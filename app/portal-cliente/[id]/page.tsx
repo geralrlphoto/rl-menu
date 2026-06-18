@@ -3404,6 +3404,7 @@ function PortalSubPageContent() {
                               <BriefingExtensions
                                 info={equipaBI as BriefingExt}
                                 isAdmin={isAdmin}
+                                teamView={isFreelancerView}
                                 onSave={handleSaveBriefingExt}
                                 pageTitle={title}
                                 portalRef={portalRef || refParam || undefined}

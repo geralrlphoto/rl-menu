@@ -1473,9 +1473,23 @@ function ServicosDiaEditor({ value, eventId, onSaved }: {
 // O briefing é enviado a partir do portal dos noivos (botão "Enviar Briefing"),
 // que guarda o link em evento_equipa.briefing_url. Aqui mostramos esse link na
 // ficha do evento, para além de continuar a ir para o portal dos noivos.
+// Acrescenta ?freelancer=1 ao URL do briefing → abre em modo equipa, mostrando
+// TUDO (incl. secção ACESSO e Notas Privadas reservadas à equipa).
+function withBriefingLock(url: string): string {
+  if (!url) return ''
+  try {
+    const u = new URL(url)
+    u.searchParams.set('freelancer', '1')
+    return u.toString()
+  } catch {
+    return url + (url.includes('?') ? '&' : '?') + 'freelancer=1'
+  }
+}
+
 function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null; eventoId: string }) {
   const [url, setUrl] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [open, setOpen] = useState(false)
 
   useEffect(() => {
     const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
@@ -1485,23 +1499,64 @@ function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null;
       .catch(() => setLoaded(true))
   }, [referencia, eventoId])
 
+  // Fechar com ESC
+  useEffect(() => {
+    if (!open) return
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
+
+  const lockedUrl = url ? withBriefingLock(url) : ''
+
   return (
     <div className="ficha-reveal print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mt-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-[11px] tracking-[0.4em] text-gold uppercase font-light">Briefing</h2>
-          <p className="text-[10px] text-white/30 mt-1 italic">Enviado a partir do portal dos noivos — disponível aqui na ficha.</p>
+          <p className="text-[10px] text-white/30 mt-1 italic">Enviado a partir do portal dos noivos — disponível aqui na ficha (vista completa da equipa).</p>
         </div>
         {url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer"
+          <button onClick={() => setOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[11px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3"/></svg>
             Ver Briefing
-          </a>
+          </button>
         ) : (
           <span className="text-[11px] text-white/25 italic">{loaded ? 'Ainda não enviado' : '…'}</span>
         )}
       </div>
+
+      {/* Aba lateral · só o briefing (modo equipa) */}
+      {open && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[300] flex justify-end" onClick={() => setOpen(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="relative z-10 h-full w-full max-w-3xl flex flex-col bg-[#0b0905] border-l border-gold/30 shadow-[-30px_0_70px_-10px_rgba(0,0,0,0.85)]"
+            onClick={e => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between gap-3 px-5 py-3 border-b border-white/[0.07] shrink-0 bg-[#0e0c08]">
+              <p className="text-[12px] tracking-[0.4em] text-gold/80 uppercase">Briefing · Equipa</p>
+              <div className="flex items-center gap-2">
+                <a href={lockedUrl} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] px-3 py-1.5 rounded-lg border border-white/10 text-white/40 hover:text-white/70 hover:border-white/25 transition-all tracking-widest uppercase">
+                  Separador ↗
+                </a>
+                <button onClick={() => setOpen(false)}
+                  className="inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all tracking-widest uppercase font-semibold"
+                  title="Fechar (Esc)">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  Fechar
+                </button>
+              </div>
+            </div>
+            {/* Iframe do briefing */}
+            <div className="flex-1 overflow-hidden bg-black/40">
+              <iframe src={lockedUrl} title="Briefing" className="w-full h-full border-0" />
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   )
 }

@@ -43,6 +43,9 @@ export type BriefingExt = {
 type Props = {
   info: BriefingExt
   isAdmin: boolean
+  /** Vista da equipa/freelancer (?freelancer=1): mostra secções reservadas
+   *  à equipa (ex.: Notas Privadas) em modo leitura, sem ser admin. */
+  teamView?: boolean
   onSave: (patch: Partial<BriefingExt>) => Promise<void> | void
   pageTitle?: string
   portalRef?: string
@@ -818,7 +821,7 @@ function TarefasPreSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
 
 // ─── Section: Notas Privadas (admin only) ────────────────────────────────────
 
-function NotasPrivadasSection({ info, onSave }: { info: BriefingExt; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function NotasPrivadasSection({ info, onSave, readOnly }: { info: BriefingExt; onSave: (p: Partial<BriefingExt>) => void | Promise<void>; readOnly?: boolean }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.notasPrivadas ?? '')
 
@@ -829,7 +832,7 @@ function NotasPrivadasSection({ info, onSave }: { info: BriefingExt; onSave: (p:
     <Section id="notas-privadas" icon="◬" label="Notas Privadas · Apenas Equipa" title="Comentários internos"
       subtitle="O cliente NÃO vê esta secção"
       accent="blue"
-      action={<EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={readOnly ? undefined : <EditChip active={editing} onClick={editing ? save : startEdit} />}>
       {editing ? (
         <textarea value={draft} onChange={e => setDraft(e.target.value)}
           rows={4} placeholder="Notas para a equipa que o cliente não deve ver…"
@@ -1281,7 +1284,7 @@ function VisaoGeralSection({ info, onJump }: { info: BriefingExt; onJump: (id: s
 // ─── Main export ─────────────────────────────────────────────────────────────
 
 export default function BriefingExtensions({
-  info, isAdmin, onSave, pageTitle, dataEvento, local,
+  info, isAdmin, teamView, onSave, pageTitle, dataEvento, local,
   enviarBriefingNode, equipaNode, fichasNode,
 }: Props) {
   const [viewMode, setViewMode] = useState<'admin' | 'client'>(isAdmin ? 'admin' : 'client')
@@ -1317,9 +1320,12 @@ export default function BriefingExtensions({
         { id: 'notas-privadas', label: 'Notas Privadas', icon: '◬', group: 'Admin' },
         { id: 'historico',      label: 'Histórico',      icon: '◷', group: 'Admin' },
       )
+    } else if (teamView) {
+      // Equipa vê as Notas Privadas (apenas leitura), mas não o Histórico.
+      base.push({ id: 'notas-privadas', label: 'Notas Privadas', icon: '◬', group: 'Equipa' })
     }
     return base
-  }, [effectiveAdmin])
+  }, [effectiveAdmin, teamView])
 
   // Smooth scroll para uma secção
   function scrollTo(id: string) {
@@ -1440,8 +1446,8 @@ export default function BriefingExtensions({
           <NotasSensiveisSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
           <TarefasPreSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
 
-          {/* Admin-only */}
-          {effectiveAdmin && <NotasPrivadasSection info={info} onSave={saveWithLog} />}
+          {/* Notas Privadas — admin (editável) ou equipa/freelancer (só leitura) */}
+          {(effectiveAdmin || teamView) && <NotasPrivadasSection info={info} onSave={saveWithLog} readOnly={!effectiveAdmin} />}
           {effectiveAdmin && <HistoricoSection info={info} />}
         </div>
       </div>
