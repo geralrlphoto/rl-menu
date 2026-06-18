@@ -1557,38 +1557,10 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
   const contratoAprovado = !!c.contrato_aprovado_em
   const portalAprovado = !!c.aprovado_em
 
-  // ── STATE C: PORTAL JÁ APROVADO (verde) ───────────────────────────────────
-  if (portalAprovado) {
-    const adminUrl = data.portalUrl ? `${data.portalUrl}?admin=1` : null
-    return (
-      <div className="mt-4 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.04] p-4">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div>
-            <p className="text-[10px] tracking-[0.3em] text-emerald-400/80 uppercase mb-1">✓ Portal aprovado</p>
-            <p className="text-sm text-white/80">
-              Aprovado em {new Date(c.aprovado_em!).toLocaleString('pt-PT')}
-            </p>
-          </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            {adminUrl && (
-              <a href={adminUrl} target="_blank" rel="noopener noreferrer"
-                title="Abre o portal com controlos de edição visíveis — alterações ficam só neste portal."
-                className="px-4 py-2 text-[11px] tracking-[0.3em] uppercase border border-gold/50 text-gold hover:bg-gold/10 whitespace-nowrap">
-                ✎ Editar Portal
-              </a>
-            )}
-            {data.portalUrl && (
-              <a href={data.portalUrl} target="_blank" rel="noopener noreferrer"
-                title="Vê o portal como o cliente o vê (sem controlos admin)."
-                className="px-4 py-2 text-[11px] tracking-[0.3em] uppercase border border-emerald-400/40 text-emerald-300 hover:bg-emerald-500/10 whitespace-nowrap">
-                Abrir portal →
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // ── STATE C: PORTAL JÁ APROVADO ───────────────────────────────────────────
+  // Não renderiza aqui — o estado "Portal aprovado" (Editar/Abrir) é mostrado
+  // pela secção PortalSection (mais abaixo), evitando duplicação.
+  if (portalAprovado) return null
 
   // ── STATE B: CONTRATO APROVADO → falta criar portal (gold) ────────────────
   if (contratoAprovado) {
