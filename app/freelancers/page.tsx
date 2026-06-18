@@ -160,10 +160,13 @@ const CATEGORY_MAP: Record<string, typeof CATEGORY_CONFIG[0]> = Object.fromEntri
 
 const EMPTY_FORM: FormData = { nome: '', status: 'FOTOGRAFO', contato: '', email: '', nome_sos: '', contato_sos: '' }
 
-function CopiarUrlButton({ id }: { id: string }) {
+function CopiarUrlButton({ id, status }: { id: string; status?: string | null }) {
   const [copied, setCopied] = useState(false)
   function copy() {
-    const url = `${window.location.origin}/freelancers/${id}?view=freelancer`
+    // Editores têm portal próprio — o link a partilhar é o painel de editor.
+    const url = status === 'EDITORES'
+      ? `${window.location.origin}/painel-editor?freelancer=${id}`
+      : `${window.location.origin}/freelancers/${id}?view=freelancer`
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
@@ -542,7 +545,7 @@ export default function FreelancersPage() {
                             </Link>
 
                             <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-                              <CopiarUrlButton id={f.id} />
+                              <CopiarUrlButton id={f.id} status={f.status} />
                               <button onClick={() => { setPwEditId(f.id); setPwDraft(f.password ?? '') }}
                                 className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
                                 🔑 PW
