@@ -1149,9 +1149,12 @@ function PortalSubPageContent() {
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
       setPortalHeroImageUrl(ps.heroImageUrl ?? '')
       setDesignPremiumPages(ps.designPremiumPages ?? [])
-      const slots = ps.preWeddingSlots ?? []
+      // Unificado com a secção "Marcação" da ficha (bookingSlots quando aprovado).
+      const slots = ps.bookingActive && Array.isArray(ps.bookingSlots) && ps.bookingSlots.length
+        ? ps.bookingSlots
+        : (ps.preWeddingSlots ?? [])
       setPreWeddingSlots(slots)
-      const savedId = ps.preWeddingReservedSlotId ?? null
+      const savedId = ps.bookingReservedSlotId ?? ps.preWeddingReservedSlotId ?? null
       const validId = savedId && slots.some((s: {id: string}) => s.id === savedId) ? savedId : null
       setReservedSlotId(validId)
       setContratoDisponivel(ps.contratoDisponivel ?? false)
@@ -2089,13 +2092,21 @@ function PortalSubPageContent() {
                       referencia: portalRef,
                       updates: {
                         settings: {
-                          ...portalSettingsObj,
+                          bookingReservedSlotId: slotId,
+                          bookingReservedAt: new Date().toISOString(),
                           preWeddingReservedSlotId: slotId,
                           preWeddingReservedAt: new Date().toISOString(),
                         },
                       },
                     }),
                   })
+                  const s = preWeddingSlots.find(x => x.id === slotId)
+                  if (s) {
+                    fetch('/api/send-booking-reservation', {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ referencia: portalRef, tipoEvento: 'batizado', bookingType: 'sessao', date: s.date, time: s.time, local: s.local }),
+                    }).catch(() => {})
+                  }
                   setReservedSlotId(slotId)
                   setShowReservedWarning(true)
                 } finally { setReservingSlotId(null) }

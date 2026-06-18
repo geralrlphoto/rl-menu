@@ -1146,9 +1146,13 @@ function PortalSubPageContent() {
       setSubpageHeaderUrl(ps.subpageHeaderUrl ?? '')
       setPortalHeroImageUrl(ps.heroImageUrl ?? '')
       setDesignPremiumPages(ps.designPremiumPages ?? [])
-      const slots = ps.preWeddingSlots ?? []
+      // Unificado com a secção "Marcação" da ficha: quando o admin aprova
+      // (bookingActive), usa os bookingSlots; senão cai para os preWeddingSlots antigos.
+      const slots = ps.bookingActive && Array.isArray(ps.bookingSlots) && ps.bookingSlots.length
+        ? ps.bookingSlots
+        : (ps.preWeddingSlots ?? [])
       setPreWeddingSlots(slots)
-      const savedId = ps.preWeddingReservedSlotId ?? null
+      const savedId = ps.bookingReservedSlotId ?? ps.preWeddingReservedSlotId ?? null
       const validId = savedId && slots.some((s: {id: string}) => s.id === savedId) ? savedId : null
       setReservedSlotId(validId)
       setContratoDisponivel(ps.contratoDisponivel ?? false)
@@ -2080,6 +2084,8 @@ function PortalSubPageContent() {
               onReserve={async (slotId: string) => {
                 setReservingSlotId(slotId)
                 try {
+                  // Grava só a parte alterada (merge no servidor) — escreve em
+                  // bookingReservedSlotId para o admin ver na ficha + receber notif.
                   await fetch(`/api/portais?ref=${encodeURIComponent(portalRef)}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -2087,13 +2093,22 @@ function PortalSubPageContent() {
                       referencia: portalRef,
                       updates: {
                         settings: {
-                          ...portalSettingsObj,
+                          bookingReservedSlotId: slotId,
+                          bookingReservedAt: new Date().toISOString(),
                           preWeddingReservedSlotId: slotId,
                           preWeddingReservedAt: new Date().toISOString(),
                         },
                       },
                     }),
                   })
+                  // Email ao admin com a data/hora/local escolhidos
+                  const s = preWeddingSlots.find(x => x.id === slotId)
+                  if (s) {
+                    fetch('/api/send-booking-reservation', {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ referencia: portalRef, tipoEvento: 'casamento', bookingType: 'sessao', date: s.date, time: s.time, local: s.local }),
+                    }).catch(() => {})
+                  }
                   setReservedSlotId(slotId)
                   setShowReservedWarning(true)
                 } finally { setReservingSlotId(null) }
