@@ -1898,6 +1898,9 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   // URL do briefing a abrir num modal de preview (null = fechado)
   const [previewBriefingUrl, setPreviewBriefingUrl] = useState<string | null>(null)
   const [previewBriefingTitle, setPreviewBriefingTitle] = useState<string>('')
+  // Casamento cujo "Relatório Diário" está aberto na aba lateral (null = fechada).
+  // Conteúdo da aba ainda em branco — placeholder por agora.
+  const [reportCasamento, setReportCasamento] = useState<Casamento | null>(null)
 
   async function saveIntro() {
     if (!freelancer) return
@@ -2419,6 +2422,15 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5">
                   {/* LEFT: ações principais */}
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* Relatório Diário — abre aba lateral à direita (conteúdo em branco por agora).
+                         Só para videógrafos, tal como o restante fluxo de vídeo. */}
+                    {freelancerStatus === 'VIDEOGRAFO' && (
+                      <button onClick={() => setReportCasamento(c)}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-[11px] tracking-widest uppercase font-bold hover:bg-emerald-500/20 transition-all">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        Relatório Diário
+                      </button>
+                    )}
                     {/* Ver Briefing — desbloqueado quando briefing_url existe (admin enviou em /portal-cliente) */}
                     {c.briefing_url ? (
                       <button onClick={() => { setPreviewBriefingUrl(c.briefing_url!); setPreviewBriefingTitle(c.local || 'Briefing') }}
@@ -2493,6 +2505,40 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
         )
       })}
       </div>
+
+      {/* ── Aba lateral · Relatório Diário ──────────────────────
+           Drawer encostado à direita. Conteúdo ainda em branco
+           (placeholder) — será preenchido numa próxima iteração. */}
+      {reportCasamento && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[200] flex justify-end"
+          onClick={() => setReportCasamento(null)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative z-10 h-full w-full max-w-md flex flex-col border-l border-gold/30 animate-in slide-in-from-right duration-300"
+            style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)', boxShadow: '-30px 0 70px -10px rgba(0,0,0,0.85)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="h-0.5 w-full bg-gold/65 shrink-0" />
+            {/* Header */}
+            <div className="px-6 pt-5 pb-4 border-b border-white/[0.05] flex items-start justify-between gap-3 shrink-0">
+              <div className="min-w-0">
+                <p className="text-[10px] tracking-[0.4em] text-gold/65 uppercase mb-1">Relatório Diário</p>
+                <h3 className="text-lg text-white font-light tracking-tight truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                  {reportCasamento.local || 'Casamento'}
+                </h3>
+              </div>
+              <button onClick={() => setReportCasamento(null)}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0"
+                title="Fechar (Esc)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            {/* Corpo — em branco por agora */}
+            <div className="flex-1 overflow-y-auto px-6 py-8 flex items-center justify-center">
+              <p className="text-[13px] text-white/25 italic text-center">Em breve.</p>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* ── Modal Preview · Ver Briefing ────────────────────── */}
       {previewBriefingUrl && typeof document !== 'undefined' && createPortal(
