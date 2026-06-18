@@ -179,9 +179,9 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
             <div key={t.tema} className={`tema ${unread ? 'unread' : ''}`}>
               <button className="tema-head" onClick={() => toggle(t.tema)}>
                 <span className={`chev ${open ? 'on' : ''}`}>▸</span>
-                <span className="tema-nome">{highlight(t.tema, q)}</span>
+                <span style={{ flex: 1, fontFamily: "'Cormorant Garamond', serif", fontSize: 13, color: '#e9dcc2' }}>{highlight(t.tema, q)}</span>
                 {unread && <span className="novo">Nova</span>}
-                <span className="tema-meta">{t.items.length} msg · {dayLabel(t.lastTs).replace(/ de \d{4}$/, '')}</span>
+                <span style={{ fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7a6f5e', whiteSpace: 'nowrap' }}>{t.items.length} msg · {dayLabel(t.lastTs).replace(/ de \d{4}$/, '')}</span>
               </button>
               {open && (
                 <div className="tema-body">
@@ -191,12 +191,18 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
                     lastDay = dk
                     return (
                       <div key={it.id}>
-                        {showDay && <div className="day">── {dayLabel(it.ts)} ──</div>}
-                        <div className={`row ${it.from}`}>
-                          <div className={`bubble ${it.from}`}>
-                            <div className="who">{it.from === 'vocs' ? 'Vocês' : 'RL Photo·Video'}</div>
-                            <p className="txt">{highlight(it.texto, q)}</p>
-                            <div className="when">{timeLabel(it.ts)}</div>
+                        {showDay && <div style={{ textAlign: 'center', fontSize: 8, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#6f6557', margin: '4px 0 2px' }}>── {dayLabel(it.ts)} ──</div>}
+                        <div style={{ display: 'flex', justifyContent: it.from === 'vocs' ? 'flex-end' : 'flex-start' }}>
+                          <div style={{
+                            maxWidth: '58%', padding: '4px 8px', borderRadius: 9,
+                            background: it.from === 'vocs' ? 'rgba(200,168,102,.14)' : 'rgba(40,60,45,.4)',
+                            border: `1px solid ${it.from === 'vocs' ? 'rgba(200,168,102,.25)' : 'rgba(120,200,140,.25)'}`,
+                          }}>
+                            <div style={{ fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 1, color: it.from === 'vocs' ? '#d7bd87' : '#84c896' }}>
+                              {it.from === 'vocs' ? 'Vocês' : 'RL Photo·Video'}
+                            </div>
+                            <p style={{ margin: 0, fontSize: 9, lineHeight: 1.35, color: '#cfc6b6', whiteSpace: 'pre-wrap' }}>{highlight(it.texto, q)}</p>
+                            <div style={{ fontSize: 6, color: '#7a6f5e', marginTop: 1, textAlign: 'right' }}>{timeLabel(it.ts)}</div>
                           </div>
                         </div>
                       </div>
