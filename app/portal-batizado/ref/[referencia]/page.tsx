@@ -433,7 +433,7 @@ export default function PortalRefPage() {
     // (identidade, valores, estado das entregas, mensagens, URLs das
     // galerias, password) continua a vir só do portal individual.
     const [d, templateD, evD] = await Promise.all([
-      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json()),
+      fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`, { cache: 'no-store' }).then(r => r.json()),
       fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`).then(r => r.json()).catch(() => null),
       fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => null),
     ])
