@@ -2705,7 +2705,7 @@ function DrawerBloco({ label, sub, children, width = 820 }: { label: string; sub
           <button onClick={() => setOpen(false)} aria-label="Fechar"
             className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-gold/40 transition-all">✕</button>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {open && children}
         </div>
       </aside>
@@ -2776,7 +2776,7 @@ function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
             className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-gold/40 transition-all">✕</button>
         </div>
         {/* Conteúdo */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: 20 }}>
           {open && (tab === 'marcacao'
             ? <BookingSectionFicha referencia={referencia} />
             : <NotasSection referencia={referencia} />)}
