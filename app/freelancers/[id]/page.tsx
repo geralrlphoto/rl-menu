@@ -60,6 +60,8 @@ type Casamento = {
     vaisFazerBackup?: string
     problemaTecnico?: string
     infoRelevante?: string
+    enviado?: boolean
+    enviadoEm?: string
   } | null
 }
 type Edicao = {
@@ -1915,10 +1917,18 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
   const [vaisBackup, setVaisBackup] = useState<string>(rd.vaisFazerBackup ?? '')
   const [problema, setProblema] = useState<string>(rd.problemaTecnico ?? '')
   const [info, setInfo] = useState<string>(rd.infoRelevante ?? '')
+  const [enviado, setEnviado] = useState<boolean>(!!rd.enviado)
+  const [enviadoEm, setEnviadoEm] = useState<string>(rd.enviadoEm ?? '')
   const [saving, setSaving] = useState(false)
 
   function snapshot(over: Record<string, any> = {}) {
-    return { gravado, tipoCerimonia: tipo, audio, drone, equipaAnimacao: equipa, equipaAnimacaoOutra: outra, maquina, audiosNuvem, vaisFazerBackup: vaisBackup, problemaTecnico: problema, infoRelevante: info, ...over }
+    return { gravado, tipoCerimonia: tipo, audio, drone, equipaAnimacao: equipa, equipaAnimacaoOutra: outra, maquina, audiosNuvem, vaisFazerBackup: vaisBackup, problemaTecnico: problema, infoRelevante: info, enviado, enviadoEm, ...over }
+  }
+  async function enviarRelatorio() {
+    if (!confirm('Enviar o relatório à RL? Depois de enviado já não poderás editar.')) return
+    const now = new Date().toISOString()
+    setEnviado(true); setEnviadoEm(now)
+    await persist(snapshot({ enviado: true, enviadoEm: now }))
   }
   function setSimNao(key: string, val: string, current: string, setter: (v: string) => void) {
     const next = current === val ? '' : val
@@ -1972,6 +1982,15 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
 
   return (
     <div className="space-y-6 pt-2">
+      {enviado && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/[0.08] px-4 py-3 flex items-center gap-2.5">
+          <svg className="w-4 h-4 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+          <p className="text-[12px] text-emerald-300/90">
+            Relatório enviado{enviadoEm ? ` em ${new Date(enviadoEm).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })} às ${new Date(enviadoEm).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}` : ''} — já não é editável.
+          </p>
+        </div>
+      )}
+      <fieldset disabled={enviado} className="space-y-6 border-0 p-0 m-0 disabled:opacity-60 disabled:pointer-events-none" style={{ minInlineSize: 'auto' }}>
       <Chips titulo="O que gravaste durante o dia" opcoes={RD_GRAVADO_OPCOES} list={gravado} setList={setGravado} dataKey="gravado" />
       <Chips titulo="Tipo de Cerimónia" opcoes={RD_TIPO_CERIMONIA_OPCOES} list={tipo} setList={setTipo} dataKey="tipoCerimonia" />
       <Chips titulo="Áudio" opcoes={RD_AUDIO_OPCOES} list={audio} setList={setAudio} dataKey="audio" />
@@ -2030,6 +2049,15 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
           rows={4} placeholder="Escreve aqui alguma informação relevante…"
           className={`${inputCls} resize-y leading-relaxed`} />
       </div>
+      </fieldset>
+
+      {!enviado && (
+        <button onClick={enviarRelatorio} disabled={saving}
+          className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-[12px] font-bold tracking-widest uppercase hover:bg-emerald-500/25 transition-all disabled:opacity-50">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Enviar Relatório à RL
+        </button>
+      )}
 
       <p className="text-[10px] text-gold/40 h-3">{saving ? 'A guardar…' : ''}</p>
     </div>

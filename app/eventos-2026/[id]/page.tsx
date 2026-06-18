@@ -1659,6 +1659,75 @@ function BriefingNaFicha({ referencia, eventoId, local, dataCasamento }: { refer
   )
 }
 
+// ─── Relatório Diário da equipa (vista admin, na ficha · Evento & Serviços) ──
+function RelatorioEquipaNaFicha({ referencia, eventoId }: { referencia?: string | null; eventoId: string }) {
+  const [relatorios, setRelatorios] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
+    fetch(`/api/relatorio-diario-evento?${qs}`)
+      .then(r => r.json())
+      .then(d => { setRelatorios(Array.isArray(d?.relatorios) ? d.relatorios : []); setLoaded(true) })
+      .catch(() => setLoaded(true))
+  }, [referencia, eventoId])
+
+  if (!loaded || relatorios.length === 0) return null
+
+  const STATUS_ICON: Record<string, string> = { FOTOGRAFO: '📷', VIDEOGRAFO: '🎥', EDITORES: '✎', ASSISTENTE: '✚' }
+  const tagList = (label: string, arr?: string[]) => (arr && arr.length > 0) ? (
+    <div>
+      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">{label}</p>
+      <div className="flex flex-wrap gap-1.5">{arr.map(t => <span key={t} className="text-[11px] px-2.5 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold/90">{t}</span>)}</div>
+    </div>
+  ) : null
+  const txt = (label: string, v?: string) => (v && v.trim()) ? (
+    <div><p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">{label}</p><p className="text-[13px] text-white/85 whitespace-pre-wrap leading-relaxed">{v}</p></div>
+  ) : null
+  const simNao = (label: string, v?: string) => v ? (
+    <div className="flex items-center gap-2"><span className="text-[11px] text-white/45">{label}:</span><span className={`text-[11px] font-semibold uppercase ${v === 'sim' ? 'text-emerald-300' : 'text-red-300'}`}>{v === 'sim' ? 'Sim' : 'Não'}</span></div>
+  ) : null
+
+  return (
+    <div className="ficha-reveal print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mt-4 space-y-4">
+      <div>
+        <h2 className="text-[11px] tracking-[0.4em] text-gold uppercase font-light">Relatório Diário · Equipa</h2>
+        <p className="text-[10px] text-white/30 mt-1 italic">Preenchido pelos membros no portal deles.</p>
+      </div>
+      {relatorios.map(r => {
+        const rd = r.relatorio ?? {}
+        return (
+          <div key={r.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <p className="text-[13px] text-white/90 font-medium">{STATUS_ICON[r.status ?? ''] ?? '•'} {r.nome}</p>
+              {rd.enviado
+                ? <span className="text-[9px] text-emerald-300/80 tracking-wider uppercase">✓ Enviado{rd.enviadoEm ? ` · ${new Date(rd.enviadoEm).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}` : ''}</span>
+                : <span className="text-[9px] text-amber-300/60 tracking-wider uppercase">Rascunho</span>}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {tagList('Gravado', rd.gravado)}
+              {tagList('Tipo de Cerimónia', rd.tipoCerimonia)}
+              {tagList('Áudio', rd.audio)}
+              {tagList('Drone', rd.drone)}
+              {tagList('Equipa Animação', rd.equipaAnimacao)}
+              {txt('Outra Equipa', rd.equipaAnimacaoOutra)}
+              {txt('Máquina Utilizada', rd.maquina)}
+            </div>
+            {(rd.audiosNuvem || rd.vaisFazerBackup) && (
+              <div className="flex flex-wrap gap-4 pt-1">
+                {simNao('Áudios na Nuvem', rd.audiosNuvem)}
+                {simNao('Vai fazer Backup', rd.vaisFazerBackup)}
+              </div>
+            )}
+            {txt('Problema Técnico', rd.problemaTecnico)}
+            {txt('Informação Relevante', rd.infoRelevante)}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 // ─── Upload de contrato PDF ────────────────────────────────────────────────────
 function ContratoUpload({ eventId, contratoUrl, onSaved }: {
   eventId: string; contratoUrl: string | null
@@ -3687,6 +3756,9 @@ export default function EventoPage() {
 
       {/* ── Briefing: ver + enviar à equipa (notificação + email) ──────── */}
       <BriefingNaFicha referencia={e.referencia ?? undefined} eventoId={e.id} local={e.local} dataCasamento={e.data_evento} />
+
+      {/* ── Relatório Diário enviado pela equipa ───────────────────────── */}
+      <RelatorioEquipaNaFicha referencia={e.referencia ?? undefined} eventoId={e.id} />
 
       </DrawerBloco>
 
