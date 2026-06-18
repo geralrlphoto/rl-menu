@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { loadFreelancerProfile, saveFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
+import { loadFreelancerProfile, saveFreelancerProfile, getEditorId, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 import { PROJECTS as MOCK_PROJECTS, TASKS as MOCK_TASKS } from '../_data/projects'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
@@ -45,15 +45,51 @@ export default function DadosPessoaisPage() {
   const [theme, setTheme] = useState<'dark'|'light'>('dark')
   const [profile, setProfile] = useState<FreelancerProfile>(DEFAULT_FREELANCER_PROFILE)
 
-  // Carrega perfil de localStorage no mount
+  // Carrega perfil: localStorage primeiro (rápido), depois da BD (fonte de verdade).
   useEffect(() => {
-    setProfile(loadFreelancerProfile())
+    const local = loadFreelancerProfile()
+    setProfile(local)
+    const id = getEditorId()
+    if (!id) return
+    let cancelled = false
+    fetch(`/api/painel-editor/perfil?freelancer=${id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return
+        const fromDb = (d?.perfil && typeof d.perfil === 'object') ? d.perfil : {}
+        const base = d?.base ?? {}
+        const merged: FreelancerProfile = {
+          ...DEFAULT_FREELANCER_PROFILE, ...local, ...fromDb,
+          nome:  fromDb.nome  || base.nome     || local.nome,
+          email: fromDb.email || base.email    || local.email,
+          foto:  fromDb.foto  || base.foto_url || local.foto,
+        }
+        setProfile(merged)
+        saveFreelancerProfile(merged)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
   }, [])
+
+  // Grava na BD (debounced) — guarda também em localStorage de imediato.
+  const dbSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function persistToDb(next: FreelancerProfile) {
+    const id = getEditorId()
+    if (!id) return
+    if (dbSaveTimer.current) clearTimeout(dbSaveTimer.current)
+    dbSaveTimer.current = setTimeout(() => {
+      fetch('/api/painel-editor/perfil', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer: id, perfil: next }),
+      }).catch(() => {})
+    }, 800)
+  }
 
   function updateProfile(patch: Partial<FreelancerProfile>) {
     const next = { ...profile, ...patch }
     setProfile(next)
     saveFreelancerProfile(next)
+    persistToDb(next)
   }
 
   // Stats agregados (Resumo da Atividade) — sincronizados com localStorage + mocks
