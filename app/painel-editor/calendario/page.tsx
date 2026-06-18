@@ -7,6 +7,53 @@ import { eventsFromProjects, eventColorFor, PROJECTS, TASKS, TODAY as TODAY_PT, 
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
+import { getEditorId } from '../_data/freelancer-profile'
+
+// ── Eventos reais da RL para editar (deriva dos trabalhos enviados) ──────────
+function EventosRLSection() {
+  const [jobs, setJobs] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const id = getEditorId()
+    if (!id) { setLoaded(true); return }
+    let cancelled = false
+    fetch(`/api/painel-editor/projetos?freelancer=${id}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setJobs(Array.isArray(d?.jobs) ? d.jobs : []); setLoaded(true) } })
+      .catch(() => { if (!cancelled) setLoaded(true) })
+    return () => { cancelled = true }
+  }, [])
+
+  if (!loaded || jobs.length === 0) return null
+
+  const ordered = [...jobs].sort((a, b) => String(a.data_casamento ?? '').localeCompare(String(b.data_casamento ?? '')))
+  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : 'Sem data'
+
+  return (
+    <div className="rounded-2xl border border-gold/25 p-5 mb-5"
+      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-gold text-lg">◉</span>
+        <h3 className="text-[15px] font-semibold text-white">Eventos da RL para Editar</h3>
+        <span className="text-[10px] text-white/35 tracking-widest uppercase">{jobs.length}</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {ordered.map((j, i) => (
+          <div key={j.notifId ?? i} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+            <p className="text-[10px] tracking-[0.25em] uppercase text-gold/70 mb-1 capitalize">{fmt(j.data_casamento)}</p>
+            <p className="text-[14px] text-white font-medium">{j.noivos || j.local || 'Evento'}</p>
+            {j.local && <p className="text-[11px] text-white/45 truncate">{j.local}</p>}
+            {Array.isArray(j.downloads) && j.downloads.length > 0 && (
+              <a href={j.downloads[0]} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-2 text-[10px] px-2.5 py-1 rounded-lg bg-gold/15 border border-gold/35 text-gold font-semibold tracking-wider uppercase hover:bg-gold/25 transition-all">↓ Download</a>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // ── Helper: gera eventos a partir dos projetos criados pelo utilizador ──
 // (estrutura igual à de eventsFromProjects() em _data/projects.ts)
@@ -305,6 +352,9 @@ export default function CalendarioPage() {
 
           {/* HERO */}
           <Hero />
+
+          {/* Eventos reais da RL para editar */}
+          <EventosRLSection />
 
           {/* GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 mt-5">
