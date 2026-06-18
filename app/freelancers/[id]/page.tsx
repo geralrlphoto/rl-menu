@@ -538,6 +538,15 @@ function FreelancerDetailInner() {
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
+  const isEditor     = freelancer?.status === 'EDITORES'
+
+  // Editores têm o seu próprio portal (/painel-editor). Quando um editor acede
+  // ao portal de freelancer (via login, email ou link antigo), reencaminha-se.
+  useEffect(() => {
+    if (viewAsFreelancer && isEditor && typeof window !== 'undefined') {
+      window.location.replace(`/painel-editor?freelancer=${id}`)
+    }
+  }, [viewAsFreelancer, isEditor, id])
 
   function handleIntroHomeChange(val: string) {
     setIntroHome(val)

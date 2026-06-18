@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
     <tr>
       <td align="center">
-        <a href="${SITE}/freelancers/${ed.id}?view=freelancer" style="display:block;text-decoration:none;">
+        <a href="${SITE}/painel-editor?freelancer=${ed.id}" style="display:block;text-decoration:none;">
           <img src="${CARD_URL}" width="560" alt="Novo trabalho de edição"
             style="display:block;width:100%;max-width:560px;border:0;" />
         </a>
