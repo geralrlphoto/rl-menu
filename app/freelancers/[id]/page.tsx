@@ -517,6 +517,15 @@ function FreelancerDetailInner() {
     })
   }, [prazosCriticos.length, freelancer?.id])
 
+  // Editores têm o seu próprio portal (/painel-editor). Quando um editor acede
+  // ao portal de freelancer (via login, email ou link antigo), reencaminha-se.
+  // (Tem de estar ANTES dos early returns abaixo — regra dos hooks.)
+  useEffect(() => {
+    if (viewAsFreelancer && freelancer?.status === 'EDITORES' && typeof window !== 'undefined') {
+      window.location.replace(`/painel-editor?freelancer=${id}`)
+    }
+  }, [viewAsFreelancer, freelancer?.status, id])
+
   if (loading) return (
     <main className="min-h-screen flex items-center justify-center">
       <p className="text-white/20 text-[14px] tracking-widest uppercase">A carregar...</p>
@@ -539,14 +548,6 @@ function FreelancerDetailInner() {
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
   const isEditor     = freelancer?.status === 'EDITORES'
-
-  // Editores têm o seu próprio portal (/painel-editor). Quando um editor acede
-  // ao portal de freelancer (via login, email ou link antigo), reencaminha-se.
-  useEffect(() => {
-    if (viewAsFreelancer && isEditor && typeof window !== 'undefined') {
-      window.location.replace(`/painel-editor?freelancer=${id}`)
-    }
-  }, [viewAsFreelancer, isEditor, id])
 
   function handleIntroHomeChange(val: string) {
     setIntroHome(val)
