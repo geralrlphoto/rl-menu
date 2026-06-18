@@ -144,6 +144,8 @@ const OPTIONAL_COLS = [
   // Toggle admin: quando false, este casamento NÃO gera alertas/prazos
   // de fotografia (útil para eventos onde a RL não é responsável pela foto).
   'alertas_fotografia_ativos',
+  // Relatório Diário do videógrafo (o que gravou + tipo de cerimónia, etc.)
+  'relatorio_diario',
 ] as const
 
 export async function POST(req: NextRequest) {

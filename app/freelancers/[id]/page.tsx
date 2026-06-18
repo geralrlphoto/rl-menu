@@ -46,6 +46,8 @@ type Casamento = {
   nome_noivo?: string | null
   // Toggle admin: false ⇒ casamento NÃO gera alertas/prazos de fotografia
   alertas_fotografia_ativos?: boolean | null
+  // Relatório Diário do videógrafo (o que gravou + tipo de cerimónia)
+  relatorio_diario?: { gravado?: string[]; tipoCerimonia?: string[] } | null
 }
 type Edicao = {
   id: string; freelancer_id: string; nome: string; status: string; local: string | null
@@ -1880,6 +1882,70 @@ function SidebarNavAdmin({
   )
 }
 
+// ─── Relatório Diário — secções (o que gravou + tipo de cerimónia) ───────────
+const RD_GRAVADO_OPCOES = ['Making Off Noivo', 'Making Off Noiva', 'Cerimónia', 'Votos dos Noivos', 'Discursos Convidados', 'Dança dos Noivos', 'Corte do Bolo']
+const RD_TIPO_CERIMONIA_OPCOES = ['Religiosa', 'Civil', 'Conservador', 'Celebrante']
+
+function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
+  const [gravado, setGravado] = useState<string[]>(casamento.relatorio_diario?.gravado ?? [])
+  const [tipo, setTipo] = useState<string[]>(casamento.relatorio_diario?.tipoCerimonia ?? [])
+  const [saving, setSaving] = useState(false)
+
+  async function persist(next: { gravado: string[]; tipoCerimonia: string[] }) {
+    setSaving(true)
+    try {
+      await fetch('/api/freelancer-casamentos', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: casamento.id, relatorio_diario: next }),
+      })
+    } finally { setSaving(false) }
+  }
+
+  function toggleGravado(opt: string) {
+    const next = gravado.includes(opt) ? gravado.filter(x => x !== opt) : [...gravado, opt]
+    setGravado(next); persist({ gravado: next, tipoCerimonia: tipo })
+  }
+  function toggleTipo(opt: string) {
+    const next = tipo.includes(opt) ? tipo.filter(x => x !== opt) : [...tipo, opt]
+    setTipo(next); persist({ gravado, tipoCerimonia: next })
+  }
+
+  const chipCls = (active: boolean) =>
+    `px-4 py-2.5 rounded-xl border text-[12px] tracking-wide uppercase font-semibold transition-all inline-flex items-center gap-2 ${
+      active
+        ? 'bg-gold/20 border-gold/50 text-gold'
+        : 'bg-white/[0.03] border-white/10 text-white/55 hover:border-gold/30 hover:text-white/80'
+    }`
+  const box = (active: boolean) =>
+    `w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px] shrink-0 ${active ? 'border-gold bg-gold/30 text-gold' : 'border-white/25 text-transparent'}`
+
+  return (
+    <div className="space-y-6 pt-2">
+      <div>
+        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">O que gravaste durante o dia</p>
+        <div className="flex flex-wrap gap-2">
+          {RD_GRAVADO_OPCOES.map(o => (
+            <button key={o} onClick={() => toggleGravado(o)} className={chipCls(gravado.includes(o))}>
+              <span className={box(gravado.includes(o))}>✓</span>{o}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 mb-3">Tipo de Cerimónia</p>
+        <div className="flex flex-wrap gap-2">
+          {RD_TIPO_CERIMONIA_OPCOES.map(o => (
+            <button key={o} onClick={() => toggleTipo(o)} className={chipCls(tipo.includes(o))}>
+              <span className={box(tipo.includes(o))}>✓</span>{o}
+            </button>
+          ))}
+        </div>
+      </div>
+      <p className="text-[10px] text-gold/40 h-3">{saving ? 'A guardar…' : ''}</p>
+    </div>
+  )
+}
+
 // ─── Casamentos Tab ───────────────────────────────────────────────────────────
 
 const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
@@ -2570,7 +2636,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                   </div>
                 )
               })()}
-              <p className="text-[13px] text-white/25 italic text-center pt-8">Restante relatório em breve.</p>
+              <RelatorioDiarioSecoes casamento={reportCasamento} />
             </div>
           </div>
         </div>,
