@@ -70,29 +70,29 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
       ))}
 
       <style jsx>{`
-        .atend-thread { margin: 30px 0 6px; display: flex; flex-direction: column; gap: 22px; }
+        .atend-thread { margin: 22px 0 6px; display: flex; flex-direction: column; gap: 12px; max-width: 620px; }
         .th-label {
-          font-family: 'Hanken Grotesk', sans-serif; font-size: 10px;
+          font-family: 'Hanken Grotesk', sans-serif; font-size: 9px;
           letter-spacing: .42em; text-transform: uppercase; color: #c8a866; font-weight: 600;
         }
-        .th-item { display: flex; flex-direction: column; gap: 10px; }
+        .th-item { display: flex; flex-direction: column; gap: 6px; }
         .th-bubble {
-          border-radius: 12px; padding: 14px 18px;
-          border: 1px solid rgba(200,168,102,.18);
+          border-radius: 10px; padding: 9px 13px;
+          border: 1px solid rgba(200,168,102,.16);
           background: rgba(0,0,0,.25);
         }
         .th-bubble.rl {
           border-left: 2px solid rgba(120,200,140,.5);
           background: rgba(40,60,45,.18);
-          margin-left: 22px;
+          margin-left: 18px;
         }
-        .th-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
-        .who { font-size: 10px; letter-spacing: .2em; text-transform: uppercase; color: #c8a866; font-weight: 600; }
+        .th-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
+        .who { font-size: 8.5px; letter-spacing: .2em; text-transform: uppercase; color: #c8a866; font-weight: 600; }
         .rl-who { color: #84c896; }
-        .when { font-size: 10px; color: #7a6f5e; }
-        .th-tit { margin: 0 0 4px; font-family: 'Cormorant Garamond', serif; font-size: 17px; color: #e9dcc2; }
-        .th-txt { margin: 0; font-size: 14px; line-height: 1.65; color: #c3b8a3; white-space: pre-wrap; }
-        .th-aguarda { margin: 0 0 0 22px; font-size: 11px; font-style: italic; color: #6f6557; }
+        .when { font-size: 8.5px; color: #7a6f5e; }
+        .th-tit { margin: 0 0 2px; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: #e9dcc2; }
+        .th-txt { margin: 0; font-size: 12.5px; line-height: 1.45; color: #c3b8a3; white-space: pre-wrap; }
+        .th-aguarda { margin: 0 0 0 18px; font-size: 10px; font-style: italic; color: #6f6557; }
       `}</style>
     </div>
   )
