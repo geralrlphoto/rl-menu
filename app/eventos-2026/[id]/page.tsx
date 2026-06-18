@@ -1490,6 +1490,7 @@ function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null;
   const [url, setUrl] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [open, setOpen] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
@@ -1517,11 +1518,27 @@ function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null;
           <p className="text-[10px] text-white/30 mt-1 italic">Enviado a partir do portal dos noivos — disponível aqui na ficha (vista completa da equipa).</p>
         </div>
         {url ? (
-          <button onClick={() => setOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[11px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3"/></svg>
-            Ver Briefing
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button onClick={() => setOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-[11px] font-semibold tracking-widest uppercase hover:bg-gold/20 transition-all">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/><circle cx="12" cy="12" r="3"/></svg>
+              Ver Briefing
+            </button>
+            <button onClick={async () => {
+              if (!confirm('Apagar o briefing desta ficha? O link deixa de aparecer aqui e no portal do freelancer.')) return
+              setDeleting(true)
+              try {
+                const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
+                await fetch(`/api/evento-equipa?${qs}`, { method: 'DELETE' })
+                setUrl(null); setOpen(false)
+              } finally { setDeleting(false) }
+            }}
+              disabled={deleting}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-red-500/25 text-red-300/80 text-[11px] font-semibold tracking-widest uppercase hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40 transition-all disabled:opacity-50">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+              {deleting ? 'A apagar…' : 'Apagar'}
+            </button>
+          </div>
         ) : (
           <span className="text-[11px] text-white/25 italic">{loaded ? 'Ainda não enviado' : '…'}</span>
         )}

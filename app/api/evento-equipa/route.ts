@@ -386,3 +386,46 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true })
 }
+
+// Apaga o briefing (limpa briefing_url) na ficha do evento e nos casamentos
+// dos freelancers — usado pelo botão "Apagar" na secção Briefing da ficha.
+export async function DELETE(req: NextRequest) {
+  const referencia = req.nextUrl.searchParams.get('ref')
+  const evento_id  = req.nextUrl.searchParams.get('evento_id')
+
+  if (!referencia && !evento_id) {
+    return NextResponse.json({ error: 'ref or evento_id required' }, { status: 400 })
+  }
+
+  const supabase = db()
+
+  // Resolve evento_id a partir da referência, se necessário
+  let resolvedEventoId = evento_id ?? null
+  if (!resolvedEventoId && referencia) {
+    const { data: eq } = await supabase
+      .from('evento_equipa')
+      .select('evento_id')
+      .eq('referencia', referencia)
+      .maybeSingle()
+    resolvedEventoId = eq?.evento_id ?? null
+  }
+
+  if (resolvedEventoId) {
+    await supabase.from('evento_equipa')
+      .update({ briefing_url: null })
+      .eq('evento_id', resolvedEventoId)
+    await supabase.from('freelancer_casamentos')
+      .update({ briefing_url: null })
+      .eq('evento_id', resolvedEventoId)
+  }
+  if (referencia) {
+    await supabase.from('evento_equipa')
+      .update({ briefing_url: null })
+      .eq('referencia', referencia)
+    await supabase.from('freelancer_casamentos')
+      .update({ briefing_url: null })
+      .eq('referencia', referencia)
+  }
+
+  return NextResponse.json({ ok: true })
+}
