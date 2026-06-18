@@ -41,11 +41,21 @@ export async function POST(req: NextRequest) {
     const idx = messages.findIndex((m: any) => m?.id === messageId)
     if (idx === -1) return NextResponse.json({ ok: false, error: 'mensagem não encontrada' }, { status: 404 })
 
-    const resposta = { id: `r_${Date.now()}`, texto, ts: new Date().toISOString() }
+    const agora = new Date().toISOString()
+    const resposta = { id: `r_${Date.now()}`, texto, ts: agora }
     const respostas = Array.isArray(messages[idx].respostas) ? messages[idx].respostas : []
     messages[idx] = { ...messages[idx], respostas: [...respostas, resposta], lida: true }
 
-    const newSettings = { ...settings, noivos_messages: messages }
+    // Adiciona também uma notificação ao sino do portal dos noivos.
+    const notifs = Array.isArray(settings.noivos_notifications) ? settings.noivos_notifications : []
+    const notif = {
+      id: `n_${Date.now()}`,
+      titulo: 'Nova Mensagem · Atendimento',
+      texto: 'Recebeste uma resposta da nossa equipa. Consulta a página Atendimento do portal.',
+      ts: agora,
+    }
+
+    const newSettings = { ...settings, noivos_messages: messages, noivos_notifications: [notif, ...notifs] }
     await supabase.from('portais').update({ settings: newSettings }).ilike('referencia', referencia)
 
     return NextResponse.json({ ok: true, resposta })
