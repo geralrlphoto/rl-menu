@@ -1491,7 +1491,7 @@ function BriefingNaFicha({ referencia, eventoId, local, dataCasamento }: { refer
   const [loaded, setLoaded] = useState(false)
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [membros, setMembros] = useState<Array<{ id: string; nome: string; status: string | null; email: string | null; enviado: boolean }>>([])
+  const [membros, setMembros] = useState<Array<{ id: string; nome: string; status: string | null; email: string | null; assigned: boolean; enviado: boolean }>>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [sending, setSending] = useState(false)
   const [sentMsg, setSentMsg] = useState<string | null>(null)
@@ -1505,7 +1505,10 @@ function BriefingNaFicha({ referencia, eventoId, local, dataCasamento }: { refer
         setUrl(d?.briefingUrl ?? null)
         const ms = Array.isArray(d?.membros) ? d.membros : []
         setMembros(ms)
-        setSelected(new Set(ms.map((m: any) => m.id)))
+        // Pré-seleciona quem já está atribuído ao evento; os restantes ficam
+        // disponíveis na lista para adicionar.
+        const pre = ms.filter((m: any) => m.assigned).map((m: any) => m.id)
+        setSelected(new Set(pre.length ? pre : ms.map((m: any) => m.id)))
         setLoaded(true)
       })
       .catch(() => setLoaded(true))
@@ -1599,6 +1602,7 @@ function BriefingNaFicha({ referencia, eventoId, local, dataCasamento }: { refer
                   <label key={m.id} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] cursor-pointer hover:border-gold/25 transition-all">
                     <input type="checkbox" checked={checked} onChange={() => toggle(m.id)} className="accent-[#c9a45c] w-4 h-4" />
                     <span className="flex-1 text-[13px] text-white/85">{STATUS_ICON[m.status ?? ''] ?? '•'} {m.nome}</span>
+                    {!m.assigned && <span className="text-[9px] text-white/30 tracking-wider uppercase" title="Não está atribuído a este evento — ao enviar, passa a ver o evento e o briefing">+ adicionar</span>}
                     {!m.email && <span className="text-[9px] text-amber-300/60 tracking-wider uppercase" title="Sem email — recebe só a notificação no portal">sem email</span>}
                     {m.enviado && <span className="text-[9px] text-emerald-300/70 tracking-wider uppercase">✓ enviado</span>}
                   </label>

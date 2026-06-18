@@ -36,20 +36,27 @@ export async function GET(req: NextRequest) {
     : (await supabase.from('evento_equipa').select('briefing_url').eq('evento_id', evento_id!).maybeSingle()).data
   const briefingUrl = eq?.briefing_url ?? null
 
+  // Registos deste evento (quem já está atribuído + estado do briefing)
   const fcs = ref
     ? (await supabase.from('freelancer_casamentos').select('freelancer_id, briefing_url').eq('referencia', ref)).data
     : (await supabase.from('freelancer_casamentos').select('freelancer_id, briefing_url').eq('evento_id', evento_id!)).data
   const rows = (fcs ?? []).filter((r: any) => r.freelancer_id)
-  const ids = Array.from(new Set(rows.map((r: any) => r.freelancer_id)))
 
-  let membros: any[] = []
-  if (ids.length) {
-    const { data: fls } = await supabase.from('freelancers').select('id, nome, status, email').in('id', ids)
-    membros = (fls ?? []).map((f: any) => {
-      const row = rows.find((r: any) => r.freelancer_id === f.id)
-      return { id: f.id, nome: f.nome, status: f.status, email: f.email, enviado: !!row?.briefing_url }
-    })
-  }
+  // TODOS os fotógrafos + videógrafos da equipa (para se poder escolher a quem enviar)
+  const { data: fls } = await supabase
+    .from('freelancers')
+    .select('id, nome, status, email')
+    .in('status', ['FOTOGRAFO', 'VIDEOGRAFO'])
+    .order('nome', { ascending: true })
+
+  const membros = (fls ?? []).map((f: any) => {
+    const row = rows.find((r: any) => r.freelancer_id === f.id)
+    return {
+      id: f.id, nome: f.nome, status: f.status, email: f.email,
+      assigned: !!row,              // já atribuído a este evento
+      enviado: !!row?.briefing_url, // já recebeu o briefing
+    }
+  })
 
   return NextResponse.json({ briefingUrl, membros })
 }
@@ -80,13 +87,27 @@ export async function POST(req: NextRequest) {
   const dataCas  = data_casamento ?? eq?.data_casamento ?? null
   const dateLabel = dateLabelFrom(dataCas)
 
-  // 1) Desbloquear "Ver Briefing" nos casamentos dos membros selecionados
-  {
-    let upd = supabase.from('freelancer_casamentos')
-      .update({ briefing_url: briefingUrl })
-      .in('freelancer_id', freelancerIds)
-    upd = referencia ? upd.eq('referencia', referencia) : upd.eq('evento_id', evento_id)
-    await upd
+  // 1) Desbloquear "Ver Briefing" no portal de cada membro selecionado.
+  //    Se ainda não estiver atribuído a este evento, cria-se o registo
+  //    (passa a ver o evento + briefing no portal dele).
+  for (const fid of freelancerIds) {
+    let q = supabase.from('freelancer_casamentos').select('id').eq('freelancer_id', fid).limit(1)
+    q = referencia ? q.eq('referencia', referencia) : q.eq('evento_id', evento_id)
+    const { data: existRows } = await q
+    const existing = (existRows ?? [])[0]
+    if (existing) {
+      await supabase.from('freelancer_casamentos').update({ briefing_url: briefingUrl }).eq('id', existing.id)
+    } else {
+      await supabase.from('freelancer_casamentos').insert({
+        freelancer_id: fid,
+        referencia: referencia ?? null,
+        evento_id: evento_id ?? null,
+        local: localStr || null,
+        data_casamento: dataCas,
+        briefing_url: briefingUrl,
+        order_index: 999,
+      })
+    }
   }
 
   // 2) Notificação no sino (idempotente por freelancer+referência não lida)
