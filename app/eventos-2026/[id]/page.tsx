@@ -1660,70 +1660,166 @@ function BriefingNaFicha({ referencia, eventoId, local, dataCasamento }: { refer
 }
 
 // ─── Relatório Diário da equipa (vista admin, na ficha · Evento & Serviços) ──
-function RelatorioEquipaNaFicha({ referencia, eventoId }: { referencia?: string | null; eventoId: string }) {
+const RD_STATUS_ICON: Record<string, string> = { FOTOGRAFO: '📷', VIDEOGRAFO: '🎥', EDITORES: '✎', ASSISTENTE: '✚' }
+function rdTagList(label: string, arr?: string[]) {
+  if (!arr || arr.length === 0) return null
+  return (
+    <div>
+      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">{label}</p>
+      <div className="flex flex-wrap gap-1.5">{arr.map(t => <span key={t} className="text-[11px] px-2.5 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold/90">{t}</span>)}</div>
+    </div>
+  )
+}
+function rdTxt(label: string, v?: string) {
+  if (!v || !v.trim()) return null
+  return <div><p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">{label}</p><p className="text-[13px] text-white/85 whitespace-pre-wrap leading-relaxed">{v}</p></div>
+}
+function rdSimNao(label: string, v?: string) {
+  if (!v) return null
+  return <div className="flex items-center gap-2"><span className="text-[11px] text-white/45">{label}:</span><span className={`text-[11px] font-semibold uppercase ${v === 'sim' ? 'text-emerald-300' : 'text-red-300'}`}>{v === 'sim' ? 'Sim' : 'Não'}</span></div>
+}
+
+// Cartão (read-only) do relatório de um membro + campo de download (admin).
+function MembroRelatorioCard({ membro }: { membro: any }) {
+  const rd = membro.relatorio ?? {}
+  const [downloadUrl, setDownloadUrl] = useState<string>(rd.downloadUrl ?? '')
+  const [saving, setSaving] = useState(false)
+
+  async function saveDownload() {
+    setSaving(true)
+    try {
+      await fetch('/api/freelancer-casamentos', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: membro.casamentoId, relatorio_diario: { ...rd, downloadUrl: downloadUrl.trim() } }),
+      })
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <p className="text-[13px] text-white/90 font-medium">{RD_STATUS_ICON[membro.status ?? ''] ?? '•'} {membro.nome}</p>
+        {rd.enviado
+          ? <span className="text-[9px] text-emerald-300/80 tracking-wider uppercase">✓ Enviado{rd.enviadoEm ? ` · ${new Date(rd.enviadoEm).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}` : ''}</span>
+          : <span className="text-[9px] text-amber-300/60 tracking-wider uppercase">Rascunho</span>}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {rdTagList('Gravado', rd.gravado)}
+        {rdTagList('Tipo de Cerimónia', rd.tipoCerimonia)}
+        {rdTagList('Áudio', rd.audio)}
+        {rdTagList('Drone', rd.drone)}
+        {rdTagList('Equipa Animação', rd.equipaAnimacao)}
+        {rdTxt('Outra Equipa', rd.equipaAnimacaoOutra)}
+        {rdTxt('Máquina Utilizada', rd.maquina)}
+      </div>
+      {(rd.audiosNuvem || rd.vaisFazerBackup) && (
+        <div className="flex flex-wrap gap-4 pt-1">
+          {rdSimNao('Áudios na Nuvem', rd.audiosNuvem)}
+          {rdSimNao('Vai fazer Backup', rd.vaisFazerBackup)}
+        </div>
+      )}
+      {rdTxt('Problema Técnico', rd.problemaTecnico)}
+      {rdTxt('Informação Relevante', rd.infoRelevante)}
+
+      {/* Conteúdo para Download — link para o editor descarregar */}
+      <div className="pt-2 border-t border-white/[0.06]">
+        <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">Conteúdo para Download</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <input value={downloadUrl} onChange={e => setDownloadUrl(e.target.value)} onBlur={saveDownload}
+            placeholder="Cola aqui o link de download (WeTransfer, Drive, etc.)…"
+            className="flex-1 min-w-[220px] bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 text-[12px] text-white/90 placeholder:text-white/25 outline-none focus:border-gold/40 transition-all" />
+          {downloadUrl.trim() && (
+            <a href={downloadUrl} target="_blank" rel="noopener noreferrer"
+              className="text-[10px] px-3 py-2 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all tracking-widest uppercase whitespace-nowrap">Abrir ↗</a>
+          )}
+          {saving && <span className="text-[10px] text-gold/40 animate-pulse">A guardar…</span>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Secção: escolher editores e enviar-lhes o relatório/conteúdo.
+function EditoresEnviar({ referencia, eventoId, editores, local, dataCasamento }: { referencia?: string | null; eventoId: string; editores: any[]; local?: string | null; dataCasamento?: string | null }) {
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [sending, setSending] = useState(false)
+  const [sentMsg, setSentMsg] = useState<string | null>(null)
+
+  function toggle(id: string) {
+    setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  }
+  async function enviar() {
+    if (selected.size === 0) return
+    setSending(true); setSentMsg(null)
+    try {
+      const res = await fetch('/api/relatorio-editores', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, evento_id: eventoId, editorIds: Array.from(selected), local, data_casamento: dataCasamento }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(d?.error ?? 'Falha ao enviar.'); return }
+      setSentMsg(`Enviado a ${d.sent} editor(es)${d.downloads ? ` · ${d.downloads} link(s)` : ''}.`)
+      setTimeout(() => setSentMsg(null), 6000)
+    } finally { setSending(false) }
+  }
+
+  return (
+    <div className="pt-4 border-t border-white/[0.06]">
+      <p className="text-[10px] tracking-[0.3em] uppercase text-white/45 mb-2">Enviar aos Editores</p>
+      {editores.length === 0 ? (
+        <p className="text-[12px] text-white/30 italic">Sem editores na equipa (freelancers com função EDITORES).</p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-1.5">
+            {editores.map(ed => (
+              <label key={ed.id} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] cursor-pointer hover:border-gold/25 transition-all">
+                <input type="checkbox" checked={selected.has(ed.id)} onChange={() => toggle(ed.id)} className="accent-[#c9a45c] w-4 h-4" />
+                <span className="flex-1 text-[13px] text-white/85">✎ {ed.nome}</span>
+                {!ed.email && <span className="text-[9px] text-amber-300/60 tracking-wider uppercase">sem email</span>}
+              </label>
+            ))}
+          </div>
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <button onClick={enviar} disabled={sending || selected.size === 0}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 text-[11px] font-semibold tracking-widest uppercase hover:bg-emerald-500/25 transition-all disabled:opacity-40">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              {sending ? 'A enviar…' : `Enviar aos Editores (${selected.size})`}
+            </button>
+            {sentMsg && <span className="text-[11px] text-emerald-300/80">✓ {sentMsg}</span>}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+function RelatorioEquipaNaFicha({ referencia, eventoId, local, dataCasamento }: { referencia?: string | null; eventoId: string; local?: string | null; dataCasamento?: string | null }) {
   const [relatorios, setRelatorios] = useState<any[]>([])
+  const [editores, setEditores] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
     fetch(`/api/relatorio-diario-evento?${qs}`)
       .then(r => r.json())
-      .then(d => { setRelatorios(Array.isArray(d?.relatorios) ? d.relatorios : []); setLoaded(true) })
+      .then(d => {
+        setRelatorios(Array.isArray(d?.relatorios) ? d.relatorios : [])
+        setEditores(Array.isArray(d?.editores) ? d.editores : [])
+        setLoaded(true)
+      })
       .catch(() => setLoaded(true))
   }, [referencia, eventoId])
 
   if (!loaded || relatorios.length === 0) return null
 
-  const STATUS_ICON: Record<string, string> = { FOTOGRAFO: '📷', VIDEOGRAFO: '🎥', EDITORES: '✎', ASSISTENTE: '✚' }
-  const tagList = (label: string, arr?: string[]) => (arr && arr.length > 0) ? (
-    <div>
-      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1.5">{label}</p>
-      <div className="flex flex-wrap gap-1.5">{arr.map(t => <span key={t} className="text-[11px] px-2.5 py-1 rounded-full bg-gold/10 border border-gold/25 text-gold/90">{t}</span>)}</div>
-    </div>
-  ) : null
-  const txt = (label: string, v?: string) => (v && v.trim()) ? (
-    <div><p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-1">{label}</p><p className="text-[13px] text-white/85 whitespace-pre-wrap leading-relaxed">{v}</p></div>
-  ) : null
-  const simNao = (label: string, v?: string) => v ? (
-    <div className="flex items-center gap-2"><span className="text-[11px] text-white/45">{label}:</span><span className={`text-[11px] font-semibold uppercase ${v === 'sim' ? 'text-emerald-300' : 'text-red-300'}`}>{v === 'sim' ? 'Sim' : 'Não'}</span></div>
-  ) : null
-
   return (
     <div className="ficha-reveal print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mt-4 space-y-4">
       <div>
         <h2 className="text-[11px] tracking-[0.4em] text-gold uppercase font-light">Relatório Diário · Equipa</h2>
-        <p className="text-[10px] text-white/30 mt-1 italic">Preenchido pelos membros no portal deles.</p>
+        <p className="text-[10px] text-white/30 mt-1 italic">Preenchido pelos membros no portal deles. Cola o link de download e envia aos editores.</p>
       </div>
-      {relatorios.map(r => {
-        const rd = r.relatorio ?? {}
-        return (
-          <div key={r.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-4 space-y-3">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <p className="text-[13px] text-white/90 font-medium">{STATUS_ICON[r.status ?? ''] ?? '•'} {r.nome}</p>
-              {rd.enviado
-                ? <span className="text-[9px] text-emerald-300/80 tracking-wider uppercase">✓ Enviado{rd.enviadoEm ? ` · ${new Date(rd.enviadoEm).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}` : ''}</span>
-                : <span className="text-[9px] text-amber-300/60 tracking-wider uppercase">Rascunho</span>}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {tagList('Gravado', rd.gravado)}
-              {tagList('Tipo de Cerimónia', rd.tipoCerimonia)}
-              {tagList('Áudio', rd.audio)}
-              {tagList('Drone', rd.drone)}
-              {tagList('Equipa Animação', rd.equipaAnimacao)}
-              {txt('Outra Equipa', rd.equipaAnimacaoOutra)}
-              {txt('Máquina Utilizada', rd.maquina)}
-            </div>
-            {(rd.audiosNuvem || rd.vaisFazerBackup) && (
-              <div className="flex flex-wrap gap-4 pt-1">
-                {simNao('Áudios na Nuvem', rd.audiosNuvem)}
-                {simNao('Vai fazer Backup', rd.vaisFazerBackup)}
-              </div>
-            )}
-            {txt('Problema Técnico', rd.problemaTecnico)}
-            {txt('Informação Relevante', rd.infoRelevante)}
-          </div>
-        )
-      })}
+      {relatorios.map(r => <MembroRelatorioCard key={r.casamentoId} membro={r} />)}
+      <EditoresEnviar referencia={referencia} eventoId={eventoId} editores={editores} local={local} dataCasamento={dataCasamento} />
     </div>
   )
 }
@@ -3758,7 +3854,7 @@ export default function EventoPage() {
       <BriefingNaFicha referencia={e.referencia ?? undefined} eventoId={e.id} local={e.local} dataCasamento={e.data_evento} />
 
       {/* ── Relatório Diário enviado pela equipa ───────────────────────── */}
-      <RelatorioEquipaNaFicha referencia={e.referencia ?? undefined} eventoId={e.id} />
+      <RelatorioEquipaNaFicha referencia={e.referencia ?? undefined} eventoId={e.id} local={e.local} dataCasamento={e.data_evento} />
 
       </DrawerBloco>
 

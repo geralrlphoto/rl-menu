@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
   const supabase = db()
 
   const { data: fcs } = ref
-    ? await supabase.from('freelancer_casamentos').select('freelancer_id, relatorio_diario').eq('referencia', ref)
-    : await supabase.from('freelancer_casamentos').select('freelancer_id, relatorio_diario').eq('evento_id', evento_id!)
+    ? await supabase.from('freelancer_casamentos').select('id, freelancer_id, relatorio_diario').eq('referencia', ref)
+    : await supabase.from('freelancer_casamentos').select('id, freelancer_id, relatorio_diario').eq('evento_id', evento_id!)
 
   const rows = (fcs ?? []).filter((r: any) => r.freelancer_id && r.relatorio_diario)
   const ids = Array.from(new Set(rows.map((r: any) => r.freelancer_id)))
@@ -29,9 +29,17 @@ export async function GET(req: NextRequest) {
     const { data: fls } = await supabase.from('freelancers').select('id, nome, status').in('id', ids)
     relatorios = rows.map((r: any) => {
       const f = (fls ?? []).find((x: any) => x.id === r.freelancer_id)
-      return { id: r.freelancer_id, nome: f?.nome ?? '—', status: f?.status ?? null, relatorio: r.relatorio_diario }
+      return { casamentoId: r.id, freelancerId: r.freelancer_id, nome: f?.nome ?? '—', status: f?.status ?? null, relatorio: r.relatorio_diario }
     })
   }
 
-  return NextResponse.json({ relatorios })
+  // Lista de editores (para o admin poder enviar-lhes o relatório/conteúdo)
+  const { data: eds } = await supabase
+    .from('freelancers')
+    .select('id, nome, email')
+    .eq('status', 'EDITORES')
+    .order('nome', { ascending: true })
+  const editores = (eds ?? []).map((e: any) => ({ id: e.id, nome: e.nome, email: e.email }))
+
+  return NextResponse.json({ relatorios, editores })
 }
