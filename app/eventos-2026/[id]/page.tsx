@@ -3450,7 +3450,7 @@ export default function EventoPage() {
   const prazoVideo    = e.data_evento ? addWorkingDays(e.data_evento, 180) : null
 
   return (
-    <main id="evento-page" className="min-h-screen px-4 py-10 max-w-3xl mx-auto print:max-w-full print:py-6 print:px-8">
+    <main id="evento-page" className="min-h-screen px-4 sm:px-8 lg:px-12 xl:px-16 py-10 print:max-w-full print:py-6 print:px-8">
       <style>{`
         @keyframes fichaReveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
         .ficha-reveal { animation: fichaReveal .55s cubic-bezier(.2,.7,.2,1) both; }
