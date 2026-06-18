@@ -946,6 +946,15 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
   const [enviando, setEnviando] = useState(false)
   const [query, setQuery] = useState('')
   const [openTemas, setOpenTemas] = useState<Set<string>>(new Set())
+  const [seenMap, setSeenMap] = useState<Record<string, string>>({})
+  const LS_SEEN = `admin_atend_seen_${referencia}`
+
+  useEffect(() => {
+    try { const raw = localStorage.getItem(LS_SEEN); if (raw) setSeenMap(JSON.parse(raw)) } catch { /* ignore */ }
+  }, [LS_SEEN])
+  function marcarTemaVisto(tema: string, lastTs: string) {
+    setSeenMap(prev => { const next = { ...prev, [tema]: lastTs }; try { localStorage.setItem(LS_SEEN, JSON.stringify(next)) } catch {/* */} ; return next })
+  }
 
   async function carregar() {
     try {
@@ -1022,7 +1031,13 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
     : temas
   const totalRes = q ? temasFiltrados.reduce((s, t) => s + t.items.length, 0) : 0
   const isOpen = (tema: string) => q ? true : openTemas.has(tema)
-  const toggleTema = (tema: string) => setOpenTemas(prev => { const n = new Set(prev); n.has(tema) ? n.delete(tema) : n.add(tema); return n })
+  const isUnread = (t: Tema) => (seenMap[t.tema] ?? '') < (t.lastTs ?? '')
+  const toggleTema = (tema: string) => setOpenTemas(prev => {
+    const n = new Set(prev)
+    if (n.has(tema)) { n.delete(tema) }
+    else { n.add(tema); const t = temasFiltrados.find(x => x.tema === tema); if (t) marcarTemaVisto(tema, t.lastTs) }
+    return n
+  })
 
   return (
     <Section title="Mensagens dos Noivos" right={
@@ -1052,15 +1067,18 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
 
           {temasFiltrados.length === 0 && <p className="text-[11px] text-white/30 italic text-center py-2">Sem resultados para “{query}”.</p>}
 
+          <style>{`@keyframes adminTemaGlow{0%,100%{box-shadow:0 0 0 0 rgba(201,164,92,0);border-color:rgba(255,255,255,.08)}50%{box-shadow:0 0 14px 1px rgba(201,164,92,.45);border-color:rgba(232,199,109,.8)}} .admin-tema-glow{animation:adminTemaGlow 1.8s ease-in-out infinite}`}</style>
           {/* Temas */}
           {temasFiltrados.map(t => {
             const open = isOpen(t.tema)
+            const unread = !open && isUnread(t)
             let lastDay = ''
             return (
-              <div key={t.tema} className="rounded-lg border border-white/[0.08] bg-black/20 overflow-hidden">
+              <div key={t.tema} className={`rounded-lg border border-white/[0.08] bg-black/20 overflow-hidden ${unread ? 'admin-tema-glow' : ''}`}>
                 <button onClick={() => toggleTema(t.tema)} className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.03] transition-colors">
                   <span className={`text-gold/70 text-[9px] transition-transform ${open ? 'rotate-90' : ''}`}>▸</span>
                   <span className="flex-1 text-[12px] text-gold/90 font-semibold">{hl(t.tema, q)}</span>
+                  {unread && <span className="text-[7px] tracking-[0.14em] uppercase font-bold text-black bg-gold px-1.5 py-0.5 rounded-full">Nova</span>}
                   <span className="text-[8px] tracking-[0.12em] uppercase text-white/30 whitespace-nowrap">{t.items.length} msg · {fmtDia(t.lastTs).replace(/ de \d{4}$/, '')}</span>
                 </button>
                 {open && (

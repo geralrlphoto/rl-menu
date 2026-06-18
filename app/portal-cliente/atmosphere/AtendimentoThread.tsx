@@ -51,6 +51,20 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
   const [replyTema, setReplyTema] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
+  const [seenMap, setSeenMap] = useState<Record<string, string>>({})
+  const LS_SEEN = `atend_seen_${referencia}`
+
+  useEffect(() => {
+    try { const raw = localStorage.getItem(LS_SEEN); if (raw) setSeenMap(JSON.parse(raw)) } catch { /* ignore */ }
+  }, [LS_SEEN])
+
+  function marcarTemaVisto(tema: string, lastTs: string) {
+    setSeenMap(prev => {
+      const next = { ...prev, [tema]: lastTs }
+      try { localStorage.setItem(LS_SEEN, JSON.stringify(next)) } catch { /* ignore */ }
+      return next
+    })
+  }
 
   async function carregar() {
     try {
@@ -108,8 +122,14 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
 
   // Quando há pesquisa, abre automaticamente os temas com resultados.
   const isOpen = (tema: string) => q ? true : openTemas.has(tema)
+  const isUnread = (t: Tema) => (seenMap[t.tema] ?? '') < (t.lastTs ?? '')
   function toggle(tema: string) {
-    setOpenTemas(prev => { const n = new Set(prev); n.has(tema) ? n.delete(tema) : n.add(tema); return n })
+    setOpenTemas(prev => {
+      const n = new Set(prev)
+      if (n.has(tema)) { n.delete(tema) }
+      else { n.add(tema); const t = temas.find(x => x.tema === tema); if (t) marcarTemaVisto(tema, t.lastTs) }
+      return n
+    })
   }
 
   if (loading) return null
@@ -137,12 +157,14 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
         )}
         {temasFiltrados.map(t => {
           const open = isOpen(t.tema)
+          const unread = !open && isUnread(t)
           let lastDay = ''
           return (
-            <div key={t.tema} className="tema">
+            <div key={t.tema} className={`tema ${unread ? 'unread' : ''}`}>
               <button className="tema-head" onClick={() => toggle(t.tema)}>
                 <span className={`chev ${open ? 'on' : ''}`}>▸</span>
                 <span className="tema-nome">{highlight(t.tema, q)}</span>
+                {unread && <span className="novo">Nova</span>}
                 <span className="tema-meta">{t.items.length} msg · {dayLabel(t.lastTs).replace(/ de \d{4}$/, '')}</span>
               </button>
               {open && (
@@ -221,7 +243,16 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
           padding: 10px; max-height: 420px; overflow-y: auto;
         }
         .vazio { font-size: 11px; color: #6f6557; font-style: italic; text-align: center; padding: 14px 0; margin: 0; }
-        .tema { border: 1px solid rgba(200,168,102,.12); border-radius: 10px; overflow: hidden; background: rgba(0,0,0,.18); }
+        .tema { border: 1px solid rgba(200,168,102,.12); border-radius: 10px; overflow: hidden; background: rgba(0,0,0,.18); transition: box-shadow .3s; }
+        @keyframes temaGlow {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(201,164,92,0); border-color: rgba(200,168,102,.25); }
+          50%      { box-shadow: 0 0 16px 1px rgba(201,164,92,.45); border-color: rgba(232,199,109,.8); }
+        }
+        .tema.unread { animation: temaGlow 1.8s ease-in-out infinite; }
+        .novo {
+          font-size: 7px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700;
+          color: #1a1306; background: #c9a45c; padding: 2px 6px; border-radius: 999px;
+        }
         .tema-head {
           width: 100%; display: flex; align-items: center; gap: 8px;
           padding: 8px 12px; background: rgba(200,168,102,.05); border: 0; cursor: pointer; text-align: left;
