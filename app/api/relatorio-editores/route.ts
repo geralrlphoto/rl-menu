@@ -53,5 +53,48 @@ export async function POST(req: NextRequest) {
     })
   }
 
-  return NextResponse.json({ ok: true, sent: editorIds.length, downloads: downloads.length })
+  // ── Email (card TRABALHO EDIÇÃO) via Resend ──
+  let emailsSent = 0
+  if (process.env.RESEND_API_KEY) {
+    const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'
+    const CARD_URL = `${SITE}/card-trabalho-edicao.png`
+    const { data: editores } = await supabase.from('freelancers').select('id, nome, email').in('id', editorIds)
+    const subject = localStr ? `Trabalho de edição — ${localStr}` : 'Novo trabalho de edição'
+
+    for (const ed of (editores ?? []) as Array<{ id: string; nome: string | null; email: string | null }>) {
+      if (!ed.email) continue
+      try {
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+            to: [ed.email],
+            subject,
+            html: `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0d0901;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <a href="${SITE}/freelancers/${ed.id}?view=freelancer" style="display:block;text-decoration:none;">
+          <img src="${CARD_URL}" width="560" alt="Novo trabalho de edição"
+            style="display:block;width:100%;max-width:560px;border:0;" />
+        </a>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`,
+          }),
+        })
+        emailsSent++
+      } catch (e) {
+        console.warn(`[relatorio-editores email] falhou para ${ed.email}:`, e)
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true, sent: editorIds.length, downloads: downloads.length, emailsSent })
 }

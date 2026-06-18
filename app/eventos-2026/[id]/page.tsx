@@ -1758,7 +1758,7 @@ function EditoresEnviar({ referencia, eventoId, editores, local, dataCasamento }
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok) { alert(d?.error ?? 'Falha ao enviar.'); return }
-      setSentMsg(`Enviado a ${d.sent} editor(es)${d.downloads ? ` · ${d.downloads} link(s)` : ''}.`)
+      setSentMsg(`Enviado a ${d.sent} editor(es)${d.emailsSent ? ` · ${d.emailsSent} email(s)` : ''}${d.downloads ? ` · ${d.downloads} link(s)` : ''}.`)
       setTimeout(() => setSentMsg(null), 6000)
     } finally { setSending(false) }
   }
