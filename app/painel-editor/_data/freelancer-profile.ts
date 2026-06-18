@@ -70,6 +70,23 @@ export const DEFAULT_FREELANCER_PROFILE: FreelancerProfile = {
   moeda: 'EUR (€)',
 }
 
+// ── Identidade do editor (id do freelancer) partilhada entre páginas ──────────
+// O painel principal recebe ?freelancer=<id> e memoriza-o; as sub-páginas leem-no
+// daqui (URL tem prioridade; senão localStorage).
+const EDITOR_ID_KEY = 'painel-editor-fl-id'
+export function rememberEditorId(id: string | null): void {
+  if (id && typeof window !== 'undefined') {
+    try { localStorage.setItem(EDITOR_ID_KEY, id) } catch {}
+  }
+}
+export function getEditorId(urlId?: string | null): string | null {
+  if (urlId) return urlId
+  if (typeof window !== 'undefined') {
+    try { return localStorage.getItem(EDITOR_ID_KEY) } catch {}
+  }
+  return null
+}
+
 const STORAGE_KEY = 'painel-editor-freelancer-profile'
 
 export function loadFreelancerProfile(): FreelancerProfile {

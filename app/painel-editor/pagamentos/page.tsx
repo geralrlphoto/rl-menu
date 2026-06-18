@@ -4,6 +4,61 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { PROJECTS, paymentPlanFor, comparePtDate, TODAY, type Project, type Installment } from '../_data/projects'
 import { BrandLogo } from '../_components/BrandLogo'
+import { getEditorId } from '../_data/freelancer-profile'
+
+// ── Pagamentos reais da RL ao editor (tabela freelancer_pagamentos) ──────────
+function PagamentosRLSection() {
+  const [rows, setRows] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const id = getEditorId()
+    if (!id) { setLoaded(true); return }
+    let cancelled = false
+    fetch(`/api/freelancer-pagamentos?freelancer_id=${id}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setRows(Array.isArray(d?.pagamentos) ? d.pagamentos : []); setLoaded(true) } })
+      .catch(() => { if (!cancelled) setLoaded(true) })
+    return () => { cancelled = true }
+  }, [])
+
+  if (!loaded || rows.length === 0) return null
+
+  const eur = (v: any) => (typeof v === 'number' ? v : Number(v) || 0).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
+  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
+  const isPago = (s: string) => (s ?? '').toUpperCase() === 'PAGO'
+  const totalReceber = rows.filter(r => !isPago(r.status)).reduce((s, r) => s + (Number(r.valor) || 0), 0)
+
+  return (
+    <div className="rounded-2xl border border-gold/25 p-5 mb-6"
+      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-gold text-lg">€</span>
+          <h3 className="text-[15px] font-semibold text-white">Pagamentos da RL</h3>
+          <span className="text-[10px] text-white/35 tracking-widest uppercase">{rows.length}</span>
+        </div>
+        {totalReceber > 0 && <span className="text-[12px] text-gold/90">A receber: <strong>{eur(totalReceber)}</strong></span>}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        {rows.map((r, i) => (
+          <div key={r.id ?? i} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] flex-wrap">
+            <div className="min-w-0">
+              <p className="text-[13px] text-white/90 truncate">{r.descricao || 'Pagamento'}</p>
+              <p className="text-[10px] text-white/40">Previsto: {fmt(r.data_prevista)}{r.data_pago ? ` · Pago: ${fmt(r.data_pago)}` : ''}</p>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <span className="text-[14px] text-white font-medium tabular-nums">{eur(r.valor)}</span>
+              <span className={`text-[9px] px-2 py-1 rounded-full tracking-widest uppercase font-bold ${isPago(r.status) ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-300 border border-amber-500/25'}`}>
+                {isPago(r.status) ? 'Pago' : (r.status || 'Pendente')}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 /** Limpa horário "DD/MM/YYYY — HH:MM" → "DD/MM/YYYY" */
 function stripTime(d: string): string {
@@ -320,6 +375,9 @@ export default function PagamentosPage() {
             onNovoRecebimento={() => setShowNovoRecebimento(true)}
             onExportar={exportarCSV}
           />
+
+          {/* Pagamentos reais da RL ao editor */}
+          <PagamentosRLSection />
 
           {/* KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
