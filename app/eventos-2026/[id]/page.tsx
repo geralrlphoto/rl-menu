@@ -1486,19 +1486,32 @@ function withBriefingLock(url: string): string {
   }
 }
 
-function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null; eventoId: string }) {
+function BriefingNaFicha({ referencia, eventoId, local, dataCasamento }: { referencia?: string | null; eventoId: string; local?: string | null; dataCasamento?: string | null }) {
   const [url, setUrl] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [open, setOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [membros, setMembros] = useState<Array<{ id: string; nome: string; status: string | null; email: string | null; enviado: boolean }>>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [sending, setSending] = useState(false)
+  const [sentMsg, setSentMsg] = useState<string | null>(null)
 
-  useEffect(() => {
-    const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
-    fetch(`/api/evento-equipa?${qs}`)
+  const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
+
+  function loadData() {
+    fetch(`/api/briefing-equipa?${qs}`)
       .then(r => r.json())
-      .then(d => { setUrl(d?.equipa?.briefing_url ?? null); setLoaded(true) })
+      .then(d => {
+        setUrl(d?.briefingUrl ?? null)
+        const ms = Array.isArray(d?.membros) ? d.membros : []
+        setMembros(ms)
+        setSelected(new Set(ms.map((m: any) => m.id)))
+        setLoaded(true)
+      })
       .catch(() => setLoaded(true))
-  }, [referencia, eventoId])
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { loadData() }, [referencia, eventoId])
 
   // Fechar com ESC
   useEffect(() => {
@@ -1508,14 +1521,35 @@ function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null;
     return () => document.removeEventListener('keydown', onKey)
   }, [open])
 
+  function toggle(id: string) {
+    setSelected(prev => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  }
+
+  async function enviar() {
+    if (selected.size === 0) return
+    setSending(true); setSentMsg(null)
+    try {
+      const res = await fetch('/api/briefing-equipa', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, evento_id: eventoId, freelancerIds: Array.from(selected), local, data_casamento: dataCasamento }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(d?.error ?? 'Falha ao enviar o briefing.'); return }
+      setSentMsg(`Enviado a ${d.sent} membro(s)${d.emailsSent ? ` · ${d.emailsSent} email(s)` : ''}.`)
+      setTimeout(() => setSentMsg(null), 6000)
+      loadData()
+    } finally { setSending(false) }
+  }
+
   const lockedUrl = url ? withBriefingLock(url) : ''
+  const STATUS_ICON: Record<string, string> = { FOTOGRAFO: '📷', VIDEOGRAFO: '🎥', EDITORES: '✎', ASSISTENTE: '✚' }
 
   return (
     <div className="ficha-reveal print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mt-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
           <h2 className="text-[11px] tracking-[0.4em] text-gold uppercase font-light">Briefing</h2>
-          <p className="text-[10px] text-white/30 mt-1 italic">Enviado a partir do portal dos noivos — disponível aqui na ficha (vista completa da equipa).</p>
+          <p className="text-[10px] text-white/30 mt-1 italic">Prepara no portal dos noivos e envia à equipa — recebem notificação + email e o "Ver Briefing" desbloqueia no portal deles.</p>
         </div>
         {url ? (
           <div className="flex items-center gap-2 flex-wrap">
@@ -1528,9 +1562,8 @@ function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null;
               if (!confirm('Apagar o briefing desta ficha? O link deixa de aparecer aqui e no portal do freelancer.')) return
               setDeleting(true)
               try {
-                const qs = referencia ? `ref=${encodeURIComponent(referencia)}` : `evento_id=${eventoId}`
                 await fetch(`/api/evento-equipa?${qs}`, { method: 'DELETE' })
-                setUrl(null); setOpen(false)
+                setUrl(null); setOpen(false); loadData()
               } finally { setDeleting(false) }
             }}
               disabled={deleting}
@@ -1540,9 +1573,49 @@ function BriefingNaFicha({ referencia, eventoId }: { referencia?: string | null;
             </button>
           </div>
         ) : (
-          <span className="text-[11px] text-white/25 italic">{loaded ? 'Ainda não enviado' : '…'}</span>
+          <span className="text-[11px] text-white/25 italic">{loaded ? 'Ainda não preparado — envia primeiro no portal dos noivos' : '…'}</span>
         )}
       </div>
+
+      {/* ── Enviar à equipa: escolher membros + botão ─────────────────── */}
+      {url && (
+        <div className="mt-4 pt-4 border-t border-white/[0.06]">
+          <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-white/45">Enviar à Equipa</p>
+            {membros.length > 0 && (
+              <button onClick={() => setSelected(selected.size === membros.length ? new Set() : new Set(membros.map(m => m.id)))}
+                className="text-[10px] text-gold/70 hover:text-gold tracking-wider uppercase transition-colors">
+                {selected.size === membros.length ? 'Limpar' : 'Selecionar todos'}
+              </button>
+            )}
+          </div>
+          {membros.length === 0 ? (
+            <p className="text-[12px] text-white/30 italic">Sem membros atribuídos a este evento — atribui fotógrafo/videógrafo na secção da equipa.</p>
+          ) : (
+            <div className="flex flex-col gap-1.5">
+              {membros.map(m => {
+                const checked = selected.has(m.id)
+                return (
+                  <label key={m.id} className="flex items-center gap-3 px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02] cursor-pointer hover:border-gold/25 transition-all">
+                    <input type="checkbox" checked={checked} onChange={() => toggle(m.id)} className="accent-[#c9a45c] w-4 h-4" />
+                    <span className="flex-1 text-[13px] text-white/85">{STATUS_ICON[m.status ?? ''] ?? '•'} {m.nome}</span>
+                    {!m.email && <span className="text-[9px] text-amber-300/60 tracking-wider uppercase" title="Sem email — recebe só a notificação no portal">sem email</span>}
+                    {m.enviado && <span className="text-[9px] text-emerald-300/70 tracking-wider uppercase">✓ enviado</span>}
+                  </label>
+                )
+              })}
+            </div>
+          )}
+          <div className="flex items-center gap-3 mt-3 flex-wrap">
+            <button onClick={enviar} disabled={sending || selected.size === 0}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 text-[11px] font-semibold tracking-widest uppercase hover:bg-emerald-500/25 transition-all disabled:opacity-40">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              {sending ? 'A enviar…' : `Enviar à Equipa (${selected.size})`}
+            </button>
+            {sentMsg && <span className="text-[11px] text-emerald-300/80">✓ {sentMsg}</span>}
+          </div>
+        </div>
+      )}
 
       {/* Aba lateral · só o briefing (modo equipa) */}
       {open && typeof document !== 'undefined' && createPortal(
@@ -3604,8 +3677,8 @@ export default function EventoPage() {
         />
       </div>
 
-      {/* ── Briefing enviado (a partir do portal dos noivos) ───────────── */}
-      <BriefingNaFicha referencia={e.referencia ?? undefined} eventoId={e.id} />
+      {/* ── Briefing: ver + enviar à equipa (notificação + email) ──────── */}
+      <BriefingNaFicha referencia={e.referencia ?? undefined} eventoId={e.id} local={e.local} dataCasamento={e.data_evento} />
 
       </DrawerBloco>
 

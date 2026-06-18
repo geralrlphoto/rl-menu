@@ -354,35 +354,22 @@ export async function POST(req: NextRequest) {
   if (resolvedEventoId) upsertPayload.evento_id = resolvedEventoId
   if (referencia)       upsertPayload.referencia = referencia
 
+  // Guarda o briefing_url em evento_equipa (link/conteúdo do briefing).
+  // NÃO desbloqueia já os freelancers nem envia notificação/email — isso passa
+  // a ser feito a partir da ficha do evento ("Enviar à Equipa", com escolha dos
+  // membros), via /api/briefing-equipa.
   if (resolvedEventoId) {
     await supabase.from('evento_equipa')
       .upsert(upsertPayload, { onConflict: 'evento_id' })
-    // Atualizar por evento_id
-    await supabase.from('freelancer_casamentos')
-      .update({ briefing_url })
-      .eq('evento_id', resolvedEventoId)
+  } else if (referencia) {
+    const { data: existing } = await supabase
+      .from('evento_equipa').select('referencia').eq('referencia', referencia).maybeSingle()
+    if (existing) {
+      await supabase.from('evento_equipa').update({ briefing_url }).eq('referencia', referencia)
+    } else {
+      await supabase.from('evento_equipa').insert({ briefing_url, referencia })
+    }
   }
-
-  // Atualizar por referencia (o mais fiável — cobre registos criados pelo novo sistema)
-  if (referencia) {
-    await supabase.from('freelancer_casamentos')
-      .update({ briefing_url })
-      .eq('referencia', referencia)
-  }
-
-  // Atualizar por local + data (registos antigos do Notion sem referencia nem evento_id)
-  if (local && data_casamento) {
-    await supabase.from('freelancer_casamentos')
-      .update({ briefing_url })
-      .ilike('local', local)
-      .eq('data_casamento', data_casamento)
-  }
-
-  // ── Briefing: NÃO enviar notificação nem email ──
-  //    Por decisão do admin, "Enviar Briefing" apenas guarda o link
-  //    (briefing_url em evento_equipa + freelancer_casamentos). O briefing
-  //    fica visível na ficha do evento e no portal dos noivos, mas o
-  //    freelancer já não recebe notificação no sino nem email.
 
   return NextResponse.json({ ok: true })
 }
