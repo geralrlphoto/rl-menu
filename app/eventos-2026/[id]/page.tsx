@@ -1831,6 +1831,28 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
     await persistPatch({ bookingType: novo })
   }
 
+  // Aprova: ativa a secção no portal E notifica os noivos (sino + email card).
+  async function aprovarENotificar() {
+    if (!referencia) return
+    if (slots.filter(s => s.date && s.time).length === 0) {
+      setNotif({ tone: 'err', msg: 'Adiciona pelo menos uma data (slot) antes de aprovar.' })
+      return
+    }
+    setSaving(true)
+    setActive(true)
+    await persistPatch({ bookingActive: true })
+    const titulo = tipo === 'reuniao' ? 'Marcar Reunião' : 'Marcar Pré-Wedding'
+    const texto = tipo === 'reuniao'
+      ? 'Já podem escolher a data e hora da reunião na página Pré-Wedding do vosso portal.'
+      : 'Já podem escolher a data, hora e local da vossa sessão pré-wedding na página Pré-Wedding do portal.'
+    await fetch('/api/notificacao-noivos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, titulo, texto }),
+    }).catch(() => {})
+    setSaving(false)
+    setNotif({ tone: 'ok', msg: 'Aprovado — os noivos foram notificados (sino + email).' })
+  }
+
   async function cancelarReserva() {
     setReservedSlotId(undefined); setReservedAt(undefined)
     await persistPatch({ bookingReservedSlotId: null, bookingReservedAt: null })
@@ -1894,6 +1916,10 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
             <option value="sessao">Sessão Fotografia</option>
             <option value="reuniao">Reunião</option>
           </select>
+          <button onClick={aprovarENotificar}
+            className="text-[10px] tracking-widest font-bold uppercase px-3 py-1 rounded-lg border border-gold/50 bg-gold/15 text-gold hover:bg-gold/25 transition-all">
+            ✓ Aprovar e Notificar
+          </button>
           <button onClick={toggleActive}
             className={`text-[10px] tracking-widest font-bold uppercase px-3 py-1 rounded-lg border transition-all ${active ? 'border-emerald-400/50 text-emerald-300 bg-emerald-400/10' : 'border-white/20 text-white/45 bg-white/[0.02]'}`}>
             {active ? '● Ativo (cliente vê)' : '○ Inativo (oculto)'}

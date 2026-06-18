@@ -27,6 +27,7 @@ const TIPO_LABELS: Record<string, string> = {
   video_prazo:              'Prazo de Entrega do Vídeo',
   fotos_edicao_prazo:       'Prazo das Fotos em Edição',
   noivos_selecao_falta:     'Noivos em Falta — Escolher Fotos',
+  booking_reservado:        'Marcação Reservada pelos Noivos',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -48,6 +49,7 @@ const TIPO_ICONS: Record<string, string> = {
   video_prazo:              '🎬',
   fotos_edicao_prazo:       '✎',
   noivos_selecao_falta:     '⏰',
+  booking_reservado:        '📅',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -625,6 +627,44 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] noivos selecao falta read failed:', err)
+    }
+
+    // ── Notificação: MARCAÇÃO RESERVADA PELOS NOIVOS ──
+    //    Quando os noivos escolhem um slot no portal, fica gravado em
+    //    settings.bookingReservedSlotId + bookingReservedAt. Mostra no sino.
+    try {
+      const { data: portaisBk } = await supabase.from('portais').select('referencia, settings').limit(500)
+      const fmtDataBk = (d: string) => {
+        try { return new Date(d + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }) }
+        catch { return d }
+      }
+      for (const p of (portaisBk ?? []) as any[]) {
+        const s = p.settings ?? {}
+        const slotId = s.bookingReservedSlotId
+        const at = s.bookingReservedAt
+        if (!slotId || !at) continue
+        const slot = (Array.isArray(s.bookingSlots) ? s.bookingSlots : []).find((x: any) => x?.id === slotId)
+        if (!slot) continue
+        const tipoLabel = s.bookingType === 'reuniao' ? 'Reunião' : 'Sessão / Pré-Wedding'
+        const nomeNoivos = [s.noiva, s.noivo].filter(Boolean).join(' & ') || p.referencia || '—'
+        notifications.push({
+          id: `booking_reservado::${p.referencia}::${slotId}`,
+          tipo: 'booking_reservado',
+          tipo_label: TIPO_LABELS.booking_reservado,
+          tipo_icon: TIPO_ICONS.booking_reservado,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: nomeNoivos,
+          local: p.referencia ?? '—',
+          data_casamento: null,
+          referencia: p.referencia ?? null,
+          url: p.referencia ? `/eventos-2026?ref=${encodeURIComponent(p.referencia)}` : '/eventos-2026',
+          sent_at: at,
+          mensagem: `${tipoLabel} reservada: ${fmtDataBk(slot.date)} · ${slot.time}${slot.local ? ' · ' + slot.local : ''}.`,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] booking reservado read failed:', err)
     }
 
     // Ordenar por sent_at DESC
