@@ -74,6 +74,7 @@ export async function POST(req: NextRequest) {
     id: row.id,
     email: row.email ?? emailNorm,
     role: 'freelancer',
+    status: row.status ?? undefined,
   })
 
   const res = NextResponse.json({

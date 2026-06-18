@@ -21,6 +21,7 @@ export type FlPayload = {
   id: string
   email: string
   role: string
+  status?: string // função (ex.: 'EDITORES') — usada para routing no middleware
   exp: number // epoch ms
 }
 

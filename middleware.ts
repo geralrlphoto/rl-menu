@@ -79,6 +79,10 @@ export async function middleware(request: NextRequest) {
     const session = await verifyFlSession(flCookie)
     const isFreelancerView = searchParams.get('view') === 'freelancer'
     if (session && session.id === targetId && isFreelancerView) {
+      // Editores têm portal próprio — reencaminha no servidor (sem flash).
+      if (session.status === 'EDITORES') {
+        return NextResponse.redirect(new URL(`/painel-editor?freelancer=${targetId}`, request.url))
+      }
       return NextResponse.next()
     }
     if (session) {

@@ -77,12 +77,14 @@ export async function POST(req: NextRequest) {
     // 1) Preferir o id da sessão (mais seguro: o membro não pode marcar outro)
     let freelancerId: string | null = null
     let sessionEmail: string | null = null
+    let sessionStatus: string | undefined = undefined
     const flCookie = req.cookies.get(FL_COOKIE_NAME)?.value
     if (flCookie) {
       const session = await verifyFlSession(flCookie)
       if (session?.id) {
         freelancerId = session.id
         sessionEmail = session.email ?? null
+        sessionStatus = session.status ?? undefined
       }
     }
     // 2) Fallback: corpo (útil para admin/debug e quando não há cookie)
@@ -101,7 +103,7 @@ export async function POST(req: NextRequest) {
     //    de uma sessão válida. Estende o exp por mais TTL_SECONDS.
     //    Se foi via body (admin/debug), não renova nada.
     if (!viaBody && sessionEmail) {
-      const token = await makeFlSession({ id: freelancerId, email: sessionEmail, role: 'freelancer' })
+      const token = await makeFlSession({ id: freelancerId, email: sessionEmail, role: 'freelancer', status: sessionStatus })
       res.cookies.set(FL_COOKIE_NAME, token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
