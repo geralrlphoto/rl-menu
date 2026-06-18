@@ -2660,6 +2660,59 @@ function FotoNoivosUpload({ referencia }: { referencia: string }) {
   )
 }
 
+// ─── Drawer genérico de bloco (botão → painel lateral à direita, fecha) ───────
+function DrawerBloco({ label, sub, children, width = 820 }: { label: string; sub?: string; children: React.ReactNode; width?: number }) {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    function onKey(ev: KeyboardEvent) { if (ev.key === 'Escape') setOpen(false) }
+    if (open) { document.addEventListener('keydown', onKey); document.body.style.overflow = 'hidden' }
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
+  }, [open])
+  return (
+    <>
+      <button onClick={() => setOpen(true)}
+        className="ficha-reveal print:hidden w-full group relative overflow-hidden rounded-2xl border border-white/[0.08] hover:border-gold/30 p-5 flex items-center justify-between gap-4 text-left transition-all"
+        style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.028), rgba(201,164,92,0.02))' }}>
+        <span className="pointer-events-none absolute left-0 top-5 bottom-5 w-[2px] rounded-full" style={{ background: 'linear-gradient(to bottom, rgba(201,164,92,0.7), rgba(201,164,92,0))' }} />
+        <div className="pl-1.5">
+          <p className="flex items-center gap-2.5 text-[10px] tracking-[0.38em] text-gold uppercase font-semibold">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-gold" style={{ boxShadow: '0 0 9px rgba(201,164,92,0.7)' }} />
+            {label}
+          </p>
+          {sub && <p className="text-[11px] text-white/40 mt-1.5">{sub}</p>}
+        </div>
+        <span className="shrink-0 flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-gold/80 border border-gold/30 bg-gold/10 rounded-lg px-3 py-2 group-hover:bg-gold/20 transition-all">
+          Abrir
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </button>
+
+      <div onClick={() => setOpen(false)}
+        style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(6,5,3,0.6)', backdropFilter: 'blur(3px)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity .3s ease' }} />
+
+      <aside style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 96,
+        width: `min(${width}px, 100vw)`, maxWidth: '100vw',
+        background: 'linear-gradient(180deg, #15110b, #0d0a06)',
+        borderLeft: '1px solid rgba(201,164,92,0.25)',
+        boxShadow: '-30px 0 80px -20px rgba(0,0,0,0.7)',
+        transform: open ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <span className="text-[10px] tracking-[0.35em] text-gold uppercase font-semibold">{label}</span>
+          <button onClick={() => setOpen(false)} aria-label="Fechar"
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-gold/40 transition-all">✕</button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {open && children}
+        </div>
+      </aside>
+    </>
+  )
+}
+
 // ─── Drawer Agendamento & Notas (abre da direita, tabs, fecha) ────────────────
 function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
   const [open, setOpen] = useState(false)
@@ -3369,6 +3422,8 @@ export default function EventoPage() {
 
       <BlocoHeader num="I">Evento & Serviços</BlocoHeader>
 
+      <DrawerBloco label="Serviços do Dia" sub="O que vai ser fotografado/filmado neste evento.">
+
       {/* ── Serviços do Dia (secção própria) ───────────────────────────── */}
       <div className="ficha-reveal print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
         <div className="flex items-center justify-between mb-3">
@@ -3384,7 +3439,11 @@ export default function EventoPage() {
         />
       </div>
 
+      </DrawerBloco>
+
       <BlocoHeader num="II">Contrato & Portal</BlocoHeader>
+
+      <DrawerBloco label="Contrato & Portal" sub="Aprovação do contrato CPS, criação/acesso ao portal e contratos.">
 
       {/* ── Aprovação do Contrato CPS + Criar Portal ── */}
       <div className="ficha-reveal print:hidden">
@@ -3405,6 +3464,8 @@ export default function EventoPage() {
         <ContratoUpload eventId={e.id} contratoUrl={e.contratos} onSaved={handleSaved} />
       </div>
 
+      </DrawerBloco>
+
       <BlocoHeader num="III">Agendamento & Notas</BlocoHeader>
 
       {/* ── Marcação + Notas em painel lateral (drawer) ── */}
@@ -3413,6 +3474,8 @@ export default function EventoPage() {
       <BlocoHeader num="IV">Comercial</BlocoHeader>
 
       <div className="flex flex-col gap-5">
+
+        <DrawerBloco label="Comercial" sub="Proposta escolhida e valores financeiros.">
 
         {/* ── Proposta ── */}
         <Section title="Proposta">
@@ -3806,7 +3869,11 @@ export default function EventoPage() {
           {/* Contratos foi movido para o topo da ficha (junto do Portal do Cliente) */}
         </Section>
 
+        </DrawerBloco>
+
         <BlocoHeader num="V">Produção & Entregas</BlocoHeader>
+
+        <DrawerBloco label="Produção & Entregas" sub="Estados de entrega (fotos, vídeo, álbum) e regras automáticas.">
 
         {/* ── Estado das Entregas ── */}
         <Section title="Estado das Entregas" right={
@@ -3868,15 +3935,19 @@ export default function EventoPage() {
           </div>
         </Section>
 
+        </DrawerBloco>
+
         <BlocoHeader num="VI">Comunicação com os Noivos</BlocoHeader>
-
-        {/* ── Notificação aos Noivos ── */}
-        {e.referencia && <NotificacaoNoivosSection referencia={e.referencia} />}
-
-        {/* ── Mensagens dos Noivos ── */}
-        {e.referencia && <MensagensNoivosSection referencia={e.referencia} />}
+        {e.referencia && (
+          <DrawerBloco label="Comunicação com os Noivos" sub="Notificações enviadas e mensagens dos noivos.">
+            <NotificacaoNoivosSection referencia={e.referencia} />
+            <MensagensNoivosSection referencia={e.referencia} />
+          </DrawerBloco>
+        )}
 
         <BlocoHeader num="VII">Equipa & Tarefas</BlocoHeader>
+
+        <DrawerBloco label="Equipa & Tarefas" sub="Equipa atribuída, tarefas do evento e relatório de vídeo.">
 
         {/* ── Tarefas deste casamento ── */}
         <EventoTarefas eventoId={e.id} />
@@ -4605,7 +4676,11 @@ export default function EventoPage() {
           </div>
         </div>
 
+        </DrawerBloco>
+
         <BlocoHeader num="VIII">Dados do Casal</BlocoHeader>
+
+        <DrawerBloco label="Dados do Casal" sub="Dados dos noivos/pais — nomes, contactos, NIF, morada.">
 
         {/* ── Dados dos Noivos / Pais ── */}
         <Section title="Dados dos Noivos / Pais">
@@ -4630,6 +4705,8 @@ export default function EventoPage() {
             </div>
           </div>
         </Section>
+
+        </DrawerBloco>
 
       </div>
 
