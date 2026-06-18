@@ -2351,6 +2351,9 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             {/* ── EXPANDED PANEL (inline accordion) ─────────────────── */}
             {expandedId === c.id && (
               <div className="relative px-5 pb-5 pt-4 border-t border-gold/15 animate-in fade-in slide-in-from-top-1 space-y-4">
+                {/* Secções de fotografia (links de edição + fotos convidados) —
+                     escondidas para videógrafos, que não tratam de fotografia. */}
+                {freelancerStatus !== 'VIDEOGRAFO' && (<>
                 {/* Helper text */}
                 <p className="text-[13px] text-white/55 italic leading-relaxed">
                   Sempre que tiveres uma edição pronta, cola aqui o link para ficar guardado. Depois clica em <span className="text-gold/90 font-semibold not-italic">Enviar Notificação</span> para o admin receber um email com o trabalho. A data de envio fica registada e não desaparece.
@@ -2411,6 +2414,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     isFotografo={freelancerStatus === 'FOTOGRAFO'}
                   />
                 )}
+                </>)}
 
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5">
                   {/* LEFT: ações principais */}
