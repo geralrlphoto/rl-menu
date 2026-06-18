@@ -2613,6 +2613,63 @@ function PortalSection({ evento }: { evento: Evento }) {
   )
 }
 
+// ─── Foto dos Noivos (redonda) — upload no topo da ficha → portal sidebar ─────
+function FotoNoivosUpload({ referencia }: { referencia: string }) {
+  const [url, setUrl] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+
+  useEffect(() => {
+    fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`)
+      .then(r => r.json())
+      .then(d => setUrl(d.portal?.settings?.casalFotoUrl ?? null))
+      .catch(() => {})
+  }, [referencia])
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const fd = new FormData(); fd.append('file', file)
+      const up = await fetch('/api/upload-image', { method: 'POST', body: fd }).then(r => r.json())
+      if (up?.url) {
+        await fetch('/api/portais', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referencia, updates: { settings: { casalFotoUrl: up.url } } }),
+        })
+        setUrl(up.url)
+      }
+    } finally { setUploading(false) }
+  }
+
+  async function remover() {
+    await fetch('/api/portais', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia, updates: { settings: { casalFotoUrl: null } } }),
+    })
+    setUrl(null)
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <label className="relative w-[68px] h-[68px] rounded-full overflow-hidden border-2 border-gold/40 cursor-pointer shrink-0 flex items-center justify-center group"
+        style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.22), rgba(20,16,10,0.9))', boxShadow: '0 0 20px -6px rgba(201,164,92,0.5)' }}
+        title="Carregar foto dos noivos">
+        {url
+          ? <img src={url} alt="" className="w-full h-full object-cover" />
+          : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c9a45c" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.66-.9l.82-1.2A2 2 0 0110.07 4h3.86a2 2 0 011.66.9l.82 1.2a2 2 0 001.66.9H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>}
+        <span className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center text-[8px] text-white/0 group-hover:text-white/90 tracking-widest uppercase">{uploading ? '…' : 'Alterar'}</span>
+        <input type="file" accept="image/*" className="hidden" onChange={onFile} disabled={uploading} />
+      </label>
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[9px] tracking-[0.3em] uppercase text-gold/60">Foto dos Noivos</span>
+        <span className="text-[10px] text-white/35">{uploading ? 'A carregar…' : url ? 'Aparece na barra lateral do portal' : 'Clica para carregar'}</span>
+        {url && <button onClick={remover} className="text-[9px] text-red-400/60 hover:text-red-400 tracking-widest uppercase self-start mt-0.5">Remover</button>}
+      </div>
+    </div>
+  )
+}
+
 // ─── Página principal ──────────────────────────────────────────────────────────
 export default function EventoPage() {
   const { id } = useParams<{ id: string }>()
@@ -3120,6 +3177,13 @@ export default function EventoPage() {
       <Link href={`/eventos-2026?ano=${anoEvento}`} className="print:hidden text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
         ‹ VOLTAR AOS CASAMENTOS
       </Link>
+
+      {/* ── Foto dos Noivos (topo-esquerdo) ── */}
+      {e.referencia && (
+        <div className="print:hidden mt-5">
+          <FotoNoivosUpload referencia={e.referencia} />
+        </div>
+      )}
 
       {/* ── Header editável ── */}
       <div className="mt-8 mb-2">
