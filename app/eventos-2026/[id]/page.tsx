@@ -950,6 +950,58 @@ function NotificacaoNoivosSection({ referencia }: { referencia: string }) {
   )
 }
 
+// ─── Resposta Rápida — responde à conversa mais recente direto da ficha ───────
+function RespostaRapidaNoivos({ referencia }: { referencia: string }) {
+  const [ultima, setUltima] = useState<{ id: string; titulo: string } | null>(null)
+  const [texto, setTexto] = useState('')
+  const [enviando, setEnviando] = useState(false)
+  const [ok, setOk] = useState(false)
+
+  async function carregar() {
+    try {
+      const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
+      const lista = (d.portal?.settings?.noivos_messages ?? []) as Array<{ id: string; titulo?: string; ts?: string }>
+      if (lista.length === 0) { setUltima(null); return }
+      const recente = [...lista].sort((a, b) => (b.ts ?? '').localeCompare(a.ts ?? ''))[0]
+      setUltima({ id: recente.id, titulo: recente.titulo || 'Mensagem' })
+    } catch { /* ignore */ }
+  }
+  useEffect(() => { carregar() }, [referencia])
+
+  async function enviar() {
+    if (!ultima || !texto.trim()) return
+    setEnviando(true)
+    try {
+      await fetch('/api/noivos-message/responder', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, messageId: ultima.id, texto: texto.trim() }),
+      })
+      setTexto(''); setOk(true); setTimeout(() => setOk(false), 3000)
+    } finally { setEnviando(false) }
+  }
+
+  if (!ultima) return null
+
+  return (
+    <div className="rounded-xl border border-gold/25 bg-gold/[0.05] p-4 flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] tracking-[0.3em] uppercase text-gold/80 font-semibold">Resposta Rápida</span>
+        <span className="text-[9px] text-white/35">para: <span className="text-gold/70">{ultima.titulo}</span></span>
+      </div>
+      <textarea value={texto} onChange={e => setTexto(e.target.value)} rows={2}
+        placeholder="Responder à conversa mais recente…"
+        className="w-full bg-black/30 border border-white/12 focus:border-gold/50 rounded-lg px-3 py-2 text-sm text-white outline-none placeholder:text-white/25 resize-y" />
+      <div className="flex items-center gap-2">
+        <button onClick={enviar} disabled={enviando || !texto.trim()}
+          className="px-4 py-1.5 rounded-lg bg-gold text-black text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-gold/90 disabled:opacity-50 transition-all">
+          {enviando ? 'A enviar…' : 'Enviar resposta'}
+        </button>
+        {ok && <span className="text-[10px] text-emerald-400 tracking-wide">✓ Enviada — visível no portal</span>}
+      </div>
+    </div>
+  )
+}
+
 // ─── Mensagens dos Noivos — recebidas do portal, com resposta do admin ────────
 type NoivosMsg = {
   id: string; titulo?: string | null; mensagem: string; ts?: string
@@ -3940,6 +3992,7 @@ export default function EventoPage() {
         <BlocoHeader num="VI">Comunicação com os Noivos</BlocoHeader>
         {e.referencia && (
           <DrawerBloco label="Comunicação com os Noivos" sub="Notificações enviadas e mensagens dos noivos.">
+            <RespostaRapidaNoivos referencia={e.referencia} />
             <NotificacaoNoivosSection referencia={e.referencia} />
             <MensagensNoivosSection referencia={e.referencia} />
           </DrawerBloco>
