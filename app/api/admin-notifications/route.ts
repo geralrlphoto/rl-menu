@@ -28,6 +28,7 @@ const TIPO_LABELS: Record<string, string> = {
   fotos_edicao_prazo:       'Prazo das Fotos em Edição',
   noivos_selecao_falta:     'Noivos em Falta — Escolher Fotos',
   booking_reservado:        'Marcação Reservada pelos Noivos',
+  prewedding_alerta:        'Alerta — Marcar Pré-Wedding',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -50,6 +51,7 @@ const TIPO_ICONS: Record<string, string> = {
   fotos_edicao_prazo:       '✎',
   noivos_selecao_falta:     '⏰',
   booking_reservado:        '📅',
+  prewedding_alerta:        '💍',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -665,6 +667,60 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] booking reservado read failed:', err)
+    }
+
+    // ── Alerta: MARCAR PRÉ-WEDDING (≤ 35 dias do evento) ──
+    //    Quando o serviço Pré-Wedding está ativo (settings.preWeddingServico)
+    //    e ainda não há reserva, alerta a 35 dias ou menos do dia do evento.
+    try {
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
+      const evDateByRef = new Map<string, { cliente: string | null; data_evento: string | null }>()
+      for (const tabela of ['eventos_2026', 'eventos_2027']) {
+        const { data: eventos } = await supabase
+          .from(tabela)
+          .select('referencia, cliente, data_evento')
+          .not('data_evento', 'is', null)
+          .limit(500)
+        for (const ev of (eventos ?? []) as any[]) {
+          if (ev.referencia) evDateByRef.set(ev.referencia, { cliente: ev.cliente ?? null, data_evento: ev.data_evento ?? null })
+        }
+      }
+      const { data: portaisPw } = await supabase.from('portais').select('referencia, settings').limit(500)
+      const fmtDataPw = (d: string) => {
+        try { return new Date(d + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }) }
+        catch { return d }
+      }
+      for (const p of (portaisPw ?? []) as any[]) {
+        const s = p.settings ?? {}
+        if (!s.preWeddingServico) continue        // só se o serviço está ativo
+        if (s.bookingReservedSlotId) continue      // já reservado → sem alerta
+        const ev = evDateByRef.get(p.referencia)
+        if (!ev?.data_evento) continue
+        const dataEvento = String(ev.data_evento).slice(0, 10)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEvento)) continue
+        const dEvento = new Date(dataEvento + 'T00:00:00'); dEvento.setHours(0, 0, 0, 0)
+        const dias = Math.ceil((dEvento.getTime() - hoje.getTime()) / 86400000)
+        if (dias > 35 || dias < 0) continue        // só dentro da janela dos 35 dias
+        const nomeNoivos = [s.noiva, s.noivo].filter(Boolean).join(' & ') || ev.cliente || p.referencia || '—'
+        notifications.push({
+          id: `prewedding_alerta::${p.referencia}`,
+          tipo: 'prewedding_alerta',
+          tipo_label: TIPO_LABELS.prewedding_alerta,
+          tipo_icon: TIPO_ICONS.prewedding_alerta,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: nomeNoivos,
+          local: p.referencia ?? '—',
+          data_casamento: null,
+          referencia: p.referencia ?? null,
+          url: p.referencia ? `/eventos-2026?ref=${encodeURIComponent(p.referencia)}` : '/eventos-2026',
+          // sent_at estável = momento em que o alerta abriu (evento − 35 dias)
+          sent_at: new Date(dEvento.getTime() - 35 * 86400000).toISOString(),
+          mensagem: `Faltam ${dias} dia(s) para o evento e o pré-wedding ainda não está marcado (evento: ${fmtDataPw(dataEvento)}).`,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] prewedding alerta read failed:', err)
     }
 
     // Ordenar por sent_at DESC

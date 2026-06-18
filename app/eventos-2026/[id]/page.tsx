@@ -723,6 +723,9 @@ function RegrasEntregasDrop() {
             <strong>Prazo de Entrega do Vídeo (180 dias úteis):</strong> a <strong>30 dias</strong> do fim do prazo recebes um <strong>alerta no sino</strong> e o vídeo aparece no card <strong>«VÍDEOS PRAZO»</strong> do painel. Só enquanto não estiver «Entregue».
           </p>
           <p>
+            <strong>Marcar Pré-Wedding:</strong> com o serviço Pré-Wedding ativado (caixa na secção Marcação), a <strong>35 dias</strong> do evento sem reserva recebes um <strong>alerta no sino</strong> («Alerta — Marcar Pré-Wedding»).
+          </p>
+          <p>
             <strong>Seleção Fotos Noivos:</strong> ao marcar a Seleção de Fotos como «Entregue», fica registado o dia. Se passarem <strong>30 dias</strong> e os noivos ainda não tiverem escolhido as fotos, recebes um <strong>alerta no sino</strong> («Noivos em Falta — Escolher Fotos»).
           </p>
           <p>
@@ -1775,6 +1778,7 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
   const [slots, setSlots]     = useState<BookingSlot[]>([])
   const [reservedSlotId, setReservedSlotId] = useState<string | undefined>()
   const [reservedAt, setReservedAt]         = useState<string | undefined>()
+  const [temServico, setTemServico]         = useState(false)
   const [draftSlots, setDraftSlots] = useState<BookingSlot[]>([])
   const [editing, setEditing] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -1795,6 +1799,7 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
         setSlots(Array.isArray(s.bookingSlots) ? s.bookingSlots : [])
         setReservedSlotId(s.bookingReservedSlotId)
         setReservedAt(s.bookingReservedAt)
+        setTemServico(!!s.preWeddingServico)
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -1836,6 +1841,13 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
   async function changeTipo(novo: 'sessao' | 'reuniao') {
     setTipo(novo)
     await persistPatch({ bookingType: novo })
+  }
+
+  async function toggleTemServico() {
+    const next = !temServico
+    setTemServico(next)
+    await persistPatch({ preWeddingServico: next })
+    setNotif({ tone: 'ok', msg: next ? 'Serviço Pré-Wedding ativado.' : 'Serviço Pré-Wedding desativado.' })
   }
 
   // Aprova: ativa a secção no portal E notifica os noivos (sino + email card).
@@ -1924,10 +1936,17 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-6 flex flex-col gap-4">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">Marcação</h2>
+        <div className="flex items-center gap-3 flex-wrap">
+          <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">Marcação de Pré-Wedding</h2>
+          {/* Checkbox: ativa o serviço (desbloqueia a secção) */}
+          <button onClick={toggleTemServico}
+            className={`flex items-center gap-2 text-[10px] tracking-widest font-bold uppercase px-3 py-1 rounded-lg border transition-all ${temServico ? 'border-emerald-400/50 text-emerald-300 bg-emerald-400/10' : 'border-white/20 text-white/45 bg-white/[0.02]'}`}>
+            <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px] ${temServico ? 'border-emerald-400 bg-emerald-400/20 text-emerald-300' : 'border-white/30'}`}>{temServico ? '✓' : ''}</span>
+            Tem serviço Pré-Wedding
+          </button>
           {saving && <span className="text-[9px] text-gold/40 animate-pulse">A guardar...</span>}
         </div>
+        {temServico && (
         <div className="flex items-center gap-2">
           <select value={tipo} onChange={e => changeTipo(e.target.value as 'sessao' | 'reuniao')}
             className="text-[10px] bg-black/40 border border-white/15 text-white/70 rounded px-2 py-1">
@@ -1947,7 +1966,12 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
             Ver no Portal ↗
           </a>
         </div>
+        )}
       </div>
+
+      {!temServico && (
+        <p className="text-[11px] text-white/30 italic">Este evento não tem serviço de Pré-Wedding. Marca a caixa acima se o serviço estiver contratado para desbloquear a marcação.</p>
+      )}
 
       {notif && (
         <div className={`text-[11px] px-3 py-2 rounded ${notif.tone === 'ok' ? 'border border-emerald-400/25 text-emerald-300/90 bg-emerald-400/5' : 'border border-red-400/25 text-red-300/80 bg-red-400/5'}`}>
@@ -1956,7 +1980,7 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
       )}
 
       {/* Reserva atual */}
-      {reservedSlot && (
+      {temServico && reservedSlot && (
         <div className="rounded-xl border border-emerald-400/40 bg-emerald-400/[0.06] p-4 flex items-center justify-between flex-wrap gap-3">
           <div>
             <p className="text-[9px] tracking-[0.4em] text-emerald-300/70 uppercase mb-1">Cliente reservou</p>
@@ -1975,7 +1999,7 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
       )}
 
       {/* Slots (lista compacta) */}
-      {!editing && (
+      {temServico && !editing && (
         <div className="flex flex-col gap-2">
           {slots.length === 0 && (
             <p className="text-[11px] text-white/30 italic">Sem slots configurados.</p>
@@ -2004,7 +2028,7 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
       )}
 
       {/* Editor */}
-      {editing && (
+      {temServico && editing && (
         <div className="flex flex-col gap-2 border-t border-white/[0.06] pt-3">
           <p className="text-[10px] tracking-[0.3em] text-white/40 uppercase">Editar Slots</p>
           {draftSlots.map(s => (
