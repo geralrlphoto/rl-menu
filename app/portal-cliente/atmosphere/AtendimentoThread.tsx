@@ -70,43 +70,43 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
 
       <style jsx>{`
         .atend-chat {
-          margin: 18px 0 6px; max-width: 420px;
-          border: 1px solid rgba(200,168,102,.18); border-radius: 12px;
+          margin: 22px 0 6px; max-width: 560px;
+          border: 1px solid rgba(200,168,102,.18); border-radius: 16px;
           background: rgba(0,0,0,.22); overflow: hidden;
         }
         .chat-head {
-          display: flex; align-items: center; gap: 6px;
-          padding: 7px 12px; border-bottom: 1px solid rgba(200,168,102,.14);
-          font-family: 'Hanken Grotesk', sans-serif; font-size: 8px;
-          letter-spacing: .35em; text-transform: uppercase; color: #c8a866; font-weight: 600;
+          display: flex; align-items: center; gap: 8px;
+          padding: 11px 16px; border-bottom: 1px solid rgba(200,168,102,.14);
+          font-family: 'Hanken Grotesk', sans-serif; font-size: 9px;
+          letter-spacing: .38em; text-transform: uppercase; color: #c8a866; font-weight: 600;
           background: rgba(200,168,102,.04);
         }
-        .chat-head .dot { width: 5px; height: 5px; border-radius: 50%; background: #84c896; box-shadow: 0 0 5px rgba(132,200,150,.8); }
+        .chat-head .dot { width: 6px; height: 6px; border-radius: 50%; background: #84c896; box-shadow: 0 0 6px rgba(132,200,150,.8); }
         .chat-body {
-          display: flex; flex-direction: column; gap: 5px;
-          padding: 10px; max-height: 300px; overflow-y: auto;
+          display: flex; flex-direction: column; gap: 8px;
+          padding: 16px; max-height: 420px; overflow-y: auto;
         }
         .row { display: flex; }
         .row.vocs { justify-content: flex-end; }
         .row.rl   { justify-content: flex-start; }
         .bubble {
-          max-width: 80%; padding: 5px 9px; border-radius: 10px;
+          max-width: 78%; padding: 8px 12px; border-radius: 14px;
           font-family: 'Hanken Grotesk', sans-serif;
         }
         .bubble.vocs {
           background: rgba(200,168,102,.14); border: 1px solid rgba(200,168,102,.25);
-          border-bottom-right-radius: 3px;
+          border-bottom-right-radius: 4px;
         }
         .bubble.rl {
           background: rgba(40,60,45,.4); border: 1px solid rgba(120,200,140,.25);
-          border-bottom-left-radius: 3px;
+          border-bottom-left-radius: 4px;
         }
-        .who { font-size: 6.5px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; margin-bottom: 1px; }
+        .who { font-size: 8px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; margin-bottom: 3px; }
         .bubble.vocs .who { color: #d7bd87; }
         .bubble.rl .who { color: #84c896; }
-        .tit { margin: 0 0 1px; font-family: 'Cormorant Garamond', serif; font-size: 11px; color: #e9dcc2; }
-        .txt { margin: 0; font-size: 10px; line-height: 1.35; color: #cfc6b6; white-space: pre-wrap; }
-        .when { font-size: 6.5px; color: #7a6f5e; margin-top: 2px; text-align: right; }
+        .tit { margin: 0 0 2px; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: #e9dcc2; }
+        .txt { margin: 0; font-size: 12.5px; line-height: 1.45; color: #cfc6b6; white-space: pre-wrap; }
+        .when { font-size: 8px; color: #7a6f5e; margin-top: 4px; text-align: right; }
       `}</style>
     </div>
   )
