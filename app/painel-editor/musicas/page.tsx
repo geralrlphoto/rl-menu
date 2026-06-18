@@ -1,12 +1,83 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
 import { PROJECTS as MOCK_PROJECTS } from '../_data/projects'
 import { loadAssociacao, associate, disassociate } from '../_data/musicas-associacao'
+import { getEditorId } from '../_data/freelancer-profile'
+
+// ── Biblioteca de músicas do editor (guardada na BD: freelancers.editor_musicas) ──
+function MinhaBiblioteca() {
+  const [musicas, setMusicas] = useState<Array<{ titulo: string; link: string }>>([])
+  const [loaded, setLoaded] = useState(false)
+  const [titulo, setTitulo] = useState('')
+  const [link, setLink] = useState('')
+  const idRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const id = getEditorId()
+    idRef.current = id
+    if (!id) { setLoaded(true); return }
+    let cancelled = false
+    fetch(`/api/painel-editor/workflow?freelancer=${id}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setMusicas(Array.isArray(d?.musicas) ? d.musicas : []); setLoaded(true) } })
+      .catch(() => { if (!cancelled) setLoaded(true) })
+    return () => { cancelled = true }
+  }, [])
+
+  function save(next: Array<{ titulo: string; link: string }>) {
+    setMusicas(next)
+    const id = idRef.current
+    if (id) {
+      fetch('/api/painel-editor/workflow', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer: id, musicas: next }),
+      }).catch(() => {})
+    }
+  }
+  function add() {
+    if (!titulo.trim() && !link.trim()) return
+    save([...musicas, { titulo: titulo.trim(), link: link.trim() }])
+    setTitulo(''); setLink('')
+  }
+  function remove(i: number) { save(musicas.filter((_, k) => k !== i)) }
+
+  if (!loaded) return null
+
+  const inputCls = 'bg-white/[0.03] border border-white/10 rounded-lg px-3 py-2 text-[12px] text-white/90 placeholder:text-white/25 outline-none focus:border-gold/40 transition-all'
+
+  return (
+    <div className="rounded-2xl border border-gold/25 p-5 mb-5"
+      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-gold text-lg">♪</span>
+        <h3 className="text-[15px] font-semibold text-white">A Minha Biblioteca</h3>
+        <span className="text-[10px] text-white/35 tracking-widest uppercase">{musicas.length}</span>
+      </div>
+      <div className="flex flex-col gap-2 mb-3">
+        {musicas.map((m, i) => (
+          <div key={i} className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+            <div className="min-w-0">
+              <p className="text-[13px] text-white/90 truncate">{m.titulo || m.link}</p>
+              {m.link && <a href={m.link} target="_blank" rel="noopener noreferrer" className="text-[10px] text-gold/70 hover:text-gold truncate block">{m.link}</a>}
+            </div>
+            <button onClick={() => remove(i)} className="text-white/30 hover:text-red-400 text-[14px] shrink-0" title="Remover">✕</button>
+          </div>
+        ))}
+        {musicas.length === 0 && <p className="text-[12px] text-white/30 italic">Sem músicas guardadas. Adiciona abaixo.</p>}
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Título / artista…" className={`${inputCls} flex-1 min-w-[140px]`} />
+        <input value={link} onChange={e => setLink(e.target.value)} placeholder="Link (Spotify, YouTube…)" className={`${inputCls} flex-1 min-w-[160px]`} />
+        <button onClick={add} className="text-[11px] px-4 py-2 rounded-lg bg-gold/15 border border-gold/35 text-gold font-semibold tracking-widest uppercase hover:bg-gold/25 transition-all">+ Adicionar</button>
+      </div>
+    </div>
+  )
+}
 
 // ── Helpers de URL/plataforma ───────────────────────────────────────────
 function detectPlataforma(url: string): Plataforma {
@@ -251,6 +322,9 @@ export default function MusicasPage() {
 
           {/* HERO */}
           <Hero onAdd={() => setShowAddModal(true)} />
+
+          {/* Biblioteca real do editor (BD) */}
+          <MinhaBiblioteca />
 
           {/* SEARCH + FILTERS */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3 mt-5 mb-5">

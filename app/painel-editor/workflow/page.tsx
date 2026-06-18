@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   PROJECTS,
@@ -16,6 +16,75 @@ import {
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
+import { getEditorId } from '../_data/freelancer-profile'
+
+// ── Estado de edição (workflow) dos trabalhos reais da RL ────────────────────
+const WF_STAGES = ['Novo', 'Em Edição', 'Color Grading', 'Áudio', 'Para Revisão', 'Correções', 'Finalizado', 'Entregue']
+function MeusTrabalhosWorkflow() {
+  const [jobs, setJobs] = useState<any[]>([])
+  const [wf, setWf] = useState<Record<string, string>>({})
+  const [loaded, setLoaded] = useState(false)
+  const idRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const id = getEditorId()
+    idRef.current = id
+    if (!id) { setLoaded(true); return }
+    let cancelled = false
+    Promise.all([
+      fetch(`/api/painel-editor/projetos?freelancer=${id}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/painel-editor/workflow?freelancer=${id}`).then(r => r.json()).catch(() => ({})),
+    ]).then(([p, w]) => {
+      if (cancelled) return
+      setJobs(Array.isArray(p?.jobs) ? p.jobs : [])
+      setWf((w?.workflow && typeof w.workflow === 'object') ? w.workflow : {})
+      setLoaded(true)
+    })
+    return () => { cancelled = true }
+  }, [])
+
+  function setStage(key: string, stage: string) {
+    setWf(prev => ({ ...prev, [key]: stage }))
+    const id = idRef.current
+    if (id && key) {
+      fetch('/api/painel-editor/workflow', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer: id, referencia: key, stage }),
+      }).catch(() => {})
+    }
+  }
+
+  if (!loaded || jobs.length === 0) return null
+
+  return (
+    <div className="rounded-2xl border border-gold/25 p-5 mb-5"
+      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+      <div className="flex items-center gap-2 mb-4">
+        <span className="text-gold text-lg">☰</span>
+        <h3 className="text-[15px] font-semibold text-white">Estado dos Meus Trabalhos</h3>
+        <span className="text-[10px] text-white/35 tracking-widest uppercase">{jobs.length}</span>
+      </div>
+      <div className="flex flex-col gap-2">
+        {jobs.map((j, i) => {
+          const key = j.referencia || j.notifId || String(i)
+          const stage = wf[key] || 'Novo'
+          return (
+            <div key={key} className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] flex-wrap">
+              <div className="min-w-0">
+                <p className="text-[13px] text-white/90 truncate">{j.noivos || j.local || 'Evento'}</p>
+                {j.local && <p className="text-[10px] text-white/40 truncate">{j.local}</p>}
+              </div>
+              <select value={stage} onChange={e => setStage(key, e.target.value)}
+                className="bg-[#0e0c08] border border-gold/30 text-gold text-[11px] rounded-lg px-3 py-1.5 outline-none focus:border-gold/60 tracking-wider uppercase">
+                {WF_STAGES.map(s => <option key={s} value={s} className="bg-[#0e0c08] text-white">{s}</option>)}
+              </select>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────
 function stripTimeWF(d: string): string { return (d || '').split('—')[0].trim() }
@@ -203,6 +272,9 @@ export default function WorkflowPage() {
 
           {/* HERO */}
           <Hero />
+
+          {/* Estado dos trabalhos reais da RL */}
+          <MeusTrabalhosWorkflow />
 
           {/* GRID */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-5 mt-5">
