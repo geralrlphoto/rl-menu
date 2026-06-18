@@ -136,22 +136,36 @@ function NoivosNotificationsBell({
 }) {
   const [open, setOpen] = useState(false)
   const [seen, setSeen] = useState<Set<string>>(new Set())
+  const [deleted, setDeleted] = useState<Set<string>>(new Set())
   const LS = `noivos_notif_seen_${refKey}`
+  const LS_DEL = `noivos_notif_deleted_${refKey}`
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(LS)
       if (raw) setSeen(new Set(JSON.parse(raw)))
+      const rawDel = localStorage.getItem(LS_DEL)
+      if (rawDel) setDeleted(new Set(JSON.parse(rawDel)))
     } catch { /* ignore */ }
-  }, [LS])
+  }, [LS, LS_DEL])
 
-  const ordered = [...notifs].sort((a, b) => (b.ts || '').localeCompare(a.ts || ''))
+  // Só conta as que não foram apagadas localmente pelos noivos.
+  const ordered = [...notifs]
+    .filter(n => !deleted.has(n.id))
+    .sort((a, b) => (b.ts || '').localeCompare(a.ts || ''))
   const unread = ordered.filter(n => !seen.has(n.id)).length
 
   function markAllSeen() {
-    const next = new Set(ordered.map(n => n.id))
+    const next = new Set([...seen, ...ordered.map(n => n.id)])
     setSeen(next)
     try { localStorage.setItem(LS, JSON.stringify(Array.from(next))) } catch { /* ignore */ }
+  }
+
+  // Apagar só no portal (localStorage) — não mexe na ficha/admin.
+  function apagar(id: string) {
+    const next = new Set(deleted); next.add(id)
+    setDeleted(next)
+    try { localStorage.setItem(LS_DEL, JSON.stringify(Array.from(next))) } catch { /* ignore */ }
   }
 
   function toggle() {
@@ -160,7 +174,8 @@ function NoivosNotificationsBell({
     if (willOpen) markAllSeen()
   }
 
-  if (notifs.length === 0) return null
+  // Se já não há notificações visíveis, o sino desaparece.
+  if (ordered.length === 0) return null
 
   const fmtData = (ts: string) => {
     try { return new Date(ts).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }) }
@@ -227,7 +242,18 @@ function NoivosNotificationsBell({
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d9b25e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
                     </svg>
-                    <span style={{ fontSize: 14, fontWeight: 600, color: '#f2e6cf', fontFamily: 'Cormorant Garamond, Georgia, serif' }}>{n.titulo}</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: '#f2e6cf', fontFamily: 'Cormorant Garamond, Georgia, serif', flex: 1 }}>{n.titulo}</span>
+                    <button
+                      onClick={() => apagar(n.id)}
+                      aria-label="Apagar notificação"
+                      title="Apagar"
+                      style={{
+                        width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                        border: '1px solid rgba(255,255,255,0.12)', background: 'transparent',
+                        color: 'rgba(255,255,255,0.4)', fontSize: 11, cursor: 'pointer', lineHeight: 1,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >✕</button>
                   </div>
                   <p style={{ fontSize: 12.5, lineHeight: 1.55, color: 'rgba(255,255,255,0.7)', margin: 0 }}>{n.texto}</p>
                   {n.ts && <p style={{ fontSize: 10, color: 'rgba(201,164,92,0.55)', marginTop: 6, letterSpacing: '0.05em' }}>{fmtData(n.ts)}</p>}
