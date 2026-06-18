@@ -83,30 +83,30 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
         }
         .chat-head .dot { width: 6px; height: 6px; border-radius: 50%; background: #84c896; box-shadow: 0 0 6px rgba(132,200,150,.8); }
         .chat-body {
-          display: flex; flex-direction: column; gap: 8px;
-          padding: 16px; max-height: 420px; overflow-y: auto;
+          display: flex; flex-direction: column; gap: 5px;
+          padding: 10px; max-height: 260px; overflow-y: auto;
         }
         .row { display: flex; }
         .row.vocs { justify-content: flex-end; }
         .row.rl   { justify-content: flex-start; }
         .bubble {
-          max-width: 62%; padding: 6px 10px; border-radius: 10px;
+          max-width: 48%; padding: 4px 8px; border-radius: 8px;
           font-family: 'Hanken Grotesk', sans-serif;
         }
         .bubble.vocs {
           background: rgba(200,168,102,.14); border: 1px solid rgba(200,168,102,.25);
-          border-bottom-right-radius: 3px;
+          border-bottom-right-radius: 2px;
         }
         .bubble.rl {
           background: rgba(40,60,45,.4); border: 1px solid rgba(120,200,140,.25);
-          border-bottom-left-radius: 3px;
+          border-bottom-left-radius: 2px;
         }
-        .who { font-size: 7px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; margin-bottom: 1px; }
+        .who { font-size: 6px; letter-spacing: .15em; text-transform: uppercase; font-weight: 700; margin-bottom: 1px; }
         .bubble.vocs .who { color: #d7bd87; }
         .bubble.rl .who { color: #84c896; }
-        .tit { margin: 0 0 1px; font-family: 'Cormorant Garamond', serif; font-size: 11px; color: #e9dcc2; }
-        .txt { margin: 0; font-size: 10.5px; line-height: 1.35; color: #cfc6b6; white-space: pre-wrap; }
-        .when { font-size: 7px; color: #7a6f5e; margin-top: 2px; text-align: right; }
+        .tit { margin: 0 0 1px; font-family: 'Cormorant Garamond', serif; font-size: 9.5px; color: #e9dcc2; }
+        .txt { margin: 0; font-size: 8.5px; line-height: 1.3; color: #cfc6b6; white-space: pre-wrap; }
+        .when { font-size: 6px; color: #7a6f5e; margin-top: 1px; text-align: right; }
       `}</style>
     </div>
   )
