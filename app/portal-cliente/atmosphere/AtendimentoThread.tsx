@@ -201,7 +201,7 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
                             <div style={{ fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 1, color: it.from === 'vocs' ? '#d7bd87' : '#84c896' }}>
                               {it.from === 'vocs' ? 'Vocês' : 'RL Photo·Video'}
                             </div>
-                            <p style={{ margin: 0, fontSize: 9, lineHeight: 1.35, color: '#cfc6b6', whiteSpace: 'pre-wrap' }}>{highlight(it.texto, q)}</p>
+                            <div style={{ margin: 0, fontSize: 11, lineHeight: 1.4, color: '#cfc6b6', whiteSpace: 'pre-wrap' }}>{highlight(it.texto, q)}</div>
                             <div style={{ fontSize: 6, color: '#7a6f5e', marginTop: 1, textAlign: 'right' }}>{timeLabel(it.ts)}</div>
                           </div>
                         </div>
