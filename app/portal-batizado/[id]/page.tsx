@@ -11,6 +11,7 @@ import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type Side
 import { ContratoView } from '../../portal-cliente/atmosphere/ContratoView'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../../portal-cliente/atmosphere/PreWeddingView'
 import { SendMessageButton } from '../../portal-cliente/atmosphere/SendMessageButton'
+import { AtendimentoThread } from '../../portal-cliente/atmosphere/AtendimentoThread'
 import { FotografiasView, type FotografiasCard } from '../../portal-cliente/atmosphere/FotografiasView'
 
 const PORTAL_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
@@ -1826,6 +1827,9 @@ function PortalSubPageContent() {
                     emailNoiva={portalSettingsObj?.emailNoiva ?? null}
                   />
                 </div>
+
+                {/* Histórico de mensagens + respostas da RL */}
+                <AtendimentoThread referencia={portalRef} />
 
                 <style jsx>{`
                   .msg-info-wrap {

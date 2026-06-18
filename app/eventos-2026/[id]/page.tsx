@@ -929,6 +929,113 @@ function NotificacaoNoivosSection({ referencia }: { referencia: string }) {
   )
 }
 
+// ─── Mensagens dos Noivos — recebidas do portal, com resposta do admin ────────
+type NoivosMsg = {
+  id: string; titulo?: string | null; mensagem: string; ts?: string
+  nome_noivos?: string | null; email_noiva?: string | null; lida?: boolean
+  respostas?: Array<{ id: string; texto: string; ts: string }>
+}
+function MensagensNoivosSection({ referencia }: { referencia: string }) {
+  const [msgs, setMsgs] = useState<NoivosMsg[]>([])
+  const [loading, setLoading] = useState(true)
+  const [respostaDe, setRespostaDe] = useState<string | null>(null)
+  const [texto, setTexto] = useState('')
+  const [enviando, setEnviando] = useState(false)
+
+  async function carregar() {
+    try {
+      const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
+      const lista = (d.portal?.settings?.noivos_messages ?? []) as NoivosMsg[]
+      setMsgs([...lista].sort((a, b) => (b.ts ?? '').localeCompare(a.ts ?? '')))
+    } catch { /* ignore */ } finally { setLoading(false) }
+  }
+  useEffect(() => { carregar() }, [referencia])
+
+  async function responder(messageId: string) {
+    if (!texto.trim()) return
+    setEnviando(true)
+    try {
+      await fetch('/api/noivos-message/responder', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, messageId, texto: texto.trim() }),
+      })
+      setTexto(''); setRespostaDe(null)
+      await carregar()
+    } finally { setEnviando(false) }
+  }
+
+  const fmt = (ts?: string) => {
+    if (!ts) return ''
+    try { return new Date(ts).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
+    catch { return '' }
+  }
+
+  return (
+    <Section title="Mensagens dos Noivos" right={
+      <span className="text-[9px] tracking-[0.3em] text-gold uppercase">{msgs.length} mensagem{msgs.length === 1 ? '' : 's'}</span>
+    }>
+      {loading ? (
+        <p className="text-xs text-white/20 tracking-wider">A carregar…</p>
+      ) : msgs.length === 0 ? (
+        <p className="text-xs text-white/25 italic">Sem mensagens dos noivos para esta referência.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {msgs.map(m => (
+            <div key={m.id} className="rounded-xl border border-white/[0.07] bg-black/20 p-4 flex flex-col gap-3">
+              <div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[13px] text-gold/90 font-semibold">{m.titulo || 'Mensagem'}</p>
+                  <span className="text-[9px] text-white/25">{fmt(m.ts)}</span>
+                </div>
+                {m.nome_noivos && <p className="text-[10px] text-white/35 mt-0.5">{m.nome_noivos}</p>}
+                <p className="text-[12.5px] text-white/70 leading-relaxed mt-1.5 whitespace-pre-wrap">{m.mensagem}</p>
+              </div>
+
+              {/* Respostas do admin */}
+              {(m.respostas ?? []).length > 0 && (
+                <div className="flex flex-col gap-2 pl-3 border-l-2 border-emerald-500/30">
+                  {(m.respostas ?? []).map(r => (
+                    <div key={r.id}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] tracking-[0.2em] uppercase text-emerald-400/70 font-semibold">RL Photo · Resposta</span>
+                        <span className="text-[9px] text-white/25">{fmt(r.ts)}</span>
+                      </div>
+                      <p className="text-[12.5px] text-white/75 leading-relaxed whitespace-pre-wrap">{r.texto}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Caixa de resposta */}
+              {respostaDe === m.id ? (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    value={texto} onChange={e => setTexto(e.target.value)} rows={3} autoFocus
+                    placeholder="Escreve a resposta aos noivos…"
+                    className="w-full bg-white/[0.03] border border-white/12 focus:border-gold/50 rounded-lg px-3 py-2 text-sm text-white outline-none placeholder:text-white/20 resize-y" />
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => responder(m.id)} disabled={enviando || !texto.trim()}
+                      className="px-3 py-1.5 rounded-lg bg-gold text-black text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-gold/90 disabled:opacity-50 transition-all">
+                      {enviando ? 'A enviar…' : 'Enviar resposta'}
+                    </button>
+                    <button onClick={() => { setRespostaDe(null); setTexto('') }}
+                      className="px-3 py-1.5 text-[10px] text-white/35 hover:text-white/60 tracking-widest uppercase">Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <button onClick={() => { setRespostaDe(m.id); setTexto('') }}
+                  className="self-start px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/10 text-gold text-[10px] font-semibold tracking-[0.2em] uppercase hover:bg-gold/20 transition-all">
+                  ↩ Responder
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </Section>
+  )
+}
+
 // ─── Fotos Seleção associadas ao evento ───────────────────────────────────────
 function FotosSelecaoRef({ referencia }: { referencia: string }) {
   const [data, setData] = useState<any | null>(null)
@@ -3450,6 +3557,9 @@ export default function EventoPage() {
 
         {/* ── Notificação aos Noivos ── */}
         {e.referencia && <NotificacaoNoivosSection referencia={e.referencia} />}
+
+        {/* ── Mensagens dos Noivos ── */}
+        {e.referencia && <MensagensNoivosSection referencia={e.referencia} />}
 
         {/* ── Tarefas deste casamento ── */}
         <EventoTarefas eventoId={e.id} />
