@@ -664,13 +664,13 @@ function TasksSection({ tasks, referencia, settings, onSettingsChange, isAdmin }
   }, [notif])
 
   async function persist(nextTasks: Task[]) {
-    const newSettings = { ...settings, tasks: nextTasks }
-    onSettingsChange(newSettings)
+    onSettingsChange({ ...settings, tasks: nextTasks })
     setSaving(true)
+    // Grava só a chave alterada — o servidor faz merge (não sobrepõe slots etc.)
     await fetch('/api/portais', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referencia, updates: { settings: newSettings } }),
+      body: JSON.stringify({ referencia, updates: { settings: { tasks: nextTasks } } }),
     })
     setSaving(false)
   }
@@ -809,13 +809,16 @@ function BookingSection({ referencia, settings, onSettingsChange, isAdmin, tipoE
   }, [notif])
 
   async function persist(next: Partial<PortalSettings>) {
-    const newSettings = { ...settings, ...next }
-    onSettingsChange(newSettings)
+    // Atualiza a UI local com o merge…
+    onSettingsChange({ ...settings, ...next })
     setSaving(true)
+    // …mas grava APENAS a parte alterada. O servidor faz merge com as settings
+    // atuais da BD — assim nunca sobrepõe outras chaves (ex: bookingSlots) com
+    // uma cópia antiga carregada quando a página abriu.
     await fetch('/api/portais', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referencia, updates: { settings: newSettings } }),
+      body: JSON.stringify({ referencia, updates: { settings: next } }),
     })
     setSaving(false)
   }
