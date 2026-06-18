@@ -899,13 +899,14 @@ function calcProgress(info: BriefingExt) {
 // ─── Hero Premium ────────────────────────────────────────────────────────────
 
 function BriefingHero({
-  info, dataEvento, local, pageTitle, isAdmin, viewMode, setViewMode, onSave, enviarBriefingNode,
+  info, dataEvento, local, pageTitle, isAdmin, teamView, viewMode, setViewMode, onSave, enviarBriefingNode,
 }: {
   info: BriefingExt
   dataEvento?: string | null
   local?: string | null
   pageTitle?: string
   isAdmin: boolean
+  teamView?: boolean
   viewMode: 'admin' | 'client'
   setViewMode: (v: 'admin' | 'client') => void
   onSave: (p: Partial<BriefingExt>) => void | Promise<void>
@@ -994,7 +995,8 @@ function BriefingHero({
           )}
         </div>
 
-        {/* Linha 3: status + progress + actions */}
+        {/* Linha 3: status + progress + actions — escondido na vista da equipa/freelancer */}
+        {!teamView && (
         <div className="flex items-center gap-4 flex-wrap">
           {/* Status pill */}
           <div className="relative">
@@ -1043,6 +1045,7 @@ function BriefingHero({
             {enviarBriefingNode}
           </div>
         </div>
+        )}
       </div>
     </div>
   )
@@ -1367,6 +1370,7 @@ export default function BriefingExtensions({
         local={local}
         pageTitle={pageTitle}
         isAdmin={isAdmin}
+        teamView={teamView}
         viewMode={viewMode}
         setViewMode={setViewMode}
         onSave={saveWithLog}
