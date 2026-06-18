@@ -944,12 +944,14 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
   const [respostaDe, setRespostaDe] = useState<string | null>(null)
   const [texto, setTexto] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [query, setQuery] = useState('')
+  const [openTemas, setOpenTemas] = useState<Set<string>>(new Set())
 
   async function carregar() {
     try {
       const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
       const lista = (d.portal?.settings?.noivos_messages ?? []) as NoivosMsg[]
-      setMsgs([...lista].sort((a, b) => (b.ts ?? '').localeCompare(a.ts ?? '')))
+      setMsgs([...lista])
     } catch { /* ignore */ } finally { setLoading(false) }
   }
   useEffect(() => { carregar() }, [referencia])
@@ -967,14 +969,60 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
     } finally { setEnviando(false) }
   }
 
-  const fmt = (ts?: string) => {
-    if (!ts) return ''
-    try { return new Date(ts).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) }
-    catch { return '' }
+  const fmtDia = (ts?: string) => { try { return new Date(ts!).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }) } catch { return '' } }
+  const fmtHora = (ts?: string) => { try { return new Date(ts!).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' }) } catch { return '' } }
+  const dayKey = (ts?: string) => (ts ?? '').slice(0, 10)
+
+  function hl(t: string, qq: string) {
+    if (!qq.trim()) return t
+    const low = t.toLowerCase(), ql = qq.trim().toLowerCase(); const out: React.ReactNode[] = []
+    let i = 0, k = 0
+    while (i < t.length) {
+      const idx = low.indexOf(ql, i)
+      if (idx === -1) { out.push(<span key={k++}>{t.slice(i)}</span>); break }
+      if (idx > i) out.push(<span key={k++}>{t.slice(i, idx)}</span>)
+      out.push(<mark key={k++} className="bg-gold/50 text-white rounded-sm px-0.5">{t.slice(idx, idx + qq.trim().length)}</mark>)
+      i = idx + qq.trim().length
+    }
+    return out
   }
 
   const isBat = (referencia ?? '').toUpperCase().startsWith('BAT')
   const chatUrl = `${isBat ? '/portal-batizado' : '/portal-cliente'}/ref/${encodeURIComponent(referencia)}?admin=1`
+
+  // Agrupa por TEMA (titulo) → itens (mensagens + respostas) cronológicos.
+  type Item = { id: string; from: 'vocs' | 'rl'; texto: string; ts: string }
+  type Tema = { tema: string; items: Item[]; lastTs: string; lastMsgId: string }
+  const temas: Tema[] = (() => {
+    const map = new Map<string, { items: Item[]; lastMsgId: string; lastMsgTs: string }>()
+    for (const m of msgs) {
+      const tema = (m.titulo || 'Sem assunto').trim()
+      const e = map.get(tema) ?? { items: [], lastMsgId: m.id, lastMsgTs: '' }
+      e.items.push({ id: m.id, from: 'vocs', texto: m.mensagem, ts: m.ts ?? '' })
+      for (const r of (m.respostas ?? [])) e.items.push({ id: r.id, from: 'rl', texto: r.texto, ts: r.ts })
+      if ((m.ts ?? '') >= e.lastMsgTs) { e.lastMsgTs = m.ts ?? ''; e.lastMsgId = m.id }
+      map.set(tema, e)
+    }
+    const out: Tema[] = []
+    for (const [tema, e] of map) {
+      e.items.sort((a, b) => (a.ts || '').localeCompare(b.ts || ''))
+      out.push({ tema, items: e.items, lastTs: e.items[e.items.length - 1]?.ts ?? '', lastMsgId: e.lastMsgId })
+    }
+    out.sort((a, b) => (b.lastTs || '').localeCompare(a.lastTs || ''))
+    return out
+  })()
+
+  const q = query.trim().toLowerCase()
+  const temasFiltrados = q
+    ? temas.map(t => {
+        const temaHit = t.tema.toLowerCase().includes(q)
+        const items = temaHit ? t.items : t.items.filter(it => it.texto.toLowerCase().includes(q))
+        return items.length ? { ...t, items } : null
+      }).filter(Boolean) as Tema[]
+    : temas
+  const totalRes = q ? temasFiltrados.reduce((s, t) => s + t.items.length, 0) : 0
+  const isOpen = (tema: string) => q ? true : openTemas.has(tema)
+  const toggleTema = (tema: string) => setOpenTemas(prev => { const n = new Set(prev); n.has(tema) ? n.delete(tema) : n.add(tema); return n })
 
   return (
     <Section title="Mensagens dos Noivos" right={
@@ -992,57 +1040,72 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
       ) : msgs.length === 0 ? (
         <p className="text-xs text-white/25 italic">Sem mensagens dos noivos para esta referência.</p>
       ) : (
-        <div className="flex flex-col gap-2">
-          {msgs.map(m => (
-            <div key={m.id} className="rounded-lg border border-white/[0.07] bg-black/20 px-3 py-2 flex flex-col gap-2">
-              <div>
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] text-gold/90 font-semibold">{m.titulo || 'Mensagem'}</p>
-                  <span className="text-[8px] text-white/25">{fmt(m.ts)}</span>
-                </div>
-                {m.nome_noivos && <p className="text-[9px] text-white/35 mt-0.5">{m.nome_noivos}</p>}
-                <p className="text-[10.5px] text-white/70 leading-snug mt-1 whitespace-pre-wrap">{m.mensagem}</p>
-              </div>
+        <div className="flex flex-col gap-3">
+          {/* Pesquisa */}
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-white/10 bg-black/20">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#c9a45c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Procurar por palavra ou assunto…"
+              className="flex-1 bg-transparent border-0 outline-none text-[12px] text-white/85 placeholder:text-white/25" />
+            {q && <span className="text-[9px] text-gold/70 whitespace-nowrap">{totalRes} resultado{totalRes === 1 ? '' : 's'}</span>}
+            {q && <button onClick={() => setQuery('')} className="text-white/30 hover:text-white/60 text-xs">✕</button>}
+          </div>
 
-              {/* Respostas do admin */}
-              {(m.respostas ?? []).length > 0 && (
-                <div className="flex flex-col gap-1.5 pl-2.5 border-l-2 border-emerald-500/30">
-                  {(m.respostas ?? []).map(r => (
-                    <div key={r.id}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[8px] tracking-[0.2em] uppercase text-emerald-400/70 font-semibold">RL Photo · Resposta</span>
-                        <span className="text-[8px] text-white/25">{fmt(r.ts)}</span>
-                      </div>
-                      <p className="text-[10.5px] text-white/75 leading-snug whitespace-pre-wrap">{r.texto}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
+          {temasFiltrados.length === 0 && <p className="text-[11px] text-white/30 italic text-center py-2">Sem resultados para “{query}”.</p>}
 
-              {/* Caixa de resposta */}
-              {respostaDe === m.id ? (
-                <div className="flex flex-col gap-2">
-                  <textarea
-                    value={texto} onChange={e => setTexto(e.target.value)} rows={3} autoFocus
-                    placeholder="Escreve a resposta aos noivos…"
-                    className="w-full bg-white/[0.03] border border-white/12 focus:border-gold/50 rounded-lg px-3 py-2 text-sm text-white outline-none placeholder:text-white/20 resize-y" />
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => responder(m.id)} disabled={enviando || !texto.trim()}
-                      className="px-3 py-1.5 rounded-lg bg-gold text-black text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-gold/90 disabled:opacity-50 transition-all">
-                      {enviando ? 'A enviar…' : 'Enviar resposta'}
-                    </button>
-                    <button onClick={() => { setRespostaDe(null); setTexto('') }}
-                      className="px-3 py-1.5 text-[10px] text-white/35 hover:text-white/60 tracking-widest uppercase">Cancelar</button>
-                  </div>
-                </div>
-              ) : (
-                <button onClick={() => { setRespostaDe(m.id); setTexto('') }}
-                  className="self-start px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/10 text-gold text-[10px] font-semibold tracking-[0.2em] uppercase hover:bg-gold/20 transition-all">
-                  ↩ Responder
+          {/* Temas */}
+          {temasFiltrados.map(t => {
+            const open = isOpen(t.tema)
+            let lastDay = ''
+            return (
+              <div key={t.tema} className="rounded-lg border border-white/[0.08] bg-black/20 overflow-hidden">
+                <button onClick={() => toggleTema(t.tema)} className="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-white/[0.03] transition-colors">
+                  <span className={`text-gold/70 text-[9px] transition-transform ${open ? 'rotate-90' : ''}`}>▸</span>
+                  <span className="flex-1 text-[12px] text-gold/90 font-semibold">{hl(t.tema, q)}</span>
+                  <span className="text-[8px] tracking-[0.12em] uppercase text-white/30 whitespace-nowrap">{t.items.length} msg · {fmtDia(t.lastTs).replace(/ de \d{4}$/, '')}</span>
                 </button>
-              )}
-            </div>
-          ))}
+                {open && (
+                  <div className="px-3 pb-3 pt-1 flex flex-col gap-1.5">
+                    {t.items.map(it => {
+                      const dk = dayKey(it.ts); const showDay = dk !== lastDay; lastDay = dk
+                      return (
+                        <div key={it.id}>
+                          {showDay && <div className="text-center text-[8px] tracking-[0.2em] uppercase text-white/25 my-1">── {fmtDia(it.ts)} ──</div>}
+                          <div className={`flex ${it.from === 'vocs' ? 'justify-end' : 'justify-start'}`}>
+                            <div className={`max-w-[75%] px-2.5 py-1.5 rounded-lg border ${it.from === 'vocs' ? 'bg-gold/10 border-gold/25' : 'bg-emerald-500/[0.08] border-emerald-500/25'}`}>
+                              <p className={`text-[7px] tracking-[0.18em] uppercase font-bold mb-0.5 ${it.from === 'vocs' ? 'text-gold/80' : 'text-emerald-400/80'}`}>{it.from === 'vocs' ? 'Noivos' : 'RL Photo · Resposta'}</p>
+                              <p className="text-[10.5px] text-white/80 leading-snug whitespace-pre-wrap">{hl(it.texto, q)}</p>
+                              <p className="text-[7px] text-white/25 mt-0.5 text-right">{fmtHora(it.ts)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+
+                    {/* Responder ao tema (responde à última mensagem) */}
+                    {respostaDe === t.tema ? (
+                      <div className="flex flex-col gap-2 mt-1">
+                        <textarea value={texto} onChange={e => setTexto(e.target.value)} rows={2} autoFocus
+                          placeholder="Escreve a resposta…"
+                          className="w-full bg-white/[0.03] border border-white/12 focus:border-gold/50 rounded-lg px-3 py-2 text-[13px] text-white outline-none placeholder:text-white/20 resize-y" />
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => responder(t.lastMsgId)} disabled={enviando || !texto.trim()}
+                            className="px-3 py-1.5 rounded-lg bg-gold text-black text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-gold/90 disabled:opacity-50 transition-all">
+                            {enviando ? 'A enviar…' : 'Enviar resposta'}
+                          </button>
+                          <button onClick={() => { setRespostaDe(null); setTexto('') }} className="px-3 py-1.5 text-[10px] text-white/35 hover:text-white/60 tracking-widest uppercase">Cancelar</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button onClick={() => { setRespostaDe(t.tema); setTexto('') }}
+                        className="self-start mt-1 px-3 py-1.5 rounded-lg border border-gold/30 bg-gold/10 text-gold text-[10px] font-semibold tracking-[0.2em] uppercase hover:bg-gold/20 transition-all">
+                        ↩ Responder
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
     </Section>
