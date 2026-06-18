@@ -41,58 +41,72 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
   if (loading) return null
   if (msgs.length === 0) return null
 
+  // Constrói uma lista linear de mensagens em ordem cronológica (chat).
+  type ChatMsg = { id: string; from: 'vocs' | 'rl'; titulo?: string | null; texto: string; ts: string }
+  const chat: ChatMsg[] = []
+  for (const m of [...msgs].sort((a, b) => (a.ts || '').localeCompare(b.ts || ''))) {
+    chat.push({ id: m.id, from: 'vocs', titulo: m.titulo, texto: m.mensagem, ts: m.ts ?? '' })
+    for (const r of (m.respostas ?? [])) chat.push({ id: r.id, from: 'rl', texto: r.texto, ts: r.ts })
+  }
+  chat.sort((a, b) => (a.ts || '').localeCompare(b.ts || ''))
+
   return (
-    <div className="atend-thread">
-      <div className="th-label">As Vossas Mensagens</div>
-      {msgs.map(m => (
-        <div key={m.id} className="th-item">
-          <div className="th-bubble vocs">
-            <div className="th-head">
-              <span className="who">Vocês</span>
-              <span className="when">{fmt(m.ts)}</span>
+    <div className="atend-chat">
+      <div className="chat-head">
+        <span className="dot" /> Conversa · Atendimento
+      </div>
+      <div className="chat-body">
+        {chat.map(c => (
+          <div key={c.id} className={`row ${c.from}`}>
+            <div className={`bubble ${c.from}`}>
+              <div className="who">{c.from === 'vocs' ? 'Vocês' : 'RL Photo·Video'}</div>
+              {c.titulo && <p className="tit">{c.titulo}</p>}
+              <p className="txt">{c.texto}</p>
+              <div className="when">{fmt(c.ts)}</div>
             </div>
-            {m.titulo && <p className="th-tit">{m.titulo}</p>}
-            <p className="th-txt">{m.mensagem}</p>
           </div>
-          {(m.respostas ?? []).map(r => (
-            <div key={r.id} className="th-bubble rl">
-              <div className="th-head">
-                <span className="who rl-who">RL Photo·Video</span>
-                <span className="when">{fmt(r.ts)}</span>
-              </div>
-              <p className="th-txt">{r.texto}</p>
-            </div>
-          ))}
-          {(m.respostas ?? []).length === 0 && (
-            <p className="th-aguarda">A aguardar resposta da nossa equipa…</p>
-          )}
-        </div>
-      ))}
+        ))}
+      </div>
 
       <style jsx>{`
-        .atend-thread { margin: 22px 0 6px; display: flex; flex-direction: column; gap: 12px; max-width: 620px; }
-        .th-label {
+        .atend-chat {
+          margin: 22px 0 6px; max-width: 560px;
+          border: 1px solid rgba(200,168,102,.18); border-radius: 16px;
+          background: rgba(0,0,0,.22); overflow: hidden;
+        }
+        .chat-head {
+          display: flex; align-items: center; gap: 8px;
+          padding: 11px 16px; border-bottom: 1px solid rgba(200,168,102,.14);
           font-family: 'Hanken Grotesk', sans-serif; font-size: 9px;
-          letter-spacing: .42em; text-transform: uppercase; color: #c8a866; font-weight: 600;
+          letter-spacing: .38em; text-transform: uppercase; color: #c8a866; font-weight: 600;
+          background: rgba(200,168,102,.04);
         }
-        .th-item { display: flex; flex-direction: column; gap: 6px; }
-        .th-bubble {
-          border-radius: 10px; padding: 9px 13px;
-          border: 1px solid rgba(200,168,102,.16);
-          background: rgba(0,0,0,.25);
+        .chat-head .dot { width: 6px; height: 6px; border-radius: 50%; background: #84c896; box-shadow: 0 0 6px rgba(132,200,150,.8); }
+        .chat-body {
+          display: flex; flex-direction: column; gap: 8px;
+          padding: 16px; max-height: 420px; overflow-y: auto;
         }
-        .th-bubble.rl {
-          border-left: 2px solid rgba(120,200,140,.5);
-          background: rgba(40,60,45,.18);
-          margin-left: 18px;
+        .row { display: flex; }
+        .row.vocs { justify-content: flex-end; }
+        .row.rl   { justify-content: flex-start; }
+        .bubble {
+          max-width: 78%; padding: 8px 12px; border-radius: 14px;
+          font-family: 'Hanken Grotesk', sans-serif;
         }
-        .th-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 2px; }
-        .who { font-size: 8.5px; letter-spacing: .2em; text-transform: uppercase; color: #c8a866; font-weight: 600; }
-        .rl-who { color: #84c896; }
-        .when { font-size: 8.5px; color: #7a6f5e; }
-        .th-tit { margin: 0 0 2px; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: #e9dcc2; }
-        .th-txt { margin: 0; font-size: 12.5px; line-height: 1.45; color: #c3b8a3; white-space: pre-wrap; }
-        .th-aguarda { margin: 0 0 0 18px; font-size: 10px; font-style: italic; color: #6f6557; }
+        .bubble.vocs {
+          background: rgba(200,168,102,.14); border: 1px solid rgba(200,168,102,.25);
+          border-bottom-right-radius: 4px;
+        }
+        .bubble.rl {
+          background: rgba(40,60,45,.4); border: 1px solid rgba(120,200,140,.25);
+          border-bottom-left-radius: 4px;
+        }
+        .who { font-size: 8px; letter-spacing: .2em; text-transform: uppercase; font-weight: 700; margin-bottom: 3px; }
+        .bubble.vocs .who { color: #d7bd87; }
+        .bubble.rl .who { color: #84c896; }
+        .tit { margin: 0 0 2px; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: #e9dcc2; }
+        .txt { margin: 0; font-size: 12.5px; line-height: 1.45; color: #cfc6b6; white-space: pre-wrap; }
+        .when { font-size: 8px; color: #7a6f5e; margin-top: 4px; text-align: right; }
       `}</style>
     </div>
   )
