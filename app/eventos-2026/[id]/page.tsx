@@ -2699,7 +2699,7 @@ function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
       {/* Drawer */}
       <aside style={{
         position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 96,
-        width: 'min(520px, 100vw)', maxWidth: '100vw',
+        width: 'min(820px, 100vw)', maxWidth: '100vw',
         background: 'linear-gradient(180deg, #15110b, #0d0a06)',
         borderLeft: '1px solid rgba(201,164,92,0.25)',
         boxShadow: '-30px 0 80px -20px rgba(0,0,0,0.7)',
