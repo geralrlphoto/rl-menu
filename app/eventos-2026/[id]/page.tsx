@@ -982,28 +982,28 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
       ) : msgs.length === 0 ? (
         <p className="text-xs text-white/25 italic">Sem mensagens dos noivos para esta referência.</p>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {msgs.map(m => (
-            <div key={m.id} className="rounded-xl border border-white/[0.07] bg-black/20 p-4 flex flex-col gap-3">
+            <div key={m.id} className="rounded-lg border border-white/[0.07] bg-black/20 px-3 py-2 flex flex-col gap-2">
               <div>
                 <div className="flex items-center justify-between gap-2">
-                  <p className="text-[13px] text-gold/90 font-semibold">{m.titulo || 'Mensagem'}</p>
-                  <span className="text-[9px] text-white/25">{fmt(m.ts)}</span>
+                  <p className="text-[11px] text-gold/90 font-semibold">{m.titulo || 'Mensagem'}</p>
+                  <span className="text-[8px] text-white/25">{fmt(m.ts)}</span>
                 </div>
-                {m.nome_noivos && <p className="text-[10px] text-white/35 mt-0.5">{m.nome_noivos}</p>}
-                <p className="text-[12.5px] text-white/70 leading-relaxed mt-1.5 whitespace-pre-wrap">{m.mensagem}</p>
+                {m.nome_noivos && <p className="text-[9px] text-white/35 mt-0.5">{m.nome_noivos}</p>}
+                <p className="text-[10.5px] text-white/70 leading-snug mt-1 whitespace-pre-wrap">{m.mensagem}</p>
               </div>
 
               {/* Respostas do admin */}
               {(m.respostas ?? []).length > 0 && (
-                <div className="flex flex-col gap-2 pl-3 border-l-2 border-emerald-500/30">
+                <div className="flex flex-col gap-1.5 pl-2.5 border-l-2 border-emerald-500/30">
                   {(m.respostas ?? []).map(r => (
                     <div key={r.id}>
                       <div className="flex items-center gap-2">
-                        <span className="text-[9px] tracking-[0.2em] uppercase text-emerald-400/70 font-semibold">RL Photo · Resposta</span>
-                        <span className="text-[9px] text-white/25">{fmt(r.ts)}</span>
+                        <span className="text-[8px] tracking-[0.2em] uppercase text-emerald-400/70 font-semibold">RL Photo · Resposta</span>
+                        <span className="text-[8px] text-white/25">{fmt(r.ts)}</span>
                       </div>
-                      <p className="text-[12.5px] text-white/75 leading-relaxed whitespace-pre-wrap">{r.texto}</p>
+                      <p className="text-[10.5px] text-white/75 leading-snug whitespace-pre-wrap">{r.texto}</p>
                     </div>
                   ))}
                 </div>
