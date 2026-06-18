@@ -2691,21 +2691,21 @@ function DrawerBloco({ label, sub, children, width = 820 }: { label: string; sub
         style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(6,5,3,0.6)', backdropFilter: 'blur(3px)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity .3s ease' }} />
 
       <aside style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 96,
+        position: 'fixed', top: 0, right: 0, height: '100dvh', zIndex: 96,
         width: `min(${width}px, 100vw)`, maxWidth: '100vw',
         background: 'linear-gradient(180deg, #15110b, #0d0a06)',
         borderLeft: '1px solid rgba(201,164,92,0.25)',
         boxShadow: '-30px 0 80px -20px rgba(0,0,0,0.7)',
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
-        display: 'flex', flexDirection: 'column',
+        overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
       }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 2, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#15110b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <span className="text-[10px] tracking-[0.35em] text-gold uppercase font-semibold">{label}</span>
           <button onClick={() => setOpen(false)} aria-label="Fechar"
             className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-gold/40 transition-all">✕</button>
         </div>
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {open && children}
         </div>
       </aside>
@@ -2751,17 +2751,17 @@ function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
 
       {/* Drawer */}
       <aside style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 96,
+        position: 'fixed', top: 0, right: 0, height: '100dvh', zIndex: 96,
         width: 'min(820px, 100vw)', maxWidth: '100vw',
         background: 'linear-gradient(180deg, #15110b, #0d0a06)',
         borderLeft: '1px solid rgba(201,164,92,0.25)',
         boxShadow: '-30px 0 80px -20px rgba(0,0,0,0.7)',
         transform: open ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
-        display: 'flex', flexDirection: 'column',
+        overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
       }}>
         {/* Header do drawer */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+        <div style={{ position: 'sticky', top: 0, zIndex: 2, background: '#15110b', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setTab('marcacao')}
               className={`text-[10px] tracking-[0.2em] uppercase font-bold px-3 py-2 rounded-lg border transition-all ${tab === 'marcacao' ? 'border-gold/50 text-gold bg-gold/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
@@ -2776,7 +2776,7 @@ function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
             className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-gold/40 transition-all">✕</button>
         </div>
         {/* Conteúdo */}
-        <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: 20 }}>
+        <div style={{ padding: 20 }}>
           {open && (tab === 'marcacao'
             ? <BookingSectionFicha referencia={referencia} />
             : <NotasSection referencia={referencia} />)}
