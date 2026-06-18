@@ -973,9 +973,19 @@ function MensagensNoivosSection({ referencia }: { referencia: string }) {
     catch { return '' }
   }
 
+  const isBat = (referencia ?? '').toUpperCase().startsWith('BAT')
+  const chatUrl = `${isBat ? '/portal-batizado' : '/portal-cliente'}/ref/${encodeURIComponent(referencia)}?admin=1`
+
   return (
     <Section title="Mensagens dos Noivos" right={
-      <span className="text-[9px] tracking-[0.3em] text-gold uppercase">{msgs.length} mensagem{msgs.length === 1 ? '' : 's'}</span>
+      <div className="flex items-center gap-3">
+        <span className="text-[9px] tracking-[0.3em] text-gold/70 uppercase">{msgs.length} mensagem{msgs.length === 1 ? '' : 's'}</span>
+        <a href={chatUrl} target="_blank" rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gold/40 bg-gold/10 text-gold text-[10px] font-bold tracking-[0.2em] uppercase hover:bg-gold/20 transition-all">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          Abrir Chat ↗
+        </a>
+      </div>
     }>
       {loading ? (
         <p className="text-xs text-white/20 tracking-wider">A carregar…</p>
