@@ -406,9 +406,15 @@ export function AdminNotificationsBell() {
                             {/* Chip referência + botão Ver Mais */}
                             <div className="flex items-center justify-between gap-2 mt-1.5">
                               {n.referencia ? (
-                                <span className="text-[9px] tracking-[0.15em] uppercase px-1.5 py-0.5 rounded font-bold bg-gold/10 text-gold/85 border border-gold/30">
-                                  {n.referencia}
-                                </span>
+                                <a
+                                  href={`/eventos-2026?ref=${encodeURIComponent(n.referencia)}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Abrir ficha do cliente"
+                                  className="text-[9px] tracking-[0.15em] uppercase px-1.5 py-0.5 rounded font-bold bg-gold/10 text-gold/85 border border-gold/30 hover:bg-gold/25 hover:text-gold transition-all cursor-pointer">
+                                  {n.referencia} ↗
+                                </a>
                               ) : (
                                 <span className="text-[10px] text-white/30">{fmtRel(n.sent_at)}</span>
                               )}
