@@ -1807,16 +1807,23 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
     return () => clearTimeout(t)
   }, [notif])
 
-  async function persistPatch(patch: Record<string, any>) {
-    if (!referencia) return
+  async function persistPatch(patch: Record<string, any>): Promise<boolean> {
+    if (!referencia) return false
     setSaving(true)
     // PATCH /api/portais já faz merge: { ...current.settings, ...updates.settings }
-    await fetch('/api/portais', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referencia, updates: { settings: patch } }),
-    }).catch(() => null)
-    setSaving(false)
+    try {
+      const res = await fetch('/api/portais', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, updates: { settings: patch } }),
+      })
+      const j = await res.json().catch(() => ({}))
+      setSaving(false)
+      return res.ok && j?.ok !== false
+    } catch {
+      setSaving(false)
+      return false
+    }
   }
 
   async function toggleActive() {
@@ -1870,8 +1877,19 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
   }
   async function saveDraftSlots() {
     const clean = draftSlots.filter(s => s.date && s.time)
-    setSlots(clean)
-    await persistPatch({ bookingSlots: clean })
+    const ok = await persistPatch({ bookingSlots: clean })
+    if (!ok) {
+      setNotif({ tone: 'err', msg: 'Falha ao guardar os slots. Verifica a ligação e tenta de novo.' })
+      return
+    }
+    // Reconfirma com o servidor para garantir que ficou mesmo guardado
+    try {
+      const d = await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`).then(r => r.json())
+      const saved = Array.isArray(d.portal?.settings?.bookingSlots) ? d.portal.settings.bookingSlots : clean
+      setSlots(saved)
+    } catch {
+      setSlots(clean)
+    }
     setEditing(false)
     setNotif({ tone: 'ok', msg: `${clean.length} slot(s) guardado(s).` })
   }
