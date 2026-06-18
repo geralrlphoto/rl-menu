@@ -282,13 +282,13 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
         .row { display: flex; }
         .row.vocs { justify-content: flex-end; }
         .row.rl   { justify-content: flex-start; }
-        .bubble { max-width: 72%; padding: 6px 10px; border-radius: 10px; font-family: 'Hanken Grotesk', sans-serif; }
+        .bubble { max-width: 60%; padding: 4px 8px; border-radius: 9px; font-family: 'Hanken Grotesk', sans-serif; }
         .bubble.vocs { background: rgba(200,168,102,.14); border: 1px solid rgba(200,168,102,.25); border-bottom-right-radius: 3px; }
         .bubble.rl { background: rgba(40,60,45,.4); border: 1px solid rgba(120,200,140,.25); border-bottom-left-radius: 3px; }
-        .who { font-size: 7px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; margin-bottom: 2px; }
+        .who { font-size: 6px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; margin-bottom: 1px; }
         .bubble.vocs .who { color: #d7bd87; }
         .bubble.rl .who { color: #84c896; }
-        .txt { margin: 0; font-size: 11px; line-height: 1.4; color: #cfc6b6; white-space: pre-wrap; }
+        .txt { margin: 0; font-size: 9px; line-height: 1.35; color: #cfc6b6; white-space: pre-wrap; }
         .txt :global(mark) { background: rgba(232,199,109,.5); color: #fff; border-radius: 2px; padding: 0 1px; }
         .tema-nome :global(mark) { background: rgba(232,199,109,.5); color: #fff; border-radius: 2px; padding: 0 1px; }
         .when { font-size: 7px; color: #7a6f5e; margin-top: 2px; text-align: right; }
