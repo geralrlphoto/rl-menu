@@ -77,7 +77,12 @@ function LoginPageInner() {
     return () => clearTimeout(t)
   }, [toast])
 
-  // Se já existe sessão de freelancer válida, redireciona para o portal próprio.
+  // Sessão de freelancer já ativa neste browser (para mostrar opção "continuar").
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
+
+  // Se já existe sessão E o utilizador veio de um link protegido (?next=), segue
+  // direto. Se entrou em /login sem next, NÃO reencaminha — mostra o formulário
+  // (permite iniciar sessão com outra conta) + um atalho para o portal.
   useEffect(() => {
     let canceled = false
     ;(async () => {
@@ -86,12 +91,12 @@ function LoginPageInner() {
         if (canceled) return
         const j = await r.json().catch(() => ({}))
         if (j?.ok && j?.session?.id) {
-          // Respeita ?next= (ex.: admin a abrir "Ver como Freelancer" doutro membro);
-          // só usa o portal da própria sessão se não houver next válido.
-          const target = (nextFromUrl && (nextFromUrl.startsWith('/freelancers/') || nextFromUrl.startsWith('/painel-editor') || nextFromUrl.startsWith('/freelancer-view/')))
-            ? nextFromUrl
-            : `/freelancers/${j.session.id}?view=freelancer`
-          router.replace(target)
+          const validNext = !!nextFromUrl && (nextFromUrl.startsWith('/freelancers/') || nextFromUrl.startsWith('/painel-editor') || nextFromUrl.startsWith('/freelancer-view/'))
+          if (validNext) {
+            router.replace(nextFromUrl!)
+          } else {
+            setActiveSessionId(j.session.id)
+          }
         }
       } catch { /* offline / erro — fica em login */ }
     })()
@@ -295,6 +300,16 @@ function LoginPageInner() {
               ? 'Inicia sessão com o teu e-mail e palavra-passe.'
               : 'Acede ao dashboard interno com a palavra-passe global.'}
           </p>
+
+          {mode === 'freelancer' && activeSessionId && (
+            <div className="mb-4 flex items-center justify-between gap-3 px-4 py-3 rounded-xl border border-emerald-500/30 bg-emerald-500/[0.06]">
+              <span className="text-[11px] text-emerald-200/80">Já tens uma sessão iniciada neste dispositivo.</span>
+              <button type="button" onClick={() => router.push(`/freelancers/${activeSessionId}?view=freelancer`)}
+                className="text-[10px] px-3 py-1.5 rounded-lg border border-emerald-500/40 text-emerald-300 tracking-widest uppercase font-semibold hover:bg-emerald-500/15 transition-all whitespace-nowrap">
+                Entrar no portal ↗
+              </button>
+            </div>
+          )}
 
           {mode === 'freelancer' ? (
             <form onSubmit={handleFreelancerSubmit} className="space-y-5">
