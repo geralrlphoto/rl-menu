@@ -2660,6 +2660,79 @@ function FotoNoivosUpload({ referencia }: { referencia: string }) {
   )
 }
 
+// ─── Drawer Agendamento & Notas (abre da direita, tabs, fecha) ────────────────
+function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
+  const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState<'marcacao' | 'notas'>('marcacao')
+
+  useEffect(() => {
+    function onKey(ev: KeyboardEvent) { if (ev.key === 'Escape') setOpen(false) }
+    if (open) { document.addEventListener('keydown', onKey); document.body.style.overflow = 'hidden' }
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
+  }, [open])
+
+  return (
+    <>
+      {/* Botão (conteúdo do bloco) */}
+      <button onClick={() => setOpen(true)}
+        className="ficha-reveal print:hidden mt-5 w-full group relative overflow-hidden rounded-2xl border border-white/[0.08] hover:border-gold/30 p-5 flex items-center justify-between gap-4 text-left transition-all"
+        style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.028), rgba(201,164,92,0.02))' }}>
+        <span className="pointer-events-none absolute left-0 top-5 bottom-5 w-[2px] rounded-full" style={{ background: 'linear-gradient(to bottom, rgba(201,164,92,0.7), rgba(201,164,92,0))' }} />
+        <div className="pl-1.5">
+          <p className="flex items-center gap-2.5 text-[10px] tracking-[0.38em] text-gold uppercase font-semibold">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-gold" style={{ boxShadow: '0 0 9px rgba(201,164,92,0.7)' }} />
+            Marcação Pré-Wedding & Notas
+          </p>
+          <p className="text-[11px] text-white/40 mt-1.5">Abrir painel para gerir a sessão pré-wedding e as notas privadas.</p>
+        </div>
+        <span className="shrink-0 flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-gold/80 border border-gold/30 bg-gold/10 rounded-lg px-3 py-2 group-hover:bg-gold/20 transition-all">
+          Abrir
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </span>
+      </button>
+
+      {/* Overlay */}
+      <div onClick={() => setOpen(false)}
+        style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(6,5,3,0.6)', backdropFilter: 'blur(3px)',
+          opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity .3s ease' }} />
+
+      {/* Drawer */}
+      <aside style={{
+        position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 96,
+        width: 'min(520px, 100vw)', maxWidth: '100vw',
+        background: 'linear-gradient(180deg, #15110b, #0d0a06)',
+        borderLeft: '1px solid rgba(201,164,92,0.25)',
+        boxShadow: '-30px 0 80px -20px rgba(0,0,0,0.7)',
+        transform: open ? 'translateX(0)' : 'translateX(100%)',
+        transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
+        display: 'flex', flexDirection: 'column',
+      }}>
+        {/* Header do drawer */}
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => setTab('marcacao')}
+              className={`text-[10px] tracking-[0.2em] uppercase font-bold px-3 py-2 rounded-lg border transition-all ${tab === 'marcacao' ? 'border-gold/50 text-gold bg-gold/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
+              Marcação
+            </button>
+            <button onClick={() => setTab('notas')}
+              className={`text-[10px] tracking-[0.2em] uppercase font-bold px-3 py-2 rounded-lg border transition-all ${tab === 'notas' ? 'border-gold/50 text-gold bg-gold/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
+              Notas
+            </button>
+          </div>
+          <button onClick={() => setOpen(false)} aria-label="Fechar"
+            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-gold/40 transition-all">✕</button>
+        </div>
+        {/* Conteúdo */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+          {open && (tab === 'marcacao'
+            ? <BookingSectionFicha referencia={referencia} />
+            : <NotasSection referencia={referencia} />)}
+        </div>
+      </aside>
+    </>
+  )
+}
+
 // ─── Página principal ──────────────────────────────────────────────────────────
 export default function EventoPage() {
   const { id } = useParams<{ id: string }>()
@@ -3334,15 +3407,8 @@ export default function EventoPage() {
 
       <BlocoHeader num="III">Agendamento & Notas</BlocoHeader>
 
-      {/* ── Marcação (sincroniza com portal do cliente) ── */}
-      <div className="ficha-reveal print:hidden mt-5">
-        <BookingSectionFicha referencia={e.referencia ?? undefined} />
-      </div>
-
-      {/* ── Notas privadas do admin ── */}
-      <div className="ficha-reveal print:hidden mt-5">
-        <NotasSection referencia={e.referencia ?? undefined} />
-      </div>
+      {/* ── Marcação + Notas em painel lateral (drawer) ── */}
+      <AgendamentoNotasDrawer referencia={e.referencia ?? undefined} />
 
       <BlocoHeader num="IV">Comercial</BlocoHeader>
 
