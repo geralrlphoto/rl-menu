@@ -118,11 +118,13 @@ function LoginPageInner() {
       // Aceita ?next= legítimo (novo /freelancers/<id>?view=freelancer
       // ou antigo /freelancer-view/<id>); caso contrário usa redirect do servidor.
       const flId = j.freelancer?.id ?? ''
+      const isEditor = j.freelancer?.status === 'EDITORES'
       // Editores têm portal próprio (/painel-editor); restantes vão ao portal de freelancer.
-      let target = j.freelancer?.status === 'EDITORES'
+      let target = isEditor
         ? `/painel-editor?freelancer=${flId}`
         : (j.redirect ?? `/freelancers/${flId}?view=freelancer`)
-      if (nextFromUrl) {
+      // Para editores, ignora um next que aponte para /freelancers (evita hop/loop).
+      if (nextFromUrl && !isEditor) {
         if (nextFromUrl.startsWith('/freelancer-view/')) {
           // Mantém para compatibilidade — middleware redireciona depois.
           target = nextFromUrl

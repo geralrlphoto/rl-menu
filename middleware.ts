@@ -89,6 +89,28 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // ── 2b) Painel do Editor (/painel-editor) — portal próprio dos editores ──
+  //   Admin (rl_auth) entra livremente. Editor (fl_session) entra no seu painel
+  //   (força ?freelancer=<sessionId>). Sem credenciais → /login?next=…
+  if (pathname.startsWith('/painel-editor')) {
+    const adminAuth = request.cookies.get('rl_auth')?.value
+    if (adminAuth && adminAuth === process.env.AUTH_SECRET) {
+      return NextResponse.next()
+    }
+    const flCookie = request.cookies.get('fl_session')?.value
+    const session = await verifyFlSession(flCookie)
+    if (session) {
+      const wanted = searchParams.get('freelancer')
+      if (wanted && wanted !== session.id) {
+        return NextResponse.redirect(new URL(`/painel-editor?freelancer=${session.id}`, request.url))
+      }
+      return NextResponse.next()
+    }
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', `${pathname}${search}`)
+    return NextResponse.redirect(loginUrl)
+  }
+
   // Allow login page and auth API
   if (
     pathname.startsWith('/login') ||
