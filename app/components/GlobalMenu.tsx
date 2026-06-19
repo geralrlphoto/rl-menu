@@ -8,9 +8,9 @@ import { AdminNotificationsBell } from './AdminNotificationsBell'
 import OnlineMembersItem from './OnlineMembersItem'
 import NoivosOnlineItem from './NoivosOnlineItem'
 
-const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media']
+const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media', '/painel-editor']
 // Paths em que o menu lateral permanente é colapsado (só botão flutuante visível)
-const COLLAPSED_PATHS = ['/freelancers/', '/painel-editor', '/painel-fotografo']
+const COLLAPSED_PATHS = ['/freelancers/', '/painel-fotografo']
 const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
 const MEDIA_LINKS = [
