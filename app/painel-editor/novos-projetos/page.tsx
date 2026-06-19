@@ -390,6 +390,9 @@ const PROJECTS: Project[] = [
 
 // Helpers
 const WORKFLOW_STAGES: WorkflowStage[] = ['Novo Projeto','Em Edição','Color Grading','Trailer em Produção','Áudio / Sincronização','Para Revisão','Correções','Finalizado','Entregue']
+// Estados selecionáveis pelo editor no card (Status do Vídeo). "Entregue" não
+// está aqui — é definido fora do painel do editor.
+const EDITOR_STAGE_OPTIONS: WorkflowStage[] = ['Novo Projeto','Em Edição','Para Revisão','Finalizado']
 const APPROVAL_OPTIONS: { value: Approval; emoji: string; color: string }[] = [
   { value: 'Aguardando Revisão',  emoji: '🟡', color: 'text-yellow-300' },
   { value: 'Aprovado Cliente',    emoji: '🟢', color: 'text-emerald-300' },
@@ -1881,8 +1884,8 @@ function ProjectCard({
 
           {/* Workflow */}
           <Section title="Status do Vídeo">
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-              {WORKFLOW_STAGES.map(s => {
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {EDITOR_STAGE_OPTIONS.map(s => {
                 const active = p.stage === s
                 return (
                   <button key={s} onClick={() => onChange({ stage: s })}
