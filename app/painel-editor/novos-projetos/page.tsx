@@ -168,6 +168,9 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     feedback: [],
     eventoId: j.evento_id || undefined,
     notifId: j.notifId || undefined,
+    revisaoLink: j.revisao?.link || undefined,
+    revisaoStatus: j.revisao?.status || undefined,
+    revisaoFeedback: j.revisao?.feedback || undefined,
     rlDownloads: downloads,
     rlRelatorios: Array.isArray(j.relatorios) ? j.relatorios.filter(Boolean) : [],
   }
@@ -216,6 +219,9 @@ type Project = {
   // ── Dados do trabalho enviado pela RL (só em modo editor real) ──
   eventoId?: string           // id Notion do evento (para sincronizar estado do vídeo)
   notifId?: string            // id da notificação 'relatorio_editor' (marcar como lido)
+  revisaoLink?: string        // link do vídeo (Frame.io) enviado para revisão
+  revisaoStatus?: string      // 'Em Revisão' | 'Aprovado' | 'Requer Alterações'
+  revisaoFeedback?: string    // notas do admin quando pede alterações
   rlDownloads?: string[]      // link(s) de download do material
   rlRelatorios?: RelatorioDiario[]   // relatório(s) diário(s) da equipa
 }
@@ -1620,6 +1626,84 @@ function TrabalhoRLSection({ downloads, relatorios, locked }: { downloads: strin
   )
 }
 
+// ── Revisão do Vídeo (Frame.io) — editor envia o link; admin aprova na ficha ──
+function RevisaoVideoSection({ p }: { p: Project }) {
+  const [link, setLink] = useState(p.revisaoLink ?? '')
+  const [status, setStatus] = useState(p.revisaoStatus ?? '')
+  const [feedback, setFeedback] = useState(p.revisaoFeedback ?? '')
+  const [sending, setSending] = useState(false)
+  const [sentMsg, setSentMsg] = useState('')
+
+  async function enviar() {
+    const url = link.trim()
+    if (!url || sending) return
+    setSending(true); setSentMsg('')
+    try {
+      const res = await fetch('/api/painel-editor/video-revisao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia: p.referencia,
+          evento_id: p.eventoId ?? null,
+          freelancer: getEditorId(),
+          link: url,
+          noivos: p.noivos,
+          local: p.local ?? null,
+        }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok && d?.ok) { setStatus('Em Revisão'); setFeedback(''); setSentMsg('Enviado para revisão ✓') }
+      else setSentMsg(d?.error || 'Erro ao enviar')
+    } catch { setSentMsg('Erro de rede') }
+    setSending(false)
+  }
+
+  const badge =
+    status === 'Aprovado'           ? { txt: 'Vídeo Aprovado', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' } :
+    status === 'Requer Alterações'  ? { txt: 'Requer Alterações', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30' } :
+    status === 'Em Revisão'         ? { txt: 'Em Revisão', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/30' } : null
+
+  return (
+    <Section title="Revisão do Vídeo">
+      <div className="rounded-2xl border border-gold/25 p-4 sm:p-5 space-y-3"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.55))' }}>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Label>Link do vídeo para revisão (Frame.io)</Label>
+          {badge && <span className={`text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold ${badge.cls}`}>{badge.txt}</span>}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            value={link}
+            onChange={e => setLink(e.target.value)}
+            placeholder="https://f.io/…  ou  https://frame.io/…"
+            className="flex-1 min-w-[220px] bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white/85 placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+          />
+          <button onClick={enviar} disabled={!link.trim() || sending}
+            className="inline-flex items-center gap-1.5 text-[11px] px-4 py-2 rounded-lg bg-gold text-black font-bold tracking-wider uppercase hover:bg-gold/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            {sending ? 'A enviar…' : '↗ Enviar para Revisão'}
+          </button>
+          {link.trim() && (
+            <a href={link.trim()} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] px-3 py-2 rounded-lg border border-white/10 text-white/60 hover:text-gold hover:border-gold/30 transition-all">
+              Abrir
+            </a>
+          )}
+        </div>
+        {sentMsg && <p className="text-[11px] text-gold/80">{sentMsg}</p>}
+        {status === 'Requer Alterações' && feedback && (
+          <div className="rounded-lg border border-orange-500/25 bg-orange-500/[0.04] p-3">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-orange-300/70 font-bold mb-1">Alterações pedidas</p>
+            <p className="text-[12px] text-white/75 whitespace-pre-wrap">{feedback}</p>
+          </div>
+        )}
+        {status === 'Aprovado' && (
+          <p className="text-[11px] text-emerald-300/80">O admin aprovou este vídeo. 🎉</p>
+        )}
+      </div>
+    </Section>
+  )
+}
+
 function ProjectCard({
   p, expanded, isUnseen, isAdmin, onToggle, onChange, onDelete,
 }: {
@@ -1942,6 +2026,9 @@ function ProjectCard({
               })}
             </div>
           </Section>
+
+          {/* Revisão do Vídeo (Frame.io) — só para trabalhos reais da RL */}
+          {p.referencia && <RevisaoVideoSection p={p} />}
 
           {/* Approval */}
           <Section title="Aprovação do Cliente">

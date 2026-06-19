@@ -23,11 +23,13 @@ const SEEN_TRABALHOS_KEY = 'painel-editor-seen-trabalhos'
 
 type Notif = {
   id: string
-  type: 'projeto' | 'tarefa' | 'mensagem' | 'trabalho'
+  type: 'projeto' | 'tarefa' | 'mensagem' | 'trabalho' | 'decisao'
   title: string
   sub: string
   href: string
 }
+
+const SEEN_DECISOES_KEY = 'painel-editor-seen-decisoes'
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
@@ -35,6 +37,8 @@ export function NotificationBell() {
   const [mounted, setMounted] = useState(false)
   // Trabalhos reais enviados pela RL (tabela freelancer_notificacoes, tipo relatorio_editor)
   const [trabalhos, setTrabalhos] = useState<any[]>([])
+  // Decisões do admin sobre o vídeo (aprovado / rever alterações)
+  const [decisoes, setDecisoes] = useState<any[]>([])
   const btnRef = useRef<HTMLButtonElement>(null)
   const [pos, setPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 })
 
@@ -82,6 +86,10 @@ export function NotificationBell() {
       .then(r => r.json())
       .then(d => { if (!cancelled) setTrabalhos(Array.isArray(d?.jobs) ? d.jobs : []) })
       .catch(() => {})
+    fetch(`/api/painel-editor/minhas-notificacoes?freelancer=${id}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setDecisoes(Array.isArray(d?.notifs) ? d.notifs : []) })
+      .catch(() => {})
     return () => { cancelled = true }
   }, [tick])
 
@@ -116,6 +124,21 @@ export function NotificationBell() {
           title: j.noivos || j.local || 'Novo trabalho de edição',
           sub: [j.local, dia].filter(Boolean).join(' · ') || 'Conteúdo para editar disponível',
           href: '/painel-editor',
+        })
+      })
+
+      // 0b) Decisões do admin sobre o vídeo (aprovado / rever alterações)
+      const seenDecRaw = localStorage.getItem(SEEN_DECISOES_KEY)
+      const seenDec = new Set<string>(seenDecRaw ? JSON.parse(seenDecRaw) : [])
+      decisoes.forEach(d => {
+        if (!d?.id || seenDec.has(d.id)) return
+        const aprovado = d.tipo === 'video_aprovado'
+        items.push({
+          id: `dec-${d.id}`,
+          type: 'decisao',
+          title: aprovado ? 'Vídeo aprovado ✅' : 'Vídeo — rever alterações',
+          sub: [d.noivos || d.local, aprovado ? 'O admin aprovou o teu vídeo' : (d.feedback || 'O admin pediu alterações')].filter(Boolean).join(' · '),
+          href: d.referencia ? `/painel-editor/novos-projetos?open=${d.referencia}` : '/painel-editor/novos-projetos',
         })
       })
 
@@ -199,7 +222,7 @@ export function NotificationBell() {
       }
     } catch {}
     return items
-  }, [tick, trabalhos])
+  }, [tick, trabalhos, decisoes])
 
   function clearOne(notifId: string) {
     try {
@@ -209,6 +232,12 @@ export function NotificationBell() {
         const arr: string[] = raw ? JSON.parse(raw) : []
         if (!arr.includes(id)) arr.push(id)
         localStorage.setItem(SEEN_TRABALHOS_KEY, JSON.stringify(arr))
+      } else if (notifId.startsWith('dec-')) {
+        const id = notifId.replace('dec-', '')
+        const raw = localStorage.getItem(SEEN_DECISOES_KEY)
+        const arr: string[] = raw ? JSON.parse(raw) : []
+        if (!arr.includes(id)) arr.push(id)
+        localStorage.setItem(SEEN_DECISOES_KEY, JSON.stringify(arr))
       } else if (notifId.startsWith('proj-')) {
         const id = notifId.replace('proj-', '')
         const raw = localStorage.getItem('painel-editor-unseen-projects')
@@ -238,6 +267,12 @@ export function NotificationBell() {
         const raw = localStorage.getItem(SEEN_TRABALHOS_KEY)
         const arr: string[] = raw ? JSON.parse(raw) : []
         localStorage.setItem(SEEN_TRABALHOS_KEY, JSON.stringify(Array.from(new Set([...arr, ...trabIds]))))
+      }
+      const decIds = decisoes.map(d => d.id).filter(Boolean)
+      if (decIds.length) {
+        const raw = localStorage.getItem(SEEN_DECISOES_KEY)
+        const arr: string[] = raw ? JSON.parse(raw) : []
+        localStorage.setItem(SEEN_DECISOES_KEY, JSON.stringify(Array.from(new Set([...arr, ...decIds]))))
       }
       localStorage.setItem('painel-editor-unseen-projects', JSON.stringify([]))
       localStorage.setItem('painel-editor-unseen-tasks', JSON.stringify([]))
@@ -302,9 +337,11 @@ export function NotificationBell() {
                         ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
                         : n.type === 'tarefa'
                           ? 'bg-gold/15 text-gold border-gold/30'
-                          : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                          : n.type === 'decisao'
+                            ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
+                            : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                   }`}>
-                    {n.type === 'trabalho' ? '🎬 Trabalho' : n.type === 'projeto' ? '◫ Projeto' : n.type === 'tarefa' ? '◷ Tarefa' : '💬 Mensagem'}
+                    {n.type === 'trabalho' ? '🎬 Trabalho' : n.type === 'projeto' ? '◫ Projeto' : n.type === 'tarefa' ? '◷ Tarefa' : n.type === 'decisao' ? '🎞 Vídeo' : '💬 Mensagem'}
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-gold mt-2 shrink-0 animate-pulse"
                     style={{ boxShadow: '0 0 6px rgba(201,164,92,0.7)' }} />

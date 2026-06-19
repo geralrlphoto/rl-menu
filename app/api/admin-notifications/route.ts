@@ -31,6 +31,7 @@ const TIPO_LABELS: Record<string, string> = {
   prewedding_alerta:        'Alerta — Marcar Pré-Wedding',
   relatorio_diario_enviado: 'Relatório Diário enviado',
   video_estado_alterado:    'Estado do Vídeo · Editor',
+  video_revisao_enviada:    'Vídeo para Revisão · Editor',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -56,6 +57,7 @@ const TIPO_ICONS: Record<string, string> = {
   prewedding_alerta:        '💍',
   relatorio_diario_enviado: '🎥',
   video_estado_alterado:    '🎬',
+  video_revisao_enviada:    '🎞',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -355,6 +357,45 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] video_estado_alterado read failed:', err)
+    }
+
+    // ── Vídeo enviado para revisão pelo editor (freelancer_notificacoes tipo='video_revisao_enviada') ──
+    try {
+      const { data: vrevs } = await supabase
+        .from('freelancer_notificacoes')
+        .select('id, freelancer_id, titulo, mensagem, created_at')
+        .eq('tipo', 'video_revisao_enviada')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      const vrIds = Array.from(new Set((vrevs ?? []).map((n: any) => n.freelancer_id).filter(Boolean)))
+      const vrNomes = new Map<string, string>(nomesById)
+      const vrMissing = vrIds.filter(id => !vrNomes.has(id))
+      if (vrMissing.length > 0) {
+        const { data: flsVr } = await supabase.from('freelancers').select('id, nome').in('id', vrMissing)
+        for (const f of (flsVr ?? []) as any[]) vrNomes.set(f.id, f.nome)
+      }
+      for (const n of (vrevs ?? []) as any[]) {
+        let meta: any = {}
+        const m = String(n.mensagem ?? '').match(/^__META__(.*?)__\/META__/)
+        if (m) { try { meta = JSON.parse(m[1]) } catch { meta = {} } }
+        notifications.push({
+          id: `video_revisao::${n.id}`,
+          tipo: 'video_revisao_enviada',
+          tipo_label: TIPO_LABELS.video_revisao_enviada,
+          tipo_icon: TIPO_ICONS.video_revisao_enviada,
+          casamento_id: '',
+          freelancer_id: n.freelancer_id,
+          freelancer_nome: vrNomes.get(n.freelancer_id) ?? '—',
+          local: meta.local ?? meta.noivos ?? '',
+          data_casamento: null,
+          url: meta.referencia ? `/eventos-2026/${meta.evento_id ?? ''}` : '/freelancers',
+          sent_at: n.created_at,
+          referencia: meta.referencia ?? null,
+          mensagem: 'O editor enviou o vídeo para revisão.',
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] video_revisao_enviada read failed:', err)
     }
 
     // ── Relatório Diário enviado pela equipa (freelancer_casamentos.relatorio_diario) ──

@@ -116,6 +116,83 @@ function Section({ title, right, children }: { title: string; right?: React.Reac
   )
 }
 
+// ─── Revisão do Vídeo (admin) ────────────────────────────────────────────────
+//  Mostra o link que o editor enviou (Frame.io) e permite aprovar ou pedir
+//  alterações. Notifica o editor (via /api/painel-editor/video-revisao PATCH).
+function RevisaoVideoAdmin({ referencia }: { referencia: string }) {
+  const [rev, setRev] = useState<any>(null)
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/painel-editor/video-revisao?referencia=${encodeURIComponent(referencia)}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setRev(d?.revisao ?? null); setLoaded(true) } })
+      .catch(() => { if (!cancelled) setLoaded(true) })
+    return () => { cancelled = true }
+  }, [referencia])
+
+  async function decidir(status: 'Aprovado' | 'Requer Alterações') {
+    if (saving) return
+    let feedback: string | null = null
+    if (status === 'Requer Alterações') {
+      feedback = window.prompt('Que alterações pedir ao editor?', '') || ''
+      if (feedback === '') return
+    }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/painel-editor/video-revisao', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia, status, feedback }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok && d?.ok) setRev((r: any) => ({ ...(r ?? {}), status, feedback }))
+    } catch {}
+    setSaving(false)
+  }
+
+  if (!loaded) return null
+
+  const status = rev?.status as string | undefined
+  const badge =
+    status === 'Aprovado'          ? { txt: 'Aprovado', cls: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' } :
+    status === 'Requer Alterações' ? { txt: 'Requer Alterações', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30' } :
+    status === 'Em Revisão'        ? { txt: 'Em Revisão', cls: 'bg-blue-500/15 text-blue-300 border-blue-500/30' } : null
+
+  return (
+    <Section title="Revisão do Vídeo" right={badge && <span className={`text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold ${badge.cls}`}>{badge.txt}</span>}>
+      {!rev?.link ? (
+        <p className="text-[12px] text-white/35 italic">O editor ainda não enviou nenhum vídeo para revisão.</p>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <a href={rev.link} target="_blank" rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-[12px] px-3 py-2 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all w-fit max-w-full truncate">
+            ▶ Abrir vídeo (Frame.io)
+          </a>
+          <p className="text-[11px] text-white/40 break-all">{rev.link}</p>
+          <div className="flex items-center gap-2 flex-wrap pt-1">
+            <button onClick={() => decidir('Aprovado')} disabled={saving}
+              className="text-[11px] px-4 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-300 font-bold tracking-wider uppercase hover:bg-emerald-500/25 transition-all disabled:opacity-40">
+              ✓ Aprovar Vídeo
+            </button>
+            <button onClick={() => decidir('Requer Alterações')} disabled={saving}
+              className="text-[11px] px-4 py-2 rounded-lg bg-orange-500/15 border border-orange-500/35 text-orange-300 font-bold tracking-wider uppercase hover:bg-orange-500/25 transition-all disabled:opacity-40">
+              ✎ Rever Alterações
+            </button>
+          </div>
+          {status === 'Requer Alterações' && rev?.feedback && (
+            <div className="rounded-lg border border-orange-500/25 bg-orange-500/[0.04] p-3">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-orange-300/70 font-bold mb-1">Alterações pedidas</p>
+              <p className="text-[12px] text-white/75 whitespace-pre-wrap">{rev.feedback}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </Section>
+  )
+}
+
 // ─── Cabeçalho de bloco (divisória premium entre grupos de secções) ──────────
 function BlocoHeader({ num, children }: { num: string; children: React.ReactNode }) {
   return (
@@ -4351,6 +4428,9 @@ export default function EventoPage() {
             <EditCheck label="Alerta 30 dias úteis enviado" checked={e.alerta_30du} field="alerta_30du" eventId={e.id} onSaved={handleSaved} />
           </div>
         </Section>
+
+        {/* ── Revisão do Vídeo (enviada pelo editor via Frame.io) ── */}
+        {e.referencia && <RevisaoVideoAdmin referencia={e.referencia} />}
 
         </DrawerBloco>
 

@@ -68,5 +68,17 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Enriquecer com o estado da revisão de vídeo (Frame.io) por referência.
+  if (refs.length) {
+    const { data: revs } = await supabase
+      .from('video_revisoes')
+      .select('referencia, link, status, feedback')
+      .in('referencia', refs)
+    for (const j of jobs) {
+      const r = (revs ?? []).find((x: any) => x.referencia === j.referencia)
+      if (r) j.revisao = { link: r.link, status: r.status, feedback: r.feedback }
+    }
+  }
+
   return NextResponse.json({ jobs })
 }
