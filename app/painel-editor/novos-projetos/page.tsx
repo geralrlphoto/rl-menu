@@ -7,7 +7,7 @@ import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
 import { getTracksForProject, disassociate } from '../_data/musicas-associacao'
-import { getEditorId } from '../_data/freelancer-profile'
+import { getEditorId, rememberAdminMode, isAdminMode } from '../_data/freelancer-profile'
 
 // ────────────────────────────────────────────────────────────────────────────
 //  NOVOS PROJETOS — RL Photo.Video (premium cinematic editor workspace)
@@ -449,8 +449,13 @@ const STORAGE_UNSEEN_KEY = 'painel-editor-unseen-projects'
 export default function NovosProjetosPage() {
   const searchParams = useSearchParams()
   const openParam = searchParams?.get('open') ?? null
-  // Modo admin (?admin=1): mostra o menu de gestão (editar/arquivar/eliminar…).
-  const isAdminView = searchParams?.get('admin') === '1'
+  // Modo admin (maquete): ?admin=1 OU sessionStorage (persiste na navegação).
+  const [isAdminView, setIsAdminView] = useState(false)
+  useEffect(() => {
+    const urlAdmin = searchParams?.get('admin') === '1'
+    rememberAdminMode(urlAdmin)
+    setIsAdminView(isAdminMode(urlAdmin))
+  }, [searchParams])
   const [projects, setProjects] = useState<Project[]>(PROJECTS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
   const [hydrated, setHydrated] = useState(false)

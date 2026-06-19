@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { TODAY as TODAY_PT, TASKS as MOCK_TASKS, PROJECTS as MOCK_PROJECTS, paymentPlanFor, type Project as DataProject } from './_data/projects'
 import { NotificationBell } from './_components/NotificationBell'
 import { MessagesBell } from './_components/MessagesBell'
-import { loadFreelancerProfile, rememberEditorId } from './_data/freelancer-profile'
+import { loadFreelancerProfile, rememberEditorId, rememberAdminMode } from './_data/freelancer-profile'
 
 // Hoje (derivado da constante canónica)
 const [_TD, _TM, _TY] = TODAY_PT.split('/').map(Number)
@@ -164,6 +164,10 @@ export default function PainelEditor() {
 
   // Memoriza o id do editor para as sub-páginas o lerem (getEditorId).
   useEffect(() => { rememberEditorId(freelancerId) }, [freelancerId])
+
+  // Modo admin (maquete): se entrou com ?admin=1, memoriza para a sessão toda
+  // (as sub-páginas lêem via isAdminMode e mantêm a edição ativa).
+  useEffect(() => { rememberAdminMode(params?.get('admin') === '1') }, [params])
 
   // Buscar freelancer da BD se o id estiver na URL
   useEffect(() => {

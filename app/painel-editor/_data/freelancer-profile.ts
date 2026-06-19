@@ -87,6 +87,22 @@ export function getEditorId(urlId?: string | null): string | null {
   return null
 }
 
+// ── Modo admin (maquete) — admin abre o painel do editor com ?admin=1 e pode
+// editar tudo. Persistido em sessionStorage (por separador) para sobreviver à
+// navegação entre sub-páginas sem ter de propagar o ?admin=1 em todos os links.
+const ADMIN_MODE_KEY = 'painel-editor-admin-mode'
+export function rememberAdminMode(on: boolean): void {
+  if (typeof window === 'undefined' || !on) return
+  try { sessionStorage.setItem(ADMIN_MODE_KEY, 'true') } catch {}
+}
+export function isAdminMode(urlAdmin?: boolean): boolean {
+  if (urlAdmin) return true
+  if (typeof window !== 'undefined') {
+    try { return sessionStorage.getItem(ADMIN_MODE_KEY) === 'true' } catch {}
+  }
+  return false
+}
+
 const STORAGE_KEY = 'painel-editor-freelancer-profile'
 
 export function loadFreelancerProfile(): FreelancerProfile {
