@@ -107,6 +107,7 @@ function mapEstadoToDeliveryState(s: string | null | undefined): import('./Porta
   if (v.startsWith('em sele')) return 'select'
   if (v.startsWith('em revis')) return 'review'
   if (v.startsWith('em edi')) return 'edit'
+  if (v.startsWith('finaliz')) return 'final'
   if (!v || v === 'aguardar' || v === 'aguarda') return 'wait'
   if (v === 'entregue') return 'ok'
   if (v.startsWith('aprov') || v.startsWith('em aprov')) return 'info'

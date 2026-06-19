@@ -4309,7 +4309,7 @@ export default function EventoPage() {
             )}
             {prazoVideo && (
               <EstadoRow label="Prazo Entrega Vídeo (180 dias úteis)" dateStr={prazoVideo}
-                estado={e.video_estado} options={['Aguardar','Em Edição','Em Revisão','Entregue','S/SERVIÇO']}
+                estado={e.video_estado} options={['Aguardar','Em Edição','Em Revisão','Finalizado','Entregue','S/SERVIÇO']}
                 field="video_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia} />
             )}
             <EstadoRow label="Fotos em Edição"
