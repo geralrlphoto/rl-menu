@@ -167,6 +167,7 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     versions: [],
     feedback: [],
     eventoId: j.evento_id || undefined,
+    notifId: j.notifId || undefined,
     rlDownloads: downloads,
     rlRelatorios: Array.isArray(j.relatorios) ? j.relatorios.filter(Boolean) : [],
   }
@@ -214,6 +215,7 @@ type Project = {
   feedback: string[]
   // ── Dados do trabalho enviado pela RL (só em modo editor real) ──
   eventoId?: string           // id Notion do evento (para sincronizar estado do vídeo)
+  notifId?: string            // id da notificação 'relatorio_editor' (marcar como lido)
   rlDownloads?: string[]      // link(s) de download do material
   rlRelatorios?: RelatorioDiario[]   // relatório(s) diário(s) da equipa
 }
@@ -538,12 +540,23 @@ export default function NovosProjetosPage() {
   }, [unseenIds, hydrated, realMode])
 
   function markAsSeen(id: string) {
+    const wasUnseen = unseenIds.has(id)
     setUnseenIds(prev => {
       if (!prev.has(id)) return prev
       const next = new Set(prev)
       next.delete(id)
       return next
     })
+    // Em modo real: persiste o "visto" na BD (marca a notificação como lida),
+    // para o trabalho deixar de aparecer como "Novo" / a brilhar após recarregar.
+    if (wasUnseen && realMode && freelancerId) {
+      const proj = projects.find(p => p.id === id)
+      fetch('/api/painel-editor/marcar-visto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer: freelancerId, referencia: proj?.referencia ?? null, notifId: proj?.notifId ?? id }),
+      }).catch(() => {})
+    }
   }
 
   // ── Persistir alterações no localStorage ─────────────────────────────
