@@ -31,26 +31,15 @@ export async function POST(req: NextRequest) {
   const supabase = db()
   const videoEstado = stageToVideoEstado(stage)
 
-  // 1) Resolver o evento (id Notion + estado atual) por referência OU evento_id.
+  // 1) Resolver o id do evento (Notion) por referência OU evento_id.
+  //    Sincroniza SEMPRE — sem exceções — para o estado do vídeo no portal
+  //    dos noivos refletir exatamente o estado de edição do editor.
   let eventId: string | null = evento_id || null
-  let currentEstado: string | null = null
-  for (const t of ['eventos_2026', 'eventos_2027']) {
-    const sel = supabase.from(t).select('notion_id, id, video_estado')
-    const { data } = referencia
-      ? await sel.eq('referencia', referencia).maybeSingle()
-      : await sel.or(`notion_id.eq.${eventId},id.eq.${eventId}`).maybeSingle()
-    if (data) {
-      eventId = eventId || (data as any).notion_id || (data as any).id
-      currentEstado = (data as any).video_estado ?? null
-      break
+  if (!eventId && referencia) {
+    for (const t of ['eventos_2026', 'eventos_2027']) {
+      const { data } = await supabase.from(t).select('notion_id, id').eq('referencia', referencia).maybeSingle()
+      if (data) { eventId = (data as any).notion_id || (data as any).id; break }
     }
-  }
-
-  // Evento sem serviço de vídeo (admin marcou "S/SERVIÇO") → não sincroniza
-  // nem notifica: não há entrega de vídeo a refletir no portal dos noivos.
-  const norm = (currentEstado || '').trim().toLowerCase().replace(/[-/]/g, '/')
-  if (norm === 's/serviço' || norm === 's/servico') {
-    return NextResponse.json({ ok: true, skipped: 'sem serviço de vídeo' })
   }
 
   // 2) Sincroniza via endpoint canónico (escreve Notion + eventos_YYYY + evento_equipa).
