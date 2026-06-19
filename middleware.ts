@@ -106,9 +106,13 @@ export async function middleware(request: NextRequest) {
     if (session) {
       // Força sempre ?freelancer=<id da sessão>: garante que o editor vê o SEU
       // painel (com a identidade real) e nunca o painel sem id (dados demo).
+      // IMPORTANTE: preservar o pathname (sub-páginas como /pagamentos), senão
+      // qualquer clique no menu lateral era reenviado para o dashboard base.
       const wanted = searchParams.get('freelancer')
       if (wanted !== session.id) {
-        return NextResponse.redirect(new URL(`/painel-editor?freelancer=${session.id}`, request.url))
+        const redirectUrl = request.nextUrl.clone()
+        redirectUrl.searchParams.set('freelancer', session.id)
+        return NextResponse.redirect(redirectUrl)
       }
       return NextResponse.next()
     }

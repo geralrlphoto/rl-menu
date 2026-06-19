@@ -936,8 +936,9 @@ export default function PainelEditor() {
             const cls = 'group w-full flex items-center gap-3 pl-4 pr-3 py-2.5 text-left transition-all'
 
             if (it.href) {
+              const href = freelancerId ? `${it.href}?freelancer=${freelancerId}` : it.href
               return (
-                <Link key={it.key} href={it.href} className={cls} style={styleProps}>{inner}</Link>
+                <Link key={it.key} href={href} className={cls} style={styleProps}>{inner}</Link>
               )
             }
             return (
