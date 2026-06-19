@@ -49,17 +49,18 @@ export async function GET(req: NextRequest) {
   }
   const jobs = Array.from(byRef.values())
 
-  // Enriquecer com nome dos noivos + relatórios da equipa (por referência)
+  // Enriquecer com relatórios diários da equipa + links de download (por referência).
+  // NB: freelancer_casamentos NÃO tem coluna de nome dos noivos — usar local/meta para o título.
   const refs = jobs.map(j => j.referencia).filter(Boolean) as string[]
   if (refs.length) {
     const { data: fcs } = await supabase
       .from('freelancer_casamentos')
-      .select('referencia, nome_noivos, relatorio_diario')
+      .select('referencia, local, relatorio_diario')
       .in('referencia', refs)
     for (const j of jobs) {
       const rows = (fcs ?? []).filter((r: any) => r.referencia === j.referencia)
-      const noivos = rows.map((r: any) => r.nome_noivos).find(Boolean)
-      if (noivos) j.noivos = noivos
+      // Local da equipa como fallback do título, caso a meta não traga
+      if (!j.local) j.local = rows.map((r: any) => r.local).find(Boolean) ?? null
       j.relatorios = rows.map((r: any) => r.relatorio_diario).filter(Boolean)
       // junta downloads dos relatórios (caso a meta esteja desatualizada)
       const extra = rows.map((r: any) => r.relatorio_diario?.downloadUrl).filter(Boolean) as string[]

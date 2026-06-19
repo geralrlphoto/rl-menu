@@ -166,6 +166,8 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     deliveries: [],
     versions: [],
     feedback: [],
+    rlDownloads: downloads,
+    rlRelatorios: Array.isArray(j.relatorios) ? j.relatorios.filter(Boolean) : [],
   }
 }
 
@@ -209,6 +211,27 @@ type Project = {
   deliveries: DeliveryItem[]
   versions: Version[]
   feedback: string[]
+  // ── Dados do trabalho enviado pela RL (só em modo editor real) ──
+  rlDownloads?: string[]      // link(s) de download do material
+  rlRelatorios?: RelatorioDiario[]   // relatório(s) diário(s) da equipa
+}
+
+// Relatório Diário do videógrafo (subset usado para mostrar ao editor)
+type RelatorioDiario = {
+  gravado?: string[]
+  tipoCerimonia?: string[]
+  audio?: string[]
+  drone?: string[]
+  equipaAnimacao?: string[]
+  equipaAnimacaoOutra?: string
+  maquina?: string
+  audiosNuvem?: string
+  vaisFazerBackup?: string
+  problemaTecnico?: string
+  infoRelevante?: string
+  downloadUrl?: string
+  enviado?: boolean
+  enviadoEm?: string
 }
 
 const PROJECTS: Project[] = [
@@ -1457,6 +1480,84 @@ function EditarDadosModal({
   )
 }
 
+// ── Material + Relatório Diário enviados pela RL ───────────────────────────
+//  Mostrado no topo do projeto expandido quando o trabalho vem da RL (modo real).
+function TrabalhoRLSection({ downloads, relatorios }: { downloads: string[]; relatorios: RelatorioDiario[] }) {
+  const RD_CAMPOS: { key: keyof RelatorioDiario; label: string }[] = [
+    { key: 'gravado',         label: 'O que foi gravado' },
+    { key: 'tipoCerimonia',   label: 'Tipo de cerimónia' },
+    { key: 'audio',           label: 'Áudio' },
+    { key: 'drone',           label: 'Drone' },
+    { key: 'equipaAnimacao',  label: 'Equipa de animação' },
+    { key: 'maquina',         label: 'Máquina utilizada' },
+    { key: 'audiosNuvem',     label: 'Áudios na nuvem' },
+    { key: 'vaisFazerBackup', label: 'Backup' },
+    { key: 'problemaTecnico', label: 'Problemas técnicos' },
+    { key: 'infoRelevante',   label: 'Info relevante' },
+  ]
+  const asText = (v: any): string => {
+    if (Array.isArray(v)) return v.filter(Boolean).join(', ')
+    return String(v ?? '').trim()
+  }
+  return (
+    <Section title="Material e Relatório da RL">
+      <div className="rounded-2xl border border-gold/25 p-4 sm:p-5 space-y-5"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.55))' }}>
+
+        {/* Download do material */}
+        <div>
+          <Label>Download do Material</Label>
+          {downloads.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mt-1">
+              {downloads.map((u, i) => (
+                <a key={i} href={u} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-gold/15 border border-gold/35 text-gold font-semibold tracking-wider uppercase hover:bg-gold/25 transition-all">
+                  ↓ Download{downloads.length > 1 ? ` ${i + 1}` : ''}
+                </a>
+              ))}
+            </div>
+          ) : (
+            <p className="text-[12px] text-white/30 italic mt-1">Sem link de download ainda.</p>
+          )}
+        </div>
+
+        {/* Relatório(s) diário(s) da equipa */}
+        <div>
+          <Label>Relatório Diário</Label>
+          {relatorios.length === 0 ? (
+            <p className="text-[12px] text-white/30 italic mt-1">Sem relatório diário associado.</p>
+          ) : (
+            <div className="space-y-3 mt-1">
+              {relatorios.map((rd, ri) => {
+                const campos = RD_CAMPOS.map(c => ({ label: c.label, value: asText(rd[c.key]) })).filter(c => c.value)
+                if (campos.length === 0) return (
+                  <p key={ri} className="text-[12px] text-white/30 italic">Relatório sem dados preenchidos.</p>
+                )
+                return (
+                  <div key={ri} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
+                    {relatorios.length > 1 && <p className="text-[10px] text-gold/60 tracking-widest uppercase mb-2">Relatório {ri + 1}</p>}
+                    <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-2.5">
+                      {campos.map((c, i) => (
+                        <div key={i}>
+                          <dt className="text-[10px] tracking-widest uppercase text-white/40">{c.label}</dt>
+                          <dd className="text-[12px] text-white/80 mt-0.5 whitespace-pre-wrap leading-snug">{c.value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                    {rd.enviadoEm && (
+                      <p className="text-[10px] text-white/35 mt-3">Enviado em <span className="text-gold/70">{rd.enviadoEm}</span></p>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </Section>
+  )
+}
+
 function ProjectCard({
   p, expanded, isUnseen, onToggle, onChange, onDelete,
 }: {
@@ -1743,6 +1844,11 @@ function ProjectCard({
       {expanded && (
         <div className="relative border-t border-white/[0.06] px-5 sm:px-8 py-7 space-y-7"
           style={{ background: 'linear-gradient(180deg, rgba(11,11,11,0.4), rgba(11,11,11,0.7))' }}>
+
+          {/* Material + Relatório enviados pela RL */}
+          {((p.rlDownloads && p.rlDownloads.length > 0) || (p.rlRelatorios && p.rlRelatorios.length > 0)) && (
+            <TrabalhoRLSection downloads={p.rlDownloads ?? []} relatorios={p.rlRelatorios ?? []} />
+          )}
 
           {/* Workflow */}
           <Section title="Status do Vídeo">
