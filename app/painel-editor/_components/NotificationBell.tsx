@@ -4,6 +4,16 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { PROJECTS as MOCK_PROJECTS } from '../_data/projects'
+import { getEditorId } from '../_data/freelancer-profile'
+
+// Parse do bloco __META__…__/META__ nas mensagens das notificações da RL.
+function parseNotifMeta(mensagem: string): any {
+  const m = (mensagem ?? '').match(/^__META__(.*?)__\/META__/s)
+  if (!m) return null
+  try { return JSON.parse(m[1]) } catch { return null }
+}
+
+const SEEN_TRABALHOS_KEY = 'painel-editor-seen-trabalhos'
 
 // ──────────────────────────────────────────────────────────────────────
 //  Sineta de notificações — shared component
@@ -13,7 +23,7 @@ import { PROJECTS as MOCK_PROJECTS } from '../_data/projects'
 
 type Notif = {
   id: string
-  type: 'projeto' | 'tarefa' | 'mensagem'
+  type: 'projeto' | 'tarefa' | 'mensagem' | 'trabalho'
   title: string
   sub: string
   href: string
@@ -23,6 +33,8 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [tick, setTick] = useState(0)
   const [mounted, setMounted] = useState(false)
+  // Trabalhos reais enviados pela RL (tabela freelancer_notificacoes, tipo relatorio_editor)
+  const [trabalhos, setTrabalhos] = useState<any[]>([])
   const btnRef = useRef<HTMLButtonElement>(null)
   const [pos, setPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 })
 
@@ -60,6 +72,19 @@ export function NotificationBell() {
     }
   }, [])
 
+  // Busca os trabalhos reais que a RL enviou a este editor (sino acende quando
+  // chega trabalho novo). Refaz no mount e sempre que o tick muda (focus/storage).
+  useEffect(() => {
+    const id = getEditorId()
+    if (!id) return
+    let cancelled = false
+    fetch(`/api/painel-editor/projetos?freelancer=${id}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setTrabalhos(Array.isArray(d?.jobs) ? d.jobs : []) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [tick])
+
   // Fecha popover ao clicar fora
   useEffect(() => {
     if (!open) return
@@ -76,6 +101,24 @@ export function NotificationBell() {
     if (typeof window === 'undefined') return []
     const items: Notif[] = []
     try {
+      // 0) Trabalhos reais enviados pela RL (notificações da BD) ainda não vistos
+      const seenTrabRaw = localStorage.getItem(SEEN_TRABALHOS_KEY)
+      const seenTrab = new Set<string>(seenTrabRaw ? JSON.parse(seenTrabRaw) : [])
+      trabalhos.forEach(j => {
+        const tid = j.notifId ?? j.referencia ?? j.evento_id
+        if (!tid || seenTrab.has(tid)) return
+        const dia = j.data_casamento
+          ? new Date(j.data_casamento).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
+          : null
+        items.push({
+          id: `trab-${tid}`,
+          type: 'trabalho',
+          title: j.noivos || j.local || 'Novo trabalho de edição',
+          sub: [j.local, dia].filter(Boolean).join(' · ') || 'Conteúdo para editar disponível',
+          href: '/painel-editor',
+        })
+      })
+
       // 1) Projetos não vistos
       const unseenProjRaw = localStorage.getItem('painel-editor-unseen-projects')
       const unseenProjIds: string[] = unseenProjRaw ? JSON.parse(unseenProjRaw) : []
@@ -156,11 +199,17 @@ export function NotificationBell() {
       }
     } catch {}
     return items
-  }, [tick])
+  }, [tick, trabalhos])
 
   function clearOne(notifId: string) {
     try {
-      if (notifId.startsWith('proj-')) {
+      if (notifId.startsWith('trab-')) {
+        const id = notifId.replace('trab-', '')
+        const raw = localStorage.getItem(SEEN_TRABALHOS_KEY)
+        const arr: string[] = raw ? JSON.parse(raw) : []
+        if (!arr.includes(id)) arr.push(id)
+        localStorage.setItem(SEEN_TRABALHOS_KEY, JSON.stringify(arr))
+      } else if (notifId.startsWith('proj-')) {
         const id = notifId.replace('proj-', '')
         const raw = localStorage.getItem('painel-editor-unseen-projects')
         const arr: string[] = raw ? JSON.parse(raw) : []
@@ -183,6 +232,13 @@ export function NotificationBell() {
 
   function clearAll() {
     try {
+      // Marca todos os trabalhos atuais como vistos
+      const trabIds = trabalhos.map(j => j.notifId ?? j.referencia ?? j.evento_id).filter(Boolean)
+      if (trabIds.length) {
+        const raw = localStorage.getItem(SEEN_TRABALHOS_KEY)
+        const arr: string[] = raw ? JSON.parse(raw) : []
+        localStorage.setItem(SEEN_TRABALHOS_KEY, JSON.stringify(Array.from(new Set([...arr, ...trabIds]))))
+      }
       localStorage.setItem('painel-editor-unseen-projects', JSON.stringify([]))
       localStorage.setItem('painel-editor-unseen-tasks', JSON.stringify([]))
       // Marca todas as conversas como totalmente lidas
@@ -240,13 +296,15 @@ export function NotificationBell() {
                 className="block px-4 py-3 hover:bg-gold/[0.04] transition-colors group">
                 <div className="flex items-start gap-3">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold shrink-0 mt-0.5 ${
-                    n.type === 'projeto'
-                      ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
-                      : n.type === 'tarefa'
-                        ? 'bg-gold/15 text-gold border-gold/30'
-                        : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+                    n.type === 'trabalho'
+                      ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+                      : n.type === 'projeto'
+                        ? 'bg-blue-500/15 text-blue-300 border-blue-500/30'
+                        : n.type === 'tarefa'
+                          ? 'bg-gold/15 text-gold border-gold/30'
+                          : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
                   }`}>
-                    {n.type === 'projeto' ? '◫ Projeto' : n.type === 'tarefa' ? '◷ Tarefa' : '💬 Mensagem'}
+                    {n.type === 'trabalho' ? '🎬 Trabalho' : n.type === 'projeto' ? '◫ Projeto' : n.type === 'tarefa' ? '◷ Tarefa' : '💬 Mensagem'}
                   </span>
                   <span className="w-1.5 h-1.5 rounded-full bg-gold mt-2 shrink-0 animate-pulse"
                     style={{ boxShadow: '0 0 6px rgba(201,164,92,0.7)' }} />
