@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { TODAY as TODAY_PT, TASKS as MOCK_TASKS, PROJECTS as MOCK_PROJECTS, paymentPlanFor, type Project as DataProject } from './_data/projects'
 import { NotificationBell } from './_components/NotificationBell'
 import { MessagesBell } from './_components/MessagesBell'
-import { loadFreelancerProfile, rememberEditorId, rememberAdminMode } from './_data/freelancer-profile'
+import { loadFreelancerProfile, rememberEditorId, rememberAdminMode, getEditorId } from './_data/freelancer-profile'
 
 // Hoje (derivado da constante canónica)
 const [_TD, _TM, _TY] = TODAY_PT.split('/').map(Number)
@@ -159,7 +159,10 @@ function TrabalhosRLSection({ freelancerId }: { freelancerId: string | null }) {
 
 export default function PainelEditor() {
   const params = useSearchParams()
-  const freelancerId = params?.get('freelancer') ?? null
+  // Mantém o editor mesmo quando a navegação volta a /painel-editor sem o
+  // ?freelancer na URL (lê do localStorage, tal como as sub-páginas via
+  // getEditorId). Sem isto, voltar ao Dashboard caía no modo demo.
+  const freelancerId = (params?.get('freelancer') ?? null) || getEditorId()
   const [freelancer, setFreelancer] = useState<FreelancerData | null>(null)
 
   // Memoriza o id do editor para as sub-páginas o lerem (getEditorId).
