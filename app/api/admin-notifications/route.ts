@@ -30,6 +30,7 @@ const TIPO_LABELS: Record<string, string> = {
   booking_reservado:        'Marcação Reservada pelos Noivos',
   prewedding_alerta:        'Alerta — Marcar Pré-Wedding',
   relatorio_diario_enviado: 'Relatório Diário enviado',
+  video_estado_alterado:    'Estado do Vídeo · Editor',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -54,6 +55,7 @@ const TIPO_ICONS: Record<string, string> = {
   booking_reservado:        '📅',
   prewedding_alerta:        '💍',
   relatorio_diario_enviado: '🎥',
+  video_estado_alterado:    '🎬',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -314,6 +316,45 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] nova_tarefa_atribuida read failed:', err)
+    }
+
+    // ── Estado do vídeo alterado pelo editor (freelancer_notificacoes tipo='video_estado_alterado') ──
+    try {
+      const { data: videoChanges } = await supabase
+        .from('freelancer_notificacoes')
+        .select('id, freelancer_id, titulo, mensagem, created_at')
+        .eq('tipo', 'video_estado_alterado')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      const vRecipIds = Array.from(new Set((videoChanges ?? []).map((n: any) => n.freelancer_id).filter(Boolean)))
+      const vNomes = new Map<string, string>(nomesById)
+      const vMissing = vRecipIds.filter(id => !vNomes.has(id))
+      if (vMissing.length > 0) {
+        const { data: flsV } = await supabase.from('freelancers').select('id, nome').in('id', vMissing)
+        for (const f of (flsV ?? []) as any[]) vNomes.set(f.id, f.nome)
+      }
+      for (const n of (videoChanges ?? []) as any[]) {
+        let meta: any = {}
+        const m = String(n.mensagem ?? '').match(/^__META__(.*?)__\/META__/)
+        if (m) { try { meta = JSON.parse(m[1]) } catch { meta = {} } }
+        notifications.push({
+          id: `video_estado::${n.id}`,
+          tipo: 'video_estado_alterado',
+          tipo_label: TIPO_LABELS.video_estado_alterado,
+          tipo_icon: TIPO_ICONS.video_estado_alterado,
+          casamento_id: '',
+          freelancer_id: n.freelancer_id,
+          freelancer_nome: vNomes.get(n.freelancer_id) ?? '—',
+          local: meta.local ?? '',
+          data_casamento: meta.data_casamento ?? null,
+          url: `/painel-editor?freelancer=${n.freelancer_id}`,
+          sent_at: n.created_at,
+          referencia: meta.referencia ?? null,
+          mensagem: `Estado do vídeo: ${meta.video_estado ?? '—'}${meta.stage ? ` (${meta.stage})` : ''}.`,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] video_estado_alterado read failed:', err)
     }
 
     // ── Relatório Diário enviado pela equipa (freelancer_casamentos.relatorio_diario) ──

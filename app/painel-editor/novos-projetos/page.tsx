@@ -166,6 +166,7 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     deliveries: [],
     versions: [],
     feedback: [],
+    eventoId: j.evento_id || undefined,
     rlDownloads: downloads,
     rlRelatorios: Array.isArray(j.relatorios) ? j.relatorios.filter(Boolean) : [],
   }
@@ -212,6 +213,7 @@ type Project = {
   versions: Version[]
   feedback: string[]
   // ── Dados do trabalho enviado pela RL (só em modo editor real) ──
+  eventoId?: string           // id Notion do evento (para sincronizar estado do vídeo)
   rlDownloads?: string[]      // link(s) de download do material
   rlRelatorios?: RelatorioDiario[]   // relatório(s) diário(s) da equipa
 }
@@ -634,6 +636,21 @@ export default function NovosProjetosPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ freelancer: freelancerId, referencia: key, stage: toWfStage(patch.stage) }),
+      }).catch(() => {})
+
+      // Sincroniza o estado de entrega do vídeo no portal dos noivos,
+      // notifica o admin (sino) e regista o dia da mudança.
+      fetch('/api/painel-editor/sync-video-estado', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer: freelancerId,
+          referencia: proj?.referencia ?? null,
+          evento_id: proj?.eventoId ?? null,
+          stage: toWfStage(patch.stage),
+          local: proj?.local || proj?.noivos || null,
+          data_casamento: proj?.dataCasamento ?? null,
+        }),
       }).catch(() => {})
     }
   }
