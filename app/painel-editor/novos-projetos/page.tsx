@@ -2065,61 +2065,6 @@ function ProjectCard({
             )}
           </Section>
 
-          {/* Files & Links */}
-          <Section title="Ficheiros e Links">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              {/* Cliente link */}
-              <Card>
-                <Label>Link enviado pelo cliente</Label>
-                <p className="text-[10px] text-white/30 mb-2">Drive · Dropbox · Frame.io · WeTransfer · Mega</p>
-                <div className="flex items-center gap-2">
-                  <input
-                    defaultValue={p.clientLink}
-                    placeholder="https://drive.google.com/…"
-                    className="flex-1 bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white/85 placeholder:text-white/25 focus:outline-none focus:border-gold/40 truncate"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2 mt-3">
-                  <PillBtn label="Abrir Link" />
-                  <PillBtn label="Copiar Link" />
-                  <PillBtn label="Download Material" gold />
-                  <PillBtn label="Download All" />
-                </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold ${
-                    p.materialStatus === 'Material descarregado' ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' :
-                    p.materialStatus === 'Material recebido' ? 'bg-blue-500/15 text-blue-300 border-blue-500/30' :
-                    'bg-yellow-500/15 text-yellow-300 border-yellow-500/30'
-                  }`}>{p.materialStatus}</span>
-                </div>
-              </Card>
-
-              {/* Download status */}
-              <Card>
-                <Label>Estado do Download (freelancer)</Label>
-                <div className="space-y-2 mt-2">
-                  {(['Não descarregado','Em download','Material recebido','Download concluído'] as const).map(s => {
-                    const active = p.downloadStatus === s
-                    return (
-                      <button key={s} onClick={() => onChange({ downloadStatus: s, ultimoDownload: s === 'Download concluído' ? '24/05/2026 — 18:30' : p.ultimoDownload })}
-                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg border text-[12px] transition-all ${
-                          active ? 'bg-gold/10 border-gold/30 text-gold' : 'border-white/[0.06] text-white/55 hover:bg-white/[0.03]'
-                        }`}>
-                        <span className={`w-4 h-4 rounded-sm border flex items-center justify-center ${active ? 'bg-gold border-gold' : 'border-white/25'}`}>
-                          {active && <span className="text-[10px] text-black font-bold">✓</span>}
-                        </span>
-                        {s}
-                      </button>
-                    )
-                  })}
-                </div>
-                {p.ultimoDownload && (
-                  <p className="text-[11px] text-white/40 mt-3">Último download: <span className="text-gold/80">{p.ultimoDownload}</span></p>
-                )}
-              </Card>
-            </div>
-          </Section>
-
           {/* Músicas Utilizadas — associadas em /musicas */}
           <MusicasProjetoSection projectId={p.id} />
 
