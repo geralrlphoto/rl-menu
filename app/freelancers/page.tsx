@@ -512,8 +512,8 @@ export default function FreelancersPage() {
                               </div>
                             </Link>
 
-                            {/* Botão Maquete: SEMPRE visível (gold destacado) */}
-                            <Link href={`/painel-editor?freelancer=${f.id}`}
+                            {/* Botão Maquete: abre o painel em modo admin (ver + editar) */}
+                            <Link href={`/painel-editor?freelancer=${f.id}&admin=1`}
                               className="flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border tracking-widest uppercase font-bold transition-all"
                               style={{
                                 background: 'linear-gradient(135deg, rgba(201,164,92,0.15), rgba(201,164,92,0.04))',
@@ -521,7 +521,7 @@ export default function FreelancersPage() {
                                 color: '#C9A45C',
                                 boxShadow: '0 0 12px rgba(201,164,92,0.18)',
                               }}
-                              title={`Abrir maquete como ${f.nome}`}>
+                              title={`Ver e editar o painel de ${f.nome} como admin`}>
                               ✦ Maquete
                             </Link>
 

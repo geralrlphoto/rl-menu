@@ -449,6 +449,8 @@ const STORAGE_UNSEEN_KEY = 'painel-editor-unseen-projects'
 export default function NovosProjetosPage() {
   const searchParams = useSearchParams()
   const openParam = searchParams?.get('open') ?? null
+  // Modo admin (?admin=1): mostra o menu de gestão (editar/arquivar/eliminar…).
+  const isAdminView = searchParams?.get('admin') === '1'
   const [projects, setProjects] = useState<Project[]>(PROJECTS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
   const [hydrated, setHydrated] = useState(false)
@@ -871,6 +873,7 @@ export default function NovosProjetosPage() {
                   p={p}
                   expanded={expanded === p.id}
                   isUnseen={unseenIds.has(p.id)}
+                  isAdmin={isAdminView}
                   onToggle={() => {
                     setExpanded(expanded === p.id ? null : p.id)
                     markAsSeen(p.id)
@@ -1613,11 +1616,12 @@ function TrabalhoRLSection({ downloads, relatorios, locked }: { downloads: strin
 }
 
 function ProjectCard({
-  p, expanded, isUnseen, onToggle, onChange, onDelete,
+  p, expanded, isUnseen, isAdmin, onToggle, onChange, onDelete,
 }: {
   p: Project
   expanded: boolean
   isUnseen?: boolean
+  isAdmin?: boolean
   onToggle: () => void
   onChange: (patch: Partial<Project>) => void
   onDelete?: () => void
@@ -1753,8 +1757,11 @@ function ProjectCard({
                 </span>
               )}
             </button>
-          {/* Menu de três pontos (ações de gestão) — escondido no painel do editor */}
-          <div className="relative hidden">
+          {/* Menu de três pontos (gestão) — só visível em modo admin (?admin=1) */}
+          {isAdmin && (
+          <div className="relative">
+            <button onClick={() => setMenuOpen(v => !v)}
+              className="w-9 h-9 rounded-lg border border-white/10 text-white/60 hover:text-gold hover:border-gold/30 transition-all flex items-center justify-center text-lg">⋮</button>
             {menuOpen && (
               <div className="absolute top-11 right-0 w-60 rounded-xl border border-gold/20 backdrop-blur-xl p-1.5 z-30"
                 style={{ background: 'rgba(15,12,8,0.95)', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.7)' }}>
@@ -1885,6 +1892,7 @@ function ProjectCard({
               </div>
             )}
           </div>
+          )}
           </div>
           <button onClick={onToggle}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gold/30 text-gold text-[12px] tracking-wider uppercase font-semibold hover:bg-gold/10 transition-all">
