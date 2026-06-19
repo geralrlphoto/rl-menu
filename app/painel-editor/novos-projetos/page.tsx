@@ -393,6 +393,15 @@ const WORKFLOW_STAGES: WorkflowStage[] = ['Novo Projeto','Em Edição','Color Gr
 // Estados selecionáveis pelo editor no card (Status do Vídeo). "Entregue" não
 // está aqui — é definido fora do painel do editor.
 const EDITOR_STAGE_OPTIONS: WorkflowStage[] = ['Novo Projeto','Em Edição','Para Revisão','Finalizado']
+// Ordem de progressão: o editor só avança. Estados com rank inferior ao atual
+// ficam bloqueados (não se pode voltar atrás). Mapeia também estados antigos.
+function stageRank(s: string): number {
+  if (s === 'Novo Projeto') return 0
+  if (s === 'Para Revisão' || s === 'Correções') return 2
+  if (s === 'Finalizado') return 3
+  if (s === 'Entregue') return 4
+  return 1 // Em Edição, Color Grading, Trailer em Produção, Áudio / Sincronização
+}
 const APPROVAL_OPTIONS: { value: Approval; emoji: string; color: string }[] = [
   { value: 'Aguardando Revisão',  emoji: '🟡', color: 'text-yellow-300' },
   { value: 'Aprovado Cliente',    emoji: '🟢', color: 'text-emerald-300' },
@@ -1887,15 +1896,21 @@ function ProjectCard({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {EDITOR_STAGE_OPTIONS.map(s => {
                 const active = p.stage === s
+                // Não se pode recuar: estados antes do atual ficam bloqueados.
+                const locked = stageRank(s) < stageRank(p.stage)
                 return (
-                  <button key={s} onClick={() => onChange({ stage: s })}
+                  <button key={s} disabled={locked} onClick={() => { if (!locked) onChange({ stage: s }) }}
+                    title={locked ? 'Estado anterior — bloqueado' : undefined}
                     className={`px-3 py-2.5 rounded-xl border text-[11px] text-left transition-all flex items-center gap-2 ${
                       active
                         ? 'bg-gold/15 border-gold/45 text-gold'
-                        : 'border-white/[0.06] text-white/45 hover:text-white/80 hover:bg-white/[0.03]'
+                        : locked
+                          ? 'border-white/[0.04] text-white/20 cursor-not-allowed'
+                          : 'border-white/[0.06] text-white/45 hover:text-white/80 hover:bg-white/[0.03]'
                     }`}
                     style={active ? { boxShadow: '0 0 14px -2px rgba(201,164,92,0.4)' } : {}}>
-                    <span className={`w-2 h-2 rounded-full ${active ? 'bg-gold' : 'bg-white/15'}`} style={active ? { boxShadow: '0 0 8px rgba(201,164,92,0.7)' } : {}} />
+                    <span className={`shrink-0 ${active ? 'w-2 h-2 rounded-full bg-gold' : locked ? 'text-[10px]' : 'w-2 h-2 rounded-full bg-white/15'}`}
+                      style={active ? { boxShadow: '0 0 8px rgba(201,164,92,0.7)' } : {}}>{locked ? '🔒' : ''}</span>
                     {s}
                   </button>
                 )
