@@ -3145,8 +3145,14 @@ function FotoNoivosUpload({ referencia }: { referencia: string }) {
 }
 
 // ─── Drawer genérico de bloco (botão → painel lateral à direita, fecha) ───────
-function DrawerBloco({ label, sub, children, width = 820 }: { label: string; sub?: string; children: React.ReactNode; width?: number }) {
+function DrawerBloco({ label, sub, children, width = 820, defaultOpen = false }: { label: string; sub?: string; children: React.ReactNode; width?: number; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(false)
+  // Abre automaticamente uma vez quando defaultOpen passa a true (ex.: vídeo
+  // por rever). Não volta a forçar se o utilizador fechar.
+  const autoOpened = useRef(false)
+  useEffect(() => {
+    if (defaultOpen && !autoOpened.current) { autoOpened.current = true; setOpen(true) }
+  }, [defaultOpen])
   useEffect(() => {
     function onKey(ev: KeyboardEvent) { if (ev.key === 'Escape') setOpen(false) }
     if (open) { document.addEventListener('keydown', onKey); document.body.style.overflow = 'hidden' }
@@ -3303,6 +3309,18 @@ export default function EventoPage() {
   const [editingPagSaving, setEditingPagSaving] = useState(false)
   const [fotosDataEntrada, setFotosDataEntrada] = useState<string | null>(null)
   const [albumDataPrevista, setAlbumDataPrevista] = useState<string | null>(null)
+  // Vídeo por rever (editor enviou e aguarda decisão) → abre o bloco automaticamente
+  const [videoRevPendente, setVideoRevPendente] = useState(false)
+  useEffect(() => {
+    const ref = evento?.referencia
+    if (!ref) return
+    let cancelled = false
+    fetch(`/api/painel-editor/video-revisao?referencia=${encodeURIComponent(ref)}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setVideoRevPendente(d?.revisao?.status === 'Em Revisão') })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [evento?.referencia])
   const [albumNotionId, setAlbumNotionId] = useState<string | null>(null)
   const [referenciaLoaded, setReferenciaLoaded] = useState<string | null>(null)
   const [portalSelecaoEstado, setPortalSelecaoEstado] = useState<string>('Aguardar')
@@ -4367,7 +4385,7 @@ export default function EventoPage() {
 
         <BlocoHeader num="V">Produção & Entregas</BlocoHeader>
 
-        <DrawerBloco label="Produção & Entregas" sub="Estados de entrega (fotos, vídeo, álbum) e regras automáticas.">
+        <DrawerBloco label="Produção & Entregas" sub="Estados de entrega (fotos, vídeo, álbum) e regras automáticas." defaultOpen={videoRevPendente}>
 
         {/* ── Estado das Entregas ── */}
         <Section title="Estado das Entregas" right={
