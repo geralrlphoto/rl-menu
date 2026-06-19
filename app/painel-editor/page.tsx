@@ -225,13 +225,14 @@ export default function PainelEditor() {
 
   const [active, setActive] = useState('dashboard')
 
-  // ── Novos Projetos (lê localStorage + mock) — máximo 4 mais recentes ──
-  const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(MOCK_NOVOS)
-  const [finalizadosProjetos, setFinalizadosProjetos] = useState<typeof MOCK_FINALIZADOS>(MOCK_FINALIZADOS)
+  // ── Novos Projetos — mock só quando NÃO há editor real (?freelancer=) ──
+  const hasEditor = !!freelancerId
+  const [novosProjetos, setNovosProjetos] = useState<NovoMini[]>(hasEditor ? [] : MOCK_NOVOS)
+  const [finalizadosProjetos, setFinalizadosProjetos] = useState<typeof MOCK_FINALIZADOS>(hasEditor ? [] : MOCK_FINALIZADOS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
   const [storageTick, setStorageTick] = useState(0)  // refresh signal para useMemos que leem localStorage
-  // Inicializa com contagens calculadas dos defaults do mock
-  const initialKpis = (() => {
+  // Inicializa com contagens calculadas dos defaults do mock (0 quando há editor real)
+  const initialKpis = hasEditor ? { novos: 0, andamento: 0, finalizados: 0 } : (() => {
     const stages = Object.values(MOCK_PROJECTS_STAGES)
     return {
       novos:       stages.filter(s => s === 'Novo Projeto').length,
@@ -241,7 +242,50 @@ export default function PainelEditor() {
   })()
   const [kpiCounts, setKpiCounts] = useState(initialKpis)
 
+  // ── DADOS REAIS do editor (substituem o mock quando há ?freelancer=<id>) ──
+  const realMode = !!freelancerId
+  const [realPagamentos, setRealPagamentos] = useState<any[]>([])
+  const FINALIZADO_STAGES = ['Finalizado', 'Entregue']
+  useEffect(() => {
+    if (!freelancerId) return
+    let cancelled = false
+    Promise.all([
+      fetch(`/api/painel-editor/projetos?freelancer=${freelancerId}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/painel-editor/workflow?freelancer=${freelancerId}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/freelancer-pagamentos?freelancer_id=${freelancerId}`).then(r => r.json()).catch(() => ({})),
+    ]).then(([p, w, pg]) => {
+      if (cancelled) return
+      const jobs: any[] = Array.isArray(p?.jobs) ? p.jobs : []
+      const wf: Record<string, string> = (w?.workflow && typeof w.workflow === 'object') ? w.workflow : {}
+      const pagamentos: any[] = Array.isArray(pg?.pagamentos) ? pg.pagamentos : []
+      setRealPagamentos(pagamentos)
+      const stageOf = (j: any) => wf[j.referencia || j.notifId] || 'Novo'
+      const novos = jobs.filter(j => stageOf(j) === 'Novo')
+      const andamento = jobs.filter(j => { const s = stageOf(j); return s !== 'Novo' && !FINALIZADO_STAGES.includes(s) })
+      const finalizados = jobs.filter(j => FINALIZADO_STAGES.includes(stageOf(j)))
+      setNovosProjetos(novos.map(j => ({
+        id: j.referencia || j.notifId, noivos: j.noivos || j.local || 'Evento',
+        data: j.data_casamento ?? '', entrega: '', foto: '', status: 'Novo', createdAt: j.sentAt ?? '',
+      })) as NovoMini[])
+      setFinalizadosProjetos(finalizados.map(j => ({
+        id: j.referencia || j.notifId, noivos: j.noivos || j.local || 'Evento', entrega: '', foto: '',
+      })) as any)
+      setKpiCounts({ novos: novos.length, andamento: andamento.length, finalizados: finalizados.length })
+    })
+    return () => { cancelled = true }
+  }, [freelancerId])
+
+  // Recebimentos reais (soma dos pagamentos pagos) — usado no KPI e financeiro.
+  const realRecebido = useMemo(
+    () => realPagamentos.filter(p => String(p.status ?? '').toUpperCase() === 'PAGO').reduce((s, p) => s + (Number(p.valor) || 0), 0),
+    [realPagamentos],
+  )
+
   function loadFromStorage() {
+    if (freelancerId) {
+      // Editor real: os dados vêm da BD (efeito acima). Não usar mock/localStorage.
+      return
+    }
     try {
       const raw = localStorage.getItem('painel-editor-user-projects')
       const userProjects: any[] = raw ? JSON.parse(raw) : []
@@ -318,6 +362,7 @@ export default function PainelEditor() {
   // Mapa: 'YYYY-MM-DD' → { creations: string[], deliveries: string[], tasks: string[] }
   const calendarMarks = useMemo(() => {
     const marks: Record<string, { creations: string[]; deliveries: string[]; tasks: string[] }> = {}
+    if (hasEditor) return marks  // editor real: sem marcas mock no calendário
     const ensure = (k: string) => { if (!marks[k]) marks[k] = { creations: [], deliveries: [], tasks: [] }; return marks[k] }
 
     // 1) Projetos criados pelo utilizador (localStorage) — têm recebido + entregaPrevista
@@ -421,9 +466,11 @@ export default function PainelEditor() {
   // Gráfico (SVG path)
   const chartPath = useMemo(() => {
     const w = 320, h = 90, pad = 6
-    const max = Math.max(...MOCK_REVENUE)
-    const step = (w - pad*2) / (MOCK_REVENUE.length - 1)
-    const pts = MOCK_REVENUE.map((v, i) => {
+    // Editor real: linha plana no valor real recebido (sem curva fictícia).
+    const revenue = hasEditor ? new Array(MOCK_REVENUE.length).fill(realRecebido) : MOCK_REVENUE
+    const max = Math.max(...revenue, 1)
+    const step = (w - pad*2) / (revenue.length - 1)
+    const pts = revenue.map((v, i) => {
       const x = pad + i * step
       const y = h - pad - (v / max) * (h - pad*2)
       return { x, y }
@@ -438,11 +485,11 @@ export default function PainelEditor() {
     }
     const last = pts[pts.length - 1]
     return { path: d, last, points: pts, w, h }
-  }, [])
+  }, [hasEditor, realRecebido])
 
   // ── Stats de Performance: total + on-time + late + média de dias ─────
   const performanceStats = useMemo(() => {
-    if (typeof window === 'undefined') return { total: 0, onTime: 0, late: 0, emCurso: 0, mediaDias: 0 }
+    if (typeof window === 'undefined' || hasEditor) return { total: 0, onTime: 0, late: 0, emCurso: 0, mediaDias: 0 }
     try {
       const userRaw = localStorage.getItem('painel-editor-user-projects')
       const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
@@ -501,12 +548,12 @@ export default function PainelEditor() {
       const mediaDias = countEntregues > 0 ? Math.round(somaDias / countEntregues) : 0
       return { total: projects.length, onTime, late, emCurso, mediaDias }
     } catch { return { total: 0, onTime: 0, late: 0, emCurso: 0, mediaDias: 0 } }
-  }, [storageTick])
+  }, [storageTick, hasEditor])
 
   // ── Alertas críticos: projetos com prazo de entrega ultrapassado ──────
   // Aparece a brilhar vermelho até o admin marcar o projeto como Entregue.
   const projetosAtrasados = useMemo(() => {
-    if (typeof window === 'undefined') return [] as { id: string; noivos: string; entregaPrevista: string; diasAtraso: number; foto?: string }[]
+    if (typeof window === 'undefined' || hasEditor) return [] as { id: string; noivos: string; entregaPrevista: string; diasAtraso: number; foto?: string }[]
     try {
       const userRaw = localStorage.getItem('painel-editor-user-projects')
       const userProjects: any[] = userRaw ? JSON.parse(userRaw) : []
@@ -605,7 +652,7 @@ export default function PainelEditor() {
   // ── Próximos compromissos: TODAS as tarefas (user + auto + mocks) ──────
   // Filtra: não concluídas, ordena por data+hora ASC, limita a 5
   const compromissos = useMemo(() => {
-    if (typeof window === 'undefined') return [] as { hora: string; titulo: string; sub: string; overdue: boolean; dateMs: number }[]
+    if (typeof window === 'undefined' || hasEditor) return [] as { hora: string; titulo: string; sub: string; overdue: boolean; dateMs: number }[]
     try {
       const raw = localStorage.getItem('painel-editor-user-tasks')
       const userTasks: any[] = raw ? JSON.parse(raw) : []
@@ -677,7 +724,7 @@ export default function PainelEditor() {
 
   // ── Widget Tarefas (lateral): 2 últimas concluídas + 3 mais recentes ─────
   const tarefasWidget = useMemo(() => {
-    if (typeof window === 'undefined') return [] as { id: string; label: string; pct: number; done: boolean; ts: number }[]
+    if (typeof window === 'undefined' || hasEditor) return [] as { id: string; label: string; pct: number; done: boolean; ts: number }[]
     try {
       const raw = localStorage.getItem('painel-editor-user-tasks')
       const userTasks: any[] = raw ? JSON.parse(raw) : []
@@ -723,6 +770,7 @@ export default function PainelEditor() {
   // Soma das parcelas com status 'Recebido' no ano corrente, aplicando overrides
   const totalAnualEuros = useMemo(() => {
     if (typeof window === 'undefined') return 0
+    if (hasEditor) return realRecebido  // editor real: soma dos pagamentos reais
     try {
       // 1) user-projects do localStorage
       const userRaw = localStorage.getItem('painel-editor-user-projects')
@@ -776,7 +824,7 @@ export default function PainelEditor() {
       })
       return total
     } catch { return 0 }
-  }, [storageTick])
+  }, [storageTick, hasEditor, realRecebido])
 
   const totalAnualLabel = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalAnualEuros) + ' €'
 
