@@ -133,6 +133,10 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/freelancer-auth') ||
     pathname.startsWith('/api/freelancers') ||
     pathname.startsWith('/api/freelancer-') ||
+    // APIs do painel do editor — id-parametrizadas, lidas pelo próprio editor
+    // (só tem fl_session, não rl_auth). Sem isto o middleware reenviava-as para
+    // /login e a dashboard do editor aparecia vazia (admin via dados, editor não).
+    pathname.startsWith('/api/painel-editor') ||
     pathname.startsWith('/api/noivos-auth') ||
     pathname.startsWith('/api/noivos-recover') ||
     pathname.startsWith('/api/noivos-presence') ||
