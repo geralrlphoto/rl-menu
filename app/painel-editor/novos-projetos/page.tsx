@@ -1482,7 +1482,7 @@ function EditarDadosModal({
 
 // ── Material + Relatório Diário enviados pela RL ───────────────────────────
 //  Mostrado no topo do projeto expandido quando o trabalho vem da RL (modo real).
-function TrabalhoRLSection({ downloads, relatorios }: { downloads: string[]; relatorios: RelatorioDiario[] }) {
+function TrabalhoRLSection({ downloads, relatorios, locked }: { downloads: string[]; relatorios: RelatorioDiario[]; locked?: boolean }) {
   const RD_CAMPOS: { key: keyof RelatorioDiario; label: string }[] = [
     { key: 'gravado',         label: 'O que foi gravado' },
     { key: 'tipoCerimonia',   label: 'Tipo de cerimónia' },
@@ -1504,10 +1504,24 @@ function TrabalhoRLSection({ downloads, relatorios }: { downloads: string[]; rel
       <div className="rounded-2xl border border-gold/25 p-4 sm:p-5 space-y-5"
         style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.55))' }}>
 
-        {/* Download do material */}
+        {/* Download do material — bloqueado até o estado passar a "Em Edição" */}
         <div>
           <Label>Download do Material</Label>
-          {downloads.length > 0 ? (
+          {downloads.length === 0 ? (
+            <p className="text-[12px] text-white/30 italic mt-1">Sem link de download ainda.</p>
+          ) : locked ? (
+            <div className="mt-1">
+              <div className="flex flex-wrap gap-2">
+                {downloads.map((_, i) => (
+                  <span key={i} aria-disabled="true" title="Coloca o estado do vídeo em &quot;Em Edição&quot; para desbloquear"
+                    className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-white/30 font-semibold tracking-wider uppercase cursor-not-allowed select-none">
+                    🔒 Download{downloads.length > 1 ? ` ${i + 1}` : ''}
+                  </span>
+                ))}
+              </div>
+              <p className="text-[11px] text-gold/60 mt-2">Coloca o estado do vídeo em <span className="text-gold font-semibold">“Em Edição”</span> para desbloquear o download.</p>
+            </div>
+          ) : (
             <div className="flex flex-wrap gap-2 mt-1">
               {downloads.map((u, i) => (
                 <a key={i} href={u} target="_blank" rel="noopener noreferrer"
@@ -1516,8 +1530,6 @@ function TrabalhoRLSection({ downloads, relatorios }: { downloads: string[]; rel
                 </a>
               ))}
             </div>
-          ) : (
-            <p className="text-[12px] text-white/30 italic mt-1">Sem link de download ainda.</p>
           )}
         </div>
 
@@ -1847,7 +1859,7 @@ function ProjectCard({
 
           {/* Material + Relatório enviados pela RL */}
           {((p.rlDownloads && p.rlDownloads.length > 0) || (p.rlRelatorios && p.rlRelatorios.length > 0)) && (
-            <TrabalhoRLSection downloads={p.rlDownloads ?? []} relatorios={p.rlRelatorios ?? []} />
+            <TrabalhoRLSection downloads={p.rlDownloads ?? []} relatorios={p.rlRelatorios ?? []} locked={p.stage === 'Novo Projeto'} />
           )}
 
           {/* Workflow */}
