@@ -93,6 +93,8 @@
 .portal-atmosphere .atm-status.done .pip  { background: var(--done); }
 .portal-atmosphere .atm-status.select { color: #d9b25e; }
 .portal-atmosphere .atm-status.select .pip { background: #d9b25e; box-shadow: 0 0 0 3px rgba(217,178,94,.16); }
+.portal-atmosphere .atm-status.edit { color: #7bb0a8; }
+.portal-atmosphere .atm-status.edit .pip { background: #7bb0a8; box-shadow: 0 0 0 3px rgba(123,176,168,.16); }
 
 /* ── image placeholder ── */
 .portal-atmosphere .ph {
