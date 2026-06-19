@@ -9,11 +9,12 @@ function db() {
 }
 
 // Estado de edição do editor → "ESTADO DO VIDEO" do portal dos noivos.
-// Valores aceites na ficha do evento: Aguardar | Em Edição | Entregue | S/SERVIÇO.
+// Valores: Aguardar | Em Edição | Em Revisão | Entregue | S/SERVIÇO.
 function stageToVideoEstado(stage: string): string {
   const s = (stage || '').trim()
   if (s === '' || s === 'Novo' || s === 'Novo Projeto') return 'Aguardar'
   if (s === 'Entregue') return 'Entregue'
+  if (s === 'Para Revisão' || s === 'Correções') return 'Em Revisão'
   return 'Em Edição'
 }
 

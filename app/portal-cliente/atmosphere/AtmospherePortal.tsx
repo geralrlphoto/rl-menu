@@ -105,6 +105,7 @@ const DEFAULT_DELIVERIES: NonNullable<AtmosphereData['deliveries']> = [
 function mapEstadoToDeliveryState(s: string | null | undefined): import('./PortalShell').DeliveryState {
   const v = String(s ?? '').trim().toLowerCase()
   if (v.startsWith('em sele')) return 'select'
+  if (v.startsWith('em revis')) return 'review'
   if (v.startsWith('em edi')) return 'edit'
   if (!v || v === 'aguardar' || v === 'aguarda') return 'wait'
   if (v === 'entregue') return 'ok'

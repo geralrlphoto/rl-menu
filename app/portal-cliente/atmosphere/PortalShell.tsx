@@ -328,7 +328,7 @@ export function Gallery({
 /* ============================================================
    Deliveries
    ============================================================ */
-export type DeliveryState = 'ok' | 'wait' | 'info' | 'done' | 'select' | 'edit'
+export type DeliveryState = 'ok' | 'wait' | 'info' | 'done' | 'select' | 'edit' | 'review'
 const STATE_LABEL: Record<DeliveryState, string> = {
   ok:     'Entregue',
   wait:   'Aguarda',
@@ -336,6 +336,7 @@ const STATE_LABEL: Record<DeliveryState, string> = {
   done:   'Concluído',
   select: 'Em Seleção',
   edit:   'Em Edição',
+  review: 'Em Revisão',
 }
 
 export function DeliveryCard({
