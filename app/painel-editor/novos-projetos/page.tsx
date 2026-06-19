@@ -7,6 +7,7 @@ import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
 import { getTracksForProject, disassociate } from '../_data/musicas-associacao'
+import { getEditorId } from '../_data/freelancer-profile'
 
 // ────────────────────────────────────────────────────────────────────────────
 //  NOVOS PROJETOS — RL Photo.Video (premium cinematic editor workspace)
@@ -112,6 +113,60 @@ function ptToIso(pt: string): string {
   const [d, m, y] = pt.split('/')
   if (!d || !m || !y) return ''
   return `${y}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`
+}
+
+/** Converte timestamp ISO (sentAt do trabalho) para 'dd/mm/yyyy — HH:MM' */
+function isoToPtDateTime(iso: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} — ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+// ── Estados do workflow (API) ↔ stages desta página ──────────────────────
+// A API /workflow guarda 'Novo'/'Áudio'; esta página usa 'Novo Projeto'/'Áudio / Sincronização'.
+const WF_TO_STAGE: Record<string, WorkflowStage> = {
+  'Novo': 'Novo Projeto', 'Em Edição': 'Em Edição', 'Color Grading': 'Color Grading',
+  'Áudio': 'Áudio / Sincronização', 'Para Revisão': 'Para Revisão', 'Correções': 'Correções',
+  'Finalizado': 'Finalizado', 'Entregue': 'Entregue',
+}
+function fromWfStage(s: string): WorkflowStage { return WF_TO_STAGE[s] ?? 'Novo Projeto' }
+function toWfStage(s: WorkflowStage): string {
+  if (s === 'Novo Projeto') return 'Novo'
+  if (s === 'Áudio / Sincronização') return 'Áudio'
+  if (s === 'Trailer em Produção') return 'Em Edição'
+  return s
+}
+
+/** Converte um trabalho real enviado pela RL (API /projetos) num Project desta página */
+function jobToProject(j: any, wf: Record<string, string>, idx: number): Project {
+  const key = j.referencia || j.notifId || String(idx)
+  const downloads: string[] = Array.isArray(j.downloads) ? j.downloads : []
+  return {
+    id: key,
+    referencia: j.referencia || undefined,
+    noivos: j.noivos || j.local || 'Evento',
+    local: j.local || '',
+    foto: FALLBACK_FOTOS[idx % FALLBACK_FOTOS.length],
+    recebido: isoToPtDateTime(j.sentAt || ''),
+    dataCasamento: isoToPt(j.data_casamento || ''),
+    entregaPrevista: '',
+    pacote: 'Pacote Premium 👑',
+    duracao: '~12 min',
+    stage: fromWfStage(wf[key] || 'Novo'),
+    approval: 'Aguardando Revisão',
+    observacoes: [],
+    clientLink: downloads[0] || '',
+    materialStatus: 'Material pendente',
+    downloadStatus: 'Não descarregado',
+    ultimoDownload: null,
+    materialItems: [],
+    finalLink: '',
+    deliveries: [],
+    versions: [],
+    feedback: [],
+  }
 }
 
 /** Mapeia evento da API para EventReference — aceita TODOS os eventos com referência */
@@ -358,6 +413,9 @@ export default function NovosProjetosPage() {
   const [projects, setProjects] = useState<Project[]>(PROJECTS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
   const [hydrated, setHydrated] = useState(false)
+  // Editor real (?freelancer=<id>): mostra os trabalhos enviados pela RL em vez dos mocks
+  const [freelancerId, setFreelancerId] = useState<string | null>(null)
+  const realMode = !!freelancerId
   const [activeTab, setActiveTab] = useState('Todos')
   const [search, setSearch] = useState('')
   const [showOnlyActive, setShowOnlyActive] = useState(false)
@@ -382,8 +440,32 @@ export default function NovosProjetosPage() {
   const [page, setPage] = useState(1)
   const [showAddModal, setShowAddModal] = useState(false)
 
-  // ── Carregar projetos criados pelo utilizador + patches sobre mocks ───
+  // ── Carregar projetos ────────────────────────────────────────────────
+  //  • Editor real (?freelancer=<id>): trabalhos enviados pela RL (BD)
+  //  • Sem editor: projetos criados pelo utilizador + patches sobre mocks
   useEffect(() => {
+    const fid = getEditorId(searchParams?.get('freelancer') ?? null)
+    setFreelancerId(fid)
+
+    // ── REAL MODE: trabalhos da RL + estado de edição (workflow) ──
+    if (fid) {
+      let cancelled = false
+      Promise.all([
+        fetch(`/api/painel-editor/projetos?freelancer=${fid}`).then(r => r.json()).catch(() => ({})),
+        fetch(`/api/painel-editor/workflow?freelancer=${fid}`).then(r => r.json()).catch(() => ({})),
+      ]).then(([p, w]) => {
+        if (cancelled) return
+        const jobs: any[] = Array.isArray(p?.jobs) ? p.jobs : []
+        const wf: Record<string, string> = (w?.workflow && typeof w.workflow === 'object') ? w.workflow : {}
+        setProjects(jobs.map((j, i) => jobToProject(j, wf, i)))
+        // Brilho gold nos trabalhos ainda não lidos
+        setUnseenIds(new Set(jobs.filter(j => !j.lida).map((j, i) => j.referencia || j.notifId || String(i))))
+        setHydrated(true)
+      })
+      return () => { cancelled = true }
+    }
+
+    // ── MOCK MODE: localStorage + mocks ──
     try {
       const userJson = localStorage.getItem(STORAGE_KEY)
       const userProjects: Project[] = userJson ? JSON.parse(userJson) : []
@@ -408,15 +490,15 @@ export default function NovosProjetosPage() {
       console.warn('Erro ao carregar projetos guardados:', err)
     }
     setHydrated(true)
-  }, [])
+  }, [searchParams])
 
   // ── Persistir unseen ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!hydrated) return
+    if (!hydrated || realMode) return
     try {
       localStorage.setItem(STORAGE_UNSEEN_KEY, JSON.stringify([...unseenIds]))
     } catch {}
-  }, [unseenIds, hydrated])
+  }, [unseenIds, hydrated, realMode])
 
   function markAsSeen(id: string) {
     setUnseenIds(prev => {
@@ -428,8 +510,9 @@ export default function NovosProjetosPage() {
   }
 
   // ── Persistir alterações no localStorage ─────────────────────────────
+  //  Em modo real os dados vivem na BD (workflow API), não no localStorage.
   useEffect(() => {
-    if (!hydrated) return
+    if (!hydrated || realMode) return
     try {
       const mockIds = new Set(PROJECTS.map(p => p.id))
       // 1) Projetos criados pelo utilizador (não estão no mock)
@@ -454,7 +537,7 @@ export default function NovosProjetosPage() {
     } catch (err) {
       console.warn('Erro ao guardar projetos:', err)
     }
-  }, [projects, hydrated])
+  }, [projects, hydrated, realMode])
 
   function handleCreate(p: Project) {
     setProjects(prev => [p, ...prev])
@@ -519,6 +602,17 @@ export default function NovosProjetosPage() {
       }
       return next
     }))
+
+    // Em modo real: persiste a mudança de estado no workflow do editor (BD)
+    if (realMode && freelancerId && patch.stage) {
+      const proj = projects.find(p => p.id === id)
+      const key = proj?.referencia || id
+      fetch('/api/painel-editor/workflow', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer: freelancerId, referencia: key, stage: toWfStage(patch.stage) }),
+      }).catch(() => {})
+    }
   }
 
   function deleteProject(id: string) {
