@@ -1753,9 +1753,8 @@ function ProjectCard({
                 </span>
               )}
             </button>
-          <div className="relative">
-            <button onClick={() => setMenuOpen(v => !v)}
-              className="w-9 h-9 rounded-lg border border-white/10 text-white/60 hover:text-gold hover:border-gold/30 transition-all flex items-center justify-center text-lg">⋮</button>
+          {/* Menu de três pontos (ações de gestão) — escondido no painel do editor */}
+          <div className="relative hidden">
             {menuOpen && (
               <div className="absolute top-11 right-0 w-60 rounded-xl border border-gold/20 backdrop-blur-xl p-1.5 z-30"
                 style={{ background: 'rgba(15,12,8,0.95)', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.7)' }}>
