@@ -218,6 +218,7 @@ export default async function SecaoPage({ params }: Props) {
       { href: '/albuns-casamento', label: 'Álbuns de Casamento',  internal: true },
       { href: '/portais-clientes', label: 'Portal do Cliente',    internal: true },
       { href: '/contrato-cps',     label: 'Dados para Contrato CPS', internal: true },
+      { href: '/galeria-convidados', label: 'Fotos Convidados',   internal: true },
     )
   }
 
