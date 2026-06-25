@@ -171,6 +171,8 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     revisaoLink: j.revisao?.link || undefined,
     revisaoStatus: j.revisao?.status || undefined,
     revisaoFeedback: j.revisao?.feedback || undefined,
+    entregaLink: j.revisao?.entregaLink || undefined,
+    entregaEm: j.revisao?.entregaEm || undefined,
     rlDownloads: downloads,
     rlRelatorios: Array.isArray(j.relatorios) ? j.relatorios.filter(Boolean) : [],
   }
@@ -222,6 +224,8 @@ type Project = {
   revisaoLink?: string        // link do vídeo (Frame.io) enviado para revisão
   revisaoStatus?: string      // 'Em Revisão' | 'Aprovado' | 'Requer Alterações'
   revisaoFeedback?: string    // notas do admin quando pede alterações
+  entregaLink?: string        // link da entrega final do projeto
+  entregaEm?: string          // timestamp ISO da entrega
   rlDownloads?: string[]      // link(s) de download do material
   rlRelatorios?: RelatorioDiario[]   // relatório(s) diário(s) da equipa
 }
@@ -1704,6 +1708,69 @@ function RevisaoVideoSection({ p }: { p: Project }) {
   )
 }
 
+// ── Entrega do Projeto — editor envia o link da entrega final ────────────────
+function EntregaProjetoSection({ p }: { p: Project }) {
+  const [link, setLink] = useState(p.entregaLink ?? '')
+  const [entregue, setEntregue] = useState(!!p.entregaLink)
+  const [sending, setSending] = useState(false)
+  const [msg, setMsg] = useState('')
+
+  async function enviar() {
+    const url = link.trim()
+    if (!url || sending) return
+    setSending(true); setMsg('')
+    try {
+      const res = await fetch('/api/painel-editor/entrega-projeto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          referencia: p.referencia,
+          evento_id: p.eventoId ?? null,
+          freelancer: getEditorId(),
+          link: url,
+          noivos: p.noivos,
+          local: p.local ?? null,
+        }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (res.ok && d?.ok) { setEntregue(true); setMsg('Entrega enviada ✓') }
+      else setMsg(d?.error || 'Erro ao enviar')
+    } catch { setMsg('Erro de rede') }
+    setSending(false)
+  }
+
+  return (
+    <Section title="Entrega do Projeto">
+      <div className="rounded-2xl border border-gold/25 p-4 sm:p-5 space-y-3"
+        style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.55))' }}>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Label>Link da entrega final (Drive · WeTransfer · Frame.io · Vimeo)</Label>
+          {entregue && <span className="text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold bg-emerald-500/15 text-emerald-300 border-emerald-500/30">Entregue</span>}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <input
+            value={link}
+            onChange={e => setLink(e.target.value)}
+            placeholder="https://…  link da entrega do projeto"
+            className="flex-1 min-w-[220px] bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white/85 placeholder:text-white/25 focus:outline-none focus:border-gold/40"
+          />
+          <button onClick={enviar} disabled={!link.trim() || sending}
+            className="inline-flex items-center gap-1.5 text-[11px] px-4 py-2 rounded-lg bg-gold text-black font-bold tracking-wider uppercase hover:bg-gold/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed">
+            {sending ? 'A enviar…' : '↗ Enviar Entrega'}
+          </button>
+          {link.trim() && (
+            <a href={link.trim()} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] px-3 py-2 rounded-lg border border-white/10 text-white/60 hover:text-gold hover:border-gold/30 transition-all">
+              Abrir
+            </a>
+          )}
+        </div>
+        {msg && <p className="text-[11px] text-gold/80">{msg}</p>}
+      </div>
+    </Section>
+  )
+}
+
 function ProjectCard({
   p, expanded, isUnseen, isAdmin, onToggle, onChange, onDelete,
 }: {
@@ -2029,6 +2096,9 @@ function ProjectCard({
 
           {/* Revisão do Vídeo (Frame.io) — só para trabalhos reais da RL */}
           {p.referencia && <RevisaoVideoSection p={p} />}
+
+          {/* Entrega do Projeto (link final) — só para trabalhos reais da RL */}
+          {p.referencia && <EntregaProjetoSection p={p} />}
 
           {/* Approval */}
           <Section title="Aprovação do Cliente">

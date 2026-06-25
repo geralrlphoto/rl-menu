@@ -189,6 +189,23 @@ function RevisaoVideoAdmin({ referencia }: { referencia: string }) {
           )}
         </div>
       )}
+
+      {/* Entrega final do projeto (enviada pelo editor) */}
+      <div className="mt-2 pt-3 border-t border-white/[0.06]">
+        <p className="text-[10px] tracking-[0.3em] uppercase text-white/45 font-medium mb-1.5">Entrega do Projeto</p>
+        {rev?.entrega_link ? (
+          <div className="flex flex-col gap-1.5">
+            <a href={rev.entrega_link} target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-[12px] px-3 py-2 rounded-lg border border-emerald-500/35 text-emerald-300 hover:bg-emerald-500/10 transition-all w-fit max-w-full truncate">
+              ⬇ Abrir entrega final
+            </a>
+            <p className="text-[11px] text-white/40 break-all">{rev.entrega_link}</p>
+            {rev.entrega_em && <p className="text-[10px] text-white/35">Enviada em {new Date(rev.entrega_em).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })}</p>}
+          </div>
+        ) : (
+          <p className="text-[12px] text-white/35 italic">O editor ainda não enviou a entrega final.</p>
+        )}
+      </div>
     </Section>
   )
 }

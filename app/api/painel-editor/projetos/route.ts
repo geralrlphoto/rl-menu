@@ -72,11 +72,11 @@ export async function GET(req: NextRequest) {
   if (refs.length) {
     const { data: revs } = await supabase
       .from('video_revisoes')
-      .select('referencia, link, status, feedback')
+      .select('referencia, link, status, feedback, entrega_link, entrega_em')
       .in('referencia', refs)
     for (const j of jobs) {
       const r = (revs ?? []).find((x: any) => x.referencia === j.referencia)
-      if (r) j.revisao = { link: r.link, status: r.status, feedback: r.feedback }
+      if (r) j.revisao = { link: r.link, status: r.status, feedback: r.feedback, entregaLink: r.entrega_link, entregaEm: r.entrega_em }
     }
   }
 

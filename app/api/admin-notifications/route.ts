@@ -32,6 +32,7 @@ const TIPO_LABELS: Record<string, string> = {
   relatorio_diario_enviado: 'Relatório Diário enviado',
   video_estado_alterado:    'Estado do Vídeo · Editor',
   video_revisao_enviada:    'Vídeo para Revisão · Editor',
+  entrega_projeto:          'Entrega do Projeto · Editor',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -58,6 +59,7 @@ const TIPO_ICONS: Record<string, string> = {
   relatorio_diario_enviado: '🎥',
   video_estado_alterado:    '🎬',
   video_revisao_enviada:    '🎞',
+  entrega_projeto:          '📦',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -396,6 +398,45 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] video_revisao_enviada read failed:', err)
+    }
+
+    // ── Entrega final do projeto enviada pelo editor (freelancer_notificacoes tipo='entrega_projeto') ──
+    try {
+      const { data: entregas } = await supabase
+        .from('freelancer_notificacoes')
+        .select('id, freelancer_id, titulo, mensagem, created_at')
+        .eq('tipo', 'entrega_projeto')
+        .order('created_at', { ascending: false })
+        .limit(50)
+      const enIds = Array.from(new Set((entregas ?? []).map((n: any) => n.freelancer_id).filter(Boolean)))
+      const enNomes = new Map<string, string>(nomesById)
+      const enMissing = enIds.filter(id => !enNomes.has(id))
+      if (enMissing.length > 0) {
+        const { data: flsEn } = await supabase.from('freelancers').select('id, nome').in('id', enMissing)
+        for (const f of (flsEn ?? []) as any[]) enNomes.set(f.id, f.nome)
+      }
+      for (const n of (entregas ?? []) as any[]) {
+        let meta: any = {}
+        const m = String(n.mensagem ?? '').match(/^__META__(.*?)__\/META__/)
+        if (m) { try { meta = JSON.parse(m[1]) } catch { meta = {} } }
+        notifications.push({
+          id: `entrega_projeto::${n.id}`,
+          tipo: 'entrega_projeto',
+          tipo_label: TIPO_LABELS.entrega_projeto,
+          tipo_icon: TIPO_ICONS.entrega_projeto,
+          casamento_id: '',
+          freelancer_id: n.freelancer_id,
+          freelancer_nome: enNomes.get(n.freelancer_id) ?? '—',
+          local: meta.local ?? meta.noivos ?? '',
+          data_casamento: null,
+          url: meta.evento_id ? `/eventos-2026/${meta.evento_id}` : '/freelancers',
+          sent_at: n.created_at,
+          referencia: meta.referencia ?? null,
+          mensagem: 'O editor enviou a entrega final do projeto.',
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] entrega_projeto read failed:', err)
     }
 
     // ── Relatório Diário enviado pela equipa (freelancer_casamentos.relatorio_diario) ──
