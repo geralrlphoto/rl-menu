@@ -9,11 +9,11 @@ type Pedido = {
   mensagem: string | null; fotografias: string | null; comprovativo_url: string | null
   referencia: string | null; created_at: string
 }
+type Evento = { referencia: string; cliente: string; data_evento: string }
 
 const GOLD = '#c8a866'
 const eur = (n: any) => `${Number(n || 0).toFixed(2)} €`
 
-// "DD/MM/AAAA" (com ou sem espaços) → timestamp; inválido → +infinito (fica no fim)
 function weddingTs(s: string | null): number {
   if (!s) return Number.MAX_SAFE_INTEGER
   const p = s.replace(/\s/g, '').split('/').map(Number)
@@ -23,6 +23,7 @@ function weddingTs(s: string | null): number {
 
 export default function PedidosFotos() {
   const [pedidos, setPedidos] = useState<Pedido[]>([])
+  const [eventos, setEventos] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
   const [refs, setRefs] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState<string | null>(null)
@@ -43,23 +44,32 @@ export default function PedidosFotos() {
   }
   useEffect(() => { load() }, [])
 
-  async function guardarRef(id: string) {
+  // Casamentos (referência + noivos) — fonte: /api/eventos-supabase (vários anos)
+  useEffect(() => {
+    const anos = [2025, 2026, 2027]
+    Promise.all(anos.map(a => fetch(`/api/eventos-supabase?ano=${a}`).then(r => r.json()).catch(() => ({}))))
+      .then(results => {
+        const byRef = new Map<string, Evento>()
+        results.forEach(res => (res?.events ?? []).forEach((e: any) => {
+          if (e.referencia && !byRef.has(e.referencia)) byRef.set(e.referencia, { referencia: e.referencia, cliente: e.cliente ?? '', data_evento: e.data_evento ?? '' })
+        }))
+        setEventos(Array.from(byRef.values()).sort((a, b) => (a.data_evento || '').localeCompare(b.data_evento || '')))
+      }).catch(() => {})
+  }, [])
+
+  async function guardarRef(id: string, val: string) {
+    const ref = (val ?? '').trim()
+    setRefs(r => ({ ...r, [id]: ref }))
     setSaving(id)
     try {
       await fetch('/api/pedidos-fotos', {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, referencia: refs[id] ?? '' }),
+        body: JSON.stringify({ id, referencia: ref }),
       })
-      setPedidos(prev => prev.map(p => p.id === id ? { ...p, referencia: (refs[id] ?? '').trim() || null } : p))
+      setPedidos(prev => prev.map(p => p.id === id ? { ...p, referencia: ref || null } : p))
     } catch {}
     setSaving(null)
   }
-
-  // Referências já atribuídas (distintas) — para o autocompletar
-  const refsAtribuidas = useMemo(
-    () => Array.from(new Set(pedidos.map(p => p.referencia).filter(Boolean) as string[])).sort(),
-    [pedidos],
-  )
 
   const visiveis = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -77,14 +87,11 @@ export default function PedidosFotos() {
   }, [pedidos, search, sort])
 
   const fmtDate = (iso: string) => { try { return new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) } catch { return iso } }
+  const optLabel = (e: Evento) => `${e.referencia}${e.cliente ? ` · ${e.cliente}` : ''}`
   const inputCls = 'bg-black/30 border border-white/[0.1] rounded-lg px-3 py-2 text-[12px] text-white/90 placeholder:text-white/25 focus:outline-none focus:border-[#c8a866]/40'
 
   return (
     <div>
-      <datalist id="refs-atribuidas">
-        {refsAtribuidas.map(r => <option key={r} value={r} />)}
-      </datalist>
-
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <p className="text-[11px] tracking-[0.3em] uppercase font-bold" style={{ color: GOLD }}>
           Pedidos de Fotos {!loading && <span className="text-white/35">· {visiveis.length}{visiveis.length !== pedidos.length ? `/${pedidos.length}` : ''}</span>}
@@ -119,7 +126,8 @@ export default function PedidosFotos() {
         <div className="flex flex-col gap-4">
           {visiveis.map(p => {
             const fotos = (p.fotografias ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean)
-            const dirty = (refs[p.id] ?? '') !== (p.referencia ?? '')
+            const cur = refs[p.id] ?? ''
+            const refInList = !cur || eventos.some(e => e.referencia === cur)
             return (
               <div key={p.id} className="rounded-2xl border border-white/[0.08] p-5"
                 style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.025), rgba(200,168,102,0.02))' }}>
@@ -154,19 +162,15 @@ export default function PedidosFotos() {
                       ↗ Ver comprovativo
                     </a>
                   )}
-                  <div className="flex-1 min-w-[220px]">
-                    <label className="block text-[10px] tracking-[0.2em] uppercase text-white/45 mb-1.5">Referência do casamento</label>
-                    <div className="flex items-center gap-2">
-                      <input list="refs-atribuidas" value={refs[p.id] ?? ''} onChange={e => setRefs(r => ({ ...r, [p.id]: e.target.value }))}
-                        placeholder="ex: CAS_150_26_RL"
-                        className="flex-1 bg-black/30 border border-white/[0.1] rounded-lg px-3 py-2 text-[12px] text-white/90 placeholder:text-white/25 focus:outline-none focus:border-[#c8a866]/40 font-mono" />
-                      <button onClick={() => guardarRef(p.id)} disabled={!dirty || saving === p.id}
-                        className="text-[11px] px-4 py-2 rounded-lg font-bold tracking-wider uppercase transition-all disabled:opacity-40"
-                        style={{ background: dirty ? GOLD : 'rgba(255,255,255,0.06)', color: dirty ? '#0b0a08' : 'rgba(255,255,255,0.5)' }}>
-                        {saving === p.id ? '…' : 'Guardar'}
-                      </button>
-                    </div>
-                    {p.referencia && !dirty && <p className="text-[10px] text-emerald-300/70 mt-1.5">Associado a {p.referencia} — aparece na ficha dos noivos.</p>}
+                  <div className="flex-1 min-w-[240px]">
+                    <label className="block text-[10px] tracking-[0.2em] uppercase text-white/45 mb-1.5">Referência do casamento {saving === p.id && <span className="text-[#c8a866]">· a guardar…</span>}</label>
+                    <select value={cur} onChange={e => guardarRef(p.id, e.target.value)}
+                      className="w-full bg-black/30 border border-white/[0.1] rounded-lg px-3 py-2.5 text-[12px] text-white/90 focus:outline-none focus:border-[#c8a866]/40 cursor-pointer [color-scheme:dark] font-mono">
+                      <option value="">— Sem referência —</option>
+                      {!refInList && cur && <option value={cur}>{cur} (atual)</option>}
+                      {eventos.map(e => <option key={e.referencia} value={e.referencia}>{optLabel(e)}</option>)}
+                    </select>
+                    {p.referencia && refs[p.id] === p.referencia && <p className="text-[10px] text-emerald-300/70 mt-1.5">Associado a {p.referencia} — aparece na ficha dos noivos.</p>}
                   </div>
                 </div>
               </div>
