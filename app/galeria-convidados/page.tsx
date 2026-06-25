@@ -1,7 +1,7 @@
 import Link from 'next/link'
+import PhotoOrderForm from './PhotoOrderForm'
 
-// Página em branco (placeholder) — Fotos Convidados.
-// Conteúdo a definir; por agora só a estrutura base.
+// Fotos Convidados — encomenda de fotografias (formulário → /api/photo-orders).
 export default function GaleriaConvidadosPage() {
   return (
     <main className="min-h-screen text-white" style={{ background: '#120d08' }}>
@@ -19,9 +19,8 @@ export default function GaleriaConvidadosPage() {
           <div className="mt-4 h-px w-16" style={{ background: 'linear-gradient(90deg, rgba(200,168,102,0.7), transparent)' }} />
         </header>
 
-        <div className="mt-16 rounded-2xl border border-white/[0.08] py-20 text-center"
-          style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.02), rgba(200,168,102,0.015))' }}>
-          <p className="text-[13px] text-white/35">Página em branco — conteúdo a definir.</p>
+        <div className="mt-12">
+          <PhotoOrderForm />
         </div>
       </div>
     </main>
