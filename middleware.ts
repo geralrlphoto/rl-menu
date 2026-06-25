@@ -203,6 +203,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/test-batizado-email') ||
     pathname.startsWith('/api/webhook-tally-fotos-convidados') ||
     pathname.startsWith('/api/photo-orders') ||
+    pathname.startsWith('/adquirir-fotografias') ||
     pathname.startsWith('/portal-media') ||
     pathname.startsWith('/media/portal-cliente/acesso') ||
     pathname.startsWith('/api/media-portal-acesso') ||

@@ -35,6 +35,7 @@ const eur = (n: number) => `${Number(n).toFixed(2)} €`
 // ── Template HTML do email (tom RL) ──────────────────────────────────────────
 function buildEmailHtml(o: {
   pedido: string; nome: string; email: string; telefone: string; morada?: string | null
+  noivos?: string | null; data_casamento?: string | null
   formato: string; quantidade: number; subtotal: number; portes: number; total: number
 }): string {
   const data = new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -65,6 +66,8 @@ function buildEmailHtml(o: {
             ${row('Nº do pedido', o.pedido, true)}
             ${row('Data', data)}
             ${row('Nome', o.nome)}
+            ${o.noivos ? row('Nome dos noivos', o.noivos) : ''}
+            ${o.data_casamento ? row('Data do casamento', o.data_casamento) : ''}
             ${row('Email', o.email)}
             ${row('Telefone', o.telefone)}
             ${isPapel && o.morada ? row('Morada', o.morada) : ''}
@@ -113,6 +116,8 @@ export async function POST(req: NextRequest) {
     return typeof v === 'string' ? v.trim() : ''
   }
   const nome = get('nome'), email = get('email'), telefone = get('telefone')
+  const noivos = get('noivos') || null
+  const data_casamento = get('data_casamento') || null
   const morada = get('morada') || null
   const formato = (get('formato') || 'digital').toLowerCase() === 'papel' ? 'papel' : 'digital'
   const quantidade = parseInt(get('quantidade') || '0', 10) || 0
@@ -157,13 +162,13 @@ export async function POST(req: NextRequest) {
 
     // ── Insere o pedido ──
     const { error: insErr } = await supabase.from('photo_orders').insert({
-      pedido, nome, email, telefone, morada, formato,
+      pedido, nome, email, telefone, noivos, data_casamento, morada, formato,
       quantidade, subtotal, portes, total, mensagem, comprovativo_url,
     })
     if (insErr) throw new Error(insErr.message)
 
     // ── Emails ──
-    const html = buildEmailHtml({ pedido, nome, email, telefone, morada, formato, quantidade, subtotal, portes, total })
+    const html = buildEmailHtml({ pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total })
     const b64 = Buffer.from(bytes).toString('base64')
 
     // (A) cliente
