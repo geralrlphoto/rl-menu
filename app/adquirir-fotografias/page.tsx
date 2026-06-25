@@ -76,6 +76,22 @@ const CSS = `
 .adqf .qty-hint{font-family:var(--fm);font-size:11px;letter-spacing:.1em;color:var(--tx-mid);margin-top:14px;}
 .adqf .qty-hint b{color:var(--g);}
 
+/* lista dinâmica de fotografias */
+.adqf .fotolist{display:flex;flex-direction:column;gap:12px;margin-bottom:14px;}
+.adqf .fotorow{display:flex;align-items:center;gap:12px;}
+.adqf .fotorow .idx{font-family:var(--fm);font-size:11px;letter-spacing:.06em;color:var(--tx-dim);width:30px;flex:none;}
+.adqf .fotorow input{flex:1;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--tx);
+  font-family:var(--fd);font-weight:300;font-size:clamp(16px,1.4vw,20px);padding:6px 0 10px;outline:none;transition:border-color .4s var(--ease);}
+.adqf .fotorow input::placeholder{color:var(--tx-dim);}
+.adqf .fotorow input:focus{border-color:var(--g);}
+.adqf .fotorow .rm{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--tx-mid);cursor:pointer;font-size:13px;transition:.3s;}
+.adqf .fotorow .rm:hover{border-color:var(--g);color:var(--g);}
+.adqf .addfoto{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--g);background:transparent;
+  border:1px solid var(--line);border-radius:40px;padding:12px 22px;cursor:pointer;transition:.3s var(--ease);}
+.adqf .addfoto:hover{border-color:var(--g);background:rgba(216,190,147,.06);}
+.adqf .btn:disabled{opacity:.4;cursor:not-allowed;}
+.adqf .btn:disabled .fill{transform:translateY(101%);}
+
 .adqf .summary{border:1px solid var(--line-soft);border-radius:12px;background:var(--ink-2);padding:clamp(28px,3vw,38px);position:sticky;top:24px;}
 .adqf .summary h3{font-family:var(--fm);font-weight:400;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);}
 .adqf .sline{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:16px 0;border-bottom:1px solid var(--line-soft);}
@@ -197,12 +213,9 @@ const BODY = `
       </div>
 
       <div class="field">
-        <label>Número de fotografias</label>
-        <div class="stepper">
-          <button type="button" id="minus" aria-label="Menos">&minus;</button>
-          <input type="number" id="f-qtd" value="1" min="1" max="999" inputmode="numeric">
-          <button type="button" id="plus" aria-label="Mais">+</button>
-        </div>
+        <label>Fotografias <span class="opt">(escrevam o número de cada uma)</span></label>
+        <div class="fotolist" id="fotoList"></div>
+        <button type="button" class="addfoto" id="addFoto">+ Adicionar fotografia</button>
         <div class="qty-hint" id="qtyHint">Faltam <b>4</b> para terem portes grátis (papel).</div>
       </div>
 
@@ -289,12 +302,22 @@ export default function AdquirirFotografiasPage() {
     document.querySelectorAll('.adqf .r').forEach(function (el) { reduce ? el.classList.add('in') : io.observe(el) })
 
     var PRICE = 5, PORTES = 4, FREE_FROM = 5
-    var qtd = document.getElementById('f-qtd') as HTMLInputElement
-    var minus = document.getElementById('minus')!, plus = document.getElementById('plus')!
     var seg = document.getElementById('segFormato')!
+    var fotoList = document.getElementById('fotoList')!
+    var addFoto = document.getElementById('addFoto')!
 
     function fmt() { return (seg.querySelector('label.on') as HTMLElement).dataset.val! }
-    function n() { var v = parseInt(qtd.value, 10); if (isNaN(v) || v < 1) v = 1; if (v > 999) v = 999; return v }
+    function rowCount() { return fotoList.querySelectorAll('.fotorow').length }
+    function n() { var v = rowCount(); return v < 1 ? 1 : v }
+    function fotografiasValue() { return Array.prototype.map.call(fotoList.querySelectorAll('.fotorow input'), function (i: any) { return i.value.trim() }).filter(Boolean).join('\n') }
+    function renumber() { Array.prototype.forEach.call(fotoList.querySelectorAll('.fotorow'), function (r: any, i: number) { r.querySelector('.idx').textContent = (i + 1) + '.' }) }
+    function addRow() {
+      var row = document.createElement('div'); row.className = 'fotorow'
+      row.innerHTML = '<span class="idx"></span><input type="text" inputmode="numeric" placeholder="Nº da fotografia"><button type="button" class="rm" aria-label="Remover">✕</button>'
+      ;(row.querySelector('.rm') as HTMLElement).addEventListener('click', function () { if (rowCount() <= 1) return; row.remove(); renumber(); update() })
+      ;(row.querySelector('input') as HTMLInputElement).addEventListener('input', update)
+      fotoList.appendChild(row); renumber()
+    }
     function euro(x: number) { return (Number.isInteger(x) ? x : x.toFixed(2)) + '€' }
 
     function update() {
@@ -332,10 +355,8 @@ export default function AdquirirFotografiasPage() {
       }
     }
 
-    minus.addEventListener('click', function () { qtd.value = String(Math.max(1, n() - 1)); update() })
-    plus.addEventListener('click', function () { qtd.value = String(Math.min(999, n() + 1)); update() })
-    qtd.addEventListener('input', update)
-    qtd.addEventListener('blur', function () { qtd.value = String(n()); update() })
+    addFoto.addEventListener('click', function () { addRow(); update() })
+    addRow()  // começa com 1 espaço
 
     seg.querySelectorAll('label').forEach(function (lab) {
       lab.addEventListener('click', function () {
@@ -357,6 +378,10 @@ export default function AdquirirFotografiasPage() {
     var upSize = document.getElementById('uploadSize')!
     var upRemove = document.getElementById('uploadRemove')!
     var MAXB = 8 * 1024 * 1024
+    var submitBtn = document.querySelector('.adqf .btn') as HTMLButtonElement | null
+
+    // O botão "Confirmar pedido" só fica ativo depois de anexado o comprovativo.
+    function syncBtn() { if (submitBtn) submitBtn.disabled = !(upInput.files && upInput.files[0]) }
 
     function human(b: number) { if (b < 1024) return b + ' B'; if (b < 1048576) return (b / 1024).toFixed(0) + ' KB'; return (b / 1048576).toFixed(1) + ' MB' }
     function showFile(file: File) {
@@ -372,10 +397,13 @@ export default function AdquirirFotografiasPage() {
         upDoc.textContent = file.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'FILE'
       }
       upBox.classList.add('has-file')
+      syncBtn()
     }
     function clearFile() {
       upInput.value = ''; upThumb.src = ''; upBox.classList.remove('has-file')
+      syncBtn()
     }
+    syncBtn()  // estado inicial: desativado (sem comprovativo)
     upInput.addEventListener('change', function () { if (upInput.files && upInput.files[0]) showFile(upInput.files[0]) })
     upRemove.addEventListener('click', function (e) { e.stopPropagation(); clearFile() })
     ;['dragenter', 'dragover'].forEach(function (ev) { upBox.addEventListener(ev, function (e) { e.preventDefault(); upBox.classList.add('drag') }) })
@@ -408,6 +436,7 @@ export default function AdquirirFotografiasPage() {
       fd.append('morada', morada); fd.append('formato', f); fd.append('quantidade', String(q))
       fd.append('subtotal', String(sub)); fd.append('portes', String(portes)); fd.append('total', String(total))
       fd.append('mensagem', msg)
+      fd.append('fotografias', fotografiasValue())
       fd.append('comprovativo', upInput.files[0])
       try {
         await fetch('/api/photo-orders', { method: 'POST', body: fd })

@@ -35,7 +35,7 @@ const eur = (n: number) => `${Number(n).toFixed(2)} €`
 // ── Template HTML do email (tom RL) ──────────────────────────────────────────
 function buildEmailHtml(o: {
   pedido: string; nome: string; email: string; telefone: string; morada?: string | null
-  noivos?: string | null; data_casamento?: string | null
+  noivos?: string | null; data_casamento?: string | null; fotografias?: string | null
   formato: string; quantidade: number; subtotal: number; portes: number; total: number
 }): string {
   const data = new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -73,6 +73,7 @@ function buildEmailHtml(o: {
             ${isPapel && o.morada ? row('Morada', o.morada) : ''}
             ${row('Formato', isPapel ? 'Papel (carta registada)' : 'Digital')}
             ${row(`Fotografias (× ${eur(PRECO_FOTO)})`, String(o.quantidade))}
+            ${o.fotografias ? row('Nº das fotografias', String(o.fotografias).split(/\r?\n/).map(s => s.trim()).filter(Boolean).join(', ')) : ''}
             ${row('Subtotal', eur(o.subtotal))}
             ${row('Portes', o.portes > 0 ? eur(o.portes) : 'Grátis')}
             ${row('TOTAL', eur(o.total), true)}
@@ -116,17 +117,18 @@ export async function POST(req: NextRequest) {
     return typeof v === 'string' ? v.trim() : ''
   }
   const nome = get('nome'), email = get('email'), telefone = get('telefone')
-  const noivos = get('noivos') || null
-  const data_casamento = get('data_casamento') || null
+  const noivos = get('noivos')
+  const data_casamento = get('data_casamento')
   const morada = get('morada') || null
   const formato = (get('formato') || 'digital').toLowerCase() === 'papel' ? 'papel' : 'digital'
   const quantidade = parseInt(get('quantidade') || '0', 10) || 0
+  const fotografias = get('fotografias') || null
   const mensagem = get('mensagem') || null
   const comprovativo = form.get('comprovativo')
 
   // ── Validação ──
-  if (!nome || !email || !telefone || !quantidade) {
-    return json({ ok: false, error: 'Faltam campos obrigatórios (nome, email, telefone, quantidade).' }, 400)
+  if (!nome || !email || !telefone || !noivos || !data_casamento || !quantidade) {
+    return json({ ok: false, error: 'Faltam campos obrigatórios (nome, email, telefone, noivos, data do casamento, fotografias).' }, 400)
   }
   if (formato === 'papel' && !morada) {
     return json({ ok: false, error: 'A morada é obrigatória para entrega em papel.' }, 400)
@@ -163,12 +165,12 @@ export async function POST(req: NextRequest) {
     // ── Insere o pedido ──
     const { error: insErr } = await supabase.from('photo_orders').insert({
       pedido, nome, email, telefone, noivos, data_casamento, morada, formato,
-      quantidade, subtotal, portes, total, mensagem, comprovativo_url,
+      quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url,
     })
     if (insErr) throw new Error(insErr.message)
 
     // ── Emails ──
-    const html = buildEmailHtml({ pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total })
+    const html = buildEmailHtml({ pedido, nome, email, telefone, noivos, data_casamento, fotografias, morada, formato, quantidade, subtotal, portes, total })
     const b64 = Buffer.from(bytes).toString('base64')
 
     // (A) cliente
