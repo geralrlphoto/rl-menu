@@ -211,9 +211,12 @@ function RevisaoVideoAdmin({ referencia }: { referencia: string }) {
 }
 
 // ─── Pedidos de Fotos (convidados) associados a este casamento ───────────────
+const eurPF = (n: any) => `${Number(n || 0).toFixed(2)} €`
+
 function PedidosFotosEvento({ referencia }: { referencia: string }) {
   const [pedidos, setPedidos] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
+  const [preview, setPreview] = useState<any | null>(null)
   useEffect(() => {
     let cancelled = false
     fetch(`/api/pedidos-fotos?referencia=${encodeURIComponent(referencia)}`)
@@ -224,36 +227,100 @@ function PedidosFotosEvento({ referencia }: { referencia: string }) {
   }, [referencia])
 
   if (!loaded || pedidos.length === 0) return null
-  const eur = (n: any) => `${Number(n || 0).toFixed(2)} €`
 
   return (
     <Section title="Pedidos de Fotos (Convidados)" right={<span className="text-[9px] tracking-[0.3em] text-gold uppercase">{pedidos.length} pedido{pedidos.length === 1 ? '' : 's'}</span>}>
-      <div className="flex flex-col gap-3">
-        {pedidos.map((p: any) => {
-          const fotos = String(p.fotografias ?? '').split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
-          return (
-            <div key={p.id} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <span className="text-[12px] font-semibold text-gold">{p.pedido} · {p.nome}</span>
-                <span className="text-[12px] text-white/80">{p.quantidade} foto(s) · {p.formato} · {eur(p.total)}</span>
-              </div>
-              {fotos.length > 0 && <p className="text-[11px] text-white/55 mt-1.5">Nº: {fotos.join(', ')}</p>}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[11px] text-white/40">
-                {p.email && <span>{p.email}</span>}
-                {p.telefone && <span>{p.telefone}</span>}
-                {p.morada && <span>{p.morada}</span>}
-              </div>
-              {p.comprovativo_url && (
-                <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[11px] mt-2 px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">
-                  ↗ Comprovativo
-                </a>
-              )}
+      <div className="flex flex-col gap-2.5">
+        {pedidos.map((p: any) => (
+          <div key={p.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+            <div className="min-w-0">
+              <span className="text-[12px] font-semibold text-gold">{p.pedido}</span>
+              <span className="text-[12px] text-white/75"> · {p.nome}</span>
+              <p className="text-[11px] text-white/45">{p.quantidade} foto(s) · {p.formato} · {eurPF(p.total)}</p>
             </div>
-          )
-        })}
+            <button onClick={() => setPreview(p)}
+              className="shrink-0 inline-flex items-center gap-1.5 text-[11px] px-4 py-2 rounded-lg border border-gold/35 text-gold hover:bg-gold/10 transition-all tracking-wider uppercase font-semibold">
+              ◉ Ver Pedido
+            </button>
+          </div>
+        ))}
       </div>
+      {preview && <PedidoPreview pedido={preview} onClose={() => setPreview(null)} />}
     </Section>
+  )
+}
+
+function PedidoPreview({ pedido: p, onClose }: { pedido: any; onClose: () => void }) {
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow; document.body.style.overflow = 'hidden'
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+  }, [onClose])
+
+  const fotos = String(p.fotografias ?? '').split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
+  const url: string = p.comprovativo_url || ''
+  const isImg = /\.(jpe?g|png|webp|gif|heic|bmp)(\?|$)/i.test(url)
+  const isPdf = /\.pdf(\?|$)/i.test(url)
+  const row = (k: string, v: any) => v ? (
+    <div className="flex justify-between gap-4 py-2 border-b border-white/[0.06]">
+      <span className="text-[11px] tracking-wide uppercase text-white/40">{k}</span>
+      <span className="text-[13px] text-white/85 text-right">{v}</span>
+    </div>
+  ) : null
+
+  return (
+    <div onClick={onClose}
+      style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6,5,3,0.72)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div onClick={e => e.stopPropagation()}
+        className="w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-2xl border border-gold/25"
+        style={{ background: 'linear-gradient(180deg, #15110b, #0d0a06)', boxShadow: '0 40px 80px -20px rgba(0,0,0,0.7)' }}>
+        <div className="sticky top-0 flex items-center justify-between gap-3 px-6 py-4 border-b border-white/[0.08]" style={{ background: '#15110b' }}>
+          <div>
+            <p className="text-[10px] tracking-[0.35em] uppercase text-gold/70 font-bold">Pedido de Fotos</p>
+            <p className="text-[16px] text-white font-semibold">{p.pedido}</p>
+          </div>
+          <button onClick={onClose} aria-label="Fechar"
+            className="w-9 h-9 flex items-center justify-center rounded-full border border-white/10 text-white/50 hover:text-white hover:border-gold/40 transition-all">✕</button>
+        </div>
+
+        <div className="px-6 py-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+            {row('Cliente', p.nome)}
+            {row('Noivos', p.noivos)}
+            {row('Email', p.email)}
+            {row('Telefone', p.telefone)}
+            {row('Data casamento', p.data_casamento)}
+            {row('Formato', p.formato)}
+            {row('Nº fotografias', p.quantidade)}
+            {row('Subtotal', eurPF(p.subtotal))}
+            {row('Portes', Number(p.portes) > 0 ? eurPF(p.portes) : 'Grátis')}
+            {row('Total', eurPF(p.total))}
+            {p.morada && <div className="sm:col-span-2">{row('Morada', p.morada)}</div>}
+            {fotos.length > 0 && <div className="sm:col-span-2">{row('Números das fotografias', fotos.join(', '))}</div>}
+            {p.mensagem && <div className="sm:col-span-2">{row('Mensagem', p.mensagem)}</div>}
+          </div>
+
+          {/* Comprovativo */}
+          <div className="mt-5">
+            <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 font-bold mb-2">Comprovativo de pagamento</p>
+            {!url ? (
+              <p className="text-[12px] text-white/35 italic">Sem comprovativo.</p>
+            ) : isImg ? (
+              <a href={url} target="_blank" rel="noopener noreferrer">
+                <img src={url} alt="Comprovativo" className="w-full rounded-xl border border-white/10" style={{ maxHeight: '60vh', objectFit: 'contain', background: '#000' }} />
+              </a>
+            ) : isPdf ? (
+              <iframe src={url} title="Comprovativo" className="w-full rounded-xl border border-white/10" style={{ height: '60vh', background: '#fff' }} />
+            ) : (
+              <a href={url} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-[12px] px-3 py-2 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Abrir comprovativo</a>
+            )}
+            {url && <a href={url} target="_blank" rel="noopener noreferrer" className="block text-[11px] text-white/40 mt-2 hover:text-gold break-all">Abrir em nova aba ↗</a>}
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
