@@ -267,7 +267,8 @@ function PedidoPreview({ pedido: p, onClose }: { pedido: any; onClose: () => voi
     </div>
   ) : null
 
-  return (
+  if (typeof document === 'undefined') return null
+  return createPortal(
     <div onClick={onClose}
       style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(6,5,3,0.72)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
       <div onClick={e => e.stopPropagation()}
@@ -308,7 +309,8 @@ function PedidoPreview({ pedido: p, onClose }: { pedido: any; onClose: () => voi
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
