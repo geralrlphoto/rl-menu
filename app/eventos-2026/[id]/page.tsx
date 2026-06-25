@@ -210,6 +210,53 @@ function RevisaoVideoAdmin({ referencia }: { referencia: string }) {
   )
 }
 
+// ─── Pedidos de Fotos (convidados) associados a este casamento ───────────────
+function PedidosFotosEvento({ referencia }: { referencia: string }) {
+  const [pedidos, setPedidos] = useState<any[]>([])
+  const [loaded, setLoaded] = useState(false)
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/pedidos-fotos?referencia=${encodeURIComponent(referencia)}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) { setPedidos(Array.isArray(d?.pedidos) ? d.pedidos : []); setLoaded(true) } })
+      .catch(() => { if (!cancelled) setLoaded(true) })
+    return () => { cancelled = true }
+  }, [referencia])
+
+  if (!loaded || pedidos.length === 0) return null
+  const eur = (n: any) => `${Number(n || 0).toFixed(2)} €`
+
+  return (
+    <Section title="Pedidos de Fotos (Convidados)" right={<span className="text-[9px] tracking-[0.3em] text-gold uppercase">{pedidos.length} pedido{pedidos.length === 1 ? '' : 's'}</span>}>
+      <div className="flex flex-col gap-3">
+        {pedidos.map((p: any) => {
+          const fotos = String(p.fotografias ?? '').split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
+          return (
+            <div key={p.id} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <span className="text-[12px] font-semibold text-gold">{p.pedido} · {p.nome}</span>
+                <span className="text-[12px] text-white/80">{p.quantidade} foto(s) · {p.formato} · {eur(p.total)}</span>
+              </div>
+              {fotos.length > 0 && <p className="text-[11px] text-white/55 mt-1.5">Nº: {fotos.join(', ')}</p>}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-[11px] text-white/40">
+                {p.email && <span>{p.email}</span>}
+                {p.telefone && <span>{p.telefone}</span>}
+                {p.morada && <span>{p.morada}</span>}
+              </div>
+              {p.comprovativo_url && (
+                <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-[11px] mt-2 px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">
+                  ↗ Comprovativo
+                </a>
+              )}
+            </div>
+          )
+        })}
+      </div>
+    </Section>
+  )
+}
+
 // ─── Cabeçalho de bloco (divisória premium entre grupos de secções) ──────────
 function BlocoHeader({ num, children }: { num: string; children: React.ReactNode }) {
   return (
@@ -4466,6 +4513,9 @@ export default function EventoPage() {
 
         {/* ── Revisão do Vídeo (enviada pelo editor via Frame.io) ── */}
         {e.referencia && <RevisaoVideoAdmin referencia={e.referencia} />}
+
+        {/* ── Pedidos de Fotos dos convidados associados a este casamento ── */}
+        {e.referencia && <PedidosFotosEvento referencia={e.referencia} />}
 
         </DrawerBloco>
 

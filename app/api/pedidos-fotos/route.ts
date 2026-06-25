@@ -1,0 +1,33 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
+
+function db() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+}
+
+const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, created_at'
+
+// GET: lista pedidos de fotos (admin). ?referencia=<ref> filtra por casamento.
+export async function GET(req: NextRequest) {
+  const referencia = req.nextUrl.searchParams.get('referencia')
+  const supabase = db()
+  let query = supabase.from('photo_orders').select(COLS).order('created_at', { ascending: false })
+  if (referencia) query = query.eq('referencia', referencia)
+  const { data, error } = await query.limit(500)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ pedidos: data ?? [] })
+}
+
+// PATCH: atribui (ou limpa) a referência do casamento a um pedido.
+export async function PATCH(req: NextRequest) {
+  const { id, referencia } = await req.json().catch(() => ({}))
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+  const supabase = db()
+  const ref = typeof referencia === 'string' && referencia.trim() ? referencia.trim() : null
+  const { error } = await supabase.from('photo_orders').update({ referencia: ref }).eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true, referencia: ref })
+}
