@@ -260,8 +260,6 @@ function PedidoPreview({ pedido: p, onClose }: { pedido: any; onClose: () => voi
 
   const fotos = String(p.fotografias ?? '').split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
   const url: string = p.comprovativo_url || ''
-  const isImg = /\.(jpe?g|png|webp|gif|heic|bmp)(\?|$)/i.test(url)
-  const isPdf = /\.pdf(\?|$)/i.test(url)
   const row = (k: string, v: any) => v ? (
     <div className="flex justify-between gap-4 py-2 border-b border-white/[0.06]">
       <span className="text-[11px] tracking-wide uppercase text-white/40">{k}</span>
@@ -301,23 +299,13 @@ function PedidoPreview({ pedido: p, onClose }: { pedido: any; onClose: () => voi
             {p.mensagem && <div className="sm:col-span-2">{row('Mensagem', p.mensagem)}</div>}
           </div>
 
-          {/* Comprovativo */}
-          <div className="mt-5">
-            <p className="text-[10px] tracking-[0.3em] uppercase text-gold/70 font-bold mb-2">Comprovativo de pagamento</p>
-            {!url ? (
-              <p className="text-[12px] text-white/35 italic">Sem comprovativo.</p>
-            ) : isImg ? (
-              <a href={url} target="_blank" rel="noopener noreferrer">
-                <img src={url} alt="Comprovativo" className="w-full rounded-xl border border-white/10" style={{ maxHeight: '60vh', objectFit: 'contain', background: '#000' }} />
-              </a>
-            ) : isPdf ? (
-              <iframe src={url} title="Comprovativo" className="w-full rounded-xl border border-white/10" style={{ height: '60vh', background: '#fff' }} />
-            ) : (
+          {/* Comprovativo — apenas link (não embebido) */}
+          {url && (
+            <div className="mt-5 pt-4 border-t border-white/[0.06]">
               <a href={url} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-[12px] px-3 py-2 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Abrir comprovativo</a>
-            )}
-            {url && <a href={url} target="_blank" rel="noopener noreferrer" className="block text-[11px] text-white/40 mt-2 hover:text-gold break-all">Abrir em nova aba ↗</a>}
-          </div>
+                className="inline-flex items-center gap-2 text-[12px] px-3 py-2 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Ver comprovativo de pagamento</a>
+            </div>
+          )}
         </div>
       </div>
     </div>
