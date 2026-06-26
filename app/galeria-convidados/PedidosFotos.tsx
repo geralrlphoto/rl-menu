@@ -12,6 +12,7 @@ type Pedido = {
 type Evento = { referencia: string; cliente: string; data_evento: string }
 
 const GOLD = '#c8a866'
+const PER_PAGE = 20
 const eur = (n: any) => `${Number(n || 0).toFixed(2)} €`
 
 function weddingTs(s: string | null): number {
@@ -29,6 +30,9 @@ export default function PedidosFotos() {
   const [saving, setSaving] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('pedido_recente')
+  const [tab, setTab] = useState<'por' | 'assoc' | 'todos'>('por')
+  const [page, setPage] = useState(1)
+  const [aberto, setAberto] = useState<string | null>(null)
 
   async function load() {
     setLoading(true)
@@ -44,10 +48,8 @@ export default function PedidosFotos() {
   }
   useEffect(() => { load() }, [])
 
-  // Casamentos (referência + noivos) — fonte: /api/eventos-supabase (vários anos)
   useEffect(() => {
-    const anos = [2025, 2026, 2027]
-    Promise.all(anos.map(a => fetch(`/api/eventos-supabase?ano=${a}`).then(r => r.json()).catch(() => ({}))))
+    Promise.all([2025, 2026, 2027].map(a => fetch(`/api/eventos-supabase?ano=${a}`).then(r => r.json()).catch(() => ({}))))
       .then(results => {
         const byRef = new Map<string, Evento>()
         results.forEach(res => (res?.events ?? []).forEach((e: any) => {
@@ -62,50 +64,68 @@ export default function PedidosFotos() {
     setRefs(r => ({ ...r, [id]: ref }))
     setSaving(id)
     try {
-      await fetch('/api/pedidos-fotos', {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, referencia: ref }),
-      })
+      await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, referencia: ref }) })
       setPedidos(prev => prev.map(p => p.id === id ? { ...p, referencia: ref || null } : p))
     } catch {}
     setSaving(null)
   }
 
-  const visiveis = useMemo(() => {
+  // Pesquisa
+  const pesquisados = useMemo(() => {
     const q = search.trim().toLowerCase()
-    let arr = pedidos
-    if (q) {
-      arr = arr.filter(p => [p.pedido, p.nome, p.noivos, p.email, p.telefone, p.referencia, p.data_casamento]
-        .filter(Boolean).some(v => String(v).toLowerCase().includes(q)))
-    }
+    if (!q) return pedidos
+    return pedidos.filter(p => [p.pedido, p.nome, p.noivos, p.email, p.telefone, p.referencia, p.data_casamento]
+      .filter(Boolean).some(v => String(v).toLowerCase().includes(q)))
+  }, [pedidos, search])
+
+  const counts = useMemo(() => ({
+    por: pesquisados.filter(p => !p.referencia).length,
+    assoc: pesquisados.filter(p => p.referencia).length,
+    todos: pesquisados.length,
+  }), [pesquisados])
+
+  const visiveis = useMemo(() => {
+    let arr = pesquisados
+    if (tab === 'por') arr = arr.filter(p => !p.referencia)
+    else if (tab === 'assoc') arr = arr.filter(p => p.referencia)
     arr = [...arr]
     if (sort === 'pedido_recente') arr.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
     else if (sort === 'pedido_antigo') arr.sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''))
     else if (sort === 'casamento') arr.sort((a, b) => weddingTs(a.data_casamento) - weddingTs(b.data_casamento))
     else if (sort === 'cliente') arr.sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))
     return arr
-  }, [pedidos, search, sort])
+  }, [pesquisados, tab, sort])
 
-  const fmtDate = (iso: string) => { try { return new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) } catch { return iso } }
+  useEffect(() => { setPage(1) }, [search, sort, tab])
+  const totalPages = Math.max(1, Math.ceil(visiveis.length / PER_PAGE))
+  const pageItems = visiveis.slice((page - 1) * PER_PAGE, page * PER_PAGE)
+
+  const fmtDate = (iso: string) => { try { return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' }) } catch { return iso } }
   const optLabel = (e: Evento) => `${e.referencia}${e.cliente ? ` · ${e.cliente}` : ''}`
   const inputCls = 'bg-black/30 border border-white/[0.1] rounded-lg px-3 py-2 text-[12px] text-white/90 placeholder:text-white/25 focus:outline-none focus:border-[#c8a866]/40'
+
+  const TabBtn = ({ id, label, n }: { id: 'por' | 'assoc' | 'todos'; label: string; n: number }) => (
+    <button onClick={() => setTab(id)}
+      className={`text-[12px] px-3 py-1.5 rounded-lg border tracking-wide transition-all ${tab === id ? 'bg-gold/15 border-gold/40 text-gold' : 'border-white/[0.08] text-white/45 hover:text-white/80'}`}
+      style={tab === id ? { color: GOLD, borderColor: 'rgba(200,168,102,0.4)' } : {}}>
+      {label} <span className="opacity-50">{n}</span>
+    </button>
+  )
 
   return (
     <div>
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <p className="text-[11px] tracking-[0.3em] uppercase font-bold" style={{ color: GOLD }}>
-          Pedidos de Fotos {!loading && <span className="text-white/35">· {visiveis.length}{visiveis.length !== pedidos.length ? `/${pedidos.length}` : ''}</span>}
+          Pedidos de Fotos {!loading && <span className="text-white/35">· {pedidos.length}</span>}
         </p>
         <button onClick={load} className="text-[11px] tracking-widest uppercase text-white/45 hover:text-[#c8a866] transition-colors">↻ Atualizar</button>
       </div>
 
       {/* Pesquisa + ordenação */}
-      <div className="flex items-center gap-2 mb-5 flex-wrap">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         <div className="relative flex-1 min-w-[220px]">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[13px]">⌕</span>
-          <input value={search} onChange={e => setSearch(e.target.value)}
-            placeholder="Pesquisar por cliente, noivos, email, referência, pedido…"
-            className={inputCls + ' w-full pl-9'} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar por cliente, noivos, email, referência, pedido…" className={inputCls + ' w-full pl-9'} />
           {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white text-[14px]">✕</button>}
         </div>
         <select value={sort} onChange={e => setSort(e.target.value)} className={inputCls + ' [color-scheme:dark] cursor-pointer'}>
@@ -116,75 +136,106 @@ export default function PedidosFotos() {
         </select>
       </div>
 
+      {/* Abas por estado */}
+      <div className="flex items-center gap-2 mb-5 flex-wrap">
+        <TabBtn id="por" label="Por associar" n={counts.por} />
+        <TabBtn id="assoc" label="Associados" n={counts.assoc} />
+        <TabBtn id="todos" label="Todos" n={counts.todos} />
+      </div>
+
       {loading ? (
         <p className="text-[13px] text-white/35">A carregar…</p>
-      ) : visiveis.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-white/[0.1] py-16 text-center">
-          <p className="text-[13px] text-white/35">{pedidos.length === 0 ? 'Ainda não há pedidos de fotografias.' : 'Sem resultados para esta pesquisa.'}</p>
+      ) : pageItems.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-white/[0.1] py-14 text-center">
+          <p className="text-[13px] text-white/35">{pedidos.length === 0 ? 'Ainda não há pedidos de fotografias.' : 'Sem pedidos nesta vista.'}</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4">
-          {visiveis.map(p => {
+        <div className="rounded-2xl border border-white/[0.07] overflow-hidden" style={{ background: 'rgba(255,255,255,0.015)' }}>
+          {pageItems.map(p => {
             const fotos = (p.fotografias ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean)
             const cur = refs[p.id] ?? ''
             const refInList = !cur || eventos.some(e => e.referencia === cur)
+            const open = aberto === p.id
             return (
-              <div key={p.id} className="rounded-2xl border border-white/[0.08] p-5"
-                style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.025), rgba(200,168,102,0.02))' }}>
-                <div className="flex items-start justify-between gap-3 flex-wrap">
-                  <div>
-                    <p className="text-[14px] font-semibold" style={{ color: GOLD }}>{p.pedido}</p>
-                    <p className="text-[12px] text-white/45">{fmtDate(p.created_at)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {p.referencia && <span className="text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold bg-emerald-500/10 text-emerald-300 border-emerald-500/25 font-mono">{p.referencia}</span>}
-                    <span className="text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold bg-white/5 text-white/70 border-white/15">{p.formato}</span>
-                    <span className="text-[13px] font-bold" style={{ color: GOLD }}>{eur(p.total)}</span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 mt-4 text-[12px]">
-                  <Info k="Cliente" v={p.nome} />
-                  <Info k="Noivos" v={p.noivos} />
-                  <Info k="Email" v={p.email} />
-                  <Info k="Data casamento" v={p.data_casamento} />
-                  <Info k="Telefone" v={p.telefone} />
-                  <Info k="Quantidade" v={`${p.quantidade} foto(s) · ${eur(p.subtotal)} + portes ${p.portes > 0 ? eur(p.portes) : 'grátis'}`} />
-                  {p.morada && <Info k="Morada" v={p.morada} />}
-                  {fotos.length > 0 && <Info k="Nº fotografias" v={fotos.join(', ')} />}
-                  {p.mensagem && <Info k="Mensagem" v={p.mensagem} />}
-                </div>
-
-                <div className="flex flex-wrap items-end gap-3 mt-4 pt-4 border-t border-white/[0.06]">
-                  {p.comprovativo_url && (
-                    <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer"
-                      className="text-[11px] px-3 py-2 rounded-lg border border-white/10 text-white/65 hover:text-[#c8a866] hover:border-[#c8a866]/30 transition-all">
-                      ↗ Ver comprovativo
-                    </a>
-                  )}
-                  <div className="flex-1 min-w-[240px]">
-                    <label className="block text-[10px] tracking-[0.2em] uppercase text-white/45 mb-1.5">Referência do casamento {saving === p.id && <span className="text-[#c8a866]">· a guardar…</span>}</label>
-                    <select value={cur} onChange={e => guardarRef(p.id, e.target.value)}
-                      className="w-full bg-black/30 border border-white/[0.1] rounded-lg px-3 py-2.5 text-[12px] text-white/90 focus:outline-none focus:border-[#c8a866]/40 cursor-pointer [color-scheme:dark] font-mono">
-                      <option value="">— Sem referência —</option>
+              <div key={p.id} className="border-b border-white/[0.06] last:border-0">
+                {/* Linha compacta */}
+                <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
+                  <button onClick={() => setAberto(open ? null : p.id)} className="flex items-center gap-2.5 min-w-0 text-left flex-1">
+                    <span className="text-white/30 text-[12px] w-3 shrink-0">{open ? '▾' : '▸'}</span>
+                    <span className="min-w-0">
+                      <span className="text-[13px] font-semibold" style={{ color: GOLD }}>{p.pedido}</span>
+                      <span className="text-[13px] text-white/80"> · {p.nome}</span>
+                      <span className="block text-[11px] text-white/40 mt-0.5 truncate">
+                        {p.data_casamento ? `Casamento ${p.data_casamento} · ` : ''}{p.quantidade} foto(s) · {eur(p.total)} · {p.formato}
+                      </span>
+                    </span>
+                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <select value={cur} onChange={e => guardarRef(p.id, e.target.value)} title="Referência do casamento"
+                      className="bg-black/30 border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[11px] text-white/90 focus:outline-none focus:border-[#c8a866]/40 cursor-pointer [color-scheme:dark] font-mono max-w-[200px]"
+                      style={p.referencia ? { borderColor: 'rgba(110,200,140,0.35)' } : {}}>
+                      <option value="">— Atribuir referência —</option>
                       {!refInList && cur && <option value={cur}>{cur} (atual)</option>}
                       {eventos.map(e => <option key={e.referencia} value={e.referencia}>{optLabel(e)}</option>)}
                     </select>
-                    {p.referencia && refs[p.id] === p.referencia && <p className="text-[10px] text-emerald-300/70 mt-1.5">Associado a {p.referencia} — aparece na ficha dos noivos.</p>}
+                    {saving === p.id && <span className="text-[10px] text-[#c8a866]">…</span>}
                   </div>
                 </div>
+
+                {/* Detalhes (expandido) */}
+                {open && (
+                  <div className="px-4 pb-4 pt-1 ml-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-[12px] rounded-xl border border-white/[0.06] bg-black/20 p-4">
+                      <Info k="Email" v={p.email} />
+                      <Info k="Telefone" v={p.telefone} />
+                      <Info k="Noivos" v={p.noivos} />
+                      <Info k="Data casamento" v={p.data_casamento} />
+                      <Info k="Subtotal / portes" v={`${eur(p.subtotal)} + ${p.portes > 0 ? eur(p.portes) : 'grátis'}`} />
+                      <Info k="Recebido em" v={fmtDate(p.created_at)} />
+                      {p.morada && <Info k="Morada" v={p.morada} />}
+                      {fotos.length > 0 && <Info k="Nº fotografias" v={fotos.join(', ')} />}
+                      {p.mensagem && <Info k="Mensagem" v={p.mensagem} />}
+                    </div>
+                    {p.comprovativo_url && (
+                      <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[11px] mt-3 px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Ver comprovativo</a>
+                    )}
+                  </div>
+                )}
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Paginação */}
+      {!loading && visiveis.length > 0 && (
+        <div className="flex items-center justify-between mt-4 flex-wrap gap-2">
+          <span className="text-[11px] text-white/35">{(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, visiveis.length)} de {visiveis.length}</span>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <PgBtn label="‹" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} />
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                <PgBtn key={n} label={String(n)} active={n === page} onClick={() => setPage(n)} />
+              ))}
+              <PgBtn label="›" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} />
+            </div>
+          )}
         </div>
       )}
     </div>
   )
 }
 
+function PgBtn({ label, onClick, active, disabled }: { label: string; onClick: () => void; active?: boolean; disabled?: boolean }) {
+  return (
+    <button onClick={onClick} disabled={disabled}
+      className={`min-w-[30px] h-8 px-2 rounded-lg text-[12px] border transition-all disabled:opacity-30 ${active ? 'bg-gold/20 border-gold/45 text-gold font-bold' : 'border-white/10 text-white/55 hover:text-gold hover:border-gold/30'}`}
+      style={active ? { color: '#c8a866', borderColor: 'rgba(200,168,102,0.45)' } : {}}>{label}</button>
+  )
+}
+
 function Info({ k, v }: { k: string; v: any }) {
   if (!v) return null
-  return (
-    <p className="text-white/70"><span className="text-white/40">{k}: </span>{v}</p>
-  )
+  return <p className="text-white/70"><span className="text-white/40">{k}: </span>{v}</p>
 }
