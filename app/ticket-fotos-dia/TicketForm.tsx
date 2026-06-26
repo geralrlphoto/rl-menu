@@ -87,30 +87,34 @@ const CSS = `
 `
 
 const BODY = `
-<section class="phero">
-  <h1 class="r"><em>Comprovativo</em></h1>
-  <p class="phero__sub r">Registo de venda de fotografias no dia. Preenche o responsável, os dados do cliente e o pagamento. Cada fotografia custa <strong>5&euro;</strong>.</p>
+<section class="phero" style="padding-bottom:clamp(10px,2vh,20px)">
+  <div class="r"><span class="eyebrow" style="justify-content:center">Responsável pela venda</span></div>
+  <div class="respbox r" style="max-width:640px;margin:24px auto 0;text-align:left;">
+    <div class="frow two">
+      <div class="field"><label>Membro responsável</label>
+        <select id="t-resp"><option value="">— Seleciona o fotógrafo —</option></select>
+      </div>
+      <div class="field"><label>Conta MB WAY</label>
+        <select id="t-mbway">
+          <option value="">— Seleciona a conta —</option>
+          <option value="Liliana Gonçalves - 916 162 728">Liliana Gonçalves · 916 162 728</option>
+          <option value="Alexandre Capão - 969 000 132">Alexandre Capão · 969 000 132</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <p class="phero__sub r" id="gateHint" style="margin-top:20px">Seleciona o responsável e a conta MB WAY para continuar.</p>
+</section>
+
+<div id="formBody" style="display:none">
+<section class="phero" style="padding-top:clamp(20px,4vh,40px)">
+  <h1><em>Comprovativo</em></h1>
+  <p class="phero__sub">Preenche os dados do cliente, as fotografias e o pagamento. Cada fotografia custa <strong>5&euro;</strong>.</p>
 </section>
 
 <section class="wrap">
   <div class="order" id="orderBlock">
-    <form class="form r" id="ticketForm" novalidate>
-
-      <div class="respbox">
-        <span class="rh">Responsável pela venda</span>
-        <div class="frow two">
-          <div class="field"><label>Membro responsável</label>
-            <select id="t-resp"><option value="">— Seleciona o fotógrafo —</option></select>
-          </div>
-          <div class="field"><label>Conta MB WAY</label>
-            <select id="t-mbway">
-              <option value="">— Seleciona a conta —</option>
-              <option value="Liliana Gonçalves - 916 162 728">Liliana Gonçalves · 916 162 728</option>
-              <option value="Alexandre Capão - 969 000 132">Alexandre Capão · 969 000 132</option>
-            </select>
-          </div>
-        </div>
-      </div>
+    <form class="form" id="ticketForm" novalidate>
 
       <div class="frow two">
         <div class="field"><label>Nome do cliente</label><input type="text" id="t-nome" placeholder="Nome do cliente"></div>
@@ -152,7 +156,7 @@ const BODY = `
       <div class="field"><label>Mensagem <span class="opt">(opcional)</span></label><textarea id="t-msg" placeholder="Notas do pedido…"></textarea></div>
     </form>
 
-    <aside class="summary r">
+    <aside class="summary">
       <h3>Resumo do ticket</h3>
       <div class="sline"><div class="k">Fotografias <span id="recapFmt">Digital</span></div><div class="v"><span id="recapQtd">1</span> × 5&euro;</div></div>
       <div class="sline"><div class="k">Subtotal</div><div class="v" id="recapSub">5&euro;</div></div>
@@ -171,6 +175,7 @@ const BODY = `
     <div class="recap" id="sentRecap"></div>
   </div>
 </section>
+</div>
 `
 
 export default function TicketForm() {
@@ -222,6 +227,21 @@ export default function TicketForm() {
     segWire(seg); segWire(segM)
     addFoto.addEventListener('click', function () { addRow(); update() })
     addRow(); update()
+
+    // O resto do formulário só fica disponível depois de escolher o
+    // responsável + a conta MB WAY.
+    var resp = document.getElementById('t-resp') as HTMLSelectElement
+    var mbwaySel = document.getElementById('t-mbway') as HTMLSelectElement
+    var formBody = document.getElementById('formBody')!
+    var gateHint = document.getElementById('gateHint')!
+    function checkGate() {
+      var ok = !!(resp.value && mbwaySel.value)
+      formBody.style.display = ok ? '' : 'none'
+      gateHint.style.display = ok ? 'none' : ''
+    }
+    resp.addEventListener('change', checkGate)
+    mbwaySel.addEventListener('change', checkGate)
+    checkGate()
 
     fetch('/api/freelancers').then(r => r.json()).then(d => {
       var membros = (d?.freelancers ?? []).filter((f: any) => ['FOTOGRAFO', 'VIDEOGRAFO'].includes(String(f.status || '').toUpperCase()))
