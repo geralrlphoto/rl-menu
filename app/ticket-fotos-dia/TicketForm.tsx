@@ -88,8 +88,7 @@ const CSS = `
 
 const BODY = `
 <section class="phero">
-  <div class="r"><span class="eyebrow" style="justify-content:center">Ticket Fotos/Dia</span></div>
-  <h1 class="r" style="margin-top:18px">Abrir <em>ticket.</em></h1>
+  <h1 class="r"><em>Comprovativo</em></h1>
   <p class="phero__sub r">Registo de venda de fotografias no dia. Preenche o responsável, os dados do cliente e o pagamento. Cada fotografia custa <strong>5&euro;</strong>.</p>
 </section>
 
