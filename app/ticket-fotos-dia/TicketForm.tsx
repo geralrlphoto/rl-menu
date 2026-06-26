@@ -74,8 +74,10 @@ const CSS = `
 .tkt .stotal .v{font-family:var(--fd);font-weight:200;font-size:clamp(34px,4vw,50px);color:var(--g);line-height:.9;}
 .tkt .btn{display:inline-flex;align-items:center;justify-content:center;gap:.9em;width:100%;font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);padding:20px 38px;border:1px solid var(--g);border-radius:40px;background:var(--g);cursor:pointer;margin-top:26px;transition:opacity .3s;}
 .tkt .btn:disabled{opacity:.5;cursor:not-allowed;}
-.tkt .mbline{font-family:var(--fm);font-size:11px;letter-spacing:.06em;color:var(--tx-mid);margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft);text-align:center;line-height:1.6;}
-.tkt .mbline b{color:var(--g);font-weight:700;}
+.tkt .mbway{max-width:640px;margin:0 auto clamp(40px,8vh,90px);border:1px solid var(--g);border-radius:12px;padding:24px 26px;background:rgba(216,190,147,.05);text-align:center;}
+.tkt .mbway__h{font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);}
+.tkt .mbway__num{font-family:var(--fd);font-weight:200;font-size:clamp(26px,3vw,34px);color:var(--tx);margin-top:10px;letter-spacing:.04em;}
+.tkt .mbway__name{font-family:var(--fb);font-size:13px;color:var(--tx-mid);margin-top:4px;}
 .tkt .note{font-family:var(--fm);font-size:10px;letter-spacing:.12em;color:var(--tx-dim);text-align:center;margin-top:16px;line-height:1.6;}
 .tkt .msg{font-family:var(--fm);font-size:11px;text-align:center;margin-top:14px;}
 .tkt .msg.err{color:#e9a3a3;} .tkt .msg.ok{color:var(--ok);}
@@ -164,11 +166,16 @@ const BODY = `
       <div class="sline"><div class="k">Subtotal</div><div class="v" id="recapSub">5&euro;</div></div>
       <div class="sline" id="linePortes" style="display:none"><div class="k">Portes</div><div class="v" id="recapPortes">&mdash;</div></div>
       <div class="stotal"><div class="k">Total</div><div class="v" id="recapTotal">5&euro;</div></div>
-      <div class="mbline" id="recapMbway"></div>
       <button class="btn" type="submit" form="ticketForm" id="btnSubmit" disabled>Confirmar pedido</button>
       <p class="note">Envia ao cliente, ao responsável e ao admin. Fica guardado em Pedidos de Fotos.</p>
       <p class="msg" id="formMsg"></p>
     </aside>
+  </div>
+
+  <div class="mbway" id="mbwayBox">
+    <div class="mbway__h">Pagamento por MB WAY</div>
+    <div class="mbway__num" id="mbwayNum">&mdash;</div>
+    <div class="mbway__name" id="mbwayName"></div>
   </div>
 
   <div class="sent" id="sentBlock">
@@ -236,7 +243,13 @@ export default function TicketForm() {
       return true
     }
     function syncBtn() { var b = document.getElementById('btnSubmit') as HTMLButtonElement | null; if (b) b.disabled = !allFilled() }
-    function updateMbway() { var el = document.getElementById('recapMbway')!; el.innerHTML = mbwaySel.value ? ('MB WAY · <b>' + mbwaySel.value + '</b>') : '' }
+    function updateMbway() {
+      var v = mbwaySel.value
+      var parts = v.split(' - ')
+      var num = document.getElementById('mbwayNum')!, nm = document.getElementById('mbwayName')!
+      num.textContent = v ? (parts[1] || v) : '—'
+      nm.textContent = v ? (parts[0] || '') : ''
+    }
     function segWire(box: HTMLElement) {
       box.querySelectorAll('label').forEach(function (lab) {
         lab.addEventListener('click', function () { box.querySelectorAll('label').forEach(l => l.classList.remove('on')); lab.classList.add('on'); update() })
