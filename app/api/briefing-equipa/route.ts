@@ -71,27 +71,33 @@ export async function POST(req: NextRequest) {
 
   const supabase = db()
 
-  // briefing_url a distribuir (tem de ter sido preparado/enviado a partir do portal)
+  // briefing_url + EQUIPA da ficha (chips de fotógrafo/videógrafo = fonte da verdade)
   const eq = referencia
-    ? (await supabase.from('evento_equipa').select('briefing_url, local, data_casamento').eq('referencia', referencia).maybeSingle()).data
-    : (await supabase.from('evento_equipa').select('briefing_url, local, data_casamento').eq('evento_id', evento_id).maybeSingle()).data
+    ? (await supabase.from('evento_equipa').select('briefing_url, local, data_casamento, fotografo, videografo').eq('referencia', referencia).maybeSingle()).data
+    : (await supabase.from('evento_equipa').select('briefing_url, local, data_casamento, fotografo, videografo').eq('evento_id', evento_id).maybeSingle()).data
   const briefingUrl = eq?.briefing_url ?? null
   if (!briefingUrl) {
     return NextResponse.json({ error: 'Briefing ainda não foi preparado. Envia primeiro a partir do portal dos noivos.' }, { status: 400 })
   }
 
   // Destinatários: lista explícita (ficha do evento) ou, quando não vem lista
-  // (botão "Enviar Briefing" do portal), todos os membros já atribuídos a este
-  // evento. Assim, um clique no portal prepara E distribui à equipa toda.
+  // (botão "Enviar Briefing" do portal), TODOS os membros nos chips da EQUIPA
+  // desta ficha — resolvendo os nomes (fotografo/videografo) para freelancers.
+  // É robusto mesmo quando o registo do membro foi criado à mão (sem referência).
   let freelancerIds: string[] = Array.isArray(rawIds) ? rawIds.filter(Boolean) : []
   if (freelancerIds.length === 0) {
-    let aq = supabase.from('freelancer_casamentos').select('freelancer_id')
-    aq = referencia ? aq.eq('referencia', referencia) : aq.eq('evento_id', evento_id)
-    const { data: assigned } = await aq
-    freelancerIds = Array.from(new Set((assigned ?? []).map((r: any) => r.freelancer_id).filter(Boolean)))
+    const teamNames = [...(eq?.fotografo ?? []), ...(eq?.videografo ?? [])]
+      .map((n: any) => String(n ?? '').trim()).filter(Boolean)
+    if (teamNames.length) {
+      const { data: fls } = await supabase.from('freelancers').select('id, nome')
+      const byName = new Map((fls ?? []).map((f: any) => [String(f.nome ?? '').trim().toUpperCase(), f.id]))
+      freelancerIds = Array.from(new Set(
+        teamNames.map((n) => byName.get(n.toUpperCase())).filter(Boolean) as string[]
+      ))
+    }
   }
   if (freelancerIds.length === 0) {
-    return NextResponse.json({ error: 'Sem membros atribuídos a este evento.' }, { status: 400 })
+    return NextResponse.json({ error: 'Sem membros na EQUIPA desta ficha. Adiciona fotógrafos/videógrafos no evento primeiro.' }, { status: 400 })
   }
 
   const localStr = String(local ?? eq?.local ?? '').trim()
@@ -112,26 +118,38 @@ export async function POST(req: NextRequest) {
   }
 
   // 1) Desbloquear "Ver Briefing" no portal de cada membro novo.
-  //    Se ainda não estiver atribuído a este evento, cria-se o registo
-  //    (passa a ver o evento + briefing no portal dele).
   for (const fid of newIds) {
+    // a) Já tem registo ligado a este evento? → só atualiza o briefing.
     let q = supabase.from('freelancer_casamentos').select('id').eq('freelancer_id', fid).limit(1)
     q = referencia ? q.eq('referencia', referencia) : q.eq('evento_id', evento_id)
-    const { data: existRows } = await q
-    const existing = (existRows ?? [])[0]
+    const existing = ((await q).data ?? [])[0]
     if (existing) {
       await supabase.from('freelancer_casamentos').update({ briefing_url: briefingUrl }).eq('id', existing.id)
-    } else {
-      await supabase.from('freelancer_casamentos').insert({
-        freelancer_id: fid,
-        referencia: referencia ?? null,
-        evento_id: evento_id ?? null,
-        local: localStr || null,
-        data_casamento: dataCas,
-        briefing_url: briefingUrl,
-        order_index: 999,
-      })
+      continue
     }
+    // b) Tem registo "solto" (sem referência) do mesmo local/data? → adota-o
+    //    (liga ao evento + desbloqueia) em vez de criar um duplicado. Cobre os
+    //    membros adicionados à mão no portal do freelancer.
+    let lq = supabase.from('freelancer_casamentos').select('id, data_casamento').eq('freelancer_id', fid).is('referencia', null)
+    if (localStr) lq = lq.ilike('local', localStr)
+    const loose = (await lq).data ?? []
+    const adopt = loose.find((r: any) => dataCas && r.data_casamento === dataCas) ?? loose[0]
+    if (adopt) {
+      await supabase.from('freelancer_casamentos')
+        .update({ briefing_url: briefingUrl, referencia: referencia ?? null, evento_id: evento_id ?? null })
+        .eq('id', adopt.id)
+      continue
+    }
+    // c) Não tem nenhum registo → cria um já ligado e desbloqueado.
+    await supabase.from('freelancer_casamentos').insert({
+      freelancer_id: fid,
+      referencia: referencia ?? null,
+      evento_id: evento_id ?? null,
+      local: localStr || null,
+      data_casamento: dataCas,
+      briefing_url: briefingUrl,
+      order_index: 999,
+    })
   }
 
   // 2) Notificação no sino (idempotente por freelancer+referência não lida)
