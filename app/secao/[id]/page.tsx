@@ -60,6 +60,8 @@ function metaFor(label: string): Meta {
     return { desc: 'Cláusulas e dados contratuais', group: 'cli' }
   if (k.includes('CONVIDADO'))
     return { desc: 'Fotos enviadas pelos convidados', group: 'cli' }
+  if (k.includes('TICKET'))
+    return { desc: 'Tickets de fotos do dia', group: 'cli' }
   if (k.includes('REDES') || k.includes('SOCIAL'))
     return { desc: 'Conteúdo para Instagram e redes', group: 'cli' }
   if (k.includes('ORÇAMENTO') || k.includes('ORCAMENTO'))
@@ -219,6 +221,7 @@ export default async function SecaoPage({ params }: Props) {
       { href: '/portais-clientes', label: 'Portal do Cliente',    internal: true },
       { href: '/contrato-cps',     label: 'Dados para Contrato CPS', internal: true },
       { href: '/galeria-convidados', label: 'Fotos Convidados',   internal: true },
+      { href: '/ticket-fotos-dia',   label: 'Ticket Fotos/Dia',   internal: true },
     )
   }
 
