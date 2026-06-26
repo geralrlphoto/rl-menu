@@ -238,10 +238,18 @@ function PedidosFotosEvento({ referencia }: { referencia: string }) {
               <span className="text-[12px] text-white/75"> · {p.nome}</span>
               <p className="text-[11px] text-white/45">{p.quantidade} foto(s) · {p.formato} · {eurPF(p.total)}</p>
             </div>
-            <button onClick={() => setPreview(p)}
-              className="shrink-0 inline-flex items-center gap-1.5 text-[11px] px-4 py-2 rounded-lg border border-gold/35 text-gold hover:bg-gold/10 transition-all tracking-wider uppercase font-semibold">
-              ◉ Ver Pedido
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <span className="text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold"
+                style={p.estado === 'Entregue'
+                  ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.3)', color: '#6ee7b7' }
+                  : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.28)', color: '#fcd34d' }}>
+                {p.estado === 'Entregue' ? 'Entregue' : 'Aguardar'}
+              </span>
+              <button onClick={() => setPreview(p)}
+                className="inline-flex items-center gap-1.5 text-[11px] px-4 py-2 rounded-lg border border-gold/35 text-gold hover:bg-gold/10 transition-all tracking-wider uppercase font-semibold">
+                ◉ Ver Pedido
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -285,6 +293,7 @@ function PedidoPreview({ pedido: p, onClose }: { pedido: any; onClose: () => voi
 
         <div className="px-6 py-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+            {row('Estado', p.estado === 'Entregue' ? 'Entregue' : 'Aguardar')}
             {row('Cliente', p.nome)}
             {row('Noivos', p.noivos)}
             {row('Email', p.email)}

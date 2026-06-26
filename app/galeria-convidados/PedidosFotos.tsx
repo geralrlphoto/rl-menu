@@ -7,7 +7,7 @@ type Pedido = {
   noivos: string | null; data_casamento: string | null; morada: string | null
   formato: string; quantidade: number; subtotal: number; portes: number; total: number
   mensagem: string | null; fotografias: string | null; comprovativo_url: string | null
-  referencia: string | null; created_at: string
+  referencia: string | null; estado: string | null; created_at: string
 }
 type Evento = { referencia: string; cliente: string; data_evento: string }
 
@@ -66,6 +66,15 @@ export default function PedidosFotos() {
     try {
       await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, referencia: ref }) })
       setPedidos(prev => prev.map(p => p.id === id ? { ...p, referencia: ref || null } : p))
+    } catch {}
+    setSaving(null)
+  }
+
+  async function guardarEstado(id: string, estado: string) {
+    setPedidos(prev => prev.map(p => p.id === id ? { ...p, estado } : p))
+    setSaving(id)
+    try {
+      await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, estado }) })
     } catch {}
     setSaving(null)
   }
@@ -171,6 +180,14 @@ export default function PedidosFotos() {
                     </span>
                   </button>
                   <div className="flex items-center gap-2 shrink-0">
+                    <select value={p.estado === 'Entregue' ? 'Entregue' : 'Aguardar'} onChange={e => guardarEstado(p.id, e.target.value)} title="Estado do pedido"
+                      className="border rounded-lg px-2.5 py-1.5 text-[11px] font-semibold tracking-wide focus:outline-none cursor-pointer [color-scheme:dark]"
+                      style={p.estado === 'Entregue'
+                        ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#6ee7b7' }
+                        : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.30)', color: '#fcd34d' }}>
+                      <option value="Aguardar" className="bg-[#0e0c08] text-white">Aguardar</option>
+                      <option value="Entregue" className="bg-[#0e0c08] text-white">Entregue</option>
+                    </select>
                     <select value={cur} onChange={e => guardarRef(p.id, e.target.value)} title="Referência do casamento"
                       className="bg-black/30 border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[11px] text-white/90 focus:outline-none focus:border-[#c8a866]/40 cursor-pointer [color-scheme:dark] font-mono max-w-[200px]"
                       style={p.referencia ? { borderColor: 'rgba(110,200,140,0.35)' } : {}}>
