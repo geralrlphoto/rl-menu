@@ -22,6 +22,13 @@ const CSS = `
 .tkt .phero h1{font-size:clamp(36px,6vw,76px);}
 .tkt .phero h1 em{font-style:italic;color:var(--g);}
 .tkt .phero__sub{color:var(--tx-mid);max-width:54ch;margin:18px auto 0;line-height:1.7;font-size:clamp(14px,1.1vw,17px);}
+.tkt .info{display:grid;grid-template-columns:1fr;gap:16px;margin:clamp(20px,4vh,40px) 0 0;}
+@media(min-width:720px){.tkt .info{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:1000px){.tkt .info{grid-template-columns:repeat(4,1fr);}}
+.tkt .icard{border:1px solid var(--line-soft);border-radius:10px;padding:24px 22px;background:var(--ink-2);}
+.tkt .icard .ic{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);}
+.tkt .icard .iv{font-family:var(--fd);font-weight:200;font-size:clamp(26px,3vw,38px);margin:12px 0 8px;line-height:1;}
+.tkt .icard .id{color:var(--tx-mid);font-size:13px;line-height:1.6;}
 
 .tkt .order{display:grid;grid-template-columns:1fr;gap:clamp(30px,4vw,56px);margin:clamp(30px,5vh,60px) 0 clamp(70px,10vh,120px);}
 @media(min-width:980px){.tkt .order{grid-template-columns:1.4fr .8fr;align-items:start;}}
@@ -115,6 +122,15 @@ const BODY = `
   <h1><em>Comprovativo</em></h1>
   <p class="phero__sub">Preenche os dados do cliente, as fotografias e o pagamento. Cada fotografia custa <strong>5&euro;</strong>.</p>
 </section>
+
+<div class="wrap">
+  <div class="info">
+    <div class="icard"><div class="ic">Preço</div><div class="iv">5&euro;</div><div class="id">Por cada fotografia, em digital ou papel.</div></div>
+    <div class="icard"><div class="ic">Digital</div><div class="iv">15 dias</div><div class="id">Entrega por link de download, em alta resolução.</div></div>
+    <div class="icard"><div class="ic">Papel</div><div class="iv">30 dias</div><div class="id">Impressão e envio para a vossa morada por carta registada.</div></div>
+    <div class="icard"><div class="ic">Portes (papel)</div><div class="iv">+4&euro;</div><div class="id">Só abaixo de 5 fotografias. A partir de 5, portes grátis.</div></div>
+  </div>
+</div>
 
 <section class="wrap">
   <div class="order" id="orderBlock">
