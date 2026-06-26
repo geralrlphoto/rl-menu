@@ -74,6 +74,8 @@ const CSS = `
 .tkt .stotal .v{font-family:var(--fd);font-weight:200;font-size:clamp(34px,4vw,50px);color:var(--g);line-height:.9;}
 .tkt .btn{display:inline-flex;align-items:center;justify-content:center;gap:.9em;width:100%;font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);padding:20px 38px;border:1px solid var(--g);border-radius:40px;background:var(--g);cursor:pointer;margin-top:26px;transition:opacity .3s;}
 .tkt .btn:disabled{opacity:.5;cursor:not-allowed;}
+.tkt .mbline{font-family:var(--fm);font-size:11px;letter-spacing:.06em;color:var(--tx-mid);margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft);text-align:center;line-height:1.6;}
+.tkt .mbline b{color:var(--g);font-weight:700;}
 .tkt .note{font-family:var(--fm);font-size:10px;letter-spacing:.12em;color:var(--tx-dim);text-align:center;margin-top:16px;line-height:1.6;}
 .tkt .msg{font-family:var(--fm);font-size:11px;text-align:center;margin-top:14px;}
 .tkt .msg.err{color:#e9a3a3;} .tkt .msg.ok{color:var(--ok);}
@@ -157,13 +159,14 @@ const BODY = `
     </form>
 
     <aside class="summary">
-      <h3>Resumo do ticket</h3>
+      <h3>Resumo do pedido</h3>
       <div class="sline"><div class="k">Fotografias <span id="recapFmt">Digital</span></div><div class="v"><span id="recapQtd">1</span> × 5&euro;</div></div>
       <div class="sline"><div class="k">Subtotal</div><div class="v" id="recapSub">5&euro;</div></div>
       <div class="sline" id="linePortes" style="display:none"><div class="k">Portes</div><div class="v" id="recapPortes">&mdash;</div></div>
       <div class="stotal"><div class="k">Total</div><div class="v" id="recapTotal">5&euro;</div></div>
-      <button class="btn" type="submit" form="ticketForm" id="btnSubmit">Confirmar ticket</button>
-      <p class="note">Envia o registo ao responsável e ao admin. Fica guardado em Pedidos de Fotos.</p>
+      <div class="mbline" id="recapMbway"></div>
+      <button class="btn" type="submit" form="ticketForm" id="btnSubmit" disabled>Confirmar pedido</button>
+      <p class="note">Envia ao cliente, ao responsável e ao admin. Fica guardado em Pedidos de Fotos.</p>
       <p class="msg" id="formMsg"></p>
     </aside>
   </div>
@@ -192,6 +195,8 @@ export default function TicketForm() {
     var segM = document.getElementById('segMetodo')!
     var fotoList = document.getElementById('fotoList')!
     var addFoto = document.getElementById('addFoto')!
+    var resp = document.getElementById('t-resp') as HTMLSelectElement
+    var mbwaySel = document.getElementById('t-mbway') as HTMLSelectElement
 
     function fmt() { return (seg.querySelector('label.on') as HTMLElement).dataset.val! }
     function metodo() { return (segM.querySelector('label.on') as HTMLElement).dataset.val! }
@@ -218,7 +223,20 @@ export default function TicketForm() {
       if (f === 'papel') { lp.style.display = ''; if (portes === 0) { rp.innerHTML = 'Grátis'; rp.className = 'v free' } else { rp.textContent = euro(portes); rp.className = 'v' } } else { lp.style.display = 'none' }
       var hint = document.getElementById('qtyHint')!
       if (f === 'papel') { hint.style.display = ''; if (q < FREE) { var falta = FREE - q; hint.innerHTML = 'Faltam <b>' + falta + '</b> ' + (falta === 1 ? 'fotografia' : 'fotografias') + ' para portes grátis.' } else { hint.innerHTML = '<b>Portes grátis</b> — 5 ou mais fotografias.' } } else { hint.style.display = 'none' }
+      syncBtn()
     }
+    function gv(id: string) { return (document.getElementById(id) as HTMLInputElement).value.trim() }
+    function allFilled() {
+      if (!resp.value || !mbwaySel.value) return false
+      if (!gv('t-nome') || !gv('t-email') || !gv('t-tel') || !gv('t-noivos') || !gv('t-data')) return false
+      if (fmt() === 'papel' && !gv('t-morada')) return false
+      var inputs = Array.prototype.slice.call(fotoList.querySelectorAll('.fotorow input')) as HTMLInputElement[]
+      if (inputs.length === 0 || inputs.some(i => !i.value.trim())) return false
+      if (!metodo()) return false
+      return true
+    }
+    function syncBtn() { var b = document.getElementById('btnSubmit') as HTMLButtonElement | null; if (b) b.disabled = !allFilled() }
+    function updateMbway() { var el = document.getElementById('recapMbway')!; el.innerHTML = mbwaySel.value ? ('MB WAY · <b>' + mbwaySel.value + '</b>') : '' }
     function segWire(box: HTMLElement) {
       box.querySelectorAll('label').forEach(function (lab) {
         lab.addEventListener('click', function () { box.querySelectorAll('label').forEach(l => l.classList.remove('on')); lab.classList.add('on'); update() })
@@ -230,17 +248,19 @@ export default function TicketForm() {
 
     // O resto do formulário só fica disponível depois de escolher o
     // responsável + a conta MB WAY.
-    var resp = document.getElementById('t-resp') as HTMLSelectElement
-    var mbwaySel = document.getElementById('t-mbway') as HTMLSelectElement
     var formBody = document.getElementById('formBody')!
     var gateHint = document.getElementById('gateHint')!
     function checkGate() {
       var ok = !!(resp.value && mbwaySel.value)
       formBody.style.display = ok ? '' : 'none'
       gateHint.style.display = ok ? 'none' : ''
+      updateMbway(); syncBtn()
     }
     resp.addEventListener('change', checkGate)
     mbwaySel.addEventListener('change', checkGate)
+    ;['t-nome', 't-email', 't-tel', 't-noivos', 't-data', 't-morada'].forEach(function (id) {
+      document.getElementById(id)!.addEventListener('input', syncBtn)
+    })
     checkGate()
 
     fetch('/api/freelancers').then(r => r.json()).then(d => {
@@ -280,8 +300,8 @@ export default function TicketForm() {
           var s = document.getElementById('sentBlock')!; s.classList.add('show')
           document.getElementById('sentRecap')!.innerHTML = dd.pedido + ' · ' + q + ' fotografia' + (q > 1 ? 's' : '') + ' · ' + (f === 'papel' ? 'Papel' : 'Digital') + ' · ' + euro(total) + ' · ' + met
           s.scrollIntoView({ behavior: 'smooth', block: 'center' })
-        } else { setMsg(dd?.error || 'Não foi possível registar o ticket.'); btn.disabled = false; btn.textContent = 'Confirmar ticket' }
-      } catch { setMsg('Erro de rede. Tenta novamente.'); btn.disabled = false; btn.textContent = 'Confirmar ticket' }
+        } else { setMsg(dd?.error || 'Não foi possível registar o ticket.'); btn.disabled = false; btn.textContent = 'Confirmar pedido' }
+      } catch { setMsg('Erro de rede. Tenta novamente.'); btn.disabled = false; btn.textContent = 'Confirmar pedido' }
     })
   }, [])
 

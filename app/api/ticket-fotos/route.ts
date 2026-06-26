@@ -119,7 +119,9 @@ export async function POST(req: NextRequest) {
     const html = buildHtml(reg)
     const to = [ADMIN_EMAIL]
     if (responsavel_email && responsavel_email.includes('@')) to.push(responsavel_email)
-    await sendEmail({ from: FROM_EMAIL, to, reply_to: email || undefined, subject: `Ticket Fotos/Dia — ${pedido} (${nome})`, html })
+    if (email && email.includes('@')) to.push(email)  // cliente que adquiriu
+    const recipients = Array.from(new Set(to))
+    await sendEmail({ from: FROM_EMAIL, to: recipients, reply_to: email || undefined, subject: `Comprovativo de aquisição de fotografias — ${pedido}`, html })
 
     return NextResponse.json({ ok: true, pedido })
   } catch (err: any) {
