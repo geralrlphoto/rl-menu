@@ -1596,17 +1596,22 @@ function PortalSubPageContent() {
       // Get evento info (id, local, data) from referencia
       const ev = await fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json())
       const briefing_url = typeof window !== 'undefined' ? window.location.href : ''
+      const evento_id = ev?.evento?.id ?? ev?.id ?? null
+      const local = ev?.evento?.local ?? ev?.local ?? null
+      const data_casamento = ev?.evento?.data_evento ?? ev?.data_evento ?? null
+      // 1) Preparar: guardar o link do briefing no evento.
       await fetch('/api/evento-equipa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          referencia: ref,
-          briefing_url,
-          evento_id: ev?.evento?.id ?? ev?.id ?? null,
-          local: ev?.evento?.local ?? ev?.local ?? null,
-          data_casamento: ev?.evento?.data_evento ?? ev?.data_evento ?? null,
-        }),
+        body: JSON.stringify({ referencia: ref, briefing_url, evento_id, local, data_casamento }),
       })
+      // 2) Distribuir à equipa: desbloqueia "Ver Briefing" + notificação + email
+      //    a todos os membros atribuídos a este evento (sem lista = todos).
+      await fetch('/api/briefing-equipa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: ref, evento_id, local, data_casamento }),
+      }).catch(() => {})
       setBriefingSent(true)
       setTimeout(() => setBriefingSent(false), 3000)
     } finally {

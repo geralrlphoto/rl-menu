@@ -66,11 +66,8 @@ export async function GET(req: NextRequest) {
 //    2) cria notificação no sino do portal do freelancer
 //    3) envia email com o card "NOVO BRIEFING" (CTA → portal do membro)
 export async function POST(req: NextRequest) {
-  const { referencia, evento_id, freelancerIds, local, data_casamento } = await req.json()
+  const { referencia, evento_id, freelancerIds: rawIds, local, data_casamento } = await req.json()
   if (!referencia && !evento_id) return NextResponse.json({ error: 'referencia or evento_id required' }, { status: 400 })
-  if (!Array.isArray(freelancerIds) || freelancerIds.length === 0) {
-    return NextResponse.json({ error: 'freelancerIds required' }, { status: 400 })
-  }
 
   const supabase = db()
 
@@ -81,6 +78,20 @@ export async function POST(req: NextRequest) {
   const briefingUrl = eq?.briefing_url ?? null
   if (!briefingUrl) {
     return NextResponse.json({ error: 'Briefing ainda não foi preparado. Envia primeiro a partir do portal dos noivos.' }, { status: 400 })
+  }
+
+  // Destinatários: lista explícita (ficha do evento) ou, quando não vem lista
+  // (botão "Enviar Briefing" do portal), todos os membros já atribuídos a este
+  // evento. Assim, um clique no portal prepara E distribui à equipa toda.
+  let freelancerIds: string[] = Array.isArray(rawIds) ? rawIds.filter(Boolean) : []
+  if (freelancerIds.length === 0) {
+    let aq = supabase.from('freelancer_casamentos').select('freelancer_id')
+    aq = referencia ? aq.eq('referencia', referencia) : aq.eq('evento_id', evento_id)
+    const { data: assigned } = await aq
+    freelancerIds = Array.from(new Set((assigned ?? []).map((r: any) => r.freelancer_id).filter(Boolean)))
+  }
+  if (freelancerIds.length === 0) {
+    return NextResponse.json({ error: 'Sem membros atribuídos a este evento.' }, { status: 400 })
   }
 
   const localStr = String(local ?? eq?.local ?? '').trim()
@@ -94,7 +105,7 @@ export async function POST(req: NextRequest) {
   exQ = referencia ? exQ.eq('referencia', referencia) : exQ.eq('evento_id', evento_id)
   const { data: exRows } = await exQ
   const alreadySent = new Set((exRows ?? []).filter((r: any) => r.briefing_url).map((r: any) => r.freelancer_id))
-  const newIds: string[] = (freelancerIds as string[]).filter((id) => !alreadySent.has(id))
+  const newIds: string[] = freelancerIds.filter((id) => !alreadySent.has(id))
 
   if (newIds.length === 0) {
     return NextResponse.json({ ok: true, sent: 0, alreadySent: alreadySent.size, emailsSent: 0 })
