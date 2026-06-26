@@ -1,14 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import TicketForm from './TicketForm'
 
 const GOLD = '#c8a866'
 
 export default function TicketAccess({ isAdmin, hasPassword, adminPassword }: { isAdmin: boolean; hasPassword: boolean; adminPassword: string }) {
   const [authed, setAuthed] = useState(isAdmin || !hasPassword)
-  const [showForm, setShowForm] = useState(false)
   const [pw, setPw] = useState('')
   const [err, setErr] = useState('')
   const [checking, setChecking] = useState(false)
@@ -26,8 +24,6 @@ export default function TicketAccess({ isAdmin, hasPassword, adminPassword }: { 
     } catch { setErr('Erro. Tenta novamente.') }
     setChecking(false)
   }
-
-  if (showForm) return <TicketForm />
 
   // ── Ecrã de acesso (não-admin sem sessão) ──
   if (!authed) {
@@ -52,29 +48,16 @@ export default function TicketAccess({ isAdmin, hasPassword, adminPassword }: { 
     )
   }
 
-  // ── Página (admin ou já autenticado) ──
+  // ── Acesso concedido → vai direto ao formulário ──
   return (
-    <main className="min-h-screen text-white" style={{ background: '#0b0a08' }}>
-      <div className="max-w-3xl mx-auto px-6 py-10">
-        <Link href="/secao/c3db95a8-67c5-4339-81c6-891af683f907"
-          className="text-[12px] tracking-widest uppercase text-white/30 hover:text-[#c8a866] transition-colors">‹ Voltar</Link>
-
-        <div className="mt-20 text-center">
-          <p className="text-[10px] tracking-[0.4em] uppercase text-[#c8a866]/70 font-semibold">RL Photo · Video</p>
-          <h1 className="text-4xl sm:text-5xl font-light mt-3" style={{ fontFamily: 'Georgia, serif' }}>
-            Ticket <span className="italic" style={{ color: GOLD }}>Fotos/Dia</span>
-          </h1>
-          <p className="text-[14px] text-white/45 mt-4 max-w-md mx-auto leading-relaxed">Registo de venda de fotografias no dia do evento.</p>
-          <button onClick={() => setShowForm(true)}
-            className="inline-flex items-center gap-2 mt-8 px-7 py-3.5 rounded-xl text-[13px] font-bold tracking-wider uppercase transition-all"
-            style={{ background: GOLD, color: '#0b0a08', boxShadow: '0 0 28px -6px rgba(200,168,102,0.6)' }}>
-            ＋ Abrir Ticket
-          </button>
+    <>
+      {isAdmin && (
+        <div className="px-6 pt-6" style={{ background: '#0b0a08' }}>
+          <PasswordManager initial={adminPassword} />
         </div>
-
-        {isAdmin && <PasswordManager initial={adminPassword} />}
-      </div>
-    </main>
+      )}
+      <TicketForm />
+    </>
   )
 }
 
@@ -107,7 +90,7 @@ function PasswordManager({ initial }: { initial: string }) {
   const dirty = val.trim() !== stored
 
   return (
-    <div className="mt-16 max-w-md mx-auto rounded-2xl border border-white/[0.08] p-5"
+    <div className="max-w-md mx-auto rounded-2xl border border-white/[0.08] p-5"
       style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.025), rgba(200,168,102,0.02))' }}>
       <p className="text-[11px] tracking-[0.3em] uppercase font-bold mb-1" style={{ color: GOLD }}>Palavra-passe de acesso</p>
       <p className="text-[11px] text-white/40 mb-3">{stored ? 'Quem souber a palavra-passe acede a esta página.' : 'Sem palavra-passe — a página está de acesso livre.'}</p>
