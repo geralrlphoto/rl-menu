@@ -180,9 +180,10 @@ const BODY = `
 
   <div class="sent" id="sentBlock">
     <div class="mk">✓</div>
-    <h2>Ticket <em>registado.</em></h2>
-    <p>O pedido foi enviado ao responsável e ao admin, e ficou guardado em Pedidos de Fotos.</p>
+    <h2>Pedido <em>registado.</em></h2>
+    <p>O pedido foi enviado ao cliente, ao responsável e ao admin, e ficou guardado em Pedidos de Fotos.</p>
     <div class="recap" id="sentRecap"></div>
+    <button type="button" class="btn" id="btnNovo" style="max-width:300px;margin:30px auto 0;">+ Novo pedido</button>
   </div>
 </section>
 </div>
@@ -315,6 +316,20 @@ export default function TicketForm() {
           s.scrollIntoView({ behavior: 'smooth', block: 'center' })
         } else { setMsg(dd?.error || 'Não foi possível registar o ticket.'); btn.disabled = false; btn.textContent = 'Confirmar pedido' }
       } catch { setMsg('Erro de rede. Tenta novamente.'); btn.disabled = false; btn.textContent = 'Confirmar pedido' }
+    })
+
+    // Novo pedido — limpa só os dados do pedido; mantém o responsável + conta MB WAY.
+    document.getElementById('btnNovo')!.addEventListener('click', function () {
+      ;['t-nome', 't-email', 't-noivos', 't-data', 't-tel', 't-morada', 't-msg'].forEach(function (id) { var el = document.getElementById(id) as HTMLInputElement | null; if (el) el.value = '' })
+      seg.querySelectorAll('label').forEach(l => l.classList.remove('on')); (seg.querySelector('label[data-val="digital"]') as HTMLElement).classList.add('on')
+      segM.querySelectorAll('label').forEach(l => l.classList.remove('on')); (segM.querySelector('label[data-val="Numerário"]') as HTMLElement).classList.add('on')
+      fotoList.innerHTML = ''; addRow()
+      var b = document.getElementById('btnSubmit') as HTMLButtonElement; b.textContent = 'Confirmar pedido'
+      document.getElementById('formMsg')!.textContent = ''
+      update()
+      document.getElementById('sentBlock')!.classList.remove('show')
+      document.getElementById('orderBlock')!.style.display = ''
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     })
   }, [])
 
