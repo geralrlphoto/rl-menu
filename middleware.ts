@@ -204,6 +204,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/webhook-tally-fotos-convidados') ||
     pathname.startsWith('/api/photo-orders') ||
     pathname.startsWith('/adquirir-fotografias') ||
+    pathname.startsWith('/ticket-fotos-dia') ||
+    pathname.startsWith('/api/ticket-') ||
     pathname.startsWith('/portal-media') ||
     pathname.startsWith('/media/portal-cliente/acesso') ||
     pathname.startsWith('/api/media-portal-acesso') ||
