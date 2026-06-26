@@ -294,6 +294,9 @@ function PedidoPreview({ pedido: p, onClose }: { pedido: any; onClose: () => voi
         <div className="px-6 py-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
             {row('Estado', p.estado === 'Entregue' ? 'Entregue' : 'Aguardar')}
+            {p.origem === 'ticket' && row('Origem', 'Ticket Fotos/Dia')}
+            {row('Responsável', p.responsavel)}
+            {row('Pagamento', p.metodo_pagamento ? p.metodo_pagamento + (p.metodo_pagamento === 'MBWay' && p.mbway_conta ? ` · ${p.mbway_conta}` : '') : '')}
             {row('Cliente', p.nome)}
             {row('Noivos', p.noivos)}
             {row('Email', p.email)}

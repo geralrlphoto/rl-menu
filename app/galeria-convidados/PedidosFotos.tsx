@@ -8,6 +8,7 @@ type Pedido = {
   formato: string; quantidade: number; subtotal: number; portes: number; total: number
   mensagem: string | null; fotografias: string | null; comprovativo_url: string | null
   referencia: string | null; estado: string | null; created_at: string
+  origem: string | null; responsavel: string | null; metodo_pagamento: string | null; mbway_conta: string | null
 }
 type Evento = { referencia: string; cliente: string; data_evento: string }
 
@@ -173,6 +174,7 @@ export default function PedidosFotos() {
                     <span className="text-white/30 text-[12px] w-3 shrink-0">{open ? '▾' : '▸'}</span>
                     <span className="min-w-0">
                       <span className="text-[13px] font-semibold" style={{ color: GOLD }}>{p.pedido}</span>
+                      {p.origem === 'ticket' && <span className="ml-1.5 text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold align-middle" style={{ background: 'rgba(147,112,219,0.12)', borderColor: 'rgba(147,112,219,0.3)', color: '#c4b5fd' }}>Ticket</span>}
                       <span className="text-[13px] text-white/80"> · {p.nome}</span>
                       <span className="block text-[11px] text-white/40 mt-0.5 truncate">
                         {p.data_casamento ? `Casamento ${p.data_casamento} · ` : ''}{p.quantidade} foto(s) · {eur(p.total)} · {p.formato}
@@ -209,6 +211,8 @@ export default function PedidosFotos() {
                       <Info k="Data casamento" v={p.data_casamento} />
                       <Info k="Subtotal / portes" v={`${eur(p.subtotal)} + ${p.portes > 0 ? eur(p.portes) : 'grátis'}`} />
                       <Info k="Recebido em" v={fmtDate(p.created_at)} />
+                      {p.responsavel && <Info k="Responsável" v={p.responsavel} />}
+                      {p.metodo_pagamento && <Info k="Pagamento" v={p.metodo_pagamento + (p.metodo_pagamento === 'MBWay' && p.mbway_conta ? ` · ${p.mbway_conta}` : '')} />}
                       {p.morada && <Info k="Morada" v={p.morada} />}
                       {fotos.length > 0 && <Info k="Nº fotografias" v={fotos.join(', ')} />}
                       {p.mensagem && <Info k="Mensagem" v={p.mensagem} />}
