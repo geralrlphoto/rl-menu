@@ -117,7 +117,7 @@ export async function POST(req: NextRequest) {
     if (insErr) throw new Error(insErr.message)
 
     const html = buildHtml(reg)
-    const to = [ADMIN_EMAIL]
+    const to: string[] = []
     if (responsavel_email && responsavel_email.includes('@')) to.push(responsavel_email)
     if (email && email.includes('@')) to.push(email)  // cliente que adquiriu
     const recipients = Array.from(new Set(to))
