@@ -17,12 +17,6 @@ const GOLD = '#c8a866'
 const PER_PAGE = 12
 const eur = (n: any) => `${Number(n || 0).toFixed(2)} €`
 
-function weddingTs(s: string | null): number {
-  if (!s) return Number.MAX_SAFE_INTEGER
-  const p = s.replace(/\s/g, '').split('/').map(Number)
-  if (p.length < 3 || !p[0] || !p[1] || !p[2]) return Number.MAX_SAFE_INTEGER
-  return new Date(p[2], p[1] - 1, p[0]).getTime()
-}
 function maxCreated(g: Grupo): number {
   return g.itens.reduce((m, p) => Math.max(m, new Date(p.created_at).getTime() || 0), 0)
 }
@@ -46,6 +40,34 @@ function bestNoivos(itens: Pedido[]): string {
   const comLigacao = names.filter(n => /(^|\s)(e|&)(\s|$)/i.test(n) || n.includes('&'))
   const pool = comLigacao.length ? comLigacao : names
   return pool.sort((a, b) => b.length - a.length)[0]
+}
+// Normaliza a data do casamento para "AAAAMMDD", tolerante ao formato escrito:
+// "27/06/2026", "27 / 06 / 2026", "27-06-2026", "270626", "27062026",
+// "2026-06-27" → "20260627". Formato desconhecido → devolve o original.
+function canon(d: string, mo: string, y: string): string {
+  const yy = y.length === 2 ? '20' + y : y.padStart(4, '0')
+  return yy + mo.padStart(2, '0') + d.padStart(2, '0')
+}
+function normDate(s: string): string {
+  const raw = (s || '').replace(/\s/g, '')
+  let m = raw.match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{2,4})$/)
+  if (m) return canon(m[1], m[2], m[3])
+  m = raw.match(/^(\d{4})[/.\-](\d{1,2})[/.\-](\d{1,2})$/)
+  if (m) return canon(m[3], m[2], m[1])
+  const digits = raw.replace(/\D/g, '')
+  if (digits.length === 6) return canon(digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 6))
+  if (digits.length === 8) return canon(digits.slice(0, 2), digits.slice(2, 4), digits.slice(4, 8))
+  return raw.toLowerCase()
+}
+function tsFromNorm(c: string): number {
+  if (!/^\d{8}$/.test(c)) return Number.MAX_SAFE_INTEGER
+  return new Date(+c.slice(0, 4), +c.slice(4, 6) - 1, +c.slice(6, 8)).getTime()
+}
+// Apresentação: "270626" → "27/06/2026"; formato desconhecido fica como está.
+function fmtDataCasamento(s: string | null): string {
+  if (!s) return ''
+  const c = normDate(s)
+  return /^\d{8}$/.test(c) ? `${c.slice(6, 8)}/${c.slice(4, 6)}/${c.slice(0, 4)}` : s
 }
 
 export default function PedidosFotos() {
@@ -157,9 +179,9 @@ export default function PedidosFotos() {
       const noivosRaw = (p.noivos || '').trim()
       const dataRaw = (p.data_casamento || '').trim()
       const noivosKey = normNoivos(noivosRaw)
-      const dataKey = dataRaw.replace(/\s/g, '')
+      const dataKey = normDate(dataRaw)
       const key = (noivosKey || dataKey) ? `${noivosKey}__${dataKey}` : '__sem__'
-      if (!map.has(key)) map.set(key, { key, noivos: noivosRaw, data: dataRaw || null, ts: weddingTs(dataRaw || null), itens: [] })
+      if (!map.has(key)) map.set(key, { key, noivos: noivosRaw, data: dataRaw || null, ts: tsFromNorm(dataKey), itens: [] })
       map.get(key)!.itens.push(p)
     }
     const arr = Array.from(map.values())
@@ -319,7 +341,7 @@ export default function PedidosFotos() {
                       <span className="text-[15px] font-light text-white/95" style={{ fontFamily: 'Georgia, serif' }}>
                         {g.noivos ? <>Casamento <span className="italic" style={{ color: GOLD }}>{capNoivos(g.noivos)}</span></> : <span className="text-white/55">Sem casamento definido</span>}
                       </span>
-                      {g.data && <span className="text-[13px] text-white/55"> · {g.data}</span>}
+                      {g.data && <span className="text-[13px] text-white/55"> · {fmtDataCasamento(g.data)}</span>}
                       <span className="block text-[11px] text-white/40 mt-0.5">
                         {g.itens.length} encomenda(s) · {eur(totalGrupo)}{nDigital ? ` · ${nDigital} digital` : ''}{nPapel ? ` · ${nPapel} papel` : ''}
                       </span>
