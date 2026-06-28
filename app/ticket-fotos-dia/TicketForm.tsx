@@ -183,7 +183,7 @@ const BODY = `
       <div class="sline" id="linePortes" style="display:none"><div class="k">Portes</div><div class="v" id="recapPortes">&mdash;</div></div>
       <div class="stotal"><div class="k">Total</div><div class="v" id="recapTotal">5&euro;</div></div>
       <button class="btn" type="submit" form="ticketForm" id="btnSubmit" disabled>Confirmar pedido</button>
-      <p class="note">Envia ao cliente, ao responsável e ao admin. Fica guardado em Pedidos de Fotos.</p>
+      <p class="note">Envia ao cliente e ao responsável. Fica guardado em Pedidos de Fotos.</p>
       <p class="msg" id="formMsg"></p>
     </aside>
   </div>
@@ -197,7 +197,7 @@ const BODY = `
   <div class="sent" id="sentBlock">
     <div class="mk">✓</div>
     <h2>Pedido <em>registado.</em></h2>
-    <p>O pedido foi enviado ao cliente, ao responsável e ao admin, e ficou guardado em Pedidos de Fotos.</p>
+    <p>O pedido foi enviado ao cliente e ao responsável, e ficou guardado em Pedidos de Fotos.</p>
     <div class="recap" id="sentRecap"></div>
     <button type="button" class="btn" id="btnNovo" style="max-width:300px;margin:30px auto 0;">+ Novo pedido</button>
   </div>
