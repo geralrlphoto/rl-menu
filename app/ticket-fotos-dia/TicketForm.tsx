@@ -42,6 +42,7 @@ const CSS = `
 .tkt .field select{cursor:pointer;color-scheme:dark;}
 .tkt .field select option{background:#15110b;color:var(--tx);}
 .tkt .field input::placeholder,.tkt .field textarea::placeholder{color:var(--tx-dim);}
+.tkt .field input.locked{color:var(--g);border-bottom-style:dashed;cursor:not-allowed;}
 .tkt .field input:focus,.tkt .field textarea:focus,.tkt .field select:focus{border-color:var(--g);}
 .tkt .field textarea{resize:none;min-height:60px;}
 
@@ -292,6 +293,23 @@ export default function TicketForm() {
       document.getElementById(id)!.addEventListener('input', syncBtn)
     })
     checkGate()
+
+    // Pré-preenchimento via URL (vindo do portal do membro): noivos + data do
+    // casamento. Ficam bloqueados, pois o ticket pertence àquele casamento.
+    try {
+      var params = new URLSearchParams(window.location.search)
+      var qNoivos = params.get('noivos')
+      var qData = params.get('data')
+      if (qNoivos) {
+        var elN = document.getElementById('t-noivos') as HTMLInputElement
+        elN.value = qNoivos; elN.readOnly = true; elN.classList.add('locked')
+      }
+      if (qData) {
+        var elD = document.getElementById('t-data') as HTMLInputElement
+        elD.value = qData; elD.readOnly = true; elD.classList.add('locked')
+      }
+      syncBtn()
+    } catch {}
 
     fetch('/api/freelancers').then(r => r.json()).then(d => {
       var membros = (d?.freelancers ?? []).filter((f: any) => ['FOTOGRAFO', 'VIDEOGRAFO'].includes(String(f.status || '').toUpperCase()))

@@ -2630,6 +2630,17 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5">
                   {/* LEFT: ações principais */}
                   <div className="flex flex-wrap items-center gap-2">
+                    {/* Ticket Fotos/Dia — abre o formulário já com os noivos e a
+                         data deste casamento pré-preenchidos (bloqueados), pois o
+                         ticket pertence a este casamento. Só para fotógrafos. */}
+                    {freelancerStatus !== 'VIDEOGRAFO' && (
+                      <a
+                        href={`/ticket-fotos-dia?noivos=${encodeURIComponent(c.nome_noivos ?? '')}&data=${encodeURIComponent(c.data_casamento ? (() => { const [y, m, d] = c.data_casamento!.split('-'); return `${d} / ${m} / ${y}` })() : '')}`}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-bold hover:bg-gold/20 transition-all">
+                        <span className="text-[12px]">🎟</span>
+                        Ticket Fotos/Dia
+                      </a>
+                    )}
                     {/* Relatório Diário — abre aba lateral à direita (conteúdo em branco por agora).
                          Só para videógrafos, tal como o restante fluxo de vídeo. */}
                     {freelancerStatus === 'VIDEOGRAFO' && (
