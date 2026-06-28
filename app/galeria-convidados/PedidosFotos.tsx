@@ -31,6 +31,22 @@ function maxCreated(g: Grupo): number {
 function capNoivos(s: string): string {
   return s.replace(/\S+/g, w => (w === 'e' || w === '&' || w === 'E') ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1))
 }
+// Normaliza o nome dos noivos para agrupar tolerante a variações de escrita:
+// minúsculas, sem pontuação, sem o "e"/"&" de ligação e por ordem alfabética.
+// "Ana e Rui", "Ana Rui", "Ana.Rui", "Rui e Ana" → "ana rui".
+function normNoivos(s: string): string {
+  return s.toLowerCase().replace(/[.&/_,\-]+/g, ' ').replace(/\s+/g, ' ').trim()
+    .split(' ').filter(w => w && w !== 'e').sort().join(' ')
+}
+// Escolhe a melhor variante escrita do nome (prefere as que têm ligação "e"/"&",
+// depois a mais comprida) para mostrar no cabeçalho do casamento.
+function bestNoivos(itens: Pedido[]): string {
+  const names = itens.map(p => (p.noivos || '').trim()).filter(Boolean)
+  if (!names.length) return ''
+  const comLigacao = names.filter(n => /(^|\s)(e|&)(\s|$)/i.test(n) || n.includes('&'))
+  const pool = comLigacao.length ? comLigacao : names
+  return pool.sort((a, b) => b.length - a.length)[0]
+}
 
 export default function PedidosFotos() {
   const [pedidos, setPedidos] = useState<Pedido[]>([])
@@ -117,14 +133,17 @@ export default function PedidosFotos() {
     for (const p of filtrados) {
       const noivosRaw = (p.noivos || '').trim()
       const dataRaw = (p.data_casamento || '').trim()
-      const noivosKey = noivosRaw.toLowerCase()
+      const noivosKey = normNoivos(noivosRaw)
       const dataKey = dataRaw.replace(/\s/g, '')
       const key = (noivosKey || dataKey) ? `${noivosKey}__${dataKey}` : '__sem__'
       if (!map.has(key)) map.set(key, { key, noivos: noivosRaw, data: dataRaw || null, ts: weddingTs(dataRaw || null), itens: [] })
       map.get(key)!.itens.push(p)
     }
     const arr = Array.from(map.values())
-    arr.forEach(g => g.itens.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')))
+    arr.forEach(g => {
+      g.itens.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''))
+      g.noivos = bestNoivos(g.itens) // melhor variante escrita para o título
+    })
     if (sort === 'casamento') arr.sort((a, b) => a.ts - b.ts)
     else if (sort === 'casamento_desc') arr.sort((a, b) => b.ts - a.ts)
     else if (sort === 'nome') arr.sort((a, b) => a.noivos.localeCompare(b.noivos))
