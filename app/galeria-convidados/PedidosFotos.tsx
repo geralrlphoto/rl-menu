@@ -86,6 +86,9 @@ export default function PedidosFotos() {
   const [gruposAbertos, setGruposAbertos] = useState<Set<string>>(new Set())
   const [fotografos, setFotografos] = useState<Fotografo[]>([])
   const [enviarSel, setEnviarSel] = useState<Record<string, string>>({})
+  const [editandoId, setEditandoId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState<Record<string, any>>({})
+  const [editSaving, setEditSaving] = useState(false)
 
   async function load() {
     setLoading(true)
@@ -162,6 +165,29 @@ export default function PedidosFotos() {
     setSaving(null)
   }
 
+  function iniciarEdicao(p: Pedido) {
+    setEditandoId(p.id)
+    setEditForm({
+      nome: p.nome ?? '', email: p.email ?? '', telefone: p.telefone ?? '',
+      noivos: p.noivos ?? '', data_casamento: p.data_casamento ?? '',
+      formato: (p.formato || 'digital').toLowerCase(), quantidade: p.quantidade ?? 0,
+      metodo_pagamento: p.metodo_pagamento ?? '', responsavel: p.responsavel ?? '',
+      morada: p.morada ?? '', fotografias: p.fotografias ?? '', mensagem: p.mensagem ?? '',
+    })
+  }
+  async function guardarEdicao(p: Pedido) {
+    setEditSaving(true)
+    const q = Math.max(0, parseInt(String(editForm.quantidade), 10) || 0)
+    const fmt = String(editForm.formato).toLowerCase() === 'papel' ? 'papel' : 'digital'
+    const subtotal = q * 5, portes = (fmt === 'papel' && q < 5) ? 4 : 0, total = subtotal + portes
+    try {
+      await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, fields: editForm }) })
+      setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, ...editForm, formato: fmt, quantidade: q, subtotal, portes, total } : x))
+      setEditandoId(null)
+    } catch {}
+    setEditSaving(false)
+  }
+
   async function enviarGrupo(g: Grupo) {
     const fid = enviarSel[g.key] ?? (g.itens[0]?.enviado_para_id ?? '')
     if (!fid) { alert('Escolhe um fotógrafo para enviar.'); return }
@@ -233,6 +259,13 @@ export default function PedidosFotos() {
   const optLabel = (e: Evento) => `${e.referencia}${e.cliente ? ` · ${e.cliente}` : ''}`
   const inputCls = 'bg-black/30 border border-white/[0.1] rounded-lg px-3 py-2 text-[12px] text-white/90 placeholder:text-white/25 focus:outline-none focus:border-[#c8a866]/40'
 
+  const editField = (label: string, key: string) => (
+    <label className="block">
+      <span className="text-[10px] tracking-widest uppercase text-white/40">{label}</span>
+      <input value={editForm[key] ?? ''} onChange={e => setEditForm(s => ({ ...s, [key]: e.target.value }))} className={inputCls + ' w-full mt-1'} />
+    </label>
+  )
+
   const FmtBtn = ({ id, label, n }: { id: 'todas' | 'digital' | 'papel'; label: string; n: number }) => (
     <button onClick={() => setFormato(id)}
       className={`text-[12px] px-3 py-1.5 rounded-lg border tracking-wide transition-all ${formato === id ? 'bg-gold/15 border-gold/40 text-gold' : 'border-white/[0.08] text-white/45 hover:text-white/80'}`}
@@ -289,22 +322,83 @@ export default function PedidosFotos() {
         {/* Detalhes (expandido) */}
         {open && (
           <div className="px-4 pb-4 pt-1 ml-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-[12px] rounded-xl border border-white/[0.06] bg-black/20 p-4">
-              <Info k="Email" v={p.email} />
-              <Info k="Telefone" v={p.telefone} />
-              <Info k="Noivos" v={p.noivos} />
-              <Info k="Data casamento" v={p.data_casamento} />
-              <Info k="Subtotal / portes" v={`${eur(p.subtotal)} + ${p.portes > 0 ? eur(p.portes) : 'grátis'}`} />
-              <Info k="Recebido em" v={fmtDate(p.created_at)} />
-              {p.responsavel && <Info k="Responsável" v={p.responsavel} />}
-              {p.metodo_pagamento && <Info k="Pagamento" v={p.metodo_pagamento + (p.metodo_pagamento === 'MBWay' && p.mbway_conta ? ` · ${p.mbway_conta}` : '')} />}
-              {p.morada && <Info k="Morada" v={p.morada} />}
-              {fotos.length > 0 && <Info k="Nº fotografias" v={fotos.join(', ')} />}
-              {p.mensagem && <Info k="Mensagem" v={p.mensagem} />}
-            </div>
-            {p.comprovativo_url && (
-              <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-[11px] mt-3 px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Ver comprovativo</a>
+            {editandoId === p.id ? (
+              /* Modo edição */
+              <div className="rounded-xl border border-gold/20 bg-black/20 p-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {editField('Cliente', 'nome')}
+                  {editField('Email', 'email')}
+                  {editField('Telefone', 'telefone')}
+                  {editField('Nome dos noivos', 'noivos')}
+                  {editField('Data casamento', 'data_casamento')}
+                  <label className="block">
+                    <span className="text-[10px] tracking-widest uppercase text-white/40">Formato</span>
+                    <select value={editForm.formato} onChange={e => setEditForm(s => ({ ...s, formato: e.target.value }))} className={inputCls + ' w-full mt-1 [color-scheme:dark] cursor-pointer'}>
+                      <option value="digital">Digital</option>
+                      <option value="papel">Papel</option>
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] tracking-widest uppercase text-white/40">Quantidade de fotos</span>
+                    <input type="number" min={0} value={editForm.quantidade} onChange={e => setEditForm(s => ({ ...s, quantidade: e.target.value }))} className={inputCls + ' w-full mt-1'} />
+                  </label>
+                  <label className="block">
+                    <span className="text-[10px] tracking-widest uppercase text-white/40">Pagamento</span>
+                    <select value={editForm.metodo_pagamento} onChange={e => setEditForm(s => ({ ...s, metodo_pagamento: e.target.value }))} className={inputCls + ' w-full mt-1 [color-scheme:dark] cursor-pointer'}>
+                      <option value="">—</option>
+                      <option value="Numerário">Numerário</option>
+                      <option value="MBWay">MBWay</option>
+                      <option value="Multibanco">Multibanco</option>
+                    </select>
+                  </label>
+                  {editField('Responsável', 'responsavel')}
+                  {editField('Morada', 'morada')}
+                  {editField('Nº fotografias', 'fotografias')}
+                </div>
+                <label className="block mt-3">
+                  <span className="text-[10px] tracking-widest uppercase text-white/40">Mensagem</span>
+                  <textarea value={editForm.mensagem} onChange={e => setEditForm(s => ({ ...s, mensagem: e.target.value }))} className={inputCls + ' w-full mt-1 min-h-[60px] resize-none'} />
+                </label>
+                <p className="text-[11px] text-white/45 mt-3">Total recalculado ao guardar: <b className="text-gold">{eur(Math.max(0, parseInt(String(editForm.quantidade), 10) || 0) * 5 + (String(editForm.formato).toLowerCase() === 'papel' && (parseInt(String(editForm.quantidade), 10) || 0) < 5 ? 4 : 0))}</b></p>
+                <div className="flex items-center gap-2 mt-3">
+                  <button onClick={() => guardarEdicao(p)} disabled={editSaving}
+                    className="text-[11px] px-4 py-2 rounded-lg bg-gold text-black font-bold tracking-wider uppercase hover:bg-gold/90 transition-all disabled:opacity-50">
+                    {editSaving ? 'A guardar…' : 'Guardar'}
+                  </button>
+                  <button onClick={() => setEditandoId(null)}
+                    className="text-[11px] px-3 py-2 rounded-lg border border-white/15 text-white/55 tracking-wider uppercase hover:text-white/80 transition-all">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Modo leitura */
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-[12px] rounded-xl border border-white/[0.06] bg-black/20 p-4">
+                  <Info k="Email" v={p.email} />
+                  <Info k="Telefone" v={p.telefone} />
+                  <Info k="Noivos" v={p.noivos} />
+                  <Info k="Data casamento" v={p.data_casamento} />
+                  <Info k="Subtotal / portes" v={`${eur(p.subtotal)} + ${p.portes > 0 ? eur(p.portes) : 'grátis'}`} />
+                  <Info k="Recebido em" v={fmtDate(p.created_at)} />
+                  {p.responsavel && <Info k="Responsável" v={p.responsavel} />}
+                  {p.metodo_pagamento && <Info k="Pagamento" v={p.metodo_pagamento + (p.metodo_pagamento === 'MBWay' && p.mbway_conta ? ` · ${p.mbway_conta}` : '')} />}
+                  {p.morada && <Info k="Morada" v={p.morada} />}
+                  {fotos.length > 0 && <Info k="Nº fotografias" v={fotos.join(', ')} />}
+                  {p.mensagem && <Info k="Mensagem" v={p.mensagem} />}
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <button onClick={() => iniciarEdicao(p)}
+                    className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Editar
+                  </button>
+                  {p.comprovativo_url && (
+                    <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Ver comprovativo</a>
+                  )}
+                </div>
+              </>
             )}
           </div>
         )}

@@ -25,8 +25,32 @@ export async function GET(req: NextRequest) {
 //   ou envia um grupo de encomendas ({ ids }) a um fotógrafo ({ enviado_para_id }).
 export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const { id, ids, referencia, estado, enviado_para_id, enviado_para_nome } = body
+  const { id, ids, referencia, estado, enviado_para_id, enviado_para_nome, fields } = body
   const supabase = db()
+
+  // Edição completa dos dados de uma encomenda ({ id, fields }). Recalcula
+  // subtotal/portes/total a partir de quantidade/formato (5€/foto, 4€ portes
+  // só em papel com menos de 5 fotos).
+  if (id && fields && typeof fields === 'object') {
+    const f = fields
+    const upd: Record<string, any> = {}
+    const txt = ['nome', 'email', 'telefone', 'noivos', 'data_casamento', 'morada', 'mensagem', 'responsavel', 'metodo_pagamento', 'fotografias']
+    for (const k of txt) if (f[k] !== undefined) upd[k] = (typeof f[k] === 'string' ? f[k].trim() : f[k]) || null
+    if (f.formato !== undefined) upd.formato = String(f.formato).toLowerCase() === 'papel' ? 'papel' : 'digital'
+    if (f.quantidade !== undefined) upd.quantidade = Math.max(0, parseInt(f.quantidade, 10) || 0)
+    if (upd.quantidade !== undefined || upd.formato !== undefined) {
+      const { data: cur } = await supabase.from('photo_orders').select('quantidade, formato').eq('id', id).single()
+      const q = upd.quantidade !== undefined ? upd.quantidade : (cur?.quantidade ?? 0)
+      const fmt = upd.formato !== undefined ? upd.formato : (cur?.formato ?? 'digital')
+      const subtotal = q * 5
+      const portes = (fmt === 'papel' && q < 5) ? 4 : 0
+      upd.subtotal = subtotal; upd.portes = portes; upd.total = subtotal + portes
+    }
+    if (Object.keys(upd).length === 0) return NextResponse.json({ error: 'nada a atualizar' }, { status: 400 })
+    const { error } = await supabase.from('photo_orders').update(upd).eq('id', id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true, ...upd })
+  }
 
   // Envio em grupo a um fotógrafo (ou anular envio com enviado_para_id vazio).
   if (Array.isArray(ids) && ids.length > 0 && enviado_para_id !== undefined) {
