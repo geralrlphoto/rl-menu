@@ -2614,17 +2614,6 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     )
                   })}
                 </div>
-
-                {/* ── Fotos Convidados (Email + CTT) ──────────────────── */}
-                {c.referencia && (
-                  <FotosConvidadosBox
-                    referencia={c.referencia}
-                    estado={fotosConvidadosMap[c.referencia] ?? { email: null, ctt: null, emailLista: [], cttLista: [], emailWorkflow: '', cttWorkflow: '' }}
-                    onChange={(next) => setFotosConvidadosMap(prev => ({ ...prev, [c.referencia!]: next }))}
-                    dataCasamento={c.data_casamento}
-                    isFotografo={freelancerStatus === 'FOTOGRAFO'}
-                  />
-                )}
                 </>)}
 
                 <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-5">
