@@ -2630,6 +2630,15 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                         Ticket Fotos/Dia
                       </a>
                     )}
+                    {/* Ver Encomendas — placeholder por agora (sem ação). Funcionalidade
+                         a definir mais tarde. Só para fotógrafos. */}
+                    {freelancerStatus !== 'VIDEOGRAFO' && (
+                      <button onClick={() => {}}
+                        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-bold hover:bg-gold/20 transition-all">
+                        <span className="text-[12px]">📦</span>
+                        Ver Encomendas
+                      </button>
+                    )}
                     {/* Relatório Diário — abre aba lateral à direita (conteúdo em branco por agora).
                          Só para videógrafos, tal como o restante fluxo de vídeo. */}
                     {freelancerStatus === 'VIDEOGRAFO' && (
