@@ -2109,6 +2109,18 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   // Casamento cujo "Relatório Diário" está aberto na aba lateral (null = fechada).
   // Conteúdo da aba ainda em branco — placeholder por agora.
   const [reportCasamento, setReportCasamento] = useState<Casamento | null>(null)
+  // "Ver Encomendas" — modal com as encomendas de fotos enviadas a este membro.
+  const [encomendasOpen, setEncomendasOpen] = useState(false)
+  const [encomendasList, setEncomendasList] = useState<any[]>([])
+  const [encomendasLoading, setEncomendasLoading] = useState(false)
+  async function abrirEncomendas() {
+    setEncomendasOpen(true); setEncomendasLoading(true)
+    try {
+      const d = await fetch(`/api/freelancer-encomendas?freelancer_id=${encodeURIComponent(freelancerId)}`).then(r => r.json())
+      setEncomendasList(Array.isArray(d?.encomendas) ? d.encomendas : [])
+    } catch { setEncomendasList([]) }
+    setEncomendasLoading(false)
+  }
 
   async function saveIntro() {
     if (!freelancer) return
@@ -2633,7 +2645,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     {/* Ver Encomendas — placeholder por agora (sem ação). Funcionalidade
                          a definir mais tarde. Só para fotógrafos. */}
                     {freelancerStatus !== 'VIDEOGRAFO' && (
-                      <button onClick={() => {}}
+                      <button onClick={abrirEncomendas}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-bold hover:bg-gold/20 transition-all">
                         <span className="text-[12px]">📦</span>
                         Ver Encomendas
@@ -2722,6 +2734,68 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
         )
       })}
       </div>
+
+      {/* ── Modal · Ver Encomendas (fotos enviadas a este membro) ───────── */}
+      {encomendasOpen && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={() => setEncomendasOpen(false)}>
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+          <div className="relative z-10 w-full max-w-2xl max-h-[85vh] flex flex-col rounded-2xl border border-gold/25 overflow-hidden"
+            style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)', boxShadow: '0 30px 80px -20px rgba(0,0,0,0.85)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="h-0.5 w-full bg-gold/65 shrink-0" />
+            <div className="px-6 pt-5 pb-4 border-b border-white/[0.06] flex items-start justify-between gap-3 shrink-0">
+              <div>
+                <p className="text-[10px] tracking-[0.4em] text-gold/65 uppercase mb-1">Encomendas de Fotos</p>
+                <h3 className="text-lg text-white font-light tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+                  Enviadas a {freelancer?.nome || 'ti'}{!encomendasLoading && <span className="text-white/35"> · {encomendasList.length}</span>}
+                </h3>
+              </div>
+              <button onClick={() => setEncomendasOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {encomendasLoading ? (
+                <p className="text-[13px] text-white/35">A carregar…</p>
+              ) : encomendasList.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/[0.1] py-12 text-center">
+                  <p className="text-[13px] text-white/35">Ainda não tens encomendas enviadas.</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {encomendasList.map((e: any) => {
+                    const fotos = String(e.fotografias ?? '').split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
+                    return (
+                      <div key={e.id} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+                        <div className="flex items-center justify-between gap-3 flex-wrap">
+                          <div className="min-w-0">
+                            <span className="text-[13px] font-semibold text-gold">{e.pedido}</span>
+                            <span className="text-[13px] text-white/80"> · {e.nome}</span>
+                            {e.noivos && <span className="block text-[11px] text-white/45 mt-0.5">💍 {e.noivos}{e.data_casamento ? ` · ${e.data_casamento}` : ''}</span>}
+                          </div>
+                          <span className={`text-[10px] px-2 py-1 rounded-md border tracking-widest uppercase font-bold shrink-0 ${e.estado === 'Entregue' ? 'border-emerald-500/35 text-emerald-300 bg-emerald-500/10' : 'border-amber-500/30 text-amber-300 bg-amber-500/10'}`}>
+                            {e.estado === 'Entregue' ? 'Entregue' : 'Aguardar'}
+                          </span>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[12px] text-white/60">
+                          <span>{e.quantidade} foto(s) · {(e.formato || '').toLowerCase() === 'papel' ? 'Papel' : 'Digital'}</span>
+                          <span>{Number(e.total || 0).toFixed(2)} €</span>
+                          {e.telefone && <span>☎ {e.telefone}</span>}
+                        </div>
+                        {fotos.length > 0 && <p className="mt-1.5 text-[11px] text-white/45">Nº fotografias: {fotos.join(', ')}</p>}
+                        {e.morada && <p className="mt-1 text-[11px] text-white/45">Morada: {e.morada}</p>}
+                        {e.mensagem && <p className="mt-1 text-[11px] text-white/45 italic">“{e.mensagem}”</p>}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
 
       {/* ── Aba lateral · Relatório Diário ──────────────────────
            Drawer encostado à direita. Conteúdo ainda em branco

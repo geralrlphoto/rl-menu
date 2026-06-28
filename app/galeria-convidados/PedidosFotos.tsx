@@ -9,8 +9,10 @@ type Pedido = {
   mensagem: string | null; fotografias: string | null; comprovativo_url: string | null
   referencia: string | null; estado: string | null; created_at: string
   origem: string | null; responsavel: string | null; metodo_pagamento: string | null; mbway_conta: string | null
+  enviado_para_id: string | null; enviado_para_nome: string | null; enviado_em: string | null
 }
 type Evento = { referencia: string; cliente: string; data_evento: string }
+type Fotografo = { id: string; nome: string }
 type Grupo = { key: string; noivos: string; data: string | null; ts: number; itens: Pedido[] }
 
 const GOLD = '#c8a866'
@@ -82,6 +84,8 @@ export default function PedidosFotos() {
   const [page, setPage] = useState(1)
   const [aberto, setAberto] = useState<string | null>(null)
   const [gruposAbertos, setGruposAbertos] = useState<Set<string>>(new Set())
+  const [fotografos, setFotografos] = useState<Fotografo[]>([])
+  const [enviarSel, setEnviarSel] = useState<Record<string, string>>({})
 
   async function load() {
     setLoading(true)
@@ -106,6 +110,13 @@ export default function PedidosFotos() {
         }))
         setEventos(Array.from(byRef.values()).sort((a, b) => (a.data_evento || '').localeCompare(b.data_evento || '')))
       }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    fetch('/api/freelancers').then(r => r.json()).then(d => {
+      const fts = (d?.freelancers ?? []).filter((f: any) => String(f.status || '').toUpperCase() === 'FOTOGRAFO')
+      setFotografos(fts.map((f: any) => ({ id: f.id, nome: f.nome })))
+    }).catch(() => {})
   }, [])
 
   async function guardarRef(id: string, val: string) {
@@ -147,6 +158,20 @@ export default function PedidosFotos() {
       await fetch('/api/pedidos-fotos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) })
       const idset = new Set(ids)
       setPedidos(prev => prev.filter(p => !idset.has(p.id)))
+    } catch {}
+    setSaving(null)
+  }
+
+  async function enviarGrupo(g: Grupo) {
+    const fid = enviarSel[g.key] ?? (g.itens[0]?.enviado_para_id ?? '')
+    if (!fid) { alert('Escolhe um fotógrafo para enviar.'); return }
+    const f = fotografos.find(x => x.id === fid)
+    const ids = g.itens.map(p => p.id)
+    setSaving('env:' + g.key)
+    try {
+      await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, enviado_para_id: fid, enviado_para_nome: f?.nome ?? '' }) })
+      const idset = new Set(ids)
+      setPedidos(prev => prev.map(p => idset.has(p.id) ? { ...p, enviado_para_id: fid, enviado_para_nome: f?.nome ?? null, enviado_em: new Date().toISOString() } : p))
     } catch {}
     setSaving(null)
   }
@@ -331,6 +356,10 @@ export default function PedidosFotos() {
             const totalGrupo = g.itens.reduce((s, p) => s + Number(p.total || 0), 0)
             const nDigital = g.itens.filter(p => (p.formato || '').toLowerCase() === 'digital').length
             const nPapel = g.itens.filter(p => (p.formato || '').toLowerCase() === 'papel').length
+            // Nome do fotógrafo a quem o grupo foi enviado (só se todas as encomendas
+            // estiverem enviadas para o mesmo).
+            const enviadoNomes = new Set(g.itens.map(p => p.enviado_para_nome || ''))
+            const enviadoNome = (enviadoNomes.size === 1 && !enviadoNomes.has('')) ? g.itens[0].enviado_para_nome : null
             return (
               <div key={g.key} className="rounded-2xl border border-white/[0.07] overflow-hidden" style={{ background: 'rgba(255,255,255,0.015)' }}>
                 {/* Cabeçalho do casamento */}
@@ -344,10 +373,22 @@ export default function PedidosFotos() {
                       {g.data && <span className="text-[13px] text-white/55"> · {fmtDataCasamento(g.data)}</span>}
                       <span className="block text-[11px] text-white/40 mt-0.5">
                         {g.itens.length} encomenda(s) · {eur(totalGrupo)}{nDigital ? ` · ${nDigital} digital` : ''}{nPapel ? ` · ${nPapel} papel` : ''}
+                        {enviadoNome && <span className="text-emerald-300/80"> · ✓ Enviado a {enviadoNome}</span>}
                       </span>
                     </span>
                   </button>
                   <div className="flex items-center gap-2 shrink-0">
+                    {/* Enviar a um fotógrafo */}
+                    <select value={enviarSel[g.key] ?? (g.itens[0]?.enviado_para_id ?? '')} onChange={e => setEnviarSel(s => ({ ...s, [g.key]: e.target.value }))}
+                      title="Enviar estas encomendas a um fotógrafo"
+                      className="bg-black/30 border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[11px] text-white/90 focus:outline-none focus:border-[#c8a866]/40 cursor-pointer [color-scheme:dark] max-w-[170px]">
+                      <option value="">— Enviar a… —</option>
+                      {fotografos.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                    </select>
+                    <button onClick={() => enviarGrupo(g)} disabled={saving === 'env:' + g.key} title="Enviar ao fotógrafo selecionado"
+                      className="text-[10px] px-2.5 py-1.5 rounded-lg border border-gold/35 text-gold hover:bg-gold/10 tracking-wide uppercase transition-all disabled:opacity-40 flex items-center gap-1">
+                      {saving === 'env:' + g.key ? 'A enviar…' : <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar</>}
+                    </button>
                     <button onClick={() => apagarGrupo(g)} title="Apagar todas as encomendas deste casamento"
                       className="text-[10px] px-2.5 py-1.5 rounded-lg border border-red-500/25 text-red-300/80 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40 tracking-wide uppercase transition-all flex items-center gap-1">
                       {saving === 'grp:' + g.key
