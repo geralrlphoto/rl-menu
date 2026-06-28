@@ -2113,7 +2113,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   const [encomendasOpen, setEncomendasOpen] = useState(false)
   const [encomendasList, setEncomendasList] = useState<any[]>([])
   const [encomendasLoading, setEncomendasLoading] = useState(false)
-  const [pagandoId, setPagandoId] = useState<string | null>(null)
+  const [apagandoId, setApagandoId] = useState<string | null>(null)
   async function abrirEncomendas() {
     setEncomendasOpen(true); setEncomendasLoading(true)
     try {
@@ -2122,26 +2122,27 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
     } catch { setEncomendasList([]) }
     setEncomendasLoading(false)
   }
-  // Marcar uma encomenda como paga / por pagar (apenas admin).
-  async function togglePago(e: any) {
-    const novo = !e.pago
-    setPagandoId(e.id)
+  // Apagar uma encomenda (apenas admin).
+  async function apagarEncomenda(e: any) {
+    if (!confirm(`Apagar a encomenda ${e.pedido}? Esta ação é irreversível.`)) return
+    setApagandoId(e.id)
     try {
-      await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: e.id, pago: novo }) })
-      setEncomendasList(prev => prev.map(x => x.id === e.id ? { ...x, pago: novo, pago_em: novo ? new Date().toISOString() : null } : x))
+      await fetch('/api/pedidos-fotos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: e.id }) })
+      setEncomendasList(prev => prev.filter(x => x.id !== e.id))
     } catch {}
-    setPagandoId(null)
+    setApagandoId(null)
   }
-  // Marcar todas as encomendas por pagar como pagas (apenas admin).
-  async function pagarTodas() {
-    const ids = encomendasList.filter(e => !e.pago).map(e => e.id)
+  // Apagar todas as encomendas enviadas a este fotógrafo (apenas admin).
+  async function apagarTodasEncomendas() {
+    const ids = encomendasList.map(e => e.id)
     if (ids.length === 0) return
-    setPagandoId('all')
+    if (!confirm(`Apagar TODAS as ${ids.length} encomenda(s) enviadas a este fotógrafo?\n\nEsta ação é irreversível.`)) return
+    setApagandoId('all')
     try {
-      await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, pago: true }) })
-      setEncomendasList(prev => prev.map(x => ({ ...x, pago: true, pago_em: x.pago_em ?? new Date().toISOString() })))
+      await fetch('/api/pedidos-fotos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) })
+      setEncomendasList([])
     } catch {}
-    setPagandoId(null)
+    setApagandoId(null)
   }
 
   async function saveIntro() {
@@ -2771,24 +2772,14 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 <h3 className="text-lg text-white font-light tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
                   Enviadas a {freelancer?.nome || 'ti'}{!encomendasLoading && <span className="text-white/35"> · {encomendasList.length}</span>}
                 </h3>
-                {!encomendasLoading && encomendasList.length > 0 && (() => {
-                  const pagas = encomendasList.filter(e => e.pago).length
-                  const porPagar = encomendasList.filter(e => !e.pago)
-                  const totalPorPagar = porPagar.reduce((s, e) => s + Number(e.total || 0), 0)
-                  return (
-                    <div className="mt-1.5 flex items-center gap-3 flex-wrap">
-                      <p className="text-[12px] text-white/45">
-                        {pagas}/{encomendasList.length} pagas{porPagar.length ? ` · ${totalPorPagar.toFixed(2)} € por pagar` : ' · tudo pago'}
-                      </p>
-                      {!viewAsFreelancer && porPagar.length > 0 && (
-                        <button onClick={pagarTodas} disabled={pagandoId === 'all'}
-                          className="text-[10px] px-2.5 py-1 rounded-lg border border-emerald-500/35 text-emerald-300 hover:bg-emerald-500/10 tracking-wide uppercase transition-all disabled:opacity-40">
-                          {pagandoId === 'all' ? 'A marcar…' : '✓ Marcar todas pagas'}
-                        </button>
-                      )}
-                    </div>
-                  )
-                })()}
+                {!viewAsFreelancer && !encomendasLoading && encomendasList.length > 0 && (
+                  <div className="mt-1.5">
+                    <button onClick={apagarTodasEncomendas} disabled={apagandoId === 'all'}
+                      className="text-[10px] px-2.5 py-1 rounded-lg border border-red-500/30 text-red-300/85 hover:bg-red-500/10 hover:text-red-300 tracking-wide uppercase transition-all disabled:opacity-40 inline-flex items-center gap-1">
+                      {apagandoId === 'all' ? 'A apagar…' : <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg> Apagar todas</>}
+                    </button>
+                  </div>
+                )}
               </div>
               <button onClick={() => setEncomendasOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0">
@@ -2818,15 +2809,11 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                             <span className={`text-[10px] px-2 py-1 rounded-md border tracking-widest uppercase font-bold ${e.estado === 'Entregue' ? 'border-emerald-500/35 text-emerald-300 bg-emerald-500/10' : 'border-amber-500/30 text-amber-300 bg-amber-500/10'}`}>
                               {e.estado === 'Entregue' ? 'Entregue' : 'Aguardar'}
                             </span>
-                            {viewAsFreelancer ? (
-                              <span className={`text-[10px] px-2 py-1 rounded-md border tracking-widest uppercase font-bold ${e.pago ? 'border-emerald-500/35 text-emerald-300 bg-emerald-500/10' : 'border-white/15 text-white/45'}`}>
-                                {e.pago ? '✓ Pago' : 'Por pagar'}
-                              </span>
-                            ) : (
-                              <button onClick={() => togglePago(e)} disabled={pagandoId === e.id}
-                                title={e.pago ? 'Marcar como por pagar' : 'Marcar como pago'}
-                                className={`text-[10px] px-2.5 py-1 rounded-md border tracking-widest uppercase font-bold transition-all disabled:opacity-40 ${e.pago ? 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20' : 'border-gold/35 text-gold hover:bg-gold/10'}`}>
-                                {pagandoId === e.id ? '…' : (e.pago ? '✓ Pago' : 'Marcar pago')}
+                            {!viewAsFreelancer && (
+                              <button onClick={() => apagarEncomenda(e)} disabled={apagandoId === e.id}
+                                title="Apagar esta encomenda"
+                                className="w-7 h-7 rounded-lg border border-white/10 text-white/35 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center disabled:opacity-40">
+                                {apagandoId === e.id ? '…' : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>}
                               </button>
                             )}
                           </div>

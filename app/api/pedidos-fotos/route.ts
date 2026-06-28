@@ -8,7 +8,7 @@ function db() {
   )
 }
 
-const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, estado, origem, responsavel, metodo_pagamento, mbway_conta, created_at, enviado_para_id, enviado_para_nome, enviado_em, pago, pago_em'
+const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, estado, origem, responsavel, metodo_pagamento, mbway_conta, created_at, enviado_para_id, enviado_para_nome, enviado_em'
 
 // GET: lista pedidos de fotos (admin). ?referencia=<ref> filtra por casamento.
 export async function GET(req: NextRequest) {
@@ -25,17 +25,8 @@ export async function GET(req: NextRequest) {
 //   ou envia um grupo de encomendas ({ ids }) a um fotógrafo ({ enviado_para_id }).
 export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
-  const { id, ids, referencia, estado, enviado_para_id, enviado_para_nome, pago } = body
+  const { id, ids, referencia, estado, enviado_para_id, enviado_para_nome } = body
   const supabase = db()
-
-  // Marcar como pago/por pagar — individual ({ id, pago }) ou em grupo ({ ids, pago }).
-  if (pago !== undefined && (id || (Array.isArray(ids) && ids.length > 0))) {
-    const updates = { pago: !!pago, pago_em: pago ? new Date().toISOString() : null }
-    const q = supabase.from('photo_orders').update(updates)
-    const { error } = await (Array.isArray(ids) && ids.length > 0 ? q.in('id', ids) : q.eq('id', id))
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ ok: true, ...updates })
-  }
 
   // Envio em grupo a um fotógrafo (ou anular envio com enviado_para_id vazio).
   if (Array.isArray(ids) && ids.length > 0 && enviado_para_id !== undefined) {
