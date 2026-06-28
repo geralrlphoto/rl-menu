@@ -34,3 +34,17 @@ export async function PATCH(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true, ...updates })
 }
+
+// DELETE: apaga uma encomenda ({ id }) ou várias de uma vez ({ ids: [...] }),
+//   usado para apagar todas as encomendas de um casamento.
+export async function DELETE(req: NextRequest) {
+  const body = await req.json().catch(() => ({}))
+  const ids: string[] = Array.isArray(body?.ids)
+    ? body.ids.filter((x: any) => typeof x === 'string' && x)
+    : (body?.id ? [body.id] : [])
+  if (ids.length === 0) return NextResponse.json({ error: 'id(s) required' }, { status: 400 })
+  const supabase = db()
+  const { error } = await supabase.from('photo_orders').delete().in('id', ids)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true, deleted: ids.length })
+}

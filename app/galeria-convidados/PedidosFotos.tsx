@@ -106,6 +106,29 @@ export default function PedidosFotos() {
     setSaving(null)
   }
 
+  async function apagarPedido(id: string, pedido: string) {
+    if (!confirm(`Apagar a encomenda ${pedido}? Esta ação é irreversível.`)) return
+    setSaving(id)
+    try {
+      await fetch('/api/pedidos-fotos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+      setPedidos(prev => prev.filter(p => p.id !== id))
+    } catch {}
+    setSaving(null)
+  }
+
+  async function apagarGrupo(g: Grupo) {
+    const ids = g.itens.map(p => p.id)
+    const nome = g.noivos ? capNoivos(g.noivos) : 'sem casamento'
+    if (!confirm(`Apagar TODAS as ${ids.length} encomenda(s) do casamento ${nome}${g.data ? ' · ' + g.data : ''}?\n\nEsta ação é irreversível.`)) return
+    setSaving('grp:' + g.key)
+    try {
+      await fetch('/api/pedidos-fotos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) })
+      const idset = new Set(ids)
+      setPedidos(prev => prev.filter(p => !idset.has(p.id)))
+    } catch {}
+    setSaving(null)
+  }
+
   // Pesquisa
   const pesquisados = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -209,6 +232,10 @@ export default function PedidosFotos() {
               {eventos.map(e => <option key={e.referencia} value={e.referencia}>{optLabel(e)}</option>)}
             </select>
             {saving === p.id && <span className="text-[10px] text-[#c8a866]">…</span>}
+            <button onClick={() => apagarPedido(p.id, p.pedido)} title="Apagar esta encomenda"
+              className="w-7 h-7 rounded-lg border border-white/10 text-white/35 hover:text-red-400 hover:border-red-500/30 transition-all flex items-center justify-center shrink-0">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+            </button>
           </div>
         </div>
 
@@ -285,9 +312,8 @@ export default function PedidosFotos() {
             return (
               <div key={g.key} className="rounded-2xl border border-white/[0.07] overflow-hidden" style={{ background: 'rgba(255,255,255,0.015)' }}>
                 {/* Cabeçalho do casamento */}
-                <button onClick={() => toggleGrupo(g.key)}
-                  className="w-full flex items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-white/[0.025] transition-colors">
-                  <span className="flex items-center gap-2.5 min-w-0">
+                <div className="w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-white/[0.025] transition-colors">
+                  <button onClick={() => toggleGrupo(g.key)} className="flex items-center gap-2.5 min-w-0 text-left flex-1">
                     <span className="text-white/30 text-[12px] w-3 shrink-0">{gOpen ? '▾' : '▸'}</span>
                     <span className="min-w-0">
                       <span className="text-[15px] font-light text-white/95" style={{ fontFamily: 'Georgia, serif' }}>
@@ -298,9 +324,17 @@ export default function PedidosFotos() {
                         {g.itens.length} encomenda(s) · {eur(totalGrupo)}{nDigital ? ` · ${nDigital} digital` : ''}{nPapel ? ` · ${nPapel} papel` : ''}
                       </span>
                     </span>
-                  </span>
-                  <span className="text-[12px] px-2.5 py-1 rounded-full border shrink-0 font-semibold" style={{ borderColor: 'rgba(200,168,102,0.3)', color: GOLD }}>{g.itens.length}</span>
-                </button>
+                  </button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button onClick={() => apagarGrupo(g)} title="Apagar todas as encomendas deste casamento"
+                      className="text-[10px] px-2.5 py-1.5 rounded-lg border border-red-500/25 text-red-300/80 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40 tracking-wide uppercase transition-all flex items-center gap-1">
+                      {saving === 'grp:' + g.key
+                        ? 'A apagar…'
+                        : <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg> Apagar todas</>}
+                    </button>
+                    <span className="text-[12px] px-2.5 py-1 rounded-full border font-semibold" style={{ borderColor: 'rgba(200,168,102,0.3)', color: GOLD }}>{g.itens.length}</span>
+                  </div>
+                </div>
 
                 {/* Encomendas do casamento */}
                 {gOpen && (
