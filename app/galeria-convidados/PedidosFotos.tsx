@@ -26,6 +26,11 @@ function weddingTs(s: string | null): number {
 function maxCreated(g: Grupo): number {
   return g.itens.reduce((m, p) => Math.max(m, new Date(p.created_at).getTime() || 0), 0)
 }
+// Capitaliza o nome dos noivos para apresentação (mantém "e"/"&" de ligação
+// em minúscula): "rui e maria" → "Rui e Maria".
+function capNoivos(s: string): string {
+  return s.replace(/\S+/g, w => (w === 'e' || w === '&' || w === 'E') ? w.toLowerCase() : w.charAt(0).toUpperCase() + w.slice(1))
+}
 
 export default function PedidosFotos() {
   const [pedidos, setPedidos] = useState<Pedido[]>([])
@@ -267,7 +272,7 @@ export default function PedidosFotos() {
                     <span className="text-white/30 text-[12px] w-3 shrink-0">{gOpen ? '▾' : '▸'}</span>
                     <span className="min-w-0">
                       <span className="text-[15px] font-light text-white/95" style={{ fontFamily: 'Georgia, serif' }}>
-                        {g.noivos ? <>Casamento <span className="italic" style={{ color: GOLD }}>{g.noivos}</span></> : <span className="text-white/55">Sem casamento definido</span>}
+                        {g.noivos ? <>Casamento <span className="italic" style={{ color: GOLD }}>{capNoivos(g.noivos)}</span></> : <span className="text-white/55">Sem casamento definido</span>}
                       </span>
                       {g.data && <span className="text-[13px] text-white/55"> · {g.data}</span>}
                       <span className="block text-[11px] text-white/40 mt-0.5">
