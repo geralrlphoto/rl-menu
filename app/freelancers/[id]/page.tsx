@@ -2114,6 +2114,17 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   const [encomendasList, setEncomendasList] = useState<any[]>([])
   const [encomendasLoading, setEncomendasLoading] = useState(false)
   const [apagandoId, setApagandoId] = useState<string | null>(null)
+  const [estadoSavingId, setEstadoSavingId] = useState<string | null>(null)
+  // O fotógrafo (ou admin) marca a encomenda como Entregue/Aguardar. Fica no
+  // mesmo photo_orders.estado, por isso sincroniza com a página admin (Galeria).
+  async function updateEstadoEncomenda(e: any, novo: string) {
+    setEstadoSavingId(e.id)
+    try {
+      await fetch('/api/freelancer-encomendas', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: e.id, estado: novo, freelancer_id: freelancerId }) })
+      setEncomendasList(prev => prev.map(x => x.id === e.id ? { ...x, estado: novo } : x))
+    } catch {}
+    setEstadoSavingId(null)
+  }
   async function abrirEncomendas() {
     setEncomendasOpen(true); setEncomendasLoading(true)
     try {
@@ -2806,9 +2817,11 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                             {e.noivos && <span className="block text-[11px] text-white/45 mt-0.5">💍 {e.noivos}{e.data_casamento ? ` · ${e.data_casamento}` : ''}</span>}
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className={`text-[10px] px-2 py-1 rounded-md border tracking-widest uppercase font-bold ${e.estado === 'Entregue' ? 'border-emerald-500/35 text-emerald-300 bg-emerald-500/10' : 'border-amber-500/30 text-amber-300 bg-amber-500/10'}`}>
-                              {e.estado === 'Entregue' ? 'Entregue' : 'Aguardar'}
-                            </span>
+                            <button onClick={() => updateEstadoEncomenda(e, e.estado === 'Entregue' ? 'Aguardar' : 'Entregue')} disabled={estadoSavingId === e.id}
+                              title={e.estado === 'Entregue' ? 'Marcar como Aguardar' : 'Marcar como Entregue'}
+                              className={`text-[10px] px-2.5 py-1 rounded-md border tracking-widest uppercase font-bold transition-all disabled:opacity-40 ${e.estado === 'Entregue' ? 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20' : 'border-amber-500/30 text-amber-300 bg-amber-500/10 hover:bg-amber-500/20'}`}>
+                              {estadoSavingId === e.id ? '…' : (e.estado === 'Entregue' ? '✓ Entregue' : 'Marcar Entregue')}
+                            </button>
                             {!viewAsFreelancer && (
                               <button onClick={() => apagarEncomenda(e)} disabled={apagandoId === e.id}
                                 title="Apagar esta encomenda"

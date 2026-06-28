@@ -27,3 +27,20 @@ export async function GET(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ encomendas: data ?? [] })
 }
+
+// PATCH: o fotógrafo atualiza o estado de uma encomenda que lhe foi enviada
+//   ({ id, estado, freelancer_id }). A alteração só é permitida nas encomendas
+//   com enviado_para_id = freelancer_id (não toca em encomendas de outros).
+//   Fica no mesmo photo_orders.estado, por isso sincroniza com a página admin.
+export async function PATCH(req: NextRequest) {
+  const { id, estado, freelancer_id } = await req.json().catch(() => ({}))
+  if (!id || !freelancer_id) return NextResponse.json({ error: 'id e freelancer_id obrigatórios' }, { status: 400 })
+  const novoEstado = estado === 'Entregue' ? 'Entregue' : 'Aguardar'
+  const { error } = await db()
+    .from('photo_orders')
+    .update({ estado: novoEstado })
+    .eq('id', id)
+    .eq('enviado_para_id', freelancer_id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true, estado: novoEstado })
+}
