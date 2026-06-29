@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+
+export const runtime = 'nodejs'
 
 // Upload de foto para os cards da landing /contrato-cps
 // Body: FormData { file: File, which: 'casamento' | 'batizado' }
@@ -34,11 +37,17 @@ export async function POST(req: NextRequest) {
     const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
     const path = `contrato-cps-landing/${which}-${Date.now()}.${ext}`
 
-    const buf = Buffer.from(await file.arrayBuffer())
+    // Redimensiona (máx 2000px, q80) antes de gravar para poupar egress.
+    const { buffer: buf, contentType } = await optimizeImage(
+      Buffer.from(await file.arrayBuffer()),
+      file.type || 'image/jpeg',
+      file.name,
+    )
 
     const sb = db()
     const { error: upErr } = await sb.storage.from(BUCKET).upload(path, buf, {
-      contentType: file.type || 'image/jpeg',
+      contentType,
+      cacheControl: IMAGE_CACHE_CONTROL,
       upsert: true,
     })
     if (upErr) return NextResponse.json({ error: upErr.message }, { status: 500 })

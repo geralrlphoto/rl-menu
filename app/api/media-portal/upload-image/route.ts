@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+
+export const runtime = 'nodejs'
 
 export async function POST(req: NextRequest) {
   const auth = req.cookies.get('rl_auth')?.value
@@ -21,13 +24,18 @@ export async function POST(req: NextRequest) {
   const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
   const fileName = `proposta/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
+  // Redimensiona (máx 2000px, q80) antes de gravar para poupar egress.
+  const { buffer, contentType } = await optimizeImage(
+    Buffer.from(await file.arrayBuffer()),
+    file.type || 'image/jpeg',
+    file.name,
+  )
 
   const { error } = await supabase.storage
     .from('portal-images')
     .upload(fileName, buffer, {
-      contentType: file.type || 'image/jpeg',
+      contentType,
+      cacheControl: IMAGE_CACHE_CONTROL,
       upsert: false,
     })
 
@@ -37,7 +45,7 @@ export async function POST(req: NextRequest) {
       await supabase.storage.createBucket('portal-images', { public: true })
       const { error: e2 } = await supabase.storage
         .from('portal-images')
-        .upload(fileName, buffer, { contentType: file.type || 'image/jpeg', upsert: false })
+        .upload(fileName, buffer, { contentType, cacheControl: IMAGE_CACHE_CONTROL, upsert: false })
       if (e2) return NextResponse.json({ error: e2.message }, { status: 500 })
     } else {
       return NextResponse.json({ error: error.message }, { status: 500 })

@@ -1,6 +1,9 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
+import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+
+export const runtime = 'nodejs'
 
 const PT_MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 function formatDatePT(iso: string) {
@@ -34,12 +37,16 @@ export async function POST(req: NextRequest) {
   if (file && file.size > 0) {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
     const fileName = `comprovativos/${ref}-${Date.now()}.${ext}`
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
+    // Redimensiona (máx 2000px, q80) antes de gravar para poupar egress.
+    const { buffer, contentType } = await optimizeImage(
+      Buffer.from(await file.arrayBuffer()),
+      file.type || 'image/jpeg',
+      file.name,
+    )
 
     const { error: upErr } = await supabase.storage
       .from('portal-images')
-      .upload(fileName, buffer, { contentType: file.type || 'image/jpeg', upsert: false })
+      .upload(fileName, buffer, { contentType, cacheControl: IMAGE_CACHE_CONTROL, upsert: false })
 
     if (!upErr) {
       const { data: { publicUrl } } = supabase.storage

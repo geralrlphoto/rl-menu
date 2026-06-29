@@ -1,5 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+
+export const runtime = 'nodejs'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,8 +22,16 @@ export async function POST(req: Request) {
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
   const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-  const { error } = await supabase.storage.from(BUCKET).upload(name, file, {
-    contentType: file.type || 'image/jpeg',
+  // Redimensiona (máx 2000px, q80) antes de gravar para poupar egress.
+  const { buffer, contentType } = await optimizeImage(
+    Buffer.from(await file.arrayBuffer()),
+    file.type || 'image/jpeg',
+    file.name,
+  )
+
+  const { error } = await supabase.storage.from(BUCKET).upload(name, buffer, {
+    contentType,
+    cacheControl: IMAGE_CACHE_CONTROL,
     upsert: false,
   })
 
