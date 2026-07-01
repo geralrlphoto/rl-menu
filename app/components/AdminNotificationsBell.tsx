@@ -125,6 +125,8 @@ export function AdminNotificationsBell() {
   useEffect(() => {
     let cancelled = false
     async function fetchNotifs() {
+      // Não faz poll quando o separador está em segundo plano — poupa egress.
+      if (typeof document !== 'undefined' && document.hidden) return
       try {
         const res = await fetch('/api/admin-notifications', { cache: 'no-store' })
         if (!res.ok) return
@@ -133,8 +135,11 @@ export function AdminNotificationsBell() {
       } catch {}
     }
     fetchNotifs()
-    const iv = setInterval(fetchNotifs, 60_000)
-    return () => { cancelled = true; clearInterval(iv) }
+    const iv = setInterval(fetchNotifs, 300_000) // 5 min
+    // Atualiza imediatamente quando o separador volta a ficar visível.
+    const onVis = () => { if (!document.hidden) fetchNotifs() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { cancelled = true; clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
   }, [])
 
   // Lista de freelancers (para o seletor de reencaminhar) — só carrega quando o modal abre

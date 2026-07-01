@@ -103,7 +103,17 @@ type Notif = {
   mensagem?: string | null
 }
 
+// Cache em memória (por instância serverless) — colapsa múltiplos separadores
+// admin a bater na mesma instância dentro da janela. O sino faz poll a cada
+// 5 min, por isso 45s de TTL mantém os dados praticamente ao vivo mas evita
+// recomputar/reler a BD em rajadas de pedidos simultâneos.
+const NOTIF_TTL_MS = 45_000
+let notifCache: { at: number; payload: any } | null = null
+
 export async function GET() {
+  if (notifCache && Date.now() - notifCache.at < NOTIF_TTL_MS) {
+    return NextResponse.json(notifCache.payload)
+  }
   const supabase = db()
 
   // Buscar casamentos com qualquer url_*_enviado_em preenchido (com tolerância a colunas ausentes)
@@ -168,6 +178,23 @@ export async function GET() {
     // Expandir para notificações (1 casamento pode gerar até 4 notifs)
     const tipos = ['selecao', 'provas', 'editadas', 'album'] as const
     const notifications: Notif[] = []
+
+    // ── Leitura ÚNICA da tabela `portais` ──
+    //    Vários blocos abaixo precisam de (referencia, settings). Antes cada
+    //    bloco fazia o seu próprio SELECT à tabela toda (5 leituras iguais por
+    //    chamada), o que — com o poll do sino — era a maior fonte de egress do
+    //    PostgREST. Lemos uma vez e reutilizamos em todos os blocos.
+    let portaisAll: any[] = []
+    try {
+      const { data: portaisData } = await supabase
+        .from('portais')
+        .select('referencia, settings')
+        .limit(500)
+      portaisAll = (portaisData ?? []) as any[]
+    } catch (err) {
+      console.warn('[admin-notifications] leitura única de portais falhou:', err)
+    }
+
     for (const c of (casamentos ?? []) as any[]) {
       const extras = buildExtras(c)
       for (const tipo of tipos) {
@@ -544,11 +571,7 @@ export async function GET() {
     // ── Notificações de FOTOS CONVIDADOS (portais.settings) ──
     //    Dois canais separados: email_enviada (15d) e ctt_enviada (30d).
     try {
-      const { data: portais } = await supabase
-        .from('portais')
-        .select('referencia, settings')
-        .limit(500)
-      for (const p of (portais ?? []) as any[]) {
+      for (const p of portaisAll) {
         const s = p.settings ?? {}
         const canais: Array<{ key: 'fotos_convidados_email' | 'fotos_convidados_ctt'; sent: string | null }> = [
           { key: 'fotos_convidados_email', sent: s.fotos_convidados_email_enviada ?? null },
@@ -577,11 +600,7 @@ export async function GET() {
 
     // ── Mensagens enviadas pelos NOIVOS (portais.settings.noivos_messages) ──
     try {
-      const { data: portaisMsg } = await supabase
-        .from('portais')
-        .select('referencia, settings')
-        .limit(500)
-      for (const p of (portaisMsg ?? []) as any[]) {
+      for (const p of portaisAll) {
         const s = p.settings ?? {}
         const msgs = Array.isArray(s.noivos_messages) ? s.noivos_messages : []
         for (const m of msgs) {
@@ -757,8 +776,7 @@ export async function GET() {
       // Referências cuja seleção dos noivos já foi submetida (form Tally → fotos_selecao)
       const { data: selFeitas } = await supabase.from('fotos_selecao').select('referencia')
       const refsSubmetidas = new Set((selFeitas ?? []).map((s: any) => s.referencia).filter(Boolean))
-      const { data: portaisSel } = await supabase.from('portais').select('referencia, settings').limit(500)
-      for (const p of (portaisSel ?? []) as any[]) {
+      for (const p of portaisAll) {
         const s = p.settings ?? {}
         const entregueEm = s.sel_fotos_entregue_em
         if (!entregueEm) continue
@@ -795,12 +813,11 @@ export async function GET() {
     //    Quando os noivos escolhem um slot no portal, fica gravado em
     //    settings.bookingReservedSlotId + bookingReservedAt. Mostra no sino.
     try {
-      const { data: portaisBk } = await supabase.from('portais').select('referencia, settings').limit(500)
       const fmtDataBk = (d: string) => {
         try { return new Date(d + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }) }
         catch { return d }
       }
-      for (const p of (portaisBk ?? []) as any[]) {
+      for (const p of portaisAll) {
         const s = p.settings ?? {}
         const slotId = s.bookingReservedSlotId
         const at = s.bookingReservedAt
@@ -845,12 +862,11 @@ export async function GET() {
           if (ev.referencia) evDateByRef.set(ev.referencia, { cliente: ev.cliente ?? null, data_evento: ev.data_evento ?? null })
         }
       }
-      const { data: portaisPw } = await supabase.from('portais').select('referencia, settings').limit(500)
       const fmtDataPw = (d: string) => {
         try { return new Date(d + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }) }
         catch { return d }
       }
-      for (const p of (portaisPw ?? []) as any[]) {
+      for (const p of portaisAll) {
         const s = p.settings ?? {}
         if (!s.preWeddingServico) continue        // só se o serviço está ativo
         if (s.bookingReservedSlotId) continue      // já reservado → sem alerta
@@ -886,7 +902,9 @@ export async function GET() {
     // Ordenar por sent_at DESC
     notifications.sort((a, b) => (b.sent_at || '').localeCompare(a.sent_at || ''))
 
-    return NextResponse.json({ notifications: notifications.slice(0, 50) })
+    const payload = { notifications: notifications.slice(0, 50) }
+    notifCache = { at: Date.now(), payload }
+    return NextResponse.json(payload)
   } catch (err: any) {
     return NextResponse.json({ notifications: [], error: err.message }, { status: 200 })
   }

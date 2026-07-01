@@ -291,16 +291,29 @@ export default function CRMPage() {
         .catch(() => {})
     }
 
-    // Realtime — atualiza automaticamente quando há mudanças
-    const channel = supabase
-      .channel('crm_realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_contacts' }, () => {
+    // Realtime — atualiza automaticamente quando há mudanças.
+    // Debounce: uma sincronização Notion faz upsert de muitas rows de uma vez,
+    // e antes cada evento disparava um SELECT * à tabela toda (rajada de egress).
+    // Agora colapsamos a rajada num único refetch 1,5s após o último evento e
+    // só quando o separador está visível.
+    let refetchTimer: ReturnType<typeof setTimeout> | null = null
+    const scheduleRefetch = () => {
+      if (document.hidden) return
+      if (refetchTimer) clearTimeout(refetchTimer)
+      refetchTimer = setTimeout(() => {
         supabase.from('crm_contacts').select('*').order('data_entrada', { ascending: false })
           .then(({ data }) => { if (data) setContacts(dedupeContacts(data)) })
-      })
+      }, 1500)
+    }
+    const channel = supabase
+      .channel('crm_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'crm_contacts' }, scheduleRefetch)
       .subscribe()
 
-    return () => { supabase.removeChannel(channel) }
+    return () => {
+      if (refetchTimer) clearTimeout(refetchTimer)
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   // Leads activas no pipeline (excluir fechadas/encerradas)

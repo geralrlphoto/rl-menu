@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+
+export const runtime = 'nodejs'
 
 const BUCKET = 'SECTION-IMAGES'
 
@@ -34,11 +37,17 @@ export async function POST(req: NextRequest) {
   const ext  = file.name.split('.').pop() ?? 'jpg'
   const path = `${sectionId}/${Date.now()}.${ext}`
 
-  const buffer = Buffer.from(await file.arrayBuffer())
+  // Redimensiona (máx 2000px, q80) antes de gravar e aplica cache de 1 ano,
+  // para os uploads novos entrarem leves e bem cacheados (poupa egress).
+  const { buffer, contentType } = await optimizeImage(
+    Buffer.from(await file.arrayBuffer()),
+    file.type || 'image/jpeg',
+    file.name,
+  )
 
   const { error: uploadErr } = await supabase.storage
     .from(BUCKET)
-    .upload(path, buffer, { contentType: file.type, upsert: false })
+    .upload(path, buffer, { contentType, cacheControl: IMAGE_CACHE_CONTROL, upsert: false })
 
   if (uploadErr) {
     return NextResponse.json({ error: uploadErr.message }, { status: 500 })

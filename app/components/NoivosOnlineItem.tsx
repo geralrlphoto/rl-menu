@@ -64,8 +64,11 @@ export default function NoivosOnlineItem() {
   useEffect(() => {
     loadPresence()
     loadPortais()
-    const iv = setInterval(loadPresence, 30_000)
-    return () => clearInterval(iv)
+    // Poll a cada 3 min e só com o separador visível — poupa egress.
+    const iv = setInterval(() => { if (!document.hidden) loadPresence() }, 180_000)
+    const onVis = () => { if (!document.hidden) loadPresence() }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
   }, [])
 
   useEffect(() => {
