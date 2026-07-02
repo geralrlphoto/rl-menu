@@ -16,6 +16,19 @@ function supabase() {
   )
 }
 
+// Cache em memória por referência — esta rota é chamada em CADA visita de
+// portal (e pelo sino admin) e faz 1 query Notion + até 3 leituras Supabase.
+// Cachear 90s colapsa as visitas repetidas do mesmo evento sem prejudicar a
+// frescura (estados do evento aparecem no portal com <90s de atraso).
+declare global {
+  // eslint-disable-next-line no-var
+  var eventoByRefCache: Map<string, { ts: number; body: any }> | undefined
+}
+if (!global.eventoByRefCache) global.eventoByRefCache = new Map()
+const evCache = global.eventoByRefCache
+const EV_TTL = 90_000
+const EV_HEADERS = { 'Cache-Control': 'private, max-age=90, stale-while-revalidate=180' }
+
 // Fallback Supabase: usado quando Notion não encontra (eventos criados via
 // /contrato-cps onde a página Notion não foi criada) ou quando se quiser
 // suplementar dados em falta no Notion.
@@ -81,6 +94,12 @@ export async function GET(req: NextRequest) {
   const ref = req.nextUrl.searchParams.get('ref')
   if (!ref) return NextResponse.json({ error: 'ref required' }, { status: 400 })
 
+  // 0. Cache em memória (90s) — evita repetir Notion + Supabase por visita.
+  const hit = evCache.get(ref)
+  if (hit && Date.now() - hit.ts < EV_TTL) {
+    return NextResponse.json(hit.body, { headers: EV_HEADERS })
+  }
+
   // 1. Tenta Notion
   let notionEvento: any = null
   try {
@@ -126,21 +145,23 @@ export async function GET(req: NextRequest) {
   // 2. Carrega de Supabase (sempre — para suplementar campos em falta)
   const sbEvento = await loadFromSupabase(ref)
 
-  // 3. Se nada encontrado, devolve found:false
+  // 3-4. Monta o body (merge Notion + Supabase) e cacheia 90s.
+  let body: any
   if (!notionEvento && !sbEvento) {
-    return NextResponse.json({ found: false })
-  }
-
-  // 4. Merge: Notion primeiro; Supabase preenche os null/empty
-  const evento = notionEvento ?? sbEvento
-  if (notionEvento && sbEvento) {
-    // Sobrescreve campos vazios do Notion com dados Supabase
-    for (const k of Object.keys(sbEvento) as (keyof typeof sbEvento)[]) {
-      const v = (notionEvento as any)[k]
-      const isEmpty = v == null || v === '' || (Array.isArray(v) && v.length === 0)
-      if (isEmpty) (notionEvento as any)[k] = (sbEvento as any)[k]
+    body = { found: false }
+  } else {
+    const evento = notionEvento ?? sbEvento
+    if (notionEvento && sbEvento) {
+      // Sobrescreve campos vazios do Notion com dados Supabase
+      for (const k of Object.keys(sbEvento) as (keyof typeof sbEvento)[]) {
+        const v = (notionEvento as any)[k]
+        const isEmpty = v == null || v === '' || (Array.isArray(v) && v.length === 0)
+        if (isEmpty) (notionEvento as any)[k] = (sbEvento as any)[k]
+      }
     }
+    body = { found: true, evento }
   }
 
-  return NextResponse.json({ found: true, evento })
+  evCache.set(ref, { ts: Date.now(), body })
+  return NextResponse.json(body, { headers: EV_HEADERS })
 }

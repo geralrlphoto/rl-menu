@@ -115,7 +115,7 @@ export default async function PhotoDashboard() {
         return res
       },
       [cacheKey],
-      { revalidate: 600, tags: ['photo-dashboard'] }
+      { revalidate: 1800, tags: ['photo-dashboard'] }
     )()
 
   const getLeadsAtivas = unstable_cache(
@@ -128,7 +128,7 @@ export default async function PhotoDashboard() {
       return data ?? []
     },
     [`photo-leads-${ago10Str}`],
-    { revalidate: 600, tags: ['photo-dashboard'] }
+    { revalidate: 1800, tags: ['photo-dashboard'] }
   )
 
   const getRefPortais = unstable_cache(
@@ -137,7 +137,7 @@ export default async function PhotoDashboard() {
       return data ?? []
     },
     ['photo-portais'],
-    { revalidate: 600, tags: ['photo-dashboard'] }
+    { revalidate: 1800, tags: ['photo-dashboard'] }
   )
 
   const getAlbunsAprovadosSb = unstable_cache(
@@ -151,7 +151,7 @@ export default async function PhotoDashboard() {
       return data ?? []
     },
     ['photo-albuns-aprovados'],
-    { revalidate: 600, tags: ['photo-dashboard'] }
+    { revalidate: 1800, tags: ['photo-dashboard'] }
   )
 
   const [
@@ -222,7 +222,7 @@ export default async function PhotoDashboard() {
       return out
     },
     ['photo-alertas-off'],
-    { revalidate: 600, tags: ['photo-dashboard'] }
+    { revalidate: 1800, tags: ['photo-dashboard'] }
   )
   const alertasOffRefs = new Set(await getAlertasOff())
 

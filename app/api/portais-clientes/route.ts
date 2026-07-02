@@ -49,7 +49,7 @@ declare global {
 }
 if (!global.notionBlocksCache) global.notionBlocksCache = new Map()
 const cache = global.notionBlocksCache
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL = 10 * 60 * 1000 // 10 minutes
 
 async function getBlocks(blockId: string): Promise<any[]> {
   const all: any[] = []
@@ -156,7 +156,7 @@ export async function GET(req: Request) {
     const { portalPassword, ...safeSettings } = settings as any
     return NextResponse.json(
       { blocks, settings: safeSettings, settingsBlockId, hasPassword: !!(portalPassword), isAdmin },
-      { headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' } }
+      { headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=300' } }
     )
   } catch (e: any) {
     console.error('[portais-clientes] Error:', e.message)
