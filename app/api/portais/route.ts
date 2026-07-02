@@ -36,6 +36,18 @@ export async function GET(req: NextRequest) {
     }
     return NextResponse.json({ portal: data })
   }
+  // Modo leve: só os campos que os ecrãs admin (ex.: "Noivos online") precisam,
+  // sem puxar o `settings` completo (blocos de conteúdo) de cada portal.
+  // Poupa egress — o `select *` da tabela toda é a query mais pesada do projeto.
+  if (req.nextUrl.searchParams.get('light')) {
+    const { data, error } = await db
+      .from('portais')
+      .select('referencia, noiva, noivo, data, tipoPortal:settings->>tipoPortal, dataFormatada:settings->>dataFormatada')
+      .order('referencia')
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ portais: data ?? [] })
+  }
+
   const { data, error } = await db.from('portais').select('*').order('referencia')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const portais = (data ?? []).map(portal => {

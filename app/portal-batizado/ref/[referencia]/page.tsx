@@ -549,6 +549,7 @@ export default function PortalRefPage() {
     if (isAdmin) return
     let canceled = false
     let initialized = false
+    let presenceMarked = false
     async function ping(redirectOnFail: boolean) {
       if (document.visibilityState !== 'visible') return
       try {
@@ -562,8 +563,13 @@ export default function PortalRefPage() {
           return
         }
         initialized = true
-        // Marca presença na referencia actual (para dashboard admin)
-        fetch('/api/noivos-presence', { method: 'POST', credentials: 'include', body: '{}', keepalive: true }).catch(() => {})
+        // Marca presença UMA vez por visita (regista a entrada para o dashboard
+        // admin). O heartbeat continua só para renovar a sessão — não reescreve
+        // a presença a cada tick (poupa egress na tabela `portais`).
+        if (!presenceMarked) {
+          presenceMarked = true
+          fetch('/api/noivos-presence', { method: 'POST', credentials: 'include', body: '{}', keepalive: true }).catch(() => {})
+        }
       } catch { /* offline */ }
     }
     ping(false)

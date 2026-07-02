@@ -10,9 +10,10 @@ import { createPortal } from 'react-dom'
  *  (noivos / pais de batizado). Mostra quantos portais têm sessão activa
  *  agora, com pulse rosa-dourado. Click abre modal com:
  *    · Lista por referência (CAS_011_26_RL → "RUI & LILIANA")
- *    · Último ping (Online · Há 3 min · Há 2 dias / Nunca entraram)
+ *    · Última entrada (Entrou hoje · Há 2 dias / Nunca entraram)
  *
- *  Auto-refresh: re-puxa /api/noivos-presence cada 30s.
+ *  A presença é registada UMA vez por visita (ver portais). Aqui só lemos
+ *  ao montar e ao abrir o modal — sem polling — para poupar egress.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 type PortalRow = {
@@ -24,7 +25,13 @@ type PortalRow = {
   tipoPortal?: 'casamento' | 'batizado' | null
 }
 
-const ONLINE_WINDOW_MS = 120_000 // 2 min
+// "Entrou hoje" = timestamp no mesmo dia de calendário (fuso do browser admin).
+function isSameDay(a: number, b: number): boolean {
+  const da = new Date(a), db = new Date(b)
+  return da.getFullYear() === db.getFullYear()
+    && da.getMonth() === db.getMonth()
+    && da.getDate() === db.getDate()
+}
 
 export default function NoivosOnlineItem() {
   const [lastSeen, setLastSeen] = useState<Record<string, string>>({})
@@ -45,39 +52,37 @@ export default function NoivosOnlineItem() {
 
   async function loadPortais() {
     try {
-      const r = await fetch('/api/portais', { cache: 'no-store' })
+      // Modo leve — não puxa o `settings` completo de cada portal.
+      const r = await fetch('/api/portais?light=1', { cache: 'no-store' })
       const j = await r.json().catch(() => ({}))
       const list: PortalRow[] = (j?.portais ?? [])
         .filter((p: any) => p?.referencia && !p.referencia.startsWith('__'))
         .map((p: any) => ({
           referencia: p.referencia,
-          noiva: p.noiva ?? p.settings?.noiva ?? null,
-          noivo: p.noivo ?? p.settings?.noivo ?? null,
-          data: p.data ?? p.settings?.data ?? null,
-          data_formatada: p.data_formatada ?? p.settings?.dataFormatada ?? null,
-          tipoPortal: p.settings?.tipoPortal ?? 'casamento',
+          noiva: p.noiva ?? null,
+          noivo: p.noivo ?? null,
+          data: p.data ?? null,
+          data_formatada: p.dataFormatada ?? null,
+          tipoPortal: p.tipoPortal ?? 'casamento',
         }))
       setPortais(list)
     } catch { /* ignore */ }
   }
 
   useEffect(() => {
+    // Sem polling: a presença é escrita 1x por visita nos portais, por isso
+    // basta ler ao montar (e ao abrir o modal, abaixo). Poupa egress.
     loadPresence()
     loadPortais()
-    // Poll a cada 3 min e só com o separador visível — poupa egress.
-    const iv = setInterval(() => { if (!document.hidden) loadPresence() }, 180_000)
-    const onVis = () => { if (!document.hidden) loadPresence() }
-    document.addEventListener('visibilitychange', onVis)
-    return () => { clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
   }, [])
 
   useEffect(() => {
     if (open) { loadPresence(); loadPortais() }
   }, [open])
 
-  const onlineCount = Object.entries(lastSeen).filter(([, ts]) => {
+  const enteredTodayCount = Object.entries(lastSeen).filter(([, ts]) => {
     const t = new Date(ts).getTime()
-    return !isNaN(t) && serverNow - t < ONLINE_WINDOW_MS
+    return !isNaN(t) && isSameDay(t, serverNow)
   }).length
 
   return (
@@ -86,34 +91,34 @@ export default function NoivosOnlineItem() {
         onClick={() => setOpen(true)}
         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group hover:bg-white/[0.03]"
         style={{ border: '1px solid rgba(255,255,255,0.05)' }}
-        title="Noivos online no portal"
+        title="Noivos que entraram hoje no portal"
       >
         <span className="relative inline-flex items-center justify-center w-7 h-7 rounded-lg"
           style={{ border: '1px solid rgba(201,164,92,0.30)', background: 'rgba(201,164,92,0.05)' }}>
           <span className="block w-2 h-2 rounded-full"
             style={{
-              background: onlineCount > 0 ? '#C9A84C' : 'rgba(255,255,255,0.20)',
-              boxShadow: onlineCount > 0 ? '0 0 8px #C9A84C, 0 0 14px rgba(201,164,92,0.55)' : undefined,
-              animation: onlineCount > 0 ? 'noivosPulse 1.8s ease-in-out infinite' : undefined,
+              background: enteredTodayCount > 0 ? '#C9A84C' : 'rgba(255,255,255,0.20)',
+              boxShadow: enteredTodayCount > 0 ? '0 0 8px #C9A84C, 0 0 14px rgba(201,164,92,0.55)' : undefined,
+              animation: enteredTodayCount > 0 ? 'noivosPulse 1.8s ease-in-out infinite' : undefined,
             }} />
         </span>
         <div className="flex-1 min-w-0 text-left">
           <div className="flex items-center gap-2">
             <p className="text-[11px] tracking-[0.15em] uppercase font-medium" style={{ color: 'rgba(255,255,255,0.78)' }}>
-              Noivos online
+              Noivos hoje
             </p>
-            {loaded && onlineCount > 0 && (
+            {loaded && enteredTodayCount > 0 && (
               <span className="inline-flex items-center justify-center text-[10px] font-bold rounded-full px-2 h-[18px] min-w-[18px]"
                 style={{ background: '#C9A84C', color: '#1F1608', boxShadow: '0 0 10px rgba(201,164,92,0.5)' }}>
-                {onlineCount}
+                {enteredTodayCount}
               </span>
             )}
-            {loaded && onlineCount === 0 && (
-              <span className="text-[10px] text-white/30 tracking-widest uppercase">— ninguém</span>
+            {loaded && enteredTodayCount === 0 && (
+              <span className="text-[10px] text-white/30 tracking-widest uppercase">— ninguém hoje</span>
             )}
           </div>
           <p className="text-[9px] tracking-widest uppercase mt-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>
-            Casais nos portais
+            Entraram no portal
           </p>
         </div>
       </button>
@@ -149,15 +154,15 @@ function NoivosPresenceModal({
   const rows = [...portais].map(p => {
     const ts = lastSeen[p.referencia]
     const t = ts ? new Date(ts).getTime() : 0
-    const isOnline = t > 0 && (serverNow - t) < ONLINE_WINDOW_MS
+    const enteredToday = t > 0 && isSameDay(t, serverNow)
     const labelCouple = [p.noiva, p.noivo].filter(Boolean).join(' & ') || p.referencia
-    return { ...p, ts, t, isOnline, labelCouple }
+    return { ...p, ts, t, enteredToday, labelCouple }
   }).sort((a, b) => {
-    if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1
+    if (a.enteredToday !== b.enteredToday) return a.enteredToday ? -1 : 1
     return b.t - a.t
   })
 
-  const onlineCount = rows.filter(r => r.isOnline).length
+  const todayCount = rows.filter(r => r.enteredToday).length
 
   return (
     <div className="fixed inset-0 z-[200] flex items-start justify-center p-4 sm:p-8 overflow-y-auto"
@@ -178,12 +183,12 @@ function NoivosPresenceModal({
               Casais nos Portais
             </p>
             <h2 className="text-2xl font-light tracking-[0.06em] text-white mt-1.5" style={{ fontFamily: 'Georgia, serif' }}>
-              Noivos <em className="italic" style={{ color: '#D4B870' }}>online</em>
+              Noivos <em className="italic" style={{ color: '#D4B870' }}>hoje</em>
             </h2>
             <p className="text-[12px] text-white/55 mt-1.5">
-              {onlineCount === 0
-                ? 'Nenhum casal está dentro do portal neste momento.'
-                : `${onlineCount} portal${onlineCount === 1 ? '' : 's'} com sessão activa (últimos 2 min).`}
+              {todayCount === 0
+                ? 'Nenhum casal entrou no portal hoje.'
+                : `${todayCount} casal${todayCount === 1 ? '' : 'ais'} ${todayCount === 1 ? 'entrou' : 'entraram'} no portal hoje.`}
             </p>
           </div>
           <button onClick={onClose}
@@ -207,21 +212,21 @@ function NoivosPresenceModal({
                     <a href={portalUrl} target="_blank" rel="noopener noreferrer"
                       className="flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all hover:bg-white/[0.04]"
                       style={{
-                        background: r.isOnline ? 'rgba(201,164,92,0.06)' : 'rgba(255,255,255,0.015)',
-                        borderColor: r.isOnline ? 'rgba(201,164,92,0.35)' : 'rgba(255,255,255,0.06)',
+                        background: r.enteredToday ? 'rgba(201,164,92,0.06)' : 'rgba(255,255,255,0.015)',
+                        borderColor: r.enteredToday ? 'rgba(201,164,92,0.35)' : 'rgba(255,255,255,0.06)',
                       }}>
                       <div className="relative shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[14px]"
                         style={{
-                          background: r.isOnline ? 'linear-gradient(135deg, #D4B870 0%, #C9A84C 100%)' : 'rgba(255,255,255,0.04)',
-                          color: r.isOnline ? '#1F1608' : 'rgba(255,255,255,0.65)',
-                          border: r.isOnline ? '1px solid rgba(201,164,92,0.50)' : '1px solid rgba(255,255,255,0.10)',
+                          background: r.enteredToday ? 'linear-gradient(135deg, #D4B870 0%, #C9A84C 100%)' : 'rgba(255,255,255,0.04)',
+                          color: r.enteredToday ? '#1F1608' : 'rgba(255,255,255,0.65)',
+                          border: r.enteredToday ? '1px solid rgba(201,164,92,0.50)' : '1px solid rgba(255,255,255,0.10)',
                         }}>
                         {isBatizado ? '👶' : '♡'}
                         <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-black"
                           style={{
-                            background: r.isOnline ? '#C9A84C' : '#71717a',
-                            boxShadow: r.isOnline ? '0 0 8px #C9A84C' : undefined,
-                            animation: r.isOnline ? 'noivosPulse 1.8s ease-in-out infinite' : undefined,
+                            background: r.enteredToday ? '#C9A84C' : '#71717a',
+                            boxShadow: r.enteredToday ? '0 0 8px #C9A84C' : undefined,
+                            animation: r.enteredToday ? 'noivosPulse 1.8s ease-in-out infinite' : undefined,
                           }} />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -232,11 +237,11 @@ function NoivosPresenceModal({
                         </p>
                       </div>
                       <div className="text-right shrink-0">
-                        {r.isOnline ? (
+                        {r.enteredToday ? (
                           <span className="inline-flex items-center gap-1.5 text-[10px] tracking-[0.25em] uppercase font-bold px-2.5 py-1 rounded-full"
                             style={{ background: 'rgba(201,164,92,0.15)', color: '#D4B870', border: '1px solid rgba(201,164,92,0.35)' }}>
                             <span className="w-1.5 h-1.5 rounded-full" style={{ background: '#C9A84C', animation: 'noivosPulse 1.8s ease-in-out infinite' }} />
-                            Online
+                            Hoje
                           </span>
                         ) : r.ts ? (
                           <span className="text-[11px] text-white/45 italic">
@@ -258,7 +263,7 @@ function NoivosPresenceModal({
 
         <div className="px-6 sm:px-7 py-3 border-t border-white/[0.05] flex items-center justify-between bg-black/30">
           <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase">
-            Heartbeat 3min · janela online 2min
+            Regista a última entrada de cada casal
           </p>
           <button onClick={onClose}
             className="text-[10px] tracking-widest uppercase text-white/45 hover:text-white transition-colors px-3 py-1">
