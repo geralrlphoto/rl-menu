@@ -259,7 +259,7 @@ function FreelancerDetailInner() {
       } catch { /* offline silencioso */ }
     }
     ping() // primeiro tick imediato
-    const iv = setInterval(ping, 60_000) // 60s
+    const iv = setInterval(ping, 180_000) // 3 min — poupa egress (sessão dura 30 min)
     const onVis = () => { if (document.visibilityState === 'visible') ping() }
     document.addEventListener('visibilitychange', onVis)
     return () => {

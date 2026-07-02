@@ -10,13 +10,13 @@ import { createPortal } from 'react-dom'
  *  real (pulse verde + count). Clicar abre modal preview com a lista
  *  completa de membros e o último ping de cada um (Online · Há X min).
  *
- *  Online = last_seen dentro dos últimos 120 segundos.
+ *  Online = last_seen dentro dos últimos 6 minutos.
  *  Auto-refresh: re-puxa de /api/freelancer-presence cada 30 segundos.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 type FreelancerRow = { id: string; nome: string; status: string | null; foto_url: string | null }
 
-const ONLINE_WINDOW_MS = 120_000 // 2 min
+const ONLINE_WINDOW_MS = 360_000 // 6 min (ping do freelancer é a cada 3 min)
 
 export default function OnlineMembersItem() {
   const [lastSeen, setLastSeen] = useState<Record<string, string>>({})
@@ -62,7 +62,7 @@ export default function OnlineMembersItem() {
     if (open) { loadPresence(); loadFreelancers() }
   }, [open])
 
-  // Conta online (devs presentes em lastSeen e dentro da janela 2min)
+  // Conta online (devs presentes em lastSeen e dentro da janela 6min)
   const onlineCount = Object.entries(lastSeen).filter(([, ts]) => {
     const t = new Date(ts).getTime()
     return !isNaN(t) && serverNow - t < ONLINE_WINDOW_MS
@@ -173,7 +173,7 @@ function PresenceModal({
             <p className="text-[12px] text-white/55 mt-1.5">
               {onlineCount === 0
                 ? 'Nenhum membro está online neste momento.'
-                : `${onlineCount} membro${onlineCount === 1 ? '' : 's'} online nos últimos 2 minutos.`}
+                : `${onlineCount} membro${onlineCount === 1 ? '' : 's'} online nos últimos 6 minutos.`}
             </p>
           </div>
           <button onClick={onClose}
@@ -247,7 +247,7 @@ function PresenceModal({
         {/* Footer */}
         <div className="px-6 sm:px-7 py-3 border-t border-white/[0.05] flex items-center justify-between bg-black/30">
           <p className="text-[9px] tracking-[0.4em] text-white/25 uppercase">
-            Heartbeat 60s · janela online 2min
+            Heartbeat 3min · janela online 6min
           </p>
           <button onClick={onClose}
             className="text-[10px] tracking-widest uppercase text-white/45 hover:text-white transition-colors px-3 py-1">
