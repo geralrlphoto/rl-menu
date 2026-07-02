@@ -1076,7 +1076,9 @@ export default function PortalRefPage() {
     // galerias, password) continua a vir só do portal individual.
     const [d, templateD, evD] = await Promise.all([
       fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`, { cache: 'no-store' }).then(r => r.json()),
-      fetch(`/api/portais-clientes?id=${PAGE_ID}&bust=1`).then(r => r.json()).catch(() => null),
+      // Template (fallback visual) — sem bust: usa o cache de 10 min em vez de
+      // ir ao Notion a cada visita. Os dados do casal vêm do Supabase acima.
+      fetch(`/api/portais-clientes?id=${PAGE_ID}`).then(r => r.json()).catch(() => null),
       fetch(`/api/evento-by-ref?ref=${encodeURIComponent(referencia)}`).then(r => r.json()).catch(() => null),
     ])
     if (d.portal?.settings) {
