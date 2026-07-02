@@ -279,17 +279,13 @@ export default function CRMPage() {
   }
 
   useEffect(() => {
-    // Carregamento inicial + sync automático com Notion em background
+    // Carregamento inicial dos contactos (do Supabase).
     supabase.from('crm_contacts').select('*').order('data_entrada', { ascending: false })
       .then(({ data }) => { setContacts(dedupeContacts(data ?? [])); setLoading(false) })
 
-    // Sync silencioso com Notion ao abrir o CRM — throttle: só sincroniza se passaram >5 min desde o último sync
-    const lastSync = localStorage.getItem('crm_last_sync')
-    if (!lastSync || Date.now() - Number(lastSync) > 5 * 60 * 1000) {
-      fetch('/api/sync-notion', { method: 'POST' })
-        .then(() => localStorage.setItem('crm_last_sync', String(Date.now())))
-        .catch(() => {})
-    }
+    // Sync automático com o Notion DESLIGADO — os leads entram agora pelo
+    // formulário /nova-lead, Tally e criação manual (escrevem direto no
+    // Supabase). O botão "Sincronizar" continua disponível como fallback manual.
 
     // Realtime — atualiza automaticamente quando há mudanças.
     // Debounce: uma sincronização Notion faz upsert de muitas rows de uma vez,
