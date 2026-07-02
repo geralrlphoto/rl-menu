@@ -397,6 +397,111 @@ function EditField({ label, value, field, eventId, type = 'text', large = false,
   )
 }
 
+// ─── Formulário "Dados do Casal" com guardar explícito ───────────────────────
+// Substitui a edição inline campo-a-campo (que gravava no blur e podia
+// perder-se ao fechar o modal). Inputs sempre visíveis + botão Guardar fixo
+// no fim, que grava todos os campos alterados de uma vez.
+function DadosCasalForm({ e, eventId, onSaved }: {
+  e: any; eventId: string; onSaved: (field: string, val: any) => void
+}) {
+  const ROWS: Array<[string, string, string, string]> = [
+    ['nome_noiva',   'nome_noivo',   'Nome',          'text'],
+    ['email_noiva',  'email_noivo',  'Email',         'email'],
+    ['tel_noiva',    'tel_noivo',    'Telemóvel',     'tel'],
+    ['morada_noiva', 'morada_noivo', 'Morada',        'text'],
+    ['cc_noiva',     'cc_noivo',     'Nº C. Cidadão', 'text'],
+    ['nif_noiva',    'nif_noivo',    'NIF',           'text'],
+  ]
+  const keys = ROWS.flatMap(([a, b]) => [a, b])
+  const snapshot = () => Object.fromEntries(keys.map(k => [k, String(e[k] ?? '')]))
+  const [draft, setDraft] = useState<Record<string, string>>(snapshot)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  // Re-sincroniza só ao mudar de evento — nunca apaga o que se está a escrever.
+  useEffect(() => {
+    setDraft(snapshot())
+    setSaved(false)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [eventId])
+
+  const dirty = keys.some(k => draft[k] !== String(e[k] ?? ''))
+
+  function set(k: string, v: string) { setDraft(d => ({ ...d, [k]: v })); setSaved(false) }
+
+  async function saveAll() {
+    setSaving(true)
+    const payload: Record<string, any> = {}
+    for (const k of keys) {
+      const cur = String(e[k] ?? '')
+      if (draft[k] !== cur) payload[k] = draft[k] === '' ? null : draft[k]
+    }
+    if (Object.keys(payload).length > 0) {
+      try {
+        await fetch(`/api/eventos-notion/${eventId}`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+        for (const [k, v] of Object.entries(payload)) onSaved(k, v)
+      } catch { /* mantém o draft para o utilizador tentar de novo */ }
+    }
+    setSaving(false)
+    setSaved(true)
+  }
+
+  const col = (who: 0 | 1, title: string) => (
+    <div className="flex flex-col gap-3">
+      <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase border-b border-white/5 pb-1">{title}</span>
+      {ROWS.map(row => {
+        const k = row[who]
+        return (
+          <div key={k} className="flex flex-col gap-1">
+            <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">{row[2]}</span>
+            <input
+              type={row[3] as any}
+              value={draft[k]}
+              onChange={ev => set(k, ev.target.value)}
+              placeholder="—"
+              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white w-full focus:outline-none focus:border-gold transition-colors placeholder:text-white/15"
+            />
+          </div>
+        )
+      })}
+    </div>
+  )
+
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        {col(0, 'Noiva / Mãe')}
+        {col(1, 'Noivo / Pai')}
+      </div>
+
+      {/* Barra de guardar — sempre presente, fixa no fim do bloco */}
+      <div className="sticky bottom-0 -mx-1 mt-1 flex items-center justify-end gap-4 py-3 px-1 bg-gradient-to-t from-black/85 via-black/60 to-transparent backdrop-blur-sm">
+        {dirty
+          ? <span className="text-[11px] tracking-[0.2em] uppercase text-amber-400/70">Alterações por guardar</span>
+          : saved
+            ? <span className="text-[11px] tracking-[0.2em] uppercase text-green-400/80">Guardado ✓</span>
+            : null}
+        <button
+          onClick={saveAll}
+          disabled={saving}
+          className="px-6 py-2.5 rounded-xl text-[12px] tracking-[0.25em] uppercase font-medium transition-all disabled:opacity-50"
+          style={{
+            background: dirty ? 'linear-gradient(135deg, #D4B870, #C9A84C)' : 'rgba(201,164,92,0.15)',
+            color: dirty ? '#1F1608' : '#D4B870',
+            border: '1px solid rgba(201,164,92,0.45)',
+            boxShadow: dirty ? '0 0 18px rgba(201,164,92,0.35)' : undefined,
+          }}
+        >
+          {saving ? 'A guardar…' : 'Guardar Dados do Casal'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Multi-select inline editável ─────────────────────────────────────────────
 function EditMultiField({ label, value, field, eventId, referencia, onSaved }: {
   label: string; value: string[]; field: string; eventId: string
@@ -5336,26 +5441,7 @@ export default function EventoPage() {
 
         {/* ── Dados dos Noivos / Pais ── */}
         <Section title="Dados dos Noivos / Pais">
-          <div className="grid grid-cols-2 gap-6">
-            <div className="flex flex-col gap-3">
-              <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase border-b border-white/5 pb-1">Noiva / Mãe</span>
-              <EditField label="Nome" value={e.nome_noiva} field="nome_noiva" eventId={e.id} onSaved={handleSaved} />
-              <EditField label="Email" value={e.email_noiva} field="email_noiva" eventId={e.id} type="email" onSaved={handleSaved} />
-              <EditField label="Telemóvel" value={e.tel_noiva} field="tel_noiva" eventId={e.id} type="tel" onSaved={handleSaved} />
-              <EditField label="Morada" value={e.morada_noiva} field="morada_noiva" eventId={e.id} onSaved={handleSaved} />
-              <EditField label="Nº C. Cidadão" value={e.cc_noiva} field="cc_noiva" eventId={e.id} onSaved={handleSaved} />
-              <EditField label="NIF" value={e.nif_noiva} field="nif_noiva" eventId={e.id} onSaved={handleSaved} />
-            </div>
-            <div className="flex flex-col gap-3">
-              <span className="text-[9px] tracking-[0.4em] text-gold/40 uppercase border-b border-white/5 pb-1">Noivo / Pai</span>
-              <EditField label="Nome" value={e.nome_noivo} field="nome_noivo" eventId={e.id} onSaved={handleSaved} />
-              <EditField label="Email" value={e.email_noivo} field="email_noivo" eventId={e.id} type="email" onSaved={handleSaved} />
-              <EditField label="Telemóvel" value={e.tel_noivo} field="tel_noivo" eventId={e.id} type="tel" onSaved={handleSaved} />
-              <EditField label="Morada" value={e.morada_noivo} field="morada_noivo" eventId={e.id} onSaved={handleSaved} />
-              <EditField label="Nº C. Cidadão" value={e.cc_noivo} field="cc_noivo" eventId={e.id} onSaved={handleSaved} />
-              <EditField label="NIF" value={e.nif_noivo} field="nif_noivo" eventId={e.id} onSaved={handleSaved} />
-            </div>
-          </div>
+          <DadosCasalForm e={e} eventId={e.id} onSaved={handleSaved} />
         </Section>
 
         </DrawerBloco>
