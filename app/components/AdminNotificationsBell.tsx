@@ -121,7 +121,7 @@ export function AdminNotificationsBell() {
     setDismissed(prev => { const next = new Set<string>(); saveDismissed(next); return next })
   }
 
-  // Fetch notifs on mount + interval 60s
+  // Fetch notifs ao montar + ao voltar à aba (sem interval)
   useEffect(() => {
     let cancelled = false
     async function fetchNotifs() {
@@ -135,11 +135,12 @@ export function AdminNotificationsBell() {
       } catch {}
     }
     fetchNotifs()
-    const iv = setInterval(fetchNotifs, 300_000) // 5 min
-    // Atualiza imediatamente quando o separador volta a ficar visível.
+    // Sem setInterval: atualiza ao montar e sempre que voltas à aba
+    // (visibilidade/foco). Não faz pedidos enquanto não estás a olhar — poupa egress.
     const onVis = () => { if (!document.hidden) fetchNotifs() }
     document.addEventListener('visibilitychange', onVis)
-    return () => { cancelled = true; clearInterval(iv); document.removeEventListener('visibilitychange', onVis) }
+    window.addEventListener('focus', onVis)
+    return () => { cancelled = true; document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', onVis) }
   }, [])
 
   // Lista de freelancers (para o seletor de reencaminhar) — só carrega quando o modal abre

@@ -18,7 +18,7 @@
    - localStorage: media-bell-read-at = ISO da última vista
    ============================================================ */
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Item = {
   id: string
@@ -33,7 +33,6 @@ type Item = {
 }
 
 const STORAGE_KEY = 'media-bell-read-at'
-const POLL_MS = 60_000
 
 function timeAgo(iso: string): string {
   try {
@@ -118,22 +117,32 @@ export default function MediaNotificationsBell() {
     } catch {}
   }, [])
 
-  /* ── Fetch periódico ── */
-  useEffect(() => {
-    let alive = true
-    const load = async () => {
-      try {
-        const r = await fetch('/api/media-portal/all-notifications', { cache: 'no-store' })
-        const json = await r.json()
-        if (alive) setItems(Array.isArray(json?.items) ? json.items : [])
-      } catch {
-        if (alive) setItems([])
-      }
+  /* ── Carrega notificações (sem poll — evita egress) ── */
+  const load = useCallback(async () => {
+    try {
+      const r = await fetch('/api/media-portal/all-notifications', { cache: 'no-store' })
+      const json = await r.json()
+      setItems(Array.isArray(json?.items) ? json.items : [])
+    } catch {
+      setItems([])
     }
-    load()
-    const id = setInterval(load, POLL_MS)
-    return () => { alive = false; clearInterval(id) }
   }, [])
+
+  // Busca ao montar, ao voltar à aba (focus/visibilidade) e ao abrir o sino.
+  // Sem setInterval: não faz pedidos enquanto não estás a olhar.
+  useEffect(() => {
+    load()
+    const onVis = () => { if (!document.hidden) load() }
+    document.addEventListener('visibilitychange', onVis)
+    window.addEventListener('focus', load)
+    return () => {
+      document.removeEventListener('visibilitychange', onVis)
+      window.removeEventListener('focus', load)
+    }
+  }, [load])
+
+  // Refresca ao abrir o sino
+  useEffect(() => { if (open) load() }, [open, load])
 
   /* ── Click-outside fecha ── */
   useEffect(() => {
