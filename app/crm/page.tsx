@@ -23,6 +23,12 @@ type Contact = {
   data_fecho: string
 }
 
+// Colunas que a LISTA do CRM usa — exclui de propósito o `page_content`
+// (propostas, ~3 KB/linha) que só é preciso na ficha /crm/[id]. Puxar só
+// isto em vez de `select *` corta ~75% do egress por abertura do CRM.
+const LIST_COLUMNS =
+  'id,notion_id,nome,contato,email,status,lead_prioridade,tipo_evento,data_casamento,data_entrada,local_casamento,orcamento,como_chegou,servicos,status_updated_at,data_fecho'
+
 const statusColor: Record<string, string> = {
   'Fechou': 'bg-green-500/20 text-green-400 border-green-500/30',
   'Negociação': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
@@ -280,7 +286,7 @@ export default function CRMPage() {
 
   useEffect(() => {
     // Carregamento inicial dos contactos (do Supabase).
-    supabase.from('crm_contacts').select('*').order('data_entrada', { ascending: false })
+    supabase.from('crm_contacts').select(LIST_COLUMNS).order('data_entrada', { ascending: false })
       .then(({ data }) => { setContacts(dedupeContacts(data ?? [])); setLoading(false) })
 
     // Sync automático com o Notion DESLIGADO — os leads entram agora pelo
@@ -297,7 +303,7 @@ export default function CRMPage() {
       if (document.hidden) return
       if (refetchTimer) clearTimeout(refetchTimer)
       refetchTimer = setTimeout(() => {
-        supabase.from('crm_contacts').select('*').order('data_entrada', { ascending: false })
+        supabase.from('crm_contacts').select(LIST_COLUMNS).order('data_entrada', { ascending: false })
           .then(({ data }) => { if (data) setContacts(dedupeContacts(data)) })
       }, 1500)
     }
