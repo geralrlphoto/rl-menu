@@ -937,7 +937,7 @@ function PortalSubPageContent() {
   const [parentNavPages, setParentNavPages] = useState<Array<{ id: string; title: string }>>([])
   useEffect(() => {
     let cancelled = false
-    fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`)
+    fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`, { cache: 'no-store' })
       .then(r => r.json())
       .then(d => {
         if (cancelled) return
@@ -1065,7 +1065,7 @@ function PortalSubPageContent() {
         // continua a ser preservado do portal individual.
         const [d, templateD] = await Promise.all([
           fetch(`/api/portais?ref=${encodeURIComponent(refParam)}`).then(r => r.json()),
-          fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json()).catch(() => null),
+          fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`, { cache: 'no-store' }).then(r => r.json()).catch(() => null),
         ])
         ps = d.portal?.settings ?? {}
 
@@ -1119,7 +1119,7 @@ function PortalSubPageContent() {
         useTemplateIfEmpty('designPremiumPages')
       } else {
         // Main portal: load settings from Notion
-        const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`).then(r => r.json())
+        const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`, { cache: 'no-store' }).then(r => r.json())
         ps = d.settings ?? {}
         settingsBlockIdVal = d.settingsBlockId ?? null
         // Auto-extract reference from portal page blocks if not in settings
