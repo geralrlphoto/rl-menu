@@ -37,8 +37,11 @@ type FormState = {
   link_video: string       // videografo / editor (video completo 1)
   link_video2: string      // editor (video completo 2)
   faz_edicao: string       // videografo
+  equipamento_cameras: string // videografo
+  captacao_audio: string   // videografo
   drone: string            // fotografo / videografo
   valor_drone: string
+  marca_drone: string      // se drone === SIM
   valor_edicao: string     // editor
   tipo_videos: string[]               // editor: que tipo de vídeos edita
   tempo_entrega: string               // editor: tempo médio de entrega
@@ -50,7 +53,8 @@ type FormState = {
 const EMPTY: FormState = {
   nome: '', funcao: '', telefone: '', email: '', instagram: '', zona: '', tipo_eventos: [],
   servicos_feitos: '', valor_servico: '', link_portfolio: '', link_trailer: '', link_trailer2: '',
-  link_video: '', link_video2: '', faz_edicao: '', drone: '', valor_drone: '', valor_edicao: '',
+  link_video: '', link_video2: '', faz_edicao: '', equipamento_cameras: '', captacao_audio: '',
+  drone: '', valor_drone: '', marca_drone: '', valor_edicao: '',
   tipo_videos: [], tempo_entrega: '', software_edicao: [], skills_editor: {}, mensagem: '',
 }
 
@@ -109,9 +113,14 @@ export default function FreelancerFormularioPage() {
         req(empty(form.link_trailer), 'Link trailer')
         req(empty(form.link_video), 'Link vídeo completo')
         req(empty(form.faz_edicao), 'Fazes edição de vídeo?')
+        req(empty(form.equipamento_cameras), 'Máquinas / câmaras')
+        req(empty(form.captacao_audio), 'Captação de áudio')
       }
       req(empty(form.drone), 'Tens drone?')
-      if (form.drone === 'SIM') req(empty(form.valor_drone), 'Valor do drone')
+      if (form.drone === 'SIM') {
+        req(empty(form.marca_drone), 'Marca do drone')
+        req(empty(form.valor_drone), 'Valor do drone')
+      }
     }
     return m
   }
@@ -163,7 +172,10 @@ export default function FreelancerFormularioPage() {
         ? SKILLS_EDITOR.filter(s => (form.skills_editor[s] ?? 0) > 0).map(s => `${s}: ${form.skills_editor[s]}/5`).join(' · ')
         : '',
       drone:           form.drone,
+      marca_drone:     form.drone === 'SIM' ? form.marca_drone.trim() : '',
       faz_edicao:      form.faz_edicao,
+      equipamento_cameras: form.funcao === 'VIDEOGRAFO' ? form.equipamento_cameras.trim() : '',
+      captacao_audio:  form.funcao === 'VIDEOGRAFO' ? form.captacao_audio.trim() : '',
       link_trailer:    links.link_trailer,
       link_trailer2:   links.link_trailer2,
       link_video:      links.link_video,
@@ -468,6 +480,14 @@ export default function FreelancerFormularioPage() {
                     <option value="NÃO" style={optStyle}>Não</option>
                   </select>
                 </div>
+                <div>
+                  <label className={lbl}>Máquinas / câmaras</label>
+                  <input value={form.equipamento_cameras} onChange={e => set('equipamento_cameras', e.target.value)} placeholder="ex: Sony A7 IV, FX3" className={inp} />
+                </div>
+                <div>
+                  <label className={lbl}>Captação de áudio</label>
+                  <input value={form.captacao_audio} onChange={e => set('captacao_audio', e.target.value)} placeholder="ex: Rode Wireless, Zoom H6" className={inp} />
+                </div>
               </div>
             )}
 
@@ -481,6 +501,12 @@ export default function FreelancerFormularioPage() {
                     <option value="NÃO" style={optStyle}>Não</option>
                   </select>
                 </div>
+                {form.drone === 'SIM' && (
+                  <div>
+                    <label className={lbl}>Marca do drone</label>
+                    <input value={form.marca_drone} onChange={e => set('marca_drone', e.target.value)} placeholder="ex: DJI Mavic 3" className={inp} />
+                  </div>
+                )}
                 {form.drone === 'SIM' && (
                   <div>
                     <label className={lbl}>Valor do drone</label>

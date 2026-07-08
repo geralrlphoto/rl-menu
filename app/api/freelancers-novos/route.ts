@@ -55,6 +55,9 @@ function buildProps(data: Record<string, any>) {
   if (data.servicos_feitos != null) p['SERVIÇOS FEITOS']    = { number: data.servicos_feitos ? Number(data.servicos_feitos) : null }
   if (data.drone        != null) p['DRONE']                 = { select: data.drone ? { name: data.drone } : null }
   if (data.faz_edicao   != null) p['FAZ EDIÇÃO DE VIDEO']   = { select: data.faz_edicao ? { name: data.faz_edicao } : null }
+  if (data.equipamento_cameras != null) p['EQUIPAMENTO CÂMARAS'] = { rich_text: data.equipamento_cameras ? [{ text: { content: String(data.equipamento_cameras) } }] : [] }
+  if (data.captacao_audio != null) p['CAPTAÇÃO DE ÁUDIO']   = { rich_text: data.captacao_audio ? [{ text: { content: String(data.captacao_audio) } }] : [] }
+  if (data.marca_drone  != null) p['MARCA DO DRONE']        = { rich_text: data.marca_drone ? [{ text: { content: String(data.marca_drone) } }] : [] }
   if (data.link_trailer != null) p['LINK TRAILER']          = { url: data.link_trailer || null }
   if (data.link_trailer2!= null) p['LINK TRAILER 2']        = { url: data.link_trailer2 || null }
   if (data.link_video   != null) p['LINK VIDEO COMPLETO']   = { url: data.link_video || null }
@@ -84,6 +87,9 @@ function mapPage(page: any) {
     servicos_feitos: getProp(p, 'SERVIÇOS FEITOS',     'number'),
     drone:           getProp(p, 'DRONE',               'select'),
     faz_edicao:      getProp(p, 'FAZ EDIÇÃO DE VIDEO', 'select'),
+    equipamento_cameras: getProp(p, 'EQUIPAMENTO CÂMARAS', 'text'),
+    captacao_audio:  getProp(p, 'CAPTAÇÃO DE ÁUDIO',   'text'),
+    marca_drone:     getProp(p, 'MARCA DO DRONE',      'text'),
     link_trailer:    getProp(p, 'LINK TRAILER',        'url'),
     link_trailer2:   getProp(p, 'LINK TRAILER 2',      'url'),
     link_video:      getProp(p, 'LINK VIDEO COMPLETO', 'url'),

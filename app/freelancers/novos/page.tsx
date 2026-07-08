@@ -17,6 +17,9 @@ type NovoFreelancer = {
   servicos_feitos: number | null
   drone: string | null
   faz_edicao: string | null
+  equipamento_cameras: string | null
+  captacao_audio: string | null
+  marca_drone: string | null
   link_trailer: string | null
   link_trailer2: string | null
   link_video: string | null
@@ -43,7 +46,8 @@ const FUNCAO_STYLE: Record<string, { badge: string; tab: string; dot: string }> 
 const EMPTY_FORM = {
   nome: '', instagram: '', funcao: 'FOTOGRAFO', tipo_eventos: [] as string[], zona: '',
   telefone: '', valor_servico: '', valor_drone: '', valor_edicao: '',
-  servicos_feitos: '', drone: '', faz_edicao: '', link_trailer: '', link_trailer2: '',
+  servicos_feitos: '', drone: '', faz_edicao: '', equipamento_cameras: '', captacao_audio: '', marca_drone: '',
+  link_trailer: '', link_trailer2: '',
   link_video: '', link_video2: '', avaliacao: [] as string[],
   tipo_videos: [] as string[], tempo_entrega: '',
   software_edicao: [] as string[], skills_editor: '', mensagem: '',
@@ -440,7 +444,9 @@ export default function NovosFreelancersPage() {
                         ))}
                       </div>
                       <div className="flex gap-2 flex-wrap">
-                        {f.drone && <span className="text-[10px] px-3 py-1 rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400">🚁 Drone: {f.drone}</span>}
+                        {f.drone && <span className="text-[10px] px-3 py-1 rounded-lg border border-blue-500/20 bg-blue-500/10 text-blue-400">🚁 Drone: {f.drone}{f.marca_drone ? ` · ${f.marca_drone}` : ''}</span>}
+                        {f.equipamento_cameras && <span className="text-[10px] px-3 py-1 rounded-lg border border-white/10 bg-white/[0.03] text-white/50">📷 {f.equipamento_cameras}</span>}
+                        {f.captacao_audio && <span className="text-[10px] px-3 py-1 rounded-lg border border-white/10 bg-white/[0.03] text-white/50">🎙️ {f.captacao_audio}</span>}
                         {f.faz_edicao && <span className="text-[10px] px-3 py-1 rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-400">✂️ Edição: {f.faz_edicao}</span>}
                         {f.tipo_eventos?.map(t => (
                           <span key={t} className="text-[10px] px-3 py-1 rounded-lg border border-white/10 text-white/30">{t}</span>
