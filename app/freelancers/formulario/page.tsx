@@ -75,10 +75,55 @@ export default function FreelancerFormularioPage() {
   const selectCls = inp + ' cursor-pointer [color-scheme:dark]'
   const optStyle = { background: '#141210', color: '#f5f5f5' }
 
-  const canSubmit = form.nome.trim() && form.funcao && form.telefone.trim()
+  // Todos os campos são obrigatórios — valida os que estão visíveis para a função escolhida.
+  function getMissing(): string[] {
+    const m: string[] = []
+    const req = (cond: boolean, label: string) => { if (cond) m.push(label) }
+    const empty = (s: string) => !s.trim()
+    const f = form.funcao
+
+    req(empty(form.nome), 'Nome completo')
+    req(!f, 'Função pretendida')
+    req(empty(form.telefone), 'Telefone / WhatsApp')
+    req(empty(form.email), 'Email')
+    req(empty(form.instagram), 'Instagram')
+    req(empty(form.zona), 'Zona de residência')
+    req(empty(form.servicos_feitos), 'Nº de eventos já realizados')
+    req(empty(form.mensagem), 'Apresentação / mensagem')
+
+    if (f === 'EDITOR') {
+      req(form.tipo_videos.length === 0, 'Que tipo de vídeos editas')
+      req(empty(form.valor_edicao), 'Valor edição (20 min)')
+      req(empty(form.tempo_entrega), 'Tempo médio de entrega')
+      req(empty(form.link_trailer), 'Link trailer 1')
+      req(empty(form.link_trailer2), 'Link trailer 2')
+      req(empty(form.link_video), 'Link vídeo completo 1')
+      req(empty(form.link_video2), 'Link vídeo completo 2')
+      req(form.software_edicao.length === 0, 'Programa de edição')
+      req(!Object.values(form.skills_editor).some(v => v > 0), 'Atributos (pontuação)')
+    } else if (f) {
+      req(form.tipo_eventos.length === 0, 'Tipo de eventos que fazes')
+      req(empty(form.valor_servico), 'Valor por serviço')
+      if (f === 'FOTOGRAFO') req(empty(form.link_portfolio), 'Link portfólio')
+      if (f === 'VIDEOGRAFO') {
+        req(empty(form.link_trailer), 'Link trailer')
+        req(empty(form.link_video), 'Link vídeo completo')
+        req(empty(form.faz_edicao), 'Fazes edição de vídeo?')
+      }
+      req(empty(form.drone), 'Tens drone?')
+      if (form.drone === 'SIM') req(empty(form.valor_drone), 'Valor do drone')
+    }
+    return m
+  }
+
+  const missing = getMissing()
+  const canSubmit = missing.length === 0
 
   async function handleSubmit() {
-    if (!canSubmit) { setError('Preenche pelo menos o nome, função e telefone.'); return }
+    if (!canSubmit) {
+      setError(`Faltam preencher: ${missing.join(', ')}.`)
+      return
+    }
     setSaving(true); setError(null)
 
     // Mapeamento dos links por função:
@@ -200,7 +245,7 @@ export default function FreelancerFormularioPage() {
           Junta-te à <span className="italic text-gold">equipa RL</span>
         </h1>
         <p className="text-sm text-white/45 mt-2 leading-relaxed max-w-lg">
-          Preenche o formulário de recrutamento. Os campos marcados com <span className="text-gold">*</span> são obrigatórios.
+          Preenche o formulário de recrutamento. <span className="text-gold">Todos os campos são obrigatórios.</span>
         </p>
         <div className="mt-4 h-px w-16 bg-gold/40" />
       </div>
@@ -462,7 +507,7 @@ export default function FreelancerFormularioPage() {
           </div>
         )}
 
-        <button onClick={handleSubmit} disabled={saving || !canSubmit}
+        <button onClick={handleSubmit} disabled={saving}
           className="w-full py-3.5 rounded-xl bg-gold text-black font-bold text-sm tracking-widest uppercase hover:bg-gold/85 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           style={{ boxShadow: canSubmit ? '0 0 20px rgba(201,164,92,0.25)' : 'none' }}>
           {saving ? 'A enviar...' : 'Enviar candidatura'}
