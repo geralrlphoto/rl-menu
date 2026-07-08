@@ -44,7 +44,7 @@ function buildProps(data: Record<string, any>) {
   if (data.funcao       != null) p['FUNÇÃO']                = { select: data.funcao ? { name: data.funcao } : null }
   if (data.tipo_eventos != null) p['TIPO DE EVENTOS']       = { multi_select: (data.tipo_eventos as string[]).map(n => ({ name: n })) }
   if (data.software_edicao != null) p['SOFTWARE EDIÇÃO']    = { multi_select: (data.software_edicao as string[]).map(n => ({ name: n })) }
-  if (data.skills_editor != null) p['SKILLS EDITOR']        = { multi_select: (data.skills_editor as string[]).map(n => ({ name: n })) }
+  if (data.skills_editor != null) p['SKILLS EDITOR']        = { rich_text: data.skills_editor ? [{ text: { content: String(data.skills_editor) } }] : [] }
   if (data.zona         != null) p['ZONA DE RESIDÊNCIA']    = { select: data.zona ? { name: data.zona } : null }
   if (data.telefone     != null) p['Telefone']              = { phone_number: data.telefone || null }
   if (data.valor_servico!= null) p['VALOR POR SERVIÇO']     = { rich_text: [{ text: { content: data.valor_servico ?? '' } }] }
@@ -71,7 +71,7 @@ function mapPage(page: any) {
     funcao:          getProp(p, 'FUNÇÃO',              'select'),
     tipo_eventos:    getProp(p, 'TIPO DE EVENTOS',     'multi_select'),
     software_edicao: getProp(p, 'SOFTWARE EDIÇÃO',     'multi_select'),
-    skills_editor:   getProp(p, 'SKILLS EDITOR',       'multi_select'),
+    skills_editor:   getProp(p, 'SKILLS EDITOR',       'text'),
     zona:            getProp(p, 'ZONA DE RESIDÊNCIA',  'select'),
     telefone:        getProp(p, 'Telefone',            'phone'),
     valor_servico:   getProp(p, 'VALOR POR SERVIÇO',   'text'),

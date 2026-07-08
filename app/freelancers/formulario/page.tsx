@@ -15,8 +15,8 @@ const FUNCOES: { key: Funcao; label: string; desc: string; color: string; glow: 
 const TIPOS_EVENTO = ['Casamentos', 'Batizados', 'Festas / Aniversários', 'Corporate', 'Moda / Retrato', 'Outros']
 
 // Skills do Editor
-const SOFTWARE_EDICAO = ['DaVinci Resolve', 'Adobe Premiere Pro', 'Final Cut Pro', 'After Effects', 'Avid Media Composer', 'CapCut', 'Outro']
-const SKILLS_EDITOR = ['Motion Graphics', 'VFX', 'Sound Design', 'Color Grading', 'Montagem', 'Legendagem']
+const SOFTWARE_EDICAO = ['DaVinci Resolve', 'Adobe Premiere Pro', 'Final Cut Pro', 'Outro']
+const SKILLS_EDITOR = ['Motion Graphics', 'VFX', 'Sound Design', 'Color Grading', 'Montagem', 'Legendagem', 'After Effects']
 
 type FormState = {
   nome: string
@@ -38,8 +38,8 @@ type FormState = {
   drone: string            // fotografo / videografo
   valor_drone: string
   valor_edicao: string     // editor
-  software_edicao: string[] // editor
-  skills_editor: string[]   // editor
+  software_edicao: string[]           // editor
+  skills_editor: Record<string, number> // editor: atributo → pontuação 0–5
   mensagem: string
 }
 
@@ -47,7 +47,7 @@ const EMPTY: FormState = {
   nome: '', funcao: '', telefone: '', email: '', instagram: '', zona: '', tipo_eventos: [],
   servicos_feitos: '', valor_servico: '', link_portfolio: '', link_trailer: '', link_trailer2: '',
   link_video: '', link_video2: '', faz_edicao: '', drone: '', valor_drone: '', valor_edicao: '',
-  software_edicao: [], skills_editor: [], mensagem: '',
+  software_edicao: [], skills_editor: {}, mensagem: '',
 }
 
 export default function FreelancerFormularioPage() {
@@ -59,8 +59,11 @@ export default function FreelancerFormularioPage() {
   const set = (k: keyof FormState, v: any) => setForm(p => ({ ...p, [k]: v }))
   const toggleEvento = (t: string) =>
     setForm(p => ({ ...p, tipo_eventos: p.tipo_eventos.includes(t) ? p.tipo_eventos.filter(x => x !== t) : [...p.tipo_eventos, t] }))
-  const toggleIn = (key: 'software_edicao' | 'skills_editor', v: string) =>
-    setForm(p => ({ ...p, [key]: p[key].includes(v) ? p[key].filter(x => x !== v) : [...p[key], v] }))
+  const toggleSoftware = (v: string) =>
+    setForm(p => ({ ...p, software_edicao: p.software_edicao.includes(v) ? p.software_edicao.filter(x => x !== v) : [...p.software_edicao, v] }))
+  // Clicar na mesma bola desliga (volta a 0).
+  const setSkillScore = (skill: string, n: number) =>
+    setForm(p => ({ ...p, skills_editor: { ...p.skills_editor, [skill]: p.skills_editor[skill] === n ? 0 : n } }))
 
   const inp = "w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/85 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
   const lbl = "block text-[10px] text-white/35 tracking-widest uppercase mb-1.5"
@@ -101,7 +104,9 @@ export default function FreelancerFormularioPage() {
       valor_drone:     form.valor_drone.trim(),
       valor_edicao:    form.valor_edicao.trim(),
       software_edicao: form.funcao === 'EDITOR' ? form.software_edicao : [],
-      skills_editor:   form.funcao === 'EDITOR' ? form.skills_editor : [],
+      skills_editor:   form.funcao === 'EDITOR'
+        ? SKILLS_EDITOR.filter(s => (form.skills_editor[s] ?? 0) > 0).map(s => `${s}: ${form.skills_editor[s]}/5`).join(' · ')
+        : '',
       drone:           form.drone,
       faz_edicao:      form.faz_edicao,
       link_trailer:    links.link_trailer,
@@ -322,7 +327,7 @@ export default function FreelancerFormularioPage() {
                     {SOFTWARE_EDICAO.map(s => {
                       const on = form.software_edicao.includes(s)
                       return (
-                        <button key={s} type="button" onClick={() => toggleIn('software_edicao', s)}
+                        <button key={s} type="button" onClick={() => toggleSoftware(s)}
                           className={`px-3.5 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide transition-all ${
                             on ? 'border-violet-400/60 bg-violet-500/10 text-violet-300' : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70 hover:border-white/25'
                           }`}>
@@ -333,19 +338,28 @@ export default function FreelancerFormularioPage() {
                   </div>
                 </div>
 
-                {/* Skills — atributos */}
+                {/* Skills — atributos com pontuação (bolas 1–5) */}
                 <div>
-                  <label className={lbl}>Atributos / especialidades</label>
-                  <div className="flex flex-wrap gap-2 mt-1">
+                  <label className={lbl}>Atributos / especialidades <span className="text-white/20 normal-case tracking-normal">— dá a tua pontuação</span></label>
+                  <div className="space-y-2 mt-1">
                     {SKILLS_EDITOR.map(s => {
-                      const on = form.skills_editor.includes(s)
+                      const score = form.skills_editor[s] ?? 0
                       return (
-                        <button key={s} type="button" onClick={() => toggleIn('skills_editor', s)}
-                          className={`px-3.5 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide transition-all ${
-                            on ? 'border-violet-400/60 bg-violet-500/10 text-violet-300' : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70 hover:border-white/25'
-                          }`}>
-                          {s}
-                        </button>
+                        <div key={s} className="flex items-center justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2">
+                          <span className="text-[13px] text-white/70">{s}</span>
+                          <div className="flex items-center gap-1.5">
+                            {[1, 2, 3, 4, 5].map(n => (
+                              <button key={n} type="button" onClick={() => setSkillScore(s, n)}
+                                aria-label={`${s}: ${n} de 5`}
+                                className="w-4 h-4 rounded-full border transition-all"
+                                style={{
+                                  borderColor: n <= score ? '#a78bfa' : 'rgba(255,255,255,0.18)',
+                                  background: n <= score ? '#a78bfa' : 'transparent',
+                                  boxShadow: n <= score ? '0 0 6px rgba(167,139,250,0.5)' : 'none',
+                                }} />
+                            ))}
+                          </div>
+                        </div>
                       )
                     })}
                   </div>

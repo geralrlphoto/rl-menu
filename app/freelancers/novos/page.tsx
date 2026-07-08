@@ -23,7 +23,7 @@ type NovoFreelancer = {
   link_video2: string | null
   avaliacao: string[]
   software_edicao: string[]
-  skills_editor: string[]
+  skills_editor: string | null
   mensagem: string | null
 }
 
@@ -43,7 +43,7 @@ const EMPTY_FORM = {
   telefone: '', valor_servico: '', valor_drone: '', valor_edicao: '',
   servicos_feitos: '', drone: '', faz_edicao: '', link_trailer: '', link_trailer2: '',
   link_video: '', link_video2: '', avaliacao: [] as string[],
-  software_edicao: [] as string[], skills_editor: [] as string[], mensagem: '',
+  software_edicao: [] as string[], skills_editor: '', mensagem: '',
 }
 
 function funcaoStyle(f: string | null) {
@@ -442,12 +442,12 @@ export default function NovosFreelancersPage() {
                           <span key={t} className="text-[10px] px-3 py-1 rounded-lg border border-white/10 text-white/30">{t}</span>
                         ))}
                       </div>
-                      {((f.software_edicao?.length ?? 0) > 0 || (f.skills_editor?.length ?? 0) > 0) && (
+                      {((f.software_edicao?.length ?? 0) > 0 || !!f.skills_editor) && (
                         <div className="flex gap-2 flex-wrap">
                           {f.software_edicao?.map(s => (
                             <span key={s} className="text-[10px] px-3 py-1 rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-300">🎛️ {s}</span>
                           ))}
-                          {f.skills_editor?.map(s => (
+                          {(f.skills_editor ?? '').split(' · ').filter(Boolean).map(s => (
                             <span key={s} className="text-[10px] px-3 py-1 rounded-lg border border-violet-500/20 bg-violet-500/[0.06] text-violet-200/80">✦ {s}</span>
                           ))}
                         </div>
