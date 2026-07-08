@@ -71,6 +71,9 @@ export default function FreelancerFormularioPage() {
 
   const inp = "w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/85 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
   const lbl = "block text-[10px] text-white/35 tracking-widest uppercase mb-1.5"
+  // Menu nativo escuro (Chromium) — sem isto as opções ficavam texto branco em fundo branco.
+  const selectCls = inp + ' cursor-pointer [color-scheme:dark]'
+  const optStyle = { background: '#141210', color: '#f5f5f5' }
 
   const canSubmit = form.nome.trim() && form.funcao && form.telefone.trim()
 
@@ -312,9 +315,9 @@ export default function FreelancerFormularioPage() {
           {isEditor && (
             <div>
               <label className={lbl}>Tempo médio de entrega</label>
-              <select value={form.tempo_entrega} onChange={e => set('tempo_entrega', e.target.value)} className={inp + ' cursor-pointer'}>
-                <option value="">—</option>
-                {TEMPO_ENTREGA.map(t => <option key={t} value={t}>{t}</option>)}
+              <select value={form.tempo_entrega} onChange={e => set('tempo_entrega', e.target.value)} className={selectCls}>
+                <option value="" style={optStyle}>—</option>
+                {TEMPO_ENTREGA.map(t => <option key={t} value={t} style={optStyle}>{t}</option>)}
               </select>
             </div>
           )}
@@ -414,10 +417,10 @@ export default function FreelancerFormularioPage() {
                 </div>
                 <div>
                   <label className={lbl}>Fazes edição de vídeo?</label>
-                  <select value={form.faz_edicao} onChange={e => set('faz_edicao', e.target.value)} className={inp + ' cursor-pointer'}>
-                    <option value="">—</option>
-                    <option value="SIM">Sim</option>
-                    <option value="NÃO">Não</option>
+                  <select value={form.faz_edicao} onChange={e => set('faz_edicao', e.target.value)} className={selectCls}>
+                    <option value="" style={optStyle}>—</option>
+                    <option value="SIM" style={optStyle}>Sim</option>
+                    <option value="NÃO" style={optStyle}>Não</option>
                   </select>
                 </div>
               </div>
@@ -427,10 +430,10 @@ export default function FreelancerFormularioPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={lbl}>Tens drone?</label>
-                  <select value={form.drone} onChange={e => set('drone', e.target.value)} className={inp + ' cursor-pointer'}>
-                    <option value="">—</option>
-                    <option value="SIM">Sim</option>
-                    <option value="NÃO">Não</option>
+                  <select value={form.drone} onChange={e => set('drone', e.target.value)} className={selectCls}>
+                    <option value="" style={optStyle}>—</option>
+                    <option value="SIM" style={optStyle}>Sim</option>
+                    <option value="NÃO" style={optStyle}>Não</option>
                   </select>
                 </div>
                 {form.drone === 'SIM' && (
