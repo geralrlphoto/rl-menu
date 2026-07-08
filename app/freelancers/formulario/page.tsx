@@ -110,8 +110,7 @@ export default function FreelancerFormularioPage() {
       req(empty(form.valor_servico), 'Valor por serviço')
       if (f === 'FOTOGRAFO') req(empty(form.link_portfolio), 'Link portfólio')
       if (f === 'VIDEOGRAFO') {
-        req(empty(form.link_trailer), 'Link trailer')
-        req(empty(form.link_video), 'Link vídeo completo')
+        // Os 3 links (2 trailers + vídeo de casamento) são opcionais.
         req(empty(form.faz_edicao), 'Fazes edição de vídeo?')
         req(empty(form.equipamento_cameras), 'Máquinas / câmaras')
         req(empty(form.captacao_audio), 'Captação de áudio')
@@ -144,7 +143,7 @@ export default function FreelancerFormularioPage() {
         ? { link_trailer: '', link_trailer2: '', link_video: form.link_portfolio.trim(), link_video2: '' }
         : form.funcao === 'EDITOR'
           ? { link_trailer: form.link_trailer.trim(), link_trailer2: form.link_trailer2.trim(), link_video: form.link_video.trim(), link_video2: form.link_video2.trim() }
-          : { link_trailer: form.link_trailer.trim(), link_trailer2: '', link_video: form.link_video.trim(), link_video2: '' }
+          : { link_trailer: form.link_trailer.trim(), link_trailer2: form.link_trailer2.trim(), link_video: form.link_video.trim(), link_video2: '' }
 
     // Email vai na mensagem (a base não tem campo próprio de email).
     // Instagram tem agora campo dedicado na base — enviado à parte.
@@ -463,30 +462,42 @@ export default function FreelancerFormularioPage() {
             )}
 
             {isVideo && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-4">
+                {/* Links opcionais — trabalhos do videógrafo */}
                 <div>
-                  <label className={lbl}>Link trailer</label>
-                  <input value={form.link_trailer} onChange={e => set('link_trailer', e.target.value)} placeholder="https://..." className={inp} />
+                  <p className="text-[12px] text-white/50 mb-2">Coloca aqui alguns vídeos que tenhas feito ou participado <span className="text-white/25">(opcional)</span></p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={lbl}>Link trailer 1</label>
+                      <input value={form.link_trailer} onChange={e => set('link_trailer', e.target.value)} placeholder="https://..." className={inp} />
+                    </div>
+                    <div>
+                      <label className={lbl}>Link trailer 2</label>
+                      <input value={form.link_trailer2} onChange={e => set('link_trailer2', e.target.value)} placeholder="https://..." className={inp} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className={lbl}>Link completo de vídeo de casamento</label>
+                      <input value={form.link_video} onChange={e => set('link_video', e.target.value)} placeholder="https://..." className={inp} />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className={lbl}>Link vídeo completo</label>
-                  <input value={form.link_video} onChange={e => set('link_video', e.target.value)} placeholder="https://..." className={inp} />
-                </div>
-                <div>
-                  <label className={lbl}>Fazes edição de vídeo?</label>
-                  <select value={form.faz_edicao} onChange={e => set('faz_edicao', e.target.value)} className={selectCls}>
-                    <option value="" style={optStyle}>—</option>
-                    <option value="SIM" style={optStyle}>Sim</option>
-                    <option value="NÃO" style={optStyle}>Não</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={lbl}>Máquinas / câmaras</label>
-                  <input value={form.equipamento_cameras} onChange={e => set('equipamento_cameras', e.target.value)} placeholder="ex: Sony A7 IV, FX3" className={inp} />
-                </div>
-                <div>
-                  <label className={lbl}>Captação de áudio</label>
-                  <input value={form.captacao_audio} onChange={e => set('captacao_audio', e.target.value)} placeholder="ex: Rode Wireless, Zoom H6" className={inp} />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={lbl}>Fazes edição de vídeo?</label>
+                    <select value={form.faz_edicao} onChange={e => set('faz_edicao', e.target.value)} className={selectCls}>
+                      <option value="" style={optStyle}>—</option>
+                      <option value="SIM" style={optStyle}>Sim</option>
+                      <option value="NÃO" style={optStyle}>Não</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className={lbl}>Máquinas / câmaras</label>
+                    <input value={form.equipamento_cameras} onChange={e => set('equipamento_cameras', e.target.value)} placeholder="ex: Sony A7 IV, FX3" className={inp} />
+                  </div>
+                  <div>
+                    <label className={lbl}>Captação de áudio</label>
+                    <input value={form.captacao_audio} onChange={e => set('captacao_audio', e.target.value)} placeholder="ex: Rode Wireless, Zoom H6" className={inp} />
+                  </div>
                 </div>
               </div>
             )}
