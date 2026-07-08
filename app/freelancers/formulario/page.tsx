@@ -19,6 +19,7 @@ type FormState = {
   funcao: Funcao | ''
   telefone: string
   email: string
+  instagram: string
   zona: string
   tipo_eventos: string[]
   servicos_feitos: string
@@ -35,7 +36,7 @@ type FormState = {
 }
 
 const EMPTY: FormState = {
-  nome: '', funcao: '', telefone: '', email: '', zona: '', tipo_eventos: [],
+  nome: '', funcao: '', telefone: '', email: '', instagram: '', zona: '', tipo_eventos: [],
   servicos_feitos: '', valor_servico: '', link_portfolio: '', link_trailer: '',
   link_video: '', faz_edicao: '', drone: '', valor_drone: '', valor_edicao: '', mensagem: '',
 }
@@ -62,10 +63,11 @@ export default function FreelancerFormularioPage() {
     // Portfólio partilhado: fotógrafo/editor guardam o link em "link_video".
     const linkVideo = form.funcao === 'VIDEOGRAFO' ? form.link_video : form.link_portfolio
 
-    // Email + notas extra vão na mensagem (a base de candidatos não tem campo próprio de email).
+    // Email + Instagram + notas extra vão na mensagem (a base de candidatos não tem campo próprio).
     const notas = [
-      form.email.trim()   ? `✉ Email: ${form.email.trim()}` : '',
-      form.mensagem.trim() ? `\n${form.mensagem.trim()}` : '',
+      form.email.trim()     ? `✉ Email: ${form.email.trim()}` : '',
+      form.instagram.trim() ? `📷 Instagram: ${form.instagram.trim()}` : '',
+      form.mensagem.trim()  ? `\n${form.mensagem.trim()}` : '',
     ].filter(Boolean).join('\n')
 
     const payload = {
@@ -104,6 +106,7 @@ export default function FreelancerFormularioPage() {
           funcao: form.funcao,
           telefone: form.telefone.trim(),
           candidato_email: form.email.trim(),
+          instagram: form.instagram.trim(),
           zona: form.zona.trim(),
           mensagem: form.mensagem.trim(),
         }),
@@ -203,6 +206,10 @@ export default function FreelancerFormularioPage() {
           <div>
             <label className={lbl}>Email</label>
             <input type="email" value={form.email} onChange={e => set('email', e.target.value)} placeholder="email@exemplo.com" className={inp} />
+          </div>
+          <div>
+            <label className={lbl}>Instagram</label>
+            <input value={form.instagram} onChange={e => set('instagram', e.target.value)} placeholder="@utilizador" className={inp} />
           </div>
           <div>
             <label className={lbl}>Zona de residência</label>

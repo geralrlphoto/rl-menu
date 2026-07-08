@@ -115,7 +115,7 @@ function buildAlbumAprovadoEmail(nome_noivos: string, referencia: string): strin
 
 export async function POST(req: NextRequest) {
   const { tipo, freelancer_nome, nome_noivos, referencia, data_evento, local, email_noiva,
-    funcao, telefone, zona, candidato_email, mensagem } = await req.json().catch(() => ({}))
+    funcao, telefone, zona, candidato_email, instagram, mensagem } = await req.json().catch(() => ({}))
 
   // ── Nova candidatura de recrutamento ──────────────────────────────────────
   if (tipo === 'nova_candidatura') {
@@ -123,6 +123,7 @@ export async function POST(req: NextRequest) {
       ['Função', funcao ?? null],
       ['Telefone', telefone ?? null],
       ['Email', candidato_email ?? null],
+      ['Instagram', instagram ?? null],
       ['Zona', zona ?? null],
     ]
     const detalhes = linhas.filter(([, v]) => v).map(([k, v]) => `
