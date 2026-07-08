@@ -88,7 +88,7 @@ export default function FreelancerFormularioPage() {
       zona:            form.zona.trim(),
       tipo_eventos:    form.tipo_eventos,
       servicos_feitos: form.servicos_feitos,
-      valor_servico:   form.valor_servico.trim(),
+      valor_servico:   form.funcao === 'EDITOR' ? '' : form.valor_servico.trim(),
       valor_drone:     form.valor_drone.trim(),
       valor_edicao:    form.valor_edicao.trim(),
       drone:           form.drone,
@@ -254,10 +254,13 @@ export default function FreelancerFormularioPage() {
 
         {/* ── 4. Valores ────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className={lbl}>Valor por serviço</label>
-            <input value={form.valor_servico} onChange={e => set('valor_servico', e.target.value)} placeholder="ex: 250€" className={inp} />
-          </div>
+          {/* Editor cobra por edição, não por serviço. */}
+          {!isEditor && (
+            <div>
+              <label className={lbl}>Valor por serviço</label>
+              <input value={form.valor_servico} onChange={e => set('valor_servico', e.target.value)} placeholder="ex: 250€" className={inp} />
+            </div>
+          )}
           {isEditor && (
             <div>
               <label className={lbl}>Valor edição (20 min)</label>
