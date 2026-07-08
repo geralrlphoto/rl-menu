@@ -14,6 +14,10 @@ const FUNCOES: { key: Funcao; label: string; desc: string; color: string; glow: 
 
 const TIPOS_EVENTO = ['Casamentos', 'Batizados', 'Festas / Aniversários', 'Corporate', 'Moda / Retrato', 'Outros']
 
+// Skills do Editor
+const SOFTWARE_EDICAO = ['DaVinci Resolve', 'Adobe Premiere Pro', 'Final Cut Pro', 'After Effects', 'Avid Media Composer', 'CapCut', 'Outro']
+const SKILLS_EDITOR = ['Motion Graphics', 'VFX', 'Sound Design', 'Color Grading', 'Montagem', 'Legendagem']
+
 type FormState = {
   nome: string
   funcao: Funcao | ''
@@ -34,13 +38,16 @@ type FormState = {
   drone: string            // fotografo / videografo
   valor_drone: string
   valor_edicao: string     // editor
+  software_edicao: string[] // editor
+  skills_editor: string[]   // editor
   mensagem: string
 }
 
 const EMPTY: FormState = {
   nome: '', funcao: '', telefone: '', email: '', instagram: '', zona: '', tipo_eventos: [],
   servicos_feitos: '', valor_servico: '', link_portfolio: '', link_trailer: '', link_trailer2: '',
-  link_video: '', link_video2: '', faz_edicao: '', drone: '', valor_drone: '', valor_edicao: '', mensagem: '',
+  link_video: '', link_video2: '', faz_edicao: '', drone: '', valor_drone: '', valor_edicao: '',
+  software_edicao: [], skills_editor: [], mensagem: '',
 }
 
 export default function FreelancerFormularioPage() {
@@ -52,6 +59,8 @@ export default function FreelancerFormularioPage() {
   const set = (k: keyof FormState, v: any) => setForm(p => ({ ...p, [k]: v }))
   const toggleEvento = (t: string) =>
     setForm(p => ({ ...p, tipo_eventos: p.tipo_eventos.includes(t) ? p.tipo_eventos.filter(x => x !== t) : [...p.tipo_eventos, t] }))
+  const toggleIn = (key: 'software_edicao' | 'skills_editor', v: string) =>
+    setForm(p => ({ ...p, [key]: p[key].includes(v) ? p[key].filter(x => x !== v) : [...p[key], v] }))
 
   const inp = "w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white/85 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
   const lbl = "block text-[10px] text-white/35 tracking-widest uppercase mb-1.5"
@@ -91,6 +100,8 @@ export default function FreelancerFormularioPage() {
       valor_servico:   form.funcao === 'EDITOR' ? '' : form.valor_servico.trim(),
       valor_drone:     form.valor_drone.trim(),
       valor_edicao:    form.valor_edicao.trim(),
+      software_edicao: form.funcao === 'EDITOR' ? form.software_edicao : [],
+      skills_editor:   form.funcao === 'EDITOR' ? form.skills_editor : [],
       drone:           form.drone,
       faz_edicao:      form.faz_edicao,
       link_trailer:    links.link_trailer,
@@ -284,22 +295,60 @@ export default function FreelancerFormularioPage() {
             )}
 
             {isEditor && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className={lbl}>Link trailer 1</label>
-                  <input value={form.link_trailer} onChange={e => set('link_trailer', e.target.value)} placeholder="https://..." className={inp} />
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={lbl}>Link trailer 1</label>
+                    <input value={form.link_trailer} onChange={e => set('link_trailer', e.target.value)} placeholder="https://..." className={inp} />
+                  </div>
+                  <div>
+                    <label className={lbl}>Link trailer 2</label>
+                    <input value={form.link_trailer2} onChange={e => set('link_trailer2', e.target.value)} placeholder="https://..." className={inp} />
+                  </div>
+                  <div>
+                    <label className={lbl}>Link vídeo completo 1</label>
+                    <input value={form.link_video} onChange={e => set('link_video', e.target.value)} placeholder="https://..." className={inp} />
+                  </div>
+                  <div>
+                    <label className={lbl}>Link vídeo completo 2</label>
+                    <input value={form.link_video2} onChange={e => set('link_video2', e.target.value)} placeholder="https://..." className={inp} />
+                  </div>
                 </div>
+
+                {/* Skills — programa de edição */}
                 <div>
-                  <label className={lbl}>Link trailer 2</label>
-                  <input value={form.link_trailer2} onChange={e => set('link_trailer2', e.target.value)} placeholder="https://..." className={inp} />
+                  <label className={lbl}>Programa de edição</label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {SOFTWARE_EDICAO.map(s => {
+                      const on = form.software_edicao.includes(s)
+                      return (
+                        <button key={s} type="button" onClick={() => toggleIn('software_edicao', s)}
+                          className={`px-3.5 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide transition-all ${
+                            on ? 'border-violet-400/60 bg-violet-500/10 text-violet-300' : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70 hover:border-white/25'
+                          }`}>
+                          {s}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
+
+                {/* Skills — atributos */}
                 <div>
-                  <label className={lbl}>Link vídeo completo 1</label>
-                  <input value={form.link_video} onChange={e => set('link_video', e.target.value)} placeholder="https://..." className={inp} />
-                </div>
-                <div>
-                  <label className={lbl}>Link vídeo completo 2</label>
-                  <input value={form.link_video2} onChange={e => set('link_video2', e.target.value)} placeholder="https://..." className={inp} />
+                  <label className={lbl}>Atributos / especialidades</label>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {SKILLS_EDITOR.map(s => {
+                      const on = form.skills_editor.includes(s)
+                      return (
+                        <button key={s} type="button" onClick={() => toggleIn('skills_editor', s)}
+                          className={`px-3.5 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide transition-all ${
+                            on ? 'border-violet-400/60 bg-violet-500/10 text-violet-300' : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70 hover:border-white/25'
+                          }`}>
+                          {s}
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             )}

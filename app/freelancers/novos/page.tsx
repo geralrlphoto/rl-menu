@@ -22,6 +22,8 @@ type NovoFreelancer = {
   link_video: string | null
   link_video2: string | null
   avaliacao: string[]
+  software_edicao: string[]
+  skills_editor: string[]
   mensagem: string | null
 }
 
@@ -40,7 +42,8 @@ const EMPTY_FORM = {
   nome: '', instagram: '', funcao: 'FOTOGRAFO', tipo_eventos: [] as string[], zona: '',
   telefone: '', valor_servico: '', valor_drone: '', valor_edicao: '',
   servicos_feitos: '', drone: '', faz_edicao: '', link_trailer: '', link_trailer2: '',
-  link_video: '', link_video2: '', avaliacao: [] as string[], mensagem: '',
+  link_video: '', link_video2: '', avaliacao: [] as string[],
+  software_edicao: [] as string[], skills_editor: [] as string[], mensagem: '',
 }
 
 function funcaoStyle(f: string | null) {
@@ -439,6 +442,16 @@ export default function NovosFreelancersPage() {
                           <span key={t} className="text-[10px] px-3 py-1 rounded-lg border border-white/10 text-white/30">{t}</span>
                         ))}
                       </div>
+                      {((f.software_edicao?.length ?? 0) > 0 || (f.skills_editor?.length ?? 0) > 0) && (
+                        <div className="flex gap-2 flex-wrap">
+                          {f.software_edicao?.map(s => (
+                            <span key={s} className="text-[10px] px-3 py-1 rounded-lg border border-violet-500/25 bg-violet-500/10 text-violet-300">🎛️ {s}</span>
+                          ))}
+                          {f.skills_editor?.map(s => (
+                            <span key={s} className="text-[10px] px-3 py-1 rounded-lg border border-violet-500/20 bg-violet-500/[0.06] text-violet-200/80">✦ {s}</span>
+                          ))}
+                        </div>
+                      )}
                       <div className="flex gap-2 flex-wrap">
                         {f.instagram && <a href={f.instagram} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-pink-500/25 bg-pink-500/5 text-pink-300 hover:bg-pink-500/10 transition-all">📷 Instagram</a>}
                         {f.link_trailer && <a href={f.link_trailer} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-gold/20 bg-gold/5 text-gold hover:bg-gold/10 transition-all">▶ Trailer{f.link_trailer2 ? ' 1' : ''}</a>}
