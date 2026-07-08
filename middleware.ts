@@ -61,6 +61,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/freelancers/${targetId}?view=freelancer`, request.url))
   }
 
+  // ── Formulário de recrutamento — público ─────────────────────────────────
+  //   /freelancers/formulario é preenchido por candidatos externos (sem login).
+  //   Tem de vir ANTES do flMatch, senão "formulario" é tratado como id de
+  //   portal e reencaminhado para /login.
+  if (pathname === '/freelancers/formulario') {
+    return NextResponse.next()
+  }
+
   // ── 2) Acesso ao portal do membro (/freelancers/<id>?view=freelancer) ──
   //   Admin (rl_auth válido) entra em /freelancers/<id> com ou sem ?view.
   //   Freelancer só entra se:
