@@ -93,6 +93,22 @@ export default function FreelancerFormularioPage() {
       })
       const d = await res.json()
       if (!res.ok || !d.ok) throw new Error(d.error || 'Erro ao enviar.')
+
+      // Avisa o admin (email + sino) — fire-and-forget, não bloqueia a confirmação.
+      fetch('/api/send-admin-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tipo: 'nova_candidatura',
+          freelancer_nome: form.nome.trim(),
+          funcao: form.funcao,
+          telefone: form.telefone.trim(),
+          candidato_email: form.email.trim(),
+          zona: form.zona.trim(),
+          mensagem: form.mensagem.trim(),
+        }),
+      }).catch(() => {})
+
       setDone(true)
     } catch (e: any) {
       setError(e.message || 'Não foi possível enviar. Tenta novamente.')

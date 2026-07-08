@@ -114,7 +114,82 @@ function buildAlbumAprovadoEmail(nome_noivos: string, referencia: string): strin
 }
 
 export async function POST(req: NextRequest) {
-  const { tipo, freelancer_nome, nome_noivos, referencia, data_evento, local, email_noiva } = await req.json().catch(() => ({}))
+  const { tipo, freelancer_nome, nome_noivos, referencia, data_evento, local, email_noiva,
+    funcao, telefone, zona, candidato_email, mensagem } = await req.json().catch(() => ({}))
+
+  // ── Nova candidatura de recrutamento ──────────────────────────────────────
+  if (tipo === 'nova_candidatura') {
+    const linhas: Array<[string, string | null]> = [
+      ['Função', funcao ?? null],
+      ['Telefone', telefone ?? null],
+      ['Email', candidato_email ?? null],
+      ['Zona', zona ?? null],
+    ]
+    const detalhes = linhas.filter(([, v]) => v).map(([k, v]) => `
+      <tr>
+        <td style="padding:6px 0;font-size:10px;letter-spacing:0.35em;color:#7a6340;text-transform:uppercase;text-align:left;width:90px;vertical-align:top;">${k}</td>
+        <td style="padding:6px 0;font-size:14px;color:#d4c9b0;text-align:left;">${v}</td>
+      </tr>`).join('')
+
+    const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0e0b07;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
+        <tr><td style="padding:0;"><table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
+          <td></td>
+          <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
+        </tr></table></td></tr>
+        <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
+          <img src="${IMG_BASE}/logo_rl_gold.png" width="80" alt="RL Photo Video"
+            style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
+          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, Rui!</p>
+          <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Nova candidatura</p>
+          <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">de recrutamento.</p>
+          <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
+          <table cellpadding="0" cellspacing="0" style="margin:0 auto 24px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
+            <tr><td style="padding:22px 32px;">
+              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;text-align:center;">Candidato</p>
+              <p style="margin:0 0 18px;font-size:24px;font-style:italic;font-weight:400;color:#c9a96e;line-height:1.2;text-align:center;">${freelancer_nome ?? '—'}</p>
+              <table cellpadding="0" cellspacing="0" width="100%">${detalhes}</table>
+            </td></tr>
+          </table>
+          ${mensagem ? `<p style="margin:0 0 24px;font-size:13px;color:#a09070;line-height:1.7;white-space:pre-wrap;text-align:left;">${String(mensagem).replace(/</g, '&lt;')}</p>` : ''}
+          <p style="margin:0;font-size:15px;color:#a09070;line-height:1.8;">
+            Vê a candidatura em <strong style="color:#c9b88a;font-weight:500;">Novos Freelancers</strong><br>
+            <a href="${ADMIN_URL}/freelancers/novos" style="color:#c9a96e;">${ADMIN_URL}/freelancers/novos</a>
+          </p>
+        </td></tr>
+        <tr><td style="padding:0;"><table width="100%" cellpadding="0" cellspacing="0"><tr>
+          <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
+          <td style="text-align:center;vertical-align:bottom;padding-bottom:20px;">
+            <p style="margin:0;font-size:9px;letter-spacing:0.4em;color:#3a2a12;text-transform:uppercase;">RL PHOTO &middot; VIDEO</p>
+          </td>
+          <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
+        </tr></table></td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+        to: [ADMIN_EMAIL],
+        subject: `✦ Nova candidatura — ${freelancer_nome ?? ''}${funcao ? ` (${funcao})` : ''}`,
+        html,
+      }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return NextResponse.json({ ok: false, error: data.message ?? 'erro' }, { status: 500 })
+    return NextResponse.json({ ok: true, id: data.id })
+  }
 
   // ── Pré-wedding reservado ─────────────────────────────────────────────────
   if (tipo === 'prewedding_reserva') {

@@ -24,6 +24,7 @@ const TIPO_LABELS: Record<string, string> = {
   album_aprovado:           'Álbum Aprovado pelos Noivos',
   mensagem_noivos:          'Mensagem dos Noivos',
   blog_subscriber:          'Nova Subscrição do Blog',
+  nova_candidatura:         'Nova Candidatura de Recrutamento',
   video_prazo:              'Prazo de Entrega do Vídeo',
   fotos_edicao_prazo:       'Prazo das Fotos em Edição',
   noivos_selecao_falta:     'Noivos em Falta — Escolher Fotos',
@@ -51,6 +52,7 @@ const TIPO_ICONS: Record<string, string> = {
   album_aprovado:           '✓',
   mensagem_noivos:          '💬',
   blog_subscriber:          '✉',
+  nova_candidatura:         '✦',
   video_prazo:              '🎬',
   fotos_edicao_prazo:       '✎',
   noivos_selecao_falta:     '⏰',
@@ -660,6 +662,59 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] blog_subscribers read failed:', err)
+    }
+
+    // ── Notificações de NOVA CANDIDATURA (Notion · Novos Freelancers) ──
+    //    Cada submissão do formulário público /recrutamento cria uma página na
+    //    DB Notion "Novos Freelancers". Mostramos as dos últimos 30 dias no sino.
+    //    Isolado em try/catch: se o Notion falhar, o resto do sino não quebra.
+    try {
+      const NOVOS_DB = '2f3220116d8a8027b435c5b4c0f48948'
+      const notionToken = process.env.NOTION_TOKEN
+      if (notionToken) {
+        const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        const resNovos = await fetch(`https://api.notion.com/v1/databases/${NOVOS_DB}/query`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${notionToken}`,
+            'Notion-Version': '2022-06-28',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            filter: { timestamp: 'created_time', created_time: { on_or_after: cutoff } },
+            sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+            page_size: 30,
+          }),
+          cache: 'no-store',
+        })
+        if (resNovos.ok) {
+          const dataNovos = await resNovos.json()
+          for (const page of (dataNovos.results ?? []) as any[]) {
+            const props = page.properties ?? {}
+            const nome   = props['Nome']?.title?.map((t: any) => t.plain_text).join('') || '—'
+            const funcao = props['FUNÇÃO']?.select?.name ?? null
+            const zona   = props['ZONA DE RESIDÊNCIA']?.select?.name ?? null
+            const tel    = props['Telefone']?.phone_number ?? null
+            notifications.push({
+              id: `nova_candidatura::${page.id}`,
+              tipo: 'nova_candidatura',
+              tipo_label: TIPO_LABELS.nova_candidatura,
+              tipo_icon: TIPO_ICONS.nova_candidatura,
+              casamento_id: '',
+              freelancer_id: '',
+              freelancer_nome: nome,
+              local: [funcao, zona].filter(Boolean).join(' · ') || '—',
+              data_casamento: null,
+              url: '/freelancers/novos',
+              sent_at: page.created_time,
+              mensagem: [funcao ? `Função: ${funcao}` : '', tel ? `Tel: ${tel}` : '']
+                .filter(Boolean).join(' · ') || undefined,
+            })
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] nova candidatura (Notion) read failed:', err)
     }
 
     // ── Notificações de PRAZO DE ENTREGA DO VÍDEO (≤ 30 dias) ──

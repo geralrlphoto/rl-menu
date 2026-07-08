@@ -64,8 +64,8 @@ export async function middleware(request: NextRequest) {
   // ── Formulário de recrutamento — público ─────────────────────────────────
   //   /freelancers/formulario é preenchido por candidatos externos (sem login).
   //   Tem de vir ANTES do flMatch, senão "formulario" é tratado como id de
-  //   portal e reencaminhado para /login.
-  if (pathname === '/freelancers/formulario') {
+  //   portal e reencaminhado para /login. /recrutamento é o alias público.
+  if (pathname === '/freelancers/formulario' || pathname === '/recrutamento') {
     return NextResponse.next()
   }
 
