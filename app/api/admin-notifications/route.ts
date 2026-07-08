@@ -695,6 +695,7 @@ export async function GET() {
             const funcao = props['FUNÇÃO']?.select?.name ?? null
             const zona   = props['ZONA DE RESIDÊNCIA']?.select?.name ?? null
             const tel    = props['Telefone']?.phone_number ?? null
+            const ig     = props['Instagram']?.url ?? null
             notifications.push({
               id: `nova_candidatura::${page.id}`,
               tipo: 'nova_candidatura',
@@ -707,7 +708,7 @@ export async function GET() {
               data_casamento: null,
               url: '/freelancers/novos',
               sent_at: page.created_time,
-              mensagem: [funcao ? `Função: ${funcao}` : '', tel ? `Tel: ${tel}` : '']
+              mensagem: [funcao ? `Função: ${funcao}` : '', tel ? `Tel: ${tel}` : '', ig ? `IG: ${ig}` : '']
                 .filter(Boolean).join(' · ') || undefined,
             })
           }

@@ -63,17 +63,18 @@ export default function FreelancerFormularioPage() {
     // Portfólio partilhado: fotógrafo/editor guardam o link em "link_video".
     const linkVideo = form.funcao === 'VIDEOGRAFO' ? form.link_video : form.link_portfolio
 
-    // Email + Instagram + notas extra vão na mensagem (a base de candidatos não tem campo próprio).
+    // Email vai na mensagem (a base não tem campo próprio de email).
+    // Instagram tem agora campo dedicado na base — enviado à parte.
     const notas = [
-      form.email.trim()     ? `✉ Email: ${form.email.trim()}` : '',
-      form.instagram.trim() ? `📷 Instagram: ${form.instagram.trim()}` : '',
-      form.mensagem.trim()  ? `\n${form.mensagem.trim()}` : '',
+      form.email.trim()    ? `✉ Email: ${form.email.trim()}` : '',
+      form.mensagem.trim() ? `\n${form.mensagem.trim()}` : '',
     ].filter(Boolean).join('\n')
 
     const payload = {
       nome:            form.nome.trim(),
       funcao:          form.funcao,
       telefone:        form.telefone.trim(),
+      instagram:       form.instagram.trim(),
       zona:            form.zona.trim(),
       tipo_eventos:    form.tipo_eventos,
       servicos_feitos: form.servicos_feitos,

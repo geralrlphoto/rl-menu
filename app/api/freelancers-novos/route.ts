@@ -24,9 +24,23 @@ function getProp(props: any, key: string, type: string): any {
   return null
 }
 
+// Normaliza um handle/URL de Instagram para um URL completo clicável.
+//   "@rlphoto" / "rlphoto"           → https://instagram.com/rlphoto
+//   "instagram.com/rlphoto"          → https://instagram.com/rlphoto
+//   "https://instagram.com/rlphoto"  → inalterado
+//   vazio                            → null
+function normalizeInstagram(raw: any): string | null {
+  const v = String(raw ?? '').trim()
+  if (!v) return null
+  if (/^https?:\/\//i.test(v)) return v
+  if (/instagram\.com/i.test(v)) return `https://${v.replace(/^\/+/, '')}`
+  return `https://instagram.com/${v.replace(/^@+/, '')}`
+}
+
 function buildProps(data: Record<string, any>) {
   const p: Record<string, any> = {}
   if (data.nome         != null) p['Nome']                  = { title: [{ text: { content: data.nome ?? '' } }] }
+  if (data.instagram    != null) p['Instagram']             = { url: normalizeInstagram(data.instagram) }
   if (data.funcao       != null) p['FUNÇÃO']                = { select: data.funcao ? { name: data.funcao } : null }
   if (data.tipo_eventos != null) p['TIPO DE EVENTOS']       = { multi_select: (data.tipo_eventos as string[]).map(n => ({ name: n })) }
   if (data.zona         != null) p['ZONA DE RESIDÊNCIA']    = { select: data.zona ? { name: data.zona } : null }
@@ -49,6 +63,7 @@ function mapPage(page: any) {
   return {
     id:              page.id,
     nome:            getProp(p, 'Nome',                'title'),
+    instagram:       getProp(p, 'Instagram',           'url'),
     funcao:          getProp(p, 'FUNÇÃO',              'select'),
     tipo_eventos:    getProp(p, 'TIPO DE EVENTOS',     'multi_select'),
     zona:            getProp(p, 'ZONA DE RESIDÊNCIA',  'select'),
