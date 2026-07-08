@@ -18,7 +18,9 @@ type NovoFreelancer = {
   drone: string | null
   faz_edicao: string | null
   link_trailer: string | null
+  link_trailer2: string | null
   link_video: string | null
+  link_video2: string | null
   avaliacao: string[]
   mensagem: string | null
 }
@@ -37,8 +39,8 @@ const FUNCAO_STYLE: Record<string, { badge: string; tab: string; dot: string }> 
 const EMPTY_FORM = {
   nome: '', instagram: '', funcao: 'FOTOGRAFO', tipo_eventos: [] as string[], zona: '',
   telefone: '', valor_servico: '', valor_drone: '', valor_edicao: '',
-  servicos_feitos: '', drone: '', faz_edicao: '', link_trailer: '',
-  link_video: '', avaliacao: [] as string[], mensagem: '',
+  servicos_feitos: '', drone: '', faz_edicao: '', link_trailer: '', link_trailer2: '',
+  link_video: '', link_video2: '', avaliacao: [] as string[], mensagem: '',
 }
 
 function funcaoStyle(f: string | null) {
@@ -149,8 +151,16 @@ function FreelancerForm({ initial, onSave, onCancel, saving }: {
           <input value={form.link_trailer} onChange={e => set('link_trailer', e.target.value)} placeholder="https://..." className={inp} />
         </div>
         <div>
+          <label className="block text-[10px] text-white/30 tracking-widest uppercase mb-1">Link Trailer 2</label>
+          <input value={form.link_trailer2} onChange={e => set('link_trailer2', e.target.value)} placeholder="https://..." className={inp} />
+        </div>
+        <div>
           <label className="block text-[10px] text-white/30 tracking-widest uppercase mb-1">Link Vídeo Completo</label>
           <input value={form.link_video} onChange={e => set('link_video', e.target.value)} placeholder="https://..." className={inp} />
+        </div>
+        <div>
+          <label className="block text-[10px] text-white/30 tracking-widest uppercase mb-1">Link Vídeo Completo 2</label>
+          <input value={form.link_video2} onChange={e => set('link_video2', e.target.value)} placeholder="https://..." className={inp} />
         </div>
       </div>
       <div>
@@ -431,8 +441,10 @@ export default function NovosFreelancersPage() {
                       </div>
                       <div className="flex gap-2 flex-wrap">
                         {f.instagram && <a href={f.instagram} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-pink-500/25 bg-pink-500/5 text-pink-300 hover:bg-pink-500/10 transition-all">📷 Instagram</a>}
-                        {f.link_trailer && <a href={f.link_trailer} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-gold/20 bg-gold/5 text-gold hover:bg-gold/10 transition-all">▶ Ver Trailer</a>}
-                        {f.link_video && <a href={f.link_video} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-white/50 hover:text-white/70 transition-all">🎬 Vídeo Completo</a>}
+                        {f.link_trailer && <a href={f.link_trailer} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-gold/20 bg-gold/5 text-gold hover:bg-gold/10 transition-all">▶ Trailer{f.link_trailer2 ? ' 1' : ''}</a>}
+                        {f.link_trailer2 && <a href={f.link_trailer2} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-gold/20 bg-gold/5 text-gold hover:bg-gold/10 transition-all">▶ Trailer 2</a>}
+                        {f.link_video && <a href={f.link_video} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-white/50 hover:text-white/70 transition-all">🎬 Vídeo Completo{f.link_video2 ? ' 1' : ''}</a>}
+                        {f.link_video2 && <a href={f.link_video2} target="_blank" rel="noopener noreferrer" className="text-[10px] px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-white/50 hover:text-white/70 transition-all">🎬 Vídeo Completo 2</a>}
                         {f.telefone && <a href={`tel:${f.telefone}`} className="text-[10px] px-3 py-1.5 rounded-lg border border-white/10 bg-white/[0.03] text-white/50 hover:text-white/70 transition-all">📞 {f.telefone}</a>}
                       </div>
                       {f.mensagem && (

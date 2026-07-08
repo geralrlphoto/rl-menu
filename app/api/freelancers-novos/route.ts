@@ -52,7 +52,9 @@ function buildProps(data: Record<string, any>) {
   if (data.drone        != null) p['DRONE']                 = { select: data.drone ? { name: data.drone } : null }
   if (data.faz_edicao   != null) p['FAZ EDIÇÃO DE VIDEO']   = { select: data.faz_edicao ? { name: data.faz_edicao } : null }
   if (data.link_trailer != null) p['LINK TRAILER']          = { url: data.link_trailer || null }
+  if (data.link_trailer2!= null) p['LINK TRAILER 2']        = { url: data.link_trailer2 || null }
   if (data.link_video   != null) p['LINK VIDEO COMPLETO']   = { url: data.link_video || null }
+  if (data.link_video2  != null) p['LINK VIDEO COMPLETO 2'] = { url: data.link_video2 || null }
   if (data.avaliacao    != null) p['AVALIAÇÃO']             = { multi_select: (data.avaliacao as string[]).map(n => ({ name: n })) }
   if (data.mensagem     != null) p['MENSAGEM']              = { rich_text: [{ text: { content: data.mensagem ?? '' } }] }
   return p
@@ -75,7 +77,9 @@ function mapPage(page: any) {
     drone:           getProp(p, 'DRONE',               'select'),
     faz_edicao:      getProp(p, 'FAZ EDIÇÃO DE VIDEO', 'select'),
     link_trailer:    getProp(p, 'LINK TRAILER',        'url'),
+    link_trailer2:   getProp(p, 'LINK TRAILER 2',      'url'),
     link_video:      getProp(p, 'LINK VIDEO COMPLETO', 'url'),
+    link_video2:     getProp(p, 'LINK VIDEO COMPLETO 2', 'url'),
     avaliacao:       getProp(p, 'AVALIAÇÃO',           'multi_select'),
     mensagem:        getProp(p, 'MENSAGEM',            'text'),
   }

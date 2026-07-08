@@ -26,8 +26,10 @@ type FormState = {
   valor_servico: string
   // condicionais
   link_portfolio: string   // fotografo / editor (link_video)
-  link_trailer: string     // videografo
-  link_video: string       // videografo (video completo)
+  link_trailer: string     // videografo / editor (trailer 1)
+  link_trailer2: string    // editor (trailer 2)
+  link_video: string       // videografo / editor (video completo 1)
+  link_video2: string      // editor (video completo 2)
   faz_edicao: string       // videografo
   drone: string            // fotografo / videografo
   valor_drone: string
@@ -37,8 +39,8 @@ type FormState = {
 
 const EMPTY: FormState = {
   nome: '', funcao: '', telefone: '', email: '', instagram: '', zona: '', tipo_eventos: [],
-  servicos_feitos: '', valor_servico: '', link_portfolio: '', link_trailer: '',
-  link_video: '', faz_edicao: '', drone: '', valor_drone: '', valor_edicao: '', mensagem: '',
+  servicos_feitos: '', valor_servico: '', link_portfolio: '', link_trailer: '', link_trailer2: '',
+  link_video: '', link_video2: '', faz_edicao: '', drone: '', valor_drone: '', valor_edicao: '', mensagem: '',
 }
 
 export default function FreelancerFormularioPage() {
@@ -60,8 +62,16 @@ export default function FreelancerFormularioPage() {
     if (!canSubmit) { setError('Preenche pelo menos o nome, função e telefone.'); return }
     setSaving(true); setError(null)
 
-    // Portfólio partilhado: fotógrafo/editor guardam o link em "link_video".
-    const linkVideo = form.funcao === 'VIDEOGRAFO' ? form.link_video : form.link_portfolio
+    // Mapeamento dos links por função:
+    //   FOTOGRAFO → portfólio no "link_video"
+    //   VIDEOGRAFO → 1 trailer + 1 vídeo completo
+    //   EDITOR → 2 trailers + 2 vídeos completos
+    const links =
+      form.funcao === 'FOTOGRAFO'
+        ? { link_trailer: '', link_trailer2: '', link_video: form.link_portfolio.trim(), link_video2: '' }
+        : form.funcao === 'EDITOR'
+          ? { link_trailer: form.link_trailer.trim(), link_trailer2: form.link_trailer2.trim(), link_video: form.link_video.trim(), link_video2: form.link_video2.trim() }
+          : { link_trailer: form.link_trailer.trim(), link_trailer2: '', link_video: form.link_video.trim(), link_video2: '' }
 
     // Email vai na mensagem (a base não tem campo próprio de email).
     // Instagram tem agora campo dedicado na base — enviado à parte.
@@ -83,8 +93,10 @@ export default function FreelancerFormularioPage() {
       valor_edicao:    form.valor_edicao.trim(),
       drone:           form.drone,
       faz_edicao:      form.faz_edicao,
-      link_trailer:    form.link_trailer.trim(),
-      link_video:      linkVideo.trim(),
+      link_trailer:    links.link_trailer,
+      link_trailer2:   links.link_trailer2,
+      link_video:      links.link_video,
+      link_video2:     links.link_video2,
       mensagem:        notas,
     }
 
@@ -261,10 +273,31 @@ export default function FreelancerFormularioPage() {
               Detalhes — {FUNCOES.find(f => f.key === form.funcao)?.label}
             </p>
 
-            {(isFoto || isEditor) && (
+            {isFoto && (
               <div>
-                <label className={lbl}>{isEditor ? 'Link de trabalhos de edição' : 'Link portfólio / Instagram'}</label>
+                <label className={lbl}>Link portfólio</label>
                 <input value={form.link_portfolio} onChange={e => set('link_portfolio', e.target.value)} placeholder="https://..." className={inp} />
+              </div>
+            )}
+
+            {isEditor && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className={lbl}>Link trailer 1</label>
+                  <input value={form.link_trailer} onChange={e => set('link_trailer', e.target.value)} placeholder="https://..." className={inp} />
+                </div>
+                <div>
+                  <label className={lbl}>Link trailer 2</label>
+                  <input value={form.link_trailer2} onChange={e => set('link_trailer2', e.target.value)} placeholder="https://..." className={inp} />
+                </div>
+                <div>
+                  <label className={lbl}>Link vídeo completo 1</label>
+                  <input value={form.link_video} onChange={e => set('link_video', e.target.value)} placeholder="https://..." className={inp} />
+                </div>
+                <div>
+                  <label className={lbl}>Link vídeo completo 2</label>
+                  <input value={form.link_video2} onChange={e => set('link_video2', e.target.value)} placeholder="https://..." className={inp} />
+                </div>
               </div>
             )}
 
