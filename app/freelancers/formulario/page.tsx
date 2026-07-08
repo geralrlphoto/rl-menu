@@ -17,6 +17,8 @@ const TIPOS_EVENTO = ['Casamentos', 'Batizados', 'Festas / Aniversários', 'Corp
 // Skills do Editor
 const SOFTWARE_EDICAO = ['DaVinci Resolve', 'Adobe Premiere Pro', 'Final Cut Pro', 'Outro']
 const SKILLS_EDITOR = ['Motion Graphics', 'VFX', 'Sound Design', 'Color Grading', 'Montagem', 'Legendagem', 'After Effects']
+const TIPO_VIDEOS = ['Casamentos', 'Batizados', 'Same Day Edit', 'Trailer / Teaser', 'Filme Completo', 'Corporate', 'Redes Sociais / Reels', 'Outros']
+const TEMPO_ENTREGA = ['Até 1 semana', '1–2 semanas', '2–4 semanas', '1–2 meses', 'Mais de 2 meses']
 
 type FormState = {
   nome: string
@@ -38,6 +40,8 @@ type FormState = {
   drone: string            // fotografo / videografo
   valor_drone: string
   valor_edicao: string     // editor
+  tipo_videos: string[]               // editor: que tipo de vídeos edita
+  tempo_entrega: string               // editor: tempo médio de entrega
   software_edicao: string[]           // editor
   skills_editor: Record<string, number> // editor: atributo → pontuação 0–5
   mensagem: string
@@ -47,7 +51,7 @@ const EMPTY: FormState = {
   nome: '', funcao: '', telefone: '', email: '', instagram: '', zona: '', tipo_eventos: [],
   servicos_feitos: '', valor_servico: '', link_portfolio: '', link_trailer: '', link_trailer2: '',
   link_video: '', link_video2: '', faz_edicao: '', drone: '', valor_drone: '', valor_edicao: '',
-  software_edicao: [], skills_editor: {}, mensagem: '',
+  tipo_videos: [], tempo_entrega: '', software_edicao: [], skills_editor: {}, mensagem: '',
 }
 
 export default function FreelancerFormularioPage() {
@@ -59,8 +63,8 @@ export default function FreelancerFormularioPage() {
   const set = (k: keyof FormState, v: any) => setForm(p => ({ ...p, [k]: v }))
   const toggleEvento = (t: string) =>
     setForm(p => ({ ...p, tipo_eventos: p.tipo_eventos.includes(t) ? p.tipo_eventos.filter(x => x !== t) : [...p.tipo_eventos, t] }))
-  const toggleSoftware = (v: string) =>
-    setForm(p => ({ ...p, software_edicao: p.software_edicao.includes(v) ? p.software_edicao.filter(x => x !== v) : [...p.software_edicao, v] }))
+  const toggleArr = (key: 'software_edicao' | 'tipo_videos', v: string) =>
+    setForm(p => ({ ...p, [key]: p[key].includes(v) ? p[key].filter(x => x !== v) : [...p[key], v] }))
   // Clicar na mesma bola desliga (volta a 0).
   const setSkillScore = (skill: string, n: number) =>
     setForm(p => ({ ...p, skills_editor: { ...p.skills_editor, [skill]: p.skills_editor[skill] === n ? 0 : n } }))
@@ -98,7 +102,10 @@ export default function FreelancerFormularioPage() {
       telefone:        form.telefone.trim(),
       instagram:       form.instagram.trim(),
       zona:            form.zona.trim(),
-      tipo_eventos:    form.tipo_eventos,
+      // Editor → "que tipo de vídeos edita"; restantes → "tipo de eventos".
+      tipo_eventos:    form.funcao === 'EDITOR' ? [] : form.tipo_eventos,
+      tipo_videos:     form.funcao === 'EDITOR' ? form.tipo_videos : [],
+      tempo_entrega:   form.funcao === 'EDITOR' ? form.tempo_entrega : '',
       servicos_feitos: form.servicos_feitos,
       valor_servico:   form.funcao === 'EDITOR' ? '' : form.valor_servico.trim(),
       valor_drone:     form.valor_drone.trim(),
@@ -250,23 +257,42 @@ export default function FreelancerFormularioPage() {
           </div>
         </div>
 
-        {/* ── 3. Tipo de eventos ────────────────────────────────────────────── */}
-        <div>
-          <label className={lbl}>Tipo de eventos que fazes</label>
-          <div className="flex flex-wrap gap-2 mt-1">
-            {TIPOS_EVENTO.map(t => {
-              const on = form.tipo_eventos.includes(t)
-              return (
-                <button key={t} type="button" onClick={() => toggleEvento(t)}
-                  className={`px-3.5 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide transition-all ${
-                    on ? 'border-gold/50 bg-gold/10 text-gold' : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70 hover:border-white/25'
-                  }`}>
-                  {t}
-                </button>
-              )
-            })}
+        {/* ── 3. Tipo de eventos / vídeos ───────────────────────────────────── */}
+        {isEditor ? (
+          <div>
+            <label className={lbl}>Que tipo de vídeos editas</label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {TIPO_VIDEOS.map(t => {
+                const on = form.tipo_videos.includes(t)
+                return (
+                  <button key={t} type="button" onClick={() => toggleArr('tipo_videos', t)}
+                    className={`px-3.5 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide transition-all ${
+                      on ? 'border-gold/50 bg-gold/10 text-gold' : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70 hover:border-white/25'
+                    }`}>
+                    {t}
+                  </button>
+                )
+              })}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <label className={lbl}>Tipo de eventos que fazes</label>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {TIPOS_EVENTO.map(t => {
+                const on = form.tipo_eventos.includes(t)
+                return (
+                  <button key={t} type="button" onClick={() => toggleEvento(t)}
+                    className={`px-3.5 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide transition-all ${
+                      on ? 'border-gold/50 bg-gold/10 text-gold' : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70 hover:border-white/25'
+                    }`}>
+                    {t}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
 
         {/* ── 4. Valores ────────────────────────────────────────────────────── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -281,6 +307,15 @@ export default function FreelancerFormularioPage() {
             <div>
               <label className={lbl}>Valor edição (20 min)</label>
               <input value={form.valor_edicao} onChange={e => set('valor_edicao', e.target.value)} placeholder="ex: 80€" className={inp} />
+            </div>
+          )}
+          {isEditor && (
+            <div>
+              <label className={lbl}>Tempo médio de entrega</label>
+              <select value={form.tempo_entrega} onChange={e => set('tempo_entrega', e.target.value)} className={inp + ' cursor-pointer'}>
+                <option value="">—</option>
+                {TEMPO_ENTREGA.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
             </div>
           )}
         </div>
@@ -327,7 +362,7 @@ export default function FreelancerFormularioPage() {
                     {SOFTWARE_EDICAO.map(s => {
                       const on = form.software_edicao.includes(s)
                       return (
-                        <button key={s} type="button" onClick={() => toggleSoftware(s)}
+                        <button key={s} type="button" onClick={() => toggleArr('software_edicao', s)}
                           className={`px-3.5 py-1.5 rounded-xl border text-[11px] font-semibold tracking-wide transition-all ${
                             on ? 'border-violet-400/60 bg-violet-500/10 text-violet-300' : 'border-white/10 bg-white/[0.02] text-white/40 hover:text-white/70 hover:border-white/25'
                           }`}>

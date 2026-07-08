@@ -22,6 +22,8 @@ type NovoFreelancer = {
   link_video: string | null
   link_video2: string | null
   avaliacao: string[]
+  tipo_videos: string[]
+  tempo_entrega: string | null
   software_edicao: string[]
   skills_editor: string | null
   mensagem: string | null
@@ -43,6 +45,7 @@ const EMPTY_FORM = {
   telefone: '', valor_servico: '', valor_drone: '', valor_edicao: '',
   servicos_feitos: '', drone: '', faz_edicao: '', link_trailer: '', link_trailer2: '',
   link_video: '', link_video2: '', avaliacao: [] as string[],
+  tipo_videos: [] as string[], tempo_entrega: '',
   software_edicao: [] as string[], skills_editor: '', mensagem: '',
 }
 
@@ -427,6 +430,7 @@ export default function NovosFreelancersPage() {
                           ['Valor por Serviço', f.valor_servico],
                           ['Valor Drone', f.valor_drone],
                           ['Valor Edição 20m', f.valor_edicao],
+                          ['Tempo de Entrega', f.tempo_entrega],
                           ['Serviços Feitos', f.servicos_feitos != null ? String(f.servicos_feitos) : null],
                         ] as [string, string | null][]).filter(([,v]) => v).map(([label, val]) => (
                           <div key={label} className="bg-white/[0.03] rounded-xl p-3">
@@ -440,6 +444,9 @@ export default function NovosFreelancersPage() {
                         {f.faz_edicao && <span className="text-[10px] px-3 py-1 rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-400">✂️ Edição: {f.faz_edicao}</span>}
                         {f.tipo_eventos?.map(t => (
                           <span key={t} className="text-[10px] px-3 py-1 rounded-lg border border-white/10 text-white/30">{t}</span>
+                        ))}
+                        {f.tipo_videos?.map(t => (
+                          <span key={t} className="text-[10px] px-3 py-1 rounded-lg border border-white/10 text-white/30">🎬 {t}</span>
                         ))}
                       </div>
                       {((f.software_edicao?.length ?? 0) > 0 || !!f.skills_editor) && (

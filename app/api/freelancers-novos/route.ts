@@ -43,6 +43,8 @@ function buildProps(data: Record<string, any>) {
   if (data.instagram    != null) p['Instagram']             = { url: normalizeInstagram(data.instagram) }
   if (data.funcao       != null) p['FUNÇÃO']                = { select: data.funcao ? { name: data.funcao } : null }
   if (data.tipo_eventos != null) p['TIPO DE EVENTOS']       = { multi_select: (data.tipo_eventos as string[]).map(n => ({ name: n })) }
+  if (data.tempo_entrega != null) p['TEMPO MÉDIO ENTREGA']  = { select: data.tempo_entrega ? { name: data.tempo_entrega } : null }
+  if (data.tipo_videos  != null) p['TIPO DE VÍDEOS EDITADOS'] = { multi_select: (data.tipo_videos as string[]).map(n => ({ name: n })) }
   if (data.software_edicao != null) p['SOFTWARE EDIÇÃO']    = { multi_select: (data.software_edicao as string[]).map(n => ({ name: n })) }
   if (data.skills_editor != null) p['SKILLS EDITOR']        = { rich_text: data.skills_editor ? [{ text: { content: String(data.skills_editor) } }] : [] }
   if (data.zona         != null) p['ZONA DE RESIDÊNCIA']    = { select: data.zona ? { name: data.zona } : null }
@@ -70,6 +72,8 @@ function mapPage(page: any) {
     instagram:       getProp(p, 'Instagram',           'url'),
     funcao:          getProp(p, 'FUNÇÃO',              'select'),
     tipo_eventos:    getProp(p, 'TIPO DE EVENTOS',     'multi_select'),
+    tempo_entrega:   getProp(p, 'TEMPO MÉDIO ENTREGA', 'select'),
+    tipo_videos:     getProp(p, 'TIPO DE VÍDEOS EDITADOS', 'multi_select'),
     software_edicao: getProp(p, 'SOFTWARE EDIÇÃO',     'multi_select'),
     skills_editor:   getProp(p, 'SKILLS EDITOR',       'text'),
     zona:            getProp(p, 'ZONA DE RESIDÊNCIA',  'select'),
