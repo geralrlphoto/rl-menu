@@ -271,16 +271,60 @@ export default function FreelancerFormularioPage() {
           </div>
 
           {/* Princípios */}
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-4">
             {[
-              ['✦', 'Especialização', 'A pessoa certa para cada função.'],
-              ['✦', 'Opinião partilhada', 'Ouvimos-te e damos-te a nossa.'],
-              ['✦', 'Rigor & respeito', 'Pelo teu trabalho e pelo cliente.'],
-            ].map(([icon, titulo, desc]) => (
-              <div key={titulo} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
-                <span className="text-gold text-sm">{icon}</span>
-                <p className="text-[13px] font-semibold text-white/80 mt-1.5" style={{ fontFamily: 'Georgia, serif' }}>{titulo}</p>
-                <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{desc}</p>
+              {
+                titulo: 'Especialização',
+                desc: 'A pessoa certa para cada função.',
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="4.5" /><circle cx="12" cy="12" r="1" fill="currentColor" />
+                  </svg>
+                ),
+              },
+              {
+                titulo: 'Opinião partilhada',
+                desc: 'Ouvimos-te e damos-te a nossa.',
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M8 10.5h6M8 13.5h3.5" /><path d="M4 5h11a2 2 0 012 2v6a2 2 0 01-2 2H9l-4 3v-3H4a2 2 0 01-2-2V7a2 2 0 012-2z" /><path d="M18 9h2a2 2 0 012 2v6a2 2 0 01-2 2h-1v2l-2.5-2" opacity="0.5" />
+                  </svg>
+                ),
+              },
+              {
+                titulo: 'Rigor & respeito',
+                desc: 'Pelo teu trabalho e pelo cliente.',
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" /><path d="M9 12l2 2 4-4" />
+                  </svg>
+                ),
+              },
+            ].map((p) => (
+              <div key={p.titulo}
+                className="group relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  background: 'linear-gradient(155deg, rgba(201,164,92,0.08), rgba(255,255,255,0.012) 60%)',
+                  border: '1px solid rgba(201,164,92,0.18)',
+                  boxShadow: '0 12px 34px -18px rgba(0,0,0,0.7)',
+                }}>
+                {/* glow no hover */}
+                <div className="pointer-events-none absolute -top-10 -right-10 w-28 h-28 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.16), transparent 70%)' }} />
+                {/* badge do ícone */}
+                <div className="relative w-11 h-11 rounded-xl flex items-center justify-center text-gold mb-4"
+                  style={{
+                    background: 'radial-gradient(circle at 30% 25%, rgba(201,164,92,0.22), rgba(201,164,92,0.05))',
+                    border: '1px solid rgba(201,164,92,0.38)',
+                    boxShadow: '0 0 16px -3px rgba(201,164,92,0.4), inset 0 0 10px rgba(201,164,92,0.06)',
+                  }}>
+                  {p.icon}
+                </div>
+                <p className="relative text-[15px] font-bold text-white leading-tight" style={{ fontFamily: 'Georgia, serif' }}>{p.titulo}</p>
+                <div className="relative mt-2 h-px w-8 bg-gradient-to-r from-gold/60 to-transparent" />
+                <p className="relative text-[12px] text-white/45 mt-2.5 leading-relaxed">{p.desc}</p>
+                {/* sweep */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.05] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
               </div>
             ))}
           </div>
