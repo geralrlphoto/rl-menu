@@ -189,7 +189,36 @@ export async function POST(req: NextRequest) {
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) return NextResponse.json({ ok: false, error: data.message ?? 'erro' }, { status: 500 })
-    return NextResponse.json({ ok: true, id: data.id })
+
+    // ── Card de confirmação ao candidato (mesmo card do fluxo Tally antigo) ──
+    let candidatoEmailId: string | null = null
+    if (candidato_email && /.+@.+\..+/.test(String(candidato_email))) {
+      const cardHtml = `<!DOCTYPE html>
+<html lang="pt">
+<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Candidatura Recebida</title></head>
+<body style="margin:0;padding:0;background:#0e0c07;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0c07;">
+  <tr><td align="center" style="padding:32px 20px;">
+    <img src="${ADMIN_URL}/card-freelancer-obrigado.png" width="560" alt="Recebemos a tua candidatura" style="display:block;max-width:100%;border:0;"/>
+  </td></tr>
+</table>
+</body>
+</html>`
+      const cres = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
+          to: [candidato_email],
+          subject: 'Recebemos a tua candidatura · RL Photo.Video',
+          html: cardHtml,
+        }),
+      })
+      if (cres.ok) { const cd = await cres.json().catch(() => ({})); candidatoEmailId = cd.id ?? null }
+      else console.error('[nova_candidatura] erro email candidato:', await cres.text().catch(() => ''))
+    }
+
+    return NextResponse.json({ ok: true, id: data.id, candidatoEmailId })
   }
 
   // ── Pré-wedding reservado ─────────────────────────────────────────────────
