@@ -60,6 +60,7 @@ const EMPTY: FormState = {
 
 export default function FreelancerFormularioPage() {
   const [form, setForm]     = useState<FormState>(EMPTY)
+  const [started, setStarted] = useState(false)
   const [saving, setSaving] = useState(false)
   const [done, setDone]     = useState(false)
   const [error, setError]   = useState<string | null>(null)
@@ -235,6 +236,62 @@ export default function FreelancerFormularioPage() {
           className="mt-8 px-5 py-2.5 rounded-xl bg-white/[0.03] border border-white/10 text-white/50 text-xs font-semibold tracking-widest hover:bg-white/[0.06] hover:text-white/80 transition-all uppercase">
           Enviar outra candidatura
         </button>
+      </main>
+    )
+  }
+
+  // ── Ecrã de apresentação (antes do formulário) ─────────────────────────────
+  if (!started) {
+    return (
+      <main className="min-h-screen px-4 sm:px-8 py-12 max-w-[680px] mx-auto flex flex-col justify-center">
+        <div>
+          <Link href="/freelancers" className="text-[10px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
+            ← Equipas de Trabalho
+          </Link>
+          <p className="text-[10px] tracking-[0.5em] uppercase text-gold/70 font-bold mt-6">Recrutamento</p>
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-wide text-white mt-2 leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
+            Colaborar com a <span className="italic text-gold">RL Photo·Video</span>
+          </h1>
+          <div className="mt-5 h-px w-16 bg-gold/40" />
+
+          <div className="mt-7 space-y-5 text-[15px] leading-relaxed text-white/60">
+            <p>
+              Trabalhar connosco é mais do que prestar um serviço — é uma <span className="text-white/85">parceria</span>.
+              Somos uma produtora especializada em <span className="text-white/85">casamentos e batizados</span> e atuamos
+              também noutras áreas, sempre com uma regra que não muda: cada função é entregue a
+              <span className="text-white/85"> pessoas especializadas</span>, para que o resultado esteja à altura de quem confia em nós.
+            </p>
+            <p>
+              Temos <span className="text-white/85">princípios</span> e gostamos de os partilhar. Valorizamos a tua opinião
+              tanto quanto gostamos de dar a nossa — é dessa troca honesta que nascem os melhores trabalhos.
+            </p>
+            <p>
+              Se procuras uma equipa que respeita o teu talento e cresce contigo, é aqui que começamos.
+            </p>
+          </div>
+
+          {/* Princípios */}
+          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {[
+              ['✦', 'Especialização', 'A pessoa certa para cada função.'],
+              ['✦', 'Opinião partilhada', 'Ouvimos-te e damos-te a nossa.'],
+              ['✦', 'Rigor & respeito', 'Pelo teu trabalho e pelo cliente.'],
+            ].map(([icon, titulo, desc]) => (
+              <div key={titulo} className="rounded-2xl border border-white/[0.07] bg-white/[0.02] p-4">
+                <span className="text-gold text-sm">{icon}</span>
+                <p className="text-[13px] font-semibold text-white/80 mt-1.5" style={{ fontFamily: 'Georgia, serif' }}>{titulo}</p>
+                <p className="text-[11px] text-white/40 mt-1 leading-relaxed">{desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <button onClick={() => setStarted(true)}
+            className="mt-9 w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl bg-gold text-black font-bold text-sm tracking-widest uppercase hover:bg-gold/85 transition-all group"
+            style={{ boxShadow: '0 0 20px rgba(201,164,92,0.25)' }}>
+            Avançar
+            <span className="group-hover:translate-x-0.5 transition-transform">→</span>
+          </button>
+        </div>
       </main>
     )
   }
