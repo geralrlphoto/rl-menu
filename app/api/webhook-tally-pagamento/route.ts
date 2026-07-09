@@ -317,7 +317,11 @@ export async function POST(req: NextRequest) {
 
     // Extrair campos do formulário
     // ⚠️ Ajusta os labels abaixo para corresponderem EXATAMENTE aos campos do teu formulário Tally
-    const nome_noivos      = getField(fields, 'Nome dos Noivos', 'NOME DOS NOIVOS', 'Nome', 'NOME') ?? 'Noivos'
+    // Nome do casal: tenta labels conhecidos e, se falhar, qualquer campo cujo
+    // label contenha "noiv" (ex. variações do formulário). Pode ficar null aqui —
+    // é resolvido a seguir pela referência (fonte fiável = tabela de eventos).
+    let nome_noivos: string | null = getField(fields, 'Nome dos Noivos', 'NOME DOS NOIVOS', 'Nome do Casal', 'NOME DO CASAL', 'Nome', 'NOME')
+      ?? (fields.find((f: any) => /noiv/i.test(String(f.label ?? '')) && typeof f.value === 'string' && f.value.trim())?.value?.trim() ?? null)
     const referencia       = getField(fields, 'Referência', 'REFERÊNCIA', 'Referencia', 'REFERENCIA', 'Referência do Evento', 'REFERÊNCIA DO EVENTO')
     const email_cliente    = getField(fields, 'Email', 'EMAIL', 'E-mail', 'E-MAIL', 'Email do Cliente', 'EMAIL DO CLIENTE')
     const valor            = getField(fields, 'Valor a Liquidar', 'VALOR A LIQUIDAR', 'Valor', 'VALOR', 'Valor Pago', 'VALOR PAGO', 'Montante', 'MONTANTE')
@@ -327,6 +331,24 @@ export async function POST(req: NextRequest) {
     const fase_pagamento   = getChoiceLabels(fields, 'Fase de Pagamento', 'FASE DE PAGAMENTO', 'Fase', 'FASE')
     const metodo_labels    = getChoiceLabels(fields, 'Forma de Pagamento', 'FORMA DE PAGAMENTO', 'Método de Pagamento', 'MÉTODO DE PAGAMENTO')
     const forma_pagamento  = metodo_labels[0] ?? getField(fields, 'Forma de Pagamento', 'FORMA DE PAGAMENTO', 'Método de Pagamento', 'MÉTODO DE PAGAMENTO')
+
+    // ── Nome fiável pela referência ──────────────────────────────────────────
+    //   Se o Tally não trouxe o nome do casal, resolve-o pela referência do
+    //   evento (chave fiável). Evita ficar o texto por defeito "Noivos".
+    if (!nome_noivos && referencia && /^CAS[_-]/i.test(referencia.trim())) {
+      try {
+        const { data: evs } = await db()
+          .from('eventos_2026')
+          .select('cliente')
+          .eq('referencia', referencia.trim())
+          .limit(1)
+        const cliente = evs?.[0]?.cliente?.trim()
+        if (cliente) nome_noivos = cliente
+      } catch (e) {
+        console.warn('[webhook-tally-pagamento] lookup nome por referência falhou:', e)
+      }
+    }
+    if (!nome_noivos) nome_noivos = 'Noivos'   // último recurso
 
     const paymentData = { nome_noivos, referencia, valor, forma_pagamento, data_pagamento, email_cliente, notas }
 
