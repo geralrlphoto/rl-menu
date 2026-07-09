@@ -92,7 +92,7 @@ export default function FreelancerFormularioPage() {
     req(empty(form.email), 'Email')
     req(empty(form.instagram), 'Instagram')
     req(empty(form.zona), 'Zona de residência')
-    req(empty(form.servicos_feitos), 'Nº de eventos já realizados')
+    req(f !== 'EDITOR' && empty(form.servicos_feitos), 'Nº de eventos já realizados')
     req(empty(form.mensagem), 'Apresentação / mensagem')
 
     if (f === 'EDITOR') {
@@ -162,7 +162,7 @@ export default function FreelancerFormularioPage() {
       tipo_eventos:    form.funcao === 'EDITOR' ? [] : form.tipo_eventos,
       tipo_videos:     form.funcao === 'EDITOR' ? form.tipo_videos : [],
       tempo_entrega:   form.funcao === 'EDITOR' ? form.tempo_entrega : '',
-      servicos_feitos: form.servicos_feitos,
+      servicos_feitos: form.funcao === 'EDITOR' ? '' : form.servicos_feitos,
       valor_servico:   form.funcao === 'EDITOR' ? '' : form.valor_servico.trim(),
       valor_drone:     form.valor_drone.trim(),
       valor_edicao:    form.valor_edicao.trim(),
@@ -310,10 +310,12 @@ export default function FreelancerFormularioPage() {
             <label className={lbl}>Zona de residência</label>
             <input value={form.zona} onChange={e => set('zona', e.target.value)} placeholder="ex: Lisboa" className={inp} />
           </div>
-          <div>
-            <label className={lbl}>Nº de eventos já realizados</label>
-            <input type="number" min="0" value={form.servicos_feitos} onChange={e => set('servicos_feitos', e.target.value)} placeholder="ex: 30" className={inp} />
-          </div>
+          {!isEditor && (
+            <div>
+              <label className={lbl}>Nº de eventos já realizados</label>
+              <input type="number" min="0" value={form.servicos_feitos} onChange={e => set('servicos_feitos', e.target.value)} placeholder="ex: 30" className={inp} />
+            </div>
+          )}
         </div>
 
         {/* ── 3. Tipo de eventos / vídeos ───────────────────────────────────── */}
