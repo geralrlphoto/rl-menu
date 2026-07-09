@@ -256,14 +256,14 @@ export default function FreelancerFormularioPage() {
 
           <div className="mt-7 space-y-5 text-[15px] leading-relaxed text-white/60">
             <p>
-              Trabalhar connosco é mais do que prestar um serviço — é uma <span className="text-white/85">parceria</span>.
+              Trabalhar connosco é mais do que prestar um serviço. É uma <span className="text-white/85">parceria</span>.
               Somos uma produtora especializada em <span className="text-white/85">casamentos e batizados</span> e atuamos
               também noutras áreas, sempre com uma regra que não muda: cada função é entregue a
               <span className="text-white/85"> pessoas especializadas</span>, para que o resultado esteja à altura de quem confia em nós.
             </p>
             <p>
               Temos <span className="text-white/85">princípios</span> e gostamos de os partilhar. Valorizamos a tua opinião
-              tanto quanto gostamos de dar a nossa — é dessa troca honesta que nascem os melhores trabalhos.
+              tanto quanto gostamos de dar a nossa. É dessa troca honesta que nascem os melhores trabalhos.
             </p>
             <p>
               Se procuras uma equipa que respeita o teu talento e cresce contigo, é aqui que começamos.
