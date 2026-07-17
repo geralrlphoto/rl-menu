@@ -39,7 +39,9 @@ export async function GET(req: NextRequest) {
       if (refs0.length > 0) {
         const { data: pr } = await supabase
           .from('portais')
-          .select('referencia, settings')
+          // JSON-path select — só os 5 campos usados abaixo, em vez do `settings`
+          // inteiro (poupa egress; esta rota é do painel freelancer, tráfego alto).
+          .select('referencia, alertas_fotografia_ativos:settings->alertas_fotografia_ativos, status_selecao:settings->>status_selecao, status_provas:settings->>status_provas, status_editadas:settings->>status_editadas, status_album:settings->>status_album')
           .in('referencia', refs0)
         portaisRows = pr ?? []
       }
@@ -100,7 +102,8 @@ export async function GET(req: NextRequest) {
         //    Default: true (ativo). Apenas é false quando admin clicou no
         //    botão "🔕 Alerta Desativo" no card do casamento.
         const portal = c.referencia ? portaisByRef.get(c.referencia) : null
-        const portalSettings = portal?.settings ?? {}
+        // Os campos vêm agora aliased diretamente na row (JSON-path select acima).
+        const portalSettings = portal ?? {}
         c.alertas_fotografia_ativos = portalSettings.alertas_fotografia_ativos === false
           ? false
           : true

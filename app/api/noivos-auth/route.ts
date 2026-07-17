@@ -186,10 +186,10 @@ export async function POST(req: NextRequest) {
   for (const cand of candidates) {
     const { data: portalRow } = await supabase
       .from('portais')
-      .select('settings')
+      .select('portalPassword:settings->>portalPassword')
       .ilike('referencia', cand.referencia)
       .maybeSingle()
-    const storedRaw = portalRow?.settings?.portalPassword ?? ''
+    const storedRaw = (portalRow as any)?.portalPassword ?? ''
     const stored = String(storedRaw).trim().toLowerCase()
     const isMatch = !!stored && stored === entered
     attempts.push({

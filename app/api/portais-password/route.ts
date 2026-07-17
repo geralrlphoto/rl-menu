@@ -11,12 +11,12 @@ export async function GET(req: NextRequest) {
   const db = createClient(SUPABASE_URL, SUPABASE_KEY)
   const { data, error } = await db
     .from('portais')
-    .select('settings')
+    .select('portalPassword:settings->>portalPassword')
     .ilike('referencia', ref)
     .maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   if (!data) return NextResponse.json({ password: null })
 
-  return NextResponse.json({ password: data.settings?.portalPassword ?? null })
+  return NextResponse.json({ password: (data as any).portalPassword ?? null })
 }

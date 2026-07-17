@@ -10,8 +10,8 @@ export async function POST(req: NextRequest) {
     const { referencia, password } = await req.json()
     if (!referencia || !password) return NextResponse.json({ ok: false })
     const db = createClient(SUPABASE_URL, SUPABASE_KEY)
-    const { data } = await db.from('portais').select('settings').ilike('referencia', referencia).maybeSingle()
-    const stored = data?.settings?.portalPassword
+    const { data } = await db.from('portais').select('portalPassword:settings->>portalPassword').ilike('referencia', referencia).maybeSingle()
+    const stored = (data as any)?.portalPassword
     if (!stored) return NextResponse.json({ ok: true }) // no password set = open
     return NextResponse.json({ ok: stored === password })
   } catch {

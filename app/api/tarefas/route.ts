@@ -38,11 +38,12 @@ export async function GET() {
   try {
     const { data: portais } = await supabase
       .from('portais')
-      .select('referencia, settings')
+      // JSON-path select — só o array `noivos_messages`, não o `settings` inteiro
+      // de até 500 portais (era das leituras mais pesadas do sistema).
+      .select('referencia, noivos_messages:settings->noivos_messages')
       .limit(500)
     for (const p of (portais ?? []) as any[]) {
-      const s = p.settings ?? {}
-      const msgs = Array.isArray(s.noivos_messages) ? s.noivos_messages : []
+      const msgs = Array.isArray(p.noivos_messages) ? p.noivos_messages : []
       for (const m of msgs) {
         if (!m?.id || !m?.ts) continue
         const isDone = !!m.respondido_em
