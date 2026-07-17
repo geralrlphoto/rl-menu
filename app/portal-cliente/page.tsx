@@ -1005,7 +1005,8 @@ export default function PortalClientePage() {
   )
 
   const images = findImages(blocks)
-  const DEFAULT_HERO_IMAGE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/1776042124014-05s55nxzmc4v.png'
+  // Imagem default servida da Vercel (WebP) em vez do Supabase Storage — poupa egress.
+  const DEFAULT_HERO_IMAGE = '/portal-defaults/hero-default.webp'
   const heroImage = settings.heroImageUrl || DEFAULT_HERO_IMAGE
   const galleryImages = (() => {
     const saved = (settings.galleryUrls ?? []).filter(Boolean)

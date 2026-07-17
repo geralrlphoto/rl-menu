@@ -1340,12 +1340,14 @@ export default function PortalRefPage() {
   }
 
   const images = findImages(blocks)
-  const DEFAULT_HERO_IMAGE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/1776042124014-05s55nxzmc4v.png'
+  // Imagens default servidas da Vercel (WebP) em vez do Supabase Storage — poupa
+  // egress. Mesma imagem/dimensões do original (verificado); só o ficheiro é mais leve.
+  const DEFAULT_HERO_IMAGE = '/portal-defaults/hero-default.webp'
   const heroImage = settings.heroImageUrl || DEFAULT_HERO_IMAGE
   const DEFAULT_GALLERY_IMAGES = [
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-1.jpg',
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-2.jpg',
-    'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/default-gallery-3.jpg',
+    '/portal-defaults/gallery-1.webp',
+    '/portal-defaults/gallery-2.webp',
+    '/portal-defaults/gallery-3.webp',
   ]
   const galleryImages = (() => {
     const saved = settings.galleryUrls ?? []
