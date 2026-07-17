@@ -4293,9 +4293,17 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
       setLoaded(true)
     }
     load()
-    // Refresh a cada 60s para apanhar novas tarefas enviadas
-    const id = setInterval(load, 60_000)
-    return () => { cancelled = true; clearInterval(id) }
+    // Sem polling — poupa egress. Em vez de reler de 60 em 60s, recarrega
+    // só quando o membro volta à aba (foco / visibilidade). Parado ou em
+    // segundo plano = 0 leituras; as tarefas novas aparecem ao regressar.
+    const onBack = () => { if (!document.hidden) load() }
+    document.addEventListener('visibilitychange', onBack)
+    window.addEventListener('focus', onBack)
+    return () => {
+      cancelled = true
+      document.removeEventListener('visibilitychange', onBack)
+      window.removeEventListener('focus', onBack)
+    }
   }, [KEY, freelancerId])
 
   useEffect(() => {
