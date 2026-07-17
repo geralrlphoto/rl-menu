@@ -5,8 +5,6 @@ import { Suspense, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { AdminNotificationsBell } from './AdminNotificationsBell'
-import OnlineMembersItem from './OnlineMembersItem'
-import NoivosOnlineItem from './NoivosOnlineItem'
 
 const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media', '/painel-editor']
 // Paths em que o menu lateral permanente é colapsado (só botão flutuante visível)
@@ -220,9 +218,6 @@ function GlobalMenuInner() {
         {!isMedia && (
           <>
             <AdminNotificationsBell />
-            <div className="relative h-px my-1.5 mx-1" style={{ background: 'rgba(255,255,255,0.04)' }} />
-            <OnlineMembersItem />
-            <NoivosOnlineItem />
             <div className="relative h-px my-1.5 mx-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
           </>
         )}
