@@ -44,8 +44,16 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
 
   useEffect(() => {
     fetchMensagens()
-    const iv = setInterval(() => fetchMensagens(true), 5000)
-    return () => clearInterval(iv)
+    // Sem polling — poupa egress do Supabase. As mensagens novas são
+    // avisadas por email; aqui só recarregamos quando voltas à aba
+    // (foco / visibilidade) e logo após enviares uma mensagem.
+    const onBack = () => { if (!document.hidden) fetchMensagens(true) }
+    document.addEventListener('visibilitychange', onBack)
+    window.addEventListener('focus', onBack)
+    return () => {
+      document.removeEventListener('visibilitychange', onBack)
+      window.removeEventListener('focus', onBack)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -93,9 +101,9 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
 
       {/* ── Header ── */}
       <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-3 shrink-0">
-        <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+        <div className="w-1.5 h-1.5 rounded-full bg-white/25 shrink-0" />
         <div className="flex-1">
-          <p className="text-base tracking-[0.4em] text-white/45 uppercase">Chat do Projeto</p>
+          <p className="text-base tracking-[0.4em] text-white/45 uppercase">Mensagens do Projeto</p>
         </div>
         <span className="text-base text-white/15 font-mono">{mensagens.length} msg{mensagens.length !== 1 ? 's' : ''}</span>
       </div>
@@ -162,8 +170,17 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
         <div ref={bottomRef} />
       </div>
 
+      {/* ── Aviso: entrega por email ── */}
+      <div className="shrink-0 border-t border-white/[0.06] px-5 pt-2.5 pb-0">
+        <p className="text-sm text-white/25">
+          {isAdmin
+            ? 'O cliente é avisado por email quando envias.'
+            : 'A resposta chega também ao teu email.'}
+        </p>
+      </div>
+
       {/* ── Input ── */}
-      <div className="shrink-0 border-t border-white/[0.06] px-4 py-3 flex items-center gap-3">
+      <div className="shrink-0 px-4 py-3 flex items-center gap-3">
         <div className="flex-1 border border-white/[0.07] bg-white/[0.02] flex items-center px-4 py-2.5 gap-2 focus-within:border-white/20 transition-colors">
           <input
             ref={inputRef}
