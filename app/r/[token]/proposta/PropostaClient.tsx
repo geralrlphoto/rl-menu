@@ -346,7 +346,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <div className="absolute bottom-0 left-0 w-8 h-8"  style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderLeft:  '1px solid rgba(201,168,76,0.6)' }} />
           <div className="absolute bottom-0 right-0 w-8 h-8" style={{ borderBottom: '1px solid rgba(201,168,76,0.6)', borderRight: '1px solid rgba(201,168,76,0.6)' }} />
           <div className="px-10 py-12 text-center flex flex-col items-center gap-6">
-            <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-12 opacity-75" />
+            <img src={`/logo_rl_gold.png`} alt="RL" className="w-12 opacity-75" />
             <p className="text-[10px] tracking-[0.45em] text-white/20 uppercase">Exclusivo</p>
             <div>
               <h1 className="font-cormorant text-3xl font-light italic text-white/90">Proposta</h1>
@@ -382,7 +382,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'cover': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6">
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-36 sm:w-44 opacity-80 mb-2" />
+          <img src={`/logo_rl_gold.png`} alt="RL" className="w-36 sm:w-44 opacity-80 mb-2" />
           <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
           <div>
             <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
@@ -1004,7 +1004,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
           {/* Right — large logo */}
           <div className="flex items-center justify-center" style={{ width: '38%', flexShrink: 0 }}>
-            <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL Photo Video" className="opacity-70"
+            <img src={`/logo_rl_gold.png`} alt="RL Photo Video" className="opacity-70"
               style={{ width: 'clamp(160px, 22vw, 300px)' }} />
           </div>
 
@@ -1075,7 +1075,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       {/* Logo topo — slides 1 a N (exceto contact) */}
       {current > 0 && slides[current] !== 'contact' && (
         <div className={`absolute left-0 right-0 flex justify-center z-20 pointer-events-none ${isAdmin ? 'top-11' : 'top-5'}`}>
-          <img src={`${IMG_BASE}/logo_rl_gold.png`} alt="RL" className="w-40 opacity-70" />
+          <img src={`/logo_rl_gold.png`} alt="RL" className="w-40 opacity-70" />
         </div>
       )}
 

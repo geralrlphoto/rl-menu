@@ -292,7 +292,7 @@ export default function LandingContratoCPS({
         <header className="mb-16 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            src="/logo_rl_gold.png"
             alt="RL Photo Video"
             className="mx-auto mb-8 w-[110px] sm:w-[130px] h-auto opacity-90"
           />

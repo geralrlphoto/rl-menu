@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
           <td style='width:50px;height:50px;border-top:1px solid #C9A84C;border-right:1px solid #C9A84C;'></td>
         </tr></table></td></tr>
         <tr><td style='padding:10px 56px 40px;text-align:center;'>
-          <img src='https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png' width='64' alt='RL' style='display:block;margin:0 auto 28px;opacity:0.9;' />
+          <img src='https://rl-menu-lake.vercel.app/logo_rl_gold.png' width='64' alt='RL' style='display:block;margin:0 auto 28px;opacity:0.9;' />
           <table cellpadding='0' cellspacing='0' style='margin:0 auto 20px;'><tr>
             <td style='width:60px;height:60px;border-radius:50%;border:1.5px solid #C9A84C;text-align:center;vertical-align:middle;'><span style='font-size:26px;'>⏰</span></td>
           </tr></table>

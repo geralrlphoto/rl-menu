@@ -1815,7 +1815,7 @@ function SidebarNavAdmin({
             boxShadow: '0 0 22px rgba(201,164,92,0.18)',
           }}>
           <img
-            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            src="/logo_rl_gold.png"
             alt="RL Photo·Video"
             className="w-11 h-11 object-contain"
           />

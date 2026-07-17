@@ -344,7 +344,7 @@ export default function OrcamentoDeslocacaoPage() {
           <header className="flex items-start justify-between mb-10 pb-6 border-b-2 border-black">
             <div className="flex items-center gap-5">
               <img
-                src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+                src="/logo_rl_gold.png"
                 alt="RL Photo Video"
                 width={80} height={80}
                 style={{ width: '80px', height: '80px' }}

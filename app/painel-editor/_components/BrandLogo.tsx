@@ -30,7 +30,7 @@ export function BrandLogo() {
     <div className="px-6 pt-8 pb-7 flex flex-col items-center border-b border-white/[0.04]">
       <div className="w-14 h-14 rounded-2xl border border-gold/40 flex items-center justify-center mb-2 overflow-hidden"
         style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 20px rgba(201,164,92,0.15)' }}>
-        <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-10 h-10 object-contain" />
+        <img src="/logo_rl_gold.png" alt="RL" className="w-10 h-10 object-contain" />
       </div>
       <p className="text-[10px] tracking-[0.4em] text-gold/70 font-light uppercase mt-1">{funcao}</p>
     </div>

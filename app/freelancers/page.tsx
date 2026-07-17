@@ -356,7 +356,7 @@ export default function FreelancersPage() {
             <div className="relative flex items-start gap-4">
               <div className="w-14 h-14 rounded-2xl border border-gold/45 flex items-center justify-center text-2xl shrink-0 overflow-hidden"
                 style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' }}>
-                <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
+                <img src="/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[9px] tracking-[0.4em] uppercase text-gold/60 font-bold mb-1">Editor de Vídeo</p>
@@ -387,7 +387,7 @@ export default function FreelancersPage() {
             <div className="relative flex items-start gap-4">
               <div className="w-14 h-14 rounded-2xl border border-gold/45 flex items-center justify-center text-2xl shrink-0 overflow-hidden"
                 style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' }}>
-                <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
+                <img src="/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-[9px] tracking-[0.4em] uppercase text-gold/60 font-bold mb-1">Fotógrafo</p>

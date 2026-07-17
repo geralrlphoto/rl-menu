@@ -174,7 +174,7 @@ function NoivosLoginInner() {
           {/* Logo oficial RL PHOTO.VIDEO (gold) */}
           <div className="mb-10 relative flex items-center justify-center">
             <img
-              src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+              src="/logo_rl_gold.png"
               alt="RL Photo · Video"
               className="w-44 h-44 sm:w-52 sm:h-52 object-contain"
               style={{

@@ -909,7 +909,7 @@ export default function PainelEditor() {
             <div className="absolute top-0 right-0 w-2 h-2" style={{ borderTop: '0.5px solid #c9a96e', borderRight: '0.5px solid #c9a96e' }} />
             <div className="absolute bottom-0 left-0 w-2 h-2" style={{ borderBottom: '0.5px solid #c9a96e', borderLeft: '0.5px solid #c9a96e' }} />
             <div className="absolute bottom-0 right-0 w-2 h-2" style={{ borderBottom: '0.5px solid #c9a96e', borderRight: '0.5px solid #c9a96e' }} />
-            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-11 h-11 object-contain" />
+            <img src="/logo_rl_gold.png" alt="RL" className="w-11 h-11 object-contain" />
           </div>
           <div className="flex items-center gap-2">
             <div className="h-px w-3" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.45))' }} />

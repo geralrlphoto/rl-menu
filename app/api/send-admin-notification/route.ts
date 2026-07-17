@@ -53,7 +53,7 @@ function buildAlbumAprovadoEmail(nome_noivos: string, referencia: string): strin
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 
@@ -145,7 +145,7 @@ export async function POST(req: NextRequest) {
           <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
         </tr></table></td></tr>
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="${IMG_BASE}/logo_rl_gold.png" width="80" alt="RL Photo Video"
+          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png" width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
           <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, Rui!</p>
           <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Nova candidatura</p>
@@ -246,7 +246,7 @@ export async function POST(req: NextRequest) {
           <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
         </tr></table></td></tr>
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="${IMG_BASE}/logo_rl_gold.png" width="80" alt="RL Photo Video"
+          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png" width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
             <span style="font-size:22px;color:#c9a96e;">&#10003;</span>
@@ -375,7 +375,7 @@ export async function POST(req: NextRequest) {
             <td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
               <!-- Logo -->
-              <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+              <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
                 width="100" alt="RL Photo Video"
                 style="display:block;margin:0 auto 28px;width:100px;height:auto;opacity:0.9;" />
 

@@ -227,7 +227,7 @@ function LoginPageInner() {
         <header className="relative z-10 px-12 pt-12 flex items-center gap-5">
           <div className="w-16 h-16 rounded-2xl border border-gold/45 overflow-hidden flex items-center justify-center"
             style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.22), rgba(201,164,92,0.05))', boxShadow: '0 0 28px -4px rgba(201,164,92,0.55)' }}>
-            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-11 h-11 object-contain" />
+            <img src="/logo_rl_gold.png" alt="RL" className="w-11 h-11 object-contain" />
           </div>
           <div>
             <p className="text-[10px] tracking-[0.55em] uppercase text-white/50">Photography &amp; Video</p>
@@ -267,7 +267,7 @@ function LoginPageInner() {
       <section className="relative flex flex-col items-center justify-center px-6 sm:px-12 py-12">
         {/* Logo topo — apenas mobile */}
         <div className="lg:hidden mb-8 flex flex-col items-center gap-2">
-          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL Photo.Video" className="w-48 h-48 object-contain" />
+          <img src="/logo_rl_gold.png" alt="RL Photo.Video" className="w-48 h-48 object-contain" />
         </div>
         <div className="w-full max-w-[420px]">
           {/* Mode toggle */}
@@ -420,7 +420,7 @@ function LoginPageInner() {
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl border border-gold/40 overflow-hidden flex items-center justify-center"
                 style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.20), rgba(201,164,92,0.04))', boxShadow: '0 0 20px -4px rgba(201,164,92,0.45)' }}>
-                <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png" alt="RL" className="w-8 h-8 object-contain" />
+                <img src="/logo_rl_gold.png" alt="RL" className="w-8 h-8 object-contain" />
               </div>
               <div>
                 <p className="text-[9px] tracking-[0.5em] uppercase text-white/40">Photography &amp; Video</p>

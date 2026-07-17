@@ -231,7 +231,7 @@ export default function BatizadoPage() {
         <div className="flex justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            src="/logo_rl_gold.png"
             alt="RL Photo · Video" className="w-28 opacity-80"
           />
         </div>
@@ -283,7 +283,7 @@ export default function BatizadoPage() {
         <div className="flex justify-center mb-12">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            src="/logo_rl_gold.png"
             alt="RL Photo · Video" className="w-28 sm:w-36 opacity-80"
           />
         </div>

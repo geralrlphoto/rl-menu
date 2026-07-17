@@ -311,7 +311,7 @@ export default function NovaLeadPage() {
       <div className="relative text-center max-w-md space-y-8">
         <div className="flex justify-center">
           <img
-            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            src="/logo_rl_gold.png"
             alt="RL Photo · Video"
             className="w-28 opacity-80"
           />
@@ -359,7 +359,7 @@ export default function NovaLeadPage() {
         {/* Logo centrado */}
         <div className="flex justify-center mb-12">
           <img
-            src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            src="/logo_rl_gold.png"
             alt="RL Photo · Video"
             className="w-28 sm:w-36 opacity-80"
           />

@@ -86,7 +86,7 @@ export async function POST(req: Request) {
         <tr><td style="padding:8px 48px 52px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo -->
-          <img src="${IMG_BASE}/logo_rl_gold.png" width="72" alt="RL Photo Video"
+          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png" width="72" alt="RL Photo Video"
             style="display:block;margin:0 auto 20px;width:72px;height:auto;opacity:0.9;" />
 
           <!-- Ícone mensagem em círculo -->

@@ -984,7 +984,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                 {banner.signature && <p className="font-cormorant text-base italic" style={{ color: '#C9A84C' }}>{banner.signature}</p>}
               </div>
               <div className="flex flex-col items-center gap-5 sm:pl-8">
-                <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+                <img src="/logo_rl_gold.png"
                   alt="RL" className="w-10 h-auto opacity-60" />
                 <a href={`/b/${token}/proposta`}
                   className="group flex items-center gap-3 px-8 py-3.5 text-[10px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.04] whitespace-nowrap"

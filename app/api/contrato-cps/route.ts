@@ -176,7 +176,7 @@ function buildClienteEmail(data: { nome_noivos: string; data_casamento: string |
 
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
-          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 
@@ -260,7 +260,7 @@ function buildAdminEmail(data: Record<string, any>): string {
         <tr><td style="padding:8px 48px 48px;font-family:Georgia,'Times New Roman',serif;">
 
           <div style="text-align:center;">
-            <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+            <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
               width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 
             <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">

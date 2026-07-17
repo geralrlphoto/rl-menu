@@ -98,7 +98,7 @@ function buildComprovatvoClienteEmail(data: {
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 
@@ -210,7 +210,7 @@ function buildAdminNotifEmail(data: {
 
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
-          <img src="https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png"
+          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 

@@ -65,7 +65,7 @@ function fmt(n: number): string {
 }
 
 const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Montserrat:wght@300;400;500&display=swap'
-const LOGO_URL  = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images/logo_rl_gold.png'
+const LOGO_URL  = '/logo_rl_gold.png'
 
 export default function PrintView({ contact, content, autoPrint = true }: { contact: any; content: PageContent; autoPrint?: boolean }) {
   useEffect(() => {
