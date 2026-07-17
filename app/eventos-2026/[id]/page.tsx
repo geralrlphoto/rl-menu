@@ -3726,13 +3726,18 @@ export default function EventoPage() {
     }
   }
 
-  // Poll payments every 30 seconds automatically
+  // Refresca pagamentos ao voltar à aba (sem poll — poupa egress).
+  // Em vez de reler de 30 em 30s, só reavaliamos quando regressas ao
+  // separador. Parado/escondido = 0 leituras.
   useEffect(() => {
     if (!referenciaLoaded) return
-    const interval = setInterval(() => {
-      loadPagamentos(referenciaLoaded)
-    }, 30000)
-    return () => clearInterval(interval)
+    const onBack = () => { if (!document.hidden) loadPagamentos(referenciaLoaded) }
+    document.addEventListener('visibilitychange', onBack)
+    window.addEventListener('focus', onBack)
+    return () => {
+      document.removeEventListener('visibilitychange', onBack)
+      window.removeEventListener('focus', onBack)
+    }
   }, [referenciaLoaded])
 
   useEffect(() => {

@@ -1220,10 +1220,17 @@ function PortalSubPageContent() {
     loadPagamentos()
   }, [loadPagamentos])
 
-  // Auto-refresh pagamentos a cada 30 segundos
+  // Refresca pagamentos ao voltar à aba (sem poll — poupa egress).
+  // A carga inicial fica no useEffect acima; aqui só reavaliamos quando
+  // o utilizador regressa ao separador. Parado/escondido = 0 leituras.
   useEffect(() => {
-    const id = setInterval(() => { loadPagamentos() }, 30000)
-    return () => clearInterval(id)
+    const onBack = () => { if (!document.hidden) loadPagamentos() }
+    document.addEventListener('visibilitychange', onBack)
+    window.addEventListener('focus', onBack)
+    return () => {
+      document.removeEventListener('visibilitychange', onBack)
+      window.removeEventListener('focus', onBack)
+    }
   }, [loadPagamentos])
 
   // Dedicated fetch for proposta data — runs immediately from refParam (URL param)
