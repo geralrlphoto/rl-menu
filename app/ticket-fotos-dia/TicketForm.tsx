@@ -147,7 +147,7 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="t-tel" placeholder="912 000 000"></div>
-        <div class="field"><label>Morada de envio <span class="opt">(para papel)</span></label><input type="text" id="t-morada" placeholder="Rua, nº, código postal"></div>
+        <div class="field" id="fieldMorada" style="display:none"><label>Morada de envio <span class="opt">(para papel)</span></label><input type="text" id="t-morada" placeholder="Rua, nº, código postal"></div>
       </div>
 
       <div class="field">
@@ -248,6 +248,8 @@ export default function TicketForm() {
       if (f === 'papel') { lp.style.display = ''; if (portes === 0) { rp.innerHTML = 'Grátis'; rp.className = 'v free' } else { rp.textContent = euro(portes); rp.className = 'v' } } else { lp.style.display = 'none' }
       var hint = document.getElementById('qtyHint')!
       if (f === 'papel') { hint.style.display = ''; if (q < FREE) { var falta = FREE - q; hint.innerHTML = 'Faltam <b>' + falta + '</b> ' + (falta === 1 ? 'fotografia' : 'fotografias') + ' para portes grátis.' } else { hint.innerHTML = '<b>Portes grátis</b> — 5 ou mais fotografias.' } } else { hint.style.display = 'none' }
+      var fm = document.getElementById('fieldMorada')!
+      fm.style.display = f === 'papel' ? '' : 'none'
       syncBtn()
     }
     function gv(id: string) { return (document.getElementById(id) as HTMLInputElement).value.trim() }
