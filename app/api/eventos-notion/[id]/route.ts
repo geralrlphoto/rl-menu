@@ -260,26 +260,34 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       }
     }
     if (Object.keys(evFields).length > 0) {
-      // Determinar tabela pelo ano da data, se existir
-      let ano = 2026
-      if (body.data_evento) {
-        ano = parseInt(String(body.data_evento).slice(0, 4)) || 2026
-      } else {
-        // Buscar data atual do Supabase para determinar a tabela (procura por notion_id OU id)
-        for (const t of ['eventos_2026', 'eventos_2027']) {
-          const { data } = await supabase().from(t).select('data_evento').or(`notion_id.eq.${id},id.eq.${id}`).limit(1).maybeSingle()
-          if (data) {
-            ano = parseInt(String(data.data_evento).slice(0, 4)) || 2026
-            break
-          }
+      // Descobrir em que tabela o evento existe REALMENTE (por notion_id ou id).
+      // ANTES: a tabela era escolhida pelo ANO da data (eventos_2026 vs eventos_2027).
+      // Mas a tabela eventos_2027 NÃO existe — todos os eventos (2026 e 2027) vivem
+      // em eventos_2026. Um evento com data 2027 era encaminhado para eventos_2027;
+      // como o supabase-js não lança excepção numa tabela inexistente (devolve erro
+      // em silêncio), o update falhava sem aviso e os valores perdiam-se ao dar
+      // refresh (ex.: valor_real_foto, que só é lido do Supabase).
+      let table = 'eventos_2026'
+      let matchCol: 'notion_id' | 'id' = 'notion_id'
+      for (const t of ['eventos_2026', 'eventos_2027']) {
+        const { data, error } = await supabase()
+          .from(t).select('id, notion_id')
+          .or(`notion_id.eq.${id},id.eq.${id}`).limit(1).maybeSingle()
+        if (error) continue // tabela pode não existir (eventos_2027)
+        if (data) {
+          table = t
+          matchCol = (data as any).notion_id === id ? 'notion_id' : 'id'
+          break
         }
       }
-      const table = ano === 2027 ? 'eventos_2027' : 'eventos_2026'
-      // Tenta por notion_id primeiro
-      const { data: byNotion } = await supabase().from(table).update(evFields).eq('notion_id', id).select('id, referencia')
-      // Se não houve match (evento órfão sem notion_id), tenta por id (Supabase PK)
+      // Actualiza pela coluna que fez match (notion_id normal; id para órfãos)
+      let { data: byNotion } = await supabase()
+        .from(table).update(evFields).eq(matchCol, id).select('id, referencia')
+      // Rede de segurança: se não houve match, tenta a outra coluna
       if (!byNotion || byNotion.length === 0) {
-        await supabase().from(table).update(evFields).eq('id', id)
+        const alt = matchCol === 'notion_id' ? 'id' : 'notion_id'
+        const r = await supabase().from(table).update(evFields).eq(alt, id).select('id, referencia')
+        byNotion = r.data
       }
 
       // ── Sync para freelancer_casamentos (servicos_dia + local_cerimonia + hora_inicio) ──
