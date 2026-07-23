@@ -417,8 +417,12 @@ export async function POST(req: NextRequest) {
     // e enviou a ref ao cliente). Se não, auto-gera nova (fallback).
     try {
       const ano = data.data_casamento ? parseInt(data.data_casamento.slice(0, 4)) : 2026
-      const TABLE_BY_YEAR: Record<number, string> = { 2026: 'eventos_2026', 2027: 'eventos_2027' }
-      const table = TABLE_BY_YEAR[ano]
+      // A tabela eventos_2027 NÃO existe: todos os eventos (2026, 2027, ...) vivem
+      // em eventos_2026 e o ano é lido pela coluna data_evento (igual a sync-eventos).
+      const TABLE_BY_YEAR: Record<number, string> = {
+        2025: 'eventos_2026', 2026: 'eventos_2026', 2027: 'eventos_2026', 2028: 'eventos_2026',
+      }
+      const table = TABLE_BY_YEAR[ano] ?? 'eventos_2026'
       if (table) {
         const sb = db()
         const prefix = PREFIX_BY_TIPO[tipo_evento]
