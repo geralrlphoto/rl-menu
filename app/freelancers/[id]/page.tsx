@@ -2113,6 +2113,19 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   const [encomendasOpen, setEncomendasOpen] = useState(false)
   const [encomendasList, setEncomendasList] = useState<any[]>([])
   const [encomendasLoading, setEncomendasLoading] = useState(false)
+  // Casamento a partir do qual "Ver Encomendas" foi aberto. Quando definido,
+  // a lista é filtrada para mostrar só as encomendas deste casamento.
+  const [encomendasCasamento, setEncomendasCasamento] = useState<any>(null)
+  // Normaliza noivos/datas para comparação tolerante (sem acentos, espaços,
+  // "e"/"&", etc.). Serve para casar a encomenda com o casamento aberto.
+  const normEnc = (s: any) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
+  const encomendaDoCasamento = (e: any, cas: any) => {
+    if (!cas) return true
+    const alvo = normEnc(cas.nome_noivos)
+    if (!alvo) return true
+    return normEnc(e.noivos) === alvo
+  }
+  const encomendasFiltradas = encomendasList.filter(e => encomendaDoCasamento(e, encomendasCasamento))
   const [apagandoId, setApagandoId] = useState<string | null>(null)
   const [estadoSavingId, setEstadoSavingId] = useState<string | null>(null)
   // O fotógrafo (ou admin) marca a encomenda como Entregue/Aguardar. Fica no
@@ -2125,7 +2138,8 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
     } catch {}
     setEstadoSavingId(null)
   }
-  async function abrirEncomendas() {
+  async function abrirEncomendas(cas?: any) {
+    setEncomendasCasamento(cas ?? null)
     setEncomendasOpen(true); setEncomendasLoading(true)
     try {
       const d = await fetch(`/api/freelancer-encomendas?freelancer_id=${encodeURIComponent(freelancerId)}`).then(r => r.json())
@@ -2145,13 +2159,15 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   }
   // Apagar todas as encomendas enviadas a este fotógrafo (apenas admin).
   async function apagarTodasEncomendas() {
-    const ids = encomendasList.map(e => e.id)
+    const alvo = encomendasList.filter(e => encomendaDoCasamento(e, encomendasCasamento))
+    const ids = alvo.map(e => e.id)
     if (ids.length === 0) return
-    if (!confirm(`Apagar TODAS as ${ids.length} encomenda(s) enviadas a este fotógrafo?\n\nEsta ação é irreversível.`)) return
+    const ondeMsg = encomendasCasamento?.nome_noivos ? ` do casamento ${encomendasCasamento.nome_noivos}` : ' enviadas a este fotógrafo'
+    if (!confirm(`Apagar TODAS as ${ids.length} encomenda(s)${ondeMsg}?\n\nEsta ação é irreversível.`)) return
     setApagandoId('all')
     try {
       await fetch('/api/pedidos-fotos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids }) })
-      setEncomendasList([])
+      setEncomendasList(prev => prev.filter(e => !ids.includes(e.id)))
     } catch {}
     setApagandoId(null)
   }
@@ -2679,7 +2695,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     {/* Ver Encomendas — placeholder por agora (sem ação). Funcionalidade
                          a definir mais tarde. Só para fotógrafos. */}
                     {freelancerStatus !== 'VIDEOGRAFO' && (
-                      <button onClick={abrirEncomendas}
+                      <button onClick={() => abrirEncomendas(c)}
                         className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gold/10 border border-gold/30 text-gold text-[11px] tracking-widest uppercase font-bold hover:bg-gold/20 transition-all">
                         <span className="text-[12px]">📦</span>
                         Ver Encomendas
@@ -2781,9 +2797,12 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
               <div>
                 <p className="text-[10px] tracking-[0.4em] text-gold/65 uppercase mb-1">Encomendas de Fotos</p>
                 <h3 className="text-lg text-white font-light tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-                  Enviadas a {freelancer?.nome || 'ti'}{!encomendasLoading && <span className="text-white/35"> · {encomendasList.length}</span>}
+                  {encomendasCasamento?.nome_noivos || `Enviadas a ${freelancer?.nome || 'ti'}`}{!encomendasLoading && <span className="text-white/35"> · {encomendasFiltradas.length}</span>}
                 </h3>
-                {!viewAsFreelancer && !encomendasLoading && encomendasList.length > 0 && (
+                {encomendasCasamento?.nome_noivos && (
+                  <p className="text-[11px] text-gold/60 mt-0.5">Só as encomendas deste casamento</p>
+                )}
+                {!viewAsFreelancer && !encomendasLoading && encomendasFiltradas.length > 0 && (
                   <div className="mt-1.5">
                     <button onClick={apagarTodasEncomendas} disabled={apagandoId === 'all'}
                       className="text-[10px] px-2.5 py-1 rounded-lg border border-red-500/30 text-red-300/85 hover:bg-red-500/10 hover:text-red-300 tracking-wide uppercase transition-all disabled:opacity-40 inline-flex items-center gap-1">
@@ -2800,13 +2819,13 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
             <div className="flex-1 overflow-y-auto px-6 py-5">
               {encomendasLoading ? (
                 <p className="text-[13px] text-white/35">A carregar…</p>
-              ) : encomendasList.length === 0 ? (
+              ) : encomendasFiltradas.length === 0 ? (
                 <div className="rounded-xl border border-dashed border-white/[0.1] py-12 text-center">
-                  <p className="text-[13px] text-white/35">Ainda não tens encomendas enviadas.</p>
+                  <p className="text-[13px] text-white/35">{encomendasCasamento?.nome_noivos ? 'Sem encomendas para este casamento.' : 'Ainda não tens encomendas enviadas.'}</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">
-                  {encomendasList.map((e: any) => {
+                  {encomendasFiltradas.map((e: any) => {
                     const fotos = String(e.fotografias ?? '').split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
                     return (
                       <div key={e.id} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
