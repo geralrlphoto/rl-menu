@@ -108,16 +108,31 @@ export async function POST(req: NextRequest) {
     if (cErr) throw new Error(cErr.message)
     const pedido = `RL-${ano}-${String(counter).padStart(4, '0')}`
 
+    // Associa o ticket ao membro que fez a venda (o "responsável"), para que
+    // apareça no "Ver Encomendas" do portal dele, filtrado por casamento.
+    // Preferimos o id enviado pelo formulário; se faltar (ex.: bundle antigo em
+    // cache no browser), resolvemos aqui pelo email e depois pelo nome. Assim a
+    // encomenda fica sempre associada, sem depender do frontend.
+    let enviadoParaId: string | null = responsavel_id
+    let enviadoParaNome: string | null = responsavel_id ? responsavel : null
+    if (!enviadoParaId && (responsavel_email || responsavel)) {
+      const { data: fr } = await supabase.from('freelancers').select('id, nome, email')
+      const emailLc = responsavel_email.toLowerCase()
+      const nomeLc = responsavel.toLowerCase()
+      const match = (fr ?? []).find((f: any) =>
+        (emailLc && String(f.email ?? '').trim().toLowerCase() === emailLc)) ||
+        (fr ?? []).find((f: any) => nomeLc && String(f.nome ?? '').trim().toLowerCase() === nomeLc)
+      if (match) { enviadoParaId = match.id; enviadoParaNome = match.nome }
+    }
+
     const reg = {
       pedido, nome, email, telefone, noivos, data_casamento, morada, formato,
       quantidade, subtotal, portes, total, mensagem, fotografias,
       responsavel, responsavel_email, mbway_conta, metodo_pagamento: metodo,
       origem: 'ticket', estado: 'Aguardar', comprovativo_url: null,
-      // Associa o ticket ao membro que fez a venda (o "responsável"), para que
-      // apareça no "Ver Encomendas" do portal dele, filtrado por casamento.
-      enviado_para_id: responsavel_id,
-      enviado_para_nome: responsavel_id ? responsavel : null,
-      enviado_em: responsavel_id ? new Date().toISOString() : null,
+      enviado_para_id: enviadoParaId,
+      enviado_para_nome: enviadoParaId ? (enviadoParaNome ?? responsavel) : null,
+      enviado_em: enviadoParaId ? new Date().toISOString() : null,
     }
     const { error: insErr } = await supabase.from('photo_orders').insert(reg)
     if (insErr) throw new Error(insErr.message)
