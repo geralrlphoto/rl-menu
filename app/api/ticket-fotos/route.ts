@@ -84,6 +84,7 @@ export async function POST(req: NextRequest) {
   const fotografias = (b.fotografias ?? '').trim() || null
   const mensagem = (b.mensagem ?? '').trim() || null
   const responsavel = (b.responsavel ?? '').trim()
+  const responsavel_id = (b.responsavel_id ?? '').trim() || null
   const responsavel_email = (b.responsavel_email ?? '').trim()
   const mbway_conta = (b.mbway_conta ?? '').trim()
   const metodo = ['Numerário', 'MBWay', 'Multibanco'].includes(b.metodo_pagamento) ? b.metodo_pagamento : ''
@@ -112,6 +113,11 @@ export async function POST(req: NextRequest) {
       quantidade, subtotal, portes, total, mensagem, fotografias,
       responsavel, responsavel_email, mbway_conta, metodo_pagamento: metodo,
       origem: 'ticket', estado: 'Aguardar', comprovativo_url: null,
+      // Associa o ticket ao membro que fez a venda (o "responsável"), para que
+      // apareça no "Ver Encomendas" do portal dele, filtrado por casamento.
+      enviado_para_id: responsavel_id,
+      enviado_para_nome: responsavel_id ? responsavel : null,
+      enviado_em: responsavel_id ? new Date().toISOString() : null,
     }
     const { error: insErr } = await supabase.from('photo_orders').insert(reg)
     if (insErr) throw new Error(insErr.message)

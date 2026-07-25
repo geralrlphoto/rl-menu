@@ -343,7 +343,7 @@ export default function TicketForm() {
       try {
         var res = await fetch('/api/ticket-fotos', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ responsavel, responsavel_email, mbway_conta: mbway, metodo_pagamento: met, nome, email, telefone: tel, noivos, data_casamento: data, morada, formato: f, quantidade: q, subtotal: sub, portes, total, fotografias: fotosVal(), mensagem: msg }),
+          body: JSON.stringify({ responsavel, responsavel_id: respSel.value, responsavel_email, mbway_conta: mbway, metodo_pagamento: met, nome, email, telefone: tel, noivos, data_casamento: data, morada, formato: f, quantidade: q, subtotal: sub, portes, total, fotografias: fotosVal(), mensagem: msg }),
         })
         var dd = await res.json().catch(() => ({}))
         if (res.ok && dd?.ok) {
