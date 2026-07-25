@@ -111,6 +111,7 @@ const BODY = `
           <option value="">— Seleciona a conta —</option>
           <option value="Liliana Gonçalves - 916 162 728">Liliana Gonçalves · 916 162 728</option>
           <option value="Alexandre Capão - 969 000 132">Alexandre Capão · 969 000 132</option>
+          <option value="Patrício Ferreira - 964 211 778">Patrício Ferreira · 964 211 778</option>
         </select>
       </div>
     </div>
