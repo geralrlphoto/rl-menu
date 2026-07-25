@@ -349,7 +349,14 @@ export default function TicketForm() {
         if (res.ok && dd?.ok) {
           document.getElementById('orderBlock')!.style.display = 'none'
           var s = document.getElementById('sentBlock')!; s.classList.add('show')
-          document.getElementById('sentRecap')!.innerHTML = dd.pedido + ' · ' + q + ' fotografia' + (q > 1 ? 's' : '') + ' · ' + (f === 'papel' ? 'Papel' : 'Digital') + ' · ' + euro(total) + ' · ' + met
+          var recap = [dd.pedido]
+          if (noivos) recap.push(noivos)
+          if (data) recap.push(data)
+          recap.push(q + ' fotografia' + (q > 1 ? 's' : ''))
+          recap.push(f === 'papel' ? 'Papel' : 'Digital')
+          recap.push(euro(total))
+          recap.push(met)
+          document.getElementById('sentRecap')!.innerHTML = recap.join(' · ')
           s.scrollIntoView({ behavior: 'smooth', block: 'center' })
         } else { setMsg(dd?.error || 'Não foi possível registar o ticket.'); btn.disabled = false; btn.textContent = 'Confirmar pedido' }
       } catch { setMsg('Erro de rede. Tenta novamente.'); btn.disabled = false; btn.textContent = 'Confirmar pedido' }
