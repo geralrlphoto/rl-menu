@@ -3157,9 +3157,24 @@ function PortalSection({ evento }: { evento: Evento }) {
 
   const dtu = pwBooking ? Math.round((new Date(pwBooking.date + 'T00:00:00').getTime() - new Date().setHours(0,0,0,0)) / 86400000) : null
 
-  // Quando não há portal, esconde a secção inteira — a criação do portal
-  // é feita pela secção nova "Aprovação Contrato CPS" no topo da ficha.
-  if (status === 'not_found') return null
+  // Quando não há portal (nunca criado ou eliminado), mostra um painel com
+  // atalho para a secção "Criar Portal" logo acima, para o admin poder
+  // (re)criar sem procurar.
+  if (status === 'not_found') return (
+    <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mb-5">
+      <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase mb-3">Portal do Cliente</h2>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <p className="text-xs text-white/50 flex-1">Sem portal ativo para este evento. Podes criá-lo a partir da aprovação do contrato.</p>
+        <button
+          onClick={() => document.getElementById('criar-portal-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase whitespace-nowrap"
+        >
+          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+          Criar Portal
+        </button>
+      </div>
+    </div>
+  )
 
   return (
     <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mb-5">
@@ -4204,7 +4219,7 @@ export default function EventoPage() {
       <DrawerBloco label="Contrato & Portal" sub="Aprovação do contrato CPS, criação/acesso ao portal e contratos.">
 
       {/* ── Aprovação do Contrato CPS + Criar Portal ── */}
-      <div className="ficha-reveal print:hidden">
+      <div id="criar-portal-section" className="ficha-reveal print:hidden scroll-mt-24">
         <ContratoCPSAprovacaoSection referencia={e.referencia ?? undefined} />
       </div>
 
