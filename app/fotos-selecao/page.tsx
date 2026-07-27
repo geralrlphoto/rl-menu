@@ -260,6 +260,7 @@ function FichaModal({ row, onClose, onSaved }: {
                 nome:           row.nome_noivos || 'Sem nome',
                 status:         'NOVO TRABALHO',
                 data_casamento: row.date ?? null,
+                referencia:     row.referencia ?? null,
               }),
             })
           }

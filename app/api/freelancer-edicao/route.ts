@@ -23,6 +23,12 @@ export async function GET(req: NextRequest) {
     const refs = Array.from(new Set(rows.filter((r: any) => r.referencia).map((r: any) => r.referencia)))
     if (refs.length === 0) return NextResponse.json({ edicao: rows })
 
+    // `editor_fotos` em `evento_equipa` guarda NOMES (ex.: "Patricio Ferreira"),
+    // não ids. Buscamos o nome deste freelancer para comparar corretamente.
+    const norm = (s: any) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim()
+    const { data: fl } = await supabase.from('freelancers').select('nome').eq('id', fid).maybeSingle()
+    const meuNome = norm(fl?.nome)
+
     const { data: equipa } = await supabase
       .from('evento_equipa')
       .select('referencia, editor_fotos')
@@ -41,8 +47,9 @@ export async function GET(req: NextRequest) {
       const editores = editorByRef.get(r.referencia)
       // Sem entrada em evento_equipa → não há editor atribuído → esconde
       if (!editores) return false
-      // Freelancer não está na lista de editores → esconde
-      return editores.includes(fid)
+      // Freelancer atribuído? Comparamos por NOME (normalizado) e, por
+      // segurança, também pelo id — caso algum evento guarde ids.
+      return editores.some(e => norm(e) === meuNome || e === fid)
     })
 
     return NextResponse.json({ edicao: filtered })
