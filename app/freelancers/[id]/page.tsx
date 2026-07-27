@@ -3671,6 +3671,7 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
 
   // Preview da Seleção dos Noivos (modal inline — sem nova janela)
   const [selecaoPreview, setSelecaoPreview] = useState<any | null>(null)
+  const [selecaoRows, setSelecaoRows]       = useState<any[]>([]) // todas as seleções da ref
   const [selecaoError, setSelecaoError]     = useState<string | null>(null)
   const [openingSelecao, setOpeningSelecao] = useState<string | null>(null) // ref ativo
   const [previewLocal, setPreviewLocal]     = useState<string>('')
@@ -3684,9 +3685,10 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
     setOpeningSelecao(refOrName); setSelecaoError(null); setPreviewLocal(jobNome)
     try {
       const res = await fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(refOrName)}`).then(r => r.json())
-      const row = res?.row
-      if (row?.id) {
-        setSelecaoPreview(row)
+      const rows = Array.isArray(res?.rows) && res.rows.length ? res.rows : (res?.row ? [res.row] : [])
+      if (rows.length) {
+        setSelecaoRows(rows)
+        setSelecaoPreview(rows[0])
       } else {
         setSelecaoError('Ainda não existe seleção de fotos para este evento. Os noivos ainda não submeteram.')
       }
@@ -3929,7 +3931,7 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
       {/* ── Modal Preview: Seleção dos Noivos (inline) ───────────────────── */}
       {(selecaoPreview || selecaoError) && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}>
+          onClick={() => { setSelecaoPreview(null); setSelecaoRows([]); setSelecaoError(null) }}>
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
           <div className="relative z-10 w-full max-w-2xl rounded-3xl overflow-hidden border border-gold/25 shadow-2xl"
             style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)' }}
@@ -3947,7 +3949,7 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
                   <p className="text-[11px] text-white/35 mt-1 tracking-widest">{selecaoPreview.referencia}</p>
                 )}
               </div>
-              <button onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}
+              <button onClick={() => { setSelecaoPreview(null); setSelecaoRows([]); setSelecaoError(null) }}
                 className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0"
                 title="Fechar">✕</button>
             </div>
@@ -3959,16 +3961,17 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
                   <p className="text-2xl opacity-30 mb-2">📷</p>
                   <p className="text-[13px] text-white/55 italic leading-relaxed">{selecaoError}</p>
                 </div>
-              ) : selecaoPreview && (() => {
+              ) : selecaoRows.length > 0 ? (
+                selecaoRows.map((sel: any, idx: number) => {
                 const counts: Array<{ label: string; value: string | null }> = [
-                  { label: 'Sessão Noivos',  value: selecaoPreview.sessao_noivos },
-                  { label: 'Fotos da Noiva', value: selecaoPreview.fotos_noiva },
-                  { label: 'Fotos do Noivo', value: selecaoPreview.fotos_noivo },
-                  { label: 'Convidados',     value: selecaoPreview.convidados },
-                  { label: 'Cerimónia',      value: selecaoPreview.cerimonia },
-                  { label: 'Bolo & Bouquet', value: selecaoPreview.bolo_bouquet },
-                  { label: 'Sala & Animação',value: selecaoPreview.sala_animacao },
-                  { label: 'Fotos p/ Álbum', value: selecaoPreview.fotos_album },
+                  { label: 'Sessão Noivos',  value: sel.sessao_noivos },
+                  { label: 'Fotos da Noiva', value: sel.fotos_noiva },
+                  { label: 'Fotos do Noivo', value: sel.fotos_noivo },
+                  { label: 'Convidados',     value: sel.convidados },
+                  { label: 'Cerimónia',      value: sel.cerimonia },
+                  { label: 'Bolo & Bouquet', value: sel.bolo_bouquet },
+                  { label: 'Sala & Animação',value: sel.sala_animacao },
+                  { label: 'Fotos p/ Álbum', value: sel.fotos_album },
                 ]
                 const totalFotos = counts.reduce((acc, c) => {
                   const n = Number(c.value); return acc + (Number.isFinite(n) ? n : 0)
@@ -3981,15 +3984,20 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
                   } catch { return d }
                 }
                 return (
-                  <>
+                  <div key={sel.id ?? idx} className={idx > 0 ? 'mt-8 pt-6 border-t border-white/10' : ''}>
+                    {selecaoRows.length > 1 && (
+                      <p className="text-[11px] tracking-[0.35em] text-gold/75 uppercase mb-4">
+                        Seleção {idx + 1} de {selecaoRows.length}{sel.data_entrada ? ` · entrada ${fmt(sel.data_entrada)}` : ''}
+                      </p>
+                    )}
                     <div className="grid grid-cols-2 gap-3 mb-5">
                       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                         <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Data do Evento</p>
-                        <p className="text-[14px] text-white/85 font-medium">{fmt(selecaoPreview.date)}</p>
+                        <p className="text-[14px] text-white/85 font-medium">{fmt(sel.date)}</p>
                       </div>
                       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                         <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Data de Entrada</p>
-                        <p className="text-[14px] text-white/85 font-medium">{fmt(selecaoPreview.data_entrada)}</p>
+                        <p className="text-[14px] text-white/85 font-medium">{fmt(sel.data_entrada)}</p>
                       </div>
                     </div>
 
@@ -4016,20 +4024,21 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
                       ))}
                     </div>
 
-                    {selecaoPreview.detalhes && (
+                    {sel.detalhes && (
                       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                         <p className="text-[10px] tracking-[0.4em] text-white/35 uppercase mb-2">Detalhes & Observações</p>
-                        <p className="text-[13px] text-white/75 leading-relaxed whitespace-pre-wrap">{selecaoPreview.detalhes}</p>
+                        <p className="text-[13px] text-white/75 leading-relaxed whitespace-pre-wrap">{sel.detalhes}</p>
                       </div>
                     )}
-                  </>
+                  </div>
                 )
-              })()}
+              })
+              ) : null}
             </div>
 
             <div className="px-7 sm:px-8 py-3 border-t border-white/[0.05] flex items-center justify-between bg-black/30">
               <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">RL Photo · Video</p>
-              <button onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}
+              <button onClick={() => { setSelecaoPreview(null); setSelecaoRows([]); setSelecaoError(null) }}
                 className="text-[10px] tracking-widest uppercase text-white/35 hover:text-gold transition-colors">
                 Fechar
               </button>
@@ -9873,6 +9882,7 @@ function UrlEntryCard({
   const editadasUnlocked = editorTipo && status !== 'AGUARDAR'
   const [openingSelecao, setOpeningSelecao] = useState(false)
   const [selecaoPreview, setSelecaoPreview] = useState<any | null>(null)
+  const [selecaoRows, setSelecaoRows] = useState<any[]>([]) // todas as seleções da ref
   const [selecaoError, setSelecaoError] = useState<string | null>(null)
 
   async function abrirFotosSelecionadas() {
@@ -9883,9 +9893,10 @@ function UrlEntryCard({
     setOpeningSelecao(true); setSelecaoError(null)
     try {
       const res = await fetch(`/api/fotos-selecao-by-ref?ref=${encodeURIComponent(casamentoReferencia)}`).then(r => r.json())
-      const row = res?.row
-      if (row?.id) {
-        setSelecaoPreview(row)
+      const rows = Array.isArray(res?.rows) && res.rows.length ? res.rows : (res?.row ? [res.row] : [])
+      if (rows.length) {
+        setSelecaoRows(rows)
+        setSelecaoPreview(rows[0])
       } else {
         setSelecaoError('Os noivos ainda não submeteram a seleção de fotos para edição. Quando o fizerem aparece aqui.')
       }
@@ -9898,7 +9909,7 @@ function UrlEntryCard({
   useEffect(() => {
     if (!selecaoPreview && !selecaoError) return
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') { setSelecaoPreview(null); setSelecaoError(null) }
+      if (e.key === 'Escape') { setSelecaoPreview(null); setSelecaoRows([]); setSelecaoError(null) }
     }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
@@ -10172,7 +10183,7 @@ function UrlEntryCard({
       {/* ── Modal Preview: Seleção dos Noivos (Fotos Editadas) ── */}
       {(selecaoPreview || selecaoError) && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}>
+          onClick={() => { setSelecaoPreview(null); setSelecaoRows([]); setSelecaoError(null) }}>
           <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
           <div className="relative z-10 w-full max-w-2xl rounded-3xl overflow-hidden border border-gold/25 shadow-2xl"
             style={{ background: 'linear-gradient(180deg, #100c08, #0b0905)' }}
@@ -10191,7 +10202,7 @@ function UrlEntryCard({
                   <p className="text-[11px] text-white/35 mt-1 tracking-widest">{selecaoPreview.referencia}</p>
                 )}
               </div>
-              <button onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}
+              <button onClick={() => { setSelecaoPreview(null); setSelecaoRows([]); setSelecaoError(null) }}
                 className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0"
                 title="Fechar (Esc)">✕</button>
             </div>
@@ -10203,16 +10214,17 @@ function UrlEntryCard({
                   <p className="text-2xl opacity-30 mb-2">📷</p>
                   <p className="text-[13px] text-white/55 italic leading-relaxed">{selecaoError}</p>
                 </div>
-              ) : selecaoPreview && (() => {
+              ) : selecaoRows.length > 0 ? (
+                selecaoRows.map((sel: any, idx: number) => {
                 const counts: Array<{ label: string; value: string | null }> = [
-                  { label: 'Sessão Noivos',  value: selecaoPreview.sessao_noivos },
-                  { label: 'Fotos da Noiva', value: selecaoPreview.fotos_noiva },
-                  { label: 'Fotos do Noivo', value: selecaoPreview.fotos_noivo },
-                  { label: 'Convidados',     value: selecaoPreview.convidados },
-                  { label: 'Cerimónia',      value: selecaoPreview.cerimonia },
-                  { label: 'Bolo & Bouquet', value: selecaoPreview.bolo_bouquet },
-                  { label: 'Sala & Animação',value: selecaoPreview.sala_animacao },
-                  { label: 'Fotos p/ Álbum', value: selecaoPreview.fotos_album },
+                  { label: 'Sessão Noivos',  value: sel.sessao_noivos },
+                  { label: 'Fotos da Noiva', value: sel.fotos_noiva },
+                  { label: 'Fotos do Noivo', value: sel.fotos_noivo },
+                  { label: 'Convidados',     value: sel.convidados },
+                  { label: 'Cerimónia',      value: sel.cerimonia },
+                  { label: 'Bolo & Bouquet', value: sel.bolo_bouquet },
+                  { label: 'Sala & Animação',value: sel.sala_animacao },
+                  { label: 'Fotos p/ Álbum', value: sel.fotos_album },
                 ]
                 const totalFotos = counts.reduce((acc, c) => {
                   const n = Number(c.value); return acc + (Number.isFinite(n) ? n : 0)
@@ -10225,16 +10237,21 @@ function UrlEntryCard({
                   } catch { return d }
                 }
                 return (
-                  <>
+                  <div key={sel.id ?? idx} className={idx > 0 ? 'mt-8 pt-6 border-t border-white/10' : ''}>
+                    {selecaoRows.length > 1 && (
+                      <p className="text-[11px] tracking-[0.35em] text-gold/75 uppercase mb-4">
+                        Seleção {idx + 1} de {selecaoRows.length}{sel.data_entrada ? ` · entrada ${fmt(sel.data_entrada)}` : ''}
+                      </p>
+                    )}
                     {/* Datas */}
                     <div className="grid grid-cols-2 gap-3 mb-5">
                       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                         <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Data do Evento</p>
-                        <p className="text-[14px] text-white/85 font-medium">{fmt(selecaoPreview.date)}</p>
+                        <p className="text-[14px] text-white/85 font-medium">{fmt(sel.date)}</p>
                       </div>
                       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
                         <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Data de Entrada</p>
-                        <p className="text-[14px] text-white/85 font-medium">{fmt(selecaoPreview.data_entrada)}</p>
+                        <p className="text-[14px] text-white/85 font-medium">{fmt(sel.data_entrada)}</p>
                       </div>
                     </div>
 
@@ -10264,21 +10281,22 @@ function UrlEntryCard({
                     </div>
 
                     {/* Detalhes */}
-                    {selecaoPreview.detalhes && (
+                    {sel.detalhes && (
                       <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-4">
                         <p className="text-[10px] tracking-[0.4em] text-white/35 uppercase mb-2">Detalhes & Observações</p>
-                        <p className="text-[13px] text-white/75 leading-relaxed whitespace-pre-wrap">{selecaoPreview.detalhes}</p>
+                        <p className="text-[13px] text-white/75 leading-relaxed whitespace-pre-wrap">{sel.detalhes}</p>
                       </div>
                     )}
-                  </>
+                  </div>
                 )
-              })()}
+              })
+              ) : null}
             </div>
 
             {/* Footer */}
             <div className="px-7 sm:px-8 py-3 border-t border-white/[0.05] flex items-center justify-between bg-black/30">
               <p className="text-[9px] tracking-[0.4em] text-white/20 uppercase">RL Photo · Video</p>
-              <button onClick={() => { setSelecaoPreview(null); setSelecaoError(null) }}
+              <button onClick={() => { setSelecaoPreview(null); setSelecaoRows([]); setSelecaoError(null) }}
                 className="text-[10px] tracking-widest uppercase text-white/35 hover:text-gold transition-colors">
                 Fechar
               </button>
