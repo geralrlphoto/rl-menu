@@ -15,12 +15,16 @@ export async function GET(req: Request) {
   const ref = searchParams.get('ref')
   if (!ref) return NextResponse.json({ row: null })
 
+  // Nota: a mesma referência pode ter mais do que uma seleção (ex.: casamento +
+  // batizado com a mesma etiqueta). `.maybeSingle()` dava erro nesses casos e o
+  // portal mostrava "não existe seleção". Devolvemos a mais recente.
   const { data, error } = await db()
     .from('fotos_selecao')
     .select('*')
     .eq('referencia', ref)
-    .maybeSingle()
+    .order('data_entrada', { ascending: false, nullsFirst: false })
+    .limit(1)
 
   if (error) return NextResponse.json({ row: null })
-  return NextResponse.json({ row: data ?? null })
+  return NextResponse.json({ row: (data && data[0]) ?? null })
 }
