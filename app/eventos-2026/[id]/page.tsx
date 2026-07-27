@@ -2269,14 +2269,14 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
       return
     }
     const nomeMostra = data?.contrato?.nome_noivos || referencia
-    if (!confirm(`Aprovar contrato e criar portal para ${nomeMostra}?\n\nA password (${pwd}) será enviada por email ao cliente.\n\n(Se o nome/email não estiver no CPS, o sistema vai buscar à ficha do cliente.)`)) return
+    if (!confirm(`Criar portal para ${nomeMostra}?\n\nO portal é criado com a password (${pwd}), mas NÃO é enviado ao cliente agora. Podes rever tudo e enviar depois com o botão "Enviar Portal ao Cliente".`)) return
     setSubmitting(true)
     setError(null)
     try {
       const r = await fetch('/api/contrato-cps/aprovar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ referencia, password: pwd }),
+        body: JSON.stringify({ referencia, password: pwd, skipEmail: true }),
       })
       const j = await r.json()
       if (!r.ok) throw new Error(j.error ?? 'erro')
@@ -2329,7 +2329,7 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
             <div className="flex-1">
               <p className="text-[10px] tracking-[0.3em] text-gold/70 uppercase mb-2">
                 🔑 Password do portal
-                <span className="text-gold/40 normal-case tracking-normal ml-2">(será enviada ao cliente)</span>
+                <span className="text-gold/40 normal-case tracking-normal ml-2">(fica guardada; envias ao cliente depois)</span>
               </p>
               <input
                 type="text"
@@ -2341,7 +2341,7 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
             </div>
             <button onClick={handleAprovar} disabled={submitting || !password.trim()}
               className="px-5 py-3 text-[11px] tracking-[0.3em] uppercase border border-gold/60 bg-gold/15 text-gold hover:bg-gold/25 disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap">
-              {submitting ? 'A criar...' : '✓ Criar Portal e Enviar Cliente'}
+              {submitting ? 'A criar...' : '✓ Criar Portal (sem enviar)'}
             </button>
           </div>
         </div>
@@ -2888,7 +2888,7 @@ function ReenviarEmailButton({ referencia }: { referencia: string }) {
   const [feedback, setFeedback] = useState<{ tone: 'ok' | 'err'; msg: string } | null>(null)
 
   async function handleReenviar() {
-    if (!confirm(`Reenviar email do portal ao cliente para ${referencia}?\n\nO sistema resolve o email da noiva/noivo da ficha do cliente (CPS, eventos, Notion).`)) return
+    if (!confirm(`Enviar o email do portal ao cliente para ${referencia}?\n\nO sistema resolve o email da noiva/noivo da ficha do cliente (CPS, eventos, Notion). Usa este botão para o primeiro envio e para reenviar.`)) return
     setSending(true)
     setFeedback(null)
     try {
@@ -2919,7 +2919,7 @@ function ReenviarEmailButton({ referencia }: { referencia: string }) {
         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
         </svg>
-        {sending ? 'A enviar...' : '📧 Reenviar Email ao Cliente'}
+        {sending ? 'A enviar...' : '📧 Enviar Portal ao Cliente'}
       </button>
       {feedback && (
         <p className={`text-[10px] tracking-wide ${feedback.tone === 'ok' ? 'text-emerald-300/80' : 'text-red-400/80'}`}>

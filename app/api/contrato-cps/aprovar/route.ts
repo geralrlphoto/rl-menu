@@ -302,6 +302,9 @@ export async function POST(req: NextRequest) {
     // resend=true: reenvia o email ao cliente mesmo se o portal já estiver
     // aprovado (idempotente). Usado pelo botão "📧 Reenviar Email".
     const resendOnly: boolean = !!body.resend
+    // skipEmail=true: cria o portal mas NÃO envia o email ao cliente. Permite ao
+    // admin rever o portal todo e só depois enviar (botão "Enviar ao Cliente").
+    const skipEmail: boolean = !!body.skipEmail
     if (!referencia) {
       return NextResponse.json({ error: 'referencia obrigatória' }, { status: 400 })
     }
@@ -480,9 +483,10 @@ export async function POST(req: NextRequest) {
       .update({ aprovado_em })
       .eq('id', contrato.id)
 
-    // Email ao cliente (se tiver email)
+    // Email ao cliente (se tiver email) — a menos que o admin tenha optado por
+    // criar sem enviar (skipEmail), para rever o portal antes de enviar.
     const clienteEmail = contrato.email_noiva || contrato.email_noivo
-    if (clienteEmail) {
+    if (clienteEmail && !skipEmail) {
       await sendEmail(
         clienteEmail,
         tipo === 'batizado'
@@ -515,7 +519,7 @@ export async function POST(req: NextRequest) {
           <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">— · ◆ · —</div>
           <p style="margin:0 0 8px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Referência</p>
           <p style="margin:0 0 20px;font-size:18px;font-family:'Courier New',monospace;color:#c9b88a;">${referencia}</p>
-          <p style="margin:0 0 8px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Password enviada ao cliente</p>
+          <p style="margin:0 0 8px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Password ${skipEmail ? '(ainda por enviar ao cliente)' : 'enviada ao cliente'}</p>
           <p style="margin:0 0 28px;font-size:18px;font-family:'Courier New',monospace;color:#c9b88a;letter-spacing:0.1em;">${password}</p>
           <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto;">
             <tr><td align="center" style="border-radius:8px;background:#c9a96e;">
