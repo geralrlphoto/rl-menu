@@ -30,73 +30,64 @@ async function sendEmail(payload: Record<string, any>) {
   return res.ok
 }
 
-function emailAdmin(o: any): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;font-family:Georgia,serif;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:1px solid #4a3a1e;border-radius:6px;overflow:hidden;">
-        <tr><td style="padding:30px 44px;text-align:center;border-bottom:1px solid #2a2114;">
-          <p style="margin:0;font-size:11px;letter-spacing:0.45em;color:#c9a96e;text-transform:uppercase;">RL Photo · Video</p>
-          <p style="margin:8px 0 0;font-size:20px;color:#f0e8d8;font-style:italic;">Novo pagamento registado</p>
-        </td></tr>
-        <tr><td style="padding:28px 44px;">
-          <table width="100%" cellpadding="0" cellspacing="0">
-            ${[
-              ['Noivos', o.nome_noivos],
-              ['Referência', o.referencia || '—'],
-              ['Valor', eur(o.valor)],
-              ['Método', o.metodo || '—'],
-              ['Data', o.data],
-            ].map(([k, v]) => `<tr>
-              <td style="padding:9px 0;border-bottom:1px solid #241c11;font-size:12px;color:#8c7a55;">${k}</td>
-              <td style="padding:9px 0;border-bottom:1px solid #241c11;font-size:13px;color:#f0e8d8;text-align:right;font-weight:bold;">${v}</td>
-            </tr>`).join('')}
-          </table>
-          ${o.comprovativo_url ? `
-          <p style="margin:24px 0 8px;font-size:10px;letter-spacing:0.3em;color:#7a6340;text-transform:uppercase;">Comprovativo</p>
-          <a href="${o.comprovativo_url}" target="_blank" style="text-decoration:none;">
-            <img src="${o.comprovativo_url}" alt="Comprovativo" style="width:100%;max-width:472px;border-radius:6px;border:1px solid #2a2114;display:block;" />
-          </a>
-          <p style="margin:10px 0 0;text-align:center;"><a href="${o.comprovativo_url}" target="_blank" style="font-size:11px;color:#c9a96e;">Abrir comprovativo em tamanho real →</a></p>` : ''}
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
-}
-
-function emailNoiva(o: any): string {
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#f3ede1;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f3ede1;padding:32px 16px;font-family:Georgia,serif;">
-    <tr><td align="center">
-      <table width="540" cellpadding="0" cellspacing="0" style="max-width:540px;width:100%;background:#fffdf8;border:1px solid #e6dcc8;border-radius:4px;overflow:hidden;">
-        <tr><td style="background:#0b0a08;padding:28px 40px;text-align:center;">
-          <p style="margin:0;font-size:11px;letter-spacing:0.45em;color:#d8be93;text-transform:uppercase;">RL Photo · Video</p>
-          <p style="margin:8px 0 0;font-size:22px;color:#f0e8d8;font-style:italic;">Comprovativo de Pagamento</p>
-        </td></tr>
-        <tr><td style="padding:32px 40px;">
-          <p style="margin:0 0 20px;font-size:14px;color:#3a352e;line-height:1.7;">Olá ${o.nome_noivos},<br>Confirmamos que recebemos o vosso pagamento. Obrigado!</p>
-          <table width="100%" cellpadding="0" cellspacing="0" style="border-top:2px solid #d8be93;">
-            ${[
-              ['Valor pago', eur(o.valor)],
-              ['Método', o.metodo || '—'],
-              ['Referência', o.referencia || '—'],
-              ['Data', o.data],
-            ].map(([k, v]) => `<tr>
-              <td style="padding:10px 0;border-bottom:1px solid #ece4d4;font-size:13px;color:#6a6258;">${k}</td>
-              <td style="padding:10px 0;border-bottom:1px solid #ece4d4;font-size:13px;color:#0b0a08;text-align:right;font-weight:bold;">${v}</td>
-            </tr>`).join('')}
-          </table>
-          <p style="margin:22px 0 0;font-size:12px;color:#8c8170;line-height:1.7;">Este email serve como comprovativo do pagamento efetuado. Qualquer questão, responde a este email.</p>
-        </td></tr>
-        <tr><td style="background:#0b0a08;padding:18px 40px;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#8c8170;">geral.rlphoto@gmail.com · 912 832 788</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
+// Card personalizado do comprovativo de pagamento. O MESMO card é enviado ao
+// admin e à noiva (estilo escuro/dourado da marca, email-safe com tabelas).
+function cardPagamento(o: any): string {
+  return `<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f2ede4;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f2ede4;padding:36px 14px;font-family:Georgia,'Times New Roman',serif;">
+  <tr><td align="center">
+    <table width="560" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;width:100%;background:#0e0b07;border:1px solid #3a2e18;">
+      <tr><td style="height:3px;background:#c9a96e;font-size:0;line-height:0;">&nbsp;</td></tr>
+      <tr><td style="padding:40px 48px 8px;text-align:center;">
+        <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png" width="120" alt="RL Photo Video" style="width:120px;height:auto;opacity:0.92;display:inline-block;">
+      </td></tr>
+      <tr><td style="padding:14px 48px 0;text-align:center;">
+        <p style="margin:0;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.42em;color:#c9a96e;text-transform:uppercase;">Comprovativo de Pagamento</p>
+      </td></tr>
+      <tr><td align="center" style="padding:26px 48px 0;">
+        <table cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center" valign="middle"
+          style="width:70px;height:70px;border:1px solid #c9a96e;border-radius:50%;color:#e6c680;font-size:30px;line-height:70px;text-align:center;">&#10003;</td></tr></table>
+      </td></tr>
+      <tr><td style="padding:22px 48px 0;text-align:center;">
+        <p style="margin:0;font-size:30px;font-style:italic;color:#f0e8d8;">${o.nome_noivos}</p>
+      </td></tr>
+      <tr><td style="padding:6px 48px 0;text-align:center;">
+        <p style="margin:0 0 4px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Valor Pago</p>
+        <p style="margin:0;font-size:52px;line-height:1;color:#e6c680;">${eur(o.valor)}</p>
+      </td></tr>
+      <tr><td style="padding:24px 48px 4px;text-align:center;">
+        <span style="color:#6a5430;font-size:12px;letter-spacing:0.35em;">&mdash; &middot; &#9670; &middot; &mdash;</span>
+      </td></tr>
+      <tr><td style="padding:8px 48px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          ${[
+            ['Referência', o.referencia || '—'],
+            ['Método', o.metodo || '—'],
+            ['Data', o.data],
+          ].map(([k, v]) => `<tr>
+            <td style="padding:11px 0;border-bottom:1px solid #241c11;font-size:12px;color:#8c7a55;">${k}</td>
+            <td style="padding:11px 0;border-bottom:1px solid #241c11;font-size:13px;color:#f0e8d8;text-align:right;">${v}</td>
+          </tr>`).join('')}
+        </table>
+      </td></tr>
+      ${o.comprovativo_url ? `
+      <tr><td style="padding:26px 48px 0;text-align:center;">
+        <p style="margin:0 0 10px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Comprovativo Anexado</p>
+        <a href="${o.comprovativo_url}" target="_blank" style="text-decoration:none;">
+          <img src="${o.comprovativo_url}" alt="Comprovativo" width="464" style="width:100%;max-width:464px;border:1px solid #2a2114;border-radius:4px;display:block;">
+        </a>
+      </td></tr>` : ''}
+      <tr><td style="padding:28px 48px 40px;text-align:center;">
+        <p style="margin:0;font-size:12px;color:#8c8170;line-height:1.7;font-style:italic;">Este documento confirma o pagamento efetuado.<br>Obrigado pela vossa confiança.</p>
+      </td></tr>
+      <tr><td style="background:#0a0805;padding:18px 48px;text-align:center;border-top:1px solid #241c11;">
+        <p style="margin:0;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.3em;color:#9a855c;text-transform:uppercase;">RL Photo &middot; Video</p>
+        <p style="margin:5px 0 0;font-size:11px;color:#6a5f4c;">geral.rlphoto@gmail.com &middot; 912 832 788</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
 </body></html>`
 }
 
@@ -150,10 +141,12 @@ export async function POST(req: NextRequest) {
   const payload = { nome_noivos, referencia, valor, metodo, data: dataFmt, comprovativo_url }
 
   // Email ao admin (sempre) + recibo à noiva (se tivermos email).
+  const cardHtml = cardPagamento(payload)
+
   await sendEmail({
     from: FROM_EMAIL, to: [ADMIN_EMAIL], reply_to: emailNoivaAddr || undefined,
     subject: `Novo pagamento — ${nome_noivos}${referencia ? ` (${referencia})` : ''} · ${eur(valor)}`,
-    html: emailAdmin(payload),
+    html: cardHtml,
   })
 
   let recibo_enviado = false
@@ -161,7 +154,7 @@ export async function POST(req: NextRequest) {
     recibo_enviado = await sendEmail({
       from: FROM_EMAIL, to: [emailNoivaAddr],
       subject: `Comprovativo de pagamento — ${eur(valor)}`,
-      html: emailNoiva(payload),
+      html: cardHtml,
     })
   }
 
