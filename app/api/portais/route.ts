@@ -114,6 +114,11 @@ export async function DELETE(req: NextRequest) {
     const db = supabase()
     const { error } = await db.from('portais').delete().ilike('referencia', ref)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    // Repõe o estado "portal por criar": limpa a marca de criação do portal no
+    // CPS (aprovado_em), mantendo a aprovação do contrato (contrato_aprovado_em).
+    // Sem isto, a ficha continuava a achar o portal aprovado e escondia o botão
+    // "Criar Portal", ficando sem forma de o recriar.
+    await db.from('dados_contrato_cps').update({ aprovado_em: null }).ilike('referencia_evento', ref)
     return NextResponse.json({ ok: true })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

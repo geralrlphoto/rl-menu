@@ -3140,6 +3140,9 @@ function PortalSection({ evento }: { evento: Evento }) {
       await fetch(`/api/portais?ref=${encodeURIComponent(referencia)}`, { method: 'DELETE' })
       setStatus('not_found')
       setConfirmDelete(false)
+      // Recarrega a ficha para a secção do topo voltar a mostrar "Criar Portal"
+      // (o estado do contrato foi reposto para "por criar" no servidor).
+      if (typeof window !== 'undefined') window.location.reload()
     } finally {
       setDeleting(false)
     }
