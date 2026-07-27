@@ -3589,7 +3589,7 @@ function PortalSubPageContent() {
                         'BLOG':                     { icon: '✍️', label: 'Ver Blog',             url: guiaLinks.blogUrl },
                         'FOTOS CONVIDADOS':          { icon: '📷', label: 'Solicitar Fotos',      url: guiaLinks.fotosConvidadosUrl },
                         'DADOS PARA CONTRATO - CPS': { icon: '📋', label: 'Preencher Dados',      url: withRef(guiaLinks.dadosContratoUrl) },
-                        'PAGAMENTOS/REGISTO':        { icon: '💳', label: 'Registar Pagamento',   url: guiaLinks.pagamentosRegistoUrl },
+                        'PAGAMENTOS/REGISTO':        { icon: '💳', label: 'Registar Pagamento',   url: `/registar-pagamento?ref=${encodeURIComponent(portalSettingsObj?.referencia ?? refParam ?? portalRef ?? '')}&noivos=${encodeURIComponent([portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & '))}` },
                       }
                       // find the column_list that contains the 4 section callouts
                       const colListIdx = blocks.findIndex(b =>
@@ -4018,7 +4018,7 @@ function PortalSubPageContent() {
                         <NotionBlocks blocks={beforeNumerario} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                         {numerarioIdx !== -1 && (
                           <div className="my-5">
-                            <a href={guiaLinks.pagamentosRegistoUrl ?? 'https://tally.so/r/A72PQB'} target="_blank" rel="noopener noreferrer"
+                            <a href={`/registar-pagamento?ref=${encodeURIComponent(portalSettingsObj?.referencia ?? refParam ?? portalRef ?? '')}&noivos=${encodeURIComponent([portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & '))}`} target="_blank" rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold text-black font-semibold text-sm tracking-wide hover:bg-gold/80 transition-all">
                               Registar Pagamento
                             </a>
