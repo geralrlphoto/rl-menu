@@ -40,7 +40,7 @@ function cardPagamento(o: any): string {
     <table width="560" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;width:100%;background:#0e0b07;border:1px solid #3a2e18;">
       <tr><td style="height:3px;background:#c9a96e;font-size:0;line-height:0;">&nbsp;</td></tr>
       <tr><td style="padding:40px 48px 8px;text-align:center;">
-        <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png" width="200" alt="RL Photo Video" style="width:200px;max-width:70%;height:auto;display:inline-block;">
+        <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png" width="130" alt="RL Photo Video" style="width:130px;height:auto;display:inline-block;">
       </td></tr>
       <tr><td style="padding:14px 48px 0;text-align:center;">
         <p style="margin:0;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.42em;color:#c9a96e;text-transform:uppercase;">Comprovativo de Pagamento</p>
