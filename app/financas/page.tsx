@@ -251,6 +251,11 @@ function FinancasPageInner() {
           <div className="mt-3 h-px w-16 bg-gold/40" />
         </div>
         <div className="flex items-center gap-2">
+          {/* Formulário de registo de pagamento (noivos) */}
+          <Link href="/registar-pagamento"
+            className="flex items-center gap-1.5 text-xs tracking-widest text-emerald-300/80 hover:text-emerald-200 px-3 py-2 rounded-lg border border-emerald-400/30 hover:border-emerald-400/60 bg-emerald-400/5 hover:bg-emerald-400/10 transition-all">
+            ＋ Registar Pagamento
+          </Link>
           {/* Atualizar */}
           <button onClick={() => loadRows(true)} disabled={refreshing}
             className="flex items-center gap-1.5 text-xs tracking-widest text-white/40 hover:text-white px-3 py-2 rounded-lg border border-white/10 hover:border-white/25 transition-all disabled:opacity-40">
