@@ -28,6 +28,14 @@ const norm = (s: any) => String(s ?? '').toLowerCase().normalize('NFD').replace(
 export async function GET(req: NextRequest) {
   if (!autorizado(req)) return NextResponse.json({ error: 'não autorizado' }, { status: 401 })
   const sb = db()
+
+  // Interruptor global: se o envio automático estiver DESLIGADO na app, o robô
+  // não faz nada (nem consulta encomendas nem varre pastas).
+  const { data: cfg } = await sb.from('app_config').select('value').eq('key', 'envio_auto_ativo').maybeSingle()
+  if ((cfg?.value ?? 'true') !== 'true') {
+    return NextResponse.json({ pendentes: [], desativado: true })
+  }
+
   // Elegíveis para envio automático: fotografias DIGITAIS ainda por enviar que
   // sejam aquisições por link (origem='adquirir') OU tickets marcados com envio
   // automático (envio_auto=true).

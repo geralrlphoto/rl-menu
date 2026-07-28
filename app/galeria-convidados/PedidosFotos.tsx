@@ -112,6 +112,23 @@ export default function PedidosFotos() {
   }
   useEffect(() => { load() }, [])
 
+  // Interruptor global do envio automático (ligado/desligado).
+  const [autoAtivo, setAutoAtivo] = useState<boolean | null>(null)
+  const [autoSaving, setAutoSaving] = useState(false)
+  useEffect(() => {
+    fetch('/api/envio-auto-config').then(r => r.json()).then(d => setAutoAtivo(!!d.ativo)).catch(() => {})
+  }, [])
+  async function toggleAuto() {
+    if (autoAtivo === null) return
+    setAutoSaving(true)
+    const novo = !autoAtivo
+    try {
+      const d = await fetch('/api/envio-auto-config', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ativo: novo }) }).then(r => r.json())
+      if (d.ok) setAutoAtivo(!!d.ativo)
+    } catch {}
+    setAutoSaving(false)
+  }
+
   useEffect(() => {
     Promise.all([2025, 2026, 2027].map(a => fetch(`/api/eventos-supabase?ano=${a}`).then(r => r.json()).catch(() => ({}))))
       .then(results => {
@@ -452,7 +469,18 @@ export default function PedidosFotos() {
         <p className="text-[11px] tracking-[0.3em] uppercase font-bold" style={{ color: GOLD }}>
           Pedidos de Fotos {!loading && <span className="text-white/35">· {pedidos.length}</span>}
         </p>
-        <button onClick={load} className="text-[11px] tracking-widest uppercase text-white/45 hover:text-[#c8a866] transition-colors">↻ Atualizar</button>
+        <div className="flex items-center gap-3">
+          {/* Interruptor do envio automático */}
+          {autoAtivo !== null && (
+            <button onClick={toggleAuto} disabled={autoSaving}
+              title="Liga/desliga o envio automático das fotografias digitais"
+              className={`flex items-center gap-2 text-[10px] tracking-widest uppercase px-3 py-1.5 rounded-full border transition-all disabled:opacity-50 ${autoAtivo ? 'border-emerald-500/40 text-emerald-300 bg-emerald-500/10' : 'border-white/15 text-white/45 bg-white/[0.03]'}`}>
+              <span className={`w-2 h-2 rounded-full ${autoAtivo ? 'bg-emerald-400' : 'bg-white/30'}`} />
+              {autoSaving ? '...' : `Envio automático: ${autoAtivo ? 'Ligado' : 'Desligado'}`}
+            </button>
+          )}
+          <button onClick={load} className="text-[11px] tracking-widest uppercase text-white/45 hover:text-[#c8a866] transition-colors">↻ Atualizar</button>
+        </div>
       </div>
 
       {/* Pesquisa + ordenação */}
