@@ -66,7 +66,8 @@ export async function POST(req: NextRequest) {
   const id = String(b.id ?? '').trim()
   if (!pedido && !id) return NextResponse.json({ error: 'pedido ou id obrigatório' }, { status: 400 })
   const sb = db()
-  let q = sb.from('photo_orders').update({ fotos_enviadas_em: new Date().toISOString() })
+  // Marca como enviado E passa o estado a "Entregue" (aparece logo na galeria).
+  let q = sb.from('photo_orders').update({ fotos_enviadas_em: new Date().toISOString(), estado: 'Entregue' })
   q = pedido ? q.eq('pedido', pedido) : q.eq('id', id)
   const { error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
