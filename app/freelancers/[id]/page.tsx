@@ -2126,6 +2126,13 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
     return normEnc(e.noivos) === alvo
   }
   const encomendasFiltradas = encomendasList.filter(e => encomendaDoCasamento(e, encomendasCasamento))
+  // Filtro por formato (todas / papel / digital) dentro do modal.
+  const [encFormato, setEncFormato] = useState<'todas' | 'papel' | 'digital'>('todas')
+  const isPapel = (e: any) => String(e.formato ?? '').toLowerCase() === 'papel'
+  const encPapelCount = encomendasFiltradas.filter(isPapel).length
+  const encDigitalCount = encomendasFiltradas.length - encPapelCount
+  const encomendasView = encomendasFiltradas.filter(e =>
+    encFormato === 'todas' ? true : encFormato === 'papel' ? isPapel(e) : !isPapel(e))
   const [apagandoId, setApagandoId] = useState<string | null>(null)
   const [estadoSavingId, setEstadoSavingId] = useState<string | null>(null)
   // O fotógrafo (ou admin) marca a encomenda como Entregue/Aguardar. Fica no
@@ -2140,6 +2147,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   }
   async function abrirEncomendas(cas?: any) {
     setEncomendasCasamento(cas ?? null)
+    setEncFormato('todas')
     setEncomendasOpen(true); setEncomendasLoading(true)
     try {
       const d = await fetch(`/api/freelancer-encomendas?freelancer_id=${encodeURIComponent(freelancerId)}`).then(r => r.json())
@@ -2810,6 +2818,17 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     </button>
                   </div>
                 )}
+                {/* Filtro por formato: Todas / Papel / Digital */}
+                {!encomendasLoading && encomendasFiltradas.length > 0 && (
+                  <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                    {([['todas', 'Todas', encomendasFiltradas.length], ['papel', 'Papel', encPapelCount], ['digital', 'Digital', encDigitalCount]] as const).map(([v, lbl, n]) => (
+                      <button key={v} onClick={() => setEncFormato(v)}
+                        className={`text-[10px] px-2.5 py-1 rounded-full border tracking-wide uppercase transition-all ${encFormato === v ? 'border-gold/60 bg-gold/10 text-gold' : 'border-white/10 text-white/45 hover:text-white/70 hover:border-white/25'}`}>
+                        {lbl} · {n}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
               <button onClick={() => setEncomendasOpen(false)}
                 className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/35 hover:text-white hover:border-white/30 transition-all shrink-0">
@@ -2823,9 +2842,13 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                 <div className="rounded-xl border border-dashed border-white/[0.1] py-12 text-center">
                   <p className="text-[13px] text-white/35">{encomendasCasamento?.nome_noivos ? 'Sem encomendas para este casamento.' : 'Ainda não tens encomendas enviadas.'}</p>
                 </div>
+              ) : encomendasView.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-white/[0.1] py-12 text-center">
+                  <p className="text-[13px] text-white/35">Sem encomendas em {encFormato === 'papel' ? 'papel' : 'digital'}.</p>
+                </div>
               ) : (
                 <div className="space-y-2.5">
-                  {encomendasFiltradas.map((e: any) => {
+                  {encomendasView.map((e: any) => {
                     const fotos = String(e.fotografias ?? '').split(/\r?\n/).map((s: string) => s.trim()).filter(Boolean)
                     return (
                       <div key={e.id} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
