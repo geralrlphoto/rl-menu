@@ -17,9 +17,12 @@ function autorizado(req: NextRequest): boolean {
 
 // GET: lista os pedidos de AQUISIÇÃO DIGITAL ainda por enviar (fotos_enviadas_em
 //   nulo). É o que o robô local precisa para saber o que enviar.
+const norm = (s: any) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
+
 export async function GET(req: NextRequest) {
   if (!autorizado(req)) return NextResponse.json({ error: 'não autorizado' }, { status: 401 })
-  const { data, error } = await db()
+  const sb = db()
+  const { data, error } = await sb
     .from('photo_orders')
     .select('id, pedido, nome, email, noivos, data_casamento, formato, quantidade, fotografias')
     .eq('origem', 'adquirir')
@@ -28,7 +31,21 @@ export async function GET(req: NextRequest) {
     .order('created_at', { ascending: true })
     .limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ pendentes: data ?? [] })
+
+  // Resolve a pasta de cada pedido pelo nome dos noivos → evento (campo
+  // pasta_fotos definido na ficha, secção Produção & Entregas). Assim o robô
+  // recebe já o caminho exato quando existe.
+  const pendentes = data ?? []
+  const { data: evs } = await sb.from('eventos_2026').select('cliente, referencia, pasta_fotos').not('pasta_fotos', 'is', null)
+  const mapa = new Map<string, string>()
+  for (const ev of (evs ?? []) as any[]) {
+    if (ev.pasta_fotos) {
+      if (ev.cliente) mapa.set(norm(ev.cliente), ev.pasta_fotos)
+      if (ev.referencia) mapa.set(norm(ev.referencia), ev.pasta_fotos)
+    }
+  }
+  const comPasta = pendentes.map((p: any) => ({ ...p, pasta: mapa.get(norm(p.noivos)) ?? null }))
+  return NextResponse.json({ pendentes: comPasta })
 }
 
 // POST: marca um pedido como já enviado ({ pedido } ou { id }), para não repetir.

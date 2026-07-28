@@ -1070,6 +1070,48 @@ function RegrasEntregasDrop() {
   )
 }
 
+// ─── Pasta de fotografias (caminho local) — usada pelo robô de envio automático ──
+function PastaFotosField({ eventId }: { eventId: string }) {
+  const [valor, setValor] = useState('')
+  const [inicial, setInicial] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  useEffect(() => {
+    if (!eventId) return
+    fetch(`/api/evento-pasta?eventId=${encodeURIComponent(eventId)}`)
+      .then(r => r.json()).then(d => { setValor(d.pasta_fotos ?? ''); setInicial(d.pasta_fotos ?? '') })
+      .catch(() => {})
+  }, [eventId])
+  const dirty = valor.trim() !== inicial
+  async function guardar() {
+    setSaving(true)
+    try {
+      const v = valor.trim()
+      await fetch('/api/evento-pasta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId, pasta_fotos: v }) })
+      setInicial(v); setValor(v); setSaved(true); setTimeout(() => setSaved(false), 2500)
+    } catch {}
+    setSaving(false)
+  }
+  return (
+    <div className="mb-4 rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+      <div className="flex items-center justify-between gap-2 mb-1.5">
+        <p className="text-[10px] tracking-[0.3em] text-gold uppercase">📁 Pasta de Fotografias (envio automático)</p>
+        {saved && <span className="text-[10px] text-emerald-300/80">Guardado ✓</span>}
+      </div>
+      <p className="text-[11px] text-white/40 mb-2.5 leading-relaxed">Caminho local no PC onde estão as fotos deste casamento. O robô usa-o para enviar as aquisições digitais automaticamente. Deixa vazio para usar a convenção «&lt;noivos&gt;_provas».</p>
+      <div className="flex items-center gap-2">
+        <input value={valor} onChange={e => setValor(e.target.value)}
+          placeholder="C:\Users\Rui\Desktop\Maria e Ruben_provas"
+          className="flex-1 bg-black/30 border border-white/[0.1] rounded-lg px-3 py-2 text-[12px] text-white/90 placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+        <button onClick={guardar} disabled={!dirty || saving}
+          className="text-[11px] px-4 py-2 rounded-lg bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-40 shrink-0">
+          {saving ? '...' : 'Guardar'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Linha de estado com dropdown e prazo opcional ─────────────────────────────
 // ─── Linha de estado ligada ao portal (Supabase) ──────────────────────────────
 function PortalEstadoRow({ label, dateStr, estado, referencia, stateKey, onSaved }: {
@@ -4647,6 +4689,9 @@ export default function EventoPage() {
         <BlocoHeader num="V">Produção & Entregas</BlocoHeader>
 
         <DrawerBloco label="Produção & Entregas" sub="Estados de entrega (fotos, vídeo, álbum) e regras automáticas." defaultOpen={videoRevPendente}>
+
+        {/* ── Pasta de fotografias (envio automático das aquisições digitais) ── */}
+        <PastaFotosField eventId={e.id} />
 
         {/* ── Estado das Entregas ── */}
         <Section title="Estado das Entregas" right={
