@@ -18,10 +18,12 @@ const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada,
 export async function GET(req: NextRequest) {
   const fid = req.nextUrl.searchParams.get('freelancer_id')
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
+  // Mostra encomendas enviadas a este fotógrafo, quer como destinatário único
+  // (enviado_para_id), quer quando faz parte de um envio a vários (enviado_para_ids).
   const { data, error } = await db()
     .from('photo_orders')
     .select(COLS)
-    .eq('enviado_para_id', fid)
+    .or(`enviado_para_id.eq.${fid},enviado_para_ids.cs.{${fid}}`)
     .order('created_at', { ascending: false })
     .limit(500)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

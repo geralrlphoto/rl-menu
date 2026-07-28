@@ -9,7 +9,7 @@ type Pedido = {
   mensagem: string | null; fotografias: string | null; comprovativo_url: string | null
   referencia: string | null; estado: string | null; created_at: string
   origem: string | null; responsavel: string | null; metodo_pagamento: string | null; mbway_conta: string | null
-  enviado_para_id: string | null; enviado_para_nome: string | null; enviado_em: string | null
+  enviado_para_id: string | null; enviado_para_ids?: string[] | null; enviado_para_nome: string | null; enviado_em: string | null
 }
 type Evento = { referencia: string; cliente: string; data_evento: string }
 type Fotografo = { id: string; nome: string }
@@ -85,7 +85,9 @@ export default function PedidosFotos() {
   const [aberto, setAberto] = useState<string | null>(null)
   const [gruposAbertos, setGruposAbertos] = useState<Set<string>>(new Set())
   const [fotografos, setFotografos] = useState<Fotografo[]>([])
-  const [enviarSel, setEnviarSel] = useState<Record<string, string>>({})
+  const [enviarSel, setEnviarSel] = useState<Record<string, string[]>>({})
+  const [enviarFmt, setEnviarFmt] = useState<Record<string, 'todas' | 'digital' | 'papel'>>({})
+  const [enviarOpen, setEnviarOpen] = useState<string | null>(null)
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Record<string, any>>({})
   const [editSaving, setEditSaving] = useState(false)
@@ -189,15 +191,20 @@ export default function PedidosFotos() {
   }
 
   async function enviarGrupo(g: Grupo) {
-    const fid = enviarSel[g.key] ?? (g.itens[0]?.enviado_para_id ?? '')
-    if (!fid) { alert('Escolhe um fotógrafo para enviar.'); return }
-    const f = fotografos.find(x => x.id === fid)
-    const ids = g.itens.map(p => p.id)
+    const fids = enviarSel[g.key] ?? []
+    if (fids.length === 0) { alert('Escolhe pelo menos um fotógrafo.'); return }
+    const fmt = enviarFmt[g.key] ?? 'todas'
+    const itens = g.itens.filter(p => fmt === 'todas' ? true : (p.formato || '').toLowerCase() === fmt)
+    if (itens.length === 0) { alert('Não há encomendas nesse formato para enviar.'); return }
+    const nomes = fids.map(id => fotografos.find(x => x.id === id)?.nome).filter(Boolean) as string[]
+    const nomeJoin = nomes.join(', ')
+    const ids = itens.map(p => p.id)
     setSaving('env:' + g.key)
     try {
-      await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, enviado_para_id: fid, enviado_para_nome: f?.nome ?? '' }) })
+      await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ids, enviado_para_ids: fids, enviado_para_nome: nomeJoin }) })
       const idset = new Set(ids)
-      setPedidos(prev => prev.map(p => idset.has(p.id) ? { ...p, enviado_para_id: fid, enviado_para_nome: f?.nome ?? null, enviado_em: new Date().toISOString() } : p))
+      setPedidos(prev => prev.map(p => idset.has(p.id) ? { ...p, enviado_para_id: fids[0], enviado_para_ids: fids, enviado_para_nome: nomeJoin, enviado_em: new Date().toISOString() } : p))
+      setEnviarOpen(null)
     } catch {}
     setSaving(null)
   }
@@ -472,17 +479,51 @@ export default function PedidosFotos() {
                     </span>
                   </button>
                   <div className="flex items-center gap-2 shrink-0">
-                    {/* Enviar a um fotógrafo */}
-                    <select value={enviarSel[g.key] ?? (g.itens[0]?.enviado_para_id ?? '')} onChange={e => setEnviarSel(s => ({ ...s, [g.key]: e.target.value }))}
-                      title="Enviar estas encomendas a um fotógrafo"
-                      className="bg-black/30 border border-white/[0.1] rounded-lg px-2.5 py-1.5 text-[11px] text-white/90 focus:outline-none focus:border-[#c8a866]/40 cursor-pointer [color-scheme:dark] max-w-[170px]">
-                      <option value="">— Enviar a… —</option>
-                      {fotografos.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                    </select>
-                    <button onClick={() => enviarGrupo(g)} disabled={saving === 'env:' + g.key} title="Enviar ao fotógrafo selecionado"
-                      className="text-[10px] px-2.5 py-1.5 rounded-lg border border-gold/35 text-gold hover:bg-gold/10 tracking-wide uppercase transition-all disabled:opacity-40 flex items-center gap-1">
-                      {saving === 'env:' + g.key ? 'A enviar…' : <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg> Enviar</>}
-                    </button>
+                    {/* Enviar a um ou vários fotógrafos (com escolha do formato) */}
+                    <div className="relative">
+                      <button
+                        onClick={() => {
+                          if (enviarOpen === g.key) { setEnviarOpen(null); return }
+                          setEnviarSel(s => s[g.key] ? s : ({ ...s, [g.key]: (g.itens[0]?.enviado_para_ids ?? (g.itens[0]?.enviado_para_id ? [g.itens[0].enviado_para_id] : [])) }))
+                          setEnviarOpen(g.key)
+                        }}
+                        title="Enviar estas encomendas a um ou vários fotógrafos"
+                        className="text-[10px] px-2.5 py-1.5 rounded-lg border border-gold/35 text-gold hover:bg-gold/10 tracking-wide uppercase transition-all flex items-center gap-1">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        {(enviarSel[g.key]?.length ?? 0) > 0 ? `Enviar · ${enviarSel[g.key].length}` : 'Enviar a…'}
+                      </button>
+                      {enviarOpen === g.key && (
+                        <div className="absolute right-0 top-full mt-1.5 z-30 w-64 rounded-xl border border-white/12 bg-[#0e0c08] p-3 shadow-2xl" onClick={ev => ev.stopPropagation()}>
+                          <p className="text-[9px] tracking-[0.2em] uppercase text-white/35 mb-1.5">Formato</p>
+                          <div className="flex gap-1 mb-3">
+                            {(['todas', 'digital', 'papel'] as const).map(fm => (
+                              <button key={fm} onClick={() => setEnviarFmt(s => ({ ...s, [g.key]: fm }))}
+                                className={`flex-1 text-[10px] px-2 py-1 rounded-md border transition-all ${(enviarFmt[g.key] ?? 'todas') === fm ? 'border-gold/60 bg-gold/10 text-gold' : 'border-white/10 text-white/50 hover:border-white/25'}`}>
+                                {fm === 'todas' ? 'Todas' : fm === 'digital' ? 'Digital' : 'Papel'}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-[9px] tracking-[0.2em] uppercase text-white/35 mb-1.5">Fotógrafos que veem</p>
+                          <div className="max-h-40 overflow-y-auto flex flex-col gap-1 mb-3">
+                            {fotografos.length === 0 && <p className="text-[11px] text-white/30 italic">Sem fotógrafos.</p>}
+                            {fotografos.map(f => {
+                              const sel = (enviarSel[g.key] ?? []).includes(f.id)
+                              return (
+                                <button key={f.id} onClick={() => setEnviarSel(s => { const cur = s[g.key] ?? []; return { ...s, [g.key]: sel ? cur.filter(x => x !== f.id) : [...cur, f.id] } })}
+                                  className={`flex items-center gap-2 text-[11px] px-2 py-1.5 rounded-md border text-left transition-all ${sel ? 'border-gold/50 bg-gold/10 text-gold' : 'border-white/8 text-white/60 hover:border-white/20'}`}>
+                                  <span className={`w-3.5 h-3.5 rounded border flex items-center justify-center text-[9px] shrink-0 ${sel ? 'border-gold bg-gold/20 text-gold' : 'border-white/25 text-transparent'}`}>✓</span>
+                                  <span className="truncate">{f.nome}</span>
+                                </button>
+                              )
+                            })}
+                          </div>
+                          <button onClick={() => enviarGrupo(g)} disabled={saving === 'env:' + g.key || (enviarSel[g.key]?.length ?? 0) === 0}
+                            className="w-full text-[10px] px-2.5 py-2 rounded-lg border border-gold/40 bg-gold/5 text-gold hover:bg-gold/15 tracking-widest uppercase transition-all disabled:opacity-40">
+                            {saving === 'env:' + g.key ? 'A enviar…' : 'Confirmar Envio'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                     <button onClick={() => apagarGrupo(g)} title="Apagar todas as encomendas deste casamento"
                       className="text-[10px] px-2.5 py-1.5 rounded-lg border border-red-500/25 text-red-300/80 hover:bg-red-500/10 hover:text-red-300 hover:border-red-500/40 tracking-wide uppercase transition-all flex items-center gap-1">
                       {saving === 'grp:' + g.key

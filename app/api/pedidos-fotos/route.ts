@@ -52,11 +52,28 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ ok: true, ...upd })
   }
 
+  // Envio em grupo a VÁRIOS fotógrafos ({ ids, enviado_para_ids: [...] }).
+  // Cada encomenda fica visível no portal de todos os fotógrafos indicados.
+  if (Array.isArray(ids) && ids.length > 0 && Array.isArray(body.enviado_para_ids)) {
+    const fids: string[] = body.enviado_para_ids.map((s: any) => String(s).trim()).filter(Boolean)
+    const nome = (enviado_para_nome ?? '').trim() || null
+    const updates = {
+      enviado_para_ids: fids.length ? fids : null,
+      enviado_para_id: fids[0] ?? null, // compat com fluxos/consultas antigas
+      enviado_para_nome: fids.length ? nome : null,
+      enviado_em: fids.length ? new Date().toISOString() : null,
+    }
+    const { error } = await supabase.from('photo_orders').update(updates).in('id', ids)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true, ...updates, count: ids.length })
+  }
+
   // Envio em grupo a um fotógrafo (ou anular envio com enviado_para_id vazio).
   if (Array.isArray(ids) && ids.length > 0 && enviado_para_id !== undefined) {
     const fid = (typeof enviado_para_id === 'string' && enviado_para_id.trim()) ? enviado_para_id.trim() : null
     const updates = {
       enviado_para_id: fid,
+      enviado_para_ids: fid ? [fid] : null,
       enviado_para_nome: fid ? ((enviado_para_nome ?? '').trim() || null) : null,
       enviado_em: fid ? new Date().toISOString() : null,
     }
