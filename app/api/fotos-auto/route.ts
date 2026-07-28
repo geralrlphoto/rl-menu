@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createHash } from 'crypto'
+import { buildTicketHtml } from '@/lib/ticket-html'
 
 export const dynamic = 'force-dynamic'
 
@@ -47,9 +48,11 @@ export async function GET(req: NextRequest) {
     .or('origem.eq.adquirir,envio_auto.eq.true')
     .order('created_at', { ascending: true }).limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  // Papel por preparar (copiar para a subpasta Impressão).
+  // Papel por preparar (copiar para a subpasta Impressão). Traz os campos todos
+  // para gerar a cópia do ticket idêntica à do cliente.
   const { data: pap } = await sb
-    .from('photo_orders').select(COLS)
+    .from('photo_orders')
+    .select('id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, fotografias, responsavel, metodo_pagamento, mbway_conta, created_at')
     .eq('formato', 'papel').is('impressao_preparada_em', null)
     .order('created_at', { ascending: true }).limit(200)
 
@@ -69,7 +72,10 @@ export async function GET(req: NextRequest) {
     }
   }
   const comPasta = (arr: any[]) => arr.map((p: any) => ({ ...p, pasta: mapa.get(norm(p.noivos)) ?? null }))
-  return NextResponse.json({ pendentes: comPasta(pendentes), papel: comPasta(papel) })
+  // Nas de papel juntamos o HTML do ticket (o mesmo do cliente) para o robô
+  // guardar uma cópia na pasta da encomenda.
+  const papelComTicket = comPasta(papel).map((p: any) => ({ ...p, ticket_html: buildTicketHtml(p) }))
+  return NextResponse.json({ pendentes: comPasta(pendentes), papel: papelComTicket })
 }
 
 // POST: marca um pedido como tratado, para não repetir.
