@@ -88,6 +88,10 @@ export default function PedidosFotos() {
   const [enviarSel, setEnviarSel] = useState<Record<string, string[]>>({})
   const [enviarFmt, setEnviarFmt] = useState<Record<string, 'todas' | 'digital' | 'papel'>>({})
   const [enviarOpen, setEnviarOpen] = useState<string | null>(null)
+  // Encomendas excluídas do envio (por defeito envia-se tudo; o utilizador
+  // desmarca as que NÃO quer enviar). Guarda os ids a excluir.
+  const [naoEnviar, setNaoEnviar] = useState<Set<string>>(new Set())
+  const toggleNaoEnviar = (id: string) => setNaoEnviar(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
   const [editandoId, setEditandoId] = useState<string | null>(null)
   const [editForm, setEditForm] = useState<Record<string, any>>({})
   const [editSaving, setEditSaving] = useState(false)
@@ -194,8 +198,8 @@ export default function PedidosFotos() {
     const fids = enviarSel[g.key] ?? []
     if (fids.length === 0) { alert('Escolhe pelo menos um fotógrafo.'); return }
     const fmt = enviarFmt[g.key] ?? 'todas'
-    const itens = g.itens.filter(p => fmt === 'todas' ? true : (p.formato || '').toLowerCase() === fmt)
-    if (itens.length === 0) { alert('Não há encomendas nesse formato para enviar.'); return }
+    const itens = g.itens.filter(p => (fmt === 'todas' ? true : (p.formato || '').toLowerCase() === fmt) && !naoEnviar.has(p.id))
+    if (itens.length === 0) { alert('Não há encomendas selecionadas nesse formato para enviar.'); return }
     const nomes = fids.map(id => fotografos.find(x => x.id === id)?.nome).filter(Boolean) as string[]
     const nomeJoin = nomes.join(', ')
     const ids = itens.map(p => p.id)
@@ -291,6 +295,11 @@ export default function PedidosFotos() {
       <div key={p.id} className="border-b border-white/[0.06] last:border-0">
         {/* Linha compacta */}
         <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
+          <button onClick={() => toggleNaoEnviar(p.id)}
+            title={naoEnviar.has(p.id) ? 'Excluída do envio — não vai para ninguém' : 'Será enviada'}
+            className="shrink-0">
+            <span className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] transition-all ${naoEnviar.has(p.id) ? 'border-white/20 text-transparent' : 'border-gold/50 bg-gold/15 text-gold'}`}>✓</span>
+          </button>
           <button onClick={() => setAberto(open ? null : p.id)} className="flex items-center gap-2.5 min-w-0 text-left flex-1">
             <span className="text-white/30 text-[12px] w-3 shrink-0">{open ? '▾' : '▸'}</span>
             <span className="min-w-0">
@@ -517,6 +526,11 @@ export default function PedidosFotos() {
                               )
                             })}
                           </div>
+                          {(() => {
+                            const fmt = enviarFmt[g.key] ?? 'todas'
+                            const n = g.itens.filter(p => (fmt === 'todas' ? true : (p.formato || '').toLowerCase() === fmt) && !naoEnviar.has(p.id)).length
+                            return <p className="text-[10px] text-white/40 mb-2 text-center">{n} encomenda(s) serão enviadas{naoEnviar.size > 0 ? ' · algumas excluídas' : ''}</p>
+                          })()}
                           <button onClick={() => enviarGrupo(g)} disabled={saving === 'env:' + g.key || (enviarSel[g.key]?.length ?? 0) === 0}
                             className="w-full text-[10px] px-2.5 py-2 rounded-lg border border-gold/40 bg-gold/5 text-gold hover:bg-gold/15 tracking-widest uppercase transition-all disabled:opacity-40">
                             {saving === 'env:' + g.key ? 'A enviar…' : 'Confirmar Envio'}
