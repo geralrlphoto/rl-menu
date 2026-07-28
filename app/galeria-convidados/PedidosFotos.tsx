@@ -13,7 +13,7 @@ type Pedido = {
 }
 type Evento = { referencia: string; cliente: string; data_evento: string }
 type Fotografo = { id: string; nome: string }
-type Grupo = { key: string; noivos: string; data: string | null; ts: number; itens: Pedido[] }
+type Grupo = { key: string; noivos: string; data: string | null; ts: number; origem: 'ticket' | 'adquirir'; itens: Pedido[] }
 
 const GOLD = '#c8a866'
 const PER_PAGE = 12
@@ -247,7 +247,8 @@ export default function PedidosFotos() {
     })
   }, [pesquisados, formato, origemFiltro])
 
-  // Agrupa por casamento (nome dos noivos + data)
+  // Agrupa por casamento (nome dos noivos + data) E por origem: as aquisições
+  // por link nunca se misturam com os tickets, mesmo sendo do mesmo casamento.
   const grupos = useMemo(() => {
     const map = new Map<string, Grupo>()
     for (const p of filtrados) {
@@ -255,8 +256,10 @@ export default function PedidosFotos() {
       const dataRaw = (p.data_casamento || '').trim()
       const noivosKey = normNoivos(noivosRaw)
       const dataKey = normDate(dataRaw)
-      const key = (noivosKey || dataKey) ? `${noivosKey}__${dataKey}` : '__sem__'
-      if (!map.has(key)) map.set(key, { key, noivos: noivosRaw, data: dataRaw || null, ts: tsFromNorm(dataKey), itens: [] })
+      const origemCls: 'ticket' | 'adquirir' = (p.origem || '') === 'ticket' ? 'ticket' : 'adquirir'
+      const baseKey = (noivosKey || dataKey) ? `${noivosKey}__${dataKey}` : '__sem__'
+      const key = `${baseKey}__${origemCls}`
+      if (!map.has(key)) map.set(key, { key, noivos: noivosRaw, data: dataRaw || null, ts: tsFromNorm(dataKey), origem: origemCls, itens: [] })
       map.get(key)!.itens.push(p)
     }
     const arr = Array.from(map.values())
@@ -509,6 +512,12 @@ export default function PedidosFotos() {
                     <span className="min-w-0">
                       <span className="text-[15px] font-light text-white/95" style={{ fontFamily: 'Georgia, serif' }}>
                         {g.noivos ? <>Casamento <span className="italic" style={{ color: GOLD }}>{capNoivos(g.noivos)}</span></> : <span className="text-white/55">Sem casamento definido</span>}
+                      </span>
+                      <span className="ml-2 text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold align-middle"
+                        style={g.origem === 'ticket'
+                          ? { background: 'rgba(147,112,219,0.12)', borderColor: 'rgba(147,112,219,0.3)', color: '#c4b5fd' }
+                          : { background: 'rgba(200,168,102,0.12)', borderColor: 'rgba(200,168,102,0.3)', color: '#e6c680' }}>
+                        {g.origem === 'ticket' ? 'Tickets' : 'Aquisições'}
                       </span>
                       {g.data && <span className="text-[13px] text-white/55"> · {fmtDataCasamento(g.data)}</span>}
                       <span className="block text-[11px] text-white/40 mt-0.5">
