@@ -216,6 +216,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/ticket-') ||
     pathname.startsWith('/registar-pagamento') ||
     pathname.startsWith('/api/registar-pagamento-noivos') ||
+    pathname.startsWith('/api/fotos-auto') ||
     pathname.startsWith('/portal-media') ||
     pathname.startsWith('/media/portal-cliente/acesso') ||
     pathname.startsWith('/api/media-portal-acesso') ||
