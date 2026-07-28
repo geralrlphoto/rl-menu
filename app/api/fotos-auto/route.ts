@@ -39,24 +39,27 @@ export async function GET(req: NextRequest) {
   // Elegíveis para envio automático: fotografias DIGITAIS ainda por enviar que
   // sejam aquisições por link (origem='adquirir') OU tickets marcados com envio
   // automático (envio_auto=true).
-  const { data, error } = await sb
-    .from('photo_orders')
-    .select('id, pedido, nome, email, noivos, data_casamento, formato, quantidade, fotografias')
-    .eq('formato', 'digital')
-    .is('fotos_enviadas_em', null)
+  const COLS = 'id, pedido, nome, email, noivos, data_casamento, formato, quantidade, fotografias'
+  // Digitais por enviar (aquisições ou tickets com envio_auto).
+  const { data: dig, error } = await sb
+    .from('photo_orders').select(COLS)
+    .eq('formato', 'digital').is('fotos_enviadas_em', null)
     .or('origem.eq.adquirir,envio_auto.eq.true')
-    .order('created_at', { ascending: true })
-    .limit(200)
+    .order('created_at', { ascending: true }).limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  // Papel por preparar (copiar para a subpasta Impressão).
+  const { data: pap } = await sb
+    .from('photo_orders').select(COLS)
+    .eq('formato', 'papel').is('impressao_preparada_em', null)
+    .order('created_at', { ascending: true }).limit(200)
 
-  // Sem pedidos por enviar (o caso normal) → devolve já, sem tocar em mais nada.
-  // Poupa egress: cada verificação de rotina fica numa única leitura mínima.
-  const pendentes = data ?? []
-  if (pendentes.length === 0) return NextResponse.json({ pendentes: [] })
+  const pendentes = dig ?? []
+  const papel = pap ?? []
+  // Nada a fazer (o caso normal) → devolve já. Poupa egress.
+  if (pendentes.length === 0 && papel.length === 0) return NextResponse.json({ pendentes: [], papel: [] })
 
   // Resolve a pasta de cada pedido pelo nome dos noivos → evento (campo
-  // pasta_fotos definido na ficha, secção Produção & Entregas). Assim o robô
-  // recebe já o caminho exato quando existe.
+  // pasta_fotos da ficha). Uma única leitura serve os dois grupos.
   const { data: evs } = await sb.from('eventos_2026').select('cliente, referencia, pasta_fotos').not('pasta_fotos', 'is', null)
   const mapa = new Map<string, string>()
   for (const ev of (evs ?? []) as any[]) {
@@ -65,20 +68,26 @@ export async function GET(req: NextRequest) {
       if (ev.referencia) mapa.set(norm(ev.referencia), ev.pasta_fotos)
     }
   }
-  const comPasta = pendentes.map((p: any) => ({ ...p, pasta: mapa.get(norm(p.noivos)) ?? null }))
-  return NextResponse.json({ pendentes: comPasta })
+  const comPasta = (arr: any[]) => arr.map((p: any) => ({ ...p, pasta: mapa.get(norm(p.noivos)) ?? null }))
+  return NextResponse.json({ pendentes: comPasta(pendentes), papel: comPasta(papel) })
 }
 
-// POST: marca um pedido como já enviado ({ pedido } ou { id }), para não repetir.
+// POST: marca um pedido como tratado, para não repetir.
+//   tipo omitido / 'envio'     → digital enviado: fotos_enviadas_em + estado Entregue.
+//   tipo 'impressao'           → papel preparado: impressao_preparada_em (sem mexer no estado;
+//                                a entrega física é marcada à mão depois de imprimir/enviar).
 export async function POST(req: NextRequest) {
   if (!autorizado(req)) return NextResponse.json({ error: 'não autorizado' }, { status: 401 })
   const b = await req.json().catch(() => ({}))
   const pedido = String(b.pedido ?? '').trim()
   const id = String(b.id ?? '').trim()
+  const tipo = String(b.tipo ?? 'envio')
   if (!pedido && !id) return NextResponse.json({ error: 'pedido ou id obrigatório' }, { status: 400 })
   const sb = db()
-  // Marca como enviado E passa o estado a "Entregue" (aparece logo na galeria).
-  let q = sb.from('photo_orders').update({ fotos_enviadas_em: new Date().toISOString(), estado: 'Entregue' })
+  const updates = tipo === 'impressao'
+    ? { impressao_preparada_em: new Date().toISOString() }
+    : { fotos_enviadas_em: new Date().toISOString(), estado: 'Entregue' }
+  let q = sb.from('photo_orders').update(updates)
   q = pedido ? q.eq('pedido', pedido) : q.eq('id', id)
   const { error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
