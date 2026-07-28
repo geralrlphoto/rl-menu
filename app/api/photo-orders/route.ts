@@ -166,6 +166,7 @@ export async function POST(req: NextRequest) {
     const { error: insErr } = await supabase.from('photo_orders').insert({
       pedido, nome, email, telefone, noivos, data_casamento, morada, formato,
       quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url,
+      origem: 'adquirir', // aquisição via link /adquirir-fotografias (distingue dos tickets)
     })
     if (insErr) throw new Error(insErr.message)
 

@@ -81,6 +81,8 @@ export default function PedidosFotos() {
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('casamento')
   const [formato, setFormato] = useState<'todas' | 'digital' | 'papel'>('todas')
+  // Separa aquisições (link /adquirir-fotografias) dos tickets (origem='ticket').
+  const [origemFiltro, setOrigemFiltro] = useState<'todas' | 'adquirir' | 'ticket'>('todas')
   const [page, setPage] = useState(1)
   const [aberto, setAberto] = useState<string | null>(null)
   const [gruposAbertos, setGruposAbertos] = useState<Set<string>>(new Set())
@@ -228,11 +230,22 @@ export default function PedidosFotos() {
     papel: pesquisados.filter(p => (p.formato || '').toLowerCase() === 'papel').length,
   }), [pesquisados])
 
-  // Filtro por formato (Ver todas / Só digital / Só papel)
+  // Contagens por origem (aquisição via link vs ticket)
+  const origemCounts = useMemo(() => ({
+    todas: pesquisados.length,
+    ticket: pesquisados.filter(p => (p.origem || '') === 'ticket').length,
+    adquirir: pesquisados.filter(p => (p.origem || '') !== 'ticket').length,
+  }), [pesquisados])
+
+  // Filtro por formato + por origem
   const filtrados = useMemo(() => {
-    if (formato === 'todas') return pesquisados
-    return pesquisados.filter(p => (p.formato || '').toLowerCase() === formato)
-  }, [pesquisados, formato])
+    return pesquisados.filter(p => {
+      const okFmt = formato === 'todas' || (p.formato || '').toLowerCase() === formato
+      const isTicket = (p.origem || '') === 'ticket'
+      const okOrigem = origemFiltro === 'todas' || (origemFiltro === 'ticket' ? isTicket : !isTicket)
+      return okFmt && okOrigem
+    })
+  }, [pesquisados, formato, origemFiltro])
 
   // Agrupa por casamento (nome dos noivos + data)
   const grupos = useMemo(() => {
@@ -258,7 +271,7 @@ export default function PedidosFotos() {
     return arr
   }, [filtrados, sort])
 
-  useEffect(() => { setPage(1) }, [search, sort, formato])
+  useEffect(() => { setPage(1) }, [search, sort, formato, origemFiltro])
   const totalPages = Math.max(1, Math.ceil(grupos.length / PER_PAGE))
   const pageGrupos = grupos.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
@@ -281,6 +294,14 @@ export default function PedidosFotos() {
     <button onClick={() => setFormato(id)}
       className={`text-[12px] px-3 py-1.5 rounded-lg border tracking-wide transition-all ${formato === id ? 'bg-gold/15 border-gold/40 text-gold' : 'border-white/[0.08] text-white/45 hover:text-white/80'}`}
       style={formato === id ? { color: GOLD, borderColor: 'rgba(200,168,102,0.4)' } : {}}>
+      {label} <span className="opacity-50">{n}</span>
+    </button>
+  )
+
+  const OrigemBtn = ({ id, label, n }: { id: 'todas' | 'adquirir' | 'ticket'; label: string; n: number }) => (
+    <button onClick={() => setOrigemFiltro(id)}
+      className={`text-[12px] px-3 py-1.5 rounded-lg border tracking-wide transition-all ${origemFiltro === id ? 'bg-gold/15 border-gold/40 text-gold' : 'border-white/[0.08] text-white/45 hover:text-white/80'}`}
+      style={origemFiltro === id ? { color: GOLD, borderColor: 'rgba(200,168,102,0.4)' } : {}}>
       {label} <span className="opacity-50">{n}</span>
     </button>
   )
@@ -446,8 +467,17 @@ export default function PedidosFotos() {
         </select>
       </div>
 
+      {/* Filtro por origem (aquisições via link vs tickets) */}
+      <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+        <span className="text-[10px] tracking-[0.2em] uppercase text-white/30 mr-1">Origem</span>
+        <OrigemBtn id="todas" label="Todas" n={origemCounts.todas} />
+        <OrigemBtn id="adquirir" label="Aquisições (link)" n={origemCounts.adquirir} />
+        <OrigemBtn id="ticket" label="Tickets" n={origemCounts.ticket} />
+      </div>
+
       {/* Filtro por formato */}
       <div className="flex items-center gap-2 mb-5 flex-wrap">
+        <span className="text-[10px] tracking-[0.2em] uppercase text-white/30 mr-1">Formato</span>
         <FmtBtn id="todas" label="Ver todas" n={fmtCounts.todas} />
         <FmtBtn id="digital" label="Só digital" n={fmtCounts.digital} />
         <FmtBtn id="papel" label="Só papel" n={fmtCounts.papel} />
