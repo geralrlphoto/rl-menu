@@ -115,6 +115,13 @@ const BODY = `
         </select>
       </div>
     </div>
+    <div class="field" style="margin-top:22px">
+      <label>Envio automático de fotos <span class="opt">(só para digital)</span></label>
+      <div class="seg" id="segAuto">
+        <label class="on" data-val="nao"><span class="t">Não</span><span class="d">Envio manual</span></label>
+        <label data-val="sim"><span class="t">Sim</span><span class="d">O sistema envia sozinho</span></label>
+      </div>
+    </div>
   </div>
   <p class="phero__sub r" id="gateHint" style="margin-top:20px">Seleciona o responsável e a conta MB WAY para continuar.</p>
 </section>
@@ -172,14 +179,6 @@ const BODY = `
           <label class="on" data-val="Numerário"><span class="t">Numerário</span></label>
           <label data-val="MBWay"><span class="t">MB WAY</span></label>
           <label data-val="Multibanco"><span class="t">Multibanco</span></label>
-        </div>
-      </div>
-
-      <div class="field">
-        <label>Envio automático de fotos <span class="opt">(só para digital)</span></label>
-        <div class="seg" id="segAuto">
-          <label class="on" data-val="nao"><span class="t">Não</span><span class="d">Envio manual</span></label>
-          <label data-val="sim"><span class="t">Sim</span><span class="d">O sistema envia sozinho</span></label>
         </div>
       </div>
 
