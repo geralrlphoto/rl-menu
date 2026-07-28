@@ -1,17 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { createHash } from 'crypto'
 
 export const dynamic = 'force-dynamic'
+
+// Hash (sha256) do token dedicado do robô. O token em si nunca fica no código;
+// o robô local envia-o no header `x-auto-token` e comparamos o hash. Como
+// alternativa, também aceita o AUTH_SECRET de admin.
+const TOKEN_HASH = 'f2ce9de66682050f2ba6700743d9cd0426754ec00bea91f06f49d73158071f75'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
-// Autenticação simples por token partilhado (reutiliza AUTH_SECRET, o mesmo
-// segredo de admin já configurado na Vercel). O robô local envia-o no header
-// `x-auto-token`. Sem token válido, 401.
 function autorizado(req: NextRequest): boolean {
   const t = req.headers.get('x-auto-token') || req.nextUrl.searchParams.get('token') || ''
+  if (!t) return false
+  const h = createHash('sha256').update(t).digest('hex')
+  if (h === TOKEN_HASH) return true
   return !!process.env.AUTH_SECRET && t === process.env.AUTH_SECRET
 }
 
