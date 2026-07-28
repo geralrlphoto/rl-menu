@@ -38,10 +38,14 @@ export async function GET(req: NextRequest) {
     .limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Sem pedidos por enviar (o caso normal) → devolve já, sem tocar em mais nada.
+  // Poupa egress: cada verificação de rotina fica numa única leitura mínima.
+  const pendentes = data ?? []
+  if (pendentes.length === 0) return NextResponse.json({ pendentes: [] })
+
   // Resolve a pasta de cada pedido pelo nome dos noivos → evento (campo
   // pasta_fotos definido na ficha, secção Produção & Entregas). Assim o robô
   // recebe já o caminho exato quando existe.
-  const pendentes = data ?? []
   const { data: evs } = await sb.from('eventos_2026').select('cliente, referencia, pasta_fotos').not('pasta_fotos', 'is', null)
   const mapa = new Map<string, string>()
   for (const ev of (evs ?? []) as any[]) {
