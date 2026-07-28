@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import MagazineViewer from './MagazineViewer'
+import EnvioAutoToggle from '@/app/components/EnvioAutoToggle'
 import './menu-geral.css'
 
 export const revalidate = 60
@@ -329,6 +330,13 @@ export default async function SecaoPage({ params }: Props) {
         </h1>
         <hr className="rl-mg-rule" />
       </header>
+
+      {/* ── Interruptor do envio automático (só na secção Cliente, admin) ── */}
+      {isAdmin && section.name?.toUpperCase().includes('CLIENTE') && (
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 22px' }}>
+          <EnvioAutoToggle />
+        </div>
+      )}
 
       {/* Revista de fotos (só quando há fotos) */}
       {(images && images.length > 0) && (
