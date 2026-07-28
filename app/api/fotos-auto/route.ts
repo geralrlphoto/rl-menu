@@ -28,12 +28,15 @@ const norm = (s: any) => String(s ?? '').toLowerCase().normalize('NFD').replace(
 export async function GET(req: NextRequest) {
   if (!autorizado(req)) return NextResponse.json({ error: 'não autorizado' }, { status: 401 })
   const sb = db()
+  // Elegíveis para envio automático: fotografias DIGITAIS ainda por enviar que
+  // sejam aquisições por link (origem='adquirir') OU tickets marcados com envio
+  // automático (envio_auto=true).
   const { data, error } = await sb
     .from('photo_orders')
     .select('id, pedido, nome, email, noivos, data_casamento, formato, quantidade, fotografias')
-    .eq('origem', 'adquirir')
     .eq('formato', 'digital')
     .is('fotos_enviadas_em', null)
+    .or('origem.eq.adquirir,envio_auto.eq.true')
     .order('created_at', { ascending: true })
     .limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

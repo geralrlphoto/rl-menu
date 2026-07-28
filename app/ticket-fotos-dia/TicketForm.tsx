@@ -175,6 +175,14 @@ const BODY = `
         </div>
       </div>
 
+      <div class="field">
+        <label>Envio automático de fotos <span class="opt">(só para digital)</span></label>
+        <div class="seg" id="segAuto">
+          <label class="on" data-val="nao"><span class="t">Não</span><span class="d">Envio manual</span></label>
+          <label data-val="sim"><span class="t">Sim</span><span class="d">O sistema envia sozinho</span></label>
+        </div>
+      </div>
+
       <div class="field"><label>Mensagem <span class="opt">(opcional)</span></label><textarea id="t-msg" placeholder="Notas do pedido…"></textarea></div>
     </form>
 
@@ -219,6 +227,8 @@ export default function TicketForm() {
     var PRICE = 5, PORTES = 4, FREE = 5
     var seg = document.getElementById('segFormato')!
     var segM = document.getElementById('segMetodo')!
+    var segAuto = document.getElementById('segAuto')!
+    function envioAuto() { return (segAuto.querySelector('label.on') as HTMLElement).dataset.val === 'sim' }
     var fotoList = document.getElementById('fotoList')!
     var addFoto = document.getElementById('addFoto')!
     var resp = document.getElementById('t-resp') as HTMLSelectElement
@@ -276,7 +286,7 @@ export default function TicketForm() {
         lab.addEventListener('click', function () { box.querySelectorAll('label').forEach(l => l.classList.remove('on')); lab.classList.add('on'); update() })
       })
     }
-    segWire(seg); segWire(segM)
+    segWire(seg); segWire(segM); segWire(segAuto)
     addFoto.addEventListener('click', function () { addRow(); update() })
     addRow(); update()
 
@@ -343,7 +353,7 @@ export default function TicketForm() {
       try {
         var res = await fetch('/api/ticket-fotos', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ responsavel, responsavel_id: respSel.value, responsavel_email, mbway_conta: mbway, metodo_pagamento: met, nome, email, telefone: tel, noivos, data_casamento: data, morada, formato: f, quantidade: q, subtotal: sub, portes, total, fotografias: fotosVal(), mensagem: msg }),
+          body: JSON.stringify({ responsavel, responsavel_id: respSel.value, responsavel_email, mbway_conta: mbway, metodo_pagamento: met, nome, email, telefone: tel, noivos, data_casamento: data, morada, formato: f, quantidade: q, subtotal: sub, portes, total, fotografias: fotosVal(), mensagem: msg, envio_auto: envioAuto() }),
         })
         var dd = await res.json().catch(() => ({}))
         if (res.ok && dd?.ok) {

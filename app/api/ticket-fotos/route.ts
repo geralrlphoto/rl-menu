@@ -87,6 +87,7 @@ export async function POST(req: NextRequest) {
   const responsavel_id = (b.responsavel_id ?? '').trim() || null
   const responsavel_email = (b.responsavel_email ?? '').trim()
   const mbway_conta = (b.mbway_conta ?? '').trim()
+  const envio_auto = b.envio_auto === true
   const metodo = ['Numerário', 'MBWay', 'Multibanco'].includes(b.metodo_pagamento) ? b.metodo_pagamento : ''
 
   // ── Validação: todos obrigatórios ──
@@ -130,6 +131,8 @@ export async function POST(req: NextRequest) {
       quantidade, subtotal, portes, total, mensagem, fotografias,
       responsavel, responsavel_email, mbway_conta, metodo_pagamento: metodo,
       origem: 'ticket', estado: 'Aguardar', comprovativo_url: null,
+      // Só faz sentido em digital; o robô só apanha os digitais na mesma.
+      envio_auto: envio_auto && formato === 'digital',
       enviado_para_id: enviadoParaId,
       enviado_para_nome: enviadoParaId ? (enviadoParaNome ?? responsavel) : null,
       enviado_em: enviadoParaId ? new Date().toISOString() : null,
