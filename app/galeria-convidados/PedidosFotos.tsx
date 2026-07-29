@@ -10,6 +10,7 @@ type Pedido = {
   referencia: string | null; estado: string | null; created_at: string
   origem: string | null; responsavel: string | null; metodo_pagamento: string | null; mbway_conta: string | null
   enviado_para_id: string | null; enviado_para_ids?: string[] | null; enviado_para_nome: string | null; enviado_em: string | null
+  fotos_enviadas_em?: string | null; impressao_preparada_em?: string | null
 }
 type Evento = { referencia: string; cliente: string; data_evento: string }
 type Fotografo = { id: string; nome: string }
@@ -110,6 +111,29 @@ export default function PedidosFotos() {
       setTicketMsg({ id: p.id, ok: false, txt: e.message || 'Erro de rede' })
     }
     setEnviandoTicket(null)
+    setTimeout(() => setTicketMsg(null), 8000)
+  }
+  const [reenviandoId, setReenviandoId] = useState<string | null>(null)
+  async function reenviarFotos(p: Pedido) {
+    const jaEnviado = !!p.fotos_enviadas_em
+    if (!confirm(jaEnviado
+      ? `Reenviar as fotos de ${p.pedido} a ${p.email}? O robô volta a enviá-las na próxima passagem.`
+      : `Marcar ${p.pedido} para envio das fotos a ${p.email}? O robô envia na próxima passagem (se as fotos/pasta existirem).`)) return
+    setReenviandoId(p.id); setTicketMsg(null)
+    try {
+      const d = await fetch('/api/pedidos-fotos/reenviar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id }),
+      }).then(r => r.json())
+      if (d.ok) {
+        setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, estado: 'Aguardar', fotos_enviadas_em: null } : x))
+        setTicketMsg({ id: p.id, ok: true, txt: 'Marcado para envio — o robô envia em breve.' })
+      } else {
+        setTicketMsg({ id: p.id, ok: false, txt: d.error || 'Falha ao marcar para envio' })
+      }
+    } catch (e: any) {
+      setTicketMsg({ id: p.id, ok: false, txt: e.message || 'Erro de rede' })
+    }
+    setReenviandoId(null)
     setTimeout(() => setTicketMsg(null), 8000)
   }
   const [editForm, setEditForm] = useState<Record<string, any>>({})
@@ -466,7 +490,17 @@ export default function PedidosFotos() {
                   {fotos.length > 0 && <Info k="Nº fotografias" v={fotos.join(', ')} />}
                   {p.mensagem && <Info k="Mensagem" v={p.mensagem} />}
                 </div>
-                <div className="flex items-center gap-2 mt-3">
+                {/* Estado do envio das fotos (digital) / preparação da impressão (papel) */}
+                {p.formato === 'digital' ? (
+                  <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border ${p.fotos_enviadas_em ? 'border-emerald-500/30 text-emerald-300/90 bg-emerald-500/10' : 'border-amber-500/40 text-amber-300/90 bg-amber-500/10'}`}>
+                    {p.fotos_enviadas_em ? `✓ Fotos enviadas · ${fmtDate(p.fotos_enviadas_em)}` : '⚠ Fotos não enviadas'}
+                  </div>
+                ) : (
+                  <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border ${p.impressao_preparada_em ? 'border-emerald-500/30 text-emerald-300/90 bg-emerald-500/10' : 'border-amber-500/40 text-amber-300/90 bg-amber-500/10'}`}>
+                    {p.impressao_preparada_em ? `✓ Impressão preparada · ${fmtDate(p.impressao_preparada_em)}` : '⚠ Impressão por preparar'}
+                  </div>
+                )}
+                <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <button onClick={() => iniciarEdicao(p)}
                     className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
@@ -482,6 +516,14 @@ export default function PedidosFotos() {
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     {enviandoTicket === p.id ? 'A enviar…' : 'Enviar ticket ao cliente'}
                   </button>
+                  {p.formato === 'digital' && (
+                    <button onClick={() => reenviarFotos(p)} disabled={reenviandoId === p.id}
+                      title="Marca para o robô (re)enviar as fotos ao cliente na próxima passagem"
+                      className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-blue-400/30 text-blue-300/90 hover:bg-blue-400/10 hover:border-blue-400/60 transition-all disabled:opacity-50">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                      {reenviandoId === p.id ? 'A marcar…' : (p.fotos_enviadas_em ? 'Enviar de novo' : 'Enviar fotos')}
+                    </button>
+                  )}
                 </div>
                 {ticketMsg && ticketMsg.id === p.id && (
                   <p className={`mt-2 text-[11px] ${ticketMsg.ok ? 'text-emerald-300/85' : 'text-red-400/80'}`}>
