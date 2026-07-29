@@ -150,7 +150,7 @@ const BODY = `
         <div class="field"><label>Email</label><input type="email" id="t-email" placeholder="nome@email.pt"></div>
       </div>
       <div class="frow two">
-        <div class="field"><label>Nome dos noivos</label><input type="text" id="t-noivos" placeholder="Ana &amp; Edney"></div>
+        <div class="field"><label>Nome dos noivos</label><input type="text" id="t-noivos" placeholder="Ex.: Ana e André"></div>
         <div class="field"><label>Data do casamento</label><input type="text" id="t-data" placeholder="DD / MM / AAAA"></div>
       </div>
       <div class="frow two">
