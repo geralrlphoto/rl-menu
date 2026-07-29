@@ -116,22 +116,54 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       const newRef = String(body.referencia).trim()
       if (newRef) {
         const sb = supabase()
-        // Procura a referência ANTERIOR — pelo notion_id OU pelo id (orphan)
+        // Procura a referência ANTERIOR (e o casal do evento) — pelo notion_id OU pelo id (orphan)
         const findOld = async (t: string) => {
-          const { data } = await sb.from(t).select('referencia').or(`notion_id.eq.${id},id.eq.${id}`).maybeSingle()
-          return data?.referencia ?? null
+          const { data } = await sb.from(t).select('referencia, cliente').or(`notion_id.eq.${id},id.eq.${id}`).maybeSingle()
+          return data ? { ref: (data.referencia as string) ?? null, cliente: (data.cliente as string) ?? null } : null
         }
         let oldRef: string | null = null
+        let eventoCliente: string | null = null
         for (const t of ['eventos_2026', 'eventos_2027']) {
-          oldRef = await findOld(t)
-          if (oldRef) break
+          const r = await findOld(t)
+          if (r?.ref) { oldRef = r.ref; eventoCliente = r.cliente; break }
         }
         if (oldRef && oldRef !== newRef) {
           console.log(`[eventos-notion PATCH] Cascading rename: ${oldRef} → ${newRef}`)
-          // dados_contrato_cps
-          await sb.from('dados_contrato_cps')
-            .update({ referencia_evento: newRef })
+          // ── dados_contrato_cps: mover SÓ o contrato deste casal ──────────────
+          // Antes movia-se TODOS os contratos da referência antiga. Se dois
+          // eventos tivessem passado pela mesma referência, arrastava o casal
+          // errado (foi o cruzamento Catarina↔Daniela). Agora:
+          //  • 1 contrato na ref antiga  → move-se (caso normal, inequívoco);
+          //  • vários contratos          → move-se só o que bate com o casal
+          //    deste evento (por nome); se nenhum bater, NÃO se move nenhum.
+          const toks = (s: any) => String(s ?? '').toLowerCase().normalize('NFD')
+            .replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/).filter((w) => w.length >= 3 && !['dos', 'das'].includes(w))
+          const { data: cpsRows } = await sb.from('dados_contrato_cps')
+            .select('id, nome_noivos, nome_noiva, nome_noivo')
             .eq('referencia_evento', oldRef)
+          let idsMover: any[] = []
+          if (cpsRows && cpsRows.length === 1) {
+            idsMover = [cpsRows[0].id]
+          } else if (cpsRows && cpsRows.length > 1) {
+            const alvo = new Set(toks(eventoCliente))
+            let melhor = 0
+            const scored = cpsRows.map((r: any) => {
+              const nome = toks(`${r.nome_noivos ?? ''} ${r.nome_noiva ?? ''} ${r.nome_noivo ?? ''}`)
+              const score = nome.filter((w) => alvo.has(w)).length
+              if (score > melhor) melhor = score
+              return { id: r.id, score }
+            })
+            idsMover = melhor >= 1 ? scored.filter((r) => r.score === melhor).map((r) => r.id) : []
+            if (idsMover.length === 0) {
+              console.warn(`[eventos-notion PATCH] ${cpsRows.length} contratos em ${oldRef} e nenhum bate com "${eventoCliente}" — não migro nenhum para não cruzar casais`)
+            }
+          }
+          if (idsMover.length > 0) {
+            await sb.from('dados_contrato_cps')
+              .update({ referencia_evento: newRef })
+              .in('id', idsMover)
+          }
           // portais (settings.referencia também precisa de atualizar)
           const { data: oldPortal } = await sb.from('portais').select('settings').eq('referencia', oldRef).maybeSingle()
           if (oldPortal) {
