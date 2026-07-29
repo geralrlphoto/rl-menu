@@ -24,7 +24,12 @@ function autorizado(req: NextRequest): boolean {
 
 // GET: lista os pedidos de AQUISIÇÃO DIGITAL ainda por enviar (fotos_enviadas_em
 //   nulo). É o que o robô local precisa para saber o que enviar.
-const norm = (s: any) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
+// Normaliza noivos para comparação tolerante: sem acentos, e ignora o conector
+// entre os nomes ("e", "&", "+", "/") — "Ana e André" = "Ana & André" = "Ana André".
+const norm = (s: any) => String(s ?? '')
+  .toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  .replace(/\s+e\s+/g, ' ').replace(/[&+/]/g, ' ')
+  .replace(/[^a-z0-9]/g, '')
 
 export async function GET(req: NextRequest) {
   if (!autorizado(req)) return NextResponse.json({ error: 'não autorizado' }, { status: 401 })
