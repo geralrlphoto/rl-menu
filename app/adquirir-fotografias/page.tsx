@@ -189,7 +189,7 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Nome dos noivos</label><input type="text" id="f-noivos" placeholder="Ex.: Ana e André" required></div>
-        <div class="field"><label>Data do casamento</label><input type="text" id="f-data" placeholder="DD / MM / AAAA" required></div>
+        <div class="field"><label>Data do casamento</label><input type="date" id="f-data" required style="color-scheme:dark;"></div>
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="f-tel" placeholder="912 000 000" required></div>
@@ -420,7 +420,11 @@ export default function AdquirirFotografiasPage() {
       var nome = (document.getElementById('f-nome') as HTMLInputElement).value.trim()
       var email = (document.getElementById('f-email') as HTMLInputElement).value.trim()
       var noivos = (document.getElementById('f-noivos') as HTMLInputElement).value.trim()
-      var dataCasamento = (document.getElementById('f-data') as HTMLInputElement).value.trim()
+      var dataRaw = (document.getElementById('f-data') as HTMLInputElement).value.trim()
+      // O calendário devolve AAAA-MM-DD; guardamos como DD / MM / AAAA (formato usado nos emails/tickets).
+      var dataCasamento = /^\d{4}-\d{2}-\d{2}$/.test(dataRaw)
+        ? (function () { var p = dataRaw.split('-'); return p[2] + ' / ' + p[1] + ' / ' + p[0] })()
+        : dataRaw
       var tel = (document.getElementById('f-tel') as HTMLInputElement).value.trim()
       var morada = (document.getElementById('f-morada') as HTMLInputElement).value.trim()
       var msg = (document.getElementById('f-msg') as HTMLTextAreaElement).value.trim()

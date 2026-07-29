@@ -151,7 +151,7 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Nome dos noivos</label><input type="text" id="t-noivos" placeholder="Ex.: Ana e André"></div>
-        <div class="field"><label>Data do casamento</label><input type="text" id="t-data" placeholder="DD / MM / AAAA"></div>
+        <div class="field"><label>Data do casamento</label><input type="date" id="t-data" style="color-scheme:dark;"></div>
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="t-tel" placeholder="912 000 000"></div>
@@ -318,7 +318,10 @@ export default function TicketForm() {
       }
       if (qData) {
         var elD = document.getElementById('t-data') as HTMLInputElement
-        elD.value = qData; elD.readOnly = true; elD.classList.add('locked')
+        // O URL traz DD / MM / AAAA; o input de data precisa de AAAA-MM-DD.
+        var mData = qData.replace(/\s/g, '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+        elD.value = mData ? (mData[3] + '-' + mData[2] + '-' + mData[1]) : qData
+        elD.readOnly = true; elD.classList.add('locked')
       }
       syncBtn()
     } catch {}
@@ -340,6 +343,8 @@ export default function TicketForm() {
       var mbway = g('t-mbway')
       var f = fmt(), q = n(), met = metodo()
       var nome = g('t-nome'), email = g('t-email'), noivos = g('t-noivos'), data = g('t-data'), tel = g('t-tel'), morada = g('t-morada'), msg = g('t-msg')
+      // O calendário devolve AAAA-MM-DD; guardamos como DD / MM / AAAA.
+      if (/^\d{4}-\d{2}-\d{2}$/.test(data)) { var dpp = data.split('-'); data = dpp[2] + ' / ' + dpp[1] + ' / ' + dpp[0] }
       var setMsg = (t: string, ok = false) => { var el = document.getElementById('formMsg')!; el.textContent = t; el.className = 'msg ' + (ok ? 'ok' : 'err') }
       if (!respSel.value || !mbway) { setMsg('Seleciona o responsável e a conta MB WAY.'); return }
       if (!nome || !email || !tel || !noivos || !data) { setMsg('Preenche todos os campos do cliente.'); return }
