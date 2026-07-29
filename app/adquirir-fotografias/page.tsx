@@ -193,7 +193,7 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="f-tel" placeholder="912 000 000" required></div>
-        <div class="field"><label>Morada de envio <span class="opt">(para papel)</span></label><input type="text" id="f-morada" placeholder="Rua, nº, código postal, localidade"></div>
+        <div class="field" id="fieldMorada" style="display:none"><label>Morada de envio <span class="opt">(obrigatória para papel)</span></label><input type="text" id="f-morada" placeholder="Rua, nº, código postal, localidade"></div>
       </div>
 
       <div class="field">
@@ -344,6 +344,10 @@ export default function AdquirirFotografiasPage() {
       document.getElementById('recapEntrega')!.textContent = f === 'papel'
         ? 'Impressão e envio por carta registada em até 30 dias úteis.'
         : 'Entrega digital (link de download) em até 15 dias úteis.'
+
+      // Morada só para papel (aí é obrigatória); em digital some.
+      var fm = document.getElementById('fieldMorada')!
+      fm.style.display = f === 'papel' ? '' : 'none'
 
       var hint = document.getElementById('qtyHint')!
       if (f === 'papel') {
