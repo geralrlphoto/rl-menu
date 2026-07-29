@@ -427,7 +427,12 @@ export default function PedidosFotos() {
                   </label>
                   {editField('Responsável', 'responsavel')}
                   {editField('Morada', 'morada')}
-                  {editField('Nº fotografias', 'fotografias')}
+                  <label className="block sm:col-span-2">
+                    <span className="text-[10px] tracking-widest uppercase text-white/40">Nº fotografias <span className="text-white/20 normal-case tracking-normal">(um por linha)</span></span>
+                    <textarea value={editForm.fotografias ?? ''} rows={6}
+                      onChange={e => setEditForm(s => ({ ...s, fotografias: e.target.value }))}
+                      className={inputCls + ' w-full mt-1 resize-y leading-relaxed'} />
+                  </label>
                 </div>
                 <label className="block mt-3">
                   <span className="text-[10px] tracking-widest uppercase text-white/40">Mensagem</span>
