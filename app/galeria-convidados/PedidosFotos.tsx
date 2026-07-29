@@ -95,6 +95,23 @@ export default function PedidosFotos() {
   const [naoEnviar, setNaoEnviar] = useState<Set<string>>(new Set())
   const toggleNaoEnviar = (id: string) => setNaoEnviar(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n })
   const [editandoId, setEditandoId] = useState<string | null>(null)
+  const [enviandoTicket, setEnviandoTicket] = useState<string | null>(null)
+  const [ticketMsg, setTicketMsg] = useState<{ id: string; ok: boolean; txt: string } | null>(null)
+  async function enviarTicket(p: Pedido) {
+    if (!p.email) { setTicketMsg({ id: p.id, ok: false, txt: 'Sem email do cliente.' }); return }
+    if (!confirm(`Enviar o ticket de ${p.pedido} para ${p.email}?`)) return
+    setEnviandoTicket(p.id); setTicketMsg(null)
+    try {
+      const d = await fetch('/api/pedidos-fotos/enviar-ticket', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id }),
+      }).then(r => r.json())
+      setTicketMsg({ id: p.id, ok: !!d.ok, txt: d.ok ? `Ticket enviado para ${d.email}` : (d.error || 'Falha no envio') })
+    } catch (e: any) {
+      setTicketMsg({ id: p.id, ok: false, txt: e.message || 'Erro de rede' })
+    }
+    setEnviandoTicket(null)
+    setTimeout(() => setTicketMsg(null), 8000)
+  }
   const [editForm, setEditForm] = useState<Record<string, any>>({})
   const [editSaving, setEditSaving] = useState(false)
 
@@ -454,7 +471,18 @@ export default function PedidosFotos() {
                     <a href={p.comprovativo_url} target="_blank" rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Ver comprovativo</a>
                   )}
+                  <button onClick={() => enviarTicket(p)} disabled={enviandoTicket === p.id}
+                    title="Reenviar o ticket por email ao cliente"
+                    className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-emerald-400/30 text-emerald-300/90 hover:bg-emerald-400/10 hover:border-emerald-400/60 transition-all disabled:opacity-50">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    {enviandoTicket === p.id ? 'A enviar…' : 'Enviar ticket ao cliente'}
+                  </button>
                 </div>
+                {ticketMsg && ticketMsg.id === p.id && (
+                  <p className={`mt-2 text-[11px] ${ticketMsg.ok ? 'text-emerald-300/85' : 'text-red-400/80'}`}>
+                    {ticketMsg.ok ? '✓ ' : '⚠ '}{ticketMsg.txt}
+                  </p>
+                )}
               </>
             )}
           </div>
