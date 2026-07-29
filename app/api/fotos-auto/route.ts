@@ -96,11 +96,13 @@ export async function POST(req: NextRequest) {
   const pedido = String(b.pedido ?? '').trim()
   const id = String(b.id ?? '').trim()
   const tipo = String(b.tipo ?? 'envio')
+  const erro = String(b.erro ?? '').trim()
   if (!pedido && !id) return NextResponse.json({ error: 'pedido ou id obrigatório' }, { status: 400 })
   const sb = db()
-  const updates = tipo === 'impressao'
-    ? { impressao_preparada_em: new Date().toISOString() }
-    : { fotos_enviadas_em: new Date().toISOString(), estado: 'Entregue' }
+  const updates =
+    tipo === 'impressao' ? { impressao_preparada_em: new Date().toISOString() }
+    : tipo === 'erro'    ? { envio_erro: erro || 'Erro no envio' }  // guarda o motivo; não marca enviado
+    : { fotos_enviadas_em: new Date().toISOString(), estado: 'Entregue', envio_erro: null }  // sucesso limpa o erro
   let q = sb.from('photo_orders').update(updates)
   q = pedido ? q.eq('pedido', pedido) : q.eq('id', id)
   const { error } = await q

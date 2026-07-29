@@ -8,7 +8,7 @@ function db() {
   )
 }
 
-const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, estado, origem, responsavel, metodo_pagamento, mbway_conta, created_at, enviado_para_id, enviado_para_nome, enviado_em, fotos_enviadas_em, impressao_preparada_em'
+const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, estado, origem, responsavel, metodo_pagamento, mbway_conta, created_at, enviado_para_id, enviado_para_nome, enviado_em, fotos_enviadas_em, impressao_preparada_em, envio_erro, envio_auto'
 
 // GET: lista pedidos de fotos (admin). ?referencia=<ref> filtra por casamento.
 export async function GET(req: NextRequest) {

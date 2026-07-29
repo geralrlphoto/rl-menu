@@ -11,6 +11,7 @@ type Pedido = {
   origem: string | null; responsavel: string | null; metodo_pagamento: string | null; mbway_conta: string | null
   enviado_para_id: string | null; enviado_para_ids?: string[] | null; enviado_para_nome: string | null; enviado_em: string | null
   fotos_enviadas_em?: string | null; impressao_preparada_em?: string | null
+  envio_erro?: string | null; envio_auto?: boolean
 }
 type Evento = { referencia: string; cliente: string; data_evento: string }
 type Fotografo = { id: string; nome: string }
@@ -125,7 +126,7 @@ export default function PedidosFotos() {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id }),
       }).then(r => r.json())
       if (d.ok) {
-        setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, estado: 'Aguardar', fotos_enviadas_em: null } : x))
+        setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, estado: 'Aguardar', fotos_enviadas_em: null, envio_erro: null, envio_auto: true } : x))
         setTicketMsg({ id: p.id, ok: true, txt: 'Marcado para envio — o robô envia em breve.' })
       } else {
         setTicketMsg({ id: p.id, ok: false, txt: d.error || 'Falha ao marcar para envio' })
@@ -491,13 +492,16 @@ export default function PedidosFotos() {
                   {p.mensagem && <Info k="Mensagem" v={p.mensagem} />}
                 </div>
                 {/* Estado do envio das fotos (digital) / preparação da impressão (papel) */}
-                {p.formato === 'digital' ? (
-                  <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border ${p.fotos_enviadas_em ? 'border-emerald-500/30 text-emerald-300/90 bg-emerald-500/10' : 'border-amber-500/40 text-amber-300/90 bg-amber-500/10'}`}>
-                    {p.fotos_enviadas_em ? `✓ Fotos enviadas · ${fmtDate(p.fotos_enviadas_em)}` : '⚠ Fotos não enviadas'}
-                  </div>
-                ) : (
-                  <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border ${p.impressao_preparada_em ? 'border-emerald-500/30 text-emerald-300/90 bg-emerald-500/10' : 'border-amber-500/40 text-amber-300/90 bg-amber-500/10'}`}>
-                    {p.impressao_preparada_em ? `✓ Impressão preparada · ${fmtDate(p.impressao_preparada_em)}` : '⚠ Impressão por preparar'}
+                {p.formato === 'digital' ? (() => {
+                  const base = 'mt-3 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border'
+                  if (p.fotos_enviadas_em) return <div className={`${base} border-emerald-500/30 text-emerald-300/90 bg-emerald-500/10`}>✓ Entregue · {fmtDate(p.fotos_enviadas_em)}</div>
+                  if (p.envio_erro) return <div className={`${base} border-red-500/40 text-red-300/90 bg-red-500/10`}>⚠ Não enviado: {p.envio_erro}</div>
+                  const naFila = p.origem === 'adquirir' || p.envio_auto === true
+                  if (naFila) return <div className={`${base} border-blue-400/30 text-blue-300/90 bg-blue-400/10`}>⏳ Envio em espera</div>
+                  return null
+                })() : (
+                  <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border ${p.impressao_preparada_em ? 'border-emerald-500/30 text-emerald-300/90 bg-emerald-500/10' : 'border-blue-400/30 text-blue-300/90 bg-blue-400/10'}`}>
+                    {p.impressao_preparada_em ? `✓ Impressão preparada · ${fmtDate(p.impressao_preparada_em)}` : '⏳ Impressão por preparar'}
                   </div>
                 )}
                 <div className="flex items-center gap-2 mt-3 flex-wrap">

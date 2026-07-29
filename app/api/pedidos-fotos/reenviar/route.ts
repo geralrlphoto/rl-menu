@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id obrigatório' }, { status: 400 })
   const { error } = await db()
     .from('photo_orders')
-    .update({ estado: 'Aguardar', fotos_enviadas_em: null, envio_auto: true })
+    .update({ estado: 'Aguardar', fotos_enviadas_em: null, envio_auto: true, envio_erro: null })
     .eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
