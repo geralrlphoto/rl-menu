@@ -46,12 +46,14 @@ export async function GET(req: NextRequest) {
   // sejam aquisições por link (origem='adquirir') OU tickets marcados com envio
   // automático (envio_auto=true).
   const COLS = 'id, pedido, nome, email, noivos, data_casamento, formato, quantidade, fotografias'
-  // Com o interruptor ligado, envia TUDO o que está em "Aguardar" (digital),
-  // seja aquisição por link ou ticket. "Entregue" nunca é reenviado; o que já
-  // foi enviado tem fotos_enviadas_em preenchido e é ignorado.
+  // Elegíveis para envio automático: digitais em "Aguardar" (não enviados) que
+  // sejam aquisições por link (origem=adquirir) OU tickets marcados pelo
+  // responsável com envio automático (envio_auto=true). O toggle do ticket
+  // decide. "Entregue" nunca é reenviado.
   const { data: dig, error } = await sb
     .from('photo_orders').select(COLS)
     .eq('formato', 'digital').eq('estado', 'Aguardar').is('fotos_enviadas_em', null)
+    .or('origem.eq.adquirir,envio_auto.eq.true')
     .order('created_at', { ascending: true }).limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   // Papel por preparar (copiar para a subpasta Impressão). Traz os campos todos
