@@ -96,6 +96,19 @@ const CSS = `
 .tkt .sent h2 em{font-style:italic;color:var(--g);}
 .tkt .sent p{color:var(--tx-mid);max-width:46ch;margin:18px auto 0;line-height:1.7;}
 .tkt .sent .recap{font-family:var(--fm);font-size:12px;color:var(--g);margin-top:20px;}
+.tkt .cal-wrap{position:relative;}
+.tkt .cal-pop{position:absolute;z-index:60;top:calc(100% + 8px);left:0;width:290px;max-width:92vw;background:#15110b;border:1px solid var(--line);border-radius:14px;padding:14px;display:none;box-shadow:0 24px 60px rgba(0,0,0,.65);}
+.tkt .cal-pop.open{display:block;}
+.tkt .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.tkt .cal-nav{background:transparent;border:1px solid var(--line-soft);color:var(--g);font-size:16px;line-height:1;cursor:pointer;width:30px;height:30px;border-radius:8px;}
+.tkt .cal-nav:hover{border-color:var(--g);}
+.tkt .cal-title{font-family:var(--fd);font-weight:300;color:var(--tx);font-size:16px;}
+.tkt .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.tkt .cal-dow{font-family:var(--fm);font-size:9px;color:var(--tx-dim);text-align:center;padding:4px 0;text-transform:uppercase;}
+.tkt .cal-day{aspect-ratio:1;border:none;background:transparent;color:var(--tx);border-radius:9px;cursor:pointer;font-family:var(--fd);font-weight:300;font-size:14px;}
+.tkt .cal-day:hover{background:rgba(216,190,147,.14);}
+.tkt .cal-day.sel{background:var(--g);color:#0b0a08;}
+.tkt .cal-day.empty{visibility:hidden;cursor:default;}
 `
 
 const BODY = `
@@ -151,7 +164,7 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Nome dos noivos</label><input type="text" id="t-noivos" placeholder="Ex.: Ana e André"></div>
-        <div class="field"><label>Data do casamento</label><input type="date" id="t-data" lang="pt-PT" style="color-scheme:dark;"></div>
+        <div class="field"><label>Data do casamento</label><div class="cal-wrap"><input type="text" id="t-data" placeholder="DD / MM / AAAA" readonly autocomplete="off" style="cursor:pointer;"></div></div>
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="t-tel" placeholder="912 000 000"></div>
@@ -306,6 +319,49 @@ export default function TicketForm() {
     })
     checkGate()
 
+    /* Calendário próprio em pt-PT (não abre se a data vier bloqueada do link) */
+    function montarCalendario(inputId: string) {
+      var inp = document.getElementById(inputId) as HTMLInputElement
+      if (!inp || !inp.parentElement) return
+      var MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+      var DOW = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+      var wrap = inp.parentElement
+      var pop = document.createElement('div'); pop.className = 'cal-pop'; wrap.appendChild(pop)
+      var hoje = new Date()
+      var view = { y: hoje.getFullYear(), m: hoje.getMonth() }
+      var sel: { y: number; m: number; d: number } | null = null
+      function pad(n: number) { return (n < 10 ? '0' : '') + n }
+      function foraListener(e: MouseEvent) { if (!wrap.contains(e.target as Node)) { fechar() } }
+      function fechar() { pop.classList.remove('open'); document.removeEventListener('mousedown', foraListener) }
+      function abrir() { if (inp.classList.contains('locked')) return; render(); pop.classList.add('open'); document.addEventListener('mousedown', foraListener) }
+      function render() {
+        var inicioDow = (new Date(view.y, view.m, 1).getDay() + 6) % 7
+        var diasNoMes = new Date(view.y, view.m + 1, 0).getDate()
+        var html = '<div class="cal-head"><button type="button" class="cal-nav" data-nav="-1">‹</button><span class="cal-title">' + MESES[view.m] + ' ' + view.y + '</span><button type="button" class="cal-nav" data-nav="1">›</button></div><div class="cal-grid">'
+        for (var i = 0; i < 7; i++) html += '<div class="cal-dow">' + DOW[i] + '</div>'
+        for (var e2 = 0; e2 < inicioDow; e2++) html += '<button type="button" class="cal-day empty"></button>'
+        for (var d = 1; d <= diasNoMes; d++) {
+          var isSel = !!(sel && sel.y === view.y && sel.m === view.m && sel.d === d)
+          html += '<button type="button" class="cal-day' + (isSel ? ' sel' : '') + '" data-d="' + d + '">' + d + '</button>'
+        }
+        pop.innerHTML = html + '</div>'
+        pop.querySelectorAll('.cal-nav').forEach(function (b) {
+          b.addEventListener('click', function () { view.m += parseInt((b as HTMLElement).dataset.nav!, 10); if (view.m < 0) { view.m = 11; view.y-- } if (view.m > 11) { view.m = 0; view.y++ } render() })
+        })
+        pop.querySelectorAll('.cal-day[data-d]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var d = parseInt((b as HTMLElement).dataset.d!, 10)
+            sel = { y: view.y, m: view.m, d: d }
+            inp.value = pad(d) + ' / ' + pad(view.m + 1) + ' / ' + view.y
+            fechar(); inp.dispatchEvent(new Event('input', { bubbles: true }))
+          })
+        })
+      }
+      inp.addEventListener('click', abrir)
+      inp.addEventListener('focus', abrir)
+    }
+    montarCalendario('t-data')
+
     // Pré-preenchimento via URL (vindo do portal do membro): noivos + data do
     // casamento. Ficam bloqueados, pois o ticket pertence àquele casamento.
     try {
@@ -318,10 +374,7 @@ export default function TicketForm() {
       }
       if (qData) {
         var elD = document.getElementById('t-data') as HTMLInputElement
-        // O URL traz DD / MM / AAAA; o input de data precisa de AAAA-MM-DD.
-        var mData = qData.replace(/\s/g, '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-        elD.value = mData ? (mData[3] + '-' + mData[2] + '-' + mData[1]) : qData
-        elD.readOnly = true; elD.classList.add('locked')
+        elD.value = qData; elD.readOnly = true; elD.classList.add('locked')
       }
       syncBtn()
     } catch {}
@@ -343,8 +396,6 @@ export default function TicketForm() {
       var mbway = g('t-mbway')
       var f = fmt(), q = n(), met = metodo()
       var nome = g('t-nome'), email = g('t-email'), noivos = g('t-noivos'), data = g('t-data'), tel = g('t-tel'), morada = g('t-morada'), msg = g('t-msg')
-      // O calendário devolve AAAA-MM-DD; guardamos como DD / MM / AAAA.
-      if (/^\d{4}-\d{2}-\d{2}$/.test(data)) { var dpp = data.split('-'); data = dpp[2] + ' / ' + dpp[1] + ' / ' + dpp[0] }
       var setMsg = (t: string, ok = false) => { var el = document.getElementById('formMsg')!; el.textContent = t; el.className = 'msg ' + (ok ? 'ok' : 'err') }
       if (!respSel.value || !mbway) { setMsg('Seleciona o responsável e a conta MB WAY.'); return }
       if (!nome || !email || !tel || !noivos || !data) { setMsg('Preenche todos os campos do cliente.'); return }
