@@ -70,6 +70,15 @@ export async function POST(req: NextRequest) {
     if (!referencia) return NextResponse.json({ error: 'referencia required' }, { status: 400 })
 
     const db = supabase()
+
+    // Preserva as definições já existentes do portal (password, hiddenNav,
+    // notificações, conteúdos, datas de entrega, etc.). Sem isto, (re)criar um
+    // portal com este upsert apagava tudo — nomeadamente a password do portal,
+    // que deixava de aparecer no login dos noivos e no card enviado ao cliente.
+    const { data: existing } = await db
+      .from('portais').select('settings').ilike('referencia', referencia).maybeSingle()
+    const base = (existing?.settings ?? {}) as Record<string, any>
+
     const row = {
       referencia,
       noiva: noiva ?? null,
@@ -78,17 +87,18 @@ export async function POST(req: NextRequest) {
       data_formatada: formatDate(data),
       local: local ?? null,
       settings: {
+        ...base, // mantém password e restantes definições já guardadas
         referencia,
         noiva: noiva ?? '',
         noivo: noivo ?? '',
         data: data ?? '',
         dataFormatada: formatDate(data),
         local: local ?? '',
-        valorFoto: valorFoto ?? null,
-        valorVideo: valorVideo ?? null,
-        valorExtras: valorExtras ?? null,
-        tipoPortal: tipoPortal ?? 'casamento',
-        hiddenNav: [],
+        valorFoto: valorFoto ?? base.valorFoto ?? null,
+        valorVideo: valorVideo ?? base.valorVideo ?? null,
+        valorExtras: valorExtras ?? base.valorExtras ?? null,
+        tipoPortal: tipoPortal ?? base.tipoPortal ?? 'casamento',
+        hiddenNav: base.hiddenNav ?? [],
       },
       updated_at: new Date().toISOString(),
     }
