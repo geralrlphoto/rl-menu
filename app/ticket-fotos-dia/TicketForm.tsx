@@ -151,7 +151,7 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Nome dos noivos</label><input type="text" id="t-noivos" placeholder="Ex.: Ana e André"></div>
-        <div class="field"><label>Data do casamento</label><input type="date" id="t-data" style="color-scheme:dark;"></div>
+        <div class="field"><label>Data do casamento</label><input type="date" id="t-data" lang="pt-PT" style="color-scheme:dark;"></div>
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="t-tel" placeholder="912 000 000"></div>
