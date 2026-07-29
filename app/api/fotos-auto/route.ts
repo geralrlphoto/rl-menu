@@ -41,19 +41,20 @@ export async function GET(req: NextRequest) {
   // sejam aquisições por link (origem='adquirir') OU tickets marcados com envio
   // automático (envio_auto=true).
   const COLS = 'id, pedido, nome, email, noivos, data_casamento, formato, quantidade, fotografias'
-  // Digitais por enviar (aquisições ou tickets com envio_auto).
+  // Digitais por enviar (aquisições ou tickets com envio_auto). "Entregue"
+  // (mesmo marcado à mão) é paragem definitiva — nunca reenvia.
   const { data: dig, error } = await sb
     .from('photo_orders').select(COLS)
-    .eq('formato', 'digital').is('fotos_enviadas_em', null)
+    .eq('formato', 'digital').is('fotos_enviadas_em', null).neq('estado', 'Entregue')
     .or('origem.eq.adquirir,envio_auto.eq.true')
     .order('created_at', { ascending: true }).limit(200)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   // Papel por preparar (copiar para a subpasta Impressão). Traz os campos todos
-  // para gerar a cópia do ticket idêntica à do cliente.
+  // para gerar a cópia do ticket idêntica à do cliente. "Entregue" nunca é tratado.
   const { data: pap } = await sb
     .from('photo_orders')
     .select('id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, fotografias, responsavel, metodo_pagamento, mbway_conta, created_at')
-    .eq('formato', 'papel').is('impressao_preparada_em', null)
+    .eq('formato', 'papel').is('impressao_preparada_em', null).neq('estado', 'Entregue')
     .order('created_at', { ascending: true }).limit(200)
 
   const pendentes = dig ?? []
