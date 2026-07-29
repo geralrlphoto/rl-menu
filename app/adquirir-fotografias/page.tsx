@@ -159,6 +159,19 @@ const CSS = `
 .adqf .foot{background:var(--ink-2);border-top:1px solid var(--line-soft);padding:clamp(40px,6vh,70px) 0;text-align:center;}
 .adqf .foot .fm{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-dim);}
 .adqf .foot a{color:var(--g);}
+.adqf .cal-wrap{position:relative;}
+.adqf .cal-pop{position:absolute;z-index:60;top:calc(100% + 8px);left:0;width:290px;max-width:92vw;background:#15110b;border:1px solid var(--line);border-radius:14px;padding:14px;display:none;box-shadow:0 24px 60px rgba(0,0,0,.65);}
+.adqf .cal-pop.open{display:block;}
+.adqf .cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.adqf .cal-nav{background:transparent;border:1px solid var(--line-soft);color:var(--g);font-size:16px;line-height:1;cursor:pointer;width:30px;height:30px;border-radius:8px;}
+.adqf .cal-nav:hover{border-color:var(--g);}
+.adqf .cal-title{font-family:var(--fd);font-weight:300;color:var(--tx);font-size:16px;}
+.adqf .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.adqf .cal-dow{font-family:var(--fm);font-size:9px;color:var(--tx-dim);text-align:center;padding:4px 0;text-transform:uppercase;}
+.adqf .cal-day{aspect-ratio:1;border:none;background:transparent;color:var(--tx);border-radius:9px;cursor:pointer;font-family:var(--fd);font-weight:300;font-size:14px;}
+.adqf .cal-day:hover{background:rgba(216,190,147,.14);}
+.adqf .cal-day.sel{background:var(--g);color:#0b0a08;}
+.adqf .cal-day.empty{visibility:hidden;cursor:default;}
 `
 
 const BODY = `
@@ -189,7 +202,7 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Nome dos noivos</label><input type="text" id="f-noivos" placeholder="Ex.: Ana e André" required></div>
-        <div class="field"><label>Data do casamento</label><input type="date" id="f-data" required lang="pt-PT" style="color-scheme:dark;"></div>
+        <div class="field"><label>Data do casamento</label><div class="cal-wrap"><input type="text" id="f-data" placeholder="DD / MM / AAAA" readonly required autocomplete="off" style="cursor:pointer;"></div></div>
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="f-tel" placeholder="912 000 000" required></div>
@@ -372,6 +385,49 @@ export default function AdquirirFotografiasPage() {
     })
 
     update()
+
+    /* Calendário próprio em pt-PT (igual em todos os browsers) */
+    function montarCalendario(inputId: string) {
+      var inp = document.getElementById(inputId) as HTMLInputElement
+      if (!inp || !inp.parentElement) return
+      var MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+      var DOW = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+      var wrap = inp.parentElement
+      var pop = document.createElement('div'); pop.className = 'cal-pop'; wrap.appendChild(pop)
+      var hoje = new Date()
+      var view = { y: hoje.getFullYear(), m: hoje.getMonth() }
+      var sel: { y: number; m: number; d: number } | null = null
+      function pad(n: number) { return (n < 10 ? '0' : '') + n }
+      function foraListener(e: MouseEvent) { if (!wrap.contains(e.target as Node)) { fechar() } }
+      function fechar() { pop.classList.remove('open'); document.removeEventListener('mousedown', foraListener) }
+      function abrir() { render(); pop.classList.add('open'); document.addEventListener('mousedown', foraListener) }
+      function render() {
+        var inicioDow = (new Date(view.y, view.m, 1).getDay() + 6) % 7
+        var diasNoMes = new Date(view.y, view.m + 1, 0).getDate()
+        var html = '<div class="cal-head"><button type="button" class="cal-nav" data-nav="-1">‹</button><span class="cal-title">' + MESES[view.m] + ' ' + view.y + '</span><button type="button" class="cal-nav" data-nav="1">›</button></div><div class="cal-grid">'
+        for (var i = 0; i < 7; i++) html += '<div class="cal-dow">' + DOW[i] + '</div>'
+        for (var e2 = 0; e2 < inicioDow; e2++) html += '<button type="button" class="cal-day empty"></button>'
+        for (var d = 1; d <= diasNoMes; d++) {
+          var isSel = !!(sel && sel.y === view.y && sel.m === view.m && sel.d === d)
+          html += '<button type="button" class="cal-day' + (isSel ? ' sel' : '') + '" data-d="' + d + '">' + d + '</button>'
+        }
+        pop.innerHTML = html + '</div>'
+        pop.querySelectorAll('.cal-nav').forEach(function (b) {
+          b.addEventListener('click', function () { view.m += parseInt((b as HTMLElement).dataset.nav!, 10); if (view.m < 0) { view.m = 11; view.y-- } if (view.m > 11) { view.m = 0; view.y++ } render() })
+        })
+        pop.querySelectorAll('.cal-day[data-d]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            var d = parseInt((b as HTMLElement).dataset.d!, 10)
+            sel = { y: view.y, m: view.m, d: d }
+            inp.value = pad(d) + ' / ' + pad(view.m + 1) + ' / ' + view.y
+            fechar(); inp.dispatchEvent(new Event('input', { bubbles: true }))
+          })
+        })
+      }
+      inp.addEventListener('click', abrir)
+      inp.addEventListener('focus', abrir)
+    }
+    montarCalendario('f-data')
 
     /* upload comprovativo */
     var upBox = document.getElementById('upload')!
