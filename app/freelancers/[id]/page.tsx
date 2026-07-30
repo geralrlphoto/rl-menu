@@ -3994,10 +3994,13 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
            encomendas (sobretudo as de papel/impressão) ficariam invisíveis. */}
       {(() => {
         const meusNoivos = new Set(casamentos.map(c => normNoiv(c.nome_noivos)).filter(Boolean))
-        const totalEnc = encomendas.length
-        const nPapel = encomendas.filter(isPapelEnc).length
+        // Só entram as encomendas feitas por TICKET do dia. As aquisições por
+        // link/galeria não pertencem a esta secção do perfil do fotógrafo.
+        const tickets = encomendas.filter(e => String(e.origem ?? '') === 'ticket')
+        const totalEnc = tickets.length
+        const nPapel = tickets.filter(isPapelEnc).length
         const nDigital = totalEnc - nPapel
-        const filtrada = encomendas
+        const filtrada = tickets
           .filter(e => encFmt === 'todas' ? true : encFmt === 'papel' ? isPapelEnc(e) : !isPapelEnc(e))
         // Agrupa as encomendas por casamento (noivos + data, tolerante a variações
         // de escrita) — tickets do dia e aquisições por link ficam juntos no
@@ -4020,7 +4023,6 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
         })
         const renderRow = (e: any) => {
           const papel = isPapelEnc(e)
-          const isTicket = String(e.origem ?? '') === 'ticket'
           const entregue = String(e.estado ?? '') === 'Entregue'
           const aberto = encAberto === e.id
           const fotos = String(e.fotografias ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean)
@@ -4036,11 +4038,6 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
                       <span className={`text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold ${papel ? 'border-amber-400/35 bg-amber-400/10 text-amber-300/90' : 'border-blue-400/30 bg-blue-400/10 text-blue-300/90'}`}>
                         {papel ? 'Papel' : 'Digital'}
                       </span>
-                      {isTicket && (
-                        <span className="text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold" style={{ background: 'rgba(147,112,219,0.12)', borderColor: 'rgba(147,112,219,0.3)', color: '#c4b5fd' }} title="Ticket de fotos do dia">
-                          Ticket
-                        </span>
-                      )}
                     </span>
                     <span className="block text-[11px] text-white/45 mt-0.5 truncate">
                       {e.quantidade} foto(s) · {eurEnc(e.total)}
@@ -4093,10 +4090,10 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
             <div className="flex items-start justify-between gap-3 flex-wrap">
               <div>
                 <p className="text-[12px] tracking-[0.35em] text-gold/70 uppercase font-light flex items-center gap-2">
-                  <span>📦</span> Encomendas enviadas a ti {totalEnc > 0 && <span className="text-white/35">· {totalEnc}</span>}
+                  <span>📦</span> Encomendas por ticket do dia {totalEnc > 0 && <span className="text-white/35">· {totalEnc}</span>}
                 </p>
                 <p className="text-[12px] text-white/45 mt-1 leading-relaxed max-w-lg">
-                  Fotos que o RL te enviou para tratares — inclui casamentos que <b className="text-white/60">não estão na tua agenda</b>. As de <span className="text-amber-300/80">papel</span> são para impressão.
+                  Fotos vendidas por <b className="text-white/60">ticket do dia</b> — inclui casamentos que não estão na tua agenda. As de <span className="text-amber-300/80">papel</span> são para impressão.
                 </p>
               </div>
               {totalEnc > 0 && (
@@ -4110,7 +4107,7 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
 
             {totalEnc === 0 ? (
               <div className="rounded-xl border border-dashed border-white/10 py-6 text-center">
-                <p className="text-[12px] text-white/35">Ainda não recebeste encomendas de fotografias.</p>
+                <p className="text-[12px] text-white/35">Ainda não há encomendas por ticket do dia.</p>
               </div>
             ) : (
               <div className="space-y-2.5">
