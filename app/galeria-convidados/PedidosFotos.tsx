@@ -527,7 +527,7 @@ export default function PedidosFotos() {
                   return null
                 })() : (
                   <div className={`mt-3 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border ${p.impressao_preparada_em ? 'border-emerald-500/30 text-emerald-300/90 bg-emerald-500/10' : 'border-blue-400/30 text-blue-300/90 bg-blue-400/10'}`}>
-                    {p.impressao_preparada_em ? `✓ Impressão preparada · ${fmtDate(p.impressao_preparada_em)}` : '⏳ Impressão por preparar'}
+                    {p.impressao_preparada_em ? `✓ Pasta criada · ${fmtDate(p.impressao_preparada_em)}` : '⏳ Impressão por preparar'}
                   </div>
                 )}
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
