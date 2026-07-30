@@ -4114,6 +4114,7 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
                 {grupos.map(g => {
                   const naAgenda = g.key !== '__sem__' && meusNoivos.has(normNoiv(g.noivos))
                   const gPapel = g.itens.filter(isPapelEnc).length
+                  const gTotal = g.itens.reduce((s, e) => s + Number(e.total || 0), 0)
                   return (
                     <div key={g.key} className="rounded-xl border border-white/[0.06] overflow-hidden bg-black/20">
                       {/* Cabeçalho do casamento */}
@@ -4126,7 +4127,7 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
                             {g.data && <span className="text-white/45 text-[12px]"> · {g.data}</span>}
                           </p>
                           <p className="text-[10px] text-white/35 mt-0.5">
-                            {g.itens.length} encomenda(s){gPapel ? ` · ${gPapel} papel` : ''}
+                            {g.itens.length} encomenda(s){gPapel ? ` · ${gPapel} papel` : ''} · <span className="text-gold/80 font-semibold">{eurEnc(gTotal)}</span>
                           </p>
                         </div>
                         {!naAgenda && (
