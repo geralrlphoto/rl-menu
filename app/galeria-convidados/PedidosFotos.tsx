@@ -114,6 +114,32 @@ export default function PedidosFotos() {
     setEnviandoTicket(null)
     setTimeout(() => setTicketMsg(null), 8000)
   }
+  const [fazendoPastaId, setFazendoPastaId] = useState<string | null>(null)
+  // "Fazer Pasta" (papel): repõe impressao_preparada_em a null para o robô local
+  // recriar a subpasta Impressão desta encomenda na próxima passagem. Serve para
+  // re-pedir uma encomenda específica depois de corrigir uma foto em falta.
+  async function fazerPasta(p: Pedido) {
+    const jaPreparada = !!p.impressao_preparada_em
+    if (!confirm(jaPreparada
+      ? `Refazer a pasta de impressão de ${p.pedido}? O robô volta a copiar as fotos para a subpasta Impressão na próxima passagem.`
+      : `Preparar a pasta de impressão de ${p.pedido}? O robô cria a subpasta Impressão na próxima passagem (se as fotos existirem).`)) return
+    setFazendoPastaId(p.id); setTicketMsg(null)
+    try {
+      const d = await fetch('/api/pedidos-fotos/fazer-pasta', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id }),
+      }).then(r => r.json())
+      if (d.ok) {
+        setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, impressao_preparada_em: null } : x))
+        setTicketMsg({ id: p.id, ok: true, txt: 'Pedido — o robô prepara a pasta em breve.' })
+      } else {
+        setTicketMsg({ id: p.id, ok: false, txt: d.error || 'Falha ao pedir a pasta' })
+      }
+    } catch (e: any) {
+      setTicketMsg({ id: p.id, ok: false, txt: e.message || 'Erro de rede' })
+    }
+    setFazendoPastaId(null)
+    setTimeout(() => setTicketMsg(null), 8000)
+  }
   const [reenviandoId, setReenviandoId] = useState<string | null>(null)
   async function reenviarFotos(p: Pedido) {
     const jaEnviado = !!p.fotos_enviadas_em
@@ -526,6 +552,14 @@ export default function PedidosFotos() {
                       className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-blue-400/30 text-blue-300/90 hover:bg-blue-400/10 hover:border-blue-400/60 transition-all disabled:opacity-50">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                       {reenviandoId === p.id ? 'A marcar…' : (p.fotos_enviadas_em ? 'Enviar de novo' : 'Enviar fotos')}
+                    </button>
+                  )}
+                  {p.formato === 'papel' && (
+                    <button onClick={() => fazerPasta(p)} disabled={fazendoPastaId === p.id}
+                      title="Pede ao robô para criar a subpasta Impressão desta encomenda na próxima passagem (usa depois de corrigir fotos em falta)"
+                      className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-amber-400/30 text-amber-300/90 hover:bg-amber-400/10 hover:border-amber-400/60 transition-all disabled:opacity-50">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V7z"/></svg>
+                      {fazendoPastaId === p.id ? 'A pedir…' : (p.impressao_preparada_em ? 'Refazer pasta' : 'Fazer pasta')}
                     </button>
                   )}
                 </div>
