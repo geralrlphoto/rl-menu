@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
   // para gerar a cópia do ticket idêntica à do cliente. "Entregue" nunca é tratado.
   const { data: pap } = await sb
     .from('photo_orders')
-    .select('id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, fotografias, responsavel, metodo_pagamento, mbway_conta, created_at')
+    .select('id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, fotografias, responsavel, metodo_pagamento, mbway_conta, origem, created_at')
     .eq('formato', 'papel').is('impressao_preparada_em', null).neq('estado', 'Entregue')
     .order('created_at', { ascending: true }).limit(200)
 
