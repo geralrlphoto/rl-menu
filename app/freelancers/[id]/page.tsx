@@ -1747,7 +1747,7 @@ function FreelancerDetailInner() {
 
       {/* Tab content */}
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
-      {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} onRefresh={load} />}
+      {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
       {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} disponibilidade={disponibilidade} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
@@ -2128,8 +2128,6 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   const encomendasFiltradas = encomendasList.filter(e => encomendaDoCasamento(e, encomendasCasamento))
   // Filtro por formato (todas / papel / digital) dentro do modal.
   const [encFormato, setEncFormato] = useState<'todas' | 'papel' | 'digital'>('todas')
-  // Filtro por formato da SECÇÃO "Encomendas enviadas a ti" (independente do modal).
-  const [secEncFmt, setSecEncFmt] = useState<'todas' | 'papel' | 'digital'>('todas')
   const isPapel = (e: any) => String(e.formato ?? '').toLowerCase() === 'papel'
   const encPapelCount = encomendasFiltradas.filter(isPapel).length
   const encDigitalCount = encomendasFiltradas.length - encPapelCount
@@ -2181,21 +2179,6 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
     } catch {}
     setApagandoId(null)
   }
-
-  // Carrega as encomendas enviadas a este fotógrafo assim que a aba abre, para
-  // as mostrar numa secção própria — inclui casamentos que NÃO estão atribuídos
-  // a este membro, cujas encomendas (sobretudo as de papel/impressão) não
-  // apareceriam em mais lado nenhum no perfil.
-  useEffect(() => {
-    if (freelancerStatus === 'VIDEOGRAFO') return
-    let vivo = true
-    fetch(`/api/freelancer-encomendas?freelancer_id=${encodeURIComponent(freelancerId)}`)
-      .then(r => r.json())
-      .then(d => { if (vivo) setEncomendasList(Array.isArray(d?.encomendas) ? d.encomendas : []) })
-      .catch(() => {})
-    return () => { vivo = false }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [freelancerId, freelancerStatus])
 
   async function saveIntro() {
     if (!freelancer) return
@@ -2336,93 +2319,6 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
         </div>
         <p className="text-[12px] text-white/45 mt-3">{filtered.length} {filtered.length === 1 ? 'evento' : 'eventos'} · {casamentos.length} no total</p>
       </div>
-
-      {/* ── ENCOMENDAS ENVIADAS A ESTE MEMBRO ───────────────────────────
-           Fotos encomendadas (via /galeria-convidados → "Enviar a…") que o
-           admin atribuiu a este fotógrafo. Aparecem aqui mesmo quando o
-           casamento NÃO está na agenda deste membro — caso contrário as
-           encomendas (sobretudo as de papel/impressão) ficariam invisíveis. */}
-      {freelancerStatus !== 'VIDEOGRAFO' && (() => {
-        const meusNoivos = new Set(casamentos.map(c => normEnc(c.nome_noivos)).filter(Boolean))
-        const total = encomendasList.length
-        const nPapel = encomendasList.filter(isPapel).length
-        const nDigital = total - nPapel
-        const lista = encomendasList
-          .filter(e => secEncFmt === 'todas' ? true : secEncFmt === 'papel' ? isPapel(e) : !isPapel(e))
-          // Papel primeiro (precisam de impressão), depois por mais recente.
-          .sort((a, b) => (Number(isPapel(b)) - Number(isPapel(a))) || String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))
-        const SecFmtBtn = ({ id, label, n }: { id: 'todas' | 'papel' | 'digital'; label: string; n: number }) => (
-          <button onClick={() => setSecEncFmt(id)}
-            className={`text-[10px] px-2.5 py-1 rounded-full border tracking-wide uppercase transition-all ${secEncFmt === id ? 'border-gold/60 bg-gold/10 text-gold' : 'border-white/10 text-white/45 hover:text-white/70 hover:border-white/25'}`}>
-            {label} · {n}
-          </button>
-        )
-        return (
-          <div className="rounded-2xl border border-gold/15 px-5 py-4 space-y-3"
-            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.55))' }}>
-            <div className="flex items-start justify-between gap-3 flex-wrap">
-              <div>
-                <p className="text-[12px] tracking-[0.35em] text-gold/70 uppercase font-light flex items-center gap-2">
-                  <span>📦</span> Encomendas enviadas a ti {total > 0 && <span className="text-white/35">· {total}</span>}
-                </p>
-                <p className="text-[12px] text-white/45 mt-1 leading-relaxed max-w-lg">
-                  Fotos que o RL te enviou para tratares — inclui casamentos que <b className="text-white/60">não estão na tua agenda</b>. As de <span className="text-amber-300/80">papel</span> são para impressão.
-                </p>
-              </div>
-              {total > 0 && (
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <SecFmtBtn id="todas" label="Todas" n={total} />
-                  <SecFmtBtn id="papel" label="Papel" n={nPapel} />
-                  <SecFmtBtn id="digital" label="Digital" n={nDigital} />
-                </div>
-              )}
-            </div>
-
-            {total === 0 ? (
-              <div className="rounded-xl border border-dashed border-white/10 py-6 text-center">
-                <p className="text-[12px] text-white/35">Ainda não recebeste encomendas de fotografias.</p>
-              </div>
-            ) : (
-              <div className="rounded-xl border border-white/[0.06] overflow-hidden divide-y divide-white/[0.05] bg-black/20">
-                {lista.map(e => {
-                  const papel = isPapel(e)
-                  const naAgenda = meusNoivos.has(normEnc(e.noivos))
-                  const entregue = String(e.estado ?? '') === 'Entregue'
-                  return (
-                    <div key={e.id} className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[13px] font-semibold text-gold">{e.pedido}</span>
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold ${papel ? 'border-amber-400/35 bg-amber-400/10 text-amber-300/90' : 'border-blue-400/30 bg-blue-400/10 text-blue-300/90'}`}>
-                            {papel ? 'Papel' : 'Digital'}
-                          </span>
-                          {!naAgenda && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-white/12 text-white/40 tracking-wide uppercase" title="Este casamento não está atribuído a ti na tua agenda">
-                              fora da agenda
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-white/45 mt-0.5 truncate">
-                          {e.nome}{e.noivos ? ` · ${e.noivos}` : ''} · {e.quantidade} foto(s)
-                        </p>
-                      </div>
-                      <select value={entregue ? 'Entregue' : 'Aguardar'} onChange={ev => updateEstadoEncomenda(e, ev.target.value)}
-                        title="Estado da encomenda" disabled={estadoSavingId === e.id}
-                        className="border rounded-lg px-2.5 py-1.5 text-[11px] font-semibold tracking-wide focus:outline-none cursor-pointer [color-scheme:dark] shrink-0"
-                        style={entregue
-                          ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#6ee7b7' }
-                          : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.30)', color: '#fcd34d' }}>
-                        <option value="Aguardar" className="bg-[#0e0c08] text-white">Aguardar</option>
-                        <option value="Entregue" className="bg-[#0e0c08] text-white">Entregue</option>
-                      </select>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )
-      })()}
 
       {/* ── TEXTO INTRO (editável, recolhido) ───────────────────────── */}
       <div className="rounded-2xl border border-white/[0.06] px-5 py-4 space-y-2"
@@ -3789,7 +3685,7 @@ function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete, selecaoL
 
 // ─── Edição Tab (Kanban) ──────────────────────────────────────────────────────
 
-function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; edicao: Edicao[]; onRefresh: () => void }) {
+function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancerId: string; edicao: Edicao[]; casamentos: Casamento[]; onRefresh: () => void }) {
   const [editing, setEditing] = useState<Edicao | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Edicao>>({})
@@ -3857,6 +3753,33 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
   async function changeStatus(job: Edicao, newStatus: string) {
     await fetch('/api/freelancer-edicao', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: job.id, status: newStatus }) })
     onRefresh()
+  }
+
+  // ── Encomendas de fotos enviadas a este membro ──────────────────────────────
+  // Fotos encomendadas em /galeria-convidados que o admin atribuiu a este
+  // fotógrafo (Enviar a…). Aparecem aqui mesmo quando o casamento NÃO está na
+  // agenda dele — de outro modo as encomendas (sobretudo as de papel/impressão)
+  // ficariam invisíveis no perfil.
+  const [encomendas, setEncomendas] = useState<any[]>([])
+  const [encFmt, setEncFmt] = useState<'todas' | 'papel' | 'digital'>('todas')
+  const [encEstadoSaving, setEncEstadoSaving] = useState<string | null>(null)
+  const isPapelEnc = (e: any) => String(e.formato ?? '').toLowerCase() === 'papel'
+  const normNoiv = (s: any) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
+  useEffect(() => {
+    let vivo = true
+    fetch(`/api/freelancer-encomendas?freelancer_id=${encodeURIComponent(freelancerId)}`)
+      .then(r => r.json())
+      .then(d => { if (vivo) setEncomendas(Array.isArray(d?.encomendas) ? d.encomendas : []) })
+      .catch(() => {})
+    return () => { vivo = false }
+  }, [freelancerId])
+  async function setEstadoEnc(e: any, novo: string) {
+    setEncEstadoSaving(e.id)
+    try {
+      await fetch('/api/freelancer-encomendas', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: e.id, estado: novo, freelancer_id: freelancerId }) })
+      setEncomendas(prev => prev.map(x => x.id === e.id ? { ...x, estado: novo } : x))
+    } catch {}
+    setEncEstadoSaving(null)
   }
 
   // KPIs
@@ -4054,6 +3977,93 @@ function EdicaoTab({ freelancerId, edicao, onRefresh }: { freelancerId: string; 
           )
         })}
       </div>
+
+      {/* ── ENCOMENDAS ENVIADAS A ESTE MEMBRO ───────────────────────────
+           Fotos encomendadas (via /galeria-convidados → "Enviar a…") que o
+           admin atribuiu a este fotógrafo. Aparecem aqui mesmo quando o
+           casamento NÃO está na agenda deste membro — caso contrário as
+           encomendas (sobretudo as de papel/impressão) ficariam invisíveis. */}
+      {(() => {
+        const meusNoivos = new Set(casamentos.map(c => normNoiv(c.nome_noivos)).filter(Boolean))
+        const totalEnc = encomendas.length
+        const nPapel = encomendas.filter(isPapelEnc).length
+        const nDigital = totalEnc - nPapel
+        const lista = encomendas
+          .filter(e => encFmt === 'todas' ? true : encFmt === 'papel' ? isPapelEnc(e) : !isPapelEnc(e))
+          // Papel primeiro (precisam de impressão), depois por mais recente.
+          .sort((a, b) => (Number(isPapelEnc(b)) - Number(isPapelEnc(a))) || String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))
+        const FmtBtn = ({ id, label, n }: { id: 'todas' | 'papel' | 'digital'; label: string; n: number }) => (
+          <button onClick={() => setEncFmt(id)}
+            className={`text-[10px] px-2.5 py-1 rounded-full border tracking-wide uppercase transition-all ${encFmt === id ? 'border-gold/60 bg-gold/10 text-gold' : 'border-white/10 text-white/45 hover:text-white/70 hover:border-white/25'}`}>
+            {label} · {n}
+          </button>
+        )
+        return (
+          <div className="rounded-2xl border border-gold/15 px-5 py-4 space-y-3"
+            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.35), rgba(11,11,11,0.55))' }}>
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <p className="text-[12px] tracking-[0.35em] text-gold/70 uppercase font-light flex items-center gap-2">
+                  <span>📦</span> Encomendas enviadas a ti {totalEnc > 0 && <span className="text-white/35">· {totalEnc}</span>}
+                </p>
+                <p className="text-[12px] text-white/45 mt-1 leading-relaxed max-w-lg">
+                  Fotos que o RL te enviou para tratares — inclui casamentos que <b className="text-white/60">não estão na tua agenda</b>. As de <span className="text-amber-300/80">papel</span> são para impressão.
+                </p>
+              </div>
+              {totalEnc > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <FmtBtn id="todas" label="Todas" n={totalEnc} />
+                  <FmtBtn id="papel" label="Papel" n={nPapel} />
+                  <FmtBtn id="digital" label="Digital" n={nDigital} />
+                </div>
+              )}
+            </div>
+
+            {totalEnc === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/10 py-6 text-center">
+                <p className="text-[12px] text-white/35">Ainda não recebeste encomendas de fotografias.</p>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-white/[0.06] overflow-hidden divide-y divide-white/[0.05] bg-black/20">
+                {lista.map(e => {
+                  const papel = isPapelEnc(e)
+                  const naAgenda = meusNoivos.has(normNoiv(e.noivos))
+                  const entregue = String(e.estado ?? '') === 'Entregue'
+                  return (
+                    <div key={e.id} className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-[13px] font-semibold text-gold">{e.pedido}</span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold ${papel ? 'border-amber-400/35 bg-amber-400/10 text-amber-300/90' : 'border-blue-400/30 bg-blue-400/10 text-blue-300/90'}`}>
+                            {papel ? 'Papel' : 'Digital'}
+                          </span>
+                          {!naAgenda && (
+                            <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-white/12 text-white/40 tracking-wide uppercase" title="Este casamento não está atribuído a ti na tua agenda">
+                              fora da agenda
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-white/45 mt-0.5 truncate">
+                          {e.nome}{e.noivos ? ` · ${e.noivos}` : ''} · {e.quantidade} foto(s)
+                        </p>
+                      </div>
+                      <select value={entregue ? 'Entregue' : 'Aguardar'} onChange={ev => setEstadoEnc(e, ev.target.value)}
+                        title="Estado da encomenda" disabled={encEstadoSaving === e.id}
+                        className="border rounded-lg px-2.5 py-1.5 text-[11px] font-semibold tracking-wide focus:outline-none cursor-pointer [color-scheme:dark] shrink-0"
+                        style={entregue
+                          ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#6ee7b7' }
+                          : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.30)', color: '#fcd34d' }}>
+                        <option value="Aguardar" className="bg-[#0e0c08] text-white">Aguardar</option>
+                        <option value="Entregue" className="bg-[#0e0c08] text-white">Entregue</option>
+                      </select>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )
+      })()}
 
       {/* ── Modal Preview: Seleção dos Noivos (inline) ───────────────────── */}
       {(selecaoPreview || selecaoError) && typeof document !== 'undefined' && createPortal(
