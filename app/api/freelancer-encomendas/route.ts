@@ -10,7 +10,7 @@ function db() {
   )
 }
 
-const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, estado, metodo_pagamento, created_at, enviado_para_nome, enviado_em'
+const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, estado, origem, metodo_pagamento, created_at, enviado_para_nome, enviado_em'
 
 // GET: encomendas de fotos enviadas a um fotógrafo (?freelancer_id=<id>).
 //   Lido pelo portal do membro (botão "Ver Encomendas"). Sem auth admin —

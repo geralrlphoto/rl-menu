@@ -3997,10 +3997,90 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
         const totalEnc = encomendas.length
         const nPapel = encomendas.filter(isPapelEnc).length
         const nDigital = totalEnc - nPapel
-        const lista = encomendas
+        const filtrada = encomendas
           .filter(e => encFmt === 'todas' ? true : encFmt === 'papel' ? isPapelEnc(e) : !isPapelEnc(e))
-          // Papel primeiro (precisam de impressão), depois por mais recente.
-          .sort((a, b) => (Number(isPapelEnc(b)) - Number(isPapelEnc(a))) || String(b.created_at ?? '').localeCompare(String(a.created_at ?? '')))
+        // Agrupa as encomendas por casamento (noivos + data, tolerante a variações
+        // de escrita) — tickets do dia e aquisições por link ficam juntos no
+        // casamento a que pertencem.
+        const normD = (s: any) => String(s ?? '').replace(/\D/g, '')
+        const gmap = new Map<string, { key: string; noivos: string; data: string; itens: any[] }>()
+        for (const e of filtrada) {
+          const nk = normNoiv(e.noivos), dk = normD(e.data_casamento)
+          const key = (nk || dk) ? `${nk}__${dk}` : '__sem__'
+          if (!gmap.has(key)) gmap.set(key, { key, noivos: e.noivos || '', data: e.data_casamento || '', itens: [] })
+          gmap.get(key)!.itens.push(e)
+        }
+        const grupos = Array.from(gmap.values())
+        grupos.forEach(g => g.itens.sort((a, b) => (Number(isPapelEnc(b)) - Number(isPapelEnc(a))) || String(b.created_at ?? '').localeCompare(String(a.created_at ?? ''))))
+        // Casamentos com papel primeiro (precisam de impressão); "sem casamento" no fim.
+        grupos.sort((a, b) => {
+          const aSem = a.key === '__sem__' ? 1 : 0, bSem = b.key === '__sem__' ? 1 : 0
+          if (aSem !== bSem) return aSem - bSem
+          return (a.itens.some(isPapelEnc) ? 0 : 1) - (b.itens.some(isPapelEnc) ? 0 : 1)
+        })
+        const renderRow = (e: any) => {
+          const papel = isPapelEnc(e)
+          const isTicket = String(e.origem ?? '') === 'ticket'
+          const entregue = String(e.estado ?? '') === 'Entregue'
+          const aberto = encAberto === e.id
+          const fotos = String(e.fotografias ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean)
+          return (
+            <div key={e.id}>
+              <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
+                <button onClick={() => setEncAberto(aberto ? null : e.id)} className="flex items-start gap-2.5 min-w-0 text-left flex-1">
+                  <span className="text-white/30 text-[12px] w-3 shrink-0 mt-0.5">{aberto ? '▾' : '▸'}</span>
+                  <span className="min-w-0">
+                    <span className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[13px] font-semibold text-gold">{e.pedido}</span>
+                      {e.nome && <span className="text-[13px] text-white/80">· {e.nome}</span>}
+                      <span className={`text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold ${papel ? 'border-amber-400/35 bg-amber-400/10 text-amber-300/90' : 'border-blue-400/30 bg-blue-400/10 text-blue-300/90'}`}>
+                        {papel ? 'Papel' : 'Digital'}
+                      </span>
+                      {isTicket && (
+                        <span className="text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold" style={{ background: 'rgba(147,112,219,0.12)', borderColor: 'rgba(147,112,219,0.3)', color: '#c4b5fd' }} title="Ticket de fotos do dia">
+                          Ticket
+                        </span>
+                      )}
+                    </span>
+                    <span className="block text-[11px] text-white/45 mt-0.5 truncate">
+                      {e.quantidade} foto(s) · {eurEnc(e.total)}
+                    </span>
+                  </span>
+                </button>
+                <select value={entregue ? 'Entregue' : 'Aguardar'} onChange={ev => setEstadoEnc(e, ev.target.value)}
+                  title="Estado da encomenda" disabled={encEstadoSaving === e.id}
+                  className="border rounded-lg px-2.5 py-1.5 text-[11px] font-semibold tracking-wide focus:outline-none cursor-pointer [color-scheme:dark] shrink-0"
+                  style={entregue
+                    ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#6ee7b7' }
+                    : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.30)', color: '#fcd34d' }}>
+                  <option value="Aguardar" className="bg-[#0e0c08] text-white">Aguardar</option>
+                  <option value="Entregue" className="bg-[#0e0c08] text-white">Entregue</option>
+                </select>
+              </div>
+
+              {aberto && (
+                <div className="px-4 pb-4 pt-0 ml-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-[12px] rounded-xl border border-white/[0.06] bg-black/20 p-4">
+                    <EncInfo k="Email" v={e.email} />
+                    <EncInfo k="Telefone" v={e.telefone} />
+                    <EncInfo k="Noivos" v={e.noivos} />
+                    <EncInfo k="Data casamento" v={e.data_casamento} />
+                    <EncInfo k="Subtotal / portes" v={`${eurEnc(e.subtotal)} + ${Number(e.portes || 0) > 0 ? eurEnc(e.portes) : 'grátis'}`} />
+                    <EncInfo k="Recebido em" v={dataRecebido(e.created_at)} />
+                    {e.metodo_pagamento && <EncInfo k="Pagamento" v={e.metodo_pagamento} />}
+                    {e.morada && <EncInfo k="Morada" v={e.morada} />}
+                    {fotos.length > 0 && <EncInfo k="Nº fotografias" v={fotos.join(', ')} />}
+                    {e.mensagem && <EncInfo k="Mensagem" v={e.mensagem} />}
+                  </div>
+                  {e.comprovativo_url && (
+                    <a href={e.comprovativo_url} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 mt-3 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Ver comprovativo</a>
+                  )}
+                </div>
+              )}
+            </div>
+          )
+        }
         const FmtBtn = ({ id, label, n }: { id: 'todas' | 'papel' | 'digital'; label: string; n: number }) => (
           <button onClick={() => setEncFmt(id)}
             className={`text-[10px] px-2.5 py-1 rounded-full border tracking-wide uppercase transition-all ${encFmt === id ? 'border-gold/60 bg-gold/10 text-gold' : 'border-white/10 text-white/45 hover:text-white/70 hover:border-white/25'}`}>
@@ -4033,67 +4113,35 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
                 <p className="text-[12px] text-white/35">Ainda não recebeste encomendas de fotografias.</p>
               </div>
             ) : (
-              <div className="rounded-xl border border-white/[0.06] overflow-hidden divide-y divide-white/[0.05] bg-black/20">
-                {lista.map(e => {
-                  const papel = isPapelEnc(e)
-                  const naAgenda = meusNoivos.has(normNoiv(e.noivos))
-                  const entregue = String(e.estado ?? '') === 'Entregue'
-                  const aberto = encAberto === e.id
-                  const fotos = String(e.fotografias ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean)
+              <div className="space-y-2.5">
+                {grupos.map(g => {
+                  const naAgenda = g.key !== '__sem__' && meusNoivos.has(normNoiv(g.noivos))
+                  const gPapel = g.itens.filter(isPapelEnc).length
                   return (
-                    <div key={e.id}>
-                      <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
-                        <button onClick={() => setEncAberto(aberto ? null : e.id)} className="flex items-start gap-2.5 min-w-0 text-left flex-1">
-                          <span className="text-white/30 text-[12px] w-3 shrink-0 mt-0.5">{aberto ? '▾' : '▸'}</span>
-                          <span className="min-w-0">
-                            <span className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[13px] font-semibold text-gold">{e.pedido}</span>
-                              {e.nome && <span className="text-[13px] text-white/80">· {e.nome}</span>}
-                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold ${papel ? 'border-amber-400/35 bg-amber-400/10 text-amber-300/90' : 'border-blue-400/30 bg-blue-400/10 text-blue-300/90'}`}>
-                                {papel ? 'Papel' : 'Digital'}
-                              </span>
-                              {!naAgenda && (
-                                <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-white/12 text-white/40 tracking-wide uppercase" title="Este casamento não está atribuído a ti na tua agenda">
-                                  fora da agenda
-                                </span>
-                              )}
-                            </span>
-                            <span className="block text-[11px] text-white/45 mt-0.5 truncate">
-                              {e.quantidade} foto(s) · {eurEnc(e.total)}{e.noivos ? ` · ${e.noivos}` : ''}
-                            </span>
-                          </span>
-                        </button>
-                        <select value={entregue ? 'Entregue' : 'Aguardar'} onChange={ev => setEstadoEnc(e, ev.target.value)}
-                          title="Estado da encomenda" disabled={encEstadoSaving === e.id}
-                          className="border rounded-lg px-2.5 py-1.5 text-[11px] font-semibold tracking-wide focus:outline-none cursor-pointer [color-scheme:dark] shrink-0"
-                          style={entregue
-                            ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#6ee7b7' }
-                            : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.30)', color: '#fcd34d' }}>
-                          <option value="Aguardar" className="bg-[#0e0c08] text-white">Aguardar</option>
-                          <option value="Entregue" className="bg-[#0e0c08] text-white">Entregue</option>
-                        </select>
-                      </div>
-
-                      {aberto && (
-                        <div className="px-4 pb-4 pt-0 ml-6">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-[12px] rounded-xl border border-white/[0.06] bg-black/20 p-4">
-                            <EncInfo k="Email" v={e.email} />
-                            <EncInfo k="Telefone" v={e.telefone} />
-                            <EncInfo k="Noivos" v={e.noivos} />
-                            <EncInfo k="Data casamento" v={e.data_casamento} />
-                            <EncInfo k="Subtotal / portes" v={`${eurEnc(e.subtotal)} + ${Number(e.portes || 0) > 0 ? eurEnc(e.portes) : 'grátis'}`} />
-                            <EncInfo k="Recebido em" v={dataRecebido(e.created_at)} />
-                            {e.metodo_pagamento && <EncInfo k="Pagamento" v={e.metodo_pagamento} />}
-                            {e.morada && <EncInfo k="Morada" v={e.morada} />}
-                            {fotos.length > 0 && <EncInfo k="Nº fotografias" v={fotos.join(', ')} />}
-                            {e.mensagem && <EncInfo k="Mensagem" v={e.mensagem} />}
-                          </div>
-                          {e.comprovativo_url && (
-                            <a href={e.comprovativo_url} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 mt-3 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Ver comprovativo</a>
-                          )}
+                    <div key={g.key} className="rounded-xl border border-white/[0.06] overflow-hidden bg-black/20">
+                      {/* Cabeçalho do casamento */}
+                      <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.02] flex-wrap">
+                        <div className="min-w-0">
+                          <p className="text-[13px] text-white/90 truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                            {g.noivos
+                              ? <>Casamento <span className="italic text-gold">{g.noivos}</span></>
+                              : <span className="text-white/55">Sem casamento definido</span>}
+                            {g.data && <span className="text-white/45 text-[12px]"> · {g.data}</span>}
+                          </p>
+                          <p className="text-[10px] text-white/35 mt-0.5">
+                            {g.itens.length} encomenda(s){gPapel ? ` · ${gPapel} papel` : ''}
+                          </p>
                         </div>
-                      )}
+                        {!naAgenda && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-white/12 text-white/40 tracking-wide uppercase shrink-0" title="Este casamento não está atribuído a ti na tua agenda">
+                            fora da agenda
+                          </span>
+                        )}
+                      </div>
+                      {/* Encomendas do casamento */}
+                      <div className="divide-y divide-white/[0.05]">
+                        {g.itens.map(renderRow)}
+                      </div>
                     </div>
                   )
                 })}
