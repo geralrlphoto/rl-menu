@@ -3685,6 +3685,12 @@ function AlbumForm({ form, setForm, saving, onSave, onCancel, onDelete, selecaoL
 
 // ─── Edição Tab (Kanban) ──────────────────────────────────────────────────────
 
+// Linha de detalhe (chave: valor) usada no painel expandido das encomendas.
+function EncInfo({ k, v }: { k: string; v: any }) {
+  if (!v) return null
+  return <p className="text-white/70"><span className="text-white/40">{k}: </span>{v}</p>
+}
+
 function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancerId: string; edicao: Edicao[]; casamentos: Casamento[]; onRefresh: () => void }) {
   const [editing, setEditing] = useState<Edicao | null>(null)
   const [showAdd, setShowAdd] = useState(false)
@@ -3763,6 +3769,9 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
   const [encomendas, setEncomendas] = useState<any[]>([])
   const [encFmt, setEncFmt] = useState<'todas' | 'papel' | 'digital'>('todas')
   const [encEstadoSaving, setEncEstadoSaving] = useState<string | null>(null)
+  const [encAberto, setEncAberto] = useState<string | null>(null)
+  const eurEnc = (n: any) => `${Number(n || 0).toFixed(2)} €`
+  const dataRecebido = (iso: any) => { try { return new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' }) } catch { return String(iso ?? '') } }
   const isPapelEnc = (e: any) => String(e.formato ?? '').toLowerCase() === 'papel'
   const normNoiv = (s: any) => String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]/g, '')
   useEffect(() => {
@@ -4029,33 +4038,62 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
                   const papel = isPapelEnc(e)
                   const naAgenda = meusNoivos.has(normNoiv(e.noivos))
                   const entregue = String(e.estado ?? '') === 'Entregue'
+                  const aberto = encAberto === e.id
+                  const fotos = String(e.fotografias ?? '').split(/\r?\n/).map(s => s.trim()).filter(Boolean)
                   return (
-                    <div key={e.id} className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-[13px] font-semibold text-gold">{e.pedido}</span>
-                          <span className={`text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold ${papel ? 'border-amber-400/35 bg-amber-400/10 text-amber-300/90' : 'border-blue-400/30 bg-blue-400/10 text-blue-300/90'}`}>
-                            {papel ? 'Papel' : 'Digital'}
-                          </span>
-                          {!naAgenda && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-white/12 text-white/40 tracking-wide uppercase" title="Este casamento não está atribuído a ti na tua agenda">
-                              fora da agenda
+                    <div key={e.id}>
+                      <div className="flex items-center justify-between gap-3 px-4 py-3 flex-wrap">
+                        <button onClick={() => setEncAberto(aberto ? null : e.id)} className="flex items-start gap-2.5 min-w-0 text-left flex-1">
+                          <span className="text-white/30 text-[12px] w-3 shrink-0 mt-0.5">{aberto ? '▾' : '▸'}</span>
+                          <span className="min-w-0">
+                            <span className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[13px] font-semibold text-gold">{e.pedido}</span>
+                              {e.nome && <span className="text-[13px] text-white/80">· {e.nome}</span>}
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full border tracking-widest uppercase font-bold ${papel ? 'border-amber-400/35 bg-amber-400/10 text-amber-300/90' : 'border-blue-400/30 bg-blue-400/10 text-blue-300/90'}`}>
+                                {papel ? 'Papel' : 'Digital'}
+                              </span>
+                              {!naAgenda && (
+                                <span className="text-[9px] px-1.5 py-0.5 rounded-full border border-white/12 text-white/40 tracking-wide uppercase" title="Este casamento não está atribuído a ti na tua agenda">
+                                  fora da agenda
+                                </span>
+                              )}
                             </span>
+                            <span className="block text-[11px] text-white/45 mt-0.5 truncate">
+                              {e.quantidade} foto(s) · {eurEnc(e.total)}{e.noivos ? ` · ${e.noivos}` : ''}
+                            </span>
+                          </span>
+                        </button>
+                        <select value={entregue ? 'Entregue' : 'Aguardar'} onChange={ev => setEstadoEnc(e, ev.target.value)}
+                          title="Estado da encomenda" disabled={encEstadoSaving === e.id}
+                          className="border rounded-lg px-2.5 py-1.5 text-[11px] font-semibold tracking-wide focus:outline-none cursor-pointer [color-scheme:dark] shrink-0"
+                          style={entregue
+                            ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#6ee7b7' }
+                            : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.30)', color: '#fcd34d' }}>
+                          <option value="Aguardar" className="bg-[#0e0c08] text-white">Aguardar</option>
+                          <option value="Entregue" className="bg-[#0e0c08] text-white">Entregue</option>
+                        </select>
+                      </div>
+
+                      {aberto && (
+                        <div className="px-4 pb-4 pt-0 ml-6">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-[12px] rounded-xl border border-white/[0.06] bg-black/20 p-4">
+                            <EncInfo k="Email" v={e.email} />
+                            <EncInfo k="Telefone" v={e.telefone} />
+                            <EncInfo k="Noivos" v={e.noivos} />
+                            <EncInfo k="Data casamento" v={e.data_casamento} />
+                            <EncInfo k="Subtotal / portes" v={`${eurEnc(e.subtotal)} + ${Number(e.portes || 0) > 0 ? eurEnc(e.portes) : 'grátis'}`} />
+                            <EncInfo k="Recebido em" v={dataRecebido(e.created_at)} />
+                            {e.metodo_pagamento && <EncInfo k="Pagamento" v={e.metodo_pagamento} />}
+                            {e.morada && <EncInfo k="Morada" v={e.morada} />}
+                            {fotos.length > 0 && <EncInfo k="Nº fotografias" v={fotos.join(', ')} />}
+                            {e.mensagem && <EncInfo k="Mensagem" v={e.mensagem} />}
+                          </div>
+                          {e.comprovativo_url && (
+                            <a href={e.comprovativo_url} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 mt-3 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">↗ Ver comprovativo</a>
                           )}
                         </div>
-                        <p className="text-[11px] text-white/45 mt-0.5 truncate">
-                          {e.nome}{e.noivos ? ` · ${e.noivos}` : ''} · {e.quantidade} foto(s)
-                        </p>
-                      </div>
-                      <select value={entregue ? 'Entregue' : 'Aguardar'} onChange={ev => setEstadoEnc(e, ev.target.value)}
-                        title="Estado da encomenda" disabled={encEstadoSaving === e.id}
-                        className="border rounded-lg px-2.5 py-1.5 text-[11px] font-semibold tracking-wide focus:outline-none cursor-pointer [color-scheme:dark] shrink-0"
-                        style={entregue
-                          ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#6ee7b7' }
-                          : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.30)', color: '#fcd34d' }}>
-                        <option value="Aguardar" className="bg-[#0e0c08] text-white">Aguardar</option>
-                        <option value="Entregue" className="bg-[#0e0c08] text-white">Entregue</option>
-                      </select>
+                      )}
                     </div>
                   )
                 })}
