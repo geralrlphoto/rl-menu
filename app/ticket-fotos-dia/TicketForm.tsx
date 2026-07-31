@@ -205,6 +205,7 @@ const BODY = `
       <div class="sline" id="linePortes" style="display:none"><div class="k">Portes</div><div class="v" id="recapPortes">&mdash;</div></div>
       <div class="stotal"><div class="k">Total</div><div class="v" id="recapTotal">5&euro;</div></div>
       <button class="btn" type="submit" form="ticketForm" id="btnSubmit" disabled>Confirmar pedido</button>
+      <p class="note" id="btnHint"></p>
       <p class="note">Envia ao cliente e ao responsável. Fica guardado em Pedidos de Fotos.</p>
       <p class="msg" id="formMsg"></p>
     </aside>
@@ -276,16 +277,31 @@ export default function TicketForm() {
       syncBtn()
     }
     function gv(id: string) { return (document.getElementById(id) as HTMLInputElement).value.trim() }
-    function allFilled() {
-      if (!resp.value || !mbwaySel.value) return false
-      if (!gv('t-nome') || !gv('t-email') || !gv('t-tel') || !gv('t-noivos') || !gv('t-data')) return false
-      if (fmt() === 'papel' && !gv('t-morada')) return false
+    // Lista dos campos ainda por preencher — usada para ativar o botão e para
+    // explicar ao utilizador o que falta (evita a sensação de "não deixa confirmar").
+    function faltam() {
+      var m: string[] = []
+      if (!resp.value) m.push('responsável')
+      if (!mbwaySel.value) m.push('conta MB WAY')
+      if (!gv('t-nome')) m.push('nome do cliente')
+      if (!gv('t-email')) m.push('email')
+      if (!gv('t-tel')) m.push('contacto')
+      if (!gv('t-noivos')) m.push('nome dos noivos')
+      if (!gv('t-data')) m.push('data do casamento')
+      if (fmt() === 'papel' && !gv('t-morada')) m.push('morada')
       var inputs = Array.prototype.slice.call(fotoList.querySelectorAll('.fotorow input')) as HTMLInputElement[]
-      if (inputs.length === 0 || inputs.some(i => !i.value.trim())) return false
-      if (!metodo()) return false
-      return true
+      if (inputs.length === 0 || inputs.some(i => !i.value.trim())) m.push('nº das fotografias')
+      if (!metodo()) m.push('método de pagamento')
+      return m
     }
-    function syncBtn() { var b = document.getElementById('btnSubmit') as HTMLButtonElement | null; if (b) b.disabled = !allFilled() }
+    function allFilled() { return faltam().length === 0 }
+    function syncBtn() {
+      var b = document.getElementById('btnSubmit') as HTMLButtonElement | null
+      var m = faltam()
+      if (b) b.disabled = m.length > 0
+      var h = document.getElementById('btnHint')
+      if (h) h.textContent = m.length ? ('Falta preencher: ' + m.join(', ') + '.') : ''
+    }
     function updateMbway() {
       var v = mbwaySel.value
       var parts = v.split(' - ')
@@ -439,13 +455,17 @@ export default function TicketForm() {
       }
     })
 
-    // Novo pedido — limpa só os dados do cliente/pedido; mantém o responsável, a
-    // conta MB WAY e também o casamento (noivos + data). Estes últimos pertencem
-    // ao casamento e podem vir bloqueados do link do portal: se fossem limpos,
-    // ficavam vazios e sem forma de os repreencher, deixando o botão "Confirmar
-    // pedido" desativado para sempre. Se for outro casamento, basta editá-los.
+    // Novo pedido — limpa os dados do cliente/pedido; mantém o responsável + conta
+    // MB WAY. Noivos + data pertencem ao CASAMENTO e tratam-se conforme a origem:
+    //   · Bloqueados (vieram do link do portal de um casamento específico, com a
+    //     sua data): mantêm-se. Repreenchê-los seria impossível e deixaria o botão
+    //     preso — e como trazem a data exata, não há ambiguidade.
+    //   · Escritos à mão: limpam-se, para obrigar a indicar explicitamente o
+    //     casamento de cada pedido. Assim nunca se misturam dois casamentos com o
+    //     mesmo nome (ex.: "Ana e Rui") mas datas/eventos diferentes.
     document.getElementById('btnNovo')!.addEventListener('click', function () {
       ;['t-nome', 't-email', 't-tel', 't-morada', 't-msg'].forEach(function (id) { var el = document.getElementById(id) as HTMLInputElement | null; if (el) el.value = '' })
+      ;['t-noivos', 't-data'].forEach(function (id) { var el = document.getElementById(id) as HTMLInputElement | null; if (el && !el.classList.contains('locked')) el.value = '' })
       seg.querySelectorAll('label').forEach(l => l.classList.remove('on')); (seg.querySelector('label[data-val="digital"]') as HTMLElement).classList.add('on')
       segM.querySelectorAll('label').forEach(l => l.classList.remove('on')); (segM.querySelector('label[data-val="Numerário"]') as HTMLElement).classList.add('on')
       fotoList.innerHTML = ''; addRow()
