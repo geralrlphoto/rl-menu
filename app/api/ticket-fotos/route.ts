@@ -13,11 +13,21 @@ function db() {
 
 async function sendEmail(payload: Record<string, any>) {
   if (!process.env.RESEND_API_KEY) return
-  await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  })
+  // Timeout curto: o email do comprovativo nunca pode pendurar a confirmação
+  // do pedido. Se o Resend demorar, abortamos e seguimos — o pedido já ficou
+  // registado na base de dados.
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), 8000)
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal,
+    })
+  } finally {
+    clearTimeout(t)
+  }
 }
 
 // POST: cria um ticket de fotos/dia (sem comprovativo). Guarda em photo_orders
@@ -88,12 +98,21 @@ export async function POST(req: NextRequest) {
     const { error: insErr } = await supabase.from('photo_orders').insert(reg)
     if (insErr) throw new Error(insErr.message)
 
-    const html = buildTicketHtml(reg)
-    const to: string[] = []
-    if (responsavel_email && responsavel_email.includes('@')) to.push(responsavel_email)
-    if (email && email.includes('@')) to.push(email)  // cliente que adquiriu
-    const recipients = Array.from(new Set(to))
-    await sendEmail({ from: FROM_EMAIL, to: recipients, reply_to: email || undefined, subject: `Comprovativo de aquisição de fotografias — ${pedido}`, html })
+    // O comprovativo por email NÃO pode bloquear nem derrubar a confirmação:
+    // o pedido já está gravado. Se o envio falhar/demorar, devolvemos ok na
+    // mesma e o comprovativo pode ser reenviado depois a partir da galeria.
+    try {
+      const html = buildTicketHtml(reg)
+      const to: string[] = []
+      if (responsavel_email && responsavel_email.includes('@')) to.push(responsavel_email)
+      if (email && email.includes('@')) to.push(email)  // cliente que adquiriu
+      const recipients = Array.from(new Set(to))
+      if (recipients.length) {
+        await sendEmail({ from: FROM_EMAIL, to: recipients, reply_to: email || undefined, subject: `Comprovativo de aquisição de fotografias — ${pedido}`, html })
+      }
+    } catch (mailErr: any) {
+      console.error('[ticket-fotos] comprovativo não enviado (pedido registado):', mailErr?.message)
+    }
 
     return NextResponse.json({ ok: true, pedido })
   } catch (err: any) {

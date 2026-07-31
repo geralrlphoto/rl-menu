@@ -405,11 +405,15 @@ export default function TicketForm() {
       var sub = q * PRICE, portes = (f === 'papel' && q < FREE) ? PORTES : 0, total = sub + portes
       var btn = document.getElementById('btnSubmit') as HTMLButtonElement
       btn.disabled = true; btn.textContent = 'A registar…'
+      var ctrl = new AbortController()
+      var to = setTimeout(function () { ctrl.abort() }, 25000)
       try {
         var res = await fetch('/api/ticket-fotos', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ responsavel, responsavel_id: respSel.value, responsavel_email, mbway_conta: mbway, metodo_pagamento: met, nome, email, telefone: tel, noivos, data_casamento: data, morada, formato: f, quantidade: q, subtotal: sub, portes, total, fotografias: fotosVal(), mensagem: msg, envio_auto: envioAuto() }),
+          signal: ctrl.signal,
         })
+        clearTimeout(to)
         var dd = await res.json().catch(() => ({}))
         if (res.ok && dd?.ok) {
           document.getElementById('orderBlock')!.style.display = 'none'
@@ -424,7 +428,15 @@ export default function TicketForm() {
           document.getElementById('sentRecap')!.innerHTML = recap.join(' · ')
           s.scrollIntoView({ behavior: 'smooth', block: 'center' })
         } else { setMsg(dd?.error || 'Não foi possível registar o ticket.'); btn.disabled = false; btn.textContent = 'Confirmar pedido' }
-      } catch { setMsg('Erro de rede. Tenta novamente.'); btn.disabled = false; btn.textContent = 'Confirmar pedido' }
+      } catch (err: any) {
+        clearTimeout(to)
+        if (err && err.name === 'AbortError') {
+          setMsg('O pedido demorou a responder — pode já ter sido registado. Verifica em Pedidos de Fotos antes de repetir.')
+        } else {
+          setMsg('Erro de rede. Tenta novamente.')
+        }
+        btn.disabled = false; btn.textContent = 'Confirmar pedido'
+      }
     })
 
     // Novo pedido — limpa só os dados do pedido; mantém o responsável + conta MB WAY.
