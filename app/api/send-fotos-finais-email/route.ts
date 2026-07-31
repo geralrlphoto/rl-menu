@@ -77,6 +77,20 @@ export async function POST(req: NextRequest) {
                 </tr>
               </table>
 
+              <!-- Nota: telas / canvas -->
+              <table cellpadding="0" cellspacing="0" style="margin:0 auto 44px;width:100%;max-width:420px;border-top:1px solid #3a3120;">
+                <tr>
+                  <td style="padding:30px 8px 0;text-align:center;font-family:Georgia,'Times New Roman',serif;">
+                    <p style="margin:0 0 10px;font-size:9px;letter-spacing:0.4em;color:#8a7450;text-transform:uppercase;">
+                      QUEREM UMA TELA?
+                    </p>
+                    <p style="margin:0;font-size:14px;color:#d4c9b0;line-height:1.75;">
+                      Se mais tarde quiserem transformar alguma destas fotografias numa <strong style="color:#ffffff;">tela</strong> para a vossa casa, é só entrarem em contacto connosco. Teremos todo o gosto em tratar disso convosco.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+
 
               <!-- Footer -->
               <p style="margin:0;font-size:9px;letter-spacing:0.35em;color:#5a4f3a;text-transform:uppercase;">
