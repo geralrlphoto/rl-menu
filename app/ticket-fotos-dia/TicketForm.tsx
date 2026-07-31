@@ -439,9 +439,13 @@ export default function TicketForm() {
       }
     })
 
-    // Novo pedido — limpa só os dados do pedido; mantém o responsável + conta MB WAY.
+    // Novo pedido — limpa só os dados do cliente/pedido; mantém o responsável, a
+    // conta MB WAY e também o casamento (noivos + data). Estes últimos pertencem
+    // ao casamento e podem vir bloqueados do link do portal: se fossem limpos,
+    // ficavam vazios e sem forma de os repreencher, deixando o botão "Confirmar
+    // pedido" desativado para sempre. Se for outro casamento, basta editá-los.
     document.getElementById('btnNovo')!.addEventListener('click', function () {
-      ;['t-nome', 't-email', 't-noivos', 't-data', 't-tel', 't-morada', 't-msg'].forEach(function (id) { var el = document.getElementById(id) as HTMLInputElement | null; if (el) el.value = '' })
+      ;['t-nome', 't-email', 't-tel', 't-morada', 't-msg'].forEach(function (id) { var el = document.getElementById(id) as HTMLInputElement | null; if (el) el.value = '' })
       seg.querySelectorAll('label').forEach(l => l.classList.remove('on')); (seg.querySelector('label[data-val="digital"]') as HTMLElement).classList.add('on')
       segM.querySelectorAll('label').forEach(l => l.classList.remove('on')); (segM.querySelector('label[data-val="Numerário"]') as HTMLElement).classList.add('on')
       fotoList.innerHTML = ''; addRow()
