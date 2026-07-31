@@ -69,17 +69,49 @@ export async function GET(req: NextRequest) {
   // Nada a fazer (o caso normal) → devolve já. Poupa egress.
   if (pendentes.length === 0 && papel.length === 0) return NextResponse.json({ pendentes: [], papel: [] })
 
-  // Resolve a pasta de cada pedido pelo nome dos noivos → evento (campo
-  // pasta_fotos da ficha). Uma única leitura serve os dois grupos.
-  const { data: evs } = await sb.from('eventos_2026').select('cliente, referencia, pasta_fotos').not('pasta_fotos', 'is', null)
-  const mapa = new Map<string, string>()
-  for (const ev of (evs ?? []) as any[]) {
-    if (ev.pasta_fotos) {
-      if (ev.cliente) mapa.set(norm(ev.cliente), ev.pasta_fotos)
-      if (ev.referencia) mapa.set(norm(ev.referencia), ev.pasta_fotos)
-    }
+  // Resolve a pasta de cada pedido → evento (campo pasta_fotos da ficha).
+  // IMPORTANTE: dois casamentos podem ter o MESMO nome de noivos em datas
+  // diferentes (ex.: "Ana e Rui" a 27/06 e "ANA E RUI" a 31/07). Resolver só
+  // pelo nome faria colisão e misturava as pastas. Por isso a chave principal é
+  // nome + data; só se recorre ao nome isolado quando esse nome é único.
+  const { data: evs } = await sb.from('eventos_2026').select('cliente, referencia, data_evento, pasta_fotos').not('pasta_fotos', 'is', null)
+  // Canoniza qualquer data (ISO "2026-07-31" ou "31 / 07 / 2026") em "AAAAMMDD".
+  const dkey = (s: any): string => {
+    const g = String(s ?? '').match(/\d+/g)
+    if (!g || g.length < 3) return ''
+    let y: string, mo: string, d: string
+    if (g[0].length === 4) { y = g[0]; mo = g[1]; d = g[2] }   // AAAA-MM-DD
+    else { d = g[0]; mo = g[1]; y = g[2] }                     // DD-MM-AAAA
+    if (y.length !== 4) return ''
+    return y + mo.padStart(2, '0').slice(-2) + d.padStart(2, '0').slice(-2)
   }
-  const comPasta = (arr: any[]) => arr.map((p: any) => ({ ...p, pasta: mapa.get(norm(p.noivos)) ?? null }))
+  const byNameDate = new Map<string, string>()   // "anarui|20260731" → pasta
+  const byName = new Map<string, string>()        // "anarui" → pasta
+  const nameCount = new Map<string, number>()     // nº de eventos com esse nome
+  for (const ev of (evs ?? []) as any[]) {
+    if (!ev.pasta_fotos) continue
+    const dk = dkey(ev.data_evento)
+    const nk = norm(ev.cliente)
+    if (nk) {
+      if (dk) byNameDate.set(nk + '|' + dk, ev.pasta_fotos)
+      byName.set(nk, ev.pasta_fotos)
+      nameCount.set(nk, (nameCount.get(nk) ?? 0) + 1)
+    }
+    const rk = norm(ev.referencia)
+    if (rk) byName.set(rk, ev.pasta_fotos)   // referência é única → fallback direto
+  }
+  const resolvePasta = (p: any): string | null => {
+    const nk = norm(p.noivos)
+    const dk = dkey(p.data_casamento)
+    const exato = dk ? byNameDate.get(nk + '|' + dk) : undefined
+    if (exato) return exato
+    // Sem data a bater: usa o nome só se NÃO houver ambiguidade (um único
+    // casamento com esse nome). Se houver mais do que um, não arrisca — devolve
+    // null e o pedido fica por resolver, em vez de ir para a pasta errada.
+    if ((nameCount.get(nk) ?? 0) <= 1) return byName.get(nk) ?? null
+    return null
+  }
+  const comPasta = (arr: any[]) => arr.map((p: any) => ({ ...p, pasta: resolvePasta(p) }))
   // Nas de papel juntamos o HTML do ticket (o mesmo do cliente) para o robô
   // guardar uma cópia na pasta da encomenda.
   const papelComTicket = comPasta(papel).map((p: any) => ({ ...p, ticket_html: buildTicketHtml(p) }))
