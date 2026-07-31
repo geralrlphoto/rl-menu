@@ -47,6 +47,12 @@ export function buildTicketHtml(o: any): string {
               ${isPapel ? 'até 30 dias úteis, por carta registada.' : 'até 15 dias úteis (entrega digital).'}
             </p>
           </div>
+          <div style="margin:12px 0 0;padding:16px 18px;background:#faf5ea;border:1px solid #ece4d4;border-radius:4px;">
+            <p style="margin:0;font-size:12px;color:#3a352e;line-height:1.7;">
+              <strong style="color:#0b0a08;">Quer uma tela?</strong>
+              Se mais tarde quiser transformar alguma destas fotografias numa tela para a sua casa, é só entrar em contacto connosco. Teremos todo o gosto em tratar disso.
+            </p>
+          </div>
         </td></tr>
         <tr><td style="background:#0b0a08;padding:18px 40px;text-align:center;">
           <p style="margin:0;font-size:11px;color:#8c8170;">geral.rlphoto@gmail.com · 912 832 788</p>
