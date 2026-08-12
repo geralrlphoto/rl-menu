@@ -52,9 +52,8 @@ Este é um momento oportuno para falarmos dois minutinhos?`,
 
 É também nessa reunião que vos mostramos o nosso método de trabalho e apresentamos os nossos serviços. Temos uma forma muito diferenciada de trabalhar, como já devem ter sentido no formulário que preencheram.
 
-Faz sentido para vós marcarmos essa conversa?
-
-Se aceitarem, perguntar já: Que disponibilidade têm em termos de horários? Assim ajustamo-nos a vocês e combinamos logo o melhor dia. 🗓️`,
+Faz sentido para vós marcarmos essa conversa?`,
+  destaque: `Se aceitarem, perguntar já: Que disponibilidade têm em termos de horários? Assim ajustamo-nos a vocês e combinamos logo o melhor dia. 🗓️`,
 }
 
 function telefonemaTexto(t: typeof TELEFONEMA): string {
@@ -64,7 +63,7 @@ function telefonemaTexto(t: typeof TELEFONEMA): string {
     s.itens.forEach(it => linhas.push('• ' + it))
     linhas.push('')
   })
-  linhas.push('FECHO', t.fecho)
+  linhas.push('FECHO', t.fecho, '', '➤ ' + t.destaque)
   return linhas.join('\n')
 }
 
@@ -368,6 +367,14 @@ function TelefonemaCard({ numero }: { numero: string }) {
             <div>
               <div className="text-xs tracking-widest uppercase text-white/25 mb-1.5">Fecho</div>
               <p className="text-white/70 text-sm leading-relaxed italic">{t.fecho}</p>
+            </div>
+            {/* Destaque — disponibilidade */}
+            <div className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-3 flex gap-3">
+              <span className="text-gold text-lg leading-none mt-0.5">🗓️</span>
+              <div>
+                <div className="text-xs tracking-widest uppercase text-gold/80 font-semibold mb-1">Se aceitarem, perguntar já</div>
+                <p className="text-white/85 text-sm leading-relaxed">{t.destaque.replace('Se aceitarem, perguntar já: ', '')}</p>
+              </div>
             </div>
           </div>
         </div>
