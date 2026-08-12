@@ -240,12 +240,20 @@ RL`,
         n: 1,
         titulo: 'Resposta imediata',
         quando: 'O mais rápido possível',
-        objetivo: 'Responder na hora com energia e propor conversa.',
-        mensagem: `Olá [nome], tudo bem? 😊 Que bom terem chegado até nós!
+        objetivo: 'Agradecer o contacto e enviar já o formulário. Todos os noivos preenchem antes de avançarmos.',
+        mensagem: `Olá! 😊 Que bom ter-vos por aqui!
 
-Adorava saber mais sobre o vosso grande dia. Preferem que vos ligue ou combinamos uma conversa rápida por aqui mesmo?
+Antes de mais, obrigado por terem entrado em contacto connosco. Agora queremos conhecer-vos um pouco melhor.
 
-Fico a aguardar 🙌`,
+Preparámos um pequeno formulário que demora cerca de 2 minutos a preencher e que nos ajuda a perceber aquilo que procuram para o vosso casamento.
+
+👉 https://rl-menu-lake.vercel.app/nova-lead
+
+Enquanto isso, espreitem também o nosso Instagram. Lá partilhamos muitos casamentos reais, momentos espontâneos e histórias de outros casais. É a melhor forma de perceberem o nosso estilo. 📷 @rl.photo.video
+
+Assim que recebermos o vosso formulário, entramos em contacto para conversarmos com calma e percebermos se somos a equipa certa para contar a vossa história.
+
+Mal podemos esperar para vos conhecer! 🙌`,
       },
       {
         n: 2,
