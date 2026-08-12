@@ -67,30 +67,6 @@ function telefonemaTexto(t: typeof TELEFONEMA): string {
   return linhas.join('\n')
 }
 
-const PROPOSTA_ENVIADA: Fase = {
-  titulo: 'Proposta enviada',
-  quando: 'Logo após enviar o orçamento',
-  objetivo: 'Confirmar a entrega da proposta e abrir canal para dúvidas.',
-  mensagem: `Olá [nome], acabei de vos enviar a proposta com todos os detalhes. 📄
-
-Vejam com calma e digam-me o que acharam. Se houver qualquer dúvida, ou se quiserem ajustar alguma coisa ao vosso gosto, estou aqui para ajudar.
-
-Um abraço,
-RL`,
-}
-
-const FOLLOWUP_DECISAO: Fase = {
-  titulo: 'Follow up da decisão',
-  quando: '3 a 5 dias após a proposta',
-  objetivo: 'Perceber onde está a decisão e esclarecer objeções.',
-  mensagem: `Olá [nome], tudo bem? 🙂
-
-Passei só para saber se conseguiram ver a proposta e se ficou alguma questão por esclarecer. Fico feliz por vos ajudar a decidir com toda a tranquilidade.
-
-Um abraço,
-RL`,
-}
-
 const ULTIMA_TENTATIVA: Fase = {
   titulo: 'Última tentativa',
   quando: '~2 semanas sem resposta',
@@ -158,10 +134,7 @@ Mais uma vez, obrigado pela vossa confiança. Falamos muito em breve!
 Um abraço,
 RL`,
     },
-    deuResposta: [
-      PROPOSTA_ENVIADA,
-      FOLLOWUP_DECISAO,
-    ],
+    deuResposta: [],
     naoRespondeu: [
       {
         titulo: '1º lembrete',
@@ -217,10 +190,7 @@ Assim que recebermos o vosso formulário, entraremos em contacto convosco para c
 
 Mal podemos esperar para vos conhecer!`,
     },
-    deuResposta: [
-      PROPOSTA_ENVIADA,
-      FOLLOWUP_DECISAO,
-    ],
+    deuResposta: [],
     naoRespondeu: [
       {
         titulo: '1º lembrete',
@@ -278,10 +248,7 @@ Assim que recebermos o vosso formulário, entramos em contacto para conversarmos
 
 Mal podemos esperar para vos conhecer! 🙌`,
     },
-    deuResposta: [
-      PROPOSTA_ENVIADA,
-      FOLLOWUP_DECISAO,
-    ],
+    deuResposta: [],
     naoRespondeu: [
       {
         titulo: '1º lembrete',
