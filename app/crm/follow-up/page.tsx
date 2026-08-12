@@ -31,17 +31,54 @@ type Origem = {
   naoRespondeu: Fase[]
 }
 
-/* Passos partilhados do caminho "Deu resposta" (após a 1ª mensagem) */
-const REUNIAO_CONFIRMADA: Fase = {
-  titulo: 'Reunião confirmada',
-  quando: 'Quando marcam a conversa',
-  objetivo: 'Confirmar o dia e a hora e reduzir faltas.',
-  mensagem: `Olá [nome], fica então confirmada a nossa conversa para [data]. 🎉
+/* Guião da chamada telefónica — passo partilhado pelas três origens,
+   logo a seguir ao formulário preenchido. */
+type ScriptSeccao = { titulo: string; itens: string[] }
 
-Vai ser um prazer conhecer-vos. Não precisam de preparar nada, apenas trazer as vossas ideias e dúvidas.
+const TELEFONEMA = {
+  titulo: 'Chamada telefónica',
+  quando: 'Assim que recebemos o formulário preenchido',
+  objetivo: 'Conhecer os noivos, recolher os detalhes-chave do dia e preparar uma proposta à medida. Guião válido para as três origens.',
+  intro: `Olá [nome], daqui é o Rui da RL Photo.Video, tudo bem? 😊 Recebi o vosso formulário, muito obrigado! Liguei só para vos conhecer um pouco melhor e perceber a vossa visão para o grande dia. Têm uns minutinhos para conversarmos?`,
+  seccoes: [
+    { titulo: 'Conhecer os noivos', itens: [
+      'De onde são? (onde vivem atualmente)',
+      'Como se conheceram e há quanto tempo estão juntos',
+      'Como estão a correr os preparativos até agora',
+    ] },
+    { titulo: 'Detalhes do dia', itens: [
+      'Confirmar a data do casamento',
+      'De onde vão sair no dia? (local dos preparativos: casa, hotel...)',
+      'Saem os dois do mesmo sítio ou em locais separados?',
+      'Igreja ou cerimónia civil? Em que local?',
+      'Qual é a quinta / espaço do copo de água?',
+      'Número aproximado de convidados',
+      'Timings previstos (hora da cerimónia e do copo)',
+    ] },
+    { titulo: 'O que procuram', itens: [
+      'Procuram fotografia, vídeo ou os dois?',
+      'Que estilo gostam mais? (natural e espontâneo, mais posado...)',
+      'O que é mais importante para vós no registo do dia?',
+      'Já viram o nosso trabalho? O que mais vos marcou?',
+      'Têm alguma ideia de investimento para este serviço?',
+    ] },
+    { titulo: 'Para fechar a chamada', itens: [
+      'Como nos conheceram / porque nos contactaram',
+      'Alguma questão ou pedido especial da vossa parte',
+    ] },
+  ] as ScriptSeccao[],
+  fecho: `Muito obrigado pela conversa! Com estas informações, vou preparar uma proposta à vossa medida e envio-vos nos próximos dias. Qualquer dúvida entretanto, estou sempre disponível. Um abraço e até já! 🙌`,
+}
 
-Até já! Um abraço,
-RL`,
+function telefonemaTexto(t: typeof TELEFONEMA): string {
+  const linhas: string[] = ['ABERTURA', t.intro, '']
+  t.seccoes.forEach(s => {
+    linhas.push(s.titulo.toUpperCase())
+    s.itens.forEach(it => linhas.push('• ' + it))
+    linhas.push('')
+  })
+  linhas.push('FECHO', t.fecho)
+  return linhas.join('\n')
 }
 
 const PROPOSTA_ENVIADA: Fase = {
@@ -107,18 +144,6 @@ Um abraço,
 RL`,
     },
     deuResposta: [
-      {
-        titulo: 'Agendar conversa',
-        quando: 'Assim que respondem',
-        objetivo: 'Aproveitar o interesse e propor a conversa.',
-        mensagem: `Que bom ter a vossa resposta, [nome]! 😊
-
-Adorávamos marcar uma conversa (chamada ou presencial) para vos conhecermos melhor e explicarmos como trabalhamos. Que dias e horas vos dão mais jeito nos próximos dias?
-
-Um abraço,
-RL`,
-      },
-      REUNIAO_CONFIRMADA,
       PROPOSTA_ENVIADA,
       FOLLOWUP_DECISAO,
     ],
@@ -178,18 +203,6 @@ Assim que recebermos o vosso formulário, entraremos em contacto convosco para c
 Mal podemos esperar para vos conhecer!`,
     },
     deuResposta: [
-      {
-        titulo: 'Agendar conversa',
-        quando: 'Assim que respondem ou preenchem o formulário',
-        objetivo: 'Avançar para a conversa e responder às questões.',
-        mensagem: `Que bom ter notícias vossas! 😊
-
-Para avançarmos, adorávamos marcar uma breve conversa (chamada ou presencial) e responder a todas as vossas questões com calma. Que dias vos dão mais jeito nos próximos dias?
-
-Um abraço,
-RL`,
-      },
-      REUNIAO_CONFIRMADA,
       PROPOSTA_ENVIADA,
       FOLLOWUP_DECISAO,
     ],
@@ -251,15 +264,6 @@ Assim que recebermos o vosso formulário, entramos em contacto para conversarmos
 Mal podemos esperar para vos conhecer! 🙌`,
     },
     deuResposta: [
-      {
-        titulo: 'Agendar conversa',
-        quando: 'Assim que respondem ou preenchem o formulário',
-        objetivo: 'Combinar rapidamente a conversa.',
-        mensagem: `Boa, que bom ter a vossa resposta! 😊
-
-Combinamos uma conversa rápida? Digam-me só o que vos dá mais jeito, chamada ou por aqui mesmo 🙌`,
-      },
-      REUNIAO_CONFIRMADA,
       PROPOSTA_ENVIADA,
       FOLLOWUP_DECISAO,
     ],
@@ -326,6 +330,62 @@ function CopyButton({ text }: { text: string }) {
         </>
       )}
     </button>
+  )
+}
+
+/* ── Cartão do guião da chamada telefónica ── */
+function TelefonemaCard({ numero }: { numero: string }) {
+  const t = TELEFONEMA
+  return (
+    <div className="relative flex gap-4 sm:gap-6">
+      <div className="flex flex-col items-center shrink-0">
+        <div className="w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold bg-green-500/10 border border-green-500/30 text-green-400">
+          {numero}
+        </div>
+        <div className="w-px flex-1 bg-white/10 mt-2" />
+      </div>
+
+      <div className="flex-1 pb-10">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-1">
+          <h3 className="text-white font-light text-lg tracking-wide flex items-center gap-2">📞 {t.titulo}</h3>
+          <span className="text-xs tracking-widest uppercase text-gold/60 shrink-0">{t.quando}</span>
+        </div>
+        <p className="text-white/35 text-sm mb-3">{t.objetivo}</p>
+
+        <div className="rounded-2xl border border-green-500/20 bg-[#0F1210] overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
+            <span className="text-xs tracking-widest uppercase text-green-400/50">Guião da chamada</span>
+            <CopyButton text={telefonemaTexto(t)} />
+          </div>
+          <div className="px-4 py-4 flex flex-col gap-5">
+            {/* Abertura */}
+            <div>
+              <div className="text-xs tracking-widest uppercase text-white/25 mb-1.5">Abertura</div>
+              <p className="text-white/70 text-sm leading-relaxed italic">{t.intro}</p>
+            </div>
+            {/* Secções de perguntas */}
+            {t.seccoes.map((s, i) => (
+              <div key={i}>
+                <div className="text-xs tracking-widest uppercase text-green-400/60 mb-2">{s.titulo}</div>
+                <ul className="flex flex-col gap-1.5">
+                  {s.itens.map((it, j) => (
+                    <li key={j} className="flex gap-2 text-sm text-white/70">
+                      <span className="text-green-400/50 mt-0.5">›</span>
+                      <span>{it}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+            {/* Fecho */}
+            <div>
+              <div className="text-xs tracking-widest uppercase text-white/25 mb-1.5">Fecho</div>
+              <p className="text-white/70 text-sm leading-relaxed italic">{t.fecho}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -441,7 +501,7 @@ export default function FollowUpPage() {
               <span className="text-lg">✅</span>
               <span className={`text-sm tracking-[0.2em] uppercase font-semibold ${ramo === 'deu' ? 'text-green-400' : 'text-white/60'}`}>Deu resposta</span>
             </div>
-            <p className="text-white/30 text-xs mt-1.5">Responderam ou preencheram. Avançar para a conversa.</p>
+            <p className="text-white/30 text-xs mt-1.5">Responderam ou preencheram. Passo seguinte: chamada telefónica.</p>
           </button>
           <button
             onClick={() => setRamo('nao')}
@@ -470,15 +530,19 @@ export default function FollowUpPage() {
             <div className="flex-1 h-px bg-white/8" />
           </div>
           <div className="flex flex-col">
-            {passos.map((fase, i) => (
-              <FaseCard
-                key={`${ramo}-${i}`}
-                fase={fase}
-                numero={String(i + 2)}
-                ultima={i === passos.length - 1}
-                cor={ramo === 'deu' ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-orange-500/10 border border-orange-500/30 text-orange-400'}
-              />
-            ))}
+            {ramo === 'deu' && <TelefonemaCard numero="2" />}
+            {passos.map((fase, i) => {
+              const base = ramo === 'deu' ? 3 : 2
+              return (
+                <FaseCard
+                  key={`${ramo}-${i}`}
+                  fase={fase}
+                  numero={String(i + base)}
+                  ultima={i === passos.length - 1}
+                  cor={ramo === 'deu' ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-orange-500/10 border border-orange-500/30 text-orange-400'}
+                />
+              )
+            })}
           </div>
         </div>
       )}
