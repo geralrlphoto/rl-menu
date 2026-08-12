@@ -38,36 +38,19 @@ type ScriptSeccao = { titulo: string; itens: string[] }
 const TELEFONEMA = {
   titulo: 'Chamada telefónica',
   quando: 'Assim que recebemos o formulário preenchido',
-  objetivo: 'Conhecer os noivos, recolher os detalhes-chave do dia e preparar uma proposta à medida. Guião válido para as três origens.',
-  intro: `Olá [nome], daqui é o Rui da RL Photo.Video, tudo bem? 😊 Recebi o vosso formulário, muito obrigado! Liguei só para vos conhecer um pouco melhor e perceber a vossa visão para o grande dia. Têm uns minutinhos para conversarmos?`,
+  objetivo: 'Primeira abordagem curta (cerca de 2 minutos). Não é aqui que fazemos todas as perguntas, isso fica para a reunião. Só queremos criar o primeiro contacto e propor essa reunião. Guião válido para as três origens.',
+  intro: `Olá [nome], daqui é o Rui da RL Photo.Video, tudo bem? 😊 Recebi o vosso formulário, muito obrigado!
+
+Este é um momento oportuno para falarmos dois minutinhos?`,
   seccoes: [
-    { titulo: 'Conhecer os noivos', itens: [
-      'De onde são? (onde vivem atualmente)',
-      'Como se conheceram e há quanto tempo estão juntos',
-      'Como estão a correr os preparativos até agora',
-    ] },
-    { titulo: 'Detalhes do dia', itens: [
-      'Confirmar a data do casamento',
-      'De onde vão sair no dia? (local dos preparativos: casa, hotel...)',
-      'Saem os dois do mesmo sítio ou em locais separados?',
-      'Igreja ou cerimónia civil? Em que local?',
-      'Qual é a quinta / espaço do copo de água?',
-      'Número aproximado de convidados',
-      'Timings previstos (hora da cerimónia e do copo)',
-    ] },
-    { titulo: 'O que procuram', itens: [
-      'Procuram fotografia, vídeo ou os dois?',
-      'Que estilo gostam mais? (natural e espontâneo, mais posado...)',
-      'O que é mais importante para vós no registo do dia?',
-      'Já viram o nosso trabalho? O que mais vos marcou?',
-      'Têm alguma ideia de investimento para este serviço?',
-    ] },
-    { titulo: 'Para fechar a chamada', itens: [
-      'Como nos conheceram / porque nos contactaram',
-      'Alguma questão ou pedido especial da vossa parte',
+    { titulo: 'Perguntar apenas (nada mais nesta chamada)', itens: [
+      'De onde são os noivos?',
+      'Onde será, possivelmente, a preparação do dia?',
     ] },
   ] as ScriptSeccao[],
-  fecho: `Muito obrigado pela conversa! Com estas informações, vou preparar uma proposta à vossa medida e envio-vos nos próximos dias. Qualquer dúvida entretanto, estou sempre disponível. Um abraço e até já! 🙌`,
+  fecho: `Aqui na RL, optamos por criar uma relação de empatia e de amizade com os nossos noivos. Por isso, privilegiamos sempre uma reunião, presencial ou por videochamada, para vos conhecermos e vocês nos conhecerem a nós.
+
+Faz sentido para vós marcarmos essa conversa?`,
 }
 
 function telefonemaTexto(t: typeof TELEFONEMA): string {
