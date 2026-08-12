@@ -50,6 +50,8 @@ Este é um momento oportuno para falarmos dois minutinhos?`,
   ] as ScriptSeccao[],
   fecho: `Aqui na RL, optamos por criar uma relação de empatia e de amizade com os nossos noivos. Por isso, privilegiamos sempre uma reunião, presencial ou por videochamada, para vos conhecermos e vocês nos conhecerem a nós.
 
+É também nessa reunião que vos mostramos o nosso método de trabalho e apresentamos os nossos serviços. Temos uma forma muito diferenciada de trabalhar, como já devem ter sentido no formulário que preencheram.
+
 Faz sentido para vós marcarmos essa conversa?`,
 }
 
