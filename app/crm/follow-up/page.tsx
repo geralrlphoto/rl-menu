@@ -42,9 +42,9 @@ const ORIGENS: Origem[] = [
         objetivo: 'Confirmar que recebemos, mostrar entusiasmo e propor o próximo passo.',
         mensagem: `Olá [nome], tudo bem? 😊
 
-Muito obrigado pelo vosso contacto através do nosso site. Ficámos felizes por nos terem escolhido para fazer parte de um dia tão especial.
+Muito obrigado pelo vosso contacto através do nosso site. Ficámos muito felizes por terem chegado até nós.
 
-Adorávamos conhecer melhor a vossa história e a visão que têm para o casamento. Quando tiverem 15 minutos, podemos marcar uma conversa (chamada ou presencial) para vos explicar tudo com calma?
+Adorávamos conhecer melhor a vossa história e aquilo que procuram para o vosso casamento. Quando tiverem 15 minutos, podemos marcar uma conversa (chamada ou presencial) para vos explicarmos tudo com calma?
 
 Fico a aguardar. Um abraço,
 RL`,
