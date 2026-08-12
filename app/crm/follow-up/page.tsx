@@ -108,6 +108,47 @@ Fico a aguardar. Um abraço,
 RL`,
 }
 
+/* Depois da reunião (quando marcaram o dia) */
+const REUNIAO_DFP: Fase = {
+  titulo: 'Reunião feita · DFP no portal',
+  quando: 'No dia da reunião',
+  objetivo: 'Fazemos a reunião e disponibilizamos o DFP no portal, para os noivos verem a nossa proposta.',
+  mensagem: `Foi um enorme prazer conversar convosco! 😊
+
+Como combinado, deixámos o vosso DFP disponível no portal, com toda a nossa proposta. Vejam com calma e, qualquer dúvida, é só dizerem.
+
+Um abraço,
+RL`,
+}
+
+const FECHOU_CONTRATO: Fase = {
+  titulo: 'Fecharam contrato',
+  quando: 'Fecham logo na reunião',
+  objetivo: 'Pedir para confirmarem a proposta no portal da reunião e preencherem os dados solicitados. Em 2 a 3 dias recebem o portal dos noivos com toda a informação.',
+  mensagem: `Que alegria ter-vos connosco! 🎉 Muito obrigado pela vossa confiança.
+
+Para avançarmos, é só confirmarem a proposta no portal da reunião e preencherem os dados que vos são solicitados.
+
+Dentro de 2 a 3 dias recebem o vosso portal dos noivos, com toda a informação reunida num só sítio.
+
+Estamos muito felizes por fazer parte do vosso dia. Um abraço,
+RL`,
+}
+
+const AGUARDA_RESPOSTA_48H: Fase = {
+  titulo: 'Vão dar uma resposta',
+  quando: 'Ficaram de responder · follow up após 48h',
+  objetivo: 'Ficam de decidir. Esperamos até 48 horas; se não houver resposta, enviar este follow up.',
+  mensagem: `Olá [nome], tudo bem? 🙂
+
+Foi um gosto conversarmos na reunião! Passei só para saber se tiveram oportunidade de rever a nossa proposta no portal e se ficou alguma questão por esclarecer.
+
+Estou totalmente disponível para vos ajudar a decidir com toda a tranquilidade. Qualquer dúvida, é só dizerem.
+
+Um abraço,
+RL`,
+}
+
 const ORIGENS: Origem[] = [
   /* ═══════════════ SITE ═══════════════ */
   {
@@ -439,17 +480,25 @@ export default function FollowUpPage() {
   const [origemId, setOrigemId] = useState('site')
   const [ramo, setRamo] = useState<'deu' | 'nao' | null>(null)
   const [agendamento, setAgendamento] = useState<'marcado' | 'aguardar' | null>(null)
+  const [fecho, setFecho] = useState<'fechou' | 'aguarda' | null>(null)
   const origem = ORIGENS.find(o => o.id === origemId) ?? ORIGENS[0]
 
   const trocarOrigem = (id: string) => {
     setOrigemId(id)
     setRamo(null) // reinicia o caminho ao mudar de origem
     setAgendamento(null)
+    setFecho(null)
   }
 
   const escolherRamo = (r: 'deu' | 'nao') => {
     setRamo(r)
     setAgendamento(null) // reinicia o sub-caminho da reunião
+    setFecho(null)
+  }
+
+  const escolherAgendamento = (a: 'marcado' | 'aguardar') => {
+    setAgendamento(a)
+    setFecho(null) // reinicia o sub-caminho do fecho
   }
 
   const passos = ramo === 'deu' ? origem.deuResposta : ramo === 'nao' ? origem.naoRespondeu : []
@@ -558,7 +607,7 @@ export default function FollowUpPage() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <button
-                    onClick={() => setAgendamento('marcado')}
+                    onClick={() => escolherAgendamento('marcado')}
                     className={`px-5 py-4 rounded-2xl border text-left transition-all ${
                       agendamento === 'marcado'
                         ? 'border-green-500/50 bg-green-500/10'
@@ -572,7 +621,7 @@ export default function FollowUpPage() {
                     <p className="text-white/30 text-xs mt-1.5">Enviar o portal da reunião aos noivos.</p>
                   </button>
                   <button
-                    onClick={() => setAgendamento('aguardar')}
+                    onClick={() => escolherAgendamento('aguardar')}
                     className={`px-5 py-4 rounded-2xl border text-left transition-all ${
                       agendamento === 'aguardar'
                         ? 'border-amber-500/50 bg-amber-500/10'
@@ -586,7 +635,50 @@ export default function FollowUpPage() {
                     <p className="text-white/30 text-xs mt-1.5">Vão ver a disponibilidade. Toque após 24h.</p>
                   </button>
                 </div>
-                {agendamento === 'marcado' && <MensagemInset fase={ENVIAR_PORTAL_REUNIAO} cor="border-green-500/30" />}
+                {agendamento === 'marcado' && (
+                  <>
+                    <MensagemInset fase={ENVIAR_PORTAL_REUNIAO} cor="border-green-500/30" />
+                    <MensagemInset fase={REUNIAO_DFP} cor="border-green-500/20" />
+
+                    {/* Sub-caminho do fecho */}
+                    <div className="flex items-center gap-3 mb-4 mt-8">
+                      <span className="text-xs tracking-[0.3em] uppercase text-white/25">Na reunião, fecharam logo contrato?</span>
+                      <div className="flex-1 h-px bg-white/8" />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setFecho('fechou')}
+                        className={`px-5 py-4 rounded-2xl border text-left transition-all ${
+                          fecho === 'fechou'
+                            ? 'border-green-500/50 bg-green-500/10'
+                            : 'border-white/10 hover:border-green-500/40 hover:bg-green-500/5'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">✅</span>
+                          <span className={`text-sm tracking-[0.2em] uppercase font-semibold ${fecho === 'fechou' ? 'text-green-400' : 'text-white/60'}`}>Fecharam contrato</span>
+                        </div>
+                        <p className="text-white/30 text-xs mt-1.5">Confirmar proposta no portal e preencher dados.</p>
+                      </button>
+                      <button
+                        onClick={() => setFecho('aguarda')}
+                        className={`px-5 py-4 rounded-2xl border text-left transition-all ${
+                          fecho === 'aguarda'
+                            ? 'border-amber-500/50 bg-amber-500/10'
+                            : 'border-white/10 hover:border-amber-500/40 hover:bg-amber-500/5'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">🕒</span>
+                          <span className={`text-sm tracking-[0.2em] uppercase font-semibold ${fecho === 'aguarda' ? 'text-amber-400' : 'text-white/60'}`}>Vão dar resposta</span>
+                        </div>
+                        <p className="text-white/30 text-xs mt-1.5">Esperar até 48h e fazer follow up.</p>
+                      </button>
+                    </div>
+                    {fecho === 'fechou' && <MensagemInset fase={FECHOU_CONTRATO} cor="border-green-500/30" />}
+                    {fecho === 'aguarda' && <MensagemInset fase={AGUARDA_RESPOSTA_48H} cor="border-amber-500/30" />}
+                  </>
+                )}
                 {agendamento === 'aguardar' && <MensagemInset fase={AGUARDAR_AGENDAMENTO} cor="border-amber-500/30" />}
               </div>
             )}
