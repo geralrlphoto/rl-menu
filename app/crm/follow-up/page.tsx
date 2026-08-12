@@ -39,14 +39,20 @@ const ORIGENS: Origem[] = [
         n: 1,
         titulo: 'Resposta imediata',
         quando: 'Mesmo dia (idealmente na 1ª hora)',
-        objetivo: 'Confirmar que recebemos, mostrar entusiasmo e propor o próximo passo.',
+        objetivo: 'Agradecer a visita e o preenchimento do formulário, confirmar que temos a informação base e avisar que vamos entrar em contacto.',
         mensagem: `Olá [nome], tudo bem? 😊
 
-Muito obrigado pelo vosso contacto através do nosso site. Ficámos muito felizes por terem chegado até nós.
+Muito obrigado por nos terem visitado e por preencherem o formulário no nosso site. Com as informações que nos deixaram, já ficámos com uma primeira ideia do vosso casamento e daquilo que procuram.
 
-Adorávamos conhecer melhor a vossa história e aquilo que procuram para o vosso casamento. Quando tiverem 15 minutos, podemos marcar uma conversa (chamada ou presencial) para vos explicarmos tudo com calma?
+Ficámos muito felizes por terem chegado até nós. Cada casal tem uma história única e adoramos poder fazer parte de um dia tão especial.
 
-Fico a aguardar. Um abraço,
+O próximo passo é nosso: vamos analisar tudo com atenção e entramos em contacto convosco em breve para conversarmos com calma, esclarecer todas as dúvidas e perceber se somos a equipa certa para contar a vossa história.
+
+Entretanto, convidamos-vos a espreitar o nosso Instagram, onde partilhamos casamentos reais e muitos momentos espontâneos. 📷 @rl.photo.video
+
+Mais uma vez, obrigado pela vossa confiança. Falamos muito em breve!
+
+Um abraço,
 RL`,
       },
       {
