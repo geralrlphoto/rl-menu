@@ -386,6 +386,10 @@ export default function CRMPage() {
             className="px-5 py-3 border border-white/10 hover:border-gold/40 rounded-xl text-sm text-white/40 hover:text-gold tracking-[0.15em] uppercase transition-all">
             Portais
           </Link>
+          <Link href="/crm/follow-up"
+            className="px-5 py-3 border border-white/10 hover:border-gold/40 rounded-xl text-sm text-white/40 hover:text-gold tracking-[0.15em] uppercase transition-all">
+            Follow Up
+          </Link>
           <a href="/nova-lead" target="_blank" rel="noopener noreferrer"
             className="px-5 py-3 border border-gold/20 hover:border-gold/60 rounded-xl text-sm text-gold/50 hover:text-gold tracking-[0.15em] uppercase transition-all flex items-center gap-2">
             <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
