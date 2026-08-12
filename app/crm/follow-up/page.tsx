@@ -4,15 +4,17 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 /* ──────────────────────────────────────────────────────────────
-   MAPA DE FOLLOW UP  —  guia de referência
-   3 origens (Site / Casamentos.pt / Direto), cada uma com o seu
-   percurso por fases desde que a lead chega até dar resposta.
-   Edita livremente os textos das mensagens aqui em baixo.
+   MAPA DE FOLLOW UP  —  guia de referência com ramificação
+   3 origens (Site / Casamentos.pt / Direto).
+   Fluxo: 1ª mensagem → escolher "Deu resposta" ou "Não respondeu"
+   → aparecem os próximos passos desse caminho.
+   Edita livremente os textos aqui em baixo.
    Placeholders: [nome], [data], [local] são substituídos à mão.
    ────────────────────────────────────────────────────────────── */
 
+const FORM_URL = 'https://rl-menu-lake.vercel.app/nova-lead'
+
 type Fase = {
-  n: number
   titulo: string
   quando: string
   objetivo: string
@@ -24,7 +26,58 @@ type Origem = {
   label: string
   emoji: string
   descricao: string
-  fases: Fase[]
+  inicial: Fase
+  deuResposta: Fase[]
+  naoRespondeu: Fase[]
+}
+
+/* Passos partilhados do caminho "Deu resposta" (após a 1ª mensagem) */
+const REUNIAO_CONFIRMADA: Fase = {
+  titulo: 'Reunião confirmada',
+  quando: 'Quando marcam a conversa',
+  objetivo: 'Confirmar o dia e a hora e reduzir faltas.',
+  mensagem: `Olá [nome], fica então confirmada a nossa conversa para [data]. 🎉
+
+Vai ser um prazer conhecer-vos. Não precisam de preparar nada, apenas trazer as vossas ideias e dúvidas.
+
+Até já! Um abraço,
+RL`,
+}
+
+const PROPOSTA_ENVIADA: Fase = {
+  titulo: 'Proposta enviada',
+  quando: 'Logo após enviar o orçamento',
+  objetivo: 'Confirmar a entrega da proposta e abrir canal para dúvidas.',
+  mensagem: `Olá [nome], acabei de vos enviar a proposta com todos os detalhes. 📄
+
+Vejam com calma e digam-me o que acharam. Se houver qualquer dúvida, ou se quiserem ajustar alguma coisa ao vosso gosto, estou aqui para ajudar.
+
+Um abraço,
+RL`,
+}
+
+const FOLLOWUP_DECISAO: Fase = {
+  titulo: 'Follow up da decisão',
+  quando: '3 a 5 dias após a proposta',
+  objetivo: 'Perceber onde está a decisão e esclarecer objeções.',
+  mensagem: `Olá [nome], tudo bem? 🙂
+
+Passei só para saber se conseguiram ver a proposta e se ficou alguma questão por esclarecer. Fico feliz por vos ajudar a decidir com toda a tranquilidade.
+
+Um abraço,
+RL`,
+}
+
+const ULTIMA_TENTATIVA: Fase = {
+  titulo: 'Última tentativa',
+  quando: '~2 semanas sem resposta',
+  objetivo: 'Toque final respeitoso, deixando a porta aberta.',
+  mensagem: `Olá [nome], não quero ser insistente, por isso este é o meu último toque por agora. 🙏
+
+Se entretanto seguiram outro caminho, desejo-vos do fundo do coração um casamento perfeito. E se ainda estiverem a decidir, estarei sempre por aqui.
+
+Um grande abraço,
+RL`,
 }
 
 const ORIGENS: Origem[] = [
@@ -33,14 +86,12 @@ const ORIGENS: Origem[] = [
     id: 'site',
     label: 'Site',
     emoji: '🌐',
-    descricao: 'Lead que preencheu o formulário do site. Já demonstrou intenção e deixou dados. Responder rápido é o que mais converte.',
-    fases: [
-      {
-        n: 1,
-        titulo: 'Resposta imediata',
-        quando: 'Mesmo dia (idealmente na 1ª hora)',
-        objetivo: 'Agradecer a visita e o preenchimento do formulário, confirmar que temos a informação base e avisar que vamos entrar em contacto.',
-        mensagem: `Olá [nome], tudo bem? 😊
+    descricao: 'Lead que visitou o site e preencheu o formulário. Já temos a informação base; agradecemos e somos nós a entrar em contacto.',
+    inicial: {
+      titulo: 'Resposta imediata',
+      quando: 'Mesmo dia (idealmente na 1ª hora)',
+      objetivo: 'Agradecer a visita e o preenchimento do formulário, confirmar que temos a informação base e avisar que vamos entrar em contacto.',
+      mensagem: `Olá [nome], tudo bem? 😊
 
 Muito obrigado por nos terem visitado e por preencherem o formulário no nosso site. Com as informações que nos deixaram, já ficámos com uma primeira ideia do vosso casamento e daquilo que procuram.
 
@@ -54,9 +105,25 @@ Mais uma vez, obrigado pela vossa confiança. Falamos muito em breve!
 
 Um abraço,
 RL`,
-      },
+    },
+    deuResposta: [
       {
-        n: 2,
+        titulo: 'Agendar conversa',
+        quando: 'Assim que respondem',
+        objetivo: 'Aproveitar o interesse e propor a conversa.',
+        mensagem: `Que bom ter a vossa resposta, [nome]! 😊
+
+Adorávamos marcar uma conversa (chamada ou presencial) para vos conhecermos melhor e explicarmos como trabalhamos. Que dias e horas vos dão mais jeito nos próximos dias?
+
+Um abraço,
+RL`,
+      },
+      REUNIAO_CONFIRMADA,
+      PROPOSTA_ENVIADA,
+      FOLLOWUP_DECISAO,
+    ],
+    naoRespondeu: [
+      {
         titulo: '1º lembrete',
         quando: '2 a 3 dias sem resposta',
         objetivo: 'Toque suave a confirmar que a mensagem chegou.',
@@ -68,7 +135,6 @@ Um abraço,
 RL`,
       },
       {
-        n: 3,
         titulo: '2º lembrete',
         quando: '~7 dias sem resposta',
         objetivo: 'Dar valor e reforçar disponibilidade sem pressionar.',
@@ -79,54 +145,7 @@ Queria só deixar a porta aberta. Se ainda estiverem a ponderar quem irá regist
 Qualquer coisa, é só dizer. Um abraço,
 RL`,
       },
-      {
-        n: 4,
-        titulo: 'Reunião agendada',
-        quando: 'Quando marcam a conversa',
-        objetivo: 'Confirmar a reunião e reduzir faltas.',
-        mensagem: `Olá [nome], está confirmada a nossa conversa para [data]. 🎉
-
-Vai ser um prazer conhecer-vos e mostrar-vos como trabalhamos. Não precisam de preparar nada, apenas trazer as vossas ideias e dúvidas.
-
-Até já! Um abraço,
-RL`,
-      },
-      {
-        n: 5,
-        titulo: 'Proposta enviada',
-        quando: 'Logo após enviar o orçamento',
-        objetivo: 'Confirmar entrega da proposta e abrir canal para dúvidas.',
-        mensagem: `Olá [nome], acabei de vos enviar a proposta com todos os detalhes. 📄
-
-Vejam com calma e digam-me o que acharam. Se houver qualquer dúvida, ou se quiserem ajustar alguma coisa ao vosso gosto, estou aqui para ajudar.
-
-Um abraço,
-RL`,
-      },
-      {
-        n: 6,
-        titulo: 'Follow up decisão',
-        quando: '3 a 5 dias após a proposta',
-        objetivo: 'Perceber onde está a decisão e desbloquear objeções.',
-        mensagem: `Olá [nome], tudo bem? 🙂
-
-Passei só para saber se conseguiram ver a proposta e se ficou alguma questão por esclarecer. Fico feliz por vos ajudar a decidir com toda a tranquilidade.
-
-Um abraço,
-RL`,
-      },
-      {
-        n: 7,
-        titulo: 'Última tentativa',
-        quando: '~2 semanas sem resposta',
-        objetivo: 'Toque final respeitoso, deixando a porta aberta.',
-        mensagem: `Olá [nome], não quero ser insistente, por isso este é o meu último toque por agora. 🙏
-
-Se entretanto seguiram outro caminho, desejo-vos do fundo do coração um casamento perfeito. E se ainda estiverem a decidir, estarei sempre por aqui.
-
-Um grande abraço,
-RL`,
-      },
+      ULTIMA_TENTATIVA,
     ],
   },
 
@@ -135,14 +154,12 @@ RL`,
     id: 'casamentos',
     label: 'Casamentos.pt',
     emoji: '💍',
-    descricao: 'Lead vinda da plataforma Casamentos.pt. Costuma trazer menos informação e comparar vários fornecedores. Primeiro contacto mais cuidado e a destacar-nos.',
-    fases: [
-      {
-        n: 1,
-        titulo: 'Resposta imediata',
-        quando: 'Mesmo dia (rapidez faz a diferença no portal)',
-        objetivo: 'Agradecer o contacto e enviar já o formulário. Todos os noivos preenchem antes de avançarmos.',
-        mensagem: `Olá! 😊
+    descricao: 'Lead vinda da plataforma Casamentos.pt. Costuma comparar vários fornecedores. Enviamos o formulário logo no primeiro contacto.',
+    inicial: {
+      titulo: 'Resposta imediata',
+      quando: 'Mesmo dia (rapidez faz a diferença no portal)',
+      objetivo: 'Agradecer o contacto e enviar já o formulário. Todos os noivos preenchem antes de avançarmos.',
+      mensagem: `Olá! 😊
 
 Que bom ter-vos por aqui!
 
@@ -150,7 +167,7 @@ Antes de mais, obrigado por terem entrado em contacto connosco. Agora queremos c
 
 Preparámos um pequeno formulário que demora cerca de 2 minutos a preencher e que nos ajuda a perceber melhor aquilo que procuram para o vosso casamento.
 
-👉 https://rl-menu-lake.vercel.app/nova-lead
+👉 ${FORM_URL}
 
 Enquanto isso, convidamos-vos também a espreitar o nosso Instagram. Lá partilhamos muitos casamentos reais, momentos espontâneos e histórias de outros casais. É a melhor forma de perceberem o nosso estilo e, quem sabe, encontrarem inspiração para o vosso grande dia.
 
@@ -159,9 +176,25 @@ Enquanto isso, convidamos-vos também a espreitar o nosso Instagram. Lá partilh
 Assim que recebermos o vosso formulário, entraremos em contacto convosco para conversarmos com calma e percebermos se somos a equipa certa para contar a vossa história.
 
 Mal podemos esperar para vos conhecer!`,
-      },
+    },
+    deuResposta: [
       {
-        n: 2,
+        titulo: 'Agendar conversa',
+        quando: 'Assim que respondem ou preenchem o formulário',
+        objetivo: 'Avançar para a conversa e responder às questões.',
+        mensagem: `Que bom ter notícias vossas! 😊
+
+Para avançarmos, adorávamos marcar uma breve conversa (chamada ou presencial) e responder a todas as vossas questões com calma. Que dias vos dão mais jeito nos próximos dias?
+
+Um abraço,
+RL`,
+      },
+      REUNIAO_CONFIRMADA,
+      PROPOSTA_ENVIADA,
+      FOLLOWUP_DECISAO,
+    ],
+    naoRespondeu: [
+      {
         titulo: '1º lembrete',
         quando: '2 a 3 dias sem resposta',
         objetivo: 'Reforçar o preenchimento do formulário, sabendo que estão a falar com vários fornecedores.',
@@ -171,12 +204,11 @@ Passámos por aqui só para confirmar que a nossa mensagem chegou. Sabemos que n
 
 Se ainda não tiveram oportunidade, deixamos outra vez o formulário. São só 2 minutos e ajuda-nos a preparar tudo à vossa medida:
 
-👉 https://rl-menu-lake.vercel.app/nova-lead
+👉 ${FORM_URL}
 
 Ficamos a aguardar. Um abraço!`,
       },
       {
-        n: 3,
         titulo: '2º lembrete',
         quando: '~7 dias sem resposta',
         objetivo: 'Diferenciar pela atenção e deixar a porta aberta para preencherem o formulário.',
@@ -186,58 +218,11 @@ Esperamos que os preparativos estejam a correr bem. Continuamos disponíveis e a
 
 Se fizer sentido para vós, é só preencherem o formulário quando puderem, e a partir daí tratamos de tudo:
 
-👉 https://rl-menu-lake.vercel.app/nova-lead
+👉 ${FORM_URL}
 
 Um abraço!`,
       },
-      {
-        n: 4,
-        titulo: 'Reunião agendada',
-        quando: 'Quando marcam a conversa',
-        objetivo: 'Confirmar a reunião e reduzir faltas.',
-        mensagem: `Olá [nome], fica então confirmada a nossa conversa para [data]. 🎉
-
-Vai ser um prazer conhecer-vos. Tragam as vossas ideias e dúvidas, o resto trato eu.
-
-Até já! Um abraço,
-RL`,
-      },
-      {
-        n: 5,
-        titulo: 'Proposta enviada',
-        quando: 'Logo após enviar o orçamento',
-        objetivo: 'Confirmar entrega e mostrar abertura a personalizar.',
-        mensagem: `Olá [nome], enviei-vos agora a proposta com tudo detalhado. 📄
-
-Vejam com calma. Se quiserem ajustar algo para ficar perfeito para vós, é só dizer, temos toda a flexibilidade.
-
-Um abraço,
-RL`,
-      },
-      {
-        n: 6,
-        titulo: 'Follow up decisão',
-        quando: '3 a 5 dias após a proposta',
-        objetivo: 'Perceber a decisão e responder a objeções.',
-        mensagem: `Olá [nome], tudo bem? 🙂
-
-Queria só saber se tiveram oportunidade de ver a proposta e se posso esclarecer alguma coisa. Fico feliz por vos ajudar a decidir com tranquilidade.
-
-Um abraço,
-RL`,
-      },
-      {
-        n: 7,
-        titulo: 'Última tentativa',
-        quando: '~2 semanas sem resposta',
-        objetivo: 'Toque final respeitoso, deixando a porta aberta.',
-        mensagem: `Olá [nome], este é o meu último toque para não vos incomodar mais. 🙏
-
-Se já escolheram outro caminho, desejo-vos um casamento maravilhoso. E se ainda estiverem a decidir, estarei sempre por aqui para vós.
-
-Um grande abraço,
-RL`,
-      },
+      ULTIMA_TENTATIVA,
     ],
   },
 
@@ -246,29 +231,40 @@ RL`,
     id: 'direto',
     label: 'Direto',
     emoji: '💬',
-    descricao: 'Contacto direto por WhatsApp, Instagram ou mensagem. Tom mais próximo e direto, ritmo mais rápido.',
-    fases: [
-      {
-        n: 1,
-        titulo: 'Resposta imediata',
-        quando: 'O mais rápido possível',
-        objetivo: 'Agradecer o contacto e enviar já o formulário. Todos os noivos preenchem antes de avançarmos.',
-        mensagem: `Olá! 😊 Que bom ter-vos por aqui!
+    descricao: 'Contacto direto por WhatsApp, Instagram ou mensagem. Tom próximo e ritmo mais rápido. Enviamos o formulário logo no primeiro contacto.',
+    inicial: {
+      titulo: 'Resposta imediata',
+      quando: 'O mais rápido possível',
+      objetivo: 'Agradecer o contacto e enviar já o formulário. Todos os noivos preenchem antes de avançarmos.',
+      mensagem: `Olá! 😊 Que bom ter-vos por aqui!
 
 Antes de mais, obrigado por terem entrado em contacto connosco. Agora queremos conhecer-vos um pouco melhor.
 
 Preparámos um pequeno formulário que demora cerca de 2 minutos a preencher e que nos ajuda a perceber aquilo que procuram para o vosso casamento.
 
-👉 https://rl-menu-lake.vercel.app/nova-lead
+👉 ${FORM_URL}
 
 Enquanto isso, espreitem também o nosso Instagram. Lá partilhamos muitos casamentos reais, momentos espontâneos e histórias de outros casais. É a melhor forma de perceberem o nosso estilo. 📷 @rl.photo.video
 
 Assim que recebermos o vosso formulário, entramos em contacto para conversarmos com calma e percebermos se somos a equipa certa para contar a vossa história.
 
 Mal podemos esperar para vos conhecer! 🙌`,
-      },
+    },
+    deuResposta: [
       {
-        n: 2,
+        titulo: 'Agendar conversa',
+        quando: 'Assim que respondem ou preenchem o formulário',
+        objetivo: 'Combinar rapidamente a conversa.',
+        mensagem: `Boa, que bom ter a vossa resposta! 😊
+
+Combinamos uma conversa rápida? Digam-me só o que vos dá mais jeito, chamada ou por aqui mesmo 🙌`,
+      },
+      REUNIAO_CONFIRMADA,
+      PROPOSTA_ENVIADA,
+      FOLLOWUP_DECISAO,
+    ],
+    naoRespondeu: [
+      {
         titulo: '1º lembrete',
         quando: '1 a 2 dias sem resposta',
         objetivo: 'Toque leve a retomar o contacto e reforçar o formulário.',
@@ -276,12 +272,11 @@ Mal podemos esperar para vos conhecer! 🙌`,
 
 Se ainda não tiveram tempo, aqui fica outra vez o formulário. São 2 minutinhos e ajuda-nos a perceber o que procuram:
 
-👉 https://rl-menu-lake.vercel.app/nova-lead
+👉 ${FORM_URL}
 
 Estamos por aqui para o que precisarem! 🙌`,
       },
       {
-        n: 3,
         titulo: '2º lembrete',
         quando: '4 a 5 dias sem resposta',
         objetivo: 'Dar valor e deixar a porta aberta para preencherem o formulário.',
@@ -289,51 +284,16 @@ Estamos por aqui para o que precisarem! 🙌`,
 
 Adorávamos fazer parte do vosso dia. Sempre que puderem, preencham o formulário e falamos com calma:
 
-👉 https://rl-menu-lake.vercel.app/nova-lead
+👉 ${FORM_URL}
 
 Um abraço! 😊`,
       },
-      {
-        n: 4,
-        titulo: 'Reunião / chamada',
-        quando: 'Quando combinam falar',
-        objetivo: 'Confirmar o horário.',
-        mensagem: `Combinado [nome]! Falamos então [data] 🎉
-
-Qualquer coisa até lá, é só chamar. Até já!`,
-      },
-      {
-        n: 5,
-        titulo: 'Proposta enviada',
-        quando: 'Logo após enviar',
-        objetivo: 'Confirmar entrega e abrir para dúvidas.',
-        mensagem: `Já vos enviei a proposta 📄 vejam com calma!
-
-Qualquer dúvida ou se quiserem ajustar algo, é só dizer 🙂`,
-      },
-      {
-        n: 6,
-        titulo: 'Follow up decisão',
-        quando: '2 a 3 dias após a proposta',
-        objetivo: 'Perceber a decisão de forma leve.',
-        mensagem: `Olá [nome] 🙂 conseguiram dar uma vista de olhos na proposta? Ficou alguma dúvida?
-
-Estou aqui para o que precisarem 🙌`,
-      },
-      {
-        n: 7,
-        titulo: 'Última tentativa',
-        quando: '~10 dias sem resposta',
-        objetivo: 'Fecho respeitoso, porta aberta.',
-        mensagem: `Olá [nome], não quero estar sempre a chamar 🙏 por isso deixo aqui o meu último toque.
-
-Se seguiram outro caminho, desejo-vos um casamento incrível! E se ainda estiverem a decidir, sabem onde me encontrar 😊`,
-      },
+      ULTIMA_TENTATIVA,
     ],
   },
 ]
 
-/* ── Ícone copiar ── */
+/* ── Botão copiar ── */
 function CopyButton({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
   const handleCopy = async () => {
@@ -370,13 +330,13 @@ function CopyButton({ text }: { text: string }) {
 }
 
 /* ── Cartão de fase ── */
-function FaseCard({ fase, ultima }: { fase: Fase; ultima: boolean }) {
+function FaseCard({ fase, numero, ultima, cor }: { fase: Fase; numero: string; ultima: boolean; cor: string }) {
   return (
     <div className="relative flex gap-4 sm:gap-6">
       {/* Coluna do número + linha do tempo */}
       <div className="flex flex-col items-center shrink-0">
-        <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/25 flex items-center justify-center text-gold text-sm font-semibold">
-          {fase.n}
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold ${cor}`}>
+          {numero}
         </div>
         {!ultima && <div className="w-px flex-1 bg-white/10 mt-2" />}
       </div>
@@ -407,7 +367,15 @@ function FaseCard({ fase, ultima }: { fase: Fase; ultima: boolean }) {
 /* ── PÁGINA ── */
 export default function FollowUpPage() {
   const [origemId, setOrigemId] = useState('site')
+  const [ramo, setRamo] = useState<'deu' | 'nao' | null>(null)
   const origem = ORIGENS.find(o => o.id === origemId) ?? ORIGENS[0]
+
+  const trocarOrigem = (id: string) => {
+    setOrigemId(id)
+    setRamo(null) // reinicia o caminho ao mudar de origem
+  }
+
+  const passos = ramo === 'deu' ? origem.deuResposta : ramo === 'nao' ? origem.naoRespondeu : []
 
   return (
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1000px] mx-auto">
@@ -428,7 +396,7 @@ export default function FollowUpPage() {
           return (
             <button
               key={o.id}
-              onClick={() => setOrigemId(o.id)}
+              onClick={() => trocarOrigem(o.id)}
               className={`px-5 py-3 rounded-xl border text-sm tracking-[0.15em] uppercase transition-all flex items-center gap-2 ${
                 ativo
                   ? 'border-gold/50 bg-gold/10 text-gold'
@@ -447,17 +415,73 @@ export default function FollowUpPage() {
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-lg">{origem.emoji}</span>
           <span className="text-white font-light tracking-wide">{origem.label}</span>
-          <span className="ml-auto text-xs tracking-widest uppercase text-white/25">{origem.fases.length} fases</span>
         </div>
         <p className="text-white/40 text-sm leading-relaxed">{origem.descricao}</p>
       </div>
 
-      {/* ── MAPA DE FASES ── */}
-      <div className="flex flex-col">
-        {origem.fases.map((fase, i) => (
-          <FaseCard key={fase.n} fase={fase} ultima={i === origem.fases.length - 1} />
-        ))}
+      {/* ── 1ª MENSAGEM ── */}
+      <FaseCard fase={origem.inicial} numero="1" ultima cor="bg-gold/10 border border-gold/25 text-gold" />
+
+      {/* ── ESCOLHA: RESPONDEU OU NÃO ── */}
+      <div className="ml-0 sm:ml-16 mb-10">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-xs tracking-[0.3em] uppercase text-white/25">O casal respondeu?</span>
+          <div className="flex-1 h-px bg-white/8" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button
+            onClick={() => setRamo('deu')}
+            className={`px-5 py-4 rounded-2xl border text-left transition-all ${
+              ramo === 'deu'
+                ? 'border-green-500/50 bg-green-500/10'
+                : 'border-white/10 hover:border-green-500/40 hover:bg-green-500/5'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-lg">✅</span>
+              <span className={`text-sm tracking-[0.2em] uppercase font-semibold ${ramo === 'deu' ? 'text-green-400' : 'text-white/60'}`}>Deu resposta</span>
+            </div>
+            <p className="text-white/30 text-xs mt-1.5">Responderam ou preencheram. Avançar para a conversa.</p>
+          </button>
+          <button
+            onClick={() => setRamo('nao')}
+            className={`px-5 py-4 rounded-2xl border text-left transition-all ${
+              ramo === 'nao'
+                ? 'border-orange-500/50 bg-orange-500/10'
+                : 'border-white/10 hover:border-orange-500/40 hover:bg-orange-500/5'
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-lg">⏳</span>
+              <span className={`text-sm tracking-[0.2em] uppercase font-semibold ${ramo === 'nao' ? 'text-orange-400' : 'text-white/60'}`}>Não respondeu</span>
+            </div>
+            <p className="text-white/30 text-xs mt-1.5">Silêncio. Seguir com os lembretes de follow up.</p>
+          </button>
+        </div>
       </div>
+
+      {/* ── PRÓXIMOS PASSOS DO CAMINHO ESCOLHIDO ── */}
+      {ramo && (
+        <div>
+          <div className="flex items-center gap-3 mb-6">
+            <span className={`text-xs tracking-[0.3em] uppercase ${ramo === 'deu' ? 'text-green-400/70' : 'text-orange-400/70'}`}>
+              {ramo === 'deu' ? '✅ Caminho — Deu resposta' : '⏳ Caminho — Não respondeu'}
+            </span>
+            <div className="flex-1 h-px bg-white/8" />
+          </div>
+          <div className="flex flex-col">
+            {passos.map((fase, i) => (
+              <FaseCard
+                key={`${ramo}-${i}`}
+                fase={fase}
+                numero={String(i + 2)}
+                ultima={i === passos.length - 1}
+                cor={ramo === 'deu' ? 'bg-green-500/10 border border-green-500/30 text-green-400' : 'bg-orange-500/10 border border-orange-500/30 text-orange-400'}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── NOTA ── */}
       <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.02] px-5 py-4 text-white/30 text-xs leading-relaxed tracking-wide">
