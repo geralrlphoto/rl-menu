@@ -103,6 +103,35 @@ Um grande abraço,
 RL`,
 }
 
+/* Sub-caminho após a chamada, quando aceitam a reunião */
+const ENVIAR_PORTAL_REUNIAO: Fase = {
+  titulo: 'Enviar portal da reunião',
+  quando: 'Marcaram logo o dia',
+  objetivo: 'Na ficha da lead (CRM), preencher data, hora e tipo e clicar em "Enviar Reunião". O portal com os detalhes segue para os noivos. Podes reforçar por mensagem.',
+  mensagem: `Ficou combinado! 🎉
+
+Reunião marcada para [data] às [hora] ([presencial / videochamada]).
+
+Acabei de vos enviar o vosso portal com todos os detalhes. É só confirmarem por lá:
+
+👉 [link do portal]
+
+Até já! Um abraço,
+RL`,
+}
+
+const AGUARDAR_AGENDAMENTO: Fase = {
+  titulo: 'Aguardar agendamento',
+  quando: 'Vão ver a disponibilidade · toque após 24h sem resposta',
+  objetivo: 'Ficam de confirmar o horário. Se não disserem nada em 24 horas, enviar este toque suave.',
+  mensagem: `Olá [nome], tudo bem? 🙂
+
+Ficámos de combinar a nossa reunião. Já conseguiram ver a vossa disponibilidade? Digam-me só dois ou três horários que vos deem jeito e eu ajusto-me a vocês.
+
+Fico a aguardar. Um abraço,
+RL`,
+}
+
 const ORIGENS: Origem[] = [
   /* ═══════════════ SITE ═══════════════ */
   {
@@ -383,6 +412,26 @@ function TelefonemaCard({ numero }: { numero: string }) {
   )
 }
 
+/* ── Cartão de mensagem em inset (sub-caminho, sem número) ── */
+function MensagemInset({ fase, cor }: { fase: Fase; cor: string }) {
+  return (
+    <div className={`mt-4 rounded-2xl border ${cor} p-4`}>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-1">
+        <h4 className="text-white font-light tracking-wide">{fase.titulo}</h4>
+        <span className="text-xs tracking-widest uppercase text-gold/60">{fase.quando}</span>
+      </div>
+      <p className="text-white/35 text-sm mb-3">{fase.objetivo}</p>
+      <div className="rounded-xl border border-white/8 bg-[#111111] overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
+          <span className="text-xs tracking-widest uppercase text-white/25">Mensagem</span>
+          <CopyButton text={fase.mensagem} />
+        </div>
+        <pre className="px-4 py-4 text-sm text-white/70 whitespace-pre-wrap font-sans leading-relaxed">{fase.mensagem}</pre>
+      </div>
+    </div>
+  )
+}
+
 /* ── Cartão de fase ── */
 function FaseCard({ fase, numero, ultima, cor }: { fase: Fase; numero: string; ultima: boolean; cor: string }) {
   return (
@@ -422,11 +471,18 @@ function FaseCard({ fase, numero, ultima, cor }: { fase: Fase; numero: string; u
 export default function FollowUpPage() {
   const [origemId, setOrigemId] = useState('site')
   const [ramo, setRamo] = useState<'deu' | 'nao' | null>(null)
+  const [agendamento, setAgendamento] = useState<'marcado' | 'aguardar' | null>(null)
   const origem = ORIGENS.find(o => o.id === origemId) ?? ORIGENS[0]
 
   const trocarOrigem = (id: string) => {
     setOrigemId(id)
     setRamo(null) // reinicia o caminho ao mudar de origem
+    setAgendamento(null)
+  }
+
+  const escolherRamo = (r: 'deu' | 'nao') => {
+    setRamo(r)
+    setAgendamento(null) // reinicia o sub-caminho da reunião
   }
 
   const passos = ramo === 'deu' ? origem.deuResposta : ramo === 'nao' ? origem.naoRespondeu : []
@@ -484,7 +540,7 @@ export default function FollowUpPage() {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <button
-            onClick={() => setRamo('deu')}
+            onClick={() => escolherRamo('deu')}
             className={`px-5 py-4 rounded-2xl border text-left transition-all ${
               ramo === 'deu'
                 ? 'border-green-500/50 bg-green-500/10'
@@ -498,7 +554,7 @@ export default function FollowUpPage() {
             <p className="text-white/30 text-xs mt-1.5">Responderam ou preencheram. Passo seguinte: chamada telefónica.</p>
           </button>
           <button
-            onClick={() => setRamo('nao')}
+            onClick={() => escolherRamo('nao')}
             className={`px-5 py-4 rounded-2xl border text-left transition-all ${
               ramo === 'nao'
                 ? 'border-orange-500/50 bg-orange-500/10'
@@ -525,6 +581,49 @@ export default function FollowUpPage() {
           </div>
           <div className="flex flex-col">
             {ramo === 'deu' && <TelefonemaCard numero="2" />}
+
+            {/* Sub-caminho: marcaram o dia ou vão ver disponibilidade */}
+            {ramo === 'deu' && (
+              <div className="ml-0 sm:ml-16 mb-10 -mt-2">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-xs tracking-[0.3em] uppercase text-white/25">Na chamada, marcaram logo o dia?</span>
+                  <div className="flex-1 h-px bg-white/8" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => setAgendamento('marcado')}
+                    className={`px-5 py-4 rounded-2xl border text-left transition-all ${
+                      agendamento === 'marcado'
+                        ? 'border-green-500/50 bg-green-500/10'
+                        : 'border-white/10 hover:border-green-500/40 hover:bg-green-500/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">✅</span>
+                      <span className={`text-sm tracking-[0.2em] uppercase font-semibold ${agendamento === 'marcado' ? 'text-green-400' : 'text-white/60'}`}>Marcaram o dia</span>
+                    </div>
+                    <p className="text-white/30 text-xs mt-1.5">Enviar o portal da reunião aos noivos.</p>
+                  </button>
+                  <button
+                    onClick={() => setAgendamento('aguardar')}
+                    className={`px-5 py-4 rounded-2xl border text-left transition-all ${
+                      agendamento === 'aguardar'
+                        ? 'border-amber-500/50 bg-amber-500/10'
+                        : 'border-white/10 hover:border-amber-500/40 hover:bg-amber-500/5'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">🕒</span>
+                      <span className={`text-sm tracking-[0.2em] uppercase font-semibold ${agendamento === 'aguardar' ? 'text-amber-400' : 'text-white/60'}`}>Aguardar agendamento</span>
+                    </div>
+                    <p className="text-white/30 text-xs mt-1.5">Vão ver a disponibilidade. Toque após 24h.</p>
+                  </button>
+                </div>
+                {agendamento === 'marcado' && <MensagemInset fase={ENVIAR_PORTAL_REUNIAO} cor="border-green-500/30" />}
+                {agendamento === 'aguardar' && <MensagemInset fase={AGUARDAR_AGENDAMENTO} cor="border-amber-500/30" />}
+              </div>
+            )}
+
             {passos.map((fase, i) => {
               const base = ramo === 'deu' ? 3 : 2
               return (
