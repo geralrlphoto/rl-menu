@@ -164,25 +164,31 @@ Mal podemos esperar para vos conhecer!`,
         n: 2,
         titulo: '1º lembrete',
         quando: '2 a 3 dias sem resposta',
-        objetivo: 'Reforçar o contacto sabendo que estão a falar com vários fornecedores.',
-        mensagem: `Olá [nome], sei que nesta fase estão a receber várias propostas, por isso queria só garantir que a minha mensagem vos chegou. 🙂
+        objetivo: 'Reforçar o preenchimento do formulário, sabendo que estão a falar com vários fornecedores.',
+        mensagem: `Olá! 🙂
 
-Se quiserem, envio-vos alguns exemplos do nosso trabalho para verem se é o estilo que procuram. Basta dizer.
+Passámos por aqui só para confirmar que a nossa mensagem chegou. Sabemos que nesta fase estão a falar com vários fornecedores, por isso não queremos ocupar muito do vosso tempo.
 
-Um abraço,
-RL`,
+Se ainda não tiveram oportunidade, deixamos outra vez o formulário. São só 2 minutos e ajuda-nos a preparar tudo à vossa medida:
+
+👉 https://rl-menu-lake.vercel.app/nova-lead
+
+Ficamos a aguardar. Um abraço!`,
       },
       {
         n: 3,
         titulo: '2º lembrete',
         quando: '~7 dias sem resposta',
-        objetivo: 'Diferenciar pela atenção e disponibilidade.',
-        mensagem: `Olá [nome], espero que os preparativos estejam a correr bem. 💫
+        objetivo: 'Diferenciar pela atenção e deixar a porta aberta para preencherem o formulário.',
+        mensagem: `Olá! 💫
 
-Continuo disponível para conversar quando fizer sentido para vós. Gosto de conhecer bem cada casal antes de qualquer proposta, para que fique tudo à vossa medida.
+Esperamos que os preparativos estejam a correr bem. Continuamos disponíveis e adorávamos poder conhecer-vos melhor.
 
-Um abraço,
-RL`,
+Se fizer sentido para vós, é só preencherem o formulário quando puderem, e a partir daí tratamos de tudo:
+
+👉 https://rl-menu-lake.vercel.app/nova-lead
+
+Um abraço!`,
       },
       {
         n: 4,
@@ -265,19 +271,27 @@ Mal podemos esperar para vos conhecer! 🙌`,
         n: 2,
         titulo: '1º lembrete',
         quando: '1 a 2 dias sem resposta',
-        objetivo: 'Toque leve e informal a retomar a conversa.',
-        mensagem: `Olá [nome] 🙂 só a dar um toque para não perdermos o contacto.
+        objetivo: 'Toque leve a retomar o contacto e reforçar o formulário.',
+        mensagem: `Olá! 🙂 Só a dar um toque para não perdermos o contacto.
 
-Sempre que quiserem falar, é só dizer. Estou por aqui!`,
+Se ainda não tiveram tempo, aqui fica outra vez o formulário. São 2 minutinhos e ajuda-nos a perceber o que procuram:
+
+👉 https://rl-menu-lake.vercel.app/nova-lead
+
+Estamos por aqui para o que precisarem! 🙌`,
       },
       {
         n: 3,
         titulo: '2º lembrete',
         quando: '4 a 5 dias sem resposta',
-        objetivo: 'Dar valor, oferecer ver o trabalho.',
-        mensagem: `Olá [nome], espero que esteja tudo bem com os preparativos 💫
+        objetivo: 'Dar valor e deixar a porta aberta para preencherem o formulário.',
+        mensagem: `Olá! 💫 Esperamos que esteja tudo bem com os preparativos.
 
-Se quiserem, mando-vos alguns dos nossos trabalhos recentes para verem o estilo. Dizem só que sim e envio 😊`,
+Adorávamos fazer parte do vosso dia. Sempre que puderem, preencham o formulário e falamos com calma:
+
+👉 https://rl-menu-lake.vercel.app/nova-lead
+
+Um abraço! 😊`,
       },
       {
         n: 4,
