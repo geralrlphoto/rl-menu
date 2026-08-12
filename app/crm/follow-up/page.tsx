@@ -52,7 +52,9 @@ Este é um momento oportuno para falarmos dois minutinhos?`,
 
 É também nessa reunião que vos mostramos o nosso método de trabalho e apresentamos os nossos serviços. Temos uma forma muito diferenciada de trabalhar, como já devem ter sentido no formulário que preencheram.
 
-Faz sentido para vós marcarmos essa conversa?`,
+Faz sentido para vós marcarmos essa conversa?
+
+Se aceitarem, perguntar já: Que disponibilidade têm em termos de horários? Assim ajustamo-nos a vocês e combinamos logo o melhor dia. 🗓️`,
 }
 
 function telefonemaTexto(t: typeof TELEFONEMA): string {
