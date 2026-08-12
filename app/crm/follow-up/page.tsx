@@ -135,15 +135,24 @@ RL`,
         n: 1,
         titulo: 'Resposta imediata',
         quando: 'Mesmo dia (rapidez faz a diferença no portal)',
-        objetivo: 'Responder antes da concorrência e agradecer o contacto pela plataforma.',
-        mensagem: `Olá [nome], muito obrigado pela vossa mensagem através do Casamentos.pt. 😊
+        objetivo: 'Agradecer o contacto e enviar já o formulário. Todos os noivos preenchem antes de avançarmos.',
+        mensagem: `Olá! 😊
 
-Foi um gosto receber o vosso contacto. Adorávamos saber mais sobre o vosso casamento em [local] e mostrar-vos como podemos eternizar esse dia.
+Que bom ter-vos por aqui!
 
-Fazia sentido marcarmos uma breve conversa esta semana? Assim explico tudo com calma e respondo a todas as vossas questões.
+Antes de mais, obrigado por terem entrado em contacto connosco. Agora queremos conhecer-vos um pouco melhor.
 
-Um abraço,
-RL`,
+Preparámos um pequeno formulário que demora cerca de 2 minutos a preencher e que nos ajuda a perceber melhor aquilo que procuram para o vosso casamento.
+
+👉 https://rl-menu-lake.vercel.app/nova-lead
+
+Enquanto isso, convidamos-vos também a espreitar o nosso Instagram. Lá partilhamos muitos casamentos reais, momentos espontâneos e histórias de outros casais. É a melhor forma de perceberem o nosso estilo e, quem sabe, encontrarem inspiração para o vosso grande dia.
+
+📷 Instagram: @rl.photo.video
+
+Assim que recebermos o vosso formulário, entraremos em contacto convosco para conversarmos com calma e percebermos se somos a equipa certa para contar a vossa história.
+
+Mal podemos esperar para vos conhecer!`,
       },
       {
         n: 2,
