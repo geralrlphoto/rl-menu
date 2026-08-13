@@ -151,6 +151,22 @@ Um abraço,
 RL`,
 }
 
+const AGUARDA_RESPOSTA_1SEMANA: Fase = {
+  titulo: '2º follow up',
+  quando: 'Após 1 semana sem resposta',
+  objetivo: 'Se continuarem sem responder ao toque de 48h, enviar este segundo follow up, ainda caloroso e sem pressão.',
+  mensagem: `Olá [nome]! 🙂
+
+Voltei a lembrar-me de vocês e da boa energia da nossa conversa. Sei que esta é uma decisão importante e que merece o vosso tempo, por isso fica aqui apenas um miminho para saber como estão as coisas.
+
+Se ainda tiverem alguma dúvida sobre a proposta, ou se quiserem que ajustemos algum detalhe para ficar tudo à vossa medida, é só dizerem. Fico muito feliz por vos ajudar.
+
+Continuo por aqui, a torcer para fazermos parte do vosso grande dia. 💛
+
+Um abraço,
+RL`,
+}
+
 const ORIGENS: Origem[] = [
   /* ═══════════════ SITE ═══════════════ */
   {
@@ -678,7 +694,12 @@ export default function FollowUpPage() {
                       </button>
                     </div>
                     {fecho === 'fechou' && <MensagemInset fase={FECHOU_CONTRATO} cor="border-green-500/30" />}
-                    {fecho === 'aguarda' && <MensagemInset fase={AGUARDA_RESPOSTA_48H} cor="border-amber-500/30" />}
+                    {fecho === 'aguarda' && (
+                      <>
+                        <MensagemInset fase={AGUARDA_RESPOSTA_48H} cor="border-amber-500/30" />
+                        <MensagemInset fase={AGUARDA_RESPOSTA_1SEMANA} cor="border-amber-500/20" />
+                      </>
+                    )}
                   </>
                 )}
                 {agendamento === 'aguardar' && <MensagemInset fase={AGUARDAR_AGENDAMENTO} cor="border-amber-500/30" />}
