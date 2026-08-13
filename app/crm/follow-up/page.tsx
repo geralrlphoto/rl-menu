@@ -13,6 +13,7 @@ import Link from 'next/link'
    ────────────────────────────────────────────────────────────── */
 
 const FORM_URL = 'https://rl-menu-lake.vercel.app/nova-lead'
+const HERO_URL = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
 
 type Fase = {
   titulo: string
@@ -509,13 +510,23 @@ export default function FollowUpPage() {
   return (
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1000px] mx-auto">
 
-      {/* ── HEADER ── */}
-      <div className="mb-8 sm:mb-10">
-        <Link href="/crm" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">
-          ‹ CRM
-        </Link>
-        <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Follow Up</h1>
-        <p className="text-white/25 text-xs tracking-[0.25em] mt-2 uppercase">Mapa do percurso da lead por fases</p>
+      {/* ── HEADER COM FOTO ── */}
+      <div className="relative -mx-3 sm:-mx-6 -mt-6 sm:-mt-10 mb-8 sm:mb-10 h-56 sm:h-72 overflow-hidden rounded-b-3xl">
+        <img src={HERO_URL} alt="" className="absolute inset-0 w-full h-full object-cover object-center" />
+        {/* Gradientes para legibilidade */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/70 to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+        {/* Conteúdo sobreposto */}
+        <div className="relative h-full max-w-[1000px] mx-auto px-3 sm:px-6 flex flex-col justify-between py-6 sm:py-8">
+          <Link href="/crm" className="text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase">
+            ‹ CRM
+          </Link>
+          <div>
+            <h1 className="text-4xl sm:text-6xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase drop-shadow-lg">Follow Up</h1>
+            <div className="w-16 h-px bg-gold/70 mt-4 mb-3" />
+            <p className="text-white/60 text-xs tracking-[0.25em] uppercase">Mapa do percurso da lead por fases</p>
+          </div>
+        </div>
       </div>
 
       {/* ── SELETOR DE ORIGEM ── */}
