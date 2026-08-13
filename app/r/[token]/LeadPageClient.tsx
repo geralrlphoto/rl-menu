@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-const WHATSAPP     = 'https://wa.me/351919191919'
-const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
+const WHATSAPP     = 'https://wa.me/351912832788'
+const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.webp'
 
 // ─── DESIGN SYSTEM — RL PHOTO.VIDEO (rlphotovideo.pt) ─────────────────────────
 const RLP_CSS = `
@@ -288,9 +288,6 @@ function merge(saved: any): PageContent {
   }
 }
 
-function fontClass(f: string) { return FONTS.find(x => x.value === f)?.className || 'font-playfair' }
-function sizeClass(s: string) { return SIZES.find(x => x.value === s)?.className || 'text-6xl sm:text-7xl' }
-
 function toEmbedUrl(url: string): string | null {
   if (!url) return null
   // YouTube watch or short link
@@ -411,16 +408,6 @@ function fmtData(d: string) {
   } catch { return d }
 }
 function fmtHora(h: string) { return (h || '').slice(0, 5) }
-
-function Leaf({ flip }: { flip?: boolean }) {
-  return (
-    <svg viewBox="0 0 80 30" className={`w-16 sm:w-20 h-auto text-gold/50 ${flip ? 'scale-x-[-1]' : ''}`} fill="currentColor">
-      <path d="M5 15 Q20 5 40 15 Q20 25 5 15Z" opacity="0.6"/>
-      <path d="M30 15 Q50 3 75 15 Q50 27 30 15Z" opacity="0.4"/>
-      <line x1="5" y1="15" x2="75" y2="15" stroke="currentColor" strokeWidth="0.5" opacity="0.3"/>
-    </svg>
-  )
-}
 
 function Countdown({ targetDate }: { targetDate: string }) {
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
@@ -869,17 +856,19 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             }
 
             if (propostaResposta === 'confirmada') return (
-              <div className="rlp-card w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22 }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1px solid var(--g)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <span style={{ color: 'var(--g)', fontSize: 20 }}>✦</span>
+              <div className="flex flex-col gap-3 w-full flex-1">
+                <div className="rlp-card w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+                  <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1px solid var(--g)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ color: 'var(--g)', fontSize: 20 }}>✦</span>
+                  </div>
+                  <div>
+                    <p className="rlp-h2" style={{ fontSize: 'clamp(24px,3.4vw,34px)' }}>Obrigado por <em>nos escolherem</em></p>
+                    <p className="rlp-ed" style={{ fontSize: 18, marginTop: 6 }}>para o vosso grande dia</p>
+                  </div>
+                  <p className="rlp-lede" style={{ fontSize: 14, maxWidth: '40ch' }}>
+                    Estamos muito felizes por fazer parte deste momento tão especial. Para dar seguimento ao contrato, avancem abaixo.
+                  </p>
                 </div>
-                <div>
-                  <p className="rlp-h2" style={{ fontSize: 'clamp(24px,3.4vw,34px)' }}>Obrigado por <em>nos escolherem</em></p>
-                  <p className="rlp-ed" style={{ fontSize: 18, marginTop: 6 }}>para o vosso grande dia</p>
-                </div>
-                <p className="rlp-lede" style={{ fontSize: 14, maxWidth: '40ch' }}>
-                  Estamos muito felizes por fazer parte deste momento tão especial. Para dar seguimento ao contrato, avancem abaixo.
-                </p>
                 <a href="/contrato-cps/casamento" className="rlp-btn full">
                   <span className="fill" /><span className="dot" />Próximo Passo
                 </a>
@@ -1308,7 +1297,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 <button onClick={() => setRevista('visible', !revista.visible)}
                   className="w-full py-2 rounded-lg text-xs tracking-[0.2em] uppercase transition-all"
                   style={revista.visible
-                    ? { background: 'rgba(201,168,76,0.15)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.3)' }
+                    ? { background: 'rgba(216,190,147,0.15)', color: '#d8be93', border: '1px solid rgba(216,190,147,0.3)' }
                     : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.1)' }}>
                   {revista.visible ? '● Visível' : '○ Oculta'}
                 </button>
@@ -1375,7 +1364,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
               )}
               <button onClick={handleSaveContent} disabled={saving}
                 className="w-full py-3 rounded-xl text-sm font-semibold tracking-[0.1em] uppercase transition-all disabled:opacity-50"
-                style={{ background: saved ? 'rgba(74,222,128,0.15)' : 'rgba(201,168,76,0.15)', color: saved ? '#4ade80' : '#C9A84C', border: `1px solid ${saved ? 'rgba(74,222,128,0.3)' : 'rgba(201,168,76,0.3)'}` }}>
+                style={{ background: saved ? 'rgba(74,222,128,0.15)' : 'rgba(216,190,147,0.15)', color: saved ? '#4ade80' : '#d8be93', border: `1px solid ${saved ? 'rgba(74,222,128,0.3)' : 'rgba(216,190,147,0.3)'}` }}>
                 {saving ? 'A guardar...' : saved ? '✓ Guardado!' : 'Guardar Alterações'}
               </button>
             </div>
