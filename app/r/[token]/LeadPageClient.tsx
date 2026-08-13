@@ -763,9 +763,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
       {/* ── CARD REUNIÃO ── */}
       <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
-        <div className="mx-auto flex flex-col items-center md:flex-row md:items-start md:justify-center gap-6 md:gap-8" style={{ maxWidth: 900 }}>
+        <div className="mx-auto flex flex-col items-center md:flex-row md:items-stretch md:justify-center gap-6 md:gap-8" style={{ maxWidth: 900 }}>
         <FadeIn className="w-full flex flex-col gap-3" style={{ maxWidth: 420 }}>
-        <div className="rlp-card w-full">
+        <div className="rlp-card w-full flex-1">
           <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line-soft)' }}>
             <span className="rlp-eyebrow">Detalhes da Reunião</span>
           </div>
@@ -873,7 +873,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             }
 
             if (propostaResposta === 'confirmada') return (
-              <div className="rlp-card mt-4 w-full text-center" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
+              <div className="rlp-card mt-4 w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22 }}>
                 <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1px solid var(--g)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ color: 'var(--g)', fontSize: 20 }}>✦</span>
                 </div>
@@ -891,7 +891,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             )
 
             if (propostaResposta === 'rejeitada') return (
-              <div className="rlp-card mt-4 w-full text-center" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+              <div className="rlp-card mt-4 w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
                 <p className="rlp-h2" style={{ fontSize: 'clamp(22px,3vw,30px)' }}>Obrigado pelo <em>vosso tempo</em></p>
                 <p className="rlp-lede" style={{ fontSize: 14, maxWidth: '42ch' }}>
                   Foi um prazer conhecer-vos e esperamos poder trabalhar juntos no futuro. Desejamos-vos o melhor para o vosso dia especial.
@@ -900,9 +900,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             )
 
             return (
-              <div className="mt-6 flex flex-col gap-3 w-full">
+              <div className="mt-6 flex flex-col gap-3 w-full flex-1">
                 {/* Card de destaque */}
-                <div className="rlp-card w-full text-center" style={{ padding: '30px 24px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+                <div className="rlp-card w-full text-center flex-1" style={{ padding: '30px 24px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
                   <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'rgba(216,190,147,.1)', border: '1px solid rgba(216,190,147,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ color: 'var(--g)', fontSize: 18 }}>✦</span>
                   </div>
