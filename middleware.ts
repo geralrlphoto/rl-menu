@@ -221,6 +221,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/media/portal-cliente/acesso') ||
     pathname.startsWith('/api/media-portal-acesso') ||
     pathname.startsWith('/apresentacao') ||
+    pathname.startsWith('/acompanhamento') ||
     pathname.startsWith('/rm/') ||
     pathname.startsWith('/api/media-portal/view') ||
     pathname.startsWith('/api/media-portal/confirm') ||
