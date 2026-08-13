@@ -139,11 +139,13 @@ const AGUARDA_RESPOSTA_48H: Fase = {
   titulo: 'Vão dar uma resposta',
   quando: 'Ficaram de responder · follow up após 48h',
   objetivo: 'Ficam de decidir. Esperamos até 48 horas; se não houver resposta, enviar este follow up.',
-  mensagem: `Olá [nome], tudo bem? 🙂
+  mensagem: `Olá [nome]! 🙂
 
-Foi um gosto conversarmos na reunião! Passei só para saber se tiveram oportunidade de rever a nossa proposta no portal e se ficou alguma questão por esclarecer.
+Fiquei com um sorriso depois da nossa reunião. Foi mesmo especial. Deu para sentir a vibe e a atmosfera que se criou entre nós, e acredito que isso foi notório para todos. É exatamente essa ligação que adoramos criar com os nossos noivos e que depois se vê nas imagens do vosso dia.
 
-Estou totalmente disponível para vos ajudar a decidir com toda a tranquilidade. Qualquer dúvida, é só dizerem.
+Passei só para saber se já conseguiram rever a nossa proposta no portal com calma e se ficou alguma questão no ar.
+
+Seja qual for a vossa decisão, foi um prazer enorme conhecer-vos. Estou aqui para o que precisarem. 💛
 
 Um abraço,
 RL`,
