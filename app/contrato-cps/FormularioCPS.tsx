@@ -13,6 +13,74 @@ const PROPOSTAS_DEFAULT = [
 
 type Tipo = 'casamento' | 'batizado'
 
+// ─── DESIGN SYSTEM — RL PHOTO.VIDEO (rlphotovideo.pt) ─────────────────────────
+const RLP_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&family=Hanken+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+
+.rl-portal{
+  --ink:#0b0a08; --ink-2:#100e0b; --ink-3:#16130f;
+  --g:#d8be93; --g-deep:#c8a866;
+  --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4);
+  --line:rgba(243,237,226,.14); --line-soft:rgba(243,237,226,.08);
+  --fd:'Jost',sans-serif; --fb:'Hanken Grotesk',sans-serif; --fm:'Space Mono',monospace; --fs:'Cormorant Garamond',serif;
+  --ease:cubic-bezier(.16,1,.3,1); --pad:clamp(20px,5vw,80px);
+  background:var(--ink); color:var(--tx); font-family:var(--fb);
+  -webkit-font-smoothing:antialiased; min-height:100vh;
+}
+.rl-portal ::selection{background:rgba(216,190,147,.28);color:#0b0a08;}
+
+.rlp-grain{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-size:130px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");}
+.rlp-vig{position:fixed;inset:0;z-index:8990;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.5);}
+.rlp-prog{position:fixed;top:0;left:0;height:2px;width:0;background:var(--g);z-index:9100;transition:width .1s linear;}
+
+.rlp-bar{position:fixed;top:0;left:0;width:100%;z-index:8000;display:flex;align-items:center;justify-content:space-between;padding:20px var(--pad);border-bottom:1px solid transparent;transition:background .6s var(--ease),padding .6s var(--ease),border-color .6s;}
+.rlp-bar.s{background:rgba(11,10,8,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:13px;padding-bottom:13px;border-color:var(--line-soft);}
+.rlp-mono{display:inline-flex;align-items:baseline;gap:.6em;text-decoration:none;}
+.rlp-mono span{font-family:var(--fd);font-weight:300;letter-spacing:.3em;font-size:16px;color:var(--tx);}
+.rlp-mono i{font-family:var(--fm);font-style:normal;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);opacity:.85;}
+
+.rlp-eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--g);display:inline-flex;gap:.8em;align-items:center;}
+.rlp-eyebrow::before{content:"";width:34px;height:1px;background:var(--g);opacity:.6;}
+.rlp-eyebrow.c{justify-content:center;}
+
+.rlp-h1{font-family:var(--fd);font-weight:200;line-height:.98;letter-spacing:-.02em;color:var(--tx);}
+.rlp-h1 em{font-style:italic;color:var(--g);}
+.rlp-h2{font-family:var(--fd);font-weight:200;line-height:1.04;letter-spacing:-.02em;color:var(--tx);}
+.rlp-h2 em{font-style:italic;color:var(--g);}
+.rlp-lede{font-family:var(--fb);font-weight:300;color:var(--tx-mid);line-height:1.8;font-size:clamp(15px,1.4vw,17px);}
+.rlp-ed{font-family:var(--fs);font-weight:300;color:var(--tx-mid);}
+.rlp-ed em{font-style:italic;color:var(--g);}
+
+.rlp-btn{display:inline-flex;align-items:center;justify-content:center;gap:.9em;position:relative;isolation:isolate;font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);padding:18px 38px;border:1px solid var(--g);border-radius:40px;overflow:hidden;background:var(--g);transition:color .5s var(--ease),opacity .3s;cursor:pointer;text-decoration:none;}
+.rlp-btn .fill{position:absolute;inset:0;z-index:-1;background:var(--ink);transform:translateY(101%);transition:transform .6s var(--ease);}
+.rlp-btn .dot{width:5px;height:5px;border-radius:50%;background:var(--ink);transition:background .5s;flex:none;}
+.rlp-btn:hover{color:var(--g);} .rlp-btn:hover .fill{transform:translateY(0);} .rlp-btn:hover .dot{background:var(--g);}
+.rlp-btn:disabled{opacity:.45;pointer-events:none;}
+.rlp-btn.full{width:100%;}
+
+.rlp-link-u{font-family:var(--fm);font-size:12px;letter-spacing:.16em;text-transform:uppercase;display:inline-flex;gap:.7em;align-items:center;position:relative;color:var(--tx-mid);text-decoration:none;}
+.rlp-link-u::after{content:"";position:absolute;left:0;bottom:-5px;width:100%;height:1px;background:var(--g);transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease);}
+.rlp-link-u:hover::after{transform:scaleX(1);transform-origin:left;}
+.rlp-link-u .a{color:var(--g);transition:transform .4s var(--ease);}
+.rlp-link-u:hover .a{transform:translateX(-5px);}
+
+.rlp-wrap{width:100%;max-width:720px;margin:0 auto;padding-left:var(--pad);padding-right:var(--pad);}
+
+/* Campos de formulário — linha inferior */
+.rlp-field{display:block;}
+.rlp-field .lab{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);display:block;margin-bottom:12px;}
+.rlp-field .req{color:var(--g);margin-left:.35em;opacity:.8;}
+.rlp-field input,.rlp-field select{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--tx);font-family:var(--fd);font-weight:300;font-size:clamp(16px,1.6vw,20px);padding:8px 0 13px;outline:none;transition:border-color .4s var(--ease);}
+.rlp-field select{-webkit-appearance:none;appearance:none;padding-right:28px;cursor:pointer;}
+.rlp-field input:focus,.rlp-field select:focus{border-color:var(--g);}
+.rlp-field input::placeholder{color:var(--tx-dim);}
+.rlp-field select option{background:var(--ink-2);color:var(--tx);}
+.rlp-field .sel{position:relative;}
+.rlp-field .sel-arrow{position:absolute;right:0;top:50%;transform:translateY(-50%);color:var(--g);pointer-events:none;font-size:12px;}
+
+@media (prefers-reduced-motion:reduce){ * { scroll-behavior:auto; } }
+`
+
 type Form = {
   referencia_evento: string
   nome_noivos: string
@@ -106,7 +174,7 @@ function getLabels(tipo: Tipo) {
   }
 }
 
-// ─── Field wrapper premium ────────────────────────────────────────────────────
+// ─── Field wrapper (design system) ────────────────────────────────────────────
 function Field({
   label, name, value, onChange, type = 'text', required, placeholder,
 }: {
@@ -119,19 +187,14 @@ function Field({
   placeholder?: string
 }) {
   return (
-    <label className="group block">
-      <span className="block text-[10px] tracking-[0.4em] text-gold/55 uppercase mb-2 transition-colors group-focus-within:text-gold">
-        {label}{required && <span className="text-gold/80 ml-1">*</span>}
-      </span>
+    <label className="rlp-field">
+      <span className="lab">{label}{required && <span className="req">*</span>}</span>
       <input
         type={type}
         value={value}
         onChange={e => onChange(name, e.target.value)}
         required={required}
         placeholder={placeholder}
-        className="w-full bg-transparent border-b border-white/15 px-0 py-3 text-[15px] text-white/90
-                   placeholder:text-white/15 focus:outline-none focus:border-gold/70
-                   transition-colors duration-300"
       />
     </label>
   )
@@ -148,38 +211,25 @@ function Select({
   required?: boolean
 }) {
   return (
-    <label className="group block">
-      <span className="block text-[10px] tracking-[0.4em] text-gold/55 uppercase mb-2 transition-colors group-focus-within:text-gold">
-        {label}{required && <span className="text-gold/80 ml-1">*</span>}
-      </span>
-      <div className="relative">
-        <select
-          value={value}
-          onChange={e => onChange(name, e.target.value)}
-          required={required}
-          className="w-full appearance-none bg-transparent border-b border-white/15 px-0 py-3 pr-8 text-[15px]
-                     text-white/90 focus:outline-none focus:border-gold/70 transition-colors cursor-pointer
-                     [&>option]:bg-[#0e0b07] [&>option]:text-white"
-        >
-          <option value="" className="text-white/40">— Seleciona —</option>
+    <label className="rlp-field">
+      <span className="lab">{label}{required && <span className="req">*</span>}</span>
+      <div className="sel">
+        <select value={value} onChange={e => onChange(name, e.target.value)} required={required}>
+          <option value="">— Seleciona —</option>
           {options.map(o => <option key={o} value={o}>{o}</option>)}
         </select>
-        <span className="absolute right-0 top-1/2 -translate-y-1/2 text-gold/50 pointer-events-none text-xs">▾</span>
+        <span className="sel-arrow">▾</span>
       </div>
     </label>
   )
 }
 
-// ─── Section divider premium ──────────────────────────────────────────────────
+// ─── Section divider (design system) ──────────────────────────────────────────
 function SectionTitle({ kicker, title }: { kicker: string; title: string }) {
   return (
-    <div className="mb-10 mt-16 first:mt-0">
-      <p className="text-[9px] tracking-[0.5em] text-white/25 uppercase mb-3">{kicker}</p>
-      <h2 className="font-cormorant text-[28px] sm:text-[34px] font-light italic text-gold leading-tight">{title}</h2>
-      <div className="mt-4 flex items-center gap-3">
-        <div className="h-px w-12 bg-gold/50" />
-        <div className="h-px flex-1 bg-white/[0.04]" />
-      </div>
+    <div className="mb-9 mt-16 first:mt-0">
+      <span className="rlp-eyebrow">{kicker}</span>
+      <h2 className="rlp-h2" style={{ fontSize: 'clamp(26px,4vw,42px)', marginTop: 16 }}>{title}</h2>
     </div>
   )
 }
@@ -210,6 +260,21 @@ export default function FormularioCPS({
     }
   }, [searchParams])
 
+  // Barra de progresso + estado da nav
+  useEffect(() => {
+    const onScroll = () => {
+      const st = window.scrollY || document.documentElement.scrollTop
+      const h = document.documentElement.scrollHeight - document.documentElement.clientHeight
+      const prog = document.getElementById('rlp-prog')
+      if (prog) prog.style.width = `${h > 0 ? (st / h) * 100 : 0}%`
+      const bar = document.getElementById('rlp-bar')
+      if (bar) bar.classList.toggle('s', st > 40)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
   function update(k: keyof Form, v: string) {
     setForm(prev => ({ ...prev, [k]: v }))
   }
@@ -235,31 +300,26 @@ export default function FormularioCPS({
     }
   }
 
-  // ─── Pós-submit: thank you premium ─────────────────────────────────────────
+  // ─── Pós-submit: thank you ──────────────────────────────────────────────────
   if (success) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-4 py-12"
-        style={{ background: 'radial-gradient(ellipse at 50% 30%, #2b1b04 0%, #120b02 40%, #080503 100%)' }}>
-        <div className="max-w-xl w-full text-center">
-          <div className="mx-auto mb-8 w-16 h-16 rounded-full border-[1.5px] border-gold/70 flex items-center justify-center text-gold text-2xl">
-            ✓
+      <main className="rl-portal flex items-center justify-center px-4 py-12">
+        <style>{RLP_CSS}</style>
+        <div className="rlp-grain" aria-hidden />
+        <div className="rlp-vig" aria-hidden />
+        <div className="w-full text-center flex flex-col items-center" style={{ maxWidth: 560 }}>
+          <div className="mb-8 flex items-center justify-center" style={{ width: 60, height: 60, borderRadius: '50%', border: '1px solid var(--g)' }}>
+            <span style={{ color: 'var(--g)', fontSize: 22 }}>✦</span>
           </div>
-          <p className="text-[10px] tracking-[0.5em] text-gold/50 uppercase mb-4">Confirmado</p>
-          <h1 className="font-cormorant text-5xl sm:text-6xl font-light tracking-wide text-white/95 mb-3 leading-tight">
-            Dados recebidos.
-          </h1>
-          <p className="font-cormorant text-2xl italic text-gold/80 mb-8 font-light">
-            Obrigado pela vossa confiança.
+          <span className="rlp-eyebrow c" style={{ marginBottom: 22 }}>Confirmado</span>
+          <h1 className="rlp-h1" style={{ fontSize: 'clamp(40px,7vw,80px)', marginBottom: 14 }}>Dados <em>recebidos</em></h1>
+          <p className="rlp-ed" style={{ fontSize: 'clamp(18px,2.2vw,24px)', fontStyle: 'italic', color: 'var(--g)', marginBottom: 26 }}>
+            Obrigado pela vossa confiança
           </p>
-          <div className="mx-auto h-px w-24 bg-gold/40 mb-8" />
-          <p className="font-cormorant text-lg text-white/50 leading-relaxed mb-10 italic font-light">
-            Recebemos os vossos dados para o contrato.<br/>
-            Em breve entraremos em contacto para os próximos passos.
+          <p className="rlp-lede" style={{ maxWidth: '44ch', marginBottom: 34 }}>
+            Recebemos os vossos dados para o contrato. Em breve entraremos em contacto para os próximos passos.
           </p>
-          <Link href={backHref}
-            className="inline-block text-[10px] tracking-[0.4em] text-white/40 hover:text-gold uppercase transition-colors">
-            ‹ Voltar
-          </Link>
+          <Link href={backHref} className="rlp-link-u"><span className="a">‹</span><span>Voltar</span></Link>
         </div>
       </main>
     )
@@ -267,41 +327,46 @@ export default function FormularioCPS({
 
   // ─── Form principal ────────────────────────────────────────────────────────
   return (
-    <main className="min-h-screen px-4 py-10 sm:py-16"
-      style={{ background: 'radial-gradient(ellipse at 50% 20%, #1f1404 0%, #100a02 45%, #060402 100%)' }}>
-      <div className="max-w-2xl mx-auto">
+    <main className="rl-portal">
+      <style>{RLP_CSS}</style>
 
-        {/* Voltar */}
-        <Link href={backHref}
-          className="inline-flex items-center gap-2 text-[10px] tracking-[0.35em] text-white/30 hover:text-gold transition-colors mb-12 uppercase">
-          ‹ Voltar
+      {/* Atmosfera */}
+      <div className="rlp-grain" aria-hidden />
+      <div className="rlp-vig" aria-hidden />
+      <div id="rlp-prog" className="rlp-prog" aria-hidden />
+
+      {/* Barra fixa */}
+      <header id="rlp-bar" className="rlp-bar">
+        <Link href="/" className="rlp-mono" aria-label="RL Photo · Video">
+          <span>RL</span><i>Photo · Video</i>
         </Link>
+        <Link href={backHref} className="rlp-link-u"><span className="a">‹</span><span>Voltar</span></Link>
+      </header>
+
+      <div className="rlp-wrap" style={{ paddingTop: 'clamp(120px,18vh,200px)', paddingBottom: 'clamp(60px,10vh,120px)' }}>
 
         {/* Hero */}
-        <header className="mb-16 text-center">
-          <p className="text-[9px] tracking-[0.5em] text-gold/40 uppercase mb-4">RL PHOTO.VIDEO</p>
-          <h1 className="font-cormorant text-5xl sm:text-6xl font-light tracking-wide text-white/95 leading-[1.05] mb-4">
-            {L.heroTitle.line1}
-            <br/>
-            <span className="italic text-gold">{L.heroTitle.line2}</span>
+        <header className="text-center flex flex-col items-center" style={{ marginBottom: 'clamp(48px,8vh,90px)' }}>
+          <span className="rlp-eyebrow c" style={{ marginBottom: 24 }}>RL Photo · Video</span>
+          <h1 className="rlp-h1" style={{ fontSize: 'clamp(40px,8vw,92px)' }}>
+            {L.heroTitle.line1}<br /><em>{L.heroTitle.line2}</em>
           </h1>
-          <div className="mx-auto h-px w-16 bg-gold/50 my-6" />
-          <p className="font-cormorant text-[19px] sm:text-[21px] text-white/65 leading-[1.7] max-w-lg mx-auto font-light">
-            <span className="italic text-gold/80">{L.heroIntro}</span><br/>
-            espero que se encontrem bem. Quero expressar o nosso sincero <em className="text-white/85">muito obrigado</em> pela confiança que depositaram na nossa equipa ao escolher os nossos serviços.
+          <div style={{ width: 60, height: 1, background: 'var(--g)', opacity: .5, margin: '32px 0' }} />
+          <p className="rlp-ed" style={{ fontSize: 'clamp(18px,2.2vw,23px)', lineHeight: 1.6, maxWidth: '40ch' }}>
+            <em>{L.heroIntro}</em> espero que se encontrem bem. Quero expressar o nosso sincero <em>muito obrigado</em> pela confiança que depositaram na nossa equipa ao escolher os nossos serviços.
           </p>
-          <p className="font-cormorant mt-6 text-[17px] sm:text-[18px] text-white/50 leading-[1.7] max-w-lg mx-auto italic font-light">
+          <p className="rlp-lede" style={{ marginTop: 24, maxWidth: '52ch' }}>
             Para preparar o contrato, precisamos de alguns dados. Preencham o formulário abaixo da forma mais completa possível — nomes completos, moradas com código postal e quaisquer serviços extras pretendidos.
           </p>
           {sectionName && (
-            <p className="mt-8 text-[10px] tracking-[0.4em] text-white/20 uppercase">
+            <p style={{ marginTop: 28, fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.3em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>
               {sectionName}
             </p>
           )}
         </header>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-7">
 
           {/* ── Dados Gerais ── */}
           <SectionTitle kicker="Secção 01" title={L.sec01Label} />
@@ -346,24 +411,16 @@ export default function FormularioCPS({
           <Field label={L.email_noivo} name="email_noivo" value={form.email_noivo} onChange={update} type="email" required />
 
           {/* ── Submit ── */}
-          <div className="pt-12 pb-8">
+          <div className="pt-14 pb-6 flex flex-col items-center gap-6">
             {error && (
-              <div className="mb-6 p-4 border border-red-500/30 bg-red-500/[0.04] text-red-400/80 text-[13px] text-center rounded">
+              <div className="w-full text-center" style={{ padding: '14px 20px', borderRadius: 8, border: '1px solid rgba(231,155,155,.4)', background: 'rgba(231,155,155,.06)', color: '#e79b9b', fontFamily: "'Space Mono',monospace", fontSize: 12, letterSpacing: '.06em' }}>
                 {error}
               </div>
             )}
-            <button type="submit" disabled={submitting}
-              className="group relative w-full overflow-hidden border border-gold/40 bg-gradient-to-r from-gold/[0.08] via-gold/[0.04] to-gold/[0.08]
-                         hover:from-gold/[0.15] hover:via-gold/[0.08] hover:to-gold/[0.15]
-                         px-10 py-5 text-[12px] tracking-[0.4em] text-gold uppercase
-                         transition-all duration-500 disabled:opacity-40 disabled:cursor-not-allowed">
-              <span className="relative z-10">
-                {submitting ? 'A enviar...' : 'Enviar Dados'}
-              </span>
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gold/10 to-transparent
-                              -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            <button type="submit" disabled={submitting} className="rlp-btn full">
+              <span className="fill" /><span className="dot" />{submitting ? 'A enviar…' : 'Enviar Dados'}
             </button>
-            <p className="mt-6 text-center text-[10px] tracking-[0.3em] text-white/20 uppercase">
+            <p style={{ fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>
               Os vossos dados são tratados com confidencialidade
             </p>
           </div>
