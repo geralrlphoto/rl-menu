@@ -775,12 +775,49 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             <div className="rlp-drow"><span className="k">Modo</span><span className="v">{contact!.reuniao_tipo || 'Presencial'}</span></div>
           </div>
           {contact!.reuniao_link && (
-            <div style={{ padding: '0 26px 24px' }}>
+            <div style={{ padding: '0 26px 18px' }}>
               <a href={contact!.reuniao_link} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost full">
                 <span className="fill" /><span className="dot" />{isVideo ? 'Entrar na videochamada' : 'Ver localização'}
               </a>
             </div>
           )}
+          {targetDate && (() => {
+            const fmt = (d: string, h: string) => `${d.replace(/-/g,'') }T${h.replace(':','')}00`
+            const start = fmt(contact!.reuniao_data, horaFmt)
+            const end   = fmt(contact!.reuniao_data, String(parseInt(horaFmt.split(':')[0]) + 1).padStart(2,'0') + ':' + horaFmt.split(':')[1])
+            const title = encodeURIComponent('Reunião RL Photo · Video')
+            const loc   = encodeURIComponent(contact!.reuniao_link || (contact!.reuniao_tipo === 'Videochamada' ? 'Videochamada' : 'Presencial'))
+            const gcal  = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${loc}`
+            const downloadIcs = () => {
+              const ics = [
+                'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RL Photo//Video//PT',
+                'BEGIN:VEVENT',
+                `DTSTART:${start}`, `DTEND:${end}`,
+                `SUMMARY:Reunião RL Photo · Video`,
+                `LOCATION:${decodeURIComponent(loc)}`,
+                'END:VEVENT','END:VCALENDAR'
+              ].join('\r\n')
+              const blob = new Blob([ics], { type: 'text/calendar' })
+              const url  = URL.createObjectURL(blob)
+              const a    = Object.assign(document.createElement('a'), { href: url, download: 'reuniao-rl-photo.ics' })
+              a.click(); URL.revokeObjectURL(url)
+            }
+            return (
+              <div style={{ padding: '4px 26px 24px' }} className="flex flex-col items-center gap-3">
+                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Adicionar ao Calendário</p>
+                <div className="flex gap-2 w-full">
+                  <a href={gcal} target="_blank" rel="noopener noreferrer" className="rlp-calbtn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-1V1h-2v2h-9V1h-2v2h-1A2.5 2.5 0 0 0 2 5.5v15A2.5 2.5 0 0 0 4.5 23h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 3zM20 20.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5V10h16v10.5zM20 8H4V5.5a.5.5 0 0 1 .5-.5H6v1h2V5h9v1h2V5h.5a.5.5 0 0 1 .5.5V8z"/></svg>
+                    Google
+                  </a>
+                  <button onClick={downloadIcs} className="rlp-calbtn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                    Apple
+                  </button>
+                </div>
+              </div>
+            )
+          })()}
         </div>
 
           {/* Status badge */}
@@ -808,50 +845,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           <button onClick={handleChangeRequest} disabled={requesting || isAdmin} className="rlp-btn ghost full">
             <span className="fill" /><span className="dot" />{requesting ? 'A enviar…' : 'Alterar Reunião'}
           </button>
-
-          {isAdmin && <p className="text-center" style={{ fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
         </FadeIn>
 
         <FadeIn delay={150} className="w-full flex flex-col gap-3" style={{ maxWidth: 420 }}>
-
-          {/* ── Adicionar ao Calendário ── */}
-          {targetDate && (() => {
-            const fmt = (d: string, h: string) => `${d.replace(/-/g,'') }T${h.replace(':','')}00`
-            const start = fmt(contact!.reuniao_data, horaFmt)
-            const end   = fmt(contact!.reuniao_data, String(parseInt(horaFmt.split(':')[0]) + 1).padStart(2,'0') + ':' + horaFmt.split(':')[1])
-            const title = encodeURIComponent('Reunião RL Photo · Video')
-            const loc   = encodeURIComponent(contact!.reuniao_link || (contact!.reuniao_tipo === 'Videochamada' ? 'Videochamada' : 'Presencial'))
-            const gcal  = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${loc}`
-            const downloadIcs = () => {
-              const ics = [
-                'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RL Photo//Video//PT',
-                'BEGIN:VEVENT',
-                `DTSTART:${start}`, `DTEND:${end}`,
-                `SUMMARY:Reunião RL Photo · Video`,
-                `LOCATION:${decodeURIComponent(loc)}`,
-                'END:VEVENT','END:VCALENDAR'
-              ].join('\r\n')
-              const blob = new Blob([ics], { type: 'text/calendar' })
-              const url  = URL.createObjectURL(blob)
-              const a    = Object.assign(document.createElement('a'), { href: url, download: 'reuniao-rl-photo.ics' })
-              a.click(); URL.revokeObjectURL(url)
-            }
-            return (
-              <div className="pt-3 flex flex-col items-center gap-3">
-                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Adicionar ao Calendário</p>
-                <div className="flex gap-2 w-full">
-                  <a href={gcal} target="_blank" rel="noopener noreferrer" className="rlp-calbtn">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-1V1h-2v2h-9V1h-2v2h-1A2.5 2.5 0 0 0 2 5.5v15A2.5 2.5 0 0 0 4.5 23h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 3zM20 20.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5V10h16v10.5zM20 8H4V5.5a.5.5 0 0 1 .5-.5H6v1h2V5h9v1h2V5h.5a.5.5 0 0 1 .5.5V8z"/></svg>
-                    Google
-                  </a>
-                  <button onClick={downloadIcs} className="rlp-calbtn">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                    Apple
-                  </button>
-                </div>
-              </div>
-            )
-          })()}
 
           {/* ── Proposta: Confirmar / Rejeitar ── */}
           {(() => {
@@ -873,7 +869,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             }
 
             if (propostaResposta === 'confirmada') return (
-              <div className="rlp-card mt-4 w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22 }}>
+              <div className="rlp-card w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22 }}>
                 <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1px solid var(--g)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ color: 'var(--g)', fontSize: 20 }}>✦</span>
                 </div>
@@ -891,7 +887,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             )
 
             if (propostaResposta === 'rejeitada') return (
-              <div className="rlp-card mt-4 w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
+              <div className="rlp-card w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14 }}>
                 <p className="rlp-h2" style={{ fontSize: 'clamp(22px,3vw,30px)' }}>Obrigado pelo <em>vosso tempo</em></p>
                 <p className="rlp-lede" style={{ fontSize: 14, maxWidth: '42ch' }}>
                   Foi um prazer conhecer-vos e esperamos poder trabalhar juntos no futuro. Desejamos-vos o melhor para o vosso dia especial.
@@ -900,7 +896,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             )
 
             return (
-              <div className="mt-6 flex flex-col gap-3 w-full flex-1">
+              <div className="flex flex-col gap-3 w-full flex-1">
                 {/* Card de destaque */}
                 <div className="rlp-card w-full text-center flex-1" style={{ padding: '30px 24px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
                   <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'rgba(216,190,147,.1)', border: '1px solid rgba(216,190,147,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -910,10 +906,11 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                     <p className="rlp-eyebrow c" style={{ marginBottom: 10 }}>A vossa decisão</p>
                     <p className="rlp-h2" style={{ fontSize: 'clamp(22px,3vw,30px)' }}>Confirmam a nossa <em>proposta?</em></p>
                   </div>
-                  <button onClick={() => handleProposta('confirmar')} disabled={submittingProposta} className="rlp-btn full">
-                    <span className="fill" /><span className="dot" />{submittingProposta ? 'A processar…' : 'Confirmar Proposta'}
-                  </button>
                 </div>
+                {/* Confirmar */}
+                <button onClick={() => handleProposta('confirmar')} disabled={submittingProposta} className="rlp-btn full">
+                  <span className="fill" /><span className="dot" />{submittingProposta ? 'A processar…' : 'Confirmar Proposta'}
+                </button>
                 {/* Rejeitar — discreto */}
                 <button onClick={() => handleProposta('rejeitar')} disabled={submittingProposta} className="rlp-btn danger full">
                   <span className="fill" /><span className="dot" />{submittingProposta ? '…' : 'Rejeitar Proposta'}
@@ -924,6 +921,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
         </FadeIn>
         </div>
+        {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
       </section>
 
       {/* ── VÍDEO ── */}
