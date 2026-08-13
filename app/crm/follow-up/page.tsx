@@ -15,6 +15,12 @@ import Link from 'next/link'
 const FORM_URL = 'https://rl-menu-lake.vercel.app/nova-lead'
 const HERO_URL = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
 
+const PILARES = [
+  { icon: '⚡', titulo: 'Responder primeiro', texto: 'Quem responde mais depressa cria a primeira ligação e fica logo à frente.' },
+  { icon: '💛', titulo: 'Com empatia', texto: 'Follow up não é insistir. É mostrar, no tempo certo, que nos importamos a sério.' },
+  { icon: '🎯', titulo: 'Com consistência', texto: 'Grande parte dos fechos acontece no seguimento, não no primeiro contacto.' },
+]
+
 type Fase = {
   titulo: string
   quando: string
@@ -529,7 +535,38 @@ export default function FollowUpPage() {
         </div>
       </div>
 
+      {/* ── INTRODUÇÃO · IMPORTÂNCIA DO FOLLOW UP ── */}
+      <section className="mb-12">
+        <span className="text-xs tracking-[0.35em] uppercase text-gold/60">Porque importa</span>
+        <p className="text-white/55 text-sm sm:text-base leading-relaxed max-w-2xl mt-3">
+          O follow up é o que separa uma lead esquecida de um casamento fechado. A maioria dos casais não decide no primeiro contacto, decide em quem se manteve presente, com atenção e sem pressa. Cada mensagem certa, no momento certo, mostra cuidado e constrói confiança.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+          {PILARES.map(p => (
+            <div key={p.titulo} className="rounded-2xl border border-white/8 bg-white/[0.02] p-5 hover:border-white/15 transition-colors">
+              <div className="text-2xl mb-3">{p.icon}</div>
+              <div className="text-white font-light tracking-wide mb-1.5">{p.titulo}</div>
+              <p className="text-white/40 text-sm leading-relaxed">{p.texto}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Frase motivacional */}
+        <div className="relative mt-8 rounded-3xl border border-gold/20 bg-gradient-to-br from-gold/10 to-transparent px-6 sm:px-12 py-10 overflow-hidden">
+          <span className="absolute top-2 left-5 text-7xl text-gold/20 font-serif leading-none select-none">“</span>
+          <p className="relative text-white/90 text-lg sm:text-2xl font-extralight tracking-wide leading-relaxed text-center italic">
+            O seguimento é onde a maioria desiste. É exatamente por isso que é onde tu te destacas.
+          </p>
+          <p className="text-center text-gold/60 text-xs tracking-[0.3em] uppercase mt-5">RL Photo · Video</p>
+        </div>
+      </section>
+
       {/* ── SELETOR DE ORIGEM ── */}
+      <div className="flex items-center gap-3 mb-5">
+        <span className="text-xs tracking-[0.35em] uppercase text-white/30">Escolhe a origem da lead</span>
+        <div className="flex-1 h-px bg-white/8" />
+      </div>
       <div className="flex flex-wrap gap-2.5 mb-8">
         {ORIGENS.map(o => {
           const ativo = o.id === origemId
