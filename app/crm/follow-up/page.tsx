@@ -213,7 +213,7 @@ RL`,
     id: 'casamentos',
     label: 'Casamentos.pt',
     emoji: '💍',
-    descricao: 'Lead vinda da plataforma Casamentos.pt. Costuma comparar vários fornecedores. Enviamos o formulário logo no primeiro contacto.',
+    descricao: 'Lead vinda da plataforma Casamentos.pt. Costuma comparar vários fornecedores. Enviamos o formulário logo no primeiro contacto. Se não responderem pela plataforma em 24h, o follow up passa a ser feito por WhatsApp.',
     inicial: {
       titulo: 'Resposta imediata',
       quando: 'Mesmo dia (rapidez faz a diferença no portal)',
@@ -239,9 +239,9 @@ Mal podemos esperar para vos conhecer!`,
     deuResposta: [],
     naoRespondeu: [
       {
-        titulo: '1º lembrete',
-        quando: '2 a 3 dias sem resposta',
-        objetivo: 'Reforçar o preenchimento do formulário, sabendo que estão a falar com vários fornecedores.',
+        titulo: '1º lembrete (WhatsApp)',
+        quando: '24h sem resposta na plataforma · passar para WhatsApp',
+        objetivo: 'Se não responderem pela plataforma em 24 horas, o follow up passa a ser feito por WhatsApp. Reforçar o preenchimento do formulário, sabendo que estão a falar com vários fornecedores.',
         mensagem: `Olá! 🙂
 
 Passámos por aqui só para confirmar que a nossa mensagem chegou. Sabemos que nesta fase estão a falar com vários fornecedores, por isso não queremos ocupar muito do vosso tempo.
