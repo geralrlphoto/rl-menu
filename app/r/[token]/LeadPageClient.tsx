@@ -5,6 +5,120 @@ import { useEffect, useRef, useState } from 'react'
 const WHATSAPP     = 'https://wa.me/351919191919'
 const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
 
+// ─── DESIGN SYSTEM — RL PHOTO.VIDEO (rlphotovideo.pt) ─────────────────────────
+const RLP_CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&family=Hanken+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+
+.rl-portal{
+  --ink:#0b0a08; --ink-2:#100e0b; --ink-3:#16130f;
+  --g:#d8be93; --g-deep:#c8a866;
+  --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4);
+  --line:rgba(243,237,226,.14); --line-soft:rgba(243,237,226,.08);
+  --fd:'Jost',sans-serif; --fb:'Hanken Grotesk',sans-serif; --fm:'Space Mono',monospace; --fs:'Cormorant Garamond',serif;
+  --ease:cubic-bezier(.16,1,.3,1); --pad:clamp(20px,5vw,80px);
+  background:var(--ink); color:var(--tx); font-family:var(--fb);
+  -webkit-font-smoothing:antialiased;
+}
+.rl-portal ::selection{background:rgba(216,190,147,.28);color:#0b0a08;}
+
+/* Atmosfera */
+.rlp-grain{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-size:130px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");}
+.rlp-vig{position:fixed;inset:0;z-index:8990;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.5);}
+.rlp-prog{position:fixed;top:0;left:0;height:2px;width:0;background:var(--g);z-index:9100;transition:width .1s linear;}
+
+/* Barra fixa */
+.rlp-bar{position:fixed;left:0;width:100%;z-index:8000;display:flex;align-items:center;justify-content:space-between;padding:20px var(--pad);border-bottom:1px solid transparent;transition:background .6s var(--ease),padding .6s var(--ease),border-color .6s;}
+.rlp-bar.s{background:rgba(11,10,8,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:13px;padding-bottom:13px;border-color:var(--line-soft);}
+.rlp-mono{display:inline-flex;align-items:baseline;gap:.6em;text-decoration:none;}
+.rlp-mono span{font-family:var(--fd);font-weight:300;letter-spacing:.3em;font-size:16px;color:var(--tx);}
+.rlp-mono i{font-family:var(--fm);font-style:normal;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);opacity:.85;}
+
+/* Eyebrow */
+.rlp-eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--g);display:inline-flex;gap:.8em;align-items:center;}
+.rlp-eyebrow::before{content:"";width:34px;height:1px;background:var(--g);opacity:.6;}
+.rlp-eyebrow.c{justify-content:center;}
+
+/* Contentor / secção */
+.rlp-wrap{width:100%;max-width:1280px;margin:0 auto;padding-left:var(--pad);padding-right:var(--pad);}
+.rlp-sec{position:relative;padding-top:clamp(60px,9vh,120px);padding-bottom:clamp(60px,9vh,120px);}
+
+/* Títulos */
+.rlp-h1{font-family:var(--fd);font-weight:200;line-height:.92;letter-spacing:-.02em;color:var(--tx);}
+.rlp-h2{font-family:var(--fd);font-weight:200;line-height:1.04;letter-spacing:-.02em;font-size:clamp(30px,5vw,64px);color:var(--tx);}
+.rlp-h2 em{font-style:italic;color:var(--g);}
+.rlp-lede{font-family:var(--fb);font-weight:300;color:var(--tx-mid);line-height:1.75;font-size:clamp(15px,1.4vw,18px);}
+.rlp-ed{font-family:var(--fs);font-weight:300;color:var(--tx-mid);}
+.rlp-ed em{font-style:italic;color:var(--g);}
+
+/* Botões */
+.rlp-btn{display:inline-flex;align-items:center;justify-content:center;gap:.9em;position:relative;isolation:isolate;font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);padding:18px 38px;border:1px solid var(--g);border-radius:40px;overflow:hidden;background:var(--g);transition:color .5s var(--ease),opacity .3s;cursor:pointer;text-decoration:none;}
+.rlp-btn .fill{position:absolute;inset:0;z-index:-1;background:var(--ink);transform:translateY(101%);transition:transform .6s var(--ease);}
+.rlp-btn .dot{width:5px;height:5px;border-radius:50%;background:var(--ink);transition:background .5s;flex:none;}
+.rlp-btn:hover{color:var(--g);} .rlp-btn:hover .fill{transform:translateY(0);} .rlp-btn:hover .dot{background:var(--g);}
+.rlp-btn:disabled{opacity:.45;pointer-events:none;}
+.rlp-btn.ghost{background:transparent;color:var(--tx);border-color:var(--line);}
+.rlp-btn.ghost .dot{background:var(--g);}
+.rlp-btn.ghost .fill{background:var(--g);}
+.rlp-btn.ghost:hover{color:var(--ink);}
+.rlp-btn.ghost:hover .dot{background:var(--ink);}
+.rlp-btn.danger{background:transparent;color:#e79b9b;border-color:rgba(231,155,155,.4);}
+.rlp-btn.danger .dot{background:#e79b9b;} .rlp-btn.danger .fill{background:rgba(231,155,155,.9);}
+.rlp-btn.danger:hover{color:#170d0d;} .rlp-btn.danger:hover .dot{background:#170d0d;}
+.rlp-btn.full{width:100%;}
+
+/* Link sublinhado */
+.rlp-link-u{font-family:var(--fm);font-size:12px;letter-spacing:.16em;text-transform:uppercase;display:inline-flex;gap:.7em;align-items:center;position:relative;color:var(--tx-mid);text-decoration:none;}
+.rlp-link-u::after{content:"";position:absolute;left:0;bottom:-5px;width:100%;height:1px;background:var(--g);transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease);}
+.rlp-link-u:hover::after{transform:scaleX(1);transform-origin:left;}
+.rlp-link-u .a{color:var(--g);transition:transform .4s var(--ease);}
+.rlp-link-u:hover .a{transform:translateX(5px);}
+
+/* Placeholder de imagem */
+.rlp-slot{position:relative;overflow:hidden;background:var(--ink-3);background-image:repeating-linear-gradient(122deg,rgba(243,237,226,.022) 0 1px,transparent 1px 11px);}
+.rlp-slot .lab{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-family:var(--fm);font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--tx-dim);padding:1em;}
+.rlp-slot img{width:100%;height:100%;object-fit:cover;display:block;}
+
+/* Cartão com sheen */
+.rlp-card{border:1px solid var(--line-soft);border-radius:10px;background:var(--ink-2);position:relative;overflow:hidden;transition:border-color .5s var(--ease),transform .5s var(--ease);}
+.rlp-card::before{content:"";position:absolute;top:0;left:-70%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(216,190,147,.08),transparent);transform:skewX(-18deg);animation:rlpSheen 6s ease-in-out infinite;pointer-events:none;}
+@keyframes rlpSheen{0%{left:-70%}55%,100%{left:170%}}
+.rlp-card:hover{border-color:var(--g);}
+
+/* Linha de detalhe */
+.rlp-drow{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--line-soft);}
+.rlp-drow:first-child{border-top:0;}
+.rlp-drow .k{font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-dim);}
+.rlp-drow .v{font-family:var(--fd);font-weight:300;font-size:clamp(16px,1.6vw,20px);color:var(--tx);}
+
+/* Divisor */
+.rlp-div{width:100%;max-width:1280px;margin:0 auto;height:1px;background:var(--line-soft);}
+
+/* Footer */
+.rlp-foot{background:var(--ink-2);border-top:1px solid var(--line-soft);padding:clamp(50px,7vh,90px) 0 0;}
+.rlp-foot h5{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);margin-bottom:18px;}
+.rlp-foot a{color:var(--tx-mid);text-decoration:none;transition:color .4s var(--ease);}
+.rlp-foot a:hover{color:var(--tx);}
+.rlp-foot .end{border-top:1px solid var(--line-soft);margin-top:clamp(40px,6vh,70px);padding:22px var(--pad);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-family:var(--fm);font-size:11px;color:var(--tx-dim);}
+
+/* Botões de calendário */
+.rlp-calbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.6em;padding:13px 0;border:1px solid var(--line);border-radius:40px;font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-mid);background:transparent;cursor:pointer;transition:border-color .4s var(--ease),color .4s var(--ease);}
+.rlp-calbtn:hover{border-color:var(--g);color:var(--g);}
+.rlp-calbtn svg{width:13px;height:13px;}
+
+/* Botão flutuante WhatsApp */
+.rlp-wa{position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:8100;background:var(--g);color:var(--ink);box-shadow:0 10px 30px rgba(0,0,0,.4);transition:transform .4s var(--ease);}
+.rlp-wa:hover{transform:translateY(-3px) scale(1.05);}
+
+@media (max-width:760px){
+  .rlp-foot .end{flex-direction:column;align-items:flex-start;}
+  .rlp-mono i{display:none;}
+}
+@media (prefers-reduced-motion:reduce){
+  .rlp-card::before{animation:none;}
+}
+`
+
+
 type Contact = Record<string, any>
 
 export const FONTS: { value: string; label: string; className: string }[] = [
@@ -319,12 +433,12 @@ function Countdown({ targetDate }: { targetDate: string }) {
     tick(); const id = setInterval(tick, 1000); return () => clearInterval(id)
   }, [targetDate])
   const Unit = ({ v, label }: { v: number; label: string }) => (
-    <div className="flex flex-col items-center">
-      <span className="font-playfair text-4xl sm:text-5xl font-bold text-white tabular-nums">{String(v).padStart(2,'0')}</span>
-      <span className="text-[10px] tracking-[0.25em] text-white/40 uppercase mt-1">{label}</span>
+    <div className="flex flex-col items-center gap-2">
+      <span className="text-5xl sm:text-7xl tabular-nums" style={{ fontFamily: "'Jost',sans-serif", fontWeight: 200, letterSpacing: '-.02em', color: 'var(--tx)' }}>{String(v).padStart(2,'0')}</span>
+      <span className="text-[10px] tracking-[0.26em] uppercase" style={{ fontFamily: "'Space Mono',monospace", color: 'var(--tx-dim)' }}>{label}</span>
     </div>
   )
-  const Sep = () => <span className="font-playfair text-3xl text-gold/40 self-start mt-2">|</span>
+  const Sep = () => <span className="text-3xl sm:text-4xl self-start mt-2" style={{ color: 'var(--g)', opacity: .35, fontFamily: "'Jost',sans-serif", fontWeight: 200 }}>·</span>
   return (
     <div className="flex items-center justify-center gap-4 sm:gap-8">
       <Unit v={t.d} label="Dias"/><Sep/>
@@ -383,6 +497,21 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       })
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token])
+
+  // ── Scroll: barra de progresso + estado da nav ──
+  useEffect(() => {
+    const onScroll = () => {
+      const st = window.scrollY || document.documentElement.scrollTop
+      const h = document.documentElement.scrollHeight - document.documentElement.clientHeight
+      const prog = document.getElementById('rlp-prog')
+      if (prog) prog.style.width = `${h > 0 ? (st / h) * 100 : 0}%`
+      const bar = document.getElementById('rlp-bar')
+      if (bar) bar.classList.toggle('s', st > 40)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    onScroll()
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   // ── Content updater helpers ──
   function setHero(k: keyof PageContent['hero'], v: string) {
@@ -508,13 +637,13 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   }
 
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
-      <p className="text-white/20 tracking-[0.3em] text-xs uppercase animate-pulse">A carregar...</p>
+    <main className="min-h-screen flex items-center justify-center" style={{ background: '#0b0a08' }}>
+      <p className="tracking-[0.3em] text-xs uppercase animate-pulse" style={{ color: 'rgba(243,237,226,.4)', fontFamily: "'Space Mono', monospace" }}>A carregar…</p>
     </main>
   )
   if (notFound) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
-      <p className="text-white/20 tracking-[0.3em] text-xs uppercase">Página não disponível</p>
+    <main className="min-h-screen flex items-center justify-center" style={{ background: '#0b0a08' }}>
+      <p className="tracking-[0.3em] text-xs uppercase" style={{ color: 'rgba(243,237,226,.4)', fontFamily: "'Space Mono', monospace" }}>Página não disponível</p>
     </main>
   )
 
@@ -528,7 +657,25 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   const { hero, countdown, video, portfolio, testimonials, about, revista, banner, proposta } = content
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="rl-portal min-h-screen">
+
+      {/* ── DESIGN SYSTEM — RL PHOTO.VIDEO ── */}
+      <style>{RLP_CSS}</style>
+
+      {/* Atmosfera */}
+      <div className="rlp-grain" aria-hidden />
+      <div className="rlp-vig" aria-hidden />
+      <div id="rlp-prog" className="rlp-prog" aria-hidden />
+
+      {/* Barra de navegação fixa */}
+      <header id="rlp-bar" className="rlp-bar" style={{ top: isAdmin ? 34 : 0 }}>
+        <a href={`/r/${token}`} className="rlp-mono" aria-label="RL Photo · Video">
+          <span>RL</span><i>Photo · Video</i>
+        </a>
+        <a href="/login-noivos" className="rlp-link-u">
+          <span>Área de Cliente</span><span className="a">→</span>
+        </a>
+      </header>
 
       {/* ── ADMIN BAR ── */}
       {isAdmin && (
@@ -549,9 +696,10 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       )}
 
       {/* ── HERO ── */}
-      <section id="sec-reuniao" className={`relative min-h-[85vh] sm:min-h-[80vh] flex items-end justify-center pb-12 overflow-hidden ${isAdmin ? 'pt-10' : ''}`}>
+      <section id="sec-reuniao" className="relative flex items-end overflow-hidden" style={{ minHeight: '92svh', paddingTop: isAdmin ? 60 : 0 }}>
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
-          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/50 to-black/90" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(11,10,8,.35) 0%, rgba(11,10,8,.55) 45%, var(--ink) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(11,10,8,.62) 0%, rgba(11,10,8,.15) 55%, transparent 100%)' }} />
         </div>
 
         {/* Hero edit overlay */}
@@ -587,110 +735,84 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           </button>
         )}
 
-        <div className="relative z-10 text-center px-4 pt-12 sm:pt-20">
-          <FadeIn delay={80} className="flex items-center justify-center gap-3 mb-4">
-            <Leaf />
-            <p className={`${fontClass(hero.titleFont)} text-sm sm:text-base tracking-[0.4em] uppercase italic`} style={{ color: hero.brandColor }}>
-              {hero.brandLine}
-            </p>
-            <Leaf flip />
+        <div className="rlp-wrap relative z-10 w-full" style={{ paddingBottom: 'clamp(48px,8vh,110px)' }}>
+          <FadeIn delay={80}>
+            <span className="rlp-eyebrow" style={hero.brandColor && hero.brandColor !== '#C9A84C' ? { color: hero.brandColor } : undefined}>{hero.brandLine}</span>
           </FadeIn>
           <FadeIn delay={220}>
-            <h1 className={`${fontClass(hero.titleFont)} ${sizeClass(hero.titleSize)} font-black leading-none tracking-tight mb-4`} style={{ color: hero.titleColor }}>
+            <h1 className="rlp-h1" style={{ fontSize: 'clamp(42px,8vw,112px)', margin: '18px 0 0', maxWidth: '15ch', color: (hero.titleColor && hero.titleColor !== '#ffffff') ? hero.titleColor : undefined }}>
               {hero.title}
             </h1>
           </FadeIn>
-          <FadeIn delay={380} className="flex flex-col items-center gap-1 mt-2">
-            {contact!.nome && <p className="font-cormorant text-white/60 text-lg sm:text-xl italic tracking-wide">{contact!.nome}</p>}
-            {dataFmt && <p className="font-cormorant text-white/50 text-sm sm:text-base italic tracking-wide">♡ {dataFmt} · {horaFmt} · {contact!.reuniao_tipo || 'Presencial'}</p>}
+          <FadeIn delay={380} className="mt-6 flex flex-col gap-3" style={{ maxWidth: '52ch' }}>
+            {contact!.nome && <p className="rlp-ed" style={{ fontSize: 'clamp(20px,2.4vw,30px)', lineHeight: 1.2 }}><em>{contact!.nome}</em></p>}
+            {dataFmt && <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--tx-mid)' }}>{dataFmt} · {horaFmt} · {contact!.reuniao_tipo || 'Presencial'}</p>}
           </FadeIn>
         </div>
       </section>
 
       {/* ── COUNTDOWN ── */}
       {targetDate && (
-        <section id="sec-countdown" className="py-10 sm:py-14 border-y border-white/[0.05] bg-[#0d0d0d]">
-          <FadeIn>
-            <p className={`font-playfair font-black text-xl sm:text-2xl text-center mb-6 tracking-tight`} style={{ color: countdown.titleColor }}>
-              {countdown.title}
-            </p>
-          </FadeIn>
-          <FadeIn delay={150} className="flex items-center justify-center gap-2 sm:gap-4">
-            <Leaf /><Countdown targetDate={targetDate} /><Leaf flip />
-          </FadeIn>
+        <section id="sec-countdown" className="border-y" style={{ borderColor: 'var(--line-soft)', background: 'var(--ink-2)' }}>
+          <div className="rlp-wrap flex flex-col items-center gap-8" style={{ paddingTop: 'clamp(46px,7vh,88px)', paddingBottom: 'clamp(46px,7vh,88px)' }}>
+            <FadeIn><span className="rlp-eyebrow c">{countdown.title}</span></FadeIn>
+            <FadeIn delay={150}><Countdown targetDate={targetDate} /></FadeIn>
+          </div>
         </section>
       )}
 
       {/* ── CARD REUNIÃO ── */}
-      <section className="flex flex-col items-center px-6 py-10 sm:py-14">
-        <FadeIn className="w-full max-w-sm">
-        <div className="w-full border border-white/10 rounded-2xl overflow-hidden mb-8" style={{ background: 'rgba(255,255,255,0.03)' }}>
-          <div className="px-6 py-4 border-b border-white/8">
-            <p className="text-xs tracking-[0.3em] text-white/25 uppercase">Detalhes da Reunião</p>
+      <section className="rlp-sec flex flex-col items-center" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
+        <FadeIn className="w-full" style={{ maxWidth: 420 }}>
+        <div className="rlp-card w-full" style={{ marginBottom: 32 }}>
+          <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line-soft)' }}>
+            <span className="rlp-eyebrow">Detalhes da Reunião</span>
           </div>
-          <div className="px-6 py-5 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Data</span>
-              <span className="font-cormorant text-lg text-white/90">{dataFmt}</span>
-            </div>
-            <div className="h-px bg-white/5" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Hora</span>
-              <span className="font-cormorant text-lg text-white/90">{horaFmt}</span>
-            </div>
-            <div className="h-px bg-white/5" />
-            <div className="flex items-center justify-between">
-              <span className="text-xs tracking-[0.2em] text-white/30 uppercase">Modo</span>
-              <span className="font-cormorant text-lg text-white/90">{contact!.reuniao_tipo || 'Presencial'}</span>
-            </div>
+          <div style={{ padding: '8px 26px 20px' }}>
+            <div className="rlp-drow"><span className="k">Data</span><span className="v">{dataFmt}</span></div>
+            <div className="rlp-drow"><span className="k">Hora</span><span className="v">{horaFmt}</span></div>
+            <div className="rlp-drow"><span className="k">Modo</span><span className="v">{contact!.reuniao_tipo || 'Presencial'}</span></div>
           </div>
           {contact!.reuniao_link && (
-            <div className="px-6 pb-5">
-              <a href={contact!.reuniao_link} target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs tracking-widest uppercase transition-all"
-                style={{ background: 'rgba(201,168,76,0.08)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.2)' }}>
-                <span>{isVideo ? '🎥' : '📍'}</span>
-                <span>{isVideo ? 'Entrar na videochamada' : 'Ver localização'}</span>
+            <div style={{ padding: '0 26px 24px' }}>
+              <a href={contact!.reuniao_link} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost full">
+                <span className="fill" /><span className="dot" />{isVideo ? 'Entrar na videochamada' : 'Ver localização'}
               </a>
             </div>
           )}
         </div>
         </FadeIn>
 
-        <FadeIn delay={150} className="w-full max-w-sm">
+        <FadeIn delay={150} className="w-full" style={{ maxWidth: 420 }}>
         <div className="w-full flex flex-col gap-3">
 
           {/* Status badge */}
           {status === 'confirmada' && (
-            <div className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl text-sm tracking-wider"
-              style={{ background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.2)' }}>
-              <span>✓</span><span>Reunião Confirmada — Até breve!</span>
+            <div className="w-full flex items-center justify-center gap-2 rounded-lg"
+              style={{ padding: '14px 20px', background: 'rgba(216,190,147,.08)', color: 'var(--g)', border: '1px solid rgba(216,190,147,.28)', fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase' }}>
+              ✦&nbsp; Reunião Confirmada · Até breve
             </div>
           )}
           {status === 'alteracao_pedida' && (
-            <div className="inline-flex items-center justify-center gap-2 w-full px-6 py-3 rounded-xl text-sm tracking-wider"
-              style={{ background: 'rgba(251,191,36,0.1)', color: '#fbbf24', border: '1px solid rgba(251,191,36,0.2)' }}>
-              <span>⏳</span><span>Pedido enviado — Entraremos em contacto</span>
+            <div className="w-full flex items-center justify-center gap-2 rounded-lg"
+              style={{ padding: '14px 20px', background: 'rgba(243,237,226,.05)', color: 'var(--tx-mid)', border: '1px solid var(--line)', fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase' }}>
+              Pedido enviado · Entraremos em contacto
             </div>
           )}
 
           {/* Confirmar — só se ainda não confirmou */}
           {status !== 'confirmada' && (
-            <button onClick={handleConfirm} disabled={confirming || isAdmin}
-              className="w-full py-3.5 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase transition-all disabled:opacity-50"
-              style={{ background: '#C9A84C', color: '#0a0a0a' }}>
-              {confirming ? 'A confirmar...' : 'Confirmar Reunião'}
+            <button onClick={handleConfirm} disabled={confirming || isAdmin} className="rlp-btn full">
+              <span className="fill" /><span className="dot" />{confirming ? 'A confirmar…' : 'Confirmar Reunião'}
             </button>
           )}
 
           {/* Alterar — sempre visível */}
-          <button onClick={handleChangeRequest} disabled={requesting || isAdmin}
-            className="w-full py-3.5 rounded-2xl text-sm tracking-[0.15em] uppercase transition-all disabled:opacity-50"
-            style={{ color: 'rgba(255,255,255,0.4)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            {requesting ? 'A enviar...' : 'Alterar Reunião'}
+          <button onClick={handleChangeRequest} disabled={requesting || isAdmin} className="rlp-btn ghost full">
+            <span className="fill" /><span className="dot" />{requesting ? 'A enviar…' : 'Alterar Reunião'}
           </button>
 
-          {isAdmin && <p className="text-center text-[10px] text-white/20 tracking-widest uppercase">Botões desativados em modo admin</p>}
+          {isAdmin && <p className="text-center" style={{ fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
 
           {/* ── Adicionar ao Calendário ── */}
           {targetDate && (() => {
@@ -715,19 +837,15 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
               a.click(); URL.revokeObjectURL(url)
             }
             return (
-              <div className="pt-2 flex flex-col items-center gap-2">
-                <p className="text-[10px] tracking-[0.3em] text-white/20 uppercase">Adicionar ao Calendário</p>
+              <div className="pt-3 flex flex-col items-center gap-3">
+                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Adicionar ao Calendário</p>
                 <div className="flex gap-2 w-full">
-                  <a href={gcal} target="_blank" rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs tracking-wider transition-all hover:bg-white/10"
-                    style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-1V1h-2v2h-9V1h-2v2h-1A2.5 2.5 0 0 0 2 5.5v15A2.5 2.5 0 0 0 4.5 23h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 3zM20 20.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5V10h16v10.5zM20 8H4V5.5a.5.5 0 0 1 .5-.5H6v1h2V5h9v1h2V5h.5a.5.5 0 0 1 .5.5V8z"/></svg>
+                  <a href={gcal} target="_blank" rel="noopener noreferrer" className="rlp-calbtn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-1V1h-2v2h-9V1h-2v2h-1A2.5 2.5 0 0 0 2 5.5v15A2.5 2.5 0 0 0 4.5 23h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 3zM20 20.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5V10h16v10.5zM20 8H4V5.5a.5.5 0 0 1 .5-.5H6v1h2V5h9v1h2V5h.5a.5.5 0 0 1 .5.5V8z"/></svg>
                     Google
                   </a>
-                  <button onClick={downloadIcs}
-                    className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs tracking-wider transition-all hover:bg-white/10"
-                    style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+                  <button onClick={downloadIcs} className="rlp-calbtn">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
                     Apple
                   </button>
                 </div>
@@ -755,32 +873,28 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             }
 
             if (propostaResposta === 'confirmada') return (
-              <div className="mt-4 flex flex-col items-center gap-5 w-full px-2 py-8 rounded-2xl text-center"
-                style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.15)' }}>
-                <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1.5px solid #4ade80', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto' }}>
-                  <span style={{ color: '#4ade80', fontSize: 22 }}>✓</span>
+              <div className="rlp-card mt-4 w-full text-center" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 22 }}>
+                <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1px solid var(--g)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <span style={{ color: 'var(--g)', fontSize: 20 }}>✦</span>
                 </div>
                 <div>
-                  <p className="font-cormorant text-2xl font-light text-white/90 mb-1">Obrigado por nos escolherem</p>
-                  <p className="font-cormorant text-lg font-light" style={{ color: '#C9A84C' }}>para o vosso grande dia!</p>
+                  <p className="rlp-h2" style={{ fontSize: 'clamp(24px,3.4vw,34px)' }}>Obrigado por <em>nos escolherem</em></p>
+                  <p className="rlp-ed" style={{ fontSize: 18, marginTop: 6 }}>para o vosso grande dia</p>
                 </div>
-                <p className="text-white/40 text-xs tracking-wider leading-relaxed px-2">
-                  Estamos muito felizes por fazer parte deste momento tão especial.<br />Para dar seguimento ao contrato, cliquem no botão abaixo.
+                <p className="rlp-lede" style={{ fontSize: 14, maxWidth: '40ch' }}>
+                  Estamos muito felizes por fazer parte deste momento tão especial. Para dar seguimento ao contrato, avancem abaixo.
                 </p>
-                <a href="/contrato-cps/casamento"
-                  className="w-full py-4 rounded-2xl text-sm font-semibold tracking-[0.15em] uppercase text-center block"
-                  style={{ background: '#C9A84C', color: '#0a0a0a' }}>
-                  Próximo Passo →
+                <a href="/contrato-cps/casamento" className="rlp-btn full">
+                  <span className="fill" /><span className="dot" />Próximo Passo
                 </a>
               </div>
             )
 
             if (propostaResposta === 'rejeitada') return (
-              <div className="mt-4 flex flex-col items-center gap-4 w-full px-2 py-8 rounded-2xl text-center"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                <p className="font-cormorant text-2xl font-light text-white/70">Obrigado por todo o vosso tempo</p>
-                <p className="text-white/30 text-xs tracking-wider leading-relaxed px-2">
-                  Foi um prazer conhecer-vos e esperamos poder trabalhar juntos no futuro.<br />Desejamos-vos o melhor para o vosso dia especial.
+              <div className="rlp-card mt-4 w-full text-center" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+                <p className="rlp-h2" style={{ fontSize: 'clamp(22px,3vw,30px)' }}>Obrigado pelo <em>vosso tempo</em></p>
+                <p className="rlp-lede" style={{ fontSize: 14, maxWidth: '42ch' }}>
+                  Foi um prazer conhecer-vos e esperamos poder trabalhar juntos no futuro. Desejamos-vos o melhor para o vosso dia especial.
                 </p>
               </div>
             )
@@ -788,35 +902,21 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             return (
               <div className="mt-6 flex flex-col gap-3 w-full">
                 {/* Card de destaque */}
-                <div className="w-full rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)', border: '1px solid rgba(201,168,76,0.3)' }}>
-                  {/* Topo dourado */}
-                  <div className="px-5 pt-5 pb-4 flex flex-col items-center gap-3 text-center">
-                    <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'rgba(201,168,76,0.15)', border: '1.5px solid rgba(201,168,76,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <span style={{ color: '#C9A84C', fontSize: 18 }}>✦</span>
-                    </div>
-                    <div>
-                      <p className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(201,168,76,0.5)' }}>A vossa decisão</p>
-                      <p className="font-cormorant text-xl font-light text-white/90">Confirmam a nossa proposta?</p>
-                    </div>
+                <div className="rlp-card w-full text-center" style={{ padding: '30px 24px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18 }}>
+                  <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'rgba(216,190,147,.1)', border: '1px solid rgba(216,190,147,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ color: 'var(--g)', fontSize: 18 }}>✦</span>
                   </div>
-                  {/* Botão principal */}
-                  <div className="px-4 pb-4">
-                    <button
-                      onClick={() => handleProposta('confirmar')}
-                      disabled={submittingProposta}
-                      className="w-full py-4 rounded-xl text-sm font-bold tracking-[0.2em] uppercase transition-all disabled:opacity-50 active:scale-[0.98]"
-                      style={{ background: 'linear-gradient(135deg, #C9A84C, #e6c46a)', color: '#0a0a0a', boxShadow: '0 4px 20px rgba(201,168,76,0.3)' }}>
-                      {submittingProposta ? 'A processar...' : '✓  Confirmar Proposta'}
-                    </button>
+                  <div>
+                    <p className="rlp-eyebrow c" style={{ marginBottom: 10 }}>A vossa decisão</p>
+                    <p className="rlp-h2" style={{ fontSize: 'clamp(22px,3vw,30px)' }}>Confirmam a nossa <em>proposta?</em></p>
                   </div>
+                  <button onClick={() => handleProposta('confirmar')} disabled={submittingProposta} className="rlp-btn full">
+                    <span className="fill" /><span className="dot" />{submittingProposta ? 'A processar…' : 'Confirmar Proposta'}
+                  </button>
                 </div>
                 {/* Rejeitar — discreto */}
-                <button
-                  onClick={() => handleProposta('rejeitar')}
-                  disabled={submittingProposta}
-                  className="w-full py-3 rounded-xl text-xs tracking-[0.2em] uppercase transition-all disabled:opacity-40"
-                  style={{ color: '#ef4444', border: '1px solid rgba(239,68,68,0.5)', background: 'rgba(239,68,68,0.08)', boxShadow: '0 0 12px rgba(239,68,68,0.25), inset 0 0 12px rgba(239,68,68,0.05)' }}>
-                  {submittingProposta ? '...' : 'Rejeitar Proposta'}
+                <button onClick={() => handleProposta('rejeitar')} disabled={submittingProposta} className="rlp-btn danger full">
+                  <span className="fill" /><span className="dot" />{submittingProposta ? '…' : 'Rejeitar Proposta'}
                 </button>
               </div>
             )
@@ -828,209 +928,194 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
       {/* ── VÍDEO ── */}
       {(video.urls.some(u => u) || isAdmin) && (
-        <section id="sec-video" className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
-          <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{video.label}</p></FadeIn>
-          <FadeIn delay={120}><h2 className="font-cormorant text-xl sm:text-3xl font-light mb-8 text-center text-white/90">{video.title}</h2></FadeIn>
-          <FadeIn delay={240} className="w-full max-w-7xl">
-          <div className="w-full grid grid-cols-1 sm:grid-cols-3 gap-5">
-            {video.urls.map((url, i) => {
-              const embed = toEmbedUrl(url)
-              if (embed) return (
-                <div key={i} className="rounded-xl overflow-hidden shadow-xl"
-                  style={{ aspectRatio: '16/9', border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <iframe src={embed} className="w-full h-full"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen />
-                </div>
-              )
-              if (isAdmin) return (
-                <div key={i} className="rounded-xl flex flex-col items-center justify-center gap-1"
-                  style={{ aspectRatio: '16/9', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(201,168,76,0.15)' }}>
-                  <span className="text-gold/20 text-lg">▶</span>
-                  <span className="text-white/15 text-[9px] tracking-widest uppercase">Vídeo {i + 1}</span>
-                </div>
-              )
-              return null
-            })}
+        <section id="sec-video" className="rlp-sec" style={{ background: 'var(--ink-2)' }}>
+          <div className="rlp-wrap">
+            <FadeIn><span className="rlp-eyebrow">{video.label}</span></FadeIn>
+            <FadeIn delay={120}><h2 className="rlp-h2" style={{ marginTop: 16, marginBottom: 40, maxWidth: '18ch' }}>{video.title}</h2></FadeIn>
+            <FadeIn delay={240}>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              {video.urls.map((url, i) => {
+                const embed = toEmbedUrl(url)
+                if (embed) return (
+                  <div key={i} className="overflow-hidden" style={{ aspectRatio: '16/9', border: '1px solid var(--line-soft)', borderRadius: 10 }}>
+                    <iframe src={embed} className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen />
+                  </div>
+                )
+                if (isAdmin) return (
+                  <div key={i} className="rlp-slot" style={{ aspectRatio: '16/9', borderRadius: 10 }}>
+                    <div className="lab">▶ · Vídeo {i + 1}</div>
+                  </div>
+                )
+                return null
+              })}
+            </div>
+            </FadeIn>
           </div>
-          </FadeIn>
         </section>
       )}
 
-      <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
+      <div className="rlp-div" />
 
       {/* ── PORTFÓLIO ── */}
-      <section id="sec-portfolio" className="px-6 py-14 flex flex-col items-center">
-        <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{portfolio.label}</p></FadeIn>
-        <FadeIn delay={120}>
-          <h2 className={`${fontClass(portfolio.titleFont)} text-xl sm:text-3xl font-light mb-8 text-center`} style={{ color: portfolio.titleColor }}>
-            {portfolio.title}
-          </h2>
-        </FadeIn>
-        <div className="w-full max-w-2xl grid grid-cols-3 gap-3">
-          {portfolio.photos.map((url, i) => (
-            <FadeIn key={i} delay={i * 120} className="aspect-square">
-            <div className="aspect-square rounded-xl overflow-hidden relative group w-full h-full"
-              style={{ background: url ? undefined : 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              {url
-                ? <img src={url} alt="" className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center"><span className="text-white/10 text-xs tracking-widest">foto</span></div>
-              }
+      <section id="sec-portfolio" className="rlp-sec">
+        <div className="rlp-wrap">
+          <FadeIn><span className="rlp-eyebrow">{portfolio.label}</span></FadeIn>
+          <FadeIn delay={120}>
+            <h2 className="rlp-h2" style={{ marginTop: 16, marginBottom: 40, maxWidth: '20ch', color: (portfolio.titleColor && portfolio.titleColor !== '#ffffff') ? portfolio.titleColor : undefined }}>
+              {portfolio.title}
+            </h2>
+          </FadeIn>
+          <div className="grid grid-cols-3 gap-3 sm:gap-5">
+            {portfolio.photos.map((url, i) => (
+              <FadeIn key={i} delay={i * 120} className="aspect-square">
+                <div className="rlp-slot w-full h-full" style={{ borderRadius: 10 }}>
+                  {url ? <img src={url} alt="" /> : <div className="lab">Foto {i + 1}</div>}
+                </div>
+              </FadeIn>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="rlp-div" />
+
+      {/* ── REVISTA ── */}
+      {(revista.visible || isAdmin) && (
+        <section className="rlp-sec" style={{ background: 'var(--ink)' }}>
+          <div className="rlp-wrap">
+          {isAdmin && !revista.visible && (
+            <div className="mb-8" style={{ display: 'inline-block', padding: '8px 16px', borderRadius: 40, border: '1px dashed rgba(216,190,147,.3)', fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.3em', textTransform: 'uppercase', color: 'rgba(216,190,147,.4)' }}>
+              Secção Oculta · ativa no editor
             </div>
+          )}
+          <div className="flex flex-col sm:flex-row items-center gap-12">
+            <FadeIn delay={200} className="flex-shrink-0">
+              {revista.imageUrl ? (
+                <div className="rlp-slot" style={{ width: 200, aspectRatio: '2/3', borderRadius: 8 }}>
+                  <img src={revista.imageUrl} alt="Revista" />
+                </div>
+              ) : isAdmin ? (
+                <div className="rlp-slot" style={{ width: 200, aspectRatio: '2/3', borderRadius: 8 }}><div className="lab">◻ · Capa</div></div>
+              ) : null}
+            </FadeIn>
+            <FadeIn delay={300} className="flex flex-col items-start gap-6">
+              <span className="rlp-eyebrow">{revista.label || 'Edição Exclusiva'}</span>
+              <h2 className="rlp-h2" style={{ fontSize: 'clamp(28px,4vw,48px)' }}>{revista.title}</h2>
+              {revista.subtitle && <p className="rlp-lede" style={{ maxWidth: '46ch' }}>{revista.subtitle}</p>}
+              <a href={revista.linkUrl} target="_blank" rel="noopener noreferrer" className="rlp-btn">
+                <span className="fill" /><span className="dot" />{revista.buttonLabel || 'Ver Revista'}
+              </a>
+            </FadeIn>
+          </div>
+          </div>
+        </section>
+      )}
+
+      <div className="rlp-div" />
+
+      {/* ── TESTEMUNHOS ── */}
+      <section id="sec-testemunhos" className="rlp-sec">
+        <div className="rlp-wrap flex flex-col items-center gap-12" style={{ maxWidth: 900 }}>
+          <FadeIn><span className="rlp-eyebrow c">{testimonials.label}</span></FadeIn>
+          {testimonials.items.map((item, i) => (
+            <FadeIn key={i} delay={i * 150} className="w-full">
+              <blockquote className="text-center flex flex-col items-center gap-5">
+                <p className="rlp-ed" style={{ fontSize: 'clamp(20px,2.6vw,32px)', fontStyle: 'italic', lineHeight: 1.5, color: 'var(--tx)' }}>“{item.text}”</p>
+                <cite style={{ fontFamily: "'Space Mono',monospace", fontStyle: 'normal', fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--g)' }}>{item.author}</cite>
+              </blockquote>
+              {i < testimonials.items.length - 1 && <div style={{ width: 40, height: 1, background: 'rgba(216,190,147,.3)', margin: '48px auto 0' }} />}
             </FadeIn>
           ))}
         </div>
       </section>
 
-      <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
-
-      {/* ── REVISTA ── */}
-      {(revista.visible || isAdmin) && (
-        <section className="px-6 py-14 flex flex-col items-center" style={{ background: '#0d0d0d' }}>
-          {isAdmin && !revista.visible && (
-            <div className="mb-6 px-4 py-2 rounded-full border border-dashed border-gold/20 text-[10px] tracking-[0.3em] text-gold/30 uppercase">
-              Secção Oculta — ativa no editor
-            </div>
-          )}
-          <div className="flex flex-col sm:flex-row items-center gap-10 w-full max-w-2xl">
-            <FadeIn delay={260} className="flex-shrink-0">
-              {revista.imageUrl ? (
-                <div className="relative rounded-xl overflow-hidden shadow-2xl"
-                  style={{ width: '180px', aspectRatio: '2/3', border: '1px solid rgba(255,255,255,0.08)' }}>
-                  <img src={revista.imageUrl} alt="Revista" className="w-full h-full object-cover" />
-                </div>
-              ) : isAdmin ? (
-                <div className="rounded-xl flex flex-col items-center justify-center gap-2"
-                  style={{ width: '180px', aspectRatio: '2/3', background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(201,168,76,0.15)' }}>
-                  <span className="text-gold/20 text-2xl">◻</span>
-                  <span className="text-white/15 text-[9px] tracking-widest uppercase">Capa</span>
-                </div>
-              ) : null}
-            </FadeIn>
-            <FadeIn delay={340} className="flex flex-col items-center sm:items-start gap-6 text-center sm:text-left">
-              <div className="flex flex-col gap-2">
-                <p className="text-[10px] tracking-[0.4em] text-gold/40 uppercase">◆ Edição Exclusiva</p>
-                <p className="font-cormorant text-2xl sm:text-3xl font-light text-white/80">{revista.title}</p>
-                {revista.subtitle && <p className="text-sm text-white/30 leading-relaxed font-light max-w-xs">{revista.subtitle}</p>}
-              </div>
-              <a href={revista.linkUrl} target="_blank" rel="noopener noreferrer"
-                className="group flex items-center gap-3 px-8 py-3.5 text-[10px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.04]"
-                style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
-                <span>{revista.buttonLabel || 'Ver Revista'}</span>
-                <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
-              </a>
-            </FadeIn>
-          </div>
-        </section>
-      )}
-
-      <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
-
-      {/* ── TESTEMUNHOS ── */}
-      <section id="sec-testemunhos" className="px-6 py-14 flex flex-col items-center gap-8 max-w-2xl mx-auto">
-        <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase">{testimonials.label}</p></FadeIn>
-        {testimonials.items.map((item, i) => (
-          <FadeIn key={i} delay={i * 150} className="w-full">
-            <div className="flex flex-col items-center gap-4 w-full">
-              <blockquote className="text-center">
-                <p className="font-cormorant text-base sm:text-xl text-white/70 italic font-light leading-relaxed mb-3">"{item.text}"</p>
-                <cite className="text-xs tracking-[0.2em] text-gold/60 not-italic">{item.author}</cite>
-              </blockquote>
-              {i < testimonials.items.length - 1 && <div className="w-8 h-px" style={{ background: 'rgba(201,168,76,0.2)' }} />}
-            </div>
-          </FadeIn>
-        ))}
-      </section>
-
-      <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
+      <div className="rlp-div" />
 
       {/* ── BANNER ── */}
-      <section className="px-4 sm:px-8 py-10" style={{ background: '#0a0a0a' }}>
+      <section className="rlp-sec" style={{ background: 'var(--ink-2)' }}>
+        <div className="rlp-wrap">
         <FadeIn>
-          <div className="relative w-full max-w-5xl mx-auto overflow-hidden"
-            style={{ border: '0.5px solid rgba(201,168,76,0.3)' }}>
-
-            {/* Degradé de fundo */}
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(135deg, #1c1408 0%, #0f0c07 35%, #13100a 65%, #1c1408 100%)' }} />
-            <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 120% at 30% 50%, rgba(201,168,76,0.08) 0%, transparent 65%)' }} />
-
-            {/* Cantos ornamentais */}
-            <div className="absolute top-0 left-0 w-10 h-10" style={{ borderTop: '1px solid rgba(201,168,76,0.7)', borderLeft: '1px solid rgba(201,168,76,0.7)' }} />
-            <div className="absolute top-0 right-0 w-10 h-10" style={{ borderTop: '1px solid rgba(201,168,76,0.7)', borderRight: '1px solid rgba(201,168,76,0.7)' }} />
-            <div className="absolute bottom-0 left-0 w-10 h-10" style={{ borderBottom: '1px solid rgba(201,168,76,0.7)', borderLeft: '1px solid rgba(201,168,76,0.7)' }} />
-            <div className="absolute bottom-0 right-0 w-10 h-10" style={{ borderBottom: '1px solid rgba(201,168,76,0.7)', borderRight: '1px solid rgba(201,168,76,0.7)' }} />
-
-            {/* Divisor vertical */}
-            <div className="absolute top-8 bottom-8 hidden sm:block" style={{ left: '62%', width: '0.5px', background: 'rgba(201,168,76,0.2)' }} />
-
-            <div className="relative z-10 flex flex-col sm:flex-row items-center px-6 sm:px-14 py-8 sm:py-10 gap-8 sm:gap-10">
-
+          <div className="rlp-card" style={{ padding: 'clamp(32px,5vw,64px)' }}>
+            <div className="flex flex-col md:flex-row md:items-center gap-10 relative z-10">
               {/* Esquerda — frase */}
-              <div className="flex-1 flex flex-col gap-3 sm:pr-8">
-                <p className="text-[10px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.4)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-                <p className="font-cormorant text-xl sm:text-2xl italic font-light leading-relaxed"
-                  style={{ color: 'rgba(255,255,255,0.82)' }}>
+              <div className="flex-1 flex flex-col gap-5">
+                <span className="rlp-eyebrow">Uma palavra nossa</span>
+                <p className="rlp-ed" style={{ fontSize: 'clamp(22px,3vw,34px)', fontStyle: 'italic', lineHeight: 1.45, color: 'var(--tx)' }}>
                   &ldquo;{banner.message}&rdquo;
                 </p>
                 {banner.signature && (
-                  <p className="font-cormorant text-base italic" style={{ color: '#C9A84C' }}>{banner.signature}</p>
+                  <p className="rlp-ed" style={{ fontSize: 18, color: 'var(--g)' }}>{banner.signature}</p>
                 )}
               </div>
-
-              {/* Direita — botão + logo */}
-              <div className="flex flex-col items-center gap-5 sm:pl-8">
-                <img src="/logo_rl_gold.png"
-                  alt="RL" className="w-10 h-auto opacity-60" />
-                <a href={`/r/${token}/proposta`}
-                  className="group flex items-center gap-3 px-8 py-3.5 text-[10px] tracking-[0.4em] uppercase transition-all duration-300 hover:scale-[1.04] whitespace-nowrap"
-                  style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.5)', color: '#C9A84C' }}>
-                  <span>{proposta.buttonLabel}</span>
-                  <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+              {/* Direita — botões */}
+              <div className="flex flex-col items-stretch gap-3 md:w-72 flex-shrink-0">
+                <a href={`/r/${token}/proposta`} className="rlp-btn full">
+                  <span className="fill" /><span className="dot" />{proposta.buttonLabel}
                 </a>
                 {propostaPdfUrl && (
-                  <a href={propostaPdfUrl} target="_blank" rel="noopener noreferrer"
-                    className="group flex items-center gap-2 px-6 py-3 text-[10px] tracking-[0.35em] uppercase transition-all duration-300 hover:scale-[1.04] whitespace-nowrap"
-                    style={{ background: 'rgba(201,168,76,0.07)', border: '0.5px solid rgba(201,168,76,0.3)', color: 'rgba(201,168,76,0.75)' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-                    </svg>
-                    <span>Ver Proposta PDF</span>
-                    <span className="transition-transform duration-300 group-hover:translate-x-1">↗</span>
+                  <a href={propostaPdfUrl} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost full">
+                    <span className="fill" /><span className="dot" />Ver Proposta PDF
                   </a>
                 )}
               </div>
-
             </div>
           </div>
         </FadeIn>
+        </div>
       </section>
 
-      <div className="w-full max-w-sm mx-auto h-px" style={{ background: 'rgba(201,168,76,0.15)' }} />
+      <div className="rlp-div" />
 
       {/* ── SOBRE NÓS ── */}
-      <section id="sec-sobre" className="px-6 py-14 flex flex-col items-center max-w-lg mx-auto text-center">
-        <FadeIn><p className="text-xs tracking-[0.35em] text-white/25 uppercase mb-2">{about.label}</p></FadeIn>
-        <FadeIn delay={120}>
-          <h2 className={`${fontClass(about.titleFont)} text-xl sm:text-3xl font-light mb-6`} style={{ color: about.titleColor }}>
-            {about.title}
-          </h2>
-        </FadeIn>
-        <FadeIn delay={240}>
-          <p className="text-sm leading-relaxed font-light" style={{ color: about.textColor }}>{about.text}</p>
-        </FadeIn>
+      <section id="sec-sobre" className="rlp-sec">
+        <div className="rlp-wrap flex flex-col items-center text-center gap-6" style={{ maxWidth: 760 }}>
+          <FadeIn><span className="rlp-eyebrow c">{about.label}</span></FadeIn>
+          <FadeIn delay={120}>
+            <h2 className="rlp-h2">{about.title}</h2>
+          </FadeIn>
+          <FadeIn delay={240}>
+            <p className="rlp-lede" style={{ color: (about.textColor && about.textColor !== '#666666') ? about.textColor : undefined }}>{about.text}</p>
+          </FadeIn>
+          <FadeIn delay={340}>
+            <p className="rlp-ed" style={{ fontStyle: 'italic', fontSize: 'clamp(18px,2.4vw,26px)', color: 'var(--g)', marginTop: 8 }}>registamos com foco na verdade</p>
+          </FadeIn>
+        </div>
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="px-6 py-10 text-center border-t" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
-        <FadeIn><p className="text-xs tracking-widest text-white/15 uppercase">© RL Photo · Video</p></FadeIn>
+      <footer className="rlp-foot">
+        <div className="rlp-wrap">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.5fr_1fr_1fr] md:gap-8">
+            <FadeIn>
+              <h2 className="rlp-h2" style={{ fontSize: 'clamp(28px,3.4vw,44px)', maxWidth: '14ch' }}>Vamos <em>registar</em> a vossa história</h2>
+              <a href="/nova-lead" className="rlp-btn" style={{ marginTop: 28 }}><span className="fill" /><span className="dot" />Iniciar Conversa</a>
+            </FadeIn>
+            <FadeIn delay={100} className="flex flex-col gap-3">
+              <h5>Contactos</h5>
+              <a href="mailto:geral.rlphoto@gmail.com">geral.rlphoto@gmail.com</a>
+              <a href="tel:+351912832788">912 832 788</a>
+              <span style={{ color: 'var(--tx-mid)' }}>Pinhal Novo, Palmela</span>
+            </FadeIn>
+            <FadeIn delay={180} className="flex flex-col gap-3">
+              <h5>Seguir</h5>
+              <a href="https://www.instagram.com/rlphoto_fotografia.video/" target="_blank" rel="noopener noreferrer">Instagram</a>
+              <a href="https://www.facebook.com/people/RL_Photo/100089058572642/" target="_blank" rel="noopener noreferrer">Facebook</a>
+              <a href="/login-noivos">Área de Cliente</a>
+            </FadeIn>
+          </div>
+        </div>
+        <div className="end">
+          <span>© RL Photo · Video</span>
+          <span>registamos com foco na verdade</span>
+        </div>
       </footer>
 
       {/* ── WHATSAPP ── */}
       {!isAdmin && (
-        <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-transform hover:scale-105 z-50"
-          style={{ background: '#25D366' }}>
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+        <a href={WHATSAPP} target="_blank" rel="noopener noreferrer" className="rlp-wa" aria-label="WhatsApp">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
           </svg>
         </a>
