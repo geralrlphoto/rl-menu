@@ -764,7 +764,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       {/* ── CARD REUNIÃO ── */}
       <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
         <div className="mx-auto flex flex-col items-center md:flex-row md:items-start md:justify-center gap-6 md:gap-8" style={{ maxWidth: 900 }}>
-        <FadeIn className="w-full" style={{ maxWidth: 420 }}>
+        <FadeIn className="w-full flex flex-col gap-3" style={{ maxWidth: 420 }}>
         <div className="rlp-card w-full">
           <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line-soft)' }}>
             <span className="rlp-eyebrow">Detalhes da Reunião</span>
@@ -782,10 +782,6 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             </div>
           )}
         </div>
-        </FadeIn>
-
-        <FadeIn delay={150} className="w-full" style={{ maxWidth: 420 }}>
-        <div className="w-full flex flex-col gap-3">
 
           {/* Status badge */}
           {status === 'confirmada' && (
@@ -814,6 +810,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           </button>
 
           {isAdmin && <p className="text-center" style={{ fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
+        </FadeIn>
+
+        <FadeIn delay={150} className="w-full flex flex-col gap-3" style={{ maxWidth: 420 }}>
 
           {/* ── Adicionar ao Calendário ── */}
           {targetDate && (() => {
@@ -923,7 +922,6 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             )
           })()}
 
-        </div>
         </FadeIn>
         </div>
       </section>
