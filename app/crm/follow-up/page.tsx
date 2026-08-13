@@ -67,18 +67,6 @@ function telefonemaTexto(t: typeof TELEFONEMA): string {
   return linhas.join('\n')
 }
 
-const ULTIMA_TENTATIVA: Fase = {
-  titulo: 'Última tentativa',
-  quando: '~2 semanas sem resposta',
-  objetivo: 'Toque final respeitoso, deixando a porta aberta.',
-  mensagem: `Olá [nome], não quero ser insistente, por isso este é o meu último toque por agora. 🙏
-
-Se entretanto seguiram outro caminho, desejo-vos do fundo do coração um casamento perfeito. E se ainda estiverem a decidir, estarei sempre por aqui.
-
-Um grande abraço,
-RL`,
-}
-
 /* Sub-caminho após a chamada, quando aceitam a reunião */
 const ENVIAR_PORTAL_REUNIAO: Fase = {
   titulo: 'Enviar portal da reunião',
@@ -217,7 +205,6 @@ Queria só deixar a porta aberta. Se ainda estiverem a ponderar quem irá regist
 Qualquer coisa, é só dizer. Um abraço,
 RL`,
       },
-      ULTIMA_TENTATIVA,
     ],
   },
 
@@ -279,7 +266,6 @@ Se fizer sentido para vós, é só preencherem o formulário quando puderem, e a
 
 Um abraço!`,
       },
-      ULTIMA_TENTATIVA,
     ],
   },
 
@@ -333,7 +319,6 @@ Adorávamos fazer parte do vosso dia. Sempre que puderem, preencham o formulári
 
 Um abraço! 😊`,
       },
-      ULTIMA_TENTATIVA,
     ],
   },
 ]
