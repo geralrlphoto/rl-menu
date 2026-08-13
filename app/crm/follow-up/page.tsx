@@ -21,6 +21,61 @@ const PILARES = [
   { icon: '🎯', titulo: 'Com consistência', texto: 'Grande parte dos fechos acontece no seguimento, não no primeiro contacto.' },
 ]
 
+/* Micro-dicas por fase — mostradas por baixo de cada passo (procura pelo título) */
+const DICAS: Record<string, string> = {
+  'Resposta imediata': 'Se tiveres o número, liga em vez de escrever. A voz cria ligação muito mais depressa.',
+  'Chamada telefónica': 'Sorri enquanto falas, ouve-se do outro lado. E deixa-os falar mais do que tu.',
+  'Enviar portal da reunião': 'Confirma que receberam mesmo o portal e pergunta se conseguiram abrir.',
+  'Reunião feita · DFP no portal': 'Na reunião, ouve primeiro. A proposta encaixa melhor depois de perceberes o que valorizam.',
+  'Fecharam contrato': 'Celebra com eles! O pós-fecho é o início da relação, não o fim.',
+  'Vão dar uma resposta': 'Nunca pressiones. Um follow up caloroso vale mais do que dez insistências.',
+  '2º follow up': 'Se puderes, acrescenta algo novo (um trabalho recente). Não repitas só "então?".',
+  'Aguardar agendamento': 'Dá-lhes 2 ou 3 opções concretas de horário. Decidir é mais fácil do que inventar.',
+  '1º lembrete': 'Se um canal não resultar, muda: sem resposta no email, tenta WhatsApp.',
+  '1º lembrete (WhatsApp)': 'Sê breve e humano. Uma linha simpática abre mais portas do que um texto longo.',
+  '2º lembrete': 'É o último toque deste caminho. Deixa a porta aberta, sem soar a despedida.',
+}
+
+/* Banco de respostas a objeções */
+const OBJECOES = [
+  {
+    titulo: 'Está acima do nosso orçamento',
+    resposta: `Compreendo perfeitamente, e agradeço a franqueza. 🙂
+
+O nosso trabalho reflete tudo o que está por trás: a experiência, o cuidado em cada detalhe e a tranquilidade de saberem que o vosso dia fica em boas mãos.
+
+Se quiserem, vemos juntos uma solução ajustada ao que faz sentido para vós, sem abdicar do essencial. O que acham?`,
+  },
+  {
+    titulo: 'Vamos pensar / ainda estamos a decidir',
+    resposta: `Claro, é uma decisão importante e faz todo o sentido pensarem com calma. 💛
+
+Fico totalmente disponível para esclarecer qualquer dúvida que ajude nessa decisão. Posso perguntar: há algum ponto em concreto que vos deixe em dúvida? Assim consigo ajudar-vos melhor.`,
+  },
+  {
+    titulo: 'Já temos fotógrafo / videógrafo',
+    resposta: `Que bom que já têm essa parte tratada! 😊
+
+Se um dia procurarem foto e vídeo em sintonia, trabalhamos os dois de forma integrada, o que faz toda a diferença no resultado final.
+
+Fica o convite para verem o nosso trabalho e, se fizer sentido, será um prazer conversar.`,
+  },
+  {
+    titulo: 'O casamento ainda é longe',
+    resposta: `Sim, e é ótimo estarem a tratar disto com antecedência! ⏳
+
+As melhores datas costumam fechar cedo, por isso garantir já a vossa é a forma de ficarem descansados. Sem qualquer pressão, fico disponível para reservarmos o vosso dia quando estiverem prontos.`,
+  },
+  {
+    titulo: 'Encontrámos mais barato',
+    resposta: `Compreendo, e há de facto muitas opções. 🙂
+
+A diferença está no que não se vê no preço: a consistência, a experiência a lidar com imprevistos e a forma como cuidamos de vós do início ao fim. É a vossa memória para a vida, e isso merece confiança total.
+
+Adorávamos mostrar-vos porque vale a pena.`,
+  },
+]
+
 type Fase = {
   titulo: string
   quando: string
@@ -366,6 +421,87 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
+/* ── Micro-dica por fase ── */
+function DicaLine({ titulo }: { titulo: string }) {
+  const dica = DICAS[titulo]
+  if (!dica) return null
+  return (
+    <div className="mt-2.5 flex gap-2 items-start px-1">
+      <span className="text-gold/50 text-sm leading-none mt-0.5">💡</span>
+      <p className="text-white/40 text-xs leading-relaxed italic">{dica}</p>
+    </div>
+  )
+}
+
+/* ── Mapa visual do fluxo ── */
+function FlowChain({ itens, cor }: { itens: string[]; cor: 'green' | 'orange' }) {
+  const border = cor === 'green' ? 'border-green-500/25' : 'border-orange-500/25'
+  return (
+    <div className="flex flex-col items-center">
+      {itens.map((it, i) => (
+        <div key={i} className="flex flex-col items-center w-full">
+          <div className={`w-full text-center px-3 py-2.5 rounded-xl border ${border} bg-black/20 text-white/70 text-sm`}>{it}</div>
+          {i < itens.length - 1 && <div className="w-px h-4 bg-white/15" />}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function FlowMap() {
+  return (
+    <section className="mb-12">
+      <div className="flex items-center gap-3 mb-5">
+        <span className="text-xs tracking-[0.35em] uppercase text-white/30">Mapa do fluxo</span>
+        <div className="flex-1 h-px bg-white/8" />
+      </div>
+      <div className="rounded-3xl border border-white/8 bg-white/[0.02] p-6 sm:p-8">
+        {/* Nó inicial */}
+        <div className="flex justify-center">
+          <div className="px-5 py-2.5 rounded-full border border-gold/40 bg-gold/10 text-gold text-xs tracking-[0.2em] uppercase">1ª Mensagem</div>
+        </div>
+        <div className="flex justify-center"><div className="w-px h-6 bg-white/15" /></div>
+        <div className="text-center text-xs tracking-[0.25em] uppercase text-white/25 mb-5">O casal respondeu?</div>
+        {/* Ramos */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <div className="rounded-2xl border border-green-500/25 bg-green-500/5 p-4">
+            <div className="text-center text-xs tracking-[0.2em] uppercase text-green-400 font-semibold mb-4">✅ Deu resposta</div>
+            <FlowChain cor="green" itens={['📞 Chamada (2 min)', '🗓️ Reunião + DFP', '🤝 Fecha · ou follow up 48h / 1 sem']} />
+          </div>
+          <div className="rounded-2xl border border-orange-500/25 bg-orange-500/5 p-4">
+            <div className="text-center text-xs tracking-[0.2em] uppercase text-orange-400 font-semibold mb-4">⏳ Não respondeu</div>
+            <FlowChain cor="orange" itens={['🔔 1º lembrete', '🔔 2º lembrete']} />
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/* ── Cartão de objeção (acordeão) ── */
+function ObjecaoCard({ o }: { o: { titulo: string; resposta: string } }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
+      <button onClick={() => setOpen(v => !v)} className="w-full flex items-center justify-between gap-3 px-5 py-4 text-left hover:bg-white/[0.02] transition-colors">
+        <span className="text-white/80 text-sm font-light tracking-wide">“{o.titulo}”</span>
+        <span className={`text-white/25 text-xs shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}>▼</span>
+      </button>
+      {open && (
+        <div className="px-5 pb-5">
+          <div className="rounded-xl border border-white/8 bg-[#111111] overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5">
+              <span className="text-xs tracking-widest uppercase text-white/25">Resposta</span>
+              <CopyButton text={o.resposta} />
+            </div>
+            <pre className="px-4 py-4 text-sm text-white/70 whitespace-pre-wrap font-sans leading-relaxed">{o.resposta}</pre>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ── Cartão do guião da chamada telefónica ── */
 function TelefonemaCard({ numero }: { numero: string }) {
   const t = TELEFONEMA
@@ -425,6 +561,7 @@ function TelefonemaCard({ numero }: { numero: string }) {
             </div>
           </div>
         </div>
+        <DicaLine titulo={t.titulo} />
       </div>
     </div>
   )
@@ -446,6 +583,7 @@ function MensagemInset({ fase, cor }: { fase: Fase; cor: string }) {
         </div>
         <pre className="px-4 py-4 text-sm text-white/70 whitespace-pre-wrap font-sans leading-relaxed">{fase.mensagem}</pre>
       </div>
+      <DicaLine titulo={fase.titulo} />
     </div>
   )
 }
@@ -480,6 +618,7 @@ function FaseCard({ fase, numero, ultima, cor }: { fase: Fase; numero: string; u
             {fase.mensagem}
           </pre>
         </div>
+        <DicaLine titulo={fase.titulo} />
       </div>
     </div>
   )
@@ -561,6 +700,9 @@ export default function FollowUpPage() {
           <p className="text-center text-gold/60 text-xs tracking-[0.3em] uppercase mt-5">RL Photo · Video</p>
         </div>
       </section>
+
+      {/* ── MAPA VISUAL DO FLUXO ── */}
+      <FlowMap />
 
       {/* ── SELETOR DE ORIGEM ── */}
       <div className="flex items-center gap-3 mb-5">
@@ -755,8 +897,20 @@ export default function FollowUpPage() {
         </div>
       )}
 
+      {/* ── BANCO DE RESPOSTAS A OBJEÇÕES ── */}
+      <section className="mt-16">
+        <div className="flex items-center gap-3 mb-2">
+          <span className="text-xs tracking-[0.35em] uppercase text-gold/60">Respostas a objeções</span>
+          <div className="flex-1 h-px bg-white/8" />
+        </div>
+        <p className="text-white/40 text-sm mb-6 max-w-2xl">Respostas prontas para as dúvidas mais comuns. Clica para abrir e copiar.</p>
+        <div className="flex flex-col gap-3">
+          {OBJECOES.map(o => <ObjecaoCard key={o.titulo} o={o} />)}
+        </div>
+      </section>
+
       {/* ── NOTA ── */}
-      <div className="mt-4 rounded-xl border border-white/8 bg-white/[0.02] px-5 py-4 text-white/30 text-xs leading-relaxed tracking-wide">
+      <div className="mt-16 rounded-xl border border-white/8 bg-white/[0.02] px-5 py-4 text-white/30 text-xs leading-relaxed tracking-wide">
         Substitui <span className="text-gold/60">[nome]</span>, <span className="text-gold/60">[data]</span> e <span className="text-gold/60">[local]</span> antes de enviar. Os tempos são uma referência, ajusta conforme o ritmo de cada casal.
       </div>
     </main>
