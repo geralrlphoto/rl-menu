@@ -762,9 +762,10 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       )}
 
       {/* ── CARD REUNIÃO ── */}
-      <section className="rlp-sec flex flex-col items-center" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
+      <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
+        <div className="mx-auto flex flex-col items-center md:flex-row md:items-start md:justify-center gap-6 md:gap-8" style={{ maxWidth: 900 }}>
         <FadeIn className="w-full" style={{ maxWidth: 420 }}>
-        <div className="rlp-card w-full" style={{ marginBottom: 32 }}>
+        <div className="rlp-card w-full">
           <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line-soft)' }}>
             <span className="rlp-eyebrow">Detalhes da Reunião</span>
           </div>
@@ -924,6 +925,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
         </div>
         </FadeIn>
+        </div>
       </section>
 
       {/* ── VÍDEO ── */}
