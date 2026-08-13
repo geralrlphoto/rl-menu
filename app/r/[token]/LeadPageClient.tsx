@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 
-const WHATSAPP     = 'https://wa.me/351912832788'
+const WHATSAPP     = 'https://wa.me/351912932768'
 const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.webp'
 
 // ─── DESIGN SYSTEM — RL PHOTO.VIDEO (rlphotovideo.pt) ─────────────────────────
@@ -1082,7 +1082,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             <FadeIn delay={100} className="flex flex-col gap-3">
               <h5>Contactos</h5>
               <a href="mailto:geral.rlphoto@gmail.com">geral.rlphoto@gmail.com</a>
-              <a href="tel:+351912832788">912 832 788</a>
+              <a href="tel:+351912932768">912 932 768</a>
               <span style={{ color: 'var(--tx-mid)' }}>Pinhal Novo, Palmela</span>
             </FadeIn>
             <FadeIn delay={180} className="flex flex-col gap-3">
