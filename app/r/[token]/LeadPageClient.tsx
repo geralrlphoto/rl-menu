@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 const WHATSAPP     = 'https://wa.me/351912932768'
-const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
+const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.webp'
 
 // ─── DESIGN SYSTEM — RL PHOTO.VIDEO (rlphotovideo.pt) ─────────────────────────
 const RLP_CSS = `
