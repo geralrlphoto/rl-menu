@@ -369,15 +369,8 @@ export default function FormularioCPS({
         <form onSubmit={handleSubmit} className="space-y-7">
 
           {/* ── Dados Gerais ── */}
+          {/* Referência do evento: capturada automaticamente via ?ref= (não visível) */}
           <SectionTitle kicker="Secção 01" title={L.sec01Label} />
-          <Field
-            label="Referência do Evento"
-            name="referencia_evento"
-            value={form.referencia_evento}
-            onChange={update}
-            required
-            placeholder={isBatizado ? 'Ex.: BAT_001_26_RL' : 'Ex.: CAS_001_26_RL'}
-          />
           <Field label={L.nome_noivos} name="nome_noivos" value={form.nome_noivos} onChange={update} required placeholder={L.nome_noivos_placeholder} />
           <Field label={L.data_evento} name="data_casamento" value={form.data_casamento} onChange={update} type="date" required />
           <Field label={L.local_evento} name="local_cerimonia" value={form.local_cerimonia} onChange={update} required placeholder={L.local_evento_placeholder} />
