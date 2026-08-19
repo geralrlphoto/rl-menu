@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -1071,54 +1071,17 @@ function RegrasEntregasDrop() {
 }
 
 // ─── Pasta de fotografias (caminho local) — usada pelo robô de envio automático ──
-// Ao guardar o caminho fica um pedido de leitura «pendente»: as fotos estão no PC
-// (Desktop), por isso quem percorre a pasta é o robô local (auto_enviar_fotos.py),
-// que devolve a numeração das fotografias e a lista aparece aqui em baixo.
-type NumeracaoInfo = {
-  numeros: string | null
-  total: number | null
-  estado: string | null
-  erro: string | null
-}
-
 function PastaFotosField({ eventId }: { eventId: string }) {
   const [valor, setValor] = useState('')
   const [inicial, setInicial] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [copiado, setCopiado] = useState(false)
-  const [num, setNum] = useState<NumeracaoInfo>({ numeros: null, total: null, estado: null, erro: null })
-
-  const carregar = useCallback(async (comCaminho = false) => {
-    if (!eventId) return
-    try {
-      const r = await fetch(`/api/evento-pasta?eventId=${encodeURIComponent(eventId)}`)
-      const d = await r.json()
-      if (comCaminho) { setValor(d.pasta_fotos ?? ''); setInicial(d.pasta_fotos ?? '') }
-      setNum({
-        numeros: d?.numeros_fotos ?? null,
-        total: d?.numeros_fotos_total ?? null,
-        estado: d?.numeros_fotos_estado ?? null,
-        erro: d?.numeros_fotos_erro ?? null,
-      })
-    } catch {}
-  }, [eventId])
-
-  useEffect(() => { carregar(true) }, [carregar])
-
-  // Enquanto o robô não responde, vai vendo de minuto a minuto (só com o
-  // separador à vista, para não gastar tráfego à toa). Desiste ao fim de ~20 min.
   useEffect(() => {
-    if (num.estado !== 'pendente') return
-    let tentativas = 0
-    const t = setInterval(() => {
-      if (document.hidden) return
-      if (++tentativas > 20) { clearInterval(t); return }
-      carregar()
-    }, 60_000)
-    return () => clearInterval(t)
-  }, [num.estado, carregar])
-
+    if (!eventId) return
+    fetch(`/api/evento-pasta?eventId=${encodeURIComponent(eventId)}`)
+      .then(r => r.json()).then(d => { setValor(d.pasta_fotos ?? ''); setInicial(d.pasta_fotos ?? '') })
+      .catch(() => {})
+  }, [eventId])
   const dirty = valor.trim() !== inicial
   async function guardar() {
     setSaving(true)
@@ -1126,19 +1089,9 @@ function PastaFotosField({ eventId }: { eventId: string }) {
       const v = valor.trim()
       await fetch('/api/evento-pasta', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ eventId, pasta_fotos: v }) })
       setInicial(v); setValor(v); setSaved(true); setTimeout(() => setSaved(false), 2500)
-      setNum({ numeros: null, total: null, estado: 'pendente', erro: null })
     } catch {}
     setSaving(false)
   }
-
-  async function copiar() {
-    if (!num.numeros) return
-    try {
-      await navigator.clipboard.writeText(num.numeros)
-      setCopiado(true); setTimeout(() => setCopiado(false), 2000)
-    } catch {}
-  }
-
   return (
     <div className="mb-4 rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
       <div className="flex items-center justify-between gap-2 mb-1.5">
@@ -1154,40 +1107,6 @@ function PastaFotosField({ eventId }: { eventId: string }) {
           className="text-[11px] px-4 py-2 rounded-lg bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-40 shrink-0">
           {saving ? '...' : 'Guardar'}
         </button>
-      </div>
-
-      {/* Numeração lida da pasta pelo robô do PC */}
-      <div className="mt-3 rounded-lg border border-white/[0.07] bg-black/20 p-3">
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <p className="text-[10px] tracking-[0.25em] text-white/50 uppercase">
-            Numeração das fotografias{num.estado === 'ok' && num.total ? ` · ${num.total}` : ''}
-          </p>
-          <div className="flex items-center gap-2 shrink-0">
-            {num.estado === 'pendente' && (
-              <button onClick={() => carregar()} className="text-[10px] text-white/40 hover:text-white/70 underline underline-offset-2">Atualizar</button>
-            )}
-            {num.numeros && (
-              <button onClick={copiar} className="text-[10px] px-2.5 py-1 rounded-md border border-gold/30 text-gold hover:bg-gold/10 transition-all">
-                {copiado ? 'Copiado ✓' : 'Copiar'}
-              </button>
-            )}
-          </div>
-        </div>
-        {num.estado === 'pendente' && (
-          <p className="text-[11px] text-amber-200/70 leading-relaxed">A ler a pasta no PC. O robô das fotos preenche a lista na passagem seguinte (poucos minutos). Podes sair da página.</p>
-        )}
-        {num.estado === 'erro' && (
-          <p className="text-[11px] text-red-300/80 leading-relaxed">Não consegui ler a pasta: {num.erro}</p>
-        )}
-        {num.estado === 'ok' && num.numeros && (
-          <p className="text-[12px] text-white/80 leading-relaxed max-h-32 overflow-y-auto break-words font-mono">{num.numeros}</p>
-        )}
-        {num.estado === 'ok' && !num.numeros && (
-          <p className="text-[11px] text-white/40 leading-relaxed">A pasta não tem fotografias com numeração.</p>
-        )}
-        {!num.estado && (
-          <p className="text-[11px] text-white/35 leading-relaxed">Escreve o caminho da pasta e carrega em Guardar. A lista dos números das fotografias aparece aqui.</p>
-        )}
       </div>
     </div>
   )
