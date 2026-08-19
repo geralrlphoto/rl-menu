@@ -375,7 +375,6 @@ export default function TicketForm() {
       if (fmt() === 'papel' && !gv('t-morada')) m.push('morada')
       var inputs = Array.prototype.slice.call(fotoList.querySelectorAll('.fotorow input')) as HTMLInputElement[]
       if (inputs.length === 0 || inputs.some(i => !i.value.trim())) m.push('nº das fotografias')
-      if (listaCodigos && numerosInvalidos().length) m.push('nºs que não existem nas fotos deste casamento')
       if (!metodo()) m.push('método de pagamento')
       return m
     }
@@ -383,9 +382,15 @@ export default function TicketForm() {
     function syncBtn() {
       var b = document.getElementById('btnSubmit') as HTMLButtonElement | null
       var m = faltam()
-      if (b) b.disabled = m.length > 0
+      var maus = numerosInvalidos()
+      if (b) b.disabled = m.length > 0 || maus.length > 0
       var h = document.getElementById('btnHint')
-      if (h) h.textContent = m.length ? ('Falta preencher: ' + m.join(', ') + '.') : ''
+      if (h) {
+        if (maus.length) h.textContent = maus.length === 1
+          ? ('O nº ' + maus[0] + ' não existe nas fotos deste casamento. Corrige para confirmar.')
+          : ('Os nºs ' + maus.join(', ') + ' não existem nas fotos deste casamento. Corrige para confirmar.')
+        else h.textContent = m.length ? ('Falta preencher: ' + m.join(', ') + '.') : ''
+      }
       pintarHint()
     }
     function updateMbway() {
@@ -504,6 +509,8 @@ export default function TicketForm() {
       var setMsg = (t: string, ok = false) => { var el = document.getElementById('formMsg')!; el.textContent = t; el.className = 'msg ' + (ok ? 'ok' : 'err') }
       if (!respSel.value || !mbway) { setMsg('Seleciona o responsável e a conta MB WAY.'); return }
       if (!nome || !email || !tel || !noivos || !data) { setMsg('Preenche todos os campos do cliente.'); return }
+      var maus = numerosInvalidos()
+      if (maus.length) { setMsg('Estes nºs não existem nas fotos deste casamento: ' + maus.join(', ') + '.'); return }
       if (f === 'papel' && !morada) { setMsg('Indica a morada para entrega em papel.'); return }
       if (!met) { setMsg('Escolhe o método de pagamento.'); return }
 
