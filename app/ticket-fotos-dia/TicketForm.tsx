@@ -65,6 +65,9 @@ const CSS = `
 .tkt .fotorow input:focus{border-color:var(--g);}
 .tkt .fotorow .rm{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--tx-mid);cursor:pointer;font-size:13px;}
 .tkt .fotorow .rm:hover{border-color:var(--g);color:var(--g);}
+.tkt .fotorow input.bad{border-color:#c86a6a;color:#e9b6b6;}
+.tkt .fotohint{font-family:var(--fm);font-size:11px;letter-spacing:.06em;line-height:1.7;color:var(--tx-dim);margin-top:14px;}
+.tkt .fotohint.err{color:#e0a0a0;}
 .tkt .addfoto{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--g);background:transparent;border:1px solid var(--line);border-radius:40px;padding:12px 22px;cursor:pointer;}
 .tkt .addfoto:hover{border-color:var(--g);background:rgba(216,190,147,.06);}
 .tkt .qty-hint{font-family:var(--fm);font-size:11px;letter-spacing:.1em;color:var(--tx-mid);margin-top:14px;}
@@ -184,6 +187,7 @@ const BODY = `
         <div class="fotolist" id="fotoList"></div>
         <button type="button" class="addfoto" id="addFoto">+ Adicionar fotografia</button>
         <div class="qty-hint" id="qtyHint"></div>
+        <div class="fotohint" id="fotoHint"></div>
       </div>
 
       <div class="field">
@@ -276,6 +280,86 @@ export default function TicketForm() {
       fm.style.display = f === 'papel' ? '' : 'none'
       syncBtn()
     }
+    // ── Numeração do casamento ───────────────────────────────────────────────
+    // Os nºs escritos no ticket têm de existir mesmo nas fotos daquele casamento.
+    // A lista vem da ficha do evento (lida da pasta pelo robô). Sem lista, não
+    // bloqueia nada: só se valida quando há por onde comparar.
+    var listaCodigos: any = null
+    var listaInfo = { estado: '', cliente: '', total: 0 }
+    var listaKey = '', listaTimer: any = null
+
+    function codigoFoto(v: string) {
+      var s = String(v || '').replace(/\.(jpg|jpeg|png|tif|tiff|heic|webp|gif|bmp)$/i, '')
+      s = s.replace(/^[^0-9]*/, '')
+      var m = s.match(/\d+/g)
+      return m ? m.map(function (x) { return String(parseInt(x, 10)) }).join('-') : ''
+    }
+    function numeroValido(v: string) {
+      if (!listaCodigos) return true
+      var c = codigoFoto(v)
+      if (!c) return false
+      if (listaCodigos[c]) return true
+      // '4218-2' = 2.ª cópia da mesma foto, quando não há ficheiro com essa variante
+      var partes = c.split('-')
+      return partes.length > 1 && !!listaCodigos[partes.slice(0, -1).join('-')]
+    }
+    function numerosInvalidos() {
+      var maus: string[] = []
+      Array.prototype.forEach.call(fotoList.querySelectorAll('.fotorow input'), function (i: any) {
+        var v = String(i.value || '').trim()
+        var mau = !!v && !!listaCodigos && !numeroValido(v)
+        i.classList.toggle('bad', mau)
+        if (mau) maus.push(v)
+      })
+      return maus
+    }
+    function esc(t: string) { return String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
+    function pintarHint() {
+      var el = document.getElementById('fotoHint'); if (!el) return
+      var maus = numerosInvalidos()
+      var quem = listaInfo.cliente || 'deste casamento'
+      if (maus.length) {
+        el.className = 'fotohint err'
+        el.innerHTML = (maus.length === 1
+          ? 'O nº <b>' + esc(maus[0]) + '</b> não existe'
+          : 'Os nºs <b>' + maus.map(esc).join(', ') + '</b> não existem')
+          + ' nas fotografias de ' + esc(quem) + '. Confirma a numeração.'
+      } else if (listaCodigos) {
+        el.className = 'fotohint'
+        el.textContent = 'Numeração conferida com as ' + listaInfo.total + ' fotografias de ' + quem + '.'
+      } else if (listaInfo.estado === 'pendente') {
+        el.className = 'fotohint'
+        el.textContent = 'A lista das fotos deste casamento ainda está a ser lida. Os nºs não são conferidos.'
+      } else {
+        el.className = 'fotohint'
+        el.textContent = ''
+      }
+    }
+    function carregarLista() {
+      var noivos = gv('t-noivos'), data = gv('t-data')
+      var key = noivos + '|' + data
+      if (key === listaKey) return
+      listaKey = key
+      listaCodigos = null; listaInfo = { estado: '', cliente: '', total: 0 }
+      pintarHint(); syncBtn()
+      if (!data) return
+      clearTimeout(listaTimer)
+      listaTimer = setTimeout(function () {
+        fetch('/api/ticket-numeracao?data=' + encodeURIComponent(data) + '&noivos=' + encodeURIComponent(noivos))
+          .then(function (r) { return r.json() })
+          .then(function (d: any) {
+            listaInfo = { estado: String(d?.estado || ''), cliente: String(d?.cliente || ''), total: Number(d?.total || 0) }
+            if (d?.estado === 'ok' && Array.isArray(d.numeros) && d.numeros.length) {
+              var mapa: any = {}
+              d.numeros.forEach(function (x: any) { var c = codigoFoto(String(x)); if (c) mapa[c] = true })
+              listaCodigos = mapa
+            }
+            pintarHint(); syncBtn()
+          })
+          .catch(function () { pintarHint(); syncBtn() })
+      }, 400)
+    }
+
     function gv(id: string) { return (document.getElementById(id) as HTMLInputElement).value.trim() }
     // Lista dos campos ainda por preencher — usada para ativar o botão e para
     // explicar ao utilizador o que falta (evita a sensação de "não deixa confirmar").
@@ -291,6 +375,7 @@ export default function TicketForm() {
       if (fmt() === 'papel' && !gv('t-morada')) m.push('morada')
       var inputs = Array.prototype.slice.call(fotoList.querySelectorAll('.fotorow input')) as HTMLInputElement[]
       if (inputs.length === 0 || inputs.some(i => !i.value.trim())) m.push('nº das fotografias')
+      if (listaCodigos && numerosInvalidos().length) m.push('nºs que não existem nas fotos deste casamento')
       if (!metodo()) m.push('método de pagamento')
       return m
     }
@@ -301,6 +386,7 @@ export default function TicketForm() {
       if (b) b.disabled = m.length > 0
       var h = document.getElementById('btnHint')
       if (h) h.textContent = m.length ? ('Falta preencher: ' + m.join(', ') + '.') : ''
+      pintarHint()
     }
     function updateMbway() {
       var v = mbwaySel.value
@@ -332,6 +418,9 @@ export default function TicketForm() {
     mbwaySel.addEventListener('change', checkGate)
     ;['t-nome', 't-email', 't-tel', 't-noivos', 't-data', 't-morada'].forEach(function (id) {
       document.getElementById(id)!.addEventListener('input', syncBtn)
+    })
+    ;['t-noivos', 't-data'].forEach(function (id) {
+      document.getElementById(id)!.addEventListener('input', carregarLista)
     })
     checkGate()
 
@@ -392,7 +481,7 @@ export default function TicketForm() {
         var elD = document.getElementById('t-data') as HTMLInputElement
         elD.value = qData; elD.readOnly = true; elD.classList.add('locked')
       }
-      syncBtn()
+      syncBtn(); carregarLista()
     } catch {}
 
     fetch('/api/freelancers').then(r => r.json()).then(d => {
@@ -469,6 +558,7 @@ export default function TicketForm() {
       seg.querySelectorAll('label').forEach(l => l.classList.remove('on')); (seg.querySelector('label[data-val="digital"]') as HTMLElement).classList.add('on')
       segM.querySelectorAll('label').forEach(l => l.classList.remove('on')); (segM.querySelector('label[data-val="Numerário"]') as HTMLElement).classList.add('on')
       fotoList.innerHTML = ''; addRow()
+      carregarLista()
       var b = document.getElementById('btnSubmit') as HTMLButtonElement; b.textContent = 'Confirmar pedido'
       document.getElementById('formMsg')!.textContent = ''
       update()
