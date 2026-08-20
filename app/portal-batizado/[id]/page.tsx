@@ -3731,10 +3731,10 @@ function PortalSubPageContent() {
                                         _ct.includes('MAQUETE') ? (portalSettingsObj?.maquete_url ?? '') : ''
                                       const url = pageCalloutLinks[cardTitle] || actionUrlFallback || ''
                                       return (
-                                        <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
-                                          style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+                                        <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-[rgba(216,190,147,0.30)] bg-black"
+                                          style={{ boxShadow: '0 0 22px 3px rgba(216,190,147,0.10), 0 0 7px 1px rgba(216,190,147,0.14), inset 0 0 22px 0 rgba(216,190,147,0.04)' }}>
                                           <div className="px-3 pt-3 pb-2">
-                                            <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">{cardTitle}</span>
+                                            <span className="text-[10px] font-bold tracking-widest text-[rgba(216,190,147,0.78)] uppercase">{cardTitle}</span>
                                           </div>
                                           {imgUrl && (
                                             // eslint-disable-next-line @next/next/no-img-element
@@ -3743,14 +3743,14 @@ function PortalSubPageContent() {
                                           {url ? (
                                             <div className="p-3">
                                               <a href={url} target="_blank" rel="noopener noreferrer"
-                                                className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
-                                                style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
+                                                className="block w-full text-center px-4 py-2.5 rounded-xl border border-[rgba(216,190,147,0.35)] bg-[rgba(216,190,147,0.06)] text-[#d8be93] font-semibold text-xs tracking-widest uppercase hover:bg-[rgba(216,190,147,0.12)] transition-all"
+                                                style={{ boxShadow: '0 0 12px 2px rgba(216,190,147,0.12)' }}>
                                                 VER MAIS →
                                               </a>
                                             </div>
                                           ) : (
                                             <div className="p-3">
-                                              <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-white/25 font-semibold text-xs tracking-widest uppercase">
+                                              <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-[rgba(216,190,147,0.14)] bg-[rgba(216,190,147,0.03)] text-[rgba(216,190,147,0.32)] font-semibold text-xs tracking-widest uppercase">
                                                 AGUARDAR
                                               </span>
                                             </div>
@@ -3940,10 +3940,10 @@ function PortalSubPageContent() {
                                 ) : ''
                                 const url = pageCalloutLinks[cardTitle] || videoActionFallback || ''
                                 return (
-                                  <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-white/40 bg-black"
-                                    style={{ boxShadow: '0 0 18px 4px rgba(255,255,255,0.18), 0 0 6px 1px rgba(255,255,255,0.25), inset 0 0 20px 0 rgba(255,255,255,0.06)' }}>
+                                  <div key={cardTitle} className="flex flex-col rounded-2xl overflow-hidden border border-[rgba(216,190,147,0.30)] bg-black"
+                                    style={{ boxShadow: '0 0 22px 3px rgba(216,190,147,0.10), 0 0 7px 1px rgba(216,190,147,0.14), inset 0 0 22px 0 rgba(216,190,147,0.04)' }}>
                                     <div className="px-3 pt-3 pb-2">
-                                      <span className="text-[10px] font-bold tracking-widest text-white/70 uppercase">{cardTitle}</span>
+                                      <span className="text-[10px] font-bold tracking-widest text-[rgba(216,190,147,0.78)] uppercase">{cardTitle}</span>
                                     </div>
                                     {imgUrl && (
                                       // eslint-disable-next-line @next/next/no-img-element
@@ -3952,14 +3952,14 @@ function PortalSubPageContent() {
                                     {url ? (
                                       <div className="p-3">
                                         <a href={url} target="_blank" rel="noopener noreferrer"
-                                          className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/40 bg-white/5 text-white font-semibold text-xs tracking-widest uppercase hover:bg-white/10 transition-all"
-                                          style={{ boxShadow: '0 0 10px 2px rgba(255,255,255,0.15)' }}>
+                                          className="block w-full text-center px-4 py-2.5 rounded-xl border border-[rgba(216,190,147,0.35)] bg-[rgba(216,190,147,0.06)] text-[#d8be93] font-semibold text-xs tracking-widest uppercase hover:bg-[rgba(216,190,147,0.12)] transition-all"
+                                          style={{ boxShadow: '0 0 12px 2px rgba(216,190,147,0.12)' }}>
                                           VER MAIS →
                                         </a>
                                       </div>
                                     ) : (
                                       <div className="p-3">
-                                        <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-white/15 bg-white/[0.03] text-white/25 font-semibold text-xs tracking-widest uppercase">
+                                        <span className="block w-full text-center px-4 py-2.5 rounded-xl border border-[rgba(216,190,147,0.14)] bg-[rgba(216,190,147,0.03)] text-[rgba(216,190,147,0.32)] font-semibold text-xs tracking-widest uppercase">
                                           AGUARDAR
                                         </span>
                                       </div>
