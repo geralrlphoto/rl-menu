@@ -2,6 +2,87 @@
 
 import { useState, useEffect, useRef } from 'react'
 
+
+// Sistema de design partilhado com /adquirir-fotografias (.adqf).
+// O @import tem de viajar num <style> em runtime: o Turbopack remove os
+// @import dos ficheiros .css no build de producao.
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;0,400;1,200;1,300&family=Hanken+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
+.nlead{
+  --ink:#0b0a08; --ink-2:#100e0b; --ink-3:#16130f;
+  --g:#d8be93; --g-deep:#c8a866;
+  --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4);
+  --line:rgba(243,237,226,.14); --line-soft:rgba(243,237,226,.08);
+  --fd:'Jost',sans-serif; --fb:'Hanken Grotesk',sans-serif; --fm:'Space Mono',monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+  background:var(--ink); color:var(--tx); font-family:var(--fb); line-height:1.5;
+  min-height:100vh; -webkit-font-smoothing:antialiased;
+}
+.nlead ::selection{background:var(--g);color:var(--ink);}
+
+.nlead .fx-grain{position:fixed;inset:0;z-index:40;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");background-size:130px;}
+.nlead .fx-vig{position:fixed;inset:0;z-index:39;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.5);}
+
+.nlead h1,.nlead h2{font-family:var(--fd);font-weight:200;line-height:1.04;letter-spacing:-.02em;color:var(--tx);}
+.nlead h1 em,.nlead h2 em{font-style:italic;color:var(--g);}
+.nlead .eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--g);display:inline-flex;gap:.8em;align-items:center;}
+.nlead .eyebrow::before{content:"";width:34px;height:1px;background:var(--g);opacity:.6;}
+.nlead .rule{width:34px;height:1px;background:var(--g);opacity:.6;}
+.nlead .lead{color:var(--tx-mid);line-height:1.7;font-size:clamp(15px,1.15vw,18px);}
+.nlead .quest{font-family:var(--fd);font-weight:200;font-size:clamp(21px,2.4vw,28px);line-height:1.2;letter-spacing:-.01em;color:var(--tx);}
+.nlead .quest em{font-style:italic;color:var(--g);}
+.nlead .hint{font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-dim);}
+
+.nlead .flabel{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);display:block;margin-bottom:12px;}
+.nlead .flabel .opt{color:var(--tx-dim);}
+.nlead .finput{width:100%;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--tx);
+  font-family:var(--fd);font-weight:300;font-size:clamp(17px,1.6vw,22px);padding:8px 0 13px;outline:none;
+  transition:border-color .4s var(--ease);}
+.nlead .finput::placeholder{color:var(--tx-dim);}
+.nlead .finput:focus{border-color:var(--g);}
+.nlead select.finput{appearance:none;cursor:pointer;}
+.nlead select.finput option{background:var(--ink-2);color:var(--tx);}
+.nlead textarea.finput{resize:none;min-height:74px;font-size:clamp(16px,1.4vw,20px);}
+
+.nlead .pill{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-mid);
+  background:transparent;border:1px solid var(--line-soft);border-radius:40px;padding:11px 20px;cursor:pointer;
+  transition:.3s var(--ease);}
+.nlead .pill:hover{border-color:var(--line);color:var(--tx);}
+.nlead .pill.on{border-color:var(--g);background:rgba(216,190,147,.06);color:var(--g);}
+
+.nlead .seg{display:grid;gap:12px;}
+.nlead .segbtn{display:flex;align-items:center;gap:14px;width:100%;text-align:left;border:1px solid var(--line-soft);
+  border-radius:10px;padding:16px 20px;background:transparent;cursor:pointer;transition:.4s var(--ease);}
+.nlead .segbtn:hover{border-color:var(--line);}
+.nlead .segbtn.on{border-color:var(--g);background:rgba(216,190,147,.06);}
+.nlead .segbtn .t{font-family:var(--fd);font-weight:300;font-size:18px;color:var(--tx-mid);line-height:1.25;}
+.nlead .segbtn.on .t{color:var(--g);}
+.nlead .segbtn.sm{padding:12px 14px;gap:11px;border-radius:9px;}
+.nlead .segbtn.sm .t{font-size:15px;}
+.nlead .mk{width:16px;height:16px;border-radius:50%;border:1px solid var(--line);flex:none;display:grid;place-items:center;transition:.3s;}
+.nlead .segbtn.on .mk{border-color:var(--g);}
+.nlead .segbtn.on .mk::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--g);}
+.nlead .segbtn.sm .mk{width:13px;height:13px;}
+.nlead .segbtn.sm.on .mk::after{width:5px;height:5px;}
+
+.nlead .btn{display:inline-flex;align-items:center;justify-content:center;gap:.9em;position:relative;isolation:isolate;
+  font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);
+  padding:18px 34px;border:1px solid var(--g);border-radius:40px;overflow:hidden;background:var(--g);cursor:pointer;
+  transition:color .5s var(--ease);}
+.nlead .btn .fill{position:absolute;inset:0;z-index:-1;background:var(--ink);transform:translateY(101%);transition:transform .6s var(--ease);}
+.nlead .btn:hover{color:var(--g);}
+.nlead .btn:hover .fill{transform:translateY(0);}
+.nlead .btn:disabled{opacity:.4;cursor:not-allowed;}
+.nlead .btn:disabled .fill{transform:translateY(101%);}
+.nlead .btn-ghost{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-dim);
+  background:none;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:.7em;transition:color .3s;}
+.nlead .btn-ghost:hover{color:var(--g);}
+
+.nlead .err{font-family:var(--fm);font-size:11px;letter-spacing:.1em;color:#d98a7a;}
+.nlead .meta{font-family:var(--fm);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--tx-dim);}
+`
+
 // ── Opções ────────────────────────────────────────────────────────────────────
 const TIPO_EVENTO   = ['Casamento', 'Batizado', 'Casamento e Batizado']
 const TIPO_CERIMONIA = ['Religiosa', 'Civil', 'Outra']
@@ -53,19 +134,16 @@ function LeadInput({ label, type = 'text', value, onChange, placeholder, require
   label: string; type?: string; value: string; onChange: (v: string) => void; placeholder?: string; required?: boolean
 }) {
   return (
-    <div className="space-y-2">
-      <label className="block text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
-        {label}{required && <span className="ml-1" style={{ color: 'rgba(201,168,76,0.4)' }}>*</span>}
+    <div>
+      <label className="flabel">
+        {label}{required && <span className="opt"> *</span>}
       </label>
       <input
         type={type}
         value={value}
         onChange={e => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-transparent outline-none text-white placeholder-white/20 py-3 px-0 text-base font-cormorant tracking-wide transition-all duration-200"
-        style={{ borderBottom: '1px solid rgba(201,168,76,0.25)' }}
-        onFocus={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.8)' }}
-        onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.25)' }}
+        className="finput"
       />
     </div>
   )
@@ -75,23 +153,18 @@ function LeadSelect({ label, value, onChange, options, required }: {
   label: string; value: string; onChange: (v: string) => void; options: string[]; required?: boolean
 }) {
   return (
-    <div className="space-y-2">
-      <label className="block text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
-        {label}{required && <span className="ml-1" style={{ color: 'rgba(201,168,76,0.4)' }}>*</span>}
+    <div>
+      <label className="flabel">
+        {label}{required && <span className="opt"> *</span>}
       </label>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
-        className="w-full bg-transparent outline-none py-3 px-0 text-base font-cormorant tracking-wide transition-all duration-200 appearance-none cursor-pointer"
-        style={{
-          borderBottom: '1px solid rgba(201,168,76,0.25)',
-          color: value ? 'white' : 'rgba(255,255,255,0.25)',
-        }}
-        onFocus={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.8)' }}
-        onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.25)' }}
+        className="finput"
+        style={{ color: value ? undefined : 'rgba(243,237,226,.4)' }}
       >
-        <option value="" disabled style={{ background: '#0a0a0a' }}>Selecionar...</option>
-        {options.map(o => <option key={o} value={o} style={{ background: '#0a0a0a' }}>{o}</option>)}
+        <option value="" disabled>Selecionar...</option>
+        {options.map(o => <option key={o} value={o}>{o}</option>)}
       </select>
     </div>
   )
@@ -110,17 +183,10 @@ function PillToggle({ options, value, onChange, multi = false }: {
     }
   }
   return (
-    <div className="flex flex-wrap gap-2 pt-1">
+    <div className="flex flex-wrap gap-2.5 pt-1">
       {options.map(opt => (
         <button key={opt} type="button" onClick={() => toggle(opt)}
-          className="px-4 py-2 rounded-full text-xs tracking-widest uppercase transition-all duration-200 font-medium"
-          style={isActive(opt) ? {
-            background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.6)',
-            color: '#C9A84C', boxShadow: '0 0 12px rgba(201,168,76,0.15)',
-          } : {
-            background: 'transparent', border: '1px solid rgba(255,255,255,0.1)',
-            color: 'rgba(255,255,255,0.4)',
-          }}>
+          className={`pill${isActive(opt) ? ' on' : ''}`}>
           {opt}
         </button>
       ))}
@@ -134,29 +200,14 @@ function ServicoCheck({ options, value, onChange }: {
   const toggle = (opt: string) =>
     onChange(value.includes(opt) ? value.filter(x => x !== opt) : [...value, opt])
   return (
-    <div className="grid grid-cols-1 gap-2 pt-1">
+    <div className="seg pt-1">
       {options.map(opt => {
         const active = value.includes(opt)
         return (
           <button key={opt} type="button" onClick={() => toggle(opt)}
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-150"
-            style={active ? {
-              background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.35)',
-            } : {
-              background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
-            }}>
-            <div className="w-4 h-4 rounded-full shrink-0 flex items-center justify-center transition-all duration-150"
-              style={active ? {
-                background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.7)',
-              } : {
-                border: '1px solid rgba(255,255,255,0.2)', background: 'transparent',
-              }}>
-              {active && <div className="w-1.5 h-1.5 rounded-full" style={{ background: '#C9A84C' }} />}
-            </div>
-            <span className="text-sm font-cormorant tracking-wide"
-              style={{ color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.45)' }}>
-              {opt}
-            </span>
+            className={`segbtn${active ? ' on' : ''}`}>
+            <span className="mk" />
+            <span className="t">{opt}</span>
           </button>
         )
       })}
@@ -305,9 +356,10 @@ export default function NovaLeadPage() {
 
   // ── Ecrã de sucesso ───────────────────────────────────────────────────────
   if (done) return (
-    <div className="relative min-h-screen flex items-center justify-center px-6 py-20" style={{ background: '#0a0a0a' }}>
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
+    <div className="nlead relative flex items-center justify-center px-6 py-20">
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
+      <div className="fx-grain" />
+      <div className="fx-vig" />
       <div className="relative text-center max-w-md space-y-8">
         <div className="flex justify-center">
           <img
@@ -318,22 +370,20 @@ export default function NovaLeadPage() {
         </div>
         <div className="flex justify-center">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
-            <circle cx="24" cy="24" r="23" stroke="rgba(201,168,76,0.3)" strokeWidth="1"/>
-            <path d="M14 24l7 7 13-14" stroke="#C9A84C" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <circle cx="24" cy="24" r="23" stroke="rgba(216,190,147,0.35)" strokeWidth="1"/>
+            <path d="M14 24l7 7 13-14" stroke="#d8be93" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </div>
         <div className="space-y-4">
-          <h1 className="font-playfair text-4xl font-light text-white leading-tight">
-            Obrigado<br />pelo vosso contacto
+          <h1 style={{ fontSize: 'clamp(34px,5.5vw,58px)' }}>
+            Obrigado<br /><em>pelo vosso contacto</em>
           </h1>
-          <p className="font-cormorant text-lg leading-relaxed" style={{ color: 'rgba(255,255,255,0.5)' }}>
+          <p className="lead">
             Recebemos a vossa mensagem e entraremos em contacto convosco em breve.
           </p>
         </div>
-        <div className="h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(201,168,76,0.3),transparent)' }} />
-        <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.2)' }}>
-          www.rlprod.pt
-        </p>
+        <div className="h-px" style={{ background: 'linear-gradient(90deg,transparent,rgba(216,190,147,0.35),transparent)' }} />
+        <p className="meta">www.rlprod.pt</p>
       </div>
     </div>
   )
@@ -341,17 +391,17 @@ export default function NovaLeadPage() {
   const cur = STEPS[step]
 
   return (
-    <div className="relative min-h-screen" style={{ background: '#0a0a0a' }} ref={topRef}>
+    <div className="nlead relative" ref={topRef}>
+      <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
-      {/* Background proposta criativa */}
-      <div className="fixed inset-0 pointer-events-none" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
-      <div className="fixed inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
-      <div className="fixed inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 40% 40% at 50% 48%, rgba(232,180,60,0.08) 0%, transparent 60%)' }} />
+      {/* Textura — grao + vinheta, iguais a /adquirir-fotografias */}
+      <div className="fx-grain" />
+      <div className="fx-vig" />
 
       {/* Barra de progresso */}
-      <div className="fixed top-0 left-0 right-0 z-50 h-[2px]" style={{ background: 'rgba(255,255,255,0.06)' }}>
+      <div className="fixed top-0 left-0 right-0 z-50 h-[2px]" style={{ background: 'rgba(243,237,226,0.08)' }}>
         <div className="h-full transition-all duration-500 ease-out"
-          style={{ width: `${progress}%`, background: 'linear-gradient(90deg,rgba(201,168,76,0.5),#C9A84C)' }} />
+          style={{ width: `${progress}%`, background: '#d8be93' }} />
       </div>
 
       <div className="relative max-w-lg mx-auto px-6 pt-14 pb-16 sm:pt-16 sm:pb-20">
@@ -368,7 +418,7 @@ export default function NovaLeadPage() {
         {/* Contador de step — visível só a partir do step 2 */}
         {step >= 2 && (
           <div className="flex justify-end mb-6">
-            <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: 'rgba(255,255,255,0.15)' }}>
+            <p className="meta">
               {String(step - 1).padStart(2, '0')} / {String(STEPS.length - 2).padStart(2, '0')}
             </p>
           </div>
@@ -386,10 +436,10 @@ export default function NovaLeadPage() {
           {step === 0 && (
             <div className="space-y-10">
               <div className="space-y-3">
-                <h2 className="font-playfair text-4xl sm:text-5xl font-light italic text-white leading-tight">
-                  Como se chamam?
+                <h2 style={{ fontSize: 'clamp(38px,7vw,72px)' }}>
+                  Como se <em>chamam?</em>
                 </h2>
-                <div className="w-8 h-px" style={{ background: 'rgba(201,168,76,0.4)' }} />
+                <div className="rule" />
               </div>
               <LeadInput label="Nome dos Noivos / Família" value={form.nome} onChange={v => set('nome', v)}
                 placeholder="Ex: Ana & João Silva" required />
@@ -401,27 +451,25 @@ export default function NovaLeadPage() {
             <div className="space-y-8">
               {/* Saudação */}
               <div className="space-y-1">
-                <p className="font-playfair text-2xl sm:text-3xl font-light leading-snug" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                  Olá,
-                </p>
-                <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
+                <p className="eyebrow">Olá</p>
+                <h2 className="mt-3" style={{ fontSize: 'clamp(34px,6vw,64px)' }}>
                   {form.nome || 'bem-vindos'}
                 </h2>
-                <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+                <div className="rule mt-4" />
               </div>
 
               {/* Mensagem */}
-              <div className="space-y-5" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                <p className="font-cormorant text-xl leading-relaxed">
+              <div className="space-y-5">
+                <p className="lead">
                   Queremos que o registo do vosso casamento seja exactamente como sempre imaginaram, cada detalhe, cada emoção, cada momento único.
                 </p>
-                <p className="font-cormorant text-xl leading-relaxed">
+                <p className="lead">
                   Este briefing foi criado para conhecermos melhor o vosso estilo, as vossas preferências e as expectativas para a fotografia e o vídeo do grande dia.
                 </p>
 
                 <div className="space-y-2 pl-1">
-                  <p className="font-cormorant text-base tracking-wide" style={{ color: 'rgba(201,168,76,0.6)' }}>
-                    Ao preencherem este questionário, ajudam-nos a:
+                  <p className="flabel" style={{ marginBottom: 4 }}>
+                    Ao preencherem este questionário, ajudam-nos a
                   </p>
                   {[
                     'Personalizar a nossa abordagem ao vosso dia',
@@ -429,17 +477,17 @@ export default function NovaLeadPage() {
                     'Chegar à reunião com uma proposta pensada para vocês',
                   ].map(item => (
                     <div key={item} className="flex items-start gap-3">
-                      <span className="mt-1.5 shrink-0 w-1 h-1 rounded-full" style={{ background: '#C9A84C' }} />
-                      <p className="font-cormorant text-lg leading-snug">{item}</p>
+                      <span className="mt-2 shrink-0 w-1 h-1 rounded-full" style={{ background: '#d8be93' }} />
+                      <p className="lead">{item}</p>
                     </div>
                   ))}
                 </div>
 
-                <p className="font-cormorant text-xl leading-relaxed">
+                <p className="lead">
                   Quanto mais soubermos agora, mais presentes estaremos no dia, para que possam simplesmente viver cada instante enquanto nós eternizamos tudo.
                 </p>
 
-                <p className="font-cormorant text-base italic" style={{ color: 'rgba(255,255,255,0.3)' }}>
+                <p className="lead italic" style={{ color: 'rgba(243,237,226,.4)' }}>
                   Preencham com calma e sinceridade. Tudo o que partilharem será usado para criar um registo fiel e emocionante do vosso casamento.
                 </p>
               </div>
@@ -449,13 +497,11 @@ export default function NovaLeadPage() {
           {/* Título dos steps 2–5 */}
           {step >= 2 && (
             <div className="mb-10 space-y-2">
-              <p className="text-[10px] tracking-[0.45em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.55)' }}>
-                {cur.sub}
-              </p>
-              <h2 className="font-playfair text-4xl sm:text-5xl font-light text-white leading-tight">
+              <p className="eyebrow">{cur.sub}</p>
+              <h2 className="mt-3" style={{ fontSize: 'clamp(32px,5.5vw,58px)' }}>
                 {cur.titulo}
               </h2>
-              <div className="w-8 h-px mt-3" style={{ background: 'rgba(201,168,76,0.4)' }} />
+              <div className="rule mt-4" />
             </div>
           )}
 
@@ -463,18 +509,14 @@ export default function NovaLeadPage() {
           {step === 2 && (
             <div className="space-y-8">
               <div className="space-y-2">
-                <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                  Tipo de Evento <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span>
-                </p>
+                <p className="flabel">Tipo de Evento <span className="opt">*</span></p>
                 <PillToggle options={TIPO_EVENTO} value={form.tipoEvento} onChange={v => set('tipoEvento', v)} />
               </div>
               <LeadInput label="Data do Evento" type="date" value={form.dataEvento} onChange={v => set('dataEvento', v)} required />
               <LeadInput label="Local do Evento (Cerimónia + Quinta)" value={form.local} onChange={v => set('local', v)}
                 placeholder="Ex: Igreja X + Quinta Y" required />
               <div className="space-y-2">
-                <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                  Tipo de Cerimónia <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span>
-                </p>
+                <p className="flabel">Tipo de Cerimónia <span className="opt">*</span></p>
                 <PillToggle options={TIPO_CERIMONIA} value={form.tipoCerimonia} onChange={v => set('tipoCerimonia', v)} multi />
               </div>
               <LeadInput label="Número de Convidados (sensivelmente)" value={form.numConvidados}
@@ -489,30 +531,27 @@ export default function NovaLeadPage() {
               {/* Estilo */}
               <div className="space-y-3">
                 <div>
-                  <p className="font-playfair text-xl italic font-light text-white">"Qual é o vosso estilo?" <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span></p>
-                  <p className="text-[11px] tracking-wide mt-1" style={{ color: 'rgba(255,255,255,0.3)' }}>Podem escolher mais do que um</p>
+                  <p className="quest"><em>Qual é o vosso estilo?</em> <span className="hint">*</span></p>
+                  <p className="hint mt-2">Podem escolher mais do que um</p>
                 </div>
                 <PillToggle options={ESTILO} value={form.estilo} onChange={v => set('estilo', v)} multi />
               </div>
 
               {/* Visão 20 anos */}
               <div className="space-y-3">
-                <p className="font-playfair text-xl italic font-light text-white">"Como imaginam olhar para as fotos e o vídeo daqui a 20 anos?" <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span></p>
+                <p className="quest"><em>Como imaginam olhar para as fotos e o vídeo daqui a 20 anos?</em> <span className="hint">*</span></p>
                 <textarea
                   value={form.visao20anos}
                   onChange={e => set('visao20anos', e.target.value)}
                   rows={3}
                   placeholder="Partilhem o que sentem..."
-                  className="w-full bg-transparent outline-none text-white placeholder-white/20 py-3 px-0 text-base font-cormorant tracking-wide transition-all duration-200 resize-none"
-                  style={{ borderBottom: '1px solid rgba(201,168,76,0.25)' }}
-                  onFocus={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.8)' }}
-                  onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.25)' }}
+                  className="finput"
                 />
               </div>
 
               {/* Trabalho favorito */}
               <div className="space-y-3">
-                <p className="font-playfair text-xl italic font-light text-white">"Já viram algum trabalho nosso que vos emocionou?" <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span></p>
+                <p className="quest"><em>Já viram algum trabalho nosso que vos emocionou?</em> <span className="hint">*</span></p>
                 <LeadInput label="Link ou descrição" value={form.trabalhoFavorito}
                   onChange={v => set('trabalhoFavorito', v)}
                   placeholder="Ex: o vídeo do casamento na Quinta..." required />
@@ -520,16 +559,13 @@ export default function NovaLeadPage() {
 
               {/* Preocupações */}
               <div className="space-y-3">
-                <p className="font-playfair text-xl italic font-light text-white">"Há algo que não gostam em fotos ou vídeo?" <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span></p>
+                <p className="quest"><em>Há algo que não gostam em fotos ou vídeo?</em> <span className="hint">*</span></p>
                 <textarea
                   value={form.preocupacoes}
                   onChange={e => set('preocupacoes', e.target.value)}
                   rows={3}
                   placeholder="Poses, ângulos, estilos de edição (ou escreve 'nenhuma')..."
-                  className="w-full bg-transparent outline-none text-white placeholder-white/20 py-3 px-0 text-base font-cormorant tracking-wide transition-all duration-200 resize-none"
-                  style={{ borderBottom: '1px solid rgba(201,168,76,0.25)' }}
-                  onFocus={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.8)' }}
-                  onBlur={e => { e.currentTarget.style.borderBottomColor = 'rgba(201,168,76,0.25)' }}
+                  className="finput"
                 />
               </div>
 
@@ -541,27 +577,17 @@ export default function NovaLeadPage() {
             <div className="space-y-8">
               {/* Serviço principal */}
               <div className="space-y-3">
-                <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.7)' }}>
-                  O que pretendem? <span style={{ color: 'rgba(201,168,76,0.4)' }}>*</span>
-                </p>
+                <p className="flabel">O que pretendem? <span className="opt">*</span></p>
                 <div className="flex gap-3">
                   {SERVICOS_PRINCIPAIS.map(s => {
                     const active = form.servicos.includes(s)
                     return (
                       <button key={s} type="button"
                         onClick={() => set('servicos', active ? form.servicos.filter(x => x !== s) : [...form.servicos, s])}
-                        className="flex-1 py-4 rounded-2xl text-sm tracking-widest uppercase font-medium transition-all duration-200"
-                        style={active ? {
-                          background: 'rgba(201,168,76,0.12)',
-                          border: '1px solid rgba(201,168,76,0.6)',
-                          color: '#C9A84C',
-                          boxShadow: '0 0 20px rgba(201,168,76,0.1)',
-                        } : {
-                          background: 'rgba(255,255,255,0.03)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          color: 'rgba(255,255,255,0.4)',
-                        }}>
-                        {s}
+                        className={`segbtn${active ? ' on' : ''}`}
+                        style={{ flex: 1, justifyContent: 'center' }}>
+                        <span className="mk" />
+                        <span className="t">{s}</span>
                       </button>
                     )
                   })}
@@ -570,56 +596,36 @@ export default function NovaLeadPage() {
 
               {/* Adicionais — duas colunas */}
               <div className="space-y-3">
-                <p className="text-[10px] tracking-[0.4em] uppercase font-medium" style={{ color: 'rgba(201,168,76,0.4)' }}>
-                  Serviços adicionais
-                </p>
+                <p className="flabel">Serviços adicionais</p>
                 <div className="grid grid-cols-2 gap-3">
                   {/* Coluna Fotografia */}
                   <div className="space-y-1.5">
-                    <p className="text-[9px] tracking-[0.35em] uppercase mb-2" style={{ color: 'rgba(201,168,76,0.5)' }}>Fotografia</p>
+                    <p className="flabel">Fotografia</p>
                     {ADICIONAIS_FOTO.map(s => {
                       const key = `${s} — Fotografia`
                       const active = form.servicos.includes(key)
                       return (
                         <button key={key} type="button"
                           onClick={() => set('servicos', active ? form.servicos.filter(x => x !== key) : [...form.servicos, key])}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all duration-150"
-                          style={active ? {
-                            background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.35)',
-                          } : {
-                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
-                          }}>
-                          <div className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center"
-                            style={active ? { background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.7)' } : { border: '1px solid rgba(255,255,255,0.2)' }}>
-                            {active && <div className="w-1 h-1 rounded-full" style={{ background: '#C9A84C' }} />}
-                          </div>
-                          <span className="text-xs font-cormorant tracking-wide leading-tight"
-                            style={{ color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)' }}>{s}</span>
+                          className={`segbtn sm${active ? ' on' : ''}`}>
+                          <span className="mk" />
+                          <span className="t">{s}</span>
                         </button>
                       )
                     })}
                   </div>
                   {/* Coluna Vídeo */}
                   <div className="space-y-1.5">
-                    <p className="text-[9px] tracking-[0.35em] uppercase mb-2" style={{ color: 'rgba(201,168,76,0.5)' }}>Vídeo</p>
+                    <p className="flabel">Vídeo</p>
                     {ADICIONAIS_VIDEO.map(s => {
                       const key = `${s} — Vídeo`
                       const active = form.servicos.includes(key)
                       return (
                         <button key={key} type="button"
                           onClick={() => set('servicos', active ? form.servicos.filter(x => x !== key) : [...form.servicos, key])}
-                          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all duration-150"
-                          style={active ? {
-                            background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.35)',
-                          } : {
-                            background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)',
-                          }}>
-                          <div className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center"
-                            style={active ? { background: 'rgba(201,168,76,0.2)', border: '1px solid rgba(201,168,76,0.7)' } : { border: '1px solid rgba(255,255,255,0.2)' }}>
-                            {active && <div className="w-1 h-1 rounded-full" style={{ background: '#C9A84C' }} />}
-                          </div>
-                          <span className="text-xs font-cormorant tracking-wide leading-tight"
-                            style={{ color: active ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.4)' }}>{s}</span>
+                          className={`segbtn sm${active ? ' on' : ''}`}>
+                          <span className="mk" />
+                          <span className="t">{s}</span>
                         </button>
                       )
                     })}
@@ -647,17 +653,13 @@ export default function NovaLeadPage() {
 
           {/* Erro */}
           {erro && (
-            <p className="mt-6 text-sm text-red-400/70 font-cormorant">{erro}</p>
+            <p className="err mt-6">{erro}</p>
           )}
 
           {/* Navegação */}
           <div className="mt-12 flex items-center justify-between gap-4">
             {step > 0 ? (
-              <button onClick={goBack} type="button"
-                className="flex items-center gap-2 text-sm tracking-widest uppercase transition-all duration-200"
-                style={{ color: 'rgba(255,255,255,0.3)' }}
-                onMouseEnter={e => e.currentTarget.style.color = 'rgba(255,255,255,0.7)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.3)'}>
+              <button onClick={goBack} type="button" className="btn-ghost">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
                 </svg>
@@ -666,18 +668,16 @@ export default function NovaLeadPage() {
             ) : <div />}
 
             {step < STEPS.length - 1 ? (
-              <button onClick={goNext} type="button"
-                className="flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold text-sm tracking-widest uppercase transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
-                style={{ background: '#C9A84C', color: '#0a0a0a' }}>
+              <button onClick={goNext} type="button" className="btn">
+                <span className="fill" />
                 {step === 0 ? 'Começar' : step === 1 ? 'Continuar' : 'Seguinte'}
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7"/>
                 </svg>
               </button>
             ) : (
-              <button onClick={handleSubmit} disabled={sending} type="button"
-                className="flex items-center gap-3 px-8 py-3.5 rounded-full font-semibold text-sm tracking-widest uppercase transition-all duration-200 hover:scale-[1.03] active:scale-[0.98] disabled:opacity-50"
-                style={{ background: '#C9A84C', color: '#0a0a0a' }}>
+              <button onClick={handleSubmit} disabled={sending} type="button" className="btn">
+                <span className="fill" />
                 {sending ? 'A enviar...' : 'Enviar Pedido'}
                 {!sending && (
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -693,11 +693,11 @@ export default function NovaLeadPage() {
             {STEPS.map((_, i) => (
               <div key={i} className="rounded-full transition-all duration-300"
                 style={i === step ? {
-                  width: '20px', height: '4px', background: '#C9A84C',
+                  width: '24px', height: '2px', background: '#d8be93',
                 } : i < step ? {
-                  width: '8px', height: '4px', background: 'rgba(201,168,76,0.4)',
+                  width: '8px', height: '2px', background: 'rgba(216,190,147,0.45)',
                 } : {
-                  width: '8px', height: '4px', background: 'rgba(255,255,255,0.1)',
+                  width: '8px', height: '2px', background: 'rgba(243,237,226,0.12)',
                 }} />
             ))}
           </div>
