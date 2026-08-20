@@ -21,6 +21,12 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import './atmosphere.css'
+
+// As fontes tem de ser injectadas em runtime: o Turbopack remove os
+// `@import url(...)` dos ficheiros .css no build de producao, por isso o
+// import dentro de atmosphere.css nunca chega ao browser. Mesmo padrao
+// usado em /adquirir-fotografias.
+const ATMOSPHERE_FONTS = `@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');`
 import {
   ArrowUpRightIcon, CheckIcon, ClockIcon, DocumentIcon, HeartIcon,
   HomeIcon, MailIcon, ShieldIcon, getNavIconFor,
@@ -56,6 +62,7 @@ export function PortalShell({
 
   return (
     <div className="portal-atmosphere">
+      <style dangerouslySetInnerHTML={{ __html: ATMOSPHERE_FONTS }} />
       <div className="grain" />
       <div className="shell">
         <aside className={`sidebar${menuOpen ? ' open' : ''}`}>
