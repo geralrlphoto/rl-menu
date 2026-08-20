@@ -46,19 +46,19 @@ export function SendMessageButton({
           font-family: 'Hanken Grotesk', sans-serif;
           font-size: 12px; font-weight: 600; letter-spacing: .22em;
           text-transform: uppercase;
-          color: #efe7d6;
+          color: #f3ede2;
           padding: 14px 30px; border-radius: 4px;
-          border: 1px solid rgba(200,168,102,.45);
+          border: 1px solid rgba(216,190,147,.45);
           background: transparent;
           cursor: pointer;
           transition: border-color .25s, color .25s, background .25s;
           margin: 22px 0 6px;
         }
-        .send-msg-btn :global(svg) { stroke: #c8a866; transition: stroke .25s; }
+        .send-msg-btn :global(svg) { stroke: #d8be93; transition: stroke .25s; }
         .send-msg-btn:hover {
           color: #fff;
-          border-color: #c8a866;
-          background: rgba(200,168,102,.06);
+          border-color: #d8be93;
+          background: rgba(216,190,147,.06);
         }
         .send-msg-btn:hover :global(svg) { stroke: #d7bd87; }
       `}</style>
@@ -174,10 +174,10 @@ function SendMessageModal({
         .modal {
           position: relative;
           width: 100%; max-width: 520px;
-          border: 1px solid rgba(200,168,102,.30);
+          border: 1px solid rgba(216,190,147,.30);
           border-radius: 22px;
           background: linear-gradient(180deg, #1e1812, #14110c);
-          color: #efe7d6;
+          color: #f3ede2;
           padding: 36px 36px 30px;
           font-family: 'Hanken Grotesk', sans-serif;
           box-shadow: 0 60px 120px -40px rgba(0,0,0,.85);
@@ -187,66 +187,66 @@ function SendMessageModal({
         .x {
           position: absolute; top: 14px; right: 14px;
           width: 32px; height: 32px; border-radius: 50%;
-          border: 1px solid rgba(239,231,214,.15);
+          border: 1px solid rgba(243,237,226,.15);
           background: transparent;
-          color: rgba(239,231,214,.55);
+          color: rgba(243,237,226,.55);
           font-size: 14px; cursor: pointer;
           transition: .2s;
         }
-        .x:hover { color: #fff; border-color: rgba(200,168,102,.6) }
+        .x:hover { color: #fff; border-color: rgba(216,190,147,.6) }
         .eyebrow {
           font-size: 10px; letter-spacing: .42em; text-transform: uppercase;
-          color: #c8a866; font-weight: 600; margin: 0 0 8px;
+          color: #d8be93; font-weight: 600; margin: 0 0 8px;
         }
         h3 {
-          font-family: 'Cormorant Garamond', serif; font-weight: 400;
+          font-family: var(--fd); font-weight: 300;
           font-size: 30px; line-height: 1.15;
-          color: #efe7d6; margin: 0 0 10px;
+          color: #f3ede2; margin: 0 0 10px;
         }
         .sub {
-          font-size: 13px; color: #8c8170; line-height: 1.65;
+          font-size: 13px; color: #8b877f; line-height: 1.65;
           margin: 0 0 22px;
         }
         .fld-lab {
           display: block;
           font-size: 10px; letter-spacing: .32em; text-transform: uppercase;
-          color: #8c8170; font-weight: 600;
+          color: #8b877f; font-weight: 600;
           margin: 0 0 8px;
         }
         input[type="text"] {
           width: 100%;
           padding: 12px 16px;
           background: rgba(0,0,0,.35);
-          border: 1px solid rgba(200,168,102,.25);
+          border: 1px solid rgba(216,190,147,.25);
           border-radius: 4px;
-          color: #efe7d6;
+          color: #f3ede2;
           font-family: 'Hanken Grotesk', sans-serif;
           font-size: 14.5px; line-height: 1.5;
           outline: none;
           margin-bottom: 18px;
           transition: border-color .2s;
         }
-        input[type="text"]:focus { border-color: #c8a866 }
+        input[type="text"]:focus { border-color: #d8be93 }
         input[type="text"]:disabled { opacity: .5 }
-        input[type="text"]::placeholder { color: #5f574b }
+        input[type="text"]::placeholder { color: #5d5a55 }
         textarea {
           width: 100%;
           padding: 16px 18px;
           background: rgba(0,0,0,.35);
-          border: 1px solid rgba(200,168,102,.25);
+          border: 1px solid rgba(216,190,147,.25);
           border-radius: 4px;
-          color: #efe7d6;
+          color: #f3ede2;
           font-family: 'Hanken Grotesk', sans-serif;
           font-size: 15px; line-height: 1.7;
           resize: vertical; min-height: 130px;
           outline: none;
           transition: border-color .2s;
         }
-        textarea:focus { border-color: #c8a866 }
+        textarea:focus { border-color: #d8be93 }
         textarea:disabled { opacity: .5 }
-        textarea::placeholder { color: #5f574b }
+        textarea::placeholder { color: #5d5a55 }
         .count {
-          font-size: 11px; color: #5f574b;
+          font-size: 11px; color: #5d5a55;
           text-align: right; margin-top: 6px;
           letter-spacing: .04em;
         }
@@ -270,17 +270,17 @@ function SendMessageModal({
           cursor: pointer; transition: .2s;
         }
         .cancel {
-          color: #8c8170; background: transparent;
-          border: 1px solid rgba(239,231,214,.1);
+          color: #8b877f; background: transparent;
+          border: 1px solid rgba(243,237,226,.1);
         }
-        .cancel:hover { color: #efe7d6; border-color: rgba(239,231,214,.3) }
+        .cancel:hover { color: #f3ede2; border-color: rgba(243,237,226,.3) }
         .send {
-          color: #1c150b; border: 0;
-          background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
-          box-shadow: 0 8px 18px -6px rgba(200,168,102,.6);
+          color: #0b0a08; border: 0;
+          background: #d8be93;
+          box-shadow: 0 8px 18px -6px rgba(216,190,147,.6);
         }
         .send:hover:not(:disabled) {
-          background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+          background: #e4d3b3;
           transform: translateY(-1px);
         }
         .send:disabled { opacity: .4; cursor: not-allowed }
@@ -291,14 +291,14 @@ function SendMessageModal({
         .done .check {
           width: 64px; height: 64px; margin: 0 auto 18px;
           border-radius: 50%;
-          background: rgba(200,168,102,.12);
-          border: 1.5px solid #c8a866;
+          background: rgba(216,190,147,.12);
+          border: 1.5px solid #d8be93;
           color: #d7bd87;
           font-size: 28px;
           display: flex; align-items: center; justify-content: center;
         }
         .done h3 { font-size: 26px; margin-bottom: 8px }
-        .done p { font-size: 14px; color: #8c8170 }
+        .done p { font-size: 14px; color: #8b877f }
 
         @media (max-width: 560px) {
           .modal { padding: 28px 22px 24px }

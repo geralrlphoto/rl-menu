@@ -26,7 +26,7 @@
 }
 .portal-atmosphere .pw-hero-photo .ph {
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11px; letter-spacing: .36em; text-transform: uppercase;
   color: var(--ink-4);
 }
@@ -54,7 +54,7 @@
   max-width: none;
 }
 .portal-atmosphere .pw-intro .eyebrow {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11px;
   letter-spacing: .34em;
   text-transform: uppercase;
@@ -63,8 +63,8 @@
   margin-bottom: 12px;
 }
 .portal-atmosphere .pw-intro h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: clamp(28px, 3.4vw, 44px);
   line-height: 1.15;
   color: var(--ink);
@@ -75,7 +75,7 @@
   color: var(--gold-soft);
 }
 .portal-atmosphere .pw-intro p {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 15px;
   line-height: 1.85;
   color: var(--ink-2);
@@ -124,7 +124,7 @@
 }
 .portal-atmosphere .pw-tript .frame .ph {
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11px; letter-spacing: .36em; text-transform: uppercase;
   color: var(--ink-4);
 }
@@ -138,8 +138,8 @@
   margin: 72px 0;
 }
 .portal-atmosphere .pw-cenario .num {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 300;
+  font-family: var(--fd);
+  font-weight: 200;
   font-size: 64px;
   line-height: 1;
   color: var(--gold-deep);
@@ -147,8 +147,8 @@
   margin-bottom: 8px;
 }
 .portal-atmosphere .pw-cenario h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: clamp(28px, 3.2vw, 40px);
   line-height: 1.15;
   color: var(--ink);
@@ -189,7 +189,7 @@
 }
 .portal-atmosphere .pw-cenario-photo .ph {
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11px; letter-spacing: .36em; text-transform: uppercase;
   color: var(--ink-4);
 }
@@ -201,7 +201,7 @@
   display: flex; gap: 8px; z-index: 2;
 }
 .portal-atmosphere .pw-cenario .body p {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 15px;
   line-height: 1.85;
   color: var(--ink-2);
@@ -218,7 +218,7 @@
 }
 .portal-atmosphere .pw-cenario .cen-list li {
   display: flex; align-items: flex-start; gap: 12px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 14px; line-height: 1.6;
   color: var(--ink-2);
 }
@@ -241,7 +241,7 @@
   padding: 20px 22px;
 }
 .portal-atmosphere .pw-outfit .card h4 {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 10px; letter-spacing: .42em;
   text-transform: uppercase;
   color: var(--gold);
@@ -249,7 +249,7 @@
   margin: 0 0 12px;
 }
 .portal-atmosphere .pw-outfit .card p {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 13.5px; line-height: 1.65;
   color: var(--ink-2);
   margin: 0;
@@ -260,7 +260,7 @@
   margin-top: 20px;
   padding: 18px 22px;
   border-left: 2px solid var(--gold);
-  background: rgba(200,168,102,.05);
+  background: rgba(216,190,147,.05);
   border-radius: 0 8px 8px 0;
   display: flex; gap: 14px;
 }
@@ -272,7 +272,7 @@
   font-size: 13px;
 }
 .portal-atmosphere .pw-dica .txt {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 13.5px; line-height: 1.65;
   color: var(--ink-2);
 }
@@ -310,8 +310,8 @@
   color: var(--gold); font-weight: 600; margin-bottom: 10px;
 }
 .portal-atmosphere .pw-book .head h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: clamp(26px, 3vw, 34px);
   color: var(--ink); margin: 0;
   line-height: 1.15;
@@ -330,8 +330,8 @@
   margin-bottom: 18px;
 }
 .portal-atmosphere .pw-cal .cal-head h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 500;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: 22px;
   color: var(--ink); margin: 0;
   letter-spacing: .04em;
@@ -344,19 +344,19 @@
   color: var(--gold);
   cursor: pointer;
   display: inline-flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif; font-size: 18px;
+  font-family: var(--fd); font-size: 18px;
   transition: .2s;
 }
 .portal-atmosphere .pw-cal .nav-btn:hover {
-  background: rgba(200,168,102,.1);
+  background: rgba(216,190,147,.1);
   border-color: var(--gold);
 }
 .portal-atmosphere .pw-cal .weekdays {
   display: grid; grid-template-columns: repeat(7, 1fr);
   gap: 4px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 10px; letter-spacing: .2em; text-transform: uppercase;
-  color: var(--ink-4); font-weight: 600;
+  color: var(--ink-4); font-weight: 400;
   text-align: center; margin-bottom: 10px;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--line-2);
@@ -368,7 +368,7 @@
 .portal-atmosphere .pw-cal .day {
   aspect-ratio: 1;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 13px; color: var(--ink-3);
   border-radius: 8px;
   border: 1px solid transparent;
@@ -394,16 +394,16 @@
   transform: translateX(-50%);
 }
 .portal-atmosphere .pw-cal .day.available:hover {
-  background: rgba(200,168,102,.08);
+  background: rgba(216,190,147,.08);
   border-color: var(--gold);
 }
 .portal-atmosphere .pw-cal .day.selected {
   background: var(--gold);
-  color: #1c150b;
+  color: #0b0a08;
   border-color: var(--gold);
   font-weight: 600;
 }
-.portal-atmosphere .pw-cal .day.selected::after { background: #1c150b; }
+.portal-atmosphere .pw-cal .day.selected::after { background: #0b0a08; }
 .portal-atmosphere .pw-cal .day.reserved {
   background: rgba(157,181,139,.15);
   border-color: var(--ok);
@@ -413,9 +413,9 @@
 
 /* Lista de slots disponíveis */
 .portal-atmosphere .pw-slots-head {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 10px; letter-spacing: .42em; text-transform: uppercase;
-  color: var(--gold); font-weight: 600;
+  color: var(--gold); font-weight: 400;
   margin: 0 0 14px;
 }
 .portal-atmosphere .pw-slots {
@@ -426,16 +426,16 @@
   padding: 18px 22px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(200,168,102,.04), rgba(200,168,102,.01));
+  background: linear-gradient(180deg, rgba(216,190,147,.04), rgba(216,190,147,.01));
   transition: .25s;
 }
 .portal-atmosphere .pw-slot-card:hover {
   border-color: var(--gold-line);
-  background: linear-gradient(180deg, rgba(200,168,102,.08), rgba(200,168,102,.02));
+  background: linear-gradient(180deg, rgba(216,190,147,.08), rgba(216,190,147,.02));
 }
 .portal-atmosphere .pw-slot-card .date {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 500;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: 22px;
   color: var(--ink); line-height: 1;
   flex: 0 0 auto;
@@ -449,34 +449,34 @@
   margin-bottom: 4px;
 }
 .portal-atmosphere .pw-slot-card .meta .info {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 13px; color: var(--ink-3);
 }
 .portal-atmosphere .pw-slot-card .info .sep {
   margin: 0 8px; color: var(--ink-4);
 }
 .portal-atmosphere .pw-slot-card .reserve-btn {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11px; font-weight: 700; letter-spacing: .22em;
   text-transform: uppercase;
-  color: #1c150b;
+  color: #0b0a08;
   padding: 10px 22px;
   border-radius: 999px;
   border: 1px solid transparent;
-  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
+  background: var(--gold);
   box-shadow:
     inset 0 1px 0 rgba(255,250,236,.55),
-    0 8px 18px -10px rgba(200,168,102,.55);
+    0 8px 18px -10px rgba(216,190,147,.55);
   cursor: pointer; transition: .2s;
   flex: 0 0 auto;
 }
 .portal-atmosphere .pw-slot-card .reserve-btn:hover {
-  background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+  background: var(--gold-soft);
   transform: translateY(-1px);
 }
 .portal-atmosphere .pw-slot-card .reserve-btn:disabled {
   opacity: .4; cursor: not-allowed;
-  background: linear-gradient(168deg, #6a5430, #4a3a1e);
+  background: linear-gradient(168deg, #8a7449, #4a3a1e);
   color: var(--ink-4);
 }
 
@@ -486,9 +486,9 @@
   background: rgba(157,181,139,.06);
 }
 .portal-atmosphere .pw-slot-card.reserved .reserved-chip {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 10px; letter-spacing: .3em; text-transform: uppercase;
-  color: var(--ok); font-weight: 600;
+  color: var(--ok); font-weight: 400;
   display: inline-flex; align-items: center; gap: 6px;
 }
 .portal-atmosphere .pw-slot-card.reserved .reserved-chip::before {
@@ -504,17 +504,17 @@
   padding: 16px 22px;
   border-radius: 12px;
   border: 1px solid var(--gold-line);
-  background: rgba(200,168,102,.06);
+  background: rgba(216,190,147,.06);
   color: var(--ink);
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-size: 12px; font-weight: 600; letter-spacing: .25em;
+  font-family: var(--fm);
+  font-size: 12px; font-weight: 400; letter-spacing: .25em;
   text-transform: uppercase;
   cursor: pointer; transition: .2s;
   display: inline-flex; align-items: center; justify-content: center; gap: 12px;
 }
 .portal-atmosphere .pw-notify svg { width: 16px; height: 16px; stroke: var(--gold); }
 .portal-atmosphere .pw-notify:hover {
-  background: rgba(200,168,102,.12);
+  background: rgba(216,190,147,.12);
   border-color: var(--gold);
   color: #fff;
 }
@@ -554,7 +554,7 @@
 }
 .portal-atmosphere .pw-custom-toolbar .tbtn {
   display: inline-flex; align-items: center; gap: 5px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 11px; font-weight: 600; letter-spacing: .04em;
   padding: 6px 11px;
   border-radius: 999px;
@@ -573,15 +573,15 @@
 .portal-atmosphere .pw-custom-toolbar .tbtn.danger:hover:not(:disabled) { border-color: #b66; color: #fbb; }
 
 .portal-atmosphere .pw-custom-body .eyebrow {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11px; letter-spacing: .34em;
   text-transform: uppercase;
-  color: var(--gold); font-weight: 600;
+  color: var(--gold); font-weight: 400;
   margin-bottom: 12px;
 }
 .portal-atmosphere .pw-custom-body h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: clamp(28px, 3.4vw, 44px);
   line-height: 1.15;
   color: var(--ink);
@@ -591,7 +591,7 @@
   font-style: italic; color: var(--gold-soft);
 }
 .portal-atmosphere .pw-custom-body p {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 15px; line-height: 1.85;
   color: var(--ink-2);
   margin: 0 0 14px;
@@ -611,7 +611,7 @@
   display: flex; flex-direction: column; gap: 6px;
 }
 .portal-atmosphere .pw-custom-edit label > span {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 10px; letter-spacing: .3em;
   text-transform: uppercase;
   color: var(--gold);
@@ -624,7 +624,7 @@
   border-radius: 6px;
   padding: 10px 14px;
   color: var(--ink);
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 14px; line-height: 1.6;
   outline: none;
   transition: border-color .15s;
@@ -641,8 +641,8 @@
 }
 .portal-atmosphere .pw-custom-edit .btn {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-size: 11px; font-weight: 600; letter-spacing: .16em;
+  font-family: var(--fm);
+  font-size: 11px; font-weight: 400; letter-spacing: .16em;
   text-transform: uppercase; white-space: nowrap;
   padding: 10px 22px;
   border-radius: 999px;
@@ -655,7 +655,7 @@
 }
 .portal-atmosphere .pw-custom-edit .btn.ghost:hover { border-color: var(--gold); color: var(--ink); }
 .portal-atmosphere .pw-custom-edit .btn.primary {
-  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
+  background: var(--gold);
   border: 0; color: #1b1308;
 }
 .portal-atmosphere .pw-custom-edit .btn.primary:hover { filter: brightness(1.05); }
@@ -678,7 +678,7 @@
 }
 .portal-atmosphere .pw-custom-photo .ph {
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11px; letter-spacing: .36em; text-transform: uppercase;
   color: var(--ink-4);
 }
@@ -698,18 +698,18 @@
   border: 1.5px dashed var(--gold-line);
   border-radius: 12px;
   color: var(--gold);
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-size: 12px; font-weight: 600; letter-spacing: .22em;
+  font-family: var(--fm);
+  font-size: 12px; font-weight: 400; letter-spacing: .22em;
   text-transform: uppercase;
   cursor: pointer; transition: .2s;
 }
 .portal-atmosphere .pw-custom-add:hover {
   border-color: var(--gold);
-  background: rgba(200,168,102,.05);
+  background: rgba(216,190,147,.05);
   color: var(--gold-soft);
 }
 .portal-atmosphere .pw-custom-add .plus {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--fd);
   font-size: 26px; line-height: 1;
   letter-spacing: 0;
 }

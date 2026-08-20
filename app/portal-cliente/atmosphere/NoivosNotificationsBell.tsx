@@ -84,13 +84,13 @@ export function NoivosNotificationsBell({
           display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
         }}
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d9b25e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d8be93" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
           <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
         </svg>
         {unread > 0 && (
           <span style={{
             position: 'absolute', top: -6, right: -6, minWidth: 18, height: 18, padding: '0 5px',
-            borderRadius: 9, background: '#c9a45c', color: '#1a1306', fontSize: 11, fontWeight: 700,
+            borderRadius: 9, background: '#d8be93', color: '#0b0a08', fontSize: 11, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,255,255,0.25)',
           }}>{unread}</span>
         )}
@@ -124,10 +124,10 @@ export function NoivosNotificationsBell({
                 {ordered.map(n => (
                   <div key={n.id} style={{ padding: '14px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d9b25e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d8be93" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
                       </svg>
-                      <span style={{ fontSize: 14, fontWeight: 600, color: '#f2e6cf', fontFamily: 'Cormorant Garamond, Georgia, serif', flex: 1 }}>{n.titulo}</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: '#f3ede2', fontFamily: 'var(--fd)', flex: 1 }}>{n.titulo}</span>
                       <button
                         onClick={() => apagar(n.id)}
                         aria-label="Apagar notificação"

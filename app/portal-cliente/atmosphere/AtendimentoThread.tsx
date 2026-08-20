@@ -179,9 +179,9 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
             <div key={t.tema} className={`tema ${unread ? 'unread' : ''}`}>
               <button className="tema-head" onClick={() => toggle(t.tema)}>
                 <span className={`chev ${open ? 'on' : ''}`}>▸</span>
-                <span style={{ flex: 1, fontFamily: "'Cormorant Garamond', serif", fontSize: 13, color: '#e9dcc2' }}>{highlight(t.tema, q)}</span>
+                <span style={{ flex: 1, fontFamily: 'var(--fd)', fontSize: 13, color: '#f3ede2' }}>{highlight(t.tema, q)}</span>
                 {unread && <span className="novo">Nova</span>}
-                <span style={{ fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7a6f5e', whiteSpace: 'nowrap' }}>{t.items.length} msg · {dayLabel(t.lastTs).replace(/ de \d{4}$/, '')}</span>
+                <span style={{ fontSize: 8, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#79756e', whiteSpace: 'nowrap' }}>{t.items.length} msg · {dayLabel(t.lastTs).replace(/ de \d{4}$/, '')}</span>
               </button>
               {open && (
                 <div className="tema-body">
@@ -191,18 +191,18 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
                     lastDay = dk
                     return (
                       <div key={it.id}>
-                        {showDay && <div style={{ textAlign: 'center', fontSize: 8, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#6f6557', margin: '4px 0 2px' }}>── {dayLabel(it.ts)} ──</div>}
+                        {showDay && <div style={{ textAlign: 'center', fontSize: 8, letterSpacing: '0.2em', textTransform: 'uppercase', color: '#6b6862', margin: '4px 0 2px' }}>── {dayLabel(it.ts)} ──</div>}
                         <div style={{ display: 'flex', justifyContent: it.from === 'vocs' ? 'flex-end' : 'flex-start' }}>
                           <div style={{
                             maxWidth: '58%', padding: '4px 8px', borderRadius: 9,
-                            background: it.from === 'vocs' ? 'rgba(200,168,102,.14)' : 'rgba(40,60,45,.4)',
-                            border: `1px solid ${it.from === 'vocs' ? 'rgba(200,168,102,.25)' : 'rgba(120,200,140,.25)'}`,
+                            background: it.from === 'vocs' ? 'rgba(216,190,147,.14)' : 'rgba(40,60,45,.4)',
+                            border: `1px solid ${it.from === 'vocs' ? 'rgba(216,190,147,.25)' : 'rgba(120,200,140,.25)'}`,
                           }}>
                             <div style={{ fontSize: 6, letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 700, marginBottom: 1, color: it.from === 'vocs' ? '#d7bd87' : '#84c896' }}>
                               {it.from === 'vocs' ? 'Vocês' : 'RL Photo·Video'}
                             </div>
-                            <div style={{ margin: 0, fontSize: 11, lineHeight: 1.4, color: '#cfc6b6', whiteSpace: 'pre-wrap' }}>{highlight(it.texto, q)}</div>
-                            <div style={{ fontSize: 6, color: '#7a6f5e', marginTop: 1, textAlign: 'right' }}>{timeLabel(it.ts)}</div>
+                            <div style={{ margin: 0, fontSize: 11, lineHeight: 1.4, color: '#c0bbb2', whiteSpace: 'pre-wrap' }}>{highlight(it.texto, q)}</div>
+                            <div style={{ fontSize: 6, color: '#79756e', marginTop: 1, textAlign: 'right' }}>{timeLabel(it.ts)}</div>
                           </div>
                         </div>
                       </div>
@@ -236,93 +236,93 @@ export function AtendimentoThread({ referencia }: { referencia: string }) {
       <style jsx>{`
         .atend-chat {
           margin: 22px 0 6px; max-width: 100%; width: 100%;
-          border: 1px solid rgba(200,168,102,.18); border-radius: 16px;
+          border: 1px solid rgba(216,190,147,.18); border-radius: 16px;
           background: rgba(0,0,0,.22); overflow: hidden;
         }
         .chat-head {
           display: flex; align-items: center; gap: 8px;
-          padding: 11px 16px; border-bottom: 1px solid rgba(200,168,102,.14);
+          padding: 11px 16px; border-bottom: 1px solid rgba(216,190,147,.14);
           font-family: 'Hanken Grotesk', sans-serif; font-size: 9px;
-          letter-spacing: .38em; text-transform: uppercase; color: #c8a866; font-weight: 600;
-          background: rgba(200,168,102,.04);
+          letter-spacing: .38em; text-transform: uppercase; color: #d8be93; font-weight: 600;
+          background: rgba(216,190,147,.04);
         }
         .chat-head .dot { width: 6px; height: 6px; border-radius: 50%; background: #84c896; box-shadow: 0 0 6px rgba(132,200,150,.8); }
         .chat-search {
           display: flex; align-items: center; gap: 8px;
           padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,.05);
-          color: #8c8170;
+          color: #8b877f;
         }
-        .chat-search :global(svg) { stroke: #c8a866; flex-shrink: 0; }
+        .chat-search :global(svg) { stroke: #d8be93; flex-shrink: 0; }
         .chat-search input {
           flex: 1; background: transparent; border: 0; outline: none;
-          color: #e9dcc2; font-family: 'Hanken Grotesk', sans-serif; font-size: 12px;
+          color: #f3ede2; font-family: 'Hanken Grotesk', sans-serif; font-size: 12px;
         }
-        .chat-search input::placeholder { color: #6f6557; }
-        .chat-search .res { font-size: 9px; letter-spacing: .1em; color: #c8a866; white-space: nowrap; }
-        .chat-search .clr { background: none; border: 0; color: #8c8170; cursor: pointer; font-size: 11px; }
+        .chat-search input::placeholder { color: #6b6862; }
+        .chat-search .res { font-size: 9px; letter-spacing: .1em; color: #d8be93; white-space: nowrap; }
+        .chat-search .clr { background: none; border: 0; color: #8b877f; cursor: pointer; font-size: 11px; }
         .chat-body {
           display: flex; flex-direction: column; gap: 6px;
           padding: 10px; max-height: 420px; overflow-y: auto;
         }
-        .vazio { font-size: 11px; color: #6f6557; font-style: italic; text-align: center; padding: 14px 0; margin: 0; }
-        .tema { border: 1px solid rgba(200,168,102,.12); border-radius: 10px; overflow: hidden; background: rgba(0,0,0,.18); transition: box-shadow .3s; }
+        .vazio { font-size: 11px; color: #6b6862; font-style: italic; text-align: center; padding: 14px 0; margin: 0; }
+        .tema { border: 1px solid rgba(216,190,147,.12); border-radius: 10px; overflow: hidden; background: rgba(0,0,0,.18); transition: box-shadow .3s; }
         @keyframes temaGlow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(201,164,92,0); border-color: rgba(200,168,102,.25); }
+          0%, 100% { box-shadow: 0 0 0 0 rgba(201,164,92,0); border-color: rgba(216,190,147,.25); }
           50%      { box-shadow: 0 0 16px 1px rgba(201,164,92,.45); border-color: rgba(232,199,109,.8); }
         }
         .tema.unread { animation: temaGlow 1.8s ease-in-out infinite; }
         .novo {
           font-size: 7px; letter-spacing: .14em; text-transform: uppercase; font-weight: 700;
-          color: #1a1306; background: #c9a45c; padding: 2px 6px; border-radius: 999px;
+          color: #0b0a08; background: #d8be93; padding: 2px 6px; border-radius: 999px;
         }
         .tema-head {
           width: 100%; display: flex; align-items: center; gap: 8px;
-          padding: 8px 12px; background: rgba(200,168,102,.05); border: 0; cursor: pointer; text-align: left;
+          padding: 8px 12px; background: rgba(216,190,147,.05); border: 0; cursor: pointer; text-align: left;
         }
-        .chev { color: #c8a866; font-size: 9px; transition: transform .2s; }
+        .chev { color: #d8be93; font-size: 9px; transition: transform .2s; }
         .chev.on { transform: rotate(90deg); }
-        .tema-nome { flex: 1; font-family: 'Cormorant Garamond', serif; font-size: 14px; color: #e9dcc2; }
-        .tema-meta { font-size: 8px; letter-spacing: .12em; text-transform: uppercase; color: #7a6f5e; white-space: nowrap; }
+        .tema-nome { flex: 1; font-family: var(--fd); font-size: 14px; color: #f3ede2; }
+        .tema-meta { font-size: 8px; letter-spacing: .12em; text-transform: uppercase; color: #79756e; white-space: nowrap; }
         .tema-body { display: flex; flex-direction: column; gap: 5px; padding: 8px 10px; }
-        .day { text-align: center; font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: #6f6557; margin: 4px 0 2px; }
+        .day { text-align: center; font-size: 8px; letter-spacing: .2em; text-transform: uppercase; color: #6b6862; margin: 4px 0 2px; }
         .row { display: flex; }
         .row.vocs { justify-content: flex-end; }
         .row.rl   { justify-content: flex-start; }
         .bubble { max-width: 60%; padding: 4px 8px; border-radius: 9px; font-family: 'Hanken Grotesk', sans-serif; }
-        .bubble.vocs { background: rgba(200,168,102,.14); border: 1px solid rgba(200,168,102,.25); border-bottom-right-radius: 3px; }
+        .bubble.vocs { background: rgba(216,190,147,.14); border: 1px solid rgba(216,190,147,.25); border-bottom-right-radius: 3px; }
         .bubble.rl { background: rgba(40,60,45,.4); border: 1px solid rgba(120,200,140,.25); border-bottom-left-radius: 3px; }
         .who { font-size: 6px; letter-spacing: .18em; text-transform: uppercase; font-weight: 700; margin-bottom: 1px; }
         .bubble.vocs .who { color: #d7bd87; }
         .bubble.rl .who { color: #84c896; }
-        .txt { margin: 0; font-size: 9px; line-height: 1.35; color: #cfc6b6; white-space: pre-wrap; }
+        .txt { margin: 0; font-size: 9px; line-height: 1.35; color: #c0bbb2; white-space: pre-wrap; }
         .txt :global(mark) { background: rgba(232,199,109,.5); color: #fff; border-radius: 2px; padding: 0 1px; }
         .tema-nome :global(mark) { background: rgba(232,199,109,.5); color: #fff; border-radius: 2px; padding: 0 1px; }
-        .when { font-size: 7px; color: #7a6f5e; margin-top: 2px; text-align: right; }
+        .when { font-size: 7px; color: #79756e; margin-top: 2px; text-align: right; }
         .reply-btn {
           align-self: flex-start; margin-top: 4px;
-          background: rgba(200,168,102,.1); border: 1px solid rgba(200,168,102,.3);
-          color: #c8a866; font-family: 'Hanken Grotesk', sans-serif; font-size: 9px;
+          background: rgba(216,190,147,.1); border: 1px solid rgba(216,190,147,.3);
+          color: #d8be93; font-family: 'Hanken Grotesk', sans-serif; font-size: 9px;
           letter-spacing: .12em; text-transform: uppercase; font-weight: 700;
           padding: 5px 10px; border-radius: 8px; cursor: pointer;
         }
-        .reply-btn:hover { background: rgba(200,168,102,.2); }
+        .reply-btn:hover { background: rgba(216,190,147,.2); }
         .reply-box { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
         .reply-box textarea {
-          width: 100%; background: rgba(0,0,0,.35); border: 1px solid rgba(200,168,102,.25);
-          border-radius: 8px; padding: 8px 10px; color: #e9dcc2;
+          width: 100%; background: rgba(0,0,0,.35); border: 1px solid rgba(216,190,147,.25);
+          border-radius: 8px; padding: 8px 10px; color: #f3ede2;
           font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; line-height: 1.5;
           resize: vertical; outline: none;
         }
-        .reply-box textarea:focus { border-color: #c8a866; }
+        .reply-box textarea:focus { border-color: #d8be93; }
         .reply-actions { display: flex; gap: 8px; }
         .reply-box .send {
-          background: linear-gradient(168deg, #efd6a2, #c19a52); color: #1c150b; border: 0;
+          background: #d8be93; color: #0b0a08; border: 0;
           font-size: 9px; letter-spacing: .15em; text-transform: uppercase; font-weight: 700;
           padding: 6px 14px; border-radius: 999px; cursor: pointer;
         }
         .reply-box .send:disabled { opacity: .4; cursor: not-allowed; }
         .reply-box .cancel {
-          background: transparent; border: 1px solid rgba(239,231,214,.12); color: #8c8170;
+          background: transparent; border: 1px solid rgba(243,237,226,.12); color: #8b877f;
           font-size: 9px; letter-spacing: .15em; text-transform: uppercase;
           padding: 6px 12px; border-radius: 999px; cursor: pointer;
         }

@@ -3,32 +3,37 @@
    Tokens + primitivos scoped a .portal-atmosphere
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300&family=Hanken+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
 
 .portal-atmosphere {
-  /* warm espresso darks */
-  --bg:        #14110c;
-  --bg-2:      #181410;
-  --surface:   #1e1812;
-  --surface-2: #241d15;
-  --raised:    #2a2218;
+  /* fontes (alinhadas com /adquirir-fotografias) */
+  --fd: 'Jost', sans-serif;
+  --fb: 'Hanken Grotesk', system-ui, sans-serif;
+  --fm: 'Space Mono', monospace;
 
-  /* champagne / gold */
-  --gold:      #c8a866;
-  --gold-soft: #d7bd87;
-  --gold-deep: #9c7c47;
-  --gold-faint: rgba(200,168,102,.16);
-  --gold-line:  rgba(200,168,102,.22);
+  /* darks neutros (adqf) */
+  --bg:        #0b0a08;
+  --bg-2:      #100e0b;
+  --surface:   #16130f;
+  --surface-2: #1b1712;
+  --raised:    #221d16;
 
-  /* text */
-  --ink:       #efe7d6;
-  --ink-2:     #c3b8a3;
-  --ink-3:     #8c8170;
-  --ink-4:     #5f574b;
+  /* champagne / gold (adqf) */
+  --gold:      #d8be93;
+  --gold-soft: #e4d3b3;
+  --gold-deep: #c8a866;
+  --gold-faint: rgba(216,190,147,.16);
+  --gold-line:  rgba(216,190,147,.22);
 
-  /* hairlines */
-  --line:      rgba(239,231,214,.10);
-  --line-2:    rgba(239,231,214,.06);
+  /* text (adqf) */
+  --ink:       rgba(243,237,226,.92);
+  --ink-2:     rgba(243,237,226,.6);
+  --ink-3:     rgba(243,237,226,.4);
+  --ink-4:     rgba(243,237,226,.28);
+
+  /* hairlines (adqf) */
+  --line:      rgba(243,237,226,.14);
+  --line-2:    rgba(243,237,226,.08);
 
   /* status hues */
   --ok:        #9db58b;
@@ -40,9 +45,9 @@
   --atm-r:    12px;
   --atm-r-lg: 20px;
 
-  background: #120d08;
+  background: var(--bg);
   color: var(--ink);
-  font-family: 'Hanken Grotesk', system-ui, sans-serif;
+  font-family: var(--fb);
   font-weight: 400;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -53,18 +58,27 @@
 .portal-atmosphere * { box-sizing: border-box; }
 .portal-atmosphere img { display: block; max-width: 100%; }
 .portal-atmosphere a { color: inherit; text-decoration: none; }
-.portal-atmosphere ::selection { background: rgba(200,168,102,.28); color: #fff; }
+.portal-atmosphere ::selection { background: var(--gold); color: var(--bg); }
 
 /* ── type primitives ── */
 .portal-atmosphere .eyebrow {
+  font-family: var(--fm);
   font-size: 11px; letter-spacing: .34em; text-transform: uppercase;
-  color: var(--gold); font-weight: 600;
+  color: var(--gold); font-weight: 400;
 }
 .portal-atmosphere .eyebrow-muted { color: var(--ink-3); }
-.portal-atmosphere .atm-serif { font-family: 'Cormorant Garamond', serif; font-weight: 300; }
+.portal-atmosphere .atm-serif { font-family: var(--fd); font-weight: 200; }
 .portal-atmosphere .display {
-  font-family: 'Cormorant Garamond', serif; font-weight: 300;
-  line-height: 1.04; letter-spacing: .01em;
+  font-family: var(--fd); font-weight: 200;
+  line-height: 1.04; letter-spacing: -.02em;
+}
+
+/* headings — baseline igual ao adqf (h1,h2,h3 em Jost 200) */
+.portal-atmosphere h1,
+.portal-atmosphere h2,
+.portal-atmosphere h3 {
+  font-family: var(--fd); font-weight: 200;
+  line-height: 1.04; letter-spacing: -.02em;
 }
 
 .portal-atmosphere .rule {
@@ -91,8 +105,8 @@
 .portal-atmosphere .atm-status.info .pip  { background: var(--info); }
 .portal-atmosphere .atm-status.done  { color: var(--done); }
 .portal-atmosphere .atm-status.done .pip  { background: var(--done); }
-.portal-atmosphere .atm-status.select { color: #d9b25e; }
-.portal-atmosphere .atm-status.select .pip { background: #d9b25e; box-shadow: 0 0 0 3px rgba(217,178,94,.16); }
+.portal-atmosphere .atm-status.select { color: #d8be93; }
+.portal-atmosphere .atm-status.select .pip { background: #d8be93; box-shadow: 0 0 0 3px rgba(216,190,147,.16); }
 .portal-atmosphere .atm-status.edit { color: #7bb0a8; }
 .portal-atmosphere .atm-status.edit .pip { background: #7bb0a8; box-shadow: 0 0 0 3px rgba(123,176,168,.16); }
 .portal-atmosphere .atm-status.review { color: #cf8f63; }
@@ -104,13 +118,13 @@
 .portal-atmosphere .ph {
   position: relative; overflow: hidden;
   background:
-    repeating-linear-gradient(135deg, rgba(239,231,214,.035) 0 2px, transparent 2px 11px),
+    repeating-linear-gradient(135deg, rgba(243,237,226,.035) 0 2px, transparent 2px 11px),
     linear-gradient(160deg, var(--surface-2), var(--bg-2));
   display: flex; align-items: flex-end;
 }
 .portal-atmosphere .ph::after {
   content: attr(data-label);
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: var(--fm);
   font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
   color: var(--ink-4); padding: 10px 12px;
 }
@@ -119,17 +133,17 @@
 .portal-atmosphere .atm-btn {
   position: relative; overflow: hidden; isolation: isolate;
   display: inline-flex; align-items: center; justify-content: center; gap: 10px;
-  font-family: 'Hanken Grotesk', sans-serif; font-size: 12px; font-weight: 600;
-  letter-spacing: .16em; text-transform: uppercase; color: var(--ink); white-space: nowrap;
+  font-family: var(--fm); font-size: 12px; font-weight: 400;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--ink); white-space: nowrap;
   padding: 14px 28px; border-radius: 999px;
-  border: 1px solid var(--gold-line); background: rgba(200,168,102,.04);
+  border: 1px solid var(--gold-line); background: rgba(216,190,147,.04);
   cursor: pointer; -webkit-tap-highlight-color: transparent;
   transition: transform .4s cubic-bezier(.2,.85,.25,1), border-color .3s, background .3s, color .3s, box-shadow .4s;
 }
 .portal-atmosphere .atm-btn svg { transition: transform .4s cubic-bezier(.2,.85,.25,1); }
 .portal-atmosphere .atm-btn:hover {
-  border-color: var(--gold); color: #fff; background: rgba(200,168,102,.09);
-  transform: translateY(-2px); box-shadow: 0 16px 32px -16px rgba(200,168,102,.5);
+  border-color: var(--gold); color: #fff; background: rgba(216,190,147,.09);
+  transform: translateY(-2px); box-shadow: 0 16px 32px -16px rgba(216,190,147,.5);
 }
 .portal-atmosphere .atm-btn:hover svg { transform: translate(3px,-3px); }
 .portal-atmosphere .atm-btn:active { transform: translateY(0); transition-duration: .1s; }
@@ -147,16 +161,14 @@
 }
 
 .portal-atmosphere .atm-btn.solid {
-  color: #1c150b; border-color: transparent;
-  background: linear-gradient(168deg, #efd6a2 0%, #d8b873 40%, #c19a52 78%, #b78f47 100%);
-  box-shadow: inset 0 1px 0 rgba(255,250,236,.6), inset 0 -1px 0 rgba(120,86,38,.4),
-              0 10px 26px -14px rgba(200,168,102,.55);
+  color: var(--bg); border-color: var(--gold);
+  background: var(--gold);
+  box-shadow: 0 10px 26px -14px rgba(216,190,147,.45);
 }
 .portal-atmosphere .atm-btn.solid:hover {
-  color: #1c150b;
-  background: linear-gradient(168deg, #f6e1b2 0%, #e2c481 40%, #cba65c 78%, #c19a52 100%);
-  box-shadow: inset 0 1px 0 rgba(255,253,244,.75), inset 0 -1px 0 rgba(120,86,38,.35),
-              0 20px 38px -14px rgba(200,168,102,.7);
+  color: var(--bg);
+  background: var(--gold-soft); border-color: var(--gold-soft);
+  box-shadow: 0 18px 36px -16px rgba(216,190,147,.55);
 }
 .portal-atmosphere .atm-btn.solid::before {
   background: linear-gradient(100deg, transparent, rgba(255,255,255,.7), transparent);
@@ -164,7 +176,7 @@
 
 /* ── scrollbar ── */
 .portal-atmosphere *::-webkit-scrollbar { width: 10px; height: 10px; }
-.portal-atmosphere *::-webkit-scrollbar-thumb { background: rgba(200,168,102,.2); border-radius: 10px; }
+.portal-atmosphere *::-webkit-scrollbar-thumb { background: rgba(216,190,147,.2); border-radius: 10px; }
 .portal-atmosphere *::-webkit-scrollbar-track { background: transparent; }
 
 /* ============================================================
@@ -179,10 +191,15 @@
 
 /* grão decorativo */
 .portal-atmosphere .grain {
-  position: fixed; inset: 0; z-index: 60; pointer-events: none; opacity: .5;
-  background: repeating-radial-gradient(circle at 0 0,
-    rgba(239,231,214,.018) 0, rgba(239,231,214,.018) 1px,
-    transparent 1px, transparent 4px);
+  position: fixed; inset: 0; z-index: 60; pointer-events: none;
+  opacity: .05; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 130px;
+}
+/* vinheta (adqf .fx-vig) — fora do .grain para nao herdar o mix-blend */
+.portal-atmosphere::after {
+  content: ""; position: fixed; inset: 0; z-index: 59; pointer-events: none;
+  box-shadow: inset 0 0 240px 40px rgba(0,0,0,.5);
 }
 
 /* sidebar */
@@ -203,11 +220,11 @@
 }
 .portal-atmosphere .sidebar .brand img { width: 44px; height: auto; }
 .portal-atmosphere .sidebar .brand .wm {
-  font-family: 'Cormorant Garamond', serif; font-size: 21px; font-weight: 400;
+  font-family: var(--fd); font-size: 21px; font-weight: 300;
   color: var(--ink); line-height: 1.05;
 }
 .portal-atmosphere .sidebar .brand .wm small {
-  display: block; font-family: 'Hanken Grotesk', sans-serif;
+  display: block; font-family: var(--fm);
   font-size: 9px; letter-spacing: .3em; text-transform: uppercase;
   color: var(--ink-4); margin-top: 4px; font-weight: 500;
 }
@@ -224,14 +241,14 @@
 }
 .portal-atmosphere .sidebar .couple .couple-foto img { width: 100%; height: 100%; object-fit: cover; }
 .portal-atmosphere .sidebar .couple .couple-foto span {
-  font-family: 'Cormorant Garamond', serif; font-size: 34px; color: var(--gold); font-weight: 300;
+  font-family: var(--fd); font-size: 34px; color: var(--gold); font-weight: 200;
 }
 .portal-atmosphere .sidebar .couple .lbl {
   font-size: 10px; letter-spacing: .32em; text-transform: uppercase;
   color: var(--gold); font-weight: 600; margin-bottom: 8px;
 }
 .portal-atmosphere .sidebar .couple .names {
-  font-family: 'Cormorant Garamond', serif; font-weight: 400;
+  font-family: var(--fd); font-weight: 300;
   font-size: 27px; line-height: 1.1; color: var(--ink); margin-bottom: 4px;
 }
 .portal-atmosphere .sidebar .couple .date {
@@ -255,10 +272,10 @@
   stroke: var(--gold-deep); transition: stroke .25s;
 }
 .portal-atmosphere .sidebar nav .nv:hover {
-  background: rgba(200,168,102,.08); color: var(--ink);
+  background: rgba(216,190,147,.08); color: var(--ink);
 }
 .portal-atmosphere .sidebar nav .nv.on {
-  background: rgba(200,168,102,.12); color: var(--ink);
+  background: rgba(216,190,147,.12); color: var(--ink);
 }
 .portal-atmosphere .sidebar nav .nv.on svg { stroke: var(--gold); }
 
@@ -267,7 +284,7 @@
   border: 1px solid var(--gold-faint); border-radius: 14px;
   padding: 18px 16px;
   background:
-    radial-gradient(80% 120% at 50% 0%, rgba(200,168,102,.10), transparent 70%),
+    radial-gradient(80% 120% at 50% 0%, rgba(216,190,147,.10), transparent 70%),
     linear-gradient(180deg, var(--surface), var(--bg-2));
   text-align: center;
 }
@@ -276,7 +293,7 @@
   color: var(--gold); font-weight: 600; margin-bottom: 4px;
 }
 .portal-atmosphere .sidebar .mini .days {
-  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-family: var(--fd); font-weight: 200;
   font-size: 52px; color: var(--gold-soft); line-height: 1;
   margin: 2px 0;
 }
@@ -285,7 +302,7 @@
 }
 .portal-atmosphere .sidebar .mini .code {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: var(--fm);
   font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
   color: var(--ink-4); padding-top: 10px;
   border-top: 1px solid var(--line-2); width: 100%; justify-content: center;
@@ -301,7 +318,7 @@
 }
 .portal-atmosphere .main::before {
   content: ""; position: absolute; inset: 0;
-  background: radial-gradient(800px 400px at 0% 0%, rgba(200,168,102,.08), transparent 60%);
+  background: radial-gradient(800px 400px at 0% 0%, rgba(216,190,147,.08), transparent 60%);
   pointer-events: none; z-index: 0;
 }
 .portal-atmosphere .main > * { position: relative; z-index: 1; }
@@ -326,7 +343,7 @@
   border-radius: 14px;
   padding: 18px;
   text-align: center;
-  background: radial-gradient(120% 120% at 50% 0%, rgba(200,168,102,.1), transparent 70%);
+  background: radial-gradient(120% 120% at 50% 0%, rgba(216,190,147,.1), transparent 70%);
   animation: mini-gold-pulse 3.5s ease-in-out infinite;
 }
 @keyframes mini-gold-pulse {
@@ -344,7 +361,7 @@
   font-weight: 600;
 }
 .portal-atmosphere .sidebar .mini .c .big {
-  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-family: var(--fd); font-weight: 200;
   font-size: 52px; line-height: 1; color: var(--gold-soft);
   margin: 8px 0 4px;
 }
@@ -366,12 +383,12 @@
 }
 .portal-atmosphere .cband::before {
   content: ""; position: absolute; left: 50%; top: 0; width: 60%; height: 60%;
-  background: radial-gradient(closest-side, rgba(200,168,102,.18), transparent 70%);
+  background: radial-gradient(closest-side, rgba(216,190,147,.18), transparent 70%);
   transform: translateX(-50%); pointer-events: none;
 }
 .portal-atmosphere .cband .eyebrow { margin-bottom: 16px; }
 .portal-atmosphere .cband .names {
-  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-family: var(--fd); font-weight: 200;
   font-size: clamp(44px, 7vw, 84px); color: #fff; line-height: 1.04;
   margin-bottom: 14px;
 }
@@ -390,10 +407,10 @@
 }
 .portal-atmosphere .hcount > div + div::before {
   content: ""; position: absolute; left: 0; top: 18%; height: 64%; width: 1px;
-  background: rgba(200,168,102,.3);
+  background: rgba(216,190,147,.3);
 }
 .portal-atmosphere .hcount .num {
-  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-family: var(--fd); font-weight: 200;
   font-size: clamp(40px, 6vw, 62px); color: #fff; line-height: 1;
 }
 .portal-atmosphere .hcount .lbl {
@@ -414,7 +431,7 @@
 }
 .portal-atmosphere .welcome .photo img { width: 100%; height: 100%; object-fit: cover; }
 .portal-atmosphere .welcome h1 {
-  font-family: 'Cormorant Garamond', serif; font-weight: 400;
+  font-family: var(--fd); font-weight: 300;
   font-size: clamp(34px, 4.6vw, 56px); line-height: 1.06;
   color: var(--ink); margin: 12px 0 18px;
 }
@@ -424,7 +441,7 @@
   margin: 0 0 14px;
 }
 .portal-atmosphere .welcome .pull {
-  font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 23px;
+  font-family: var(--fd); font-style: italic; font-size: 23px;
   color: var(--gold-soft); padding-left: 18px; border-left: 1px solid var(--gold);
   margin: 22px 0 28px; line-height: 1.4;
 }
@@ -438,7 +455,7 @@
   gap: 24px; margin-bottom: 22px;
 }
 .portal-atmosphere .cine-head h2 {
-  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-family: var(--fd); font-weight: 200;
   font-size: clamp(28px, 3.4vw, 42px); margin: 6px 0 0; color: var(--ink);
 }
 .portal-atmosphere .cine-head .sub { font-size: 13px; color: var(--ink-3); max-width: 320px; text-align: right; }
@@ -471,9 +488,9 @@
 .portal-atmosphere .dcard.wait::before { background: var(--wait); }
 .portal-atmosphere .dcard.info::before { background: var(--info); }
 .portal-atmosphere .dcard.done::before { background: var(--done); }
-.portal-atmosphere .dcard.select::before { background: #d9b25e; }
+.portal-atmosphere .dcard.select::before { background: #d8be93; }
 .portal-atmosphere .dcard .roman {
-  font-family: 'Cormorant Garamond', serif; font-size: 20px;
+  font-family: var(--fd); font-size: 20px;
   color: var(--gold-deep); margin-bottom: 4px;
 }
 .portal-atmosphere .dcard h3 {
@@ -505,7 +522,7 @@
 /* ── feature grid (4 col) ── */
 .portal-atmosphere .feat-head { margin: 80px 0 22px; }
 .portal-atmosphere .feat-head h2 {
-  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-family: var(--fd); font-weight: 200;
   font-size: clamp(28px, 3.4vw, 42px); margin: 6px 0 0; color: var(--ink);
 }
 .portal-atmosphere .feat4 {
@@ -522,7 +539,7 @@
 /* ── explore cards (3 col) ── */
 .portal-atmosphere .cards-head { margin: 80px 0 22px; }
 .portal-atmosphere .cards-head h2 {
-  font-family: 'Cormorant Garamond', serif; font-weight: 300;
+  font-family: var(--fd); font-weight: 200;
   font-size: clamp(28px, 3.4vw, 42px); margin: 6px 0 0; color: var(--ink);
 }
 .portal-atmosphere .cards-grid {
@@ -535,7 +552,7 @@
   cursor: pointer; text-align: left; color: inherit; display: block;
 }
 .portal-atmosphere .card-item:hover {
-  border-color: var(--gold-line); background: rgba(200,168,102,.05);
+  border-color: var(--gold-line); background: rgba(216,190,147,.05);
   transform: translateY(-2px);
 }
 .portal-atmosphere .card-item .ico { color: var(--gold); width: 22px; height: 22px; margin-bottom: 12px; }
@@ -555,30 +572,30 @@
 }
 .portal-atmosphere .abtn {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 12px; font-weight: 600; letter-spacing: .02em;
   color: var(--ink-2);
   padding: 9px 16px; border-radius: 999px;
   border: 1px solid var(--line);
-  background: rgba(239,231,214,.02);
+  background: rgba(243,237,226,.02);
   cursor: pointer; transition: .2s;
 }
 .portal-atmosphere .abtn svg { width: 15px; height: 15px; stroke: var(--ink-3); flex: none; }
 .portal-atmosphere .abtn:hover:not(:disabled) {
   border-color: var(--gold-line);
   color: var(--ink);
-  background: rgba(200,168,102,.06);
+  background: rgba(216,190,147,.06);
 }
 .portal-atmosphere .abtn:hover:not(:disabled) svg { stroke: var(--gold); }
 .portal-atmosphere .abtn:disabled { opacity: .4; cursor: not-allowed; }
 .portal-atmosphere .abtn.primary {
-  color: #1c150b; border-color: transparent;
-  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
-  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 8px 20px -12px rgba(200,168,102,.55);
+  color: #0b0a08; border-color: transparent;
+  background: var(--gold);
+  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 8px 20px -12px rgba(216,190,147,.55);
 }
-.portal-atmosphere .abtn.primary svg { stroke: #1c150b; }
+.portal-atmosphere .abtn.primary svg { stroke: #0b0a08; }
 .portal-atmosphere .abtn.primary:hover:not(:disabled) {
-  background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+  background: var(--gold-soft);
 }
 .portal-atmosphere .abtn.accent { color: var(--gold-soft); border-color: var(--gold-faint); }
 .portal-atmosphere .abtn.accent svg { stroke: var(--gold-soft); }
@@ -608,12 +625,12 @@
 }
 .portal-atmosphere .gbtn {
   display: inline-flex; align-items: center; gap: 7px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 11px; font-weight: 600; letter-spacing: .03em;
   color: var(--ink);
   padding: 8px 13px; border-radius: 999px;
   background: rgba(20,15,9,.55);
-  border: 1px solid rgba(239,231,214,.16);
+  border: 1px solid rgba(243,237,226,.16);
   backdrop-filter: blur(8px);
   cursor: pointer; transition: .2s;
 }
@@ -633,7 +650,7 @@
 .portal-atmosphere .subhero .back-hero {
   position: absolute; top: 16px; left: 16px; z-index: 2;
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 13px; font-weight: 500; letter-spacing: 0;
   text-transform: none;
   color: var(--ink);
@@ -645,7 +662,7 @@
   cursor: pointer; transition: .2s;
 }
 .portal-atmosphere .subhero .back-hero .chev {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--fd);
   font-size: 16px; line-height: 1; color: var(--gold);
   margin-right: 2px;
 }
@@ -658,7 +675,7 @@
   display: flex; align-items: center; gap: 16px; margin-top: 10px;
 }
 .portal-atmosphere .subhero .cap h1 {
-  font-family: 'Cormorant Garamond', serif; font-weight: 400;
+  font-family: var(--fd); font-weight: 300;
   font-size: clamp(38px, 5.5vw, 64px);
   letter-spacing: .14em; text-transform: uppercase;
   color: #fff; margin: 0; line-height: 1;
@@ -670,7 +687,7 @@
   cursor: pointer; transition: .2s; flex: none;
 }
 .portal-atmosphere .subhero .cap .pencil svg { width: 15px; height: 15px; stroke: var(--gold); }
-.portal-atmosphere .subhero .cap .pencil:hover { background: rgba(200,168,102,.12); }
+.portal-atmosphere .subhero .cap .pencil:hover { background: rgba(216,190,147,.12); }
 
 /* artigo */
 .portal-atmosphere .subarticle {
@@ -682,18 +699,18 @@
 }
 .portal-atmosphere .subarticle .back {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 12px; font-weight: 600; letter-spacing: .06em;
   color: var(--ink-2);
   padding: 9px 18px 9px 14px; border-radius: 999px;
   border: 1px solid var(--gold-faint);
-  background: rgba(200,168,102,.05);
+  background: rgba(216,190,147,.05);
   cursor: pointer; transition: .2s;
 }
 .portal-atmosphere .subarticle .back svg { width: 15px; height: 15px; stroke: var(--gold); }
 .portal-atmosphere .subarticle .back:hover { border-color: var(--gold); color: var(--ink); }
 .portal-atmosphere .subarticle h2 {
-  font-family: 'Cormorant Garamond', serif; font-weight: 500;
+  font-family: var(--fd); font-weight: 300;
   font-size: clamp(28px, 3.4vw, 40px);
   color: var(--ink); margin: 28px 0 6px;
 }
@@ -713,7 +730,7 @@
   line-height: 1.9 !important;
   margin: 0 0 18px !important;
   text-wrap: pretty;
-  font-family: 'Hanken Grotesk', sans-serif !important;
+  font-family: var(--fb) !important;
   font-weight: 400 !important;
 }
 .portal-atmosphere .subarticle .body p strong,
@@ -729,7 +746,7 @@
 .portal-atmosphere .subarticle .body h1,
 .portal-atmosphere .subarticle .body h2,
 .portal-atmosphere .subarticle .body h3 {
-  font-family: 'Cormorant Garamond', serif !important;
+  font-family: var(--fd) !important;
   font-weight: 500 !important;
   color: var(--ink) !important;
   line-height: 1.1 !important;
@@ -758,16 +775,16 @@
   margin-top: 40px;
   border-radius: var(--atm-r-lg);
   padding: 54px 30px;
-  background: linear-gradient(160deg, #f3eee2, #e7ddca);
+  background: linear-gradient(160deg, #f3ede2, #ded8cd);
   text-align: center;
 }
 .portal-atmosphere .logocard img {
   width: 150px; margin: 0 auto 18px; opacity: .92; display: block;
 }
 .portal-atmosphere .logocard .url {
-  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-family: var(--fm);
   font-size: 11px; letter-spacing: .24em;
-  text-transform: uppercase; color: #8a7e63;
+  text-transform: uppercase; color: #8b877f;
 }
 
 /* responsivo da sub-página */
@@ -786,7 +803,7 @@
 }
 .portal-atmosphere .foot img { width: 118px; margin: 0 auto 26px; }
 .portal-atmosphere .foot .msg {
-  font-family: 'Cormorant Garamond', serif; font-style: italic;
+  font-family: var(--fd); font-style: italic;
   font-size: clamp(26px, 3.8vw, 40px); color: var(--gold-soft);
   line-height: 1.2; margin-bottom: 20px;
 }
@@ -820,7 +837,7 @@
   .portal-atmosphere .menu-toggle {
     display: inline-flex; align-items: center; gap: 8px;
     margin-left: auto;
-    background: rgba(200,168,102,.06); border: 1px solid var(--gold-line);
+    background: rgba(216,190,147,.06); border: 1px solid var(--gold-line);
     color: var(--ink); padding: 8px 14px; border-radius: 999px;
     font-size: 11px; letter-spacing: .2em; text-transform: uppercase; font-weight: 600;
     cursor: pointer;
@@ -862,5 +879,5 @@ main.sobre-view h2.font-cormorant,
 main.sobre-view h3.font-cormorant,
 main.sobre-view .font-cormorant.text-gold,
 main.sobre-view .font-playfair {
-  font-family: 'Cormorant Garamond', 'Hanken Grotesk', serif !important;
+  font-family: var(--fd) !important;
 }

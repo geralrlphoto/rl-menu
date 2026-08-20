@@ -163,7 +163,7 @@ export function SubPageShell({
         }
         :global(.portal-atmosphere .atm-subhero-cap .eyebrow) { color: var(--gold); }
         :global(.portal-atmosphere .atm-subhero-cap h1) {
-          font-family: 'Cormorant Garamond', serif; font-weight: 400;
+          font-family: var(--fd); font-weight: 300;
           font-size: clamp(38px, 5.5vw, 64px);
           letter-spacing: .14em; text-transform: uppercase;
           color: #fff; margin: 10px 0 0; line-height: 1;
@@ -183,7 +183,7 @@ export function SubPageShell({
           color: var(--ink-2);
           padding: 9px 18px 9px 14px; border-radius: 999px;
           border: 1px solid var(--gold-faint);
-          background: rgba(200,168,102,.05);
+          background: rgba(216,190,147,.05);
           transition: .2s;
           margin-bottom: 28px;
         }
@@ -232,7 +232,7 @@ export function AtmAdminButton({
           color: var(--ink-2);
           padding: 9px 16px; border-radius: 999px;
           border: 1px solid var(--line);
-          background: rgba(239,231,214,.02);
+          background: rgba(243,237,226,.02);
           cursor: pointer; transition: .2s;
         }
         .atm-abtn :global(svg) {
@@ -242,18 +242,18 @@ export function AtmAdminButton({
         .atm-abtn:hover:not(:disabled) {
           border-color: var(--gold-line);
           color: var(--ink);
-          background: rgba(200,168,102,.06);
+          background: rgba(216,190,147,.06);
         }
         .atm-abtn:hover:not(:disabled) :global(svg) { stroke: var(--gold); }
         .atm-abtn:disabled { opacity: .4; cursor: not-allowed; }
         .atm-abtn.primary {
-          color: #1c150b; border-color: transparent;
-          background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
-          box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 8px 20px -12px rgba(200,168,102,.55);
+          color: #0b0a08; border-color: transparent;
+          background: #d8be93;
+          box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 8px 20px -12px rgba(216,190,147,.55);
         }
-        .atm-abtn.primary :global(svg) { stroke: #1c150b; }
+        .atm-abtn.primary :global(svg) { stroke: #0b0a08; }
         .atm-abtn.primary:hover:not(:disabled) {
-          background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+          background: #e4d3b3;
         }
         .atm-abtn.accent { color: var(--gold-soft); border-color: var(--gold-faint); }
         .atm-abtn.accent :global(svg) { stroke: var(--gold-soft); }
@@ -287,7 +287,7 @@ export function AtmHeroButton({
           color: var(--ink);
           padding: 8px 13px; border-radius: 999px;
           background: rgba(20,15,9,.55);
-          border: 1px solid rgba(239,231,214,.16);
+          border: 1px solid rgba(243,237,226,.16);
           backdrop-filter: blur(8px);
           cursor: pointer; transition: .2s;
         }
@@ -325,8 +325,8 @@ export function AtmProseStyles() {
         font-size: 17px;
       }
       .portal-atmosphere .atm-article-body h2 {
-        font-family: 'Cormorant Garamond', serif;
-        font-weight: 500;
+        font-family: var(--fd);
+        font-weight: 300;
         font-size: clamp(28px, 3.4vw, 40px);
         color: var(--ink);
         margin: 28px 0 6px;

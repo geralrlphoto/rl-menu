@@ -12,14 +12,14 @@
   border-radius: var(--atm-r);
   padding: 26px 30px;
   background:
-    linear-gradient(180deg, rgba(200,168,102,.05), rgba(200,168,102,.01));
+    linear-gradient(180deg, rgba(216,190,147,.05), rgba(216,190,147,.01));
 }
 .portal-atmosphere .fotos-page .fp-callout .eyebrow {
   margin-bottom: 12px;
 }
 .portal-atmosphere .fotos-page .fp-callout h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: 26px;
   line-height: 1.22;
   color: var(--ink);
@@ -48,8 +48,8 @@
   margin-bottom: 14px;
 }
 .portal-atmosphere .fotos-page .fp-section h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 500;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: clamp(28px, 3.4vw, 40px);
   color: var(--ink);
   margin: 0 0 6px;
@@ -75,7 +75,7 @@
   margin-top: 18px;
   padding: 12px 16px;
   border-left: 2px solid var(--gold-line);
-  background: rgba(200,168,102,.04);
+  background: rgba(216,190,147,.04);
   border-radius: 0 8px 8px 0;
   font-size: 13px;
   color: var(--ink-3);
@@ -110,16 +110,16 @@
 .portal-atmosphere .fotos-page .fp-card:hover {
   border-color: var(--gold-line);
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px -24px rgba(200,168,102,.4);
+  box-shadow: 0 16px 40px -24px rgba(216,190,147,.4);
 }
 .portal-atmosphere .fotos-page .fp-card .fp-card-head {
   display: flex; align-items: center; justify-content: space-between;
   padding: 16px 18px 0;
 }
 .portal-atmosphere .fotos-page .fp-card .fp-card-title {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 10px; letter-spacing: .3em; text-transform: uppercase;
-  color: var(--ink-3); font-weight: 600;
+  color: var(--ink-3); font-weight: 400;
 }
 .portal-atmosphere .fotos-page .fp-card .fp-chip {
   display: inline-flex; align-items: center; gap: 6px;
@@ -132,7 +132,7 @@
 .portal-atmosphere .fotos-page .fp-chip.available {
   color: var(--gold-soft);
   border-color: var(--gold-line);
-  background: rgba(200,168,102,.08);
+  background: rgba(216,190,147,.08);
 }
 .portal-atmosphere .fotos-page .fp-chip.locked {
   color: #d8a59b;
@@ -150,12 +150,12 @@
   border-radius: 50%;
   border: 1px solid var(--gold-line);
   background:
-    radial-gradient(closest-side, rgba(200,168,102,.18), transparent 70%),
-    linear-gradient(160deg, rgba(200,168,102,.08), transparent 80%);
+    radial-gradient(closest-side, rgba(216,190,147,.18), transparent 70%),
+    linear-gradient(160deg, rgba(216,190,147,.08), transparent 80%);
   color: var(--gold-soft);
   display: inline-flex; align-items: center; justify-content: center;
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400; font-style: italic;
+  font-family: var(--fd);
+  font-weight: 300; font-style: italic;
   font-size: 28px;
   flex: none;
   margin-bottom: 14px;
@@ -165,8 +165,8 @@
   text-align: center;
 }
 .portal-atmosphere .fotos-page .fp-card .fp-card-logo .meta-title {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: 20px;
   color: var(--ink);
   line-height: 1.15;
@@ -183,23 +183,23 @@
 .portal-atmosphere .fotos-page .fp-card .fp-btn {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
   padding: 11px 14px;
   border-radius: 999px;
   border: 1px solid;
   cursor: pointer;
   transition: .25s;
-  background: rgba(200,168,102,.06);
+  background: rgba(216,190,147,.06);
 }
 .portal-atmosphere .fotos-page .fp-btn.available {
-  color: #1c150b;
+  color: #0b0a08;
   border-color: transparent;
-  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
-  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 8px 20px -12px rgba(200,168,102,.55);
+  background: var(--gold);
+  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 8px 20px -12px rgba(216,190,147,.55);
 }
 .portal-atmosphere .fotos-page .fp-btn.available:hover {
-  background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+  background: var(--gold-soft);
   transform: translateY(-1px);
 }
 .portal-atmosphere .fotos-page .fp-btn.locked {
@@ -249,8 +249,8 @@
 }
 .portal-atmosphere .fotos-page .fp-maquete-head .eyebrow { margin-bottom: 8px; }
 .portal-atmosphere .fotos-page .fp-maquete-head h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 500;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: clamp(26px, 3vw, 36px);
   color: var(--ink); margin: 0;
   line-height: 1.12;
@@ -291,12 +291,12 @@
 .portal-atmosphere .fotos-page .fp-step.done {
   border-color: var(--gold-line);
   background:
-    radial-gradient(80% 100% at 0% 0%, rgba(200,168,102,.1), transparent 60%),
-    rgba(200,168,102,.04);
+    radial-gradient(80% 100% at 0% 0%, rgba(216,190,147,.1), transparent 60%),
+    rgba(216,190,147,.04);
 }
 .portal-atmosphere .fotos-page .fp-step .fp-step-num {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400;
+  font-family: var(--fd);
+  font-weight: 300;
   font-style: italic;
   font-size: 22px;
   color: var(--gold-deep);
@@ -324,7 +324,7 @@
 }
 .portal-atmosphere .fotos-page .fp-step.done .fp-step-pip {
   background: var(--gold);
-  box-shadow: 0 0 0 3px rgba(200,168,102,.18);
+  box-shadow: 0 0 0 3px rgba(216,190,147,.18);
 }
 
 /* Botões Aprovar / Pedir alterações */
@@ -335,7 +335,7 @@
 }
 .portal-atmosphere .fotos-page .fp-approve-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 11.5px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase;
   padding: 14px 18px;
   border-radius: 999px;
@@ -346,24 +346,24 @@
   text-align: center;
 }
 .portal-atmosphere .fotos-page .fp-approve-btn.primary {
-  color: #1c150b;
+  color: #0b0a08;
   border-color: transparent;
-  background: linear-gradient(168deg, #efd6a2, #d4b46f 60%, #c19a52);
-  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 10px 24px -14px rgba(200,168,102,.55);
+  background: var(--gold);
+  box-shadow: inset 0 1px 0 rgba(255,250,236,.5), 0 10px 24px -14px rgba(216,190,147,.55);
 }
 .portal-atmosphere .fotos-page .fp-approve-btn.primary:hover {
-  background: linear-gradient(168deg, #f3dcaa, #ddbe79 60%, #c8a35a);
+  background: var(--gold-soft);
   transform: translateY(-1px);
 }
 .portal-atmosphere .fotos-page .fp-approve-btn.ghost {
   color: var(--ink-2);
   border-color: var(--gold-faint);
-  background: rgba(200,168,102,.04);
+  background: rgba(216,190,147,.04);
 }
 .portal-atmosphere .fotos-page .fp-approve-btn.ghost:hover {
   border-color: var(--gold-line);
   color: var(--ink);
-  background: rgba(200,168,102,.08);
+  background: rgba(216,190,147,.08);
 }
 .portal-atmosphere .fotos-page .fp-approve-btn:disabled {
   opacity: .45; cursor: not-allowed;
@@ -437,8 +437,8 @@
   margin-bottom: 4px;
 }
 .portal-atmosphere .fotos-page .fp-stat .val {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: 20px;
   color: var(--ink);
 }

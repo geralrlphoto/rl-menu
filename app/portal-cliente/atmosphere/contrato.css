@@ -20,7 +20,7 @@
 /* Voltar pill (re-use do .back-hero mas standalone) */
 .portal-atmosphere .subbar .back-pill {
   display: inline-flex; align-items: center; gap: 6px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 13px; font-weight: 500;
   color: var(--ink);
   padding: 7px 16px; border-radius: 999px;
@@ -29,7 +29,7 @@
   cursor: pointer; transition: .2s;
 }
 .portal-atmosphere .subbar .back-pill .chev {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--fd);
   font-size: 16px; line-height: 1; color: var(--gold);
 }
 .portal-atmosphere .subbar .back-pill:hover {
@@ -40,8 +40,8 @@
 /* Chip de estado (sálvia para "ok" / "Contrato Disponível") */
 .portal-atmosphere .statuschip {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: 'Hanken Grotesk', sans-serif;
-  font-size: 11.5px; font-weight: 600; letter-spacing: .2em;
+  font-family: var(--fm);
+  font-size: 11.5px; font-weight: 400; letter-spacing: .2em;
   text-transform: uppercase;
   padding: 8px 14px; border-radius: 999px;
 }
@@ -68,27 +68,27 @@
 /* Botão Imprimir / Guardar PDF — sólido dourado */
 .portal-atmosphere .printbtn {
   display: inline-flex; align-items: center; gap: 8px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fm);
   font-size: 12px; font-weight: 700; letter-spacing: .16em;
   text-transform: uppercase;
-  color: #1c150b;
+  color: #0b0a08;
   padding: 10px 22px; border-radius: 999px;
   border: 1px solid transparent;
-  background: linear-gradient(168deg, #efd6a2 0%, #d8b873 40%, #c19a52 78%, #b78f47 100%);
+  background: var(--gold);
   box-shadow:
     inset 0 1px 0 rgba(255,250,236,.6),
     inset 0 -1px 0 rgba(120,86,38,.4),
-    0 10px 26px -14px rgba(200,168,102,.55);
+    0 10px 26px -14px rgba(216,190,147,.55);
   cursor: pointer;
   transition: transform .3s, box-shadow .3s, background .3s;
 }
-.portal-atmosphere .printbtn svg { width: 16px; height: 16px; stroke: #1c150b; }
+.portal-atmosphere .printbtn svg { width: 16px; height: 16px; stroke: #0b0a08; }
 .portal-atmosphere .printbtn:hover {
-  background: linear-gradient(168deg, #f6e1b2 0%, #e2c481 40%, #cba65c 78%, #c19a52 100%);
+  background: var(--gold-soft);
   transform: translateY(-1px);
   box-shadow:
     inset 0 1px 0 rgba(255,253,244,.75),
-    0 16px 32px -14px rgba(200,168,102,.7);
+    0 16px 32px -14px rgba(216,190,147,.7);
 }
 
 /* ── Bloco de download do contrato ── */
@@ -97,20 +97,20 @@
   padding: 20px 24px;
   border: 1px solid var(--gold-line);
   border-radius: var(--atm-r-lg);
-  background: linear-gradient(180deg, rgba(200,168,102,.04), rgba(200,168,102,.01));
+  background: linear-gradient(180deg, rgba(216,190,147,.04), rgba(216,190,147,.01));
   transition: .25s;
   cursor: pointer; text-decoration: none; color: inherit;
 }
 .portal-atmosphere .downloadblock:hover {
   border-color: var(--gold);
-  background: linear-gradient(180deg, rgba(200,168,102,.10), rgba(200,168,102,.04));
+  background: linear-gradient(180deg, rgba(216,190,147,.10), rgba(216,190,147,.04));
   transform: translateY(-1px);
 }
 .portal-atmosphere .downloadblock .ic {
   width: 44px; height: 44px; border-radius: 12px;
   display: inline-flex; align-items: center; justify-content: center;
   border: 1px solid var(--gold-faint);
-  background: rgba(200,168,102,.06);
+  background: rgba(216,190,147,.06);
   flex: none;
 }
 .portal-atmosphere .downloadblock .ic svg { width: 22px; height: 22px; stroke: var(--gold); }
@@ -120,7 +120,7 @@
   color: var(--gold); font-weight: 600; margin-bottom: 4px;
 }
 .portal-atmosphere .downloadblock .meta .t {
-  font-family: 'Cormorant Garamond', serif; font-weight: 500;
+  font-family: var(--fd); font-weight: 300;
   font-size: 22px; color: var(--ink); line-height: 1.2;
 }
 .portal-atmosphere .downloadblock .arr {
@@ -134,7 +134,7 @@
   background: var(--gold);
   border-color: var(--gold);
 }
-.portal-atmosphere .downloadblock:hover .arr svg { stroke: #1c150b; }
+.portal-atmosphere .downloadblock:hover .arr svg { stroke: #0b0a08; }
 
 /* Nota sálvia debaixo do download */
 .portal-atmosphere .note {
@@ -156,15 +156,15 @@
 }
 .portal-atmosphere .invest .eyebrow { margin-bottom: 14px; }
 .portal-atmosphere .invest h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400; font-style: italic;
+  font-family: var(--fd);
+  font-weight: 300; font-style: italic;
   font-size: clamp(28px, 3.4vw, 40px);
   color: var(--gold-soft);
   margin: 0 0 22px; line-height: 1.15;
   max-width: 720px;
 }
 .portal-atmosphere .invest p {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 15px; line-height: 1.85;
   color: var(--ink-2);
   margin: 0 0 14px;
@@ -176,8 +176,8 @@
   margin-bottom: 22px;
 }
 .portal-atmosphere .proposeh h2 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 500;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: clamp(28px, 3.4vw, 40px);
   color: var(--ink);
   margin: 6px 0 0; line-height: 1.1;
@@ -194,8 +194,8 @@
   padding: 26px 28px;
 }
 .portal-atmosphere .servicecard h3 {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 500;
+  font-family: var(--fd);
+  font-weight: 300;
   font-size: 22px; color: var(--ink);
   margin: 0 0 18px; line-height: 1.15;
   display: flex; align-items: center; gap: 10px;
@@ -209,13 +209,13 @@
 }
 .portal-atmosphere .servicecard .checklist li {
   display: flex; align-items: flex-start; gap: 10px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
   font-size: 13.5px; color: var(--ink-2); line-height: 1.55;
 }
 .portal-atmosphere .servicecard .checklist li::before {
   content: '✓';
   color: var(--gold);
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--fd);
   font-size: 15px; line-height: 1.3;
   flex: none;
 }
@@ -227,7 +227,7 @@
 .portal-atmosphere .totalbar {
   margin: 26px 0 32px;
   padding: 22px 28px; border-radius: var(--atm-r-lg);
-  background: linear-gradient(120deg, rgba(200,168,102,.12), rgba(200,168,102,.04));
+  background: linear-gradient(120deg, rgba(216,190,147,.12), rgba(216,190,147,.04));
   border: 1px solid var(--gold-line);
   display: flex; align-items: center; justify-content: space-between;
   gap: 16px; flex-wrap: wrap;
@@ -237,8 +237,8 @@
   color: var(--gold); font-weight: 600;
 }
 .portal-atmosphere .totalbar .val {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 300; line-height: 1;
+  font-family: var(--fd);
+  font-weight: 200; line-height: 1;
   font-size: clamp(36px, 4.5vw, 52px);
   color: var(--gold-soft);
 }
@@ -267,18 +267,18 @@
 .portal-atmosphere .plancard.paid::before { background: var(--ok); }
 .portal-atmosphere .plancard.pending::before { background: var(--wait); }
 .portal-atmosphere .plancard .roman {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: var(--fd);
   font-size: 16px; color: var(--gold-deep); margin-bottom: 4px;
 }
 .portal-atmosphere .plancard h4 {
   font-size: 13px; font-weight: 600;
   color: var(--ink-2); margin: 0 0 14px;
   letter-spacing: .04em;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: var(--fb);
 }
 .portal-atmosphere .plancard .v {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 300; font-size: 32px; line-height: 1;
+  font-family: var(--fd);
+  font-weight: 200; font-size: 32px; line-height: 1;
   color: var(--ink); margin-bottom: 14px;
 }
 .portal-atmosphere .plancard .v em {
