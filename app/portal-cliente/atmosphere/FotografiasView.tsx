@@ -14,7 +14,7 @@
    ============================================================ */
 
 import { useEffect, useState, type ReactNode } from 'react'
-import { GalleryTitle } from './GalleryTitle'
+import { SectionTitle } from './SectionTitle'
 import './fotografias.css'
 
 export type FotografiasCard = {
@@ -32,6 +32,9 @@ export type FotografiasCard = {
   url?: string | null
   /** Footnote (small italic, ex.: '30 dias para download') */
   footnote?: string | null
+  /** Título editorial que aparece por cima do card. Sem isto, deriva-se
+   *  de title/heading/caption para o portal não ficar sem texto. */
+  lead?: { kicker: string; title: ReactNode; subtitle?: ReactNode }
 }
 
 export type FotografiasViewProps = {
@@ -264,7 +267,48 @@ export function FotografiasView(props: FotografiasViewProps) {
   return (
     <div className="fotos-page">
       {/* ── Título da galeria ────────────────────────────────── */}
-      <GalleryTitle />
+      <SectionTitle kicker="Alguns momentos" title={<>As vossas <em>fotografias.</em></>} />
+
+      {/* ── Título editorial + card, um por galeria ──────────── */}
+      <div className="fp-stack">
+        {props.cards.map(c => {
+          const available = Boolean(c.url && c.url.length > 0)
+          const lead = c.lead ?? { kicker: c.title, title: c.heading, subtitle: c.caption }
+          return (
+            <div key={c.key} className="fp-stack-item">
+              <SectionTitle kicker={lead.kicker} title={lead.title} subtitle={lead.subtitle} />
+              <article className="fp-card">
+                <div className="fp-card-head">
+                  <span className="fp-card-title">{c.title}</span>
+                  <span className={`fp-chip ${available ? 'available' : 'locked'}`}>
+                    {available ? 'Disponível' : 'Aguardar'}
+                  </span>
+                </div>
+                <div className="fp-card-logo">
+                  <div className="meta">
+                    <span className="mark">{c.mark}</span>
+                    <div className="meta-title">{c.heading}</div>
+                    {c.caption && <div className="meta-sub">{c.caption}</div>}
+                  </div>
+                </div>
+                <div className="fp-card-foot">
+                  {available ? (
+                    <a className="fp-btn available" href={c.url!} target="_blank" rel="noopener noreferrer">
+                      Ver Mais
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
+                      </svg>
+                    </a>
+                  ) : (
+                    <span className="fp-btn locked">Aguardar</span>
+                  )}
+                  {c.footnote && <span className="fp-foot-note">{c.footnote}</span>}
+                </div>
+              </article>
+            </div>
+          )
+        })}
+      </div>
 
       {/* ── Callout · Enviar Fotos ───────────────────────────── */}
       <section className="fp-callout">
@@ -307,43 +351,6 @@ export function FotografiasView(props: FotografiasViewProps) {
             : 'Quando a galeria estiver pronta, o cartão fica activo e podem entrar a partir daqui.'}
         </div>
       </section>
-
-      {/* ── Grelha 2×2 de cards ──────────────────────────────── */}
-      <div className="fp-grid">
-        {props.cards.map(c => {
-          const available = Boolean(c.url && c.url.length > 0)
-          return (
-            <article key={c.key} className="fp-card">
-              <div className="fp-card-head">
-                <span className="fp-card-title">{c.title}</span>
-                <span className={`fp-chip ${available ? 'available' : 'locked'}`}>
-                  {available ? 'Disponível' : 'Aguardar'}
-                </span>
-              </div>
-              <div className="fp-card-logo">
-                <div className="meta">
-                  <span className="mark">{c.mark}</span>
-                  <div className="meta-title">{c.heading}</div>
-                  {c.caption && <div className="meta-sub">{c.caption}</div>}
-                </div>
-              </div>
-              <div className="fp-card-foot">
-                {available ? (
-                  <a className="fp-btn available" href={c.url!} target="_blank" rel="noopener noreferrer">
-                    Ver Mais
-                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
-                    </svg>
-                  </a>
-                ) : (
-                  <span className="fp-btn locked">Aguardar</span>
-                )}
-                {c.footnote && <span className="fp-foot-note">{c.footnote}</span>}
-              </div>
-            </article>
-          )
-        })}
-      </div>
 
       {/* ── Separador de imagem ─────────────────────────────── */}
       <div className="fp-sep">

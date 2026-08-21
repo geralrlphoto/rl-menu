@@ -2868,6 +2868,11 @@ function PortalSubPageContent() {
     const fpCards: FotografiasCard[] = [
       {
         key: 'galerias',
+        lead: {
+          kicker: 'Galeria On-line',
+          title: <>A vossa <em>galeria</em> completa.</>,
+          subtitle: 'A vista completa do dia, pronta a partilhar com família e amigos.',
+        },
         title: 'GALERIA ONLINE',
         heading: 'Galeria Online',
         caption: 'Vista completa para partilharem com família e amigos',
@@ -2876,6 +2881,11 @@ function PortalSubPageContent() {
       },
       {
         key: 'selecao',
+        lead: {
+          kicker: 'Seleção',
+          title: <>As fotografias que vão <em>escolher</em>.</>,
+          subtitle: 'Entram, escolhem as preferidas e enviam-nos a lista. É dessa escolha que nasce o vosso álbum.',
+        },
         title: 'GALERIA PARA SELEÇÃO',
         heading: 'Galeria para Seleção',
         caption: 'Escolham as fotos preferidas para o vosso álbum',
@@ -2884,6 +2894,11 @@ function PortalSubPageContent() {
       },
       {
         key: 'prewedding',
+        lead: {
+          kicker: 'Pré-Wedding',
+          title: <>As vossas <em>fotografias</em> pré-wedding.</>,
+          subtitle: 'A sessão que fizemos antes do grande dia, quando ainda contavam os meses.',
+        },
         title: 'FOTOS PRÉ-WEDDING',
         heading: 'Fotos Pré-Wedding',
         caption: 'A sessão antes do grande dia',
@@ -2892,6 +2907,11 @@ function PortalSubPageContent() {
       },
       {
         key: 'editadas',
+        lead: {
+          kicker: 'Edição',
+          title: <>As vossas fotografias <em>editadas</em>.</>,
+          subtitle: 'A selecção final, tratada uma a uma e pronta para imprimir.',
+        },
         title: 'FOTOS EDITADAS',
         heading: 'Fotos Editadas',
         caption: 'Selecção final, editada, pronta para imprimir',
