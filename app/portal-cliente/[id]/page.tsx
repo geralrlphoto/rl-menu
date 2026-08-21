@@ -235,11 +235,11 @@ async function obterVideoInfo(url: string): Promise<VideoInfo> {
   return info
 }
 
-/** 489 -> "aprox. 8 min"; abaixo de 90s mostra os segundos */
+/** 489 -> "aprox. 8 min"; so abaixo de 1 min e que mostra segundos */
 function duracaoPorExtenso(seg?: number): string {
   if (!seg || seg <= 0) return ''
-  if (seg < 90) return `${Math.round(seg)} seg`
-  return `aprox. ${Math.round(seg / 60)} min`
+  if (seg < 60) return `${Math.round(seg)} seg`
+  return `aprox. ${Math.max(1, Math.round(seg / 60))} min`
 }
 
 // ── Bloco 3: leitor 16:9 por video ───────────────────────────────────
@@ -254,12 +254,14 @@ const FILME_PLAYER_CSS = `
   border:1px solid rgba(216,190,147,.12); background:#0f0d0a; display:block; padding:0;
   background-image:repeating-linear-gradient(135deg, rgba(243,237,226,.022) 0 2px, transparent 2px 11px);
   transition:border-color .45s cubic-bezier(.16,1,.3,1); }
-.rlfp .rlfp__frame img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.72;
+.rlfp .rlfp__frame img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.9;
   transition:opacity .6s cubic-bezier(.16,1,.3,1); }
 .rlfp .rlfp__frame::after{ content:""; position:absolute; inset:0; pointer-events:none;
   box-shadow:inset 0 0 120px 20px rgba(0,0,0,.55);
-  /* mancha escura no centro: sem ela o botao dourado desaparece sobre
-     capas claras, porque #d8be93 e quase tao claro como a fotografia */
+  }
+/* Mancha escura no centro apenas quando ha botao a destacar. Com a capa do
+   video a mostra, o painel fica limpo e so guarda a vinheta das bordas. */
+.rlfp .rlfp__frame:not(.com-capa)::after{
   background:radial-gradient(circle at 50% 50%, rgba(0,0,0,.5) 0, rgba(0,0,0,.22) 24%, transparent 48%); }
 
 .rlfp .rlfp__ph{ position:absolute; inset:0; display:grid; place-items:center;
@@ -278,7 +280,7 @@ const FILME_PLAYER_CSS = `
 
 .rlfp a.rlfp__frame{ cursor:pointer; }
 .rlfp a.rlfp__frame:hover{ border-color:rgba(216,190,147,.32); }
-.rlfp a.rlfp__frame:hover img{ opacity:.9; }
+.rlfp a.rlfp__frame:hover img{ opacity:1; }
 .rlfp a.rlfp__frame:hover .rlfp__play{ border-color:rgba(216,190,147,.55); transform:translate(-50%,-50%) scale(1.06); }
 .rlfp a.rlfp__frame:hover .rlfp__play i{ background:#e4d3b3; }
 
@@ -329,13 +331,16 @@ function FilmePlayer({ titulo, legenda, imgUrl, url }: {
   const rodape = [base, dur].filter(Boolean).join(' · ')
   // Em espera fica o painel limpo; a miniatura so entra quando ja ha video,
   // senao mostrava-se a imagem generica do Notion por tras do botao.
+  const temCapa = !!(url && capa)
   const interior = (
     <>
-      {url && capa
+      {temCapa
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={capa} alt="" onError={e => { e.currentTarget.style.display = 'none' }} />
+        ? <img src={capa!} alt="" onError={e => { e.currentTarget.style.display = 'none' }} />
         : <span className="rlfp__ph">Miniatura · 16:9</span>}
-      <span className="rlfp__play"><i>{PLAY_SVG}</i></span>
+      {/* Com a capa a mostra, o painel fica limpo: e a propria capa que
+          convida a carregar. Sem capa, mantem-se o botao da maquete. */}
+      {!temCapa && <span className="rlfp__play"><i>{PLAY_SVG}</i></span>}
       <span className="rlfp__badge"><span className="pip" />{url ? 'Ver agora' : 'Aguardar'}</span>
     </>
   )
@@ -344,7 +349,7 @@ function FilmePlayer({ titulo, legenda, imgUrl, url }: {
       <style dangerouslySetInnerHTML={{ __html: FILME_PLAYER_FONTS + FILME_PLAYER_CSS }} />
       <div className="rlfp">
         {url
-          ? <a className="rlfp__frame" href={url} target="_blank" rel="noopener noreferrer" aria-label={titulo}>{interior}</a>
+          ? <a className={`rlfp__frame${temCapa ? ' com-capa' : ''}`} href={url} target="_blank" rel="noopener noreferrer" aria-label={titulo}>{interior}</a>
           : <div className="rlfp__frame is-wait" role="img" aria-label={`${titulo} — ainda não disponível`}>{interior}</div>}
         <p className="rlfp__cap">{rodape}{!url && <b> · Aguardar</b>}</p>
       </div>
