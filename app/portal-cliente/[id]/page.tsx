@@ -618,7 +618,7 @@ function FilmeAcoes({ settings }: { settings?: any }) {
   const accoes: Accao[] = [
     { n: '01', titulo: 'Descarregar', etiqueta: 'Abrir pasta',
       texto: 'Abram cada vídeo, façam o download e guardem no vosso computador.',
-      nota: 'Disponível cerca de 20 dias',
+      nota: 'Disponível 30 dias',
       href: settings?.downloadUrl || settings?.galerias_url || undefined },
     { n: '02', titulo: 'Partilhar', etiqueta: 'Copiar link', copiar: true,
       texto: 'Enviem este link a quem quiserem. A página é privada, só acede quem o tiver.' },
