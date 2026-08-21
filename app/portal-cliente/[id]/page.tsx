@@ -400,9 +400,13 @@ const FILME_TRIO_CSS = `
   box-sizing:border-box; width:100%; margin:clamp(34px,6vh,64px) 0 0;
   font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--tx);
   display:grid; gap:clamp(26px,3.4vw,40px);
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); align-items:start; }
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); align-items:stretch; }
 .rlt3 *{ box-sizing:border-box; }
-.rlt3 .rlt3__col{ text-align:center; min-width:0; }
+/* Coluna em flex com o video colado ao fundo: os textos tem numero de
+   linhas diferente e, sem isto, cada video comecava a uma altura. Como
+   todos tem a mesma largura e racio, alinhar as bases alinha os topos. */
+.rlt3 .rlt3__col{ text-align:center; min-width:0; display:flex; flex-direction:column; }
+.rlt3 .rlt3__texto{ margin-bottom:22px; }
 
 .rlt3 .rlt3__eyebrow{ display:inline-flex; align-items:center; gap:.8em; justify-content:center;
   font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--g); }
@@ -413,7 +417,7 @@ const FILME_TRIO_CSS = `
 .rlt3 .rlt3__titulo em{ font-style:italic; color:var(--g); }
 .rlt3 .rlt3__sub{ margin:14px 0 0; color:var(--tx-mid); font-size:14px; line-height:1.65; }
 
-.rlt3 .rlt3__video{ position:relative; margin:22px 0 0; width:100%; aspect-ratio:16/9;
+.rlt3 .rlt3__video{ position:relative; margin:auto 0 0; width:100%; aspect-ratio:16/9;
   border-radius:10px; overflow:hidden; border:1px solid var(--line); background:#0f0d0a; }
 .rlt3 .rlt3__video iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
 
@@ -441,9 +445,11 @@ function FilmeTrio({ itens }: { itens: Array<{ titulo: string; url?: string }> }
           const embed = url ? paraEmbed(url) : null
           return (
             <div className="rlt3__col" key={titulo}>
-              <p className="rlt3__eyebrow">{t.eyebrow}</p>
-              <h3 className="rlt3__titulo">{t.titulo}</h3>
-              {t.sub && <p className="rlt3__sub">{t.sub}</p>}
+              <div className="rlt3__texto">
+                <p className="rlt3__eyebrow">{t.eyebrow}</p>
+                <h3 className="rlt3__titulo">{t.titulo}</h3>
+                {t.sub && <p className="rlt3__sub">{t.sub}</p>}
+              </div>
               <div className="rlt3__video">
                 {embed
                   ? <iframe
