@@ -552,12 +552,30 @@ const FILME_ACOES_CSS = `
 type Accao = { n: string; titulo: string; texto: string; etiqueta: string;
   href?: string; copiar?: boolean; nota?: string }
 
+/**
+ * URL desta pagina em modo partilha: mesma pagina, mas sem navegacao para o
+ * resto do portal. Limpa parametros que nao devem viajar no link.
+ */
+function linkDePartilha(): string {
+  try {
+    const u = new URL(window.location.href)
+    u.searchParams.delete('admin')
+    u.searchParams.delete('freelancer')
+    u.searchParams.delete('from')
+    u.searchParams.delete('fromTitle')
+    u.searchParams.set('partilha', '1')
+    return u.toString()
+  } catch {
+    return window.location.href
+  }
+}
+
 /** Card com a accao; o "copiar link" guarda estado proprio para confirmar. */
 function AccaoCard({ a }: { a: Accao }) {
   const [copiado, setCopiado] = useState(false)
 
   const copiar = async () => {
-    const texto = window.location.href
+    const texto = linkDePartilha()
     let ok = false
     // Caminho moderno: exige HTTPS e a janela em foco.
     try {
@@ -1697,6 +1715,9 @@ function PortalSubPageContent() {
   // (sidebar, menu, Voltar, sino de notificações) para não acederem ao portal
   // completo dos noivos. Ativada com ?freelancer=1 no URL do iframe.
   const isFreelancerView  = searchParams.get('freelancer') === '1'
+  // Modo partilha (?partilha=1): mostra so esta pagina, sem qualquer
+  // navegacao para o resto do portal. Usado pelo botao "Copiar link".
+  const isPartilha        = searchParams.get('partilha') === '1'
   const isFilmePage       = title.toUpperCase().includes('FILME') || title.toUpperCase().includes('NOSSO FILME')
   const isSatisfacaoPage   = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
   const isCronogramaPage   = title.toUpperCase().includes('CRONOGRAMA')
@@ -2983,9 +3004,9 @@ function PortalSubPageContent() {
   }
 
   return (
-    <PortalShell sidebar={_atmSidebar} headerRight={isFreelancerView ? undefined : <NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
-    {/* Vista freelancer: esconde toda a navegação para só se ver o briefing */}
-    {isFreelancerView && (
+    <PortalShell sidebar={_atmSidebar} headerRight={isFreelancerView || isPartilha ? undefined : <NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+    {/* Vista freelancer ou partilha: esconde a navegação para só se ver esta página */}
+    {(isFreelancerView || isPartilha) && (
       <style dangerouslySetInnerHTML={{ __html: `
         .portal-atmosphere .sidebar nav,
         .portal-atmosphere .sidebar .nav-label,
