@@ -516,6 +516,124 @@ function FilmeTrio({ itens }: { itens: Array<{ titulo: string; url?: string }> }
   )
 }
 
+// ── Bloco 5: o que fazer a seguir, antes dos testemunhos ─────────────────
+const FILME_ACOES_FONTS = `@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300&family=Hanken+Grotesk:wght@300;400&family=Space+Mono:wght@400&display=swap');`
+
+const FILME_ACOES_CSS = `
+.rlac{ --g:#d8be93; --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.58);
+  --line:rgba(216,190,147,.12);
+  box-sizing:border-box; width:100%; margin:clamp(40px,7vh,72px) 0 clamp(30px,5vh,48px);
+  font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--tx);
+  display:grid; gap:clamp(16px,2vw,24px); grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+.rlac *{ box-sizing:border-box; }
+
+.rlac .rlac__card{ position:relative; overflow:hidden; display:flex; flex-direction:column;
+  border:1px solid var(--line); border-radius:14px; background:#100e0b;
+  padding:clamp(22px,2.4vw,30px); min-width:0;
+  transition:border-color .45s cubic-bezier(.16,1,.3,1); }
+.rlac .rlac__card::before{ content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(150deg, transparent 55%, rgba(243,237,226,.035) 100%); }
+.rlac .rlac__card:hover{ border-color:rgba(216,190,147,.3); }
+
+.rlac .rlac__n{ font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.3em; color:var(--g); opacity:.8; }
+.rlac .rlac__t{ margin:14px 0 0; font-family:'Jost',sans-serif; font-weight:200;
+  font-size:clamp(21px,2.1vw,28px); line-height:1.15; letter-spacing:-.01em; color:var(--tx); }
+.rlac .rlac__d{ margin:10px 0 0; color:var(--tx-mid); font-size:14px; line-height:1.65; }
+
+.rlac .rlac__a{ margin:22px 0 0; align-self:flex-start; display:inline-flex; align-items:center; gap:.7em;
+  font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase;
+  color:var(--g); background:none; border:0; padding:0; cursor:pointer; text-align:left;
+  transition:gap .35s cubic-bezier(.16,1,.3,1), opacity .3s; }
+.rlac .rlac__a:hover{ gap:1.1em; }
+.rlac .rlac__a[data-inerte="1"]{ color:var(--tx-mid); cursor:default; opacity:.55; }
+.rlac .rlac__a[data-inerte="1"]:hover{ gap:.7em; }
+`
+
+type Accao = { n: string; titulo: string; texto: string; etiqueta: string; href?: string; copiar?: boolean }
+
+/** Card com a accao; o "copiar link" guarda estado proprio para confirmar. */
+function AccaoCard({ a }: { a: Accao }) {
+  const [copiado, setCopiado] = useState(false)
+
+  const copiar = async () => {
+    const texto = window.location.href
+    let ok = false
+    // Caminho moderno: exige HTTPS e a janela em foco.
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(texto)
+        ok = true
+      }
+    } catch { /* cai para o metodo antigo */ }
+    // Recurso: funciona sem foco e em browsers mais antigos.
+    if (!ok) {
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = texto
+        ta.setAttribute('readonly', '')
+        ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none'
+        document.body.appendChild(ta)
+        ta.select()
+        ta.setSelectionRange(0, texto.length)
+        ok = document.execCommand('copy')
+        document.body.removeChild(ta)
+      } catch { ok = false }
+    }
+    if (!ok) return
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2500)
+  }
+
+  const corpo = (
+    <>
+      <p className="rlac__n">{a.n}</p>
+      <h3 className="rlac__t">{a.titulo}</h3>
+      <p className="rlac__d">{a.texto}</p>
+    </>
+  )
+
+  return (
+    <div className="rlac__card">
+      {corpo}
+      {a.copiar ? (
+        <button type="button" className="rlac__a" onClick={copiar}>
+          {copiado ? 'Copiado ✓' : a.etiqueta} {!copiado && <span aria-hidden>→</span>}
+        </button>
+      ) : a.href ? (
+        <a className="rlac__a" href={a.href} target="_blank" rel="noopener noreferrer">
+          {a.etiqueta} <span aria-hidden>→</span>
+        </a>
+      ) : (
+        // Sem link configurado, o card mantem-se mas a accao fica inerte,
+        // para nao prometer aos noivos um botao que nao leva a lado nenhum.
+        <span className="rlac__a" data-inerte="1">Em breve</span>
+      )}
+    </div>
+  )
+}
+
+/** Tres passos seguintes, apresentados antes dos testemunhos. */
+function FilmeAcoes({ settings }: { settings?: any }) {
+  const accoes: Accao[] = [
+    { n: '01', titulo: 'Descarregar', etiqueta: 'Abrir pasta',
+      texto: 'Guardem o filme e as fotografias em alta qualidade no vosso computador.',
+      href: settings?.downloadUrl || settings?.galerias_url || undefined },
+    { n: '02', titulo: 'Partilhar', etiqueta: 'Copiar link', copiar: true,
+      texto: 'Enviem este link a quem quiserem. A página é privada, só acede quem o tiver.' },
+    { n: '03', titulo: 'Deixar testemunho', etiqueta: 'Escrever',
+      texto: 'Se gostaram, umas palavras vossas ajudam-nos mais do que imaginam.',
+      href: settings?.testemunhoUrl || 'https://tally.so/r/pbKJry' },
+  ]
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: FILME_ACOES_FONTS + FILME_ACOES_CSS }} />
+      <div className="rlac">
+        {accoes.map(a => <AccaoCard key={a.n} a={a} />)}
+      </div>
+    </>
+  )
+}
+
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
 // Sub-paginas onde o texto introdutorio aparece dentro de um dropdown.
@@ -4608,6 +4726,12 @@ function PortalSubPageContent() {
                             renderedSections.push(<FilmeTitulo key="filme-titulo" />)
                           }
                         } else {
+                          // Os tres passos entram mesmo antes do cabecalho dos testemunhos.
+                          const ehTestemunhos = b.type === 'heading_2'
+                            && plainText(b.heading_2?.rich_text ?? []).trim().toUpperCase().startsWith('TESTEMUNHO')
+                          if (layoutFilmeNovo && ehTestemunhos) {
+                            renderedSections.push(<FilmeAcoes key="filme-acoes" settings={portalSettingsObj} />)
+                          }
                           renderedSections.push(
                             <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                           )
