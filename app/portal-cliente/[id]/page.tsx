@@ -257,17 +257,22 @@ const FILME_PLAYER_CSS = `
 .rlfp .rlfp__frame img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.72;
   transition:opacity .6s cubic-bezier(.16,1,.3,1); }
 .rlfp .rlfp__frame::after{ content:""; position:absolute; inset:0; pointer-events:none;
-  box-shadow:inset 0 0 120px 20px rgba(0,0,0,.55); }
+  box-shadow:inset 0 0 120px 20px rgba(0,0,0,.55);
+  /* mancha escura no centro: sem ela o botao dourado desaparece sobre
+     capas claras, porque #d8be93 e quase tao claro como a fotografia */
+  background:radial-gradient(circle at 50% 50%, rgba(0,0,0,.5) 0, rgba(0,0,0,.22) 24%, transparent 48%); }
 
 .rlfp .rlfp__ph{ position:absolute; inset:0; display:grid; place-items:center;
   font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.3em; text-transform:uppercase;
   color:var(--tx-dim); text-align:center; padding:0 20px; }
 
-.rlfp .rlfp__play{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+.rlfp .rlfp__play{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:1;
   width:clamp(56px,13%,132px); aspect-ratio:1; border-radius:50%;
-  border:1px solid rgba(243,237,226,.18); display:grid; place-items:center;
+  border:1px solid rgba(243,237,226,.28); display:grid; place-items:center;
+  background:rgba(11,10,8,.42); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
   transition:border-color .45s cubic-bezier(.16,1,.3,1), transform .45s cubic-bezier(.16,1,.3,1); }
 .rlfp .rlfp__play i{ width:76%; aspect-ratio:1; border-radius:50%; background:var(--g); display:grid; place-items:center;
+  box-shadow:0 6px 26px rgba(0,0,0,.5);
   transition:background .45s cubic-bezier(.16,1,.3,1); }
 .rlfp .rlfp__play svg{ width:26%; height:auto; fill:rgba(11,10,8,.72); margin-left:8%; }
 
