@@ -480,7 +480,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   </div>
                 ))}
               </div>
-              <a href="/login-noivos" target="_blank" rel="noopener noreferrer"
+              <a href="/portal-cliente" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center justify-center self-start px-8 py-3 text-[11px] tracking-[0.35em] uppercase transition-all hover:scale-[1.03]"
                 style={{ background: `${typo.accentColor}1F`, border: `0.5px solid ${typo.accentColor}73`, color: typo.accentColor }}>
                 Aceder

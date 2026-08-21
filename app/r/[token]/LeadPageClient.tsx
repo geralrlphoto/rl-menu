@@ -233,7 +233,7 @@ export const DEFAULT_CONTENT: PageContent = {
     },
     relive: {
       imageUrl: '',
-      buttonUrl: '/login-noivos',
+      buttonUrl: '/portal-cliente',
     },
     couple: {
       imageUrl: '',
