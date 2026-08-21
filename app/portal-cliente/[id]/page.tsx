@@ -15,6 +15,120 @@ import { AtendimentoThread } from '../atmosphere/AtendimentoThread'
 import { NoivosNotificationsBell } from '../atmosphere/NoivosNotificationsBell'
 import { FotografiasView, type FotografiasCard } from '../atmosphere/FotografiasView'
 
+// ── Hero "O vosso filme está pronto" ─────────────────────────────────────────
+const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+/** "15/09/2026" ou "2026-09-15" -> "15 de Setembro de 2026" */
+function dataPorExtenso(v?: string | null): string {
+  if (!v) return ''
+  const br = v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (br) return `${Number(br[1])} de ${MESES_PT[Number(br[2]) - 1] ?? ''} de ${br[3]}`
+  const iso = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (iso) return `${Number(iso[3])} de ${MESES_PT[Number(iso[2]) - 1] ?? ''} de ${iso[1]}`
+  return v
+}
+
+/** "ANA " -> "Ana" (os nomes vêm em maiúsculas das definições do portal) */
+function capitalizarNome(v?: string | null): string {
+  return (v ?? '').trim().toLowerCase()
+    .replace(/(^|[\s'’-])([a-zà-ÿ])/g, (_m, pre, ch) => pre + ch.toUpperCase())
+}
+
+/**
+ * Os dois primeiros nomes do casal. Preferem-se os campos proprios do portal;
+ * se estiverem vazios, parte-se o CLIENTE do evento (ex.: "ANA E MARIO").
+ */
+function nomesDoCasal(settings: any, evento: any): [string, string] {
+  const a = capitalizarNome(settings?.noiva)
+  const b = capitalizarNome(settings?.noivo)
+  if (a || b) return [a, b]
+  const partes = String(evento?.cliente ?? '')
+    .split(/\s+(?:e|&|\/|\+)\s+/i)
+    .map(capitalizarNome)
+    .filter(Boolean)
+  return [partes[0] ?? '', partes[1] ?? '']
+}
+
+// Selectores prefixados com `.rleh ` de proposito: sem isso, a regra base
+// `.portal-atmosphere h1,h2,h3` (0,1,1) ganhava a `.rleh__names` (0,1,0) e
+// impunha Jost aos nomes em vez do Cormorant Garamond.
+const FILME_HERO_CSS = `
+.rleh{ --g:#d8be93; --tx:#f3ede2; --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4); --line:rgba(243,237,226,.14);
+  box-sizing:border-box; width:100%; text-align:center;
+  padding:clamp(50px,9vh,110px) clamp(20px,5vw,60px) clamp(70px,10vh,120px);
+  font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--tx); position:relative; }
+.rleh *{ box-sizing:border-box; }
+
+.rleh .rleh__kick{ display:inline-flex; align-items:center; gap:.9em; justify-content:center;
+  font-family:'Space Mono',monospace; font-size:clamp(10px,1.1vw,12px); letter-spacing:.32em; text-transform:uppercase; color:var(--g); }
+.rleh .rleh__kick::before{ content:""; width:44px; height:1px; background:var(--g); opacity:.75; }
+
+.rleh .rleh__names{ margin:26px 0 0; font-family:'Cormorant Garamond',serif; font-weight:300;
+  font-size:clamp(46px,9vw,132px); line-height:1; letter-spacing:.01em; text-shadow:0 2px 40px rgba(0,0,0,.45); }
+.rleh .rleh__names em{ font-style:normal; color:var(--g); font-weight:300; }
+
+.rleh .rleh__rule{ display:flex; align-items:center; justify-content:center; gap:16px; margin:clamp(22px,3vh,34px) 0; }
+.rleh .rleh__rule span{ height:1px; width:clamp(46px,9vw,110px); background:var(--g); opacity:.65; }
+.rleh .rleh__rule b{ width:5px; height:5px; border-radius:50%; background:var(--g); }
+
+.rleh .rleh__date{ font-family:'Space Mono',monospace; font-size:clamp(10px,1.2vw,14px); letter-spacing:.34em;
+  text-transform:uppercase; color:var(--tx-mid); }
+.rleh .rleh__lede{ max-width:46ch; margin:clamp(26px,4vh,40px) auto 0; color:var(--tx-mid);
+  font-size:clamp(15px,1.15vw,18px); line-height:1.75; }
+
+.rleh .rleh__cue{ display:flex; flex-direction:column; align-items:center; gap:12px; margin-top:clamp(34px,5vh,56px);
+  font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.28em; text-transform:uppercase; color:var(--tx-dim); }
+.rleh .rleh__cue .bar{ width:1px; height:44px; background:var(--line); position:relative; overflow:hidden; }
+.rleh .rleh__cue .bar::after{ content:""; position:absolute; top:0; left:0; width:100%; height:40%; background:var(--g);
+  animation:rleh-cue 2.2s cubic-bezier(.16,1,.3,1) infinite; }
+@keyframes rleh-cue{ 0%{transform:translateY(-100%)} 60%,100%{transform:translateY(260%)} }
+
+/* entrada */
+.rleh .rleh__r{ animation:rleh-up 1.1s cubic-bezier(.16,1,.3,1) both; }
+.rleh .rleh__r:nth-child(1){ animation-delay:.05s; }
+.rleh .rleh__r:nth-child(2){ animation-delay:.16s; }
+.rleh .rleh__r:nth-child(3){ animation-delay:.28s; }
+.rleh .rleh__r:nth-child(4){ animation-delay:.38s; }
+.rleh .rleh__r:nth-child(5){ animation-delay:.48s; }
+.rleh .rleh__r:nth-child(6){ animation-delay:.6s; }
+@keyframes rleh-up{ from{opacity:0; transform:translateY(26px)} to{opacity:1; transform:none} }
+@media(prefers-reduced-motion:reduce){ .rleh .rleh__r{ animation:none; } .rleh .rleh__cue .bar::after{ animation:none; } }
+`
+
+const FILME_HERO_FONTS = `@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400&family=Hanken+Grotesk:wght@300;400&family=Space+Mono:wght@400&display=swap');`
+
+/**
+ * Hero de entrega do filme. Nomes e data vêm das definições do portal.
+ * O <style> fica FORA de .rleh de proposito: dentro, contava como
+ * :nth-child(1) e desalinhava todos os atrasos de animacao.
+ */
+function FilmeHero({ settings, evento }: { settings?: any; evento?: any }) {
+  const [a, b] = nomesDoCasal(settings, evento)
+  // A data e o local vem do registo do evento, a mesma fonte usada pelo
+  // contrato e pela ficha. As definicoes do portal servem so de recurso.
+  const data = dataPorExtenso(evento?.data_evento ?? settings?.dataFormatada ?? settings?.data)
+  const local = String(evento?.local ?? settings?.local ?? '').trim()
+  const linha = [data, local].filter(Boolean).join(' · ')
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: FILME_HERO_FONTS + FILME_HERO_CSS }} />
+      <div className="rleh">
+        <div className="rleh__kick rleh__r">O vosso filme está pronto</div>
+        {(a || b) && (
+          <h1 className="rleh__names rleh__r">
+            {a}{a && b ? <> <em>/</em> </> : null}{b}
+          </h1>
+        )}
+        <div className="rleh__rule rleh__r"><span /><b /><span /></div>
+        {linha && <div className="rleh__date rleh__r">{linha}</div>}
+        <p className="rleh__lede rleh__r">Foi um privilégio viver este dia convosco. Aqui fica a vossa história, para reviverem sempre que quiserem.</p>
+        <div className="rleh__cue rleh__r"><span className="bar" />Ver</div>
+      </div>
+    </>
+  )
+}
+
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
 // Sub-paginas onde o texto introdutorio aparece dentro de um dropdown.
@@ -4057,6 +4171,9 @@ function PortalSubPageContent() {
                               <IntroDropdown key="intro-dropdown" titulo="Sobre o vosso filme">
                                 <NotionBlocks blocks={introIdx.map(k => blocks[k])} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                               </IntroDropdown>
+                            )
+                            renderedSections.push(
+                              <FilmeHero key="filme-hero" settings={portalSettingsObj} evento={eventoData} />
                             )
                           }
                         } else {
