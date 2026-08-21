@@ -259,6 +259,47 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
 }
 
 /* ───────────────────────────────────────────────────────────────
+   Partilhar galeria — abre o menu de partilha do telemóvel; onde não
+   existir (a maioria dos desktops), copia o link.
+   ─────────────────────────────────────────────────────────────── */
+function ShareGalleryButton({ url }: { url: string }) {
+  const [copied, setCopied] = useState(false)
+
+  async function handleShare() {
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: 'A nossa galeria', url })
+        return
+      }
+    } catch {
+      return // o utilizador fechou o menu de partilha
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2200)
+    } catch {}
+  }
+
+  return (
+    <button type="button" className="fp-btn ghost" onClick={handleShare}>
+      {copied ? 'Link copiado' : 'Partilhar Galeria'}
+      {copied ? (
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 12l4 4 10-10" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" y1="2" x2="12" y2="15" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
    FotografiasView (default export)
    ─────────────────────────────────────────────────────────────── */
 export function FotografiasView(props: FotografiasViewProps) {
@@ -335,6 +376,9 @@ export function FotografiasView(props: FotografiasViewProps) {
                   ) : (
                     <span className="fp-btn locked">Aguardar</span>
                   )}
+                  {/* A galeria on-line é para partilhar: botão de partilha
+                      assim que houver link. */}
+                  {c.key === 'galerias' && available && <ShareGalleryButton url={c.url!} />}
                   {/* O card da selecção leva também o formulário: é por ali
                       que a escolha nos chega. */}
                   {c.key === 'selecao' && (
