@@ -101,6 +101,13 @@
   margin-right: auto;
 }
 
+/* Card da maqueta: mesmo desenho dos cards das galerias, sozinho e
+   centrado na secção. */
+.portal-atmosphere .fotos-page .fp-maquete-card {
+  max-width: 360px;
+  margin: 0 auto 6px;
+}
+
 /* ── Capa da galeria (og:image do link) no topo do card ─────── */
 .portal-atmosphere .fotos-page .fp-card .fp-card-cover {
   position: relative;

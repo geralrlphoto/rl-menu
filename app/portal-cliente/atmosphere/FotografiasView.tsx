@@ -88,6 +88,7 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
   const [album, setAlbum]   = useState<AlbumState>(null)
   const [saving, setSaving] = useState(false)
   const [feedback, setFeedback] = useState('')
+  const [cover, setCover]   = useState<string | null>(null)
 
   useEffect(() => {
     if (!portalRef) return
@@ -96,6 +97,19 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
       .then(d => setAlbum(d))
       .catch(() => {})
   }, [portalRef])
+
+  // Capa do card: a imagem da maqueta se existir, senão a og:image do link.
+  const imagemMaquete = album?.imagem_maquete_url ?? null
+  useEffect(() => {
+    if (imagemMaquete) { setCover(imagemMaquete); return }
+    if (!maqueteUrl) { setCover(null); return }
+    let alive = true
+    fetch(`/api/link-preview?url=${encodeURIComponent(maqueteUrl)}`)
+      .then(r => r.json())
+      .then(d => { if (alive && d?.image) setCover(d.image) })
+      .catch(() => {})
+    return () => { alive = false }
+  }, [imagemMaquete, maqueteUrl])
 
   async function handleAprovar() {
     if (!album?.id) return
@@ -154,13 +168,6 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
         <h2>Aprovação da <em>maqueta</em></h2>
       </div>
       <div className="fp-maquete-body">
-        {/* Imagem da maquete (se vier de Notion ou de campo dedicado) */}
-        {album?.imagem_maquete_url && (
-          <div className="fp-maquete-img">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={album.imagem_maquete_url} alt="Maquete do álbum" />
-          </div>
-        )}
 
         {/* Stats — só quando há registo do álbum */}
         {album?.id && (
@@ -178,25 +185,42 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
           </div>
         )}
 
-        {/* Botão "Ver Maqueta" — abre o link/PDF da maqueta para o cliente rever */}
-        <div className="fp-view-maquete">
-          {maqueteUrl ? (
-            <a
-              className="fp-approve-btn primary"
-              href={maqueteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Ver Maqueta
-              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
-              </svg>
-            </a>
-          ) : (
-            <span className="fp-approve-btn ghost" style={{ cursor: 'default', opacity: .55 }}>
-              Maqueta a aguardar
-            </span>
-          )}
+        {/* Card da maqueta — mesmo desenho dos cards das galerias, com a
+            capa por cima. */}
+        <div className="fp-maquete-card">
+          <article className={`fp-card${cover ? ' has-cover' : ''}`}>
+            <div className="fp-card-head">
+              <span className="fp-card-title">Maquete Álbum</span>
+              <span className={`fp-chip ${maqueteUrl ? 'available' : 'locked'}`}>
+                {maqueteUrl ? 'Disponível' : 'Aguardar'}
+              </span>
+            </div>
+            {cover && (
+              <div className="fp-card-cover">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={cover} alt="" loading="lazy" referrerPolicy="no-referrer" />
+              </div>
+            )}
+            <div className="fp-card-logo">
+              <div className="meta">
+                {!cover && <span className="mark">M</span>}
+                <div className="meta-title">Maqueta do Álbum</div>
+                <div className="meta-sub">A montagem que preparámos para o vosso álbum</div>
+              </div>
+            </div>
+            <div className="fp-card-foot">
+              {maqueteUrl ? (
+                <a className="fp-btn available" href={maqueteUrl} target="_blank" rel="noopener noreferrer">
+                  Ver Maqueta
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
+                  </svg>
+                </a>
+              ) : (
+                <span className="fp-btn locked">Aguardar</span>
+              )}
+            </div>
+          </article>
         </div>
 
         {/* Timeline 3 passos */}
