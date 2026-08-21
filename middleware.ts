@@ -173,6 +173,10 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/portal-batizado') ||
     (pathname.includes('/contrato') && !pathname.startsWith('/api')) ||
     // (/freelancer-view é tratado no bloco acima — requer fl_session OU rl_auth)
+    pathname.startsWith('/p/') ||   // páginas partilhadas por token assinado
+    // A própria rota decide quem pode emitir (admin ou noivos dessa referência);
+    // aqui só se deixa passar, senão o middleware barrava os noivos.
+    pathname.startsWith('/api/partilha-token') ||
     pathname.startsWith('/r/') ||
     pathname.startsWith('/b/') ||
     pathname.startsWith('/secao/') ||

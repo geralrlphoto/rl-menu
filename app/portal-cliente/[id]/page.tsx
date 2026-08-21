@@ -112,7 +112,7 @@ const FILME_HERO_FONTS = `@import url('https://fonts.googleapis.com/css2?family=
  * O <style> fica FORA de .rleh de proposito: dentro, contava como
  * :nth-child(1) e desalinhava todos os atrasos de animacao.
  */
-function FilmeHero({ settings, evento }: { settings?: any; evento?: any }) {
+export function FilmeHero({ settings, evento }: { settings?: any; evento?: any }) {
   const [a, b] = nomesDoCasal(settings, evento)
   // A data e o local vem do registo do evento, a mesma fonte usada pelo
   // contrato e pela ficha. As definicoes do portal servem so de recurso.
@@ -172,7 +172,7 @@ const FILME_TITULO_CSS = `
  * o <style> fica fora de .rlft para nao contar como :nth-child(1) e
  * desalinhar os atrasos.
  */
-function FilmeTitulo() {
+export function FilmeTitulo() {
   const ref = useRef<HTMLDivElement>(null)
   const [visivel, setVisivel] = useState(false)
 
@@ -312,7 +312,7 @@ const PLAY_SVG = (
  * Leitor 16:9 de um video. Com `url` e clicavel; sem url fica em espera,
  * mantendo o mesmo desenho. `imgUrl` e a miniatura vinda do Notion.
  */
-function FilmePlayer({ titulo, legenda, imgUrl, url }: {
+export function FilmePlayer({ titulo, legenda, imgUrl, url }: {
   titulo: string; legenda?: string; imgUrl?: string | null; url?: string
 }) {
   const [info, setInfo] = useState<VideoInfo>(() => (url && cacheVideoInfo.get(url)) || {})
@@ -493,7 +493,7 @@ function TrioVideo({ titulo, url }: { titulo: string; url?: string }) {
 }
 
 /** Fila dos tres videos secundarios, cada um com a sua copy por cima. */
-function FilmeTrio({ itens }: { itens: Array<{ titulo: string; url?: string }> }) {
+export function FilmeTrio({ itens }: { itens: Array<{ titulo: string; url?: string }> }) {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: FILME_TRIO_FONTS + FILME_TRIO_CSS }} />
@@ -556,18 +556,25 @@ type Accao = { n: string; titulo: string; texto: string; etiqueta: string;
  * URL desta pagina em modo partilha: mesma pagina, mas sem navegacao para o
  * resto do portal. Limpa parametros que nao devem viajar no link.
  */
-function linkDePartilha(): string {
+async function linkDePartilha(): Promise<string> {
+  const u = new URL(window.location.href)
+  const id = u.pathname.split('/').filter(Boolean).pop() ?? ''
+  const ref = u.searchParams.get('portalRef') ?? ''
+  const titulo = u.searchParams.get('title') ?? ''
+  // Preferido: token assinado, que so abre esta pagina e caduca.
   try {
-    const u = new URL(window.location.href)
-    u.searchParams.delete('admin')
-    u.searchParams.delete('freelancer')
-    u.searchParams.delete('from')
-    u.searchParams.delete('fromTitle')
-    u.searchParams.set('partilha', '1')
-    return u.toString()
-  } catch {
-    return window.location.href
-  }
+    const r = await fetch(
+      `/api/partilha-token?id=${encodeURIComponent(id)}&ref=${encodeURIComponent(ref)}&titulo=${encodeURIComponent(titulo)}`,
+      { cache: 'no-store' })
+    if (r.ok) {
+      const d = await r.json()
+      if (d?.url) return d.url as string
+    }
+  } catch { /* cai para o link simples */ }
+  // Recurso: mesma pagina em modo partilha, sem navegacao.
+  ;['admin', 'freelancer', 'from', 'fromTitle'].forEach(k => u.searchParams.delete(k))
+  u.searchParams.set('partilha', '1')
+  return u.toString()
 }
 
 /** Card com a accao; o "copiar link" guarda estado proprio para confirmar. */
@@ -575,7 +582,7 @@ function AccaoCard({ a }: { a: Accao }) {
   const [copiado, setCopiado] = useState(false)
 
   const copiar = async () => {
-    const texto = linkDePartilha()
+    const texto = await linkDePartilha()
     let ok = false
     // Caminho moderno: exige HTTPS e a janela em foco.
     try {
@@ -632,7 +639,7 @@ function AccaoCard({ a }: { a: Accao }) {
 }
 
 /** Tres passos seguintes, apresentados antes dos testemunhos. */
-function FilmeAcoes({ settings }: { settings?: any }) {
+export function FilmeAcoes({ settings }: { settings?: any }) {
   const accoes: Accao[] = [
     { n: '01', titulo: 'Descarregar', etiqueta: 'Abrir pasta',
       texto: 'Abram cada vídeo, façam o download e guardem no vosso computador.',
@@ -663,7 +670,7 @@ const DROPDOWN_INTRO_PAGES = ['32c22011-6d8a-80d5-bd1c-f22ddfbb59f2']
 const semTracos = (v: string) => v.replace(/-/g, '').toLowerCase()
 
 /** Bloco recolhivel para o texto introdutorio das sub-paginas. */
-function IntroDropdown({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+export function IntroDropdown({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
     <div className="mb-5 rounded-2xl border overflow-hidden"
