@@ -259,21 +259,25 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
 }
 
 /* ───────────────────────────────────────────────────────────────
-   Partilhar galeria — abre o menu de partilha do telemóvel; onde não
-   existir (a maioria dos desktops), copia o link.
+   Partilhar galeria — abre um painel com o link à mão, que fica aberto
+   nas visitas seguintes. Assim os noivos entram, copiam e passam o
+   link aos convidados sem terem de o ir procurar.
    ─────────────────────────────────────────────────────────────── */
-function ShareGalleryButton({ url }: { url: string }) {
+function ShareGalleryButton({ url, storageKey }: { url: string; storageKey: string }) {
+  const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
 
-  async function handleShare() {
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: 'A nossa galeria', url })
-        return
-      }
-    } catch {
-      return // o utilizador fechou o menu de partilha
-    }
+  useEffect(() => {
+    try { if (localStorage.getItem(storageKey) === '1') setOpen(true) } catch {}
+  }, [storageKey])
+
+  function toggle() {
+    const next = !open
+    setOpen(next)
+    try { localStorage.setItem(storageKey, next ? '1' : '0') } catch {}
+  }
+
+  async function copy() {
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
@@ -282,20 +286,34 @@ function ShareGalleryButton({ url }: { url: string }) {
   }
 
   return (
-    <button type="button" className="fp-btn ghost" onClick={handleShare}>
-      {copied ? 'Link copiado' : 'Partilhar Galeria'}
-      {copied ? (
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 12l4 4 10-10" />
-        </svg>
-      ) : (
+    <>
+      <button type="button" className="fp-btn ghost" onClick={toggle} aria-expanded={open}>
+        {open ? 'Esconder link' : 'Partilhar Galeria'}
         <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
           <polyline points="16 6 12 2 8 6" />
           <line x1="12" y1="2" x2="12" y2="15" />
         </svg>
+      </button>
+
+      {open && (
+        <div className="fp-share">
+          <div className="lbl">Link para os convidados</div>
+          <div className="row">
+            <input
+              type="text"
+              readOnly
+              value={url}
+              onFocus={e => e.currentTarget.select()}
+              aria-label="Link da galeria"
+            />
+            <button type="button" className="copy" onClick={copy}>
+              {copied ? 'Copiado' : 'Copiar'}
+            </button>
+          </div>
+        </div>
       )}
-    </button>
+    </>
   )
 }
 
@@ -378,7 +396,9 @@ export function FotografiasView(props: FotografiasViewProps) {
                   )}
                   {/* A galeria on-line é para partilhar: botão de partilha
                       assim que houver link. */}
-                  {c.key === 'galerias' && available && <ShareGalleryButton url={c.url!} />}
+                  {c.key === 'galerias' && available && (
+                    <ShareGalleryButton url={c.url!} storageKey={`rl_share_${props.portalRef ?? 'portal'}_${c.key}`} />
+                  )}
                   {/* O card da selecção leva também o formulário: é por ali
                       que a escolha nos chega. */}
                   {c.key === 'selecao' && (

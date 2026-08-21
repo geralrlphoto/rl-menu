@@ -272,6 +272,50 @@
   background: rgba(216,190,147,.12);
 }
 
+/* Painel com o link da galeria, para copiar e dar aos convidados. */
+.portal-atmosphere .fotos-page .fp-share {
+  margin-top: 10px;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--gold-line);
+  border-radius: 12px;
+  background: rgba(216,190,147,.05);
+}
+.portal-atmosphere .fotos-page .fp-share .lbl {
+  font-family: var(--fm);
+  font-size: 9.5px; letter-spacing: .22em; text-transform: uppercase;
+  color: var(--ink-4);
+}
+.portal-atmosphere .fotos-page .fp-share .row {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 8px;
+}
+.portal-atmosphere .fotos-page .fp-share input {
+  flex: 1; min-width: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(0,0,0,.35);
+  color: var(--ink-2);
+  font-family: var(--fb);
+  font-size: 11.5px;
+}
+.portal-atmosphere .fotos-page .fp-share .copy {
+  flex: none;
+  padding: 8px 12px;
+  border: 1px solid var(--gold-line);
+  border-radius: 8px;
+  background: rgba(216,190,147,.1);
+  color: var(--gold-soft);
+  font-family: var(--fm);
+  font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+  cursor: pointer;
+  transition: .25s;
+}
+.portal-atmosphere .fotos-page .fp-share .copy:hover {
+  color: var(--gold); border-color: var(--gold);
+  background: rgba(216,190,147,.18);
+}
+
 .portal-atmosphere .fotos-page .fp-card-foot .fp-foot-note {
   display: block; text-align: center;
   font-size: 10.5px; color: var(--ink-4);
