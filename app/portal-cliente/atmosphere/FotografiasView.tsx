@@ -264,6 +264,32 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
 export function FotografiasView(props: FotografiasViewProps) {
   const selecaoOk = props.selecaoAvailable ?? props.cards.some(c => c.key === 'selecao' && !!c.url)
 
+  // ── Capas das galerias ────────────────────────────────────────
+  // O Wfolio publica a capa escolhida em og:image. /api/link-preview lê-a
+  // do lado do servidor (o browser não pode, por CORS) e faz cache.
+  const [covers, setCovers] = useState<Record<string, string>>({})
+  const cardsKey = props.cards.map(c => `${c.key}:${c.url ?? ''}`).join('|')
+
+  useEffect(() => {
+    const targets = props.cards.filter(c => c.url)
+    if (targets.length === 0) { setCovers({}); return }
+    let alive = true
+    Promise.all(targets.map(async c => {
+      try {
+        const r = await fetch(`/api/link-preview?url=${encodeURIComponent(c.url!)}`)
+        const d = await r.json()
+        return d?.image ? ([c.key, d.image as string] as const) : null
+      } catch { return null }
+    })).then(rows => {
+      if (!alive) return
+      const next: Record<string, string> = {}
+      for (const row of rows) if (row) next[row[0]] = row[1]
+      setCovers(next)
+    })
+    return () => { alive = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cardsKey])
+
   return (
     <div className="fotos-page">
       {/* ── Título da galeria ────────────────────────────────── */}
@@ -274,19 +300,26 @@ export function FotografiasView(props: FotografiasViewProps) {
         {props.cards.map(c => {
           const available = Boolean(c.url && c.url.length > 0)
           const lead = c.lead ?? { kicker: c.title, title: c.heading, subtitle: c.caption }
+          const cover = covers[c.key]
           return (
             <div key={c.key} className="fp-grid-item">
               <SectionTitle size="sm" kicker={lead.kicker} title={lead.title} subtitle={lead.subtitle} />
-              <article className="fp-card">
+              <article className={`fp-card${cover ? ' has-cover' : ''}`}>
                 <div className="fp-card-head">
                   <span className="fp-card-title">{c.title}</span>
                   <span className={`fp-chip ${available ? 'available' : 'locked'}`}>
                     {available ? 'Disponível' : 'Aguardar'}
                   </span>
                 </div>
+                {cover && (
+                  <div className="fp-card-cover">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={cover} alt="" loading="lazy" referrerPolicy="no-referrer" />
+                  </div>
+                )}
                 <div className="fp-card-logo">
                   <div className="meta">
-                    <span className="mark">{c.mark}</span>
+                    {!cover && <span className="mark">{c.mark}</span>}
                     <div className="meta-title">{c.heading}</div>
                     {c.caption && <div className="meta-sub">{c.caption}</div>}
                   </div>
