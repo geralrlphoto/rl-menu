@@ -283,6 +283,9 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
   )
 }
 
+/** Cards cujo link se partilha com convidados. */
+const SHAREABLE = new Set(['galerias', 'prewedding'])
+
 /* ───────────────────────────────────────────────────────────────
    Partilhar galeria — abre um painel com o link à mão, que fica aberto
    nas visitas seguintes. Assim os noivos entram, copiam e passam o
@@ -418,9 +421,9 @@ export function FotografiasView(props: FotografiasViewProps) {
                   ) : (
                     <span className="fp-btn locked">Aguardar</span>
                   )}
-                  {/* A galeria on-line é para partilhar: botão de partilha
-                      assim que houver link. */}
-                  {c.key === 'galerias' && available && (
+                  {/* Galerias que fazem sentido partilhar com os convidados:
+                      botão de partilha assim que houver link. */}
+                  {SHAREABLE.has(c.key) && available && (
                     <ShareGalleryButton url={c.url!} storageKey={`rl_share_${props.portalRef ?? 'portal'}_${c.key}`} />
                   )}
                   {/* O card da selecção leva também o formulário: é por ali
