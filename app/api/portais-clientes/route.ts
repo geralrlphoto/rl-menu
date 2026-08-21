@@ -51,6 +51,54 @@ if (!global.notionBlocksCache) global.notionBlocksCache = new Map()
 const cache = global.notionBlocksCache
 const CACHE_TTL = 10 * 60 * 1000 // 10 minutes
 
+class NotionFetchError extends Error {
+  status: number
+  constructor(status: number, msg: string) {
+    super(msg)
+    this.name = 'NotionFetchError'
+    this.status = status
+  }
+}
+
+const espera = (ms: number) => new Promise(r => setTimeout(r, ms))
+
+/**
+ * Pedido ao Notion com repeticao em 429 e 5xx.
+ * Antes fazia-se `if (!res.ok) break`, o que devolvia uma pagina vazia sem
+ * qualquer sinal e depois ficava 10 minutos em cache. Agora falha alto.
+ */
+async function pedirNotion(url: string, tentativas = 3): Promise<any> {
+  for (let i = 0; i < tentativas; i++) {
+    const res = await fetch(url, { headers: notionHeaders, cache: 'no-store' })
+    if (res.ok) return res.json()
+
+    const recuperavel = res.status === 429 || res.status >= 500
+    if (!recuperavel || i === tentativas - 1) {
+      throw new NotionFetchError(res.status, `Notion respondeu ${res.status}`)
+    }
+    // Retry-After vem em segundos; limitado a 4s para nao prender o pedido
+    const ra = Number(res.headers.get('retry-after'))
+    const atraso = Number.isFinite(ra) && ra > 0 ? Math.min(ra * 1000, 4000) : 400 * 2 ** i
+    console.warn(`[portais-clientes] Notion ${res.status}, repete em ${atraso}ms (${i + 1}/${tentativas})`)
+    await espera(atraso)
+  }
+  throw new NotionFetchError(0, 'inalcancavel')
+}
+
+/** Corre `fn` sobre `itens` com no maximo `limite` pedidos simultaneos. */
+async function mapaLimitado<T, R>(itens: T[], limite: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const saida = new Array<R>(itens.length)
+  let proximo = 0
+  const obreiro = async () => {
+    while (proximo < itens.length) {
+      const i = proximo++
+      saida[i] = await fn(itens[i])
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(limite, itens.length) }, obreiro))
+  return saida
+}
+
 async function getBlocks(blockId: string): Promise<any[]> {
   const all: any[] = []
   let cursor: string | undefined
@@ -60,18 +108,15 @@ async function getBlocks(blockId: string): Promise<any[]> {
     url.searchParams.set('page_size', '100')
     if (cursor) url.searchParams.set('start_cursor', cursor)
 
-    const res = await fetch(url.toString(), {
-      headers: notionHeaders,
-      cache: 'no-store',
-    })
-    if (!res.ok) break
-    const data = await res.json()
+    const data = await pedirNotion(url.toString())
     all.push(...(data.results ?? []))
     cursor = data.has_more ? data.next_cursor : undefined
   } while (cursor)
 
+  // Antes era Promise.all sobre todos os filhos, o que disparava dezenas de
+  // pedidos ao mesmo tempo e era a propria causa dos 429. Agora vao a 3.
   const withChildren = all.filter(b => b.has_children)
-  const childResults = await Promise.all(withChildren.map(b => getBlocks(b.id)))
+  const childResults = await mapaLimitado(withChildren, 3, (b: any) => getBlocks(b.id))
   withChildren.forEach((b, i) => { b.children = childResults[i] })
 
   return all
@@ -120,9 +165,29 @@ export async function GET(req: Request) {
       notionSettings = cached.notionSettings
       notionSettingsBlockId = cached.notionSettingsBlockId
     } else {
-      const raw = await getBlocks(id)
-      ;({ content: blocks, notionSettings, notionSettingsBlockId } = extractNotionSettings(raw))
-      cache.set(id, { blocks, notionSettings, notionSettingsBlockId, ts: Date.now() })
+      try {
+        const raw = await getBlocks(id)
+        ;({ content: blocks, notionSettings, notionSettingsBlockId } = extractNotionSettings(raw))
+        // So se guarda em cache o que veio bem: um resultado falhado ficava
+        // 10 minutos a servir uma pagina em branco aos noivos.
+        cache.set(id, { blocks, notionSettings, notionSettingsBlockId, ts: Date.now() })
+      } catch (e: any) {
+        console.error(`[portais-clientes] Notion falhou para ${id}: ${e?.status ?? '?'} ${e?.message ?? e}`)
+        if (cached) {
+          // Serve o ultimo conteudo bom, mesmo fora de validade. Melhor um
+          // portal ligeiramente desactualizado do que um portal vazio.
+          console.warn(`[portais-clientes] a servir cache expirada para ${id}`)
+          blocks = cached.blocks
+          notionSettings = cached.notionSettings
+          notionSettingsBlockId = cached.notionSettingsBlockId
+        } else {
+          return NextResponse.json(
+            { blocks: [], settings: { hiddenNav: [] }, settingsBlockId: null,
+              error: 'notion_indisponivel', notionStatus: e?.status ?? 0 },
+            { status: 503, headers: { 'Cache-Control': 'no-store' } }
+          )
+        }
+      }
     }
 
     // ── 2. Fetch settings from Supabase (authoritative source) ────────────────
@@ -154,9 +219,14 @@ export async function GET(req: Request) {
 
     // Strip password before sending to client
     const { portalPassword, ...safeSettings } = settings as any
+    // Uma resposta sem blocos nunca deve ficar em cache no browser: era assim
+    // que um erro passageiro do Notion deixava a pagina em branco 5 minutos.
+    const cacheHeader = blocks.length > 0
+      ? 'private, max-age=300, stale-while-revalidate=300'
+      : 'no-store'
     return NextResponse.json(
       { blocks, settings: safeSettings, settingsBlockId, hasPassword: !!(portalPassword), isAdmin },
-      { headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=300' } }
+      { headers: { 'Cache-Control': cacheHeader } }
     )
   } catch (e: any) {
     console.error('[portais-clientes] Error:', e.message)

@@ -14,7 +14,11 @@ async function getBlocks(pageId: string): Promise<any[]> {
   const res = await fetch(`https://api.notion.com/v1/blocks/${pageId}/children?page_size=100`, {
     headers: notionH, cache: 'no-store',
   })
-  if (!res.ok) return []
+  if (!res.ok) {
+    // Nao rebentar aqui, mas deixar sinal: antes falhava em silencio absoluto.
+    console.error(`[portal-by-ref] Notion respondeu ${res.status} para ${pageId}`)
+    return []
+  }
   const data = await res.json()
   return data.results ?? []
 }
