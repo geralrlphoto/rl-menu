@@ -237,7 +237,19 @@ const FILME_PLAYER_CSS = `
 .rlfp button.rlfp__frame:hover .rlfp__play i{ background:#e4d3b3; }
 
 /* em espera: leitor inerte e um pouco recuado */
-.rlfp .rlfp__frame.is-wait .rlfp__play{ opacity:.78; }
+.rlfp .rlfp__frame.is-wait .rlfp__play{ opacity:.72; }
+
+/* distintivo de estado, sempre visivel sobre o painel */
+.rlfp .rlfp__badge{ position:absolute; top:14px; left:14px; z-index:2;
+  display:inline-flex; align-items:center; gap:.75em;
+  font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.24em; text-transform:uppercase;
+  color:var(--g); background:rgba(11,10,8,.6); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  border:1px solid rgba(216,190,147,.3); border-radius:40px; padding:7px 14px; white-space:nowrap; }
+.rlfp .rlfp__badge .pip{ width:5px; height:5px; border-radius:50%; background:var(--g); flex:none; }
+.rlfp .rlfp__frame.is-wait .rlfp__badge .pip{ animation:rlfp-pulse 2.4s ease-in-out infinite; }
+@keyframes rlfp-pulse{ 0%,100%{opacity:.3} 50%{opacity:1} }
+@media(prefers-reduced-motion:reduce){ .rlfp .rlfp__frame.is-wait .rlfp__badge .pip{ animation:none; } }
+@media(max-width:520px){ .rlfp .rlfp__badge{ top:10px; left:10px; font-size:9px; padding:6px 11px; letter-spacing:.2em; } }
 
 .rlfp .rlfp__cap{ margin:16px 0 0; text-align:center;
   font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--tx-mid); }
@@ -264,6 +276,7 @@ function FilmePlayer({ titulo, legenda, imgUrl, url }: {
         ? <img src={imgUrl} alt="" />
         : <span className="rlfp__ph">Miniatura · 16:9</span>}
       <span className="rlfp__play"><i>{PLAY_SVG}</i></span>
+      <span className="rlfp__badge"><span className="pip" />{url ? 'Ver agora' : 'Aguardar'}</span>
     </>
   )
   return (
@@ -273,7 +286,7 @@ function FilmePlayer({ titulo, legenda, imgUrl, url }: {
         {url
           ? <a className="rlfp__frame" href={url} target="_blank" rel="noopener noreferrer" aria-label={titulo}>{interior}</a>
           : <div className="rlfp__frame is-wait" role="img" aria-label={`${titulo} — ainda não disponível`}>{interior}</div>}
-        <p className="rlfp__cap">{legenda ?? titulo}</p>
+        <p className="rlfp__cap">{legenda ?? titulo}{!url && <b> · Aguardar</b>}</p>
       </div>
     </>
   )
