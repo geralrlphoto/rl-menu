@@ -257,9 +257,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   function setAbout(k: keyof PageContent['propostaPage']['about'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, about: { ...c.propostaPage.about, [k]: v } } }))
   }
-  function setRelive(k: keyof PageContent['propostaPage']['relive'], v: string) {
-    setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, relive: { ...c.propostaPage.relive, [k]: v } } }))
-  }
   const handleSlidePhotoUpload = async (slideId: string, file: File) => {
     setUploadingSlidePhoto(slideId)
     try {
@@ -295,16 +292,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   }
   function setGrandeDia(k: keyof PageContent['propostaPage']['grandeDia'], v: string) {
     setContent(c => ({ ...c, propostaPage: { ...c.propostaPage, grandeDia: { ...c.propostaPage.grandeDia, [k]: v } } }))
-  }
-  const handleReliveUpload = async (file: File) => {
-    setUploadingRelive(true)
-    try {
-      const fd = new FormData(); fd.append('file', file)
-      const res = await fetch('/api/upload-image', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (data.url) setRelive('imageUrl', data.url)
-    } catch {}
-    setUploadingRelive(false)
   }
   const handleGrandeDiaUpload = async (file: File) => {
     setUploadingRelive(true)
@@ -478,14 +465,14 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             <div className="flex flex-col gap-6 flex-1">
               <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-                Relive Wedding
+                Portal dos Noivos
               </h2>
               <div className="flex flex-col gap-3">
                 {[
-                  'Armazenamento seguro durante 10 anos',
-                  'Acesso privado com palavra-passe',
-                  'Todos os vídeos na plataforma',
-                  'Experiência cinematográfica completa',
+                  'Acesso privado com e-mail e palavra-passe',
+                  'Fotografias, vídeos e documentos num só lugar',
+                  'Seleção de fotos e estado das entregas',
+                  'Contrato, pagamentos e cronograma sempre à mão',
                 ].map((item, i) => (
                   <div key={i} className="flex items-start gap-3">
                     <span style={{ color: typo.accentColor, fontSize: '0.7rem', marginTop: '3px', flexShrink: 0 }}>◆</span>
@@ -493,7 +480,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   </div>
                 ))}
               </div>
-              <a href={pp.relive?.buttonUrl || 'https://relive.wedding'} target="_blank" rel="noopener noreferrer"
+              <a href="/login-noivos" target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center justify-center self-start px-8 py-3 text-[11px] tracking-[0.35em] uppercase transition-all hover:scale-[1.03]"
                 style={{ background: `${typo.accentColor}1F`, border: `0.5px solid ${typo.accentColor}73`, color: typo.accentColor }}>
                 Aceder
@@ -502,14 +489,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
             {/* Direita — imagem */}
             <div className="flex-shrink-0" style={{ width: 'clamp(300px,48vw,580px)' }}>
-              {pp.relive?.imageUrl
-                ? <img src={pp.relive.imageUrl} alt="Relive Wedding"
-                    className="w-full h-auto"
-                    style={{ borderRadius: '8px' }} />
-                : <div className="w-full flex items-center justify-center" style={{ height: '260px', background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
-                    <p className="text-[10px] tracking-widest text-white/15 uppercase">Imagem</p>
-                  </div>
-              }
+              <img src="/portal-noivos-login.webp" alt="Portal dos Noivos"
+                className="w-full h-auto"
+                style={{ borderRadius: '8px', border: `0.5px solid ${typo.accentColor}2E`, boxShadow: '0 18px 50px rgba(0,0,0,0.45)' }} />
             </div>
           </div>
         </div>
@@ -1257,7 +1239,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                     ['cover',  'Capa'],
                     ['about',  'Sobre Nós'],
                     ['intro',  'Quem são os noivos?'],
-                    ['relive', 'Relive Wedding'],
+                    ['relive', 'Portal dos Noivos'],
                     ['blank',  'Como imaginam o dia?'],
                     ['blank2', 'O Grande Dia'],
                     ['invest', 'Investimento'],
@@ -1293,19 +1275,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </AccordionSection>
 
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
-                <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide Relive Wedding</p>
-                <Field label="Imagem (PNG sem fundo)">
-                  <label className={`flex items-center justify-center gap-2 w-full py-2.5 rounded-lg text-xs cursor-pointer transition-all ${uploadingRelive ? 'opacity-50 pointer-events-none' : ''}`}
-                    style={{ background: 'rgba(255,255,255,0.04)', border: '1px dashed rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.35)' }}>
-                    <input type="file" accept="image/*" className="hidden"
-                      onChange={e => { const f = e.target.files?.[0]; if (f) handleReliveUpload(f) }} />
-                    {uploadingRelive ? '⏳ A carregar...' : pp.relive?.imageUrl ? '✓ Trocar imagem' : '⬆ Carregar imagem'}
-                  </label>
-                </Field>
-                <Field label="URL do botão ACEDER">
-                  <TInput value={pp.relive?.buttonUrl || ''} onChange={v => setRelive('buttonUrl', v)} placeholder="https://relive.wedding/..." />
-                </Field>
-
                 <div className="h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Slide "O Grande Dia"</p>
                 <Field label="Título">
