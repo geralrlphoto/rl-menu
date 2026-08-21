@@ -17,6 +17,38 @@ import { FotografiasView, type FotografiasCard } from '../atmosphere/Fotografias
 
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
+// Sub-paginas onde o texto introdutorio aparece dentro de um dropdown.
+// Em teste apenas nesta pagina; para alargar a todos os portais, trocar a
+// verificacao por `isFilmePage` em vez de consultar esta lista.
+const DROPDOWN_INTRO_PAGES = ['32c22011-6d8a-80d5-bd1c-f22ddfbb59f2']
+const semTracos = (v: string) => v.replace(/-/g, '').toLowerCase()
+
+/** Bloco recolhivel para o texto introdutorio das sub-paginas. */
+function IntroDropdown({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="mb-5 rounded-2xl border overflow-hidden"
+      style={{ borderColor: 'rgba(216,190,147,0.22)', background: 'rgba(216,190,147,0.02)' }}>
+      <button type="button" onClick={() => setOpen(o => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
+        style={{ color: '#d8be93' }}>
+        <span className="text-[10px] font-bold tracking-[0.3em] uppercase">{titulo}</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"
+          style={{ flex: 'none', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .35s cubic-bezier(.16,1,.3,1)' }}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+      {/* 0fr -> 1fr da altura animada sem precisar de medir o conteudo */}
+      <div style={{ display: 'grid', gridTemplateRows: open ? '1fr' : '0fr', transition: 'grid-template-rows .4s cubic-bezier(.16,1,.3,1)' }}>
+        <div style={{ overflow: 'hidden' }}>
+          <div className="px-5 pb-5">{children}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 function findImageBlocks(
@@ -3941,6 +3973,24 @@ function PortalSubPageContent() {
                         return imgChild.image?.type === 'external' ? imgChild.image.external?.url : imgChild.image?.file?.url
                       }
 
+                      // Paragrafos introdutorios (antes do primeiro bloco de cards).
+                      // Quando activo, entram todos num dropdown em vez de ficarem
+                      // sempre visiveis. O botao Voltar e os cards ficam de fora.
+                      const temCards = (b: Block) => b.type === 'column_list'
+                        ? (b.children ?? []).some((col: Block) =>
+                            (col.children ?? []).some((c: Block) =>
+                              c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')))
+                        : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
+                      const dropdownIntro = DROPDOWN_INTRO_PAGES.some(v => semTracos(v) === semTracos(String(id ?? '')))
+                      const primeiroCard = blocks.findIndex(temCards)
+                      const introIdx = !dropdownIntro ? [] : blocks
+                        .map((b, idx) => [b, idx] as [Block, number])
+                        .filter(([b, idx]) => (primeiroCard === -1 || idx < primeiroCard)
+                          && b.type === 'paragraph'
+                          && plainText(b.paragraph?.rich_text ?? []).trim().length > 0)
+                        .map(([, idx]) => idx)
+                      const introSet = new Set(introIdx)
+
                       // Render blocks, replacing column_list that contain callouts with card grid
                       const renderedSections: React.ReactNode[] = []
                       let i = 0
@@ -3999,6 +4049,16 @@ function PortalSubPageContent() {
                               })}
                             </div>
                           )
+                        } else if (introSet.has(i)) {
+                          // So o primeiro paragrafo desenha o dropdown; os restantes
+                          // ja vao la dentro, por isso sao saltados aqui.
+                          if (i === introIdx[0]) {
+                            renderedSections.push(
+                              <IntroDropdown key="intro-dropdown" titulo="Sobre o vosso filme">
+                                <NotionBlocks blocks={introIdx.map(k => blocks[k])} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
+                              </IntroDropdown>
+                            )
+                          }
                         } else {
                           renderedSections.push(
                             <NotionBlocks key={`block-${i}`} blocks={[b]} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
