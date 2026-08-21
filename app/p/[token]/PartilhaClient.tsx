@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { NotionBlocks, plainText, type Block } from '../../portal-cliente/NotionRenderer'
 import '../../portal-cliente/atmosphere/atmosphere.css'
 import {
-  FilmeHero, FilmeTitulo, FilmePlayer, FilmeTrio, FilmeAcoes,
+  FilmeHero, FilmeTitulo, FilmePlayer, FilmeTrio,
 } from '../../portal-cliente/[id]/page'
 
 /**
@@ -95,7 +95,9 @@ export default function PartilhaClient({ id, videos, casal }: {
       {secundarios.length > 0 && (
         <FilmeTrio itens={secundarios.map(c => ({ titulo: c.titulo, url: urlDo(c.T) || undefined }))} />
       )}
-      <FilmeAcoes settings={null} />
+      {/* Sem os tres passos: descarregar, partilhar e deixar testemunho sao
+          accoes dos noivos. Quem recebe o link so vem ver o filme, e o
+          "Copiar link" nem sequer teria token para emitir. */}
       {depois.length > 0 && <NotionBlocks blocks={depois} />}
     </Moldura>
   )
