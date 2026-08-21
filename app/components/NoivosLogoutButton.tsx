@@ -11,6 +11,24 @@
 
 import { useState } from 'react'
 
+/**
+ * Posição do botão flutuante.
+ * Desktop: canto superior direito (a sidebar do portal fica à esquerda).
+ * Mobile (<=980px): o header colapsa numa barra única com logo, sino e o
+ * botão "☰ Menu" encostado à direita — o botão Sair ficava por cima do menu.
+ * Aí passa para o canto inferior direito, respeitando a safe-area do iOS.
+ */
+const FAB_CSS = `
+.nv-logout-fab { position: fixed; top: 16px; right: 16px; z-index: 60; }
+@media (max-width: 980px) {
+  .nv-logout-fab {
+    top: auto;
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+    right: 16px;
+  }
+}
+`
+
 export function NoivosLogoutButton({
   referencia,
   isAdmin = false,
@@ -64,10 +82,12 @@ export function NoivosLogoutButton({
   }
 
   return (
+    <>
+    <style dangerouslySetInnerHTML={{ __html: FAB_CSS }} />
     <button
       onClick={handleLogout}
       disabled={signingOut}
-      className="group fixed top-4 right-4 z-[60] flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur transition-all disabled:opacity-40"
+      className="nv-logout-fab group flex items-center gap-2 px-3.5 py-2 rounded-full backdrop-blur transition-all disabled:opacity-40"
       style={{
         background: 'rgba(20,12,6,0.55)',
         border: '1px solid rgba(201,164,92,0.30)',
@@ -95,5 +115,6 @@ export function NoivosLogoutButton({
         {signingOut ? 'A sair…' : 'Sair'}
       </span>
     </button>
+    </>
   )
 }
