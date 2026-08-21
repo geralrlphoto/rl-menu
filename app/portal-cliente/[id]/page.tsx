@@ -549,7 +549,8 @@ const FILME_ACOES_CSS = `
 .rlac .rlac__a[data-inerte="1"]:hover{ gap:.7em; }
 `
 
-type Accao = { n: string; titulo: string; texto: string; etiqueta: string; href?: string; copiar?: boolean }
+type Accao = { n: string; titulo: string; texto: string; etiqueta: string;
+  href?: string; copiar?: boolean; nota?: string }
 
 /** Card com a accao; o "copiar link" guarda estado proprio para confirmar. */
 function AccaoCard({ a }: { a: Accao }) {
@@ -604,9 +605,9 @@ function AccaoCard({ a }: { a: Accao }) {
           {a.etiqueta} <span aria-hidden>→</span>
         </a>
       ) : (
-        // Sem link configurado, o card mantem-se mas a accao fica inerte,
-        // para nao prometer aos noivos um botao que nao leva a lado nenhum.
-        <span className="rlac__a" data-inerte="1">Em breve</span>
+        // Sem link, o rodape do card fica inerte: ou a nota do proprio card,
+        // ou "Em breve", para nao prometer um botao que nao leva a lado nenhum.
+        <span className="rlac__a" data-inerte="1">{a.nota ?? 'Em breve'}</span>
       )}
     </div>
   )
@@ -616,7 +617,8 @@ function AccaoCard({ a }: { a: Accao }) {
 function FilmeAcoes({ settings }: { settings?: any }) {
   const accoes: Accao[] = [
     { n: '01', titulo: 'Descarregar', etiqueta: 'Abrir pasta',
-      texto: 'Guardem o filme e as fotografias em alta qualidade no vosso computador.',
+      texto: 'Abram cada vídeo, façam o download e guardem no vosso computador.',
+      nota: 'Disponível cerca de 20 dias',
       href: settings?.downloadUrl || settings?.galerias_url || undefined },
     { n: '02', titulo: 'Partilhar', etiqueta: 'Copiar link', copiar: true,
       texto: 'Enviem este link a quem quiserem. A página é privada, só acede quem o tiver.' },
