@@ -417,25 +417,6 @@ export function FotografiasView(props: FotografiasViewProps) {
         })}
       </div>
 
-      {/* ── Callout · Enviar Fotos ───────────────────────────── */}
-      <section className="fp-callout">
-        <div className="eyebrow">Enviar Selecção</div>
-        <h3>Esta é a forma como recebemos a <em>vossa escolha</em></h3>
-        <p>
-          Noivos, este formulário é para vocês nos enviarem a vossa escolha através dele.
-          De outra forma não é considerado entregue. O processo é simples e fica imediatamente
-          registado no vosso portal.
-        </p>
-        <div className="actions">
-          <a className="atm-btn solid" href={props.enviarFotosUrl} target="_blank" rel="noopener noreferrer">
-            Enviar Selecção
-            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M7 17 17 7" /><path d="M9 7h8v8" />
-            </svg>
-          </a>
-        </div>
-      </section>
-
       {/* ── Texto editorial · Seleção de Fotografias ─────────── */}
       <section className="fp-section">
         <div className="eyebrow">Seleção</div>
