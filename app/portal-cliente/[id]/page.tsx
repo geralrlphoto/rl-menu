@@ -57,7 +57,8 @@ const FILME_HERO_CSS = `
 .rleh{ --g:#d8be93; --tx:#f3ede2; --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4); --line:rgba(243,237,226,.14);
   box-sizing:border-box; width:100%; text-align:center;
   padding:clamp(50px,9vh,110px) clamp(20px,5vw,60px) clamp(70px,10vh,120px);
-  font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--tx); position:relative; }
+  font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--tx); position:relative;
+  container-type:inline-size; }
 .rleh *{ box-sizing:border-box; }
 
 .rleh .rleh__kick{ display:inline-flex; align-items:center; gap:.9em; justify-content:center;
@@ -65,7 +66,15 @@ const FILME_HERO_CSS = `
 .rleh .rleh__kick::before{ content:""; width:44px; height:1px; background:var(--g); opacity:.75; }
 
 .rleh .rleh__names{ margin:26px 0 0; font-family:'Cormorant Garamond',serif; font-weight:300;
-  font-size:clamp(46px,9vw,132px); line-height:1; letter-spacing:.01em; text-shadow:0 2px 40px rgba(0,0,0,.45); }
+  line-height:1; letter-spacing:.01em; text-shadow:0 2px 40px rgba(0,0,0,.45);
+  white-space:nowrap; max-width:100%;
+  /* recurso para browsers sem container queries */
+  font-size:clamp(34px,7vw,96px);
+  /* --n = numero de caracteres, vindo do React. 0.47em e a largura media
+     por caractere do Cormorant 300 (medida: 0.436) com folga. Assim a
+     linha ocupa ~92% da coluna, seja qual for o comprimento dos nomes. */
+  --n:12;
+  font-size:clamp(26px, calc(92cqi / (var(--n) * 0.47)), 132px); }
 .rleh .rleh__names em{ font-style:normal; color:var(--g); font-weight:300; }
 
 .rleh .rleh__rule{ display:flex; align-items:center; justify-content:center; gap:16px; margin:clamp(22px,3vh,34px) 0; }
@@ -116,7 +125,8 @@ function FilmeHero({ settings, evento }: { settings?: any; evento?: any }) {
       <div className="rleh">
         <div className="rleh__kick rleh__r">O vosso filme está pronto</div>
         {(a || b) && (
-          <h1 className="rleh__names rleh__r">
+          <h1 className="rleh__names rleh__r"
+            style={{ ['--n' as string]: String(`${a}${a && b ? ' / ' : ''}${b}`.length) } as React.CSSProperties}>
             {a}{a && b ? <> <em>/</em> </> : null}{b}
           </h1>
         )}
