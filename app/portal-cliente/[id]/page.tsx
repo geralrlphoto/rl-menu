@@ -201,6 +201,84 @@ function FilmeTitulo() {
   )
 }
 
+// ── Bloco 3: leitor 16:9 por video ───────────────────────────────────
+const FILME_PLAYER_FONTS = `@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400&display=swap');`
+
+const FILME_PLAYER_CSS = `
+.rlfp{ --g:#d8be93; --ink:#0b0a08; --tx-mid:rgba(243,237,226,.55); --tx-dim:rgba(243,237,226,.22);
+  box-sizing:border-box; width:100%; margin:clamp(18px,3vh,30px) 0 0; }
+.rlfp *{ box-sizing:border-box; }
+
+.rlfp .rlfp__frame{ position:relative; width:100%; aspect-ratio:16/9; overflow:hidden; border-radius:14px;
+  border:1px solid rgba(216,190,147,.12); background:#0f0d0a; display:block; padding:0;
+  background-image:repeating-linear-gradient(135deg, rgba(243,237,226,.022) 0 2px, transparent 2px 11px);
+  transition:border-color .45s cubic-bezier(.16,1,.3,1); }
+.rlfp .rlfp__frame img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.5;
+  transition:opacity .6s cubic-bezier(.16,1,.3,1); }
+.rlfp .rlfp__frame::after{ content:""; position:absolute; inset:0; pointer-events:none;
+  box-shadow:inset 0 0 120px 20px rgba(0,0,0,.55); }
+
+.rlfp .rlfp__ph{ position:absolute; inset:0; display:grid; place-items:center;
+  font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.3em; text-transform:uppercase;
+  color:var(--tx-dim); text-align:center; padding:0 20px; }
+
+.rlfp .rlfp__play{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:clamp(56px,13%,132px); aspect-ratio:1; border-radius:50%;
+  border:1px solid rgba(243,237,226,.18); display:grid; place-items:center;
+  transition:border-color .45s cubic-bezier(.16,1,.3,1), transform .45s cubic-bezier(.16,1,.3,1); }
+.rlfp .rlfp__play i{ width:76%; aspect-ratio:1; border-radius:50%; background:var(--g); display:grid; place-items:center;
+  transition:background .45s cubic-bezier(.16,1,.3,1); }
+.rlfp .rlfp__play svg{ width:26%; height:auto; fill:rgba(11,10,8,.72); margin-left:8%; }
+
+.rlfp button.rlfp__frame{ cursor:pointer; }
+.rlfp button.rlfp__frame:hover{ border-color:rgba(216,190,147,.32); }
+.rlfp button.rlfp__frame:hover img{ opacity:.66; }
+.rlfp button.rlfp__frame:hover .rlfp__play{ border-color:rgba(216,190,147,.55); transform:translate(-50%,-50%) scale(1.06); }
+.rlfp button.rlfp__frame:hover .rlfp__play i{ background:#e4d3b3; }
+
+/* em espera: leitor inerte e um pouco recuado */
+.rlfp .rlfp__frame.is-wait .rlfp__play{ opacity:.78; }
+
+.rlfp .rlfp__cap{ margin:16px 0 0; text-align:center;
+  font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--tx-mid); }
+.rlfp .rlfp__cap b{ font-weight:400; color:var(--tx-dim); }
+`
+
+const PLAY_SVG = (
+  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+)
+
+/**
+ * Leitor 16:9 de um video. Com `url` e clicavel; sem url fica em espera,
+ * mantendo o mesmo desenho. `imgUrl` e a miniatura vinda do Notion.
+ */
+function FilmePlayer({ titulo, legenda, imgUrl, url }: {
+  titulo: string; legenda?: string; imgUrl?: string | null; url?: string
+}) {
+  // Em espera fica o painel limpo; a miniatura so entra quando ja ha video,
+  // senao mostrava-se a imagem generica do Notion por tras do botao.
+  const interior = (
+    <>
+      {url && imgUrl
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={imgUrl} alt="" />
+        : <span className="rlfp__ph">Miniatura · 16:9</span>}
+      <span className="rlfp__play"><i>{PLAY_SVG}</i></span>
+    </>
+  )
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: FILME_PLAYER_FONTS + FILME_PLAYER_CSS }} />
+      <div className="rlfp">
+        {url
+          ? <a className="rlfp__frame" href={url} target="_blank" rel="noopener noreferrer" aria-label={titulo}>{interior}</a>
+          : <div className="rlfp__frame is-wait" role="img" aria-label={`${titulo} — ainda não disponível`}>{interior}</div>}
+        <p className="rlfp__cap">{legenda ?? titulo}</p>
+      </div>
+    </>
+  )
+}
+
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
 // Sub-paginas onde o texto introdutorio aparece dentro de um dropdown.
@@ -4168,6 +4246,8 @@ function PortalSubPageContent() {
                               c.type === 'callout' && (c.children ?? []).some((ch: Block) => ch.type === 'image')))
                         : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
                       const dropdownIntro = DROPDOWN_INTRO_PAGES.some(v => semTracos(v) === semTracos(String(id ?? '')))
+                      // Mesmo ambito de teste do dropdown: leitores 16:9 em vez da grelha.
+                      const layoutFilmeNovo = dropdownIntro
                       const primeiroCard = blocks.findIndex(temCards)
                       const introIdx = !dropdownIntro ? [] : blocks
                         .map((b, idx) => [b, idx] as [Block, number])
@@ -4191,7 +4271,33 @@ function PortalSubPageContent() {
                           : b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')
                             ? [b] : []
 
-                        if (cardsInBlock.length > 0) {
+                        if (cardsInBlock.length > 0 && layoutFilmeNovo) {
+                          // Layout novo: um leitor 16:9 por video, empilhados,
+                          // em vez da grelha de cards pequenos.
+                          renderedSections.push(
+                            <div key={`players-${i}`} className="my-4">
+                              {cardsInBlock.map((callout: Block) => {
+                                const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
+                                const _ct = cardTitle.toUpperCase()
+                                const url = pageCalloutLinks[cardTitle] || (
+                                  _ct.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
+                                  _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
+                                  _ct.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
+                                  _ct.includes('TEASER') || _ct.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
+                                ) || ''
+                                return (
+                                  <FilmePlayer
+                                    key={cardTitle}
+                                    titulo={cardTitle}
+                                    legenda={_ct.includes('WEDDING FILM') ? 'Filme completo · aprox. 20 min' : cardTitle}
+                                    imgUrl={getImgUrl(callout)}
+                                    url={url || undefined}
+                                  />
+                                )
+                              })}
+                            </div>
+                          )
+                        } else if (cardsInBlock.length > 0) {
                           renderedSections.push(
                             <div key={`cards-${i}`} className="grid grid-cols-2 gap-3 my-4">
                               {cardsInBlock.map((callout: Block) => {
