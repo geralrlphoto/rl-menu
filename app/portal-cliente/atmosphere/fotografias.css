@@ -92,6 +92,15 @@
   color: #d8a59b;
 }
 
+/* ── Centrar a coluna de conteúdo ────────────────────────────
+   O .body do artigo tem max-width:680px sem margem automática, por
+   isso encosta à esquerda dentro do artigo (que é mais largo). Nesta
+   página centramo-lo. Onde :has() não existir, fica como estava. */
+.portal-atmosphere .subarticle .body:has(.fotos-page) {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* ── Capa da galeria (og:image do link) no topo do card ─────── */
 .portal-atmosphere .fotos-page .fp-card .fp-card-cover {
   position: relative;
