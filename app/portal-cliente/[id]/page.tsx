@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import React, { useEffect, useState, useCallback, Suspense } from 'react'
+import React, { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer'
@@ -134,6 +134,68 @@ function FilmeHero({ settings, evento }: { settings?: any; evento?: any }) {
         {linha && <div className="rleh__date rleh__r">{linha}</div>}
         <p className="rleh__lede rleh__r">Foi um privilégio viver este dia convosco. Aqui fica a vossa história, para reviverem sempre que quiserem.</p>
         <div className="rleh__cue rleh__r"><span className="bar" />Ver</div>
+      </div>
+    </>
+  )
+}
+
+// ── Bloco 2: titulo do filme, revelado ao entrar no ecra ─────────────────────
+const FILME_TITULO_FONTS = `@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;1,200&family=Hanken+Grotesk:wght@300;400&family=Space+Mono:wght@400&display=swap');`
+
+// Tal como no hero, os selectores levam o prefixo `.rlft ` para ganharem a
+// `.portal-atmosphere h1,h2,h3`, que de outra forma impunha os seus proprios
+// line-height e letter-spacing ao titulo.
+const FILME_TITULO_CSS = `
+.rlft{ --g:#d8be93; --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.6);
+  box-sizing:border-box; width:100%; text-align:center;
+  padding:clamp(40px,6vh,80px) clamp(20px,5vw,60px) clamp(20px,3vh,34px);
+  font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--tx); }
+.rlft *{ box-sizing:border-box; }
+.rlft .rlft__kick{ display:inline-flex; align-items:center; gap:.9em; justify-content:center;
+  font-family:'Space Mono',monospace; font-size:clamp(10px,1.1vw,12px); letter-spacing:.32em; text-transform:uppercase; color:var(--g); }
+.rlft .rlft__kick::before{ content:""; width:44px; height:1px; background:var(--g); opacity:.75; }
+.rlft .rlft__title{ margin:22px auto 0; font-family:'Jost',sans-serif; font-weight:200;
+  font-size:clamp(30px,5.4vw,76px); line-height:1.06; letter-spacing:-.02em; max-width:22ch; }
+.rlft .rlft__title em{ font-style:italic; color:var(--g); }
+.rlft .rlft__sub{ max-width:46ch; margin:22px auto 0; color:var(--tx-mid); font-size:clamp(15px,1.1vw,17px); line-height:1.7; }
+
+.rlft.js .rlft__r{ opacity:0; transform:translateY(24px); }
+.rlft .rlft__r{ transition:opacity 1s cubic-bezier(.16,1,.3,1), transform 1s cubic-bezier(.16,1,.3,1); }
+.rlft.js.is-in .rlft__r{ opacity:1; transform:none; }
+.rlft.js.is-in .rlft__r:nth-child(2){ transition-delay:.1s; }
+.rlft.js.is-in .rlft__r:nth-child(3){ transition-delay:.2s; }
+@media(prefers-reduced-motion:reduce){ .rlft.js .rlft__r{ opacity:1; transform:none; } }
+`
+
+/**
+ * Revela-se quando entra no ecra. O <script> do original vira efeito React;
+ * o <style> fica fora de .rlft para nao contar como :nth-child(1) e
+ * desalinhar os atrasos.
+ */
+function FilmeTitulo() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visivel, setVisivel] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (!('IntersectionObserver' in window)) { setVisivel(true); return }
+    const io = new IntersectionObserver(entradas => {
+      entradas.forEach(e => { if (e.isIntersecting) { setVisivel(true); io.disconnect() } })
+    }, { threshold: 0.2 })
+    io.observe(el)
+    // rede de seguranca do original: mostra na mesma ao fim de 1,5s
+    const t = setTimeout(() => setVisivel(true), 1500)
+    return () => { io.disconnect(); clearTimeout(t) }
+  }, [])
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: FILME_TITULO_FONTS + FILME_TITULO_CSS }} />
+      <div ref={ref} className={`rlft js${visivel ? ' is-in' : ''}`}>
+        <div className="rlft__kick rlft__r">Filme completo</div>
+        <h2 className="rlft__title rlft__r">O vosso <em>dia</em>, do início ao fim.</h2>
+        <p className="rlft__sub rlft__r">Recomendamos verem com som, em ecrã inteiro e sem pressa. Vale a pena.</p>
       </div>
     </>
   )
@@ -4185,6 +4247,7 @@ function PortalSubPageContent() {
                             renderedSections.push(
                               <FilmeHero key="filme-hero" settings={portalSettingsObj} evento={eventoData} />
                             )
+                            renderedSections.push(<FilmeTitulo key="filme-titulo" />)
                           }
                         } else {
                           renderedSections.push(
