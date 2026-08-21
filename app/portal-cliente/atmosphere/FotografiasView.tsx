@@ -40,9 +40,10 @@ export type FotografiasCard = {
 export type FotografiasViewProps = {
   /** Tally URL para Enviar Selecção */
   enviarFotosUrl: string
-  /** Bloqueado vs disponível para legenda da secção */
+  /** Já não é usado: servia a legenda da secção "Seleção de Fotografias",
+   *  entretanto removida. Mantido para não partir quem já o passa. */
   selecaoAvailable?: boolean
-  /** Os 4 cartões 2×2 */
+  /** Os 4 cartões, dois por linha */
   cards: FotografiasCard[]
   /** URL da imagem separadora (fallback: placeholder) */
   separatorImageUrl?: string | null
@@ -321,7 +322,6 @@ function ShareGalleryButton({ url, storageKey }: { url: string; storageKey: stri
    FotografiasView (default export)
    ─────────────────────────────────────────────────────────────── */
 export function FotografiasView(props: FotografiasViewProps) {
-  const selecaoOk = props.selecaoAvailable ?? props.cards.some(c => c.key === 'selecao' && !!c.url)
 
   // ── Capas das galerias ────────────────────────────────────────
   // O Wfolio publica a capa escolhida em og:image. /api/link-preview lê-a
@@ -416,29 +416,6 @@ export function FotografiasView(props: FotografiasViewProps) {
           )
         })}
       </div>
-
-      {/* ── Texto editorial · Seleção de Fotografias ─────────── */}
-      <section className="fp-section">
-        <div className="eyebrow">Seleção</div>
-        <h2>Seleção de <em>Fotografias</em></h2>
-        <hr className="lede-rule" />
-        <p>
-          A partir do dia em que disponibilizarmos a galeria para seleção, têm acesso à pré seleção
-          das fotos do vosso casamento. <strong>Escolhem as imagens preferidas</strong> e enviam nos
-          a lista pelo formulário acima. É a partir dessa selecção que preparamos o vosso álbum.
-        </p>
-        <p>
-          A galeria online fica disponível durante <strong>vários meses</strong> para partilharem com
-          familiares e amigos. Após a galeria de seleção fechar, o atelier inicia a montagem da
-          maqueta, que depois aprovam aqui dentro do portal.
-        </p>
-        <div className={`fp-caption${selecaoOk ? '' : ' locked'}`}>
-          <strong>{selecaoOk ? 'Galeria de seleção disponível.' : 'Galeria de seleção a aguardar abertura.'}</strong>{' '}
-          {selecaoOk
-            ? 'Podem entrar agora e enviar a vossa lista.'
-            : 'Quando a galeria estiver pronta, o cartão fica activo e podem entrar a partir daqui.'}
-        </div>
-      </section>
 
       {/* ── Separador de imagem ─────────────────────────────── */}
       <div className="fp-sep">
