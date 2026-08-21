@@ -357,6 +357,115 @@ function FilmePlayer({ titulo, legenda, imgUrl, url }: {
   )
 }
 
+// ── Bloco 4: fila dos tres videos secundarios ────────────────────────────
+/** Link de video -> URL de incorporacao. Devolve null se nao reconhecer. */
+function paraEmbed(url: string): string | null {
+  const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?dnt=1`
+  const yt = idYouTube(url)
+  if (yt) return `https://www.youtube.com/embed/${yt}?rel=0`
+  const gd = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/)
+  if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview`
+  return null
+}
+
+type TextoVideo = { eyebrow: string; titulo: React.ReactNode; sub: string }
+
+/** Copy de cada um dos tres, indexada pelo titulo do card no Notion. */
+function textoDoVideo(tituloCard: string): TextoVideo {
+  const t = tituloCard.toUpperCase()
+  if (t.includes('TEASER') || t.includes('TRAILER')) return {
+    eyebrow: 'Trailer',
+    titulo: <>Um <em>vislumbre</em> do vosso dia.</>,
+    sub: 'Curto e intenso, feito para partilhar com quem quiserem.',
+  }
+  if (t.includes('PRÉ-WEDDING') || t.includes('PRE-WEDDING')) return {
+    eyebrow: 'Pré-Wedding',
+    titulo: <>Onde tudo <em>começou</em>.</>,
+    sub: 'A sessão que fizemos antes do grande dia, quando ainda contávamos os meses.',
+  }
+  if (t.includes('SAME DAY')) return {
+    eyebrow: 'Same Day Edit',
+    titulo: <>O filme que viram <em>no próprio dia</em>.</>,
+    sub: 'Editado em horas, mostrado à mesa. As imagens ainda quentes do vosso casamento.',
+  }
+  return { eyebrow: tituloCard, titulo: tituloCard, sub: '' }
+}
+
+const FILME_TRIO_FONTS = `@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;1,200&family=Hanken+Grotesk:wght@300;400&family=Space+Mono:wght@400&display=swap');`
+
+const FILME_TRIO_CSS = `
+.rlt3{ --g:#d8be93; --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.58); --tx-dim:rgba(243,237,226,.22);
+  --line:rgba(243,237,226,.12);
+  box-sizing:border-box; width:100%; margin:clamp(34px,6vh,64px) 0 0;
+  font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--tx);
+  display:grid; gap:clamp(26px,3.4vw,40px);
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); align-items:start; }
+.rlt3 *{ box-sizing:border-box; }
+.rlt3 .rlt3__col{ text-align:center; min-width:0; }
+
+.rlt3 .rlt3__eyebrow{ display:inline-flex; align-items:center; gap:.8em; justify-content:center;
+  font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--g); }
+.rlt3 .rlt3__eyebrow::before{ content:""; width:30px; height:1px; background:var(--g); opacity:.7; }
+
+.rlt3 .rlt3__titulo{ margin:16px 0 0; font-family:'Jost',sans-serif; font-weight:200;
+  font-size:clamp(20px,2.3vw,30px); line-height:1.16; letter-spacing:-.01em; color:var(--tx); }
+.rlt3 .rlt3__titulo em{ font-style:italic; color:var(--g); }
+.rlt3 .rlt3__sub{ margin:14px 0 0; color:var(--tx-mid); font-size:14px; line-height:1.65; }
+
+.rlt3 .rlt3__video{ position:relative; margin:22px 0 0; width:100%; aspect-ratio:16/9;
+  border-radius:10px; overflow:hidden; border:1px solid var(--line); background:#0f0d0a; }
+.rlt3 .rlt3__video iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
+
+/* em espera: mesmo painel dos outros, em versao reduzida */
+.rlt3 .rlt3__espera{ position:absolute; inset:0; display:grid; place-items:center;
+  background-image:repeating-linear-gradient(135deg, rgba(243,237,226,.022) 0 2px, transparent 2px 11px); }
+.rlt3 .rlt3__espera span{ font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.26em;
+  text-transform:uppercase; color:var(--tx-dim); }
+.rlt3 .rlt3__selo{ position:absolute; top:10px; left:10px; display:inline-flex; align-items:center; gap:.7em;
+  font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--g);
+  background:rgba(11,10,8,.6); border:1px solid rgba(216,190,147,.3); border-radius:40px; padding:5px 11px; }
+.rlt3 .rlt3__selo .pip{ width:4px; height:4px; border-radius:50%; background:var(--g);
+  animation:rlfp-pulse 2.4s ease-in-out infinite; }
+@media(prefers-reduced-motion:reduce){ .rlt3 .rlt3__selo .pip{ animation:none; } }
+`
+
+/** Fila dos tres videos secundarios, cada um com a sua copy por cima. */
+function FilmeTrio({ itens }: { itens: Array<{ titulo: string; url?: string }> }) {
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: FILME_TRIO_FONTS + FILME_TRIO_CSS }} />
+      <div className="rlt3">
+        {itens.map(({ titulo, url }) => {
+          const t = textoDoVideo(titulo)
+          const embed = url ? paraEmbed(url) : null
+          return (
+            <div className="rlt3__col" key={titulo}>
+              <p className="rlt3__eyebrow">{t.eyebrow}</p>
+              <h3 className="rlt3__titulo">{t.titulo}</h3>
+              {t.sub && <p className="rlt3__sub">{t.sub}</p>}
+              <div className="rlt3__video">
+                {embed
+                  ? <iframe
+                      src={embed}
+                      title={titulo}
+                      loading="lazy"
+                      allow="autoplay; fullscreen; picture-in-picture"
+                      allowFullScreen
+                    />
+                  : <>
+                      <span className="rlt3__espera"><span>Miniatura · 16:9</span></span>
+                      <span className="rlt3__selo"><span className="pip" />Aguardar</span>
+                    </>}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+}
+
 const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
 // Sub-paginas onde o texto introdutorio aparece dentro de um dropdown.
@@ -4352,27 +4461,42 @@ function PortalSubPageContent() {
                         if (cardsInBlock.length > 0 && layoutFilmeNovo) {
                           // Layout novo: um leitor 16:9 por video, empilhados,
                           // em vez da grelha de cards pequenos.
+                          const comLink = cardsInBlock.map((callout: Block) => {
+                            const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
+                            const _ct = cardTitle.toUpperCase()
+                            const url = pageCalloutLinks[cardTitle] || (
+                              _ct.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
+                              _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
+                              _ct.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
+                              _ct.includes('TEASER') || _ct.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
+                            ) || ''
+                            return { callout, cardTitle, _ct, url }
+                          })
+                          const principal = comLink.find(c => c._ct.includes('WEDDING FILM'))
+                          // Ordem pedida para a fila: trailer, pre-wedding, same day edit
+                          const ordem = ['TEASER', 'PRÉ-WEDDING', 'SAME DAY']
+                          const secundarios = comLink
+                            .filter(c => c !== principal)
+                            .sort((a, b) => {
+                              const pos = (x: any) => {
+                                const i2 = ordem.findIndex(o => x._ct.includes(o) || (o === 'TEASER' && x._ct.includes('TRAILER')))
+                                return i2 === -1 ? 99 : i2
+                              }
+                              return pos(a) - pos(b)
+                            })
                           renderedSections.push(
                             <div key={`players-${i}`} className="my-4">
-                              {cardsInBlock.map((callout: Block) => {
-                                const cardTitle = plainText(callout.callout?.rich_text ?? []).trim()
-                                const _ct = cardTitle.toUpperCase()
-                                const url = pageCalloutLinks[cardTitle] || (
-                                  _ct.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
-                                  _ct.includes('PRÉ-WEDDING') || _ct.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
-                                  _ct.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
-                                  _ct.includes('TEASER') || _ct.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
-                                ) || ''
-                                return (
-                                  <FilmePlayer
-                                    key={cardTitle}
-                                    titulo={cardTitle}
-                                    legenda={_ct.includes('WEDDING FILM') ? 'Filme completo' : cardTitle}
-                                    imgUrl={getImgUrl(callout)}
-                                    url={url || undefined}
-                                  />
-                                )
-                              })}
+                              {principal && (
+                                <FilmePlayer
+                                  titulo={principal.cardTitle}
+                                  legenda="Filme completo"
+                                  imgUrl={getImgUrl(principal.callout)}
+                                  url={principal.url || undefined}
+                                />
+                              )}
+                              {secundarios.length > 0 && (
+                                <FilmeTrio itens={secundarios.map(c => ({ titulo: c.cardTitle, url: c.url || undefined }))} />
+                              )}
                             </div>
                           )
                         } else if (cardsInBlock.length > 0) {
