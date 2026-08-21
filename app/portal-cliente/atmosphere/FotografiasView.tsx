@@ -14,6 +14,7 @@
    ============================================================ */
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { GalleryTitle } from './GalleryTitle'
 import './fotografias.css'
 
 export type FotografiasCard = {
@@ -262,6 +263,9 @@ export function FotografiasView(props: FotografiasViewProps) {
 
   return (
     <div className="fotos-page">
+      {/* ── Título da galeria ────────────────────────────────── */}
+      <GalleryTitle />
+
       {/* ── Callout · Enviar Fotos ───────────────────────────── */}
       <section className="fp-callout">
         <div className="eyebrow">Enviar Selecção</div>
