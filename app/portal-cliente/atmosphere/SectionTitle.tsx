@@ -20,9 +20,12 @@ export type SectionTitleProps = {
   title: ReactNode
   /** Parágrafo opcional por baixo do título. */
   subtitle?: ReactNode
+  /** 'lg' (default) para o título da página; 'sm' para caber ao lado de
+   *  outro numa grelha de duas colunas. */
+  size?: 'lg' | 'sm'
 }
 
-export function SectionTitle({ kicker, title, subtitle }: SectionTitleProps) {
+export function SectionTitle({ kicker, title, subtitle, size = 'lg' }: SectionTitleProps) {
   const ref = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -49,7 +52,7 @@ export function SectionTitle({ kicker, title, subtitle }: SectionTitleProps) {
   // `.subarticle .body h2` e `.body p` com !important, e esmagava o
   // desenho deste bloco.
   return (
-    <div className="rlgt" ref={ref}>
+    <div className={`rlgt${size === 'sm' ? ' rlgt--sm' : ''}`} ref={ref}>
       <div className="rlgt__kick rlgt__r">{kicker}</div>
       <div className="rlgt__title rlgt__r" role="heading" aria-level={2}>{title}</div>
       {subtitle && <div className="rlgt__sub rlgt__r">{subtitle}</div>}

@@ -269,14 +269,14 @@ export function FotografiasView(props: FotografiasViewProps) {
       {/* ── Título da galeria ────────────────────────────────── */}
       <SectionTitle kicker="Alguns momentos" title={<>As vossas <em>fotografias.</em></>} />
 
-      {/* ── Título editorial + card, um por galeria ──────────── */}
-      <div className="fp-stack">
+      {/* ── Título editorial + card, dois por linha ───────────── */}
+      <div className="fp-grid">
         {props.cards.map(c => {
           const available = Boolean(c.url && c.url.length > 0)
           const lead = c.lead ?? { kicker: c.title, title: c.heading, subtitle: c.caption }
           return (
-            <div key={c.key} className="fp-stack-item">
-              <SectionTitle kicker={lead.kicker} title={lead.title} subtitle={lead.subtitle} />
+            <div key={c.key} className="fp-grid-item">
+              <SectionTitle size="sm" kicker={lead.kicker} title={lead.title} subtitle={lead.subtitle} />
               <article className="fp-card">
                 <div className="fp-card-head">
                   <span className="fp-card-title">{c.title}</span>
