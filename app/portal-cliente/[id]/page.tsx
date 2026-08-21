@@ -418,8 +418,19 @@ const FILME_TRIO_CSS = `
 .rlt3 .rlt3__sub{ margin:14px 0 0; color:var(--tx-mid); font-size:14px; line-height:1.65; }
 
 .rlt3 .rlt3__video{ position:relative; margin:auto 0 0; width:100%; aspect-ratio:16/9;
-  border-radius:10px; overflow:hidden; border:1px solid var(--line); background:#0f0d0a; }
+  border-radius:10px; overflow:hidden; border:1px solid var(--line); background:#0f0d0a;
+  padding:0; font:inherit; color:inherit; display:block; }
 .rlt3 .rlt3__video iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
+
+/* Capa propria em vez do leitor do Vimeo: parado nao mostra botao de play,
+   barra de tempo nem logotipo. O leitor entra so depois do clique. */
+.rlt3 button.rlt3__video{ cursor:pointer; transition:border-color .45s cubic-bezier(.16,1,.3,1); }
+.rlt3 .rlt3__video img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  opacity:.9; transition:opacity .5s cubic-bezier(.16,1,.3,1); }
+.rlt3 button.rlt3__video:hover{ border-color:rgba(216,190,147,.32); }
+.rlt3 button.rlt3__video:hover img{ opacity:1; }
+.rlt3 button.rlt3__video::after{ content:""; position:absolute; inset:0; pointer-events:none;
+  box-shadow:inset 0 0 60px 10px rgba(0,0,0,.45); }
 
 /* em espera: mesmo painel dos outros, em versao reduzida */
 .rlt3 .rlt3__espera{ position:absolute; inset:0; display:grid; place-items:center;
@@ -429,10 +440,57 @@ const FILME_TRIO_CSS = `
 .rlt3 .rlt3__selo{ position:absolute; top:10px; left:10px; display:inline-flex; align-items:center; gap:.7em;
   font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--g);
   background:rgba(11,10,8,.6); border:1px solid rgba(216,190,147,.3); border-radius:40px; padding:5px 11px; }
-.rlt3 .rlt3__selo .pip{ width:4px; height:4px; border-radius:50%; background:var(--g);
-  animation:rlfp-pulse 2.4s ease-in-out infinite; }
-@media(prefers-reduced-motion:reduce){ .rlt3 .rlt3__selo .pip{ animation:none; } }
+.rlt3 .rlt3__selo .pip{ width:4px; height:4px; border-radius:50%; background:var(--g); }
+.rlt3 .rlt3__selo.esperar .pip{ animation:rlfp-pulse 2.4s ease-in-out infinite; }
+@media(prefers-reduced-motion:reduce){ .rlt3 .rlt3__selo.esperar .pip{ animation:none; } }
 `
+
+/**
+ * Video de uma coluna. Parado mostra a capa do Vimeo, sem qualquer moldura
+ * do leitor; o iframe so e criado ao clicar, ja com autoplay. Assim o
+ * repouso fica limpo e nao se carregam tres leitores por cada visita.
+ */
+function TrioVideo({ titulo, url }: { titulo: string; url?: string }) {
+  const [info, setInfo] = useState<VideoInfo>(() => (url && cacheVideoInfo.get(url)) || {})
+  const [aTocar, setATocar] = useState(false)
+
+  useEffect(() => {
+    if (!url) return
+    let vivo = true
+    obterVideoInfo(url).then(v => { if (vivo) setInfo(v) })
+    return () => { vivo = false }
+  }, [url])
+
+  const embed = url ? paraEmbed(url) : null
+
+  if (!embed) return (
+    <div className="rlt3__video">
+      <span className="rlt3__espera"><span>Miniatura · 16:9</span></span>
+      <span className="rlt3__selo esperar"><span className="pip" />Aguardar</span>
+    </div>
+  )
+
+  if (aTocar) return (
+    <div className="rlt3__video">
+      <iframe
+        src={`${embed}&autoplay=1`}
+        title={titulo}
+        allow="autoplay; fullscreen; picture-in-picture"
+        allowFullScreen
+      />
+    </div>
+  )
+
+  return (
+    <button type="button" className="rlt3__video" onClick={() => setATocar(true)} aria-label={`Ver ${titulo}`}>
+      {info.thumb
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={info.thumb} alt="" />
+        : <span className="rlt3__espera" />}
+      <span className="rlt3__selo"><span className="pip" />Ver agora</span>
+    </button>
+  )
+}
 
 /** Fila dos tres videos secundarios, cada um com a sua copy por cima. */
 function FilmeTrio({ itens }: { itens: Array<{ titulo: string; url?: string }> }) {
@@ -442,7 +500,6 @@ function FilmeTrio({ itens }: { itens: Array<{ titulo: string; url?: string }> }
       <div className="rlt3">
         {itens.map(({ titulo, url }) => {
           const t = textoDoVideo(titulo)
-          const embed = url ? paraEmbed(url) : null
           return (
             <div className="rlt3__col" key={titulo}>
               <div className="rlt3__texto">
@@ -450,20 +507,7 @@ function FilmeTrio({ itens }: { itens: Array<{ titulo: string; url?: string }> }
                 <h3 className="rlt3__titulo">{t.titulo}</h3>
                 {t.sub && <p className="rlt3__sub">{t.sub}</p>}
               </div>
-              <div className="rlt3__video">
-                {embed
-                  ? <iframe
-                      src={embed}
-                      title={titulo}
-                      loading="lazy"
-                      allow="autoplay; fullscreen; picture-in-picture"
-                      allowFullScreen
-                    />
-                  : <>
-                      <span className="rlt3__espera"><span>Miniatura · 16:9</span></span>
-                      <span className="rlt3__selo"><span className="pip" />Aguardar</span>
-                    </>}
-              </div>
+              <TrioVideo titulo={titulo} url={url} />
             </div>
           )
         })}
