@@ -258,6 +258,20 @@
   background: rgba(216,165,155,.05);
   cursor: not-allowed;
 }
+/* Segundo botão do card (ex.: Enviar Selecção) — discreto, para não
+   competir com o botão principal. */
+.portal-atmosphere .fotos-page .fp-btn.ghost {
+  margin-top: 8px;
+  color: var(--gold-soft);
+  border-color: var(--gold-line);
+  background: rgba(216,190,147,.06);
+}
+.portal-atmosphere .fotos-page .fp-btn.ghost:hover {
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(216,190,147,.12);
+}
+
 .portal-atmosphere .fotos-page .fp-card-foot .fp-foot-note {
   display: block; text-align: center;
   font-size: 10.5px; color: var(--ink-4);

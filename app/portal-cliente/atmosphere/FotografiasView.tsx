@@ -335,6 +335,16 @@ export function FotografiasView(props: FotografiasViewProps) {
                   ) : (
                     <span className="fp-btn locked">Aguardar</span>
                   )}
+                  {/* O card da selecção leva também o formulário: é por ali
+                      que a escolha nos chega. */}
+                  {c.key === 'selecao' && (
+                    <a className="fp-btn ghost" href={props.enviarFotosUrl} target="_blank" rel="noopener noreferrer">
+                      Enviar Selecção
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M7 17 17 7" /><path d="M9 7h8v8" />
+                      </svg>
+                    </a>
+                  )}
                   {c.footnote && <span className="fp-foot-note">{c.footnote}</span>}
                 </div>
               </article>
