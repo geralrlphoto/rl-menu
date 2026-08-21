@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { NotionBlocks, plainText, type Block } from '../../portal-cliente/NotionRenderer'
 import '../../portal-cliente/atmosphere/atmosphere.css'
 import {
-  IntroDropdown, FilmeHero, FilmeTitulo, FilmePlayer, FilmeTrio, FilmeAcoes,
+  FilmeHero, FilmeTitulo, FilmePlayer, FilmeTrio, FilmeAcoes,
 } from '../../portal-cliente/[id]/page'
 
 /**
@@ -12,8 +12,8 @@ import {
  * página: o id vem assinado no token e nunca há navegação, links ou
  * pedidos que revelem outras páginas do portal.
  */
-export default function PartilhaClient({ id, titulo, videos, casal }: {
-  id: string; titulo: string; videos: Record<string, string>
+export default function PartilhaClient({ id, videos, casal }: {
+  id: string; videos: Record<string, string>
   casal: { cliente: string; data_evento: string | null; local: string } | null
 }) {
   const [blocks, setBlocks] = useState<Block[] | null>(null)
@@ -53,9 +53,6 @@ export default function PartilhaClient({ id, titulo, videos, casal }: {
   }
 
   const idxCards = blocks.findIndex(temCards)
-  const intro = blocks.filter((b, i) =>
-    (idxCards === -1 || i < idxCards) && b.type === 'paragraph'
-    && plainText(b.paragraph?.rich_text ?? []).trim().length > 0)
 
   const todos = (idxCards === -1 ? [] : cartoes(blocks[idxCards])).map(c => {
     const t = plainText(c.callout?.rich_text ?? []).trim()
@@ -82,12 +79,9 @@ export default function PartilhaClient({ id, titulo, videos, casal }: {
 
   return (
     <Moldura>
-      <h1 className="ptitulo">{titulo || 'O Nosso Filme'}</h1>
-      {intro.length > 0 && (
-        <IntroDropdown titulo="Sobre o vosso filme">
-          <NotionBlocks blocks={intro} />
-        </IntroDropdown>
-      )}
+      {/* Sem titulo nem dropdown: o texto introdutorio fala do portal, dos
+          avisos por WhatsApp e do acesso a plataforma, que nada dizem a
+          quem so recebeu o link. A pagina abre directamente no hero. */}
       <FilmeHero settings={null} evento={casal} />
       <FilmeTitulo />
       {principal && (
@@ -112,9 +106,6 @@ function Moldura({ children }: { children: React.ReactNode }) {
     <div className="portal-atmosphere">
       <style dangerouslySetInnerHTML={{ __html: `
         .ppag{ max-width:860px; margin:0 auto; padding:clamp(24px,5vh,56px) clamp(16px,4vw,32px) 80px; }
-        .ptitulo{ font-family:'Jost',sans-serif; font-weight:200; letter-spacing:.18em;
-          text-transform:uppercase; font-size:clamp(15px,1.6vw,19px); color:rgba(243,237,226,.55);
-          text-align:center; margin:0 0 clamp(20px,4vh,36px); }
         .pmsg{ text-align:center; color:rgba(243,237,226,.5); font-family:'Hanken Grotesk',sans-serif;
           padding:22vh 0; }
         .prodape{ margin-top:64px; text-align:center; font-family:'Space Mono',monospace;

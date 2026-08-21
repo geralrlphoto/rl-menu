@@ -6,8 +6,13 @@ import PartilhaClient from './PartilhaClient'
 export const dynamic = 'force-dynamic'
 
 /** A página partilhada não deve aparecer em motores de busca. */
-export const metadata = {
-  robots: { index: false, follow: false },
+export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {
+  const { token } = await params
+  const p = await verificarPartilha(token)
+  return {
+    title: p?.titulo ? `${p.titulo} · RL Photo Video` : 'RL Photo Video',
+    robots: { index: false, follow: false },
+  }
 }
 
 /**
@@ -48,5 +53,5 @@ export default async function Page({ params }: { params: Promise<{ token: string
     } catch { /* sem dados: a página mostra os painéis em espera */ }
   }
 
-  return <PartilhaClient id={p.id} titulo={p.titulo} videos={videos} casal={casal} />
+  return <PartilhaClient id={p.id} videos={videos} casal={casal} />
 }
