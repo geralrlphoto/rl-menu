@@ -191,6 +191,7 @@ function FinancasPageInner() {
   const [error, setError] = useState('')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [openingFicha, setOpeningFicha] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
   const refFilter = searchParams.get('ref') ?? ''
@@ -217,9 +218,24 @@ function FinancasPageInner() {
 
   useEffect(() => { loadRows() }, [loadRows])
 
-  const filteredRows = refFilter
-    ? rows.filter(r => r.referencia?.toLowerCase() === refFilter.toLowerCase())
-    : rows
+  const q = search.trim().toLowerCase()
+  const filteredRows = rows.filter(r => {
+    if (refFilter && r.referencia?.toLowerCase() !== refFilter.toLowerCase()) return false
+    if (!q) return true
+    const campos = [
+      r.nome_noivos,
+      r.referencia,
+      fmt(r.data_casamento),
+      fmt(r.data_pagamento),
+      r.data_casamento,
+      r.data_pagamento,
+      ...(r.fase_pagamento ?? []),
+      ...(r.metodo_pagamento ?? []),
+      r.valor_liquidado != null ? String(r.valor_liquidado) : '',
+      r.atualizado ? 'atualizado sim' : 'nao atualizado',
+    ]
+    return campos.some(c => (c ?? '').toString().toLowerCase().includes(q))
+  })
 
   function handleSaved(rowId: string, field: string, val: any) {
     setRows(prev => prev.map(r => r.id === rowId ? { ...r, [field]: val } : r))
@@ -281,9 +297,31 @@ function FinancasPageInner() {
               <button onClick={() => router.push('/financas')} className="text-[10px] text-white/30 hover:text-white/60 ml-auto">✕ Limpar</button>
             </div>
           )}
-          <p className="text-xs text-white/20 tracking-wider mb-4">
-            {filteredRows.length} registos · <span className="text-white/15">clica em qualquer campo para editar</span>
-          </p>
+          <div className="flex items-center gap-3 mb-4 flex-wrap">
+            <div className="relative flex-1 min-w-[220px] max-w-[420px]">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 text-xs pointer-events-none">⌕</span>
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Escape') setSearch('') }}
+                placeholder="Pesquisar nome, referência, data, fase, método, valor..."
+                className="w-full bg-white/[0.03] border border-white/10 rounded-lg pl-8 pr-8 py-2 text-xs text-white/80 placeholder:text-white/20 focus:outline-none focus:border-gold/50 focus:bg-white/[0.05] transition-colors"
+              />
+              {search && (
+                <button onClick={() => setSearch('')}
+                  title="Limpar pesquisa"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 text-xs transition-colors">
+                  ✕
+                </button>
+              )}
+            </div>
+            <p className="text-xs text-white/20 tracking-wider">
+              {filteredRows.length} {filteredRows.length === 1 ? 'registo' : 'registos'}
+              {search && <span className="text-white/15"> de {rows.length}</span>}
+              {' · '}<span className="text-white/15">clica em qualquer campo para editar</span>
+            </p>
+          </div>
           <div className="overflow-x-auto -mx-3 sm:mx-0 rounded-2xl border border-white/[0.06]">
             <table className="w-full text-sm">
               <thead>
@@ -368,6 +406,11 @@ function FinancasPageInner() {
                 ))}
               </tbody>
             </table>
+            {filteredRows.length === 0 && (
+              <div className="py-14 text-center text-xs tracking-widest text-white/20 uppercase">
+                {`Sem resultados para "${search || refFilter}"`}
+              </div>
+            )}
           </div>
         </>
       )}
