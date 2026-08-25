@@ -454,6 +454,9 @@ const ACOES_FOTO: Array<{ chave: keyof AcoesFoto; icones: number; label: string 
   { chave: 'finais',   icones: 3, label: 'Fotos Finais' },
 ]
 
+// Tinge o emoji 📷 de verde quando o serviço de foto está concluído
+const FILTRO_VERDE = 'grayscale(1) sepia(1) hue-rotate(75deg) saturate(5) brightness(1.05)'
+
 function dataCurta(v: string) {
   const dt = new Date(v.split('T')[0] + 'T00:00:00')
   if (isNaN(dt.getTime())) return v
@@ -800,11 +803,22 @@ function Eventos2026Inner() {
                         </div>
                       )}
 
-                      {/* Ações Fotografia — "+" por cada ação já enviada */}
+                      {/* Ações Fotografia — ícone por cada ação já enviada */}
                       {(() => {
                         const acoes = e.referencia ? acoesFoto.get(e.referencia.toUpperCase()) : undefined
                         const feitas = ACOES_FOTO.filter(a => acoes?.[a.chave])
                         if (feitas.length === 0) return null
+                        // Tudo enviado → um só ícone a verde
+                        if (feitas.length === ACOES_FOTO.length) {
+                          const datas = ACOES_FOTO.map(a => `${a.label}: ${dataCurta(acoes![a.chave]!)}`).join(' · ')
+                          return (
+                            <div className="shrink-0 hidden sm:flex items-center gap-1"
+                              title={`Serviço de foto concluído — ${datas}`}>
+                              <span className="text-[11px] leading-none cursor-default" style={{ filter: FILTRO_VERDE }}>📷</span>
+                              <span className="text-[10px] leading-none text-green-400 font-bold cursor-default">✓</span>
+                            </div>
+                          )
+                        }
                         return (
                           <div className="shrink-0 hidden sm:flex items-center gap-2">
                             {feitas.map(a => (
