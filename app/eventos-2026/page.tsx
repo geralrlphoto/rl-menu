@@ -440,6 +440,26 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
   )
 }
 
+// Ações Fotografia mostradas na lista por sinais "+" (ver ACOES_FOTO)
+type AcoesFoto = {
+  galerias: string | null
+  selecao:  string | null
+  finais:   string | null
+}
+
+// 1 "+" Galerias Online · 2 "+" Fotos p/ Seleção · 3 "+" Fotos Finais
+const ACOES_FOTO: Array<{ chave: keyof AcoesFoto; sinais: string; label: string }> = [
+  { chave: 'galerias', sinais: '+',   label: 'Galerias Online' },
+  { chave: 'selecao',  sinais: '++',  label: 'Fotos p/ Seleção' },
+  { chave: 'finais',   sinais: '+++', label: 'Fotos Finais' },
+]
+
+function dataCurta(v: string) {
+  const dt = new Date(v.split('T')[0] + 'T00:00:00')
+  if (isNaN(dt.getTime())) return v
+  return dt.toLocaleDateString('pt-PT')
+}
+
 function Eventos2026Inner() {
   const [events, setEvents] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
@@ -452,6 +472,8 @@ function Eventos2026Inner() {
   const [portaisAtivos, setPortaisAtivos] = useState<Set<string>>(new Set())
   // Map ref(upper) → ISO timestamp do backup confirmado em /eventos-2026/[id]
   const [backupsFeitos, setBackupsFeitos] = useState<Map<string, string>>(new Map())
+  // Map ref(upper) → datas de envio das Ações Fotografia (portal settings)
+  const [acoesFoto, setAcoesFoto] = useState<Map<string, AcoesFoto>>(new Map())
   const router = useRouter()
   const searchParams = useSearchParams()
   const anoFiltro = parseInt(searchParams.get('ano') ?? '2026')
@@ -482,22 +504,29 @@ function Eventos2026Inner() {
   }
 
   function loadPortais() {
-    fetch('/api/portais')
+    fetch('/api/portais?compact=1')
       .then(r => r.json())
       .then(d => {
         const list = (d.portais ?? d.rows ?? []) as Array<{ referencia?: string | null; settings?: any }>
         const s = new Set<string>()
         const bk = new Map<string, string>()
+        const af = new Map<string, AcoesFoto>()
         list.forEach(p => {
           if (p.referencia) {
             const ref = p.referencia.toUpperCase()
             s.add(ref)
             const ts = p.settings?.armazenamento_backup
             if (ts && typeof ts === 'string') bk.set(ref, ts)
+            af.set(ref, {
+              galerias: p.settings?.galerias_enviada ?? null,
+              selecao:  p.settings?.selecao_enviada ?? null,
+              finais:   p.settings?.fotos_finais_enviada ?? null,
+            })
           }
         })
         setPortaisAtivos(s)
         setBackupsFeitos(bk)
+        setAcoesFoto(af)
       })
       .catch(() => {/* silencioso */})
   }
@@ -770,6 +799,24 @@ function Eventos2026Inner() {
                           )}
                         </div>
                       )}
+
+                      {/* Ações Fotografia — "+" por cada ação já enviada */}
+                      {(() => {
+                        const acoes = e.referencia ? acoesFoto.get(e.referencia.toUpperCase()) : undefined
+                        const feitas = ACOES_FOTO.filter(a => acoes?.[a.chave])
+                        if (feitas.length === 0) return null
+                        return (
+                          <div className="shrink-0 hidden sm:flex items-end gap-1.5">
+                            {feitas.map(a => (
+                              <span
+                                key={a.chave}
+                                title={`${a.label} · enviado em ${dataCurta(acoes![a.chave]!)}`}
+                                className="text-gold/75 hover:text-gold text-[13px] font-bold leading-none tracking-[-0.08em] cursor-default transition-colors"
+                              >{a.sinais}</span>
+                            ))}
+                          </div>
+                        )
+                      })()}
 
                       {/* Estado das entregas */}
                       <div className="shrink-0 hidden sm:flex items-center gap-1">

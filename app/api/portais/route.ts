@@ -48,6 +48,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ portais: data ?? [] })
   }
 
+  // Modo compacto: usado pela lista /eventos-2026 — só precisa de saber que
+  // portais existem, se o backup foi confirmado e que ações de fotografia já
+  // foram enviadas. Evita puxar o `settings` inteiro de cada portal.
+  if (req.nextUrl.searchParams.get('compact')) {
+    const { data, error } = await db
+      .from('portais')
+      .select('referencia, armazenamento_backup:settings->>armazenamento_backup, selecao_enviada:settings->>selecao_enviada, fotos_finais_enviada:settings->>fotos_finais_enviada, galerias_enviada:settings->>galerias_enviada')
+      .order('referencia')
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const portais = (data ?? []).map((p: any) => ({
+      referencia: p.referencia,
+      settings: {
+        armazenamento_backup: p.armazenamento_backup,
+        selecao_enviada:      p.selecao_enviada,
+        fotos_finais_enviada: p.fotos_finais_enviada,
+        galerias_enviada:     p.galerias_enviada,
+      },
+    }))
+    return NextResponse.json({ portais })
+  }
+
   const { data, error } = await db.from('portais').select('*').order('referencia')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const portais = (data ?? []).map(portal => {
