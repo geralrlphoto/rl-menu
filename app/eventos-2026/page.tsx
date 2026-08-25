@@ -440,18 +440,18 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
   )
 }
 
-// Ações Fotografia mostradas na lista por sinais "+" (ver ACOES_FOTO)
+// Ações Fotografia mostradas na lista por ícones 📷 (ver ACOES_FOTO)
 type AcoesFoto = {
   galerias: string | null
   selecao:  string | null
   finais:   string | null
 }
 
-// 1 "+" Galerias Online · 2 "+" Fotos p/ Seleção · 3 "+" Fotos Finais
-const ACOES_FOTO: Array<{ chave: keyof AcoesFoto; sinais: string; label: string }> = [
-  { chave: 'galerias', sinais: '+',   label: 'Galerias Online' },
-  { chave: 'selecao',  sinais: '++',  label: 'Fotos p/ Seleção' },
-  { chave: 'finais',   sinais: '+++', label: 'Fotos Finais' },
+// 1 📷 Galerias Online · 2 📷 Fotos p/ Seleção · 3 📷 Fotos Finais
+const ACOES_FOTO: Array<{ chave: keyof AcoesFoto; icones: number; label: string }> = [
+  { chave: 'galerias', icones: 1, label: 'Galerias Online' },
+  { chave: 'selecao',  icones: 2, label: 'Fotos p/ Seleção' },
+  { chave: 'finais',   icones: 3, label: 'Fotos Finais' },
 ]
 
 function dataCurta(v: string) {
@@ -806,20 +806,22 @@ function Eventos2026Inner() {
                         const feitas = ACOES_FOTO.filter(a => acoes?.[a.chave])
                         if (feitas.length === 0) return null
                         return (
-                          <div className="shrink-0 hidden sm:flex items-end gap-1.5">
+                          <div className="shrink-0 hidden sm:flex items-center gap-2">
                             {feitas.map(a => (
                               <span
                                 key={a.chave}
                                 title={`${a.label} · enviado em ${dataCurta(acoes![a.chave]!)}`}
-                                className="text-gold/75 hover:text-gold text-[13px] font-bold leading-none tracking-[-0.08em] cursor-default transition-colors"
-                              >{a.sinais}</span>
+                                className="flex items-center gap-[1px] text-[11px] leading-none cursor-default opacity-90 hover:opacity-100 transition-opacity"
+                              >
+                                {Array.from({ length: a.icones }).map((_, n) => <span key={n}>📷</span>)}
+                              </span>
                             ))}
                           </div>
                         )
                       })()}
 
                       {/* Estado das entregas */}
-                      <div className="shrink-0 hidden sm:flex items-center gap-1">
+                      <div className="shrink-0 hidden sm:flex items-center gap-1 sm:pl-2 sm:border-l sm:border-white/8">
                         {(() => {
                           const isE = (v: string | null) => v === 'Entregue' || v === 'S/SERVIÇO'
                           const items = [
