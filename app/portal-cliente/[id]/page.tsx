@@ -1661,6 +1661,20 @@ function PortalSubPageContent() {
   const [briefingFichas, setBriefingFichas] = useState<Record<string, FichaCampo[]>>({})
   const [openFichaKey, setOpenFichaKey] = useState<string | null>(null)
   const [fichaSaving, setFichaSaving] = useState(false)
+  // Guarda anti-perda: o loader de settings volta a correr sempre que a janela
+  // ganha foco e repoe as fichas com o que esta no servidor. Enquanto houver
+  // alteracoes por gravar, esse refetch nao pode tocar em briefingFichas, senao
+  // apaga o que o utilizador esta a escrever nas caixas de texto.
+  const [fichaDirty, setFichaDirty] = useState(false)
+  const fichaDirtyRef = useRef(false)
+  const markFichaDirty = () => { fichaDirtyRef.current = true; setFichaDirty(true) }
+  // Aviso do browser se tentar sair com fichas por guardar.
+  useEffect(() => {
+    if (!fichaDirty) return
+    const onLeave = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = '' }
+    window.addEventListener('beforeunload', onLeave)
+    return () => window.removeEventListener('beforeunload', onLeave)
+  }, [fichaDirty])
   const [editingBriefingInfo, setEditingBriefingInfo] = useState(false)
   const [briefingFieldsForm, setBriefingFieldsForm] = useState<Array<{ label: string; value: string }>>([])
   const [editingInfoGeral, setEditingInfoGeral] = useState(false)
@@ -1859,7 +1873,7 @@ function PortalSubPageContent() {
       setPwIntro(ps.pwIntro && typeof ps.pwIntro === 'object' ? ps.pwIntro : null)
       setPwCenarios(Array.isArray(ps.pwCenarios) ? ps.pwCenarios : null)
       setBriefingInfo(ps.briefingInfo ?? {})
-      setBriefingFichas(ps.briefingFichas ?? {})
+      if (!fichaDirtyRef.current) setBriefingFichas(ps.briefingFichas ?? {})
       setCronogramaStatus(ps.cronogramaStatus ?? {})
       setSatisfacao(ps.satisfacao ?? null)
 
@@ -3850,6 +3864,7 @@ function PortalSubPageContent() {
                               const campos = briefingFichas[key] ?? defaultCampos
 
                               const updateCampo = (idx: number, field: 'label' | 'value', val: string) => {
+                                markFichaDirty()
                                 setBriefingFichas(prev => ({
                                   ...prev,
                                   [key]: (prev[key] ?? defaultCampos).map((c, i) =>
@@ -3858,6 +3873,7 @@ function PortalSubPageContent() {
                                 }))
                               }
                               const addCampo = () => {
+                                markFichaDirty()
                                 const newCampo: FichaCampo = {
                                   id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
                                   label: 'Novo campo',
@@ -3869,6 +3885,7 @@ function PortalSubPageContent() {
                                 }))
                               }
                               const removeCampo = (idx: number) => {
+                                markFichaDirty()
                                 setBriefingFichas(prev => ({
                                   ...prev,
                                   [key]: (prev[key] ?? defaultCampos).filter((_, i) => i !== idx),
@@ -3880,6 +3897,8 @@ function PortalSubPageContent() {
                                   const newSettings = { ...portalSettingsObj, briefingFichas }
                                   await savePortalSettings(newSettings)
                                   setPortalSettingsObj(newSettings)
+                                  fichaDirtyRef.current = false
+                                  setFichaDirty(false)
                                 } finally { setFichaSaving(false) }
                               }
 
@@ -3961,8 +3980,10 @@ function PortalSubPageContent() {
 
                                         {/* Footer com Guardar */}
                                         <div className="mt-5 pt-4 border-t border-white/[0.05] flex items-center justify-between gap-3">
-                                          <span className="text-[10px] text-white/30 italic">
-                                            {campos.length} caixa{campos.length === 1 ? '' : 's'} · guarda para persistir
+                                          <span className={`text-[10px] italic ${fichaDirty ? 'text-gold/80 not-italic font-semibold' : 'text-white/30'}`}>
+                                            {fichaDirty
+                                              ? '● Alterações por guardar'
+                                              : `${campos.length} caixa${campos.length === 1 ? '' : 's'} · guarda para persistir`}
                                           </span>
                                           <button
                                             type="button"
