@@ -465,7 +465,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           .from('dados_contrato_cps')
           .select('id')
           .eq('referencia_evento', referencia)
-          .order('id', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
         if (existing?.id) {
@@ -536,7 +536,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           .from('dados_contrato_cps')
           .select('*')
           .eq('referencia_evento', orphan.referencia)
-          .order('id', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
         contrato = data
@@ -547,7 +547,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
           .select('*')
           .eq('nome_noivos', orphan.cliente)
           .eq('data_casamento', orphan.data_evento)
-          .order('id', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
         contrato = data
@@ -623,25 +623,67 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     // Buscar dados detalhados em dados_contrato_cps (form submission) para
     // suplementar/substituir campos quando Notion não os tem (retry com payload mínimo)
     const refFromNotion = getProp(p, 'REFERÊNCIA DO EVENTO', 'title')
-    const refForLookup = sbRow?.referencia ?? refFromNotion
+    const refForLookup = firstNonEmpty(sbRow?.referencia, refFromNotion)
+    const clienteForLookup = firstNonEmpty(sbRow?.cliente, getProp(p, 'CLIENTE', 'text'))
+    const dataForLookup = firstNonEmpty(getProp(p, 'DATA DO EVENTO', 'date'), sbRow?.data_evento)
+
     let contrato: any = null
     if (refForLookup) {
       const { data: cps } = await sbClient
         .from('dados_contrato_cps')
         .select('*')
         .eq('referencia_evento', refForLookup)
-        .order('id', { ascending: false })
+        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
       contrato = cps
     }
 
+    // Fallback: há linhas de dados_contrato_cps gravadas pelo formulário sem
+    // `referencia_evento` (fica ''), e nesses casos a procura acima não
+    // encontra nada — o contrato saía todo em branco. Procura por
+    // nome_noivos + data_casamento, tal como o ramo orphan já fazia.
+    if (!contrato && clienteForLookup && dataForLookup) {
+      const { data: cps } = await sbClient
+        .from('dados_contrato_cps')
+        .select('*')
+        .eq('nome_noivos', clienteForLookup)
+        .eq('data_casamento', dataForLookup)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      contrato = cps
+    }
+
+    // Último recurso: só por nome_noivos (a data pode divergir entre a ficha e
+    // o formulário). Só aceita quando existe uma única linha com esse nome.
+    if (!contrato && clienteForLookup) {
+      const { data: cpsRows } = await sbClient
+        .from('dados_contrato_cps')
+        .select('*')
+        .eq('nome_noivos', clienteForLookup)
+        .limit(2)
+      if (cpsRows && cpsRows.length === 1) contrato = cpsRows[0]
+    }
+
+    // Auto-cura: se encontrámos a linha por nome e ela não tem referência,
+    // carimba-a agora para as próximas consultas usarem a via directa.
+    if (contrato && refForLookup && !String(contrato.referencia_evento ?? '').trim()) {
+      await sbClient
+        .from('dados_contrato_cps')
+        .update({ referencia_evento: refForLookup })
+        .eq('id', contrato.id)
+      contrato.referencia_evento = refForLookup
+    }
+
     const event = {
       id: page.id,
-      referencia:       getProp(p, 'REFERÊNCIA DO EVENTO', 'title'),
-      cliente:          getProp(p, 'CLIENTE', 'text'),
-      data_evento:      getProp(p, 'DATA DO EVENTO', 'date') ?? contrato?.data_casamento ?? null,
-      local:            getProp(p, 'LOCAL', 'text') ?? contrato?.local_cerimonia ?? '',
+      referencia:       firstNonEmpty(getProp(p, 'REFERÊNCIA DO EVENTO', 'title'), sbRow?.referencia) ?? '',
+      cliente:          firstNonEmpty(getProp(p, 'CLIENTE', 'text'), sbRow?.cliente) ?? '',
+      // Notion devolve '' quando a propriedade existe sem valor, por isso o `??`
+      // não chegava: usa-se firstNonEmpty + a ficha Supabase como fallback.
+      data_evento:      firstNonEmpty(getProp(p, 'DATA DO EVENTO', 'date'), sbRow?.data_evento, contrato?.data_casamento),
+      local:            firstNonEmpty(getProp(p, 'LOCAL', 'text'), sbRow?.local, contrato?.local_cerimonia) ?? '',
       // tipo_evento: Notion (multi_select) primeiro; se vazio, cai para Supabase
       // que guarda como string JSON (ex: '["BATIZADO"]') ou array directo.
       tipo_evento:      (() => {

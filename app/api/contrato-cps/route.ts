@@ -440,6 +440,18 @@ export async function POST(req: NextRequest) {
           referencia = `${prefix}_${proximoNum}_${anoSufixo}_RL`
         }
 
+        // Carimba a referência resolvida na linha de dados_contrato_cps que
+        // acabou de ser criada. Sem isto, quando o cliente não preenche a
+        // referência no formulário, a linha fica com `referencia_evento` vazio
+        // e o contrato do evento (/eventos-2026/[id]/contrato) abre em branco,
+        // porque a procura dos dados dos noivos é feita por referência.
+        const cpsId = supabaseResult.status === 'fulfilled' ? (supabaseResult.value as any)?.id : null
+        if (cpsId && referencia) {
+          await sb.from('dados_contrato_cps')
+            .update({ referencia_evento: referencia })
+            .eq('id', cpsId)
+        }
+
         // Verifica se já existe um registo com esta referência (caso o admin
         // o tenha criado antes do envio do formulário)
         const { data: existing } = await sb
