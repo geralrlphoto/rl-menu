@@ -129,6 +129,24 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
+  // ── 2c) Fluxo de Trabalho (/fluxo-trabalho) ───────────────────────
+  //   Página das 6 etapas do fluxo do fotógrafo. Aberta a quem tem sessão:
+  //   admin (rl_auth) ou freelancer (fl_session). Sem credenciais → /login?next=…
+  if (pathname === '/fluxo-trabalho' || pathname.startsWith('/fluxo-trabalho/')) {
+    const adminAuth = request.cookies.get('rl_auth')?.value
+    if (adminAuth && adminAuth === process.env.AUTH_SECRET) {
+      return NextResponse.next()
+    }
+    const flCookie = request.cookies.get('fl_session')?.value
+    const session = await verifyFlSession(flCookie)
+    if (session) {
+      return NextResponse.next()
+    }
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('next', `${pathname}${search}`)
+    return NextResponse.redirect(loginUrl)
+  }
+
   // Allow login page and auth API
   if (
     pathname.startsWith('/login') ||

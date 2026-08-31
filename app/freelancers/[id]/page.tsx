@@ -731,6 +731,16 @@ function FreelancerDetailInner() {
                 )}
               </button>
             ))}
+            {/* Fluxo de Trabalho — página própria (fotógrafos) */}
+            {isFotografo && (
+              <a
+                href="/fluxo-trabalho"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] text-white/50 hover:text-white hover:bg-white/5">
+                <span className="text-lg">❖</span>
+                <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">Fluxo de Trabalho</span>
+              </a>
+            )}
             {/* Sair */}
             <button
               onClick={async () => {
@@ -1782,7 +1792,8 @@ function SidebarNavAdmin({
   viewAsFreelancer?: boolean
 }) {
   // Sidebar items — sem números/badges à frente (regra do utilizador)
-  const items: Array<{ key: AdminTabKey; label: string; icon: string }> = [
+  //   `href` → item de navegação para outra rota (não é um separador interno).
+  const items: Array<{ key: AdminTabKey; label: string; icon: string; href?: string }> = [
     { key: null,             label: 'Início',         icon: '⌂' },
     { key: 'casamentos',     label: 'Casamentos',     icon: '◆' },
     ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição Fotos', icon: '✎' }] : []),
@@ -1791,6 +1802,7 @@ function SidebarNavAdmin({
     { key: 'calendario',     label: 'Calendário',     icon: '◉' },
     { key: 'pagamentos',     label: 'Pagamentos',     icon: '$' },
     { key: 'notificacoes',   label: 'Notificações',   icon: '◉' },
+    ...(isFotografo ? [{ key: null as AdminTabKey, label: 'Fluxo de Trabalho', icon: '❖', href: '/fluxo-trabalho' }] : []),
     { key: 'definicoes' as AdminTabKey, label: 'Dados Pessoais', icon: '☻' },
   ]
 
@@ -1860,18 +1872,9 @@ function SidebarNavAdmin({
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-0.5">
         {items.map((it, i) => {
-          const active = tab === it.key
-          return (
-            <button
-              key={i}
-              onClick={() => setTab(it.key)}
-              className="group relative w-full flex items-center gap-3 pl-4 pr-3 py-2.5 text-left transition-all"
-              style={{
-                background: active ? 'linear-gradient(90deg, rgba(201,164,92,0.10) 0%, rgba(201,164,92,0.02) 60%, transparent 100%)' : 'transparent',
-                borderLeft: active ? '1.5px solid #c9a96e' : '1.5px solid transparent',
-                boxShadow: active ? 'inset 12px 0 24px -16px rgba(201,164,92,0.5)' : 'none',
-              }}
-            >
+          const active = !it.href && tab === it.key
+          const inner = (
+            <>
               <span className="w-5 text-center text-[14px] transition-colors"
                 style={{ color: active ? '#c9a96e' : 'rgba(255,255,255,0.30)' }}>{it.icon}</span>
               {active ? (
@@ -1879,6 +1882,26 @@ function SidebarNavAdmin({
               ) : (
                 <span className="flex-1 text-[10px] tracking-[0.3em] uppercase font-light text-white/45 group-hover:text-white/85 transition-colors">{it.label}</span>
               )}
+            </>
+          )
+          const cls = "group relative w-full flex items-center gap-3 pl-4 pr-3 py-2.5 text-left transition-all"
+          const sty = {
+            background: active ? 'linear-gradient(90deg, rgba(201,164,92,0.10) 0%, rgba(201,164,92,0.02) 60%, transparent 100%)' : 'transparent',
+            borderLeft: active ? '1.5px solid #c9a96e' : '1.5px solid transparent',
+            boxShadow: active ? 'inset 12px 0 24px -16px rgba(201,164,92,0.5)' : 'none',
+          } as const
+          // Rota externa ao painel (ex.: /fluxo-trabalho) — <a> normal, não muda de tab.
+          if (it.href) {
+            return <a key={i} href={it.href} className={cls} style={sty}>{inner}</a>
+          }
+          return (
+            <button
+              key={i}
+              onClick={() => setTab(it.key)}
+              className={cls}
+              style={sty}
+            >
+              {inner}
             </button>
           )
         })}

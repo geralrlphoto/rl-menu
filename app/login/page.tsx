@@ -91,7 +91,7 @@ function LoginPageInner() {
         if (canceled) return
         const j = await r.json().catch(() => ({}))
         if (j?.ok && j?.session?.id) {
-          const validNext = !!nextFromUrl && (nextFromUrl.startsWith('/freelancers/') || nextFromUrl.startsWith('/painel-editor') || nextFromUrl.startsWith('/freelancer-view/'))
+          const validNext = !!nextFromUrl && (nextFromUrl.startsWith('/freelancers/') || nextFromUrl.startsWith('/painel-editor') || nextFromUrl.startsWith('/freelancer-view/') || nextFromUrl.startsWith('/fluxo-trabalho'))
           if (validNext) {
             router.replace(nextFromUrl!)
           } else {
@@ -139,6 +139,9 @@ function LoginPageInner() {
           // Mantém para compatibilidade — middleware redireciona depois.
           target = nextFromUrl
         } else if (nextFromUrl.startsWith('/freelancers/') && nextFromUrl.includes('view=freelancer')) {
+          target = nextFromUrl
+        } else if (nextFromUrl.startsWith('/fluxo-trabalho')) {
+          // Fluxo de Trabalho do fotógrafo — acessível com fl_session.
           target = nextFromUrl
         }
       }
