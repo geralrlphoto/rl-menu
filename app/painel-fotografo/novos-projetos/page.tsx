@@ -8,6 +8,7 @@ import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
 import { getTracksForProject, disassociate } from '../_data/musicas-associacao'
 import { rememberAdminMode, isAdminMode } from '../_data/freelancer-profile'
+import { PainelUserCard } from '@/app/components/PainelUserCard'
 
 // ────────────────────────────────────────────────────────────────────────────
 //  NOVOS PROJETOS — RL Photo.Video (premium cinematic editor workspace)
@@ -597,13 +598,7 @@ export default function NovosProjetosPage() {
 
         {/* Profile + Quote */}
         <div className="px-5 py-4 border-t border-white/[0.04]">
-          <div className="flex items-center gap-3 mb-4 p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gold/30 to-gold/10 border border-gold/40 flex items-center justify-center text-gold font-bold">E</div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-white truncate">Editor Pro</p>
-              <p className="text-[10px] text-white/35 truncate">editorpro@mail.com</p>
-            </div>
-          </div>
+          <PainelUserCard compacto />
           <div className="p-3 rounded-xl border border-gold/15"
             style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.05), transparent)' }}>
             <p className="text-gold/40 text-2xl font-serif leading-none mb-1">&ldquo;</p>

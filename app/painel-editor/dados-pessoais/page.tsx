@@ -7,6 +7,7 @@ import { PROJECTS as MOCK_PROJECTS, TASKS as MOCK_TASKS } from '../_data/project
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
+import { PainelUserCard } from '@/app/components/PainelUserCard'
 
 // ────────────────────────────────────────────────────────────────────────
 //  DADOS PESSOAIS — Wedding Moments Films
@@ -281,17 +282,7 @@ function Sidebar({ profile }: { profile: FreelancerProfile }) {
         </div>
       </div>
       <div className="px-4 py-3 border-t border-white/[0.04]">
-        <div className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gold/40 shrink-0">
-            <img src={profile.foto} alt={profile.nome} className="w-full h-full object-cover" />
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border border-black" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-white truncate">{profile.nome}</p>
-            <p className="text-[10px] text-white/35 truncate">editorpro@mail.com</p>
-            <p className="text-[9px] text-emerald-400 mt-0.5">● Online</p>
-          </div>
-        </div>
+        <PainelUserCard />
       </div>
     </aside>
   )

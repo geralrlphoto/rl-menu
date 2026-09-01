@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { PROJECTS, paymentPlanFor, comparePtDate, TODAY, type Project, type Installment } from '../_data/projects'
 import { BrandLogo } from '../_components/BrandLogo'
+import { PainelUserCard } from '@/app/components/PainelUserCard'
 
 /** Limpa horário "DD/MM/YYYY — HH:MM" → "DD/MM/YYYY" */
 function stripTime(d: string): string {
@@ -639,13 +640,7 @@ function Sidebar() {
         })}
       </nav>
       <div className="px-5 py-4 border-t border-white/[0.04]">
-        <div className="flex items-center gap-3 p-2 rounded-xl bg-white/[0.02] border border-white/[0.06]">
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gold/30 to-gold/10 border border-gold/40 flex items-center justify-center text-gold font-bold">E</div>
-          <div className="min-w-0 flex-1">
-            <p className="text-[12px] font-semibold text-white truncate">Editor Pro</p>
-            <p className="text-[10px] text-white/35 truncate">editorpro@mail.com</p>
-          </div>
-        </div>
+        <PainelUserCard compacto />
       </div>
     </aside>
   )
