@@ -623,7 +623,11 @@ export default function NovosProjetosPage() {
         .then(r => r.json())
         .then(d => {
           if (d?.notifId) {
-            setProjects(prev => prev.map(x => (x.id === guardado.id ? { ...x, notifId: d.notifId } : x)))
+            // Sem referência, a chave do projeto na leitura seguinte é o id da
+            // notificação: adota-o já para o cartão não mudar de identidade.
+            setProjects(prev => prev.map(x => (x.id === guardado.id
+              ? { ...x, notifId: d.notifId, id: guardado.referencia ? x.id : d.notifId }
+              : x)))
           }
         })
         .catch(() => {})
@@ -997,6 +1001,11 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
   const [refsForYear, setRefsForYear] = useState<EventReference[]>([])
   const [loadingRefs, setLoadingRefs] = useState(false)
   const [errorRefs, setErrorRefs] = useState<string | null>(null)
+  // Projeto sem referência: trabalhos que não correspondem a um evento da lista
+  // (montagens avulso, pedidos externos). O admin dá-lhe um título à mão.
+  const [semRef, setSemRef] = useState(false)
+  const [tituloLivre, setTituloLivre] = useState('')
+  const [localLivre, setLocalLivre] = useState('')
   const ref = refsForYear.find(e => e.ref === refId) ?? null
 
   // Fetch referências de /api/eventos-supabase?ano={ano}
@@ -1085,24 +1094,27 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
 
   function valid() {
     const precoNum = Number(form.valor.replace(/[^\d,.]/g,'').replace(',','.')) || 0
-    return !!ref && !!form.entregaPrevista.trim() && !!form.dataCriacao.trim() && precoNum > 0
+    const identificado = semRef ? tituloLivre.trim().length >= 3 : !!ref
+    return identificado && !!form.entregaPrevista.trim() && !!form.dataCriacao.trim() && precoNum > 0
   }
 
   function handleSubmit() {
-    if (!valid() || !ref) return
+    if (!valid()) return
+    if (!semRef && !ref) return
     setSaving(true)
     const createdAt = `${form.dataCriacao} — ${String(today.getHours()).padStart(2,'0')}:${String(today.getMinutes()).padStart(2,'0')}`
     // Parse valor (aceita "3500", "3500,00", "3500.00", "3 500 €" etc.)
     const precoNum = Number(form.valor.replace(/[^\d,.]/g,'').replace(',','.')) || 0
 
+    const FOTO_SEM_REF = 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop'
     const newProject: Project = {
       id:           `p${Date.now()}`,
-      referencia:   ref.ref,
-      noivos:       ref.noivos,
-      local:        ref.local,
-      foto:         ref.foto,
+      referencia:   semRef ? undefined : ref!.ref,
+      noivos:       semRef ? tituloLivre.trim() : ref!.noivos,
+      local:        semRef ? localLivre.trim() : ref!.local,
+      foto:         semRef ? FOTO_SEM_REF : ref!.foto,
       recebido:     createdAt,
-      dataCasamento:   ref.data,
+      dataCasamento:   semRef ? '' : ref!.data,
       entregaPrevista: form.entregaPrevista,
       pacote:       'Pacote Premium 👑',
       preco:        precoNum,
@@ -1164,15 +1176,42 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
           {/* ─── REFERÊNCIA DO EVENTO (Supabase) ─── */}
           <div className="rounded-xl border border-gold/20 p-4"
             style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.05), transparent)' }}>
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-[10px] tracking-[0.3em] uppercase text-gold font-bold">Referência do Evento</p>
-              {loadingRefs && (
+            <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+              <p className="text-[10px] tracking-[0.3em] uppercase text-gold font-bold">
+                {semRef ? 'Projeto sem referência' : 'Referência do Evento'}
+              </p>
+              <button type="button" onClick={() => setSemRef(v => !v)}
+                className="text-[10px] px-2.5 py-1 rounded-lg border border-white/15 text-white/55 hover:text-gold hover:border-gold/40 transition-all uppercase tracking-widest">
+                {semRef ? '← Escolher da lista' : 'Sem referência'}
+              </button>
+              {!semRef && loadingRefs && (
                 <span className="text-[10px] text-gold/70 tracking-widest uppercase flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
                   A carregar…
                 </span>
               )}
             </div>
+            {semRef ? (
+              <div className="grid gap-3">
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-white/45 mb-1">
+                    Título do projeto <span className="text-gold">*</span>
+                  </label>
+                  <input value={tituloLivre} onChange={e => setTituloLivre(e.target.value)}
+                    placeholder="ex: Montagem aniversário — Família Silva"
+                    className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase tracking-widest text-white/45 mb-1">Local (opcional)</label>
+                  <input value={localLivre} onChange={e => setLocalLivre(e.target.value)}
+                    placeholder="ex: Lisboa"
+                    className="w-full bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+                </div>
+                <p className="text-[11px] text-white/40">
+                  Sem referência, o projeto não fica ligado a nenhum evento da ficha. O prazo de entrega tem de ser definido à mão.
+                </p>
+              </div>
+            ) : (
             <div className="grid grid-cols-[110px_1fr] gap-3">
               {/* Ano */}
               <div>
@@ -1194,23 +1233,24 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
                 </select>
               </div>
             </div>
+            )}
 
             {/* Erro */}
-            {errorRefs && (
+            {!semRef && errorRefs && (
               <div className="mt-3 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30">
                 <p className="text-[11px] text-red-300">Erro: {errorRefs}</p>
               </div>
             )}
 
             {/* Info de quantidade */}
-            {!loadingRefs && !errorRefs && refsForYear.length > 0 && !refId && (
+            {!semRef && !loadingRefs && !errorRefs && refsForYear.length > 0 && !refId && (
               <p className="text-[11px] text-white/45 mt-2">
                 <span className="text-gold/80 font-semibold">{refsForYear.length}</span> {refsForYear.length === 1 ? 'casamento disponível' : 'casamentos disponíveis'} em {ano}
               </p>
             )}
 
             {/* Preview do evento seleccionado */}
-            {ref && (
+            {!semRef && ref && (
               <div className="mt-4 flex items-center gap-3 p-3 rounded-lg border border-gold/25 bg-black/30">
                 <div className="w-14 h-14 rounded-lg overflow-hidden border border-gold/30 shrink-0">
                   <img src={ref.foto} alt="" className="w-full h-full object-cover" />
