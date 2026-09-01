@@ -151,7 +151,9 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     foto: FALLBACK_FOTOS[idx % FALLBACK_FOTOS.length],
     recebido: isoToPtDateTime(j.sentAt || ''),
     dataCasamento: isoToPt(j.data_casamento || ''),
-    entregaPrevista: '',
+    // Prazo do vídeo (evento + 180 dias úteis) calculado na API; o override
+    // do admin, se existir, sobrepõe-se logo a seguir.
+    entregaPrevista: isoToPt(j.prazoVideo || ''),
     pacote: 'Pacote Premium 👑',
     duracao: '~12 min',
     stage: fromWfStage(wf[key] || 'Novo'),

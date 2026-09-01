@@ -8,6 +8,21 @@ function db() {
   )
 }
 
+// Prazo de entrega do vídeo: data do evento + 180 dias úteis. É a mesma regra
+// do alerta do sino e do relatório diário — aqui serve de entrega prevista por
+// omissão, para o admin não ter de a escrever em cada trabalho.
+function addWorkingDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  if (isNaN(d.getTime())) return ''
+  let count = 0
+  while (count < days) {
+    d.setDate(d.getDate() + 1)
+    const day = d.getDay()
+    if (day !== 0 && day !== 6) count++
+  }
+  return d.toISOString().split('T')[0]
+}
+
 function parseMeta(mensagem: string): any {
   const m = (mensagem ?? '').match(/^__META__(.*?)__\/META__/)
   if (!m) return null
@@ -66,6 +81,9 @@ export async function GET(req: NextRequest) {
       local: meta.local ?? null,
       data_casamento: meta.data_casamento ?? null,
       downloads: Array.isArray(meta.downloads) ? meta.downloads : [],
+      // Entrega prevista por omissão (evento + 180 dias úteis). O admin pode
+      // sobrepô-la em Editar Dados, e aí manda o override.
+      prazoVideo: meta.data_casamento ? addWorkingDays(String(meta.data_casamento), 180) : null,
       // Edições do admin (PATCH) — a página aplica-as por cima do derivado.
       overrides: (meta.overrides && typeof meta.overrides === 'object') ? meta.overrides : null,
       lida: !!n.lida,

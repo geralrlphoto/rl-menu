@@ -129,10 +129,13 @@ function jobsToEvents(jobs: any[]): CalendarEvent[] {
     }
 
     const entregaFeita = isoToPtCal(j.revisao?.entregaEm)
-    if (o.entregaPrevista) {
-      events.push({ id: `${id}-final`, title: 'Entrega Final', subtitle: nome, date: o.entregaPrevista, type: 'Entrega', projectId: id, todoODia: true, completed: !!entregaFeita })
+    // Entrega prevista: o que o admin definiu, ou o prazo do vídeo calculado
+    // na API (evento + 180 dias úteis).
+    const entregaPrevista = o.entregaPrevista || isoToPtCal(j.prazoVideo)
+    if (entregaPrevista) {
+      events.push({ id: `${id}-final`, title: 'Entrega Final', subtitle: nome, date: entregaPrevista, type: 'Entrega', projectId: id, todoODia: true, completed: !!entregaFeita })
     }
-    if (entregaFeita && entregaFeita !== o.entregaPrevista) {
+    if (entregaFeita && entregaFeita !== entregaPrevista) {
       events.push({ id: `${id}-entregue`, title: 'Entregue', subtitle: nome, date: entregaFeita, type: 'Entrega', projectId: id, todoODia: true, completed: true })
     }
   })

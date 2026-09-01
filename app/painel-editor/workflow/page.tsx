@@ -126,7 +126,8 @@ function jobToProjectWF(j: any, wf: Record<string, string>, idx: number): Projec
     telefone: '',
     recebido: isoToPtWF(j.sentAt || ''),
     dataCasamento: isoToPtWF(j.data_casamento || ''),
-    entregaPrevista: '',
+    // Prazo do vídeo (evento + 180 dias úteis) calculado na API.
+    entregaPrevista: isoToPtWF(j.prazoVideo || ''),
     pacote: 'Pacote Premium 👑',
     preco: 0,
     duracao: '',
@@ -566,7 +567,7 @@ export default function WorkflowPage() {
               <Panel title="Próximos Prazos" right={<button className="text-[11px] tracking-wider uppercase text-gold/70 hover:text-gold transition-colors">Ver todos</button>}>
                 <div className="space-y-3">
                   {proxPrazos.length === 0 && (
-                    <p className="text-[11px] text-white/30 italic">Sem entregas previstas. Define a data em Novos Projetos &rsaquo; Editar Dados.</p>
+                    <p className="text-[11px] text-white/30 italic">Sem entregas nos próximos dias.</p>
                   )}
                   {proxPrazos.map(({ p, step, dias }) => (
                     <div key={p.id} className="flex items-start gap-3">
