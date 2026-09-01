@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { loadFreelancerProfile, saveFreelancerProfile, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
+import { loadFreelancerProfile, saveFreelancerProfile, getFotografoId, type FreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 import { PROJECTS as MOCK_PROJECTS, TASKS as MOCK_TASKS } from '../_data/projects'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
@@ -45,15 +45,39 @@ export default function DadosPessoaisPage() {
   const [theme, setTheme] = useState<'dark'|'light'>('dark')
   const [profile, setProfile] = useState<FreelancerProfile>(DEFAULT_FREELANCER_PROFILE)
 
-  // Carrega perfil de localStorage no mount
+  // Carrega perfil de localStorage no mount e, se houver fotógrafo real
+  // carregado, a foto vem da BD (fonte de verdade, igual ao dashboard).
   useEffect(() => {
-    setProfile(loadFreelancerProfile())
+    const local = loadFreelancerProfile()
+    setProfile(local)
+    const id = getFotografoId()
+    if (!id) return
+    let cancelled = false
+    fetch(`/api/painel-editor/perfil?freelancer=${id}&only=foto`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled || !d?.foto) return
+        setProfile(prev => ({ ...prev, foto: d.foto }))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
   }, [])
 
   function updateProfile(patch: Partial<FreelancerProfile>) {
     const next = { ...profile, ...patch }
     setProfile(next)
     saveFreelancerProfile(next)
+    // A foto também vai para freelancers.foto_url — é o campo que o dashboard,
+    // a ficha admin e o /freelancer-view lêem. Só URLs (nunca base64).
+    if (patch.foto && /^https?:\/\//.test(patch.foto)) {
+      const id = getFotografoId()
+      if (id) {
+        fetch('/api/freelancers', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, foto_url: patch.foto }),
+        }).catch(() => {})
+      }
+    }
   }
 
   // Stats agregados (Resumo da Atividade) — sincronizados com localStorage + mocks
@@ -772,8 +796,10 @@ function EditFotoModal({
   onSave: (urlOrDataUrl: string) => void
 }) {
   const [url, setUrl] = useState('')
+  const [file, setFile] = useState<File | null>(null)
   const [filePreview, setFilePreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
 
   function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     setError(null)
@@ -781,6 +807,7 @@ function EditFotoModal({
     if (!f) return
     if (!f.type.startsWith('image/')) { setError('Selecciona uma imagem.'); return }
     if (f.size > 2 * 1024 * 1024) { setError('Imagem demasiado grande (máx 2 MB).'); return }
+    setFile(f)
     const reader = new FileReader()
     reader.onload = () => {
       const result = reader.result
@@ -792,10 +819,26 @@ function EditFotoModal({
     reader.readAsDataURL(f)
   }
 
-  function submit() {
-    const value = filePreview || url.trim()
-    if (!value) { setError('Selecciona um ficheiro ou cola um URL.'); return }
-    onSave(value)
+  // Sobe a imagem para o Storage e devolve o URL público. Nunca guardamos
+  // base64 no perfil: enche o localStorage e não alimenta o
+  // freelancers.foto_url, que é o campo lido pelo dashboard e pela ficha admin.
+  async function submit() {
+    if (uploading) return
+    if (!file && !url.trim()) { setError('Selecciona um ficheiro ou cola um URL.'); return }
+    if (!file) { onSave(url.trim()); return }
+    setError(null)
+    setUploading(true)
+    try {
+      const form = new FormData()
+      form.append('file', file)
+      const res = await fetch('/api/upload-image', { method: 'POST', body: form }).then(r => r.json())
+      if (!res?.url) throw new Error(res?.error || 'upload falhou')
+      onSave(res.url)
+    } catch {
+      setError('Não foi possível carregar a imagem. Tenta de novo.')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const previewSrc = filePreview || (url.trim() && /^https?:\/\//.test(url.trim()) ? url.trim() : currentFoto)
@@ -857,10 +900,10 @@ function EditFotoModal({
               className="flex-1 px-4 py-2.5 rounded-lg border border-white/10 text-white/65 text-[12px] font-semibold tracking-wider hover:border-white/25 hover:text-white transition-all">
               Cancelar
             </button>
-            <button type="button" onClick={submit}
-              className="flex-1 px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all"
+            <button type="button" onClick={submit} disabled={uploading}
+              className="flex-1 px-4 py-2.5 rounded-lg bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ boxShadow: '0 0 18px -4px rgba(201,164,92,0.5)' }}>
-              ✓ Guardar foto
+              {uploading ? 'A carregar…' : '✓ Guardar foto'}
             </button>
           </div>
         </div>

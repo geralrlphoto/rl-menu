@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { TODAY as TODAY_PT, TASKS as MOCK_TASKS, PROJECTS as MOCK_PROJECTS, paymentPlanFor, type Project as DataProject } from './_data/projects'
 import { NotificationBell } from './_components/NotificationBell'
 import { MessagesBell } from './_components/MessagesBell'
-import { loadFreelancerProfile } from './_data/freelancer-profile'
+import { loadFreelancerProfile, rememberFotografoId } from './_data/freelancer-profile'
 
 // Hoje (derivado da constante canónica)
 const [_TD, _TM, _TY] = TODAY_PT.split('/').map(Number)
@@ -123,6 +123,23 @@ export default function PainelEditor() {
     return () => { cancelled = true }
   }, [freelancerId])
 
+  // Memoriza o id para as sub-páginas o lerem (getFotografoId).
+  useEffect(() => { rememberFotografoId(freelancerId) }, [freelancerId])
+
+  // Foto guardada em Dados Pessoais (freelancers.perfil_editor.foto). Sem isto
+  // o avatar caía no localStorage do browser, que é partilhado e mostrava a
+  // foto de outra pessoa a quem abrisse o painel.
+  const [perfilFoto, setPerfilFoto] = useState<string>('')
+  useEffect(() => {
+    if (!freelancerId) { setPerfilFoto(''); return }
+    let cancelled = false
+    fetch(`/api/painel-editor/perfil?freelancer=${freelancerId}&only=foto`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled && d?.foto) setPerfilFoto(d.foto) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [freelancerId])
+
   // Lê perfil de localStorage (definido em /painel-fotografo/dados-pessoais)
   // — tem prioridade sobre nome/foto do API freelancer
   const [profileNome, setProfileNome] = useState<string>('')
@@ -147,13 +164,17 @@ export default function PainelEditor() {
     }
   }, [])
 
-  // Hierarquia: 1) Profile em Dados Pessoais  2) Freelancer da API  3) fallback
-  const effectiveNome = (profileNome.trim() || freelancer?.nome || 'Editor Pro').trim()
+  // Hierarquia: com um fotógrafo real carregado (?freelancer=<id>) manda a BD;
+  // o localStorage é do browser, não da pessoa, e mostrava dados errados.
+  // Sem id (modo maquete) usa o profile de Dados Pessoais.
+  const effectiveNome = (freelancer?.nome || profileNome.trim() || 'Editor Pro').trim()
   const displayName  = effectiveNome.split(' ')[0]
   const displayFull  = effectiveNome
   const displayEmail = freelancer?.email ?? 'editorpro@mail.com'
   const displayRole  = freelancer?.status ?? 'Editor de Vídeo'
-  const displayPhoto = profileFoto.trim() || freelancer?.foto_url || DEFAULT_AVATAR
+  const displayPhoto = freelancerId
+    ? (freelancer?.foto_url || perfilFoto.trim() || DEFAULT_AVATAR)
+    : (profileFoto.trim() || DEFAULT_AVATAR)
 
   const [active, setActive] = useState('dashboard')
 

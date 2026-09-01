@@ -90,3 +90,20 @@ export function saveFreelancerProfile(p: FreelancerProfile): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(p))
   } catch {}
 }
+
+// ── Id do fotógrafo carregado ── o dashboard abre com ?freelancer=<id>, mas as
+// sub-páginas navegam sem query. Guardamos o id para elas o lerem e poderem
+// gravar na BD (foto de perfil, etc.) em vez de ficarem só no localStorage.
+const FOTOGRAFO_ID_KEY = 'painel-fotografo-fl-id'
+export function rememberFotografoId(id: string | null): void {
+  if (id && typeof window !== 'undefined') {
+    try { localStorage.setItem(FOTOGRAFO_ID_KEY, id) } catch {}
+  }
+}
+export function getFotografoId(urlId?: string | null): string | null {
+  if (urlId) return urlId
+  if (typeof window !== 'undefined') {
+    try { return localStorage.getItem(FOTOGRAFO_ID_KEY) } catch {}
+  }
+  return null
+}
