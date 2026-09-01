@@ -875,8 +875,10 @@ function Hero({ onNovaTarefa }: { onNovaTarefa: () => void }) {
           </div>
         </div>
         <div className="painel-acoes flex items-center gap-3 shrink-0">
-          <NotificationBell />
-          <MessagesBell />
+          <div className="painel-acoes-topo flex items-center gap-2">
+            <NotificationBell />
+            <MessagesBell />
+          </div>
           <button
             type="button"
             onClick={onNovaTarefa}

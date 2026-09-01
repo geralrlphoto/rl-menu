@@ -322,8 +322,10 @@ function Hero({ theme, onToggleTheme, onEdit, editMode }: { theme: 'dark'|'light
           </div>
         </div>
         <div className="painel-acoes flex items-center gap-3 shrink-0">
-          <NotificationBell />
-          <MessagesBell />
+          <div className="painel-acoes-topo flex items-center gap-2">
+            <NotificationBell />
+            <MessagesBell />
+          </div>
           <button onClick={onToggleTheme}
             className="w-11 h-11 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/75 hover:text-gold">
             {theme === 'dark' ? '☀' : '☾'}
