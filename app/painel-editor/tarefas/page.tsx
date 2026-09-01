@@ -864,7 +864,7 @@ function Hero({ onNovaTarefa }: { onNovaTarefa: () => void }) {
       </div>
       <div className="absolute inset-0 z-[1]"
         style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.85) 35%, rgba(10,10,10,0.45) 70%, rgba(10,10,10,0.05) 100%)' }} />
-      <div className="relative z-10 flex items-center justify-between gap-6 px-8 sm:px-12 py-8">
+      <div className="painel-hero-linha relative z-10 flex items-center justify-between gap-6 px-8 sm:px-12 py-8">
         <div className="flex items-center gap-5 max-w-xl">
           <div className="w-16 h-16 rounded-2xl border border-gold/40 flex items-center justify-center text-3xl text-gold shrink-0"
             style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 22px -4px rgba(201,164,92,0.3)' }}>📋</div>
@@ -874,7 +874,7 @@ function Hero({ onNovaTarefa }: { onNovaTarefa: () => void }) {
             <div className="mt-2 h-px w-14 bg-gradient-to-r from-gold/70 to-transparent" />
           </div>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="painel-acoes flex items-center gap-3 shrink-0">
           <NotificationBell />
           <MessagesBell />
           <button

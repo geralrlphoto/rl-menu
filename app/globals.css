@@ -88,3 +88,18 @@ body {
 @media (min-width: 1024px) {
   .painel-hamburger-fundo { display: none; }
 }
+
+/* ── Sino e mensagens no topo dos painéis, em telemóvel ─────────────────────
+   A linha do hero é um flex sem quebra: o bloco da esquerda (avatar + saudação)
+   não encolhe abaixo do seu conteúdo e empurrava os botões para fora do cartão,
+   que tem overflow:hidden. Resultado: o sino e as mensagens desapareciam.
+   Abaixo de 640px a linha passa a quebrar e os botões vão para cima, à direita. */
+@media (max-width: 639px) {
+  .painel-hero-linha { flex-wrap: wrap; }
+  .painel-acoes {
+    order: -1;
+    width: 100%;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+  }
+}

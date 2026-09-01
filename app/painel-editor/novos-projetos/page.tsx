@@ -839,7 +839,7 @@ export default function NovosProjetosPage() {
             </div>
             <div className="absolute inset-0 z-[1]"
               style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.85) 40%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.15) 100%)' }} />
-            <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-10 sm:py-12">
+            <div className="painel-hero-linha relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-10 sm:py-12">
               <div className="max-w-xl">
                 <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
                 <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
@@ -851,7 +851,7 @@ export default function NovosProjetosPage() {
                 </p>
               </div>
 
-              <div className="flex items-center gap-2 shrink-0">
+              <div className="painel-acoes flex items-center gap-2 shrink-0">
                 <NotificationBell />
                 <MessagesBell />
                 <button className="w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold">

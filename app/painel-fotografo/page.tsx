@@ -887,7 +887,7 @@ export default function PainelEditor() {
             </div>
             <div className="absolute inset-0 z-[1]"
               style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.85) 35%, rgba(11,11,11,0.45) 65%, rgba(11,11,11,0.1) 100%)' }} />
-            <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
+            <div className="painel-hero-linha relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
               <div className="max-w-xl flex items-center gap-5">
                 <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
                   style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
@@ -907,7 +907,7 @@ export default function PainelEditor() {
               </div>
 
               {/* Top-right: notif + profile */}
-              <div className="flex items-center gap-3 shrink-0">
+              <div className="painel-acoes flex items-center gap-3 shrink-0">
                 <NotificationBell />
                 <MessagesBell />
                 <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
