@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import FichaNoPainel from './FichaNoPainel'
 
 /* ============================================================
    /social-media/podcast — o plano do podcast "Antes do Sim".
@@ -11,6 +12,9 @@ import path from 'node:path'
 
    Para mudar o design, substitui-se o ficheiro. Os episódios estão no
    array EPS, lá dentro.
+
+   Dentro do painel lateral de cada episódio há duas fichas, a do
+   convidado e a dos potenciais convidados (FichaNoPainel).
 
    A gestão dos episódios, as candidaturas e os leads vivem nas
    sub-páginas: /episodios, /candidaturas e /leads. Não há atalhos para
@@ -55,6 +59,10 @@ export default function PlanoPodcastPage() {
       <style dangerouslySetInnerHTML={{ __html: estilo }} />
       <div dangerouslySetInnerHTML={{ __html: corpo }} />
       <script dangerouslySetInnerHTML={{ __html: script }} />
+
+      {/* As fichas do convidado e dos potenciais, dentro do painel lateral
+          que o design abre em cada episódio. */}
+      <FichaNoPainel />
 
     </>
   )
