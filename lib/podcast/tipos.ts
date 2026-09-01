@@ -42,6 +42,10 @@ export type Convidado = {
   foto_url: string | null
   website: string | null
   instagram: string | null
+  /* Contacto e notas: uso interno, não saem na página pública. */
+  email: string | null
+  telefone: string | null
+  notas: string | null
 }
 
 export type Capitulo = {

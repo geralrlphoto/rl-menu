@@ -11,9 +11,12 @@ import { useEffect, useRef, useState } from 'react'
 type Convidado = {
   id: string
   nome: string
+  email: string | null
+  telefone: string | null
   profissao: string | null
   empresa: string | null
   bio: string | null
+  notas: string | null
   foto_url: string | null
   website: string | null
   instagram: string | null
@@ -87,8 +90,13 @@ export default function ConvidadosEpisodio({ episodioId }: { episodioId: string 
             <Campo label="Empresa" valor={c.empresa ?? ''} onChange={v => guardar(c.id, { empresa: v })} />
             <Campo label="Instagram" valor={c.instagram ?? ''} onChange={v => guardar(c.id, { instagram: v })} />
           </div>
+          <div className="pc-dois">
+            <Campo label="Email" valor={c.email ?? ''} onChange={v => guardar(c.id, { email: v })} />
+            <Campo label="Telefone" valor={c.telefone ?? ''} onChange={v => guardar(c.id, { telefone: v })} />
+          </div>
           <Campo label="Site" valor={c.website ?? ''} onChange={v => guardar(c.id, { website: v })} />
-          <Area label="Bio" valor={c.bio ?? ''} onChange={v => guardar(c.id, { bio: v })} />
+          <Area label="Bio (sai na página pública)" valor={c.bio ?? ''} onChange={v => guardar(c.id, { bio: v })} />
+          <Area label="Notas internas" valor={c.notas ?? ''} onChange={v => guardar(c.id, { notas: v })} />
           <Foto foto={c.foto_url} onChange={url => guardar(c.id, { foto_url: url })} />
           <div style={{ textAlign: 'right' }}>
             <button type="button" className="pc-mini" onClick={() => apagar(c)}>Remover convidado</button>

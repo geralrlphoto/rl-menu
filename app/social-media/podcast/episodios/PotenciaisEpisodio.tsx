@@ -15,8 +15,10 @@ type Estado = typeof ESTADOS[number]
 type Potencial = {
   id: string
   nome: string
-  empresa: string | null
+  email: string | null
   contacto: string | null
+  instagram: string | null
+  empresa: string | null
   notas: string | null
   estado: Estado
 }
@@ -86,9 +88,13 @@ export default function PotenciaisEpisodio({ episodioId }: { episodioId: string 
             <Campo label="Nome" valor={p.nome} onChange={v => guardar(p.id, { nome: v })} />
             <Campo label="Empresa" valor={p.empresa ?? ''} onChange={v => guardar(p.id, { empresa: v })} />
           </div>
-          <Campo label="Contacto" valor={p.contacto ?? ''}
-            marcador="Email, telefone ou Instagram"
-            onChange={v => guardar(p.id, { contacto: v })} />
+          <div className="pc-dois">
+            <Campo label="Email" valor={p.email ?? ''} onChange={v => guardar(p.id, { email: v })} />
+            <Campo label="Contacto" valor={p.contacto ?? ''} marcador="Telefone"
+              onChange={v => guardar(p.id, { contacto: v })} />
+          </div>
+          <Campo label="Instagram" valor={p.instagram ?? ''} marcador="@ ou endereço"
+            onChange={v => guardar(p.id, { instagram: v })} />
           <Area label="Notas" valor={p.notas ?? ''} onChange={v => guardar(p.id, { notas: v })} />
 
           <div className="pc-campo">

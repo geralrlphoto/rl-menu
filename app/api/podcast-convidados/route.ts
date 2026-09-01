@@ -13,7 +13,7 @@ import { clienteAdmin } from '@/lib/podcast/dados'
 
 export const dynamic = 'force-dynamic'
 
-const CAMPOS = ['nome', 'profissao', 'empresa', 'bio', 'foto_url', 'website', 'instagram'] as const
+const CAMPOS = ['nome', 'email', 'telefone', 'instagram', 'profissao', 'empresa', 'bio', 'notas', 'foto_url', 'website'] as const
 
 function limpar(body: Record<string, any>) {
   const out: Record<string, any> = {}
