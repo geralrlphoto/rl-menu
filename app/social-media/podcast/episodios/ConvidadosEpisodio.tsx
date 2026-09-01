@@ -97,6 +97,14 @@ export default function ConvidadosEpisodio({ episodioId }: { episodioId: string 
             <span className="pc-dobra-meta">
               {[c.profissao, c.empresa].filter(Boolean).join(' · ') || 'Sem profissão'}
             </span>
+            {/* Dentro do <summary>: sem travar o clique, o botão abria a ficha. */}
+            <button
+              type="button"
+              className="pc-dobra-remover"
+              aria-label={`Remover ${c.nome}`}
+              onClick={e => { e.preventDefault(); e.stopPropagation(); apagar(c) }}>
+              Remover
+            </button>
           </summary>
 
           <div className="pc-dois">
@@ -115,9 +123,6 @@ export default function ConvidadosEpisodio({ episodioId }: { episodioId: string 
           <Area label="Bio (sai na página pública)" valor={c.bio ?? ''} onChange={v => guardar(c.id, { bio: v })} />
           <Area label="Notas internas" valor={c.notas ?? ''} onChange={v => guardar(c.id, { notas: v })} />
           <Foto foto={c.foto_url} onChange={url => guardar(c.id, { foto_url: url })} />
-          <div style={{ textAlign: 'right' }}>
-            <button type="button" className="pc-mini" onClick={() => apagar(c)}>Remover convidado</button>
-          </div>
         </details>
       ))}
 

@@ -215,7 +215,7 @@ export default function PodcastPage() {
         .pc-dobra > summary {
           cursor: pointer; list-style: none; position: relative;
           display: flex; flex-direction: column; gap: 4px;
-          padding: 14px 74px 14px 16px; min-height: 44px;
+          padding: 14px 168px 14px 16px; min-height: 44px;
         }
         .pc-dobra > summary::-webkit-details-marker { display: none; }
         .pc-dobra > summary::after {
@@ -226,6 +226,15 @@ export default function PodcastPage() {
         .pc-dobra[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; }
         .pc-dobra > *:not(summary) { margin: 0 16px; }
         .pc-dobra > *:last-child { margin-bottom: 16px; }
+        .pc-dobra-remover {
+          position: absolute; top: 13px; right: 74px;
+          font-family: inherit; cursor: pointer;
+          font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+          padding: 6px 12px; border-radius: 40px;
+          background: transparent; border: 1px solid rgba(220,80,80,.28);
+          color: #e8a1a1; transition: background .25s, border-color .25s;
+        }
+        .pc-dobra-remover:hover { background: rgba(220,80,80,.14); border-color: rgba(220,80,80,.5); }
         .pc-dobra-nome { font-size: 15px; color: var(--ink); }
         .pc-dobra-meta { font-size: 12px; color: var(--ink-4); }
 

@@ -145,10 +145,19 @@ export default function FichaNoPainel() {
           text-transform: uppercase; color: var(--tx-dim);
         }
         .fic .pc-dobra[open] > summary::after { content: 'Fechar'; }
-        .fic .pc-dobra > summary { position: relative; padding-right: 74px; }
+        .fic .pc-dobra > summary { position: relative; padding-right: 168px; }
         .fic .pc-dobra[open] > summary { border-bottom: 1px solid var(--line-soft); margin-bottom: 14px; }
         .fic .pc-dobra > *:not(summary) { margin: 0 16px; }
         .fic .pc-dobra > *:last-child { margin-bottom: 16px; }
+        .fic .pc-dobra-remover {
+          position: absolute; top: 13px; right: 74px;
+          font-family: inherit; cursor: pointer;
+          font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+          padding: 6px 12px; border-radius: 40px;
+          background: transparent; border: 1px solid rgba(220,80,80,.28);
+          color: #e8a1a1; transition: background .25s, border-color .25s;
+        }
+        .fic .pc-dobra-remover:hover { background: rgba(220,80,80,.14); border-color: rgba(220,80,80,.5); }
         .fic .pc-dobra-nome { font-family: var(--fd); font-size: 17px; color: var(--tx); }
         .fic .pc-dobra-meta { font-family: var(--fb); font-size: 12px; color: var(--tx-dim); }
 
