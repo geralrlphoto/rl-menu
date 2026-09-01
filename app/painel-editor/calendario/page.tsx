@@ -99,6 +99,46 @@ function autoTasksForUserProject(p: any): Task[] {
   })
 }
 
+// ── Trabalhos reais → eventos do calendário ─────────────────────────────
+// Só o que existe mesmo na BD: o dia do casamento, o dia em que a RL enviou o
+// trabalho, a entrega prevista (quando o admin a definiu) e a entrega feita.
+// Nada de datas calculadas por palpite, como nos mocks.
+function isoToPtCal(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+}
+
+function jobsToEvents(jobs: any[]): CalendarEvent[] {
+  const events: CalendarEvent[] = []
+  jobs.forEach((j, i) => {
+    const o = (j.overrides && typeof j.overrides === 'object') ? j.overrides : {}
+    if (o.archived) return
+    const id = j.referencia || j.notifId || String(i)
+    const nome = o.noivos || j.noivos || j.local || 'Evento'
+
+    const casamento = o.dataCasamento || isoToPtCal(j.data_casamento)
+    if (casamento) {
+      events.push({ id: `${id}-wed`, title: 'Casamento', subtitle: nome, date: casamento, type: 'Casamento', projectId: id, todoODia: true })
+    }
+
+    const recebido = (o.recebido || isoToPtCal(j.sentAt) || '').split('—')[0].trim()
+    if (recebido) {
+      events.push({ id: `${id}-mat`, title: 'Material Recebido', subtitle: nome, date: recebido, type: 'Prazo', projectId: id, todoODia: true })
+    }
+
+    const entregaFeita = isoToPtCal(j.revisao?.entregaEm)
+    if (o.entregaPrevista) {
+      events.push({ id: `${id}-final`, title: 'Entrega Final', subtitle: nome, date: o.entregaPrevista, type: 'Entrega', projectId: id, todoODia: true, completed: !!entregaFeita })
+    }
+    if (entregaFeita && entregaFeita !== o.entregaPrevista) {
+      events.push({ id: `${id}-entregue`, title: 'Entregue', subtitle: nome, date: entregaFeita, type: 'Entrega', projectId: id, todoODia: true, completed: true })
+    }
+  })
+  return events
+}
+
 // Lê TODAS as tarefas (user-criadas + auto-geradas + mocks TASKS) e converte em CalendarEvents.
 function userTasksToEvents(): CalendarEvent[] {
   if (typeof window === 'undefined') return []
@@ -224,9 +264,28 @@ export default function CalendarioPage() {
   const [userEvents, setUserEvents] = useState<CalendarEvent[]>([])
   const [taskEvents, setTaskEvents] = useState<CalendarEvent[]>([])
   const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set())
+  // Modo real: há editor identificado (?freelancer=<id> ou id já guardado no
+  // browser). Aí o calendário mostra só os trabalhos da BD; sem editor, fica o
+  // calendário de maquete como estava.
+  const [modo, setModo] = useState<'a-resolver' | 'real' | 'maquete'>('a-resolver')
+  const [realEvents, setRealEvents] = useState<CalendarEvent[]>([])
 
-  // Ler projetos + tarefas criados pelo utilizador (localStorage) e gerar os seus eventos
   useEffect(() => {
+    const id = getEditorId()
+    if (!id) { setModo('maquete'); return }
+    setModo('real')
+    let cancelled = false
+    fetch(`/api/painel-editor/projetos?freelancer=${id}`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled) setRealEvents(jobsToEvents(Array.isArray(d?.jobs) ? d.jobs : [])) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  // Ler projetos + tarefas criados pelo utilizador (localStorage) e gerar os
+  // seus eventos — só em modo maquete.
+  useEffect(() => {
+    if (getEditorId()) return
     function load() {
       setUserEvents(userProjectsToEvents())
       setTaskEvents(userTasksToEvents())
@@ -248,9 +307,13 @@ export default function CalendarioPage() {
   }, [])
 
   const allEvents = useMemo(() => {
-    // Filtra eventos de projetos eliminados (archived/cancelled)
+    // Enquanto não se sabe se há editor, não mostra nada — evita um piscar de
+    // eventos de maquete a quem tem trabalhos reais.
+    if (modo === 'a-resolver') return []
+    if (modo === 'real') return realEvents
+    // Maquete: filtra eventos de projetos eliminados (archived/cancelled)
     return [...taskEvents, ...userEvents, ...baseEvents].filter(e => !e.projectId || !deletedIds.has(e.projectId))
-  }, [taskEvents, userEvents, baseEvents, deletedIds])
+  }, [modo, realEvents, taskEvents, userEvents, baseEvents, deletedIds])
   // Hoje — derivado do TODAY canónico em _data/projects.ts
   const [TODAY_DAY_NUM, TODAY_MONTH_NUM, TODAY_YEAR_NUM] = TODAY_PT.split('/').map(Number)
   const TODAY_DAY = TODAY_DAY_NUM
