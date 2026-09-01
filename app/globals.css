@@ -102,4 +102,20 @@ body {
     justify-content: flex-end;
     margin-bottom: 0.5rem;
   }
+
+  /* Nas duas dashboards o bloco tem só o sino, as mensagens e o perfil: sobem
+     para a mesma linha do hamburger, alinhados à direita, para o topo ficar
+     simétrico. Nas sub-páginas o bloco leva mais botões (tema, editar, novo
+     projeto) e por isso fica na linha própria, dentro do cartão. */
+  .painel-acoes-topo {
+    position: fixed;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 60;
+    width: auto;
+    margin: 0;
+    gap: 0.5rem;
+  }
+  /* Iguala a altura do cartão do perfil à dos botões (44px). */
+  .painel-acoes-topo > div:last-child { padding-top: 0.25rem; padding-bottom: 0.25rem; }
 }

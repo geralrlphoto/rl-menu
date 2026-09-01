@@ -1028,7 +1028,7 @@ export default function PainelEditor() {
               </div>
 
               {/* Top-right: notif + profile */}
-              <div className="painel-acoes flex items-center gap-3 shrink-0">
+              <div className="painel-acoes painel-acoes-topo flex items-center gap-3 shrink-0">
                 <NotificationBell />
                 <MessagesBell />
                 <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
