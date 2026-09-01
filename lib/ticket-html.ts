@@ -39,7 +39,9 @@ export function buildTicketHtml(o: any): string {
             ${o.portes != null ? row('Portes', o.portes > 0 ? eur(o.portes) : 'Grátis') : ''}
             ${o.total != null ? row('TOTAL', eur(o.total), true) : ''}
             ${o.metodo_pagamento ? row('Método de pagamento', o.metodo_pagamento, true) : ''}
-            ${o.metodo_pagamento === 'MBWay' && o.mbway_conta ? row('Conta MB WAY', o.mbway_conta) : ''}
+            <!-- A conta MB WAY nao aparece no ticket do cliente: ele so precisa
+                 de saber o metodo. Continua guardada no pedido e visivel na
+                 ficha do evento e na lista de pedidos, para o controlo interno. -->
           </table>
           <div style="margin:24px 0 0;padding:16px 18px;background:#faf5ea;border:1px solid #ece4d4;border-radius:4px;">
             <p style="margin:0;font-size:12px;color:#3a352e;line-height:1.7;">
