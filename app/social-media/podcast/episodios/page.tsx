@@ -203,6 +203,14 @@ export default function PodcastPage() {
         .pc-dois { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
         @media (max-width: 640px) { .pc-dois { grid-template-columns: 1fr; } }
 
+        .pc-sub {
+          display: flex; flex-direction: column; gap: 12px;
+          padding: 16px; margin-bottom: 12px;
+          border-radius: 10px;
+          border: 1px solid var(--line);
+          background: rgba(0,0,0,0.22);
+        }
+
         .pc-dica { margin: 0; font-size: 11.5px; color: var(--ink-4); line-height: 1.6; }
         .pc-dica strong { color: var(--ink-3); }
 

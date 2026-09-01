@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Episodio, EstadoEpisodio } from '@/lib/podcast/tipos'
 import { gerarSlug } from '@/lib/podcast/tipos'
+import ConvidadosEpisodio from './ConvidadosEpisodio'
+import PotenciaisEpisodio from './PotenciaisEpisodio'
 
 /* ============================================================
    Back-office dos episódios do podcast.
@@ -210,6 +212,9 @@ export default function EpisodiosClient() {
                 <Campo label="Apple Podcasts" valor={emEdicao.apple_url ?? ''}
                   onChange={v => guardar(emEdicao.id, { apple_url: v })} />
               </div>
+
+              <ConvidadosEpisodio episodioId={emEdicao.id} />
+              <PotenciaisEpisodio episodioId={emEdicao.id} />
 
               <Area label="Notas do episódio (Markdown)" linhas={12} valor={emEdicao.notas_md ?? ''}
                 onChange={v => guardar(emEdicao.id, { notas_md: v })} />
