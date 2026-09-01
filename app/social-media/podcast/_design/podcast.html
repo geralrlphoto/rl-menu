@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Antes do Sim — Podcast · RL Photo.Video</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&family=Hanken+Grotesk:wght@300;400;500&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0b0a08; --ink-2:#100e0b; --ink-3:#16130f;
+  --g:#d8be93; --g-deep:#c8a866;
+  --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4);
+  --line:rgba(243,237,226,.14); --line-soft:rgba(243,237,226,.08);
+  --fd:'Jost',sans-serif; --fb:'Hanken Grotesk',sans-serif; --fm:'Space Mono',monospace; --fs:'Cormorant Garamond',serif;
+  --ease:cubic-bezier(.16,1,.3,1); --pad:clamp(20px,5vw,80px);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth;}
+body{background:var(--ink);color:var(--tx);font-family:var(--fb);line-height:1.5;overflow-x:hidden;}
+img{display:block;max-width:100%;}
+a{color:inherit;text-decoration:none;}
+::selection{background:var(--g);color:var(--ink);}
+
+.fx-grain{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");background-size:130px;}
+.fx-vig{position:fixed;inset:0;z-index:8990;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.5);}
+.fx-prog{position:fixed;top:0;left:0;height:2px;width:0;background:var(--g);z-index:9100;transition:width .1s linear;}
+
+.wrap{width:100%;max-width:1320px;margin:0 auto;padding-inline:var(--pad);}
+.sec{position:relative;padding-block:clamp(50px,8vh,110px);}
+h1,h2,h3{font-family:var(--fd);font-weight:200;line-height:1.05;letter-spacing:-.02em;}
+h2{font-size:clamp(28px,4.6vw,62px);}
+h2 em,h1 em,h3 em{font-style:italic;color:var(--g);}
+.eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--g);display:inline-flex;gap:.85em;align-items:center;}
+.eyebrow::before{content:"";width:40px;height:1px;background:var(--g);opacity:.7;}
+.eyebrow.c{justify-content:center;}
+.slot{position:relative;overflow:hidden;background:var(--ink-3);
+  background-image:repeating-linear-gradient(122deg,rgba(243,237,226,.022) 0 1px,transparent 1px 11px);}
+.slot::after{content:attr(data-label);position:absolute;inset:0;display:grid;place-items:center;text-align:center;
+  font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-dim);padding:1em;}
+.slot img{position:relative;z-index:1;width:100%;height:100%;object-fit:cover;}
+
+.r{transition:opacity 1s var(--ease),transform 1s var(--ease);}
+html.js .r{opacity:0;transform:translateY(26px);}
+html.js .is-in .r,html.js .r.is-in{opacity:1;transform:none;}
+@media(prefers-reduced-motion:reduce){html.js .r{opacity:1;transform:none;}}
+
+.btn{display:inline-flex;align-items:center;gap:.9em;position:relative;isolation:isolate;cursor:pointer;
+  font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);
+  padding:18px 38px;border:1px solid var(--g);border-radius:40px;overflow:hidden;background:var(--g);transition:color .5s var(--ease);}
+.btn .fill{position:absolute;inset:0;z-index:-1;background:var(--ink);transform:translateY(101%);transition:transform .6s var(--ease);}
+.btn .dot{width:5px;height:5px;border-radius:50%;background:var(--ink);transition:background .5s;}
+.btn:hover{color:var(--g);}.btn:hover .fill{transform:translateY(0);}.btn:hover .dot{background:var(--g);}
+.btn--ghost{background:transparent;color:var(--tx);border-color:var(--line);}
+.btn--ghost .fill{background:var(--g);}
+.btn--ghost:hover{color:var(--ink);border-color:var(--g);}
+.btn--ghost .dot{background:var(--g);}
+.btn--ghost:hover .dot{background:var(--ink);}
+
+/* bar */
+.bar{position:fixed;top:0;left:0;width:100%;z-index:8000;display:flex;align-items:center;justify-content:space-between;
+  padding:20px var(--pad);border-bottom:1px solid transparent;transition:background .6s var(--ease),padding .6s var(--ease),border-color .6s;}
+.bar.s{background:rgba(11,10,8,.74);backdrop-filter:blur(14px);padding-block:13px;border-color:var(--line-soft);}
+.lock{display:flex;align-items:center;gap:12px;}
+.lock svg{width:30px;height:38px;}
+.lock svg ellipse{stroke:var(--g);}
+.lock .wm{font-family:var(--fd);font-weight:300;letter-spacing:.12em;font-size:14px;}
+.lock .wm span{display:block;font-family:var(--fm);font-size:8px;letter-spacing:.4em;color:var(--tx-dim);margin-top:3px;}
+.bar .back{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-mid);display:inline-flex;gap:.6em;align-items:center;transition:color .4s;}
+.bar .back:hover{color:var(--tx);}
+.bar .back .a{color:var(--g);}
+
+/* HERO */
+.hero{position:relative;min-height:100svh;display:grid;place-items:center;overflow:hidden;padding:clamp(110px,16vh,180px) var(--pad) clamp(56px,9vh,100px);}
+.hero__bg{position:absolute;inset:0;z-index:0;}
+.hero__bg .slot{width:100%;height:100%;}
+.hero__bg .slot::after{align-items:flex-start;padding-top:5em;}
+.hero__scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(11,10,8,.62),rgba(11,10,8,.34) 34%,rgba(11,10,8,.76) 76%,var(--ink));}
+.hero__in{position:relative;z-index:2;text-align:center;max-width:900px;}
+.hero__mic{width:56px;height:56px;border:1px solid var(--g);border-radius:50%;display:grid;place-items:center;margin:0 auto 26px;color:var(--g);}
+.hero__mic svg{width:20px;fill:currentColor;}
+.hero h1{font-family:var(--fs);font-weight:300;font-size:clamp(48px,10vw,148px);line-height:.98;letter-spacing:.01em;}
+.hero h1 em{font-style:italic;color:var(--g);}
+.hero__rule{display:flex;align-items:center;justify-content:center;gap:14px;margin:24px 0;}
+.hero__rule span{height:1px;width:clamp(40px,9vw,100px);background:var(--g);opacity:.6;}
+.hero__rule b{width:5px;height:5px;border-radius:50%;background:var(--g);}
+.hero__promise{font-family:var(--fs);font-style:italic;font-weight:300;font-size:clamp(18px,2.1vw,27px);line-height:1.45;color:var(--tx);max-width:34ch;margin:0 auto;}
+.hero__meta{display:flex;gap:26px;justify-content:center;flex-wrap:wrap;margin-top:30px;font-family:var(--fm);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--tx-dim);}
+.hero__meta b{color:var(--g);font-weight:400;}
+.hero__row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:36px;}
+
+/* PORQUÊ */
+.why{display:grid;grid-template-columns:1fr;gap:18px;}
+@media(min-width:880px){.why{grid-template-columns:repeat(3,1fr);}}
+.wcard{border:1px solid var(--line-soft);border-radius:12px;padding:30px 26px;background:var(--ink-2);position:relative;overflow:hidden;
+  transition:border-color .5s var(--ease),transform .5s var(--ease);}
+.wcard::before{content:"";position:absolute;top:0;left:-70%;width:55%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(216,190,147,.08),transparent);transform:skewX(-18deg);animation:sheen 6.5s ease-in-out infinite;}
+.wcard:nth-child(2)::before{animation-delay:1.3s;}
+.wcard:nth-child(3)::before{animation-delay:2.6s;}
+@keyframes sheen{0%{left:-70%}55%,100%{left:170%}}
+.wcard:hover{border-color:var(--g);transform:translateY(-5px);}
+.wcard .wk{font-family:var(--fm);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--g);}
+.wcard .wt{font-family:var(--fd);font-weight:200;font-size:clamp(21px,2.1vw,28px);margin:14px 0 10px;line-height:1.1;}
+.wcard .wd{color:var(--tx-mid);font-size:14px;line-height:1.7;}
+
+/* ESTRUTURA */
+.struct{display:grid;grid-template-columns:1fr;gap:40px;align-items:start;}
+@media(min-width:960px){.struct{grid-template-columns:1.05fr .95fr;gap:70px;}}
+.tl{border-top:1px solid var(--line-soft);}
+.tl__row{display:grid;grid-template-columns:78px 1fr;gap:18px;padding:16px 0;border-bottom:1px solid var(--line-soft);align-items:baseline;
+  transition:background .4s var(--ease);}
+.tl__row:hover{background:rgba(216,190,147,.04);}
+.tl__t{font-family:var(--fm);font-size:11px;letter-spacing:.1em;color:var(--g);}
+.tl__b{font-family:var(--fd);font-weight:300;font-size:17px;color:var(--tx);}
+.tl__b small{display:block;font-family:var(--fb);font-size:13px;color:var(--tx-mid);margin-top:5px;line-height:1.6;}
+.fixed{display:grid;gap:14px;}
+.fbox{border:1px solid var(--line-soft);border-radius:10px;padding:22px 20px;background:var(--ink-2);}
+.fbox h4{font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);font-weight:400;margin-bottom:12px;}
+.fbox p{color:var(--tx-mid);font-size:13.5px;line-height:1.75;}
+.fbox p em{font-style:italic;color:var(--tx);}
+.fbox--gold{border-color:var(--g);background:rgba(216,190,147,.05);}
+
+/* EPISÓDIOS */
+.eps{display:grid;grid-template-columns:1fr;gap:14px;}
+@media(min-width:700px){.eps{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:1080px){.eps{grid-template-columns:repeat(3,1fr);}}
+.ep{position:relative;border:1px solid var(--line-soft);border-radius:12px;padding:26px 24px;background:var(--ink-2);
+  overflow:hidden;cursor:pointer;text-align:left;color:inherit;font:inherit;display:flex;flex-direction:column;gap:10px;min-height:180px;
+  transition:border-color .5s var(--ease),transform .5s var(--ease);}
+.ep:hover{border-color:var(--g);transform:translateY(-5px);}
+.ep__bg{position:absolute;right:-6px;bottom:-24px;font-family:var(--fs);font-weight:300;font-style:italic;
+  font-size:110px;line-height:.7;color:rgba(243,237,226,.035);pointer-events:none;}
+.ep__top{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.ep__n{font-family:var(--fm);font-size:10px;letter-spacing:.22em;color:var(--g);}
+.ep__m{font-family:var(--fm);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim);
+  border:1px solid var(--line-soft);border-radius:20px;padding:5px 11px;}
+.ep__t{display:block;font-family:var(--fd);font-weight:200;font-size:clamp(20px,2vw,26px);line-height:1.12;position:relative;z-index:1;transition:color .5s;}
+.ep:hover .ep__t{color:var(--g);}
+.ep__g{display:block;font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx-mid);margin-top:auto;position:relative;z-index:1;}
+.ep__g b{color:var(--g);font-weight:400;}
+
+/* DRAWER */
+.dr{position:fixed;inset:0;z-index:9500;display:none;}
+.dr.open{display:block;}
+.dr__bd{position:absolute;inset:0;background:rgba(8,7,5,.72);backdrop-filter:blur(8px);opacity:0;transition:opacity .45s var(--ease);}
+.dr.open .dr__bd{opacity:1;}
+.dr__p{position:absolute;top:0;right:0;height:100%;width:min(680px,100%);background:var(--ink-2);border-left:1px solid var(--line-soft);
+  transform:translateX(100%);transition:transform .55s var(--ease);overflow-y:auto;box-shadow:-40px 0 90px rgba(0,0,0,.5);}
+.dr.open .dr__p{transform:none;}
+.dr__h{position:sticky;top:0;z-index:3;background:linear-gradient(180deg,var(--ink-2) 72%,transparent);
+  padding:clamp(24px,3vw,36px) clamp(24px,3vw,40px) 20px;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;}
+.dr__x{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-mid);
+  background:rgba(11,10,8,.5);border:1px solid var(--line-soft);border-radius:40px;padding:9px 16px;cursor:pointer;transition:.4s;flex:none;}
+.dr__x:hover{border-color:var(--g);color:var(--g);}
+.dr__n{font-family:var(--fm);font-size:10px;letter-spacing:.24em;color:var(--g);}
+.dr__t{font-family:var(--fd);font-weight:200;font-size:clamp(24px,3vw,38px);line-height:1.08;margin-top:12px;}
+.dr__g{font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx-mid);margin-top:12px;}
+.dr__g b{color:var(--g);font-weight:400;}
+.dr__b{padding:0 clamp(24px,3vw,40px) clamp(34px,5vh,60px);}
+.dr__lbl{font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);margin:26px 0 14px;}
+.qs{display:grid;gap:2px;}
+.q{display:flex;gap:14px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line-soft);}
+.q:last-child{border-bottom:none;}
+.q__n{font-family:var(--fm);font-size:10px;letter-spacing:.1em;color:var(--g);flex:none;padding-top:3px;width:22px;}
+.q__t{color:var(--tx);font-size:14.5px;line-height:1.65;}
+.dr__note{border:1px solid var(--g);border-radius:10px;padding:20px 18px;background:rgba(216,190,147,.05);margin-top:26px;}
+.dr__note h5{font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);font-weight:400;margin-bottom:10px;}
+.dr__note p{color:var(--tx-mid);font-size:13.5px;line-height:1.7;}
+
+/* MÉTRICAS */
+.mets{display:grid;grid-template-columns:repeat(2,1fr);gap:24px;text-align:center;}
+@media(min-width:900px){.mets{grid-template-columns:repeat(4,1fr);}}
+.met .v{font-family:var(--fd);font-weight:200;font-size:clamp(38px,5vw,80px);line-height:.9;color:var(--g);}
+.met .k{font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx-dim);margin-top:12px;line-height:1.7;}
+
+/* CONVIDADO */
+.guest{display:grid;grid-template-columns:1fr;gap:16px;}
+@media(min-width:760px){.guest{grid-template-columns:repeat(2,1fr);}}
+@media(min-width:1080px){.guest{grid-template-columns:repeat(4,1fr);}}
+.gcard{border:1px solid var(--line-soft);border-radius:10px;padding:24px 22px;background:var(--ink-2);transition:border-color .5s var(--ease),transform .5s var(--ease);}
+.gcard:hover{border-color:var(--g);transform:translateY(-4px);}
+.gcard .gn{font-family:var(--fm);font-size:10px;letter-spacing:.22em;color:var(--g);}
+.gcard .gt{font-family:var(--fd);font-weight:200;font-size:19px;margin:12px 0 8px;line-height:1.15;}
+.gcard .gd{color:var(--tx-mid);font-size:13px;line-height:1.65;}
+
+/* CONVITE */
+.inv{display:grid;grid-template-columns:1fr;gap:16px;}
+@media(min-width:1000px){.inv{grid-template-columns:repeat(4,1fr);}}
+.step{border:1px solid var(--line-soft);border-radius:10px;padding:22px 20px;background:var(--ink-2);position:relative;overflow:hidden;
+  transition:border-color .5s var(--ease),transform .5s var(--ease);}
+.step:hover{border-color:var(--g);transform:translateY(-4px);}
+.step .sn{font-family:var(--fm);font-size:10px;letter-spacing:.22em;color:var(--g);}
+.step .st{font-family:var(--fd);font-weight:200;font-size:19px;margin:12px 0 8px;line-height:1.15;}
+.step .sd{color:var(--tx-mid);font-size:13px;line-height:1.65;}
+
+.msgs{display:grid;grid-template-columns:1fr;gap:16px;margin-top:clamp(30px,4vh,44px);}
+@media(min-width:900px){.msgs{grid-template-columns:repeat(2,1fr);}}
+.msg{border:1px solid var(--line-soft);border-radius:12px;background:var(--ink-2);overflow:hidden;display:flex;flex-direction:column;}
+.msg--gold{border-color:var(--g);}
+.msg__h{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 22px;border-bottom:1px solid var(--line-soft);}
+.msg__k{font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);}
+.msg__c{font-family:var(--fm);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-mid);
+  background:transparent;border:1px solid var(--line-soft);border-radius:30px;padding:7px 14px;cursor:pointer;transition:.4s;flex:none;}
+.msg__c:hover{border-color:var(--g);color:var(--g);}
+.msg__c.ok{border-color:var(--g);color:var(--ink);background:var(--g);}
+.msg__c.err{border-color:var(--tx-mid);color:var(--tx);}
+.msg__b{padding:22px;color:var(--tx-mid);font-size:14px;line-height:1.85;white-space:pre-line;flex:1;}
+.msg__b b{color:var(--tx);font-weight:500;}
+.msg__b i{font-style:normal;color:var(--g);}
+
+/* REDES */
+.soc{display:grid;grid-template-columns:1fr;gap:16px;}
+@media(min-width:900px){.soc{grid-template-columns:repeat(3,1fr);}}
+.scard{border:1px solid var(--line-soft);border-radius:12px;padding:26px 24px;background:var(--ink-2);position:relative;overflow:hidden;
+  transition:border-color .5s var(--ease),transform .5s var(--ease);}
+.scard:hover{border-color:var(--g);transform:translateY(-5px);}
+.scard .sk{font-family:var(--fm);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--g);}
+.scard .stt{font-family:var(--fd);font-weight:200;font-size:clamp(20px,2vw,26px);margin:12px 0 10px;line-height:1.12;}
+.scard .sd{color:var(--tx-mid);font-size:13.5px;line-height:1.7;}
+.scard .sw{display:inline-block;margin-top:14px;font-family:var(--fm);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--tx-dim);border:1px solid var(--line-soft);border-radius:20px;padding:6px 12px;}
+
+.plan{border-top:1px solid var(--line-soft);margin-top:clamp(30px,4vh,44px);}
+.plan__r{display:grid;grid-template-columns:auto 1fr;gap:clamp(14px,3vw,40px);padding:18px 0;border-bottom:1px solid var(--line-soft);align-items:baseline;}
+@media(min-width:760px){.plan__r{grid-template-columns:140px 1fr;}}
+.plan__k{font-family:var(--fm);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--g);}
+.plan__v{font-family:var(--fd);font-weight:300;font-size:16px;color:var(--tx);}
+.plan__v small{display:block;font-family:var(--fb);font-size:13.5px;color:var(--tx-mid);margin-top:5px;line-height:1.6;}
+
+/* CALENDÁRIO */
+.cal{border-top:1px solid var(--line-soft);}
+.cal__r{display:grid;grid-template-columns:auto 1fr;gap:clamp(16px,4vw,50px);padding:20px 0;border-bottom:1px solid var(--line-soft);align-items:baseline;}
+@media(min-width:760px){.cal__r{grid-template-columns:180px 1fr;}}
+.cal__k{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);}
+.cal__v{color:var(--tx);font-size:clamp(15px,1.4vw,18px);line-height:1.6;font-family:var(--fd);font-weight:300;}
+.cal__v small{display:block;color:var(--tx-mid);font-family:var(--fb);font-size:13.5px;margin-top:5px;line-height:1.6;}
+
+/* CTA */
+.cta{text-align:center;border-top:1px solid var(--line-soft);}
+.cta h2{max-width:20ch;margin:22px auto 0;}
+.cta p{color:var(--tx-mid);max-width:48ch;margin:22px auto 0;line-height:1.75;font-size:clamp(15px,1.1vw,17px);}
+.cta__row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:34px;}
+
+.foot{background:var(--ink-2);border-top:1px solid var(--line-soft);padding:clamp(40px,6vh,70px) 0;text-align:center;}
+.foot .fm{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-dim);line-height:2;}
+.foot a{color:var(--g);}
+</style>
+</head>
+<body>
+<div class="fx-grain"></div>
+<div class="fx-vig"></div>
+<div class="fx-prog" id="prog"></div>
+
+<header class="bar" id="bar">
+  <a href="RL Photo.Video.html" class="lock">
+    <svg viewBox="0 0 60 76" fill="none" aria-hidden="true"><ellipse cx="30" cy="28" rx="25" ry="27" stroke-width="1.2"/><text x="13" y="37" font-family="Jost" font-weight="300" font-size="26" fill="#f3ede2">R</text><text x="28" y="42" font-family="Jost" font-weight="300" font-size="26" fill="#f3ede2">L</text></svg>
+    <span class="wm">RL Photo.Video<span>Wedding Moments</span></span>
+  </a>
+  <a href="https://rl-menu-lake.vercel.app/nova-lead" class="back" target="_blank" rel="noopener">Pedir orçamento <span class="a">→</span></a>
+</header>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero__bg"><div class="slot" data-pll="0.09" data-label="capa · microfone · estúdio"><!-- <img src="CAPA.jpg" alt=""> --></div></div>
+  <div class="hero__scrim"></div>
+  <div class="hero__in">
+    <div class="hero__mic r"><svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg></div>
+    <div class="eyebrow c r">Podcast · RL Photo.Video</div>
+    <h1 class="r" style="margin-top:20px">Antes do <em>Sim</em></h1>
+    <div class="hero__rule r"><span></span><b></b><span></span></div>
+    <p class="hero__promise r">Todos os meses, uma conversa com quem faz casamentos por dentro, para que quem está a planear o seu saiba o que perguntar, quanto custa e o que corre mal.</p>
+    <div class="hero__meta r">
+      <span><b>12</b> episódios</span>
+      <span><b>45</b> minutos</span>
+      <span><b>1.ª terça</b> de cada mês · 7h00</span>
+    </div>
+    <div class="hero__row r">
+      <a class="btn" href="#episodios"><span class="fill"></span><span class="dot"></span>Ver os episódios</a>
+      <a class="btn btn--ghost" href="#convidado"><span class="fill"></span><span class="dot"></span>Ser convidado</a>
+    </div>
+  </div>
+</section>
+
+<!-- PORQUÊ -->
+<section class="sec wrap" data-io>
+  <div style="text-align:center;margin-bottom:clamp(30px,5vh,50px)">
+    <span class="eyebrow c r">Porquê um podcast</span>
+    <h2 class="r" style="margin-top:20px">O portefólio mostra. A conversa <em>convence.</em></h2>
+    <p class="r" style="color:var(--tx-mid);max-width:56ch;margin:22px auto 0;line-height:1.8;font-size:clamp(15px,1.1vw,17px)">Toda a concorrência publica fotografias bonitas. Uma conversa de 45 minutos onde se demonstra domínio do assunto cria familiaridade antes do primeiro contacto comercial.</p>
+  </div>
+  <div class="why">
+    <div class="wcard r"><div class="wk">Retorno 01</div><div class="wt">Rede de fornecedores</div><div class="wd">Cada convidado recomenda fotógrafos aos clientes dele. Convidar alguém para o programa é a forma mais elegante de abrir uma relação profissional: não pedes nada, dás palco.</div></div>
+    <div class="wcard r"><div class="wk">Retorno 02</div><div class="wt">Autoridade junto dos noivos</div><div class="wd">Quem ouve o episódio já chega à reunião a conhecer-te. A conversa de vendas deixa de começar do zero.</div></div>
+    <div class="wcard r"><div class="wk">Retorno 03</div><div class="wt">Conteúdo derivado</div><div class="wd">Cada gravação produz cortes verticais, artigos para o site e material para a revista digital. O custo marginal do conteúdo secundário é quase nulo.</div></div>
+  </div>
+</section>
+
+<!-- ESTRUTURA -->
+<section class="sec wrap" data-io>
+  <div style="text-align:center;margin-bottom:clamp(30px,5vh,50px)">
+    <span class="eyebrow c r">Guião mestre</span>
+    <h2 class="r" style="margin-top:20px">A mesma estrutura, <em>todos os meses.</em></h2>
+    <p class="r" style="color:var(--tx-mid);max-width:50ch;margin:22px auto 0;line-height:1.8;font-size:clamp(15px,1.1vw,17px)">É a repetição que transforma gravações soltas num programa.</p>
+  </div>
+  <div class="struct">
+    <div class="tl r">
+      <div class="tl__row"><div class="tl__t">00:00–00:45</div><div class="tl__b">Cold open<small>A melhor frase do convidado, retirada em edição. Entra a frio, sem contexto.</small></div></div>
+      <div class="tl__row"><div class="tl__t">00:45–01:00</div><div class="tl__b">Genérico<small>Música e locução fixa, 8 a 12 segundos.</small></div></div>
+      <div class="tl__row"><div class="tl__t">01:00–02:30</div><div class="tl__b">Abertura<small>Frase fixa, tema em duas frases, convidado em três.</small></div></div>
+      <div class="tl__row"><div class="tl__t">02:30–06:00</div><div class="tl__b">Origem<small>Como o convidado chegou a este trabalho. Aquece e cria ligação.</small></div></div>
+      <div class="tl__row"><div class="tl__t">06:00–20:00</div><div class="tl__b">Bloco 1: o essencial<small>Três perguntas âncora. É aqui que está o valor prático.</small></div></div>
+      <div class="tl__row"><div class="tl__t">20:00–30:00</div><div class="tl__b">Bloco 2: o que ninguém conta<small>Custos reais, erros comuns, o que os noivos assumem mal.</small></div></div>
+      <div class="tl__row"><div class="tl__t">30:00–38:00</div><div class="tl__b">A história<small>"Conte-me um caso que correu mal." O bloco mais partilhável.</small></div></div>
+      <div class="tl__row"><div class="tl__t">38:00–43:00</div><div class="tl__b">Três conselhos<small>Rubrica fixa de fecho, igual em todos os episódios.</small></div></div>
+      <div class="tl__row"><div class="tl__t">43:00–45:00</div><div class="tl__b">Fecho<small>Onde encontrar o convidado, CTA fixa, tema do mês seguinte.</small></div></div>
+    </div>
+    <div class="fixed">
+      <div class="fbox fbox--gold r"><h4>Frase de abertura (sempre igual)</h4><p><em>"Bem-vindos ao Antes do Sim, o podcast para quem está a planear o casamento. Sou o Rui Gonçalves, filmo e fotografo casamentos, e todos os meses trago aqui alguém que faz casamentos por dentro."</em></p></div>
+      <div class="fbox r"><h4>Rubrica da história</h4><p>"Conte-me um casamento em que alguma coisa correu mal. O que aconteceu e o que aprendeu com isso?"</p></div>
+      <div class="fbox r"><h4>Rubrica final</h4><p>"Três conselhos para quem está agora a planear o casamento." Ao fim de um ano são 36 conselhos: dá um episódio de compilação e uma série de Reels.</p></div>
+      <div class="fbox r"><h4>Regra de ouro na condução</h4><p>Não interromper para concordar. Acena com a cabeça e cala-te. Depois da resposta, espera três segundos: é aí que vem a melhor parte.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- EPISÓDIOS -->
+<section class="sec wrap" id="episodios" data-io>
+  <div style="text-align:center;margin-bottom:clamp(30px,5vh,50px)">
+    <span class="eyebrow c r">Temporada 1</span>
+    <h2 class="r" style="margin-top:20px">Doze episódios, <em>doze temas.</em></h2>
+    <p class="r" style="color:var(--tx-mid);max-width:52ch;margin:22px auto 0;line-height:1.8;font-size:clamp(15px,1.1vw,17px)">O calendário acompanha o ciclo real de decisão dos noivos. Clica num episódio para ver as perguntas âncora.</p>
+  </div>
+  <div class="eps" id="eps"></div>
+</section>
+
+<!-- MÉTRICAS -->
+<section class="sec wrap" data-io style="padding-top:0">
+  <div style="text-align:center;margin-bottom:clamp(26px,4vh,42px)">
+    <span class="eyebrow c r">Metas ao 12.º mês</span>
+    <p class="r" style="color:var(--tx-mid);max-width:46ch;margin:18px auto 0;line-height:1.75;font-size:14.5px">Não medir downloads como objetivo principal. 300 ouvintes certos valem mais do que 5000 dispersos.</p>
+  </div>
+  <div class="mets">
+    <div class="met r"><div class="v" data-count="12">0</div><div class="k">Episódios na data prevista</div></div>
+    <div class="met r"><div class="v" data-count="5" data-suffix="+">0</div><div class="k">Convidados a recomendar a RL</div></div>
+    <div class="met r"><div class="v" data-count="8" data-suffix="+">0</div><div class="k">Leads que mencionam o podcast</div></div>
+    <div class="met r"><div class="v" data-count="60" data-suffix="+">0</div><div class="k">Cortes verticais publicados</div></div>
+  </div>
+</section>
+
+<!-- CONVIDADO -->
+<section class="sec wrap" id="convidado" data-io>
+  <div style="text-align:center;margin-bottom:clamp(30px,5vh,50px)">
+    <span class="eyebrow c r">Para convidados</span>
+    <h2 class="r" style="margin-top:20px">O que recebe quem <em>aceita o convite.</em></h2>
+    <p class="r" style="color:var(--tx-mid);max-width:52ch;margin:22px auto 0;line-height:1.8;font-size:clamp(15px,1.1vw,17px)">Não se paga nem se é pago. Oferece-se valor de produção — um pacote que vale facilmente 150 a 250 euros de trabalho.</p>
+  </div>
+  <div class="guest">
+    <div class="gcard r"><div class="gn">01</div><div class="gt">Retrato profissional</div><div class="gd">Fotografia de perfil editada, feita durante a gravação, para uso livre.</div></div>
+    <div class="gcard r"><div class="gn">02</div><div class="gt">Cortes verticais</div><div class="gd">Três a cinco cortes prontos a publicar, com marca de água discreta do programa.</div></div>
+    <div class="gcard r"><div class="gn">03</div><div class="gt">O episódio completo</div><div class="gd">O ficheiro é seu, para usar como entender, sem restrições.</div></div>
+    <div class="gcard r"><div class="gn">04</div><div class="gt">Menção com ligação</div><div class="gd">No site e nas descrições de todas as plataformas.</div></div>
+  </div>
+  <div class="fbox fbox--gold r" style="margin-top:22px;max-width:none">
+    <h4>O que implica da sua parte</h4>
+    <p>45 minutos de conversa, mais cerca de 30 minutos de preparação no local. Não precisa de preparar nada: as perguntas são enviadas dois dias antes. Grava-se em vídeo, com duas câmaras. Roupa: cores lisas, evitar riscas finas, xadrez miúdo e verde forte.</p>
+  </div>
+</section>
+
+<!-- CONVITE -->
+<section class="sec wrap" id="convite" data-io>
+  <div style="text-align:center;margin-bottom:clamp(30px,5vh,50px)">
+    <span class="eyebrow c r">Como convidar</span>
+    <h2 class="r" style="margin-top:20px">O convite responde em <em>20 segundos.</em></h2>
+    <p class="r" style="color:var(--tx-mid);max-width:54ch;margin:22px auto 0;line-height:1.8;font-size:clamp(15px,1.1vw,17px)">O erro comum é convidar por mensagem longa e vaga. O convite tem de dizer logo: o que é, o que me pedem, quanto tempo demora e o que ganho com isto.</p>
+  </div>
+
+  <div class="inv">
+    <div class="step r"><div class="sn">Passo 01</div><div class="st">Primeiro contacto</div><div class="sd">DM ou email curto. Objetivo único: obter um "sim, conta-me mais". Sem detalhes técnicos.</div></div>
+    <div class="step r"><div class="sn">Passo 02</div><div class="st">Dossier</div><div class="sd">Uma página com formato, duração, local, o que traz (nada) e o que recebe. Reduz desistências.</div></div>
+    <div class="step r"><div class="sn">Passo 03</div><div class="st">Marcação</div><div class="sd">Propõe duas datas concretas. Nunca "quando podes?": obriga o outro a trabalhar e adia a resposta.</div></div>
+    <div class="step r"><div class="sn">Passo 04</div><div class="st">Confirmação a 7 dias</div><div class="sd">Local, hora, duração real, indicação de roupa e o aviso de que se grava em vídeo.</div></div>
+    <div class="step r"><div class="sn">Passo 05</div><div class="st">Temas a 2 dias</div><div class="sd">Envia os temas da conversa. Só a rubrica final pede que traga pensada.</div></div>
+    <div class="step r"><div class="sn">Passo 06</div><div class="st">Lembrete a 24h</div><div class="sd">Uma linha, com morada e contacto direto.</div></div>
+    <div class="step r"><div class="sn">Passo 07</div><div class="st">Agradecimento no dia</div><div class="sd">Envia o retrato tirado durante a gravação. Custa cinco minutos e é o que garante a partilha.</div></div>
+    <div class="step r"><div class="sn">Passo 08</div><div class="st">Kit de divulgação</div><div class="sd">Na publicação: ligação, três cortes verticais, duas fotos e um texto pronto a copiar.</div></div>
+  </div>
+
+  <div class="msgs">
+    <div class="msg msg--gold r">
+      <div class="msg__h"><span class="msg__k">01 · Mensagem direta</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">Olá <i>[Nome]</i>, tudo bem?
+
+Sou o Rui, da RL Photo.Video, filmo casamentos aqui na zona de Setúbal e Palmela.
+
+Estou a lançar um podcast mensal para noivos que estão a planear o casamento, onde convido quem trabalha no setor para explicar as coisas que os noivos só descobrem tarde demais. O episódio de <i>[mês]</i> é sobre <i>[tema]</i> e lembrei-me imediatamente de si.
+
+São 45 minutos de conversa, gravados em vídeo, sem preparação necessária da sua parte. Posso enviar-lhe os detalhes?
+
+Obrigado pelo tempo.</div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">02 · Email de convite</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b"><b>Assunto:</b> Convite para o podcast Antes do Sim | episódio sobre <i>[tema]</i>
+
+Olá <i>[Nome]</i>,
+
+Chamo-me Rui Gonçalves e sou fotógrafo e videógrafo de casamentos na RL Photo.Video, em Palmela.
+
+Estou a produzir um podcast mensal dirigido a casais em fase de planeamento. Cada episódio é uma conversa de 45 minutos com um profissional do setor sobre um tema concreto, para ajudar os noivos a decidir melhor.
+
+O episódio de <i>[mês]</i> é sobre <i>[tema]</i> e gostaria de o ter como convidado, pelo trabalho que tem feito em <i>[referência concreta e verdadeira]</i>.
+
+O que implica da sua parte: 45 minutos de conversa, mais cerca de 30 minutos de preparação no local. Não precisa de preparar nada, as perguntas são enviadas com antecedência.
+
+O que recebe: o retrato profissional feito no dia, cortes de vídeo prontos para as suas redes, o episódio completo para usar como entender e menção com ligação no site.
+
+Se fizer sentido, envio-lhe o dossier com todos os detalhes.
+
+Cumprimentos,
+Rui Gonçalves · RL Photo.Video
+912 832 788 · www.rlphotovideo.pt</div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">03 · Insistência a 7 dias</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">Olá <i>[Nome]</i>, só para garantir que a minha mensagem não se perdeu. Continuo com interesse em tê-lo no episódio sobre <i>[tema]</i>. Se agora não for altura, diga-me e volto a falar mais para a frente, sem problema nenhum.
+
+<b>Uma insistência só. Duas passam a incómodo.</b></div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">04 · Proposta de data</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">Ótimo, obrigado pela disponibilidade.
+
+Tenho duas janelas de gravação: <i>[data 1, dia da semana, hora]</i> ou <i>[data 2, dia da semana, hora]</i>. Alguma destas serve?
+
+A gravação é em <i>[local]</i> e conta com cerca de 90 minutos no total, entre preparação e conversa.</div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">05 · Confirmação a 7 dias</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">Olá <i>[Nome]</i>, confirmação da nossa gravação.
+
+<b>Data:</b> <i>[data]</i>, às <i>[hora]</i>
+<b>Local:</b> <i>[morada completa e nota de estacionamento]</i>
+<b>Duração:</b> cerca de 90 minutos no total
+<b>Roupa:</b> cores lisas, evite riscas finas, xadrez miúdo e verde forte. Camisa ou blusa lisa funciona sempre bem.
+<b>Nota:</b> gravamos em vídeo, com duas câmaras. Envio-lhe os temas da conversa dois dias antes, para não haver surpresas.
+
+Não precisa de levar nada. Se quiser mostrar algum trabalho ou material seu no episódio, traga.</div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">06 · Envio dos temas (2 dias antes)</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">Olá <i>[Nome]</i>, deixo os temas da conversa. Não são um guião rígido e não precisa de decorar respostas, a ideia é conversarmos com naturalidade.
+
+1. <i>[tema]</i>
+2. <i>[tema]</i>
+3. <i>[tema]</i>
+4. Uma história de algo que correu mal e o que aprendeu com isso
+5. Três conselhos para quem está a planear o casamento
+
+O ponto 5 é a rubrica fixa do programa, é a única pergunta que peço que traga pensada.</div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">07 · Agradecimento no próprio dia</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b"><i>[Nome]</i>, muito obrigado pela conversa de hoje, ficou excelente. Deixo já um retrato que fiz durante a gravação, é seu para usar como quiser. O episódio sai a <i>[data]</i> e envio-lhe tudo nesse dia.</div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">08 · Kit de divulgação</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">Olá <i>[Nome]</i>, o episódio está no ar.
+
+<b>Ouvir:</b> <i>[ligação]</i>
+<b>Ver:</b> <i>[ligação YouTube]</i>
+
+Deixo três cortes verticais prontos a publicar e duas fotografias. Se quiser partilhar, aqui fica um texto que pode copiar:
+
+"Estive à conversa no podcast Antes do Sim sobre <i>[tema]</i>. Falámos de <i>[ponto 1]</i>, <i>[ponto 2]</i> e daquilo que ninguém diz aos noivos sobre <i>[ponto 3]</i>. Fica aqui para quem estiver a planear o casamento: <i>[ligação]</i>"
+
+Obrigado outra vez pela disponibilidade.</div>
+    </div>
+  </div>
+
+  <div class="fbox fbox--gold r" style="margin-top:22px;max-width:none">
+    <h4>Antes de gravar: autorização</h4>
+    <p>Papel ou formulário digital assinado, com autorização de captação e utilização de imagem e voz, âmbito (podcast, redes sociais, site, materiais promocionais), duração indeterminada, ausência de contrapartida financeira e RGPD com o contacto do responsável pelo tratamento. Sem isto, um convidado que se zangue daqui a dois anos obriga a despublicar tudo.</p>
+  </div>
+</section>
+
+<!-- REDES SOCIAIS -->
+<section class="sec wrap" id="redes" data-io>
+  <div style="text-align:center;margin-bottom:clamp(30px,5vh,50px)">
+    <span class="eyebrow c r">Divulgação</span>
+    <h2 class="r" style="margin-top:20px">Uma gravação, <em>um mês</em> de conteúdo.</h2>
+    <p class="r" style="color:var(--tx-mid);max-width:54ch;margin:22px auto 0;line-height:1.8;font-size:clamp(15px,1.1vw,17px)">Cinco peças por episódio, escalonadas ao longo do mês. Nunca publicar tudo no mesmo dia.</p>
+  </div>
+
+  <div class="soc">
+    <div class="scard r"><div class="sk">Peça 01</div><div class="stt">Anúncio do convidado</div><div class="sd">Retrato do convidado com o tema do episódio. Publicar cinco dias antes, e marcar o convidado para ele partilhar.</div><span class="sw">Feed · 1 imagem</span></div>
+    <div class="scard r"><div class="sk">Peça 02</div><div class="stt">Teaser vertical</div><div class="sd">A frase mais forte da conversa, 30 segundos, legendas gravadas. É o corte que traz ouvintes novos.</div><span class="sw">Reels · TikTok</span></div>
+    <div class="scard r"><div class="sk">Peça 03</div><div class="stt">Episódio no ar</div><div class="sd">No dia da publicação: capa do episódio, ligação na bio e stories com autocolante de ligação.</div><span class="sw">Feed · Stories</span></div>
+    <div class="scard r"><div class="sk">Peça 04</div><div class="stt">Os três conselhos</div><div class="sd">Carrossel com a rubrica final. É a peça mais guardada e partilhada por noivos.</div><span class="sw">Carrossel · 4 slides</span></div>
+    <div class="scard r"><div class="sk">Peça 05</div><div class="stt">A história</div><div class="sd">O caso que correu mal, em vertical. Curiosidade pura: o corte com mais retenção.</div><span class="sw">Reels · 45s</span></div>
+    <div class="scard r"><div class="sk">Peça 06</div><div class="stt">Artigo no site</div><div class="sd">800 a 1200 palavras com as perguntas como subtítulos. Trabalha a pesquisa local o ano inteiro.</div><span class="sw">Blog · SEO</span></div>
+  </div>
+
+  <div class="plan">
+    <div class="plan__r r"><div class="plan__k">5 dias antes</div><div class="plan__v">Anúncio do convidado<small>Retrato + tema. Marcar o convidado.</small></div></div>
+    <div class="plan__r r"><div class="plan__k">2 dias antes</div><div class="plan__v">Teaser vertical<small>A melhor frase, sem revelar o essencial.</small></div></div>
+    <div class="plan__r r"><div class="plan__k">Dia 1 · terça</div><div class="plan__v">Episódio no ar<small>Feed, stories, ligação na bio e kit enviado ao convidado.</small></div></div>
+    <div class="plan__r r"><div class="plan__k">Dia 8</div><div class="plan__v">Carrossel dos três conselhos<small>A peça mais guardada.</small></div></div>
+    <div class="plan__r r"><div class="plan__k">Dia 15</div><div class="plan__v">Corte da história<small>O caso que correu mal.</small></div></div>
+    <div class="plan__r r"><div class="plan__k">Dia 22</div><div class="plan__v">Artigo no site + corte extra<small>Fecha o ciclo e prepara o mês seguinte.</small></div></div>
+  </div>
+
+  <div class="msgs">
+    <div class="msg msg--gold r">
+      <div class="msg__h"><span class="msg__k">Legenda · anúncio do convidado</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">No próximo episódio do <b>Antes do Sim</b> recebo <i>[Nome]</i>, <i>[profissão]</i>.
+
+Vamos falar de <i>[tema]</i> — e daquilo que os noivos só descobrem tarde demais.
+
+Terça, <i>[data]</i>, às 7h00. 🎙️
+
+#casamento #noivos #casarem<i>[zona]</i> #podcast</div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">Legenda · episódio no ar</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">Episódio <i>[nº]</i> no ar 🎙️ <b><i>[Título]</i></b>
+
+Com <i>[Nome]</i>, <i>[profissão]</i>. Falámos de:
+· <i>[ponto 1]</i>
+· <i>[ponto 2]</i>
+· <i>[ponto 3]</i>
+
+45 minutos que vos poupam meses de dúvidas. Ligação na bio.
+
+#casamento #planeardocasamento #noivos2026</div>
+    </div>
+
+    <div class="msg r">
+      <div class="msg__h"><span class="msg__k">Legenda · corte vertical</span><button class="msg__c" data-copy>Copiar</button></div>
+      <div class="msg__b">"<i>[frase forte do convidado]</i>"
+
+<i>[Nome]</i> no Antes do Sim, episódio sobre <i>[tema]</i>. Completo na bio.
+
+#casamento #noivos #dicasdecasamento</div>
+    </div>
+  </div>
+
+  <div class="fbox fbox--gold r" style="margin-top:22px;max-width:none">
+    <h4>Regras que não se quebram</h4>
+    <p>Um corte por semana, nunca uma enxurrada no dia da publicação. Legendas sempre gravadas no vídeo (a maioria vê sem som). Marcar sempre o convidado, para ele partilhar. E a ligação vai sempre para o mesmo sítio: a página do episódio.</p>
+  </div>
+</section>
+
+<!-- CALENDÁRIO -->
+<section class="sec wrap" data-io>
+  <div style="text-align:center;margin-bottom:clamp(30px,5vh,50px)">
+    <span class="eyebrow c r">Produção em lotes</span>
+    <h2 class="r" style="margin-top:20px">Gravar fora da <em>época alta.</em></h2>
+    <p class="r" style="color:var(--tx-mid);max-width:52ch;margin:22px auto 0;line-height:1.8;font-size:clamp(15px,1.1vw,17px)">De maio a setembro não há gravações marcadas: só falta editar material que já existe.</p>
+  </div>
+  <div class="cal">
+    <div class="cal__r r"><div class="cal__k">Novembro</div><div class="cal__v">Jornada 1<small>Gravar episódios 1 a 4</small></div></div>
+    <div class="cal__r r"><div class="cal__k">Fevereiro</div><div class="cal__v">Jornada 2<small>Gravar episódios 5 a 8</small></div></div>
+    <div class="cal__r r"><div class="cal__k">Abril</div><div class="cal__v">Jornada 3<small>Gravar episódios 9 a 11</small></div></div>
+    <div class="cal__r r"><div class="cal__k">Outubro</div><div class="cal__v">Episódio 12<small>Gravar com casais do ano</small></div></div>
+    <div class="cal__r r"><div class="cal__k">Última semana</div><div class="cal__v">Todos os meses<small>Editar e publicar o episódio do mês seguinte</small></div></div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="sec cta wrap" data-io>
+  <span class="eyebrow c r">Antes do Sim</span>
+  <h2 class="r">Quer ser <em>convidado?</em></h2>
+  <p class="r">Se trabalha em casamentos na zona de Setúbal, Palmela, Margem Sul ou Lisboa e tem algo a dizer a quem está a planear, fale connosco.</p>
+  <div class="cta__row r">
+    <a class="btn" href="mailto:geral.rlphoto@gmail.com?subject=Podcast%20Antes%20do%20Sim%20-%20convidado"><span class="fill"></span><span class="dot"></span>Quero ser convidado</a>
+    <a class="btn btn--ghost" href="https://rl-menu-lake.vercel.app/nova-lead" target="_blank" rel="noopener"><span class="fill"></span><span class="dot"></span>Sou noivo, quero falar</a>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="fm">Antes do Sim · um podcast RL Photo.Video<br><a href="mailto:geral.rlphoto@gmail.com">geral.rlphoto@gmail.com</a> · 912 832 788 · Pinhal Novo · Palmela</div>
+</footer>
+
+<!-- DRAWER -->
+<div class="dr" id="dr">
+  <div class="dr__bd" id="drBd"></div>
+  <aside class="dr__p" role="dialog" aria-modal="true">
+    <div class="dr__h">
+      <div>
+        <div class="dr__n" id="drN"></div>
+        <div class="dr__t" id="drT"></div>
+        <div class="dr__g" id="drG"></div>
+      </div>
+      <button class="dr__x" id="drX">Fechar ✕</button>
+    </div>
+    <div class="dr__b">
+      <div class="dr__lbl">Perguntas âncora</div>
+      <div class="qs" id="drQ"></div>
+      <div class="dr__note"><h5>Como usar</h5><p>Escolhe seis a oito perguntas e deixa a conversa correr. Guarda a melhor pergunta para os 30 minutos: aí já há confiança e as respostas são mais francas.</p></div>
+    </div>
+  </aside>
+</div>
+
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var EPS=[
+    {n:'01',m:'Janeiro',t:'Ficámos noivos, e agora? Os primeiros seis passos',g:'Wedding planner',q:[
+      'Um casal acabou de ficar noivo. O que devem fazer nas primeiras duas semanas, e o que não devem fazer de todo?',
+      'Qual é a ordem correta das decisões? O que se marca primeiro?',
+      'Com quanto tempo de antecedência é preciso reservar um espaço em Portugal, hoje?',
+      'Que percentagem do orçamento vai tipicamente para cada rubrica?',
+      'Qual é o erro número um dos casais no primeiro mês?',
+      'Vale a pena contratar um planner? Em que casos não vale?',
+      'Quantas horas, na prática, um casal gasta a organizar um casamento sem ajuda?',
+      'Como se gere a família nesta fase? A lista de convidados é o primeiro conflito?',
+      'O que mudou nos casamentos portugueses nos últimos cinco anos?']},
+    {n:'02',m:'Fevereiro',t:'Quanto custa mesmo um casamento em Portugal',g:'Planner ou proprietário de quinta',q:[
+      'Qual é hoje o custo médio real de um casamento com 100 convidados em Lisboa e Setúbal?',
+      'Onde é que o orçamento estoura sempre, sem os noivos perceberem?',
+      'Quais são os custos escondidos que ninguém menciona nas primeiras reuniões?',
+      'Como se distingue um fornecedor caro de um que cobra o que vale?',
+      'Em que rubricas se pode poupar sem que os convidados notem?',
+      'Em que rubricas poupar é sempre um erro?',
+      'Como funcionam os pagamentos e sinais no setor? O que deve levantar suspeitas?',
+      'Um casamento em época baixa ou a meio da semana poupa quanto, em termos reais?',
+      'Qual é o pedido mais caro que já lhe fizeram, e valeu a pena?']},
+    {n:'03',m:'Março',t:'Escolher o espaço: o que ninguém vos diz na visita',g:'Proprietário ou diretor de quinta',q:[
+      'O que é que um casal deve reparar numa visita e que praticamente ninguém repara?',
+      'Que perguntas é que os noivos deviam fazer e nunca fazem?',
+      'O que está mesmo incluído num preço por pessoa e o que costuma ser extra?',
+      'Como se avalia um espaço para o plano B da chuva?',
+      'Casa de banho, estacionamento, acessos, sombra. Quanto pesam estas coisas banais no dia?',
+      'Quantos convidados cabem realmente num espaço anunciado para X pessoas?',
+      'Que restrições apanham os noivos de surpresa? Horas de música, fogo de artifício, ruído.',
+      'Como olha para os fornecedores externos? Há listas fechadas e porquê?',
+      'O que faz um espaço parecer bem nas fotografias e o que o arruína?']},
+    {n:'04',m:'Abril',t:'Comida e bebida: a prova, o menu e os extras',g:'Chef ou responsável de catering',q:[
+      'Como funciona uma prova de menu e como é que os noivos a devem usar?',
+      'O que se prova não é sempre o que se serve. O que muda quando são 150 pratos?',
+      'Quantos aperitivos por pessoa é que um casamento precisa mesmo?',
+      'Como se gerem alergias, vegetarianos e crianças sem duplicar o custo?',
+      'Qual é o timing ideal do serviço, para que a festa não morra à mesa?',
+      'Que erros de menu arruínam a experiência dos convidados?',
+      'Bar aberto, bebida limitada ou consumo. O que compensa?',
+      'Bolo de casamento e doçaria: tradição ou dinheiro deitado fora?',
+      'Que pedido gastronómico mais estranho já teve num casamento?']},
+    {n:'05',m:'Maio',t:'Vestido e fato: provas, prazos e arrependimentos',g:'Atelier de noivas ou alfaiate',q:[
+      'Com que antecedência se deve começar a procurar o vestido, e porquê?',
+      'Quantas provas são normais e o que acontece em cada uma?',
+      'O que é que as noivas pedem e depois se arrependem?',
+      'Como se escolhe um vestido pensando no calor, na dança e nas fotografias?',
+      'Quanto custa um vestido em cada faixa, e o que muda entre elas?',
+      'Aluguer, compra ou vestido de família? Como se decide?',
+      'Do lado do noivo, o que continua a ser mal feito?',
+      'Sapatos, roupa interior, acessórios. O que se esquece sempre?',
+      'Uma noiva emagreceu ou engordou nos dois meses finais. O que se faz?']},
+    {n:'06',m:'Junho',t:'Beleza: maquilhagem, cabelo e o teste prévio',g:'Maquilhadora ou hairstylist',q:[
+      'O que faz uma prova de beleza valer o dinheiro, e o que a torna inútil?',
+      'Como se escolhe maquilhagem para quem vai ser fotografado e filmado o dia inteiro?',
+      'Que erros a maquilhagem de casamento comete e que só se veem nas fotografias?',
+      'Quanto tempo demora, na prática, a preparação da noiva e das damas?',
+      'A que horas se deve começar para não atrasar tudo o resto?',
+      'Como se aguenta a maquilhagem com 35 graus numa quinta do Alentejo?',
+      'Vale a pena tratar também das mães e das damas de honor?',
+      'O que se deve e não se deve fazer à pele nas semanas anteriores?',
+      'Qual foi a manhã de preparação mais caótica que viveu?']},
+    {n:'07',m:'Julho',t:'Flores e decoração sem estourar o orçamento',g:'Florista ou decoradora',q:[
+      'Quanto pesa a decoração num orçamento típico e quanto devia pesar?',
+      'Onde é que o dinheiro em flores realmente se nota, e onde se desperdiça?',
+      'Flores da época contra flores importadas. Qual é a diferença de custo real?',
+      'Como se reaproveita a decoração da cerimónia para o copo de água?',
+      'Que tendências vão envergonhar as fotografias daqui a dez anos?',
+      'Como se decora um espaço que já é bonito sem competir com ele?',
+      'Que impacto tem a luz na decoração, ao entardecer e à noite?',
+      'Aluguer contra compra de peças decorativas: o que compensa?',
+      'O que faz uma mesa parecer cara sem ser cara?']},
+    {n:'08',m:'Agosto',t:'Música: DJ, banda ou os dois',g:'DJ e, se possível, um músico',q:[
+      'Como se decide entre DJ, banda ou uma combinação?',
+      'Quanto custa cada opção e o que está incluído?',
+      'Que música funciona na cerimónia, no copo de água e na festa? São mundos diferentes?',
+      'As listas de músicas dos noivos ajudam ou atrapalham?',
+      'Como se lê uma pista de dança e se decide o que tocar a seguir?',
+      'A que horas é que a festa realmente arranca e o que a mata cedo?',
+      'Que erros técnicos de som arruínam uma cerimónia? Como se evitam?',
+      'Como é a articulação com o fotógrafo, o vídeo e a equipa da quinta?',
+      'Qual é a música mais pedida em Portugal e continua a resultar?']},
+    {n:'09',m:'Setembro',t:'A cerimónia: civil, religiosa, celebrante e votos',g:'Celebrante, pároco ou conservador',q:[
+      'Quais são as opções legais em Portugal e o que muda entre elas?',
+      'Que documentação é precisa e com que antecedência?',
+      'Como se constrói uma cerimónia que não seja fria nem interminável?',
+      'Quanto tempo deve durar uma cerimónia?',
+      'Votos escritos pelos noivos: quando resultam e quando correm mal?',
+      'Como se envolvem familiares sem transformar a cerimónia num espetáculo?',
+      'Que momentos emocionam sempre e quais são clichés já gastos?',
+      'Como se gere a cerimónia ao ar livre, com sol, vento e ruído?',
+      'Que cerimónia o marcou mais e porquê?']},
+    {n:'10',m:'Outubro',t:'Fotografia e vídeo: como escolher e o que perguntar',g:'Rui, conduzido por outra pessoa',q:[
+      'Qual é a diferença real entre um profissional de 1200 euros e um de 3500 euros?',
+      'Que perguntas é que os noivos deviam fazer numa reunião e nunca fazem?',
+      'O que significa "estilo" na prática, e como se percebe se combina com o casal?',
+      'Quantas horas de cobertura são precisas? Onde é que se corta e onde não se deve cortar?',
+      'Prazos de entrega: o que é razoável e porquê?',
+      'O que é um Same Day Edit e para quem faz sentido?',
+      'Como funciona o conteúdo vertical em tempo real e porque é que hoje faz falta?',
+      'Que erros de planeamento do dia estragam as fotografias, seja quem for a tirá-las?',
+      'Que direitos tem o casal sobre as imagens, e que direitos tem o profissional?',
+      'Como se protege um casal de ficar sem fotografias? Cópias de segurança, seguros, contratos.']},
+    {n:'11',m:'Novembro',t:'O dia hora a hora: a timeline e o que corre mal',g:'Planner ou coordenadora de dia',q:[
+      'Como se constrói uma timeline realista, de trás para a frente?',
+      'Quanto tempo a mais se deve deixar em cada bloco?',
+      'Qual é o momento do dia que atrasa sempre?',
+      'Quem manda no dia, e como se comunica isso aos fornecedores?',
+      'Sessão de casal, convidados e cocktail. Como se resolve este conflito de horários?',
+      'O que fazer quando chove e o plano B tem de ser acionado?',
+      'Como se gere a família que quer fotografias intermináveis?',
+      'Porque é que a hora do pôr do sol manda tanto na definição das horas?',
+      'Conte-me o dia mais difícil que teve e como o salvou.']},
+    {n:'12',m:'Dezembro',t:'Já casámos: o que faríamos diferente',g:'Dois ou três casais já casados',q:[
+      'O que vos deu mais trabalho e afinal ninguém reparou?',
+      'Em que gastaram dinheiro que hoje consideram desperdiçado?',
+      'E o que valeu cada cêntimo?',
+      'O que vos surpreendeu no próprio dia?',
+      'Do que se lembram melhor, um ano depois?',
+      'Quantas vezes já viram o vídeo e as fotografias?',
+      'Que conselho dariam a vocês próprios, um ano antes?',
+      'O que diriam a um casal que está a começar agora?']}
+  ];
+
+  /* render episódios */
+  var wrap=document.getElementById('eps');
+  EPS.forEach(function(e,i){
+    var b=document.createElement('button');
+    b.className='ep r'; b.type='button'; b.dataset.i=i;
+    b.innerHTML='<span class="ep__bg">'+e.n+'</span>'+
+      '<span class="ep__top"><span class="ep__n">Episódio '+e.n+'</span><span class="ep__m">'+e.m+'</span></span>'+
+      '<span class="ep__t">'+e.t+'</span>'+
+      '<span class="ep__g">Convidado: <b>'+e.g+'</b></span>';
+    wrap.appendChild(b);
+  });
+
+  /* reveals */
+  var groups=[].slice.call(document.querySelectorAll('[data-io]'));
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('is-in');io.unobserve(e.target);}});},{threshold:.06,rootMargin:'0px 0px -5% 0px'});
+    groups.forEach(function(g){io.observe(g);});
+  } else { groups.forEach(function(g){g.classList.add('is-in');}); }
+  document.querySelectorAll('.hero .r').forEach(function(e,i){ setTimeout(function(){ e.classList.add('is-in'); }, 120+i*110); });
+  setTimeout(function(){ document.querySelectorAll('[data-io],.r').forEach(function(el){el.classList.add('is-in');}); },2600);
+
+  /* progresso + bar */
+  var prog=document.getElementById('prog'), bar=document.getElementById('bar');
+  function onScroll(){ var h=document.documentElement,max=h.scrollHeight-h.clientHeight;
+    if(prog) prog.style.width=(max>0?(h.scrollTop/max)*100:0)+'%';
+    if(bar) bar.classList.toggle('s', h.scrollTop>40); }
+  onScroll(); addEventListener('scroll',onScroll,{passive:true});
+
+  /* contadores */
+  function up(n){ var t=parseFloat(n.dataset.count)||0,s=n.dataset.suffix||'',a=null,d=1500;
+    function st(ts){ if(!a)a=ts; var p=Math.min((ts-a)/d,1),e=1-Math.pow(1-p,3);
+      n.textContent=Math.round(e*t)+s; if(p<1)requestAnimationFrame(st);} requestAnimationFrame(st); }
+  var nums=document.querySelectorAll('[data-count]');
+  if('IntersectionObserver' in window){
+    var cio=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){up(e.target);cio.unobserve(e.target);}});},{threshold:.5});
+    nums.forEach(function(n){cio.observe(n);});
+  } else { nums.forEach(up); }
+
+  /* drawer */
+  var dr=document.getElementById('dr'), drBd=document.getElementById('drBd'), drX=document.getElementById('drX');
+  function open(i){
+    var e=EPS[i];
+    document.getElementById('drN').textContent='Episódio '+e.n+' · '+e.m;
+    document.getElementById('drT').textContent=e.t;
+    document.getElementById('drG').innerHTML='Convidado: <b>'+e.g+'</b>';
+    document.getElementById('drQ').innerHTML=e.q.map(function(q,k){
+      return '<div class="q"><span class="q__n">'+String(k+1).padStart(2,'0')+'</span><span class="q__t">'+q+'</span></div>';
+    }).join('');
+    dr.classList.add('open'); document.body.style.overflow='hidden';
+  }
+  function close(){ dr.classList.remove('open'); document.body.style.overflow=''; }
+  wrap.addEventListener('click',function(ev){ var b=ev.target.closest('.ep'); if(b) open(+b.dataset.i); });
+  drX.addEventListener('click',close); drBd.addEventListener('click',close);
+  addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
+
+  /* copiar mensagens de convite */
+  function copyText(txt){
+    if(navigator.clipboard && window.isSecureContext){ return navigator.clipboard.writeText(txt); }
+    return new Promise(function(res,rej){
+      var ta=document.createElement('textarea');
+      ta.value=txt; ta.setAttribute('readonly','');
+      ta.style.cssText='position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+      document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0,ta.value.length);
+      var ok=false; try{ ok=document.execCommand('copy'); }catch(e){ ok=false; }
+      document.body.removeChild(ta);
+      ok?res():rej(new Error('copy failed'));
+    });
+  }
+  document.querySelectorAll('[data-copy]').forEach(function(btn){
+    var label=btn.textContent;
+    btn.addEventListener('click',function(){
+      var body=btn.closest('.msg').querySelector('.msg__b');
+      var txt=(body.innerText||body.textContent||'').trim();
+      function reset(){ btn.textContent=label; btn.classList.remove('ok','err'); }
+      copyText(txt).then(function(){
+        btn.textContent='Copiado ✓'; btn.classList.add('ok'); setTimeout(reset,1800);
+      }).catch(function(){
+        btn.textContent='Selecione e copie'; btn.classList.add('err');
+        try{
+          var rg=document.createRange(); rg.selectNodeContents(body);
+          var sel=window.getSelection(); sel.removeAllRanges(); sel.addRange(rg);
+        }catch(e){}
+        setTimeout(reset,2600);
+      });
+    });
+  });
+
+  /* parallax */
+  if(!reduce){
+    var pll=[].slice.call(document.querySelectorAll('[data-pll]')),data=[],tick=false;
+    if(pll.length){
+      function measure(){ data=pll.map(function(e){var r=e.getBoundingClientRect();return{el:e,top:r.top+scrollY,h:r.height,sp:parseFloat(e.dataset.pll)||.1};}); }
+      function apply(){ tick=false; var vh=innerHeight,sy=scrollY;
+        data.forEach(function(d){var c=(d.top+d.h/2)-(sy+vh/2); d.el.style.transform='translate3d(0,'+(-c*d.sp)+'px,0)';}); }
+      measure(); apply();
+      addEventListener('scroll',function(){ if(!tick){tick=true;requestAnimationFrame(apply);} },{passive:true});
+      addEventListener('resize',function(){ measure(); apply(); });
+      setTimeout(function(){ measure(); apply(); },1000);
+    }
+  }
+})();
+</script>
+</body>
+</html>
