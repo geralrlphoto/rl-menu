@@ -13,19 +13,14 @@ import path from 'node:path'
    array EPS, lá dentro.
 
    A gestão dos episódios, as candidaturas e os leads vivem nas
-   sub-páginas: /episodios, /candidaturas e /leads.
+   sub-páginas: /episodios, /candidaturas e /leads. Não há atalhos para
+   elas nesta página, por opção: o design fica intacto.
    ============================================================ */
 
 export const metadata = {
   title: 'Antes do Sim — Plano do podcast · RL Photo.Video',
 }
 
-const ATALHOS = [
-  { href: '/social-media/podcast/episodios', texto: 'Gerir episódios' },
-  { href: '/social-media/podcast/candidaturas', texto: 'Candidaturas' },
-  { href: '/social-media/podcast/leads', texto: 'Leads' },
-  { href: '/podcast', texto: 'Página pública ↗' },
-]
 
 function lerDesign() {
   const ficheiro = path.join(process.cwd(), 'app', 'social-media', 'podcast', '_design', 'podcast.html')
@@ -61,31 +56,6 @@ export default function PlanoPodcastPage() {
       <div dangerouslySetInnerHTML={{ __html: corpo }} />
       <script dangerouslySetInnerHTML={{ __html: script }} />
 
-      {/* Atalhos do back-office, fora do design para não lhe tocar. */}
-      <nav className="pod-atalhos" aria-label="Gestão do podcast">
-        {ATALHOS.map(a => (
-          <a key={a.href} href={a.href}>{a.texto}</a>
-        ))}
-      </nav>
-
-      <style dangerouslySetInnerHTML={{ __html: `
-        .pod-atalhos {
-          position: fixed; right: 16px; bottom: 16px; z-index: 8100;
-          display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end;
-          max-width: min(420px, calc(100vw - 32px));
-        }
-        .pod-atalhos a {
-          font-family: 'Space Mono', monospace;
-          font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-          color: rgba(243,237,226,.6); text-decoration: none;
-          padding: 9px 14px; border-radius: 40px;
-          border: 1px solid rgba(243,237,226,.14);
-          background: rgba(11,10,8,.82); backdrop-filter: blur(10px);
-          transition: color .3s, border-color .3s;
-        }
-        .pod-atalhos a:hover { color: #d8be93; border-color: #d8be93; }
-        @media (max-width: 640px) { .pod-atalhos { position: static; margin: 24px 20px 40px; } }
-      ` }} />
     </>
   )
 }
