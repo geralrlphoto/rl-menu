@@ -1,42 +1,30 @@
 import Link from 'next/link'
-import EpisodiosClient from './EpisodiosClient'
+import CandidaturasClient from './CandidaturasClient'
 
 /* ============================================================
-   /social-media/podcast — Antes do Sim.
-   Cabeçalho + lista de episódios (EpisodiosClient), que vive na
-   tabela podcast_episodios via /api/podcast-episodios.
-   O nome do podcast está no <h1> e no cartão da /social-media.
+   Back-office do podcast: quem se ofereceu para ser convidado do podcast.
+   A página está dentro de /social-media, que o middleware já protege
+   com o cookie de admin. O briefing pedia /admin/podcast, mas não
+   existe secção /admin neste projeto: esta é a casa equivalente.
    ============================================================ */
 
-export default function PodcastPage() {
+export default function Pagina() {
   return (
     <main className="pc-page">
-      {/* Voltar */}
       <div className="pc-back-row">
-        <Link href="/social-media" className="pc-back">
-          <span className="chev">‹</span> Social Media
+        <Link href="/social-media/podcast" className="pc-back">
+          <span className="chev">‹</span> Podcast
         </Link>
       </div>
 
-      {/* Hero */}
       <header className="pc-head">
-        <p className="pc-eyebrow">RL Photo · Video — Podcast</p>
-        <h1 className="pc-title">ANTES DO <em>Sim</em></h1>
+        <p className="pc-eyebrow">Antes do Sim</p>
+        <h1 className="pc-title">CANDIDATURAS</h1>
         <hr className="pc-rule" />
-        <p className="pc-lede">
-          Conversas sobre casamentos, para quem está a planear o seu.
-        </p>
+        <p className="pc-lede">Quem se ofereceu para ser convidado do podcast.</p>
       </header>
 
-      {/* Atalhos do back-office */}
-      <nav className="pc-atalhos" aria-label="Secções do podcast">
-        <Link href="/social-media/podcast/candidaturas" className="pc-atalho">Candidaturas</Link>
-        <Link href="/social-media/podcast/leads" className="pc-atalho">Leads</Link>
-        <a href="/podcast" className="pc-atalho" target="_blank" rel="noreferrer">Ver página pública ↗</a>
-      </nav>
-
-      {/* Episódios */}
-      <EpisodiosClient />
+      <CandidaturasClient />
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap');

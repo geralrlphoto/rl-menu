@@ -212,6 +212,13 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/send-booking-reservation') ||
     pathname.startsWith('/api/send-task-email') ||
     pathname.startsWith('/api/calendar/ics') ||
+    // Secção pública do podcast (páginas e os dois formulários).
+    // As rotas de gestão (/api/podcast-episodios, -candidaturas, -leads)
+    // ficam de fora de propósito: exigem o cookie de admin.
+    pathname === '/podcast' ||
+    pathname.startsWith('/podcast/') ||
+    pathname.startsWith('/api/podcast/') ||
+    pathname === '/sitemap.xml' ||
     pathname === '/' ||
     pathname.startsWith('/wedding-mentor') ||
     pathname === '/newsletter' ||

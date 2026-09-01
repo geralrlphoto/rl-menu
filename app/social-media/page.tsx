@@ -85,7 +85,7 @@ export default function SocialMediaPage() {
             </span>
             <div className="sm-tile-body">
               <p className="sm-tile-name">Antes do Sim</p>
-              <p className="sm-tile-desc">Podcast sobre casamentos</p>
+              <p className="sm-tile-desc">Episódios, candidaturas e leads do Antes do Sim</p>
             </div>
             <span className="sm-tile-arrow">→</span>
           </div>
