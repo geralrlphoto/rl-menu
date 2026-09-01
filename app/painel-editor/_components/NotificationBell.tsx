@@ -40,7 +40,7 @@ export function NotificationBell() {
   // Decisões do admin sobre o vídeo (aprovado / rever alterações)
   const [decisoes, setDecisoes] = useState<any[]>([])
   const btnRef = useRef<HTMLButtonElement>(null)
-  const [pos, setPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 })
+  const [pos, setPos] = useState<{ top: number; right: number; left?: number }>({ top: 0, right: 0 })
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -50,9 +50,14 @@ export function NotificationBell() {
     function updatePos() {
       const rect = btnRef.current?.getBoundingClientRect()
       if (!rect) return
+      // Em ecrã estreito o painel não cabe alinhado pelo botão: ancorado à
+      // direita do sino, transbordava para fora do ecrã pela esquerda. Aí
+      // ocupa a largura toda, com margem dos dois lados.
+      const estreito = window.innerWidth < 640
       setPos({
         top: rect.bottom + 8,                          // 8px abaixo do botão
-        right: Math.max(8, window.innerWidth - rect.right), // alinha pela direita do botão
+        right: estreito ? 12 : Math.max(8, window.innerWidth - rect.right),
+        left: estreito ? 12 : undefined,
       })
     }
     updatePos()
@@ -295,10 +300,12 @@ export function NotificationBell() {
   const popover = open && (
     <div
       data-notif-root
-      className="fixed w-[340px] max-h-[400px] rounded-2xl border border-gold/25 overflow-hidden"
+      className="fixed max-h-[400px] rounded-2xl border border-gold/25 overflow-hidden"
       style={{
         top: pos.top,
         right: pos.right,
+        left: pos.left,
+        width: pos.left !== undefined ? undefined : 340,
         zIndex: 9999,
         background: 'linear-gradient(180deg, rgba(20,15,8,0.98), rgba(11,9,5,0.99))',
         boxShadow: '0 20px 60px -10px rgba(0,0,0,0.7), 0 0 30px -8px rgba(201,164,92,0.3)',
