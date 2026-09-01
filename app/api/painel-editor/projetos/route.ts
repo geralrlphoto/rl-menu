@@ -167,7 +167,42 @@ Projeto criado no painel do editor.`)
     .select('id')
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, notifId: data?.id ?? null })
+
+  // Um projeto com valor é dinheiro a receber: cria o pagamento pendente para
+  // aparecer em /painel-editor/pagamentos e na ficha do freelancer. Sem isto,
+  // o valor ficava só no cartão do projeto e não entrava em lado nenhum.
+  let pagamentoId: string | null = null
+  const valor = Number(projeto.preco) || 0
+  if (valor > 0) {
+    const descricao = [projeto.referencia, projeto.noivos].filter(Boolean).join(' — ') || titulo
+    // Não duplica se já existir um pagamento com a mesma descrição.
+    const { data: jaExiste } = await supabase
+      .from('freelancer_pagamentos')
+      .select('id')
+      .eq('freelancer_id', freelancer)
+      .eq('descricao', descricao)
+      .maybeSingle()
+
+    if (!jaExiste) {
+      const { data: pag, error: pagErr } = await supabase
+        .from('freelancer_pagamentos')
+        .insert({
+          freelancer_id: freelancer,
+          descricao,
+          valor,
+          data_prevista: ptParaIso(projeto.entregaPrevista),
+          status: 'PENDENTE',
+        })
+        .select('id')
+        .single()
+      if (pagErr) console.warn('[projetos POST] pagamento nao criado:', pagErr.message)
+      else pagamentoId = pag?.id ?? null
+    } else {
+      pagamentoId = jaExiste.id
+    }
+  }
+
+  return NextResponse.json({ ok: true, notifId: data?.id ?? null, pagamentoId })
 }
 
 // PATCH { freelancer, notifId, patch } — grava as edições do admin em
