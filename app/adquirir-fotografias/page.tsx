@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { PRECO_FOTO, PORTES_PAPEL, PORTES_GRATIS_A_PARTIR_DE, TEXTO_PORTES } from '@/lib/precos-fotos'
 
 // Design FINAL e APROVADO — "Adquirir Fotografias". Markup, CSS e JS copiados
 // 1:1 do ficheiro aprovado. Única alteração: o email do rodapé (artefacto
@@ -189,7 +190,7 @@ const BODY = `
     <div class="icard r"><div class="ic">Preço</div><div class="iv">5&euro;</div><div class="id">Por cada fotografia, em digital ou papel.</div></div>
     <div class="icard r"><div class="ic">Digital</div><div class="iv">15 dias</div><div class="id">Entrega por link de download, em alta resolução.</div></div>
     <div class="icard r"><div class="ic">Papel</div><div class="iv">30 dias</div><div class="id">Impressão e envio para a vossa morada por carta registada.</div></div>
-    <div class="icard r"><div class="ic">Portes (papel)</div><div class="iv">+4&euro;</div><div class="id">Só abaixo de 5 fotografias. A partir de 5, portes grátis.</div></div>
+    <div class="icard r"><div class="ic">Portes (papel)</div><div class="iv">+${PORTES_PAPEL}&euro;</div><div class="id">${TEXTO_PORTES}</div></div>
   </div>
 </div>
 
@@ -229,7 +230,7 @@ const BODY = `
         <label>Fotografias <span class="opt">(escrevam o número de cada uma)</span></label>
         <div class="fotolist" id="fotoList"></div>
         <button type="button" class="addfoto" id="addFoto">+ Adicionar fotografia</button>
-        <div class="qty-hint" id="qtyHint">Faltam <b>4</b> para terem portes grátis (papel).</div>
+        <div class="qty-hint" id="qtyHint">Faltam <b>${PORTES_GRATIS_A_PARTIR_DE - 1}</b> para terem portes grátis (papel).</div>
       </div>
 
       <div class="field">
@@ -314,7 +315,7 @@ export default function AdquirirFotografiasPage() {
     var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { (e.target as HTMLElement).classList.add('in'); io.unobserve(e.target) } }) }, { threshold: .12 })
     document.querySelectorAll('.adqf .r').forEach(function (el) { reduce ? el.classList.add('in') : io.observe(el) })
 
-    var PRICE = 5, PORTES = 4, FREE_FROM = 5
+    var PRICE = PRECO_FOTO, PORTES = PORTES_PAPEL, FREE_FROM = PORTES_GRATIS_A_PARTIR_DE
     var seg = document.getElementById('segFormato')!
     var fotoList = document.getElementById('fotoList')!
     var addFoto = document.getElementById('addFoto')!
@@ -366,7 +367,7 @@ export default function AdquirirFotografiasPage() {
       if (f === 'papel') {
         hint.style.display = ''
         if (q < FREE_FROM) { var falta = FREE_FROM - q; hint.innerHTML = 'Faltam <b>' + falta + '</b> ' + (falta === 1 ? 'fotografia' : 'fotografias') + ' para terem portes grátis.' }
-        else { hint.innerHTML = '<b>Portes grátis</b> — têm 5 ou mais fotografias.' }
+        else { hint.innerHTML = '<b>Portes grátis</b> — têm ' + PORTES_GRATIS_A_PARTIR_DE + ' ou mais fotografias.' }
       } else {
         hint.style.display = 'none'
       }

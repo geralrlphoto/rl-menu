@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { PRECO_FOTO, PORTES_PAPEL, calcularPortes } from '@/lib/precos-fotos'
 
 function db() {
   return createClient(
@@ -42,8 +43,8 @@ export async function PATCH(req: NextRequest) {
       const { data: cur } = await supabase.from('photo_orders').select('quantidade, formato').eq('id', id).single()
       const q = upd.quantidade !== undefined ? upd.quantidade : (cur?.quantidade ?? 0)
       const fmt = upd.formato !== undefined ? upd.formato : (cur?.formato ?? 'digital')
-      const subtotal = q * 5
-      const portes = (fmt === 'papel' && q < 5) ? 4 : 0
+      const subtotal = q * PRECO_FOTO
+      const portes = calcularPortes(fmt, q)
       upd.subtotal = subtotal; upd.portes = portes; upd.total = subtotal + portes
     }
     if (Object.keys(upd).length === 0) return NextResponse.json({ error: 'nada a atualizar' }, { status: 400 })

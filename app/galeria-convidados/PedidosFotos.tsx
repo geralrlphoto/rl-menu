@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { PRECO_FOTO, PORTES_PAPEL, calcularPortes } from '@/lib/precos-fotos'
 
 type Pedido = {
   id: string; pedido: string; nome: string; email: string; telefone: string
@@ -272,7 +273,7 @@ export default function PedidosFotos() {
     setEditSaving(true)
     const q = Math.max(0, parseInt(String(editForm.quantidade), 10) || 0)
     const fmt = String(editForm.formato).toLowerCase() === 'papel' ? 'papel' : 'digital'
-    const subtotal = q * 5, portes = (fmt === 'papel' && q < 5) ? 4 : 0, total = subtotal + portes
+    const subtotal = q * PRECO_FOTO, portes = calcularPortes(fmt, q), total = subtotal + portes
     try {
       await fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, fields: editForm }) })
       setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, ...editForm, formato: fmt, quantidade: q, subtotal, portes, total } : x))

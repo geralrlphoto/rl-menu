@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef } from 'react'
+import { PRECO_FOTO, PORTES_PAPEL, PORTES_GRATIS_A_PARTIR_DE, TEXTO_PORTES } from '@/lib/precos-fotos'
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;0,400;1,200;1,300&family=Hanken+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');
@@ -150,7 +151,7 @@ const BODY = `
     <div class="icard"><div class="ic">Preço</div><div class="iv">5&euro;</div><div class="id">Por cada fotografia, em digital ou papel.</div></div>
     <div class="icard"><div class="ic">Digital</div><div class="iv">15 dias</div><div class="id">Entrega por link de download, em alta resolução.</div></div>
     <div class="icard"><div class="ic">Papel</div><div class="iv">30 dias</div><div class="id">Impressão e envio para a vossa morada por carta registada.</div></div>
-    <div class="icard"><div class="ic">Portes (papel)</div><div class="iv">+4&euro;</div><div class="id">Só abaixo de 5 fotografias. A partir de 5, portes grátis.</div></div>
+    <div class="icard"><div class="ic">Portes (papel)</div><div class="iv">+${PORTES_PAPEL}&euro;</div><div class="id">${TEXTO_PORTES}</div></div>
   </div>
 </div>
 
@@ -237,7 +238,7 @@ export default function TicketForm() {
     var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { (e.target as HTMLElement).classList.add('in'); io.unobserve(e.target) } }) }, { threshold: .1 })
     document.querySelectorAll('.tkt .r').forEach(function (el) { reduce ? el.classList.add('in') : io.observe(el) })
 
-    var PRICE = 5, PORTES = 4, FREE = 5
+    var PRICE = PRECO_FOTO, PORTES = PORTES_PAPEL, FREE = PORTES_GRATIS_A_PARTIR_DE
     var seg = document.getElementById('segFormato')!
     var segM = document.getElementById('segMetodo')!
     var segAuto = document.getElementById('segAuto')!
@@ -271,7 +272,7 @@ export default function TicketForm() {
       var lp = document.getElementById('linePortes')!, rp = document.getElementById('recapPortes')!
       if (f === 'papel') { lp.style.display = ''; if (portes === 0) { rp.innerHTML = 'Grátis'; rp.className = 'v free' } else { rp.textContent = euro(portes); rp.className = 'v' } } else { lp.style.display = 'none' }
       var hint = document.getElementById('qtyHint')!
-      if (f === 'papel') { hint.style.display = ''; if (q < FREE) { var falta = FREE - q; hint.innerHTML = 'Faltam <b>' + falta + '</b> ' + (falta === 1 ? 'fotografia' : 'fotografias') + ' para portes grátis.' } else { hint.innerHTML = '<b>Portes grátis</b> — 5 ou mais fotografias.' } } else { hint.style.display = 'none' }
+      if (f === 'papel') { hint.style.display = ''; if (q < FREE) { var falta = FREE - q; hint.innerHTML = 'Faltam <b>' + falta + '</b> ' + (falta === 1 ? 'fotografia' : 'fotografias') + ' para portes grátis.' } else { hint.innerHTML = '<b>Portes grátis</b> — ' + PORTES_GRATIS_A_PARTIR_DE + ' ou mais fotografias.' } } else { hint.style.display = 'none' }
       var fm = document.getElementById('fieldMorada')!
       fm.style.display = f === 'papel' ? '' : 'none'
       syncBtn()

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { buildTicketHtml } from '@/lib/ticket-html'
+import { PRECO_FOTO, PORTES_PAPEL, calcularPortes } from '@/lib/precos-fotos'
 
 const FROM_EMAIL  = process.env.FROM_EMAIL ?? 'RL Photo.Video <geral@rlphotovideo.pt>'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'geral.rlphoto@gmail.com'
-const PRECO_FOTO  = 5
-const PORTES_PAPEL = 4
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -57,7 +56,7 @@ export async function POST(req: NextRequest) {
   }
 
   const subtotal = quantidade * PRECO_FOTO
-  const portes = formato === 'papel' ? (quantidade < 5 ? PORTES_PAPEL : 0) : 0
+  const portes = calcularPortes(formato, quantidade)
   const total = subtotal + portes
 
   const supabase = db()

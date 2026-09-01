@@ -2,7 +2,7 @@
 // email. Partilhado entre o envio do ticket e a preparação de impressão, para
 // a cópia colocada na pasta ser idêntica ao ticket do cliente.
 
-const PRECO_FOTO = 5
+import { PRECO_FOTO } from '@/lib/precos-fotos'
 const eur = (n: number) => `${Number(n).toFixed(2)} €`
 
 export function buildTicketHtml(o: any): string {
