@@ -107,3 +107,19 @@ export function getFotografoId(urlId?: string | null): string | null {
   }
   return null
 }
+
+// ── Modo admin ── o admin abre o painel com ?admin=1 e vê as ações de gestão
+// (criar projeto, menu de três pontos). Guardado em sessionStorage para
+// sobreviver à navegação entre sub-páginas.
+const ADMIN_MODE_KEY = 'painel-fotografo-admin-mode'
+export function rememberAdminMode(on: boolean): void {
+  if (typeof window === 'undefined' || !on) return
+  try { sessionStorage.setItem(ADMIN_MODE_KEY, 'true') } catch {}
+}
+export function isAdminMode(urlAdmin?: boolean): boolean {
+  if (urlAdmin) return true
+  if (typeof window !== 'undefined') {
+    try { return sessionStorage.getItem(ADMIN_MODE_KEY) === 'true' } catch {}
+  }
+  return false
+}

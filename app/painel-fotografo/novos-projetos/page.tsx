@@ -7,6 +7,7 @@ import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
 import { getTracksForProject, disassociate } from '../_data/musicas-associacao'
+import { rememberAdminMode, isAdminMode } from '../_data/freelancer-profile'
 
 // ────────────────────────────────────────────────────────────────────────────
 //  NOVOS PROJETOS — RL Photo.Video (premium cinematic editor workspace)
@@ -355,6 +356,13 @@ const STORAGE_UNSEEN_KEY = 'painel-fotografo-unseen-projects'
 export default function NovosProjetosPage() {
   const searchParams = useSearchParams()
   const openParam = searchParams?.get('open') ?? null
+  // Modo admin: ?admin=1 OU sessionStorage (persiste na navegação).
+  const [isAdminView, setIsAdminView] = useState(false)
+  useEffect(() => {
+    const urlAdmin = searchParams?.get('admin') === '1'
+    rememberAdminMode(urlAdmin)
+    setIsAdminView(isAdminMode(urlAdmin))
+  }, [searchParams])
   const [projects, setProjects] = useState<Project[]>(PROJECTS)
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
   const [hydrated, setHydrated] = useState(false)
@@ -639,12 +647,15 @@ export default function NovosProjetosPage() {
                 <button className="w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold">
                   ◉
                 </button>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-                  style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
-                  <span className="text-lg leading-none">+</span> Novo Projeto
-                </button>
+                {/* Criar projetos é do admin: o membro só recebe trabalho, não o cria. */}
+                {isAdminView && (
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+                    style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
+                    <span className="text-lg leading-none">+</span> Novo Projeto
+                  </button>
+                )}
               </div>
             </div>
           </div>

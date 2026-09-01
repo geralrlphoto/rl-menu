@@ -857,12 +857,15 @@ export default function NovosProjetosPage() {
                 <button className="w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold">
                   ◉
                 </button>
-                <button
-                  onClick={() => setShowAddModal(true)}
-                  className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-                  style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
-                  <span className="text-lg leading-none">+</span> Novo Projeto
-                </button>
+                {/* Criar projetos é do admin: o membro só recebe trabalho, não o cria. */}
+                {isAdminView && (
+                  <button
+                    onClick={() => setShowAddModal(true)}
+                    className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
+                    style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
+                    <span className="text-lg leading-none">+</span> Novo Projeto
+                  </button>
+                )}
               </div>
             </div>
           </div>
