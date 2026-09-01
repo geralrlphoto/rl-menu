@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { PROGRAMA, BASE_URL } from '@/lib/podcast/programa'
 import FormularioCandidatura from './FormularioCandidatura'
+import Envolvente from '../Envolvente'
 
 /* ============================================================
    /podcast/convidados — dossier de convite.
@@ -24,6 +25,7 @@ export const metadata: Metadata = {
 
 export default function ConvidadosPage() {
   return (
+    <Envolvente>
     <div className="pod-wrap">
       <p style={{ marginBottom: 28 }}>
         <Link className="pod-voltar" href="/podcast"><span aria-hidden="true">‹</span> Podcast</Link>
@@ -110,5 +112,6 @@ export default function ConvidadosPage() {
         <FormularioCandidatura />
       </section>
     </div>
+    </Envolvente>
   )
 }

@@ -8,6 +8,7 @@ import { markdownParaHtml } from '@/lib/podcast/markdown'
 import { PROGRAMA, BASE_URL } from '@/lib/podcast/programa'
 import FormularioLead from '../FormularioLead'
 import LeitorEpisodio from '../LeitorEpisodio'
+import Envolvente from '../Envolvente'
 
 /* ============================================================
    /podcast/[slug] — página do episódio.
@@ -98,6 +99,7 @@ export default async function EpisodioPage(
   }
 
   return (
+    <Envolvente>
     <div className="pod-wrap">
       <script
         type="application/ld+json"
@@ -257,5 +259,6 @@ export default async function EpisodioPage(
         .pod-vizinho.is-fim { text-align: right; margin-left: auto; }
       `}</style>
     </div>
+    </Envolvente>
   )
 }
