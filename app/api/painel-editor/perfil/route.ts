@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdminOuProprio } from '@/lib/api-guard'
 
 function db() {
   return createClient(
@@ -12,6 +13,9 @@ function db() {
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('freelancer')
   if (!id) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
+  // O perfil leva IBAN e NIF: só o próprio ou o admin.
+  const barrado = await exigeAdminOuProprio(req, id)
+  if (barrado) return barrado
   const supabase = db()
 
   // ?only=foto — devolve só a foto (JSON-path select). Evita arrastar o
@@ -40,6 +44,8 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { freelancer, perfil } = await req.json()
   if (!freelancer) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
+  const barrado = await exigeAdminOuProprio(req, freelancer)
+  if (barrado) return barrado
   const supabase = db()
   const { error } = await supabase
     .from('freelancers')

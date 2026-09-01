@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin, exigeAdminOuProprio } from '@/lib/api-guard'
 
 function db() {
   return createClient(
@@ -64,6 +65,8 @@ const CAMPOS_EDITAVEIS = [
 export async function GET(req: NextRequest) {
   const freelancer = req.nextUrl.searchParams.get('freelancer')
   if (!freelancer) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
+  const barrado = await exigeAdminOuProprio(req, freelancer)
+  if (barrado) return barrado
 
   const supabase = db()
 
@@ -138,6 +141,8 @@ export async function GET(req: NextRequest) {
 // insere uma dessas linhas. Antes o "Criar Projeto" só mexia no estado do
 // React e o projeto desaparecia no recarregamento.
 export async function POST(req: NextRequest) {
+  const barrado = exigeAdmin(req)   // criar projetos é do admin
+  if (barrado) return barrado
   const { freelancer, projeto } = await req.json()
   if (!freelancer || !projeto) return NextResponse.json({ error: 'freelancer e projeto obrigatórios' }, { status: 400 })
 
@@ -209,6 +214,8 @@ Projeto criado no painel do editor.`)
 // META.overrides da notificação que originou o projeto. O envio original
 // (downloads, relatórios) fica intacto.
 export async function PATCH(req: NextRequest) {
+  const barrado = exigeAdmin(req)   // editar dados do projeto é do admin
+  if (barrado) return barrado
   const { freelancer, notifId, patch } = await req.json()
   if (!freelancer || !notifId) return NextResponse.json({ error: 'freelancer e notifId obrigatórios' }, { status: 400 })
   if (!patch || typeof patch !== 'object') return NextResponse.json({ error: 'patch obrigatório' }, { status: 400 })
@@ -243,6 +250,8 @@ export async function PATCH(req: NextRequest) {
 // DELETE ?freelancer=<id>&notif=<id> — elimina o projeto do painel do editor,
 // apagando a notificação de envio que lhe deu origem.
 export async function DELETE(req: NextRequest) {
+  const barrado = exigeAdmin(req)   // eliminar projetos é do admin
+  if (barrado) return barrado
   const freelancer = req.nextUrl.searchParams.get('freelancer')
   const notifId = req.nextUrl.searchParams.get('notif')
   if (!freelancer || !notifId) return NextResponse.json({ error: 'freelancer e notif obrigatórios' }, { status: 400 })
