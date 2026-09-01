@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Episodio, EstadoEpisodio } from '@/lib/podcast/tipos'
 import { gerarSlug } from '@/lib/podcast/tipos'
+import GravacaoEpisodio from './GravacaoEpisodio'
 import ConvidadosEpisodio from './ConvidadosEpisodio'
 import PotenciaisEpisodio from './PotenciaisEpisodio'
 
@@ -213,6 +214,7 @@ export default function EpisodiosClient() {
                   onChange={v => guardar(emEdicao.id, { apple_url: v })} />
               </div>
 
+              <GravacaoEpisodio episodioId={emEdicao.id} />
               <ConvidadosEpisodio episodioId={emEdicao.id} />
               <PotenciaisEpisodio episodioId={emEdicao.id} />
 

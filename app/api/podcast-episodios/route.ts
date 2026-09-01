@@ -18,6 +18,7 @@ const CAMPOS = [
   'numero', 'temporada', 'slug', 'titulo', 'subtitulo', 'descricao_curta',
   'notas_md', 'duracao_segundos', 'data_publicacao', 'estado', 'capa_url',
   'youtube_id', 'spotify_url', 'apple_url', 'audio_url', 'transcricao',
+  'gravacao_data', 'gravacao_hora', 'gravacao_local',
 ] as const
 
 const ESTADOS = ['rascunho', 'agendado', 'publicado']

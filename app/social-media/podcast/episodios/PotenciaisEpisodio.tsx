@@ -68,6 +68,27 @@ export default function PotenciaisEpisodio({ episodioId }: { episodioId: string 
     }).catch(() => setErro('Não foi possível guardar.'))
   }
 
+  /** Aceitar deixa de ser um estado: passa a pessoa para a ficha do convidado. */
+  async function promover(p: Potencial) {
+    if (!confirm(`${p.nome} aceitou. Passar para convidado deste episódio?`)) return
+    setErro(null)
+    try {
+      const r = await fetch('/api/podcast-potenciais/promover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: p.id }),
+      })
+      const j = await r.json()
+      if (!r.ok) throw new Error(j?.error ?? 'erro')
+      setLista(prev => prev.filter(x => x.id !== p.id))
+      // A ficha do convidado está ao lado, noutro componente: avisa-se por
+      // evento para ela recarregar, sem estado partilhado entre os dois.
+      window.dispatchEvent(new CustomEvent('podcast:convidado-novo'))
+    } catch {
+      setErro('Não foi possível passar para convidado.')
+    }
+  }
+
   async function apagar(p: Potencial) {
     if (!confirm(`Remover ${p.nome} da lista?`)) return
     setLista(prev => prev.filter(x => x.id !== p.id))
@@ -77,7 +98,10 @@ export default function PotenciaisEpisodio({ episodioId }: { episodioId: string 
   return (
     <div className="pc-campo">
       <label className="pc-label">Potenciais convidados</label>
-      <p className="pc-dica">Quem queres abordar para este tema. Não aparece em lado nenhum público.</p>
+      <p className="pc-dica">
+        Quem queres abordar para este tema. Não aparece em lado nenhum público.
+        Ao marcar <strong>aceitou</strong>, a pessoa passa para a ficha do convidado.
+      </p>
 
       {loading && <p className="pc-dica">A carregar…</p>}
       {erro && <p className="pc-erro" style={{ margin: 0 }}>{erro}</p>}
@@ -103,7 +127,7 @@ export default function PotenciaisEpisodio({ episodioId }: { episodioId: string 
               {ESTADOS.map(e => (
                 <button key={e} type="button"
                   className={`pc-estado ${p.estado === e ? 'is-on' : ''}`}
-                  onClick={() => guardar(p.id, { estado: e })}>
+                  onClick={() => (e === 'aceitou' ? promover(p) : guardar(p.id, { estado: e }))}>
                   {e}
                 </button>
               ))}

@@ -29,13 +29,23 @@ export default function ConvidadosEpisodio({ episodioId }: { episodioId: string 
   const [novoNome, setNovoNome] = useState('')
   const [aCriar, setACriar] = useState(false)
 
-  useEffect(() => {
+  function carregar() {
     setLoading(true)
     fetch(`/api/podcast-convidados?episodio=${episodioId}`)
       .then(r => r.json())
       .then(j => setLista(j.convidados ?? []))
       .catch(() => setErro('Não foi possível carregar o convidado.'))
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { carregar() }, [episodioId])
+
+  // Quando um potencial aceita, ele passa para aqui: a lista recarrega ao
+  // ouvir o aviso, em vez de estado partilhado entre os dois componentes.
+  useEffect(() => {
+    function aoPromover() { carregar() }
+    window.addEventListener('podcast:convidado-novo', aoPromover)
+    return () => window.removeEventListener('podcast:convidado-novo', aoPromover)
   }, [episodioId])
 
   async function criar() {
@@ -81,7 +91,14 @@ export default function ConvidadosEpisodio({ episodioId }: { episodioId: string 
       {erro && <p className="pc-erro" style={{ margin: 0 }}>{erro}</p>}
 
       {lista.map(c => (
-        <div key={c.id} className="pc-sub">
+        <details key={c.id} className="pc-sub pc-dobra">
+          <summary>
+            <span className="pc-dobra-nome">{c.nome}</span>
+            <span className="pc-dobra-meta">
+              {[c.profissao, c.empresa].filter(Boolean).join(' · ') || 'Sem profissão'}
+            </span>
+          </summary>
+
           <div className="pc-dois">
             <Campo label="Nome" valor={c.nome} onChange={v => guardar(c.id, { nome: v })} />
             <Campo label="Profissão" valor={c.profissao ?? ''} onChange={v => guardar(c.id, { profissao: v })} />
@@ -101,7 +118,7 @@ export default function ConvidadosEpisodio({ episodioId }: { episodioId: string 
           <div style={{ textAlign: 'right' }}>
             <button type="button" className="pc-mini" onClick={() => apagar(c)}>Remover convidado</button>
           </div>
-        </div>
+        </details>
       ))}
 
       {!loading && (

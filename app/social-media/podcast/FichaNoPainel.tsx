@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import GravacaoEpisodio from './episodios/GravacaoEpisodio'
 import ConvidadosEpisodio from './episodios/ConvidadosEpisodio'
 import PotenciaisEpisodio from './episodios/PotenciaisEpisodio'
 
@@ -95,6 +96,7 @@ export default function FichaNoPainel() {
 
       {episodio && (
         <>
+          <GravacaoEpisodio episodioId={episodio.id} />
           <ConvidadosEpisodio episodioId={episodio.id} />
           <PotenciaisEpisodio episodioId={episodio.id} />
         </>
@@ -128,6 +130,27 @@ export default function FichaNoPainel() {
           padding: 16px; border-radius: 10px;
           border: 1px solid var(--line-soft); background: rgba(0,0,0,.22);
         }
+
+
+        .fic .pc-dobra { padding: 0; gap: 0; }
+        .fic .pc-dobra > summary {
+          cursor: pointer; list-style: none;
+          display: flex; flex-direction: column; gap: 4px;
+          padding: 14px 16px; min-height: 44px;
+        }
+        .fic .pc-dobra > summary::-webkit-details-marker { display: none; }
+        .fic .pc-dobra > summary::after {
+          content: 'Abrir'; position: absolute; right: 16px;
+          font-family: var(--fm); font-size: 9px; letter-spacing: .16em;
+          text-transform: uppercase; color: var(--tx-dim);
+        }
+        .fic .pc-dobra[open] > summary::after { content: 'Fechar'; }
+        .fic .pc-dobra > summary { position: relative; padding-right: 74px; }
+        .fic .pc-dobra[open] > summary { border-bottom: 1px solid var(--line-soft); margin-bottom: 14px; }
+        .fic .pc-dobra > *:not(summary) { margin: 0 16px; }
+        .fic .pc-dobra > *:last-child { margin-bottom: 16px; }
+        .fic .pc-dobra-nome { font-family: var(--fd); font-size: 17px; color: var(--tx); }
+        .fic .pc-dobra-meta { font-family: var(--fb); font-size: 12px; color: var(--tx-dim); }
 
         .fic .pc-novo { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .fic .pc-novo .pc-input { flex: 1; min-width: 180px; }

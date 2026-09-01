@@ -211,6 +211,24 @@ export default function PodcastPage() {
           background: rgba(0,0,0,0.22);
         }
 
+        .pc-dobra { padding: 0; gap: 0; }
+        .pc-dobra > summary {
+          cursor: pointer; list-style: none; position: relative;
+          display: flex; flex-direction: column; gap: 4px;
+          padding: 14px 74px 14px 16px; min-height: 44px;
+        }
+        .pc-dobra > summary::-webkit-details-marker { display: none; }
+        .pc-dobra > summary::after {
+          content: 'Abrir'; position: absolute; right: 16px; top: 16px;
+          font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-4);
+        }
+        .pc-dobra[open] > summary::after { content: 'Fechar'; }
+        .pc-dobra[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 14px; }
+        .pc-dobra > *:not(summary) { margin: 0 16px; }
+        .pc-dobra > *:last-child { margin-bottom: 16px; }
+        .pc-dobra-nome { font-size: 15px; color: var(--ink); }
+        .pc-dobra-meta { font-size: 12px; color: var(--ink-4); }
+
         .pc-dica { margin: 0; font-size: 11.5px; color: var(--ink-4); line-height: 1.6; }
         .pc-dica strong { color: var(--ink-3); }
 
