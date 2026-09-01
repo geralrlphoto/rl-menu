@@ -82,7 +82,7 @@ body {
   main.painel-main { padding-left: 0 !important; }
 
   /* Espaço para o hamburger não tapar o início do conteúdo. */
-  main.painel-main > div:first-child { padding-top: 3.5rem; }
+  main.painel-main > div:first-child { padding-top: 4rem; }
 }
 
 @media (min-width: 1024px) {
@@ -118,4 +118,8 @@ body {
   }
   /* Iguala a altura do cartão do perfil à dos botões (44px). */
   .painel-acoes-topo > div:last-child { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+
+  /* Com a barra de ícones fixa no topo, o cartão de boas-vindas começava
+     colado a ela. Afasta o conteúdo o suficiente para respirar. */
+  main.painel-main > div:first-child { padding-top: 5.5rem; }
 }
