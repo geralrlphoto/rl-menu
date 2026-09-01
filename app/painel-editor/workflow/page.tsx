@@ -12,6 +12,7 @@ import {
   TODAY,
   type Project,
   type WorkflowStep,
+  type WorkflowStage,
 } from '../_data/projects'
 import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
@@ -97,6 +98,50 @@ function progressFromStageWF(stage: string): number {
   return 5
 }
 
+// ── Trabalhos reais → Project ────────────────────────────────────────────
+// Mesma conversão que o Novos Projetos faz: a fase vem de
+// freelancers.editor_workflow (por referência) e as edições do admin de
+// META.overrides da notificação de envio.
+const WF_TO_STAGE_WF: Record<string, WorkflowStage> = {
+  'Novo': 'Novo Projeto', 'Em Edição': 'Em Edição', 'Color Grading': 'Color Grading',
+  'Áudio': 'Áudio / Sincronização', 'Para Revisão': 'Para Revisão', 'Correções': 'Correções',
+  'Finalizado': 'Finalizado', 'Entregue': 'Entregue',
+}
+
+function isoToPtWF(iso: string): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+}
+
+function jobToProjectWF(j: any, wf: Record<string, string>, idx: number): Project {
+  const key = j.referencia || j.notifId || String(idx)
+  const stage: WorkflowStage = WF_TO_STAGE_WF[wf[key] ?? ''] ?? 'Novo Projeto'
+  const base: Project = {
+    id: key,
+    noivos: j.noivos || j.local || 'Evento',
+    foto: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
+    email: '',
+    telefone: '',
+    recebido: isoToPtWF(j.sentAt || ''),
+    dataCasamento: isoToPtWF(j.data_casamento || ''),
+    entregaPrevista: '',
+    pacote: 'Pacote Premium 👑',
+    preco: 0,
+    duracao: '',
+    stage,
+    approval: 'Aguardando Revisão',
+    progress: progressFromStageWF(stage),
+    editor: '',
+    finalEntregue: stage === 'Entregue',
+    finalLink: j.revisao?.entregaLink || '',
+  }
+  // Edições do admin mandam sobre o que é derivado do envio.
+  const merged: Project = j.overrides ? { ...base, ...j.overrides } : base
+  return { ...merged, progress: progressFromStageWF(merged.stage) }
+}
+
 function userProjectToProject(p: any): Project {
   const pacote = p.pacote ?? 'Pacote Premium 👑'
   const preco = typeof p.preco === 'number' && p.preco > 0
@@ -177,13 +222,48 @@ const PROGRESS_COLORS: Record<WorkflowStep, string> = {
   'Entrega':       '#C9A45C',
 }
 
+// Atividades de exemplo — só usadas no modo maquete (sem editor identificado).
+const ACTIVIDADES_MAQUETE = [
+  { ico: '↓', titulo: 'Projeto recebido',     noivos: 'Amanda & Lucas',    quando: 'Hoje, 14:32',       ord: 0 },
+  { ico: '◫', titulo: 'Arquivos organizados', noivos: 'Beatriz & Gabriel', quando: 'Hoje, 11:15',       ord: 0 },
+  { ico: '✂', titulo: 'Edição iniciada',      noivos: 'Juliana & Mateus',  quando: 'Ontem, 16:40',      ord: 0 },
+  { ico: '↻', titulo: 'Revisão enviada',      noivos: 'Carolina & Felipe', quando: 'Ontem, 10:22',      ord: 0 },
+  { ico: '↗', titulo: 'Projeto entregue',     noivos: 'Sofia & Ricardo',   quando: '18/05/2026, 18:10', ord: 0 },
+]
+
 export default function WorkflowPage() {
   const [stageFilter, setStageFilter] = useState<'Todos os Projetos' | WorkflowStep>('Todos os Projetos')
   const [search, setSearch] = useState('')
   const [allProjects, setAllProjects] = useState<Project[]>(PROJECTS)
+  // Modo real: há editor identificado (?freelancer=<id> ou id já guardado).
+  // Nesse caso a página inteira passa a espelhar os trabalhos da BD em vez
+  // dos projetos de maquete.
+  const [realMode, setRealMode] = useState(false)
+
+  // ── Trabalhos reais do editor (BD) ────────────────────────────────────
+  useEffect(() => {
+    const id = getEditorId()
+    if (!id) return
+    let cancelled = false
+    Promise.all([
+      fetch(`/api/painel-editor/projetos?freelancer=${id}`).then(r => r.json()).catch(() => ({})),
+      fetch(`/api/painel-editor/workflow?freelancer=${id}`).then(r => r.json()).catch(() => ({})),
+    ]).then(([pj, w]) => {
+      if (cancelled) return
+      const jobs: any[] = Array.isArray(pj?.jobs) ? pj.jobs : []
+      const wf: Record<string, string> = (w?.workflow && typeof w.workflow === 'object') ? w.workflow : {}
+      setRealMode(true)
+      setAllProjects(
+        jobs.map((j, i) => jobToProjectWF(j, wf, i)).filter(p => !(p as any).archived)
+      )
+    })
+    return () => { cancelled = true }
+  }, [])
 
   // ── Sincroniza com user-projects (localStorage) + patches sobre mocks ──
+  //    Só em modo maquete: com editor real, a fonte é a BD.
   useEffect(() => {
+    if (getEditorId()) return
     function load() {
       try {
         const userRaw = localStorage.getItem('painel-editor-user-projects')
@@ -243,14 +323,21 @@ export default function WorkflowPage() {
     return found ?? 'Edição'
   }, [stageCounts])
 
-  // Atividades recentes (mock)
-  const activities = [
-    { ico: '↓', titulo: 'Projeto recebido',  noivos: 'Amanda & Lucas',    quando: 'Hoje, 14:32' },
-    { ico: '◫', titulo: 'Arquivos organizados', noivos: 'Beatriz & Gabriel', quando: 'Hoje, 11:15' },
-    { ico: '✂', titulo: 'Edição iniciada',   noivos: 'Juliana & Mateus',  quando: 'Ontem, 16:40' },
-    { ico: '↻', titulo: 'Revisão enviada',    noivos: 'Carolina & Felipe', quando: 'Ontem, 10:22' },
-    { ico: '↗', titulo: 'Projeto entregue',  noivos: 'Sofia & Ricardo',   quando: '18/05/2026, 18:10' },
-  ]
+  // Atividades recentes — em modo real vêm dos trabalhos (envio e entrega);
+  // em modo maquete mantêm-se os exemplos.
+  const activities = useMemo(() => {
+    if (!realMode) return ACTIVIDADES_MAQUETE
+    const itens: { ico: string; titulo: string; noivos: string; quando: string; ord: number }[] = []
+    allProjects.forEach(p => {
+      const ordDe = (d: string) => {
+        const [dd, mm, yy] = (d || '').split('/').map(Number)
+        return (dd && mm && yy) ? new Date(yy, mm - 1, dd).getTime() : 0
+      }
+      if (p.recebido) itens.push({ ico: '↓', titulo: 'Trabalho recebido', noivos: p.noivos, quando: p.recebido, ord: ordDe(p.recebido) })
+      if (p.finalEntregue) itens.push({ ico: '↗', titulo: 'Projeto entregue', noivos: p.noivos, quando: p.entregaPrevista || p.recebido, ord: ordDe(p.entregaPrevista || p.recebido) })
+    })
+    return itens.sort((a, b) => b.ord - a.ord).slice(0, 5)
+  }, [realMode, allProjects])
 
   // Próximos prazos (top 3 ordenados)
   const proxPrazos = useMemo(() => enriched
@@ -457,6 +544,9 @@ export default function WorkflowPage() {
               {/* Atividades Recentes */}
               <Panel title="Atividades Recentes" right={<button className="text-[11px] tracking-wider uppercase text-gold/70 hover:text-gold transition-colors">Ver todas</button>}>
                 <div className="space-y-3">
+                  {activities.length === 0 && (
+                    <p className="text-[11px] text-white/30 italic">Ainda sem atividade registada.</p>
+                  )}
                   {activities.map((a, i) => (
                     <div key={i} className="flex items-start gap-3">
                       <div className="w-9 h-9 rounded-lg flex items-center justify-center border border-gold/20 bg-gold/[0.06] text-gold text-base shrink-0">
@@ -475,6 +565,9 @@ export default function WorkflowPage() {
               {/* Próximos Prazos */}
               <Panel title="Próximos Prazos" right={<button className="text-[11px] tracking-wider uppercase text-gold/70 hover:text-gold transition-colors">Ver todos</button>}>
                 <div className="space-y-3">
+                  {proxPrazos.length === 0 && (
+                    <p className="text-[11px] text-white/30 italic">Sem entregas previstas. Define a data em Novos Projetos &rsaquo; Editar Dados.</p>
+                  )}
                   {proxPrazos.map(({ p, step, dias }) => (
                     <div key={p.id} className="flex items-start gap-3">
                       <div className="w-10 h-10 rounded-lg flex items-center justify-center border shrink-0"
