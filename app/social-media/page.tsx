@@ -65,7 +65,7 @@ export default function SocialMediaPage() {
             </span>
             <div className="sm-tile-body">
               <p className="sm-tile-name">12 Meses 12 Vídeos</p>
-              <p className="sm-tile-desc">Um vídeo por mês, do primeiro ao último</p>
+              <p className="sm-tile-desc">Guiões prontos, de setembro 2026 a agosto 2027</p>
             </div>
             <span className="sm-tile-arrow">→</span>
           </div>
