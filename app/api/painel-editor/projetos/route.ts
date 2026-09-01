@@ -29,6 +29,13 @@ function parseMeta(mensagem: string): any {
   try { return JSON.parse(m[1]) } catch { return null }
 }
 
+// dd/mm/yyyy → yyyy-mm-dd (o resto do código guarda datas em ISO).
+function ptParaIso(d: string | null | undefined): string | null {
+  if (!d) return null
+  const m = String(d).split('—')[0].trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : null
+}
+
 // Separa a mensagem em META + texto legível, para poder reescrever só a META.
 function splitMeta(mensagem: string): { meta: any; resto: string } {
   const raw = mensagem ?? ''
@@ -124,6 +131,43 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ jobs })
+}
+
+// POST { freelancer, projeto } — cria um projeto no painel do editor.
+// Os projetos são notificações de envio (tipo relatorio_editor); criar um aqui
+// insere uma dessas linhas. Antes o "Criar Projeto" só mexia no estado do
+// React e o projeto desaparecia no recarregamento.
+export async function POST(req: NextRequest) {
+  const { freelancer, projeto } = await req.json()
+  if (!freelancer || !projeto) return NextResponse.json({ error: 'freelancer e projeto obrigatórios' }, { status: 400 })
+
+  const overrides: Record<string, any> = {}
+  for (const k of CAMPOS_EDITAVEIS) {
+    if (projeto[k] !== undefined && projeto[k] !== null && projeto[k] !== '') overrides[k] = projeto[k]
+  }
+
+  const meta = {
+    referencia: projeto.referencia ?? null,
+    evento_id: projeto.eventoId ?? null,
+    local: projeto.local ?? null,
+    data_casamento: ptParaIso(projeto.dataCasamento),
+    downloads: projeto.clientLink ? [projeto.clientLink] : [],
+    criadoNoPainel: true,
+    overrides,
+  }
+
+  const titulo = `Projeto — ${projeto.noivos || projeto.referencia || 'Evento'}`
+  const mensagem = joinMeta(meta, `
+Projeto criado no painel do editor.`)
+
+  const supabase = db()
+  const { data, error } = await supabase
+    .from('freelancer_notificacoes')
+    .insert({ freelancer_id: freelancer, titulo, mensagem, tipo: 'relatorio_editor', lida: true })
+    .select('id')
+    .single()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true, notifId: data?.id ?? null })
 }
 
 // PATCH { freelancer, notifId, patch } — grava as edições do admin em

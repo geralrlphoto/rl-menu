@@ -612,8 +612,24 @@ export default function NovosProjetosPage() {
   }, [projects, hydrated, realMode])
 
   function handleCreate(p: Project) {
-    setProjects(prev => [p, ...prev])
-    setUnseenIds(prev => new Set([...prev, p.id]))   // brilho gold até abrir
+    // Em modo real o projeto tem de ir para a BD, senão desaparecia assim que
+    // a lista voltasse a ser carregada de lá.
+    const guardado: Project = realMode && p.referencia ? { ...p, id: p.referencia } : p
+    if (realMode && freelancerId) {
+      fetch('/api/painel-editor/projetos', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer: freelancerId, projeto: guardado }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          if (d?.notifId) {
+            setProjects(prev => prev.map(x => (x.id === guardado.id ? { ...x, notifId: d.notifId } : x)))
+          }
+        })
+        .catch(() => {})
+    }
+    setProjects(prev => [guardado, ...prev])
+    setUnseenIds(prev => new Set([...prev, guardado.id]))   // brilho gold até abrir
     setShowAddModal(false)
     // não dou setExpanded aqui — deixo o user clicar para "abrir" e tirar o glow
 
