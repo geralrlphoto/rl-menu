@@ -59,3 +59,32 @@ body {
   /* Mantém títulos dourados visíveis em impressão */
   [class*="text-gold"], h1, h2, h3 { color: #8a6f1c !important; }
 }
+
+/* ── Painéis (editor e fotógrafo) em telemóvel ──────────────────────────────
+   A barra lateral é fixa com 230–250px e o conteúdo tem um padding-left igual.
+   Num ecrã de 375px sobrava um terço para o conteúdo e não havia forma de a
+   fechar. Aqui ela sai do ecrã e volta com o hamburger (SidebarMobileToggle,
+   que liga/desliga a classe .sidebar-aberta no body). */
+.painel-hamburger { display: none; }
+
+@media (max-width: 1023px) {
+  .painel-hamburger { display: flex; }
+
+  aside.painel-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    z-index: 50;
+    width: min(280px, 82vw);
+  }
+  body.sidebar-aberta aside.painel-sidebar { transform: translateX(0); }
+
+  /* O conteúdo ocupa a largura toda; a barra passa a flutuar por cima. */
+  main.painel-main { padding-left: 0 !important; }
+
+  /* Espaço para o hamburger não tapar o início do conteúdo. */
+  main.painel-main > div:first-child { padding-top: 3.5rem; }
+}
+
+@media (min-width: 1024px) {
+  .painel-hamburger-fundo { display: none; }
+}

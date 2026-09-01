@@ -777,7 +777,7 @@ export default function NovosProjetosPage() {
 
       {/* ── SIDEBAR ─────────────────────────────────────────────────── */}
       <aside
-        className="flex fixed top-0 left-0 bottom-0 w-[230px] z-30 flex-col"
+        className="painel-sidebar flex fixed top-0 left-0 bottom-0 w-[230px] z-30 flex-col"
         style={{
           background: 'linear-gradient(180deg, rgba(15,12,8,0.96) 0%, rgba(11,9,5,0.98) 100%)',
           backdropFilter: 'blur(20px)',
@@ -823,7 +823,7 @@ export default function NovosProjetosPage() {
       </aside>
 
       {/* ── MAIN ────────────────────────────────────────────────────── */}
-      <main className="relative z-10 pl-[230px]">
+      <main className="painel-main relative z-10 pl-[230px]">
         <div className="px-6 sm:px-8 py-6 max-w-[1500px] mx-auto">
 
           {/* HERO */}
