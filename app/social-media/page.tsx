@@ -21,7 +21,7 @@ export default function SocialMediaPage() {
         <h1 className="sm-title">SOCIAL <em>Media</em></h1>
         <hr className="sm-rule" />
         <p className="sm-lede">
-          Gestão de Instagram, planeamento editorial e conteúdo para o blog.
+          Gestão de Instagram, planeamento editorial, blog e podcast.
         </p>
       </header>
 
@@ -71,11 +71,31 @@ export default function SocialMediaPage() {
           </div>
         </Link>
 
+        {/* Podcast */}
+        <Link href="/social-media/podcast" className="sm-tile">
+          <span className="sm-sweep" />
+          <div className="sm-tile-row">
+            <span className="sm-num">03</span>
+            <span className="sm-tile-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="9" y="2" width="6" height="12" rx="3" />
+                <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
+                <line x1="12" y1="19" x2="12" y2="22" />
+              </svg>
+            </span>
+            <div className="sm-tile-body">
+              <p className="sm-tile-name">Antes do Sim</p>
+              <p className="sm-tile-desc">Podcast sobre casamentos</p>
+            </div>
+            <span className="sm-tile-arrow">→</span>
+          </div>
+        </Link>
+
         {/* Placeholder para Instagram (futuro) */}
         <div className="sm-tile is-soon">
           <span className="sm-soon-badge">Em breve</span>
           <div className="sm-tile-row">
-            <span className="sm-num">03</span>
+            <span className="sm-num">04</span>
             <span className="sm-tile-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="5" />
