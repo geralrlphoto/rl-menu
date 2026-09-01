@@ -1,11 +1,12 @@
 import Link from 'next/link'
-import { GUIOES, PLANO } from './_data/guioes'
+import GuioesClient from './GuioesClient'
+import { PLANO } from './_data/guioes'
 
 /* ============================================================
    /social-media/12-meses-12-videos
    Pasta do projecto "12 Meses, 12 Vídeos": um vídeo por mês,
-   de setembro de 2026 a agosto de 2027. Cada mês abre com a
-   nota de realização e o teleponto completo.
+   de setembro de 2026 a agosto de 2027.
+   Grelha dos meses + painel com o guião, estado e link.
    ============================================================ */
 
 export default function DozeMesesDozeVideosPage() {
@@ -25,52 +26,12 @@ export default function DozeMesesDozeVideosPage() {
         <hr className="mv-rule" />
         <p className="mv-lede">
           Um vídeo por mês, de setembro de 2026 a agosto de 2027.
-          Público: noivos. Objectivo: autoridade e captação de leads.
-          Clica num mês para abrir a nota de realização e o teleponto.
+          Clica num mês para abrir o guião, marcar o estado e guardar o link.
         </p>
       </header>
 
-      {/* Meses */}
-      <section className="mv-list">
-        {GUIOES.map(g => (
-          <details key={g.n} className="mv-card">
-            <summary className="mv-sum">
-              <span className="mv-num">{String(g.n).padStart(2, '0')}</span>
-              <span className="mv-sum-body">
-                <span className="mv-mes">{g.mes} {g.ano}</span>
-                <span className="mv-titulo">{g.titulo}</span>
-              </span>
-              <span className="mv-meta">
-                <span className="mv-dur">{g.duracao}</span>
-                <span className="mv-badge">{g.estado}</span>
-              </span>
-              <span className="mv-chev">›</span>
-            </summary>
-
-            <div className="mv-body">
-              {g.publicacao && (
-                <p className="mv-pub">
-                  <span className="mv-pub-label">Publicação</span> {g.publicacao}
-                </p>
-              )}
-
-              <h3 className="mv-h3">Nota de realização</h3>
-              <p className="mv-nota">{g.nota}</p>
-
-              <h3 className="mv-h3">Teleponto</h3>
-              <div className="mv-tele">
-                {g.teleponto.map((par, i) => (
-                  <p key={i}>
-                    {par.label && <strong>{par.label}</strong>}
-                    {par.label && par.text ? ' ' : null}
-                    {par.text}
-                  </p>
-                ))}
-              </div>
-            </div>
-          </details>
-        ))}
-      </section>
+      {/* Grelha + painel (cliente) */}
+      <GuioesClient />
 
       {/* Plano */}
       <section className="mv-plano">
@@ -108,6 +69,7 @@ export default function DozeMesesDozeVideosPage() {
           --ink-3: #8c8170;
           --ink-4: #5f574b;
           --line: rgba(239, 231, 214, 0.10);
+          --verde: #6fbf8f;
 
           min-height: 100vh;
           background: var(--bg);
@@ -142,7 +104,7 @@ export default function DozeMesesDozeVideosPage() {
           font-size: 16px; color: var(--gold); line-height: 1;
         }
 
-        .mv-head { text-align: center; margin-bottom: 48px; }
+        .mv-head { text-align: center; margin-bottom: 28px; }
         .mv-eyebrow {
           font-size: 10.5px; font-weight: 600;
           letter-spacing: 0.36em; text-transform: uppercase;
@@ -158,9 +120,7 @@ export default function DozeMesesDozeVideosPage() {
           color: var(--ink);
           margin: 0 0 18px;
         }
-        .mv-title em {
-          font-style: italic; color: var(--gold-soft); font-weight: 400;
-        }
+        .mv-title em { font-style: italic; color: var(--gold-soft); font-weight: 400; }
         .mv-rule {
           margin: 22px auto 0;
           width: 96px; height: 1px; border: 0;
@@ -168,21 +128,48 @@ export default function DozeMesesDozeVideosPage() {
         }
         .mv-lede {
           margin-top: 20px;
-          max-width: 520px;
+          max-width: 480px;
           margin-left: auto; margin-right: auto;
           font-size: 13.5px; color: var(--ink-3);
           line-height: 1.7;
         }
 
-        /* ── Lista de meses ── */
-        .mv-list { display: flex; flex-direction: column; gap: 10px; }
+        .mv-contador {
+          text-align: center;
+          font-size: 10.5px; font-weight: 600;
+          letter-spacing: 0.28em; text-transform: uppercase;
+          color: var(--ink-4);
+          margin: 0 0 26px;
+        }
+        .mv-contador strong { color: var(--gold); font-weight: 700; }
+
+        .mv-erro {
+          text-align: center; font-size: 12px;
+          color: #d98b7a; margin: 0 0 18px;
+        }
+
+        /* ── Grelha dos meses ── */
+        .mv-grid {
+          display: grid;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 12px;
+        }
+        @media (max-width: 860px) { .mv-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 540px) { .mv-grid { grid-template-columns: 1fr; } }
 
         .mv-card {
           position: relative; overflow: hidden;
+          display: flex; flex-direction: column;
+          text-align: left; cursor: pointer;
+          font-family: inherit;
+          min-height: 152px;
+          padding: 16px 18px 14px;
           border-radius: 12px;
           border: 1px solid var(--line);
           background: linear-gradient(180deg, var(--surface), var(--surface-2));
-          transition: border-color 0.3s, box-shadow 0.4s;
+          color: inherit;
+          transition: transform 0.35s cubic-bezier(0.2,0.85,0.25,1),
+                      border-color 0.3s, box-shadow 0.4s;
         }
         .mv-card::before {
           content: '';
@@ -192,87 +179,171 @@ export default function DozeMesesDozeVideosPage() {
           transition: transform 0.35s cubic-bezier(0.2,0.85,0.25,1);
         }
         .mv-card:hover {
+          transform: translateY(-3px);
           border-color: var(--gold-line);
-          box-shadow: 0 22px 44px -30px rgba(200,168,102,0.4);
+          box-shadow: 0 22px 44px -28px rgba(200,168,102,0.45), 0 4px 8px rgba(0,0,0,0.35);
         }
-        .mv-card:hover::before, .mv-card[open]::before { transform: scaleY(1); }
-        .mv-card[open] { border-color: var(--gold-line); }
+        .mv-card:hover::before { transform: scaleY(1); }
+        .mv-card:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
 
-        .mv-sum {
-          list-style: none; cursor: pointer;
-          display: flex; align-items: center; gap: 16px;
-          padding: 18px 22px;
+        .mv-card-top {
+          display: flex; align-items: center; justify-content: space-between;
+          margin-bottom: 10px;
         }
-        .mv-sum::-webkit-details-marker { display: none; }
-
         .mv-num {
           font-family: 'Cormorant Garamond', serif;
           font-weight: 400; font-style: italic;
           font-size: 26px; line-height: 1;
           color: var(--gold-deep);
-          flex: none; min-width: 28px;
         }
-        .mv-card:hover .mv-num, .mv-card[open] .mv-num { color: var(--gold-soft); }
+        .mv-card:hover .mv-num { color: var(--gold-soft); }
+        .mv-dot {
+          width: 6px; height: 6px; border-radius: 50%;
+          background: var(--ink-4);
+        }
+        .mv-card.is-gravado .mv-dot   { background: var(--gold-deep); }
+        .mv-card.is-editado .mv-dot   { background: var(--gold); }
+        .mv-card.is-publicado .mv-dot { background: var(--verde); }
 
-        .mv-sum-body { flex: 1; min-width: 0; }
         .mv-mes {
-          display: block;
-          font-size: 10.5px; font-weight: 700;
+          font-size: 10px; font-weight: 700;
           letter-spacing: 0.28em; text-transform: uppercase;
           color: var(--gold);
-          margin-bottom: 5px;
+          margin-bottom: 6px;
         }
         .mv-titulo {
-          display: block;
-          font-size: 14px; color: var(--ink);
-          line-height: 1.4;
+          font-size: 13.5px; line-height: 1.45;
+          color: var(--ink);
+          flex: 1;
         }
-
-        .mv-meta {
-          display: flex; align-items: center; gap: 8px;
-          flex: none;
+        .mv-card-foot {
+          display: flex; align-items: center; justify-content: space-between;
+          gap: 8px; margin-top: 12px;
+          padding-top: 10px;
+          border-top: 1px solid var(--line);
         }
-        .mv-dur {
-          font-size: 11px; color: var(--ink-4);
-          white-space: nowrap;
-        }
-        .mv-badge {
+        .mv-estado {
           font-size: 8.5px; font-weight: 700;
           letter-spacing: 0.22em; text-transform: uppercase;
           color: var(--ink-3);
-          padding: 3px 8px;
+        }
+        .mv-card.is-publicado .mv-estado { color: var(--verde); }
+        .mv-tem-link { font-size: 10px; color: var(--gold); }
+
+        /* ── Painel do guião ── */
+        .mv-overlay {
+          position: fixed; inset: 0; z-index: 60;
+          background: rgba(8, 5, 3, 0.78);
+          backdrop-filter: blur(3px);
+          display: flex; align-items: flex-start; justify-content: center;
+          padding: clamp(16px, 5vh, 56px) 16px;
+          overflow-y: auto;
+          animation: mv-fade 0.2s ease;
+        }
+        @keyframes mv-fade { from { opacity: 0 } to { opacity: 1 } }
+
+        .mv-painel {
+          width: 100%; max-width: 760px;
+          border-radius: 14px;
+          border: 1px solid var(--gold-line);
+          background: linear-gradient(180deg, var(--surface), var(--surface-2));
+          padding: 26px clamp(20px, 4vw, 34px) 32px;
+          box-shadow: 0 40px 80px -30px rgba(0,0,0,0.8);
+          animation: mv-rise 0.25s cubic-bezier(0.2,0.85,0.25,1);
+        }
+        @keyframes mv-rise { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: none } }
+
+        .mv-painel-head {
+          display: flex; align-items: flex-start; justify-content: space-between;
+          gap: 16px;
+          padding-bottom: 18px;
+          border-bottom: 1px solid var(--line);
+        }
+        .mv-painel-mes {
+          font-size: 10px; font-weight: 700;
+          letter-spacing: 0.28em; text-transform: uppercase;
+          color: var(--gold);
+          margin: 0 0 8px;
+        }
+        .mv-painel-titulo {
+          font-family: 'Cormorant Garamond', serif;
+          font-weight: 400;
+          font-size: clamp(22px, 3.4vw, 30px);
+          line-height: 1.2;
+          color: var(--ink);
+          margin: 0;
+        }
+        .mv-fechar {
+          flex: none;
+          width: 32px; height: 32px;
           border-radius: 999px;
           border: 1px solid var(--line);
           background: rgba(255,255,255,0.02);
+          color: var(--ink-3);
+          font-size: 18px; line-height: 1;
+          cursor: pointer;
+          transition: 0.25s;
+        }
+        .mv-fechar:hover { color: var(--ink); border-color: var(--gold-line); }
+
+        /* Campos editáveis */
+        .mv-campos {
+          display: flex; align-items: flex-end; flex-wrap: wrap;
+          gap: 12px;
+          padding: 18px 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .mv-campo { display: flex; flex-direction: column; gap: 6px; }
+        .mv-campo--link { flex: 1; min-width: 220px; }
+        .mv-campo-label {
+          font-size: 9px; font-weight: 700;
+          letter-spacing: 0.26em; text-transform: uppercase;
+          color: var(--gold-deep);
+        }
+        .mv-select, .mv-input {
+          font-family: inherit;
+          font-size: 13px;
+          color: var(--ink);
+          background: rgba(255,255,255,0.03);
+          border: 1px solid var(--line);
+          border-radius: 8px;
+          padding: 9px 12px;
+          outline: none;
+          transition: border-color 0.25s, background 0.25s;
+        }
+        .mv-select { min-width: 150px; cursor: pointer; }
+        .mv-select option { background: var(--surface); color: var(--ink); }
+        .mv-input { width: 100%; }
+        .mv-input::placeholder { color: var(--ink-4); }
+        .mv-select:focus, .mv-input:focus {
+          border-color: var(--gold-line);
+          background: rgba(200,168,102,0.06);
+        }
+        .mv-abrir {
+          font-size: 11px; font-weight: 600;
+          letter-spacing: 0.2em; text-transform: uppercase;
+          color: var(--gold);
+          text-decoration: none;
+          padding: 9px 14px;
+          border-radius: 8px;
+          border: 1px solid var(--gold-faint);
+          background: rgba(200,168,102,0.06);
+          transition: 0.25s;
           white-space: nowrap;
         }
-        .mv-chev {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 24px; line-height: 1;
-          color: var(--ink-4);
-          flex: none;
-          transition: transform 0.3s cubic-bezier(0.2,0.85,0.25,1), color 0.3s;
+        .mv-abrir:hover { border-color: var(--gold); background: rgba(200,168,102,0.12); }
+        .mv-guardado {
+          font-size: 9px; font-weight: 700;
+          letter-spacing: 0.24em; text-transform: uppercase;
+          color: var(--verde);
+          opacity: 0;
+          transition: opacity 0.3s;
+          padding-bottom: 11px;
         }
-        .mv-card:hover .mv-chev { color: var(--gold); }
-        .mv-card[open] .mv-chev { transform: rotate(90deg); color: var(--gold); }
-
-        @media (max-width: 640px) {
-          .mv-sum { flex-wrap: wrap; gap: 12px; padding: 16px 18px; }
-          .mv-sum-body { flex: 1 1 100%; order: 2; }
-          .mv-meta { order: 3; }
-          .mv-chev { order: 4; margin-left: auto; }
-        }
-
-        /* ── Corpo do guião ── */
-        .mv-body {
-          padding: 4px 22px 24px 66px;
-          border-top: 1px solid var(--line);
-          margin-top: 2px;
-        }
-        @media (max-width: 640px) { .mv-body { padding: 4px 18px 22px; } }
+        .mv-guardado.is-on { opacity: 1; }
 
         .mv-pub {
-          margin: 16px 0 0;
+          margin: 18px 0 0;
           font-size: 12px; color: var(--ink-2);
         }
         .mv-pub-label {
@@ -286,7 +357,7 @@ export default function DozeMesesDozeVideosPage() {
           font-size: 9.5px; font-weight: 700;
           letter-spacing: 0.3em; text-transform: uppercase;
           color: var(--gold);
-          margin: 22px 0 10px;
+          margin: 24px 0 10px;
         }
         .mv-nota {
           margin: 0;
