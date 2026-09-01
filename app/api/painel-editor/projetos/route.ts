@@ -14,6 +14,29 @@ function parseMeta(mensagem: string): any {
   try { return JSON.parse(m[1]) } catch { return null }
 }
 
+// Separa a mensagem em META + texto legível, para poder reescrever só a META.
+function splitMeta(mensagem: string): { meta: any; resto: string } {
+  const raw = mensagem ?? ''
+  const m = raw.match(/^__META__(.*?)__\/META__/)
+  if (!m) return { meta: {}, resto: raw }
+  let meta: any = {}
+  try { meta = JSON.parse(m[1]) ?? {} } catch { meta = {} }
+  return { meta, resto: raw.slice(m[0].length) }
+}
+
+function joinMeta(meta: any, resto: string): string {
+  return `__META__${JSON.stringify(meta)}__/META__${resto}`
+}
+
+// Campos que o admin pode reescrever no projeto. Guardados em META.overrides e
+// aplicados por cima do que é derivado do envio original.
+const CAMPOS_EDITAVEIS = [
+  'referencia', 'noivos', 'local', 'foto', 'duracao', 'recebido',
+  'dataCasamento', 'entregaPrevista', 'preco', 'observacoes', 'notas',
+  'clientLink', 'finalLink', 'materialStatus', 'downloadStatus',
+  'ultimoDownload', 'approval', 'archived',
+] as const
+
 // GET: trabalhos reais enviados a um editor (tipo 'relatorio_editor').
 //   Para cada evento, junta os links de download e o(s) relatório(s) da equipa.
 export async function GET(req: NextRequest) {
@@ -43,6 +66,8 @@ export async function GET(req: NextRequest) {
       local: meta.local ?? null,
       data_casamento: meta.data_casamento ?? null,
       downloads: Array.isArray(meta.downloads) ? meta.downloads : [],
+      // Edições do admin (PATCH) — a página aplica-as por cima do derivado.
+      overrides: (meta.overrides && typeof meta.overrides === 'object') ? meta.overrides : null,
       lida: !!n.lida,
       sentAt: n.created_at,
     })
@@ -81,4 +106,56 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ jobs })
+}
+
+// PATCH { freelancer, notifId, patch } — grava as edições do admin em
+// META.overrides da notificação que originou o projeto. O envio original
+// (downloads, relatórios) fica intacto.
+export async function PATCH(req: NextRequest) {
+  const { freelancer, notifId, patch } = await req.json()
+  if (!freelancer || !notifId) return NextResponse.json({ error: 'freelancer e notifId obrigatórios' }, { status: 400 })
+  if (!patch || typeof patch !== 'object') return NextResponse.json({ error: 'patch obrigatório' }, { status: 400 })
+
+  const supabase = db()
+  const { data: row, error: readErr } = await supabase
+    .from('freelancer_notificacoes')
+    .select('id, mensagem')
+    .eq('id', notifId)
+    .eq('freelancer_id', freelancer)
+    .maybeSingle()
+  if (readErr) return NextResponse.json({ error: readErr.message }, { status: 500 })
+  if (!row) return NextResponse.json({ error: 'projeto não encontrado' }, { status: 404 })
+
+  const limpo: Record<string, any> = {}
+  for (const k of CAMPOS_EDITAVEIS) {
+    if (patch[k] !== undefined) limpo[k] = patch[k]
+  }
+  if (Object.keys(limpo).length === 0) return NextResponse.json({ ok: true, ignorado: true })
+
+  const { meta, resto } = splitMeta(row.mensagem)
+  meta.overrides = { ...(meta.overrides ?? {}), ...limpo }
+
+  const { error } = await supabase
+    .from('freelancer_notificacoes')
+    .update({ mensagem: joinMeta(meta, resto) })
+    .eq('id', row.id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true, overrides: meta.overrides })
+}
+
+// DELETE ?freelancer=<id>&notif=<id> — elimina o projeto do painel do editor,
+// apagando a notificação de envio que lhe deu origem.
+export async function DELETE(req: NextRequest) {
+  const freelancer = req.nextUrl.searchParams.get('freelancer')
+  const notifId = req.nextUrl.searchParams.get('notif')
+  if (!freelancer || !notifId) return NextResponse.json({ error: 'freelancer e notif obrigatórios' }, { status: 400 })
+
+  const supabase = db()
+  const { error } = await supabase
+    .from('freelancer_notificacoes')
+    .delete()
+    .eq('id', notifId)
+    .eq('freelancer_id', freelancer)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
 }

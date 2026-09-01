@@ -143,7 +143,7 @@ function toWfStage(s: WorkflowStage): string {
 function jobToProject(j: any, wf: Record<string, string>, idx: number): Project {
   const key = j.referencia || j.notifId || String(idx)
   const downloads: string[] = Array.isArray(j.downloads) ? j.downloads : []
-  return {
+  const base: Project = {
     id: key,
     referencia: j.referencia || undefined,
     noivos: j.noivos || j.local || 'Evento',
@@ -176,6 +176,9 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     rlDownloads: downloads,
     rlRelatorios: Array.isArray(j.relatorios) ? j.relatorios.filter(Boolean) : [],
   }
+  // Edições do admin (guardadas em META.overrides) mandam sobre o que é
+  // derivado do envio original.
+  return j.overrides ? { ...base, ...j.overrides } : base
 }
 
 /** Mapeia evento da API para EventReference — aceita TODOS os eventos com referência */
@@ -513,7 +516,7 @@ export default function NovosProjetosPage() {
         if (cancelled) return
         const jobs: any[] = Array.isArray(p?.jobs) ? p.jobs : []
         const wf: Record<string, string> = (w?.workflow && typeof w.workflow === 'object') ? w.workflow : {}
-        setProjects(jobs.map((j, i) => jobToProject(j, wf, i)))
+        setProjects(jobs.map((j, i) => jobToProject(j, wf, i)).filter(p => !(p as any).archived))
         // Brilho gold nos trabalhos ainda não lidos
         setUnseenIds(new Set(jobs.filter(j => !j.lida).map((j, i) => j.referencia || j.notifId || String(i))))
         setHydrated(true)
@@ -695,9 +698,30 @@ export default function NovosProjetosPage() {
         }),
       }).catch(() => {})
     }
+
+    // Em modo real: as restantes edições (Editar Dados, observações, links,
+    // arquivar) ficam guardadas na BD. Sem isto desapareciam no reload.
+    if (realMode && freelancerId) {
+      const proj = projects.find(p => p.id === id)
+      const { stage: _stage, ...campos } = patch as Record<string, any>
+      if (proj?.notifId && Object.keys(campos).length > 0) {
+        fetch('/api/painel-editor/projetos', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ freelancer: freelancerId, notifId: proj.notifId, patch: campos }),
+        }).catch(() => {})
+      }
+    }
   }
 
   function deleteProject(id: string) {
+    // Em modo real, apaga mesmo o envio na BD — senão o projeto voltava a
+    // aparecer no reload, porque é derivado da notificação de envio.
+    const alvo = projects.find(p => p.id === id)
+    if (realMode && freelancerId && alvo?.notifId) {
+      fetch(`/api/painel-editor/projetos?freelancer=${freelancerId}&notif=${alvo.notifId}`, { method: 'DELETE' })
+        .catch(() => {})
+    }
     setProjects(prev => prev.filter(p => p.id !== id))
     // Limpa também os outros estados relacionados
     setUnseenIds(prev => {
