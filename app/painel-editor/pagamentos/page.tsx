@@ -798,7 +798,7 @@ function Hero({ total, facturasPendentes, aguardamPagamento, onNovoRecebimento, 
             onClick={onNovoRecebimento}
             className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
             style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
-            <span className="text-lg leading-none">+</span> Novo Recebimento
+            <span className="text-lg leading-none">✓</span> Marcar Recebimento
           </button>
           <button
             type="button"

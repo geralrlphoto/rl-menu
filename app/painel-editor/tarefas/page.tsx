@@ -143,14 +143,26 @@ function projectFor(projectId: string) {
   return getProjectsLookup().find(p => p.id === projectId)
 }
 
+function todayPtT(): string {
+  const d = new Date()
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+}
+
+// "Hoje" — nos mocks é a data fixa TODAY; com editor real passa a ser o dia
+// de hoje, senão prazos e atrasos ficavam presos a 23/05/2026.
+let _hoje = TODAY
+function hojeStr() { return _hoje }
+function setHoje(v: string) { _hoje = v }
+
 function isOverdue(t: Task) {
-  return t.status !== 'Concluída' && t.status !== 'Cancelada' && comparePtDate(t.deadline, TODAY) < 0
+  return t.status !== 'Concluída' && t.status !== 'Cancelada' && !!t.deadline && comparePtDate(t.deadline, hojeStr()) < 0
 }
 
 function deadlineLabel(date: string): string {
-  if (date === TODAY) return 'Hoje'
+  if (!date) return 'Sem prazo'
+  if (date === hojeStr()) return 'Hoje'
   const [d,m,y] = date.split('/').map(Number)
-  const [td,tm,ty] = TODAY.split('/').map(Number)
+  const [td,tm,ty] = hojeStr().split('/').map(Number)
   const target = new Date(y, m-1, d).getTime()
   const today = new Date(ty, tm-1, td).getTime()
   const diff = Math.round((target - today) / 86400000)
@@ -160,6 +172,70 @@ function deadlineLabel(date: string): string {
   if (diff < 0 && diff > -8) return `${Math.abs(diff)} dias atrás`
   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
   return `${String(d).padStart(2,'0')} ${meses[m-1]}`
+}
+
+// ── Tarefas reais atribuídas ao editor ──────────────────────────────────
+// Vivem em freelancer_notificacoes (tipo nova_tarefa_atribuida), criadas na
+// ficha do freelancer. O estado/eliminação ficam em META.overrides da própria
+// linha, para sobreviverem ao reload.
+const MESES_ABR = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+
+function ptLongoParaPt(txt: string): string {
+  const m = (txt || '').toLowerCase().match(/(\d{1,2})\s+de\s+([a-zç.]+)\s+de\s+(\d{4})/)
+  if (!m) return ''
+  const idx = MESES_ABR.findIndex(x => m[2].startsWith(x))
+  if (idx < 0) return ''
+  return `${m[1].padStart(2,'0')}/${String(idx+1).padStart(2,'0')}/${m[3]}`
+}
+
+function separaMeta(mensagem: string): { meta: any; resto: string } {
+  const raw = mensagem ?? ''
+  const m = raw.match(/^__META__(.*?)__\/META__/)
+  if (!m) return { meta: {}, resto: raw }
+  let meta: any = {}
+  try { meta = JSON.parse(m[1]) ?? {} } catch { meta = {} }
+  return { meta, resto: raw.slice(m[0].length) }
+}
+
+function notifParaTarefa(n: any): Task | null {
+  const { meta, resto } = separaMeta(String(n.mensagem ?? ''))
+  const ov = (meta.overrides && typeof meta.overrides === 'object') ? meta.overrides : {}
+  if (ov.eliminada) return null
+
+  const linhas = resto.split('\n').map((l: string) => l.trim()).filter(Boolean)
+  const valorDe = (prefixo: string) => {
+    const l = linhas.find((x: string) => x.startsWith(prefixo))
+    return l ? l.slice(prefixo.length).trim() : ''
+  }
+  const prioridade = valorDe('Prioridade:')
+  const descricao = linhas
+    .filter((l: string) => !/^(Prioridade|Prazo|Enviada por):/.test(l))
+    .filter((l: string) => l !== 'Esta tarefa precisa da tua resposta.')
+    .join('\n')
+
+  return {
+    id: n.id,
+    title: String(n.titulo ?? '').replace(/^✈\s*Nova tarefa de .*?—\s*/, '').trim() || 'Tarefa',
+    description: descricao || undefined,
+    projectId: '',
+    assignee: valorDe('Enviada por:') || meta.senderName || 'RL Photo.Video',
+    deadline: ov.deadline || ptLongoParaPt(valorDe('Prazo:')),
+    priority: (['Alta','Média','Baixa'].includes(prioridade) ? prioridade : 'Média') as Priority,
+    status: (ov.status ?? (n.lida ? 'Em andamento' : 'Pendente')) as TaskStatus,
+    progress: ov.status === 'Concluída' ? 100 : 0,
+    completedAt: ov.completedAt,
+    resultado: ov.resultado,
+  }
+}
+
+// Grava overrides na META da notificação (estado, resultado, eliminação).
+async function gravarOverrideTarefa(id: string, mensagemAtual: string, patch: Record<string, any>) {
+  const { meta, resto } = separaMeta(mensagemAtual)
+  meta.overrides = { ...(meta.overrides ?? {}), ...patch }
+  await fetch('/api/freelancer-notificacoes', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id, mensagem: `__META__${JSON.stringify(meta)}__/META__${resto}` }),
+  })
 }
 
 const USER_TASKS_STORAGE_KEY = 'painel-editor-user-tasks'
@@ -174,9 +250,36 @@ export default function TarefasPage() {
   const [showCompleted, setShowCompleted] = useState(false)
   const [showNewTaskModal, setShowNewTaskModal] = useState(false)
   const [completingTask, setCompletingTask] = useState<Task | null>(null)   // task que está prestes a ser marcada como Concluída
+  // Modo real: há editor identificado. As tarefas passam a ser as que lhe
+  // foram atribuídas na ficha, em vez das de maquete.
+  const [modo, setModo] = useState<'a-resolver' | 'real' | 'maquete'>('a-resolver')
+  // mensagem original de cada tarefa real, para o PATCH da META não a perder
+  const [rawPorId, setRawPorId] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    const id = getEditorId()
+    if (!id) { setModo('maquete'); return }
+    setHoje(todayPtT())
+    setModo('real')
+    let cancelled = false
+    fetch(`/api/freelancer-notificacoes?freelancer_id=${id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return
+        const lista: any[] = Array.isArray(d?.notificacoes) ? d.notificacoes : []
+        const tarefas = lista.filter(n => n.tipo === 'nova_tarefa_atribuida')
+        setRawPorId(Object.fromEntries(tarefas.map(n => [n.id, String(n.mensagem ?? '')])))
+        setTasks(tarefas.map(notifParaTarefa).filter(Boolean) as Task[])
+        setProjectsLookup([])
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   // ── Sincroniza com user-projects (localStorage) ─────────────────────
+  //    Só em modo maquete: com editor real, a fonte é a BD.
   useEffect(() => {
+    if (getEditorId()) return
     function load() {
       try {
         const raw = localStorage.getItem('painel-editor-user-projects')
@@ -226,14 +329,47 @@ export default function TarefasPage() {
     return () => window.removeEventListener('focus', onFocus)
   }, [])
 
-  // Persistir tarefas criadas manualmente sempre que mudam
+  // Persistir tarefas criadas manualmente sempre que mudam (só maquete)
   useEffect(() => {
+    if (modo === 'real') return
     try {
       localStorage.setItem(USER_TASKS_STORAGE_KEY, JSON.stringify(userTasks))
     } catch {}
-  }, [userTasks])
+  }, [userTasks, modo])
 
   function addTask(newTask: Task) {
+    // Modo real: a tarefa vai para a BD como tarefa atribuída ao próprio
+    // editor, com o mesmo formato das que a ficha do admin envia. Sem isto
+    // desaparecia no reload.
+    const id = getEditorId()
+    if (modo === 'real' && id) {
+      const prazoLabel = newTask.deadline
+        ? (() => { const [d, m, y] = newTask.deadline.split('/'); return `${d} de ${MESES_ABR[Number(m) - 1]}. de ${y}` })()
+        : null
+      const mensagem = [
+        `__META__${JSON.stringify({ criadaNoPainel: true })}__/META__`,
+        newTask.description?.trim() || null,
+        `Prioridade: ${newTask.priority}`,
+        prazoLabel ? `Prazo: ${prazoLabel}` : null,
+      ].filter(Boolean).join('\n')
+      fetch('/api/freelancer-notificacoes', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          freelancer_id: id, titulo: newTask.title,
+          mensagem, tipo: 'nova_tarefa_atribuida', lida: true,
+        }),
+      })
+        .then(r => r.json())
+        .then(d => {
+          const nova = d?.notificacao
+          if (!nova?.id) return
+          setRawPorId(prev => ({ ...prev, [nova.id]: String(nova.mensagem ?? '') }))
+          setTasks(prev => prev.map(t => (t.id === newTask.id ? { ...t, id: nova.id } : t)))
+        })
+        .catch(() => {})
+      setTasks(prev => [newTask, ...prev])
+      return
+    }
     setUserTasks(prev => [newTask, ...prev])
     setTasks(prev => [newTask, ...prev])
     // Marca tarefa como "não vista" para brilhar no widget do dashboard até ser aberta
@@ -246,6 +382,11 @@ export default function TarefasPage() {
   }
 
   function deleteTask(id: string) {
+    // Modo real: marca como eliminada na própria tarefa (não apaga a linha, que
+    // a ficha do admin também lê).
+    if (modo === 'real' && rawPorId[id] !== undefined) {
+      gravarOverrideTarefa(id, rawPorId[id], { eliminada: true }).catch(() => {})
+    }
     // Remove da lista visível e de userTasks (caso seja user-criada)
     setTasks(prev => prev.filter(t => t.id !== id))
     setUserTasks(prev => prev.filter(t => t.id !== id))
@@ -272,7 +413,7 @@ export default function TarefasPage() {
   }, [tasks, filter, search])
 
   // Agrupar
-  const hoje      = filtered.filter(t => t.deadline === TODAY && (showCompleted || t.status !== 'Concluída'))
+  const hoje      = filtered.filter(t => t.deadline === hojeStr() && (showCompleted || t.status !== 'Concluída'))
   const proximas  = filtered.filter(t => t.deadline !== TODAY && comparePtDate(t.deadline, TODAY) > 0 && t.status !== 'Concluída')
                             .sort((a, b) => comparePtDate(a.deadline, b.deadline))
   const atrasadas = filtered.filter(t => isOverdue(t) && t.deadline !== TODAY)
@@ -325,15 +466,20 @@ export default function TarefasPage() {
   function completeTaskWithResultado(id: string, resultado: string) {
     const now = new Date()
     const tm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`
+    const completedAt = `${hojeStr()} — ${tm}`
     const update = (t: Task): Task =>
-      t.id !== id ? t : { ...t, status: 'Concluída', progress: 100, completedAt: `${TODAY} — ${tm}`, resultado: resultado.trim() }
+      t.id !== id ? t : { ...t, status: 'Concluída', progress: 100, completedAt, resultado: resultado.trim() }
     setTasks(prev => prev.map(update))
     setUserTasks(prev => prev.map(update))
     setCompletingTask(null)
+    // Modo real: fica gravado na própria tarefa, senão voltava a Pendente.
+    if (modo === 'real' && rawPorId[id] !== undefined) {
+      gravarOverrideTarefa(id, rawPorId[id], { status: 'Concluída', completedAt, resultado: resultado.trim() }).catch(() => {})
+    }
   }
 
-  // Calendário — hoje derivado da constante TODAY
-  const [_td, _tm, _ty] = TODAY.split('/').map(Number)
+  // Calendário — hoje real em modo real, TODAY fixo na maquete
+  const [_td, _tm, _ty] = hojeStr().split('/').map(Number)
   const calToday = new Date(_ty, _tm - 1, _td)
   const [calView, setCalView] = useState({ y: _ty, m: _tm - 1 })
   const firstDay = new Date(calView.y, calView.m, 1).getDay()
@@ -342,7 +488,7 @@ export default function TarefasPage() {
 
   // Sincronizado com /calendario: marca dias com TAREFAS + EVENTOS DE PROJETOS
   // (Casamento, Material Recebido, Início Edição, Revisão V1/V2, Entrega Trailer/Final, Pagamento)
-  const baseEvents = useMemo(() => eventsFromProjects(), [])
+  const baseEvents = useMemo(() => (modo === 'real' ? [] : eventsFromProjects()), [modo])
   const userProjectEvents = useMemo(() => {
     if (typeof window === 'undefined') return [] as { date: string }[]
     try {
