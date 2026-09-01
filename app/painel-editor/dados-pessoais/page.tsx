@@ -60,9 +60,11 @@ export default function DadosPessoaisPage() {
         const base = d?.base ?? {}
         const merged: FreelancerProfile = {
           ...DEFAULT_FREELANCER_PROFILE, ...local, ...fromDb,
-          nome:  fromDb.nome  || base.nome     || local.nome,
-          email: fromDb.email || base.email    || local.email,
-          foto:  fromDb.foto  || base.foto_url || local.foto,
+          // Identidade: a tabela freelancers manda — é o que a ficha admin edita.
+          nome:  base.nome     || fromDb.nome  || local.nome,
+          email: base.email    || fromDb.email || local.email,
+          telefone: base.contato || fromDb.telefone || local.telefone,
+          foto:  base.foto_url || fromDb.foto  || local.foto,
         }
         setProfile(merged)
         saveFreelancerProfile(merged)
@@ -85,22 +87,36 @@ export default function DadosPessoaisPage() {
     }, 800)
   }
 
+  // Identidade (nome, email, telefone, foto) vive na tabela freelancers — é a
+  // fonte que o dashboard, a ficha admin e o /freelancer-view lêem. Acumula os
+  // campos pendentes para o debounce não perder o que se escreveu antes.
+  const idSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const idPending = useRef<Record<string, string>>({})
+  function persistIdentityToDb(patch: Partial<FreelancerProfile>) {
+    const id = getEditorId()
+    if (!id) return
+    if (patch.nome !== undefined) idPending.current.nome = patch.nome
+    if (patch.email !== undefined) idPending.current.email = patch.email
+    if (patch.telefone !== undefined) idPending.current.contato = patch.telefone
+    if (patch.foto && /^https?:\/\//.test(patch.foto)) idPending.current.foto_url = patch.foto
+    if (Object.keys(idPending.current).length === 0) return
+    if (idSaveTimer.current) clearTimeout(idSaveTimer.current)
+    idSaveTimer.current = setTimeout(() => {
+      const fields = idPending.current
+      idPending.current = {}
+      fetch('/api/freelancers', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...fields }),
+      }).catch(() => {})
+    }, 800)
+  }
+
   function updateProfile(patch: Partial<FreelancerProfile>) {
     const next = { ...profile, ...patch }
     setProfile(next)
     saveFreelancerProfile(next)
     persistToDb(next)
-    // A foto também vai para freelancers.foto_url — é o campo que o dashboard,
-    // a ficha admin e o /freelancer-view lêem. Só URLs (nunca base64).
-    if (patch.foto && /^https?:\/\//.test(patch.foto)) {
-      const id = getEditorId()
-      if (id) {
-        fetch('/api/freelancers', {
-          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, foto_url: patch.foto }),
-        }).catch(() => {})
-      }
-    }
+    persistIdentityToDb(patch)
   }
 
   // Stats agregados (Resumo da Atividade) — sincronizados com localStorage + mocks

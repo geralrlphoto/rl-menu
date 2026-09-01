@@ -6782,6 +6782,61 @@ const DEFAULT_DP_EXT: DadosPessoaisExt = {
   payMoeda: 'EUR (€)',
 }
 
+// ── Ponte ficha admin ↔ painel do freelancer ────────────────────────
+// Os dois editam os MESMOS dados (freelancers.perfil_editor); só os nomes dos
+// campos diferem. Sem esta ponte, o que o admin escrevia ficava no localStorage
+// da máquina dele e nunca chegava ao painel da pessoa.
+function extFromPerfil(p: Record<string, any>): Partial<DadosPessoaisExt> {
+  const out: Record<string, any> = {}
+  const put = (k: string, v: any) => { if (v !== undefined && v !== null) out[k] = v }
+  put('username', p.username)
+  put('dataNascimento', p.dataNascimento)
+  put('localizacao', p.localizacao)
+  put('fusoHorario', p.fusoHorario)
+  put('idioma', p.idioma)
+  put('sobreMim', p.sobre)
+  put('experiencia', p.experiencia)
+  put('projetosRealizados', p.projetosRealizados)
+  put('estilo', p.estilo)
+  if (Array.isArray(p.skills)) put('skills', p.skills)
+  put('prefDias', p.diasTrabalho)
+  put('prefHorario', p.horarioPreferencial)
+  put('prefComunicacao', p.comunicacao)
+  if (typeof p.notificacoesAtivas === 'boolean') put('prefNotificacoes', p.notificacoesAtivas ? 'Ativas' : 'Desativadas')
+  if (typeof p.disponivelNovosProjetos === 'boolean') put('prefDisponibilidade', p.disponivelNovosProjetos ? 'Disponível para novos projetos' : 'Indisponível')
+  put('payMetodo', p.metodoPagamento)
+  put('payIban', p.iban)
+  put('payTitular', p.titularConta)
+  put('payNif', p.nif)
+  put('payMoeda', p.moeda)
+  return out as Partial<DadosPessoaisExt>
+}
+
+function perfilFromExt(e: DadosPessoaisExt): Record<string, any> {
+  return {
+    username: e.username ?? '',
+    dataNascimento: e.dataNascimento ?? '',
+    localizacao: e.localizacao ?? '',
+    fusoHorario: e.fusoHorario ?? '',
+    idioma: e.idioma ?? '',
+    sobre: e.sobreMim ?? '',
+    experiencia: e.experiencia ?? '',
+    projetosRealizados: e.projetosRealizados ?? '',
+    estilo: e.estilo ?? '',
+    skills: e.skills ?? [],
+    diasTrabalho: e.prefDias ?? '',
+    horarioPreferencial: e.prefHorario ?? '',
+    comunicacao: e.prefComunicacao ?? '',
+    notificacoesAtivas: !/desativ|inativ|não|nao/i.test(e.prefNotificacoes ?? ''),
+    disponivelNovosProjetos: !/indispon|não|nao/i.test(e.prefDisponibilidade ?? ''),
+    metodoPagamento: e.payMetodo ?? '',
+    iban: e.payIban ?? '',
+    titularConta: e.payTitular ?? '',
+    nif: e.payNif ?? '',
+    moeda: e.payMoeda ?? '',
+  }
+}
+
 function DadosPessoaisTab(props: {
   freelancerId: string
   freelancer: Freelancer | null
@@ -6811,23 +6866,62 @@ function DadosPessoaisTab(props: {
   const editingThis = editForm !== null
   const KEY_EXT = `freelancer_${freelancerId}_profile_ext`
   const [ext, setExt] = useState<DadosPessoaisExt>(DEFAULT_DP_EXT)
-  const [loaded, setLoaded] = useState(false)
-  const [editingSection, setEditingSection] = useState<null | 'sobre' | 'skills' | 'pref' | 'pay'>(null)
+  const [extStatus, setExtStatus] = useState<'idle'|'saving'|'saved'>('idle')
+  const [editingSection, setEditingSection] = useState<null | 'conta' | 'sobre' | 'skills' | 'pref' | 'pay'>(null)
+  // perfil_editor tal como está na BD — guardado para o PATCH não apagar os
+  // campos que só o painel do freelancer usa (foto, função, etc.).
+  const perfilRaw = useRef<Record<string, any>>({})
 
-  // Load extended profile
+  // Carrega o perfil da BD (freelancers.perfil_editor) — a mesma fonte que o
+  // painel da pessoa lê. Se ainda não houver nada lá, migra o que estiver no
+  // localStorage desta máquina, onde estes campos viviam antes.
   useEffect(() => {
+    let cancelled = false
+    let localExt: DadosPessoaisExt | null = null
     try {
       const raw = localStorage.getItem(KEY_EXT)
-      if (raw) setExt({ ...DEFAULT_DP_EXT, ...JSON.parse(raw) })
+      if (raw) localExt = { ...DEFAULT_DP_EXT, ...JSON.parse(raw) }
     } catch {}
-    setLoaded(true)
-  }, [KEY_EXT])
-  useEffect(() => {
-    if (!loaded) return
-    try { localStorage.setItem(KEY_EXT, JSON.stringify(ext)) } catch {}
-  }, [ext, KEY_EXT, loaded])
+    fetch(`/api/painel-editor/perfil?freelancer=${freelancerId}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return
+        const perfil = (d?.perfil && typeof d.perfil === 'object') ? d.perfil : {}
+        perfilRaw.current = perfil
+        if (Object.keys(perfil).length > 0) {
+          setExt({ ...DEFAULT_DP_EXT, ...extFromPerfil(perfil) })
+        } else if (localExt) {
+          setExt(localExt)
+          saveExt(localExt)   // migração do localStorage para a BD
+        }
+      })
+      .catch(() => { if (!cancelled && localExt) setExt(localExt) })
+    return () => { cancelled = true }
+  }, [freelancerId, KEY_EXT])   // eslint-disable-line react-hooks/exhaustive-deps
 
-  function updateExt(patch: Partial<DadosPessoaisExt>) { setExt(prev => ({ ...prev, ...patch })) }
+  // Grava na BD (debounced). Faz merge com o perfil que lá está para não
+  // apagar os campos que a ficha admin não mostra.
+  const extSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  function saveExt(next: DadosPessoaisExt) {
+    setExtStatus('saving')
+    if (extSaveTimer.current) clearTimeout(extSaveTimer.current)
+    extSaveTimer.current = setTimeout(() => {
+      const perfil = { ...perfilRaw.current, ...perfilFromExt(next) }
+      perfilRaw.current = perfil
+      fetch('/api/painel-editor/perfil', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer: freelancerId, perfil }),
+      })
+        .then(() => { setExtStatus('saved'); setTimeout(() => setExtStatus('idle'), 2000) })
+        .catch(() => setExtStatus('idle'))
+    }, 800)
+  }
+
+  function updateExt(patch: Partial<DadosPessoaisExt>) {
+    const next = { ...ext, ...patch }
+    setExt(next)
+    saveExt(next)
+  }
 
   // Stats
   const projetosEmEdicao = edicao.filter(e => e.status !== 'CONCLUÍDO').length
@@ -6866,6 +6960,11 @@ function DadosPessoaisTab(props: {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            {extStatus !== 'idle' && (
+              <span className={`text-[10px] tracking-[0.3em] uppercase font-bold ${extStatus === 'saving' ? 'text-white/45' : 'text-emerald-300'}`}>
+                {extStatus === 'saving' ? 'A guardar…' : '✓ Guardado'}
+              </span>
+            )}
             {!editingThis ? (
               <button onClick={() => setEditForm({ nome: freelancer.nome, status: freelancer.status ?? '', contato: freelancer.contato ?? '', email: freelancer.email ?? '', nome_sos: freelancer.nome_sos ?? '', contato_sos: freelancer.contato_sos ?? '' })}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gold text-black text-[12px] font-bold tracking-wider hover:bg-gold/90 transition-all"
@@ -6957,17 +7056,19 @@ function DadosPessoaisTab(props: {
         </Card>
 
         {/* Informações da Conta */}
-        <Card title="Informações da Conta">
+        <Card title="Informações da Conta" rightAction={
+          <EditarChip active={editingSection === 'conta'} onClick={() => setEditingSection(editingSection === 'conta' ? null : 'conta')} />
+        }>
           <div className="space-y-3.5">
             <Row label="Nome Completo" value={editingThis && editForm ? <InpRight value={editForm.nome ?? ''} onChange={v => setEditForm({ ...editForm, nome: v })} /> : freelancer.nome} />
-            <Row label="Nome de Usuário" value={editingSection === 'pref' ? <InpRight value={ext.username ?? ''} onChange={v => updateExt({ username: v })} /> : (ext.username ?? '—')} />
+            <Row label="Nome de Usuário" value={editingSection === 'conta' ? <InpRight value={ext.username ?? ''} onChange={v => updateExt({ username: v })} /> : (ext.username ?? '—')} />
             <Row label="Email" value={editingThis && editForm ? <InpRight type="email" value={editForm.email ?? ''} onChange={v => setEditForm({ ...editForm, email: v })} /> : (freelancer.email || '—')} />
             <Row label="Telefone" value={editingThis && editForm ? <InpRight type="tel" value={editForm.contato ?? ''} onChange={v => setEditForm({ ...editForm, contato: v })} /> : (freelancer.contato || '—')} />
             <Row label="Palavra-chave ou Senha" value={<PalavraChaveCell password={freelancer.password} />} />
-            <Row label="Data de Nascimento" value={editingSection === 'pref' ? <InpRight type="date" value={ext.dataNascimento ?? ''} onChange={v => updateExt({ dataNascimento: v })} /> : (ext.dataNascimento ? new Date(ext.dataNascimento).toLocaleDateString('pt-PT') : '—')} />
-            <Row label="Localização" value={editingSection === 'pref' ? <InpRight value={ext.localizacao ?? ''} onChange={v => updateExt({ localizacao: v })} /> : (ext.localizacao ?? '—')} />
-            <Row label="Fuso Horário" value={ext.fusoHorario ?? '—'} />
-            <Row label="Idioma" value={ext.idioma ?? '—'} last />
+            <Row label="Data de Nascimento" value={editingSection === 'conta' ? <InpRight type="date" value={ext.dataNascimento ?? ''} onChange={v => updateExt({ dataNascimento: v })} /> : (ext.dataNascimento ? new Date(ext.dataNascimento).toLocaleDateString('pt-PT') : '—')} />
+            <Row label="Localização" value={editingSection === 'conta' ? <InpRight value={ext.localizacao ?? ''} onChange={v => updateExt({ localizacao: v })} /> : (ext.localizacao ?? '—')} />
+            <Row label="Fuso Horário" value={editingSection === 'conta' ? <InpRight value={ext.fusoHorario ?? ''} onChange={v => updateExt({ fusoHorario: v })} /> : (ext.fusoHorario ?? '—')} />
+            <Row label="Idioma" value={editingSection === 'conta' ? <InpRight value={ext.idioma ?? ''} onChange={v => updateExt({ idioma: v })} /> : (ext.idioma ?? '—')} last />
           </div>
         </Card>
 
