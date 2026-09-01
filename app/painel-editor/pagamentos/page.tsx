@@ -6,59 +6,6 @@ import { PROJECTS, paymentPlanFor, comparePtDate, TODAY, type Project, type Inst
 import { BrandLogo } from '../_components/BrandLogo'
 import { getEditorId } from '../_data/freelancer-profile'
 
-// ── Pagamentos reais da RL ao editor (tabela freelancer_pagamentos) ──────────
-function PagamentosRLSection() {
-  const [rows, setRows] = useState<any[]>([])
-  const [loaded, setLoaded] = useState(false)
-
-  useEffect(() => {
-    const id = getEditorId()
-    if (!id) { setLoaded(true); return }
-    let cancelled = false
-    fetch(`/api/freelancer-pagamentos?freelancer_id=${id}`)
-      .then(r => r.json())
-      .then(d => { if (!cancelled) { setRows(Array.isArray(d?.pagamentos) ? d.pagamentos : []); setLoaded(true) } })
-      .catch(() => { if (!cancelled) setLoaded(true) })
-    return () => { cancelled = true }
-  }, [])
-
-  if (!loaded || rows.length === 0) return null
-
-  const eur = (v: any) => (typeof v === 'number' ? v : Number(v) || 0).toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' })
-  const fmt = (d: string | null) => d ? new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'
-  const isPago = (s: string) => (s ?? '').toUpperCase() === 'PAGO'
-  const totalReceber = rows.filter(r => !isPago(r.status)).reduce((s, r) => s + (Number(r.valor) || 0), 0)
-
-  return (
-    <div className="rounded-2xl border border-gold/25 p-5 mb-6"
-      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        <div className="flex items-center gap-2">
-          <span className="text-gold text-lg">€</span>
-          <h3 className="text-[15px] font-semibold text-white">Pagamentos da RL</h3>
-          <span className="text-[10px] text-white/35 tracking-widest uppercase">{rows.length}</span>
-        </div>
-        {totalReceber > 0 && <span className="text-[12px] text-gold/90">A receber: <strong>{eur(totalReceber)}</strong></span>}
-      </div>
-      <div className="flex flex-col gap-1.5">
-        {rows.map((r, i) => (
-          <div key={r.id ?? i} className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border border-white/[0.06] bg-white/[0.02] flex-wrap">
-            <div className="min-w-0">
-              <p className="text-[13px] text-white/90 truncate">{r.descricao || 'Pagamento'}</p>
-              <p className="text-[10px] text-white/40">Previsto: {fmt(r.data_prevista)}{r.data_pago ? ` · Pago: ${fmt(r.data_pago)}` : ''}</p>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <span className="text-[14px] text-white font-medium tabular-nums">{eur(r.valor)}</span>
-              <span className={`text-[9px] px-2 py-1 rounded-full tracking-widest uppercase font-bold ${isPago(r.status) ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/10 text-amber-300 border border-amber-500/25'}`}>
-                {isPago(r.status) ? 'Pago' : (r.status || 'Pendente')}
-              </span>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 /** Limpa horário "DD/MM/YYYY — HH:MM" → "DD/MM/YYYY" */
 function stripTime(d: string): string {
@@ -157,15 +104,96 @@ function todayPt() {
   return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
 }
 
+// ── Pagamentos reais → linhas da tabela ─────────────────────────────────
+// Cada linha de freelancer_pagamentos vira um "projeto" com uma única parcela,
+// para a tabela, os KPIs e o gráfico funcionarem sobre dados verdadeiros em vez
+// do plano de parcelas inventado pelos mocks.
+function isoToPtPag(iso: string | null | undefined): string {
+  if (!iso) return ''
+  const d = new Date(String(iso).length <= 10 ? String(iso) + 'T00:00:00' : String(iso))
+  if (isNaN(d.getTime())) return ''
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+}
+
+function statusRealPara(pag: any, hoje: string): Installment['status'] {
+  const st = String(pag.status ?? '').toUpperCase()
+  if (st === 'PAGO') return 'Recebido'
+  if (st === 'CANCELADO') return 'Cancelado'
+  const prevista = isoToPtPag(pag.data_prevista)
+  if (prevista && comparePtDate(prevista, hoje) < 0) return 'Atrasado'
+  return 'A receber'
+}
+
+function pagamentoParaRow(pag: any, hoje: string): Row {
+  const valor = Number(pag.valor) || 0
+  const descricao = pag.descricao || 'Pagamento'
+  const project: Project = {
+    id: pag.id,
+    noivos: descricao,
+    foto: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
+    email: '',
+    telefone: '',
+    recebido: isoToPtPag(pag.created_at),
+    dataCasamento: '',
+    entregaPrevista: '',
+    pacote: 'Pacote Premium 👑',
+    preco: valor,
+    duracao: '',
+    stage: 'Novo Projeto',
+    approval: 'Aguardando Revisão',
+    progress: 0,
+    editor: '',
+    finalEntregue: false,
+    finalLink: '',
+  }
+  const inst: Installment = {
+    key: 'entrega',
+    label: descricao,
+    percent: 100,
+    value: valor,
+    dueDate: isoToPtPag(pag.data_prevista),
+    paidDate: isoToPtPag(pag.data_pago) || null,
+    status: statusRealPara(pag, hoje),
+  }
+  return { project, inst, idx: 0, totalParcels: 1 }
+}
+
 export default function PagamentosPage() {
   const [filter, setFilter] = useState<FilterTab>('Todos')
   const [search, setSearch] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>('p1')
   const [allProjects, setAllProjects] = useState<Project[]>(PROJECTS)
   const [paymentOverrides, setPaymentOverrides] = useState<Record<string, PaymentOverride>>({})
+  // Modo real: há editor identificado. A tabela passa a ser a de
+  // freelancer_pagamentos em vez do plano de parcelas gerado sobre os mocks.
+  const [modo, setModo] = useState<'a-resolver' | 'real' | 'maquete'>('a-resolver')
+  const [realRows, setRealRows] = useState<Row[]>([])
+  // Em modo real a referência de "hoje" é o dia de hoje; o TODAY dos mocks é
+  // uma data fixa (23/05/2026) e daria KPIs errados sobre dados verdadeiros.
+  const hojeRef = modo === 'real' ? todayPt() : TODAY
 
-  // ── Carregar payment overrides do localStorage ──
   useEffect(() => {
+    const id = getEditorId()
+    if (!id) { setModo('maquete'); return }
+    setModo('real')
+    let cancelled = false
+    fetch(`/api/freelancer-pagamentos?freelancer_id=${id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return
+        const pags: any[] = Array.isArray(d?.pagamentos) ? d.pagamentos : []
+        const hoje = todayPt()
+        const rows = pags.map(pag => pagamentoParaRow(pag, hoje))
+        setRealRows(rows)
+        if (rows.length > 0) setSelectedId(rows[0].project.id)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
+  // ── Carregar payment overrides do localStorage (só maquete) ──
+  useEffect(() => {
+    if (getEditorId()) return
     try {
       const raw = localStorage.getItem(PAYMENT_STORAGE_KEY)
       if (raw) setPaymentOverrides(JSON.parse(raw))
@@ -173,6 +201,20 @@ export default function PagamentosPage() {
   }, [])
 
   function setPaymentStatus(projectId: string, status: 'A receber' | 'Recebido', metodo?: PaymentMethod) {
+    // Modo real: grava na BD (freelancer_pagamentos) em vez do localStorage.
+    if (modo === 'real') {
+      const pago = status === 'Recebido'
+      const hoje = todayPt()
+      setRealRows(prev => prev.map(r => r.project.id === projectId
+        ? { ...r, inst: { ...r.inst, status: pago ? 'Recebido' : 'A receber', paidDate: pago ? hoje : null, metodo } }
+        : r))
+      const isoHoje = new Date().toISOString().split('T')[0]
+      fetch('/api/freelancer-pagamentos', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: projectId, status: pago ? 'PAGO' : 'PENDENTE', data_pago: pago ? isoHoje : null }),
+      }).catch(() => {})
+      return
+    }
     setPaymentOverrides(prev => {
       const next = { ...prev }
       if (status === 'A receber') {
@@ -186,7 +228,9 @@ export default function PagamentosPage() {
   }
 
   // ── Sincroniza com user-projects (localStorage) + patches sobre mocks ──
+  //    Só em modo maquete: com editor real, a fonte é a BD.
   useEffect(() => {
+    if (getEditorId()) return
     function load() {
       try {
         const userRaw = localStorage.getItem('painel-editor-user-projects')
@@ -216,6 +260,10 @@ export default function PagamentosPage() {
 
   // Construir todas as rows (uma por installment) — aplica overrides do user
   const allRows: Row[] = useMemo(() => {
+    // Enquanto não se sabe se há editor, não mostra nada — evita um piscar de
+    // pagamentos de maquete a quem tem pagamentos reais.
+    if (modo === 'a-resolver') return []
+    if (modo === 'real') return realRows
     const rows: Row[] = []
     allProjects.forEach(p => {
       const plan = paymentPlanFor(p)
@@ -234,7 +282,7 @@ export default function PagamentosPage() {
       })
     })
     return rows
-  }, [allProjects, paymentOverrides])
+  }, [modo, realRows, allProjects, paymentOverrides])
 
   const filteredRows = useMemo(() => {
     let arr = allRows
@@ -252,8 +300,8 @@ export default function PagamentosPage() {
 
   // KPIs
   const kpis = useMemo(() => {
-    const month = TODAY.split('/')[1]
-    const year  = TODAY.split('/')[2]
+    const month = hojeRef.split('/')[1]
+    const year  = hojeRef.split('/')[2]
     const recebidosMes = allRows
       .filter(r => r.inst.status === 'Recebido' && r.inst.paidDate)
       .filter(r => (r.inst.paidDate ?? '').split('/')[1] === month && (r.inst.paidDate ?? '').split('/')[2] === year)
@@ -268,7 +316,7 @@ export default function PagamentosPage() {
     const aguardamPagamento = allRows.filter(r => r.inst.key === 'entrega' && r.project.approval === 'Aprovado Cliente' && r.inst.status !== 'Recebido').length
 
     return { recebidosMes, aReceber, atrasados, totalAnual, facturasPendentes, aguardamPagamento }
-  }, [allRows])
+  }, [allRows, hojeRef])
 
   // Próximos pagamentos (right panel)
   const upcoming = useMemo(() => allRows
@@ -278,8 +326,8 @@ export default function PagamentosPage() {
   , [allRows])
 
   // Gráfico — 12 meses do ano atual, acumulado real (a partir de allRows recebidos)
-  const currentYear = TODAY.split('/')[2]
-  const currentMonthIdx = Math.max(0, Number(TODAY.split('/')[1]) - 1)
+  const currentYear = hojeRef.split('/')[2]
+  const currentMonthIdx = Math.max(0, Number(hojeRef.split('/')[1]) - 1)
   const MONTH_LABELS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
   const monthlyRevenue = useMemo(() => {
     // Soma por mês (apenas pagamentos efetivamente recebidos no ano corrente)
@@ -323,8 +371,15 @@ export default function PagamentosPage() {
     return { path: d, last: pts[pts.length-1], highlight, pts, w, h, currentValue: monthlyRevenue[currentMonthIdx] }
   }, [monthlyRevenue, currentMonthIdx])
 
-  const selectedProject = allProjects.find(p => p.id === selectedId) ?? null
-  const selectedPlan    = selectedProject ? paymentPlanFor(selectedProject) : []
+  // Em modo real o "projeto" e o plano vêm da própria linha de pagamento — não
+  // há parcelas para gerar.
+  const selectedRow     = modo === 'real' ? (realRows.find(r => r.project.id === selectedId) ?? null) : null
+  const selectedProject = modo === 'real'
+    ? (selectedRow?.project ?? null)
+    : (allProjects.find(p => p.id === selectedId) ?? null)
+  const selectedPlan    = modo === 'real'
+    ? (selectedRow ? [selectedRow.inst] : [])
+    : (selectedProject ? paymentPlanFor(selectedProject) : [])
 
   // Modal Novo Recebimento
   const [showNovoRecebimento, setShowNovoRecebimento] = useState(false)
@@ -376,8 +431,6 @@ export default function PagamentosPage() {
             onExportar={exportarCSV}
           />
 
-          {/* Pagamentos reais da RL ao editor */}
-          <PagamentosRLSection />
 
           {/* KPIs */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -652,7 +705,7 @@ export default function PagamentosPage() {
       {/* Modal Novo Recebimento */}
       {showNovoRecebimento && (
         <NovoRecebimentoModal
-          projects={allProjects}
+          projects={modo === 'real' ? realRows.map(r => r.project) : allProjects}
           paymentOverrides={paymentOverrides}
           onClose={() => setShowNovoRecebimento(false)}
           onConfirm={(projectId, metodo) => {
