@@ -1455,11 +1455,9 @@ function ProjectCard({
         <div className="flex flex-col gap-2 min-w-0">
           <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              {p.referencia && (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-gold/10 border border-gold/30 text-gold tracking-widest font-bold">
-                  {p.referencia}
-                </span>
-              )}
+              {/* A referência interna do evento não é mostrada no cartão: o
+                  projeto identifica-se pelo nome. Continua guardada e a servir
+                  de chave para o workflow, os pagamentos e a ficha. */}
               <span className="text-[10px] px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-widest font-bold">Novo Projeto</span>
             </div>
             <h2 className="text-2xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{p.noivos}</h2>
