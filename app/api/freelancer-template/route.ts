@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,10 @@ function supabase() {
   )
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const { data, error } = await supabase()
     .from('freelancers')
     .select('*')

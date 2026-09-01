@@ -1,12 +1,16 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const { data, error } = await supabase
     .from('media_leads')
     .select('*')
@@ -327,6 +331,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const body = await req.json()
   const { id, ...updates } = body
 
@@ -340,6 +347,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const { id } = await req.json()
   if (!id) return NextResponse.json({ error: 'ID obrigatório' }, { status: 400 })
 

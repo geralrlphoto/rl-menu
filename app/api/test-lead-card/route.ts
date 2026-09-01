@@ -1,6 +1,10 @@
 ﻿import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const primeiroNome = 'Rui'
   const tipoTxt = 'Vídeo Institucional'
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -11,6 +12,9 @@ function supabase() {
 }
 
 export async function GET(req: Request) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const { searchParams } = new URL(req.url)
   const freelancer_id = searchParams.get('freelancer_id')
   const thread_id = searchParams.get('thread_id')
@@ -39,6 +43,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const body = await req.json()
   const { data, error } = await supabase().from('freelancer_notificacoes').insert(body).select().single()
   if (error) { console.error('[freelancer-notificacoes POST]', error); return NextResponse.json({ error: error.message }, { status: 500 }) }
@@ -46,6 +53,9 @@ export async function POST(req: Request) {
 }
 
 export async function PATCH(req: Request) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const body = await req.json()
   const { id, ...rest } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
@@ -55,6 +65,9 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })

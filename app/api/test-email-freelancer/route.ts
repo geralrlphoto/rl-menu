@@ -1,6 +1,10 @@
 ﻿import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {

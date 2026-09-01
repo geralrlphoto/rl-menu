@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 }
 
 export async function GET(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const fid = req.nextUrl.searchParams.get('freelancer_id')
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
   const supabase = db()
@@ -61,6 +65,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const body = await req.json()
   const { data, error } = await db().from('freelancer_edicao').insert({ ...body, updated_at: new Date().toISOString() }).select().single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -68,6 +75,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const { id, ...fields } = await req.json()
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
@@ -100,6 +110,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
   const { error } = await db().from('freelancer_edicao').delete().eq('id', id)

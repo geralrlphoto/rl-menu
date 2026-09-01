@@ -1,8 +1,12 @@
 ﻿import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
 // GET /api/test-batizado-email
 // Testa o envio de email de batizado e devolve a resposta real do Resend
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const RESEND_HEADERS = {
     'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
     'Content-Type': 'application/json',

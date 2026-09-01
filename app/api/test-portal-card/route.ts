@@ -1,8 +1,12 @@
 ﻿import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const primeiroNome = 'Rui'
   const dataFmt      = '15 de Maio de 2026'
   const horaFmt      = '10:00'

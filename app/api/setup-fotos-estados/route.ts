@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
@@ -8,7 +9,10 @@ const OPTIONS = [
   { name: 'Entregue', color: 'green' },
 ]
 
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const res = await fetch(`https://api.notion.com/v1/databases/${EVENTOS_DB}`, {
     method: 'PATCH',
     headers: {

@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 }
 
 export async function GET(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const fid = req.nextUrl.searchParams.get('freelancer_id')
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
   const supabase = db()
@@ -152,6 +156,9 @@ const OPTIONAL_COLS = [
 ] as const
 
 export async function POST(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const body = await req.json()
   const supabase = db()
   // Tentar primeiro com TODAS as colunas opcionais; se falhar por coluna inexistente, retry sem elas
@@ -168,6 +175,9 @@ export async function POST(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const body = await req.json()
   const { id, confirmado_em, indisponivel_em, confirmado_videografo_em, indisponivel_videografo_em, ...rest } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
@@ -352,6 +362,9 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
   const { error } = await db().from('freelancer_casamentos').delete().eq('id', id)

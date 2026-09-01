@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 export async function GET(req: NextRequest) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const ref = req.nextUrl.searchParams.get('ref')
   if (!ref) return NextResponse.json({ error: 'ref required' }, { status: 400 })
 

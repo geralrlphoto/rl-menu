@@ -1,12 +1,16 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   // Todas as newsletters (não só as enviadas)
   const { data: newsletters } = await supabase
     .from('newsletters')

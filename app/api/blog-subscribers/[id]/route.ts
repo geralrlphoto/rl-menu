@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 
 function db() {
   return createClient(
@@ -17,6 +18,8 @@ function db() {
 type Params = { params: Promise<{ id: string }> }
 
 export async function PATCH(req: NextRequest, { params }: Params) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
   const { id } = await params
   const body = await req.json().catch(() => ({}))
 
@@ -39,6 +42,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(_req: NextRequest, { params }: Params) {
+  const barrado = exigeAdmin(_req)
+  if (barrado) return barrado
   const { id } = await params
   try {
     const { error } = await db().from('blog_subscribers').delete().eq('id', id)

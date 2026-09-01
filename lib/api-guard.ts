@@ -1,5 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { verifyFlSession, FL_COOKIE_NAME } from '@/lib/freelancer-session'
+
+/** Lê os cookies do cabeçalho — funciona com Request e com NextRequest. */
+function cookiesDe(req: Request): Record<string, string> {
+  const bruto = req.headers.get('cookie') ?? ''
+  const out: Record<string, string> = {}
+  for (const parte of bruto.split(';')) {
+    const i = parte.indexOf('=')
+    if (i < 0) continue
+    out[parte.slice(0, i).trim()] = decodeURIComponent(parte.slice(i + 1).trim())
+  }
+  return out
+}
 
 /**
  * Guardas de autorização para as rotas de API do painel e da equipa.
@@ -12,14 +24,14 @@ import { verifyFlSession, FL_COOKIE_NAME } from '@/lib/freelancer-session'
  */
 
 /** Admin = cookie rl_auth igual ao AUTH_SECRET. */
-export function ehAdmin(req: NextRequest): boolean {
-  const auth = req.cookies.get('rl_auth')?.value
+export function ehAdmin(req: Request): boolean {
+  const auth = cookiesDe(req)['rl_auth']
   return !!auth && auth === process.env.AUTH_SECRET
 }
 
 /** Sessão do membro (cookie fl_session), ou null. */
-export async function sessaoMembro(req: NextRequest) {
-  return verifyFlSession(req.cookies.get(FL_COOKIE_NAME)?.value)
+export async function sessaoMembro(req: Request) {
+  return verifyFlSession(cookiesDe(req)[FL_COOKIE_NAME])
 }
 
 export function naoAutorizado(motivo = 'nao_autorizado') {
@@ -27,7 +39,7 @@ export function naoAutorizado(motivo = 'nao_autorizado') {
 }
 
 /** Só admin. Devolve a resposta de erro, ou null quando pode seguir. */
-export function exigeAdmin(req: NextRequest): NextResponse | null {
+export function exigeAdmin(req: Request): NextResponse | null {
   return ehAdmin(req) ? null : naoAutorizado()
 }
 
@@ -36,7 +48,7 @@ export function exigeAdmin(req: NextRequest): NextResponse | null {
  * ou null quando pode seguir.
  */
 export async function exigeAdminOuProprio(
-  req: NextRequest,
+  req: Request,
   freelancerId: string | null | undefined,
 ): Promise<NextResponse | null> {
   if (ehAdmin(req)) return null
@@ -55,4 +67,15 @@ export function apenasCamposPublicos(linha: Record<string, any>) {
   const out: Record<string, any> = {}
   for (const k of CAMPOS_PUBLICOS) out[k] = linha[k]
   return out
+}
+
+/**
+ * Qualquer sessão válida (admin ou membro). Usado nas rotas da equipa, que são
+ * partilhadas entre todos: mensagens, notificações, casamentos, disponibilidade.
+ * Fecha o caso grave — estarem abertas a quem não tem sessão nenhuma.
+ */
+export async function exigeSessao(req: Request): Promise<NextResponse | null> {
+  if (ehAdmin(req)) return null
+  const sessao = await sessaoMembro(req)
+  return sessao ? null : naoAutorizado()
 }

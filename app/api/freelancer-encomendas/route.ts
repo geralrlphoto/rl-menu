@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,6 +17,9 @@ const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada,
 //   Lido pelo portal do membro (botão "Ver Encomendas"). Sem auth admin —
 //   id-parametrizado, como as restantes APIs /api/freelancer-*.
 export async function GET(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const fid = req.nextUrl.searchParams.get('freelancer_id')
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
   // Mostra encomendas enviadas a este fotógrafo, quer como destinatário único
@@ -35,6 +39,9 @@ export async function GET(req: NextRequest) {
 //   com enviado_para_id = freelancer_id (não toca em encomendas de outros).
 //   Fica no mesmo photo_orders.estado, por isso sincroniza com a página admin.
 export async function PATCH(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const { id, estado, freelancer_id } = await req.json().catch(() => ({}))
   if (!id || !freelancer_id) return NextResponse.json({ error: 'id e freelancer_id obrigatórios' }, { status: 400 })
   const novoEstado = estado === 'Entregue' ? 'Entregue' : 'Aguardar'

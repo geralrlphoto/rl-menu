@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 const DB_ID = '2f3220116d8a8027b435c5b4c0f48948'
@@ -100,7 +101,10 @@ function mapPage(page: any) {
 }
 
 // GET — listar todos
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   try {
     const allRows: any[] = []
     let cursor: string | null = null
@@ -123,6 +127,9 @@ export async function GET() {
 
 // POST — criar novo
 export async function POST(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   try {
     const body = await req.json()
     const res = await fetch('https://api.notion.com/v1/pages', {
@@ -139,6 +146,9 @@ export async function POST(req: NextRequest) {
 
 // PATCH — editar
 export async function PATCH(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   try {
     const { id, ...data } = await req.json()
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
@@ -156,6 +166,9 @@ export async function PATCH(req: NextRequest) {
 
 // DELETE — arquivar
 export async function DELETE(req: NextRequest) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   try {
     const { id } = await req.json()
     if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })

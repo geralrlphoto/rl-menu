@@ -25,6 +25,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
 
 function db() {
   return createClient(
@@ -34,6 +35,9 @@ function db() {
 }
 
 export async function GET(req: NextRequest) {
+  const barrado = await exigeSessao(req)
+  if (barrado) return barrado
+
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ ok: true, tarefas: [] })
 

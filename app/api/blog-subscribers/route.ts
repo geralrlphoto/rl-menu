@@ -18,6 +18,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 
 function db() {
   return createClient(
@@ -41,7 +42,10 @@ export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS })
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   try {
     const { data, error } = await db()
       .from('blog_subscribers')

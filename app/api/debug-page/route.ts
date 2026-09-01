@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
 export async function GET(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
+
   const { searchParams } = new URL(req.url)
   const id = searchParams.get('id') ?? '2be22011-6d8a-808c-8440-f543d9c06818'
 
