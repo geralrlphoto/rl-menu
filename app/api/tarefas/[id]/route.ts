@@ -93,7 +93,7 @@ function buildNoivaReplyEmail(opts: {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#120e09;border:0.5px solid #4a3a1e;">
         <tr><td style="padding:48px 56px;font-family:Georgia,'Times New Roman',serif;color:#efe7d6;">
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
             width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;opacity:.9" />
           <p style="margin:0 0 4px;font-size:24px;font-style:italic;font-weight:300;color:#c9a96e;text-align:center;">Olá, ${safe(primeiro)}!</p>
           <p style="margin:0 0 18px;font-size:32px;font-weight:400;color:#f0e8d8;text-align:center;line-height:1.15;">Resposta da nossa equipa</p>

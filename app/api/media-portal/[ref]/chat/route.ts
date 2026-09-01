@@ -9,7 +9,7 @@ const supabase = createClient(
 
 type Params = { params: Promise<{ ref: string }> }
 
-const BASE_URL = 'https://rl-menu-lake.vercel.app'
+const BASE_URL = 'https://portal.rlphotovideo.pt'
 const EMAIL_FROM = 'RL PROD <geral@rlphotovideo.pt>'
 const ADMIN_FALLBACK_EMAIL = 'geral.rlmedia@gmail.com'
 

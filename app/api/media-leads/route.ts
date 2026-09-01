@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo RL Photo Video -->
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 
@@ -232,7 +232,7 @@ export async function POST(req: NextRequest) {
                        box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;padding:0;">
-              <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png"
+              <img src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png"
                 width="68" alt="RL PROD"
                 style="display:block;margin:16px auto;width:68px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />

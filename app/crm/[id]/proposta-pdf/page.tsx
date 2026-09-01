@@ -53,7 +53,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
 
   // Constrói o URL público a partir do host da request
   const hdrs = await headers()
-  const host = hdrs.get('host') || 'rl-menu-lake.vercel.app'
+  const host = hdrs.get('host') || 'portal.rlphotovideo.pt'
   const protocol = host.startsWith('localhost') ? 'http' : 'https'
   const publicPdfUrl = `${protocol}://${host}/r/${token}/proposta-pdf`
 

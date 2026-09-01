@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
         <tr><td style="padding:44px 44px 36px;text-align:center;">
 
-          <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+          <img src="https://portal.rlphotovideo.pt/logo_marca_advocacia__8_-removebg-preview.png"
             width="80" alt="RL PROD"
             style="display:block;margin:0 auto 28px;width:80px;height:80px;object-fit:contain;" />
 
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
           <!-- CTA -->
           <table cellpadding="0" cellspacing="0" style="margin:8px auto 12px;width:100%;">
             <tr><td style="border:1px solid rgba(201,164,92,0.45);background:rgba(201,164,92,0.08);text-align:center;">
-              <a href="https://rl-menu-lake.vercel.app/painel-editor/tarefas"
+              <a href="https://portal.rlphotovideo.pt/painel-editor/tarefas"
                 style="display:block;padding:15px 32px;font-size:10px;letter-spacing:5px;color:#C9A45C;text-decoration:none;text-transform:uppercase;font-family:Arial,sans-serif;font-weight:600;">
                 Abrir Painel &rarr;
               </a>

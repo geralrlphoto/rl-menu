@@ -5,10 +5,10 @@ import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
 export const dynamic = 'force-dynamic'
 
 const ADMIN_EMAIL  = 'geral.rlphoto@gmail.com'
-const ADMIN_URL    = 'https://rl-menu-lake.vercel.app'
+const ADMIN_URL    = 'https://portal.rlphotovideo.pt'
 const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
-const PORTAL_BASE  = 'https://rl-menu-lake.vercel.app/freelancer-view'
-const NOTIF_IMG    = 'https://rl-menu-lake.vercel.app/card_nova_mensagem.png'
+const PORTAL_BASE  = 'https://portal.rlphotovideo.pt/freelancer-view'
+const NOTIF_IMG    = 'https://portal.rlphotovideo.pt/card_nova_mensagem.png'
 
 function supabase() {
   return createClient(
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
         <tr><td style="padding:8px 48px 52px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png" width="72" alt="RL Photo Video"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png" width="72" alt="RL Photo Video"
             style="display:block;margin:0 auto 20px;width:72px;height:auto;opacity:0.9;" />
 
           <!-- Ícone mensagem em círculo -->

@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
     }
 
     const html = buildNewsletterHtml(nl)
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://portal.rlphotovideo.pt'
 
     let sent = 0, failed = 0
     const batchSize = 50

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 const WHATSAPP     = 'https://wa.me/351912932768'
-const DEFAULT_HERO = 'https://rl-menu-lake.vercel.app/casamentos-2028.webp'
+const DEFAULT_HERO = 'https://portal.rlphotovideo.pt/casamentos-2028.webp'
 
 // ─── DESIGN SYSTEM — RL PHOTO.VIDEO (rlphotovideo.pt) ─────────────────────────
 const RLP_CSS = `
@@ -208,7 +208,7 @@ export const DEFAULT_CONTENT: PageContent = {
     subtitle: 'Descobre o nosso método de trabalho e todos os serviços disponíveis ao detalhe. Fica a saber exatamente o que esperar de um casamento com a RL Photo · Video.',
     imageUrl: '',
     buttonLabel: 'Ver Revista',
-    linkUrl: 'https://rl-menu-lake.vercel.app/secao/ee958740-f53f-4417-ad11-c01d0c42efa5',
+    linkUrl: 'https://portal.rlphotovideo.pt/secao/ee958740-f53f-4417-ad11-c01d0c42efa5',
   },
   banner: {
     message: 'Cada momento do vosso dia merece ser preservado para sempre. Estamos honrados em fazer parte desta história.',

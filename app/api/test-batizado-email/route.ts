@@ -67,7 +67,7 @@ export async function GET(req: Request) {
           <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
         </tr></table></td></tr>
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
             width="80" alt="RL Photo Video" style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
             <span style="font-size:22px;">🕊</span>

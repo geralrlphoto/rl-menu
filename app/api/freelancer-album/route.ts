@@ -136,7 +136,7 @@ export async function PATCH(req: NextRequest) {
 
       // When EM APROVAÇÃO: email the bride
       if (newStatus === 'EM APROVAÇÃO') {
-        const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
+        const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
         const emailNoiva = eventoRes?.evento?.email_noiva
         const nomeNoiva  = eventoRes?.evento?.nome_noiva ?? 'Cliente'
         if (emailNoiva) {

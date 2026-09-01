@@ -11,7 +11,7 @@ export async function GET(req: Request) {
   const dataFmt      = '15 de Maio de 2026'
   const horaFmt      = '10:00'
   const tipoTxt      = 'Videochamada'
-  const portalUrl    = 'https://rl-menu-lake.vercel.app/rm/exemplo-token-123'
+  const portalUrl    = 'https://portal.rlphotovideo.pt/rm/exemplo-token-123'
 
   const cardHtml = `<!DOCTYPE html>
 <html lang="pt">
@@ -33,7 +33,7 @@ export async function GET(req: Request) {
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 

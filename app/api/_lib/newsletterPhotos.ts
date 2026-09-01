@@ -8,7 +8,7 @@ export function getNewsletterPhotos(): string[] {
     const dir = path.join(process.cwd(), 'public', 'newsletter')
     if (!fs.existsSync(dir)) return []
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://portal.rlphotovideo.pt'
     return fs.readdirSync(dir)
       .filter(f => /\.(jpg|jpeg|png|webp)$/i.test(f))
       .map(f => `${baseUrl}/newsletter/${f}`)

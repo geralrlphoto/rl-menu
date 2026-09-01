@@ -42,7 +42,7 @@ function buildConfirmacaoHtml(nome: string): string {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0c07;">
   <tr>
     <td align="center" style="padding:32px 20px;">
-      <img src="https://rl-menu-lake.vercel.app/card-freelancer-obrigado.png" width="560" alt="Recebemos a tua candidatura" style="display:block;max-width:100%;border:0;"/>
+      <img src="https://portal.rlphotovideo.pt/card-freelancer-obrigado.png" width="560" alt="Recebemos a tua candidatura" style="display:block;max-width:100%;border:0;"/>
     </td>
   </tr>
 </table>

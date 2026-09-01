@@ -10,7 +10,7 @@ import { createClient } from '@supabase/supabase-js'
  *
  * Configurar no Tally:
  *   Form "Mais Informações" → Integrations → Add Webhook
- *   URL: https://rl-menu-lake.vercel.app/api/webhook-tally-evento
+ *   URL: https://portal.rlphotovideo.pt/api/webhook-tally-evento
  */
 export async function GET() {
   return NextResponse.json({ ok: true, endpoint: 'webhook-tally-evento' })

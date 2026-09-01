@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     .eq('scheduled_for', tomorrowStr)
 
   const adminEmail = process.env.NEWSLETTER_ADMIN_EMAIL || 'geral@rlphotovideo.pt'
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://rl-menu-lake.vercel.app'
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://portal.rlphotovideo.pt'
 
   for (const n of (upcoming ?? [])) {
     const isComplete = n.intro && Array.isArray(n.sections) && n.sections.length > 0

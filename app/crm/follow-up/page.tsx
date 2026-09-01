@@ -12,8 +12,8 @@ import Link from 'next/link'
    Placeholders: [nome], [data], [local] são substituídos à mão.
    ────────────────────────────────────────────────────────────── */
 
-const FORM_URL = 'https://rl-menu-lake.vercel.app/nova-lead'
-const HERO_URL = 'https://rl-menu-lake.vercel.app/casamentos-2028.png'
+const FORM_URL = 'https://portal.rlphotovideo.pt/nova-lead'
+const HERO_URL = 'https://portal.rlphotovideo.pt/casamentos-2028.png'
 
 const PILARES = [
   { icon: '⚡', titulo: 'Responder primeiro', texto: 'Quem responde mais depressa cria a primeira ligação e fica logo à frente.' },

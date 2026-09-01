@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'RESEND_API_KEY não configurada' }, { status: 500 })
   }
 
-  const portalUrl = 'https://rl-menu-lake.vercel.app/painel-editor/novos-projetos'
+  const portalUrl = 'https://portal.rlphotovideo.pt/painel-editor/novos-projetos'
 
   const html = `<!DOCTYPE html>
 <html>
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
         <tr><td style="padding:44px 44px 36px;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+          <img src="https://portal.rlphotovideo.pt/logo_marca_advocacia__8_-removebg-preview.png"
             width="80" alt="RL PROD"
             style="display:block;margin:0 auto 24px;width:80px;height:80px;object-fit:contain;" />
 

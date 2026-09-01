@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   if (!nota) return NextResponse.json({ ok: false, error: 'Nota em falta' }, { status: 400 })
 
   const adminEmail = process.env.ADMIN_EMAIL ?? 'geral.rlmedia@gmail.com'
-  const portalUrl  = `https://rl-menu-lake.vercel.app/portal-media/${ref}/satisfacao`
+  const portalUrl  = `https://portal.rlphotovideo.pt/portal-media/${ref}/satisfacao`
 
   const stars = [1, 2, 3, 4, 5]
     .map(i => `<span style="font-size:24px;color:${i <= nota ? '#f59e0b' : 'rgba(255,255,255,0.12)'};margin:0 2px;">&#9733;</span>`)
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
                        box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;padding:0;">
-              <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png"
+              <img src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png"
                 width="58" alt="RL PROD"
                 style="display:block;margin:16px auto;width:58px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />

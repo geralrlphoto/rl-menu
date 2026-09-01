@@ -8,10 +8,10 @@ import Link from 'next/link'
    ────────────────────────────────────────────────────────────── */
 
 const FOTOS = {
-  hero: 'https://rl-menu-lake.vercel.app/casamentos-2028.png',
-  s1: 'https://rl-menu-lake.vercel.app/casamentos-2028.png',
-  s2: 'https://rl-menu-lake.vercel.app/casamentos-2028.png',
-  s3: 'https://rl-menu-lake.vercel.app/casamentos-2028.png',
+  hero: 'https://portal.rlphotovideo.pt/casamentos-2028.png',
+  s1: 'https://portal.rlphotovideo.pt/casamentos-2028.png',
+  s2: 'https://portal.rlphotovideo.pt/casamentos-2028.png',
+  s3: 'https://portal.rlphotovideo.pt/casamentos-2028.png',
 }
 
 const VIDEOS = [

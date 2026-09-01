@@ -9,7 +9,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const RESEND_KEY  = process.env.RESEND_API_KEY!
-const SITE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'
+const SITE_URL    = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'
 
 function db() {
   return createClient(
@@ -98,7 +98,7 @@ function buildComprovatvoClienteEmail(data: {
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 
@@ -210,7 +210,7 @@ function buildAdminNotifEmail(data: {
 
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 

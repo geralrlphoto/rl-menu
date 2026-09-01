@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 export const dynamic = 'force-dynamic'
 
 const RESEND_KEY  = process.env.RESEND_API_KEY
-const SITE_BASE   = process.env.NEXT_PUBLIC_SITE_URL || 'https://rl-menu-lake.vercel.app'
+const SITE_BASE   = process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.rlphotovideo.pt'
 const NOTION_TOKEN = process.env.NOTION_TOKEN
 // DBs Notion onde vivem as fichas dos noivos. Há uma por ano (ver
 // app/api/eventos-notion/route.ts DB_BY_YEAR). Procuramos em ambas.
@@ -85,7 +85,7 @@ function buildRecoveryEmail(opts: {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
         <tr><td style="padding:48px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
             width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;opacity:0.9;" />
           <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;">Olá, ${primeiroNome}!</p>
           <p style="margin:0 0 18px;font-size:24px;font-weight:400;color:#f0e8d8;">A vossa palavra-passe</p>

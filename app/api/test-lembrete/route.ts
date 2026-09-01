@@ -24,7 +24,7 @@ export async function GET() {
         <tr><td style='padding:10px 56px 40px;text-align:center;'>
 
           <!-- Logo -->
-          <img src='https://rl-menu-lake.vercel.app/logo_rl_gold.png'
+          <img src='https://portal.rlphotovideo.pt/logo_rl_gold.png'
             width='64' alt='RL Photo Video'
             style='display:block;margin:0 auto 28px;width:64px;height:auto;opacity:0.9;' />
 

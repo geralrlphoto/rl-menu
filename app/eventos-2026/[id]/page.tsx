@@ -5485,7 +5485,7 @@ export default function EventoPage() {
                           nome_noivo: evento.nome_noivo,
                           referencia: evento.referencia,
                           password: pwData.password ?? '',
-                          portal_url: `https://rl-menu-lake.vercel.app/portal-cliente/ref/${encodeURIComponent(evento.referencia)}`,
+                          portal_url: `https://portal.rlphotovideo.pt/portal-cliente/ref/${encodeURIComponent(evento.referencia)}`,
                         }),
                       })
                       if (!portalEmailRes.ok) {

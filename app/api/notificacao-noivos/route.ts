@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 export const dynamic = 'force-dynamic'
 
 const RESEND_KEY = process.env.RESEND_API_KEY
-const SITE_URL = 'https://rl-menu-lake.vercel.app'
+const SITE_URL = 'https://portal.rlphotovideo.pt'
 
 function db() {
   return createClient(

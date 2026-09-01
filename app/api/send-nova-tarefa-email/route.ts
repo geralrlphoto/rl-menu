@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
-const PORTAL_BASE = 'https://rl-menu-lake.vercel.app/freelancer-view'
-const IMG_URL     = 'https://rl-menu-lake.vercel.app/card-nova-tarefa.png'
+const PORTAL_BASE = 'https://portal.rlphotovideo.pt/freelancer-view'
+const IMG_URL     = 'https://portal.rlphotovideo.pt/card-nova-tarefa.png'
 
 function supabase() {
   return createClient(

@@ -3,8 +3,8 @@
 export async function POST(req: NextRequest) {
   const { to, ref, nome, cliente, tipo } = await req.json()
 
-  const cardUrl = `https://rl-menu-lake.vercel.app/portal-media/${ref}/card`
-  const portalUrl = `https://rl-menu-lake.vercel.app/portal-media/${ref}`
+  const cardUrl = `https://portal.rlphotovideo.pt/portal-media/${ref}/card`
+  const portalUrl = `https://portal.rlphotovideo.pt/portal-media/${ref}`
 
   const html = `<!DOCTYPE html>
 <html>
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         <tr><td style="padding:48px 48px 40px;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+          <img src="https://portal.rlphotovideo.pt/logo_marca_advocacia__8_-removebg-preview.png"
             width="88" alt="RL PROD"
             style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:contain;" />
 

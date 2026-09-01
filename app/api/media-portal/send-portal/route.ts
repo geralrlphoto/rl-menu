@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   if (!emailCliente)
     return NextResponse.json({ error: 'Email do cliente não definido no portal (Contrato & CPS)' }, { status: 400 })
 
-  const portalUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://rl-menu-lake.vercel.app'}/portal-media/${ref.toUpperCase()}`
+  const portalUrl = `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://portal.rlphotovideo.pt'}/portal-media/${ref.toUpperCase()}`
 
   // ── Construir email ──
   const senhaBlock = senha ? `
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
                        box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;padding:0;">
-              <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png"
+              <img src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png"
                 width="58" alt="RL PROD"
                 style="display:block;margin:16px auto;width:58px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />

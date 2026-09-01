@@ -104,12 +104,12 @@ export async function PATCH(req: NextRequest) {
       .eq('referencia_album', data.ref_evento)
 
     const ref = data.ref_evento
-    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
+    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
     const ev = eventoRes?.evento
     const nomeNoivos = ev?.cliente ?? (ev?.nome_noiva && ev?.nome_noivo ? `${ev.nome_noiva} & ${ev.nome_noivo}` : ev?.nome_noiva ?? ev?.nome_noivo ?? data.nome ?? ref)
 
     // Notify admin (email)
-    fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'}/api/send-admin-notification`, {
+    fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/send-admin-notification`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tipo: 'album_aprovado', nome_noivos: nomeNoivos, referencia: ref }),
@@ -180,7 +180,7 @@ export async function PATCH(req: NextRequest) {
   // When PARA APROVAÇÃO (admin): email the bride
   if (status === 'PARA APROVAÇÃO' && data?.ref_evento) {
     const ref = data.ref_evento
-    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
+    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
     const emailNoiva = eventoRes?.evento?.email_noiva
     const nomeNoiva  = eventoRes?.evento?.nome_noiva ?? 'Cliente'
     if (emailNoiva) {

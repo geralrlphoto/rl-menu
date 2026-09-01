@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     <tr><td style="background:radial-gradient(ellipse 100% 85% at 50% 10%,#1c2a4a 0%,#101928 50%,#080d18 100%);padding:52px 52px 48px;text-align:center;">
 
       <!-- Logo circular com neon -->
-      <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+      <img src="https://portal.rlphotovideo.pt/logo_marca_advocacia__8_-removebg-preview.png"
         width="88" height="88" alt="RL PROD"
         style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:cover;border-radius:50%;border:1.5px solid rgba(200,170,100,0.65);box-shadow:0 0 10px rgba(200,170,100,0.7),0 0 24px rgba(200,170,100,0.35),0 0 50px rgba(200,170,100,0.15);" />
 

@@ -413,7 +413,7 @@ function buildEmailHtml(d: any) {
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0c0907;"><tr><td align="center" style="padding:32px 16px;">
 <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#1a1410;border:1px solid rgba(201,168,76,0.15);border-radius:8px;overflow:hidden;">
   <tr><td style="padding:40px 40px 24px;text-align:center;background:rgba(201,168,76,0.04);">
-    <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png" alt="RL" width="80" height="80" style="display:block;margin:0 auto 16px;width:80px;height:auto;border:0;" />
+    <img src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png" alt="RL" width="80" height="80" style="display:block;margin:0 auto 16px;width:80px;height:auto;border:0;" />
     <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;color:#c9a84c;letter-spacing:4px;">RL PHOTO &amp; VIDEO</p>
     <p style="margin:0;font-family:'Montserrat',Arial,sans-serif;font-size:10px;letter-spacing:3px;color:#a09585;">NEWSLETTER QUINZENAL</p>
   </td></tr>

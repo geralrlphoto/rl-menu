@@ -65,7 +65,7 @@ export default async function Image({ params }: { params: { ref: string } }) {
           boxShadow: '0 0 40px rgba(255,255,255,0.08)',
         }}>
           <img
-            src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png"
+            src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png"
             width={65}
             style={{ opacity: 0.9 }}
           />

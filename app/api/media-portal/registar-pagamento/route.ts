@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
 
   const valorPago   = parseFloat(valor) || 0
   const dataPT      = dataISO ? new Date(dataISO).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' }) : '—'
-  const portalUrl   = `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://rl-menu-lake.vercel.app'}/portal-media/${ref}`
+  const portalUrl   = `${process.env.NEXT_PUBLIC_BASE_URL ?? 'https://portal.rlphotovideo.pt'}/portal-media/${ref}`
 
   // ── 4. Email admin ─────────────────────────────────────────────────
   const htmlAdmin = `<!DOCTYPE html>
@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
       <table width="480" cellpadding="0" cellspacing="0" style="max-width:480px;width:100%;background:#0a0a12;border:1px solid rgba(255,255,255,0.1);">
         <tr><td height="1" style="background:linear-gradient(90deg,#050507,rgba(255,255,255,0.25),#050507);font-size:0;line-height:0;">&nbsp;</td></tr>
         <tr><td style="padding:44px 48px 40px;text-align:center;">
-          <img src="https://rl-menu-lake.vercel.app/logo_marca_advocacia__8_-removebg-preview.png"
+          <img src="https://portal.rlphotovideo.pt/logo_marca_advocacia__8_-removebg-preview.png"
             width="72" alt="RL PROD"
             style="display:block;margin:0 auto 28px;width:72px;height:72px;object-fit:contain;" />
           <p style="margin:0 0 4px;font-size:8px;letter-spacing:6px;color:rgba(255,255,255,0.18);text-transform:uppercase;">Registo de Pagamento</p>
@@ -239,7 +239,7 @@ export async function POST(req: NextRequest) {
                        box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;">
-              <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png"
+              <img src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png"
                 width="52" alt="RL PROD"
                 style="display:block;margin:14px auto;width:52px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />

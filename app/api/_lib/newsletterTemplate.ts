@@ -102,7 +102,7 @@ export function buildNewsletterHtml(d: any) {
 
     <!-- Header — igual ao mockup da landing -->
     <tr><td style="padding:40px 40px 24px;text-align:center;background:rgba(201,168,76,0.04);" class="mobile-pad">
-      <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png" alt="RL Photo & Video" width="80" height="80" style="display:block;margin:0 auto 16px;width:80px;height:auto;border:0;" />
+      <img src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png" alt="RL Photo & Video" width="80" height="80" style="display:block;margin:0 auto 16px;width:80px;height:auto;border:0;" />
       <p style="margin:0 0 6px;font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;font-weight:400;color:#c9a84c;letter-spacing:4px;">
         RL PHOTO &amp; VIDEO
       </p>

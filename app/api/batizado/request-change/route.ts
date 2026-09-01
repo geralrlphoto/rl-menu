@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
           </tr></table>
         </td></tr>
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png" width="80" alt="RL"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png" width="80" alt="RL"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
           <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #e8a020;">
             <tr><td align="center" valign="middle">

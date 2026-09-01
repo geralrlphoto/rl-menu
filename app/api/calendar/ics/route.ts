@@ -10,7 +10,7 @@ import { createClient } from '@supabase/supabase-js'
 //   - Tarefas com data_prazo (tarefas)
 //
 // Para subscrever no Google Calendar: Outras agendas → Adicionar via URL →
-// cola https://rl-menu-lake.vercel.app/api/calendar/ics
+// cola https://portal.rlphotovideo.pt/api/calendar/ics
 // Google sincroniza automaticamente (cada ~12h).
 
 export const dynamic = 'force-dynamic'

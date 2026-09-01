@@ -6,9 +6,9 @@ export async function POST(req: NextRequest) {
   if (!to) return NextResponse.json({ ok: false, error: 'Email do cliente em falta' }, { status: 400 })
 
   const verUrl = contratoUrl
-    ? `https://rl-menu-lake.vercel.app${contratoUrl}`
+    ? `https://portal.rlphotovideo.pt${contratoUrl}`
     : portalUrl
-    ? `https://rl-menu-lake.vercel.app${portalUrl}`
+    ? `https://portal.rlphotovideo.pt${portalUrl}`
     : null
 
   const html = `<!DOCTYPE html>
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
                        box-shadow:0 0 18px rgba(255,255,255,0.1),inset 0 0 12px rgba(255,255,255,0.04);
                        background:rgba(255,255,255,0.04);
                        text-align:center;vertical-align:middle;padding:0;">
-              <img src="https://rl-menu-lake.vercel.app/logo-rl-prod-branco.png"
+              <img src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png"
                 width="58" alt="RL PROD"
                 style="display:block;margin:16px auto;width:58px;height:auto;
                        mix-blend-mode:screen;opacity:0.95;" />

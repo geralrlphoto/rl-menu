@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
   const modoTxt  = isVideo ? 'Videochamada' : 'Presencial'
   const prefix   = page_tipo === 'batizado' ? 'b' : 'r'
   const pageLink = page_token
-    ? `https://rl-menu-lake.vercel.app/${prefix}/${page_token}`
+    ? `https://portal.rlphotovideo.pt/${prefix}/${page_token}`
     : (isVideo ? MEET_LINK : MAPS_LINK)
   const saudacao = nome ? `Olá, ${nome}!` : 'Olá!'
 
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
             width="80" alt="RL Photo Video"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 

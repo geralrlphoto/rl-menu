@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const IMG_BASE    = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
-const ADMIN_URL   = 'https://rl-menu-lake.vercel.app'
+const ADMIN_URL   = 'https://portal.rlphotovideo.pt'
 
 export async function POST(req: NextRequest) {
   const { token } = await req.json().catch(() => ({}))
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
         <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
 
           <!-- Logo -->
-          <img src="https://rl-menu-lake.vercel.app/logo_rl_gold.png" width="80" alt="RL"
+          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png" width="80" alt="RL"
             style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
 
           <!-- Ícone alerta -->

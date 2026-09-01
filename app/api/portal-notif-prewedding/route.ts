@@ -1,6 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 
-const CARD_URL      = 'https://rl-menu-lake.vercel.app/card_prewedding_marcar_mobile.png'
+const CARD_URL      = 'https://portal.rlphotovideo.pt/card_prewedding_marcar_mobile.png'
 const NOTION_TOKEN  = process.env.NOTION_TOKEN!
 const EVENTOS_DB    = '1ad220116d8a804b839ddc36f1e7ecf1'
 

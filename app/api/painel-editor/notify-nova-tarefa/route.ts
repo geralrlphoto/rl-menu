@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 <body style="margin:0;padding:0;background:#050507;">
   <table width="100%" cellpadding="0" cellspacing="0" style="background:#050507;padding:24px 12px;">
     <tr><td align="center">
-      <img src="https://rl-menu-lake.vercel.app/nova-tarefa-card.png"
+      <img src="https://portal.rlphotovideo.pt/nova-tarefa-card.png"
         alt="Nova tarefa atribuída · RL Photo.Video"
         width="440"
         style="display:block;width:100%;max-width:440px;height:auto;border:0;outline:none;text-decoration:none;" />

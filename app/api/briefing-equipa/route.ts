@@ -181,7 +181,7 @@ export async function POST(req: NextRequest) {
   // 3) Email (card NOVO BRIEFING) via Resend
   let emailsSent = 0
   if (process.env.RESEND_API_KEY) {
-    const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://rl-menu-lake.vercel.app'
+    const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'
     const CARD_URL = `${SITE}/card-novo-briefing.png`
     const { data: members } = await supabase.from('freelancers').select('id, nome, email').in('id', newIds)
     const subject = localStr
