@@ -187,6 +187,20 @@ export default function PainelEditor() {
     return () => { cancelled = true }
   }, [freelancerId])
 
+  // Foto do perfil guardada em Dados Pessoais (freelancers.perfil_editor.foto).
+  // Sem isto o avatar caía no localStorage do browser, que é partilhado e
+  // mostrava a foto de outra pessoa a quem abrisse o painel.
+  const [perfilFoto, setPerfilFoto] = useState<string>('')
+  useEffect(() => {
+    if (!freelancerId) { setPerfilFoto(''); return }
+    let cancelled = false
+    fetch(`/api/painel-editor/perfil?freelancer=${freelancerId}&only=foto`)
+      .then(r => r.json())
+      .then(d => { if (!cancelled && d?.foto) setPerfilFoto(d.foto) })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [freelancerId])
+
   // Lê perfil de localStorage (definido em /painel-editor/dados-pessoais)
   // — tem prioridade sobre nome/foto do API freelancer
   const [profileNome, setProfileNome] = useState<string>('')
@@ -228,7 +242,11 @@ export default function PainelEditor() {
     ? (STATUS_FUNCAO[freelancer.status] ?? freelancer.status)
     : (profileFuncao || 'Editor de Vídeo')
   const displayRole  = displayFuncao
-  const displayPhoto = freelancer?.foto_url || profileFoto.trim() || DEFAULT_AVATAR
+  // Com um editor real carregado (?freelancer=<id>) a foto vem só da BD: o
+  // localStorage é do browser, não da pessoa, e mostrava a foto errada.
+  const displayPhoto = freelancerId
+    ? (freelancer?.foto_url || perfilFoto.trim() || DEFAULT_AVATAR)
+    : (profileFoto.trim() || DEFAULT_AVATAR)
 
   const [active, setActive] = useState('dashboard')
 

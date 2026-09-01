@@ -13,6 +13,18 @@ export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('freelancer')
   if (!id) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
   const supabase = db()
+
+  // ?only=foto — devolve só a foto (JSON-path select). Evita arrastar o
+  // perfil_editor inteiro para o dashboard, que só precisa do avatar.
+  if (req.nextUrl.searchParams.get('only') === 'foto') {
+    const { data } = await supabase
+      .from('freelancers')
+      .select('foto_url, perfil_editor->>foto')
+      .eq('id', id)
+      .maybeSingle()
+    const row = data as { foto_url?: string | null; foto?: string | null } | null
+    return NextResponse.json({ foto: row?.foto_url || row?.foto || null })
+  }
   const { data } = await supabase
     .from('freelancers')
     .select('id, nome, email, contato, foto_url, perfil_editor')
