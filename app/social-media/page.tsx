@@ -49,11 +49,33 @@ export default function SocialMediaPage() {
           </div>
         </Link>
 
+        {/* 12 Meses 12 Vídeos */}
+        <Link href="/social-media/12-meses-12-videos" className="sm-tile">
+          <span className="sm-sweep" />
+          <div className="sm-tile-row">
+            <span className="sm-num">02</span>
+            <span className="sm-tile-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="17" rx="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <polygon points="11,13 15,15.5 11,18" fill="currentColor" stroke="none" />
+              </svg>
+            </span>
+            <div className="sm-tile-body">
+              <p className="sm-tile-name">12 Meses 12 Vídeos</p>
+              <p className="sm-tile-desc">Um vídeo por mês, do primeiro ao último</p>
+            </div>
+            <span className="sm-tile-arrow">→</span>
+          </div>
+        </Link>
+
         {/* Placeholder para Instagram (futuro) */}
         <div className="sm-tile is-soon">
           <span className="sm-soon-badge">Em breve</span>
           <div className="sm-tile-row">
-            <span className="sm-num">02</span>
+            <span className="sm-num">03</span>
             <span className="sm-tile-icon">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="5" />
