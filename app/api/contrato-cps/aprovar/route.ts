@@ -81,6 +81,19 @@ function db() {
   )
 }
 
+// Um portal só conta como criado quando a row tem mesmo a identidade dos
+// noivos. Uma row nascida de um PATCH de settings (ex.: marcar o contrato como
+// disponível) existe mas está vazia — e o portal abre sem nomes nem data.
+async function portalCompleto(sb: ReturnType<typeof db>, ref: string): Promise<boolean> {
+  const { data } = await sb
+    .from('portais')
+    .select('noiva, noivo, data')
+    .ilike('referencia', ref)
+    .maybeSingle()
+  if (!data) return false
+  return !!((data.noiva || data.noivo) && data.data)
+}
+
 function fmtData(d: string | null | undefined): string {
   if (!d) return ''
   try {
@@ -97,6 +110,10 @@ async function criarPortalCasamento(ref: string, dados: any, password: string) {
   const sb = db()
   const maquete = await fetchMaqueteSettings(CASAMENTO_TEMPLATE_PAGE_ID)
   const valores = await fetchValoresEvento(sb, ref)
+  // Settings já guardadas (contratoUrl, tarefas, notificações…) — recriar o
+  // portal para o repor não pode apagar o que o admin já tinha configurado.
+  const { data: existenteRow } = await sb.from('portais').select('settings').ilike('referencia', ref).maybeSingle()
+  const existente = (existenteRow?.settings ?? {}) as Record<string, any>
   const row = {
     referencia: ref,
     noiva: dados.nome_noiva ?? null,
@@ -107,7 +124,9 @@ async function criarPortalCasamento(ref: string, dados: any, password: string) {
     settings: {
       // PRIMEIRO: tudo herdado da maquete (hero/galeria/parceiros/headers/etc)
       ...maquete,
-      // DEPOIS: campos específicos do cliente (sobrescrevem maquete)
+      // DEPOIS: o que já estava guardado neste portal
+      ...existente,
+      // POR FIM: campos específicos do cliente (sobrescrevem tudo)
       referencia: ref,
       noiva: dados.nome_noiva ?? '',
       noivo: dados.nome_noivo ?? '',
@@ -141,6 +160,9 @@ async function criarPortalBatizado(ref: string, dados: any, password: string) {
   const sb = db()
   const maquete = await fetchMaqueteSettings(BATIZADO_TEMPLATE_PAGE_ID)
   const valores = await fetchValoresEvento(sb, ref)
+  // Ver nota em criarPortalCasamento: preserva as settings já guardadas.
+  const { data: existenteRow } = await sb.from('portais').select('settings').ilike('referencia', ref).maybeSingle()
+  const existente = (existenteRow?.settings ?? {}) as Record<string, any>
   const row = {
     referencia: ref,
     noiva: dados.nome_noiva ?? null,  // mãe — reutiliza campo "noiva"
@@ -151,7 +173,9 @@ async function criarPortalBatizado(ref: string, dados: any, password: string) {
     settings: {
       // PRIMEIRO: tudo herdado da maquete (hero/galeria/parceiros/headers/etc)
       ...maquete,
-      // DEPOIS: campos específicos do cliente (sobrescrevem maquete)
+      // DEPOIS: o que já estava guardado neste portal
+      ...existente,
+      // POR FIM: campos específicos do cliente (sobrescrevem tudo)
       referencia: ref,
       noiva: dados.nome_noiva ?? '',
       noivo: dados.nome_noivo ?? '',
@@ -421,9 +445,15 @@ export async function POST(req: NextRequest) {
       }).eq('id', contrato.id).then(() => {/* sync */})
     }
 
-    // Idempotente: se já foi aprovado, devolve o link
+    // O contrato pode estar marcado como aprovado e mesmo assim o portal estar
+    // vazio (row criada por um PATCH de settings, ou apagada à mão na BD). Nesse
+    // caso este pedido tem de recriar o portal, não devolver o link nem enviar
+    // email de um portal que os noivos abririam sem nomes nem data.
+    const temPortalCompleto = await portalCompleto(sb, referencia)
+
+    // Idempotente: se já foi aprovado e o portal está completo, devolve o link
     // (envia o email novamente se resend=true OU a password foi passada)
-    if (contrato.aprovado_em && !resendOnly && !password) {
+    if (contrato.aprovado_em && temPortalCompleto && !resendOnly && !password) {
       const tipo = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
       const url = tipo === 'batizado'
         ? `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(referencia)}`
@@ -436,9 +466,9 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    // Caso especial: resend=true ou portal já aprovado mas com password →
-    // só envia email (não recria portal nem altera aprovado_em)
-    if (contrato.aprovado_em && (resendOnly || password)) {
+    // Caso especial: resend=true ou portal já aprovado E completo mas com
+    // password → só envia email (não recria portal nem altera aprovado_em)
+    if (contrato.aprovado_em && (resendOnly || (temPortalCompleto && password))) {
       const tipo = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
       const portalUrlExisting = tipo === 'batizado'
         ? `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(referencia)}`
@@ -572,6 +602,9 @@ export async function GET(req: NextRequest) {
       exists: true,
       contrato,
       portalUrl,
+      // A ficha usa isto para voltar a mostrar "Criar Portal" quando o contrato
+      // está aprovado mas o portal ficou sem os dados dos noivos.
+      portalCompleto: await portalCompleto(sb, referencia),
     })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })

@@ -2284,6 +2284,7 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
       email_noivo?: string | null
     }
     portalUrl?: string | null
+    portalCompleto?: boolean
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
 
@@ -2337,7 +2338,11 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
   const c = data.contrato!
   const isBatizado = c.tipo_evento === 'batizado'
   const contratoAprovado = !!c.contrato_aprovado_em
-  const portalAprovado = !!c.aprovado_em
+  // O portal só conta como aprovado se a row existir COM os dados dos noivos.
+  // Uma row vazia (nascida de um PATCH de settings) escondia este passo e
+  // deixava o portal a abrir sem nomes nem data, sem forma de o recriar.
+  const portalVazio = data.portalCompleto === false
+  const portalAprovado = !!c.aprovado_em && !portalVazio
 
   // ── STATE C: PORTAL JÁ APROVADO ───────────────────────────────────────────
   // Não renderiza aqui — o estado "Portal aprovado" (Editar/Abrir) é mostrado
@@ -2352,7 +2357,9 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
           <div className="text-3xl">✓</div>
           <div className="flex-1">
             <p className="text-[10px] tracking-[0.3em] text-gold/80 uppercase mb-1">
-              Contrato aprovado — Próximo passo: criar portal
+              {portalVazio && c.aprovado_em
+                ? 'Portal sem os dados dos noivos — criar de novo para os repor'
+                : 'Contrato aprovado — Próximo passo: criar portal'}
             </p>
             <p className="text-sm text-white/85 mb-1">
               <span className="font-medium">{c.nome_noivos}</span>
