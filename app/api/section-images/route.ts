@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
-import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+import { optimizeImage, extensaoPara, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
 
 export const runtime = 'nodejs'
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   }
 
   const ext  = file.name.split('.').pop() ?? 'jpg'
-  const path = `${sectionId}/${Date.now()}.${ext}`
+  let path = `${sectionId}/${Date.now()}.${ext}`
 
   // Redimensiona (máx 2000px, q80) antes de gravar e aplica cache de 1 ano,
   // para os uploads novos entrarem leves e bem cacheados (poupa egress).
@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
     file.type || 'image/jpeg',
     file.name,
   )
+  // A extensão segue o formato final, para o URL não dizer .png a servir WebP.
+  path = path.replace(/\.[^.]+$/, `.${extensaoPara(contentType, ext)}`)
 
   const { error: uploadErr } = await supabase.storage
     .from(BUCKET)

@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
-import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+import { optimizeImage, extensaoPara, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
 
 export const runtime = 'nodejs'
 
@@ -20,14 +20,15 @@ export async function POST(req: Request) {
   await supabase.storage.createBucket(BUCKET, { public: true }).catch(() => {})
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-  const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-  // Redimensiona (máx 2000px, q80) antes de gravar para poupar egress.
+  // Redimensiona e converte para WebP antes de gravar, para poupar egress.
   const { buffer, contentType } = await optimizeImage(
     Buffer.from(await file.arrayBuffer()),
     file.type || 'image/jpeg',
     file.name,
   )
+  // A extensão segue o formato final, para o URL não dizer .png a servir WebP.
+  const name = `${Date.now()}-${Math.random().toString(36).slice(2)}.${extensaoPara(contentType, ext)}`
 
   const { error } = await supabase.storage.from(BUCKET).upload(name, buffer, {
     contentType,

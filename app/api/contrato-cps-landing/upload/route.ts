@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+import { optimizeImage, extensaoPara, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
 
 export const runtime = 'nodejs'
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'invalid which' }, { status: 400 })
 
     const ext = (file.name.split('.').pop() ?? 'jpg').toLowerCase()
-    const path = `contrato-cps-landing/${which}-${Date.now()}.${ext}`
+    let path = `contrato-cps-landing/${which}-${Date.now()}.${ext}`
 
     // Redimensiona (máx 2000px, q80) antes de gravar para poupar egress.
     const { buffer: buf, contentType } = await optimizeImage(
@@ -43,6 +43,8 @@ export async function POST(req: NextRequest) {
       file.type || 'image/jpeg',
       file.name,
     )
+  // A extensão segue o formato final, para o URL não dizer .png a servir WebP.
+    path = path.replace(/\.[^.]+$/, `.${extensaoPara(contentType, ext)}`)
 
     const sb = db()
     const { error: upErr } = await sb.storage.from(BUCKET).upload(path, buf, {

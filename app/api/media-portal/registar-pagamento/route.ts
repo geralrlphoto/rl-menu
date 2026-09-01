@@ -1,7 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
-import { optimizeImage, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
+import { optimizeImage, extensaoPara, IMAGE_CACHE_CONTROL } from '@/lib/optimize-image'
 
 export const runtime = 'nodejs'
 
@@ -36,13 +36,15 @@ export async function POST(req: NextRequest) {
   let comprativoUrl = ''
   if (file && file.size > 0) {
     const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
-    const fileName = `comprovativos/${ref}-${Date.now()}.${ext}`
+    let fileName = `comprovativos/${ref}-${Date.now()}.${ext}`
     // Redimensiona (máx 2000px, q80) antes de gravar para poupar egress.
     const { buffer, contentType } = await optimizeImage(
       Buffer.from(await file.arrayBuffer()),
       file.type || 'image/jpeg',
       file.name,
     )
+  // A extensão segue o formato final, para o URL não dizer .png a servir WebP.
+    fileName = fileName.replace(/\.[^.]+$/, `.${extensaoPara(contentType, ext)}`)
 
     const { error: upErr } = await supabase.storage
       .from('portal-images')
