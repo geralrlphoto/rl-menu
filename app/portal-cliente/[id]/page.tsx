@@ -399,26 +399,26 @@ const FILME_TRIO_CSS = `
   --line:rgba(243,237,226,.12);
   box-sizing:border-box; width:100%; margin:clamp(34px,6vh,64px) 0 0;
   font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--tx);
-  display:grid; gap:clamp(26px,3.4vw,40px);
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); align-items:stretch; }
+  display:grid; gap:clamp(42px,7vh,76px);
+  grid-template-columns:1fr; align-items:stretch; }
 .rlt3 *{ box-sizing:border-box; }
-/* Coluna em flex com o video colado ao fundo: os textos tem numero de
-   linhas diferente e, sem isto, cada video comecava a uma altura. Como
-   todos tem a mesma largura e racio, alinhar as bases alinha os topos. */
+/* Uma coluna so: cada video fica a largura toda, do mesmo tamanho do
+   filme completo. O texto vai centrado por cima, com largura contida
+   para as linhas nao esticarem de ponta a ponta. */
 .rlt3 .rlt3__col{ text-align:center; min-width:0; display:flex; flex-direction:column; }
-.rlt3 .rlt3__texto{ margin-bottom:22px; }
+.rlt3 .rlt3__texto{ max-width:620px; margin:0 auto 22px; }
 
 .rlt3 .rlt3__eyebrow{ display:inline-flex; align-items:center; gap:.8em; justify-content:center;
   font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.3em; text-transform:uppercase; color:var(--g); }
 .rlt3 .rlt3__eyebrow::before{ content:""; width:30px; height:1px; background:var(--g); opacity:.7; }
 
 .rlt3 .rlt3__titulo{ margin:16px 0 0; font-family:'Jost',sans-serif; font-weight:200;
-  font-size:clamp(20px,2.3vw,30px); line-height:1.16; letter-spacing:-.01em; color:var(--tx); }
+  font-size:clamp(22px,2.6vw,34px); line-height:1.16; letter-spacing:-.01em; color:var(--tx); }
 .rlt3 .rlt3__titulo em{ font-style:italic; color:var(--g); }
 .rlt3 .rlt3__sub{ margin:14px 0 0; color:var(--tx-mid); font-size:14px; line-height:1.65; }
 
 .rlt3 .rlt3__video{ position:relative; margin:auto 0 0; width:100%; aspect-ratio:16/9;
-  border-radius:10px; overflow:hidden; border:1px solid var(--line); background:#0f0d0a;
+  border-radius:14px; overflow:hidden; border:1px solid var(--line); background:#0f0d0a;
   padding:0; font:inherit; color:inherit; display:block; }
 .rlt3 .rlt3__video iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; display:block; }
 
@@ -435,14 +435,16 @@ const FILME_TRIO_CSS = `
 /* em espera: mesmo painel dos outros, em versao reduzida */
 .rlt3 .rlt3__espera{ position:absolute; inset:0; display:grid; place-items:center;
   background-image:repeating-linear-gradient(135deg, rgba(243,237,226,.022) 0 2px, transparent 2px 11px); }
-.rlt3 .rlt3__espera span{ font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.26em;
+.rlt3 .rlt3__espera span{ font-family:'Space Mono',monospace; font-size:11px; letter-spacing:.3em;
   text-transform:uppercase; color:var(--tx-dim); }
-.rlt3 .rlt3__selo{ position:absolute; top:10px; left:10px; display:inline-flex; align-items:center; gap:.7em;
-  font-family:'Space Mono',monospace; font-size:9px; letter-spacing:.2em; text-transform:uppercase; color:var(--g);
-  background:rgba(11,10,8,.6); border:1px solid rgba(216,190,147,.3); border-radius:40px; padding:5px 11px; }
-.rlt3 .rlt3__selo .pip{ width:4px; height:4px; border-radius:50%; background:var(--g); }
+.rlt3 .rlt3__selo{ position:absolute; top:14px; left:14px; display:inline-flex; align-items:center; gap:.75em;
+  font-family:'Space Mono',monospace; font-size:10px; letter-spacing:.24em; text-transform:uppercase; color:var(--g);
+  background:rgba(11,10,8,.6); -webkit-backdrop-filter:blur(6px); backdrop-filter:blur(6px);
+  border:1px solid rgba(216,190,147,.3); border-radius:40px; padding:7px 14px; }
+.rlt3 .rlt3__selo .pip{ width:5px; height:5px; border-radius:50%; background:var(--g); flex:none; }
 .rlt3 .rlt3__selo.esperar .pip{ animation:rlfp-pulse 2.4s ease-in-out infinite; }
 @media(prefers-reduced-motion:reduce){ .rlt3 .rlt3__selo.esperar .pip{ animation:none; } }
+@media(max-width:520px){ .rlt3 .rlt3__selo{ top:10px; left:10px; font-size:9px; padding:6px 11px; letter-spacing:.2em; } }
 `
 
 /**
