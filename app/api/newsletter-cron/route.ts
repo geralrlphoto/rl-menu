@@ -1,6 +1,7 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { buildNewsletterHtml } from '../_lib/newsletterTemplate'
+import { runPreWeddingProposta } from '../_lib/preWeddingProposta'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,6 +11,7 @@ const supabase = createClient(
 // Vercel Cron — corre todos os dias às 8h.
 // 1. Avisa o admin 1 dia antes de cada envio agendado.
 // 2. Envia automaticamente o batch 2 das newsletters em modo split.
+// 3. Envia a proposta de Pré-Wedding aos casamentos a 60 dias (agendados na ficha).
 export const maxDuration = 60
 
 export async function GET(req: NextRequest) {
@@ -220,10 +222,20 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── 3. Proposta de Pré-Wedding: casamentos a 60 dias com envio agendado ─────
+  // Aproveita este cron diário para não gastar mais um cron job do Vercel.
+  let prewedding: any = null
+  try {
+    prewedding = await runPreWeddingProposta()
+  } catch (e) {
+    console.error('[newsletter-cron] prewedding proposta error:', e)
+  }
+
   return NextResponse.json({
     ok: true,
     reminders: upcoming?.length ?? 0,
     batch2_processed: batch2Sent,
+    prewedding_propostas: prewedding?.enviados ?? 0,
   })
 }
 

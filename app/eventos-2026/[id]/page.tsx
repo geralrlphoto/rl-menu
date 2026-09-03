@@ -2649,6 +2649,9 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
   const [reservedSlotId, setReservedSlotId] = useState<string | undefined>()
   const [reservedAt, setReservedAt]         = useState<string | undefined>()
   const [temServico, setTemServico]         = useState(false)
+  const [dataEvento, setDataEvento]         = useState('')
+  const [propostaAgendada, setPropostaAgendada]   = useState(false)
+  const [propostaEnviadaEm, setPropostaEnviadaEm] = useState<string | undefined>()
   const [draftSlots, setDraftSlots] = useState<BookingSlot[]>([])
   const [editing, setEditing] = useState(false)
   const [saving, setSaving]   = useState(false)
@@ -2670,6 +2673,9 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
         setReservedSlotId(s.bookingReservedSlotId)
         setReservedAt(s.bookingReservedAt)
         setTemServico(!!s.preWeddingServico)
+        setDataEvento(d.portal.data ?? s.data ?? '')
+        setPropostaAgendada(!!s.preWeddingPropostaAgendada)
+        setPropostaEnviadaEm(s.preWeddingPropostaEnviadaEm)
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -2718,6 +2724,21 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
     setTemServico(next)
     await persistPatch({ preWeddingServico: next })
     setNotif({ tone: 'ok', msg: next ? 'Serviço Pré-Wedding ativado.' : 'Serviço Pré-Wedding desativado.' })
+  }
+
+  // Agenda (ou cancela) o envio automático da proposta de Pré-Wedding.
+  // O email sai sozinho quando faltarem 60 dias para o casamento — ver
+  // app/api/_lib/preWeddingProposta.ts (corre no cron diário das 8h).
+  async function togglePropostaAgendada() {
+    const next = !propostaAgendada
+    setPropostaAgendada(next)
+    await persistPatch({ preWeddingPropostaAgendada: next })
+    setNotif({
+      tone: 'ok',
+      msg: next
+        ? 'Envio agendado. O email sai a 60 dias do casamento.'
+        : 'Envio da proposta cancelado.',
+    })
   }
 
   // Aprova: ativa a secção no portal E notifica os noivos (sino + email card).
@@ -2798,6 +2819,25 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
   )
 
   const reservedSlot = slots.find(s => s.id === reservedSlotId)
+
+  // Proposta de Pré-Wedding: data em que o email automático sai (casamento -60 dias).
+  const hojeStr = new Date().toISOString().slice(0, 10)
+  let dataEnvioProposta = ''
+  if (dataEvento) {
+    const d = new Date(dataEvento + 'T12:00:00')
+    if (!isNaN(d.getTime())) { d.setDate(d.getDate() - 60); dataEnvioProposta = d.toISOString().slice(0, 10) }
+  }
+  const estadoProposta: { tom: 'ok' | 'aviso' | 'neutro'; msg: string } = propostaEnviadaEm
+    ? { tom: 'ok', msg: `Enviado em ${new Date(propostaEnviadaEm).toLocaleString('pt-PT')}.` }
+    : !propostaAgendada
+      ? { tom: 'neutro', msg: 'Envio desligado. Liga para o email sair sozinho a 60 dias do casamento.' }
+      : !dataEnvioProposta
+        ? { tom: 'aviso', msg: 'Sem data de casamento no portal. Preenche a data para o envio ser possível.' }
+        : dataEvento < hojeStr
+          ? { tom: 'aviso', msg: 'O casamento já passou. Não será enviado.' }
+          : dataEnvioProposta > hojeStr
+            ? { tom: 'neutro', msg: `Sai a ${fmtData(dataEnvioProposta)}, 60 dias antes do casamento (${fmtData(dataEvento)}).` }
+            : { tom: 'neutro', msg: 'Já dentro dos 60 dias. Sai na próxima verificação diária (8h).' }
   const portalUrl = tipoEvento === 'batizado'
     ? `/portal-batizado/ref/${encodeURIComponent(referencia)}?admin=1`
     : `/portal-cliente/ref/${encodeURIComponent(referencia)}?admin=1`
@@ -2842,6 +2882,23 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
       {!temServico && (
         <p className="text-[11px] text-white/30 italic">Este evento não tem serviço de Pré-Wedding. Marca a caixa acima se o serviço estiver contratado para desbloquear a marcação.</p>
       )}
+
+      {/* Proposta de Pré-Wedding — email automático a 60 dias do casamento */}
+      <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 flex flex-col gap-2">
+        <div className="flex items-start justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-[9px] tracking-[0.4em] text-gold/70 uppercase mb-1">Proposta de Pré-Wedding</p>
+            <p className="text-[11px] text-white/40">Email à noiva com a página de apresentação, enviado automaticamente a 60 dias do casamento.</p>
+          </div>
+          <button onClick={togglePropostaAgendada}
+            className={`text-[10px] tracking-widest font-bold uppercase px-3 py-1.5 rounded-lg border transition-all ${propostaAgendada ? 'border-emerald-400/50 text-emerald-300 bg-emerald-400/10' : 'border-gold/40 text-gold/80 bg-gold/[0.06] hover:bg-gold/15'}`}>
+            {propostaAgendada ? '✓ Envio agendado' : '✉ Agendar envio de proposta'}
+          </button>
+        </div>
+        <p className={`text-[11px] ${estadoProposta.tom === 'ok' ? 'text-emerald-300/80' : estadoProposta.tom === 'aviso' ? 'text-amber-300/70' : 'text-white/35'}`}>
+          {estadoProposta.msg}
+        </p>
+      </div>
 
       {notif && (
         <div className={`text-[11px] px-3 py-2 rounded ${notif.tone === 'ok' ? 'border border-emerald-400/25 text-emerald-300/90 bg-emerald-400/5' : 'border border-red-400/25 text-red-300/80 bg-red-400/5'}`}>
