@@ -2827,17 +2827,28 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
     const d = new Date(dataEvento + 'T12:00:00')
     if (!isNaN(d.getTime())) { d.setDate(d.getDate() - 60); dataEnvioProposta = d.toISOString().slice(0, 10) }
   }
+  // Marco dos 60 dias já passou: o email sai na próxima verificação das 8h.
+  const agora = new Date()
+  const prox = new Date(agora)
+  if (agora.getHours() >= 8) prox.setDate(prox.getDate() + 1)
+  const proximaVerificacao = `${prox.getFullYear()}-${String(prox.getMonth() + 1).padStart(2, '0')}-${String(prox.getDate()).padStart(2, '0')}`
+
   const estadoProposta: { tom: 'ok' | 'aviso' | 'neutro'; msg: string } = propostaEnviadaEm
     ? { tom: 'ok', msg: `Enviado em ${new Date(propostaEnviadaEm).toLocaleString('pt-PT')}.` }
     : !propostaAgendada
-      ? { tom: 'neutro', msg: 'Envio desligado. Liga para o email sair sozinho a 60 dias do casamento.' }
+      ? {
+          tom: 'neutro',
+          msg: dataEnvioProposta
+            ? `Envio desligado. Se ligares, sai a ${fmtData(dataEnvioProposta > hojeStr ? dataEnvioProposta : proximaVerificacao)}.`
+            : 'Envio desligado. Liga para o email sair sozinho a 60 dias do casamento.',
+        }
       : !dataEnvioProposta
         ? { tom: 'aviso', msg: 'Sem data de casamento no portal. Preenche a data para o envio ser possível.' }
         : dataEvento < hojeStr
           ? { tom: 'aviso', msg: 'O casamento já passou. Não será enviado.' }
           : dataEnvioProposta > hojeStr
             ? { tom: 'neutro', msg: `Sai a ${fmtData(dataEnvioProposta)}, 60 dias antes do casamento (${fmtData(dataEvento)}).` }
-            : { tom: 'neutro', msg: 'Já dentro dos 60 dias. Sai na próxima verificação diária (8h).' }
+            : { tom: 'neutro', msg: `Já dentro dos 60 dias. Sai a ${fmtData(proximaVerificacao)} na verificação das 8h. Casamento a ${fmtData(dataEvento)}.` }
   const portalUrl = tipoEvento === 'batizado'
     ? `/portal-batizado/ref/${encodeURIComponent(referencia)}?admin=1`
     : `/portal-cliente/ref/${encodeURIComponent(referencia)}?admin=1`
