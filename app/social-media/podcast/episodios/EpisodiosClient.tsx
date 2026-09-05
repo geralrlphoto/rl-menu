@@ -218,7 +218,7 @@ export default function EpisodiosClient() {
               <ConvidadosEpisodio episodioId={emEdicao.id} />
               <PotenciaisEpisodio episodioId={emEdicao.id} />
 
-              <Area label="Guião — perguntas âncora (interno, não sai no site)" linhas={14}
+              <Area label="Guião · perguntas âncora (interno, não sai no site)" linhas={14}
                 valor={emEdicao.guiao_md ?? ''}
                 onChange={v => guardar(emEdicao.id, { guiao_md: v })} />
 
