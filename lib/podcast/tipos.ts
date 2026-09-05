@@ -19,6 +19,9 @@ export type Episodio = {
   subtitulo: string | null
   descricao_curta: string
   notas_md: string | null
+  /* Guião de trabalho: perguntas âncora da conversa. Uso interno,
+     não sai na página pública do episódio. */
+  guiao_md: string | null
   duracao_segundos: number | null
   data_publicacao: string
   estado: EstadoEpisodio

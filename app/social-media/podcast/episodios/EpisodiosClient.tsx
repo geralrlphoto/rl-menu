@@ -218,6 +218,10 @@ export default function EpisodiosClient() {
               <ConvidadosEpisodio episodioId={emEdicao.id} />
               <PotenciaisEpisodio episodioId={emEdicao.id} />
 
+              <Area label="Guião — perguntas âncora (interno, não sai no site)" linhas={14}
+                valor={emEdicao.guiao_md ?? ''}
+                onChange={v => guardar(emEdicao.id, { guiao_md: v })} />
+
               <Area label="Notas do episódio (Markdown)" linhas={12} valor={emEdicao.notas_md ?? ''}
                 onChange={v => guardar(emEdicao.id, { notas_md: v })} />
               <Area label="Transcrição" linhas={8} valor={emEdicao.transcricao ?? ''}
