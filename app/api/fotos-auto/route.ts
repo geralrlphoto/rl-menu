@@ -45,7 +45,7 @@ export async function GET(req: NextRequest) {
   // Elegíveis para envio automático: fotografias DIGITAIS ainda por enviar que
   // sejam aquisições por link (origem='adquirir') OU tickets marcados com envio
   // automático (envio_auto=true).
-  const COLS = 'id, pedido, nome, email, noivos, data_casamento, formato, quantidade, fotografias'
+  const COLS = 'id, pedido, nome, email, noivos, data_casamento, formato, quantidade, fotografias, referencia'
   // Elegíveis para envio automático: digitais em "Aguardar" (não enviados) que
   // sejam aquisições por link (origem=adquirir) OU tickets marcados pelo
   // responsável com envio automático (envio_auto=true). O toggle do ticket
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
   // para gerar a cópia do ticket idêntica à do cliente. "Entregue" nunca é tratado.
   const { data: pap } = await sb
     .from('photo_orders')
-    .select('id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, fotografias, responsavel, metodo_pagamento, mbway_conta, origem, created_at')
+    .select('id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, fotografias, responsavel, metodo_pagamento, mbway_conta, origem, created_at, referencia')
     .eq('formato', 'papel').is('impressao_preparada_em', null).neq('estado', 'Entregue')
     .order('created_at', { ascending: true }).limit(200)
 
@@ -85,6 +85,7 @@ export async function GET(req: NextRequest) {
     if (y.length !== 4) return ''
     return y + mo.padStart(2, '0').slice(-2) + d.padStart(2, '0').slice(-2)
   }
+  const byRef = new Map<string, string>()         // "cas01926rl" → pasta
   const byNameDate = new Map<string, string>()   // "anarui|20260731" → pasta
   const byName = new Map<string, string>()        // "anarui" → pasta
   const nameCount = new Map<string, number>()     // nº de eventos com esse nome
@@ -98,9 +99,14 @@ export async function GET(req: NextRequest) {
       nameCount.set(nk, (nameCount.get(nk) ?? 0) + 1)
     }
     const rk = norm(ev.referencia)
-    if (rk) byName.set(rk, ev.pasta_fotos)   // referência é única → fallback direto
+    if (rk) { byRef.set(rk, ev.pasta_fotos); byName.set(rk, ev.pasta_fotos) }
   }
   const resolvePasta = (p: any): string | null => {
+    // A referência do casamento, quando a encomenda a tem, é a resposta certa:
+    // é única e não depende de como o nome dos noivos foi escrito no ticket
+    // ("Marco e Telma" no ticket, "Telma e Marco" na ficha, mesma boda).
+    const pr = norm(p.referencia)
+    if (pr) { const daRef = byRef.get(pr); if (daRef) return daRef }
     const nk = norm(p.noivos)
     const dk = dkey(p.data_casamento)
     const exato = dk ? byNameDate.get(nk + '|' + dk) : undefined
