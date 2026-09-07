@@ -86,7 +86,7 @@ export async function PATCH(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
   const updates: Record<string, any> = {}
   if (referencia !== undefined) updates.referencia = (typeof referencia === 'string' && referencia.trim()) ? referencia.trim() : null
-  if (estado !== undefined) updates.estado = (estado === 'Entregue') ? 'Entregue' : 'Aguardar'
+  if (estado !== undefined) updates.estado = (estado === 'Entregue' || estado === 'Impressão') ? estado : 'Aguardar'
   if (Object.keys(updates).length === 0) return NextResponse.json({ error: 'nada a atualizar' }, { status: 400 })
   const { error } = await supabase.from('photo_orders').update(updates).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

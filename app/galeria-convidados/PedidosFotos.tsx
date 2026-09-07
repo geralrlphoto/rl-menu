@@ -422,12 +422,15 @@ export default function PedidosFotos() {
             </span>
           </button>
           <div className="flex items-center gap-2 shrink-0">
-            <select value={p.estado === 'Entregue' ? 'Entregue' : 'Aguardar'} onChange={e => guardarEstado(p.id, e.target.value)} title="Estado do pedido"
+            <select value={p.estado === 'Entregue' ? 'Entregue' : p.estado === 'Impressão' ? 'Impressão' : 'Aguardar'} onChange={e => guardarEstado(p.id, e.target.value)} title="Estado do pedido"
               className="border rounded-lg px-2.5 py-1.5 text-[11px] font-semibold tracking-wide focus:outline-none cursor-pointer [color-scheme:dark]"
               style={p.estado === 'Entregue'
                 ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.35)', color: '#6ee7b7' }
+                : p.estado === 'Impressão'
+                ? { background: 'rgba(96,165,250,0.12)', borderColor: 'rgba(96,165,250,0.35)', color: '#93c5fd' }
                 : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.30)', color: '#fcd34d' }}>
               <option value="Aguardar" className="bg-[#0e0c08] text-white">Aguardar</option>
+              <option value="Impressão" className="bg-[#0e0c08] text-white">Impressão</option>
               <option value="Entregue" className="bg-[#0e0c08] text-white">Entregue</option>
             </select>
             <select value={cur} onChange={e => guardarRef(p.id, e.target.value)} title="Referência do casamento"
