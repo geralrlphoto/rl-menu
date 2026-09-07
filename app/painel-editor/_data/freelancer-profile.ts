@@ -81,9 +81,14 @@ export function rememberEditorId(id: string | null): void {
 }
 export function getEditorId(urlId?: string | null): string | null {
   if (urlId) return urlId
-  if (typeof window !== 'undefined') {
-    try { return localStorage.getItem(EDITOR_ID_KEY) } catch {}
-  }
+  if (typeof window === 'undefined') return null
+  // O ?freelancer=<id> do URL manda: uma sub-página pode ser aberta directamente
+  // com o id de outra pessoa e o id memorizado ficaria desactualizado.
+  try {
+    const doUrl = new URLSearchParams(window.location.search).get('freelancer')
+    if (doUrl) { rememberEditorId(doUrl); return doUrl }
+  } catch {}
+  try { return localStorage.getItem(EDITOR_ID_KEY) } catch {}
   return null
 }
 
@@ -105,21 +110,31 @@ export function isAdminMode(urlAdmin?: boolean): boolean {
 
 const STORAGE_KEY = 'painel-editor-freelancer-profile'
 
-export function loadFreelancerProfile(): FreelancerProfile {
+// O perfil vive no localStorage do browser, que é partilhado por toda a gente
+// que ali entre. Carimbamos o id do dono para nunca mostrar (nem gravar) os
+// dados de uma pessoa na ficha de outra: sem correspondência, volta ao default
+// e é a BD que preenche.
+type StoredProfile = FreelancerProfile & { _owner?: string | null }
+
+export function loadFreelancerProfile(id?: string | null): FreelancerProfile {
   if (typeof window === 'undefined') return DEFAULT_FREELANCER_PROFILE
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return DEFAULT_FREELANCER_PROFILE
-    const parsed = JSON.parse(raw)
-    return { ...DEFAULT_FREELANCER_PROFILE, ...parsed }
+    const parsed = JSON.parse(raw) as StoredProfile
+    const dono = parsed._owner ?? null
+    if (dono !== (getEditorId(id) ?? null)) return DEFAULT_FREELANCER_PROFILE
+    const { _owner: _dono, ...perfil } = parsed
+    return { ...DEFAULT_FREELANCER_PROFILE, ...perfil }
   } catch {
     return DEFAULT_FREELANCER_PROFILE
   }
 }
 
-export function saveFreelancerProfile(p: FreelancerProfile): void {
+export function saveFreelancerProfile(p: FreelancerProfile, id?: string | null): void {
   if (typeof window === 'undefined') return
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(p))
+    const stored: StoredProfile = { ...p, _owner: getEditorId(id) ?? null }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(stored))
   } catch {}
 }

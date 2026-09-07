@@ -7,7 +7,7 @@ import { NotificationBell } from '../_components/NotificationBell'
 import { MessagesBell } from '../_components/MessagesBell'
 import { BrandLogo } from '../_components/BrandLogo'
 import { getTracksForProject, disassociate } from '../_data/musicas-associacao'
-import { rememberAdminMode, isAdminMode } from '../_data/freelancer-profile'
+import { rememberAdminMode, isAdminMode, loadFreelancerProfile, DEFAULT_FREELANCER_PROFILE } from '../_data/freelancer-profile'
 import { PainelUserCard } from '@/app/components/PainelUserCard'
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -473,10 +473,12 @@ export default function NovosProjetosPage() {
 
     // Auto-notifica o freelancer por email (card pré-desenhado, sem dados)
     try {
-      const raw = localStorage.getItem('painel-fotografo-freelancer-profile')
-      const profile = raw ? JSON.parse(raw) : null
+      // Pelo loader, que valida o dono do perfil guardado: sem correspondência
+      // devolve o default e não se notifica ninguém (era o email de quem tinha
+      // aberto o painel antes que ia parar ao pedido).
+      const profile = loadFreelancerProfile()
       const email = profile?.email
-      if (email && email.includes('@')) {
+      if (email && email.includes('@') && email !== DEFAULT_FREELANCER_PROFILE.email) {
         fetch('/api/painel-editor/notify-novo-projeto', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

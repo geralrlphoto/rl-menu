@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { TODAY as TODAY_PT, TASKS as MOCK_TASKS, PROJECTS as MOCK_PROJECTS, paymentPlanFor, type Project as DataProject } from './_data/projects'
 import { NotificationBell } from './_components/NotificationBell'
 import { MessagesBell } from './_components/MessagesBell'
-import { loadFreelancerProfile, rememberFotografoId } from './_data/freelancer-profile'
+import { loadFreelancerProfile, rememberFotografoId, DEFAULT_FREELANCER_PROFILE } from './_data/freelancer-profile'
 
 // Hoje (derivado da constante canónica)
 const [_TD, _TM, _TY] = TODAY_PT.split('/').map(Number)
@@ -144,14 +144,14 @@ export default function PainelEditor() {
   // — tem prioridade sobre nome/foto do API freelancer
   const [profileNome, setProfileNome] = useState<string>('')
   const [profileFoto, setProfileFoto] = useState<string>('')
-  const [profileFuncao, setProfileFuncao] = useState<string>('Editor de Vídeo')
+  const [profileFuncao, setProfileFuncao] = useState<string>(DEFAULT_FREELANCER_PROFILE.funcao)
   useEffect(() => {
     function refresh() {
       try {
         const p = loadFreelancerProfile()
         setProfileNome(p.nome || '')
         setProfileFoto(p.foto || '')
-        setProfileFuncao(p.funcao || 'Editor de Vídeo')
+        setProfileFuncao(p.funcao || DEFAULT_FREELANCER_PROFILE.funcao)
       } catch {}
     }
     refresh()
@@ -171,7 +171,14 @@ export default function PainelEditor() {
   const displayName  = effectiveNome.split(' ')[0]
   const displayFull  = effectiveNome
   const displayEmail = freelancer?.email ?? 'editorpro@mail.com'
-  const displayRole  = freelancer?.status ?? 'Editor de Vídeo'
+  // Cargo a partir do status REAL da BD (mapeado, como no painel do editor).
+  const STATUS_FUNCAO: Record<string, string> = {
+    FOTOGRAFO: 'Fotógrafo', VIDEOGRAFO: 'Videógrafo', EDITORES: 'Editor de Vídeo',
+    EDITOR: 'Editor de Vídeo', ASSISTENTE: 'Assistente', OUTRO: 'Equipa',
+  }
+  const displayRole  = freelancer?.status
+    ? (STATUS_FUNCAO[freelancer.status] ?? freelancer.status)
+    : (profileFuncao || DEFAULT_FREELANCER_PROFILE.funcao)
   const displayPhoto = freelancerId
     ? (freelancer?.foto_url || perfilFoto.trim() || DEFAULT_AVATAR)
     : (profileFoto.trim() || DEFAULT_AVATAR)

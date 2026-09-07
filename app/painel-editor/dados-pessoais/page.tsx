@@ -66,6 +66,9 @@ export default function DadosPessoaisPage() {
           email: base.email    || fromDb.email || local.email,
           telefone: base.contato || fromDb.telefone || local.telefone,
           foto:  base.foto_url || fromDb.foto  || local.foto,
+          // Função: manda a coluna `status` da tabela freelancers. O perfil só
+          // entra quando o status não mapeia para nenhuma das funções.
+          funcao: (base.funcao as FreelancerProfile['funcao']) || fromDb.funcao || local.funcao,
         }
         setProfile(merged)
         saveFreelancerProfile(merged)
@@ -622,7 +625,6 @@ function WorkPreferencesCard({ editMode, onToggle, profile, onChange }: {
   profile: FreelancerProfile
   onChange: (patch: Partial<FreelancerProfile>) => void
 }) {
-  const FUNCAO_OPTIONS: FreelancerProfile['funcao'][] = ['Videógrafo', 'Fotógrafo', 'Editor de Foto', 'Editor de Vídeo', 'Assistente']
   const rows: { label: string; key: keyof FreelancerProfile }[] = [
     { label: 'Dias de Trabalho',     key: 'diasTrabalho' },
     { label: 'Horário Preferencial', key: 'horarioPreferencial' },
@@ -632,20 +634,11 @@ function WorkPreferencesCard({ editMode, onToggle, profile, onChange }: {
     <Card>
       <CardHeader title="Preferências de Trabalho" right={<EditButton editMode={editMode} onToggle={onToggle} />} />
       <div className="space-y-3.5">
-        {/* Função (dropdown) */}
+        {/* Função — vem de freelancers.status, definido na ficha admin.
+            Não é editável aqui: a API não deixa o próprio alterar o status. */}
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04]">
           <span className="text-[12px] text-white/45 shrink-0">Função</span>
-          {editMode ? (
-            <select value={profile.funcao}
-              onChange={e => onChange({ funcao: e.target.value as FreelancerProfile['funcao'] })}
-              className="flex-1 ml-3 text-right text-[13px] text-white font-medium bg-black/40 border border-gold/30 rounded-md px-2 py-1 focus:outline-none focus:border-gold/60 cursor-pointer">
-              {FUNCAO_OPTIONS.map(f => (
-                <option key={f} value={f} style={{ background: '#1a1206' }}>{f}</option>
-              ))}
-            </select>
-          ) : (
-            <span className="text-[13px] text-gold font-medium text-right truncate">{profile.funcao}</span>
-          )}
+          <span className="text-[13px] text-gold font-medium text-right truncate">{profile.funcao}</span>
         </div>
         {rows.map(({ label, key }) => (
           <div key={label} className="flex items-center justify-between gap-3 pb-3 border-b border-white/[0.04]">

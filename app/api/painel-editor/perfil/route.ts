@@ -9,6 +9,22 @@ function db() {
   )
 }
 
+// A funcao do membro e a coluna `status` da tabela freelancers (a que a ficha
+// admin edita). O perfil_editor arranca do default do painel, que dizia sempre
+// "Editor de Video" mesmo para videografos e fotografos.
+const FUNCAO_POR_STATUS: Record<string, string> = {
+  FOTOGRAFO: 'Fotógrafo',
+  VIDEOGRAFO: 'Videógrafo',
+  EDITORES: 'Editor de Vídeo',
+  EDITOR: 'Editor de Vídeo',
+  ASSISTENTE: 'Assistente',
+}
+function funcaoDeStatus(status?: string | null): string | null {
+  if (!status) return null
+  const chave = status.trim().toUpperCase()
+  return FUNCAO_POR_STATUS[chave] ?? null
+}
+
 // GET: perfil do editor (freelancers.perfil_editor) + identidade base da BD.
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('freelancer')
@@ -31,11 +47,11 @@ export async function GET(req: NextRequest) {
   }
   const { data } = await supabase
     .from('freelancers')
-    .select('id, nome, email, contato, foto_url, perfil_editor')
+    .select('id, nome, email, contato, foto_url, status, perfil_editor')
     .eq('id', id)
     .maybeSingle()
   return NextResponse.json({
-    base: data ? { nome: data.nome, email: data.email, contato: data.contato, foto_url: data.foto_url } : null,
+    base: data ? { nome: data.nome, email: data.email, contato: data.contato, foto_url: data.foto_url, funcao: funcaoDeStatus(data.status) } : null,
     perfil: data?.perfil_editor ?? null,
   })
 }
