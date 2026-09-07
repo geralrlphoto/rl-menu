@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
+import { linkPublico } from '@/lib/site-url'
 
 type SectionImage = {
   id: string
@@ -726,7 +727,7 @@ export default function MagazineViewer({ images: init, sectionId, isAdmin }: Pro
           {images.length > 0 && (
             <button
               onClick={() => {
-                const url = `${window.location.origin}/apresentacao/${sectionId}`
+                const url = linkPublico(`/apresentacao/${sectionId}`)
                 navigator.clipboard.writeText(url).then(() => {
                   setCopied(true)
                   setTimeout(() => setCopied(false), 2200)

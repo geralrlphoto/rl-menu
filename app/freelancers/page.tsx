@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { linkPublico } from '@/lib/site-url'
 
 type Freelancer = {
   id: string
@@ -165,8 +166,8 @@ function CopiarUrlButton({ id, status }: { id: string; status?: string | null })
   function copy() {
     // Editores têm portal próprio — o link a partilhar é o painel de editor.
     const url = status === 'EDITORES'
-      ? `${window.location.origin}/painel-editor?freelancer=${id}`
-      : `${window.location.origin}/freelancers/${id}?view=freelancer`
+      ? linkPublico(`/painel-editor?freelancer=${id}`)
+      : linkPublico(`/freelancers/${id}?view=freelancer`)
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)

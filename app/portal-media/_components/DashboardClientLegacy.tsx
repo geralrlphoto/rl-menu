@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
 import { MEDIA_MASTER_REF } from '@/app/portal-media/_data/mockProject'
+import { linkPublico } from '@/lib/site-url'
 import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import EditableDateField from './EditableDateField'
@@ -39,7 +40,7 @@ export default function DashboardClient({ projeto: initial, isAdmin }: Props) {
   const [copiado, setCopiado] = useState(false)
 
   const copiarLink = () => {
-    const link = `${window.location.origin}/portal-media/${projeto.ref}`
+    const link = linkPublico(`/portal-media/${projeto.ref}`)
     navigator.clipboard.writeText(link).catch(() => {})
     setCopiado(true)
     setTimeout(() => setCopiado(false), 2500)

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { linkPublico } from '@/lib/site-url'
 
 export default function CopiarLinkButton({ referencia }: { referencia: string }) {
   const [copied, setCopied] = useState(false)
@@ -8,7 +9,7 @@ export default function CopiarLinkButton({ referencia }: { referencia: string })
   function handleCopy(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    const url = `${window.location.origin}/portal-cliente/ref/${encodeURIComponent(referencia)}`
+    const url = linkPublico(`/portal-cliente/ref/${encodeURIComponent(referencia)}`)
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)

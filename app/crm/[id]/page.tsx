@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { SITE_URL, linkPublico } from '@/lib/site-url'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
@@ -326,7 +327,7 @@ export default function ClientePage() {
 
   const handleCopyLink = () => {
     const prefix = pageTipo === 'batizado' ? 'b' : 'r'
-    const url = `${window.location.origin}/${prefix}/${form.page_token}`
+    const url = linkPublico(`/${prefix}/${form.page_token}`)
     navigator.clipboard.writeText(url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
@@ -785,7 +786,7 @@ export default function ClientePage() {
               }`}
             >
               <span className="truncate font-mono text-xs">
-                {window?.location?.origin}/{pageTipo === 'batizado' ? 'b' : 'r'}/{form.page_token}
+                {SITE_URL}/{pageTipo === 'batizado' ? 'b' : 'r'}/{form.page_token}
               </span>
               <span className="ml-3 shrink-0">{copied ? '✓ Copiado' : 'Copiar'}</span>
             </button>

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import TimeBlocks from './TimeBlocks'
+import { linkPublico } from '@/lib/site-url'
 
 export type CalEvent = {
   id: string
@@ -94,9 +95,7 @@ function GoogleSyncButton() {
   const [open, setOpen]     = useState(false)
   const [copied, setCopied] = useState(false)
   // URL absoluta do feed — Google Calendar precisa de URL pública
-  const icsUrl = typeof window !== 'undefined'
-    ? `${window.location.origin}/api/calendar/ics`
-    : '/api/calendar/ics'
+  const icsUrl = linkPublico('/api/calendar/ics')
   // Google Calendar — link direto que abre o ecrã de "adicionar agenda por URL"
   const googleAddUrl = `https://calendar.google.com/calendar/u/0/r/settings/addbyurl?cid=${encodeURIComponent(icsUrl.replace(/^https?:\/\//, 'webcal://'))}`
 
