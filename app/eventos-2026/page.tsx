@@ -456,6 +456,16 @@ const ACOES_FOTO: Array<{ chave: keyof AcoesFoto; icones: number; label: string 
 
 // Tinge o emoji 📷 de verde quando o serviço de foto está concluído
 const FILTRO_VERDE = 'grayscale(1) sepia(1) hue-rotate(75deg) saturate(5) brightness(1.05)'
+// Tinge o emoji 🎬 conforme o estado do vídeo
+const FILTRO_LARANJA  = 'grayscale(1) sepia(1) hue-rotate(-12deg) saturate(7) brightness(1.05) drop-shadow(0 0 3px rgba(251, 146, 60, 0.85))'
+const FILTRO_VERMELHO = 'grayscale(1) sepia(1) hue-rotate(-45deg) saturate(9) brightness(0.95) drop-shadow(0 0 3px rgba(248, 113, 113, 0.85))'
+
+// Aguardar (ou sem estado) → vermelho · Entregue/S-SERVIÇO → verde · restantes (em curso) → laranja
+function filtroVideo(estado: string | null): string {
+  if (estado === 'Entregue' || estado === 'S/SERVIÇO') return FILTRO_VERDE + ' drop-shadow(0 0 3px rgba(74, 222, 128, 0.85))'
+  if (!estado || estado === 'Aguardar') return FILTRO_VERMELHO
+  return FILTRO_LARANJA
+}
 
 function dataCurta(v: string) {
   const dt = new Date(v.split('T')[0] + 'T00:00:00')
@@ -839,9 +849,9 @@ function Eventos2026Inner() {
                         {(() => {
                           const isE = (v: string | null) => v === 'Entregue' || v === 'S/SERVIÇO'
                           const items = [
-                            { label: '📷', val: e.fotos_edicao_estado, title: 'Fotos' },
-                            { label: '🎬', val: e.video_estado,        title: 'Vídeo' },
-                            { label: '📚', val: e.album_estado,        title: 'Álbum' },
+                            { label: '📷', val: e.fotos_edicao_estado, title: 'Fotos', colorir: false },
+                            { label: '🎬', val: e.video_estado,        title: 'Vídeo', colorir: true },
+                            { label: '📚', val: e.album_estado,        title: 'Álbum', colorir: false },
                           ]
                           // se ainda sem colunas Supabase, mostrar o boolean legado
                           const semColunas = items.every(i => i.val === null)
@@ -850,13 +860,17 @@ function Eventos2026Inner() {
                               ? <span className="text-[10px] text-green-400/70 tracking-wider">✓ Entregue</span>
                               : <span className="text-[10px] text-white/15 tracking-wider">Pendente</span>
                           }
-                          return items.map(({ label, val, title }) => (
-                            <span
-                              key={title}
-                              title={`${title}: ${val ?? 'Aguardar'}`}
-                              className={`text-[11px] ${isE(val) ? 'opacity-90' : 'opacity-20 grayscale'}`}
-                            >{label}</span>
-                          ))
+                          return items.map(({ label, val, title, colorir }) => {
+                            const filtro = colorir ? filtroVideo(val) : null
+                            return (
+                              <span
+                                key={title}
+                                title={`${title}: ${val ?? 'Aguardar'}`}
+                                className={`text-[11px] ${filtro ? 'opacity-95' : isE(val) ? 'opacity-90' : 'opacity-20 grayscale'}`}
+                                style={filtro ? { filter: filtro } : undefined}
+                              >{label}</span>
+                            )
+                          })
                         })()}
                       </div>
 
