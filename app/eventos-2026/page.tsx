@@ -853,24 +853,28 @@ function Eventos2026Inner() {
                             { label: '🎬', val: e.video_estado,        title: 'Vídeo', colorir: true },
                             { label: '📚', val: e.album_estado,        title: 'Álbum', colorir: false },
                           ]
-                          // se ainda sem colunas Supabase, mostrar o boolean legado
+                          // Sem colunas Supabase: fotos/álbum caem no boolean legado,
+                          // mas o vídeo é sempre mostrado (null conta como "Aguardar")
                           const semColunas = items.every(i => i.val === null)
-                          if (semColunas) {
-                            return e.fotos_enviadas
-                              ? <span className="text-[10px] text-green-400/70 tracking-wider">✓ Entregue</span>
-                              : <span className="text-[10px] text-white/15 tracking-wider">Pendente</span>
-                          }
-                          return items.map(({ label, val, title, colorir }) => {
-                            const filtro = colorir ? filtroVideo(val) : null
-                            return (
-                              <span
-                                key={title}
-                                title={`${title}: ${val ?? 'Aguardar'}`}
-                                className={`text-[11px] ${filtro ? 'opacity-95' : isE(val) ? 'opacity-90' : 'opacity-20 grayscale'}`}
-                                style={filtro ? { filter: filtro } : undefined}
-                              >{label}</span>
-                            )
-                          })
+                          return (
+                            <>
+                              {semColunas && (e.fotos_enviadas
+                                ? <span className="text-[10px] text-green-400/70 tracking-wider">✓ Entregue</span>
+                                : <span className="text-[10px] text-white/15 tracking-wider">Pendente</span>)}
+                              {items.map(({ label, val, title, colorir }) => {
+                                if (semColunas && !colorir) return null
+                                const filtro = colorir ? filtroVideo(val) : null
+                                return (
+                                  <span
+                                    key={title}
+                                    title={`${title}: ${val ?? 'Aguardar'}`}
+                                    className={`text-[11px] ${filtro ? 'opacity-95' : isE(val) ? 'opacity-90' : 'opacity-20 grayscale'}`}
+                                    style={filtro ? { filter: filtro } : undefined}
+                                  >{label}</span>
+                                )
+                              })}
+                            </>
+                          )
                         })()}
                       </div>
 
