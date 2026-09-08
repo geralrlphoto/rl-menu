@@ -230,6 +230,22 @@ export default function ClientePage() {
       alert('Erro ao guardar propostas: ' + error.message)
     }
     setSavingPropostas(false)
+    return !error
+  }
+
+  // Gerar Proposta: guarda sempre as propostas (incluindo as notas) antes de abrir
+  // o PDF, porque o PDF e renderizado no servidor a partir do que esta na BD.
+  const [gerandoProposta, setGerandoProposta] = useState(false)
+  const handleGerarProposta = async () => {
+    setGerandoProposta(true)
+    // Abre a janela ja aqui (sincrono) para nao ser bloqueada pelo browser
+    const win = window.open('', '_blank')
+    const ok = await handleSavePropostas()
+    setGerandoProposta(false)
+    if (!ok) { win?.close(); return }
+    const url = `/crm/${id}/proposta-pdf`
+    if (win) win.location.href = url
+    else window.open(url, '_blank')
   }
 
   const setProposta = (pi: number, key: keyof Proposta, value: string) => {
@@ -467,13 +483,14 @@ export default function ClientePage() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Proposta PDF</h2>
-              <p className="text-[11px] text-white/30 mt-1">Gera um PDF profissional com as 3 propostas</p>
+              <p className="text-[11px] text-white/30 mt-1">Guarda as propostas (com as notas) e gera o PDF</p>
             </div>
             <button
-              onClick={() => window.open(`/crm/${id}/proposta-pdf`, '_blank')}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all bg-gold/90 hover:bg-gold text-black"
+              onClick={handleGerarProposta}
+              disabled={gerandoProposta || savingPropostas}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all bg-gold/90 hover:bg-gold text-black disabled:opacity-40"
             >
-              <span>↗</span> Gerar Proposta
+              <span>↗</span> {gerandoProposta ? 'A guardar...' : 'Gerar Proposta'}
             </button>
           </div>
           {form.proposta_pdf_url ? (
