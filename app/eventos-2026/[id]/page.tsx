@@ -3725,6 +3725,7 @@ export default function EventoPage() {
   // Per-pessoa: { "PATRICIO FERREIRA": "2026-06-04", ... }
   const [notifFotoEnviadaBy, setNotifFotoEnviadaBy] = useState<Record<string, string>>({})
   const [notifVideoEnviadaBy, setNotifVideoEnviadaBy] = useState<Record<string, string>>({})
+  const [notifEditorFotosEnviadaBy, setNotifEditorFotosEnviadaBy] = useState<Record<string, string>>({})
   const [sendingNotifPerson, setSendingNotifPerson] = useState<Record<string, boolean>>({})
   const [relatoriosVideo, setRelatoriosVideo] = useState<any[]>([])
   const [copiedVideoIdx, setCopiedVideoIdx] = useState<number | null>(null)
@@ -3732,6 +3733,7 @@ export default function EventoPage() {
   const [sendingNotifVideo, setSendingNotifVideo] = useState(false)
   const [notifFotoErro, setNotifFotoErro] = useState<string | null>(null)
   const [notifVideoErro, setNotifVideoErro] = useState<string | null>(null)
+  const [notifEditorFotosErro, setNotifEditorFotosErro] = useState<string | null>(null)
   const [equipaFoto, setEquipaFoto] = useState<string[]>([])
   const [equipaVideo, setEquipaVideo] = useState<string[]>([])
   const [equipaEditorAlbum, setEquipaEditorAlbum] = useState<string[]>([])
@@ -4052,6 +4054,12 @@ export default function EventoPage() {
                 const map: Record<string, string> = {}
                 for (const n of ev.videografo) map[String(n)] = s.notif_video_enviada
                 setNotifVideoEnviadaBy(map)
+              }
+              if (s.notif_editor_fotos_enviada_by && typeof s.notif_editor_fotos_enviada_by === 'object') {
+                setNotifEditorFotosEnviadaBy(s.notif_editor_fotos_enviada_by as Record<string, string>)
+              } else if (s.notif_editor_fotos_enviada && ev.editor_fotos) {
+                // Migração do campo legacy usado em /fotos-selecao
+                setNotifEditorFotosEnviadaBy({ [String(ev.editor_fotos)]: s.notif_editor_fotos_enviada })
               }
               if (s.valor_fotografo  != null) setValorFotografo(s.valor_fotografo)
               if (s.valor_videografo != null) setValorVideografo(s.valor_videografo)
@@ -5053,6 +5061,88 @@ export default function EventoPage() {
                     })}
                     {notifVideoErro && (
                       <p className="text-[9px] text-red-400/70 leading-relaxed mt-1">⚠ {notifVideoErro}. Sem email? Adiciona na página Equipas de Trabalho.</p>
+                    )}
+                  </div>
+                )
+              })()}
+
+              {/* Notificação Editor de Fotos — 1 linha por nome */}
+              {(() => {
+                const nomes = equipaEditorFotos
+                const hasTeam = nomes.length > 0
+                return (
+                  <div className="flex flex-col gap-2 rounded-xl p-4" style={{ background: 'rgba(160,100,240,0.04)', border: '1px solid rgba(160,100,240,0.15)' }}>
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-white/30">Editor de Fotos</p>
+                    {!hasTeam && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-white/20 flex-1">Pendente</span>
+                        <span className="px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border bg-white/[0.03] text-white/20 border-white/10">🔒 Sem editor</span>
+                      </div>
+                    )}
+                    {nomes.map((nome) => {
+                      const enviadaEm = notifEditorFotosEnviadaBy[nome] ?? null
+                      const sending = sendingNotifPerson[`editorFotos::${nome}`] ?? false
+                      return (
+                        <div key={nome} className="flex items-center gap-2 py-1.5 border-t border-white/[0.04] first:border-t-0">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] text-purple-300/80 truncate">{nome}</p>
+                            <p className="text-[10px] font-mono mt-0.5">
+                              {enviadaEm
+                                ? <span className="text-green-400/70">{new Date(enviadaEm).toLocaleDateString('pt-PT')}</span>
+                                : <span className="text-white/20">Pendente</span>
+                              }
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {enviadaEm && (
+                              <button
+                                onClick={async () => {
+                                  if (!evento?.referencia) return
+                                  const next = { ...notifEditorFotosEnviadaBy }
+                                  delete next[nome]
+                                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_editor_fotos_enviada_by: next } } }) })
+                                  setNotifEditorFotosEnviadaBy(next)
+                                }}
+                                className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                                title="Repor como Pendente"
+                              >✕</button>
+                            )}
+                            <button
+                              disabled={sending}
+                              onClick={async () => {
+                                if (!evento?.referencia || sending) return
+                                setSendingNotifPerson(s => ({ ...s, [`editorFotos::${nome}`]: true }))
+                                setNotifEditorFotosErro(null)
+                                const today = new Date().toISOString().split('T')[0]
+                                const emailRes = await fetch('/api/send-freelancer-notification', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ nomes: [nome], tipo: 'editor_fotos', referencia: evento.referencia, data_evento: evento.data_evento, local: evento.local, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo }),
+                                })
+                                const emailData = await emailRes.json()
+                                if (emailRes.ok && emailData.ok) {
+                                  const next = { ...notifEditorFotosEnviadaBy, [nome]: today }
+                                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_editor_fotos_enviada_by: next } } }) })
+                                  setNotifEditorFotosEnviadaBy(next)
+                                } else {
+                                  setNotifEditorFotosErro(emailData.error ?? 'Erro ao enviar')
+                                }
+                                setSendingNotifPerson(s => ({ ...s, [`editorFotos::${nome}`]: false }))
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
+                                enviadaEm ? 'bg-green-500/15 text-green-400/80 border-green-500/25 hover:bg-green-500/25'
+                                : sending ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
+                                : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
+                              }`}
+                            >
+                              {sending ? '...' : enviadaEm ? '↻ Reenviar' : 'Notificar'}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {notifEditorFotosErro && (
+                      <p className="text-[9px] text-red-400/70 leading-relaxed mt-1">⚠ {notifEditorFotosErro}. Sem email? Adiciona na página Equipas de Trabalho.</p>
                     )}
                   </div>
                 )

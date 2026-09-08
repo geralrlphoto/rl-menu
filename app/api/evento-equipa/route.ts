@@ -294,6 +294,63 @@ export async function PATCH(req: NextRequest) {
     }
   }
 
+  // ── Sync freelancer_edicao quando o Editor de Fotos muda ──────────────────
+  // O portal do membro (tab "Edição Fotos") lê de `freelancer_edicao`, filtrado
+  // por `evento_equipa.editor_fotos`. Sem registo em `freelancer_edicao` o
+  // trabalho não aparece lá — antes só era criado a partir de /fotos-selecao.
+  // Ao escolher o editor na ficha do evento, criamos aqui o registo.
+  if (editor_fotos !== undefined) {
+    try {
+      const newEditorFotos: string[] = Array.isArray(editor_fotos) ? editor_fotos : (editor_fotos ? [editor_fotos] : [])
+      const addedEditores = newEditorFotos.filter(n => n && !oldEditorFotos.includes(n))
+
+      if (addedEditores.length) {
+        // Nome que aparece no card do portal: cliente (noivos) do evento
+        let nomeJob = ''
+        if (referencia) {
+          for (const table of ['eventos_2026', 'eventos_2027']) {
+            const { data: ev } = await supabase
+              .from(table).select('cliente').eq('referencia', referencia).limit(1).maybeSingle()
+            if (ev?.cliente) { nomeJob = String(ev.cliente); break }
+          }
+        }
+        if (!nomeJob) nomeJob = (local ?? '').trim() || referencia || 'Sem nome'
+
+        for (const name of addedEditores) {
+          const { data: fl } = await supabase
+            .from('freelancers').select('id').ilike('nome', name).maybeSingle()
+          if (!fl) continue
+
+          // Idempotente — não duplica se já existir trabalho para esta referência
+          const existsQuery = supabase
+            .from('freelancer_edicao').select('id').eq('freelancer_id', fl.id)
+          const { data: jaExiste } = await (referencia
+            ? existsQuery.eq('referencia', referencia)
+            : existsQuery.eq('nome', nomeJob)
+          ).limit(1).maybeSingle()
+          if (jaExiste) continue
+
+          const novoJob: any = {
+            freelancer_id:  fl.id,
+            nome:           nomeJob,
+            status:         'NOVO TRABALHO',
+            data_casamento: data_casamento || null,
+            referencia:     referencia ?? null,
+            local:          local ?? null,
+          }
+          const { error: insErr } = await supabase.from('freelancer_edicao').insert(novoJob)
+          if (insErr && /column .*local/i.test(insErr.message ?? '')) {
+            const { local: _l, ...semLocal } = novoJob
+            await supabase.from('freelancer_edicao').insert(semLocal)
+          }
+        }
+      }
+    } catch (err) {
+      // Não falha o upsert da equipa se a tabela/colunas não existirem
+      console.error('[evento-equipa PATCH] sync freelancer_edicao:', err)
+    }
+  }
+
   // ── Notificações para membros recém-adicionados ─────────────────────
   // Por cada papel: encontra os nomes adicionados (diff old vs new) e cria
   // entrada em freelancer_notificacoes (sino do portal do freelancer).
