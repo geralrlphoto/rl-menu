@@ -248,6 +248,28 @@ export default function ClientePage() {
     else window.open(url, '_blank')
   }
 
+  // Reverter Proposta: retira o botao do PDF do portal da reuniao (o link deixa de
+  // ficar visivel para o cliente) para se poder gerar uma proposta nova.
+  const [revertendoProposta, setRevertendoProposta] = useState(false)
+  const [confirmReverter, setConfirmReverter] = useState(false)
+  const handleReverterProposta = async () => {
+    if (!confirmReverter) {
+      setConfirmReverter(true)
+      setTimeout(() => setConfirmReverter(false), 4000)
+      return
+    }
+    setRevertendoProposta(true)
+    const { error } = await supabase.from('crm_contacts').update({ proposta_pdf_url: null }).eq('id', id)
+    if (error) {
+      alert('Erro ao reverter proposta: ' + error.message)
+    } else {
+      setForm((f: Contact) => ({ ...f, proposta_pdf_url: '' }))
+      setOriginal((f: Contact) => ({ ...f, proposta_pdf_url: '' }))
+    }
+    setConfirmReverter(false)
+    setRevertendoProposta(false)
+  }
+
   const setProposta = (pi: number, key: keyof Proposta, value: string) => {
     setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, [key]: value } : p))
   }
@@ -499,13 +521,26 @@ export default function ClientePage() {
                 <span className="text-gold text-sm">✓</span>
                 <span className="text-[11px] text-gold/80">Botão PDF visível para o cliente</span>
               </div>
-              <a href={form.proposta_pdf_url} target="_blank" rel="noopener noreferrer"
-                className="text-[11px] text-white/30 hover:text-white/60 underline transition-colors">
-                Ver →
-              </a>
+              <div className="flex items-center gap-3">
+                <a href={form.proposta_pdf_url} target="_blank" rel="noopener noreferrer"
+                  className="text-[11px] text-white/30 hover:text-white/60 underline transition-colors">
+                  Ver →
+                </a>
+                <button
+                  onClick={handleReverterProposta}
+                  disabled={revertendoProposta}
+                  className={`text-[11px] px-3 py-1.5 rounded-lg transition-all disabled:opacity-40 ${
+                    confirmReverter
+                      ? 'bg-red-500/15 text-red-300 border border-red-500/40'
+                      : 'text-white/35 hover:text-red-300 border border-white/10 hover:border-red-500/30'
+                  }`}
+                >
+                  {revertendoProposta ? 'A reverter...' : confirmReverter ? 'Confirmar?' : '↩ Reverter Proposta'}
+                </button>
+              </div>
             </div>
           ) : (
-            <p className="text-[11px] text-white/20 italic">Gera a proposta para o link ser criado automaticamente.</p>
+            <p className="text-[11px] text-white/20 italic">Sem proposta no portal da reunião. Gera a proposta para o link ser criado automaticamente.</p>
           )}
         </div>
 
