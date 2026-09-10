@@ -30,7 +30,7 @@ const CSS = `
 
 .self .eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--g);display:inline-flex;gap:.8em;align-items:center;}
 .self .eyebrow::before{content:"";width:34px;height:1px;background:var(--g);opacity:.6;}
-.self .wrap{width:100%;max-width:1180px;margin:0 auto;padding-inline:var(--pad);}
+.self .wrap{width:100%;max-width:900px;margin:0 auto;padding-inline:var(--pad);text-align:center;}
 .self h1,.self h2{font-family:var(--fd);font-weight:200;line-height:1.04;letter-spacing:-.02em;}
 
 .self .phero{padding:clamp(90px,15vh,160px) var(--pad) clamp(30px,5vh,50px);text-align:center;}
@@ -41,22 +41,22 @@ const CSS = `
 
 .self .info{display:grid;grid-template-columns:1fr;gap:16px;margin:clamp(30px,5vh,50px) 0 0;}
 @media(min-width:720px){.self .info{grid-template-columns:repeat(2,1fr);}}
-.self .icard{border:1px solid var(--line-soft);border-radius:10px;padding:28px 24px;background:var(--ink-2);}
+.self .icard{border:1px solid var(--line-soft);border-radius:10px;padding:30px 24px;background:var(--ink-2);text-align:center;}
 .self .icard .ic{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);}
 .self .icard .iv{font-family:var(--fd);font-weight:200;font-size:clamp(28px,3vw,40px);margin:14px 0 8px;line-height:1;}
-.self .icard .id{color:var(--tx-mid);font-size:13.5px;line-height:1.6;}
+.self .icard .id{color:var(--tx-mid);font-size:13.5px;line-height:1.6;max-width:34ch;margin:0 auto;}
 
 .self .block{margin:clamp(50px,8vh,90px) 0 clamp(70px,10vh,120px);}
-.self .block > .lbl{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);display:block;margin-bottom:16px;}
+.self .block > .lbl{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);display:block;margin-bottom:20px;text-align:center;}
 .self .seg{display:grid;grid-template-columns:1fr;gap:12px;}
 @media(min-width:620px){.self .seg{grid-template-columns:1fr 1fr;}}
-.self .seg button{display:block;width:100%;text-align:left;cursor:pointer;border:1px solid var(--line-soft);border-radius:10px;padding:26px 28px;background:transparent;transition:border-color .4s var(--ease),background-color .4s var(--ease);}
+.self .seg button{display:block;width:100%;text-align:center;cursor:pointer;border:1px solid var(--line-soft);border-radius:10px;padding:30px 28px;background:transparent;transition:border-color .4s var(--ease),background-color .4s var(--ease);}
 .self .seg button:hover{border-color:var(--line);}
 .self .seg button .t{font-family:var(--fd);font-weight:300;font-size:24px;color:var(--tx);display:block;transition:color .4s var(--ease);}
 .self .seg button .d{font-family:var(--fm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-dim);margin-top:10px;display:block;}
 .self .seg button.on{border-color:var(--g);background:rgba(216,190,147,.06);}
 .self .seg button.on .t{color:var(--g);}
-.self .chosen{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-mid);margin-top:20px;}
+.self .chosen{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-mid);margin-top:22px;text-align:center;}
 .self .chosen b{color:var(--g);font-weight:400;}
 
 .self .r{opacity:0;transform:translateY(26px);transition:opacity 1s var(--ease),transform 1s var(--ease);}
