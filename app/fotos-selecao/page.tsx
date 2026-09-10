@@ -773,6 +773,73 @@ function SelecaoCard({ row, onOpen, onDelete, confirmDelete, setConfirmDelete, e
   )
 }
 
+// ── Modal FORM. SELC. FOTOS ───────────────────────────────────────────────────
+function FormSelecaoModal({ onClose }: { onClose: () => void }) {
+  const [tipo, setTipo] = useState<'batizado' | 'casamento' | null>(null)
+
+  const opcoes: { key: 'batizado' | 'casamento'; label: string; icon: string }[] = [
+    { key: 'casamento', label: 'Casamento', icon: '◈' },
+    { key: 'batizado',  label: 'Batizado',  icon: '✦' },
+  ]
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+      <div className="relative z-10 bg-[#111] border border-white/[0.08] rounded-3xl w-full max-w-xl shadow-2xl overflow-hidden"
+        onClick={e => e.stopPropagation()}>
+
+        {/* Barra dourada no topo */}
+        <div className="h-0.5 w-full bg-gold/60" />
+
+        {/* Header */}
+        <div className="px-8 pt-7 pb-5 border-b border-white/[0.05] flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[9px] tracking-[0.5em] text-white/20 uppercase mb-2">RL Photo.Video</p>
+            <h2 className="text-2xl font-light tracking-[0.15em] text-white uppercase">Form. Selc. Fotos</h2>
+            <div className="mt-3 h-px w-10 bg-gold/50" />
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 shrink-0 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white hover:border-white/30 transition-all text-sm">✕</button>
+        </div>
+
+        {/* Corpo */}
+        <div className="px-8 py-7 flex flex-col gap-7">
+          <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl px-6 py-5">
+            <p className="text-sm font-light leading-relaxed tracking-wide text-white/70">
+              Chegou o momento de escolher as vossas fotografias para editarmos e entregar em alta qualidade.
+            </p>
+            <p className="text-sm font-light leading-relaxed tracking-wide text-gold/70 mt-3">
+              Prevemos entregar a seleção em 30 dias úteis após o vosso envio.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-[9px] tracking-[0.35em] text-white/25 uppercase mb-3">Escolher tipo de evento</p>
+            <div className="grid grid-cols-2 gap-3">
+              {opcoes.map(op => (
+                <button key={op.key} onClick={() => setTipo(op.key)}
+                  className={`rounded-2xl border px-5 py-6 flex flex-col items-center gap-2 transition-all ${
+                    tipo === op.key
+                      ? 'border-gold/60 bg-gold/10 text-gold'
+                      : 'border-white/[0.08] bg-white/[0.02] text-white/50 hover:border-gold/30 hover:text-white/80'
+                  }`}>
+                  <span className="text-lg">{op.icon}</span>
+                  <span className="text-[11px] tracking-[0.3em] uppercase">{op.label}</span>
+                </button>
+              ))}
+            </div>
+            {tipo && (
+              <p className="text-[10px] tracking-[0.3em] text-gold/50 uppercase mt-4 text-center">
+                Selecionado: {tipo}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ── Página principal ──────────────────────────────────────────────────────────
 function FotosSelecaoPageInner() {
   const [rows, setRows]             = useState<FotoSelecao[]>([])
@@ -784,6 +851,7 @@ function FotosSelecaoPageInner() {
   const [search, setSearch]         = useState(searchParams.get('ref') ?? '')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [fichaOpen, setFichaOpen]   = useState<FotoSelecao | null>(null)
+  const [formOpen, setFormOpen]     = useState(false)
   // editor + estado por notion_page_id
   const [editorMap, setEditorMap]         = useState<Record<string, string>>({})
   const [editorAlbumMap, setEditorAlbumMap] = useState<Record<string, string>>({})
@@ -909,6 +977,10 @@ function FotosSelecaoPageInner() {
           <div className="mt-4 h-px w-12 bg-gold/50" />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <button onClick={() => setFormOpen(true)}
+            className="flex items-center gap-2 text-[11px] tracking-widest text-gold/80 hover:text-gold px-4 py-2.5 rounded-xl border border-gold/30 hover:border-gold/60 bg-gold/[0.07] hover:bg-gold/[0.12] transition-all uppercase">
+            Form. Selc. Fotos
+          </button>
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar..."
             className="bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/60 focus:outline-none focus:border-gold/30 w-48 placeholder:text-white/15 transition-colors" />
           <button onClick={() => loadRows(true)} disabled={refreshing}
@@ -960,6 +1032,8 @@ function FotosSelecaoPageInner() {
           </div>
         </>
       )}
+
+      {formOpen && <FormSelecaoModal onClose={() => setFormOpen(false)} />}
 
       {fichaOpen && (
         <FichaModal
