@@ -242,6 +242,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/webhook-tally-fotos-convidados') ||
     pathname.startsWith('/api/photo-orders') ||
     pathname.startsWith('/adquirir-fotografias') ||
+    pathname.startsWith('/form-selecao-fotos') ||
     pathname.startsWith('/ticket-fotos-dia') ||
     pathname.startsWith('/api/ticket-') ||
     pathname.startsWith('/registar-pagamento') ||
