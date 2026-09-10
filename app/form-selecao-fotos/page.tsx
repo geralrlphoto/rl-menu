@@ -36,7 +36,7 @@ export default function FormSelecaoFotosPage() {
 
   function escolher(key: Tipo) {
     setTipo(key)
-    if (key === 'casamento') router.push('/form-selecao-fotos/casamento')
+    router.push(`/form-selecao-fotos/${key}`)
   }
 
   return (

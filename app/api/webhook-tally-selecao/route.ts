@@ -32,6 +32,7 @@ export async function POST(req: NextRequest) {
       referencia:    getField(fields, 'REFERÊNCIA DO EVENTOS')  ?? null,
       date:          getField(fields, 'DATA DO CASAMENTO')      ?? null,
       data_entrada:  today,
+      preparacao:    null,
       sessao_noivos: getField(fields, 'SESSÃO NOIVOS')          ?? null,
       fotos_noiva:   getField(fields, 'FOTOS DA NOIVA')         ?? null,
       fotos_noivo:   getField(fields, 'FOTOS DO NOIVO')         ?? null,

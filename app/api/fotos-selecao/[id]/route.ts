@@ -21,7 +21,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const allowed = [
     'nome_noivos', 'referencia', 'date', 'data_entrada',
-    'sessao_noivos', 'fotos_noiva', 'fotos_noivo', 'convidados',
+    'preparacao', 'sessao_noivos', 'fotos_noiva', 'fotos_noivo', 'convidados',
     'cerimonia', 'bolo_bouquet', 'sala_animacao', 'fotos_album', 'detalhes',
   ]
   const updates: Record<string, any> = {}

@@ -10,6 +10,7 @@ type FotoSelecao = {
   referencia: string
   date: string | null
   data_entrada: string | null
+  preparacao: string
   sessao_noivos: string
   fotos_noiva: string
   fotos_noivo: string
@@ -85,6 +86,7 @@ function EditCell({ value, field, rowId, onSaved, type = 'text', placeholder = '
 
 // ── Print / PDF ───────────────────────────────────────────────────────────────
 const FICHA_SECTIONS = [
+  { label: 'Preparação',     field: 'preparacao' as const },
   { label: 'Sessão Noivos',  field: 'sessao_noivos' as const },
   { label: 'Fotos da Noiva', field: 'fotos_noiva' as const },
   { label: 'Fotos do Noivo', field: 'fotos_noivo' as const },

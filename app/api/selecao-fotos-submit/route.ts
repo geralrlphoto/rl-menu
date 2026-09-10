@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
       referencia:    clean(body.referencia),
       date:          clean(body.date),
       data_entrada:  today,
+      preparacao:    clean(body.preparacao),
       sessao_noivos: clean(body.sessao_noivos),
       fotos_noiva:   clean(body.fotos_noiva),
       fotos_noivo:   clean(body.fotos_noivo),

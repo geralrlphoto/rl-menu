@@ -12,6 +12,7 @@ export type SelecaoFotos = {
   referencia: string | null
   date: string | null
   data_entrada: string
+  preparacao: string | null
   sessao_noivos: string | null
   fotos_noiva: string | null
   fotos_noivo: string | null
@@ -39,6 +40,7 @@ export async function saveToNotion(data: SelecaoFotos) {
   const properties: Record<string, any> = {
     'NOME DOS NOIVOS':      { title: [{ text: { content: data.nome_noivos } }] },
     'REFERÊNCIA DO EVENTO': rt(data.referencia),
+    'PREPARAÇÃO':           rt(data.preparacao),
     'SESSÃO NOIVOS':        rt(data.sessao_noivos),
     'FOTOS DA NOIVA':       rt(data.fotos_noiva),
     'FOTOS DO NOIVO':       rt(data.fotos_noivo),
@@ -55,22 +57,36 @@ export async function saveToNotion(data: SelecaoFotos) {
   }
   properties['Data  de Entrada'] = { date: { start: data.data_entrada } }
 
-  const res = await fetch('https://api.notion.com/v1/pages', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${NOTION_TOKEN}`,
-      'Notion-Version': '2022-06-28',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      parent: { database_id: NOTION_DB_ID },
-      properties,
-    }),
-  })
+  async function criar(props: Record<string, any>) {
+    return fetch('https://api.notion.com/v1/pages', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${NOTION_TOKEN}`,
+        'Notion-Version': '2022-06-28',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ parent: { database_id: NOTION_DB_ID }, properties: props }),
+    })
+  }
 
+  let res = await criar(properties)
+
+  // A base do Notion pode ainda não ter a propriedade PREPARAÇÃO (usada só no
+  // batizado). Nesse caso o Notion recusa a página inteira — repete sem ela.
   if (!res.ok) {
     const err = await res.text()
-    console.error('[selecao-fotos] Notion error:', err)
+    if (err.includes('PREPARAÇÃO') || err.includes('is not a property that exists')) {
+      const { 'PREPARAÇÃO': _fora, ...resto } = properties
+      console.warn('[selecao-fotos] Notion sem a propriedade PREPARAÇÃO — a gravar sem essa secção')
+      res = await criar(resto)
+    } else {
+      console.error('[selecao-fotos] Notion error:', err)
+      return
+    }
+  }
+
+  if (!res.ok) {
+    console.error('[selecao-fotos] Notion error:', await res.text())
   } else {
     const page = await res.json()
     console.log('[selecao-fotos] Notion page created:', page.id)
