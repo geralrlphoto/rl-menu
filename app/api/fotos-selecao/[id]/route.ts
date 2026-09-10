@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { normalizarNumeros } from '@/lib/selecao-fotos-save'
 
 function db() {
   return createClient(
@@ -24,9 +25,17 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     'preparacao', 'sessao_noivos', 'fotos_noiva', 'fotos_noivo', 'convidados',
     'cerimonia', 'bolo_bouquet', 'sala_animacao', 'fotos_album', 'detalhes',
   ]
+  // Colunas de números de fotografias: ficam sempre separadas por "; "
+  const colunasFotos = new Set([
+    'preparacao', 'sessao_noivos', 'fotos_noiva', 'fotos_noivo', 'convidados',
+    'cerimonia', 'bolo_bouquet', 'sala_animacao', 'fotos_album',
+  ])
+
   const updates: Record<string, any> = {}
   for (const key of allowed) {
-    if (key in body) updates[key] = body[key] ?? null
+    if (!(key in body)) continue
+    const valor = body[key] ?? null
+    updates[key] = colunasFotos.has(key) ? normalizarNumeros(valor) : valor
   }
 
   const { error } = await db().from('fotos_selecao').update(updates).eq('id', id)

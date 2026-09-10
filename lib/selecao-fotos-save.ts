@@ -24,6 +24,28 @@ export type SelecaoFotos = {
   detalhes: string | null
 }
 
+// Colunas com números de fotografias (detalhes é texto livre, fica de fora).
+const COLUNAS_FOTOS = [
+  'preparacao', 'sessao_noivos', 'fotos_noiva', 'fotos_noivo', 'convidados',
+  'cerimonia', 'bolo_bouquet', 'sala_animacao', 'fotos_album',
+] as const
+
+// Os números chegam separados por vírgula, ponto e vírgula ou linha; ficam
+// sempre guardados separados por "; ".
+export function normalizarNumeros(valor: string | null): string | null {
+  if (!valor) return valor
+  const partes = valor.split(/[;,\r\n]+/).map(v => v.trim()).filter(Boolean)
+  return partes.length ? partes.join('; ') : null
+}
+
+export function normalizarSelecao(data: SelecaoFotos): SelecaoFotos {
+  const out: SelecaoFotos = { ...data }
+  for (const col of COLUNAS_FOTOS) {
+    out[col] = normalizarNumeros(out[col])
+  }
+  return out
+}
+
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -94,7 +116,9 @@ export async function saveToNotion(data: SelecaoFotos) {
 }
 
 // Grava no Supabase e, sem bloquear, cria a página no Notion.
-export async function saveSelecao(mapped: SelecaoFotos, tag = 'selecao-fotos') {
+export async function saveSelecao(entrada: SelecaoFotos, tag = 'selecao-fotos') {
+  const mapped = normalizarSelecao(entrada)
+
   const { data: saved, error } = await db()
     .from('fotos_selecao')
     .insert(mapped)

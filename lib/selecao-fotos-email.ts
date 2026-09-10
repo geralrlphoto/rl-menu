@@ -29,7 +29,7 @@ const LABELS_BATIZADO: Record<string, string> = {
 
 function contar(valor: string | null) {
   if (!valor) return 0
-  return valor.split(',').map(v => v.trim()).filter(Boolean).length
+  return valor.split(/[;,]/).map(v => v.trim()).filter(Boolean).length
 }
 
 export async function enviarEmailAdminSelecao(data: SelecaoFotos, tipo: 'casamento' | 'batizado') {

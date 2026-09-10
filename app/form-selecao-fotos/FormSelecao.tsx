@@ -94,7 +94,7 @@ export default function FormSelecao({
 
     const payload: Record<string, string> = { ...dados, tipo }
     for (const s of seccoes) {
-      payload[s.name] = fotos[s.name].map(v => v.trim()).filter(Boolean).join(', ')
+      payload[s.name] = fotos[s.name].map(v => v.trim()).filter(Boolean).join('; ')
     }
 
     setSending(true)
