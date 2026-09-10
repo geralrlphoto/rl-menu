@@ -73,6 +73,23 @@ export const CSS = `
 .self .field input[type=date]{color-scheme:dark;cursor:pointer;}
 .self .field .hint{font-family:var(--fm);font-size:10px;letter-spacing:.1em;color:var(--tx-dim);margin-top:10px;}
 
+/* cards das secções — abrem para mostrar a lista de fotografias */
+.self .cards{display:grid;grid-template-columns:1fr;gap:14px;}
+@media(min-width:620px){.self .cards{grid-template-columns:1fr 1fr;}}
+.self .scard{border:1px solid var(--line-soft);border-radius:10px;background:var(--ink-2);overflow:hidden;transition:border-color .4s var(--ease);}
+.self .scard:hover{border-color:var(--line);}
+.self .scard.has{border-color:rgba(216,190,147,.32);}
+.self .scard.open{grid-column:1/-1;border-color:var(--g);}
+.self .scard__head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:16px;text-align:left;
+  padding:24px 26px;background:transparent;border:none;cursor:pointer;}
+.self .scard__t{font-family:var(--fd);font-weight:300;font-size:clamp(17px,1.7vw,21px);color:var(--tx);}
+.self .scard.open .scard__t,.self .scard.has .scard__t{color:var(--g);}
+.self .scard__t .opt{font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-dim);margin-left:.6em;}
+.self .scard__meta{display:flex;align-items:center;gap:16px;flex:none;}
+.self .chev{font-family:var(--fd);font-size:20px;color:var(--tx-dim);transition:transform .4s var(--ease),color .4s var(--ease);display:inline-block;}
+.self .scard.open .chev{transform:rotate(90deg);color:var(--g);}
+.self .scard__body{padding:0 26px 26px;}
+
 /* lista de fotografias por secção (mesmo padrão de /adquirir-fotografias) */
 .self .fhead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
 .self .fhead label{margin-bottom:0;}

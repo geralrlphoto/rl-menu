@@ -36,6 +36,7 @@ export default function FormSelecaoCasamentoPage() {
   const [sending, setSending] = useState(false)
   const [sent, setSent]     = useState(false)
   const [erro, setErro]     = useState('')
+  const [abertas, setAbertas] = useState<string[]>([])
   const ran = useRef(false)
 
   useEffect(() => {
@@ -55,8 +56,13 @@ export default function FormSelecaoCasamentoPage() {
   const preenchidas = (name: string) => fotos[name].filter(v => v.trim()).length
   const total = SECCOES.reduce((acc, s) => acc + preenchidas(s.name), 0)
 
+  function toggle(name: string) {
+    setAbertas(p => p.includes(name) ? p.filter(n => n !== name) : [...p, name])
+  }
+
   function addFoto(name: string) {
     setFotos(p => ({ ...p, [name]: [...p[name], ''] }))
+    setAbertas(p => p.includes(name) ? p : [...p, name])
   }
   function setFoto(name: string, i: number, valor: string) {
     setFotos(p => ({ ...p, [name]: p[name].map((v, j) => j === i ? valor : v) }))
@@ -72,6 +78,7 @@ export default function FormSelecaoCasamentoPage() {
     const emFalta = SECCOES.filter(s => s.required && preenchidas(s.name) === 0)
     if (emFalta.length) {
       setErro(`Falta indicar fotografias em: ${emFalta.map(s => s.label).join(', ')}.`)
+      setAbertas(p => [...new Set([...p, ...emFalta.map(s => s.name)])])
       return
     }
 
@@ -175,42 +182,54 @@ export default function FormSelecaoCasamentoPage() {
                     onChange={e => setDados(d => ({ ...d, referencia: e.target.value }))} />
                 </div>
 
-                {SECCOES.map(s => {
-                  const n = preenchidas(s.name)
-                  return (
-                    <div className="field" key={s.name}>
-                      <div className="fhead">
-                        <label>
-                          {s.label} {!s.required && <span className="opt">(opcional)</span>}
-                        </label>
-                        <span className={n ? 'count has' : 'count'}>{plural(n)}</span>
+                <div className="cards">
+                  {SECCOES.map(s => {
+                    const n = preenchidas(s.name)
+                    const aberta = abertas.includes(s.name)
+                    return (
+                      <div key={s.name} className={`scard${aberta ? ' open' : ''}${n ? ' has' : ''}`}>
+                        <button type="button" className="scard__head" onClick={() => toggle(s.name)}
+                          aria-expanded={aberta}>
+                          <span className="scard__t">
+                            {s.label}
+                            {!s.required && <span className="opt">Opcional</span>}
+                          </span>
+                          <span className="scard__meta">
+                            <span className={n ? 'count has' : 'count'}>{plural(n)}</span>
+                            <span className="chev">›</span>
+                          </span>
+                        </button>
+
+                        {aberta && (
+                          <div className="scard__body">
+                            {fotos[s.name].length > 0 ? (
+                              <div className="fotolist">
+                                {fotos[s.name].map((valor, i) => (
+                                  <div className="fotorow" key={i}>
+                                    <span className="idx">{i + 1}.</span>
+                                    <input type="text" placeholder="LG-0001" value={valor}
+                                      onChange={e => setFoto(s.name, i, e.target.value)}
+                                      onKeyDown={e => {
+                                        if (e.key === 'Enter') { e.preventDefault(); addFoto(s.name) }
+                                      }} />
+                                    <button type="button" className="rm" title="Remover"
+                                      onClick={() => removeFoto(s.name, i)}>✕</button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="vazio">Sem fotografias nesta secção.</p>
+                            )}
+
+                            <button type="button" className="addfoto" onClick={() => addFoto(s.name)}>
+                              + Adicionar fotografia
+                            </button>
+                          </div>
+                        )}
                       </div>
-
-                      {fotos[s.name].length > 0 ? (
-                        <div className="fotolist">
-                          {fotos[s.name].map((valor, i) => (
-                            <div className="fotorow" key={i}>
-                              <span className="idx">{i + 1}.</span>
-                              <input type="text" placeholder="LG-0001" value={valor}
-                                onChange={e => setFoto(s.name, i, e.target.value)}
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter') { e.preventDefault(); addFoto(s.name) }
-                                }} />
-                              <button type="button" className="rm" title="Remover"
-                                onClick={() => removeFoto(s.name, i)}>✕</button>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="vazio">Sem fotografias nesta secção.</p>
-                      )}
-
-                      <button type="button" className="addfoto" onClick={() => addFoto(s.name)}>
-                        + Adicionar fotografia
-                      </button>
-                    </div>
-                  )
-                })}
+                    )
+                  })}
+                </div>
 
                 <div className="totalgeral">
                   <span className="k">Total escolhido</span>
