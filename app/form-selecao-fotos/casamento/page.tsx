@@ -37,6 +37,7 @@ export default function FormSelecaoCasamentoPage() {
   const [sent, setSent]     = useState(false)
   const [erro, setErro]     = useState('')
   const [abertas, setAbertas] = useState<string[]>([])
+  const [aCarregar, setACarregar] = useState<string[]>([])
   const ran = useRef(false)
 
   useEffect(() => {
@@ -57,7 +58,12 @@ export default function FormSelecaoCasamentoPage() {
   const total = SECCOES.reduce((acc, s) => acc + preenchidas(s.name), 0)
 
   function toggle(name: string) {
-    setAbertas(p => p.includes(name) ? p.filter(n => n !== name) : [...p, name])
+    const abrir = !abertas.includes(name)
+    setAbertas(p => abrir ? [...p, name] : p.filter(n => n !== name))
+    if (!abrir) return
+    // barra de carregamento enquanto a lista da secção não aparece
+    setACarregar(p => [...p, name])
+    setTimeout(() => setACarregar(p => p.filter(n => n !== name)), 750)
   }
 
   function addFoto(name: string) {
@@ -202,7 +208,12 @@ export default function FormSelecaoCasamentoPage() {
 
                         {aberta && (
                           <div className="scard__body">
-                            {fotos[s.name].length > 0 ? (
+                            {aCarregar.includes(s.name) ? (
+                              <div className="loading">
+                                <span className="track"><span className="bar" /></span>
+                                <p className="lbl">A carregar fotografias</p>
+                              </div>
+                            ) : fotos[s.name].length > 0 ? (
                               <div className="fotolist">
                                 {fotos[s.name].map((valor, i) => (
                                   <div className="fotorow" key={i}>
@@ -221,9 +232,11 @@ export default function FormSelecaoCasamentoPage() {
                               <p className="vazio">Sem fotografias nesta secção.</p>
                             )}
 
-                            <button type="button" className="addfoto" onClick={() => addFoto(s.name)}>
-                              + Adicionar fotografia
-                            </button>
+                            {!aCarregar.includes(s.name) && (
+                              <button type="button" className="addfoto" onClick={() => addFoto(s.name)}>
+                                + Adicionar fotografia
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>

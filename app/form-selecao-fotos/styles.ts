@@ -89,6 +89,11 @@ export const CSS = `
 .self .chev{font-family:var(--fd);font-size:20px;color:var(--tx-dim);transition:transform .4s var(--ease),color .4s var(--ease);display:inline-block;}
 .self .scard.open .chev{transform:rotate(90deg);color:var(--g);}
 .self .scard__body{padding:0 26px 26px;}
+.self .loading{padding:4px 0 18px;}
+.self .loading .track{height:2px;background:var(--line-soft);border-radius:2px;overflow:hidden;}
+.self .loading .bar{display:block;height:100%;width:100%;background:var(--g);transform-origin:left;animation:selfload .7s var(--ease) forwards;}
+.self .loading .lbl{font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-dim);margin-top:12px;}
+@keyframes selfload{from{transform:scaleX(0);}to{transform:scaleX(1);}}
 
 /* lista de fotografias por secção (mesmo padrão de /adquirir-fotografias) */
 .self .fhead{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
