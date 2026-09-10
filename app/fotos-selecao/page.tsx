@@ -689,6 +689,15 @@ function FichaModal({ row, onClose, onSaved }: {
   )
 }
 
+type Grupo = 'todos' | 'nova' | 'atribuido' | 'entregue'
+
+const ABAS: { key: Grupo; label: string }[] = [
+  { key: 'todos',     label: 'Todos' },
+  { key: 'nova',      label: 'Nova Entrada' },
+  { key: 'atribuido', label: 'Atribuído' },
+  { key: 'entregue',  label: 'Entregue' },
+]
+
 const STATUS_EDICAO_STYLE: Record<string, string> = {
   'NOVO TRABALHO': 'bg-blue-500/15 text-blue-400 border-blue-500/25',
   'EM EDIÇÃO':     'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
@@ -785,6 +794,7 @@ function FotosSelecaoPageInner() {
   const searchParams = useSearchParams()
   const [search, setSearch]         = useState(searchParams.get('ref') ?? '')
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+  const [aba, setAba]               = useState<Grupo>('todos')
   const [fichaOpen, setFichaOpen]   = useState<FotoSelecao | null>(null)
   // editor + estado por notion_page_id
   const [editorMap, setEditorMap]         = useState<Record<string, string>>({})
@@ -891,11 +901,28 @@ function FotosSelecaoPageInner() {
     if (fichaOpen?.id === id) setFichaOpen(null)
   }
 
-  const filtered = rows.filter(r =>
+  // Nova entrada → ainda sem editor. Atribuído → já tem editor a trabalhar.
+  // Entregue → o editor deu a edição por concluída.
+  function grupoDe(r: FotoSelecao): Exclude<Grupo, 'todos'> {
+    if (statusMap[r.id] === 'CONCLUÍDO') return 'entregue'
+    if (editorMap[r.id]) return 'atribuido'
+    return 'nova'
+  }
+
+  const porPesquisa = rows.filter(r =>
     !search ||
     r.nome_noivos?.toLowerCase().includes(search.toLowerCase()) ||
     r.referencia?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const contagens = {
+    todos:     porPesquisa.length,
+    nova:      porPesquisa.filter(r => grupoDe(r) === 'nova').length,
+    atribuido: porPesquisa.filter(r => grupoDe(r) === 'atribuido').length,
+    entregue:  porPesquisa.filter(r => grupoDe(r) === 'entregue').length,
+  }
+
+  const filtered = porPesquisa.filter(r => aba === 'todos' || grupoDe(r) === aba)
 
   return (
     <main className="min-h-screen px-4 py-12 max-w-5xl mx-auto">
@@ -941,6 +968,20 @@ function FotosSelecaoPageInner() {
 
       {!loading && !error && (
         <>
+          <div className="flex items-center gap-2 flex-wrap mb-6">
+            {ABAS.map(t => (
+              <button key={t.key} onClick={() => setAba(t.key)}
+                className={`flex items-center gap-2 text-[10px] tracking-[0.25em] uppercase px-4 py-2 rounded-xl border transition-all ${
+                  aba === t.key
+                    ? 'border-gold/50 bg-gold/10 text-gold'
+                    : 'border-white/[0.08] text-white/30 hover:text-white/60 hover:border-white/20'
+                }`}>
+                {t.label}
+                <span className={aba === t.key ? 'text-gold/60' : 'text-white/20'}>{contagens[t.key]}</span>
+              </button>
+            ))}
+          </div>
+
           <p className="text-[10px] text-white/15 tracking-[0.3em] uppercase mb-6">{filtered.length} registos</p>
 
           <div className="flex flex-col gap-1.5">
@@ -960,7 +1001,7 @@ function FotosSelecaoPageInner() {
 
             {filtered.length === 0 && (
               <div className="text-center py-24 text-white/15 text-[10px] tracking-[0.5em] uppercase">
-                {search ? 'Nenhum resultado' : 'Sem registos'}
+                {search ? 'Nenhum resultado' : aba === 'todos' ? 'Sem registos' : 'Nada neste separador'}
               </div>
             )}
           </div>
