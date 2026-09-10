@@ -19,6 +19,7 @@ const SECCOES: Seccao[] = [
 export default function FormSelecaoCasamentoPage() {
   return (
     <FormSelecao
+      tipo="casamento"
       eyebrow="Casamento"
       nomeLabel="Nome dos Noivos"
       nomePlaceholder="Ex.: Ana e André"

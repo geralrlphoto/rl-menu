@@ -21,6 +21,7 @@ export type FormSelecaoProps = {
   nomePlaceholder: string
   dataLabel: string      // "Data do Casamento" / "Data do Batizado"
   refPlaceholder: string
+  tipo: 'casamento' | 'batizado'
   exemplo: string        // "LG-0001"
   iniciais: string       // como descrever as iniciais nas instruções
   seccoes: Seccao[]
@@ -31,7 +32,7 @@ function plural(n: number) {
 }
 
 export default function FormSelecao({
-  eyebrow, nomeLabel, nomePlaceholder, dataLabel, refPlaceholder, exemplo, iniciais, seccoes,
+  tipo, eyebrow, nomeLabel, nomePlaceholder, dataLabel, refPlaceholder, exemplo, iniciais, seccoes,
 }: FormSelecaoProps) {
   const [dados, setDados]     = useState({ nome_noivos: '', date: '', referencia: '' })
   const [fotos, setFotos]     = useState<Record<string, string[]>>(
@@ -92,7 +93,7 @@ export default function FormSelecao({
       return
     }
 
-    const payload: Record<string, string> = { ...dados }
+    const payload: Record<string, string> = { ...dados, tipo }
     for (const s of seccoes) {
       payload[s.name] = fotos[s.name].map(v => v.trim()).filter(Boolean).join(', ')
     }

@@ -16,6 +16,7 @@ const SECCOES: Seccao[] = [
 export default function FormSelecaoBatizadoPage() {
   return (
     <FormSelecao
+      tipo="batizado"
       eyebrow="Batizado"
       nomeLabel="Nome da Criança"
       nomePlaceholder="Ex.: Maria Silva"
