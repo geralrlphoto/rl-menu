@@ -14,6 +14,7 @@ import { SendMessageButton } from '../atmosphere/SendMessageButton'
 import { AtendimentoThread } from '../atmosphere/AtendimentoThread'
 import { NoivosNotificationsBell } from '../atmosphere/NoivosNotificationsBell'
 import { FotografiasView, type FotografiasCard } from '../atmosphere/FotografiasView'
+import { FORM_SELECAO_FOTOS_URL, linkSelecaoFotos } from '@/lib/links'
 
 // ── Hero "O vosso filme está pronto" ─────────────────────────────────────────
 const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -1577,7 +1578,7 @@ function PortalSubPageContent() {
   const [pagRefreshing, setPagRefreshing] = useState(false)
   const DEFAULT_GUIA_LINKS = {
     blogUrl: 'https://www.rlprod.pt/blog-list1',
-    fotosSelecaoUrl: 'https://tally.so/r/448PrO',
+    fotosSelecaoUrl: FORM_SELECAO_FOTOS_URL,
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',
     dadosContratoUrl: '/contrato-cps/casamento',
@@ -2855,7 +2856,7 @@ function PortalSubPageContent() {
     && !editingPreWedding && !editingPropostaToken && !error
   if (_atmIsFotografias && !loading) {
     const handleEditTitleFP = () => { setTitleInput(title); setEditingTitle(true) }
-    const fpEnviarUrl = guiaLinks.fotosSelecaoUrl || 'https://tally.so/r/448PrO'
+    const fpEnviarUrl = linkSelecaoFotos(guiaLinks.fotosSelecaoUrl)
     const fpRef = portalRef || refParam || ''
 
     // Estado das URLs de cada card — vazio = bloqueado, presente = disponível
@@ -4426,7 +4427,7 @@ function PortalSubPageContent() {
                       )
                     }
                     if (isFotografiasPage) {
-                      const fotosUrl = guiaLinks.fotosSelecaoUrl || 'https://tally.so/r/448PrO'
+                      const fotosUrl = linkSelecaoFotos(guiaLinks.fotosSelecaoUrl)
                       const pageCalloutLinks = calloutLinks[id as string] ?? {}
                       const calloutCards = findCalloutCards(blocks)
                       const getImgUrl = (b: Block) => {

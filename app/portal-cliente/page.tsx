@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { plainText, type Block } from './NotionRenderer'
 import BlockEditor from './BlockEditor'
 import { AtmospherePortal, buildDeliveriesFromSettings } from './atmosphere/AtmospherePortal'
+import { FORM_SELECAO_FOTOS_URL } from '@/lib/links'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -417,7 +418,7 @@ function SettingsPanel({
 }) {
   const DEFAULT_GUIA_LINKS = {
     blogUrl: 'https://www.rlprod.pt/blog-list1',
-    fotosSelecaoUrl: 'https://tally.so/r/448PrO',
+    fotosSelecaoUrl: FORM_SELECAO_FOTOS_URL,
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',
     dadosContratoUrl: '/contrato-cps/casamento',
@@ -531,7 +532,7 @@ function SettingsPanel({
           <div className="space-y-2">
             {([
               ['Blog', 'blogUrl', 'https://...'],
-              ['Formulário Seleção de Fotos', 'fotosSelecaoUrl', 'https://tally.so/...'],
+              ['Formulário Seleção de Fotos', 'fotosSelecaoUrl', FORM_SELECAO_FOTOS_URL],
               ['Ver Mais (sub-página Fotografias)', 'fotosVerMaisUrl', 'https://...'],
               ['Fotos Convidados', 'fotosConvidadosUrl', 'https://tally.so/...'],
               ['Dados para Contrato', 'dadosContratoUrl', '/contrato-cps/casamento'],
