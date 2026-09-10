@@ -7,10 +7,10 @@ import FormSelecao, { type Seccao } from '../FormSelecao'
 // própria, a festa fica em sala_animacao e o álbum em fotos_album.
 
 const SECCOES: Seccao[] = [
-  { name: 'preparacao',    label: 'Preparação', required: true  },
-  { name: 'cerimonia',     label: 'Cerimónia',  required: true  },
-  { name: 'sala_animacao', label: 'Festa',      required: true  },
-  { name: 'fotos_album',   label: 'Álbum',      required: false },
+  { name: 'preparacao',    label: 'Preparação' },
+  { name: 'cerimonia',     label: 'Cerimónia' },
+  { name: 'sala_animacao', label: 'Festa' },
+  { name: 'fotos_album',   label: 'Álbum' },
 ]
 
 export default function FormSelecaoBatizadoPage() {

@@ -5,15 +5,15 @@ import FormSelecao, { type Seccao } from '../FormSelecao'
 // Seleção de fotografias — casamento (mesmas secções do formulário do Tally).
 
 const SECCOES: Seccao[] = [
-  { name: 'fotos_noivo',   label: 'Fotos do Noivo',   required: true  },
-  { name: 'fotos_noiva',   label: 'Fotos da Noiva',   required: true  },
-  { name: 'cerimonia',     label: 'Cerimónia',        required: true  },
-  { name: 'convidados',    label: 'Convidados',       required: true  },
-  { name: 'sala_animacao', label: 'Sala e Animação',  required: true  },
-  { name: 'bolo_bouquet',  label: 'Bolo e Bouquet',   required: true  },
-  { name: 'detalhes',      label: 'Detalhes',         required: true  },
-  { name: 'sessao_noivos', label: 'Sessão Noivos',    required: true  },
-  { name: 'fotos_album',   label: 'Fotos para Álbum', required: false },
+  { name: 'fotos_noivo',   label: 'Fotos do Noivo' },
+  { name: 'fotos_noiva',   label: 'Fotos da Noiva' },
+  { name: 'cerimonia',     label: 'Cerimónia' },
+  { name: 'convidados',    label: 'Convidados' },
+  { name: 'sala_animacao', label: 'Sala e Animação' },
+  { name: 'bolo_bouquet',  label: 'Bolo e Bouquet' },
+  { name: 'detalhes',      label: 'Detalhes' },
+  { name: 'sessao_noivos', label: 'Sessão Noivos' },
+  { name: 'fotos_album',   label: 'Fotos para Álbum' },
 ]
 
 export default function FormSelecaoCasamentoPage() {

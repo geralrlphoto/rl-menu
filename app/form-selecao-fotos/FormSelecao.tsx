@@ -12,7 +12,6 @@ import { CSS } from './styles'
 export type Seccao = {
   name: string      // coluna em fotos_selecao
   label: string
-  required: boolean
 }
 
 export type FormSelecaoProps = {
@@ -36,13 +35,14 @@ export default function FormSelecao({
 }: FormSelecaoProps) {
   const [dados, setDados]     = useState({ nome_noivos: '', date: '', referencia: '' })
   const [fotos, setFotos]     = useState<Record<string, string[]>>(
-    () => Object.fromEntries(seccoes.map(s => [s.name, s.required ? [''] : []]))
+    () => Object.fromEntries(seccoes.map(s => [s.name, ['']]))
   )
   const [sending, setSending] = useState(false)
   const [sent, setSent]       = useState(false)
   const [erro, setErro]       = useState('')
   const [abertas, setAbertas] = useState<string[]>([])
   const [aCarregar, setACarregar] = useState<string[]>([])
+  const [progresso, setProgresso] = useState(0)
   const ran = useRef(false)
 
   useEffect(() => {
@@ -86,10 +86,9 @@ export default function FormSelecao({
     e.preventDefault()
     setErro('')
 
-    const emFalta = seccoes.filter(s => s.required && preenchidas(s.name) === 0)
-    if (emFalta.length) {
-      setErro(`Falta indicar fotografias em: ${emFalta.map(s => s.label).join(', ')}.`)
-      setAbertas(p => [...new Set([...p, ...emFalta.map(s => s.name)])])
+    // Nenhuma secção é obrigatória; só não faz sentido enviar uma seleção vazia.
+    if (total === 0) {
+      setErro('Indiquem pelo menos uma fotografia antes de enviar.')
       return
     }
 
@@ -99,12 +98,24 @@ export default function FormSelecao({
     }
 
     setSending(true)
+    setProgresso(0)
+    const inicio = Date.now()
+    const DURACAO = 4000
+    const timer = setInterval(() => {
+      setProgresso(Math.min(100, Math.round((Date.now() - inicio) / DURACAO * 100)))
+    }, 60)
+
     try {
-      const res = await fetch('/api/selecao-fotos-submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
+      // A barra vai sempre dos 0% aos 100%, mesmo que o envio seja mais rápido.
+      const [res] = await Promise.all([
+        fetch('/api/selecao-fotos-submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        }),
+        new Promise(r => setTimeout(r, DURACAO)),
+      ])
+      setProgresso(100)
       const d = await res.json()
       if (!res.ok || d.error) { setErro('Não foi possível enviar. Tentem novamente dentro de momentos.'); return }
       setSent(true)
@@ -112,6 +123,7 @@ export default function FormSelecao({
     } catch {
       setErro('Não foi possível enviar. Verifiquem a ligação e tentem novamente.')
     } finally {
+      clearInterval(timer)
       setSending(false)
     }
   }
@@ -201,10 +213,7 @@ export default function FormSelecao({
                       <div key={s.name} className={`scard${aberta ? ' open' : ''}${n ? ' has' : ''}`}>
                         <button type="button" className="scard__head" onClick={() => toggle(s.name)}
                           aria-expanded={aberta}>
-                          <span className="scard__t">
-                            {s.label}
-                            {!s.required && <span className="opt">Opcional</span>}
-                          </span>
+                          <span className="scard__t">{s.label}</span>
                           <span className="scard__meta">
                             <span className={n ? 'count has' : 'count'}>{plural(n)}</span>
                             <span className="chev">›</span>
@@ -254,10 +263,18 @@ export default function FormSelecao({
                   <span className="v">{total}</span>
                 </div>
 
-                <button className="btn" type="submit" disabled={sending}>
-                  <span className="fill" /><span className="dot" />
-                  {sending ? 'A enviar...' : 'Enviar seleção'}
-                </button>
+                {sending ? (
+                  <div className="enviando">
+                    <div className="track"><span className="bar" style={{ width: `${progresso}%` }} /></div>
+                    <p className="pct">{progresso}%</p>
+                    <p className="lbl">A enviar a vossa seleção</p>
+                  </div>
+                ) : (
+                  <button className="btn" type="submit">
+                    <span className="fill" /><span className="dot" />
+                    Enviar seleção
+                  </button>
+                )}
                 {erro && <p className="err">{erro}</p>}
                 <p className="note">
                   Confirmem a numeração antes de enviar. Depois do envio, começamos a preparar a

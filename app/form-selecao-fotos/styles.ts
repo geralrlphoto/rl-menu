@@ -125,6 +125,12 @@ export const CSS = `
 .self .btn .dot{width:5px;height:5px;border-radius:50%;background:var(--ink);transition:background .5s;}
 .self .btn:hover{color:var(--g);}.self .btn:hover .fill{transform:translateY(0);}.self .btn:hover .dot{background:var(--g);}
 .self .btn:disabled{opacity:.5;cursor:default;}
+.self .enviando{margin-top:10px;text-align:center;}
+.self .enviando .track{height:3px;background:var(--line-soft);border-radius:3px;overflow:hidden;}
+.self .enviando .bar{display:block;height:100%;background:var(--g);border-radius:3px;transition:width .12s linear;}
+.self .enviando .pct{font-family:var(--fd);font-weight:200;font-size:clamp(34px,4vw,52px);color:var(--g);line-height:1;margin-top:20px;}
+.self .enviando .lbl{font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-dim);margin-top:12px;}
+
 .self .note{font-family:var(--fm);font-size:10px;letter-spacing:.12em;color:var(--tx-dim);text-align:center;margin-top:16px;line-height:1.6;}
 .self .err{font-family:var(--fm);font-size:11px;letter-spacing:.1em;color:#e0a0a0;text-align:center;margin-top:16px;}
 
