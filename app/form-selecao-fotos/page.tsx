@@ -46,7 +46,7 @@ const CSS = `
 .self .icard .iv{font-family:var(--fd);font-weight:200;font-size:clamp(28px,3vw,40px);margin:14px 0 8px;line-height:1;}
 .self .icard .id{color:var(--tx-mid);font-size:13.5px;line-height:1.6;max-width:34ch;margin:0 auto;}
 
-.self .block{margin:clamp(50px,8vh,90px) 0 clamp(70px,10vh,120px);}
+.self .block{margin:clamp(50px,8vh,90px) auto clamp(70px,10vh,120px);}
 .self .block > .lbl{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);display:block;margin-bottom:20px;text-align:center;}
 .self .seg{display:grid;grid-template-columns:1fr;gap:12px;}
 @media(min-width:620px){.self .seg{grid-template-columns:1fr 1fr;}}
