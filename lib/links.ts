@@ -1,5 +1,11 @@
 // Links partilhados pelos portais.
 
+import { linkPublico } from './site-url'
+
+// Apoio ao Cliente das fotografias encomendadas — prazos, onde procurar a
+// entrega e aviso à equipa. Vai no ticket e no comprovativo de aquisição.
+export const APOIO_FOTOGRAFIAS_URL = linkPublico('/apoio-fotografias')
+
 // Formulário de seleção de fotografias (substituiu o formulário do Tally).
 export const FORM_SELECAO_FOTOS_URL = 'https://rl-menu-lake.vercel.app/form-selecao-fotos'
 

@@ -3,7 +3,24 @@
 // a cópia colocada na pasta ser idêntica ao ticket do cliente.
 
 import { PRECO_FOTO } from '@/lib/precos-fotos'
+import { APOIO_FOTOGRAFIAS_URL } from '@/lib/links'
 const eur = (n: number) => `${Number(n).toFixed(2)} €`
+
+// Botão de Apoio ao Cliente. Vive aqui para o ticket e o comprovativo de
+// aquisição (app/api/photo-orders) nunca ficarem com botões diferentes.
+export function blocoApoioCliente(): string {
+  return `
+          <div style="margin:24px 0 0;padding:20px 18px;background:#0b0a08;border-radius:4px;text-align:center;">
+            <p style="margin:0 0 14px;font-size:12px;color:#c9b88a;line-height:1.7;">
+              Ainda não recebeu as fotografias ou quer saber a data prevista de entrega?
+            </p>
+            <a href="${APOIO_FOTOGRAFIAS_URL}"
+              style="display:inline-block;padding:13px 30px;background:#d8be93;color:#0b0a08;border-radius:40px;
+                     font-size:11px;letter-spacing:0.2em;text-transform:uppercase;text-decoration:none;font-weight:700;">
+              Apoio ao Cliente
+            </a>
+          </div>`
+}
 
 export function buildTicketHtml(o: any): string {
   const data = new Date(o.created_at ?? Date.now()).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -55,6 +72,7 @@ export function buildTicketHtml(o: any): string {
               Se mais tarde quiser transformar alguma destas fotografias numa tela para a sua casa, é só entrar em contacto connosco. Teremos todo o gosto em tratar disso.
             </p>
           </div>
+          ${blocoApoioCliente()}
         </td></tr>
         <tr><td style="background:#0b0a08;padding:18px 40px;text-align:center;">
           <p style="margin:0;font-size:11px;color:#8c8170;">geral.rlphoto@gmail.com · 912 832 788</p>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { PRECO_FOTO, PORTES_PAPEL, calcularPortes } from '@/lib/precos-fotos'
+import { blocoApoioCliente } from '@/lib/ticket-html'
 
 // ── Config ───────────────────────────────────────────────────────────────────
 const ALLOW_ORIGIN = 'https://rlphotovideo.pt'
@@ -36,7 +37,7 @@ function buildEmailHtml(o: {
   pedido: string; nome: string; email: string; telefone: string; morada?: string | null
   noivos?: string | null; data_casamento?: string | null; fotografias?: string | null
   formato: string; quantidade: number; subtotal: number; portes: number; total: number
-}): string {
+}, apoio = false): string {
   const data = new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
   const isPapel = o.formato === 'papel'
   const row = (label: string, value: string, strong = false) => `
@@ -86,6 +87,7 @@ function buildEmailHtml(o: {
               <strong style="color:#0b0a08;">Pagamento:</strong> MB WAY 916 162 728 (Liliana Gonçalves) — comprovativo recebido.
             </p>
           </div>
+          ${apoio ? blocoApoioCliente() : ''}
         </td></tr>
         <!-- Rodapé -->
         <tr><td style="background:#0b0a08;padding:18px 40px;text-align:center;">
@@ -170,14 +172,17 @@ export async function POST(req: NextRequest) {
     if (insErr) throw new Error(insErr.message)
 
     // ── Emails ──
-    const html = buildEmailHtml({ pedido, nome, email, telefone, noivos, data_casamento, fotografias, morada, formato, quantidade, subtotal, portes, total })
+    const dadosEmail = { pedido, nome, email, telefone, noivos, data_casamento, fotografias, morada, formato, quantidade, subtotal, portes, total }
+    // Só o email do cliente leva o botão de Apoio ao Cliente.
+    const htmlCliente = buildEmailHtml(dadosEmail, true)
+    const html = buildEmailHtml(dadosEmail)
     const b64 = Buffer.from(bytes).toString('base64')
 
     // (A) cliente
     await sendEmail({
       from: FROM_EMAIL, to: [email],
       subject: `Comprovativo de aquisição de fotografias — ${pedido}`,
-      html,
+      html: htmlCliente,
     })
     // (B) admin (com anexo do comprovativo)
     await sendEmail({
