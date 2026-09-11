@@ -86,19 +86,33 @@ function ContratoPageContent() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [clausulas, setClausulas] = useState<Record<string, string>>({})
+  const [clausulas, setClausulas] = useState<Record<string, string>>(DEFAULT_CLAUSULAS)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
-  useEffect(() => {
+  // Os dois pedidos vão separados de propósito: em Promise.all, uma falha de
+  // rede num deles deixava a página sem evento e a dizer "Evento não
+  // encontrado", como se o contrato não existisse. Assim, cada um falha por si
+  // e o erro real fica à vista, com um botão para tentar de novo.
+  function carregar() {
     if (!id) return
-    Promise.all([
-      fetch(`/api/eventos-notion/${id}`).then(r => r.json()),
-      fetch(`/api/contrato-clausulas?eventoId=${id}`).then(r => r.json()).catch(() => ({ clausulas: null })),
-    ]).then(([d, cd]) => {
-      if (d.event) { setEvento(d.event); setDraft(d.event) }
-      const custom = cd.clausulas ?? {}
-      setClausulas({ ...DEFAULT_CLAUSULAS, ...custom })
-    }).finally(() => setLoading(false))
-  }, [id])
+    setLoading(true)
+    setLoadError(null)
+    fetch(`/api/eventos-notion/${id}`)
+      .then(r => r.json())
+      .then(d => {
+        if (d.event) { setEvento(d.event); setDraft(d.event) }
+        else setLoadError(d.error ? `Não foi possível carregar o evento: ${d.error}` : 'Evento não encontrado.')
+      })
+      .catch(e => setLoadError(`Não foi possível carregar o evento: ${e?.message ?? 'falha de rede'}`))
+      .finally(() => setLoading(false))
+
+    fetch(`/api/contrato-clausulas?eventoId=${id}`)
+      .then(r => r.json())
+      .then(cd => setClausulas({ ...DEFAULT_CLAUSULAS, ...(cd?.clausulas ?? {}) }))
+      .catch(() => setClausulas(DEFAULT_CLAUSULAS))
+  }
+
+  useEffect(() => { carregar() }, [id])
 
   function change(field: string, value: any) {
     setDraft((prev: any) => ({ ...prev, [field]: value }))
@@ -142,8 +156,12 @@ function ContratoPageContent() {
     </main>
   )
   if (!draft) return (
-    <main className="min-h-screen flex items-center justify-center bg-white">
-      <span className="text-red-400 text-sm">Evento não encontrado.</span>
+    <main className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white px-6 text-center">
+      <span className="text-red-400 text-sm">{loadError ?? 'Evento não encontrado.'}</span>
+      <button onClick={carregar}
+        className="border border-zinc-300 rounded-full px-5 py-2 text-[11px] tracking-[0.2em] uppercase text-zinc-600 hover:border-amber-500 hover:text-amber-600">
+        Tentar de novo
+      </button>
     </main>
   )
 

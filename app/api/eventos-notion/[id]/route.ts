@@ -512,16 +512,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       // Fallback: o [id] pode ser um id Supabase de um evento criado sem Notion
       // (ex.: form /contrato-cps cujo saveToNotion falhou). Carrega do Supabase
       // e devolve uma "página virtual" com a mesma forma que o Notion devolveria.
+      //
+      // Procura pelas duas chaves (tal como o PATCH): as fichas e o contrato são
+      // abertos pelo notion_id, por isso procurar só por `id` deixava a página a
+      // dizer "Evento não encontrado" sempre que o Notion falhasse — mesmo tendo
+      // o evento todo no Supabase.
       const sb = supabase()
       const { data: orphan } = await sb
         .from('eventos_2026')
         .select('*')
-        .eq('id', id)
+        .or(`notion_id.eq.${id},id.eq.${id}`)
         .maybeSingle()
 
       if (!orphan) {
-        const err = await res.json()
-        return NextResponse.json({ error: err.message }, { status: res.status })
+        const err = await res.json().catch(() => ({}))
+        return NextResponse.json({ error: err.message ?? `Notion respondeu ${res.status}` }, { status: res.status })
       }
 
       // Constrói o evento usando só dados Supabase
@@ -604,7 +609,10 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         servico_foto:     (orphan as any).servico_foto  ?? [],
         servico_video:    (orphan as any).servico_video ?? [],
         notion_url:       null,
-        _orphan: true, // flag para a UI saber que este evento ainda não tem Notion
+        // Órfão é só quem nunca chegou a ter página no Notion. Quando o Notion
+        // está em baixo mas o evento tem notion_id, isto continua a ser o mesmo
+        // evento — só veio todo do Supabase.
+        _orphan: !orphan.notion_id,
       }
       return NextResponse.json({ event })
     }
