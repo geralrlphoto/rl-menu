@@ -5,14 +5,22 @@ import { CSS } from './styles'
 
 // Página do cliente — "Apoio ao Cliente" das fotografias encomendadas.
 // Duas fases: (1) o cliente identifica-se e indica o nº do ticket; (2) escolhe o
-// tema e recebe logo a informação do prazo e onde procurar a entrega.
+// tema, vê logo a data estimada de entrega e escolhe uma de três opções. A
+// opção "já passou o prazo" avisa o admin por email.
 // Mesmo sistema visual das páginas públicas (ver /adquirir-fotografias).
 
 type Tema = 'digital' | 'papel'
+type Opcao = 'obrigado' | 'dentro' | 'fora'
 
 const TEMAS: { key: Tema; titulo: string; desc: string }[] = [
   { key: 'digital', titulo: 'Não recebi as fotografias digitais', desc: 'Entrega por email · 15 dias' },
   { key: 'papel',   titulo: 'Não recebi as fotografias em papel',  desc: 'Correio registado · 30 dias úteis' },
+]
+
+const OPCOES: { key: Opcao; titulo: string }[] = [
+  { key: 'obrigado', titulo: 'Obrigado' },
+  { key: 'dentro',   titulo: 'Ainda estou dentro do prazo de entrega' },
+  { key: 'fora',     titulo: 'Já passou o prazo de entrega e não recebi' },
 ]
 
 type Dados = { nome: string; email: string; telefone: string; noivos: string; data: string; ticket: string }
@@ -25,14 +33,38 @@ function fmtData(iso: string): string {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso
 }
 
+// "27 de junho de 2026" — para a data estimada de entrega.
+function fmtLongo(d: Date): string {
+  return d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+// Data estimada de entrega, contada a partir do dia do casamento: o digital em
+// dias corridos, o papel em dias úteis (seg a sex), porque é o tempo da
+// impressão e do envio.
+function previsaoEntrega(iso: string, tema: Tema): Date | null {
+  const base = new Date(iso + 'T00:00:00')
+  if (isNaN(base.getTime())) return null
+  const d = new Date(base)
+  if (tema === 'digital') { d.setDate(d.getDate() + 15); return d }
+  let uteis = 0
+  while (uteis < 30) {
+    d.setDate(d.getDate() + 1)
+    const dow = d.getDay()
+    if (dow !== 0 && dow !== 6) uteis++
+  }
+  return d
+}
+
 export default function ApoioFotografiasPage() {
   const [fase, setFase] = useState<1 | 2>(1)
   const [dados, setDados] = useState<Dados>(VAZIO)
   const [tema, setTema] = useState<Tema | null>(null)
+  const [opcao, setOpcao] = useState<Opcao | null>(null)
+  const [aviso, setAviso] = useState<'enviar' | 'enviado' | 'erro' | null>(null)
   const [erro, setErro] = useState('')
 
-  // Revela os blocos à medida que entram no ecrã. Corre outra vez a cada fase
-  // porque os blocos da 2.ª fase só existem depois de o cliente continuar.
+  // Revela os blocos à medida que entram no ecrã. Corre outra vez a cada passo
+  // porque os blocos seguintes só existem depois de o cliente escolher.
   useEffect(() => {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
     const io = new IntersectionObserver(entries => {
@@ -44,10 +76,13 @@ export default function ApoioFotografiasPage() {
       if (reduce) el.classList.add('in'); else io.observe(el)
     })
     return () => io.disconnect()
-  }, [fase, tema])
+  }, [fase, tema, opcao, aviso])
 
   const set = (k: keyof Dados) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setDados(d => ({ ...d, [k]: e.target.value }))
+
+  const entrega = tema ? previsaoEntrega(dados.data, tema) : null
+  const entregaTxt = entrega ? fmtLongo(entrega) : fmtData(dados.data)
 
   function continuar(e: React.FormEvent) {
     e.preventDefault()
@@ -59,11 +94,111 @@ export default function ApoioFotografiasPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  function escolherTema(t: Tema) {
+    setTema(t)
+    setOpcao(null)
+    setAviso(null)
+  }
+
   function voltar() {
     setTema(null)
+    setOpcao(null)
+    setAviso(null)
     setFase(1)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  // "Já passou o prazo" — avisa o admin por email com os dados do cliente.
+  async function escolherOpcao(k: Opcao) {
+    setOpcao(k)
+    if (k !== 'fora') { setAviso(null); return }
+    setAviso('enviar')
+    try {
+      const d = await fetch('/api/apoio-fotografias', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...dados, formato: tema, entregaPrevista: entregaTxt }),
+      }).then(r => r.json())
+      setAviso(d?.ok ? 'enviado' : 'erro')
+    } catch {
+      setAviso('erro')
+    }
+  }
+
+  // Bloco da data estimada — igual nos dois temas, só muda o prazo.
+  const caixaEntrega = (prazo: string) => (
+    <div className="prazo">
+      <div className="k">Data estimada de entrega</div>
+      <div className="v">{entregaTxt}</div>
+      <div className="d">
+        Prazo de <strong>{prazo}</strong>, contados a partir do dia do casamento
+        ({fmtData(dados.data)}). Até esta data, a vossa encomenda está a ser tratada.
+      </div>
+    </div>
+  )
+
+  const blocoOpcoes = (
+    <div className="opcoes r">
+      <span className="lbl">Escolham a vossa opção</span>
+      <div className="seg tres">
+        {OPCOES.map(o => (
+          <button key={o.key} type="button" onClick={() => escolherOpcao(o.key)}
+            className={opcao === o.key ? 'on' : ''}>
+            <span className="t">{o.titulo}</span>
+          </button>
+        ))}
+      </div>
+
+      {opcao === 'obrigado' && (
+        <div className="resposta">
+          <div className="mk">✓</div>
+          <h3>Ao vosso dispor.</h3>
+          <p>
+            Obrigado a vocês. Se precisarem de mais alguma coisa, escrevam para
+            <strong> geral.rlphoto@gmail.com</strong> ou liguem para o <strong>912 832 788</strong>.
+          </p>
+        </div>
+      )}
+
+      {opcao === 'dentro' && (
+        <div className="resposta">
+          <div className="mk">✓</div>
+          <h3>Combinado.</h3>
+          <p>
+            A vossa entrega está prevista para <strong>{entregaTxt}</strong>. Se nessa altura
+            ainda não tiverem recebido nada, voltem a esta página e escolham a última opção.
+          </p>
+        </div>
+      )}
+
+      {opcao === 'fora' && aviso === 'enviar' && (
+        <div className="resposta">
+          <p className="aenviar">A avisar a nossa equipa…</p>
+        </div>
+      )}
+
+      {opcao === 'fora' && aviso === 'enviado' && (
+        <div className="resposta">
+          <div className="mk">✓</div>
+          <h3>Recebemos o vosso aviso.</h3>
+          <p>
+            Vamos verificar o que se passou com a encomenda <strong>{dados.ticket}</strong> e
+            damos resposta o mais breve possível, para <strong>{dados.email}</strong>.
+          </p>
+        </div>
+      )}
+
+      {opcao === 'fora' && aviso === 'erro' && (
+        <div className="resposta">
+          <h3>Não conseguimos enviar o aviso.</h3>
+          <p>
+            Falem connosco para <strong>geral.rlphoto@gmail.com</strong> ou para o
+            <strong> 912 832 788</strong>, com o número do ticket <strong>{dados.ticket}</strong>.
+            Resolvemos o mais breve possível.
+          </p>
+        </div>
+      )}
+    </div>
+  )
 
   return (
     <>
@@ -81,8 +216,8 @@ export default function ApoioFotografiasPage() {
             {fase === 1
               ? <>Comecem por se identificar e indicar o <strong>número do ticket</strong> da encomenda.
                   Assim conseguimos acompanhar o vosso pedido sem perder tempo.</>
-              : <>Escolham o tema que descreve a vossa situação. Respondemos logo aqui, com o prazo
-                  de entrega e onde procurar as vossas fotografias.</>}
+              : <>Escolham o tema que descreve a vossa situação. Respondemos logo aqui, com a
+                  data estimada de entrega e onde procurar as vossas fotografias.</>}
           </p>
           <div className="steps r">
             <span className={`st ${fase === 1 ? 'on' : ''}`}><span className="n">1</span>Os vossos dados</span>
@@ -154,7 +289,7 @@ export default function ApoioFotografiasPage() {
             <span className="lbl">Escolham o tema</span>
             <div className="seg r">
               {TEMAS.map(t => (
-                <button key={t.key} type="button" onClick={() => setTema(t.key)}
+                <button key={t.key} type="button" onClick={() => escolherTema(t.key)}
                   className={tema === t.key ? 'on' : ''}>
                   <span className="t">{t.titulo}</span>
                   <span className="d">{t.desc}</span>
@@ -166,6 +301,7 @@ export default function ApoioFotografiasPage() {
               <div className="answer r">
                 <div className="ac">Fotografias digitais</div>
                 <h2>Comecem por procurar o email da entrega.</h2>
+                {caixaEntrega('15 dias')}
                 <p>
                   As fotografias digitais são entregues <strong>por email</strong>, com um link para
                   descarregarem os ficheiros em alta resolução. Muitas vezes o email chega, mas fica
@@ -180,20 +316,6 @@ export default function ApoioFotografiasPage() {
                   <li><span className="dot">✦</span><span><b>Arquivo e Todos os emails</b>: caso tenha sido arquivado sem ser lido.</span></li>
                   <li><span className="dot">✦</span><span><b>Confirmem o email que nos deram</b>: uma letra trocada no endereço é suficiente para a entrega não chegar.</span></li>
                 </ul>
-                <div className="prazo">
-                  <div className="k">Prazo de entrega</div>
-                  <div className="v">15 dias</div>
-                  <div className="d">
-                    As fotografias digitais são entregues no prazo de <strong>15 dias</strong>. Se ainda
-                    estamos dentro deste prazo, a vossa encomenda está a ser tratada e o email de entrega
-                    chega até ao fim dos 15 dias.
-                  </div>
-                </div>
-                <p>
-                  Se já passaram os 15 dias e não encontram o email em nenhuma destas pastas, falem
-                  connosco para <strong>geral.rlphoto@gmail.com</strong> ou para o <strong>912 832 788</strong>,
-                  indicando o número do ticket <strong>{dados.ticket}</strong>. Reenviamos a entrega no mesmo dia.
-                </p>
               </div>
             )}
 
@@ -201,34 +323,24 @@ export default function ApoioFotografiasPage() {
               <div className="answer r">
                 <div className="ac">Fotografias em papel</div>
                 <h2>As fotografias em papel seguem por correio registado.</h2>
+                {caixaEntrega('30 dias úteis')}
                 <p>
                   As fotografias em papel são impressas por nós e enviadas para a morada indicada na
                   encomenda, <strong>por correio registado</strong>. Como é registado, a entrega é feita
                   em mão e pode ser pedida assinatura.
                 </p>
-                <div className="prazo">
-                  <div className="k">Prazo de entrega</div>
-                  <div className="v">30 dias úteis</div>
-                  <div className="d">
-                    Contados a partir da confirmação da encomenda, e já incluem a impressão e o envio.
-                    Enquanto estamos dentro deste prazo, a encomenda está em preparação ou já a caminho.
-                  </div>
-                </div>
                 <ul>
                   <li><span className="dot">✦</span><span><b>Vejam a caixa de correio</b>: se não estiverem em casa na entrega, os CTT deixam um aviso.</span></li>
                   <li><span className="dot">✦</span><span><b>Guardem o aviso dos CTT</b>: com ele podem recolher a encomenda na estação de correios indicada.</span></li>
                   <li><span className="dot">✦</span><span><b>Confirmem a morada que nos deram</b>: rua, número, andar e código postal, para podermos verificar o envio.</span></li>
                 </ul>
-                <p>
-                  Passados os 30 dias úteis sem receberem nada, escrevam para
-                  <strong> geral.rlphoto@gmail.com</strong> ou liguem para o <strong>912 832 788</strong> com
-                  o número do ticket <strong>{dados.ticket}</strong>. Confirmamos o estado do envio e resolvemos.
-                </p>
               </div>
             )}
 
+            {tema && blocoOpcoes}
+
             <div className="actions">
-              {tema && <button type="button" className="ghost" onClick={() => setTema(null)}>Escolher outro tema</button>}
+              {tema && <button type="button" className="ghost" onClick={() => { setTema(null); setOpcao(null); setAviso(null) }}>Escolher outro tema</button>}
               <button type="button" className="ghost" onClick={voltar}>‹ Alterar os meus dados</button>
             </div>
           </section>

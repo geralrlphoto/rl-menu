@@ -243,6 +243,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/photo-orders') ||
     pathname.startsWith('/adquirir-fotografias') ||
     pathname.startsWith('/apoio-fotografias') ||
+    pathname.startsWith('/api/apoio-fotografias') ||
     pathname.startsWith('/form-selecao-fotos') ||
     pathname.startsWith('/api/selecao-fotos-submit') ||
     pathname.startsWith('/ticket-fotos-dia') ||

@@ -80,6 +80,19 @@ export const CSS = `
 .apoio .answer li .dot{color:var(--g);flex:none;}
 .apoio .answer li b{color:var(--tx);font-weight:400;}
 
+/* ── Opções finais (3.º passo da resposta) ───────────────────────────────── */
+.apoio .opcoes{margin-top:clamp(30px,5vh,50px);}
+.apoio .opcoes > .lbl{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);display:block;margin-bottom:20px;text-align:center;}
+@media(min-width:820px){.apoio .seg.tres{grid-template-columns:repeat(3,1fr);}}
+.apoio .seg.tres button{padding:26px 22px;display:flex;align-items:center;justify-content:center;min-height:110px;}
+.apoio .seg.tres button .t{font-size:clamp(16px,1.6vw,18px);line-height:1.4;}
+.apoio .resposta{border:1px solid rgba(216,190,147,.32);border-radius:10px;background:rgba(216,190,147,.05);padding:clamp(26px,4vw,34px);margin-top:18px;text-align:center;}
+.apoio .resposta .mk{width:54px;height:54px;border:1px solid var(--g);border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;color:var(--g);font-size:20px;}
+.apoio .resposta h3{font-size:clamp(22px,2.6vw,28px);color:var(--tx);}
+.apoio .resposta p{color:var(--tx-mid);font-size:14.5px;line-height:1.75;margin-top:14px;max-width:52ch;margin-inline:auto;}
+.apoio .resposta p strong{color:var(--g);font-weight:400;}
+.apoio .resposta .aenviar{font-family:var(--fm);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--g);margin-top:0;}
+
 /* ── Recapitulação dos dados ─────────────────────────────────────────────── */
 .apoio .recap{border:1px solid var(--line-soft);border-radius:10px;background:var(--ink-2);padding:22px 24px;text-align:left;
   display:grid;gap:16px;grid-template-columns:1fr;margin-bottom:clamp(26px,4vh,40px);}
