@@ -18,7 +18,7 @@ const TEMAS: { key: Tema; titulo: string; desc: string }[] = [
 ]
 
 const OPCOES: { key: Opcao; titulo: string }[] = [
-  { key: 'obrigado', titulo: 'Obrigado' },
+  { key: 'obrigado', titulo: 'Obrigado, está dentro do prazo ou encontrei as fotografias' },
   { key: 'dentro',   titulo: 'Ainda estou dentro do prazo de entrega' },
   { key: 'fora',     titulo: 'Já passou o prazo de entrega e não recebi' },
 ]
@@ -153,7 +153,7 @@ export default function ApoioFotografiasPage() {
           <div className="mk">✓</div>
           <h3>Ao vosso dispor.</h3>
           <p>
-            Obrigado a vocês. Se precisarem de mais alguma coisa, escrevam para
+            Ficamos descansados. Se precisarem de mais alguma coisa, escrevam para
             <strong> geral.rlphoto@gmail.com</strong> ou liguem para o <strong>912 832 788</strong>.
           </p>
         </div>
