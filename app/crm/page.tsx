@@ -43,36 +43,27 @@ const statusColor: Record<string, string> = {
   'Iniciar': 'bg-white/10 text-white/50 border-white/20',
 }
 
-const statusDot: Record<string, string> = {
-  'Fechou': 'bg-green-400',
-  'Negociação': 'bg-yellow-400',
-  'Por Contactar': 'bg-red-400',
-  'Contactado': 'bg-blue-400',
-  'Reunião Agendada': 'bg-purple-400',
-  'NÃO FECHOU': 'bg-gray-400',
-  'Agendar Reunião': 'bg-orange-400',
-  'Sem resposta': 'bg-gray-400',
-  'Encerrado': 'bg-gray-600',
-  'Cancelado': 'bg-red-700',
-  'Iniciar': 'bg-white/30',
-}
-
-const leadColor: Record<string, string> = {
-  'Alta': 'text-red-400',
-  'Médio': 'text-yellow-400',
-  'Baixa': 'text-green-400',
-}
-
-const STATUS_GROUPS = [
-  { label: 'Por Contactar', color: 'text-red-400', dot: 'bg-red-400', statuses: ['Por Contactar', 'Iniciar', 'Contactado', 'Agendar Reunião'] },
-  { label: 'Reunião Agendada', color: 'text-purple-400', dot: 'bg-purple-400', statuses: ['Reunião Agendada'] },
-  { label: 'Em Negociação', color: 'text-yellow-400', dot: 'bg-yellow-400', statuses: ['Negociação'] },
-  { label: 'Fechou', color: 'text-green-400', dot: 'bg-green-400', statuses: ['Fechou'] },
-  { label: 'Não Fechou', color: 'text-gray-400', dot: 'bg-gray-400', statuses: ['NÃO FECHOU'] },
-  { label: 'Sem Resposta / Encerrado', color: 'text-gray-500', dot: 'bg-gray-600', statuses: ['Sem resposta', 'Encerrado', 'Cancelado'] },
+// Colunas do quadro. Nova Entrada apanha tudo o que não cai nas outras
+// (Por Contactar, Iniciar, Contactado, Agendar Reunião, sem status).
+type ColunaKey = 'nova' | 'reuniao' | 'follow' | 'encerrada'
+const REUNIAO_STATUSES = ['Reunião Agendada']
+const FOLLOW_STATUSES = ['Negociação']
+const ENCERRADA_STATUSES = ['Fechou', 'NÃO FECHOU', 'Sem resposta', 'Encerrado', 'Cancelado']
+const COLUNAS: { key: ColunaKey; label: string; accent: string }[] = [
+  { key: 'nova', label: 'Nova Entrada', accent: 'bg-red-400' },
+  { key: 'reuniao', label: 'Reunião Agendada', accent: 'bg-purple-400' },
+  { key: 'follow', label: 'Follow Up', accent: 'bg-yellow-400' },
+  { key: 'encerrada', label: 'Encerrada', accent: 'bg-green-400' },
 ]
+const ENCERRADA_PAGE = 20
 
-const POR_CONTACTAR_STATUSES = ['Por Contactar', 'Iniciar', 'Contactado', 'Agendar Reunião']
+function colunaDe(status: string): ColunaKey {
+  if (REUNIAO_STATUSES.includes(status)) return 'reuniao'
+  if (FOLLOW_STATUSES.includes(status)) return 'follow'
+  if (ENCERRADA_STATUSES.includes(status)) return 'encerrada'
+  return 'nova'
+}
+
 const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
 
 function daysSince(dateStr: string): number {
@@ -89,99 +80,52 @@ function sumOrcamento(contacts: Contact[]): number {
   }, 0)
 }
 
-/* ── LEAD CARD ── */
-function LeadCard({ c, onStatusChange }: { c: Contact; onStatusChange: (id: string, s: string) => void }) {
+/* ── KANBAN CARD ── */
+function KanbanCard({ c, coluna, onStatusChange }: { c: Contact; coluna: ColunaKey; onStatusChange: (id: string, s: string) => void }) {
   const dias = daysSince(c.status_updated_at || c.data_entrada)
-  const initials = (c.nome || '?').split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+  const fechou = c.status === 'Fechou'
 
   return (
-    <div className="group relative h-56 rounded-2xl overflow-hidden border border-white/8 bg-[#111111] cursor-pointer">
-
-      {/* Fundo com gradiente suave */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/[0.03] to-transparent" />
-
-      {/* Conteúdo estático — sempre visível */}
-      <div className="relative h-full flex flex-col justify-between p-5">
-        {/* Topo: iniciais + lead prioridade */}
-        <div className="flex items-start justify-between">
-          <div className="w-10 h-10 rounded-full bg-gold/10 border border-gold/20 flex items-center justify-center text-gold text-xs font-semibold tracking-wider">
-            {initials}
-          </div>
-          {c.lead_prioridade && (
-            <span className={`text-xs font-semibold tracking-wider ${leadColor[c.lead_prioridade] ?? 'text-white/30'}`}>
-              {c.lead_prioridade.toUpperCase()}
-            </span>
-          )}
-        </div>
-
-        {/* Nome */}
-        <div>
-          <h3 className="text-white font-light text-lg leading-tight tracking-wide line-clamp-2 group-hover:text-gold transition-colors duration-300">
-            {c.nome || 'Sem nome'}
-          </h3>
-          <div className="flex items-center gap-2 mt-2">
-            <span className={`w-1.5 h-1.5 rounded-full ${statusDot[c.status] ?? 'bg-white/20'}`} />
-            <span className="text-white/40 text-xs tracking-wider">{c.status || '—'}</span>
-          </div>
-        </div>
-
-        {/* Base: tipo evento + data */}
-        <div className="flex items-end justify-between">
-          <span className="text-white/25 text-xs">{c.tipo_evento?.replace(/[\[\]"]/g, '') || '—'}</span>
-          <span className="text-white/25 text-xs">{c.data_casamento || c.data_entrada || '—'}</span>
-        </div>
+    <div className="rounded-xl border border-white/8 bg-[#111111] hover:border-gold/30 transition-colors p-4 flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <Link href={`/crm/${c.id}`} className="text-white text-sm font-medium leading-snug hover:text-gold transition-colors line-clamp-2">
+          {c.nome || 'Sem nome'}
+        </Link>
+        {coluna === 'follow' && (
+          <span
+            title="Dias em negociação"
+            className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-md ${dias >= 14 ? 'bg-red-500/20 text-red-400' : dias >= 7 ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/15 text-yellow-400'}`}
+          >
+            {dias}d
+          </span>
+        )}
+        {coluna === 'encerrada' && (
+          <span className={`flex-shrink-0 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-md ${fechou ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-white/40'}`}>
+            {fechou ? 'Fechou' : 'Não fechou'}
+          </span>
+        )}
       </div>
 
-      {/* Hover panel — desliza de baixo para cima */}
-      <div className="absolute inset-x-0 bottom-0 translate-y-full group-hover:translate-y-0 transition-transform duration-[400ms] ease-out bg-[#0D0D0D]/97 backdrop-blur-sm border-t border-white/10 p-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between text-xs text-white/35">
+        <span className="truncate">{c.tipo_evento?.replace(/[\[\]"]/g, '') || '—'}</span>
+        <span className="flex-shrink-0">{c.data_casamento || c.data_entrada || '—'}</span>
+      </div>
 
-        {/* Status dropdown */}
+      {coluna === 'follow' && (
+        <div className="text-[11px] text-white/30">
+          Em negociação há <span className="text-white/60">{dias} {dias === 1 ? 'dia' : 'dias'}</span>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-2">
         <select
           value={c.status ?? ''}
-          onClick={e => e.stopPropagation()}
-          onChange={e => { e.stopPropagation(); onStatusChange(c.id, e.target.value) }}
-          className={`w-full text-xs px-3 py-1.5 rounded-full border cursor-pointer focus:outline-none bg-transparent ${statusColor[c.status] ?? 'bg-white/10 text-white/50 border-white/20'}`}
+          onChange={e => onStatusChange(c.id, e.target.value)}
+          className={`text-xs px-2 py-1 rounded-full border cursor-pointer focus:outline-none bg-transparent min-w-0 ${statusColor[c.status] ?? 'bg-white/10 text-white/50 border-white/20'}`}
         >
           {STATUSES.map(s => <option key={s} value={s} className="bg-zinc-900 text-white">{s}</option>)}
         </select>
-
-        {/* Info */}
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          {c.contato && (
-            <div>
-              <div className="text-white/30 tracking-wider mb-0.5">CONTACTO</div>
-              <div className="text-white/70">{c.contato}</div>
-            </div>
-          )}
-          {c.orcamento && (
-            <div>
-              <div className="text-white/30 tracking-wider mb-0.5">ORÇAMENTO</div>
-              <div className="text-gold font-semibold">{c.orcamento} €</div>
-            </div>
-          )}
-          {c.local_casamento && (
-            <div className="col-span-2">
-              <div className="text-white/30 tracking-wider mb-0.5">LOCAL</div>
-              <div className="text-white/60 truncate">{c.local_casamento}</div>
-            </div>
-          )}
-        </div>
-
-        {/* Dias + Ver ficha */}
-        <div className="flex items-center justify-between pt-1">
-          {dias > 0 && (
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${dias >= 7 ? 'bg-red-500/20 text-red-400' : dias >= 3 ? 'bg-orange-500/20 text-orange-400' : 'text-white/20'}`}>
-              {dias}d
-            </span>
-          )}
-          <Link
-            href={`/crm/${c.id}`}
-            onClick={e => e.stopPropagation()}
-            className="ml-auto text-xs tracking-widest text-gold/60 hover:text-gold transition-colors uppercase"
-          >
-            Ver ficha →
-          </Link>
-        </div>
+        {c.orcamento && <span className="text-gold text-xs font-semibold whitespace-nowrap">{c.orcamento} €</span>}
       </div>
     </div>
   )
@@ -235,7 +179,7 @@ export default function CRMPage() {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('Todos')
   const [loading, setLoading] = useState(true)
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ 'Por Contactar': true })
+  const [encerradaLimit, setEncerradaLimit] = useState(ENCERRADA_PAGE)
   const [openAlerts, setOpenAlerts] = useState<Record<string, boolean>>({ quente: true, morno: true, frio: true })
   const [yearFilter, setYearFilter] = useState('Todos')
   const [syncing, setSyncing] = useState(false)
@@ -255,7 +199,6 @@ export default function CRMPage() {
     setTimeout(() => setSyncMsg(''), 4000)
   }
 
-  const toggleGroup = (label: string) => setOpenGroups(p => ({ ...p, [label]: !p[label] }))
   const toggleAlert = (k: string) => setOpenAlerts(p => ({ ...p, [k]: !p[k] }))
 
   const handleStatusChange = async (id: string, newStatus: string) => {
@@ -543,54 +486,53 @@ export default function CRMPage() {
         )}
       </div>
 
-      {/* ── LEADS ── */}
+      {/* ── QUADRO (4 colunas) ── */}
       {loading ? (
         <div className="text-center py-32 text-white/15 tracking-[0.4em] text-xs uppercase">A carregar...</div>
-      ) : isFiltering ? (
-        filtered.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map(c => <LeadCard key={c.id} c={c} onStatusChange={handleStatusChange} />)}
-          </div>
-        ) : (
-          <div className="text-center py-24 text-white/15 tracking-[0.4em] text-xs uppercase">Sem resultados</div>
-        )
       ) : (
-        <div className="flex flex-col">
-          {STATUS_GROUPS.map(group => {
-            const groupContacts = contacts.filter(c =>
-              group.statuses.includes(c.status) &&
-              (yearFilter === 'Todos' || c.data_casamento?.startsWith(yearFilter))
-            )
-            if (groupContacts.length === 0) return null
-            const isOpen = !!openGroups[group.label]
-            return (
-              <section key={group.label}>
-                {/* Título do grupo — estilo tipográfico bold */}
-                <button
-                  onClick={() => toggleGroup(group.label)}
-                  className="w-full text-left pt-8 pb-4 group"
-                >
-                  <div className="flex items-baseline justify-between gap-4">
-                    <span className="text-4xl md:text-5xl font-bold tracking-tight uppercase text-white transition-opacity group-hover:opacity-70">
-                      {group.label}
-                    </span>
-                    <div className="flex items-center gap-4 pb-1">
-                      <span className="text-white/20 text-lg font-light">{groupContacts.length}</span>
-                      <span className={`text-white/20 text-sm transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>▼</span>
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-4">
+          <div className="grid grid-cols-[repeat(4,minmax(260px,1fr))] gap-4 items-start">
+            {COLUNAS.map(col => {
+              let items = filtered.filter(c => colunaDe(c.status) === col.key)
+              if (col.key === 'follow') {
+                // Há mais tempo em negociação primeiro
+                items = [...items].sort((a, b) => daysSince(b.status_updated_at || b.data_entrada) - daysSince(a.status_updated_at || a.data_entrada))
+              } else if (col.key !== 'nova') {
+                items = [...items].sort((a, b) => (b.status_updated_at || b.data_entrada || '').localeCompare(a.status_updated_at || a.data_entrada || ''))
+              }
+              const total = items.length
+              const visiveis = col.key === 'encerrada' ? items.slice(0, encerradaLimit) : items
+              const fecharam = col.key === 'encerrada' ? items.filter(c => c.status === 'Fechou').length : 0
+              return (
+                <section key={col.key} className="rounded-2xl border border-white/5 bg-white/[0.02] p-3 flex flex-col gap-3 min-h-[200px]">
+                  <div className="flex items-center justify-between px-1 pt-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${col.accent}`} />
+                      <h2 className="text-xs tracking-[0.25em] uppercase font-semibold text-white/80">{col.label}</h2>
                     </div>
+                    <span className="text-xs text-white/30">{total}</span>
                   </div>
-                  <div className="w-full h-px bg-white/10 mt-4" />
-                </button>
-
-                {/* Cards grid */}
-                {isOpen && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pt-6 pb-4">
-                    {groupContacts.map(c => <LeadCard key={c.id} c={c} onStatusChange={handleStatusChange} />)}
+                  <div className="flex items-center justify-between px-1 -mt-1 text-[11px] text-white/25">
+                    <span>{sumOrcamento(items) > 0 ? `${sumOrcamento(items).toLocaleString('pt-PT')} €` : ' '}</span>
+                    {col.key === 'encerrada' && total > 0 && <span>{fecharam} fecharam · {total - fecharam} não</span>}
                   </div>
-                )}
-              </section>
-            )
-          })}
+                  {visiveis.length === 0 ? (
+                    <div className="text-center py-8 text-white/15 text-xs tracking-widest">Sem leads</div>
+                  ) : (
+                    visiveis.map(c => <KanbanCard key={c.id} c={c} coluna={col.key} onStatusChange={handleStatusChange} />)
+                  )}
+                  {col.key === 'encerrada' && total > encerradaLimit && (
+                    <button
+                      onClick={() => setEncerradaLimit(l => l + ENCERRADA_PAGE)}
+                      className="py-2 text-xs tracking-widest uppercase text-white/30 hover:text-gold transition-colors"
+                    >
+                      Ver mais ({total - encerradaLimit})
+                    </button>
+                  )}
+                </section>
+              )
+            })}
+          </div>
         </div>
       )}
     </main>

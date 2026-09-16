@@ -126,6 +126,10 @@ export default function ClientePage() {
       page_confirmacao:   current?.page_confirmacao ?? form.page_confirmacao     ?? null,
       page_content: { ...pc, propostas, extras_proposta: extrasGlobais, tipo: pageTipo },
     }
+    // Mudança de status pela ficha reinicia a contagem de dias na coluna do CRM
+    if (form.status !== original.status) {
+      formToSave.status_updated_at = new Date().toISOString()
+    }
     // Regista data_fecho automaticamente quando status = Fechou e ainda não tem
     if (form.status === 'Fechou' && !form.data_fecho) {
       formToSave.data_fecho = new Date().toISOString()
