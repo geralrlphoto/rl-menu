@@ -61,6 +61,56 @@ function MiniTable({ contacts, onStatusChange, onOpen, borderColor, rowHover }: 
   )
 }
 
+/* ── BOTÃO QUADRADO DA BARRA DE AÇÕES ── */
+const ICONS: Record<string, string> = {
+  sync: 'M4 4v6h6M20 20v-6h-6M5.5 15a7 7 0 0011.9 2.5L20 14M18.5 9A7 7 0 006.6 6.5L4 10',
+  aneis: 'M9 21a6 6 0 100-12 6 6 0 000 12zM15 15a6 6 0 100-12 6 6 0 000 12z',
+  estrela: 'M12 3l1.9 5.6H20l-4.9 3.6 1.9 5.8L12 14.4 7 18l1.9-5.8L4 8.6h6.1L12 3z',
+  grafico: 'M4 20h16M7 16V10M12 16V5M17 16v-4',
+  portais: 'M4 5a1 1 0 011-1h5v7H4V5zM14 4h5a1 1 0 011 1v4h-6V4zM14 13h6v6a1 1 0 01-1 1h-5v-7zM4 15h6v5H5a1 1 0 01-1-1v-4z',
+  relogio: 'M12 7v5l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+  formulario: 'M9 4h6a1 1 0 011 1v1H8V5a1 1 0 011-1zM8 6H6a1 1 0 00-1 1v13a1 1 0 001 1h12a1 1 0 001-1V7a1 1 0 00-1-1h-2M9 12h6M9 16h4',
+  mais: 'M12 5v14M5 12h14',
+}
+
+function ActionTile({ label, icon, href, onClick, external, primary, disabled }: {
+  label: string
+  icon: keyof typeof ICONS
+  href?: string
+  onClick?: () => void
+  external?: boolean
+  primary?: boolean
+  disabled?: boolean
+}) {
+  const cls = `group relative flex flex-col items-center justify-center gap-2.5 aspect-square rounded-2xl border px-2 text-center transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-40 disabled:hover:translate-y-0 ${
+    primary
+      ? 'bg-gold border-gold text-black hover:bg-[#d8b85a] hover:shadow-[0_8px_30px_-8px_rgba(201,168,76,0.6)]'
+      : 'bg-white/[0.03] border-white/8 text-white/60 hover:text-white hover:border-gold/40 hover:bg-white/[0.06]'
+  }`
+  const inner = (
+    <>
+      {external && (
+        <svg className={`absolute top-2.5 right-2.5 w-3 h-3 ${primary ? 'text-black/40' : 'text-white/20 group-hover:text-gold/60'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5" />
+        </svg>
+      )}
+      <span className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${primary ? 'bg-black/10' : 'bg-gold/10 text-gold group-hover:bg-gold/20'}`}>
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+          <path strokeLinecap="round" strokeLinejoin="round" d={ICONS[icon]} />
+        </svg>
+      </span>
+      <span className={`text-[10px] leading-tight tracking-[0.15em] uppercase ${primary ? 'font-bold' : 'font-medium'}`}>{label}</span>
+    </>
+  )
+  if (href) {
+    return external
+      ? <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
+      : <Link href={href} className={cls}>{inner}</Link>
+  }
+  return <button type="button" onClick={onClick} disabled={disabled} className={cls}>{inner}</button>
+}
+
+
 function Kpi({ label, value, sub, color = 'text-white', onClick, active }: {
   label: string; value: string | number; sub?: string; color?: string; onClick?: () => void; active?: boolean
 }) {
@@ -321,57 +371,19 @@ export default function CRMPage() {
       </section>
 
       {/* ── AÇÕES ── */}
-      <div className="flex justify-end mb-8 sm:mb-10">
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          <div className="flex flex-col items-end gap-1">
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className="px-5 py-3 border border-white/10 hover:border-green-500/40 rounded-xl text-sm text-white/40 hover:text-green-400 tracking-[0.15em] uppercase transition-all disabled:opacity-40"
-            >
-              {syncing ? 'A sincronizar...' : '↻ Sync Notion'}
-            </button>
-            {syncMsg && <span className="text-xs text-green-400/70">{syncMsg}</span>}
-          </div>
-          <a href="/r/85343645-b0d3-4412-ae78-795fd7f8ddf1"
-            className="px-5 py-3 border border-gold/20 hover:border-gold/60 rounded-xl text-sm text-gold/50 hover:text-gold tracking-[0.15em] uppercase transition-all">
-            ✦ Maquete Casamento
-          </a>
-          <a href="/b/batizado-maquete"
-            className="px-5 py-3 border border-gold/20 hover:border-gold/60 rounded-xl text-sm text-gold/50 hover:text-gold tracking-[0.15em] uppercase transition-all">
-            ✦ Maquete Batizado
-          </a>
-          <Link href="/crm/stats"
-            className="px-5 py-3 border border-white/10 hover:border-gold/40 rounded-xl text-sm text-white/40 hover:text-gold tracking-[0.15em] uppercase transition-all">
-            Estatísticas
-          </Link>
-          <Link href="/crm/portais"
-            className="px-5 py-3 border border-white/10 hover:border-gold/40 rounded-xl text-sm text-white/40 hover:text-gold tracking-[0.15em] uppercase transition-all">
-            Portais
-          </Link>
-          <Link href="/crm/follow-up"
-            className="px-5 py-3 border border-white/10 hover:border-gold/40 rounded-xl text-sm text-white/40 hover:text-gold tracking-[0.15em] uppercase transition-all">
-            Follow Up
-          </Link>
-          <a href="/nova-lead" target="_blank" rel="noopener noreferrer"
-            className="px-5 py-3 border border-gold/20 hover:border-gold/60 rounded-xl text-sm text-gold/50 hover:text-gold tracking-[0.15em] uppercase transition-all flex items-center gap-2">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-            </svg>
-            Form. Noivos
-          </a>
-          <a href="/batizado" target="_blank" rel="noopener noreferrer"
-            className="px-5 py-3 border border-gold/20 hover:border-gold/60 rounded-xl text-sm text-gold/50 hover:text-gold tracking-[0.15em] uppercase transition-all flex items-center gap-2">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
-            </svg>
-            Form. Batizado
-          </a>
-          <Link href="/crm/nova"
-            className="px-6 py-3 bg-gold/90 hover:bg-gold rounded-xl text-sm font-semibold text-black tracking-[0.15em] uppercase transition-all">
-            + Nova Lead
-          </Link>
+      <div className="mb-8 sm:mb-10">
+        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3">
+          <ActionTile label="Nova Lead" icon="mais" href="/crm/nova" primary />
+          <ActionTile label="Follow Up" icon="relogio" href="/crm/follow-up" />
+          <ActionTile label="Estatísticas" icon="grafico" href="/crm/stats" />
+          <ActionTile label="Portais" icon="portais" href="/crm/portais" />
+          <ActionTile label="Maquete Casamento" icon="aneis" href="/r/85343645-b0d3-4412-ae78-795fd7f8ddf1" />
+          <ActionTile label="Maquete Batizado" icon="estrela" href="/b/batizado-maquete" />
+          <ActionTile label="Form. Noivos" icon="formulario" href="/nova-lead" external />
+          <ActionTile label="Form. Batizado" icon="formulario" href="/batizado" external />
+          <ActionTile label={syncing ? 'A sincronizar' : 'Sync Notion'} icon="sync" onClick={handleSync} disabled={syncing} />
         </div>
+        {syncMsg && <p className="text-xs text-green-400/80 text-right mt-2">{syncMsg}</p>}
       </div>
 
 
