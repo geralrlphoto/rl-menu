@@ -20,7 +20,10 @@ type Contact = {
   data_casamento: string
   data_fecho: string
   status_updated_at: string
+  motivo_nao_fechou: string | null
 }
+
+type Historico = { contact_id: string; status_de: string | null; status_para: string | null; created_at: string }
 
 const STATUS_COLORS: Record<string, string> = {
   'Fechou': '#4ade80', 'Negociação': '#facc15', 'Follow Up 1': '#fbbf24', 'Follow Up 2': '#f59e0b', 'Follow Up 3': '#ea580c', 'Por Contactar': '#f87171',
@@ -28,6 +31,8 @@ const STATUS_COLORS: Record<string, string> = {
   'Agendar Reunião': '#fb923c', 'Sem resposta': '#6b7280', 'Encerrado': '#4b5563',
   'Cancelado': '#991b1b', 'Iniciar': '#ffffff33',
 }
+const STATUS_ORDEM = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Follow Up 1','Follow Up 2','Follow Up 3']
+const MOTIVO_COLORS = ['#f87171','#fb923c','#facc15','#60a5fa','#c084fc','#9ca3af','#4b5563']
 const COMO_COLORS = ['#C9A84C','#a07c3a','#e6c46a','#f5dfa0','#8a6a2e','#d4a853','#7a5c22','#c49040','#ffe0a0','#b8882e']
 const PRIO_COLORS: Record<string, string> = { 'Alta': '#f87171', 'Médio': '#facc15', 'Baixa': '#4ade80', 'Não def.': '#6b7280' }
 const MONTH_LABELS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -78,10 +83,17 @@ export default function StatsPage() {
   const [loading, setLoading] = useState(true)
   const [yearFilter, setYearFilter] = useState('Todos')
 
+  const [historico, setHistorico] = useState<Historico[]>([])
+
   useEffect(() => {
     supabase.from('crm_contacts')
-      .select('id,status,como_chegou,lead_prioridade,tipo_evento,orcamento,servicos,data_entrada,data_casamento,data_fecho,status_updated_at')
+      .select('id,status,como_chegou,lead_prioridade,tipo_evento,orcamento,servicos,data_entrada,data_casamento,data_fecho,status_updated_at,motivo_nao_fechou')
       .then(({ data }) => { setContacts(data ?? []); setLoading(false) })
+    supabase.from('crm_status_history')
+      .select('contact_id,status_de,status_para,created_at')
+      .order('created_at', { ascending: true })
+      .limit(5000)
+      .then(({ data }) => setHistorico(data ?? []))
   }, [])
 
   if (loading) return (
@@ -194,6 +206,39 @@ export default function StatsPage() {
   const prioMap: Record<string, number> = {}
   all.forEach(c => { const k = c.lead_prioridade || 'Não def.'; prioMap[k] = (prioMap[k]||0)+1 })
   const prioData = Object.entries(prioMap).map(([name, value]) => ({ name, value }))
+
+  /* ── Motivos de não fechar ── */
+  const naoFecharam = all.filter(c => c.status === 'NÃO FECHOU')
+  const motivoMap: Record<string, number> = {}
+  naoFecharam.forEach(c => {
+    const k = (c.motivo_nao_fechou || 'Sem motivo').replace(/^Outro: .*/, 'Outro')
+    motivoMap[k] = (motivoMap[k] || 0) + 1
+  })
+  const motivoData = Object.entries(motivoMap).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
+
+  /* ── Histórico: onde se perdem e tempo médio em cada passo ── */
+  const idsAno = new Set(all.map(c => c.id))
+  const hist = historico.filter(h => idsAno.has(h.contact_id))
+  const perdidasMap: Record<string, number> = {}
+  hist.forEach(h => {
+    if (h.status_para === 'NÃO FECHOU' && h.status_de) perdidasMap[h.status_de] = (perdidasMap[h.status_de] || 0) + 1
+  })
+  const perdidasData = Object.entries(perdidasMap).sort((a, b) => b[1] - a[1]).map(([name, value]) => ({ name, value }))
+
+  const passoDias: Record<string, number[]> = {}
+  const porContacto: Record<string, Historico[]> = {}
+  hist.forEach(h => { (porContacto[h.contact_id] ||= []).push(h) })
+  Object.values(porContacto).forEach(lista => {
+    for (let i = 1; i < lista.length; i++) {
+      const passo = lista[i].status_de
+      if (!passo) continue
+      const dias = (new Date(lista[i].created_at).getTime() - new Date(lista[i - 1].created_at).getTime()) / 86400000
+      ;(passoDias[passo] ||= []).push(dias)
+    }
+  })
+  const passoData = STATUS_ORDEM
+    .filter(s => passoDias[s]?.length)
+    .map(s => ({ name: s, dias: Math.round((passoDias[s].reduce((a, b) => a + b, 0) / passoDias[s].length) * 10) / 10, n: passoDias[s].length }))
 
   return (
     <main className="min-h-screen px-4 sm:px-6 py-10 max-w-[1400px] mx-auto">
@@ -404,6 +449,65 @@ export default function StatsPage() {
           </div>
         </div>
       )}
+
+      {/* ── PORQUE NÃO FECHAM + ONDE SE PERDEM ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
+          <h2 className="text-xs tracking-[0.35em] uppercase text-white/30 mb-2">Porque não fecham</h2>
+          <p className="text-white/20 text-[10px] mb-6 tracking-wider">{naoFecharam.length} leads com Não Fechou</p>
+          {motivoData.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {motivoData.map((m, i) => (
+                <div key={m.name}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-white/70">{m.name}</span>
+                    <span className="text-white/50">{m.value} · {Math.round((m.value / naoFecharam.length) * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div className="h-full rounded-full" style={{ width: `${(m.value / naoFecharam.length) * 100}%`, background: m.name === 'Sem motivo' ? '#4b5563' : MOTIVO_COLORS[i % MOTIVO_COLORS.length] }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : <p className="text-white/20 text-xs">Sem dados</p>}
+        </div>
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6">
+          <h2 className="text-xs tracking-[0.35em] uppercase text-white/30 mb-2">Onde se perdem</h2>
+          <p className="text-white/20 text-[10px] mb-6 tracking-wider">Último passo antes de Não Fechou. Dados desde 17 set 2026</p>
+          {perdidasData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={perdidasData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <XAxis type="number" tick={{ fill: '#ffffff30', fontSize: 10 }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" tick={{ fill: '#ffffff60', fontSize: 11 }} axisLine={false} tickLine={false} width={120} />
+                <Tooltip content={<CustomTooltip />} cursor={{ fill: '#ffffff08' }} />
+                <Bar dataKey="value" name="Perdidas" radius={[0,4,4,0]}>
+                  {perdidasData.map((d, i) => <Cell key={i} fill={STATUS_COLORS[d.name] ?? '#6b7280'} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          ) : <p className="text-white/20 text-xs">Ainda sem dados. Vai encher à medida que mudas status no CRM.</p>}
+        </div>
+      </div>
+
+      {/* ── TEMPO MÉDIO EM CADA PASSO ── */}
+      <div className="bg-white/3 border border-white/8 rounded-2xl p-6 mb-6">
+        <h2 className="text-xs tracking-[0.35em] uppercase text-white/30 mb-2">Tempo médio em cada passo</h2>
+        <p className="text-white/20 text-[10px] mb-6 tracking-wider">Dias que uma lead fica em cada status antes de mudar. Dados desde 17 set 2026</p>
+        {passoData.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            {passoData.map(p => (
+              <div key={p.name} className="rounded-xl border border-white/8 px-4 py-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 rounded-full" style={{ background: STATUS_COLORS[p.name] ?? '#6b7280' }} />
+                  <span className="text-[11px] text-white/50 truncate">{p.name}</span>
+                </div>
+                <div className="text-2xl font-extralight text-white">{p.dias}<span className="text-sm text-white/40"> dias</span></div>
+                <div className="text-[10px] text-white/25">{p.n} {p.n === 1 ? 'passagem' : 'passagens'}</div>
+              </div>
+            ))}
+          </div>
+        ) : <p className="text-white/20 text-xs">Ainda sem dados. Vai encher à medida que mudas status no CRM.</p>}
+      </div>
 
       {/* ── STATUS + PRIORIDADE ── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">

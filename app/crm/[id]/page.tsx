@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
+import { MOTIVOS_NAO_FECHOU, colunaDe } from '@/lib/crm'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
@@ -82,6 +83,14 @@ export default function ClientePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [historico, setHistorico] = useState<{ id: string; status_de: string | null; status_para: string | null; created_at: string }[]>([])
+
+  const loadHistorico = () => {
+    supabase.from('crm_status_history').select('id,status_de,status_para,created_at')
+      .eq('contact_id', id).order('created_at', { ascending: false }).limit(50)
+      .then(({ data }) => setHistorico(data ?? []))
+  }
+  useEffect(() => { loadHistorico() }, [id])
 
   useEffect(() => {
     supabase.from('crm_contacts').select('*').eq('id', id).single().then(({ data }) => {
@@ -129,9 +138,14 @@ export default function ClientePage() {
       page_confirmacao:   current?.page_confirmacao ?? form.page_confirmacao     ?? null,
       page_content: { ...pc, propostas, extras_proposta: extrasGlobais, tipo: pageTipo },
     }
+    // Campo date não aceita string vazia
+    formToSave.proxima_acao_data = form.proxima_acao_data || null
+    formToSave.proxima_acao = form.proxima_acao || null
+    formToSave.motivo_nao_fechou = form.motivo_nao_fechou || null
+    // Lead encerrada deixa de ter próxima ação pendente
+    if (colunaDe(form.status) === 'encerrada') { formToSave.proxima_acao = null; formToSave.proxima_acao_data = null }
     // Mudança de status pela ficha reinicia a contagem de dias na coluna do CRM
-    const FOLLOW = ['Negociação', 'Follow Up 1', 'Follow Up 2', 'Follow Up 3']
-    const dentroDoFollowUp = FOLLOW.includes(form.status) && FOLLOW.includes(original.status)
+    const dentroDoFollowUp = colunaDe(form.status) === 'follow' && colunaDe(original.status) === 'follow'
     if (form.status !== original.status && !dentroDoFollowUp) {
       formToSave.status_updated_at = new Date().toISOString()
     }
@@ -143,6 +157,7 @@ export default function ClientePage() {
     if (!error) {
       setForm(formToSave)
       setOriginal(formToSave)
+      if (form.status !== original.status) loadHistorico()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } else {
@@ -465,6 +480,38 @@ export default function ClientePage() {
             <S label="Lead Prioridade" name="lead_prioridade" value={form.lead_prioridade} onChange={set} options={PRIORIDADES} />
           </div>
           <F label="Data de Entrada" name="data_entrada" value={form.data_entrada} onChange={set} type="date" />
+          {form.status === 'NÃO FECHOU' && (
+            <S label="Motivo de não ter fechado" name="motivo_nao_fechou" value={form.motivo_nao_fechou} onChange={set}
+              options={['', ...MOTIVOS_NAO_FECHOU, ...(form.motivo_nao_fechou && !MOTIVOS_NAO_FECHOU.includes(form.motivo_nao_fechou) ? [form.motivo_nao_fechou] : [])]} />
+          )}
+          {colunaDe(form.status) !== 'encerrada' && (
+            <div className="grid grid-cols-[1fr_auto] gap-4">
+              <F label="Próxima ação" name="proxima_acao" value={form.proxima_acao} onChange={set} placeholder="Ex: Ligar para saber da proposta" />
+              <F label="Data" name="proxima_acao_data" value={form.proxima_acao_data} onChange={set} type="date" />
+            </div>
+          )}
+        </div>
+
+        {/* Histórico de status */}
+        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
+          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Histórico de Status</h2>
+          {historico.length === 0 ? (
+            <p className="text-xs text-white/30">Sem mudanças registadas. O histórico começou a ser guardado a 17 set 2026.</p>
+          ) : (
+            <ol className="flex flex-col gap-2">
+              {historico.map(h => (
+                <li key={h.id} className="flex items-center justify-between gap-4 text-sm">
+                  <span className="text-white/70">
+                    {h.status_de ? <><span className="text-white/35">{h.status_de}</span> → </> : <span className="text-white/35">Entrou como </span>}
+                    {h.status_para}
+                  </span>
+                  <span className="text-xs text-white/30 whitespace-nowrap">
+                    {new Date(h.created_at).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
 
         {/* Evento */}

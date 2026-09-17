@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { ENCERRADA_STATUSES, FOLLOW_PARADO_DIAS, FOLLOW_STATUSES, daysSince, fmtDataCurta, hojeISO } from '@/lib/crm'
 
 function db() {
   return createClient(
@@ -34,6 +35,8 @@ const TIPO_LABELS: Record<string, string> = {
   video_estado_alterado:    'Estado do Vídeo · Editor',
   video_revisao_enviada:    'Vídeo para Revisão · Editor',
   entrega_projeto:          'Entrega do Projeto · Editor',
+  crm_acao_atrasada:        'CRM · Próxima Ação Atrasada',
+  crm_follow_parado:        'CRM · Follow Up Parado',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -62,6 +65,8 @@ const TIPO_ICONS: Record<string, string> = {
   video_estado_alterado:    '🎬',
   video_revisao_enviada:    '🎞',
   entrega_projeto:          '📦',
+  crm_acao_atrasada:        '⏰',
+  crm_follow_parado:        '⚠',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -953,6 +958,61 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] prewedding alerta read failed:', err)
+    }
+
+    // ── CRM: próxima ação atrasada e Follow Up parado ──
+    //    Ação atrasada = proxima_acao_data < hoje numa lead não encerrada.
+    //    Parado = em Follow Up há ≥ FOLLOW_PARADO_DIAS no mesmo passo sem ação agendada.
+    try {
+      const hojeStr = hojeISO()
+      const { data: leads } = await supabase
+        .from('crm_contacts')
+        .select('id, nome, status, status_updated_at, proxima_acao, proxima_acao_data')
+        .or(`status.is.null,status.not.in.(${ENCERRADA_STATUSES.map(s => `"${s}"`).join(',')})`)
+        .limit(1000)
+      const ativos = (leads ?? []) as any[]
+      const follow = ativos.filter(l => FOLLOW_STATUSES.includes(l.status))
+      const ultimaMudanca = new Map<string, string>()
+      if (follow.length > 0) {
+        const { data: hist } = await supabase
+          .from('crm_status_history')
+          .select('contact_id, created_at')
+          .in('contact_id', follow.map(l => l.id))
+          .order('created_at', { ascending: false })
+        for (const h of (hist ?? []) as any[]) if (!ultimaMudanca.has(h.contact_id)) ultimaMudanca.set(h.contact_id, h.created_at)
+      }
+      for (const l of ativos) {
+        const base = { casamento_id: '', freelancer_id: '', freelancer_nome: l.nome || 'Sem nome', local: l.status || '—', data_casamento: null, url: `/crm/${l.id}` }
+        const acaoData = l.proxima_acao_data ? String(l.proxima_acao_data).slice(0, 10) : null
+        if (acaoData && acaoData < hojeStr) {
+          notifications.push({
+            ...base,
+            id: `crm_acao_atrasada::${l.id}::${acaoData}`,
+            tipo: 'crm_acao_atrasada',
+            tipo_label: TIPO_LABELS.crm_acao_atrasada,
+            tipo_icon: TIPO_ICONS.crm_acao_atrasada,
+            sent_at: new Date(acaoData + 'T09:00:00').toISOString(),
+            mensagem: `${l.proxima_acao || 'Próxima ação'} estava marcada para ${fmtDataCurta(acaoData)}.`,
+          })
+        }
+        if (FOLLOW_STATUSES.includes(l.status) && !(acaoData && acaoData >= hojeStr)) {
+          const desde = ultimaMudanca.get(l.id) || l.status_updated_at
+          if (!desde) continue
+          const dias = daysSince(desde)
+          if (dias < FOLLOW_PARADO_DIAS) continue
+          notifications.push({
+            ...base,
+            id: `crm_follow_parado::${l.id}::${l.status}::${String(desde).slice(0, 10)}`,
+            tipo: 'crm_follow_parado',
+            tipo_label: TIPO_LABELS.crm_follow_parado,
+            tipo_icon: TIPO_ICONS.crm_follow_parado,
+            sent_at: new Date(new Date(desde).getTime() + FOLLOW_PARADO_DIAS * 86400000).toISOString(),
+            mensagem: `Há ${dias} dias em ${l.status} sem próxima ação agendada.`,
+          })
+        }
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] crm alertas read failed:', err)
     }
 
     // Ordenar por sent_at DESC

@@ -1,57 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
-
-type Contact = {
-  id: string
-  notion_id?: string | null
-  nome: string
-  contato: string
-  email: string
-  status: string
-  lead_prioridade: string
-  tipo_evento: string
-  data_casamento: string
-  data_entrada: string
-  local_casamento: string
-  orcamento: string
-  como_chegou: string
-  servicos: string
-  status_updated_at: string
-  data_fecho: string
-}
+import {
+  DROP_STATUS, colunaDe, daysSince, estadoAcao, parseOrcamento, type ColunaKey,
+} from '@/lib/crm'
+import { EncerrarModal, KanbanCard, LeadDrawer, StatusSelect, type Contact } from './CrmBoard'
 
 // Colunas que a LISTA do CRM usa — exclui de propósito o `page_content`
-// (propostas, ~3 KB/linha) que só é preciso na ficha /crm/[id]. Puxar só
-// isto em vez de `select *` corta ~75% do egress por abertura do CRM.
+// (propostas, ~3 KB/linha) e as notas, que só são precisas na ficha/painel.
 const LIST_COLUMNS =
-  'id,notion_id,nome,contato,email,status,lead_prioridade,tipo_evento,data_casamento,data_entrada,local_casamento,orcamento,como_chegou,servicos,status_updated_at,data_fecho'
+  'id,notion_id,nome,contato,email,status,lead_prioridade,tipo_evento,data_casamento,data_entrada,local_casamento,orcamento,como_chegou,servicos,status_updated_at,data_fecho,proxima_acao,proxima_acao_data,motivo_nao_fechou'
 
-const statusColor: Record<string, string> = {
-  'Fechou': 'bg-green-500/20 text-green-400 border-green-500/30',
-  'Negociação': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-  'Follow Up 1': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-  'Follow Up 2': 'bg-amber-600/20 text-amber-500 border-amber-600/30',
-  'Follow Up 3': 'bg-orange-600/20 text-orange-500 border-orange-600/30',
-  'Por Contactar': 'bg-red-500/20 text-red-400 border-red-500/30',
-  'Contactado': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
-  'Reunião Agendada': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
-  'NÃO FECHOU': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
-  'Agendar Reunião': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
-  'Sem resposta': 'bg-gray-500/20 text-gray-300 border-gray-500/30',
-  'Encerrado': 'bg-gray-700/20 text-gray-500 border-gray-700/30',
-  'Cancelado': 'bg-red-900/20 text-red-600 border-red-900/30',
-  'Iniciar': 'bg-white/10 text-white/50 border-white/20',
-}
-
-// Colunas do quadro. Nova Entrada apanha tudo o que não cai nas outras
-// (Por Contactar, Iniciar, Contactado, Agendar Reunião, sem status).
-type ColunaKey = 'nova' | 'reuniao' | 'follow' | 'encerrada'
-const REUNIAO_STATUSES = ['Reunião Agendada']
-const FOLLOW_STATUSES = ['Negociação', 'Follow Up 1', 'Follow Up 2', 'Follow Up 3']
-const ENCERRADA_STATUSES = ['Fechou', 'NÃO FECHOU', 'Sem resposta', 'Encerrado', 'Cancelado']
 const COLUNAS: { key: ColunaKey; label: string; accent: string }[] = [
   { key: 'nova', label: 'Nova Entrada', accent: 'bg-red-400' },
   { key: 'reuniao', label: 'Reunião Agendada', accent: 'bg-purple-400' },
@@ -60,108 +21,30 @@ const COLUNAS: { key: ColunaKey; label: string; accent: string }[] = [
 ]
 const ENCERRADA_PAGE = 20
 
-function colunaDe(status: string): ColunaKey {
-  if (REUNIAO_STATUSES.includes(status)) return 'reuniao'
-  if (FOLLOW_STATUSES.includes(status)) return 'follow'
-  if (ENCERRADA_STATUSES.includes(status)) return 'encerrada'
-  return 'nova'
-}
-
-const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Follow Up 1','Follow Up 2','Follow Up 3','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
-
-function daysSince(dateStr: string): number {
-  if (!dateStr) return 0
-  const d = new Date(dateStr)
-  if (isNaN(d.getTime())) return 0
-  return Math.floor((Date.now() - d.getTime()) / (1000 * 60 * 60 * 24))
-}
-
 function sumOrcamento(contacts: Contact[]): number {
-  return contacts.reduce((sum, c) => {
-    const val = parseFloat((c.orcamento ?? '').toString().replace(/[^\d.,]/g, '').replace(',', '.'))
-    return sum + (isNaN(val) ? 0 : val)
-  }, 0)
-}
-
-/* ── KANBAN CARD ── */
-function KanbanCard({ c, coluna, onStatusChange }: { c: Contact; coluna: ColunaKey; onStatusChange: (id: string, s: string) => void }) {
-  const dias = daysSince(c.status_updated_at || c.data_entrada)
-  const fechou = c.status === 'Fechou'
-
-  return (
-    <div className="rounded-xl border border-white/8 bg-[#111111] hover:border-gold/30 transition-colors p-4 flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-2">
-        <Link href={`/crm/${c.id}`} className="text-white text-sm font-medium leading-snug hover:text-gold transition-colors line-clamp-2">
-          {c.nome || 'Sem nome'}
-        </Link>
-        {coluna === 'follow' && (
-          <span
-            title="Dias em negociação"
-            className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-md ${dias >= 14 ? 'bg-red-500/20 text-red-400' : dias >= 7 ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/15 text-yellow-400'}`}
-          >
-            {dias}d
-          </span>
-        )}
-        {coluna === 'encerrada' && (
-          <span className={`flex-shrink-0 text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-md ${fechou ? 'bg-green-500/20 text-green-400' : 'bg-white/5 text-white/40'}`}>
-            {fechou ? 'Fechou' : 'Não fechou'}
-          </span>
-        )}
-      </div>
-
-      <div className="flex items-center justify-between text-xs text-white/35">
-        <span className="truncate">{c.tipo_evento?.replace(/[\[\]"]/g, '') || '—'}</span>
-        <span className="flex-shrink-0">{c.data_casamento || c.data_entrada || '—'}</span>
-      </div>
-
-      {coluna === 'follow' && (
-        <div className="text-[11px] text-white/30">
-          Em follow up há <span className="text-white/60">{dias} {dias === 1 ? 'dia' : 'dias'}</span>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between gap-2">
-        <select
-          value={c.status ?? ''}
-          onChange={e => onStatusChange(c.id, e.target.value)}
-          className={`text-xs px-2 py-1 rounded-full border cursor-pointer focus:outline-none bg-transparent min-w-0 ${statusColor[c.status] ?? 'bg-white/10 text-white/50 border-white/20'}`}
-        >
-          {STATUSES.map(s => <option key={s} value={s} className="bg-zinc-900 text-white">{s}</option>)}
-        </select>
-        {c.orcamento && <span className="text-gold text-xs font-semibold whitespace-nowrap">{c.orcamento} €</span>}
-      </div>
-    </div>
-  )
+  return contacts.reduce((sum, c) => sum + parseOrcamento(c.orcamento), 0)
 }
 
 /* ── MINI TABLE (Requer Atenção) ── */
-function MiniTable({ contacts, onStatusChange, borderColor, rowHover }: {
+function MiniTable({ contacts, onStatusChange, onOpen, borderColor, rowHover }: {
   contacts: Contact[]
   onStatusChange: (id: string, status: string) => void
+  onOpen: (id: string) => void
   borderColor: string
   headerColor: string
   rowHover: string
 }) {
-  const total = contacts.reduce((sum, c) => {
-    const val = parseFloat((c.orcamento ?? '').toString().replace(/[^\d.,]/g, '').replace(',', '.'))
-    return sum + (isNaN(val) ? 0 : val)
-  }, 0)
+  const total = sumOrcamento(contacts)
 
   return (
     <div className={`rounded-xl border ${borderColor} overflow-hidden`}>
       {contacts.map((c, i) => (
         <div key={c.id} className={`flex flex-col gap-1.5 px-4 py-3 ${i > 0 ? `border-t ${borderColor}/30` : ''} ${rowHover} transition-colors`}>
-          <Link href={`/crm/${c.id}`} className="text-white text-sm font-medium hover:text-gold transition-colors truncate">
+          <button onClick={() => onOpen(c.id)} className="text-left text-white text-sm font-medium hover:text-gold transition-colors truncate">
             {c.nome || '—'}
-          </Link>
+          </button>
           <div className="flex items-center justify-between gap-2">
-            <select
-              value={c.status ?? ''}
-              onChange={e => onStatusChange(c.id, e.target.value)}
-              className={`text-xs px-2 py-0.5 rounded-full border cursor-pointer focus:outline-none bg-transparent flex-shrink-0 ${statusColor[c.status] ?? 'bg-white/10 text-white/50 border-white/20'}`}
-            >
-              {STATUSES.map(s => <option key={s} value={s} className="bg-zinc-900 text-white">{s}</option>)}
-            </select>
+            <StatusSelect value={c.status} onChange={s => onStatusChange(c.id, s)} className="flex-shrink-0" />
             <span className="text-white/70 text-xs font-medium whitespace-nowrap">
               {c.orcamento ? `${c.orcamento} €` : '—'}
             </span>
@@ -176,6 +59,20 @@ function MiniTable({ contacts, onStatusChange, borderColor, rowHover }: {
   )
 }
 
+function Kpi({ label, value, sub, color = 'text-white', onClick, active }: {
+  label: string; value: string | number; sub?: string; color?: string; onClick?: () => void; active?: boolean
+}) {
+  const Tag = onClick ? 'button' : 'div'
+  return (
+    <Tag onClick={onClick}
+      className={`text-left rounded-2xl border px-5 py-4 transition-colors ${active ? 'border-red-500/50 bg-red-500/10' : 'border-white/8 bg-white/[0.02]'} ${onClick ? 'hover:border-white/20 cursor-pointer' : ''}`}>
+      <p className="text-white/25 text-[10px] tracking-[0.3em] uppercase mb-2">{label}</p>
+      <p className={`text-2xl font-light ${color}`}>{value}</p>
+      {sub && <p className="text-white/25 text-[11px] mt-1">{sub}</p>}
+    </Tag>
+  )
+}
+
 /* ── MAIN PAGE ── */
 export default function CRMPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
@@ -187,6 +84,22 @@ export default function CRMPage() {
   const [yearFilter, setYearFilter] = useState('Todos')
   const [syncing, setSyncing] = useState(false)
   const [syncMsg, setSyncMsg] = useState('')
+  const [soAtrasadas, setSoAtrasadas] = useState(false)
+  const [atencaoAberta, setAtencaoAberta] = useState(false)
+  const [drawerId, setDrawerId] = useState<string | null>(null)
+  const [encerrar, setEncerrar] = useState<{ id: string; inicial: 'escolher' | 'nao' } | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dropCol, setDropCol] = useState<ColunaKey | null>(null)
+  // Última mudança de status (vinda do histórico) das leads em Follow Up
+  const [ultimaMudanca, setUltimaMudanca] = useState<Record<string, string>>({})
+
+  useEffect(() => {
+    try { setAtencaoAberta(localStorage.getItem('crm_atencao_aberta') === '1') } catch {}
+  }, [])
+  const toggleAtencao = () => setAtencaoAberta(v => {
+    try { localStorage.setItem('crm_atencao_aberta', v ? '0' : '1') } catch {}
+    return !v
+  })
 
   const handleSync = async () => {
     setSyncing(true)
@@ -204,19 +117,45 @@ export default function CRMPage() {
 
   const toggleAlert = (k: string) => setOpenAlerts(p => ({ ...p, [k]: !p[k] }))
 
-  const handleStatusChange = async (id: string, newStatus: string) => {
+  const applyStatus = async (id: string, newStatus: string, motivo?: string | null) => {
     const now = new Date().toISOString()
     const existing = contacts.find(c => c.id === id)
-    const updatePayload: Record<string, string> = { status: newStatus }
+    if (!existing || existing.status === newStatus) return
+    const updatePayload: Partial<Contact> = { status: newStatus }
     // Dentro da coluna Follow Up (Negociação → Follow Up 1/2/3) os dias continuam a contar
-    if (!(existing && colunaDe(existing.status) === 'follow' && colunaDe(newStatus) === 'follow')) {
+    if (!(colunaDe(existing.status) === 'follow' && colunaDe(newStatus) === 'follow')) {
       updatePayload.status_updated_at = now
     }
     // Regista data_fecho apenas quando muda para Fechou e ainda não tem
-    if (newStatus === 'Fechou' && !existing?.data_fecho) updatePayload.data_fecho = now
+    if (newStatus === 'Fechou' && !existing.data_fecho) updatePayload.data_fecho = now
+    if (newStatus === 'NÃO FECHOU') updatePayload.motivo_nao_fechou = motivo ?? null
+    // Lead encerrada deixa de ter próxima ação pendente
+    if (colunaDe(newStatus) === 'encerrada') { updatePayload.proxima_acao = null; updatePayload.proxima_acao_data = null }
+    if (colunaDe(newStatus) === 'follow') setUltimaMudanca(m => ({ ...m, [id]: now }))
     setContacts(prev => prev.map(c => c.id === id ? { ...c, ...updatePayload } : c))
     await supabase.from('crm_contacts').update(updatePayload).eq('id', id)
   }
+
+  // Mudança pedida no menu: Não fechou pede sempre o motivo
+  const handleStatusChange = (id: string, newStatus: string) => {
+    if (newStatus === 'NÃO FECHOU') setEncerrar({ id, inicial: 'nao' })
+    else applyStatus(id, newStatus)
+  }
+
+  const handleDrop = (col: ColunaKey, id: string) => {
+    const c = contacts.find(x => x.id === id)
+    if (!c || colunaDe(c.status) === col) return
+    if (col === 'encerrada') setEncerrar({ id, inicial: 'escolher' })
+    else applyStatus(id, DROP_STATUS[col])
+  }
+
+  const patchContact = useCallback(async (id: string, patch: Partial<Contact>) => {
+    setContacts(prev => prev.map(c => c.id === id ? { ...c, ...patch } : c))
+    await supabase.from('crm_contacts').update(patch).eq('id', id)
+  }, [])
+
+  const closeDrawer = useCallback(() => setDrawerId(null), [])
+  const cancelEncerrar = useCallback(() => setEncerrar(null), [])
 
   // Deduplica por notion_id E por nome+data_casamento para eliminar duplicados mesmo sem notion_id
   function dedupeContacts(data: Contact[]): Contact[] {
@@ -233,6 +172,20 @@ export default function CRMPage() {
       return true
     })
   }
+
+  // Só as leads em Follow Up precisam do histórico (para o aviso "parado")
+  const followIdsKey = contacts.filter(c => colunaDe(c.status) === 'follow').map(c => c.id).sort().join(',')
+  useEffect(() => {
+    if (!followIdsKey) return
+    supabase.from('crm_status_history').select('contact_id,created_at')
+      .in('contact_id', followIdsKey.split(',')).order('created_at', { ascending: false })
+      .then(({ data }) => {
+        const m: Record<string, string> = {}
+        for (const h of data ?? []) if (!m[h.contact_id]) m[h.contact_id] = h.created_at
+        setUltimaMudanca(prev => ({ ...prev, ...m }))
+      })
+  }, [followIdsKey])
+
 
   useEffect(() => {
     // Carregamento inicial dos contactos (do Supabase).
@@ -268,14 +221,30 @@ export default function CRMPage() {
     }
   }, [])
 
+
   // Leads activas no pipeline (excluir fechadas/encerradas)
-  const CLOSED = ['Fechou', 'NÃO FECHOU', 'Encerrado', 'Cancelado', 'Sem resposta']
-  const activeLeads = contacts.filter(c => !CLOSED.includes(c.status))
+  const activeLeads = contacts.filter(c => colunaDe(c.status) !== 'encerrada')
 
   // Temperatura baseada em data_entrada
   const leadsQuente = activeLeads.filter(c => daysSince(c.data_entrada) <= 3)
   const leadsMorno  = activeLeads.filter(c => { const d = daysSince(c.data_entrada); return d >= 4 && d <= 10 })
   const leadsFrio   = activeLeads.filter(c => daysSince(c.data_entrada) > 10)
+
+  // ── Números do topo ──
+  const mesAtual = new Date().toISOString().slice(0, 7)
+  const encerradasMes = contacts.filter(c =>
+    (c.status === 'Fechou' || c.status === 'NÃO FECHOU') &&
+    (c.data_fecho || c.status_updated_at || '').slice(0, 7) === mesAtual
+  )
+  const fecharamMes = encerradasMes.filter(c => c.status === 'Fechou').length
+  const taxaMes = encerradasMes.length > 0 ? Math.round((fecharamMes / encerradasMes.length) * 100) : null
+  const valorFollow = sumOrcamento(contacts.filter(c => colunaDe(c.status) === 'follow'))
+  const temposFecho = contacts
+    .filter(c => c.status === 'Fechou' && c.data_fecho && c.data_entrada)
+    .map(c => Math.round((new Date(c.data_fecho).getTime() - new Date(c.data_entrada).getTime()) / 86400000))
+    .filter(d => d >= 0)
+  const mediaDiasFecho = temposFecho.length > 0 ? Math.round(temposFecho.reduce((a, b) => a + b, 0) / temposFecho.length) : null
+  const acoesAtrasadas = activeLeads.filter(c => estadoAcao(c.proxima_acao_data) === 'atrasada').length
 
   const filtered = (() => {
     let r = contacts
@@ -286,6 +255,7 @@ export default function CRMPage() {
     )
     if (statusFilter !== 'Todos') r = r.filter(c => c.status === statusFilter)
     if (yearFilter !== 'Todos') r = r.filter(c => c.data_casamento?.startsWith(yearFilter))
+    if (soAtrasadas) r = r.filter(c => colunaDe(c.status) !== 'encerrada' && estadoAcao(c.proxima_acao_data) === 'atrasada')
     return r
   })()
 
@@ -294,8 +264,10 @@ export default function CRMPage() {
   const yearsFromData = Array.from(new Set(contacts.map(c => c.data_casamento?.slice(0,4)).filter(Boolean)))
   const fixedYears = ['2025','2026','2027','2028','2029']
   const years = ['Todos', ...Array.from(new Set([...yearsFromData, ...fixedYears])).sort((a,b) => Number(a)-Number(b))]
-  const isFiltering = search !== '' || statusFilter !== 'Todos' || yearFilter !== 'Todos'
+  const isFiltering = search !== '' || statusFilter !== 'Todos' || yearFilter !== 'Todos' || soAtrasadas
   const hasAlerts = leadsQuente.length > 0 || leadsMorno.length > 0 || leadsFrio.length > 0
+  const drawerContact = drawerId ? contacts.find(c => c.id === drawerId) ?? null : null
+  const encerrarContact = encerrar ? contacts.find(c => c.id === encerrar.id) ?? null : null
 
   return (
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1400px] mx-auto">
@@ -361,15 +333,33 @@ export default function CRMPage() {
         </div>
       </div>
 
+      {/* ── NÚMEROS DO TOPO ── */}
+      {!loading && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+          <Kpi label="Taxa de fecho (mês)" value={taxaMes !== null ? `${taxaMes}%` : '—'}
+            sub={encerradasMes.length > 0 ? `${fecharamMes} de ${encerradasMes.length} encerradas` : 'Nenhuma encerrada este mês'} color="text-green-400" />
+          <Kpi label="Valor em Follow Up" value={valorFollow > 0 ? `${valorFollow.toLocaleString('pt-PT')} €` : '—'} color="text-gold" />
+          <Kpi label="Média até fechar" value={mediaDiasFecho !== null ? `${mediaDiasFecho} dias` : '—'} sub="Da entrada ao fecho" color="text-yellow-300" />
+          <Kpi label="Ações atrasadas" value={acoesAtrasadas}
+            sub={soAtrasadas ? 'A mostrar só estas. Clica para ver todas' : acoesAtrasadas > 0 ? 'Clica para ver só estas' : 'Tudo em dia'}
+            color={acoesAtrasadas > 0 ? 'text-red-400' : 'text-white/60'}
+            onClick={acoesAtrasadas > 0 || soAtrasadas ? () => setSoAtrasadas(v => !v) : undefined} active={soAtrasadas} />
+        </div>
+      )}
+
       {/* ── PAINEL REQUER ATENÇÃO ── */}
       {!loading && hasAlerts && (
-        <section className="mb-14">
-          <div className="flex items-center gap-4 mb-6">
-            <span className="text-xs tracking-[0.4em] uppercase text-white/20 font-light">Requer Atenção</span>
+        <section className="mb-10">
+          <button onClick={toggleAtencao} className="w-full flex items-center gap-4 group">
+            <span className="text-xs tracking-[0.4em] uppercase text-white/30 font-light group-hover:text-white/60 transition-colors">Requer Atenção</span>
+            <span className="text-[11px] text-white/20">{leadsQuente.length} quentes · {leadsMorno.length} mornas · {leadsFrio.length} frias</span>
             <div className="flex-1 h-px bg-white/5" />
-          </div>
+            <span className={`text-white/25 text-xs transition-transform duration-200 ${atencaoAberta ? 'rotate-180' : ''}`}>▼</span>
+          </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          {atencaoAberta && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+
 
             {/* 🔴 QUENTE — 0 a 3 dias */}
             <div>
@@ -394,7 +384,7 @@ export default function CRMPage() {
               </button>
               {openAlerts.quente && (
                 leadsQuente.length > 0
-                  ? <MiniTable contacts={leadsQuente} onStatusChange={handleStatusChange} borderColor="border-red-500/20" headerColor="text-red-400/50" rowHover="hover:bg-red-500/5" />
+                  ? <MiniTable contacts={leadsQuente} onStatusChange={handleStatusChange} onOpen={setDrawerId} borderColor="border-red-500/20" headerColor="text-red-400/50" rowHover="hover:bg-red-500/5" />
                   : <div className="text-center py-6 text-white/15 text-xs tracking-widest border border-red-500/10 rounded-xl">Sem leads</div>
               )}
             </div>
@@ -422,7 +412,7 @@ export default function CRMPage() {
               </button>
               {openAlerts.morno && (
                 leadsMorno.length > 0
-                  ? <MiniTable contacts={leadsMorno} onStatusChange={handleStatusChange} borderColor="border-orange-500/20" headerColor="text-orange-400/50" rowHover="hover:bg-orange-500/5" />
+                  ? <MiniTable contacts={leadsMorno} onStatusChange={handleStatusChange} onOpen={setDrawerId} borderColor="border-orange-500/20" headerColor="text-orange-400/50" rowHover="hover:bg-orange-500/5" />
                   : <div className="text-center py-6 text-white/15 text-xs tracking-widest border border-orange-500/10 rounded-xl">Sem leads</div>
               )}
             </div>
@@ -450,15 +440,17 @@ export default function CRMPage() {
               </button>
               {openAlerts.frio && (
                 leadsFrio.length > 0
-                  ? <MiniTable contacts={leadsFrio} onStatusChange={handleStatusChange} borderColor="border-blue-500/20" headerColor="text-blue-400/50" rowHover="hover:bg-blue-500/5" />
+                  ? <MiniTable contacts={leadsFrio} onStatusChange={handleStatusChange} onOpen={setDrawerId} borderColor="border-blue-500/20" headerColor="text-blue-400/50" rowHover="hover:bg-blue-500/5" />
                   : <div className="text-center py-6 text-white/15 text-xs tracking-widest border border-blue-500/10 rounded-xl">Sem leads</div>
               )}
             </div>
 
           </div>
+          )}
           <div className="h-px bg-white/5 mt-8" />
         </section>
       )}
+
 
       {/* ── FILTROS ── */}
       <div className="flex flex-wrap gap-3 mb-10">
@@ -483,26 +475,34 @@ export default function CRMPage() {
         >
           {years.map(y => <option key={y} value={y} className="bg-zinc-900">{y === 'Todos' ? 'Todos os anos' : y}</option>)}
         </select>
+        {soAtrasadas && (
+          <button onClick={() => setSoAtrasadas(false)}
+            className="px-3 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-xs text-red-400 tracking-wider">
+            Só ações atrasadas ×
+          </button>
+        )}
         {isFiltering && (
           <button
-            onClick={() => { setSearch(''); setStatusFilter('Todos'); setYearFilter('Todos') }}
+            onClick={() => { setSearch(''); setStatusFilter('Todos'); setYearFilter('Todos'); setSoAtrasadas(false) }}
             className="px-4 py-2.5 text-xs text-white/30 hover:text-white/60 tracking-widest uppercase transition-colors"
           >
             Limpar
           </button>
         )}
       </div>
+      <p className="hidden md:block -mt-6 mb-4 text-[11px] text-white/20">Arrasta os cartões entre colunas. Clica num cartão para abrir a ficha rápida.</p>
+
 
       {/* ── QUADRO (4 colunas) ── */}
       {loading ? (
         <div className="text-center py-32 text-white/15 tracking-[0.4em] text-xs uppercase">A carregar...</div>
       ) : (
         <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-4">
-          <div className="grid grid-cols-[repeat(4,minmax(260px,1fr))] gap-4 items-start">
+          <div className="grid grid-cols-[repeat(4,minmax(270px,1fr))] gap-4 items-start">
             {COLUNAS.map(col => {
               let items = filtered.filter(c => colunaDe(c.status) === col.key)
               if (col.key === 'follow') {
-                // Há mais tempo em negociação primeiro
+                // Há mais tempo em follow up primeiro
                 items = [...items].sort((a, b) => daysSince(b.status_updated_at || b.data_entrada) - daysSince(a.status_updated_at || a.data_entrada))
               } else if (col.key !== 'nova') {
                 items = [...items].sort((a, b) => (b.status_updated_at || b.data_entrada || '').localeCompare(a.status_updated_at || a.data_entrada || ''))
@@ -510,8 +510,16 @@ export default function CRMPage() {
               const total = items.length
               const visiveis = col.key === 'encerrada' ? items.slice(0, encerradaLimit) : items
               const fecharam = col.key === 'encerrada' ? items.filter(c => c.status === 'Fechou').length : 0
+              const draggedCol = draggingId ? colunaDe(contacts.find(c => c.id === draggingId)?.status) : null
+              const isTarget = !!draggingId && dropCol === col.key && draggedCol !== col.key
               return (
-                <section key={col.key} className="rounded-2xl border border-white/5 bg-white/[0.02] p-3 flex flex-col gap-3 min-h-[200px]">
+                <section
+                  key={col.key}
+                  onDragOver={e => { if (!draggingId) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dropCol !== col.key) setDropCol(col.key) }}
+                  onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropCol(d => d === col.key ? null : d) }}
+                  onDrop={e => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); setDropCol(null); setDraggingId(null); if (id) handleDrop(col.key, id) }}
+                  className={`rounded-2xl border p-3 flex flex-col gap-3 min-h-[240px] transition-colors ${isTarget ? 'border-gold/50 bg-gold/[0.05]' : 'border-white/5 bg-white/[0.02]'}`}
+                >
                   <div className="flex items-center justify-between px-1 pt-1">
                     <div className="flex items-center gap-2">
                       <span className={`w-2 h-2 rounded-full ${col.accent}`} />
@@ -519,14 +527,31 @@ export default function CRMPage() {
                     </div>
                     <span className="text-xs text-white/30">{total}</span>
                   </div>
-                  <div className="flex items-center justify-between px-1 -mt-1 text-[11px] text-white/25">
-                    <span>{sumOrcamento(items) > 0 ? `${sumOrcamento(items).toLocaleString('pt-PT')} €` : ' '}</span>
+                  <div className="flex items-center justify-between px-1 -mt-1 text-[11px] text-white/25 min-h-[16px]">
+                    <span>{sumOrcamento(items) > 0 ? `${sumOrcamento(items).toLocaleString('pt-PT')} €` : ''}</span>
                     {col.key === 'encerrada' && total > 0 && <span>{fecharam} fecharam · {total - fecharam} não</span>}
                   </div>
-                  {visiveis.length === 0 ? (
+                  {isTarget && (
+                    <div className="rounded-xl border border-dashed border-gold/40 py-4 text-center text-[11px] tracking-widest uppercase text-gold/70">
+                      {col.key === 'encerrada' ? 'Largar para encerrar' : `Mover para ${col.label}`}
+                    </div>
+                  )}
+                  {visiveis.length === 0 && !isTarget ? (
                     <div className="text-center py-8 text-white/15 text-xs tracking-widest">Sem leads</div>
                   ) : (
-                    visiveis.map(c => <KanbanCard key={c.id} c={c} coluna={col.key} onStatusChange={handleStatusChange} />)
+                    visiveis.map(c => (
+                      <KanbanCard
+                        key={c.id}
+                        c={c}
+                        coluna={col.key}
+                        diasNoPasso={daysSince(ultimaMudanca[c.id] || c.status_updated_at || c.data_entrada)}
+                        onOpen={() => setDrawerId(c.id)}
+                        onStatusChange={handleStatusChange}
+                        dragging={draggingId === c.id}
+                        onDragStart={() => setDraggingId(c.id)}
+                        onDragEnd={() => { setDraggingId(null); setDropCol(null) }}
+                      />
+                    ))
                   )}
                   {col.key === 'encerrada' && total > encerradaLimit && (
                     <button
@@ -541,6 +566,19 @@ export default function CRMPage() {
             })}
           </div>
         </div>
+      )}
+
+      {drawerContact && (
+        <LeadDrawer c={drawerContact} onClose={closeDrawer} onStatusChange={handleStatusChange} onPatch={patchContact} />
+      )}
+
+      {encerrar && encerrarContact && (
+        <EncerrarModal
+          nome={encerrarContact.nome}
+          inicial={encerrar.inicial}
+          onCancel={cancelEncerrar}
+          onConfirm={(status, motivo) => { applyStatus(encerrar.id, status, motivo); setEncerrar(null) }}
+        />
       )}
     </main>
   )
