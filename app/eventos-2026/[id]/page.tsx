@@ -4474,6 +4474,17 @@ export default function EventoPage() {
             </span>
           </div>
 
+          {/* Despesas do casamento — o que sai para a equipa */}
+          <div className="flex items-center justify-between px-4 py-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+            <div>
+              <span className="text-xs tracking-widest text-red-400/60 uppercase block">Despesas do Casamento</span>
+              <span className="text-[10px] text-white/20">(Fotografia + Videógrafo + Editor Vídeo)</span>
+            </div>
+            <span className="text-red-400 font-bold text-lg">
+              {(valorFotografo + valorVideografo + valorEditorVideo).toLocaleString('pt-PT')} €
+            </span>
+          </div>
+
           {/* Valor Líquido calculado */}
           <div className="flex items-center justify-between px-4 py-3 bg-green-500/10 border border-green-500/20 rounded-xl">
             <div>
