@@ -12,6 +12,9 @@ const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,
 const statusColor: Record<string, string> = {
   'Fechou': 'bg-green-500/20 text-green-400 border-green-500/40',
   'Negociação': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40',
+  'Follow Up 1': 'bg-amber-500/20 text-amber-400 border-amber-500/40',
+  'Follow Up 2': 'bg-amber-600/20 text-amber-500 border-amber-600/40',
+  'Follow Up 3': 'bg-orange-600/20 text-orange-500 border-orange-600/40',
   'Por Contactar': 'bg-red-500/20 text-red-400 border-red-500/40',
   'Contactado': 'bg-blue-500/20 text-blue-400 border-blue-500/40',
   'Reunião Agendada': 'bg-purple-500/20 text-purple-400 border-purple-500/40',
@@ -29,7 +32,7 @@ const leadColor: Record<string, string> = {
   'Baixa': 'bg-green-500/20 text-green-400 border-green-500/40',
 }
 
-const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
+const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Follow Up 1','Follow Up 2','Follow Up 3','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
 const PRIORIDADES = ['Alta','Médio','Baixa']
 const COMO_CHEGOU_OPTIONS = ['','Instagram','Facebook','Instagram/Facebook','WebSite','Casamentos.pt','Indicação','Newsletter']
 
@@ -127,7 +130,9 @@ export default function ClientePage() {
       page_content: { ...pc, propostas, extras_proposta: extrasGlobais, tipo: pageTipo },
     }
     // Mudança de status pela ficha reinicia a contagem de dias na coluna do CRM
-    if (form.status !== original.status) {
+    const FOLLOW = ['Negociação', 'Follow Up 1', 'Follow Up 2', 'Follow Up 3']
+    const dentroDoFollowUp = FOLLOW.includes(form.status) && FOLLOW.includes(original.status)
+    if (form.status !== original.status && !dentroDoFollowUp) {
       formToSave.status_updated_at = new Date().toISOString()
     }
     // Regista data_fecho automaticamente quando status = Fechou e ainda não tem

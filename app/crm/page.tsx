@@ -32,6 +32,9 @@ const LIST_COLUMNS =
 const statusColor: Record<string, string> = {
   'Fechou': 'bg-green-500/20 text-green-400 border-green-500/30',
   'Negociação': 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
+  'Follow Up 1': 'bg-amber-500/20 text-amber-400 border-amber-500/30',
+  'Follow Up 2': 'bg-amber-600/20 text-amber-500 border-amber-600/30',
+  'Follow Up 3': 'bg-orange-600/20 text-orange-500 border-orange-600/30',
   'Por Contactar': 'bg-red-500/20 text-red-400 border-red-500/30',
   'Contactado': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   'Reunião Agendada': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
@@ -47,7 +50,7 @@ const statusColor: Record<string, string> = {
 // (Por Contactar, Iniciar, Contactado, Agendar Reunião, sem status).
 type ColunaKey = 'nova' | 'reuniao' | 'follow' | 'encerrada'
 const REUNIAO_STATUSES = ['Reunião Agendada']
-const FOLLOW_STATUSES = ['Negociação']
+const FOLLOW_STATUSES = ['Negociação', 'Follow Up 1', 'Follow Up 2', 'Follow Up 3']
 const ENCERRADA_STATUSES = ['Fechou', 'NÃO FECHOU', 'Sem resposta', 'Encerrado', 'Cancelado']
 const COLUNAS: { key: ColunaKey; label: string; accent: string }[] = [
   { key: 'nova', label: 'Nova Entrada', accent: 'bg-red-400' },
@@ -64,7 +67,7 @@ function colunaDe(status: string): ColunaKey {
   return 'nova'
 }
 
-const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
+const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Follow Up 1','Follow Up 2','Follow Up 3','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
 
 function daysSince(dateStr: string): number {
   if (!dateStr) return 0
@@ -113,7 +116,7 @@ function KanbanCard({ c, coluna, onStatusChange }: { c: Contact; coluna: ColunaK
 
       {coluna === 'follow' && (
         <div className="text-[11px] text-white/30">
-          Em negociação há <span className="text-white/60">{dias} {dias === 1 ? 'dia' : 'dias'}</span>
+          Em follow up há <span className="text-white/60">{dias} {dias === 1 ? 'dia' : 'dias'}</span>
         </div>
       )}
 
@@ -204,7 +207,11 @@ export default function CRMPage() {
   const handleStatusChange = async (id: string, newStatus: string) => {
     const now = new Date().toISOString()
     const existing = contacts.find(c => c.id === id)
-    const updatePayload: Record<string, string> = { status: newStatus, status_updated_at: now }
+    const updatePayload: Record<string, string> = { status: newStatus }
+    // Dentro da coluna Follow Up (Negociação → Follow Up 1/2/3) os dias continuam a contar
+    if (!(existing && colunaDe(existing.status) === 'follow' && colunaDe(newStatus) === 'follow')) {
+      updatePayload.status_updated_at = now
+    }
     // Regista data_fecho apenas quando muda para Fechou e ainda não tem
     if (newStatus === 'Fechou' && !existing?.data_fecho) updatePayload.data_fecho = now
     setContacts(prev => prev.map(c => c.id === id ? { ...c, ...updatePayload } : c))

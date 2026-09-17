@@ -23,7 +23,7 @@ type Contact = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  'Fechou': '#4ade80', 'Negociação': '#facc15', 'Por Contactar': '#f87171',
+  'Fechou': '#4ade80', 'Negociação': '#facc15', 'Follow Up 1': '#fbbf24', 'Follow Up 2': '#f59e0b', 'Follow Up 3': '#ea580c', 'Por Contactar': '#f87171',
   'Contactado': '#60a5fa', 'Reunião Agendada': '#c084fc', 'NÃO FECHOU': '#9ca3af',
   'Agendar Reunião': '#fb923c', 'Sem resposta': '#6b7280', 'Encerrado': '#4b5563',
   'Cancelado': '#991b1b', 'Iniciar': '#ffffff33',

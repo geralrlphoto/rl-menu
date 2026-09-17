@@ -99,7 +99,7 @@ export default function NovaLeadPage() {
               <label className="text-xs tracking-widest text-white/40 uppercase block mb-1">Status</label>
               <select value={form.status} onChange={e => set('status', e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-gold/50">
-                {['Por Contactar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado'].map(s =>
+                {['Por Contactar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Follow Up 1','Follow Up 2','Follow Up 3','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado'].map(s =>
                   <option key={s} value={s} className="bg-zinc-900">{s}</option>
                 )}
               </select>
