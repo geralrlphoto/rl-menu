@@ -474,6 +474,92 @@ function dataCurta(v: string) {
   return dt.toLocaleDateString('pt-PT')
 }
 
+// Ticket médio = (foto real + vídeo) por evento, só conta eventos com valor
+function valorEvento(e: Evento) {
+  return (e.valor_real_foto ?? 0) + (e.valor_liquido ?? 0)
+}
+
+function ticketMedio(evs: Evento[]) {
+  const comValor = evs.filter(e => valorEvento(e) > 0)
+  return comValor.length ? Math.round(comValor.reduce((s, e) => s + valorEvento(e), 0) / comValor.length) : 0
+}
+
+function TicketEvolucao({ events, anoFiltro, ticketAno }: { events: Evento[]; anoFiltro: number; ticketAno: number }) {
+  const [ticketAnterior, setTicketAnterior] = useState<number | null>(null)
+
+  // Ano anterior só é pedido quando o painel abre
+  useEffect(() => {
+    fetch(`/api/eventos-supabase?ano=${anoFiltro - 1}`)
+      .then(r => r.json())
+      .then(d => setTicketAnterior(ticketMedio(d.events ?? [])))
+      .catch(() => setTicketAnterior(0))
+  }, [anoFiltro])
+
+  let acumSoma = 0, acumN = 0
+  const meses = MESES.map((m, i) => {
+    const doMes = events.filter(e => e.data_evento && new Date(e.data_evento + 'T00:00:00').getMonth() === i && valorEvento(e) > 0)
+    doMes.forEach(e => { acumSoma += valorEvento(e); acumN++ })
+    return {
+      mes: m,
+      n: doMes.length,
+      ticket: ticketMedio(doMes),
+      acumulado: acumN ? Math.round(acumSoma / acumN) : 0,
+    }
+  })
+  const max = Math.max(...meses.map(m => m.ticket), 1)
+  const delta = ticketAnterior ? Math.round(((ticketAno - ticketAnterior) / ticketAnterior) * 100) : null
+
+  return (
+    <div className="mt-3 rounded-2xl border border-gold/25 bg-black/55 backdrop-blur-md px-4 sm:px-6 py-4 sm:py-5">
+      <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
+        <div>
+          <p className="text-gold/80 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase">Evolução do ticket médio</p>
+          <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">Média por mês do evento · linha dourada = média acumulada no ano</p>
+        </div>
+        <div className="flex items-center gap-4 text-right">
+          <div>
+            <p className="text-white/40 text-[9px] tracking-[0.2em] uppercase">{anoFiltro - 1}</p>
+            <p className="text-white/70 text-sm font-light">{ticketAnterior === null ? '…' : ticketAnterior ? `${ticketAnterior.toLocaleString('pt-PT')} €` : 'sem dados'}</p>
+          </div>
+          <div>
+            <p className="text-gold/70 text-[9px] tracking-[0.2em] uppercase">{anoFiltro}</p>
+            <p className="text-gold text-sm font-light">{ticketAno.toLocaleString('pt-PT')} €</p>
+          </div>
+          {delta !== null && (
+            <span className={`text-xs px-2 py-1 rounded-full border ${delta >= 0 ? 'text-green-300 border-green-400/30 bg-green-500/10' : 'text-red-300 border-red-400/30 bg-red-500/10'}`}>
+              {delta >= 0 ? '+' : ''}{delta}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-12 gap-1 sm:gap-2 items-end h-40">
+        {meses.map(m => (
+          <div key={m.mes} className="relative h-full flex flex-col justify-end items-center group">
+            {m.acumulado > 0 && (
+              <div className="absolute left-0 right-0 border-t border-gold/70 pointer-events-none" style={{ bottom: `${(m.acumulado / max) * 80}%` }} />
+            )}
+            {m.ticket > 0 && (
+              <span className="text-[8px] sm:text-[10px] text-white/60 mb-1 whitespace-nowrap">{Math.round(m.ticket / 100) / 10}k</span>
+            )}
+            <div className={`w-full rounded-t-md ${m.ticket > 0 ? 'bg-white/20 group-hover:bg-gold/40' : 'bg-white/5'} transition-colors`}
+              style={{ height: m.ticket > 0 ? `${(m.ticket / max) * 80}%` : '2px' }}
+              title={m.ticket > 0 ? `${m.mes}: ${m.ticket.toLocaleString('pt-PT')} € (${m.n} eventos) · acumulado ${m.acumulado.toLocaleString('pt-PT')} €` : `${m.mes}: sem eventos`} />
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-12 gap-1 sm:gap-2 mt-2">
+        {meses.map(m => (
+          <div key={m.mes} className="text-center">
+            <p className="text-[8px] sm:text-[10px] text-white/50 uppercase tracking-wider">{m.mes}</p>
+            <p className="text-[8px] sm:text-[9px] text-white/30">{m.n || ''}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function Eventos2026Inner() {
   const [events, setEvents] = useState<Evento[]>([])
   const [loading, setLoading] = useState(true)
@@ -482,6 +568,7 @@ function Eventos2026Inner() {
   const [tipoFilter, setTipoFilter] = useState('Todos')
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showNovoEvento, setShowNovoEvento] = useState(false)
+  const [showTicketEvolucao, setShowTicketEvolucao] = useState(false)
   // Set de referencias com portal ativo (existe row em `portais`)
   const [portaisAtivos, setPortaisAtivos] = useState<Set<string>>(new Set())
   // Map ref(upper) → ISO timestamp do backup confirmado em /eventos-2026/[id]
@@ -562,6 +649,8 @@ function Eventos2026Inner() {
   const totalFoto = events.reduce((s, e) => s + (e.valor_real_foto ?? 0), 0)
   const totalVideo = events.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
   const totalGeral = totalFoto + totalVideo
+  const ticketAno = ticketMedio(events)
+  const eventosComValor = events.filter(e => valorEvento(e) > 0).length
   const casamentosCount = events.filter(e => (e.tipo_evento ?? []).includes('CASAMENTO')).length
 
   const today = new Date()
@@ -614,7 +703,8 @@ function Eventos2026Inner() {
           </div>
 
           {!loading && !error && events.length > 0 && (
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+            <>
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3">
               <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
                 <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Fotografia</p>
                 <p className="text-xl sm:text-2xl font-light text-white">{totalFoto.toLocaleString('pt-PT')} <span className="text-white/40 text-base">€</span></p>
@@ -637,7 +727,22 @@ function Eventos2026Inner() {
                   <div className="h-full bg-gold/80 rounded-full" style={{ width: `${events.length ? (realizados / events.length) * 100 : 0}%` }} />
                 </div>
               </div>
+              <div className="relative col-span-2 lg:col-span-1 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
+                <button onClick={() => setShowTicketEvolucao(v => !v)}
+                  aria-label={showTicketEvolucao ? 'Fechar evolução do ticket médio' : 'Ver evolução do ticket médio'}
+                  title="Evolução do ticket médio"
+                  className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full border flex items-center justify-center transition-all ${showTicketEvolucao ? 'border-gold bg-gold text-black' : 'border-gold/50 text-gold hover:bg-gold/15'}`}>
+                  <svg className={`w-3.5 h-3.5 transition-transform ${showTicketEvolucao ? 'rotate-45' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+                  </svg>
+                </button>
+                <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Ticket Médio</p>
+                <p className="text-xl sm:text-2xl font-light text-white">{ticketAno.toLocaleString('pt-PT')} <span className="text-white/40 text-base">€</span></p>
+                <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">Por evento · {eventosComValor} com valor</p>
+              </div>
             </div>
+            {showTicketEvolucao && <TicketEvolucao events={events} anoFiltro={anoFiltro} ticketAno={ticketAno} />}
+            </>
           )}
         </div>
       </section>
