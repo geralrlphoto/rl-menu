@@ -11,6 +11,16 @@ function db() {
 
 const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, estado, origem, responsavel, metodo_pagamento, mbway_conta, created_at, enviado_para_id, enviado_para_nome, enviado_em, fotos_enviadas_em, impressao_preparada_em, envio_erro, envio_auto'
 
+// Primeiros nomes de "Ana e Simão" / "Filipa Paulista & João Bolota", sem
+// acentos nem maiúsculas, para comparar o que o convidado escreveu à mão.
+function nomesDe(v: string): string[] {
+  return String(v)
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter(n => n.length >= 3 && n !== 'e')
+}
+
 // GET: lista pedidos de fotos (admin). ?referencia=<ref> filtra por casamento.
 //   ?data=YYYY-MM-DD devolve também `sugestoes`: pedidos ainda sem referência
 //   cuja data do casamento bate certo (o convidado escreve a data à mão).
@@ -35,6 +45,20 @@ export async function GET(req: NextRequest) {
       .order('created_at', { ascending: false })
       .limit(200)
     sugestoes = semRef ?? []
+  }
+  // Só interessam os que também têm o nome dos noivos deste casamento: no mesmo
+  // dia há outros casamentos, e um ticket de "Rita e Rita" não é da "Ana e Simão".
+  const nome = req.nextUrl.searchParams.get('nome')
+  if (nome) {
+    const partes = nomesDe(nome)
+    sugestoes = sugestoes.filter(p => {
+      const dele = nomesDe(p.noivos ?? '')
+      const iguais = dele.filter(n => partes.includes(n)).length
+      // Com dois nomes de cada lado exige os dois: no mesmo dia pode haver
+      // outro casamento com uma "Ana", e não é o mesmo casamento.
+      const exige = partes.length >= 2 && dele.length >= 2 ? 2 : 1
+      return iguais >= exige
+    })
   }
 
   return NextResponse.json({ pedidos: pedidos ?? [], sugestoes })

@@ -213,7 +213,7 @@ function RevisaoVideoAdmin({ referencia }: { referencia: string }) {
 // ─── Pedidos de Fotos (convidados) associados a este casamento ───────────────
 const eurPF = (n: any) => `${Number(n || 0).toFixed(2)} €`
 
-function PedidosFotosEvento({ referencia, dataEvento }: { referencia: string; dataEvento?: string }) {
+function PedidosFotosEvento({ referencia, dataEvento, cliente }: { referencia: string; dataEvento?: string; cliente?: string }) {
   const [pedidos, setPedidos] = useState<any[]>([])
   const [sugestoes, setSugestoes] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -224,6 +224,7 @@ function PedidosFotosEvento({ referencia, dataEvento }: { referencia: string; da
     let cancelled = false
     const qs = new URLSearchParams({ referencia })
     if (dataEvento) qs.set('data', dataEvento)
+    if (cliente) qs.set('nome', cliente)
     fetch(`/api/pedidos-fotos?${qs}`)
       .then(r => r.json())
       .then(d => {
@@ -234,7 +235,7 @@ function PedidosFotosEvento({ referencia, dataEvento }: { referencia: string; da
       })
       .catch(() => { if (!cancelled) setLoaded(true) })
     return () => { cancelled = true }
-  }, [referencia, dataEvento])
+  }, [referencia, dataEvento, cliente])
 
   // Liga um pedido solto a este casamento
   async function associar(p: any) {
@@ -320,7 +321,7 @@ function PedidosFotosEvento({ referencia, dataEvento }: { referencia: string; da
       {sugestoes.length > 0 && (
         <div className="mt-5 pt-4 border-t border-white/[0.06] flex flex-col gap-2.5">
           <p className="text-[10px] tracking-[0.3em] text-white/30 uppercase">
-            Com a data deste casamento, ainda por associar ({sugestoes.length})
+            Com o nome e a data deste casamento, ainda por associar ({sugestoes.length})
           </p>
           {sugestoes.map(p => linha(p, true))}
         </div>
@@ -5016,7 +5017,7 @@ export default function EventoPage() {
         {e.referencia && <RevisaoVideoAdmin referencia={e.referencia} />}
 
         {/* ── Pedidos de Fotos dos convidados associados a este casamento ── */}
-        {e.referencia && <PedidosFotosEvento referencia={e.referencia} dataEvento={e.data_evento ?? ''} />}
+        {e.referencia && <PedidosFotosEvento referencia={e.referencia} dataEvento={e.data_evento ?? ''} cliente={e.cliente ?? ''} />}
 
         </DrawerBloco>
 
