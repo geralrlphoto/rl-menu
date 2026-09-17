@@ -1,0 +1,130 @@
+/* Quadrados de ações do CRM, com as cores e efeitos dos cartões do menu (/secao/[id]) */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;1,400&family=Hanken+Grotesk:wght@500;700&display=swap');
+
+.crm-tile {
+  --gold: #c8a866;
+  --gold-soft: #d7bd87;
+  --gold-deep: #9c7c47;
+  --gold-faint: rgba(200, 168, 102, 0.16);
+  --gold-line: rgba(200, 168, 102, 0.22);
+  --ink: #efe7d6;
+  --ink-4: #5f574b;
+  --line: rgba(239, 231, 214, 0.10);
+
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 8px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--ink);
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: linear-gradient(180deg, #1e1812, #181410);
+  transition: transform 0.35s cubic-bezier(0.2, 0.85, 0.25, 1),
+              border-color 0.3s, background 0.3s, box-shadow 0.4s;
+  cursor: pointer;
+}
+.crm-tile:disabled { opacity: 0.5; cursor: wait; }
+
+/* Barra dourada à esquerda */
+.crm-tile::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 2px;
+  background: var(--gold);
+  transform: scaleY(0);
+  transform-origin: center;
+  transition: transform 0.35s cubic-bezier(0.2, 0.85, 0.25, 1);
+}
+
+.crm-tile:hover {
+  transform: translateY(-3px);
+  border-color: var(--gold-line);
+  background: linear-gradient(180deg, rgba(30, 24, 18, 1), rgba(36, 29, 21, 1));
+  box-shadow: 0 22px 44px -28px rgba(200, 168, 102, 0.45), 0 4px 8px rgba(0, 0, 0, 0.35);
+}
+.crm-tile:hover::before { transform: scaleY(1); }
+
+/* Nova Lead: já com contorno dourado */
+.crm-tile.is-primary { border-color: var(--gold-line); }
+.crm-tile.is-primary::before { transform: scaleY(1); }
+
+/* Brilho dourado que atravessa ao passar */
+.crm-tile-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(100deg, transparent 0%, rgba(200, 168, 102, 0.10) 30%, rgba(255, 246, 224, 0.18) 50%, rgba(200, 168, 102, 0.10) 70%, transparent 100%);
+  transform: translateX(-130%);
+  opacity: 0;
+  transition: transform 0.7s cubic-bezier(0.3, 0.6, 0.3, 1);
+}
+.crm-tile:hover .crm-tile-sweep { transform: translateX(130%); opacity: 1; }
+
+.crm-tile-num {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--gold-deep);
+  transition: color 0.3s;
+}
+.crm-tile:hover .crm-tile-num { color: var(--gold-soft); }
+
+.crm-tile-arrow {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink-4);
+  transition: color 0.3s, transform 0.3s cubic-bezier(0.2, 0.85, 0.25, 1);
+}
+.crm-tile:hover .crm-tile-arrow { color: var(--gold); transform: translateX(3px); }
+.crm-tile:hover .crm-tile-arrow.is-external { transform: translate(3px, -3px); }
+
+.crm-tile-icon {
+  position: relative;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  border: 1px solid var(--gold-faint);
+  background: rgba(200, 168, 102, 0.06);
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.3s, border-color 0.3s, background 0.3s;
+}
+.crm-tile-icon svg { width: 18px; height: 18px; }
+.crm-tile:hover .crm-tile-icon {
+  border-color: var(--gold);
+  color: var(--gold-soft);
+  background: rgba(200, 168, 102, 0.12);
+}
+.crm-tile.is-primary .crm-tile-icon { border-color: var(--gold); background: rgba(200, 168, 102, 0.12); }
+
+.crm-tile-name {
+  position: relative;
+  z-index: 1;
+  font-family: 'Hanken Grotesk', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  color: var(--ink);
+}

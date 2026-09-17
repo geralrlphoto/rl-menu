@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import './crm-tiles.css'
 import {
   DROP_STATUS, colunaDe, daysSince, estadoAcao, parseOrcamento, type ColunaKey,
 } from '@/lib/crm'
@@ -73,7 +74,8 @@ const ICONS: Record<string, string> = {
   mais: 'M12 5v14M5 12h14',
 }
 
-function ActionTile({ label, icon, href, onClick, external, primary, disabled }: {
+function ActionTile({ num, label, icon, href, onClick, external, primary, disabled }: {
+  num: number
   label: string
   icon: keyof typeof ICONS
   href?: string
@@ -82,24 +84,18 @@ function ActionTile({ label, icon, href, onClick, external, primary, disabled }:
   primary?: boolean
   disabled?: boolean
 }) {
-  const cls = `group relative flex flex-col items-center justify-center gap-2.5 aspect-square rounded-2xl border px-2 text-center transition-all duration-200 hover:-translate-y-0.5 disabled:opacity-40 disabled:hover:translate-y-0 ${
-    primary
-      ? 'bg-gold border-gold text-black hover:bg-[#d8b85a] hover:shadow-[0_8px_30px_-8px_rgba(201,168,76,0.6)]'
-      : 'bg-white/[0.03] border-white/8 text-white/60 hover:text-white hover:border-gold/40 hover:bg-white/[0.06]'
-  }`
+  const cls = `crm-tile${primary ? ' is-primary' : ''}`
   const inner = (
     <>
-      {external && (
-        <svg className={`absolute top-2.5 right-2.5 w-3 h-3 ${primary ? 'text-black/40' : 'text-white/20 group-hover:text-gold/60'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5" />
-        </svg>
-      )}
-      <span className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${primary ? 'bg-black/10' : 'bg-gold/10 text-gold group-hover:bg-gold/20'}`}>
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <span className="crm-tile-sweep" />
+      <span className="crm-tile-num">{String(num).padStart(2, '0')}</span>
+      <span className="crm-tile-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
           <path strokeLinecap="round" strokeLinejoin="round" d={ICONS[icon]} />
         </svg>
       </span>
-      <span className={`text-[10px] leading-tight tracking-[0.15em] uppercase ${primary ? 'font-bold' : 'font-medium'}`}>{label}</span>
+      <span className="crm-tile-name">{label}</span>
+      <span className={`crm-tile-arrow${external ? ' is-external' : ''}`}>{external ? '↗' : '→'}</span>
     </>
   )
   if (href) {
@@ -373,15 +369,15 @@ export default function CRMPage() {
       {/* ── AÇÕES ── */}
       <div className="mb-8 sm:mb-10">
         <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-2.5 sm:gap-3">
-          <ActionTile label="Nova Lead" icon="mais" href="/crm/nova" primary />
-          <ActionTile label="Follow Up" icon="relogio" href="/crm/follow-up" />
-          <ActionTile label="Estatísticas" icon="grafico" href="/crm/stats" />
-          <ActionTile label="Portais" icon="portais" href="/crm/portais" />
-          <ActionTile label="Maquete Casamento" icon="aneis" href="/r/85343645-b0d3-4412-ae78-795fd7f8ddf1" />
-          <ActionTile label="Maquete Batizado" icon="estrela" href="/b/batizado-maquete" />
-          <ActionTile label="Form. Noivos" icon="formulario" href="/nova-lead" external />
-          <ActionTile label="Form. Batizado" icon="formulario" href="/batizado" external />
-          <ActionTile label={syncing ? 'A sincronizar' : 'Sync Notion'} icon="sync" onClick={handleSync} disabled={syncing} />
+          <ActionTile num={1} label="Nova Lead" icon="mais" href="/crm/nova" primary />
+          <ActionTile num={2} label="Follow Up" icon="relogio" href="/crm/follow-up" />
+          <ActionTile num={3} label="Estatísticas" icon="grafico" href="/crm/stats" />
+          <ActionTile num={4} label="Portais" icon="portais" href="/crm/portais" />
+          <ActionTile num={5} label="Maquete Casamento" icon="aneis" href="/r/85343645-b0d3-4412-ae78-795fd7f8ddf1" />
+          <ActionTile num={6} label="Maquete Batizado" icon="estrela" href="/b/batizado-maquete" />
+          <ActionTile num={7} label="Form. Noivos" icon="formulario" href="/nova-lead" external />
+          <ActionTile num={8} label="Form. Batizado" icon="formulario" href="/batizado" external />
+          <ActionTile num={9} label={syncing ? 'A sincronizar' : 'Sync Notion'} icon="sync" onClick={handleSync} disabled={syncing} />
         </div>
         {syncMsg && <p className="text-xs text-green-400/80 text-right mt-2">{syncMsg}</p>}
       </div>
