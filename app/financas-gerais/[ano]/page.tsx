@@ -317,13 +317,13 @@ function mapEvents(events: any[]): ReceitaRow[] {
         ? e.tipo_evento
         : (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
       const tipo = tipos[0] ?? 'CASAMENTO'
-      // Receita BRUTA cobrada ao cliente (total do serviço). O que é pago à
-      // equipa entra depois como despesa — ver despesasDeEventos().
-      const valor = typeof e.valor_total === 'number'
-        ? e.valor_total
-        : (Number(e.valor_real_foto ?? e.valor_foto) || 0)
-          + (Number(e.valor_video ?? e.valor_liquido) || 0)
-          + (Number(e.valor_extras) || 0)
+      // Receita = VALOR LÍQUIDO A RECEBER da ficha do evento
+      // (Vídeo + Extras − Fotografia − Videógrafo − Editor Vídeo).
+      // O que é pago à equipa já está descontado aqui, por isso essas despesas
+      // aparecem à parte e não somam ao total — ver despesasDeEventos().
+      const valor = typeof e.valor_liquido === 'number'
+        ? e.valor_liquido
+        : (Number(e.valor_video) || 0) + (Number(e.valor_extras) || 0)
       const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
       return { _eventoId: e.id, data: dataFmt, mes, tipo, valor, info: e.cliente ?? '' }
     })
@@ -627,7 +627,10 @@ export default function FinancasAnoPage({ params }: Props) {
     .map(e => ({ _id: e.id, data: e.data, mes: e.mes, item: e.categoria, valor: e.valor, notas: e.info }))
 
   const allReceitas = [...baseReceitas, ...dbReceitas]
-  const allDespesas = [...baseDespesas, ...eventDespesas, ...dbDespesas]
+  // eventDespesas ficam de fora dos totais: já estão descontadas na receita líquida
+  const allDespesas = [...baseDespesas, ...dbDespesas]
+  const totalEventDespesas = eventDespesas.reduce((s, d) => s + d.valor, 0)
+  const eventDespesasPorMes = groupByMes(eventDespesas)
 
   const totalReceitas = allReceitas.reduce((s, r) => s + r.valor, 0)
   const totalDespesas = allDespesas.reduce((s, d) => s + d.valor, 0)
@@ -1120,7 +1123,7 @@ export default function FinancasAnoPage({ params }: Props) {
             <div>
               <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Receitas {ano}</span>
               {anoNum >= 2026 && (
-                <p className="text-[10px] text-white/25 mt-1 normal-case tracking-normal">Eventos entram pelo valor total cobrado; o que é pago à equipa aparece nas despesas</p>
+                <p className="text-[10px] text-white/25 mt-1 normal-case tracking-normal">Eventos entram pelo valor líquido a receber, já sem fotografia, videógrafo e editor</p>
               )}
             </div>
             <span className="text-xl font-mono font-bold text-green-400">{fmt(totalReceitas)} €</span>
@@ -1401,6 +1404,59 @@ export default function FinancasAnoPage({ params }: Props) {
             <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Despesas {ano}</span>
             <span className="text-xl font-mono font-bold text-red-400">{fmt(totalDespesas)} €</span>
           </div>
+
+          {/* ── Pago à equipa dos eventos — fora do total ── */}
+          {eventDespesas.length > 0 && (
+            <div className="space-y-4 pt-4">
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-white/[0.06]" />
+                <p className="text-[10px] tracking-[0.4em] text-white/25 uppercase">Pago à equipa dos eventos</p>
+                <div className="h-px flex-1 bg-white/[0.06]" />
+              </div>
+              <p className="text-[10px] text-white/25 text-center">
+                Já descontado no valor líquido de cada evento, por isso não soma ao total acima
+              </p>
+
+              {eventDespesasPorMes.map(({ mes, items }) => {
+                const subtotal = items.reduce((s, d) => s + d.valor, 0)
+                return (
+                  <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
+                    <div className="flex items-center justify-between px-5 py-3 bg-white/[0.02] border-b border-white/[0.06]">
+                      <span className="text-xs tracking-[0.35em] text-white/50 uppercase font-medium">{mes}</span>
+                      <span className="text-sm font-mono font-semibold text-white/40">{fmt(subtotal)} €</span>
+                    </div>
+                    <table className="w-full text-sm">
+                      <tbody>
+                        {items.map((d, i) => (
+                          <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'} group`}>
+                            <td className="px-4 py-2.5 text-white/60 text-xs font-medium">{d.item}</td>
+                            <td className="px-4 py-2.5 text-white/30 text-xs hidden sm:table-cell">{d.notas}</td>
+                            <td className="px-4 py-2.5 text-right text-white/45 font-mono whitespace-nowrap">{fmt(d.valor)} €</td>
+                            <td className="px-4 py-2.5 w-10 text-right">
+                              {d._eventoId && (
+                                <Link
+                                  href={`/eventos-2026/${d._eventoId}?ano=${anoNum}`}
+                                  className="inline-flex text-white/20 hover:text-gold transition-colors opacity-0 group-hover:opacity-100"
+                                  title="Editar na ficha do evento"
+                                >
+                                  <PencilIcon />
+                                </Link>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )
+              })}
+
+              <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+                <span className="text-xs tracking-[0.35em] text-white/35 uppercase">Total pago à equipa {ano}</span>
+                <span className="text-lg font-mono font-semibold text-white/50">{fmt(totalEventDespesas)} €</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
