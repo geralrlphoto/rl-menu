@@ -67,10 +67,10 @@ function Kpi({ label, value, sub, color = 'text-white', onClick, active }: {
   const Tag = onClick ? 'button' : 'div'
   return (
     <Tag onClick={onClick}
-      className={`text-left rounded-2xl border px-5 py-4 transition-colors ${active ? 'border-red-500/50 bg-red-500/10' : 'border-white/8 bg-white/[0.02]'} ${onClick ? 'hover:border-white/20 cursor-pointer' : ''}`}>
-      <p className="text-white/25 text-[10px] tracking-[0.3em] uppercase mb-2">{label}</p>
-      <p className={`text-2xl font-light ${color}`}>{value}</p>
-      {sub && <p className="text-white/25 text-[11px] mt-1">{sub}</p>}
+      className={`text-left rounded-2xl border px-4 sm:px-5 py-3 sm:py-4 backdrop-blur-md transition-colors ${active ? 'border-red-500/50 bg-red-500/20' : 'border-white/10 bg-black/40'} ${onClick ? 'hover:border-white/30 cursor-pointer' : ''}`}>
+      <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">{label}</p>
+      <p className={`text-xl sm:text-2xl font-light ${color}`}>{value}</p>
+      {sub && <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">{sub}</p>}
     </Tag>
   )
 }
@@ -253,7 +253,9 @@ export default function CRMPage() {
     .map(c => Math.round((new Date(c.data_fecho).getTime() - new Date(c.data_entrada).getTime()) / 86400000))
     .filter(d => d >= 0)
   const mediaDiasFecho = temposFecho.length > 0 ? Math.round(temposFecho.reduce((a, b) => a + b, 0) / temposFecho.length) : null
-  const acoesAtrasadas = activeLeads.filter(c => estadoAcao(c.proxima_acao_data) === 'atrasada').length
+  const contagemReuniao = contacts.filter(c => colunaDe(c.status) === 'reuniao').length
+  const contagemFollow = contacts.filter(c => colunaDe(c.status) === 'follow').length
+  const acoesAtrasadas =activeLeads.filter(c => estadoAcao(c.proxima_acao_data) === 'atrasada').length
 
   const filtered = (() => {
     let r = contacts
@@ -281,15 +283,45 @@ export default function CRMPage() {
   return (
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1400px] mx-auto">
 
-      {/* ── HEADER ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 sm:mb-12">
-        <div>
-          <Link href="/photo" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">
+      {/* ── CABEÇALHO (banner com foto) ── */}
+      <section className="relative rounded-3xl overflow-hidden border border-white/10 mb-6 min-h-[440px] sm:min-h-[400px] flex flex-col">
+        <img src="/crm-hero.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+
+        <div className="relative flex-1 flex flex-col px-5 sm:px-10 pt-5 sm:pt-7 pb-5 sm:pb-7">
+          <Link href="/photo" className="self-start text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase">
             ‹ Menu
           </Link>
-          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">CRM</h1>
-          <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{contacts.length} Leads</p>
+
+          <div className="flex-1 flex flex-col justify-center py-8 max-w-xl">
+            <p className="text-[10px] tracking-[0.45em] uppercase text-white/45">RL Photo.Video · Gestão de Leads</p>
+            <h1 className="font-cormorant font-light text-gold text-6xl sm:text-7xl tracking-[0.12em] leading-none mt-3">CRM</h1>
+            <div className="w-20 h-px bg-gold/70 my-5" />
+            <p className="font-cormorant italic text-white/80 text-lg sm:text-xl leading-snug">
+              {loading ? 'A carregar leads…' : `${contacts.length} leads · ${contagemReuniao} com reunião agendada · ${contagemFollow} em follow up`}
+            </p>
+          </div>
+
+          {!loading && (
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1">
+          <Kpi label="Taxa de fecho (mês)" value={taxaMes !== null ? `${taxaMes}%` : '—'}
+            sub={encerradasMes.length > 0 ? `${fecharamMes} de ${encerradasMes.length} encerradas` : 'Nenhuma encerrada este mês'} color="text-green-400" />
+          <Kpi label={`Taxa de fecho · Casamentos ${ANO_TAXA_FECHO}`} value={taxaAno !== null ? `${taxaAno}%` : '—'}
+            sub={encerradasAno.length > 0 ? `${fecharamAno} de ${encerradasAno.length} encerradas` : `Nenhuma lead de ${ANO_TAXA_FECHO} encerrada`} color="text-green-300" />
+          <Kpi label="Valor em Follow Up" value={valorFollow > 0 ? `${valorFollow.toLocaleString('pt-PT')} €` : '—'} color="text-gold" />
+          <Kpi label="Média até fechar" value={mediaDiasFecho !== null ? `${mediaDiasFecho} dias` : '—'} sub="Da entrada ao fecho" color="text-yellow-300" />
+          <Kpi label="Ações atrasadas" value={acoesAtrasadas}
+            sub={soAtrasadas ? 'A mostrar só estas. Clica para ver todas' : acoesAtrasadas > 0 ? 'Clica para ver só estas' : 'Tudo em dia'}
+            color={acoesAtrasadas > 0 ? 'text-red-400' : 'text-white/60'}
+            onClick={acoesAtrasadas > 0 || soAtrasadas ? () => setSoAtrasadas(v => !v) : undefined} active={soAtrasadas} />
+            </div>
+          )}
         </div>
+      </section>
+
+      {/* ── AÇÕES ── */}
+      <div className="flex justify-end mb-8 sm:mb-10">
         <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
           <div className="flex flex-col items-end gap-1">
             <button
@@ -342,21 +374,6 @@ export default function CRMPage() {
         </div>
       </div>
 
-      {/* ── NÚMEROS DO TOPO ── */}
-      {!loading && (
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
-          <Kpi label="Taxa de fecho (mês)" value={taxaMes !== null ? `${taxaMes}%` : '—'}
-            sub={encerradasMes.length > 0 ? `${fecharamMes} de ${encerradasMes.length} encerradas` : 'Nenhuma encerrada este mês'} color="text-green-400" />
-          <Kpi label={`Taxa de fecho · Casamentos ${ANO_TAXA_FECHO}`} value={taxaAno !== null ? `${taxaAno}%` : '—'}
-            sub={encerradasAno.length > 0 ? `${fecharamAno} de ${encerradasAno.length} encerradas` : `Nenhuma lead de ${ANO_TAXA_FECHO} encerrada`} color="text-green-300" />
-          <Kpi label="Valor em Follow Up" value={valorFollow > 0 ? `${valorFollow.toLocaleString('pt-PT')} €` : '—'} color="text-gold" />
-          <Kpi label="Média até fechar" value={mediaDiasFecho !== null ? `${mediaDiasFecho} dias` : '—'} sub="Da entrada ao fecho" color="text-yellow-300" />
-          <Kpi label="Ações atrasadas" value={acoesAtrasadas}
-            sub={soAtrasadas ? 'A mostrar só estas. Clica para ver todas' : acoesAtrasadas > 0 ? 'Clica para ver só estas' : 'Tudo em dia'}
-            color={acoesAtrasadas > 0 ? 'text-red-400' : 'text-white/60'}
-            onClick={acoesAtrasadas > 0 || soAtrasadas ? () => setSoAtrasadas(v => !v) : undefined} active={soAtrasadas} />
-        </div>
-      )}
 
       {/* ── PAINEL REQUER ATENÇÃO ── */}
       {!loading && hasAlerts && (
