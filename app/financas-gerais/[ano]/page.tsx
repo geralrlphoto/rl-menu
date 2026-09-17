@@ -317,14 +317,12 @@ function mapEvents(events: any[]): ReceitaRow[] {
         ? e.tipo_evento
         : (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
       const tipo = tipos[0] ?? 'CASAMENTO'
-      // Receita BRUTA cobrada ao cliente — mesma fórmula do card /casamentos
-      // e da lista /eventos-2026: valor_foto + valor_video + valor_extras
-      // (com fallback valor_liquido para eventos antigos que ainda só têm essa coluna)
-      const valor = typeof e.valor_total === 'number'
-        ? e.valor_total
-        : (Number(e.valor_real_foto ?? e.valor_foto) || 0)
-          + (Number(e.valor_video ?? e.valor_liquido) || 0)
-          + (Number(e.valor_extras) || 0)
+      // Receita = VALOR LÍQUIDO A RECEBER da ficha do evento
+      // (Vídeo + Extras − Fotografia − Videógrafo − Editor Vídeo), não o total do serviço.
+      // Fallback para eventos sem líquido calculado: vídeo + extras.
+      const valor = typeof e.valor_liquido === 'number'
+        ? e.valor_liquido
+        : (Number(e.valor_video) || 0) + (Number(e.valor_extras) || 0)
       const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
       return { _eventoId: e.id, data: dataFmt, mes, tipo, valor, info: e.cliente ?? '' }
     })
@@ -1075,7 +1073,12 @@ export default function FinancasAnoPage({ params }: Props) {
           )}
 
           <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-green-500/20 bg-green-500/5">
-            <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Receitas {ano}</span>
+            <div>
+              <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Receitas {ano}</span>
+              {anoNum >= 2026 && (
+                <p className="text-[10px] text-white/25 mt-1 normal-case tracking-normal">Eventos entram pelo valor líquido a receber, já sem fotógrafo, videógrafo e editor</p>
+              )}
+            </div>
             <span className="text-xl font-mono font-bold text-green-400">{fmt(totalReceitas)} €</span>
           </div>
         </div>
