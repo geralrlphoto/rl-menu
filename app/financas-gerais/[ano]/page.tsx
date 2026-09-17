@@ -284,6 +284,14 @@ const TIPO_CLS: Record<string, string> = {
   'OUTRO':       'bg-white/10 text-white/50 border-white/20',
 }
 
+function PencilIcon() {
+  return (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+    </svg>
+  )
+}
+
 function fmt(n: number) {
   return n.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -318,7 +326,7 @@ function mapEvents(events: any[]): ReceitaRow[] {
           + (Number(e.valor_video ?? e.valor_liquido) || 0)
           + (Number(e.valor_extras) || 0)
       const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
-      return { data: dataFmt, mes, tipo, valor, info: e.cliente ?? '' }
+      return { _eventoId: e.id, data: dataFmt, mes, tipo, valor, info: e.cliente ?? '' }
     })
     .filter((r: ReceitaRow) => r.valor > 0)
 }
@@ -360,7 +368,7 @@ type DbEntry = {
   info: string
 }
 
-type ReceitaRow = { _id?: string; data: string; mes: string; tipo: string; valor: number; info: string }
+type ReceitaRow = { _id?: string; _eventoId?: string; data: string; mes: string; tipo: string; valor: number; info: string }
 type DespesaRow = { _id?: string; data: string; mes: string; item: string; valor: number; notas: string }
 
 type Props = { params: Promise<{ ano: string }> }
@@ -387,6 +395,8 @@ export default function FinancasAnoPage({ params }: Props) {
   const [fInfo, setFInfo]               = useState('')
   const [saving, setSaving]             = useState(false)
   const [deleting, setDeleting]         = useState<string | null>(null)
+  // id da entrada em edição (null = estamos a criar uma nova)
+  const [editingId, setEditingId]       = useState<string | null>(null)
   // Custos fixos anuais
   const [custosFixosAnuais, setCustosFixosAnuais] = useState<CustoFixo[]>([])
   const [cfModalOpen, setCfModalOpen]   = useState(false)
@@ -642,8 +652,23 @@ export default function FinancasAnoPage({ params }: Props) {
 
   function openModal(tipo: 'receita' | 'despesa', mesPrefill?: string) {
     setFormTipo(tipo)
+    setEditingId(null)
     setFMes(mesPrefill ?? 'Janeiro'); setFData(''); setFCategoria('CASAMENTO')
     setFItem(''); setFValor(''); setFInfo('')
+    setModalOpen(true)
+  }
+
+  // Abre o mesmo modal já preenchido, para alterar uma linha guardada na BD
+  function openEditModal(tipo: 'receita' | 'despesa', id: string) {
+    const entry = dbEntries.find(e => e.id === id)
+    if (!entry) return
+    setFormTipo(tipo)
+    setEditingId(id)
+    setFMes(entry.mes); setFData(entry.data ?? '')
+    setFCategoria(tipo === 'receita' ? (entry.categoria || 'CASAMENTO') : 'CASAMENTO')
+    setFItem(tipo === 'despesa' ? (entry.categoria ?? '') : '')
+    setFValor(String(entry.valor ?? ''))
+    setFInfo(entry.info ?? '')
     setModalOpen(true)
   }
 
@@ -656,14 +681,24 @@ export default function FinancasAnoPage({ params }: Props) {
       categoria: formTipo === 'receita' ? fCategoria : fItem,
       valor: valorNum, info: fInfo,
     }
-    const res = await fetch('/api/financas-gerais', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-    const d = await res.json()
-    if (d.entry) setDbEntries(prev => [...prev, d.entry])
+    if (editingId) {
+      const res = await fetch('/api/financas-gerais', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...payload, id: editingId }),
+      })
+      const d = await res.json()
+      if (d.entry) setDbEntries(prev => prev.map(e => (e.id === editingId ? d.entry : e)))
+    } else {
+      const res = await fetch('/api/financas-gerais', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const d = await res.json()
+      if (d.entry) setDbEntries(prev => [...prev, d.entry])
+    }
     setSaving(false)
     setModalOpen(false)
+    setEditingId(null)
   }
 
   async function handleDelete(id: string) {
@@ -984,16 +1019,33 @@ export default function FinancasAnoPage({ params }: Props) {
                         <td className="px-4 py-2.5 text-right text-green-400 font-mono font-semibold whitespace-nowrap">
                           {fmt(r.valor)} €
                         </td>
-                        <td className="px-4 py-2.5 w-10 text-right">
+                        <td className="px-4 py-2.5 w-16 text-right whitespace-nowrap">
                           {r._id ? (
-                            <button
-                              onClick={() => handleDelete(r._id!)}
-                              disabled={deleting === r._id}
-                              className="text-white/20 hover:text-red-400 transition-colors text-base opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                              title="Apagar"
+                            <span className="inline-flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => openEditModal('receita', r._id!)}
+                                className="text-white/20 hover:text-gold transition-colors"
+                                title="Editar"
+                              >
+                                <PencilIcon />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(r._id!)}
+                                disabled={deleting === r._id}
+                                className="text-white/20 hover:text-red-400 transition-colors text-base disabled:opacity-50"
+                                title="Apagar"
+                              >
+                                {deleting === r._id ? '…' : '×'}
+                              </button>
+                            </span>
+                          ) : r._eventoId ? (
+                            <Link
+                              href={`/eventos-2026/${r._eventoId}?ano=${anoNum}`}
+                              className="inline-flex text-white/20 hover:text-gold transition-colors opacity-0 group-hover:opacity-100"
+                              title="Editar na ficha do evento"
                             >
-                              {deleting === r._id ? '…' : '×'}
-                            </button>
+                              <PencilIcon />
+                            </Link>
                           ) : null}
                         </td>
                       </tr>
@@ -1261,16 +1313,25 @@ export default function FinancasAnoPage({ params }: Props) {
                         <td className="px-4 py-2.5 text-right text-red-400 font-mono font-semibold whitespace-nowrap">
                           {fmt(d.valor)} €
                         </td>
-                        <td className="px-4 py-2.5 w-10 text-right">
+                        <td className="px-4 py-2.5 w-16 text-right whitespace-nowrap">
                           {d._id && (
-                            <button
-                              onClick={() => handleDelete(d._id!)}
-                              disabled={deleting === d._id}
-                              className="text-white/20 hover:text-red-400 transition-colors text-xs opacity-0 group-hover:opacity-100 disabled:opacity-50"
-                              title="Apagar"
-                            >
-                              {deleting === d._id ? '…' : '×'}
-                            </button>
+                            <span className="inline-flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={() => openEditModal('despesa', d._id!)}
+                                className="text-white/20 hover:text-gold transition-colors"
+                                title="Editar"
+                              >
+                                <PencilIcon />
+                              </button>
+                              <button
+                                onClick={() => handleDelete(d._id!)}
+                                disabled={deleting === d._id}
+                                className="text-white/20 hover:text-red-400 transition-colors text-xs disabled:opacity-50"
+                                title="Apagar"
+                              >
+                                {deleting === d._id ? '…' : '×'}
+                              </button>
+                            </span>
                           )}
                         </td>
                       </tr>
@@ -3673,7 +3734,9 @@ export default function FinancasAnoPage({ params }: Props) {
           <div className="relative w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-6 shadow-2xl">
             <div className="flex items-center justify-between mb-6">
               <h2 className={`text-sm tracking-[0.3em] uppercase font-medium ${formTipo === 'receita' ? 'text-green-400' : 'text-red-400'}`}>
-                {formTipo === 'receita' ? '+ Nova Receita' : '+ Nova Despesa'}
+                {editingId
+                  ? (formTipo === 'receita' ? 'Editar Receita' : 'Editar Despesa')
+                  : (formTipo === 'receita' ? '+ Nova Receita' : '+ Nova Despesa')}
               </h2>
               <button onClick={() => setModalOpen(false)} className="text-white/30 hover:text-white text-xl leading-none">×</button>
             </div>

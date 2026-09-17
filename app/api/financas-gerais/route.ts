@@ -42,6 +42,28 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({ entry: data })
 }
 
+export async function PATCH(req: NextRequest) {
+  const body = await req.json()
+  if (!body.id) return NextResponse.json({ error: 'No id' }, { status: 400 })
+
+  const sb = supabase()
+  const { data, error } = await sb
+    .from('financas_gerais')
+    .update({
+      mes:       body.mes,
+      data:      body.data ?? '',
+      categoria: body.categoria ?? '',
+      valor:     body.valor ?? 0,
+      info:      body.info ?? '',
+    })
+    .eq('id', body.id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ entry: data })
+}
+
 export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'No id' }, { status: 400 })
