@@ -238,6 +238,13 @@ export default function CRMPage() {
   )
   const fecharamMes = encerradasMes.filter(c => c.status === 'Fechou').length
   const taxaMes = encerradasMes.length > 0 ? Math.round((fecharamMes / encerradasMes.length) * 100) : null
+  const anoAtual = mesAtual.slice(0, 4)
+  const encerradasAno = contacts.filter(c =>
+    (c.status === 'Fechou' || c.status === 'NÃO FECHOU') &&
+    (c.data_fecho || c.status_updated_at || '').slice(0, 4) === anoAtual
+  )
+  const fecharamAno = encerradasAno.filter(c => c.status === 'Fechou').length
+  const taxaAno = encerradasAno.length > 0 ? Math.round((fecharamAno / encerradasAno.length) * 100) : null
   const valorFollow = sumOrcamento(contacts.filter(c => colunaDe(c.status) === 'follow'))
   const temposFecho = contacts
     .filter(c => c.status === 'Fechou' && c.data_fecho && c.data_entrada)
@@ -335,9 +342,11 @@ export default function CRMPage() {
 
       {/* ── NÚMEROS DO TOPO ── */}
       {!loading && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
           <Kpi label="Taxa de fecho (mês)" value={taxaMes !== null ? `${taxaMes}%` : '—'}
             sub={encerradasMes.length > 0 ? `${fecharamMes} de ${encerradasMes.length} encerradas` : 'Nenhuma encerrada este mês'} color="text-green-400" />
+          <Kpi label={`Taxa de fecho (${anoAtual})`} value={taxaAno !== null ? `${taxaAno}%` : '—'}
+            sub={encerradasAno.length > 0 ? `${fecharamAno} de ${encerradasAno.length} encerradas` : 'Nenhuma encerrada este ano'} color="text-green-300" />
           <Kpi label="Valor em Follow Up" value={valorFollow > 0 ? `${valorFollow.toLocaleString('pt-PT')} €` : '—'} color="text-gold" />
           <Kpi label="Média até fechar" value={mediaDiasFecho !== null ? `${mediaDiasFecho} dias` : '—'} sub="Da entrada ao fecho" color="text-yellow-300" />
           <Kpi label="Ações atrasadas" value={acoesAtrasadas}
