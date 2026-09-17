@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import './eventos-topo.css'
 
 type Evento = {
   id: string
@@ -568,115 +569,123 @@ function Eventos2026Inner() {
   const upcoming = events
     .filter(e => e.data_evento && new Date(e.data_evento + 'T00:00:00') >= today)
     .slice(0, 3)
+  const realizados = events.filter(e => e.data_evento && new Date(e.data_evento + 'T00:00:00') < today).length
+  const heroSrc = [2026, 2027, 2028].includes(anoFiltro) ? `/eventos-hero-${anoFiltro}.webp` : '/eventos-hero-2026.webp'
 
   return (
     <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1200px] mx-auto">
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-10 gap-6">
-        <div>
-          <Link href="/casamentos" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ Casamentos</Link>
-          <h1 className="text-3xl sm:text-5xl font-extralight tracking-[0.15em] sm:tracking-[0.2em] text-white uppercase mt-3">Casamentos {anoFiltro}</h1>
-          <p className="text-white/20 text-xs tracking-[0.3em] mt-2 uppercase">{casamentosCount} casamentos · {events.length} eventos totais</p>
+      {/* ── CABEÇALHO (banner com foto) ── */}
+      <section className="relative rounded-3xl border border-white/10 mb-8 min-h-[460px] sm:min-h-[420px] flex flex-col">
+        <div className="absolute inset-0 rounded-3xl overflow-hidden">
+          <img src={heroSrc} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_40%]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/30" />
         </div>
-        <div className="flex items-center gap-3">
-          <ReferenciasDropdown events={events} anoFiltro={anoFiltro} />
-          <button onClick={() => setShowNovoEvento(true)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-gold/80 transition-all uppercase">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-            </svg>
-            Novo Evento
-          </button>
+
+        <div className="relative flex-1 flex flex-col px-5 sm:px-10 pt-5 sm:pt-7 pb-5 sm:pb-7">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <Link href="/casamentos" className="text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase pt-2">
+              ‹ Casamentos
+            </Link>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="[&>div>button]:bg-black/40 [&>div>button]:backdrop-blur-md [&>div>button]:border-white/20">
+                <ReferenciasDropdown events={events} anoFiltro={anoFiltro} />
+              </div>
+              <button onClick={() => setShowNovoEvento(true)}
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-[#d8b85a] hover:shadow-[0_8px_30px_-8px_rgba(201,168,76,0.6)] transition-all uppercase">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+                </svg>
+                Novo Evento
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center py-8 max-w-2xl">
+            <p className="text-[10px] tracking-[0.45em] uppercase text-white/45">RL Photo.Video · Temporada {anoFiltro}</p>
+            <h1 className="font-cormorant font-light text-gold text-5xl sm:text-7xl tracking-[0.08em] leading-none mt-3">
+              Casamentos <span className="italic">{anoFiltro}</span>
+            </h1>
+            <div className="w-20 h-px bg-gold/70 my-5" />
+            <p className="font-cormorant italic text-white/80 text-lg sm:text-xl leading-snug">
+              {loading ? 'A carregar eventos…' : `${casamentosCount} casamentos · ${events.length} eventos no total · ${realizados} já realizados`}
+            </p>
+          </div>
+
+          {!loading && !error && events.length > 0 && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+              <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
+                <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Fotografia</p>
+                <p className="text-xl sm:text-2xl font-light text-white">{totalFoto.toLocaleString('pt-PT')} <span className="text-white/40 text-base">€</span></p>
+                <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">Valor total</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
+                <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Vídeo</p>
+                <p className="text-xl sm:text-2xl font-light text-white">{totalVideo.toLocaleString('pt-PT')} <span className="text-white/40 text-base">€</span></p>
+                <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">Valor total</p>
+              </div>
+              <div className="rounded-2xl border border-gold/40 bg-black/45 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
+                <p className="text-gold/80 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Total Geral</p>
+                <p className="text-xl sm:text-2xl font-light text-gold">{totalGeral.toLocaleString('pt-PT')} <span className="text-gold/60 text-base">€</span></p>
+                <p className="text-gold/55 text-[10px] sm:text-[11px] mt-1">Foto + vídeo</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
+                <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Realizados</p>
+                <p className="text-xl sm:text-2xl font-light text-white">{realizados} <span className="text-white/40 text-base">de {events.length}</span></p>
+                <div className="h-1 rounded-full bg-white/10 mt-2 overflow-hidden">
+                  <div className="h-full bg-gold/80 rounded-full" style={{ width: `${events.length ? (realizados / events.length) * 100 : 0}%` }} />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      </div>
+      </section>
       {showNovoEvento && (
         <NovoEventoModal onClose={() => setShowNovoEvento(false)} onCreated={loadEvents} anoFiltro={anoFiltro} totalEventos={events.length} />
       )}
 
-      {/* Cards de Totais (Supabase) */}
-      {!loading && !error && events.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
-          <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-5 sm:p-6 overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(99,102,241,0.12),transparent_60%)] pointer-events-none" />
-            <div className="relative">
-              <p className="text-[10px] sm:text-xs tracking-[0.3em] text-white/40 uppercase mb-2">Fotografia</p>
-              <p className="text-2xl sm:text-3xl font-light text-white tracking-wide">
-                {totalFoto.toLocaleString('pt-PT')} <span className="text-white/40 text-lg">€</span>
-              </p>
-              <p className="text-[10px] tracking-[0.25em] text-white/30 uppercase mt-2">Valor Total</p>
-            </div>
-          </div>
-
-          <div className="relative rounded-2xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-5 sm:p-6 overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(236,72,153,0.12),transparent_60%)] pointer-events-none" />
-            <div className="relative">
-              <p className="text-[10px] sm:text-xs tracking-[0.3em] text-white/40 uppercase mb-2">Vídeo</p>
-              <p className="text-2xl sm:text-3xl font-light text-white tracking-wide">
-                {totalVideo.toLocaleString('pt-PT')} <span className="text-white/40 text-lg">€</span>
-              </p>
-              <p className="text-[10px] tracking-[0.25em] text-white/30 uppercase mt-2">Valor Total</p>
-            </div>
-          </div>
-
-          <div className="relative rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-transparent p-5 sm:p-6 overflow-hidden">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(212,175,55,0.18),transparent_60%)] pointer-events-none" />
-            <div className="relative">
-              <p className="text-[10px] sm:text-xs tracking-[0.3em] text-gold/70 uppercase mb-2">Total Geral</p>
-              <p className="text-2xl sm:text-3xl font-light text-gold tracking-wide">
-                {totalGeral.toLocaleString('pt-PT')} <span className="text-gold/50 text-lg">€</span>
-              </p>
-              <p className="text-[10px] tracking-[0.25em] text-gold/50 uppercase mt-2">Foto + Vídeo</p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Próximos eventos */}
       {!loading && !error && upcoming.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
-          {upcoming.map((e, i) => {
-            const days = daysUntil(e.data_evento)
-            const dt = new Date(e.data_evento + 'T00:00:00')
-            const isToday = days === 0
-            const isPast = days < 0
-            return (
-              <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`}
-                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] hover:border-gold/30 bg-white/[0.02] hover:bg-white/[0.04] p-5 flex flex-col gap-3 transition-all">
-                {/* Dias restantes */}
-                <div className="flex items-baseline gap-1.5">
-                  <span className={`text-5xl font-bold leading-none tabular-nums ${isToday ? 'text-gold' : isPast ? 'text-white/20' : i === 0 ? 'text-gold' : 'text-white/60'}`}>
-                    {isToday ? '0' : Math.abs(days)}
-                  </span>
-                  <span className={`text-xs tracking-widest uppercase ${isToday ? 'text-gold/60' : 'text-white/25'}`}>
-                    {isToday ? 'HOJE' : isPast ? 'dias atrás' : days === 1 ? 'dia' : 'dias'}
-                  </span>
-                </div>
-                {/* Info */}
-                <div>
-                  <div className="text-white text-sm font-medium truncate">{e.cliente || e.referencia}</div>
-                  <div className={`text-[10px] mt-1 font-mono ${e.referencia ? 'text-gold/60' : 'text-white/20 italic'}`}>
-                    {e.referencia || 's/referência'}
+        <section className="mb-10">
+          <div className="flex items-center gap-4 mb-4">
+            <span className="text-[10px] tracking-[0.4em] uppercase text-white/35">Próximos eventos</span>
+            <div className="flex-1 h-px bg-white/5" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {upcoming.map((e, i) => {
+              const days = daysUntil(e.data_evento)
+              const dt = new Date(e.data_evento + 'T00:00:00')
+              const isToday = days === 0
+              return (
+                <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`} className={`ev-next${i === 0 ? ' is-first' : ''}`}>
+                  <span className="ev-next-sweep" />
+                  <div className="ev-next-top">
+                    <div className="ev-next-count">
+                      <span className="ev-next-num">{isToday ? 'Hoje' : days}</span>
+                      {!isToday && <span className="ev-next-unit">{days === 1 ? 'dia' : 'dias'}</span>}
+                    </div>
+                    {i === 0 && <span className="ev-next-badge">{isToday ? 'Hoje' : 'Próximo'}</span>}
                   </div>
-                  <div className="text-white/30 text-xs mt-0.5">
-                    {String(dt.getDate()).padStart(2,'0')} {MESES_FULL[dt.getMonth()]} · {e.local || '—'}
+                  <div className="ev-next-rule" />
+                  <div className="ev-next-body">
+                    <p className="ev-next-name">{e.cliente || e.referencia}</p>
+                    <p className="ev-next-ref">{e.referencia || 's/referência'}</p>
+                    <p className="ev-next-meta">{String(dt.getDate()).padStart(2, '0')} {MESES_FULL[dt.getMonth()]} · {e.local || '—'}</p>
                   </div>
-                </div>
-                {/* Tipos */}
-                <div className="flex flex-wrap gap-1">
-                  {(e.tipo_evento ?? []).map(t => (
-                    <span key={t} className="text-[9px] px-1.5 py-0.5 rounded-full border bg-gold/10 border-gold/20 text-gold/60">{t}</span>
-                  ))}
-                </div>
-                {/* Número do evento */}
-                {i === 0 && !isToday && (
-                  <div className="absolute top-4 right-4 text-[9px] tracking-[0.3em] text-white/15 uppercase">PRÓXIMO</div>
-                )}
-              </Link>
-            )
-          })}
-        </div>
+                  <div className="ev-next-foot">
+                    <div className="ev-next-tags">
+                      {(e.tipo_evento ?? []).map(t => <span key={t} className="ev-next-tag">{t}</span>)}
+                    </div>
+                    <span className="ev-next-arrow">→</span>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </section>
       )}
+
 
       {/* Filtros */}
       <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-10">
