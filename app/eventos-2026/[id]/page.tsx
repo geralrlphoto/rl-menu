@@ -3944,14 +3944,16 @@ export default function EventoPage() {
           // Carregar pagamentos
           loadPagamentos(ev.referencia)
 
-          // Quem editou o vídeo — o campo da secção Equipa só carrega quando a
-          // gaveta abre, e o seletor junto ao valor precisa do nome logo.
+          // Quem filmou e quem editou o vídeo — os campos da secção Equipa só
+          // carregam quando a gaveta abre, e os seletores junto aos valores
+          // precisam dos nomes logo.
           fetch(`/api/evento-equipa?ref=${encodeURIComponent(ev.referencia)}`)
             .then(r => r.json())
             .then(d => {
               const val = d.equipa?.editor_video
               if (Array.isArray(val)) setEquipaEditorVideo(val)
               else if (val) setEquipaEditorVideo([val])
+              if (Array.isArray(d.equipa?.videografo)) setEquipaVideo(d.equipa.videografo)
             })
             .catch(() => {})
 
@@ -4163,6 +4165,23 @@ export default function EventoPage() {
   }
 
   // Recalcula e grava valor_liquido no Supabase sempre que uma despesa muda
+  // Guarda quem filmou — mesmo campo que o Videógrafo da secção Equipa
+  function saveVideografos(next: string[]) {
+    if (!evento) return
+    setEquipaVideo(next)
+    fetch('/api/evento-equipa', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        referencia: evento.referencia ?? '',
+        evento_id: evento.id,
+        local: evento.local ?? '',
+        data_casamento: evento.data_evento || null,
+        videografo: next,
+      }),
+    }).catch(() => {})
+  }
+
   function syncLiquido(overrides: { fotografo?: number; videografo?: number; editorVideo?: number } = {}) {
     if (!evento) return
     const vVideo  = evento.valor_video  ?? 0
@@ -4464,6 +4483,30 @@ export default function EventoPage() {
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
               </div>
+              {/* Quem filmou — mesmo campo do Videógrafo na secção Equipa.
+                  Pode ser mais do que um, por isso lista + adicionar. */}
+              {equipaVideo.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {equipaVideo.map(nome => (
+                    <span key={nome} className="inline-flex items-center gap-1 text-[10px] text-white/60 bg-white/5 border border-white/10 rounded-full pl-2 pr-1 py-0.5">
+                      {nome}
+                      <button
+                        onClick={() => saveVideografos(equipaVideo.filter(n => n !== nome))}
+                        className="text-white/30 hover:text-red-400 transition-colors leading-none"
+                        title={`Tirar ${nome}`}
+                      >×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <select
+                value=""
+                onChange={ev => { const nome = ev.target.value; if (nome && !equipaVideo.includes(nome)) saveVideografos([...equipaVideo, nome]) }}
+                className="bg-zinc-900 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none w-full"
+              >
+                <option value="">{equipaVideo.length > 0 ? 'Juntar videógrafo…' : 'Quem filmou…'}</option>
+                {optionsVideo.filter(n => !equipaVideo.includes(n)).map(nome => <option key={nome} value={nome}>{nome}</option>)}
+              </select>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Valor Editor Vídeo</span>
@@ -4934,6 +4977,7 @@ export default function EventoPage() {
               initialValue={e.videografo ?? []}
               options={optionsVideo}
               unavailableNames={unavailableNames}
+              syncValue={equipaVideo}
               onChanged={setEquipaVideo} />
             <EditEquipaField label="Editor de Fotos" field="editor_fotos" multi={false}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
