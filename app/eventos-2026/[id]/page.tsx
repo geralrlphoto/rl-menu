@@ -3944,6 +3944,17 @@ export default function EventoPage() {
           // Carregar pagamentos
           loadPagamentos(ev.referencia)
 
+          // Quem editou o vídeo — o campo da secção Equipa só carrega quando a
+          // gaveta abre, e o seletor junto ao valor precisa do nome logo.
+          fetch(`/api/evento-equipa?ref=${encodeURIComponent(ev.referencia)}`)
+            .then(r => r.json())
+            .then(d => {
+              const val = d.equipa?.editor_video
+              if (Array.isArray(val)) setEquipaEditorVideo(val)
+              else if (val) setEquipaEditorVideo([val])
+            })
+            .catch(() => {})
+
           // Carregar relatórios vídeo
           if (ev.referencia) {
             fetch(`/api/relatorios-video?referencia=${encodeURIComponent(ev.referencia)}`)
@@ -4487,6 +4498,10 @@ export default function EventoPage() {
                 className="bg-zinc-900 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none w-full"
               >
                 <option value="">Quem editou…</option>
+                {/* nome guardado que já não esteja na lista da equipa */}
+                {equipaEditorVideo[0] && !optionsAllTeam.includes(equipaEditorVideo[0]) && (
+                  <option value={equipaEditorVideo[0]}>{equipaEditorVideo[0]}</option>
+                )}
                 {optionsAllTeam.map(nome => <option key={nome} value={nome}>{nome}</option>)}
               </select>
             </div>
