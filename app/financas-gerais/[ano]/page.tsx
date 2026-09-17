@@ -345,7 +345,7 @@ function despesasDeEventos(events: any[], custos: Map<string, CustoEquipa>): Des
     const cliente = e.cliente ?? e.referencia ?? ''
     const c       = custos.get((e.referencia ?? '').toUpperCase())
     const add = (item: string, valor: number) => {
-      if (valor > 0) rows.push({ _eventoId: e.id, data: dataFmt, mes, item, valor, notas: cliente })
+      if (valor > 0) rows.push({ _eventoId: e.id, _naoSoma: true, data: dataFmt, mes, item, valor, notas: cliente })
     }
     // Nome de quem fez o trabalho, quando está escolhido na ficha
     const nomes = (v: any): string => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean).join(', ')
@@ -401,7 +401,9 @@ type DbEntry = {
 }
 
 type ReceitaRow = { _id?: string; _eventoId?: string; data: string; mes: string; tipo: string; valor: number; info: string }
-type DespesaRow = { _id?: string; _eventoId?: string; data: string; mes: string; item: string; valor: number; notas: string }
+// _naoSoma: despesa já descontada na receita líquida do evento — mostra-se na
+// lista do mês, mas fora do total para não descontar duas vezes.
+type DespesaRow = { _id?: string; _eventoId?: string; _naoSoma?: boolean; data: string; mes: string; item: string; valor: number; notas: string }
 
 type Props = { params: Promise<{ ano: string }> }
 
@@ -630,7 +632,6 @@ export default function FinancasAnoPage({ params }: Props) {
   // eventDespesas ficam de fora dos totais: já estão descontadas na receita líquida
   const allDespesas = [...baseDespesas, ...dbDespesas]
   const totalEventDespesas = eventDespesas.reduce((s, d) => s + d.valor, 0)
-  const eventDespesasPorMes = groupByMes(eventDespesas)
 
   const totalReceitas = allReceitas.reduce((s, r) => s + r.valor, 0)
   const totalDespesas = allDespesas.reduce((s, d) => s + d.valor, 0)
@@ -646,7 +647,8 @@ export default function FinancasAnoPage({ params }: Props) {
     .filter(r => r.receitas > 0 || r.despesas > 0)
 
   const receitasPorMes = groupByMes(allReceitas)
-  const despesasPorMes = groupByMes(allDespesas)
+  // Na lista aparecem também as despesas dos eventos (marcadas, sem somar)
+  const despesasPorMes = groupByMes([...allDespesas, ...eventDespesas])
 
   // ── Previsão de fecho de ano ──
   const hoje = new Date()
@@ -1347,20 +1349,34 @@ export default function FinancasAnoPage({ params }: Props) {
           </div>
 
           {despesasPorMes.map(({ mes, items }) => {
-            const subtotal = items.reduce((s, d) => s + d.valor, 0)
+            const subtotal = items.filter(d => !d._naoSoma).reduce((s, d) => s + d.valor, 0)
+            const subtotalEquipa = items.filter(d => d._naoSoma).reduce((s, d) => s + d.valor, 0)
             return (
               <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
                 <div className="flex items-center justify-between px-5 py-3 bg-white/[0.03] border-b border-white/[0.06]">
                   <span className="text-xs tracking-[0.35em] text-white/60 uppercase font-medium">{mes}</span>
-                  <span className="text-sm font-mono font-semibold text-red-400">{fmt(subtotal)} €</span>
+                  <div className="flex items-center gap-3">
+                    {subtotalEquipa > 0 && (
+                      <span className="text-[9px] tracking-wider text-white/30">+ {fmt(subtotalEquipa)} € equipa</span>
+                    )}
+                    <span className="text-sm font-mono font-semibold text-red-400">{fmt(subtotal)} €</span>
+                  </div>
                 </div>
                 <table className="w-full text-sm">
                   <tbody>
                     {items.map((d, i) => (
                       <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'} group`}>
-                        <td className="px-4 py-2.5 text-white/70 text-xs font-medium">{d.item}</td>
+                        <td className={`px-4 py-2.5 text-xs font-medium ${d._naoSoma ? 'text-white/45' : 'text-white/70'}`}>
+                          {d.item}
+                          {d._naoSoma && (
+                            <span className="ml-2 text-[8px] tracking-wider uppercase text-white/25 border border-white/10 rounded-full px-1.5 py-0.5"
+                              title="Já descontado no valor líquido do evento, por isso não soma ao total">
+                              já descontado
+                            </span>
+                          )}
+                        </td>
                         <td className="px-4 py-2.5 text-white/30 text-xs hidden sm:table-cell">{d.notas}</td>
-                        <td className="px-4 py-2.5 text-right text-red-400 font-mono font-semibold whitespace-nowrap">
+                        <td className={`px-4 py-2.5 text-right font-mono whitespace-nowrap ${d._naoSoma ? 'text-white/40' : 'text-red-400 font-semibold'}`}>
                           {fmt(d.valor)} €
                         </td>
                         <td className="px-4 py-2.5 w-16 text-right whitespace-nowrap">
@@ -1405,56 +1421,14 @@ export default function FinancasAnoPage({ params }: Props) {
             <span className="text-xl font-mono font-bold text-red-400">{fmt(totalDespesas)} €</span>
           </div>
 
-          {/* ── Pago à equipa dos eventos — fora do total ── */}
+          {/* ── Pago à equipa dos eventos — já dentro das listas acima, fora do total ── */}
           {eventDespesas.length > 0 && (
-            <div className="space-y-4 pt-4">
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/[0.06]" />
-                <p className="text-[10px] tracking-[0.4em] text-white/25 uppercase">Pago à equipa dos eventos</p>
-                <div className="h-px flex-1 bg-white/[0.06]" />
-              </div>
-              <p className="text-[10px] text-white/25 text-center">
-                Já descontado no valor líquido de cada evento, por isso não soma ao total acima
-              </p>
-
-              {eventDespesasPorMes.map(({ mes, items }) => {
-                const subtotal = items.reduce((s, d) => s + d.valor, 0)
-                return (
-                  <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
-                    <div className="flex items-center justify-between px-5 py-3 bg-white/[0.02] border-b border-white/[0.06]">
-                      <span className="text-xs tracking-[0.35em] text-white/50 uppercase font-medium">{mes}</span>
-                      <span className="text-sm font-mono font-semibold text-white/40">{fmt(subtotal)} €</span>
-                    </div>
-                    <table className="w-full text-sm">
-                      <tbody>
-                        {items.map((d, i) => (
-                          <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'} group`}>
-                            <td className="px-4 py-2.5 text-white/60 text-xs font-medium">{d.item}</td>
-                            <td className="px-4 py-2.5 text-white/30 text-xs hidden sm:table-cell">{d.notas}</td>
-                            <td className="px-4 py-2.5 text-right text-white/45 font-mono whitespace-nowrap">{fmt(d.valor)} €</td>
-                            <td className="px-4 py-2.5 w-10 text-right">
-                              {d._eventoId && (
-                                <Link
-                                  href={`/eventos-2026/${d._eventoId}?ano=${anoNum}`}
-                                  className="inline-flex text-white/20 hover:text-gold transition-colors opacity-0 group-hover:opacity-100"
-                                  title="Editar na ficha do evento"
-                                >
-                                  <PencilIcon />
-                                </Link>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )
-              })}
-
-              <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+            <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-white/[0.08] bg-white/[0.02]">
+              <div>
                 <span className="text-xs tracking-[0.35em] text-white/35 uppercase">Total pago à equipa {ano}</span>
-                <span className="text-lg font-mono font-semibold text-white/50">{fmt(totalEventDespesas)} €</span>
+                <p className="text-[10px] text-white/25 mt-1">Linhas marcadas "já descontado": saem do valor líquido do evento, por isso não somam ao total acima</p>
               </div>
+              <span className="text-lg font-mono font-semibold text-white/50">{fmt(totalEventDespesas)} €</span>
             </div>
           )}
         </div>
