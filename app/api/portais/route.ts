@@ -118,6 +118,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ portais })
   }
 
+  // Modo custos: usado por /financas-gerais — só os valores pagos à equipa de
+  // cada evento, para entrarem como despesas. Não puxa o `settings` inteiro.
+  if (req.nextUrl.searchParams.get('custos')) {
+    const { data, error } = await db
+      .from('portais')
+      .select('referencia, valor_fotografo:settings->>valor_fotografo, valor_videografo:settings->>valor_videografo, valor_editor_video:settings->>valor_editor_video')
+      .order('referencia')
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    const custos = (data ?? []).map((p: any) => ({
+      referencia: p.referencia,
+      fotografo:   Number(p.valor_fotografo) || 0,
+      videografo:  Number(p.valor_videografo) || 0,
+      editorVideo: Number(p.valor_editor_video) || 0,
+    }))
+    return NextResponse.json({ custos })
+  }
+
   const { data, error } = await db.from('portais').select('*').order('referencia')
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const portais = (data ?? []).map(portal => {

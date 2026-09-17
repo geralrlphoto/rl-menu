@@ -317,16 +317,47 @@ function mapEvents(events: any[]): ReceitaRow[] {
         ? e.tipo_evento
         : (() => { try { return JSON.parse(e.tipo_evento || '[]') } catch { return [] } })()
       const tipo = tipos[0] ?? 'CASAMENTO'
-      // Receita = VALOR LÍQUIDO A RECEBER da ficha do evento
-      // (Vídeo + Extras − Fotografia − Videógrafo − Editor Vídeo), não o total do serviço.
-      // Fallback para eventos sem líquido calculado: vídeo + extras.
-      const valor = typeof e.valor_liquido === 'number'
-        ? e.valor_liquido
-        : (Number(e.valor_video) || 0) + (Number(e.valor_extras) || 0)
+      // Receita BRUTA cobrada ao cliente (total do serviço). O que é pago à
+      // equipa entra depois como despesa — ver despesasDeEventos().
+      const valor = typeof e.valor_total === 'number'
+        ? e.valor_total
+        : (Number(e.valor_real_foto ?? e.valor_foto) || 0)
+          + (Number(e.valor_video ?? e.valor_liquido) || 0)
+          + (Number(e.valor_extras) || 0)
       const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
       return { _eventoId: e.id, data: dataFmt, mes, tipo, valor, info: e.cliente ?? '' }
     })
     .filter((r: ReceitaRow) => r.valor > 0)
+}
+
+type CustoEquipa = { referencia: string; fotografo: number; videografo: number; editorVideo: number }
+
+// Despesas de cada evento: o que é pago à equipa (mesmos valores do card
+// "Despesas do Casamento" na ficha). Quando o portal ainda não tem os valores
+// preenchidos, usa a diferença vídeo + extras − líquido, numa linha só.
+function despesasDeEventos(events: any[], custos: Map<string, CustoEquipa>): DespesaRow[] {
+  const MES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
+  const rows: DespesaRow[] = []
+  events.filter((e: any) => e.data_evento).forEach((e: any) => {
+    const dt      = new Date(e.data_evento)
+    const mes     = MES[dt.getMonth()]
+    const dataFmt = `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}/${dt.getFullYear()}`
+    const cliente = e.cliente ?? e.referencia ?? ''
+    const c       = custos.get((e.referencia ?? '').toUpperCase())
+    const add = (item: string, valor: number) => {
+      if (valor > 0) rows.push({ _eventoId: e.id, data: dataFmt, mes, item, valor, notas: cliente })
+    }
+    if (c && (c.fotografo > 0 || c.videografo > 0 || c.editorVideo > 0)) {
+      add('FOTÓGRAFO', c.fotografo)
+      add('VIDEÓGRAFO', c.videografo)
+      add('EDITOR VÍDEO', c.editorVideo)
+    } else {
+      const bruto   = (Number(e.valor_video) || 0) + (Number(e.valor_extras) || 0)
+      const liquido = Number(e.valor_liquido) || 0
+      add('EQUIPA DO EVENTO', bruto - liquido)
+    }
+  })
+  return rows
 }
 
 // ─── CUSTOS FIXOS ANUAIS — dados por defeito ───────────────────────────────────
@@ -367,7 +398,7 @@ type DbEntry = {
 }
 
 type ReceitaRow = { _id?: string; _eventoId?: string; data: string; mes: string; tipo: string; valor: number; info: string }
-type DespesaRow = { _id?: string; data: string; mes: string; item: string; valor: number; notas: string }
+type DespesaRow = { _id?: string; _eventoId?: string; data: string; mes: string; item: string; valor: number; notas: string }
 
 type Props = { params: Promise<{ ano: string }> }
 
@@ -380,6 +411,7 @@ export default function FinancasAnoPage({ params }: Props) {
   const [tab, setTab]                   = useState<'resumo' | 'receitas' | 'despesas' | 'comparação' | 'estratégia' | 'crescimento'>('resumo')
   const [dbEntries, setDbEntries]       = useState<DbEntry[]>([])
   const [eventReceitas, setEventReceitas]   = useState<ReceitaRow[]>([])
+  const [eventDespesas, setEventDespesas]   = useState<DespesaRow[]>([])
   const [prevYearReceitas, setPrevYearReceitas] = useState<ReceitaRow[]>([])
   const [prevYearDespesas, setPrevYearDespesas] = useState<DespesaRow[]>([])
   const [metaMensal, setMetaMensal]     = useState<number>(0)
@@ -460,10 +492,19 @@ export default function FinancasAnoPage({ params }: Props) {
       .then(d => setDbEntries(d.entries ?? []))
 
     // Para 2026+ as receitas vêm dos eventos (mesma fonte que /eventos-2026)
+    // e o que é pago à equipa de cada evento entra como despesa
     if (anoNum >= 2026) {
-      fetch(`/api/eventos-supabase?ano=${anoNum}`)
-        .then(r => r.json())
-        .then(d => setEventReceitas(mapEvents(d.events ?? [])))
+      Promise.all([
+        fetch(`/api/eventos-supabase?ano=${anoNum}`).then(r => r.json()),
+        fetch('/api/portais?custos=1').then(r => r.json()).catch(() => ({ custos: [] })),
+      ]).then(([ev, cu]) => {
+        const events = ev.events ?? []
+        const custos = new Map<string, CustoEquipa>(
+          (cu.custos ?? []).map((c: CustoEquipa) => [(c.referencia ?? '').toUpperCase(), c])
+        )
+        setEventReceitas(mapEvents(events))
+        setEventDespesas(despesasDeEventos(events, custos))
+      })
     }
 
     // Dados do ano anterior para a aba de comparação
@@ -583,7 +624,7 @@ export default function FinancasAnoPage({ params }: Props) {
     .map(e => ({ _id: e.id, data: e.data, mes: e.mes, item: e.categoria, valor: e.valor, notas: e.info }))
 
   const allReceitas = [...baseReceitas, ...dbReceitas]
-  const allDespesas = [...baseDespesas, ...dbDespesas]
+  const allDespesas = [...baseDespesas, ...eventDespesas, ...dbDespesas]
 
   const totalReceitas = allReceitas.reduce((s, r) => s + r.valor, 0)
   const totalDespesas = allDespesas.reduce((s, d) => s + d.valor, 0)
@@ -1076,7 +1117,7 @@ export default function FinancasAnoPage({ params }: Props) {
             <div>
               <span className="text-xs tracking-[0.35em] text-white/40 uppercase">Total Receitas {ano}</span>
               {anoNum >= 2026 && (
-                <p className="text-[10px] text-white/25 mt-1 normal-case tracking-normal">Eventos entram pelo valor líquido a receber, já sem fotógrafo, videógrafo e editor</p>
+                <p className="text-[10px] text-white/25 mt-1 normal-case tracking-normal">Eventos entram pelo valor total cobrado; o que é pago à equipa aparece nas despesas</p>
               )}
             </div>
             <span className="text-xl font-mono font-bold text-green-400">{fmt(totalReceitas)} €</span>
@@ -1335,6 +1376,15 @@ export default function FinancasAnoPage({ params }: Props) {
                                 {deleting === d._id ? '…' : '×'}
                               </button>
                             </span>
+                          )}
+                          {!d._id && d._eventoId && (
+                            <Link
+                              href={`/eventos-2026/${d._eventoId}?ano=${anoNum}`}
+                              className="inline-flex text-white/20 hover:text-gold transition-colors opacity-0 group-hover:opacity-100"
+                              title="Editar na ficha do evento"
+                            >
+                              <PencilIcon />
+                            </Link>
                           )}
                         </td>
                       </tr>
