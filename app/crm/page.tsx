@@ -20,6 +20,8 @@ const COLUNAS: { key: ColunaKey; label: string; accent: string }[] = [
   { key: 'encerrada', label: 'Encerrada', accent: 'bg-green-400' },
 ]
 const ENCERRADA_PAGE = 20
+// Ano (data do casamento) usado na taxa de fecho anual do topo
+const ANO_TAXA_FECHO = '2027'
 
 function sumOrcamento(contacts: Contact[]): number {
   return contacts.reduce((sum, c) => sum + parseOrcamento(c.orcamento), 0)
@@ -238,10 +240,10 @@ export default function CRMPage() {
   )
   const fecharamMes = encerradasMes.filter(c => c.status === 'Fechou').length
   const taxaMes = encerradasMes.length > 0 ? Math.round((fecharamMes / encerradasMes.length) * 100) : null
-  const anoAtual = mesAtual.slice(0, 4)
+  // Taxa anual pela data do casamento (época), não pela data de fecho
   const encerradasAno = contacts.filter(c =>
     (c.status === 'Fechou' || c.status === 'NÃO FECHOU') &&
-    (c.data_fecho || c.status_updated_at || '').slice(0, 4) === anoAtual
+    (c.data_casamento || '').startsWith(ANO_TAXA_FECHO)
   )
   const fecharamAno = encerradasAno.filter(c => c.status === 'Fechou').length
   const taxaAno = encerradasAno.length > 0 ? Math.round((fecharamAno / encerradasAno.length) * 100) : null
@@ -345,8 +347,8 @@ export default function CRMPage() {
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
           <Kpi label="Taxa de fecho (mês)" value={taxaMes !== null ? `${taxaMes}%` : '—'}
             sub={encerradasMes.length > 0 ? `${fecharamMes} de ${encerradasMes.length} encerradas` : 'Nenhuma encerrada este mês'} color="text-green-400" />
-          <Kpi label={`Taxa de fecho (${anoAtual})`} value={taxaAno !== null ? `${taxaAno}%` : '—'}
-            sub={encerradasAno.length > 0 ? `${fecharamAno} de ${encerradasAno.length} encerradas` : 'Nenhuma encerrada este ano'} color="text-green-300" />
+          <Kpi label={`Taxa de fecho · Casamentos ${ANO_TAXA_FECHO}`} value={taxaAno !== null ? `${taxaAno}%` : '—'}
+            sub={encerradasAno.length > 0 ? `${fecharamAno} de ${encerradasAno.length} encerradas` : `Nenhuma lead de ${ANO_TAXA_FECHO} encerrada`} color="text-green-300" />
           <Kpi label="Valor em Follow Up" value={valorFollow > 0 ? `${valorFollow.toLocaleString('pt-PT')} €` : '—'} color="text-gold" />
           <Kpi label="Média até fechar" value={mediaDiasFecho !== null ? `${mediaDiasFecho} dias` : '—'} sub="Da entrada ao fecho" color="text-yellow-300" />
           <Kpi label="Ações atrasadas" value={acoesAtrasadas}
