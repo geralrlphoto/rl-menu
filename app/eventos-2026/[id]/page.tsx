@@ -569,11 +569,14 @@ function EditMultiField({ label, value, field, eventId, referencia, onSaved }: {
 }
 
 // ─── Equipa field — salva no Supabase, NÃO no Notion ──────────────────────────
-function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options, onChanged, unavailableNames }: {
+function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options, onChanged, unavailableNames, syncValue }: {
   label: string; field: 'fotografo' | 'videografo' | 'editor_album' | 'editor_video' | 'editor_fotos'; multi: boolean
   eventoId: string; referencia: string; local: string; dataCasamento: string
   initialValue: string[]; options: string[]; onChanged?: (val: string[]) => void
   unavailableNames?: string[]
+  // Valor escolhido noutro sítio da página (ex.: o seletor junto ao valor do
+  // editor de vídeo). Acompanha sem ir outra vez à API.
+  syncValue?: string[]
 }) {
   const [value, setValue] = useState<string[]>(initialValue)
   const [open, setOpen]   = useState(false)
@@ -595,6 +598,13 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
       })
       .catch(() => setLoaded(true))
   }, [referencia, eventoId, field])
+
+  // Acompanha o valor escolhido noutro sítio da página, sem refetch
+  const syncKey = (syncValue ?? []).join(',')
+  useEffect(() => {
+    if (!syncValue || !loaded) return
+    setValue(prev => (prev.join(',') === syncKey ? prev : syncValue))
+  }, [syncKey, loaded])
 
   useEffect(() => {
     if (!open || !loaded) return
@@ -4923,11 +4933,11 @@ export default function EventoPage() {
               unavailableNames={unavailableNames}
               onChanged={setEquipaEditorAlbum} />
             <EditEquipaField label="Editor de Vídeo" field="editor_video" multi={false}
-              key={`editor-video-${equipaEditorVideo.join(',')}`}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.editor_video ?? []}
               options={optionsAllTeam}
               unavailableNames={unavailableNames}
+              syncValue={equipaEditorVideo}
               onChanged={setEquipaEditorVideo} />
             <EditField label="Agendamento Email" value={e.agendamento_email} field="agendamento_email" eventId={e.id} onSaved={handleSaved} />
           </div>
