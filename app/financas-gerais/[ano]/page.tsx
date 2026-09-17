@@ -401,8 +401,8 @@ type DbEntry = {
 }
 
 type ReceitaRow = { _id?: string; _eventoId?: string; data: string; mes: string; tipo: string; valor: number; info: string }
-// _naoSoma: despesa já descontada na receita líquida do evento — mostra-se na
-// lista do mês, mas fora do total para não descontar duas vezes.
+// _naoSoma: despesa que vem da ficha do evento (equipa). Soma ao total como
+// qualquer outra; a marca serve só para dizer quanto do mês é equipa.
 type DespesaRow = { _id?: string; _eventoId?: string; _naoSoma?: boolean; data: string; mes: string; item: string; valor: number; notas: string }
 
 type Props = { params: Promise<{ ano: string }> }
@@ -629,8 +629,7 @@ export default function FinancasAnoPage({ params }: Props) {
     .map(e => ({ _id: e.id, data: e.data, mes: e.mes, item: e.categoria, valor: e.valor, notas: e.info }))
 
   const allReceitas = [...baseReceitas, ...dbReceitas]
-  // eventDespesas ficam de fora dos totais: já estão descontadas na receita líquida
-  const allDespesas = [...baseDespesas, ...dbDespesas]
+  const allDespesas = [...baseDespesas, ...eventDespesas, ...dbDespesas]
   const totalEventDespesas = eventDespesas.reduce((s, d) => s + d.valor, 0)
 
   const totalReceitas = allReceitas.reduce((s, r) => s + r.valor, 0)
@@ -647,8 +646,7 @@ export default function FinancasAnoPage({ params }: Props) {
     .filter(r => r.receitas > 0 || r.despesas > 0)
 
   const receitasPorMes = groupByMes(allReceitas)
-  // Na lista aparecem também as despesas dos eventos (marcadas, sem somar)
-  const despesasPorMes = groupByMes([...allDespesas, ...eventDespesas])
+  const despesasPorMes = groupByMes(allDespesas)
 
   // ── Previsão de fecho de ano ──
   const hoje = new Date()
@@ -1349,7 +1347,7 @@ export default function FinancasAnoPage({ params }: Props) {
           </div>
 
           {despesasPorMes.map(({ mes, items }) => {
-            const subtotal = items.filter(d => !d._naoSoma).reduce((s, d) => s + d.valor, 0)
+            const subtotal = items.reduce((s, d) => s + d.valor, 0)
             const subtotalEquipa = items.filter(d => d._naoSoma).reduce((s, d) => s + d.valor, 0)
             return (
               <div key={mes} className="rounded-2xl border border-white/[0.06] overflow-hidden">
@@ -1357,7 +1355,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   <span className="text-xs tracking-[0.35em] text-white/60 uppercase font-medium">{mes}</span>
                   <div className="flex items-center gap-3">
                     {subtotalEquipa > 0 && (
-                      <span className="text-[9px] tracking-wider text-white/30">+ {fmt(subtotalEquipa)} € equipa</span>
+                      <span className="text-[9px] tracking-wider text-white/30">inclui {fmt(subtotalEquipa)} € de equipa</span>
                     )}
                     <span className="text-sm font-mono font-semibold text-red-400">{fmt(subtotal)} €</span>
                   </div>
@@ -1366,17 +1364,9 @@ export default function FinancasAnoPage({ params }: Props) {
                   <tbody>
                     {items.map((d, i) => (
                       <tr key={i} className={`border-b border-white/[0.04] last:border-0 ${i % 2 === 0 ? '' : 'bg-white/[0.01]'} group`}>
-                        <td className={`px-4 py-2.5 text-xs font-medium ${d._naoSoma ? 'text-white/45' : 'text-white/70'}`}>
-                          {d.item}
-                          {d._naoSoma && (
-                            <span className="ml-2 text-[8px] tracking-wider uppercase text-white/25 border border-white/10 rounded-full px-1.5 py-0.5"
-                              title="Já descontado no valor líquido do evento, por isso não soma ao total">
-                              já descontado
-                            </span>
-                          )}
-                        </td>
+                        <td className="px-4 py-2.5 text-white/70 text-xs font-medium">{d.item}</td>
                         <td className="px-4 py-2.5 text-white/30 text-xs hidden sm:table-cell">{d.notas}</td>
-                        <td className={`px-4 py-2.5 text-right font-mono whitespace-nowrap ${d._naoSoma ? 'text-white/40' : 'text-red-400 font-semibold'}`}>
+                        <td className="px-4 py-2.5 text-right text-red-400 font-mono font-semibold whitespace-nowrap">
                           {fmt(d.valor)} €
                         </td>
                         <td className="px-4 py-2.5 w-16 text-right whitespace-nowrap">
@@ -1425,8 +1415,8 @@ export default function FinancasAnoPage({ params }: Props) {
           {eventDespesas.length > 0 && (
             <div className="flex items-center justify-between px-5 py-4 rounded-2xl border border-white/[0.08] bg-white/[0.02]">
               <div>
-                <span className="text-xs tracking-[0.35em] text-white/35 uppercase">Total pago à equipa {ano}</span>
-                <p className="text-[10px] text-white/25 mt-1">Linhas marcadas "já descontado": saem do valor líquido do evento, por isso não somam ao total acima</p>
+                <span className="text-xs tracking-[0.35em] text-white/35 uppercase">Do total, pago à equipa dos eventos</span>
+                <p className="text-[10px] text-white/25 mt-1">Fotógrafo, videógrafo e editor de cada evento, já incluídos no Total Despesas acima</p>
               </div>
               <span className="text-lg font-mono font-semibold text-white/50">{fmt(totalEventDespesas)} €</span>
             </div>
