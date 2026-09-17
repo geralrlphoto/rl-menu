@@ -347,10 +347,13 @@ function despesasDeEventos(events: any[], custos: Map<string, CustoEquipa>): Des
     const add = (item: string, valor: number) => {
       if (valor > 0) rows.push({ _eventoId: e.id, data: dataFmt, mes, item, valor, notas: cliente })
     }
+    // Nome de quem fez o trabalho, quando está escolhido na ficha
+    const nomes = (v: any): string => (Array.isArray(v) ? v : v ? [v] : []).filter(Boolean).join(', ')
+    const comNome = (base: string, quem: string) => (quem ? `${base} · ${quem}` : base)
     if (c && (c.fotografo > 0 || c.videografo > 0 || c.editorVideo > 0)) {
-      add('FOTÓGRAFO', c.fotografo)
-      add('VIDEÓGRAFO', c.videografo)
-      add('EDITOR VÍDEO', c.editorVideo)
+      add(comNome('FOTÓGRAFO', nomes(e.fotografo)), c.fotografo)
+      add(comNome('VIDEÓGRAFO', nomes(e.videografo)), c.videografo)
+      add(comNome('EDITOR VÍDEO', nomes(e.editor_video)), c.editorVideo)
     } else {
       const bruto   = (Number(e.valor_video) || 0) + (Number(e.valor_extras) || 0)
       const liquido = Number(e.valor_liquido) || 0

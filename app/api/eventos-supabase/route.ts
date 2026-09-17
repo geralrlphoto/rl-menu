@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
         .order('data_evento', { ascending: true }),
       supabase
         .from('evento_equipa')
-        .select('evento_id, referencia, fotografo, videografo'),
+        .select('evento_id, referencia, fotografo, videografo, editor_video'),
     ])
     if (supabaseRes.error) {
       return NextResponse.json({ error: supabaseRes.error.message }, { status: 500 })
@@ -61,6 +61,8 @@ export async function GET(req: NextRequest) {
                      || null
       const fotografo: string[]  = equipaRow?.fotografo?.length  ? equipaRow.fotografo  : parseArr(row.fotografo)
       const videografo: string[] = equipaRow?.videografo?.length ? equipaRow.videografo : parseArr(row.videografo)
+      // Quem editou o vídeo — usado nas despesas de /financas-gerais
+      const editorVideo: string[] = parseArr(equipaRow?.editor_video)
 
       // Valor total cobrado ao cliente neste evento.
       // FOTO  = valor_real_foto ?? valor_foto
@@ -85,6 +87,7 @@ export async function GET(req: NextRequest) {
         fotografo,
         videografo,
         editor_fotos:      row.editor_fotos ?? null,
+        editor_video:      editorVideo,
         // Valores monetários — colunas próprias em eventos_2026
         valor_foto:        row.valor_foto,
         valor_real_foto:   row.valor_real_foto ?? null,

@@ -4455,6 +4455,30 @@ export default function EventoPage() {
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
               </div>
+              {/* Quem editou — mesmo campo do Editor de Vídeo na secção Equipa */}
+              <select
+                value={equipaEditorVideo[0] ?? ''}
+                onChange={ev => {
+                  const nome = ev.target.value
+                  const next = nome ? [nome] : []
+                  setEquipaEditorVideo(next)
+                  fetch('/api/evento-equipa', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      referencia: e.referencia ?? '',
+                      evento_id: e.id,
+                      local: e.local ?? '',
+                      data_casamento: e.data_evento || null,
+                      editor_video: next,
+                    }),
+                  }).catch(() => {})
+                }}
+                className="bg-zinc-900 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none w-full"
+              >
+                <option value="">Quem editou…</option>
+                {optionsAllTeam.map(nome => <option key={nome} value={nome}>{nome}</option>)}
+              </select>
             </div>
           </div>
           </div>
@@ -4899,6 +4923,7 @@ export default function EventoPage() {
               unavailableNames={unavailableNames}
               onChanged={setEquipaEditorAlbum} />
             <EditEquipaField label="Editor de Vídeo" field="editor_video" multi={false}
+              key={`editor-video-${equipaEditorVideo.join(',')}`}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.editor_video ?? []}
               options={optionsAllTeam}
