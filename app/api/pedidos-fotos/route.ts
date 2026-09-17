@@ -12,14 +12,32 @@ function db() {
 const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, estado, origem, responsavel, metodo_pagamento, mbway_conta, created_at, enviado_para_id, enviado_para_nome, enviado_em, fotos_enviadas_em, impressao_preparada_em, envio_erro, envio_auto'
 
 // GET: lista pedidos de fotos (admin). ?referencia=<ref> filtra por casamento.
+//   ?data=YYYY-MM-DD devolve também `sugestoes`: pedidos ainda sem referência
+//   cuja data do casamento bate certo (o convidado escreve a data à mão).
 export async function GET(req: NextRequest) {
   const referencia = req.nextUrl.searchParams.get('referencia')
+  const data       = req.nextUrl.searchParams.get('data')
   const supabase = db()
   let query = supabase.from('photo_orders').select(COLS).order('created_at', { ascending: false })
   if (referencia) query = query.eq('referencia', referencia)
-  const { data, error } = await query.limit(500)
+  const { data: pedidos, error } = await query.limit(500)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ pedidos: data ?? [] })
+
+  let sugestoes: any[] = []
+  if (data && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
+    const [ano, mes, dia] = data.split('-')
+    // Formatos que aparecem no campo de texto do formulário
+    const variantes = [`${dia} / ${mes} / ${ano}`, `${dia}/${mes}/${ano}`, `${dia}-${mes}-${ano}`, data]
+    const { data: semRef } = await supabase
+      .from('photo_orders').select(COLS)
+      .is('referencia', null)
+      .in('data_casamento', variantes)
+      .order('created_at', { ascending: false })
+      .limit(200)
+    sugestoes = semRef ?? []
+  }
+
+  return NextResponse.json({ pedidos: pedidos ?? [], sugestoes })
 }
 
 // PATCH: atualiza a referência do casamento e/ou o estado de um pedido,

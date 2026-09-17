@@ -213,46 +213,119 @@ function RevisaoVideoAdmin({ referencia }: { referencia: string }) {
 // ─── Pedidos de Fotos (convidados) associados a este casamento ───────────────
 const eurPF = (n: any) => `${Number(n || 0).toFixed(2)} €`
 
-function PedidosFotosEvento({ referencia }: { referencia: string }) {
+function PedidosFotosEvento({ referencia, dataEvento }: { referencia: string; dataEvento?: string }) {
   const [pedidos, setPedidos] = useState<any[]>([])
+  const [sugestoes, setSugestoes] = useState<any[]>([])
   const [loaded, setLoaded] = useState(false)
   const [preview, setPreview] = useState<any | null>(null)
+  const [associando, setAssociando] = useState<string | null>(null)
+
   useEffect(() => {
     let cancelled = false
-    fetch(`/api/pedidos-fotos?referencia=${encodeURIComponent(referencia)}`)
+    const qs = new URLSearchParams({ referencia })
+    if (dataEvento) qs.set('data', dataEvento)
+    fetch(`/api/pedidos-fotos?${qs}`)
       .then(r => r.json())
-      .then(d => { if (!cancelled) { setPedidos(Array.isArray(d?.pedidos) ? d.pedidos : []); setLoaded(true) } })
+      .then(d => {
+        if (cancelled) return
+        setPedidos(Array.isArray(d?.pedidos) ? d.pedidos : [])
+        setSugestoes(Array.isArray(d?.sugestoes) ? d.sugestoes : [])
+        setLoaded(true)
+      })
       .catch(() => { if (!cancelled) setLoaded(true) })
     return () => { cancelled = true }
-  }, [referencia])
+  }, [referencia, dataEvento])
 
-  if (!loaded || pedidos.length === 0) return null
+  // Liga um pedido solto a este casamento
+  async function associar(p: any) {
+    setAssociando(p.id)
+    await fetch('/api/pedidos-fotos', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: p.id, referencia }),
+    }).catch(() => {})
+    setSugestoes(prev => prev.filter(x => x.id !== p.id))
+    setPedidos(prev => [{ ...p, referencia }, ...prev])
+    setAssociando(null)
+  }
+
+  if (!loaded) return null
+
+  const tickets   = pedidos.filter(p => p.origem === 'ticket')
+  const links     = pedidos.filter(p => p.origem !== 'ticket')
+  const soma      = (arr: any[]) => arr.reduce((s, p) => s + Number(p.total || 0), 0)
+  const fotos     = (arr: any[]) => arr.reduce((s, p) => s + Number(p.quantidade || 0), 0)
+
+  const linha = (p: any, comBotao = false) => (
+    <div key={p.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
+      <div className="min-w-0">
+        <span className="text-[9px] tracking-widest uppercase px-1.5 py-0.5 rounded-full border mr-2"
+          style={p.origem === 'ticket'
+            ? { borderColor: 'rgba(201,168,76,0.35)', color: 'rgba(201,168,76,0.9)' }
+            : { borderColor: 'rgba(96,165,250,0.35)', color: 'rgba(147,197,253,0.9)' }}>
+          {p.origem === 'ticket' ? 'Ticket' : 'Link'}
+        </span>
+        <span className="text-[12px] font-semibold text-gold">{p.pedido}</span>
+        <span className="text-[12px] text-white/75"> · {p.nome}</span>
+        <p className="text-[11px] text-white/45">{p.quantidade} foto(s) · {p.formato} · {eurPF(p.total)}</p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {!comBotao && (
+          <span className="text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold"
+            style={p.estado === 'Entregue'
+              ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.3)', color: '#6ee7b7' }
+              : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.28)', color: '#fcd34d' }}>
+            {p.estado === 'Entregue' ? 'Entregue' : 'Aguardar'}
+          </span>
+        )}
+        {comBotao && (
+          <button onClick={() => associar(p)} disabled={associando === p.id}
+            className="inline-flex items-center gap-1.5 text-[11px] px-3 py-2 rounded-lg border border-green-500/35 text-green-300 hover:bg-green-500/10 transition-all tracking-wider uppercase font-semibold disabled:opacity-40">
+            {associando === p.id ? 'A juntar…' : '+ Juntar'}
+          </button>
+        )}
+        <button onClick={() => setPreview(p)}
+          className="inline-flex items-center gap-1.5 text-[11px] px-4 py-2 rounded-lg border border-gold/35 text-gold hover:bg-gold/10 transition-all tracking-wider uppercase font-semibold">
+          ◉ Ver Pedido
+        </button>
+      </div>
+    </div>
+  )
 
   return (
-    <Section title="Pedidos de Fotos (Convidados)" right={<span className="text-[9px] tracking-[0.3em] text-gold uppercase">{pedidos.length} pedido{pedidos.length === 1 ? '' : 's'}</span>}>
-      <div className="flex flex-col gap-2.5">
-        {pedidos.map((p: any) => (
-          <div key={p.id} className="flex items-center justify-between gap-3 flex-wrap rounded-xl border border-white/[0.07] bg-white/[0.02] px-4 py-3">
-            <div className="min-w-0">
-              <span className="text-[12px] font-semibold text-gold">{p.pedido}</span>
-              <span className="text-[12px] text-white/75"> · {p.nome}</span>
-              <p className="text-[11px] text-white/45">{p.quantidade} foto(s) · {p.formato} · {eurPF(p.total)}</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <span className="text-[10px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-bold"
-                style={p.estado === 'Entregue'
-                  ? { background: 'rgba(16,185,129,0.12)', borderColor: 'rgba(16,185,129,0.3)', color: '#6ee7b7' }
-                  : { background: 'rgba(234,179,8,0.10)', borderColor: 'rgba(234,179,8,0.28)', color: '#fcd34d' }}>
-                {p.estado === 'Entregue' ? 'Entregue' : 'Aguardar'}
-              </span>
-              <button onClick={() => setPreview(p)}
-                className="inline-flex items-center gap-1.5 text-[11px] px-4 py-2 rounded-lg border border-gold/35 text-gold hover:bg-gold/10 transition-all tracking-wider uppercase font-semibold">
-                ◉ Ver Pedido
-              </button>
-            </div>
-          </div>
-        ))}
+    <Section title="Fotos Compradas pelos Convidados" right={
+      <span className="text-[9px] tracking-[0.3em] text-gold uppercase">
+        {pedidos.length === 0 ? 'Sem compras' : `${fotos(pedidos)} fotos · ${eurPF(soma(pedidos))}`}
+      </span>
+    }>
+      {/* Resumo por origem */}
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="rounded-xl border border-gold/20 bg-gold/[0.04] px-4 py-3">
+          <p className="text-[9px] tracking-[0.3em] text-gold/70 uppercase mb-1">Pelos tickets</p>
+          <p className="text-lg font-light text-gold">{eurPF(soma(tickets))}</p>
+          <p className="text-[10px] text-white/35">{tickets.length} pedido(s) · {fotos(tickets)} fotos</p>
+        </div>
+        <div className="rounded-xl border border-blue-500/20 bg-blue-500/[0.04] px-4 py-3">
+          <p className="text-[9px] tracking-[0.3em] text-blue-300/70 uppercase mb-1">Pelo link</p>
+          <p className="text-lg font-light text-blue-300">{eurPF(soma(links))}</p>
+          <p className="text-[10px] text-white/35">{links.length} pedido(s) · {fotos(links)} fotos</p>
+        </div>
       </div>
+
+      {pedidos.length > 0 && <div className="flex flex-col gap-2.5">{pedidos.map(p => linha(p))}</div>}
+      {pedidos.length === 0 && sugestoes.length === 0 && (
+        <p className="text-[12px] text-white/35 italic">Ainda ninguém comprou fotografias deste casamento.</p>
+      )}
+
+      {/* Pedidos com a mesma data mas sem casamento associado */}
+      {sugestoes.length > 0 && (
+        <div className="mt-5 pt-4 border-t border-white/[0.06] flex flex-col gap-2.5">
+          <p className="text-[10px] tracking-[0.3em] text-white/30 uppercase">
+            Com a data deste casamento, ainda por associar ({sugestoes.length})
+          </p>
+          {sugestoes.map(p => linha(p, true))}
+        </div>
+      )}
+
       {preview && <PedidoPreview pedido={preview} onClose={() => setPreview(null)} />}
     </Section>
   )
@@ -4943,7 +5016,7 @@ export default function EventoPage() {
         {e.referencia && <RevisaoVideoAdmin referencia={e.referencia} />}
 
         {/* ── Pedidos de Fotos dos convidados associados a este casamento ── */}
-        {e.referencia && <PedidosFotosEvento referencia={e.referencia} />}
+        {e.referencia && <PedidosFotosEvento referencia={e.referencia} dataEvento={e.data_evento ?? ''} />}
 
         </DrawerBloco>
 
