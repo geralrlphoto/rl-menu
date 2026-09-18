@@ -15,6 +15,23 @@ type Pedido = {
   fotos_enviadas_em?: string | null; impressao_preparada_em?: string | null
   envio_erro?: string | null; envio_auto?: boolean
 }
+// Mensagem pré-feita para o WhatsApp: numeração do pedido não bate com as fotos.
+function msgNumeracao(p: Pedido, fotos: string[]): string {
+  const primeiro = (p.nome || '').trim().split(/\s+/)[0] || ''
+  return [
+    `Olá${primeiro ? ' ' + primeiro : ''}, muito obrigado pela aquisição das fotografias${p.noivos ? ' do casamento ' + p.noivos.trim() : ''}.`,
+    '',
+    'No entanto, detetámos que a numeração indicada não corresponde às fotografias existentes. Solicitamos que verifique novamente o seu pedido de fotografias, para as podermos enviar.',
+    '',
+    `Pedido: ${p.pedido}`,
+    `Nº de fotografias adquiridas: ${p.quantidade}`,
+    ...(fotos.length ? [`Números indicados: ${fotos.join(', ')}`] : []),
+    '',
+    'Obrigado,',
+    'RL Photo Video',
+  ].join('\n')
+}
+
 type Evento = { referencia: string; cliente: string; data_evento: string }
 type Fotografo = { id: string; nome: string }
 type Grupo = { key: string; noivos: string; data: string | null; ts: number; origem: 'ticket' | 'adquirir'; itens: Pedido[] }
@@ -552,7 +569,7 @@ export default function PedidosFotos() {
                     {enviandoTicket === p.id ? 'A enviar…' : 'Enviar ticket ao cliente'}
                   </button>
                   {whatsappLink(p.telefone) && (
-                    <a href={whatsappLink(p.telefone)!} target="_blank" rel="noopener noreferrer"
+                    <a href={whatsappLink(p.telefone)! + '?text=' + encodeURIComponent(msgNumeracao(p, fotos))} target="_blank" rel="noopener noreferrer"
                       title={`Abrir conversa de WhatsApp com ${p.telefone}`}
                       className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-all hover:bg-[#25D366]/10"
                       style={{ borderColor: 'rgba(37,211,102,0.35)', color: '#4ade80' }}>
