@@ -14,6 +14,7 @@ export type EntregaAtraso = {
 
 const COR_TIPO: Record<string, string> = {
   'Galeria Online':   '#60a5fa',
+  'Fotos p/ Seleção': '#34d399',
   'Seleção de fotos': '#fbbf24',
   'Edição de fotos':  '#fb923c',
   'Vídeo':            '#a78bfa',
