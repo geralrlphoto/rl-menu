@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -309,7 +309,10 @@ export async function PATCH(req: NextRequest) {
     // data da seleção recebida, limpa-se logo para o atraso desaparecer.
     const chavesPainel = Object.keys(updates.settings ?? {})
     if (chavesPainel.some(k => /_enviada$|_alerta_off$|^selecao_recebida$|^alertas_fotografia_ativos$|^preWedding/.test(k))) {
-      try { revalidatePath('/photo') } catch { /* ignora */ }
+      try {
+        revalidateTag('photo-portais', { expire: 0 })
+        revalidatePath('/photo')
+      } catch { /* ignora */ }
     }
 
     return NextResponse.json({ ok: true })

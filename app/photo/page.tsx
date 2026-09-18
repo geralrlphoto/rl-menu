@@ -132,13 +132,26 @@ export default async function PhotoDashboard() {
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
 
+  // Só os campos do settings de que o painel precisa (pré-wedding, entregas,
+  // alertas) — não o conteúdo inteiro de cada portal. Tag 'photo-portais' é
+  // limpa pelo PATCH de /api/portais quando se marca uma entrega na ficha.
+  const CAMPOS_PORTAL = [
+    'noiva', 'noivo', 'preWeddingSlots', 'preWeddingReservedSlotId', 'preWeddingReservedAt',
+    'galerias_enviada', 'selecao_enviada', 'fotos_finais_enviada', 'selecao_recebida',
+    'galerias_alerta_off', 'selecao_alerta_off', 'fotos_finais_alerta_off', 'alertas_fotografia_ativos',
+  ]
   const getRefPortais = unstable_cache(
     async () => {
-      const { data } = await supabase.from('portais').select('referencia, settings, noiva, noivo')
-      return data ?? []
+      const cols = CAMPOS_PORTAL.map(c => `s_${c}:settings->${c}`).join(', ')
+      const { data } = await supabase.from('portais').select(`referencia, noiva, noivo, ${cols}`)
+      return (data ?? []).map((r: any) => {
+        const settings: Record<string, any> = {}
+        for (const c of CAMPOS_PORTAL) if (r[`s_${c}`] !== null && r[`s_${c}`] !== undefined) settings[c] = r[`s_${c}`]
+        return { referencia: r.referencia as string | null, noiva: r.noiva, noivo: r.noivo, settings }
+      })
     },
-    ['photo-portais'],
-    { revalidate: 1800, tags: ['photo-dashboard'] }
+    ['photo-portais-v2'],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-portais'] }
   )
 
   const getAlbunsAprovadosSb = unstable_cache(
@@ -213,19 +226,12 @@ export default async function PhotoDashboard() {
   //   admin desliga o sino no card do casamento (/freelancers/[id]).
   //   Esses eventos NÃO aparecem nos PRAZOS FOTOS aqui.
   //   Estado guardado em portais.settings.alertas_fotografia_ativos.
-  const getAlertasOff = unstable_cache(
-    async () => {
-      const { data } = await supabase.from('portais').select('referencia, settings')
-      const out: string[] = []
-      for (const r of (data ?? []) as Array<{ referencia: string | null; settings: any }>) {
-        if (r.referencia && r.settings?.alertas_fotografia_ativos === false) out.push(r.referencia)
-      }
-      return out
-    },
-    ['photo-alertas-off'],
-    { revalidate: 1800, tags: ['photo-dashboard'] }
+  // Reaproveita a leitura dos portais acima (já traz alertas_fotografia_ativos)
+  const alertasOffRefs = new Set(
+    (refPortais ?? [])
+      .filter((r: any) => r.referencia && r.settings?.alertas_fotografia_ativos === false)
+      .map((r: any) => r.referencia as string)
   )
-  const alertasOffRefs = new Set(await getAlertasOff())
 
   // ── Parsear Notion ────────────────────────────────────────────────────────
   const prazosAlbuns = (prazosRes.results ?? []).map((p: any) => {
