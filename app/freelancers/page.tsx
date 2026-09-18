@@ -454,11 +454,6 @@ export default function FreelancersPage() {
                     e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'
                     e.currentTarget.style.boxShadow = 'none'
                   }}
-                  onMouseMove={e => {
-                    const r = e.currentTarget.getBoundingClientRect()
-                    e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`)
-                    e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`)
-                  }}
                   className="fl-card group relative rounded-2xl overflow-hidden transition-all duration-300"
                   style={{
                     animationDelay: `${Math.min(i, 12) * 45}ms`,
@@ -466,10 +461,6 @@ export default function FreelancersPage() {
                     background: 'linear-gradient(160deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))',
                   }}
                 >
-                  {/* Luz que segue o rato */}
-                  <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: `radial-gradient(260px circle at var(--mx,50%) var(--my,50%), ${cor}1a, transparent 70%)` }} />
-
                   {/* Faixa da função */}
                   <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: `linear-gradient(to bottom, ${cor}, transparent)` }} />
 

@@ -488,14 +488,7 @@ export default function NovosFreelancersPage() {
                     e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'
                     e.currentTarget.style.boxShadow = 'none'
                   }}
-                  onMouseMove={e => {
-                    const r = e.currentTarget.getBoundingClientRect()
-                    e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`)
-                    e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`)
-                  }}
                 >
-                  <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: `radial-gradient(280px circle at var(--mx,50%) var(--my,50%), ${cor}14, transparent 70%)` }} />
                   <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: `linear-gradient(to bottom, ${cor}, transparent)` }} />
 
                   <div className="relative p-5">
