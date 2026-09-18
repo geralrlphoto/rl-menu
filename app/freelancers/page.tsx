@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
 import { linkPublico } from '@/lib/site-url'
 
@@ -21,154 +21,93 @@ type FormData = Omit<Freelancer, 'id' | 'order_index'>
 
 const STATUS_OPTIONS = ['FOTOGRAFO', 'VIDEOGRAFO', 'ASSISTENTE', 'EDITORES', 'OUTRO']
 
-// ── Ícones SVG futuristas ─────────────────────────────────────────────────────
-const IconCamera = ({ color }: { color: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="4" y="12" width="32" height="22" rx="3" stroke={color} strokeWidth="1.5"/>
-    <path d="M14 12V9a2 2 0 012-2h8a2 2 0 012 2v3" stroke={color} strokeWidth="1.5"/>
-    <circle cx="20" cy="23" r="5.5" stroke={color} strokeWidth="1.5"/>
-    <circle cx="20" cy="23" r="2.5" fill={color} opacity="0.4"/>
-    <rect x="28" y="17" width="4" height="2.5" rx="0.5" fill={color} opacity="0.5"/>
-    <line x1="4" y1="18" x2="11" y2="18" stroke={color} strokeWidth="1" opacity="0.4"/>
-  </svg>
-)
-
-const IconVideo = ({ color }: { color: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <rect x="3" y="11" width="24" height="18" rx="3" stroke={color} strokeWidth="1.5"/>
-    <path d="M27 16l9-5v18l-9-5V16z" stroke={color} strokeWidth="1.5" strokeLinejoin="round"/>
-    <line x1="10" y1="20" x2="18" y2="20" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-    <line x1="14" y1="16" x2="14" y2="24" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-    <circle cx="14" cy="20" r="1.5" fill={color} opacity="0.6"/>
-  </svg>
-)
-
-const IconAssist = ({ color }: { color: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="20" cy="13" r="5.5" stroke={color} strokeWidth="1.5"/>
-    <path d="M7 35c0-7.18 5.82-13 13-13s13 5.82 13 13" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-    <line x1="20" y1="18" x2="20" y2="22" stroke={color} strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
-    <circle cx="20" cy="13" r="2" fill={color} opacity="0.4"/>
-  </svg>
-)
-
-const IconEdit = ({ color }: { color: string }) => (
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <line x1="6" y1="12" x2="34" y2="12" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-    <rect x="12" y="8" width="16" height="8" rx="1.5" stroke={color} strokeWidth="1.2" opacity="0.4"/>
-    <line x1="6" y1="20" x2="34" y2="20" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-    <rect x="6" y="16" width="10" height="8" rx="1.5" stroke={color} strokeWidth="1.2" opacity="0.4"/>
-    <line x1="6" y1="28" x2="34" y2="28" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
-    <rect x="24" y="24" width="10" height="8" rx="1.5" stroke={color} strokeWidth="1.2" opacity="0.4"/>
-  </svg>
-)
-
-const CATEGORY_ICONS: Record<string, (color: string) => JSX.Element> = {
-  FOTOGRAFO:  (c) => <IconCamera color={c} />,
-  VIDEOGRAFO: (c) => <IconVideo color={c} />,
-  ASSISTENTE: (c) => <IconAssist color={c} />,
-  EDITORES:   (c) => <IconEdit color={c} />,
-}
-
-const CATEGORY_COLORS: Record<string, string> = {
-  FOTOGRAFO:  '#facc15',
-  VIDEOGRAFO: '#34d399',
-  ASSISTENTE: '#f472b6',
-  EDITORES:   '#fb923c',
-}
-
-const NEON_GLOW: Record<string, { idle: string; active: string; border: string; borderActive: string }> = {
-  FOTOGRAFO:  {
-    idle:        '0 0 8px rgba(250,204,21,0.15), 0 0 20px rgba(250,204,21,0.08)',
-    active:      '0 0 12px rgba(250,204,21,0.5), 0 0 30px rgba(250,204,21,0.25), 0 0 60px rgba(250,204,21,0.1), inset 0 0 20px rgba(250,204,21,0.05)',
-    border:      'rgba(250,204,21,0.2)',
-    borderActive:'rgba(250,204,21,0.7)',
-  },
-  VIDEOGRAFO: {
-    idle:        '0 0 8px rgba(52,211,153,0.15), 0 0 20px rgba(52,211,153,0.08)',
-    active:      '0 0 12px rgba(52,211,153,0.5), 0 0 30px rgba(52,211,153,0.25), 0 0 60px rgba(52,211,153,0.1), inset 0 0 20px rgba(52,211,153,0.05)',
-    border:      'rgba(52,211,153,0.2)',
-    borderActive:'rgba(52,211,153,0.7)',
-  },
-  ASSISTENTE: {
-    idle:        '0 0 8px rgba(244,114,182,0.15), 0 0 20px rgba(244,114,182,0.08)',
-    active:      '0 0 12px rgba(244,114,182,0.5), 0 0 30px rgba(244,114,182,0.25), 0 0 60px rgba(244,114,182,0.1), inset 0 0 20px rgba(244,114,182,0.05)',
-    border:      'rgba(244,114,182,0.2)',
-    borderActive:'rgba(244,114,182,0.7)',
-  },
-  EDITORES:   {
-    idle:        '0 0 8px rgba(251,146,60,0.15), 0 0 20px rgba(251,146,60,0.08)',
-    active:      '0 0 12px rgba(251,146,60,0.5), 0 0 30px rgba(251,146,60,0.25), 0 0 60px rgba(251,146,60,0.1), inset 0 0 20px rgba(251,146,60,0.05)',
-    border:      'rgba(251,146,60,0.2)',
-    borderActive:'rgba(251,146,60,0.7)',
-  },
-}
-
-const CATEGORY_CONFIG = [
-  {
-    key: 'FOTOGRAFO',
-    label: 'Fotógrafos',
-    border:  'border-yellow-500/25 hover:border-yellow-500/50',
-    borderActive: 'border-yellow-500/60',
-    bg:      'bg-yellow-500/5',
-    bgActive:'bg-yellow-500/10',
-    accent:  'text-yellow-400',
-    badge:   'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
-    dot:     'bg-yellow-400',
-    glow:    'shadow-yellow-500/10',
-  },
-  {
-    key: 'VIDEOGRAFO',
-    label: 'Videógrafos',
-    border:  'border-emerald-500/25 hover:border-emerald-500/50',
-    borderActive: 'border-emerald-500/60',
-    bg:      'bg-emerald-500/5',
-    bgActive:'bg-emerald-500/10',
-    accent:  'text-emerald-400',
-    badge:   'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
-    dot:     'bg-emerald-400',
-    glow:    'shadow-emerald-500/10',
-  },
-  {
-    key: 'ASSISTENTE',
-    label: 'Assistentes',
-    border:  'border-pink-500/25 hover:border-pink-500/50',
-    borderActive: 'border-pink-500/60',
-    bg:      'bg-pink-500/5',
-    bgActive:'bg-pink-500/10',
-    accent:  'text-pink-400',
-    badge:   'bg-pink-500/15 text-pink-400 border-pink-500/30',
-    dot:     'bg-pink-400',
-    glow:    'shadow-pink-500/10',
-  },
-  {
-    key: 'EDITORES',
-    label: 'Editores',
-    border:  'border-orange-500/25 hover:border-orange-500/50',
-    borderActive: 'border-orange-500/60',
-    bg:      'bg-orange-500/5',
-    bgActive:'bg-orange-500/10',
-    accent:  'text-orange-400',
-    badge:   'bg-orange-500/15 text-orange-400 border-orange-500/30',
-    dot:     'bg-orange-400',
-    glow:    'shadow-orange-500/10',
-  },
+const CATEGORIAS = [
+  { key: 'FOTOGRAFO',  label: 'Fotógrafos',  curto: 'Foto',   cor: '#facc15' },
+  { key: 'VIDEOGRAFO', label: 'Videógrafos', curto: 'Vídeo',  cor: '#34d399' },
+  { key: 'ASSISTENTE', label: 'Assistentes', curto: 'Assist', cor: '#f472b6' },
+  { key: 'EDITORES',   label: 'Editores',    curto: 'Edição', cor: '#fb923c' },
+  { key: 'OUTRO',      label: 'Outros',      curto: 'Outros', cor: '#94a3b8' },
 ]
 
-const CATEGORY_MAP: Record<string, typeof CATEGORY_CONFIG[0]> = Object.fromEntries(
-  CATEGORY_CONFIG.map(c => [c.key, c])
-)
+const COR = Object.fromEntries(CATEGORIAS.map(c => [c.key, c.cor])) as Record<string, string>
+const LABEL = Object.fromEntries(CATEGORIAS.map(c => [c.key, c.label])) as Record<string, string>
 
 const EMPTY_FORM: FormData = { nome: '', status: 'FOTOGRAFO', contato: '', email: '', nome_sos: '', contato_sos: '' }
 
-function CopiarUrlButton({ id, status }: { id: string; status?: string | null }) {
+const iniciais = (nome: string) =>
+  nome.trim().split(/\s+/).slice(0, 2).map(p => p[0]).join('').toUpperCase() || '?'
+
+const catDe = (status: string | null) =>
+  STATUS_OPTIONS.includes(status ?? '') ? (status as string) : 'OUTRO'
+
+// ── Som: blips curtos gerados no browser, sem ficheiros ──────────────────────
+function useSfx() {
+  const [ligado, setLigado] = useState(true)
+  const ctxRef = useRef<AudioContext | null>(null)
+
+  useEffect(() => {
+    setLigado(localStorage.getItem('rl-sfx') !== '0')
+  }, [])
+
+  function alternar() {
+    setLigado(v => { localStorage.setItem('rl-sfx', v ? '0' : '1'); return !v })
+  }
+
+  function tocar(freq: number, dur = 0.06, vol = 0.05, tipo: OscillatorType = 'sine') {
+    if (!ligado || typeof window === 'undefined') return
+    try {
+      const Ctx = window.AudioContext ?? (window as any).webkitAudioContext
+      if (!Ctx) return
+      const ctx = ctxRef.current ?? new Ctx()
+      ctxRef.current = ctx
+      if (ctx.state === 'suspended') ctx.resume()
+      const osc = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.type = tipo
+      osc.frequency.setValueAtTime(freq, ctx.currentTime)
+      gain.gain.setValueAtTime(0, ctx.currentTime)
+      gain.gain.linearRampToValueAtTime(vol, ctx.currentTime + 0.012)
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur)
+      osc.connect(gain); gain.connect(ctx.destination)
+      osc.start(); osc.stop(ctx.currentTime + dur + 0.02)
+    } catch { /* som é acessório, nunca parte a página */ }
+  }
+
+  return {
+    ligado,
+    alternar,
+    hover:   () => tocar(1180, 0.045, 0.022),
+    clique:  () => tocar(760, 0.075, 0.045),
+    sucesso: () => { tocar(880, 0.09, 0.05); setTimeout(() => tocar(1320, 0.12, 0.045), 90) },
+    erro:    () => tocar(180, 0.16, 0.05, 'triangle'),
+  }
+}
+
+// ── Número que sobe até ao valor ─────────────────────────────────────────────
+function Contador({ valor, duracao = 900 }: { valor: number; duracao?: number }) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    let raf = 0
+    const inicio = performance.now()
+    const passo = (t: number) => {
+      const p = Math.min(1, (t - inicio) / duracao)
+      setN(Math.round(valor * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) raf = requestAnimationFrame(passo)
+    }
+    raf = requestAnimationFrame(passo)
+    return () => cancelAnimationFrame(raf)
+  }, [valor, duracao])
+  return <>{n}</>
+}
+
+function CopiarUrlButton({ id, status, onSom }: { id: string; status?: string | null; onSom?: () => void }) {
   const [copied, setCopied] = useState(false)
   function copy() {
-    // Editores têm portal próprio — o link a partilhar é o painel de editor.
     const url = status === 'EDITORES'
       ? linkPublico(`/painel-editor?freelancer=${id}`)
       : linkPublico(`/freelancers/${id}?view=freelancer`)
     navigator.clipboard.writeText(url).then(() => {
+      onSom?.()
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
@@ -184,7 +123,8 @@ function CopiarUrlButton({ id, status }: { id: string; status?: string | null })
 export default function FreelancersPage() {
   const [list, setList]           = useState<Freelancer[]>([])
   const [loading, setLoading]     = useState(true)
-  const [activeGroup, setActiveGroup] = useState<string | null>(null)
+  const [filtro, setFiltro]       = useState<string | null>(null)
+  const [busca, setBusca]         = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [showAdd, setShowAdd]     = useState(false)
   const [form, setForm]           = useState<FormData>(EMPTY_FORM)
@@ -196,6 +136,8 @@ export default function FreelancersPage() {
   const [removendoId, setRemovendo] = useState<string | null>(null)
   const [removidoIds, setRemovidoIds] = useState<Set<string>>(new Set())
 
+  const sfx = useSfx()
+
   async function load() {
     setLoading(true)
     const d = await fetch('/api/freelancers').then(r => r.json())
@@ -206,6 +148,7 @@ export default function FreelancersPage() {
   useEffect(() => { load() }, [])
 
   function startEdit(f: Freelancer) {
+    sfx.clique()
     setEditingId(f.id)
     setForm({ nome: f.nome, status: f.status ?? '', contato: f.contato ?? '', email: f.email ?? '', nome_sos: f.nome_sos ?? '', contato_sos: f.contato_sos ?? '' })
     setShowAdd(false)
@@ -222,6 +165,7 @@ export default function FreelancersPage() {
         setShowAdd(false)
       }
       setForm(EMPTY_FORM)
+      sfx.sucesso()
       await load()
     } finally { setSaving(false) }
   }
@@ -231,6 +175,7 @@ export default function FreelancersPage() {
     setDeletingId(id)
     await fetch(`/api/freelancers?id=${id}`, { method: 'DELETE' })
     setDeletingId(null)
+    sfx.erro()
     await load()
   }
 
@@ -245,6 +190,7 @@ export default function FreelancersPage() {
     setPwEditId(null)
     setPwDraft('')
     setPwSaving(false)
+    sfx.sucesso()
   }
 
   function statusToFuncao(status: string | null): string {
@@ -270,344 +216,396 @@ export default function FreelancersPage() {
     } finally { setRemovendo(null) }
   }
 
-  // Group by status
-  const groups: Record<string, Freelancer[]> = {}
-  for (const f of list) {
-    const key = STATUS_OPTIONS.includes(f.status ?? '') ? (f.status ?? 'OUTRO') : 'OUTRO'
-    if (!groups[key]) groups[key] = []
-    groups[key].push(f)
-  }
+  // ── Contagens e lista visível ──────────────────────────────────────────────
+  const contagens = useMemo(() => {
+    const c: Record<string, number> = {}
+    for (const f of list) { const k = catDe(f.status); c[k] = (c[k] ?? 0) + 1 }
+    return c
+  }, [list])
 
-  const activeCat = activeGroup ? CATEGORY_MAP[activeGroup] : null
+  const visiveis = useMemo(() => {
+    const q = busca.trim().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+    return list.filter(f => {
+      if (filtro && catDe(f.status) !== filtro) return false
+      if (!q) return true
+      const alvo = `${f.nome} ${f.email ?? ''} ${f.contato ?? ''}`.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+      return alvo.includes(q)
+    })
+  }, [list, filtro, busca])
+
+  const comPassword = list.filter(f => f.password).length
 
   return (
-    <main className="min-h-screen px-4 sm:px-8 py-8 max-w-[900px] mx-auto">
+    <main className="min-h-screen bg-[#08070a]">
+      <style jsx global>{`
+        @keyframes flSobe { from { opacity: 0; transform: translateY(14px) scale(.985) } to { opacity: 1; transform: none } }
+        @keyframes flAurora {
+          0%   { transform: translate3d(-8%, -4%, 0) scale(1) }
+          50%  { transform: translate3d(8%, 4%, 0) scale(1.12) }
+          100% { transform: translate3d(-8%, -4%, 0) scale(1) }
+        }
+        @keyframes flPulso { 0%,100% { opacity:.35 } 50% { opacity:1 } }
+        .fl-card { animation: flSobe .5s cubic-bezier(.2,.7,.2,1) both }
+        .fl-card:hover { transform: translateY(-4px) }
+        .fl-aurora { animation: flAurora 18s ease-in-out infinite }
+        @media (prefers-reduced-motion: reduce) {
+          .fl-card, .fl-aurora { animation: none !important }
+          .fl-card:hover { transform: none }
+        }
+      `}</style>
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-10">
-        <div>
-          <Link href="/photo" className="text-[10px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
-            ← Dashboard
-          </Link>
-          <h1 className="text-xl font-bold tracking-widest text-gold uppercase mt-1">Equipas de Trabalho</h1>
-          <div className="mt-2 h-px w-12 bg-gold/40" />
+      {/* ── HERO ─────────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="fl-aurora absolute -top-40 -left-20 w-[70%] h-[420px] rounded-full blur-3xl"
+            style={{ background: 'radial-gradient(circle, rgba(201,168,76,0.16), transparent 65%)' }} />
+          <div className="fl-aurora absolute -top-24 right-0 w-[45%] h-[360px] rounded-full blur-3xl"
+            style={{ background: 'radial-gradient(circle, rgba(52,211,153,0.10), transparent 65%)', animationDelay: '-6s' }} />
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/painel-editor"
-            className="relative flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold tracking-widest uppercase transition-all overflow-hidden group"
+
+        <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-10 pb-8">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <Link href="/photo" onMouseEnter={sfx.hover}
+                className="text-[10px] tracking-[0.4em] text-white/30 hover:text-gold uppercase transition-colors">
+                ‹ Dashboard
+              </Link>
+              <h1 className="font-cormorant font-light text-white text-5xl sm:text-6xl tracking-[0.05em] mt-3 leading-none">
+                A <span className="italic text-gold">Equipa</span>
+              </h1>
+              <div className="w-20 h-px bg-gold/60 mt-5" />
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {[
+                { href: '/painel-editor', txt: '✦ Maquete', gold: true },
+                { href: '/freelancers/novos', txt: 'Novos' },
+                { href: '/recrutamento', txt: 'Formulário' },
+              ].map(({ href, txt, gold }) => (
+                <Link key={href} href={href} onMouseEnter={sfx.hover} onClick={sfx.clique}
+                  className="px-4 py-2 rounded-xl text-[11px] font-semibold tracking-widest uppercase transition-all hover:-translate-y-0.5"
+                  style={gold
+                    ? { background: 'linear-gradient(135deg, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', border: '1px solid rgba(201,164,92,0.5)', color: '#C9A45C', boxShadow: '0 0 16px rgba(201,164,92,0.2)' }
+                    : { background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.45)' }}>
+                  {txt}
+                </Link>
+              ))}
+              <button onClick={() => { sfx.clique(); setShowAdd(true); setEditingId(null); setForm(EMPTY_FORM) }}
+                onMouseEnter={sfx.hover}
+                className="px-4 py-2 rounded-xl bg-gold text-black text-[11px] font-bold tracking-widest uppercase transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_28px_-10px_rgba(201,168,76,0.9)]">
+                + Adicionar
+              </button>
+              <button onClick={() => { sfx.alternar(); sfx.clique() }} title={sfx.ligado ? 'Silenciar' : 'Ligar som'}
+                className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+                style={{ border: `1px solid ${sfx.ligado ? 'rgba(201,168,76,0.4)' : 'rgba(255,255,255,0.1)'}`, color: sfx.ligado ? '#C9A45C' : 'rgba(255,255,255,0.3)' }}>
+                {sfx.ligado ? '♪' : '✕'}
+              </button>
+            </div>
+          </div>
+
+          {/* Números da equipa */}
+          <div className="flex items-end gap-8 mt-8 flex-wrap">
+            <div>
+              <p className="text-5xl font-extralight text-white leading-none"><Contador valor={list.length} /></p>
+              <p className="text-[9px] tracking-[0.35em] uppercase text-white/30 mt-2">Pessoas</p>
+            </div>
+            <div className="w-px h-12 bg-white/10" />
+            {CATEGORIAS.filter(c => (contagens[c.key] ?? 0) > 0).map(c => (
+              <div key={c.key}>
+                <p className="text-2xl font-light leading-none" style={{ color: c.cor }}>
+                  <Contador valor={contagens[c.key] ?? 0} />
+                </p>
+                <p className="text-[9px] tracking-[0.3em] uppercase text-white/25 mt-2">{c.curto}</p>
+              </div>
+            ))}
+            <div className="w-px h-12 bg-white/10" />
+            <div>
+              <p className="text-2xl font-light text-white/70 leading-none"><Contador valor={comPassword} /></p>
+              <p className="text-[9px] tracking-[0.3em] uppercase text-white/25 mt-2">Com acesso</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-6xl mx-auto px-5 sm:px-8 py-8">
+
+        {/* ── Filtros + pesquisa ──────────────────────────────────────────── */}
+        <div className="flex items-center gap-2 flex-wrap mb-7">
+          <button onClick={() => { sfx.clique(); setFiltro(null) }} onMouseEnter={sfx.hover}
+            className="px-4 py-2 rounded-full text-[10px] tracking-[0.25em] uppercase font-semibold transition-all"
             style={{
-              background: 'linear-gradient(135deg, rgba(201,164,92,0.18), rgba(201,164,92,0.04))',
-              border: '1px solid rgba(201,164,92,0.5)',
-              color: '#C9A45C',
-              boxShadow: '0 0 16px rgba(201,164,92,0.25), inset 0 0 12px rgba(201,164,92,0.05)',
+              border: `1px solid ${filtro === null ? 'rgba(201,168,76,0.6)' : 'rgba(255,255,255,0.08)'}`,
+              background: filtro === null ? 'rgba(201,168,76,0.12)' : 'transparent',
+              color: filtro === null ? '#e8c76d' : 'rgba(255,255,255,0.4)',
             }}>
-            <span className="absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/15 to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-out" />
-            <span className="relative">✦ Maquete</span>
-          </Link>
-          <Link href="/freelancers/novos"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-white/40 text-xs font-semibold tracking-widest hover:bg-white/[0.06] hover:text-white/70 transition-all uppercase">
-            Novos Freelancers
-          </Link>
-          <Link href="/recrutamento"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white/[0.03] border border-white/10 text-white/40 text-xs font-semibold tracking-widest hover:bg-white/[0.06] hover:text-white/70 transition-all uppercase">
-            Formulário
-          </Link>
-          <button
-            onClick={() => { setShowAdd(true); setEditingId(null); setForm(EMPTY_FORM) }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold/10 border border-gold/30 text-gold text-xs font-semibold tracking-widest hover:bg-gold/20 transition-all uppercase">
-            + Adicionar
+            Todos · {list.length}
           </button>
-        </div>
-      </div>
 
-      {/* Add form */}
-      {showAdd && (
-        <div className="mb-8 bg-white/[0.02] border border-gold/20 rounded-2xl p-5 space-y-3">
-          <p className="text-[10px] tracking-[0.3em] text-gold/70 uppercase mb-3">Novo Membro</p>
-          <FormFields form={form} setForm={setForm} />
-          <div className="flex justify-end gap-2 pt-1">
-            <button onClick={() => setShowAdd(false)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
-            <button onClick={handleSave} disabled={saving || !form.nome} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
-              {saving ? 'A guardar...' : 'Guardar'}
-            </button>
+          {CATEGORIAS.map(c => {
+            const n = contagens[c.key] ?? 0
+            if (n === 0) return null
+            const on = filtro === c.key
+            return (
+              <button key={c.key} onMouseEnter={sfx.hover}
+                onClick={() => { sfx.clique(); setFiltro(on ? null : c.key) }}
+                className="px-4 py-2 rounded-full text-[10px] tracking-[0.25em] uppercase font-semibold transition-all hover:-translate-y-0.5"
+                style={{
+                  border: `1px solid ${on ? c.cor : 'rgba(255,255,255,0.08)'}`,
+                  background: on ? `${c.cor}1f` : 'transparent',
+                  color: on ? c.cor : 'rgba(255,255,255,0.4)',
+                  boxShadow: on ? `0 0 22px -6px ${c.cor}` : 'none',
+                }}>
+                <span className="inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle"
+                  style={{ background: c.cor, opacity: on ? 1 : 0.4 }} />
+                {c.label} · {n}
+              </button>
+            )
+          })}
+
+          <div className="relative ml-auto">
+            <input
+              value={busca}
+              onChange={e => setBusca(e.target.value)}
+              placeholder="Procurar pessoa…"
+              className="w-56 rounded-full pl-9 pr-4 py-2 text-[12px] text-white/80 placeholder-white/20 focus:outline-none transition-all focus:w-64"
+              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)' }}
+            />
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/25">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-3.5 h-3.5">
+                <circle cx="11" cy="11" r="7" /><path strokeLinecap="round" d="M21 21l-4-4" />
+              </svg>
+            </span>
           </div>
         </div>
-      )}
 
-      {/* ── MAQUETES (cards das maquetes disponíveis) ──────────────── */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <p className="text-[10px] tracking-[0.4em] uppercase text-gold/70 font-bold">Maquetes</p>
-            <h2 className="text-xl font-bold tracking-widest text-white uppercase mt-1">Painéis Disponíveis</h2>
+        {/* ── Formulário de novo membro ───────────────────────────────────── */}
+        {showAdd && (
+          <div className="mb-8 rounded-2xl border border-gold/25 bg-gold/[0.03] p-5 space-y-3 fl-card">
+            <p className="text-[10px] tracking-[0.3em] text-gold/70 uppercase mb-3">Novo Membro</p>
+            <FormFields form={form} setForm={setForm} />
+            <div className="flex justify-end gap-2 pt-1">
+              <button onClick={() => { sfx.clique(); setShowAdd(false) }} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+              <button onClick={handleSave} disabled={saving || !form.nome}
+                className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                {saving ? 'A guardar...' : 'Guardar'}
+              </button>
+            </div>
           </div>
-          <p className="text-[10px] tracking-widest text-white/30 uppercase">2 maquetes</p>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Card: Maquete Editor de Vídeo */}
-          <Link href="/painel-editor"
-            className="group relative overflow-hidden rounded-2xl border border-gold/30 p-5 transition-all hover:border-gold/55"
-            style={{
-              background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))',
-              boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px -8px rgba(201,164,92,0.25)',
-            }}>
-            {/* glow on hover */}
-            <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
-            <div className="relative flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl border border-gold/45 flex items-center justify-center text-2xl shrink-0 overflow-hidden"
-                style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' }}>
-                <img src="/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[9px] tracking-[0.4em] uppercase text-gold/60 font-bold mb-1">Editor de Vídeo</p>
-                <h3 className="text-[15px] font-bold text-white leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
-                  Maquete <span className="italic text-gold">Editor de Vídeo</span>
-                </h3>
-                <p className="text-[11px] text-white/50 mt-2 leading-relaxed">
-                  Dashboard completo: novos projetos, pagamentos, calendário, tarefas, biblioteca de músicas, workflow e dados pessoais.
-                </p>
-                <span className="inline-flex items-center gap-1.5 mt-3 text-[10px] tracking-widest uppercase text-gold/85 group-hover:text-gold font-bold">
-                  Abrir Painel <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-                </span>
-              </div>
-            </div>
-            {/* Sweep effect */}
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.05] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-          </Link>
+        )}
 
-          {/* Card: Maquete Fotógrafo (independente do Editor de Vídeo) */}
-          <Link href="/freelancers/8694241a-7530-4dfd-8619-a8bf15b9e15e?view=freelancer"
-            className="group relative overflow-hidden rounded-2xl border border-gold/30 p-5 transition-all hover:border-gold/55"
-            style={{
-              background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))',
-              boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5), 0 0 20px -8px rgba(201,164,92,0.25)',
-            }}>
-            <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-              style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.18), transparent 70%)' }} />
-            <div className="relative flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl border border-gold/45 flex items-center justify-center text-2xl shrink-0 overflow-hidden"
-                style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 18px -4px rgba(201,164,92,0.35)' }}>
-                <img src="/logo_rl_gold.png" alt="RL" className="w-9 h-9 object-contain" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[9px] tracking-[0.4em] uppercase text-gold/60 font-bold mb-1">Fotógrafo</p>
-                <h3 className="text-[15px] font-bold text-white leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
-                  Maquete <span className="italic text-gold">Fotógrafo</span>
-                </h3>
-                <p className="text-[11px] text-white/50 mt-2 leading-relaxed">
-                  Dashboard independente para o fluxo de fotografia: projetos, entregas, calendário e dados pessoais. Dados separados do editor de vídeo.
-                </p>
-                <span className="inline-flex items-center gap-1.5 mt-3 text-[10px] tracking-widest uppercase text-gold/85 group-hover:text-gold font-bold">
-                  Abrir Painel <span className="group-hover:translate-x-0.5 transition-transform">→</span>
-                </span>
-              </div>
-            </div>
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.05] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
-          </Link>
-        </div>
-      </div>
+        {/* ── Equipa ──────────────────────────────────────────────────────── */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[0, 1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="h-40 rounded-2xl border border-white/[0.05] bg-white/[0.015]"
+                style={{ animation: 'flPulso 1.4s ease-in-out infinite', animationDelay: `${i * 0.12}s` }} />
+            ))}
+          </div>
+        ) : visiveis.length === 0 ? (
+          <div className="py-20 text-center text-white/25 text-xs tracking-widest uppercase border border-white/[0.06] rounded-2xl">
+            Ninguém encontrado
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {visiveis.map((f, i) => {
+              const cat = catDe(f.status)
+              const cor = COR[cat]
 
-      {loading ? (
-        <div className="text-center py-24 text-white/20 text-xs tracking-widest uppercase">A carregar...</div>
-      ) : (
-        <>
-          {/* ── Category cards ────────────────────────────────────────────── */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {CATEGORY_CONFIG.map(cat => {
-              const count = groups[cat.key]?.length ?? 0
-              const isActive = activeGroup === cat.key
-              const neon = NEON_GLOW[cat.key]
+              if (editingId === f.id) {
+                return (
+                  <div key={f.id} className="sm:col-span-2 lg:col-span-3 rounded-2xl border border-gold/25 bg-gold/[0.03] p-5 space-y-3 fl-card">
+                    <p className="text-[10px] tracking-[0.3em] text-gold/70 uppercase">A editar · {f.nome}</p>
+                    <FormFields form={form} setForm={setForm} />
+                    <div className="flex items-center justify-between pt-1">
+                      <button onClick={() => handleDelete(f.id)} disabled={!!deletingId}
+                        className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors tracking-widest">
+                        ✕ Remover
+                      </button>
+                      <div className="flex gap-2">
+                        <button onClick={() => { sfx.clique(); setEditingId(null) }} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
+                        <button onClick={handleSave} disabled={saving || !form.nome}
+                          className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
+                          {saving ? 'A guardar...' : 'Guardar'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
               return (
-                <button
-                  key={cat.key}
-                  onClick={() => setActiveGroup(isActive ? null : cat.key)}
-                  className={`relative flex flex-col items-center justify-center gap-3 p-6 rounded-2xl border transition-all duration-300 ${
-                    isActive ? cat.bgActive : cat.bg
-                  }`}
+                <div
+                  key={f.id}
+                  onMouseEnter={e => {
+                    sfx.hover()
+                    e.currentTarget.style.borderColor = `${cor}66`
+                    e.currentTarget.style.boxShadow = `0 18px 40px -22px ${cor}, 0 0 0 1px ${cor}22`
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                  onMouseMove={e => {
+                    const r = e.currentTarget.getBoundingClientRect()
+                    e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`)
+                    e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`)
+                  }}
+                  className="fl-card group relative rounded-2xl overflow-hidden transition-all duration-300"
                   style={{
-                    borderColor: isActive ? neon.borderActive : neon.border,
-                    boxShadow: isActive ? neon.active : neon.idle,
-                    transition: 'box-shadow 0.3s ease, border-color 0.3s ease, background 0.3s ease',
+                    animationDelay: `${Math.min(i, 12) * 45}ms`,
+                    border: '1px solid rgba(255,255,255,0.07)',
+                    background: 'linear-gradient(160deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))',
                   }}
                 >
-                  {/* count badge */}
-                  <span className={`absolute top-3 right-3 text-[10px] px-2 py-0.5 rounded-full border font-semibold tracking-wider ${cat.badge}`}>
-                    {count}
-                  </span>
+                  {/* Luz que segue o rato */}
+                  <div className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: `radial-gradient(260px circle at var(--mx,50%) var(--my,50%), ${cor}1a, transparent 70%)` }} />
 
-                  {/* icon — mais brilhante quando activo */}
-                  <div style={{ opacity: isActive ? 1 : 0.7, filter: isActive ? `drop-shadow(0 0 6px ${CATEGORY_COLORS[cat.key]}99)` : 'none', transition: 'all 0.3s ease' }}>
-                    {CATEGORY_ICONS[cat.key]?.(CATEGORY_COLORS[cat.key] ?? '#ffffff')}
+                  {/* Faixa da função */}
+                  <div className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: `linear-gradient(to bottom, ${cor}, transparent)` }} />
+
+                  <div className="relative p-5">
+                    <div className="flex items-start gap-3.5">
+                      {/* Monograma */}
+                      <Link href={`/freelancers/${f.id}`} onClick={sfx.clique}
+                        className="shrink-0 w-12 h-12 rounded-2xl flex items-center justify-center text-[13px] font-semibold tracking-wider transition-transform duration-300 group-hover:scale-105"
+                        style={{ color: cor, border: `1px solid ${cor}55`, background: `${cor}14`, boxShadow: `0 0 20px -8px ${cor}` }}>
+                        {iniciais(f.nome)}
+                      </Link>
+
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/freelancers/${f.id}`} onClick={sfx.clique} className="block min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[14px] font-semibold text-white/90 group-hover:text-white transition-colors truncate">{f.nome}</span>
+                            {f.is_template && (
+                              <span className="text-[8px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-semibold bg-white/10 text-white/80 border-white/25">⌘ Template</span>
+                            )}
+                            {f.password && <span className="text-[9px] text-white/25" title="Tem palavra-passe">🔑</span>}
+                          </div>
+                          <p className="text-[9px] tracking-[0.3em] uppercase mt-1" style={{ color: `${cor}cc` }}>
+                            {LABEL[cat]}
+                          </p>
+                        </Link>
+
+                        <div className="mt-3 space-y-1">
+                          {f.contato && <p className="text-[11px] text-white/45 truncate">📞 {f.contato}</p>}
+                          {f.email && <p className="text-[11px] text-white/45 truncate">✉ {f.email}</p>}
+                          {f.nome_sos && (
+                            <p className="text-[10px] text-white/25 truncate">
+                              SOS: {f.nome_sos}{f.contato_sos ? ` · ${f.contato_sos}` : ''}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Ações — sobem ao passar o rato */}
+                    <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center gap-1.5 flex-wrap
+                      opacity-60 group-hover:opacity-100 transition-all duration-300">
+                      <Link href={`/painel-editor?freelancer=${f.id}&admin=1`} onClick={sfx.clique}
+                        className="text-[9px] px-2.5 py-1 rounded-lg border tracking-widest uppercase font-bold transition-all hover:-translate-y-0.5"
+                        style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.15), rgba(201,164,92,0.04))', borderColor: 'rgba(201,164,92,0.45)', color: '#C9A45C' }}
+                        title={`Ver e editar o painel de ${f.nome} como admin`}>
+                        ✦ Maquete
+                      </Link>
+
+                      <Link href={`/login?next=${encodeURIComponent(`/freelancers/${f.id}?view=freelancer`)}`}
+                        target="_blank" rel="noopener noreferrer" onClick={sfx.clique}
+                        className="text-[9px] px-2.5 py-1 rounded-lg border tracking-widest uppercase font-bold transition-all hover:-translate-y-0.5"
+                        style={{ background: 'rgba(52,211,153,0.08)', borderColor: 'rgba(52,211,153,0.4)', color: '#34d399' }}
+                        title={`Login como ${f.nome} (nova tab)`}>
+                        👁 Ver ↗
+                      </Link>
+
+                      <CopiarUrlButton id={f.id} status={f.status} onSom={sfx.sucesso} />
+
+                      <button onClick={() => { sfx.clique(); setPwEditId(pwEditId === f.id ? null : f.id); setPwDraft(f.password ?? '') }}
+                        className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
+                        🔑 PW
+                      </button>
+
+                      {removidoIds.has(f.id) ? (
+                        <span className="text-[9px] px-2.5 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 tracking-widest uppercase">✓ Movido</span>
+                      ) : (
+                        <button onClick={() => handleRemoverDaEquipa(f)} disabled={removendoId === f.id}
+                          className="text-[9px] px-2.5 py-1 rounded-lg border border-orange-500/25 bg-orange-500/5 text-orange-400/70 hover:text-orange-400 hover:border-orange-500/40 transition-all tracking-widest uppercase disabled:opacity-40">
+                          {removendoId === f.id ? '...' : '− Equipa'}
+                        </button>
+                      )}
+
+                      <button onClick={() => startEdit(f)}
+                        className="ml-auto p-1.5 rounded-lg text-white/25 hover:text-white/70 hover:bg-white/[0.06] transition-all">
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* Palavra-passe */}
+                    {pwEditId === f.id && (
+                      <div className="mt-3 flex items-center gap-2">
+                        <input
+                          type="text" value={pwDraft} onChange={e => setPwDraft(e.target.value)}
+                          placeholder="ex: rl2026" autoFocus
+                          className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors font-mono placeholder:text-white/15"
+                        />
+                        <button onClick={() => handleSavePassword(f.id)} disabled={pwSaving}
+                          className="text-[9px] px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold hover:bg-gold/20 transition-all tracking-widest uppercase disabled:opacity-40">
+                          {pwSaving ? '...' : 'Guardar'}
+                        </button>
+                        <button onClick={() => setPwEditId(null)}
+                          className="text-[9px] px-2.5 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 transition-all">✕</button>
+                      </div>
+                    )}
                   </div>
-
-                  {/* label */}
-                  <span className={`text-xs font-bold tracking-widest uppercase transition-colors duration-300 ${isActive ? cat.accent : 'text-white/40'}`}>
-                    {cat.label}
-                  </span>
-
-                  {/* chevron */}
-                  <span className={`text-[10px] transition-all duration-300 ${isActive ? cat.accent : 'text-white/15'}`}
-                    style={{ transform: isActive ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                    ▼
-                  </span>
-                </button>
+                </div>
               )
             })}
           </div>
+        )}
 
-          {/* ── Active group members ──────────────────────────────────────── */}
-          {activeGroup && activeCat && (
-            <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+        {/* ── Maquetes ────────────────────────────────────────────────────── */}
+        <div className="mt-12">
+          <div className="flex items-center gap-4 mb-5">
+            <span className="text-[10px] tracking-[0.45em] uppercase text-white/30">Maquetes</span>
+            <div className="flex-1 h-px bg-white/[0.07]" />
+            <span className="text-[9px] tracking-[0.3em] uppercase text-white/20">2 painéis</span>
+          </div>
 
-              {/* Section header */}
-              <div className="flex items-center gap-3 mb-4">
-                <span className={`w-2 h-2 rounded-full ${activeCat.dot}`} />
-                <span className={`text-xs font-bold tracking-[0.3em] uppercase ${activeCat.accent}`}>
-                  {activeCat.label}
-                </span>
-                <span className="text-xs text-white/20">
-                  {groups[activeGroup]?.length ?? 0} membro{(groups[activeGroup]?.length ?? 0) !== 1 ? 's' : ''}
-                </span>
-              </div>
-
-              {(!groups[activeGroup] || groups[activeGroup].length === 0) ? (
-                <div className="py-12 text-center text-white/20 text-xs tracking-widest border border-white/5 rounded-2xl">
-                  Nenhum membro nesta categoria
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {[
+              { href: '/painel-editor', tag: 'Editor de Vídeo', titulo: 'Editor de Vídeo',
+                desc: 'Novos projetos, pagamentos, calendário, tarefas, biblioteca de músicas e workflow.' },
+              { href: '/freelancers/8694241a-7530-4dfd-8619-a8bf15b9e15e?view=freelancer', tag: 'Fotógrafo', titulo: 'Fotógrafo',
+                desc: 'Fluxo de fotografia: projetos, entregas, calendário e dados pessoais. Separado do editor.' },
+            ].map(m => (
+              <Link key={m.href} href={m.href} onMouseEnter={sfx.hover} onClick={sfx.clique}
+                className="group relative overflow-hidden rounded-2xl border border-gold/25 p-5 transition-all hover:border-gold/60 hover:-translate-y-1"
+                style={{ background: 'linear-gradient(135deg, rgba(24,18,9,0.7), rgba(11,11,11,0.85))' }}>
+                <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                  style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.2), transparent 70%)' }} />
+                <div className="relative flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-2xl border border-gold/45 flex items-center justify-center shrink-0 overflow-hidden transition-transform duration-500 group-hover:rotate-[8deg]"
+                    style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))' }}>
+                    <img src="/logo_rl_gold.png" alt="RL" className="w-8 h-8 object-contain" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] tracking-[0.4em] uppercase text-gold/60 font-bold mb-1">{m.tag}</p>
+                    <h3 className="font-cormorant text-2xl text-white leading-tight">
+                      Maquete <span className="italic text-gold">{m.titulo}</span>
+                    </h3>
+                    <p className="text-[11px] text-white/45 mt-2 leading-relaxed">{m.desc}</p>
+                    <span className="inline-flex items-center gap-1.5 mt-3 text-[10px] tracking-widest uppercase text-gold/85 font-bold">
+                      Abrir painel <span className="group-hover:translate-x-1 transition-transform">→</span>
+                    </span>
+                  </div>
                 </div>
-              ) : (
-                <div className="space-y-2">
-                  {groups[activeGroup].map(f => (
-                    <div key={f.id}>
-                      {editingId === f.id ? (
-                        <div className="bg-white/[0.02] border border-gold/20 rounded-xl p-4 space-y-3">
-                          <FormFields form={form} setForm={setForm} />
-                          <div className="flex items-center justify-between pt-1">
-                            <button onClick={() => handleDelete(f.id)} disabled={!!deletingId}
-                              className="text-[10px] text-red-400/60 hover:text-red-400 transition-colors tracking-widest">
-                              ✕ Remover
-                            </button>
-                            <div className="flex gap-2">
-                              <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-lg text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">Cancelar</button>
-                              <button onClick={handleSave} disabled={saving || !form.nome} className="px-4 py-1.5 rounded-lg text-xs bg-gold text-black font-semibold hover:bg-gold/80 transition-all disabled:opacity-50">
-                                {saving ? 'A guardar...' : 'Guardar'}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-white/[0.12] transition-all group">
-                          <div className="flex items-center gap-4 px-4 py-3">
-                            <Link href={`/freelancers/${f.id}`} className="flex-1 min-w-0 cursor-pointer">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-semibold text-white/85 group-hover:text-white transition-colors">{f.nome}</span>
-                                {f.is_template && (
-                                  <span className="text-[9px] px-2 py-0.5 rounded-full border tracking-widest uppercase font-semibold bg-white/10 text-white border-white/30">
-                                    ⌘ Template
-                                  </span>
-                                )}
-                                {f.password && (
-                                  <span className="text-[9px] text-white/20">🔑</span>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-1">
-                                {f.contato && <span className="text-xs text-white/40">📞 {f.contato}</span>}
-                                {f.email && <span className="text-xs text-white/40 truncate max-w-[220px]">✉ {f.email}</span>}
-                                {f.nome_sos && <span className="text-xs text-white/25">SOS: {f.nome_sos}{f.contato_sos ? ` · ${f.contato_sos}` : ''}</span>}
-                              </div>
-                            </Link>
-
-                            {/* Botão Maquete: abre o painel em modo admin (ver + editar) */}
-                            <Link href={`/painel-editor?freelancer=${f.id}&admin=1`}
-                              className="flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border tracking-widest uppercase font-bold transition-all"
-                              style={{
-                                background: 'linear-gradient(135deg, rgba(201,164,92,0.15), rgba(201,164,92,0.04))',
-                                borderColor: 'rgba(201,164,92,0.45)',
-                                color: '#C9A45C',
-                                boxShadow: '0 0 12px rgba(201,164,92,0.18)',
-                              }}
-                              title={`Ver e editar o painel de ${f.nome} como admin`}>
-                              ✦ Maquete
-                            </Link>
-
-                            {/* Botão Ver como Freelancer: passa pela página de login
-                                (admin valida o fluxo real do membro: precisa do email +
-                                palavra-passe dele para entrar no portal). */}
-                            <Link href={`/login?next=${encodeURIComponent(`/freelancers/${f.id}?view=freelancer`)}`} target="_blank" rel="noopener noreferrer"
-                              className="flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] px-3 py-1.5 rounded-lg border tracking-widest uppercase font-bold transition-all hover:scale-[1.02]"
-                              style={{
-                                background: 'linear-gradient(135deg, rgba(52,211,153,0.12), rgba(52,211,153,0.03))',
-                                borderColor: 'rgba(52,211,153,0.4)',
-                                color: '#34d399',
-                                boxShadow: '0 0 10px rgba(52,211,153,0.15)',
-                              }}
-                              title={`Login como ${f.nome} (nova tab) — precisa do email + password do membro`}>
-                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                              </svg>
-                              Ver como Freelancer ↗
-                            </Link>
-
-                            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-                              <CopiarUrlButton id={f.id} status={f.status} />
-                              <button onClick={() => { setPwEditId(f.id); setPwDraft(f.password ?? '') }}
-                                className="text-[9px] px-2.5 py-1 rounded-lg border border-white/10 text-white/30 hover:text-white/60 hover:border-white/25 transition-all tracking-widest uppercase">
-                                🔑 PW
-                              </button>
-                              {removidoIds.has(f.id) ? (
-                                <span className="text-[9px] px-2.5 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 tracking-widest uppercase">
-                                  ✓ Movido
-                                </span>
-                              ) : (
-                                <button
-                                  onClick={() => handleRemoverDaEquipa(f)}
-                                  disabled={removendoId === f.id}
-                                  className="text-[9px] px-2.5 py-1 rounded-lg border border-orange-500/25 bg-orange-500/5 text-orange-400/70 hover:text-orange-400 hover:border-orange-500/40 hover:bg-orange-500/10 transition-all tracking-widest uppercase disabled:opacity-40">
-                                  {removendoId === f.id ? '...' : '− Equipa'}
-                                </button>
-                              )}
-                              <button onClick={() => startEdit(f)}
-                                className="p-1.5 rounded-lg text-white/25 hover:text-white/60 hover:bg-white/[0.06] transition-all">
-                                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-
-                          {/* Password editor inline */}
-                          {pwEditId === f.id && (
-                            <div className="px-4 pb-3 flex items-center gap-2 border-t border-white/[0.05] pt-3">
-                              <span className="text-[9px] text-white/25 tracking-widest uppercase shrink-0">Password:</span>
-                              <input
-                                type="text"
-                                value={pwDraft}
-                                onChange={e => setPwDraft(e.target.value)}
-                                placeholder="ex: rl2026"
-                                autoFocus
-                                className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors font-mono placeholder:text-white/15"
-                              />
-                              <button onClick={() => handleSavePassword(f.id)} disabled={pwSaving}
-                                className="text-[9px] px-3 py-1.5 rounded-lg bg-gold/10 border border-gold/30 text-gold hover:bg-gold/20 transition-all tracking-widest uppercase disabled:opacity-40">
-                                {pwSaving ? '...' : 'Guardar'}
-                              </button>
-                              <button onClick={() => setPwEditId(null)}
-                                className="text-[9px] px-2.5 py-1.5 rounded-lg border border-white/10 text-white/30 hover:text-white/60 transition-all">
-                                ✕
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </>
-      )}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.06] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
     </main>
   )
 }
@@ -616,7 +614,7 @@ function FormFields({ form, setForm }: { form: FormData; setForm: React.Dispatch
   const inputCls = "w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-xs text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/15"
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Nome *</label>
           <input value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Nome" className={inputCls} />
@@ -624,12 +622,12 @@ function FormFields({ form, setForm }: { form: FormData; setForm: React.Dispatch
         <div>
           <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Função</label>
           <select value={form.status ?? ''} onChange={e => setForm(f => ({ ...f, status: e.target.value }))}
-            className={inputCls + ' cursor-pointer'}>
+            className={inputCls + ' cursor-pointer bg-zinc-900'}>
             {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Contato</label>
           <input value={form.contato ?? ''} onChange={e => setForm(f => ({ ...f, contato: e.target.value }))} placeholder="9XX XXX XXX" className={inputCls} />
@@ -639,7 +637,7 @@ function FormFields({ form, setForm }: { form: FormData; setForm: React.Dispatch
           <input value={form.email ?? ''} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@exemplo.com" className={inputCls} />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         <div>
           <label className="block text-[9px] text-white/25 tracking-widest uppercase mb-1">Contato SOS (nome)</label>
           <input value={form.nome_sos ?? ''} onChange={e => setForm(f => ({ ...f, nome_sos: e.target.value }))} placeholder="Nome familiar" className={inputCls} />
