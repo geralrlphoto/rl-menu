@@ -338,12 +338,41 @@ export default function NovaLeadPage() {
           A partir daqui, a produção do vosso casamento está nas nossas mãos: vamos ler tudo com atenção
           e entramos em contacto em breve para a primeira conversa.
         </p>
-        <div className="sobe mt-10 flex items-center justify-center gap-4" style={{ animationDelay: '.65s' }}>
+        {/* Antes da conversa: conhecerem o nosso trabalho */}
+        <div className="sobe mt-10 rounded-2xl p-6 sm:p-7 text-left"
+          style={{ animationDelay: '.7s', border: '1px solid rgba(216,190,147,.28)', background: 'rgba(11,10,8,.6)', backdropFilter: 'blur(10px)' }}>
+          <p className="eyebrow">Antes da nossa conversa</p>
+          <p className="quest mt-4">Vejam o nosso trabalho e <em>sintam se é a vossa história.</em></p>
+          <p className="lead mt-3">
+            Quem vai estar convosco o dia inteiro, e contar esse dia para sempre, escolhe-se pela forma
+            como vos faz sentir. Escolher só pelo preço é o erro de que mais casais se arrependem.
+            Visitem o nosso site e o nosso Instagram: se se reconhecerem no que fazemos, a reunião
+            vai ser o início de algo especial.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer" className="btn">
+              <span className="fill" />
+              Ver o site
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M7 17L17 7M9 7h8v8" /></svg>
+            </a>
+            <a href="https://www.instagram.com/rlphoto_fotografia.video/" target="_blank" rel="noopener noreferrer"
+              className="inline-flex items-center gap-2.5 rounded-full px-7 py-4 transition-all hover:bg-white/5"
+              style={{ border: '1px solid rgba(216,190,147,.45)', color: 'var(--g)', fontFamily: 'var(--fm)', fontSize: 11.5, letterSpacing: '.18em', textTransform: 'uppercase' }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" className="w-4 h-4"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg>
+              Instagram
+            </a>
+          </div>
+        </div>
+
+        <div className="sobe mt-10 flex items-center justify-center gap-4" style={{ animationDelay: '.9s' }}>
           <span className="h-px w-10" style={{ background: 'rgba(216,190,147,.4)' }} />
           <img src="/logo_rl_gold.png" alt="RL Photo · Video" className="w-16 opacity-80" />
           <span className="h-px w-10" style={{ background: 'rgba(216,190,147,.4)' }} />
         </div>
-        <p className="meta sobe mt-6" style={{ animationDelay: '.8s' }}>www.rlprod.pt</p>
+        <a href="https://www.rlphotovideo.pt" target="_blank" rel="noopener noreferrer"
+          className="meta sobe mt-6 inline-block hover:text-[#d8be93] transition-colors" style={{ animationDelay: '1s' }}>
+          www.rlphotovideo.pt
+        </a>
       </div>
     </div>
   )
