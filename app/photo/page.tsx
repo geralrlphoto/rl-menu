@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { unstable_cache } from 'next/cache'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
 import { LogoutButton } from '@/app/components/LogoutButton'
+import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -482,6 +483,37 @@ export default async function PhotoDashboard() {
   const galeriasAtraso = galerias.filter((g: any) => g.dias < 0)
   const galeriasAVencer = galerias.filter((g: any) => g.dias >= 0)
 
+  // ── Lista das entregas em atraso (gaveta do +) com link para a ficha ─────
+  const fotosEmAtraso = fotosAlerta.filter(f => f.diasRestantes < 0)
+  const videosEmAtraso = videosAlerta.filter((v: any) => v.diasRestantes < 0)
+  const refsSemId = Array.from(new Set([
+    ...fotosEmAtraso.map(f => f.ref),
+    ...videosEmAtraso.map((v: any) => v.referencia),
+  ].filter(Boolean))).sort()
+  const getIdsPorRef = unstable_cache(
+    async () => {
+      if (refsSemId.length === 0) return [] as Array<{ id: string; referencia: string }>
+      const { data } = await supabase.from('eventos_2026').select('id, referencia').in('referencia', refsSemId)
+      return (data ?? []) as Array<{ id: string; referencia: string }>
+    },
+    [`photo-ids-atraso-${refsSemId.join(',')}`],
+    { revalidate: 1800, tags: ['photo-dashboard'] }
+  )
+  const idPorRef = new Map<string, string>()
+  for (const r of await getIdsPorRef()) if (r.referencia) idPorRef.set(r.referencia.toUpperCase(), r.id)
+  const fichaDe = (ref: string, alternativa?: string | null) => {
+    const id = idPorRef.get((ref ?? '').toUpperCase()) ?? alternativa ?? null
+    return id ? `/eventos-2026/${id}` : null
+  }
+  const entregasAtraso: EntregaAtraso[] = [
+    ...galeriasAtraso.map((g: any) => ({ tipo: 'Galeria Online', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}` })),
+    ...fotosEmAtraso.map(f => ({
+      tipo: f.tipo === 'sel' ? 'Seleção de fotos' : 'Edição de fotos',
+      nome: f.nome, ref: f.ref, dias: Math.abs(f.diasRestantes), href: fichaDe(f.ref, f.eventoId),
+    })),
+    ...videosEmAtraso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: Math.abs(v.diasRestantes), href: fichaDe(v.referencia) })),
+  ]
+
   // ── Prioridades: o que pede atenção, tirado dos alertas já carregados ────
   const atrasados = fotosAtrasados + videosAtrasados + galeriasAtraso.length
   const aVencer7 = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 7).length
@@ -489,7 +521,7 @@ export default async function PhotoDashboard() {
     + galeriasAVencer.length
   const albunsPorEntregar = albumsAprovacao.length
   const prioridades = [
-    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, fotos e vídeos', cor: '#f87171', href: '/casamentos' },
+    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, fotos e vídeos', cor: '#f87171', href: '/casamentos', gaveta: true },
     { n: aVencer7, rotulo: 'A vencer em 7 dias', sub: 'Galerias, seleções e vídeos', cor: '#fbbf24', href: '/casamentos' },
     { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#fb923c', href: '/crm' },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
@@ -644,23 +676,36 @@ export default async function PhotoDashboard() {
 
           {/* Prioridades */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mt-9">
-            {prioridades.map(p => (
-              <Link key={p.rotulo} href={p.href}
-                className="group relative rounded-2xl border px-4 sm:px-5 py-4 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5"
-                style={{
-                  borderColor: p.n > 0 ? `${p.cor}55` : 'rgba(255,255,255,0.08)',
-                  background: p.n > 0 ? `${p.cor}10` : 'rgba(0,0,0,0.35)',
-                }}>
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-3xl sm:text-4xl font-extralight leading-none" style={{ color: p.n > 0 ? p.cor : 'rgba(255,255,255,0.35)' }}>
-                    {p.n}
-                  </p>
-                  <span className="text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all">→</span>
+            {prioridades.map(p => {
+              const comGaveta = 'gaveta' in p && p.gaveta && p.n > 0
+              return (
+                <div key={p.rotulo} className="relative">
+                  <Link href={p.href}
+                    className="group block h-full rounded-2xl border px-4 sm:px-5 py-4 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5"
+                    style={{
+                      borderColor: p.n > 0 ? `${p.cor}55` : 'rgba(255,255,255,0.08)',
+                      background: p.n > 0 ? `${p.cor}10` : 'rgba(0,0,0,0.35)',
+                    }}>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <p className="text-3xl sm:text-4xl font-extralight leading-none" style={{ color: p.n > 0 ? p.cor : 'rgba(255,255,255,0.35)' }}>
+                        {p.n}
+                      </p>
+                      {!comGaveta && (
+                        <span className="text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all">→</span>
+                      )}
+                    </div>
+                    <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mt-2.5">{p.rotulo}</p>
+                    <p className="text-[10px] text-white/30 mt-0.5">{p.n === 0 ? 'Tudo em dia' : p.sub}</p>
+                  </Link>
+                  {/* + abre a gaveta com a lista; fica fora do Link para não haver botão dentro de link */}
+                  {comGaveta && (
+                    <div className="absolute top-3.5 right-3.5">
+                      <EntregasDrawer itens={entregasAtraso} />
+                    </div>
+                  )}
                 </div>
-                <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mt-2.5">{p.rotulo}</p>
-                <p className="text-[10px] text-white/30 mt-0.5">{p.n === 0 ? 'Tudo em dia' : p.sub}</p>
-              </Link>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
