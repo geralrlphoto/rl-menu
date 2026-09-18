@@ -68,7 +68,9 @@ export default function CasamentosPage() {
   }, [])
 
   const destaque = stats[ANO_DESTAQUE]
-  const totalGeral = Object.values(stats).reduce((acc, s) => acc + s.total, 0)
+  // Faturação = valor de vídeo (o que é cobrado pelo serviço RL); a fotografia
+  // é cobrada ao cliente mas segue para o fotógrafo.
+  const totalGeral = Object.values(stats).reduce((acc, s) => acc + s.video, 0)
   const totalCasamentos = Object.values(stats).reduce((acc, s) => acc + s.count, 0)
   const proximoGlobal = Object.values(stats)
     .map(s => s.proximo).filter(Boolean)
@@ -191,7 +193,7 @@ export default function CasamentosPage() {
                     {[
                       { l: 'Casamentos', v: s ? String(s.count) : '—' },
                       { l: 'Realizados', v: s ? `${s.realizados}/${s.eventos}` : '—' },
-                      { l: 'Faturação', v: s && s.total > 0 ? `${s.total.toLocaleString('pt-PT')} €` : '—' },
+                      { l: 'Faturação', v: s && s.video > 0 ? `${s.video.toLocaleString('pt-PT')} €` : '—' },
                     ].map(({ l, v }) => (
                       <div key={l} className="min-w-0">
                         <p className="text-[8.5px] tracking-[0.3em] uppercase text-white/35 mb-1.5 truncate">{l}</p>
@@ -207,7 +209,10 @@ export default function CasamentosPage() {
 
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] tracking-[0.35em] uppercase text-white/50 group-hover:text-gold transition-colors">
-                      {s?.proximo ? `Próximo em ${s.proximo.dias} dias` : 'Ver temporada'}
+                      {!s?.proximo ? 'Ver temporada'
+                        : s.proximo.dias === 0 ? 'Casamento hoje'
+                        : s.proximo.dias === 1 ? 'Próximo amanhã'
+                        : `Próximo em ${s.proximo.dias} dias`}
                     </span>
                     <span className="w-9 h-9 rounded-full border border-gold/35 text-gold flex items-center justify-center group-hover:bg-gold group-hover:text-black transition-all">
                       →
@@ -246,9 +251,9 @@ export default function CasamentosPage() {
         {destaque && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-10">
             {[
-              { l: 'Fotografia', v: `${destaque.foto.toLocaleString('pt-PT')} €`, s: `Temporada ${ANO_DESTAQUE}` },
-              { l: 'Vídeo', v: `${destaque.video.toLocaleString('pt-PT')} €`, s: `Temporada ${ANO_DESTAQUE}` },
-              { l: 'Total da temporada', v: `${destaque.total.toLocaleString('pt-PT')} €`, s: `${destaque.eventos} eventos`, gold: true },
+              { l: 'Faturação vídeo', v: `${destaque.video.toLocaleString('pt-PT')} €`, s: `Temporada ${ANO_DESTAQUE}`, gold: true },
+              { l: 'Cobrado em fotografia', v: `${destaque.foto.toLocaleString('pt-PT')} €`, s: 'Segue para o fotógrafo' },
+              { l: 'Eventos da temporada', v: String(destaque.eventos), s: `${destaque.realizados} já realizados` },
               { l: 'Quatro temporadas', v: `${totalGeral.toLocaleString('pt-PT')} €`, s: `${totalCasamentos} casamentos` },
             ].map(({ l, v, s, gold }) => (
               <div key={l} className="rounded-2xl border px-5 py-4"
