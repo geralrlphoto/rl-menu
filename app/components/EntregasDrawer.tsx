@@ -8,7 +8,7 @@ export type EntregaAtraso = {
   tipo: string          // "Galeria Online", "Seleção de fotos", "Vídeo"…
   nome: string          // noivos
   ref: string
-  dias: number          // dias de atraso (positivo)
+  dias: number          // atraso: dias de atraso · aviso: dias que faltam
   href: string | null   // ficha do casamento
 }
 
@@ -21,9 +21,13 @@ const COR_TIPO: Record<string, string> = {
   'Vídeo':            '#a78bfa',
 }
 
-// Botão "+" no cartão das Entregas em atraso: abre uma gaveta à direita com
-// a lista, e cada linha leva diretamente à ficha do casamento.
-export function EntregasDrawer({ itens, titulo = 'Entregas em atraso' }: { itens: EntregaAtraso[]; titulo?: string }) {
+// Botão "+" nos cartões de prioridade: abre uma gaveta à direita com a lista,
+// e cada linha leva diretamente à ficha do casamento.
+//   modo 'atraso' → vermelho, dias em atraso, mais antigos primeiro
+//   modo 'aviso'  → laranja, dias que faltam, mais próximos primeiro
+export function EntregasDrawer({ itens, titulo = 'Entregas em atraso', modo = 'atraso' }: { itens: EntregaAtraso[]; titulo?: string; modo?: 'atraso' | 'aviso' }) {
+  const aviso = modo === 'aviso'
+  const corModo = aviso ? '#fb923c' : '#f87171'
   const [aberto, setAberto] = useState(false)
   const [montado, setMontado] = useState(false)
   const [filtro, setFiltro] = useState<string | null>(null)
@@ -40,15 +44,19 @@ export function EntregasDrawer({ itens, titulo = 'Entregas em atraso' }: { itens
   }, [aberto])
 
   const tipos = Array.from(new Set(itens.map(i => i.tipo)))
-  const lista = (filtro ? itens.filter(i => i.tipo === filtro) : itens).slice().sort((a, b) => b.dias - a.dias)
+  const lista = (filtro ? itens.filter(i => i.tipo === filtro) : itens).slice()
+    .sort((a, b) => aviso ? a.dias - b.dias : b.dias - a.dias)
 
   return (
     <>
       <button
         onClick={() => setAberto(true)}
-        title="Ver as entregas em atraso"
-        aria-label="Ver as entregas em atraso"
-        className="w-8 h-8 rounded-full border border-red-400/40 text-red-300 flex items-center justify-center text-lg leading-none transition-all hover:bg-red-400 hover:text-black hover:border-red-400 hover:scale-105">
+        title={`Ver: ${titulo}`}
+        aria-label={`Ver: ${titulo}`}
+        className="w-8 h-8 rounded-full border flex items-center justify-center text-lg leading-none transition-all hover:text-black hover:scale-105"
+        style={{ borderColor: `${corModo}66`, color: corModo }}
+        onMouseEnter={e => { e.currentTarget.style.background = corModo }}
+        onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}>
         +
       </button>
 
@@ -63,7 +71,7 @@ export function EntregasDrawer({ itens, titulo = 'Entregas em atraso' }: { itens
             style={{
               width: 'min(460px, 100vw)',
               background: 'linear-gradient(180deg, #14100d, #0b0907)',
-              borderLeft: '1px solid rgba(248,113,113,0.25)',
+              borderLeft: `1px solid ${corModo}40`,
               boxShadow: aberto ? '-30px 0 80px -20px rgba(0,0,0,0.75)' : 'none',
               transform: aberto ? 'translateX(0)' : 'translateX(100%)',
               transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
@@ -74,10 +82,10 @@ export function EntregasDrawer({ itens, titulo = 'Entregas em atraso' }: { itens
             <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[9px] tracking-[0.4em] uppercase text-red-300/70">Prioridade</p>
+                  <p className="text-[9px] tracking-[0.4em] uppercase" style={{ color: `${corModo}b3` }}>{aviso ? 'Aviso' : 'Prioridade'}</p>
                   <h2 className="font-cormorant text-3xl font-light text-white mt-1">{titulo}</h2>
                   <p className="text-[11px] text-white/35 mt-1">
-                    {itens.length === 0 ? 'Tudo em dia' : `${itens.length} entrega${itens.length !== 1 ? 's' : ''} · mais antigas primeiro`}
+                    {itens.length === 0 ? 'Tudo em dia' : `${itens.length} entrega${itens.length !== 1 ? 's' : ''} · ${aviso ? 'mais próximas primeiro' : 'mais antigas primeiro'}`}
                   </p>
                 </div>
                 <button onClick={() => setAberto(false)} aria-label="Fechar"
@@ -112,7 +120,7 @@ export function EntregasDrawer({ itens, titulo = 'Entregas em atraso' }: { itens
             {/* Lista */}
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
               {lista.length === 0 && (
-                <p className="text-center text-white/25 text-xs tracking-widest uppercase py-16">Nada em atraso</p>
+                <p className="text-center text-white/25 text-xs tracking-widest uppercase py-16">{aviso ? 'Nada a terminar' : 'Nada em atraso'}</p>
               )}
               {lista.map((it, i) => {
                 const cor = COR_TIPO[it.tipo] ?? '#94a3b8'
@@ -125,8 +133,10 @@ export function EntregasDrawer({ itens, titulo = 'Entregas em atraso' }: { itens
                       <p className="text-[10px] text-white/30 mt-0.5 font-mono">{it.ref}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-2xl font-extralight text-red-400 leading-none">{it.dias}</p>
-                      <p className="text-[9px] tracking-[0.2em] uppercase text-red-300/50 mt-1">dias</p>
+                      <p className="text-2xl font-extralight leading-none" style={{ color: corModo }}>{aviso && it.dias === 0 ? 'Hoje' : it.dias}</p>
+                      <p className="text-[9px] tracking-[0.2em] uppercase mt-1" style={{ color: `${corModo}80` }}>
+                        {aviso ? (it.dias === 0 ? 'último dia' : it.dias === 1 ? 'dia' : 'dias') : 'dias'}
+                      </p>
                     </div>
                     {it.href && (
                       <span className="text-white/20 group-hover:text-white group-hover:translate-x-0.5 transition-all">→</span>

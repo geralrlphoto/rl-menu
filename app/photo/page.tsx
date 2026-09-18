@@ -534,9 +534,15 @@ export default async function PhotoDashboard() {
   // ── Lista das entregas em atraso (gaveta do +) com link para a ficha ─────
   const fotosEmAtraso = fotosAlerta.filter(f => f.diasRestantes < 0)
   const videosEmAtraso = videosAlerta.filter((v: any) => v.diasRestantes < 0)
+  // Avisos: prazos a terminar nos próximos 5 dias (galerias ficam de fora)
+  const dentroAviso = (d: number) => d >= 0 && d <= 5
+  const fotosEmAviso = fotosAlerta.filter(f => dentroAviso(f.diasRestantes))
+  const videosEmAviso = videosAlerta.filter((v: any) => dentroAviso(v.diasRestantes))
   const refsSemId = Array.from(new Set([
     ...fotosEmAtraso.map(f => f.ref),
     ...videosEmAtraso.map((v: any) => v.referencia),
+    ...fotosEmAviso.map(f => f.ref),
+    ...videosEmAviso.map((v: any) => v.referencia),
   ].filter(Boolean))).sort()
   const getIdsPorRef = unstable_cache(
     async () => {
@@ -564,20 +570,22 @@ export default async function PhotoDashboard() {
     ...videosEmAtraso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: Math.abs(v.diasRestantes), href: fichaDe(v.referencia) })),
   ]
 
+  const entregasAviso: EntregaAtraso[] = [
+    ...selecoes.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}` })),
+    ...finais.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}` })),
+    ...fotosEmAviso.map(f => ({ tipo: 'Edição de fotos', nome: f.nome, ref: f.ref, dias: f.diasRestantes, href: fichaDe(f.ref, f.eventoId) })),
+    ...videosEmAviso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: v.diasRestantes, href: fichaDe(v.referencia) })),
+  ]
+
   // ── Prioridades: o que pede atenção, tirado dos alertas já carregados ────
   const atrasados = fotosAtrasados + videosAtrasados + galeriasAtraso.length + selecoesAtraso.length + finaisAtraso.length
-  // Aviso: prazos que terminam nos próximos 5 dias (a laranja). As Galerias Online
-  // ficam de fora — só contam quando passam do prazo.
-  const AVISO_DIAS = 5
-  const noAviso = (d: number) => d >= 0 && d <= AVISO_DIAS
-  const avisos5 = fotosAlerta.filter(f => noAviso(f.diasRestantes)).length
-    + videosAlerta.filter((v: any) => noAviso(v.diasRestantes)).length
-    + selecoes.filter((g: any) => noAviso(g.dias)).length
-    + finais.filter((g: any) => noAviso(g.dias)).length
+  // Aviso: prazos que terminam nos próximos 5 dias (a laranja) — é o tamanho
+  // da lista da gaveta, para o número e a lista baterem sempre certo.
+  const avisos5 = entregasAviso.length
   const albunsPorEntregar = albumsAprovacao.length
   const prioridades = [
     { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, seleções, fotos finais e vídeos', cor: '#f87171', href: '/casamentos', gaveta: true },
-    { n: avisos5, rotulo: 'Termina em 5 dias', sub: 'Seleções, fotos finais, edição e vídeos', cor: '#fb923c', href: '/casamentos' },
+    { n: avisos5, rotulo: 'Termina em 5 dias', sub: 'Seleções, fotos finais, edição e vídeos', cor: '#fb923c', href: '/casamentos', gaveta: true },
     { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#f472b6', href: '/crm' },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
@@ -772,7 +780,9 @@ export default async function PhotoDashboard() {
                   {/* + abre a gaveta com a lista; fica fora do Link para não haver botão dentro de link */}
                   {comGaveta && (
                     <div className="absolute top-3.5 right-3.5">
-                      <EntregasDrawer itens={entregasAtraso} />
+                      {p.rotulo === 'Entregas em atraso'
+                        ? <EntregasDrawer itens={entregasAtraso} />
+                        : <EntregasDrawer itens={entregasAviso} titulo="Termina em 5 dias" modo="aviso" />}
                     </div>
                   )}
                 </div>
