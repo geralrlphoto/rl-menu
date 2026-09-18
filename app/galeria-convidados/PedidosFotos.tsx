@@ -648,8 +648,10 @@ export default function PedidosFotos() {
             // estiverem enviadas para o mesmo).
             const enviadoNomes = new Set(g.itens.map(p => p.enviado_para_nome || ''))
             const enviadoNome = (enviadoNomes.size === 1 && !enviadoNomes.has('')) ? g.itens[0].enviado_para_nome : null
+            // Tudo entregue: digitais com fotos enviadas ao cliente, ou estado "Entregue".
+            const tudoEnviado = g.itens.length > 0 && g.itens.every(p => !!p.fotos_enviadas_em || p.estado === 'Entregue')
             return (
-              <div key={g.key} className="rounded-2xl border border-white/[0.07] overflow-hidden" style={{ background: 'rgba(255,255,255,0.015)' }}>
+              <div key={g.key} className={`rounded-2xl border overflow-hidden ${tudoEnviado ? 'border-emerald-500/40' : 'border-white/[0.07]'}`} style={{ background: tudoEnviado ? 'rgba(16,185,129,0.07)' : 'rgba(255,255,255,0.015)' }}>
                 {/* Cabeçalho do casamento */}
                 <div className="w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-white/[0.025] transition-colors">
                   <button onClick={() => toggleGrupo(g.key)} className="flex items-center gap-2.5 min-w-0 text-left flex-1">
@@ -668,6 +670,7 @@ export default function PedidosFotos() {
                       <span className="block text-[11px] text-white/40 mt-0.5">
                         {g.itens.length} encomenda(s) · {eur(totalGrupo)}{nDigital ? ` · ${nDigital} digital` : ''}{nPapel ? ` · ${nPapel} papel` : ''}
                         {enviadoNome && <span className="text-emerald-300/80"> · ✓ Enviado a {enviadoNome}</span>}
+                        {tudoEnviado && <span className="text-emerald-300/90"> · ✓ Tudo enviado</span>}
                       </span>
                     </span>
                   </button>
@@ -728,7 +731,7 @@ export default function PedidosFotos() {
                         ? 'A apagar…'
                         : <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg> Apagar todas</>}
                     </button>
-                    <span className="text-[12px] px-2.5 py-1 rounded-full border font-semibold" style={{ borderColor: 'rgba(200,168,102,0.3)', color: GOLD }}>{g.itens.length}</span>
+                    <span className="text-[12px] px-2.5 py-1 rounded-full border font-semibold" style={tudoEnviado ? { borderColor: 'rgba(16,185,129,0.45)', color: '#6ee7b7' } : { borderColor: 'rgba(200,168,102,0.3)', color: GOLD }}>{g.itens.length}</span>
                   </div>
                 </div>
 
