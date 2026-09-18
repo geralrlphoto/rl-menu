@@ -122,7 +122,7 @@ const CENAS: Record<number, { cena: string; titulo: string; tituloEm: string; le
   1: { cena: 'Antes de rodar',   titulo: 'Bem-vindos à',        tituloEm: 'produção',       legenda: 'Pré-produção · onde tudo começa',        img: '/casamentos-2027.jpg' },
   2: { cena: 'Cena 01',          titulo: 'O vosso',             tituloEm: 'grande dia',     legenda: 'O cenário, a data, as pessoas',          img: '/newsletter/casamento-03.jpg', pos: 'center 35%' },
   3: { cena: 'Cena 02',          titulo: 'Perguntas que',       tituloEm: 'ninguém faz',    legenda: 'Porque cada história tem outro tom',      img: '/eventos-hero-2026.webp', pos: 'center 40%' },
-  4: { cena: 'Cena 03',          titulo: 'A equipa e',          tituloEm: 'o equipamento',  legenda: 'Fotografia, vídeo, e tudo o que junta',  img: '/login hero.png' },
+  4: { cena: 'Cena 03',          titulo: 'O que vamos',         tituloEm: 'criar juntos',   legenda: 'Fotografia, filme e os detalhes que fazem a diferença', img: '/newsletter/casamento-09.jpg', pos: 'center 45%' },
   5: { cena: 'Cena 04',          titulo: 'Onde vos',            tituloEm: 'encontramos',    legenda: 'Falta pouco para a primeira conversa',   img: '/casamentos-2026.jpg', pos: 'center 40%' },
 }
 
