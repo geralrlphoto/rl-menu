@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // OPÇÃO 2 da página de marcas — "Película".
 // Três fotogramas a toda a altura; o que está em foco abre, os outros
-// encolhem e perdem cor. Vê-se em /?opcao=2 (a / normal continua a Opção 1).
+// encolhem e perdem cor. É a página principal (/); a Opção 1 está em /?opcao=1.
 // ─────────────────────────────────────────────────────────────────────────
 
 import Link from 'next/link'

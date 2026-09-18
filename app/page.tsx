@@ -78,7 +78,7 @@ function LogoWithFallback({ src, alt, priority }: { src: string; alt: string; pr
 /* ═══════════════════════════════════════════════════════
    COMPONENTE
 ═══════════════════════════════════════════════════════ */
-// /?opcao=2 mostra a Opção 2 ("Película") para comparar; sem parâmetro é a Opção 1
+// A página principal é a Opção 2 ("Película"). A Opção 1 ("Diafragma") continua em /?opcao=1
 export default function SplashPage() {
   return (
     <Suspense fallback={null}>
@@ -89,7 +89,7 @@ export default function SplashPage() {
 
 function EscolhaOpcao() {
   const opcao = useSearchParams().get('opcao')
-  return opcao === '2' ? <MarcasOpcao2 /> : <SplashOpcao1 />
+  return opcao === '1' ? <SplashOpcao1 /> : <MarcasOpcao2 />
 }
 
 function SplashOpcao1() {
