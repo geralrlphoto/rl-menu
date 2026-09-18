@@ -1,4 +1,4 @@
-﻿import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { unstable_cache } from 'next/cache'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
@@ -393,6 +393,59 @@ export default async function PhotoDashboard() {
   const quente = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) <= 3)
   const morno  = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) > 3)
 
+  // ── Esta semana: casamentos dos próximos 7 dias (hora de Lisboa) ─────────
+  const lisboaISO = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(d)
+  const hojeLx = lisboaISO(new Date())
+  const semanaDias = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(hojeLx + 'T12:00:00Z')
+    d.setUTCDate(d.getUTCDate() + i)
+    return d.toISOString().split('T')[0]
+  })
+  const getSemana = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('eventos_2026')
+        .select('id, referencia, cliente, data_evento, local')
+        .gte('data_evento', semanaDias[0])
+        .lte('data_evento', semanaDias[6])
+        .order('data_evento', { ascending: true })
+        .limit(20)
+      return data ?? []
+    },
+    [`photo-semana-${semanaDias[0]}`],
+    { revalidate: 1800, tags: ['photo-dashboard'] }
+  )
+  const eventosSemana = await getSemana()
+  const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+  const semana = semanaDias.map((iso, i) => {
+    const d = new Date(iso + 'T12:00:00Z')
+    return {
+      iso,
+      rotulo: i === 0 ? 'Hoje' : i === 1 ? 'Amanhã' : DIAS_SEM[d.getUTCDay()],
+      dia: d.getUTCDate(),
+      mes: MESES[d.getUTCMonth()],
+      fimDeSemana: d.getUTCDay() === 0 || d.getUTCDay() === 6,
+      eventos: eventosSemana.filter((e: any) => e.data_evento === iso),
+    }
+  })
+
+  // ── Saudação e data (hora de Lisboa) ────────────────────────────────────
+  const horaLx = Number(new Intl.DateTimeFormat('pt-PT', { hour: 'numeric', hour12: false, timeZone: 'Europe/Lisbon' }).format(new Date()))
+  const saudacao = horaLx < 6 ? 'Boa noite' : horaLx < 13 ? 'Bom dia' : horaLx < 20 ? 'Boa tarde' : 'Boa noite'
+  const dataLonga = new Intl.DateTimeFormat('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Lisbon' }).format(new Date())
+
+  // ── Prioridades: o que pede atenção, tirado dos alertas já carregados ────
+  const atrasados = fotosAtrasados + videosAtrasados
+  const aVencer7 = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 7).length
+    + videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 7).length
+  const albunsPorEntregar = albumsAprovacao.length
+  const prioridades = [
+    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Fotos e vídeos', cor: '#f87171', href: '/casamentos' },
+    { n: aVencer7, rotulo: 'A vencer em 7 dias', sub: 'Seleções, edições e vídeos', cor: '#fbbf24', href: '/casamentos' },
+    { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#fb923c', href: '/crm' },
+    { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
+  ]
+  const totalCasamentosSemana = eventosSemana.length
+
   // ── Colunas do carousel ───────────────────────────────────────────────────
   const cols: DashCol[] = [
     {
@@ -490,80 +543,137 @@ export default async function PhotoDashboard() {
   return (
     <main className="min-h-screen bg-[#080808] flex flex-col">
 
-      {/* Header — hero com foto */}
-      <div className="relative overflow-hidden shrink-0" style={{ height: '420px' }}>
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: "url('/casamentos-2028.png')" }}
-        />
-        <div className="absolute inset-0 bg-black/30" />
-        <div className="absolute top-0 left-0 right-0 h-28 bg-gradient-to-b from-[#080808] to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-[#080808] via-[#080808]/60 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#080808]/50 via-transparent to-[#080808]/50" />
+      {/* ── Hero: saudação + data ─────────────────────────────────────────── */}
+      <section className="relative overflow-hidden shrink-0 border-b border-white/[0.06]">
+        <div className="absolute inset-0 bg-cover bg-[center_35%]"
+          style={{ backgroundImage: "url('/casamentos-2028.png')" }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(100deg, rgba(8,8,8,0.96) 0%, rgba(8,8,8,0.78) 45%, rgba(8,8,8,0.35) 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #080808 0%, transparent 55%)' }} />
 
-        {/* Logout — topo direito */}
         <div className="absolute top-4 right-4 z-10">
           <LogoutButton />
         </div>
 
-        {/* Logo centrado */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
-          <p className="text-[8px] tracking-[0.6em] text-white/30 uppercase">Menu Interno</p>
-          <h1 className="text-3xl sm:text-4xl font-extralight tracking-[0.4em] text-white/80 uppercase">
-            RL <span className="text-[#C9A84C]">PHOTO</span>.VIDEO
-          </h1>
-          <div className="h-px w-16 bg-gradient-to-r from-transparent via-[#C9A84C]/50 to-transparent" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo_rl_gold.png"
-            alt="RL Photo Video"
-            className="mt-1 opacity-70"
-            style={{ height: '150px', width: 'auto' }}
-          />
-        </div>
-      </div>
+        <div className="relative max-w-6xl mx-auto px-5 sm:px-10 pt-16 sm:pt-20 pb-10 sm:pb-12">
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo_rl_gold.png" alt="" className="h-9 w-auto opacity-80" />
+            <p className="text-[9px] tracking-[0.5em] text-white/40 uppercase">
+              RL <span className="text-[#C9A84C]/80">Photo</span>.Video · Menu interno
+            </p>
+          </div>
 
-      {/* Grid principal — desktop */}
-      <div className="hidden sm:flex flex-1 items-center justify-center px-10 py-12 pt-16">
-        <div className="w-full max-w-6xl">
-          <div className="grid grid-cols-3 gap-2">
-            {allItems.map((item) => (
-              <Link key={item.id} href={item.href}
-                className="relative overflow-hidden group rounded-lg"
-                style={{ height: '160px' }}>
-                <div className="absolute inset-0 bg-cover bg-center scale-100 group-hover:scale-105 transition-transform duration-700 ease-out"
-                  style={{ backgroundImage: `url(${item.img})` }} />
-                <div className="absolute inset-0 bg-black/50 group-hover:bg-black/30 transition-colors duration-500" />
-                <div className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 px-5 py-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-[2px] bg-[#C9A84C]/60 group-hover:bg-[#C9A84C] transition-all duration-300" style={{ height: '12px' }} />
-                    <span className="text-[10px] tracking-[0.3em] font-medium text-white/70 group-hover:text-white uppercase transition-colors duration-200 whitespace-nowrap">{item.name}</span>
-                  </div>
-                  <span className="text-[#C9A84C]/40 group-hover:text-[#C9A84C] group-hover:translate-x-1 transition-all duration-300">→</span>
+          <h1 className="font-cormorant font-light text-white text-5xl sm:text-7xl leading-[0.95] tracking-[0.02em] mt-7">
+            {saudacao}, <span className="italic text-[#C9A84C]">Rui</span>
+          </h1>
+          <p className="font-cormorant italic text-white/55 text-lg sm:text-xl mt-3 first-letter:uppercase">
+            {dataLonga}
+            {totalCasamentosSemana > 0 && (
+              <> · {totalCasamentosSemana} casamento{totalCasamentosSemana !== 1 ? 's' : ''} nos próximos 7 dias</>
+            )}
+          </p>
+
+          {/* Prioridades */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mt-9">
+            {prioridades.map(p => (
+              <Link key={p.rotulo} href={p.href}
+                className="group relative rounded-2xl border px-4 sm:px-5 py-4 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5"
+                style={{
+                  borderColor: p.n > 0 ? `${p.cor}55` : 'rgba(255,255,255,0.08)',
+                  background: p.n > 0 ? `${p.cor}10` : 'rgba(0,0,0,0.35)',
+                }}>
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-3xl sm:text-4xl font-extralight leading-none" style={{ color: p.n > 0 ? p.cor : 'rgba(255,255,255,0.35)' }}>
+                    {p.n}
+                  </p>
+                  <span className="text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all">→</span>
                 </div>
+                <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mt-2.5">{p.rotulo}</p>
+                <p className="text-[10px] text-white/30 mt-0.5">{p.n === 0 ? 'Tudo em dia' : p.sub}</p>
               </Link>
             ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Menu mobile — lista vertical com imagem */}
-      <div className="sm:hidden flex-1 flex flex-col px-4 py-6 gap-3">
-        {allItems.map((item) => (
-          <Link key={item.id} href={item.href}
-            className="relative overflow-hidden group rounded-2xl flex items-center gap-4 bg-white/[0.03] border border-white/[0.08] active:bg-white/[0.06] transition-colors"
-            style={{ height: '72px' }}>
-            <div className="relative w-20 h-full shrink-0 overflow-hidden rounded-l-2xl">
-              <div className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${item.img})` }} />
-              <div className="absolute inset-0 bg-black/40" />
-            </div>
-            <span className="text-white font-semibold tracking-[0.12em] uppercase text-sm flex-1">{item.name}</span>
-            <span className="text-[#C9A84C]/60 text-lg pr-4">›</span>
+      {/* ── Esta semana ───────────────────────────────────────────────────── */}
+      <section className="max-w-6xl w-full mx-auto px-5 sm:px-10 pt-10">
+        <div className="flex items-center gap-4 mb-4">
+          <span className="text-[10px] tracking-[0.45em] uppercase text-white/35">Esta semana</span>
+          <div className="flex-1 h-px bg-white/[0.07]" />
+          <Link href="/calendario" className="text-[9px] tracking-[0.3em] uppercase text-white/25 hover:text-[#C9A84C] transition-colors">
+            Calendário →
           </Link>
-        ))}
-      </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+          {semana.map((d, i) => {
+            const cheio = d.eventos.length > 0
+            return (
+              <div key={d.iso}
+                className="rounded-xl border px-3 py-3 min-h-[118px] flex flex-col"
+                style={{
+                  borderColor: i === 0 ? 'rgba(201,168,76,0.5)' : cheio ? 'rgba(201,168,76,0.22)' : 'rgba(255,255,255,0.06)',
+                  background: i === 0 ? 'rgba(201,168,76,0.07)' : cheio ? 'rgba(201,168,76,0.03)' : 'rgba(255,255,255,0.015)',
+                }}>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-[9px] tracking-[0.25em] uppercase"
+                    style={{ color: i === 0 ? '#C9A84C' : d.fimDeSemana ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)' }}>
+                    {d.rotulo}
+                  </span>
+                  <span className="font-cormorant text-xl leading-none" style={{ color: cheio ? '#fff' : 'rgba(255,255,255,0.3)' }}>
+                    {d.dia} <span className="text-[10px] text-white/30 font-sans">{d.mes}</span>
+                  </span>
+                </div>
+
+                <div className="mt-2.5 flex flex-col gap-1.5">
+                  {d.eventos.length === 0 && <span className="text-[10px] text-white/15">—</span>}
+                  {d.eventos.map((e: any) => (
+                    <Link key={e.id} href={`/eventos-2026/${e.id}`}
+                      className="group block rounded-lg px-2 py-1.5 bg-white/[0.03] hover:bg-[#C9A84C]/10 border border-white/[0.05] hover:border-[#C9A84C]/35 transition-all">
+                      <p className="text-[11px] text-white/85 group-hover:text-white leading-tight truncate uppercase tracking-wide">
+                        {(e.cliente ?? '').trim() || e.referencia}
+                      </p>
+                      {e.local && <p className="text-[9px] text-white/35 truncate mt-0.5">{e.local}</p>}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* ── Menu ──────────────────────────────────────────────────────────── */}
+      <section className="max-w-6xl w-full mx-auto px-5 sm:px-10 pt-12 pb-14">
+        <div className="flex items-center gap-4 mb-4">
+          <span className="text-[10px] tracking-[0.45em] uppercase text-white/35">Menu</span>
+          <div className="flex-1 h-px bg-white/[0.07]" />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {allItems.map((item, i) => (
+            <Link key={item.id} href={item.href}
+              className="group relative overflow-hidden rounded-2xl border border-white/[0.07] hover:border-[#C9A84C]/45 transition-all duration-300"
+              style={{ height: '150px' }}>
+              <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[1200ms] ease-out group-hover:scale-110"
+                style={{ backgroundImage: `url(${item.img})` }} />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/30 group-hover:from-black/80 transition-all duration-500" />
+              <div className="relative h-full flex flex-col justify-between p-5">
+                <span className="font-cormorant italic text-[#C9A84C]/70 text-lg leading-none">{String(i + 1).padStart(2, '0')}</span>
+                <div className="flex items-end justify-between gap-3">
+                  <span className="text-[13px] tracking-[0.28em] font-medium text-white/80 group-hover:text-white uppercase transition-colors">
+                    {item.name}
+                  </span>
+                  <span className="w-8 h-8 rounded-full border border-[#C9A84C]/35 text-[#C9A84C] flex items-center justify-center shrink-0 transition-all duration-300 group-hover:bg-[#C9A84C] group-hover:text-black">
+                    →
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
 
       {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
       <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-12 sm:py-16">
