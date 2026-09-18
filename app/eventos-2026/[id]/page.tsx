@@ -3792,6 +3792,8 @@ export default function EventoPage() {
   // Alertas de prazo desligados por ação (ex.: galerias_alerta_off) — o /photo
   // deixa de contar essa entrega como atraso para este casamento.
   const [alertasOff, setAlertasOff] = useState<Record<string, boolean>>({})
+  // Dia em que os noivos entregaram a seleção — as Fotos Finais têm 30 dias a partir daqui
+  const [selecaoRecebida, setSelecaoRecebida] = useState<string>('')
   const [fotosConvidadosEmailEnviada, setFotosConvidadosEmailEnviada] = useState<string | null>(null)
   const [fotosConvidadosCttEnviada, setFotosConvidadosCttEnviada] = useState<string | null>(null)
   const [fotosConvidadosEmailLista, setFotosConvidadosEmailLista] = useState<string[]>([])
@@ -4126,7 +4128,8 @@ export default function EventoPage() {
               if (s.prewedding_enviada)       setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
-              setAlertasOff({ galerias: !!s.galerias_alerta_off, selecao: !!s.selecao_alerta_off })
+              setAlertasOff({ galerias: !!s.galerias_alerta_off, selecao: !!s.selecao_alerta_off, fotos_finais: !!s.fotos_finais_alerta_off })
+              if (typeof s.selecao_recebida === 'string') setSelecaoRecebida(s.selecao_recebida)
               if (s.fotos_convidados_email_enviada) setFotosConvidadosEmailEnviada(s.fotos_convidados_email_enviada)
               if (s.fotos_convidados_ctt_enviada)   setFotosConvidadosCttEnviada(s.fotos_convidados_ctt_enviada)
               if (Array.isArray(s.fotos_convidados_email_lista)) setFotosConvidadosEmailLista(s.fotos_convidados_email_lista)
@@ -5499,17 +5502,19 @@ export default function EventoPage() {
             {[
               { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      urlKey: 'selecao',      api: '/api/send-selecao-email', prazoDias: 30 },
               { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   urlKey: 'prewedding',   api: '/api/send-prewedding-email' },
-              { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', urlKey: 'fotos_finais', api: '/api/send-fotos-finais-email' },
+              { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', urlKey: 'fotos_finais', api: '/api/send-fotos-finais-email', prazoDias: 30, prazoDesde: 'selecao_recebida' as const },
               { label: 'Galerias Online',   state: galeriasEnviada,     setState: setGaleriasEnviada,     key: 'galerias_enviada',     urlKey: 'galerias',     api: '/api/send-galerias-email', prazoDias: 7 },
               { label: 'Enviar Maquete',    state: maqueteEnviada,      setState: setMaqueteEnviada,      key: 'maquete_enviada',      urlKey: 'maquete',      api: '/api/send-maquete-email' },
-            ].map(({ label, state, setState, key, urlKey, api, prazoDias }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoDias?: number }, i, arr) => {
+            ].map(({ label, state, setState, key, urlKey, api, prazoDias, prazoDesde }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoDias?: number; prazoDesde?: 'selecao_recebida' }, i, arr) => {
               const url = actionUrls[urlKey] ?? ''
               const hasUrl = url.trim().length > 0
               // Prazo a contar da data do casamento (só nas ações com regra)
               const alertaOff = !!alertasOff[urlKey]
               let prazoTxt = '', prazoPassou = false
-              if (prazoDias && evento?.data_evento) {
-                const lim = new Date(evento.data_evento + 'T12:00:00')
+              // Base do prazo: data do casamento, ou o dia em que os noivos entregaram a seleção
+              const basePrazo = prazoDesde === 'selecao_recebida' ? selecaoRecebida : evento?.data_evento
+              if (prazoDias && basePrazo) {
+                const lim = new Date(basePrazo + 'T12:00:00')
                 lim.setDate(lim.getDate() + prazoDias)
                 const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
                 const dias = Math.round((lim.getTime() - hoje.getTime()) / 86400000)
@@ -5543,10 +5548,29 @@ export default function EventoPage() {
                     {!state && prazoDias && alertaOff && (
                       <p className="text-[10px] mt-0.5 text-white/35">Alerta desligado · não conta como atraso</p>
                     )}
+                    {prazoDesde === 'selecao_recebida' && (
+                      <label className="flex items-center gap-2 mt-2 text-[10px] tracking-wide text-white/45">
+                        Seleção recebida dos noivos
+                        <input
+                          type="date"
+                          value={selecaoRecebida}
+                          onChange={async ev => {
+                            const v = ev.target.value
+                            setSelecaoRecebida(v)
+                            if (!evento?.referencia) return
+                            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { selecao_recebida: v || null } } }) })
+                          }}
+                          className="bg-zinc-900 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-2 py-1 text-[11px] text-white/75 focus:outline-none [color-scheme:dark]"
+                        />
+                      </label>
+                    )}
+                    {!state && prazoDesde === 'selecao_recebida' && !selecaoRecebida && (
+                      <p className="text-[10px] mt-1 text-white/30">O prazo de 30 dias começa quando indicares esta data</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {/* Desligar/ligar o alerta de prazo desta entrega */}
-                    {!state && prazoDias && (
+                    {!state && prazoDias && prazoTxt && (
                       <button
                         onClick={alternarAlerta}
                         title={alertaOff ? 'Ligar alerta de prazo' : 'Desligar alerta de prazo (não conta como atraso)'}

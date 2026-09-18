@@ -512,6 +512,27 @@ export default async function PhotoDashboard() {
   const selecoesAVencer7 = selecoes.filter((g: any) => g.dias >= 0 && g.dias <= 7)
   const selecoesProximas = selecoes.filter((g: any) => g.dias <= 15)
 
+  //   Fotos Finais: 30 dias depois de os noivos entregarem a seleção
+  //   (settings.selecao_recebida, preenchido na ficha). Feito = settings.fotos_finais_enviada.
+  //   Sem data de seleção recebida ainda não há prazo a contar.
+  const FINAIS_PRAZO_DIAS = 30
+  const finais = eventosRealizados
+    .filter((e: any) => e.referencia && temFotografia(e))
+    .filter((e: any) => !alertasOffRefs.has(e.referencia))
+    .map((e: any) => ({ e, st: settingsPorRef.get(String(e.referencia).toUpperCase()) ?? {} }))
+    .filter(({ st }: any) => typeof st.selecao_recebida === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(st.selecao_recebida))
+    .filter(({ st }: any) => !st.fotos_finais_enviada && !st.fotos_finais_alerta_off)
+    .map(({ e, st }: any) => {
+      const limite = new Date(st.selecao_recebida + 'T12:00:00Z')
+      limite.setUTCDate(limite.getUTCDate() + FINAIS_PRAZO_DIAS)
+      const dias = Math.round((limite.getTime() - new Date(hojeLx + 'T12:00:00Z').getTime()) / 86400000)
+      return { id: e.id, nome: (e.cliente ?? '').trim() || e.referencia, ref: e.referencia, dias }
+    })
+    .sort((a: any, b: any) => a.dias - b.dias)
+  const finaisAtraso = finais.filter((g: any) => g.dias < 0)
+  const finaisAVencer7 = finais.filter((g: any) => g.dias >= 0 && g.dias <= 7)
+  const finaisProximas = finais.filter((g: any) => g.dias <= 15)
+
   // ── Lista das entregas em atraso (gaveta do +) com link para a ficha ─────
   const fotosEmAtraso = fotosAlerta.filter(f => f.diasRestantes < 0)
   const videosEmAtraso = videosAlerta.filter((v: any) => v.diasRestantes < 0)
@@ -537,6 +558,7 @@ export default async function PhotoDashboard() {
   const entregasAtraso: EntregaAtraso[] = [
     ...galeriasAtraso.map((g: any) => ({ tipo: 'Galeria Online', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}` })),
     ...selecoesAtraso.map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}` })),
+    ...finaisAtraso.map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}` })),
     ...fotosEmAtraso.map(f => ({
       tipo: f.tipo === 'sel' ? 'Seleção de fotos' : 'Edição de fotos',
       nome: f.nome, ref: f.ref, dias: Math.abs(f.diasRestantes), href: fichaDe(f.ref, f.eventoId),
@@ -545,14 +567,15 @@ export default async function PhotoDashboard() {
   ]
 
   // ── Prioridades: o que pede atenção, tirado dos alertas já carregados ────
-  const atrasados = fotosAtrasados + videosAtrasados + galeriasAtraso.length + selecoesAtraso.length
+  const atrasados = fotosAtrasados + videosAtrasados + galeriasAtraso.length + selecoesAtraso.length + finaisAtraso.length
   const aVencer7 = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 7).length
     + videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 7).length
     + galeriasAVencer.length
     + selecoesAVencer7.length
+    + finaisAVencer7.length
   const albunsPorEntregar = albumsAprovacao.length
   const prioridades = [
-    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, fotos e vídeos', cor: '#f87171', href: '/casamentos', gaveta: true },
+    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, seleções, fotos finais e vídeos', cor: '#f87171', href: '/casamentos', gaveta: true },
     { n: aVencer7, rotulo: 'A vencer em 7 dias', sub: 'Galerias, seleções e vídeos', cor: '#fbbf24', href: '/casamentos' },
     { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#fb923c', href: '/crm' },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
@@ -596,10 +619,10 @@ export default async function PhotoDashboard() {
     {
       key: 'prazos-fotos',
       title: ['PRAZOS', 'FOTOS'],
-      subtitle: (fotosAlerta.length + selecoesProximas.length) === 0
+      subtitle: (fotosAlerta.length + selecoesProximas.length + finaisProximas.length) === 0
         ? 'Sem prazos urgentes'
         : [
-            (fotosAtrasados + selecoesAtraso.length) > 0 && `⚠ ${fotosAtrasados + selecoesAtraso.length} atrasado${(fotosAtrasados + selecoesAtraso.length) !== 1 ? 's' : ''}`,
+            (fotosAtrasados + selecoesAtraso.length + finaisAtraso.length) > 0 && `⚠ ${fotosAtrasados + selecoesAtraso.length + finaisAtraso.length} atrasado${(fotosAtrasados + selecoesAtraso.length + finaisAtraso.length) !== 1 ? 's' : ''}`,
             fotosCriticos  > 0 && `${fotosCriticos} crítico${fotosCriticos !== 1 ? 's' : ''}`,
             fotosUrgentes  > 0 && `${fotosUrgentes} urgente${fotosUrgentes !== 1 ? 's' : ''}`,
             selecoesProximas.length - selecoesAtraso.length > 0 && `${selecoesProximas.length - selecoesAtraso.length} seleç${selecoesProximas.length - selecoesAtraso.length !== 1 ? 'ões' : 'ão'} a enviar`,
@@ -610,6 +633,13 @@ export default async function PhotoDashboard() {
         ...selecoesProximas.map((g: any) => ({
           main: g.nome,
           sub: `Fotos p/ Seleção · ${g.ref}`,
+          tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
+          tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 3 ? 'text-red-400' : g.dias <= 7 ? 'text-amber-400' : 'text-emerald-400/80',
+        })),
+        // Fotos Finais (30 dias após a seleção dos noivos)
+        ...finaisProximas.map((g: any) => ({
+          main: g.nome,
+          sub: `Fotos Finais · ${g.ref}`,
           tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
           tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 3 ? 'text-red-400' : g.dias <= 7 ? 'text-amber-400' : 'text-emerald-400/80',
         })),
