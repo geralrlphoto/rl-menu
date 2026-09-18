@@ -1,7 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { unstable_cache } from 'next/cache'
-import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
 import { TarefasCard } from '@/app/components/TarefasCard'
@@ -31,28 +30,7 @@ const sectionImages: Record<string, string> = {
 }
 const fallbackImage = 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&q=80'
 
-const PORTAL_PAGE_ID   = '311220116d8a80d29468e817ae7bb79f'
-const SETTINGS_PREFIX  = '__PORTAL_SETTINGS__:'
-
-function parsePortalSettings(blocks: any[]): any {
-  for (const b of blocks) {
-    const rt = b?.paragraph?.rich_text ?? b?.code?.rich_text ?? []
-    const text: string = rt[0]?.plain_text ?? ''
-    if (text.startsWith(SETTINGS_PREFIX)) {
-      try { return JSON.parse(text.slice(SETTINGS_PREFIX.length)) } catch { return {} }
-    }
-  }
-  return {}
-}
-
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
-function fmt(d: string | null) {
-  if (!d) return null
-  const dt = new Date(d.split('T')[0] + 'T00:00:00')
-  if (isNaN(dt.getTime())) return null
-  return `${String(dt.getDate()).padStart(2,'0')} ${MESES[dt.getMonth()]}`
-}
-
 function daysUntil(d: string): number {
   const today = new Date(); today.setHours(0,0,0,0)
   const target = new Date(d + 'T00:00:00')
@@ -81,11 +59,8 @@ export default async function PhotoDashboard() {
 
   // ── Datas de referência ───────────────────────────────────────────────────
   const todayStr = new Date().toISOString().split('T')[0]
-  const in14Days = new Date(); in14Days.setDate(in14Days.getDate() + 14)
-  const in14DaysStr = in14Days.toISOString().split('T')[0]
 
   const NOTION_TOKEN   = process.env.NOTION_TOKEN!
-  const ALBUNS_DB      = '306220116d8a808e9fc0d77766504e52'
   const EVENTOS_DB     = '1ad220116d8a804b839ddc36f1e7ecf1'
   const notionH = {
     'Authorization': `Bearer ${NOTION_TOKEN}`,
@@ -97,22 +72,17 @@ export default async function PhotoDashboard() {
   const in15DaysStr = in15Days.toISOString().split('T')[0]
   const ago90 = new Date(); ago90.setDate(ago90.getDate() - 90)
   const ago90Str = ago90.toISOString().split('T')[0]
-  const ago10 = new Date(); ago10.setDate(ago10.getDate() - 10)
-  const ago10Str = ago10.toISOString().split('T')[0]
 
   // ── Wrappers cached (10 min runtime) ────────────────────────────────────
   // Cada query corre uma vez por chave (recalcula só quando a data de hoje
   // muda OU passam 10 min). Resultado: 1ª visita lenta, restantes instant.
-  const fetchNotion = (cacheKey: string, body: any, blocks = false) =>
+  const fetchNotion = (cacheKey: string, body: any) =>
     unstable_cache(
       async () => {
-        const url = blocks
-          ? `https://api.notion.com/v1/blocks/${PORTAL_PAGE_ID}/children?page_size=100`
-          : `https://api.notion.com/v1/databases/${body._db}/query`
-        const res = await fetch(url, {
-          method: blocks ? 'GET' : 'POST',
+        const res = await fetch(`https://api.notion.com/v1/databases/${body._db}/query`, {
+          method: 'POST',
           headers: notionH,
-          ...(blocks ? {} : { body: JSON.stringify(body) }),
+          body: JSON.stringify(body),
         }).then(r => r.json()).catch(() => ({ results: [] }))
         return res
       },
@@ -120,24 +90,9 @@ export default async function PhotoDashboard() {
       { revalidate: 1800, tags: ['photo-dashboard'] }
     )()
 
-  const getLeadsAtivas = unstable_cache(
-    async () => {
-      const { data } = await supabase.from('crm_contacts')
-        .select('nome, tipo_evento, como_chegou, data_entrada, status')
-        .gte('data_entrada', ago10Str)
-        .not('status', 'in', '("Fechou","NÃO FECHOU","Sem resposta","Encerrado","Cancelado")')
-        .order('data_entrada', { ascending: false })
-      return data ?? []
-    },
-    [`photo-leads-${ago10Str}`],
-    { revalidate: 1800, tags: ['photo-dashboard'] }
-  )
-
-  // Só os campos do settings de que o painel precisa (pré-wedding, entregas,
-  // alertas) — não o conteúdo inteiro de cada portal. Tag 'photo-portais' é
+  // Só os campos do settings de que o painel precisa (entregas e alertas) — não o conteúdo inteiro de cada portal. Tag 'photo-portais' é
   // limpa pelo PATCH de /api/portais quando se marca uma entrega na ficha.
   const CAMPOS_PORTAL = [
-    'noiva', 'noivo', 'preWeddingSlots', 'preWeddingReservedSlotId', 'preWeddingReservedAt',
     'galerias_enviada', 'selecao_enviada', 'fotos_finais_enviada', 'selecao_recebida',
     'galerias_alerta_off', 'selecao_alerta_off', 'fotos_finais_alerta_off', 'alertas_fotografia_ativos',
     'wedding_film_enviada', 'wedding_film_alerta_off',
@@ -152,7 +107,7 @@ export default async function PhotoDashboard() {
         return { referencia: r.referencia as string | null, noiva: r.noiva, noivo: r.noivo, settings }
       })
     },
-    ['photo-portais-v2'],
+    ['photo-portais-v3'],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-portais'] }
   )
 
@@ -171,29 +126,10 @@ export default async function PhotoDashboard() {
   )
 
   const [
-    leadsAtivas,
-    prazosRes,
-    aprovacaoRes,
     fotosRes,
-    portalRes,
     refPortais,
     albunsAprovadosSb,
   ] = await Promise.all([
-    getLeadsAtivas(),
-    fetchNotion(`photo-prazos-${todayStr}`, {
-      _db: ALBUNS_DB,
-      filter: { and: [
-        { property: 'Data prevista de entrega', date: { on_or_after: todayStr } },
-        { property: 'Data prevista de entrega', date: { on_or_before: in14DaysStr } },
-      ]},
-      sorts: [{ property: 'Data prevista de entrega', direction: 'ascending' }],
-      page_size: 8,
-    }),
-    fetchNotion('photo-aprovacao', {
-      _db: ALBUNS_DB,
-      filter: { property: 'Status', status: { equals: 'PARA APROVAÇÃO' } },
-      page_size: 8,
-    }),
     fetchNotion(`photo-fotos-${todayStr}`, {
       _db: EVENTOS_DB,
       filter: { or: [
@@ -211,7 +147,6 @@ export default async function PhotoDashboard() {
       sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
       page_size: 50,
     }),
-    fetchNotion('photo-portal-blocks', null, true),
     getRefPortais(),
     getAlbunsAprovadosSb(),
   ])
@@ -229,14 +164,6 @@ export default async function PhotoDashboard() {
   )
 
   // ── Parsear Notion ────────────────────────────────────────────────────────
-  const prazosAlbuns = (prazosRes.results ?? []).map((p: any) => {
-    const props = p.properties ?? {}
-    const nome = props['Nome']?.title?.[0]?.plain_text ?? '—'
-    const data = props['Data prevista de entrega']?.date?.start ?? null
-    const dias = data ? daysUntil(data) : 99
-    return { nome, data, dias }
-  })
-
   // Antes: lia 'PARA APROVAÇÃO' do Notion (notif para o admin actuar).
   // Agora: lê APROVADO do Supabase. Ficam aqui até o admin clicar 'Entregue'.
   //         Inclui a data limite de entrega (30 dias após aprovação) para
@@ -297,79 +224,6 @@ export default async function PhotoDashboard() {
   // Breakdown de estados críticos para mostrar no subtítulo
   const fotosAtrasados = fotosAlerta.filter(f => f.diasRestantes < 0).length
   // Aviso: últimos 5 dias do prazo (a laranja)
-  const fotosCriticos  = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 5).length
-
-  // ── Pré-wedding reservas ──────────────────────────────────────────────────
-  const ps = parsePortalSettings(portalRes.results ?? [])
-  const noiva: string  = ps.noiva  ?? ''
-  const noivo: string  = ps.noivo  ?? ''
-  const pwSlots: any[] = ps.preWeddingSlots ?? []
-  const pwReservedId: string | null   = ps.preWeddingReservedSlotId ?? null
-  const pwReservedAt: string | null   = ps.preWeddingReservedAt ?? null
-  const pwReservedSlot = pwReservedId ? pwSlots.find((s: any) => s.id === pwReservedId) : null
-  const coupleNames = [noiva, noivo].filter(Boolean).join(' & ') || 'Casal'
-
-  function fmtPwDate(date: string, time: string, local: string) {
-    const [, m, d] = date.split('-').map(Number)
-    return `${String(d).padStart(2,'0')} ${MESES[m-1]}${time ? ` · ${time}` : ''}${local ? ` · ${local}` : ''}`
-  }
-
-  const pwItems: { main: string; sub: string; tag: string | null; tagColor: string }[] = []
-  if (pwReservedSlot) {
-    const reservedDaysAgo  = pwReservedAt
-      ? Math.round((Date.now() - new Date(pwReservedAt).getTime()) / 86400000)
-      : 0
-    const daysToEvent = daysUntil(pwReservedSlot.date)
-    const show = reservedDaysAgo <= 5 || daysToEvent <= 15
-    if (show) {
-      const isUrgent = daysToEvent <= 15
-      pwItems.push({
-        main: coupleNames,
-        sub: fmtPwDate(pwReservedSlot.date, pwReservedSlot.time, pwReservedSlot.local),
-        tag: isUrgent ? `${daysToEvent}d` : '✓ Reservado',
-        tagColor: isUrgent ? 'text-red-400' : 'text-emerald-400',
-      })
-    }
-  }
-
-  for (const portal of refPortais ?? []) {
-    const rps = portal.settings ?? {}
-    const rSlots: any[] = rps.preWeddingSlots ?? []
-    const rReservedId: string | null = rps.preWeddingReservedSlotId ?? null
-    const rReservedAt: string | null = rps.preWeddingReservedAt ?? null
-    const rSlot = rReservedId ? rSlots.find((s: any) => s.id === rReservedId) : null
-    if (!rSlot) continue
-    const reservedDaysAgo = rReservedAt
-      ? Math.round((Date.now() - new Date(rReservedAt).getTime()) / 86400000)
-      : 0
-    const daysToEvent = daysUntil(rSlot.date)
-    const show = reservedDaysAgo <= 5 || daysToEvent <= 15
-    if (!show) continue
-    const isUrgent = daysToEvent <= 15
-    const rNoiva: string = rps.noiva ?? portal.noiva ?? ''
-    const rNoivo: string = rps.noivo ?? portal.noivo ?? ''
-    const rNames = [rNoiva, rNoivo].filter(Boolean).join(' & ') || portal.referencia
-    pwItems.push({
-      main: rNames,
-      sub: fmtPwDate(rSlot.date, rSlot.time, rSlot.local),
-      tag: isUrgent ? `${daysToEvent}d` : '✓ Reservado',
-      tagColor: isUrgent ? 'text-red-400' : 'text-emerald-400',
-    })
-  }
-
-  // ── Temperatura das leads ─────────────────────────────────────────────────
-  function daysSince(d: string) {
-    const today = new Date(); today.setHours(0,0,0,0)
-    return Math.round((today.getTime() - new Date(d + 'T00:00:00').getTime()) / 86400000)
-  }
-  const leadsDedup = new Map<string, any>()
-  for (const l of (leadsAtivas ?? [])) {
-    const key = (l.nome || '').trim()
-    if (key && !leadsDedup.has(key)) leadsDedup.set(key, l)
-  }
-  const leadsQuenteMorno = Array.from(leadsDedup.values()).filter(l => daysSince(l.data_entrada) <= 10)
-  const quente = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) <= 3)
-  const morno  = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) > 3)
 
   // ── Próximos 30 dias: casamentos por dia (hora de Lisboa) ───────────────
   const lisboaISO = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(d)
@@ -462,7 +316,6 @@ export default async function PhotoDashboard() {
     })
     .sort((a: any, b: any) => a.dias - b.dias)
   const galeriasAtraso = galerias.filter((g: any) => g.dias < 0)
-  const galeriasAVencer = galerias.filter((g: any) => g.dias >= 0)
 
   //   Fotos p/ Seleção: 30 dias após o casamento. Conta como feita se o botão
   //   Fotos p/ Seleção foi carregado (settings.selecao_enviada) OU se o
@@ -483,7 +336,6 @@ export default async function PhotoDashboard() {
     })
     .sort((a: any, b: any) => a.dias - b.dias)
   const selecoesAtraso = selecoes.filter((g: any) => g.dias < 0)
-  const selecoesProximas = selecoes.filter((g: any) => g.dias <= 15)
 
   //   Fotos Finais: 30 dias depois de os noivos entregarem a seleção
   //   (settings.selecao_recebida, preenchido na ficha). Feito = settings.fotos_finais_enviada.
@@ -503,7 +355,6 @@ export default async function PhotoDashboard() {
     })
     .sort((a: any, b: any) => a.dias - b.dias)
   const finaisAtraso = finais.filter((g: any) => g.dias < 0)
-  const finaisProximas = finais.filter((g: any) => g.dias <= 15)
 
   // ── Vídeos: Wedding Film até 180 dias úteis (seg–sex) após o casamento ──
   //   Aviso a laranja nos últimos 30 dias, vermelho quando passa.
@@ -539,8 +390,6 @@ export default async function PhotoDashboard() {
     .filter((v: any) => v.diasRestantes <= VIDEO_AVISO_DIAS)
     .sort((a: any, b: any) => a.diasRestantes - b.diasRestantes)
   const videosAtrasados = videosAlerta.filter((v: any) => v.diasRestantes < 0).length
-  const videosCriticos  = videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 5).length
-  const videosUrgentes  = videosAlerta.filter((v: any) => v.diasRestantes > 5 && v.diasRestantes <= VIDEO_AVISO_DIAS).length
   const videosLista: EntregaAtraso[] = videosAlerta.map((v: any) => ({
     tipo: 'Vídeo', nome: v.cliente, ref: v.referencia,
     dias: Math.abs(v.diasRestantes),
@@ -608,133 +457,7 @@ export default async function PhotoDashboard() {
   const totalCasamentosSemana = eventosSemana.filter((e: any) => e.data_evento <= semanaDias[6]).length
   const totalCasamentos30 = eventosSemana.length
 
-  // ── Colunas do carousel ───────────────────────────────────────────────────
-  const cols: DashCol[] = [
-    {
-      key: 'leads',
-      title: ['LEADS'],
-      subtitle: `${quente.length} quente${quente.length !== 1 ? 's' : ''} · ${morno.length} morno${morno.length !== 1 ? 's' : ''}`,
-      empty: 'Sem leads quentes ou mornas',
-      items: leadsQuenteMorno.map(l => ({
-        main: l.nome || '—',
-        sub: [l.tipo_evento, l.como_chegou].filter(Boolean).join(' · '),
-        tag: daysSince(l.data_entrada) <= 3 ? '🔥 Quente' : '🌡 Morno',
-        tagColor: daysSince(l.data_entrada) <= 3 ? 'text-red-400' : 'text-amber-400',
-      })),
-      href: '/crm',
-    },
-    {
-      key: 'galerias',
-      title: ['GALERIAS', 'ONLINE'],
-      subtitle: galerias.length === 0
-        ? 'Todas publicadas'
-        : [
-            galeriasAtraso.length > 0 && `⚠ ${galeriasAtraso.length} atrasada${galeriasAtraso.length !== 1 ? 's' : ''}`,
-            galeriasAVencer.length > 0 && `${galeriasAVencer.length} a publicar`,
-          ].filter(Boolean).join(' · '),
-      empty: 'Todas as galerias publicadas',
-      items: galerias.map((g: any) => ({
-        main: g.nome,
-        sub: `Prazo 7 dias · ${g.ref}`,
-        tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
-        tagColor: g.dias < 0 ? 'text-red-500' : 'text-white/40',
-      })),
-      href: '/casamentos',
-    },
-    {
-      key: 'prazos-fotos',
-      title: ['PRAZOS', 'FOTOS'],
-      subtitle: (fotosAlerta.length + selecoesProximas.length + finaisProximas.length) === 0
-        ? 'Sem prazos urgentes'
-        : [
-            (fotosAtrasados + selecoesAtraso.length + finaisAtraso.length) > 0 && `⚠ ${fotosAtrasados + selecoesAtraso.length + finaisAtraso.length} atrasado${(fotosAtrasados + selecoesAtraso.length + finaisAtraso.length) !== 1 ? 's' : ''}`,
-            fotosCriticos  > 0 && `${fotosCriticos} a terminar`,
-            selecoesProximas.length - selecoesAtraso.length > 0 && `${selecoesProximas.length - selecoesAtraso.length} seleç${selecoesProximas.length - selecoesAtraso.length !== 1 ? 'ões' : 'ão'} a enviar`,
-          ].filter(Boolean).join(' · '),
-      empty: 'Todos os prazos em dia',
-      items: [
-        // Fotos p/ Seleção (30 dias) — atrasadas e a vencer nos próximos 15 dias
-        ...selecoesProximas.map((g: any) => ({
-          main: g.nome,
-          sub: `Fotos p/ Seleção · ${g.ref}`,
-          tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
-          tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 5 ? 'text-orange-400' : 'text-emerald-400/80',
-        })),
-        // Fotos Finais (30 dias após a seleção dos noivos)
-        ...finaisProximas.map((g: any) => ({
-          main: g.nome,
-          sub: `Fotos Finais · ${g.ref}`,
-          tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
-          tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 5 ? 'text-orange-400' : 'text-emerald-400/80',
-        })),
-        // Edição de fotos (Notion)
-        ...fotosAlerta.map(f => ({
-          main: f.nome,
-          sub: `${f.label} · ${f.ref}`,
-          tag: f.diasRestantes < 0 ? `${Math.abs(f.diasRestantes)}d atraso` : f.diasRestantes === 0 ? 'Hoje' : `${f.diasRestantes}d`,
-          tagColor: f.diasRestantes < 0 ? 'text-red-500' : f.diasRestantes <= 5 ? 'text-orange-400' : 'text-emerald-400/80',
-          prazoEventoId: f.eventoId,
-          prazoField: f.tipo === 'fotos' ? 'fotos_edicao_estado' as const : undefined,
-          canClose: !!f.eventoId && f.tipo === 'fotos',
-        })),
-      ],
-      href: '/casamentos',
-    },
-    {
-      key: 'prazos-albuns',
-      title: ['PRAZOS', 'ÁLBUNS'],
-      subtitle: `${prazosAlbuns.length > 0 ? `${prazosAlbuns.length} prazo${prazosAlbuns.length !== 1 ? 's' : ''}` : 'Sem prazos'}${albumsAprovacao.length > 0 ? ` · ${albumsAprovacao.length} aprovação` : ''}`,
-      empty: 'Sem prazos ou aprovações',
-      items: [
-        ...prazosAlbuns.map(a => ({
-          main: a.nome,
-          sub: a.data ? (fmt(a.data) ?? '') : '',
-          tag: a.dias === 0 ? 'Hoje' : a.dias === 1 ? 'Amanhã' : `${a.dias}d`,
-          tagColor: a.dias <= 2 ? 'text-red-400' : a.dias <= 5 ? 'text-amber-400' : 'text-emerald-400/80',
-        })),
-        ...albumsAprovacao.map(a => ({
-          main: a.nome,
-          // Mostra ref + data limite. Se houver atraso, fica em vermelho via tag visual.
-          sub: [a.ref, a.prazoLabel].filter(Boolean).join(' · '),
-          tag: '✓ Entregue',
-          tagColor: 'text-emerald-300',
-          albumId: a.id,
-          canDeliver: true,
-        })),
-      ],
-      href: '/albuns-casamento',
-    },
-    {
-      key: 'pre-wedding',
-      title: ['PRÉ', 'WEDDING'],
-      subtitle: pwItems.length > 0 ? `${pwItems.length} reserva${pwItems.length !== 1 ? 's' : ''}` : 'Sem reservas',
-      empty: 'Sem reservas recentes',
-      items: pwItems,
-      href: '/pre-wedding',
-    },
-    {
-      key: 'videos-prazo',
-      title: ['VÍDEOS', 'PRAZO'],
-      subtitle: videosAlerta.length === 0
-        ? 'Sem prazos urgentes'
-        : [
-            videosAtrasados > 0 && `⚠ ${videosAtrasados} atrasado${videosAtrasados !== 1 ? 's' : ''}`,
-            (videosCriticos + videosUrgentes) > 0 && `${videosCriticos + videosUrgentes} a terminar em 30 dias`,
-          ].filter(Boolean).join(' · ') || `${videosAlerta.length} prazo${videosAlerta.length !== 1 ? 's' : ''}`,
-      empty: 'Todos os vídeos em dia',
-      items: videosAlerta.map(v => ({
-        main: v.cliente,
-        sub: v.referencia,
-        tag: v.diasRestantes < 0
-          ? `${Math.abs(v.diasRestantes)}d atraso`
-          : v.diasRestantes === 0 ? 'Hoje'
-          : v.diasRestantes === 1 ? 'Amanhã'
-          : `${v.diasRestantes}d`,
-        tagColor: v.diasRestantes < 0 ? 'text-red-500' : 'text-orange-400', // vídeos: laranja nos últimos 30 dias
-      })),
-      href: '/casamentos',
-    },
-  ]
+
 
   return (
     <main className="min-h-screen bg-[#080808] flex flex-col">
@@ -955,11 +678,6 @@ export default async function PhotoDashboard() {
             </div>
           </div>
         </div>
-      </div>
-
-      {/* ── Dashboard carousel ──────────────────────────────────────────────── */}
-      <div className="border-t border-[#C9A84C]/25 bg-[#0d0d0d] sm:mt-[80px]">
-        <DashboardCarousel cols={cols} />
       </div>
 
       {/* ── Redes Sociais ───────────────────────────────────────────────────── */}
