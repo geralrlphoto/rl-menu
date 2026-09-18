@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Suspense, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { AdminNotificationsBell } from './AdminNotificationsBell'
@@ -96,6 +96,25 @@ function GlobalMenuInner() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const [open, setOpen] = useState(false)
+  // Barra estreita (só ícones) — fica guardado entre visitas
+  const [compact, setCompact] = useState(false)
+  const [busca, setBusca] = useState('')
+
+  useEffect(() => {
+    setCompact(localStorage.getItem('rl-menu-compacto') === '1')
+  }, [])
+
+  // O conteúdo das páginas acompanha a largura da barra
+  useEffect(() => {
+    document.documentElement.style.setProperty('--rl-sidebar', compact ? '76px' : '230px')
+  }, [compact])
+
+  function toggleCompact() {
+    setCompact(v => {
+      localStorage.setItem('rl-menu-compacto', v ? '0' : '1')
+      return !v
+    })
+  }
 
   const isHidden = HIDDEN_EXACT.includes(pathname) || HIDDEN_PATHS.some(p => pathname.startsWith(p))
   // Esconder também quando ?view=freelancer (modo "Ver como Freelancer")
@@ -114,132 +133,217 @@ function GlobalMenuInner() {
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : (pathname === href || pathname.startsWith(href + '/') || (href !== '/photo' && href !== '/media' && pathname.startsWith(href)))
 
+  const semAcentos = (v: string) => v.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
   // ── Link item — shared between drawer and sidebar ──────────────────────────
-  const NavItem = ({ href, label, sub, icon, exact }: { href: string; label: string; sub?: string; icon: ReactNode; exact?: boolean }) => {
+  const NavItem = ({ href, label, sub, icon, exact, mini }: { href: string; label: string; sub?: string; icon: ReactNode; exact?: boolean; mini?: boolean }) => {
     const active = isActive(href, exact)
     return (
       <Link
         href={href}
         onClick={() => setOpen(false)}
-        className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 group"
-        style={active ? {
-          background: isMedia ? 'rgba(255,255,255,0.05)' : `${gold}0.08)`,
-          border: `1px solid ${isMedia ? 'rgba(255,255,255,0.18)' : `${gold}0.22)`}`,
-          boxShadow: isMedia ? undefined : `0 0 16px ${gold}0.06)`,
-        } : { border: '1px solid transparent' }}
-        onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+        title={mini ? label : undefined}
+        className={`group relative flex items-center ${mini ? 'justify-center' : 'gap-3'} rounded-xl transition-all duration-200`}
+        style={{
+          padding: mini ? '10px 0' : '9px 10px',
+          background: active ? (isMedia ? 'rgba(255,255,255,0.05)' : `${gold}0.09)`) : 'transparent',
+        }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.035)' }}
         onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
       >
-        <span className="shrink-0" style={{ color: active ? accent(0.75) : accent(0.3) }}>
+        {/* Barra dourada do item ativo */}
+        <span className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full transition-all duration-300"
+          style={{
+            width: '2px',
+            height: active ? '60%' : '0%',
+            background: accent(0.9),
+            boxShadow: active ? `0 0 10px ${accent(0.5)}` : 'none',
+          }} />
+
+        <span className="shrink-0 flex items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-[1.06]"
+          style={{
+            width: '30px', height: '30px',
+            color: active ? accent(0.95) : accent(0.42),
+            background: active ? (isMedia ? 'rgba(255,255,255,0.07)' : `${gold}0.12)`) : 'rgba(255,255,255,0.03)',
+            border: `1px solid ${active ? accent(0.28) : 'rgba(255,255,255,0.05)'}`,
+          }}>
           {icon}
         </span>
-        <div className="flex-1 min-w-0">
-          <p className="text-[12px] tracking-wide leading-tight truncate"
-            style={{ color: active ? accent(0.9) : accent(0.45) }}>
-            {label}
-          </p>
-          {sub && (
-            <p className="text-[9px] leading-tight mt-0.5 truncate" style={{ color: 'rgba(255,255,255,0.12)' }}>
-              {sub}
+
+        {!mini && (
+          <div className="flex-1 min-w-0">
+            <p className="text-[12.5px] tracking-wide leading-tight truncate transition-colors duration-200"
+              style={{ color: active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.62)' }}>
+              {label}
             </p>
-          )}
-        </div>
-        {active && (
-          <span className="w-1 h-1 rounded-full shrink-0"
-            style={{ background: accent(0.8), boxShadow: `0 0 6px ${accent(0.6)}` }} />
+            {sub && (
+              <p className="text-[8.5px] leading-tight mt-0.5 truncate uppercase tracking-[0.2em]"
+                style={{ color: active ? accent(0.55) : 'rgba(255,255,255,0.18)' }}>
+                {sub}
+              </p>
+            )}
+          </div>
         )}
       </Link>
     )
   }
 
   // ── Cross-brand switcher ───────────────────────────────────────────────────
-  const BrandSwitch = () => (
+  const BrandSwitch = ({ mini }: { mini?: boolean }) => (
     <Link
       href={isMedia ? '/photo' : '/media'}
       onClick={() => setOpen(false)}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150"
-      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.18)' }}
-      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.12)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.35)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)' }}
+      title={mini ? (isMedia ? 'RL Photo.Video' : 'RL PROD') : undefined}
+      className={`flex items-center ${mini ? 'justify-center' : 'gap-3'} rounded-xl transition-all duration-200`}
+      style={{ padding: mini ? '10px 0' : '9px 10px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.08)' }}
+      onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.045)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
     >
       <span className="shrink-0" style={{ color: 'rgba(255,255,255,0.5)' }}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4">
           <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2V8z"/>
         </svg>
       </span>
-      <span className="text-[12px] tracking-wide font-medium flex-1" style={{ color: 'rgba(255,255,255,0.75)' }}>
-        {isMedia ? 'RL Photo.Video' : 'RL PROD'}
-      </span>
-      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '14px' }}>→</span>
+      {!mini && (
+        <>
+          <span className="text-[12px] tracking-wide font-medium flex-1" style={{ color: 'rgba(255,255,255,0.72)' }}>
+            {isMedia ? 'RL Photo.Video' : 'RL PROD'}
+          </span>
+          <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>→</span>
+        </>
+      )}
     </Link>
   )
 
   // ── Sidebar content (shared) ───────────────────────────────────────────────
-  const SidebarContent = () => (
-    <>
-      {/* Grid bg */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden"
-        style={{
-          backgroundImage: `linear-gradient(${accent(0.025)} 1px,transparent 1px),linear-gradient(90deg,${accent(0.025)} 1px,transparent 1px)`,
-          backgroundSize: '40px 40px',
-        }}
-      />
+  // mini = barra estreita (só no desktop); comToggle = tem o botão de encolher
+  const SidebarContent = ({ mini = false, comToggle = false }: { mini?: boolean; comToggle?: boolean }) => {
+    const filtro = semAcentos(busca.trim())
+    const visiveis = filtro
+      ? navLinks.filter((l: any) => semAcentos(l.label).includes(filtro) || semAcentos(l.sub ?? '').includes(filtro))
+      : navLinks
 
-      {/* Header */}
-      <div className="relative flex items-center justify-between px-5 py-5"
-        style={{ borderBottom: `1px solid ${accent(0.1)}` }}>
-        <div>
-          <p className="text-[9px] tracking-[0.5em] uppercase font-semibold"
-            style={{ color: accent(0.65) }}>
-            {isMedia ? 'RL PROD · Photography & Video' : 'RL Photo · Video'}
-          </p>
-          <p className="text-[10px] tracking-[0.3em] uppercase mt-1"
-            style={{ color: 'rgba(255,255,255,0.2)' }}>
-            Admin
-          </p>
+    return (
+      <>
+        {/* Brilho dourado no canto superior */}
+        <div className="absolute inset-x-0 top-0 h-48 pointer-events-none"
+          style={{ background: `radial-gradient(120% 80% at 0% 0%, ${accent(0.08)}, transparent 70%)` }} />
+
+        {/* Header */}
+        <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} px-4 py-5`}>
+          <Link href={isMedia ? '/media' : '/photo'} onClick={() => setOpen(false)}
+            className={`flex items-center ${mini ? '' : 'gap-3'} min-w-0`}>
+            <span className="shrink-0 flex items-center justify-center rounded-xl"
+              style={{
+                width: '34px', height: '34px',
+                border: `1px solid ${accent(0.35)}`,
+                background: `linear-gradient(140deg, ${accent(0.16)}, transparent)`,
+                color: accent(0.95),
+                boxShadow: `0 0 18px -6px ${accent(0.6)}`,
+              }}>
+              <span className="text-[11px] tracking-[0.1em] font-semibold">RL</span>
+            </span>
+            {!mini && (
+              <div className="min-w-0">
+                <p className="text-[9.5px] tracking-[0.4em] uppercase font-semibold truncate" style={{ color: accent(0.8) }}>
+                  {isMedia ? 'RL PROD' : 'Photo · Video'}
+                </p>
+                <p className="text-[8px] tracking-[0.3em] uppercase mt-0.5" style={{ color: 'rgba(255,255,255,0.22)' }}>
+                  Admin
+                </p>
+              </div>
+            )}
+          </Link>
+
+          {!comToggle && (
+            <button
+              onClick={() => setOpen(false)}
+              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150"
+              style={{ border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.3)' }}
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          )}
         </div>
-        {/* Close button — só no drawer mobile */}
-        <button
-          onClick={() => setOpen(false)}
-          className="lg:hidden w-8 h-8 flex items-center justify-center rounded-xl transition-all duration-150"
-          style={{ border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.02)' }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)'; e.currentTarget.style.color = 'rgba(255,255,255,0.7)' }}
-          onMouseLeave={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = 'rgba(255,255,255,0.3)' }}
-        >
-          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
 
-      {/* Nav links */}
-      <nav className="relative flex-1 min-h-0 overflow-y-auto px-3 pb-4 pt-3 flex flex-col gap-0.5">
-        {/* Sino de Notificações + Presença (admin) — só no menu RL Photo (não no MEDIA) */}
-        {!isMedia && (
-          <>
-            <AdminNotificationsBell />
-            <div className="relative h-px my-1.5 mx-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
-          </>
+        {/* Pesquisa — só com a barra larga */}
+        {!mini && (
+          <div className="relative px-3 pb-3">
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.22)' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-3.5 h-3.5">
+                  <circle cx="11" cy="11" r="7"/><path strokeLinecap="round" d="M21 21l-4-4"/>
+                </svg>
+              </span>
+              <input
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+                placeholder="Procurar…"
+                className="w-full rounded-xl pl-9 pr-8 py-2 text-[12px] text-white/80 placeholder-white/20 focus:outline-none transition-all duration-200"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                onFocus={ev => { ev.currentTarget.style.borderColor = accent(0.35); ev.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
+                onBlur={ev => { ev.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; ev.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
+              />
+              {busca && (
+                <button onClick={() => setBusca('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors text-sm leading-none">
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
         )}
-        {navLinks.map(({ href, label, sub, icon, exact }: any) => (
-          <NavItem key={href} href={href} label={label} sub={sub} icon={icon} exact={exact} />
-        ))}
 
-        {/* Separador */}
-        <div className="relative h-px my-1.5 mx-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+        {/* Nav links */}
+        <nav className={`relative flex-1 min-h-0 overflow-y-auto ${mini ? 'px-2.5' : 'px-3'} pb-4 flex flex-col gap-1`}>
+          {/* Sino de Notificações — só no menu RL Photo (não no MEDIA) */}
+          {!isMedia && (
+            <>
+              <AdminNotificationsBell compact={mini} />
+              <div className="h-px my-1.5 mx-1" style={{ background: 'rgba(255,255,255,0.06)' }} />
+            </>
+          )}
 
-        {/* Trocar brand */}
-        <BrandSwitch />
-      </nav>
+          {visiveis.map(({ href, label, sub, icon, exact }: any) => (
+            <NavItem key={href} href={href} label={label} sub={sub} icon={icon} exact={exact} mini={mini} />
+          ))}
+          {visiveis.length === 0 && (
+            <p className="text-[11px] text-white/25 italic px-2 py-3">Nada com esse nome.</p>
+          )}
 
-      {/* Footer */}
-      <div className="relative px-5 py-3" style={{ borderTop: `1px solid ${accent(0.05)}` }}>
-        <p className="text-[8px] tracking-[0.4em] uppercase" style={{ color: 'rgba(255,255,255,0.1)' }}>
-          {isMedia ? '© RL PROD · Photography & Video' : '© RL Photo · Video'}
-        </p>
-      </div>
-    </>
-  )
+          <div className="h-px my-1.5 mx-1" style={{ background: 'rgba(255,255,255,0.08)' }} />
+          <BrandSwitch mini={mini} />
+        </nav>
+
+        {/* Footer */}
+        <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} gap-2 px-4 py-3`}
+          style={{ borderTop: `1px solid ${accent(0.07)}` }}>
+          {!mini && (
+            <p className="text-[8px] tracking-[0.35em] uppercase truncate" style={{ color: 'rgba(255,255,255,0.14)' }}>
+              {isMedia ? '© RL PROD' : '© RL Photo · Video'}
+            </p>
+          )}
+          {comToggle && (
+            <button
+              onClick={toggleCompact}
+              title={mini ? 'Alargar menu' : 'Encolher menu'}
+              className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200 shrink-0"
+              style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}
+              onMouseEnter={ev => { ev.currentTarget.style.borderColor = accent(0.4); ev.currentTarget.style.color = accent(0.9) }}
+              onMouseLeave={ev => { ev.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; ev.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5"
+                style={{ transform: mini ? 'rotate(180deg)' : 'none', transition: 'transform .3s ease' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 6l-6 6 6 6"/>
+              </svg>
+            </button>
+          )}
+        </div>
+      </>
+    )
+  }
 
   return (
     <>
@@ -256,13 +360,14 @@ function GlobalMenuInner() {
           data-global-menu
           className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-40 print:hidden"
           style={{
-            width: '220px',
-            background: 'rgba(0,4,10,0.96)',
-            borderRight: `1px solid ${accent(0.1)}`,
-            boxShadow: `2px 0 24px rgba(0,0,0,0.3)`,
+            width: compact ? '76px' : '230px',
+            transition: 'width .28s cubic-bezier(.2,.7,.2,1)',
+            background: 'linear-gradient(180deg, rgba(8,7,5,0.97), rgba(4,4,6,0.97))',
+            borderRight: `1px solid ${accent(0.12)}`,
+            boxShadow: '2px 0 30px rgba(0,0,0,0.45)',
           }}
         >
-          <SidebarContent />
+          <SidebarContent mini={compact} comToggle />
         </aside>
       )}
 
@@ -313,8 +418,8 @@ function GlobalMenuInner() {
         data-global-menu
         className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-0 left-0 h-full z-[60] flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{
-          width: '256px',
-          background: 'rgba(0,4,10,0.98)',
+          width: '264px',
+          background: 'linear-gradient(180deg, rgba(8,7,5,0.99), rgba(4,4,6,0.99))',
           borderRight: `1px solid ${accent(0.12)}`,
           boxShadow: `4px 0 40px ${accent(0.06)}`,
         }}

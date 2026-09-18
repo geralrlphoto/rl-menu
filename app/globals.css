@@ -6,6 +6,8 @@
 
 :root {
   --gold: #C9A84C;
+  /* Largura da barra lateral do admin — o GlobalMenu altera quando encolhe */
+  --rl-sidebar: 230px;
 }
 
 body {

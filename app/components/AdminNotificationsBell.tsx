@@ -62,7 +62,7 @@ function fmtRel(iso: string): string {
   } catch { return '' }
 }
 
-export function AdminNotificationsBell() {
+export function AdminNotificationsBell({ compact = false }: { compact?: boolean } = {}) {
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [lastSeen, setLastSeen] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
@@ -261,7 +261,8 @@ export function AdminNotificationsBell() {
       <button
         ref={buttonRef}
         onClick={() => setOpen(o => !o)}
-        className={`relative w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150 ${
+        title={compact ? 'Notificações' : undefined}
+        className={`relative w-full flex items-center ${compact ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all duration-150 ${
           unreadCount > 0 ? 'admin-bell-pulse' : ''
         }`}
         style={{
@@ -275,12 +276,14 @@ export function AdminNotificationsBell() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M13.73 21a2 2 0 01-3.46 0"/>
           </svg>
         </span>
-        <span className="text-[12px] tracking-wide font-medium flex-1 text-left"
-          style={{ color: unreadCount > 0 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.75)' }}>
-          Notificações
-        </span>
+        {!compact && (
+          <span className="text-[12px] tracking-wide font-medium flex-1 text-left"
+            style={{ color: unreadCount > 0 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.75)' }}>
+            Notificações
+          </span>
+        )}
         {unreadCount > 0 && (
-          <span className="min-w-[18px] h-[18px] px-1 rounded-full bg-gold text-black text-[10px] font-bold flex items-center justify-center"
+          <span className={`min-w-[18px] h-[18px] px-1 rounded-full bg-gold text-black text-[10px] font-bold flex items-center justify-center ${compact ? 'absolute -top-1 -right-1' : ''}`}
             style={{ boxShadow: '0 0 8px rgba(201,164,92,0.7)' }}>
             {unreadCount}
           </span>

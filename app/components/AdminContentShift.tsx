@@ -11,7 +11,7 @@ export default function AdminContentShift({ children }: { children: ReactNode })
   const isHidden = HIDDEN_EXACT.includes(pathname) || HIDDEN_PATHS.some(p => pathname.startsWith(p))
 
   return (
-    <div className={!isHidden ? 'lg:pl-[220px]' : ''}>
+    <div className={!isHidden ? 'lg:pl-[var(--rl-sidebar,230px)] transition-[padding] duration-300' : ''}>
       {children}
     </div>
   )
