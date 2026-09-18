@@ -500,8 +500,7 @@ export default function FreelancersPage() {
                     </div>
 
                     {/* Ações — sobem ao passar o rato */}
-                    <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center gap-1.5 flex-wrap
-                      opacity-60 group-hover:opacity-100 transition-all duration-300">
+                    <div className="mt-4 pt-3 border-t border-white/[0.06] flex items-center gap-1.5 flex-wrap opacity-60 group-hover:opacity-100 transition-all duration-300">
                       <Link href={`/painel-editor?freelancer=${f.id}&admin=1`} onClick={sfx.clique}
                         className="text-[9px] px-2.5 py-1 rounded-lg border tracking-widest uppercase font-bold transition-all hover:-translate-y-0.5"
                         style={{ background: 'linear-gradient(135deg, rgba(201,164,92,0.15), rgba(201,164,92,0.04))', borderColor: 'rgba(201,164,92,0.45)', color: '#C9A45C' }}
