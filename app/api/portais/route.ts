@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -301,6 +302,14 @@ export async function PATCH(req: NextRequest) {
         settings: { ...seed.settings, ...settingsPatch },
       })
       if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    // O painel /photo guarda os portais em cache (30 min). Quando muda uma
+    // entrega (botões das Ações Fotografia/Vídeo), um alerta de prazo ou a
+    // data da seleção recebida, limpa-se logo para o atraso desaparecer.
+    const chavesPainel = Object.keys(updates.settings ?? {})
+    if (chavesPainel.some(k => /_enviada$|_alerta_off$|^selecao_recebida$|^alertas_fotografia_ativos$|^preWedding/.test(k))) {
+      try { revalidatePath('/photo') } catch { /* ignora */ }
     }
 
     return NextResponse.json({ ok: true })
