@@ -87,7 +87,6 @@ function useSfx() {
   return {
     ligado,
     alternar,
-    hover:   () => tocar(1180, 0.045, 0.022),
     clique:  () => tocar(760, 0.075, 0.045),
     sucesso: () => { tocar(880, 0.09, 0.05); setTimeout(() => tocar(1320, 0.12, 0.045), 90) },
     erro:    () => tocar(180, 0.16, 0.05, 'triangle'),
@@ -277,7 +276,7 @@ export default function FreelancersPage() {
         <div className="relative max-w-6xl mx-auto px-5 sm:px-8 pt-10 pb-8">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div>
-              <Link href="/photo" onMouseEnter={sfx.hover}
+              <Link href="/photo"
                 className="text-[10px] tracking-[0.4em] text-white/30 hover:text-gold uppercase transition-colors">
                 ‹ Dashboard
               </Link>
@@ -293,7 +292,7 @@ export default function FreelancersPage() {
                 { href: '/freelancers/novos', txt: 'Novos' },
                 { href: '/recrutamento', txt: 'Formulário' },
               ].map(({ href, txt, gold }) => (
-                <Link key={href} href={href} onMouseEnter={sfx.hover} onClick={sfx.clique}
+                <Link key={href} href={href} onClick={sfx.clique}
                   className="px-4 py-2 rounded-xl text-[11px] font-semibold tracking-widest uppercase transition-all hover:-translate-y-0.5"
                   style={gold
                     ? { background: 'linear-gradient(135deg, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', border: '1px solid rgba(201,164,92,0.5)', color: '#C9A45C', boxShadow: '0 0 16px rgba(201,164,92,0.2)' }
@@ -302,7 +301,7 @@ export default function FreelancersPage() {
                 </Link>
               ))}
               <button onClick={() => { sfx.clique(); setShowAdd(true); setEditingId(null); setForm(EMPTY_FORM) }}
-                onMouseEnter={sfx.hover}
+               
                 className="px-4 py-2 rounded-xl bg-gold text-black text-[11px] font-bold tracking-widest uppercase transition-all hover:-translate-y-0.5 hover:shadow-[0_10px_28px_-10px_rgba(201,168,76,0.9)]">
                 + Adicionar
               </button>
@@ -342,7 +341,7 @@ export default function FreelancersPage() {
 
         {/* ── Filtros + pesquisa ──────────────────────────────────────────── */}
         <div className="flex items-center gap-2 flex-wrap mb-7">
-          <button onClick={() => { sfx.clique(); setFiltro(null) }} onMouseEnter={sfx.hover}
+          <button onClick={() => { sfx.clique(); setFiltro(null) }}
             className="px-4 py-2 rounded-full text-[10px] tracking-[0.25em] uppercase font-semibold transition-all"
             style={{
               border: `1px solid ${filtro === null ? 'rgba(201,168,76,0.6)' : 'rgba(255,255,255,0.08)'}`,
@@ -357,7 +356,7 @@ export default function FreelancersPage() {
             if (n === 0) return null
             const on = filtro === c.key
             return (
-              <button key={c.key} onMouseEnter={sfx.hover}
+              <button key={c.key}
                 onClick={() => { sfx.clique(); setFiltro(on ? null : c.key) }}
                 className="px-4 py-2 rounded-full text-[10px] tracking-[0.25em] uppercase font-semibold transition-all hover:-translate-y-0.5"
                 style={{
@@ -448,7 +447,6 @@ export default function FreelancersPage() {
                 <div
                   key={f.id}
                   onMouseEnter={e => {
-                    sfx.hover()
                     e.currentTarget.style.borderColor = `${cor}66`
                     e.currentTarget.style.boxShadow = `0 18px 40px -22px ${cor}, 0 0 0 1px ${cor}22`
                   }}
@@ -602,7 +600,7 @@ export default function FreelancersPage() {
               { href: '/freelancers/8694241a-7530-4dfd-8619-a8bf15b9e15e?view=freelancer', tag: 'Fotógrafo', titulo: 'Fotógrafo',
                 desc: 'Fluxo de fotografia: projetos, entregas, calendário e dados pessoais. Separado do editor.' },
             ].map(m => (
-              <Link key={m.href} href={m.href} onMouseEnter={sfx.hover} onClick={sfx.clique}
+              <Link key={m.href} href={m.href} onClick={sfx.clique}
                 className="group relative overflow-hidden rounded-2xl border border-gold/25 p-5 transition-all hover:border-gold/60 hover:-translate-y-1"
                 style={{ background: 'linear-gradient(135deg, rgba(24,18,9,0.7), rgba(11,11,11,0.85))' }}>
                 <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-500"
