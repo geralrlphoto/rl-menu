@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import MarcasOpcao2 from './_marcas/Opcao2'
 
 /* ═══════════════════════════════════════════════════════
    DADOS — edita aqui: textos, links, logos e tons
@@ -77,7 +78,21 @@ function LogoWithFallback({ src, alt, priority }: { src: string; alt: string; pr
 /* ═══════════════════════════════════════════════════════
    COMPONENTE
 ═══════════════════════════════════════════════════════ */
+// /?opcao=2 mostra a Opção 2 ("Película") para comparar; sem parâmetro é a Opção 1
 export default function SplashPage() {
+  return (
+    <Suspense fallback={null}>
+      <EscolhaOpcao />
+    </Suspense>
+  )
+}
+
+function EscolhaOpcao() {
+  const opcao = useSearchParams().get('opcao')
+  return opcao === '2' ? <MarcasOpcao2 /> : <SplashOpcao1 />
+}
+
+function SplashOpcao1() {
   const router = useRouter()
   const [ativo, setAtivo]       = useState(0)     // marca em foco
   const [mostrado, setMostrado] = useState(0)     // marca visível dentro do diafragma
