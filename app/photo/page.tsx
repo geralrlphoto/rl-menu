@@ -478,6 +478,8 @@ export default async function PhotoDashboard() {
     .filter((e: any) => e.referencia && temFotografia(e))
     .filter((e: any) => !alertasOffRefs.has(e.referencia))
     .filter((e: any) => !galeriaFeita.get(String(e.referencia).toUpperCase()))
+    // Alerta desligado na ficha (botão "Desligar alerta" das Ações Fotografia)
+    .filter((e: any) => !settingsPorRef.get(String(e.referencia).toUpperCase())?.galerias_alerta_off)
     .map((e: any) => {
       const limite = new Date(e.data_evento + 'T12:00:00Z')
       limite.setUTCDate(limite.getUTCDate() + GALERIA_PRAZO_DIAS)
@@ -497,7 +499,7 @@ export default async function PhotoDashboard() {
     .filter((e: any) => !alertasOffRefs.has(e.referencia))
     .filter((e: any) => {
       const st = settingsPorRef.get(String(e.referencia).toUpperCase()) ?? {}
-      return !st.selecao_enviada && String(e.sel_fotos_estado ?? '').toLowerCase() !== 'entregue'
+      return !st.selecao_enviada && !st.selecao_alerta_off && String(e.sel_fotos_estado ?? '').toLowerCase() !== 'entregue'
     })
     .map((e: any) => {
       const limite = new Date(e.data_evento + 'T12:00:00Z')

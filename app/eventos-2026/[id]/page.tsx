@@ -3789,6 +3789,9 @@ export default function EventoPage() {
   const [preWeddingEnviada, setPreWeddingEnviada] = useState<string | null>(null)
   const [fotosFinaisEnviada, setFotosFinaisEnviada] = useState<string | null>(null)
   const [galeriasEnviada, setGaleriasEnviada] = useState<string | null>(null)
+  // Alertas de prazo desligados por ação (ex.: galerias_alerta_off) — o /photo
+  // deixa de contar essa entrega como atraso para este casamento.
+  const [alertasOff, setAlertasOff] = useState<Record<string, boolean>>({})
   const [fotosConvidadosEmailEnviada, setFotosConvidadosEmailEnviada] = useState<string | null>(null)
   const [fotosConvidadosCttEnviada, setFotosConvidadosCttEnviada] = useState<string | null>(null)
   const [fotosConvidadosEmailLista, setFotosConvidadosEmailLista] = useState<string[]>([])
@@ -4123,6 +4126,7 @@ export default function EventoPage() {
               if (s.prewedding_enviada)       setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
+              setAlertasOff({ galerias: !!s.galerias_alerta_off, selecao: !!s.selecao_alerta_off })
               if (s.fotos_convidados_email_enviada) setFotosConvidadosEmailEnviada(s.fotos_convidados_email_enviada)
               if (s.fotos_convidados_ctt_enviada)   setFotosConvidadosCttEnviada(s.fotos_convidados_ctt_enviada)
               if (Array.isArray(s.fotos_convidados_email_lista)) setFotosConvidadosEmailLista(s.fotos_convidados_email_lista)
@@ -5493,14 +5497,31 @@ export default function EventoPage() {
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Ações Fotografia</h2>
           <div className="flex flex-col gap-4">
             {[
-              { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      urlKey: 'selecao',      api: '/api/send-selecao-email' },
+              { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      urlKey: 'selecao',      api: '/api/send-selecao-email', prazoDias: 30 },
               { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   urlKey: 'prewedding',   api: '/api/send-prewedding-email' },
               { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', urlKey: 'fotos_finais', api: '/api/send-fotos-finais-email' },
-              { label: 'Galerias Online',   state: galeriasEnviada,     setState: setGaleriasEnviada,     key: 'galerias_enviada',     urlKey: 'galerias',     api: '/api/send-galerias-email' },
+              { label: 'Galerias Online',   state: galeriasEnviada,     setState: setGaleriasEnviada,     key: 'galerias_enviada',     urlKey: 'galerias',     api: '/api/send-galerias-email', prazoDias: 7 },
               { label: 'Enviar Maquete',    state: maqueteEnviada,      setState: setMaqueteEnviada,      key: 'maquete_enviada',      urlKey: 'maquete',      api: '/api/send-maquete-email' },
-            ].map(({ label, state, setState, key, urlKey, api }, i, arr) => {
+            ].map(({ label, state, setState, key, urlKey, api, prazoDias }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoDias?: number }, i, arr) => {
               const url = actionUrls[urlKey] ?? ''
               const hasUrl = url.trim().length > 0
+              // Prazo a contar da data do casamento (só nas ações com regra)
+              const alertaOff = !!alertasOff[urlKey]
+              let prazoTxt = '', prazoPassou = false
+              if (prazoDias && evento?.data_evento) {
+                const lim = new Date(evento.data_evento + 'T12:00:00')
+                lim.setDate(lim.getDate() + prazoDias)
+                const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                const dias = Math.round((lim.getTime() - hoje.getTime()) / 86400000)
+                prazoPassou = dias < 0
+                prazoTxt = `Prazo ${prazoDias} dias · até ${lim.toLocaleDateString('pt-PT')}${dias < 0 ? ` · ${Math.abs(dias)}d atraso` : dias === 0 ? ' · hoje' : ` · faltam ${dias}d`}`
+              }
+              async function alternarAlerta() {
+                if (!evento?.referencia) return
+                const novo = !alertaOff
+                setAlertasOff(prev => ({ ...prev, [urlKey]: novo }))
+                await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_alerta_off`]: novo } } }) })
+              }
               return (
               <div key={key}>
                 {/* Row: label + date + send button */}
@@ -5513,8 +5534,33 @@ export default function EventoPage() {
                         : <span className="text-white/25">Pendente</span>
                       }
                     </p>
+                    {/* Prazo da entrega — só enquanto está pendente */}
+                    {!state && prazoTxt && (
+                      <p className={`text-[10px] mt-1 tracking-wide ${alertaOff ? 'text-white/25 line-through' : prazoPassou ? 'text-red-400/80' : 'text-amber-300/60'}`}>
+                        {prazoTxt}
+                      </p>
+                    )}
+                    {!state && prazoDias && alertaOff && (
+                      <p className="text-[10px] mt-0.5 text-white/35">Alerta desligado · não conta como atraso</p>
+                    )}
                   </div>
                   <div className="flex items-center gap-2">
+                    {/* Desligar/ligar o alerta de prazo desta entrega */}
+                    {!state && prazoDias && (
+                      <button
+                        onClick={alternarAlerta}
+                        title={alertaOff ? 'Ligar alerta de prazo' : 'Desligar alerta de prazo (não conta como atraso)'}
+                        className={`h-9 px-3 flex items-center gap-1.5 rounded-xl border text-[10px] tracking-[0.15em] uppercase transition-all ${alertaOff
+                          ? 'border-white/10 text-white/35 hover:text-white/70 hover:border-white/25'
+                          : 'border-amber-400/30 text-amber-300/80 hover:bg-amber-400/10 hover:border-amber-400/50'}`}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                          <path d="M13.73 21a2 2 0 01-3.46 0" />
+                          {alertaOff && <path d="M3 3l18 18" />}
+                        </svg>
+                        {alertaOff ? 'Ligar alerta' : 'Desligar alerta'}
+                      </button>
+                    )}
                     {state && (
                       <button
                         onClick={async () => {
