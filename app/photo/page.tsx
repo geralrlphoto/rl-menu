@@ -393,10 +393,11 @@ export default async function PhotoDashboard() {
   const quente = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) <= 3)
   const morno  = leadsQuenteMorno.filter(l => daysSince(l.data_entrada) > 3)
 
-  // ── Esta semana: casamentos dos próximos 7 dias (hora de Lisboa) ─────────
+  // ── Próximos 30 dias: casamentos por dia (hora de Lisboa) ───────────────
   const lisboaISO = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(d)
   const hojeLx = lisboaISO(new Date())
-  const semanaDias = Array.from({ length: 7 }).map((_, i) => {
+  const DIAS_AGENDA = 30
+  const semanaDias = Array.from({ length: DIAS_AGENDA }).map((_, i) => {
     const d = new Date(hojeLx + 'T12:00:00Z')
     d.setUTCDate(d.getUTCDate() + i)
     return d.toISOString().split('T')[0]
@@ -406,16 +407,17 @@ export default async function PhotoDashboard() {
       const { data } = await supabase.from('eventos_2026')
         .select('id, referencia, cliente, data_evento, local')
         .gte('data_evento', semanaDias[0])
-        .lte('data_evento', semanaDias[6])
+        .lte('data_evento', semanaDias[DIAS_AGENDA - 1])
         .order('data_evento', { ascending: true })
-        .limit(20)
+        .limit(80)
       return data ?? []
     },
-    [`photo-semana-${semanaDias[0]}`],
+    [`photo-agenda30-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
   const eventosSemana = await getSemana()
   const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
+  const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
   const semana = semanaDias.map((iso, i) => {
     const d = new Date(iso + 'T12:00:00Z')
     return {
@@ -424,6 +426,9 @@ export default async function PhotoDashboard() {
       dia: d.getUTCDate(),
       mes: MESES[d.getUTCMonth()],
       fimDeSemana: d.getUTCDay() === 0 || d.getUTCDay() === 6,
+      // Mostra o mês por cima do primeiro dia e sempre que muda
+      novoMes: i === 0 || d.getUTCDate() === 1,
+      mesLongo: MESES_LONGOS[d.getUTCMonth()],
       eventos: eventosSemana.filter((e: any) => e.data_evento === iso),
     }
   })
@@ -444,7 +449,8 @@ export default async function PhotoDashboard() {
     { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#fb923c', href: '/crm' },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
-  const totalCasamentosSemana = eventosSemana.length
+  const totalCasamentosSemana = eventosSemana.filter((e: any) => e.data_evento <= semanaDias[6]).length
+  const totalCasamentos30 = eventosSemana.length
 
   // ── Colunas do carousel ───────────────────────────────────────────────────
   const cols: DashCol[] = [
@@ -596,51 +602,66 @@ export default async function PhotoDashboard() {
         </div>
       </section>
 
-      {/* ── Esta semana ───────────────────────────────────────────────────── */}
+      {/* ── Próximos 30 dias (scroll horizontal) ─────────────────────────── */}
       <section className="max-w-6xl w-full mx-auto px-5 sm:px-10 pt-10">
         <div className="flex items-center gap-4 mb-4">
-          <span className="text-[10px] tracking-[0.45em] uppercase text-white/35">Esta semana</span>
+          <span className="text-[10px] tracking-[0.45em] uppercase text-white/35">Próximos 30 dias</span>
+          <span className="text-[10px] text-white/25">
+            {totalCasamentos30} casamento{totalCasamentos30 !== 1 ? 's' : ''}
+          </span>
           <div className="flex-1 h-px bg-white/[0.07]" />
+          <span className="hidden sm:inline text-[9px] tracking-[0.3em] uppercase text-white/20">desliza →</span>
           <Link href="/calendario" className="text-[9px] tracking-[0.3em] uppercase text-white/25 hover:text-[#C9A84C] transition-colors">
             Calendário →
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
-          {semana.map((d, i) => {
-            const cheio = d.eventos.length > 0
-            return (
-              <div key={d.iso}
-                className="rounded-xl border px-3 py-3 min-h-[118px] flex flex-col"
-                style={{
-                  borderColor: i === 0 ? 'rgba(201,168,76,0.5)' : cheio ? 'rgba(201,168,76,0.22)' : 'rgba(255,255,255,0.06)',
-                  background: i === 0 ? 'rgba(201,168,76,0.07)' : cheio ? 'rgba(201,168,76,0.03)' : 'rgba(255,255,255,0.015)',
-                }}>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-[9px] tracking-[0.25em] uppercase"
-                    style={{ color: i === 0 ? '#C9A84C' : d.fimDeSemana ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)' }}>
-                    {d.rotulo}
-                  </span>
-                  <span className="font-cormorant text-xl leading-none" style={{ color: cheio ? '#fff' : 'rgba(255,255,255,0.3)' }}>
-                    {d.dia} <span className="text-[10px] text-white/30 font-sans">{d.mes}</span>
-                  </span>
-                </div>
+        <div className="relative">
+          {/* Esbatido na ponta direita: indica que há mais para a frente */}
+          <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-16 z-10 bg-gradient-to-l from-[#080808] to-transparent" />
 
-                <div className="mt-2.5 flex flex-col gap-1.5">
-                  {d.eventos.length === 0 && <span className="text-[10px] text-white/15">—</span>}
-                  {d.eventos.map((e: any) => (
-                    <Link key={e.id} href={`/eventos-2026/${e.id}`}
-                      className="group block rounded-lg px-2 py-1.5 bg-white/[0.03] hover:bg-[#C9A84C]/10 border border-white/[0.05] hover:border-[#C9A84C]/35 transition-all">
-                      <p className="text-[11px] text-white/85 group-hover:text-white leading-tight truncate uppercase tracking-wide">
-                        {(e.cliente ?? '').trim() || e.referencia}
-                      </p>
-                      {e.local && <p className="text-[9px] text-white/35 truncate mt-0.5">{e.local}</p>}
-                    </Link>
-                  ))}
+          <div className="agenda-scroll flex gap-2 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
+            {semana.map((d, i) => {
+              const cheio = d.eventos.length > 0
+              return (
+                <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
+                  {/* Mês por cima do primeiro dia e de cada dia 1 */}
+                  <p className="h-5 text-[9px] tracking-[0.35em] uppercase text-[#C9A84C]/60 pl-1">
+                    {d.novoMes ? d.mesLongo : ''}
+                  </p>
+                  <div
+                    className="flex-1 rounded-xl border px-3 py-3 min-h-[118px] flex flex-col"
+                    style={{
+                      borderColor: i === 0 ? 'rgba(201,168,76,0.5)' : cheio ? 'rgba(201,168,76,0.22)' : 'rgba(255,255,255,0.06)',
+                      background: i === 0 ? 'rgba(201,168,76,0.07)' : cheio ? 'rgba(201,168,76,0.03)' : 'rgba(255,255,255,0.015)',
+                    }}>
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-[9px] tracking-[0.25em] uppercase"
+                        style={{ color: i === 0 ? '#C9A84C' : d.fimDeSemana ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)' }}>
+                        {d.rotulo}
+                      </span>
+                      <span className="font-cormorant text-xl leading-none" style={{ color: cheio ? '#fff' : 'rgba(255,255,255,0.3)' }}>
+                        {d.dia} <span className="text-[10px] text-white/30 font-sans">{d.mes}</span>
+                      </span>
+                    </div>
+
+                    <div className="mt-2.5 flex flex-col gap-1.5">
+                      {d.eventos.length === 0 && <span className="text-[10px] text-white/15">—</span>}
+                      {d.eventos.map((e: any) => (
+                        <Link key={e.id} href={`/eventos-2026/${e.id}`}
+                          className="group block rounded-lg px-2 py-1.5 bg-white/[0.03] hover:bg-[#C9A84C]/10 border border-white/[0.05] hover:border-[#C9A84C]/35 transition-all">
+                          <p className="text-[11px] text-white/85 group-hover:text-white leading-tight truncate uppercase tracking-wide">
+                            {(e.cliente ?? '').trim() || e.referencia}
+                          </p>
+                          {e.local && <p className="text-[9px] text-white/35 truncate mt-0.5">{e.local}</p>}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
+              )
+            })}
+          </div>
         </div>
       </section>
 

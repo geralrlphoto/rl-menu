@@ -126,3 +126,10 @@ body {
      colado a ela. Afasta o conteúdo o suficiente para respirar. */
   main.painel-main > div:first-child { padding-top: 5.5rem; }
 }
+
+/* ── Agenda de 30 dias no menu principal (/photo) — scroll horizontal fino ── */
+.agenda-scroll { scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.35) transparent; }
+.agenda-scroll::-webkit-scrollbar { height: 4px; }
+.agenda-scroll::-webkit-scrollbar-track { background: transparent; }
+.agenda-scroll::-webkit-scrollbar-thumb { background: rgba(201,168,76,0.3); border-radius: 99px; }
+.agenda-scroll::-webkit-scrollbar-thumb:hover { background: rgba(201,168,76,0.6); }
