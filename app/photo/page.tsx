@@ -306,8 +306,8 @@ export default async function PhotoDashboard() {
 
   // Breakdown de estados críticos para mostrar no subtítulo
   const fotosAtrasados = fotosAlerta.filter(f => f.diasRestantes < 0).length
-  const fotosCriticos  = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 3).length
-  const fotosUrgentes  = fotosAlerta.filter(f => f.diasRestantes > 3 && f.diasRestantes <= 7).length
+  // Aviso: últimos 5 dias do prazo (a laranja)
+  const fotosCriticos  = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 5).length
 
   const videosAlerta = (videosRes.results ?? [])
     .map((p: any) => {
@@ -322,8 +322,8 @@ export default async function PhotoDashboard() {
     .sort((a: any, b: any) => a.diasRestantes - b.diasRestantes)
 
   const videosAtrasados = videosAlerta.filter((v: any) => v.diasRestantes < 0).length
-  const videosCriticos  = videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 3).length
-  const videosUrgentes  = videosAlerta.filter((v: any) => v.diasRestantes > 3 && v.diasRestantes <= 30).length
+  const videosCriticos  = videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 5).length
+  const videosUrgentes  = videosAlerta.filter((v: any) => v.diasRestantes > 5 && v.diasRestantes <= 30).length
 
   // ── Pré-wedding reservas ──────────────────────────────────────────────────
   const ps = parsePortalSettings(portalRes.results ?? [])
@@ -509,7 +509,6 @@ export default async function PhotoDashboard() {
     })
     .sort((a: any, b: any) => a.dias - b.dias)
   const selecoesAtraso = selecoes.filter((g: any) => g.dias < 0)
-  const selecoesAVencer7 = selecoes.filter((g: any) => g.dias >= 0 && g.dias <= 7)
   const selecoesProximas = selecoes.filter((g: any) => g.dias <= 15)
 
   //   Fotos Finais: 30 dias depois de os noivos entregarem a seleção
@@ -530,7 +529,6 @@ export default async function PhotoDashboard() {
     })
     .sort((a: any, b: any) => a.dias - b.dias)
   const finaisAtraso = finais.filter((g: any) => g.dias < 0)
-  const finaisAVencer7 = finais.filter((g: any) => g.dias >= 0 && g.dias <= 7)
   const finaisProximas = finais.filter((g: any) => g.dias <= 15)
 
   // ── Lista das entregas em atraso (gaveta do +) com link para a ficha ─────
@@ -568,16 +566,19 @@ export default async function PhotoDashboard() {
 
   // ── Prioridades: o que pede atenção, tirado dos alertas já carregados ────
   const atrasados = fotosAtrasados + videosAtrasados + galeriasAtraso.length + selecoesAtraso.length + finaisAtraso.length
-  const aVencer7 = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 7).length
-    + videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 7).length
-    + galeriasAVencer.length
-    + selecoesAVencer7.length
-    + finaisAVencer7.length
+  // Aviso: prazos que terminam nos próximos 5 dias (a laranja). As Galerias Online
+  // ficam de fora — só contam quando passam do prazo.
+  const AVISO_DIAS = 5
+  const noAviso = (d: number) => d >= 0 && d <= AVISO_DIAS
+  const avisos5 = fotosAlerta.filter(f => noAviso(f.diasRestantes)).length
+    + videosAlerta.filter((v: any) => noAviso(v.diasRestantes)).length
+    + selecoes.filter((g: any) => noAviso(g.dias)).length
+    + finais.filter((g: any) => noAviso(g.dias)).length
   const albunsPorEntregar = albumsAprovacao.length
   const prioridades = [
     { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, seleções, fotos finais e vídeos', cor: '#f87171', href: '/casamentos', gaveta: true },
-    { n: aVencer7, rotulo: 'A vencer em 7 dias', sub: 'Galerias, seleções e vídeos', cor: '#fbbf24', href: '/casamentos' },
-    { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#fb923c', href: '/crm' },
+    { n: avisos5, rotulo: 'Termina em 5 dias', sub: 'Seleções, fotos finais, edição e vídeos', cor: '#fb923c', href: '/casamentos' },
+    { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#f472b6', href: '/crm' },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
   const totalCasamentosSemana = eventosSemana.filter((e: any) => e.data_evento <= semanaDias[6]).length
@@ -612,7 +613,7 @@ export default async function PhotoDashboard() {
         main: g.nome,
         sub: `Prazo 7 dias · ${g.ref}`,
         tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
-        tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 2 ? 'text-red-400' : 'text-amber-400',
+        tagColor: g.dias < 0 ? 'text-red-500' : 'text-white/40',
       })),
       href: '/casamentos',
     },
@@ -623,8 +624,7 @@ export default async function PhotoDashboard() {
         ? 'Sem prazos urgentes'
         : [
             (fotosAtrasados + selecoesAtraso.length + finaisAtraso.length) > 0 && `⚠ ${fotosAtrasados + selecoesAtraso.length + finaisAtraso.length} atrasado${(fotosAtrasados + selecoesAtraso.length + finaisAtraso.length) !== 1 ? 's' : ''}`,
-            fotosCriticos  > 0 && `${fotosCriticos} crítico${fotosCriticos !== 1 ? 's' : ''}`,
-            fotosUrgentes  > 0 && `${fotosUrgentes} urgente${fotosUrgentes !== 1 ? 's' : ''}`,
+            fotosCriticos  > 0 && `${fotosCriticos} a terminar`,
             selecoesProximas.length - selecoesAtraso.length > 0 && `${selecoesProximas.length - selecoesAtraso.length} seleç${selecoesProximas.length - selecoesAtraso.length !== 1 ? 'ões' : 'ão'} a enviar`,
           ].filter(Boolean).join(' · '),
       empty: 'Todos os prazos em dia',
@@ -634,21 +634,21 @@ export default async function PhotoDashboard() {
           main: g.nome,
           sub: `Fotos p/ Seleção · ${g.ref}`,
           tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
-          tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 3 ? 'text-red-400' : g.dias <= 7 ? 'text-amber-400' : 'text-emerald-400/80',
+          tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 5 ? 'text-orange-400' : 'text-emerald-400/80',
         })),
         // Fotos Finais (30 dias após a seleção dos noivos)
         ...finaisProximas.map((g: any) => ({
           main: g.nome,
           sub: `Fotos Finais · ${g.ref}`,
           tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
-          tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 3 ? 'text-red-400' : g.dias <= 7 ? 'text-amber-400' : 'text-emerald-400/80',
+          tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 5 ? 'text-orange-400' : 'text-emerald-400/80',
         })),
         // Edição de fotos (Notion)
         ...fotosAlerta.map(f => ({
           main: f.nome,
           sub: `${f.label} · ${f.ref}`,
           tag: f.diasRestantes < 0 ? `${Math.abs(f.diasRestantes)}d atraso` : f.diasRestantes === 0 ? 'Hoje' : `${f.diasRestantes}d`,
-          tagColor: f.diasRestantes < 0 ? 'text-red-500' : f.diasRestantes <= 3 ? 'text-red-400' : f.diasRestantes <= 7 ? 'text-amber-400' : 'text-emerald-400/80',
+          tagColor: f.diasRestantes < 0 ? 'text-red-500' : f.diasRestantes <= 5 ? 'text-orange-400' : 'text-emerald-400/80',
           prazoEventoId: f.eventoId,
           prazoField: f.tipo === 'fotos' ? 'fotos_edicao_estado' as const : undefined,
           canClose: !!f.eventoId && f.tipo === 'fotos',
@@ -695,8 +695,8 @@ export default async function PhotoDashboard() {
         ? 'Sem prazos urgentes'
         : [
             videosAtrasados > 0 && `⚠ ${videosAtrasados} atrasado${videosAtrasados !== 1 ? 's' : ''}`,
-            videosCriticos  > 0 && `${videosCriticos} crítico${videosCriticos !== 1 ? 's' : ''}`,
-            videosUrgentes  > 0 && `${videosUrgentes} urgente${videosUrgentes !== 1 ? 's' : ''}`,
+            videosCriticos  > 0 && `${videosCriticos} a terminar`,
+            videosUrgentes  > 0 && `${videosUrgentes} nos próximos 30 dias`,
           ].filter(Boolean).join(' · ') || `${videosAlerta.length} prazo${videosAlerta.length !== 1 ? 's' : ''}`,
       empty: 'Todos os vídeos em dia',
       items: videosAlerta.map(v => ({
@@ -707,7 +707,7 @@ export default async function PhotoDashboard() {
           : v.diasRestantes === 0 ? 'Hoje'
           : v.diasRestantes === 1 ? 'Amanhã'
           : `${v.diasRestantes}d`,
-        tagColor: v.diasRestantes < 0 ? 'text-red-500' : v.diasRestantes <= 3 ? 'text-red-400' : v.diasRestantes <= 7 ? 'text-amber-400' : 'text-emerald-400/80',
+        tagColor: v.diasRestantes < 0 ? 'text-red-500' : v.diasRestantes <= 5 ? 'text-orange-400' : 'text-emerald-400/80',
       })),
       href: '/casamentos',
     },

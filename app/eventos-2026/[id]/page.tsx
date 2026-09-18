@@ -5510,7 +5510,7 @@ export default function EventoPage() {
               const hasUrl = url.trim().length > 0
               // Prazo a contar da data do casamento (só nas ações com regra)
               const alertaOff = !!alertasOff[urlKey]
-              let prazoTxt = '', prazoPassou = false
+              let prazoTxt = '', prazoPassou = false, prazoAviso = false
               // Base do prazo: data do casamento, ou o dia em que os noivos entregaram a seleção
               const basePrazo = prazoDesde === 'selecao_recebida' ? selecaoRecebida : evento?.data_evento
               if (prazoDias && basePrazo) {
@@ -5519,7 +5519,9 @@ export default function EventoPage() {
                 const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
                 const dias = Math.round((lim.getTime() - hoje.getTime()) / 86400000)
                 prazoPassou = dias < 0
-                prazoTxt = `Prazo ${prazoDias} dias · até ${lim.toLocaleDateString('pt-PT')}${dias < 0 ? ` · ${Math.abs(dias)}d atraso` : dias === 0 ? ' · hoje' : ` · faltam ${dias}d`}`
+                // Aviso a laranja nos últimos 5 dias — exceto Galerias Online, que só avisa quando passa
+                prazoAviso = dias >= 0 && dias <= 5 && urlKey !== 'galerias'
+                prazoTxt = `${prazoAviso ? '⚠ ' : ''}Prazo ${prazoDias} dias · até ${lim.toLocaleDateString('pt-PT')}${dias < 0 ? ` · ${Math.abs(dias)}d atraso` : dias === 0 ? ' · termina hoje' : ` · faltam ${dias}d`}`
               }
               async function alternarAlerta() {
                 if (!evento?.referencia) return
@@ -5541,7 +5543,7 @@ export default function EventoPage() {
                     </p>
                     {/* Prazo da entrega — só enquanto está pendente */}
                     {!state && prazoTxt && (
-                      <p className={`text-[10px] mt-1 tracking-wide ${alertaOff ? 'text-white/25 line-through' : prazoPassou ? 'text-red-400/80' : 'text-amber-300/60'}`}>
+                      <p className={`text-[10px] mt-1 tracking-wide ${alertaOff ? 'text-white/25 line-through' : prazoPassou ? 'text-red-400' : prazoAviso ? 'text-orange-400' : 'text-white/35'}`}>
                         {prazoTxt}
                       </p>
                     )}
