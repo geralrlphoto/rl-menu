@@ -139,6 +139,7 @@ export default async function PhotoDashboard() {
     'noiva', 'noivo', 'preWeddingSlots', 'preWeddingReservedSlotId', 'preWeddingReservedAt',
     'galerias_enviada', 'selecao_enviada', 'fotos_finais_enviada', 'selecao_recebida',
     'galerias_alerta_off', 'selecao_alerta_off', 'fotos_finais_alerta_off', 'alertas_fotografia_ativos',
+    'wedding_film_enviada', 'wedding_film_alerta_off',
   ]
   const getRefPortais = unstable_cache(
     async () => {
@@ -172,7 +173,6 @@ export default async function PhotoDashboard() {
     leadsAtivas,
     prazosRes,
     aprovacaoRes,
-    videosRes,
     fotosRes,
     portalRes,
     refPortais,
@@ -192,12 +192,6 @@ export default async function PhotoDashboard() {
       _db: ALBUNS_DB,
       filter: { property: 'Status', status: { equals: 'PARA APROVAÇÃO' } },
       page_size: 8,
-    }),
-    fetchNotion('photo-videos', {
-      _db: EVENTOS_DB,
-      filter: { property: 'ESTADO DO VIDEO', select: { does_not_equal: 'ENTREGUE' } },
-      sorts: [{ property: 'DATA DO EVENTO', direction: 'ascending' }],
-      page_size: 100,
     }),
     fetchNotion(`photo-fotos-${todayStr}`, {
       _db: EVENTOS_DB,
@@ -269,17 +263,6 @@ export default async function PhotoDashboard() {
     }
   })
 
-  function parseVideoFormula(formula: string | null): number {
-    if (!formula) return 999
-    const faltam = formula.match(/Faltam (\d+) dias?/)
-    if (faltam) return parseInt(faltam[1])
-    const restantes = formula.match(/(\d+) dias? restantes/)
-    if (restantes) return parseInt(restantes[1])
-    const atraso = formula.match(/(\d+) dias? em atraso/)
-    if (atraso) return -parseInt(atraso[1])
-    return 999
-  }
-
   const fotosAlerta = (fotosRes.results ?? []).map((p: any) => {
     const props = p.properties ?? {}
     const nome = props['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—'
@@ -314,22 +297,6 @@ export default async function PhotoDashboard() {
   const fotosAtrasados = fotosAlerta.filter(f => f.diasRestantes < 0).length
   // Aviso: últimos 5 dias do prazo (a laranja)
   const fotosCriticos  = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 5).length
-
-  const videosAlerta = (videosRes.results ?? [])
-    .map((p: any) => {
-      const props = p.properties ?? {}
-      const cliente    = props['CLIENTE']?.rich_text?.[0]?.plain_text ?? '—'
-      const referencia = props['REFERÊNCIA DO EVENTO']?.title?.[0]?.plain_text ?? ''
-      const formula    = props['DATA ENTREGA VIDEO']?.formula?.string ?? null
-      const diasRestantes = parseVideoFormula(formula)
-      return { cliente, referencia, diasRestantes }
-    })
-    .filter((v: any) => v.diasRestantes <= 30)
-    .sort((a: any, b: any) => a.diasRestantes - b.diasRestantes)
-
-  const videosAtrasados = videosAlerta.filter((v: any) => v.diasRestantes < 0).length
-  const videosCriticos  = videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 5).length
-  const videosUrgentes  = videosAlerta.filter((v: any) => v.diasRestantes > 5 && v.diasRestantes <= 30).length
 
   // ── Pré-wedding reservas ──────────────────────────────────────────────────
   const ps = parsePortalSettings(portalRes.results ?? [])
@@ -460,13 +427,13 @@ export default async function PhotoDashboard() {
   const getEventosRealizados = unstable_cache(
     async () => {
       const { data } = await supabase.from('eventos_2026')
-        .select('id, referencia, cliente, data_evento, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado')
+        .select('id, referencia, cliente, data_evento, tipo_servico, valor_foto, valor_real_foto, valor_video, sel_fotos_estado, video_estado')
         .gte('data_evento', GALERIA_DESDE)
         .lte('data_evento', hojeLx)
         .order('data_evento', { ascending: true })
       return data ?? []
     },
-    [`photo-acoes-foto-${hojeLx}`],
+    [`photo-acoes-foto-v2-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
   const eventosRealizados = await getEventosRealizados()
@@ -537,18 +504,57 @@ export default async function PhotoDashboard() {
   const finaisAtraso = finais.filter((g: any) => g.dias < 0)
   const finaisProximas = finais.filter((g: any) => g.dias <= 15)
 
+  // ── Vídeos: Wedding Film até 180 dias úteis (seg–sex) após o casamento ──
+  //   Aviso a laranja nos últimos 30 dias, vermelho quando passa.
+  //   Feito = settings.wedding_film_enviada (botão Wedding Film das Ações Vídeo)
+  //   ou video_estado Entregue / S-Serviço. Alerta desligável na ficha
+  //   (settings.wedding_film_alerta_off). Só casamentos com vídeo, desde 2026:
+  //   os de 2025 não têm estado registado na app.
+  const VIDEO_PRAZO_UTEIS = 180
+  const VIDEO_AVISO_DIAS = 30
+  const somaDiasUteis = (iso: string, n: number) => {
+    const d = new Date(iso + 'T12:00:00Z')
+    let c = 0
+    while (c < n) { d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if (w !== 0 && w !== 6) c++ }
+    return d
+  }
+  const temVideo = (e: any) => {
+    const tipos = (Array.isArray(e.tipo_servico) ? e.tipo_servico : [e.tipo_servico]).filter(Boolean).join(' ')
+    return /v[ií]d/i.test(tipos) || Number(e.valor_video) > 0
+  }
+  const videosAlerta = eventosRealizados
+    .filter((e: any) => e.referencia && temVideo(e))
+    .filter((e: any) => {
+      const st = settingsPorRef.get(String(e.referencia).toUpperCase()) ?? {}
+      const estado = String(e.video_estado ?? '').trim().toLowerCase()
+      return !st.wedding_film_enviada && !st.wedding_film_alerta_off
+        && !['entregue', 's/serviço', 's-serviço'].includes(estado)
+    })
+    .map((e: any) => {
+      const limite = somaDiasUteis(String(e.data_evento).slice(0, 10), VIDEO_PRAZO_UTEIS)
+      const diasRestantes = Math.round((limite.getTime() - new Date(hojeLx + 'T12:00:00Z').getTime()) / 86400000)
+      return { id: e.id, cliente: (e.cliente ?? '').trim() || e.referencia, referencia: e.referencia, diasRestantes }
+    })
+    .filter((v: any) => v.diasRestantes <= VIDEO_AVISO_DIAS)
+    .sort((a: any, b: any) => a.diasRestantes - b.diasRestantes)
+  const videosAtrasados = videosAlerta.filter((v: any) => v.diasRestantes < 0).length
+  const videosCriticos  = videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 5).length
+  const videosUrgentes  = videosAlerta.filter((v: any) => v.diasRestantes > 5 && v.diasRestantes <= VIDEO_AVISO_DIAS).length
+  const videosLista: EntregaAtraso[] = videosAlerta.map((v: any) => ({
+    tipo: 'Vídeo', nome: v.cliente, ref: v.referencia,
+    dias: Math.abs(v.diasRestantes),
+    href: `/eventos-2026/${v.id}`,
+    estado: v.diasRestantes < 0 ? 'atraso' as const : 'aviso' as const,
+  }))
+
   // ── Lista das entregas em atraso (gaveta do +) com link para a ficha ─────
   const fotosEmAtraso = fotosAlerta.filter(f => f.diasRestantes < 0)
-  const videosEmAtraso = videosAlerta.filter((v: any) => v.diasRestantes < 0)
   // Avisos: prazos a terminar nos próximos 5 dias (galerias ficam de fora)
   const dentroAviso = (d: number) => d >= 0 && d <= 5
   const fotosEmAviso = fotosAlerta.filter(f => dentroAviso(f.diasRestantes))
-  const videosEmAviso = videosAlerta.filter((v: any) => dentroAviso(v.diasRestantes))
   const refsSemId = Array.from(new Set([
     ...fotosEmAtraso.map(f => f.ref),
-    ...videosEmAtraso.map((v: any) => v.referencia),
     ...fotosEmAviso.map(f => f.ref),
-    ...videosEmAviso.map((v: any) => v.referencia),
   ].filter(Boolean))).sort()
   const getIdsPorRef = unstable_cache(
     async () => {
@@ -573,25 +579,27 @@ export default async function PhotoDashboard() {
       tipo: f.tipo === 'sel' ? 'Seleção de fotos' : 'Edição de fotos',
       nome: f.nome, ref: f.ref, dias: Math.abs(f.diasRestantes), href: fichaDe(f.ref, f.eventoId), estado: 'atraso' as const,
     })),
-    ...videosEmAtraso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: Math.abs(v.diasRestantes), href: fichaDe(v.referencia), estado: 'atraso' as const })),
   ]
 
   const entregasAviso: EntregaAtraso[] = [
     ...selecoes.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}`, estado: 'aviso' as const })),
     ...finais.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}`, estado: 'aviso' as const })),
     ...fotosEmAviso.map(f => ({ tipo: 'Edição de fotos', nome: f.nome, ref: f.ref, dias: f.diasRestantes, href: fichaDe(f.ref, f.eventoId), estado: 'aviso' as const })),
-    ...videosEmAviso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: v.diasRestantes, href: fichaDe(v.referencia), estado: 'aviso' as const })),
   ]
 
   // ── Prioridades: o que pede atenção, tirado dos alertas já carregados ────
-  const atrasados = fotosAtrasados + videosAtrasados + galeriasAtraso.length + selecoesAtraso.length + finaisAtraso.length
+  // Os vídeos têm cartão próprio (ver videosLista) — aqui só fotografia
+  const atrasados = fotosAtrasados + galeriasAtraso.length + selecoesAtraso.length + finaisAtraso.length
   // Aviso: prazos que terminam nos próximos 5 dias (a laranja) — é o tamanho
   // da lista da gaveta, para o número e a lista baterem sempre certo.
   const avisos5 = entregasAviso.length
   const albunsPorEntregar = albumsAprovacao.length
   const prioridades = [
     // Atrasos e prazos a terminar juntos num só cartão (e numa só gaveta)
-    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, seleções, fotos finais e vídeos', cor: '#f87171', href: '/casamentos', gaveta: true, aviso: avisos5 },
+    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, seleções e fotos finais', cor: '#f87171', href: '/casamentos',
+      gaveta: [...entregasAtraso, ...entregasAviso], aviso: avisos5, avisoTexto: 'a terminar em 5 dias', titulo: 'Entregas' },
+    { n: videosAtrasados, rotulo: 'Vídeos em atraso', sub: 'Wedding Film · 180 dias úteis', cor: '#f87171', href: '/casamentos',
+      gaveta: videosLista, aviso: videosAlerta.length - videosAtrasados, avisoTexto: 'a terminar em 30 dias', titulo: 'Vídeos' },
     { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#f472b6', href: '/crm' },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
@@ -709,8 +717,7 @@ export default async function PhotoDashboard() {
         ? 'Sem prazos urgentes'
         : [
             videosAtrasados > 0 && `⚠ ${videosAtrasados} atrasado${videosAtrasados !== 1 ? 's' : ''}`,
-            videosCriticos  > 0 && `${videosCriticos} a terminar`,
-            videosUrgentes  > 0 && `${videosUrgentes} nos próximos 30 dias`,
+            (videosCriticos + videosUrgentes) > 0 && `${videosCriticos + videosUrgentes} a terminar em 30 dias`,
           ].filter(Boolean).join(' · ') || `${videosAlerta.length} prazo${videosAlerta.length !== 1 ? 's' : ''}`,
       empty: 'Todos os vídeos em dia',
       items: videosAlerta.map(v => ({
@@ -721,7 +728,7 @@ export default async function PhotoDashboard() {
           : v.diasRestantes === 0 ? 'Hoje'
           : v.diasRestantes === 1 ? 'Amanhã'
           : `${v.diasRestantes}d`,
-        tagColor: v.diasRestantes < 0 ? 'text-red-500' : v.diasRestantes <= 5 ? 'text-orange-400' : 'text-emerald-400/80',
+        tagColor: v.diasRestantes < 0 ? 'text-red-500' : 'text-orange-400', // vídeos: laranja nos últimos 30 dias
       })),
       href: '/casamentos',
     },
@@ -761,10 +768,11 @@ export default async function PhotoDashboard() {
           </p>
 
           {/* Prioridades */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-9">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mt-9">
             {prioridades.map(p => {
               const avisoN = 'aviso' in p ? (p.aviso as number) : 0
-              const comGaveta = 'gaveta' in p && p.gaveta && (p.n > 0 || avisoN > 0)
+              const itensGaveta = 'gaveta' in p ? (p.gaveta as EntregaAtraso[]) : []
+              const comGaveta = itensGaveta.length > 0
               return (
                 <div key={p.rotulo} className="relative">
                   <Link href={p.href}
@@ -785,14 +793,16 @@ export default async function PhotoDashboard() {
                     <p className="text-[10px] text-white/30 mt-0.5">{p.n === 0 && avisoN === 0 ? 'Tudo em dia' : p.sub}</p>
                     {avisoN > 0 && (
                       <p className="text-[11px] mt-2 font-medium" style={{ color: '#fb923c' }}>
-                        ⚠ {avisoN} a terminar em 5 dias
+                        ⚠ {avisoN} {'avisoTexto' in p ? p.avisoTexto : ''}
                       </p>
                     )}
                   </Link>
                   {/* + abre a gaveta com a lista; fica fora do Link para não haver botão dentro de link */}
                   {comGaveta && (
                     <div className="absolute top-3.5 right-3.5">
-                      <EntregasDrawer itens={[...entregasAtraso, ...entregasAviso]} />
+                      <EntregasDrawer itens={itensGaveta}
+                        titulo={'titulo' in p ? p.titulo : undefined}
+                        avisoTitulo={'avisoTexto' in p && p.avisoTexto ? `Termina em ${p.avisoTexto.replace('a terminar em ', '')}` : undefined} />
                     </div>
                   )}
                 </div>

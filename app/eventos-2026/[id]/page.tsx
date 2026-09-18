@@ -4128,7 +4128,7 @@ export default function EventoPage() {
               if (s.prewedding_enviada)       setPreWeddingEnviada(s.prewedding_enviada)
               if (s.fotos_finais_enviada)     setFotosFinaisEnviada(s.fotos_finais_enviada)
               if (s.galerias_enviada)         setGaleriasEnviada(s.galerias_enviada)
-              setAlertasOff({ galerias: !!s.galerias_alerta_off, selecao: !!s.selecao_alerta_off, fotos_finais: !!s.fotos_finais_alerta_off })
+              setAlertasOff({ galerias: !!s.galerias_alerta_off, selecao: !!s.selecao_alerta_off, fotos_finais: !!s.fotos_finais_alerta_off, wedding_film: !!s.wedding_film_alerta_off })
               if (typeof s.selecao_recebida === 'string') setSelecaoRecebida(s.selecao_recebida)
               if (s.fotos_convidados_email_enviada) setFotosConvidadosEmailEnviada(s.fotos_convidados_email_enviada)
               if (s.fotos_convidados_ctt_enviada)   setFotosConvidadosCttEnviada(s.fotos_convidados_ctt_enviada)
@@ -5766,12 +5766,32 @@ export default function EventoPage() {
           <div className="flex flex-col gap-4">
             {[
               { label: 'Vídeo Pré-Wedding', state: videoPreWeddingEnviada, setState: setVideoPreWeddingEnviada, key: 'video_prewedding_enviada', urlKey: 'video_prewedding', api: '/api/send-video-prewedding-email' },
-              { label: 'Wedding Film', state: weddingFilmEnviada, setState: setWeddingFilmEnviada, key: 'wedding_film_enviada', urlKey: 'wedding_film', api: '/api/send-wedding-film-email' },
+              { label: 'Wedding Film', state: weddingFilmEnviada, setState: setWeddingFilmEnviada, key: 'wedding_film_enviada', urlKey: 'wedding_film', api: '/api/send-wedding-film-email', prazoUteis: 180 },
               { label: 'Same Day Edit', state: sameDayEditEnviada, setState: setSameDayEditEnviada, key: 'same_day_edit_enviada', urlKey: 'same_day_edit', api: '/api/send-same-day-edit-email' },
               { label: 'Teaser / Trailer', state: teaserEnviada, setState: setTeaserEnviada, key: 'teaser_enviada', urlKey: 'teaser', api: '/api/send-teaser-email' },
-            ].map(({ label, state, setState, key, urlKey, api }) => {
+            ].map(({ label, state, setState, key, urlKey, api, prazoUteis }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoUteis?: number }) => {
               const url = videoActionUrls[urlKey] ?? ''
               const hasUrl = url.trim().length > 0
+              // Wedding Film: prazo de 180 dias úteis (seg–sex) após o casamento,
+              // aviso a laranja nos últimos 30 dias, vermelho quando passa.
+              const alertaOff = !!alertasOff[urlKey]
+              let prazoTxt = '', prazoPassou = false, prazoAviso = false
+              if (prazoUteis && evento?.data_evento) {
+                const lim = new Date(String(evento.data_evento).slice(0, 10) + 'T12:00:00')
+                let c = 0
+                while (c < prazoUteis) { lim.setDate(lim.getDate() + 1); const w = lim.getDay(); if (w !== 0 && w !== 6) c++ }
+                const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                const dias = Math.round((lim.getTime() - hoje.getTime()) / 86400000)
+                prazoPassou = dias < 0
+                prazoAviso = dias >= 0 && dias <= 30
+                prazoTxt = `${prazoAviso ? '⚠ ' : ''}Prazo ${prazoUteis} dias úteis · até ${lim.toLocaleDateString('pt-PT')}${dias < 0 ? ` · ${Math.abs(dias)}d atraso` : dias === 0 ? ' · termina hoje' : ` · faltam ${dias}d`}`
+              }
+              async function alternarAlerta() {
+                if (!evento?.referencia) return
+                const novo = !alertaOff
+                setAlertasOff(prev => ({ ...prev, [urlKey]: novo }))
+                await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_alerta_off`]: novo } } }) })
+              }
               return (
                 <div key={key}>
                   <div className="flex items-center justify-between gap-3 mb-2">
@@ -5783,8 +5803,31 @@ export default function EventoPage() {
                           : <span className="text-white/25">Pendente</span>
                         }
                       </p>
+                      {!state && prazoTxt && (
+                        <p className={`text-[10px] mt-1 tracking-wide ${alertaOff ? 'text-white/25 line-through' : prazoPassou ? 'text-red-400' : prazoAviso ? 'text-orange-400' : 'text-white/35'}`}>
+                          {prazoTxt}
+                        </p>
+                      )}
+                      {!state && prazoUteis && alertaOff && (
+                        <p className="text-[10px] mt-0.5 text-white/35">Alerta desligado · não conta como atraso</p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
+                      {!state && prazoUteis && prazoTxt && (
+                        <button
+                          onClick={alternarAlerta}
+                          title={alertaOff ? 'Ligar alerta de prazo' : 'Desligar alerta de prazo (não conta como atraso)'}
+                          className={`h-9 px-3 flex items-center gap-1.5 rounded-xl border text-[10px] tracking-[0.15em] uppercase transition-all ${alertaOff
+                            ? 'border-white/10 text-white/35 hover:text-white/70 hover:border-white/25'
+                            : 'border-amber-400/30 text-amber-300/80 hover:bg-amber-400/10 hover:border-amber-400/50'}`}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 01-3.46 0" />
+                            {alertaOff && <path d="M3 3l18 18" />}
+                          </svg>
+                          {alertaOff ? 'Ligar alerta' : 'Desligar alerta'}
+                        </button>
+                      )}
                       {state && (
                         <button
                           onClick={async () => {

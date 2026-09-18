@@ -23,9 +23,9 @@ const COR_TIPO: Record<string, string> = {
 const VERMELHO = '#f87171'
 const LARANJA  = '#fb923c'
 
-// Botão "+" no cartão das Entregas: abre uma gaveta à direita com duas secções,
-// Em atraso (vermelho) e Termina em 5 dias (laranja). Cada linha leva à ficha.
-export function EntregasDrawer({ itens }: { itens: EntregaAtraso[] }) {
+// Botão "+" nos cartões Entregas e Vídeos: abre uma gaveta à direita com duas
+// secções, Em atraso (vermelho) e a terminar (laranja). Cada linha leva à ficha.
+export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Termina em 5 dias' }: { itens: EntregaAtraso[]; titulo?: string; avisoTitulo?: string }) {
   const [aberto, setAberto] = useState(false)
   const [montado, setMontado] = useState(false)
   const [filtro, setFiltro] = useState<string | null>(null)
@@ -130,11 +130,11 @@ export function EntregasDrawer({ itens }: { itens: EntregaAtraso[] }) {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-[9px] tracking-[0.4em] uppercase text-white/40">Prioridade</p>
-                  <h2 className="font-cormorant text-3xl font-light text-white mt-1">Entregas</h2>
+                  <h2 className="font-cormorant text-3xl font-light text-white mt-1">{titulo}</h2>
                   <p className="text-[11px] mt-1">
                     <span style={{ color: VERMELHO }}>{itens.filter(i => i.estado === 'atraso').length} em atraso</span>
                     <span className="text-white/25"> · </span>
-                    <span style={{ color: LARANJA }}>{itens.filter(i => i.estado === 'aviso').length} a terminar em 5 dias</span>
+                    <span style={{ color: LARANJA }}>{itens.filter(i => i.estado === 'aviso').length} {avisoTitulo.toLowerCase().replace('termina', 'a terminar')}</span>
                   </p>
                 </div>
                 <button onClick={() => setAberto(false)} aria-label="Fechar"
@@ -172,7 +172,7 @@ export function EntregasDrawer({ itens }: { itens: EntregaAtraso[] }) {
                 <p className="text-center text-white/25 text-xs tracking-widest uppercase py-16">Tudo em dia</p>
               )}
               {seccao('Em atraso', VERMELHO, atrasos)}
-              {seccao('Termina em 5 dias', LARANJA, avisos)}
+              {seccao(avisoTitulo, LARANJA, avisos)}
             </div>
           </aside>
         </>,
