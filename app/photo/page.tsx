@@ -438,14 +438,59 @@ export default async function PhotoDashboard() {
   const saudacao = horaLx < 6 ? 'Boa noite' : horaLx < 13 ? 'Bom dia' : horaLx < 20 ? 'Boa tarde' : 'Boa noite'
   const dataLonga = new Intl.DateTimeFormat('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Lisbon' }).format(new Date())
 
+  // ── Galerias Online: prazo de 7 dias após o casamento ───────────────────
+  //   Regra: cada casamento com fotografia tem de ter as fotos na Galeria
+  //   Online até 7 dias depois da data. "Feito" = portais.settings.galerias_enviada
+  //   (o botão Galerias Online das Ações Fotografia na ficha do evento).
+  //   Só casamentos com fotografia: tipo de serviço com FOTO ou valor de foto > 0.
+  //   Ficam de fora os eventos com alertas de fotografia desligados.
+  //   Só desde 2026: antes disso as galerias não passavam por este botão.
+  const GALERIA_PRAZO_DIAS = 7
+  const GALERIA_DESDE = '2026-01-01'
+  const getEventosRealizados = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('eventos_2026')
+        .select('id, referencia, cliente, data_evento, tipo_servico, valor_foto, valor_real_foto')
+        .gte('data_evento', GALERIA_DESDE)
+        .lte('data_evento', hojeLx)
+        .order('data_evento', { ascending: true })
+      return data ?? []
+    },
+    [`photo-galerias-${hojeLx}`],
+    { revalidate: 1800, tags: ['photo-dashboard'] }
+  )
+  const eventosRealizados = await getEventosRealizados()
+  const galeriaFeita = new Map<string, boolean>()
+  for (const p of (refPortais ?? []) as Array<{ referencia: string | null; settings: any }>) {
+    if (p.referencia) galeriaFeita.set(p.referencia.toUpperCase(), !!p.settings?.galerias_enviada)
+  }
+  const temFotografia = (e: any) => {
+    const tipos = (Array.isArray(e.tipo_servico) ? e.tipo_servico : [e.tipo_servico]).filter(Boolean).join(' ')
+    return /foto/i.test(tipos) || Number(e.valor_real_foto ?? e.valor_foto) > 0
+  }
+  const galerias = eventosRealizados
+    .filter((e: any) => e.referencia && temFotografia(e))
+    .filter((e: any) => !alertasOffRefs.has(e.referencia))
+    .filter((e: any) => !galeriaFeita.get(String(e.referencia).toUpperCase()))
+    .map((e: any) => {
+      const limite = new Date(e.data_evento + 'T12:00:00Z')
+      limite.setUTCDate(limite.getUTCDate() + GALERIA_PRAZO_DIAS)
+      const dias = Math.round((limite.getTime() - new Date(hojeLx + 'T12:00:00Z').getTime()) / 86400000)
+      return { id: e.id, nome: (e.cliente ?? '').trim() || e.referencia, ref: e.referencia, dias }
+    })
+    .sort((a: any, b: any) => a.dias - b.dias)
+  const galeriasAtraso = galerias.filter((g: any) => g.dias < 0)
+  const galeriasAVencer = galerias.filter((g: any) => g.dias >= 0)
+
   // ── Prioridades: o que pede atenção, tirado dos alertas já carregados ────
-  const atrasados = fotosAtrasados + videosAtrasados
+  const atrasados = fotosAtrasados + videosAtrasados + galeriasAtraso.length
   const aVencer7 = fotosAlerta.filter(f => f.diasRestantes >= 0 && f.diasRestantes <= 7).length
     + videosAlerta.filter((v: any) => v.diasRestantes >= 0 && v.diasRestantes <= 7).length
+    + galeriasAVencer.length
   const albunsPorEntregar = albumsAprovacao.length
   const prioridades = [
-    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Fotos e vídeos', cor: '#f87171', href: '/casamentos' },
-    { n: aVencer7, rotulo: 'A vencer em 7 dias', sub: 'Seleções, edições e vídeos', cor: '#fbbf24', href: '/casamentos' },
+    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, fotos e vídeos', cor: '#f87171', href: '/casamentos' },
+    { n: aVencer7, rotulo: 'A vencer em 7 dias', sub: 'Galerias, seleções e vídeos', cor: '#fbbf24', href: '/casamentos' },
     { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#fb923c', href: '/crm' },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
@@ -466,6 +511,24 @@ export default async function PhotoDashboard() {
         tagColor: daysSince(l.data_entrada) <= 3 ? 'text-red-400' : 'text-amber-400',
       })),
       href: '/crm',
+    },
+    {
+      key: 'galerias',
+      title: ['GALERIAS', 'ONLINE'],
+      subtitle: galerias.length === 0
+        ? 'Todas publicadas'
+        : [
+            galeriasAtraso.length > 0 && `⚠ ${galeriasAtraso.length} atrasada${galeriasAtraso.length !== 1 ? 's' : ''}`,
+            galeriasAVencer.length > 0 && `${galeriasAVencer.length} a publicar`,
+          ].filter(Boolean).join(' · '),
+      empty: 'Todas as galerias publicadas',
+      items: galerias.map((g: any) => ({
+        main: g.nome,
+        sub: `Prazo 7 dias · ${g.ref}`,
+        tag: g.dias < 0 ? `${Math.abs(g.dias)}d atraso` : g.dias === 0 ? 'Hoje' : `${g.dias}d`,
+        tagColor: g.dias < 0 ? 'text-red-500' : g.dias <= 2 ? 'text-red-400' : 'text-amber-400',
+      })),
+      href: '/casamentos',
     },
     {
       key: 'prazos-fotos',
