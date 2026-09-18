@@ -4,6 +4,7 @@ import { unstable_cache } from 'next/cache'
 import { DashboardCarousel, type DashCol } from '@/app/components/DashboardCarousel'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
+import { TarefasCard } from '@/app/components/TarefasCard'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -600,7 +601,8 @@ export default async function PhotoDashboard() {
       gaveta: [...entregasAtraso, ...entregasAviso], aviso: avisos5, avisoTexto: 'a terminar em 5 dias', titulo: 'Entregas' },
     { n: videosAtrasados, rotulo: 'Vídeos em atraso', sub: 'Wedding Film · 180 dias úteis', cor: '#f87171', href: '/casamentos',
       gaveta: videosLista, aviso: videosAlerta.length - videosAtrasados, avisoTexto: 'a terminar em 30 dias', titulo: 'Vídeos' },
-    { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#f472b6', href: '/crm' },
+    // Tarefas: cartão próprio (componente cliente, com gaveta e criação de tarefas)
+    { n: 0, rotulo: 'Tarefas', sub: '', cor: '#a78bfa', href: '/tarefas', tarefas: true },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
   const totalCasamentosSemana = eventosSemana.filter((e: any) => e.data_evento <= semanaDias[6]).length
@@ -770,6 +772,7 @@ export default async function PhotoDashboard() {
           {/* Prioridades */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mt-9">
             {prioridades.map(p => {
+              if ('tarefas' in p && p.tarefas) return <TarefasCard key="tarefas" />
               const avisoN = 'aviso' in p ? (p.aviso as number) : 0
               const itensGaveta = 'gaveta' in p ? (p.gaveta as EntregaAtraso[]) : []
               const comGaveta = itensGaveta.length > 0
