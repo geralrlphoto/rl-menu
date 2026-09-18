@@ -560,21 +560,21 @@ export default async function PhotoDashboard() {
     return id ? `/eventos-2026/${id}` : null
   }
   const entregasAtraso: EntregaAtraso[] = [
-    ...galeriasAtraso.map((g: any) => ({ tipo: 'Galeria Online', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}` })),
-    ...selecoesAtraso.map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}` })),
-    ...finaisAtraso.map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}` })),
+    ...galeriasAtraso.map((g: any) => ({ tipo: 'Galeria Online', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const })),
+    ...selecoesAtraso.map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const })),
+    ...finaisAtraso.map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const })),
     ...fotosEmAtraso.map(f => ({
       tipo: f.tipo === 'sel' ? 'Seleção de fotos' : 'Edição de fotos',
-      nome: f.nome, ref: f.ref, dias: Math.abs(f.diasRestantes), href: fichaDe(f.ref, f.eventoId),
+      nome: f.nome, ref: f.ref, dias: Math.abs(f.diasRestantes), href: fichaDe(f.ref, f.eventoId), estado: 'atraso' as const,
     })),
-    ...videosEmAtraso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: Math.abs(v.diasRestantes), href: fichaDe(v.referencia) })),
+    ...videosEmAtraso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: Math.abs(v.diasRestantes), href: fichaDe(v.referencia), estado: 'atraso' as const })),
   ]
 
   const entregasAviso: EntregaAtraso[] = [
-    ...selecoes.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}` })),
-    ...finais.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}` })),
-    ...fotosEmAviso.map(f => ({ tipo: 'Edição de fotos', nome: f.nome, ref: f.ref, dias: f.diasRestantes, href: fichaDe(f.ref, f.eventoId) })),
-    ...videosEmAviso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: v.diasRestantes, href: fichaDe(v.referencia) })),
+    ...selecoes.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}`, estado: 'aviso' as const })),
+    ...finais.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}`, estado: 'aviso' as const })),
+    ...fotosEmAviso.map(f => ({ tipo: 'Edição de fotos', nome: f.nome, ref: f.ref, dias: f.diasRestantes, href: fichaDe(f.ref, f.eventoId), estado: 'aviso' as const })),
+    ...videosEmAviso.map((v: any) => ({ tipo: 'Vídeo', nome: v.cliente, ref: v.referencia, dias: v.diasRestantes, href: fichaDe(v.referencia), estado: 'aviso' as const })),
   ]
 
   // ── Prioridades: o que pede atenção, tirado dos alertas já carregados ────
@@ -584,8 +584,8 @@ export default async function PhotoDashboard() {
   const avisos5 = entregasAviso.length
   const albunsPorEntregar = albumsAprovacao.length
   const prioridades = [
-    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, seleções, fotos finais e vídeos', cor: '#f87171', href: '/casamentos', gaveta: true },
-    { n: avisos5, rotulo: 'Termina em 5 dias', sub: 'Seleções, fotos finais, edição e vídeos', cor: '#fb923c', href: '/casamentos', gaveta: true },
+    // Atrasos e prazos a terminar juntos num só cartão (e numa só gaveta)
+    { n: atrasados, rotulo: 'Entregas em atraso', sub: 'Galerias, seleções, fotos finais e vídeos', cor: '#f87171', href: '/casamentos', gaveta: true, aviso: avisos5 },
     { n: quente.length, rotulo: 'Leads quentes', sub: 'Entraram nos últimos 3 dias', cor: '#f472b6', href: '/crm' },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
@@ -755,9 +755,10 @@ export default async function PhotoDashboard() {
           </p>
 
           {/* Prioridades */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mt-9">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-9">
             {prioridades.map(p => {
-              const comGaveta = 'gaveta' in p && p.gaveta && p.n > 0
+              const avisoN = 'aviso' in p ? (p.aviso as number) : 0
+              const comGaveta = 'gaveta' in p && p.gaveta && (p.n > 0 || avisoN > 0)
               return (
                 <div key={p.rotulo} className="relative">
                   <Link href={p.href}
@@ -775,14 +776,17 @@ export default async function PhotoDashboard() {
                       )}
                     </div>
                     <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mt-2.5">{p.rotulo}</p>
-                    <p className="text-[10px] text-white/30 mt-0.5">{p.n === 0 ? 'Tudo em dia' : p.sub}</p>
+                    <p className="text-[10px] text-white/30 mt-0.5">{p.n === 0 && avisoN === 0 ? 'Tudo em dia' : p.sub}</p>
+                    {avisoN > 0 && (
+                      <p className="text-[11px] mt-2 font-medium" style={{ color: '#fb923c' }}>
+                        ⚠ {avisoN} a terminar em 5 dias
+                      </p>
+                    )}
                   </Link>
                   {/* + abre a gaveta com a lista; fica fora do Link para não haver botão dentro de link */}
                   {comGaveta && (
                     <div className="absolute top-3.5 right-3.5">
-                      {p.rotulo === 'Entregas em atraso'
-                        ? <EntregasDrawer itens={entregasAtraso} />
-                        : <EntregasDrawer itens={entregasAviso} titulo="Termina em 5 dias" modo="aviso" />}
+                      <EntregasDrawer itens={[...entregasAtraso, ...entregasAviso]} />
                     </div>
                   )}
                 </div>
