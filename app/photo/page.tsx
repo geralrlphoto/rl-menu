@@ -395,6 +395,7 @@ export default async function PhotoDashboard() {
     dias: Math.abs(v.diasRestantes),
     href: `/eventos-2026/${v.id}`,
     estado: v.diasRestantes < 0 ? 'atraso' as const : 'aviso' as const,
+    acao: 'wedding_film' as const,
   }))
 
   // ── Lista das entregas em atraso (gaveta do +) com link para a ficha ─────
@@ -422,9 +423,9 @@ export default async function PhotoDashboard() {
     return id ? `/eventos-2026/${id}` : null
   }
   const entregasAtraso: EntregaAtraso[] = [
-    ...galeriasAtraso.map((g: any) => ({ tipo: 'Galeria Online', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const })),
-    ...selecoesAtraso.map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const })),
-    ...finaisAtraso.map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const })),
+    ...galeriasAtraso.map((g: any) => ({ tipo: 'Galeria Online', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const, acao: 'galerias' as const })),
+    ...selecoesAtraso.map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const, acao: 'selecao' as const })),
+    ...finaisAtraso.map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: Math.abs(g.dias), href: `/eventos-2026/${g.id}`, estado: 'atraso' as const, acao: 'fotos_finais' as const })),
     ...fotosEmAtraso.map(f => ({
       tipo: f.tipo === 'sel' ? 'Seleção de fotos' : 'Edição de fotos',
       nome: f.nome, ref: f.ref, dias: Math.abs(f.diasRestantes), href: fichaDe(f.ref, f.eventoId), estado: 'atraso' as const,
@@ -432,8 +433,8 @@ export default async function PhotoDashboard() {
   ]
 
   const entregasAviso: EntregaAtraso[] = [
-    ...selecoes.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}`, estado: 'aviso' as const })),
-    ...finais.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}`, estado: 'aviso' as const })),
+    ...selecoes.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos p/ Seleção', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}`, estado: 'aviso' as const, acao: 'selecao' as const })),
+    ...finais.filter((g: any) => dentroAviso(g.dias)).map((g: any) => ({ tipo: 'Fotos Finais', nome: g.nome, ref: g.ref, dias: g.dias, href: `/eventos-2026/${g.id}`, estado: 'aviso' as const, acao: 'fotos_finais' as const })),
     ...fotosEmAviso.map(f => ({ tipo: 'Edição de fotos', nome: f.nome, ref: f.ref, dias: f.diasRestantes, href: fichaDe(f.ref, f.eventoId), estado: 'aviso' as const })),
   ]
 

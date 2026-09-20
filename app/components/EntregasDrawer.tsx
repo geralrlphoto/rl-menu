@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export type EntregaAtraso = {
@@ -11,6 +12,10 @@ export type EntregaAtraso = {
   dias: number              // atraso: dias de atraso · aviso: dias que faltam
   href: string | null       // ficha do casamento
   estado: 'atraso' | 'aviso'
+  // Chave das Ações Fotografia desta entrega. Quando existe (e há
+  // referência), a linha ganha os botões de marcar entregue / desligar alerta,
+  // que escrevem em portais.settings tal como a ficha do evento.
+  acao?: 'galerias' | 'selecao' | 'fotos_finais' | 'wedding_film'
 }
 
 const COR_TIPO: Record<string, string> = {
@@ -22,6 +27,7 @@ const COR_TIPO: Record<string, string> = {
 }
 const VERMELHO = '#f87171'
 const LARANJA  = '#fb923c'
+const VERDE    = '#4ade80'
 
 // Botão "+" nos cartões Entregas e Vídeos: abre uma gaveta à direita com duas
 // secções, Em atraso (vermelho) e a terminar (laranja). Cada linha leva à ficha.
@@ -29,8 +35,44 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
   const [aberto, setAberto] = useState(false)
   const [montado, setMontado] = useState(false)
   const [filtro, setFiltro] = useState<string | null>(null)
+  // Linhas já resolvidas nesta sessão (some logo, sem esperar pelo refresh)
+  const [feitos, setFeitos] = useState<string[]>([])
+  const [aGravar, setAGravar] = useState<Record<string, boolean>>({})
+  const router = useRouter()
 
   useEffect(() => { setMontado(true) }, [])
+
+  const chave = (it: EntregaAtraso) => `${it.tipo}-${it.ref}`
+
+  // Marca a entrega como feita (data de hoje) ou desliga o alerta de prazo.
+  // É o mesmo campo que os botões das Ações Fotografia da ficha gravam, por
+  // isso a ficha e o painel /photo ficam logo de acordo.
+  async function agir(it: EntregaAtraso, accao: 'entregue' | 'silenciar') {
+    if (!it.acao || !it.ref) return
+    const hoje = new Date().toISOString().slice(0, 10)
+    const settings = accao === 'entregue'
+      ? { [`${it.acao}_enviada`]: hoje }
+      : { [`${it.acao}_alerta_off`]: true }
+    const pergunta = accao === 'entregue'
+      ? `Marcar "${it.tipo}" de ${it.nome} como entregue?\n\nNão envia email aos noivos: serve para registar uma entrega que já fizeste.`
+      : `Desligar o alerta de "${it.tipo}" de ${it.nome}?\n\nSai desta lista e deixa de contar como atraso. Podes voltá-lo a ligar na ficha do evento.`
+    if (!confirm(pergunta)) return
+    const k = chave(it)
+    setAGravar(prev => ({ ...prev, [k]: true }))
+    try {
+      const res = await fetch('/api/portais', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: it.ref, updates: { settings } }),
+      })
+      if (!res.ok) throw new Error(String(res.status))
+      setFeitos(prev => [...prev, k])
+      router.refresh()
+    } catch {
+      alert('Não consegui gravar. Tenta outra vez.')
+    } finally {
+      setAGravar(prev => { const { [k]: _, ...resto } = prev; return resto })
+    }
+  }
 
   useEffect(() => {
     if (!aberto) return
@@ -41,19 +83,22 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = antes }
   }, [aberto])
 
-  const temAtraso = itens.some(i => i.estado === 'atraso')
+  const porResolver = itens.filter(i => !feitos.includes(chave(i)))
+  const temAtraso = porResolver.some(i => i.estado === 'atraso')
   const corBotao = temAtraso ? VERMELHO : LARANJA
-  const tipos = Array.from(new Set(itens.map(i => i.tipo)))
-  const visiveis = filtro ? itens.filter(i => i.tipo === filtro) : itens
+  const tipos = Array.from(new Set(porResolver.map(i => i.tipo)))
+  const visiveis = filtro ? porResolver.filter(i => i.tipo === filtro) : porResolver
   const atrasos = visiveis.filter(i => i.estado === 'atraso').sort((a, b) => b.dias - a.dias)
   const avisos  = visiveis.filter(i => i.estado === 'aviso').sort((a, b) => a.dias - b.dias)
 
   const linha = (it: EntregaAtraso, key: string) => {
     const cor = COR_TIPO[it.tipo] ?? '#94a3b8'
     const corDias = it.estado === 'atraso' ? VERMELHO : LARANJA
+    const gravando = !!aGravar[chave(it)]
+    const comAcoes = !!it.acao && !!it.ref
+    const btn = 'w-7 h-6 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40'
     const conteudo = (
       <>
-        <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: cor }} />
         <div className="min-w-0 flex-1">
           <p className="text-[9px] tracking-[0.25em] uppercase" style={{ color: cor }}>{it.tipo}</p>
           <p className="text-[14px] text-white/90 truncate mt-1">{it.nome}</p>
@@ -72,13 +117,38 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
         {it.href && <span className="text-white/20 group-hover:text-white group-hover:translate-x-0.5 transition-all">→</span>}
       </>
     )
-    const cls = 'group relative flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] pl-5 pr-4 py-3.5 transition-all'
-    return it.href ? (
-      <Link key={key} href={it.href} onClick={() => setAberto(false)} className={`${cls} hover:border-white/20 hover:bg-white/[0.05]`}>
-        {conteudo}
-      </Link>
-    ) : (
-      <div key={key} className={cls} title="Sem ficha encontrada para esta referência">{conteudo}</div>
+    const linhaCls = `flex items-center gap-4 pl-5 pr-4 ${comAcoes ? 'pt-3.5 pb-2' : 'py-3.5'}`
+    return (
+      // O cartão não é o link: os botões não podem viver dentro de uma âncora.
+      <div key={key} className="group relative rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all hover:border-white/20 hover:bg-white/[0.05] overflow-hidden">
+        <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: cor }} />
+        {it.href ? (
+          <Link href={it.href} onClick={() => setAberto(false)} className={linhaCls}>{conteudo}</Link>
+        ) : (
+          <div className={linhaCls} title="Sem ficha encontrada para esta referência">{conteudo}</div>
+        )}
+        {comAcoes && (
+          <div className="flex items-center justify-end gap-1.5 pl-5 pr-3 pb-2.5">
+            <button
+              onClick={() => agir(it, 'entregue')}
+              disabled={gravando}
+              title="Marcar esta entrega como feita (grava a data de hoje, não envia email)"
+              aria-label="Marcar como entregue"
+              className={`${btn} hover:brightness-125`}
+              style={{ borderColor: `${VERDE}55`, background: `${VERDE}14`, color: VERDE }}>
+              {gravando ? '…' : '✓'}
+            </button>
+            <button
+              onClick={() => agir(it, 'silenciar')}
+              disabled={gravando}
+              title="Desligar o alerta de prazo: sai da lista e deixa de contar como atraso"
+              aria-label="Desligar alerta"
+              className={`${btn} border-white/10 bg-black/40 text-white/30 hover:border-white/40 hover:text-white`}>
+              {gravando ? '…' : '✕'}
+            </button>
+          </div>
+        )}
+      </div>
     )
   }
 
@@ -132,9 +202,9 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
                   <p className="text-[9px] tracking-[0.4em] uppercase text-white/40">Prioridade</p>
                   <h2 className="font-cormorant text-3xl font-light text-white mt-1">{titulo}</h2>
                   <p className="text-[11px] mt-1">
-                    <span style={{ color: VERMELHO }}>{itens.filter(i => i.estado === 'atraso').length} em atraso</span>
+                    <span style={{ color: VERMELHO }}>{porResolver.filter(i => i.estado === 'atraso').length} em atraso</span>
                     <span className="text-white/25"> · </span>
-                    <span style={{ color: LARANJA }}>{itens.filter(i => i.estado === 'aviso').length} {avisoTitulo.toLowerCase().replace('termina', 'a terminar')}</span>
+                    <span style={{ color: LARANJA }}>{porResolver.filter(i => i.estado === 'aviso').length} {avisoTitulo.toLowerCase().replace('termina', 'a terminar')}</span>
                   </p>
                 </div>
                 <button onClick={() => setAberto(false)} aria-label="Fechar"
@@ -149,7 +219,7 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
                   <button onClick={() => setFiltro(null)}
                     className="px-3 py-1 rounded-full text-[9px] tracking-[0.2em] uppercase border transition-all"
                     style={{ borderColor: filtro === null ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.08)', color: filtro === null ? '#fff' : 'rgba(255,255,255,0.4)' }}>
-                    Todas · {itens.length}
+                    Todas · {porResolver.length}
                   </button>
                   {tipos.map(t => {
                     const on = filtro === t
@@ -158,7 +228,7 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
                       <button key={t} onClick={() => setFiltro(on ? null : t)}
                         className="px-3 py-1 rounded-full text-[9px] tracking-[0.2em] uppercase border transition-all"
                         style={{ borderColor: on ? cor : 'rgba(255,255,255,0.08)', color: on ? cor : 'rgba(255,255,255,0.4)', background: on ? `${cor}14` : 'transparent' }}>
-                        {t} · {itens.filter(i => i.tipo === t).length}
+                        {t} · {porResolver.filter(i => i.tipo === t).length}
                       </button>
                     )
                   })}
