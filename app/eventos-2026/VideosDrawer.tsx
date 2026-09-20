@@ -24,12 +24,16 @@ export type VideoEvento = {
   data_evento: string
   local: string
   video_estado: string | null
+  // Editor de vídeo (evento_equipa.editor_video) + id do freelancer, quando o
+  // nome bate com alguém da tabela freelancers — serve para abrir o portal.
+  editor?: { nome: string; id: string | null } | null
 }
 
 const LARANJA  = '#fb923c'
 const VERDE    = '#4ade80'
 const VERMELHO = '#f87171'
 const VIOLETA  = '#a78bfa'   // Em Revisão — falta o Rui rever o vídeo
+const AZUL     = '#7dd3fc'   // editor de vídeo
 
 const EM_CURSO = ['Em Edição', 'Em Revisão', 'Finalizado']
 
@@ -183,14 +187,18 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
     const corPrazo = dias === null ? cor : dias <= 30 ? VERMELHO : LARANJA
     const emRevisao = e.video_estado === 'Em Revisão'
     const gravando = !!aGravar[e.id]
+    const btn = 'w-7 h-6 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40'
     return (
-      // Os botões ficam fora do <Link> (uma âncora não pode conter botões).
-      <div key={`${estado}-${e.id}`} className="group relative flex items-stretch gap-2">
+      // O cartão não é um link: o <Link> principal e o link do editor não podem
+      // estar aninhados, e os botões também têm de ficar fora da âncora.
+      <div key={`${estado}-${e.id}`}
+        className="group relative rounded-xl border border-white/[0.06] bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04] transition-all overflow-hidden">
+        <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: cor }} />
+
         <Link
           href={`/eventos-2026/${e.notion_id ?? e.id}`}
           onClick={() => setAberto(false)}
-          className="relative flex-1 min-w-0 flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] pl-5 pr-4 py-3.5 transition-all hover:border-white/20 hover:bg-white/[0.05]">
-          <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: cor }} />
+          className="flex items-center gap-4 pl-5 pr-4 pt-3.5 pb-2">
           <div className="min-w-0 flex-1">
             <p className="text-[9px] tracking-[0.25em] uppercase" style={{ color: cor }}>
               {e.video_estado}{emRevisao ? ' · falta rever' : ''}
@@ -214,41 +222,62 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
           )}
         </Link>
 
-        {/* Ações da linha */}
-        <div className="shrink-0 flex flex-col items-center justify-center gap-1">
-          <button
-            onClick={() => ocultar(e.id)}
-            title="Tirar da lista"
-            aria-label={`Tirar ${e.cliente || e.referencia || 'este vídeo'} da lista`}
-            className="w-7 h-6 rounded-full border border-white/10 bg-black/40 text-white/30 text-[11px] leading-none flex items-center justify-center hover:border-white/40 hover:text-white transition-all">
-            ✕
-          </button>
-          {estado === 'curso' && (
-            <>
-              <button
-                onClick={() => alterarEstado(e, emRevisao ? 'Em Edição' : 'Em Revisão')}
-                disabled={gravando}
-                title={emRevisao ? 'Já revi — voltar a Em Edição' : 'Marcar Em Revisão (falta eu rever o vídeo)'}
-                aria-label={emRevisao ? 'Voltar a Em Edição' : 'Marcar Em Revisão'}
-                className="w-7 h-6 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40"
-                style={{
-                  borderColor: emRevisao ? `${VIOLETA}99` : 'rgba(255,255,255,0.10)',
-                  background: emRevisao ? `${VIOLETA}1f` : 'rgba(0,0,0,0.4)',
-                  color: emRevisao ? VIOLETA : 'rgba(255,255,255,0.35)',
-                }}>
-                {gravando ? '…' : '👁'}
-              </button>
-              <button
-                onClick={() => marcarEntregue(e)}
-                disabled={gravando}
-                title="Marcar vídeo como Entregue (atualiza a ficha do evento e o portal dos noivos)"
-                aria-label="Marcar vídeo como Entregue"
-                className="w-7 h-6 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40 hover:brightness-125"
-                style={{ borderColor: `${VERDE}55`, background: `${VERDE}14`, color: VERDE }}>
-                {gravando ? '…' : '✓'}
-              </button>
-            </>
+        {/* Rodapé do cartão: editor à esquerda, ações à direita */}
+        <div className="flex items-center justify-between gap-2 pl-5 pr-3 pb-2.5">
+          {e.editor?.id ? (
+            <a
+              href={`/painel-editor?freelancer=${e.editor.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={`Abrir o portal de ${e.editor.nome}`}
+              className="inline-flex items-center gap-1.5 max-w-[60%] px-2 py-1 rounded-full border text-[9px] tracking-[0.18em] uppercase transition-all hover:brightness-125"
+              style={{ borderColor: `${AZUL}55`, background: `${AZUL}14`, color: AZUL }}>
+              <span className="leading-none">✎</span>
+              <span className="truncate">{e.editor.nome}</span>
+              <span className="leading-none opacity-60">↗</span>
+            </a>
+          ) : (
+            <span className="text-[9px] tracking-[0.18em] uppercase text-white/20 truncate max-w-[60%]"
+              title={e.editor?.nome ? 'Este editor não tem portal associado' : 'Sem editor de vídeo atribuído'}>
+              {e.editor?.nome ? `✎ ${e.editor.nome}` : 'sem editor'}
+            </span>
           )}
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            {estado === 'curso' && (
+              <>
+                <button
+                  onClick={() => alterarEstado(e, emRevisao ? 'Em Edição' : 'Em Revisão')}
+                  disabled={gravando}
+                  title={emRevisao ? 'Já revi — voltar a Em Edição' : 'Marcar Em Revisão (falta eu rever o vídeo)'}
+                  aria-label={emRevisao ? 'Voltar a Em Edição' : 'Marcar Em Revisão'}
+                  className={btn}
+                  style={{
+                    borderColor: emRevisao ? `${VIOLETA}99` : 'rgba(255,255,255,0.10)',
+                    background: emRevisao ? `${VIOLETA}1f` : 'rgba(0,0,0,0.4)',
+                    color: emRevisao ? VIOLETA : 'rgba(255,255,255,0.35)',
+                  }}>
+                  {gravando ? '…' : '👁'}
+                </button>
+                <button
+                  onClick={() => marcarEntregue(e)}
+                  disabled={gravando}
+                  title="Marcar vídeo como Entregue (atualiza a ficha do evento e o portal dos noivos)"
+                  aria-label="Marcar vídeo como Entregue"
+                  className={`${btn} hover:brightness-125`}
+                  style={{ borderColor: `${VERDE}55`, background: `${VERDE}14`, color: VERDE }}>
+                  {gravando ? '…' : '✓'}
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => ocultar(e.id)}
+              title="Tirar da lista"
+              aria-label={`Tirar ${e.cliente || e.referencia || 'este vídeo'} da lista`}
+              className={`${btn} border-white/10 bg-black/40 text-white/30 hover:border-white/40 hover:text-white`}>
+              ✕
+            </button>
+          </div>
         </div>
       </div>
     )
