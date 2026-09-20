@@ -12,6 +12,9 @@ import Link from 'next/link'
 // Ficam de fora 'Aguardar' (ainda não arrancou) e 'S/SERVIÇO' (sem vídeo).
 // Os dados vêm de /api/videos-estados (só as colunas necessárias, já filtrado
 // por estado — pedido uma única vez por carregamento da página).
+// O ✕ de cada linha tira-a da lista. É uma preferência de visualização do
+// browser (localStorage), não mexe no estado do evento; o rodapé mostra
+// quantos estão ocultos e repõe-nos todos.
 
 export type VideoEvento = {
   id: string
@@ -70,13 +73,33 @@ function porAno(lista: VideoEvento[], crescente: boolean) {
     crescente ? a[0].localeCompare(b[0]) : b[0].localeCompare(a[0]))
 }
 
+const OCULTOS_KEY = 'videos_drawer_ocultos'
+
 export function VideosDrawer() {
   const [aberto, setAberto] = useState(false)
   const [montado, setMontado] = useState(false)
   const [videos, setVideos] = useState<VideoEvento[]>([])
   const [carregando, setCarregando] = useState(true)
+  // Linhas que o admin tirou da lista — só neste browser
+  const [ocultos, setOcultos] = useState<string[]>([])
 
-  useEffect(() => { setMontado(true) }, [])
+  useEffect(() => {
+    setMontado(true)
+    try {
+      const guardado = localStorage.getItem(OCULTOS_KEY)
+      if (guardado) {
+        const arr = JSON.parse(guardado)
+        if (Array.isArray(arr)) setOcultos(arr.filter((x: any) => typeof x === 'string'))
+      }
+    } catch { /* localStorage indisponível — segue sem ocultos */ }
+  }, [])
+
+  function guardarOcultos(next: string[]) {
+    setOcultos(next)
+    try { localStorage.setItem(OCULTOS_KEY, JSON.stringify(next)) } catch { /* ignora */ }
+  }
+  function ocultar(id: string) { guardarOcultos(Array.from(new Set([...ocultos, id]))) }
+  function reporTodos() { guardarOcultos([]) }
 
   useEffect(() => {
     fetch('/api/videos-estados')
@@ -95,16 +118,18 @@ export function VideosDrawer() {
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = antes }
   }, [aberto])
 
+  const visiveis = videos.filter(v => !ocultos.includes(v.id))
   // Em curso: o casamento mais antigo primeiro (é o mais urgente)
-  const emCurso = videos
+  const emCurso = visiveis
     .filter(v => EM_CURSO.includes(String(v.video_estado ?? '')))
     .sort((a, b) => (a.data_evento ?? '').localeCompare(b.data_evento ?? ''))
   // Entregues: o mais recente primeiro
-  const entregues = videos
+  const entregues = visiveis
     .filter(v => v.video_estado === 'Entregue')
     .sort((a, b) => (b.data_evento ?? '').localeCompare(a.data_evento ?? ''))
 
-  const anos = Array.from(new Set(videos.map(v => anoDe(v.data_evento)))).sort((a, b) => b.localeCompare(a))
+  const anos = Array.from(new Set(visiveis.map(v => anoDe(v.data_evento)))).sort((a, b) => b.localeCompare(a))
+  const nOcultos = videos.filter(v => ocultos.includes(v.id)).length
 
   const linha = (e: VideoEvento, estado: 'curso' | 'entregue') => {
     const cor = estado === 'curso' ? LARANJA : VERDE
@@ -112,33 +137,42 @@ export function VideosDrawer() {
     const dias = prazo ? diasAte(prazo) : null
     const corPrazo = dias === null ? cor : dias <= 30 ? VERMELHO : LARANJA
     return (
-      <Link
-        key={`${estado}-${e.id}`}
-        href={`/eventos-2026/${e.notion_id ?? e.id}`}
-        onClick={() => setAberto(false)}
-        className="group relative flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] pl-5 pr-4 py-3.5 transition-all hover:border-white/20 hover:bg-white/[0.05]">
-        <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: cor }} />
-        <div className="min-w-0 flex-1">
-          <p className="text-[9px] tracking-[0.25em] uppercase" style={{ color: cor }}>{e.video_estado}</p>
-          <p className="text-[14px] text-white/90 truncate mt-1">{e.cliente || e.referencia || '—'}</p>
-          <p className="text-[10px] text-white/30 mt-0.5 font-mono">
-            {e.referencia || 's/referência'} · {dataCurta(e.data_evento)}
-          </p>
-        </div>
-        {estado === 'curso' && dias !== null ? (
-          <div className="text-right shrink-0">
-            <p className="text-2xl font-extralight leading-none" style={{ color: corPrazo }}>
-              {dias < 0 ? `+${Math.abs(dias)}` : dias}
-            </p>
-            <p className="text-[9px] tracking-[0.2em] uppercase mt-1" style={{ color: `${corPrazo}99` }}>
-              {dias < 0 ? 'dias atraso' : dias === 1 ? 'dia p/ prazo' : 'dias p/ prazo'}
+      // O ✕ fica fora do <Link> (âncora não pode conter botões) e só aparece
+      // ao passar o rato ou com foco de teclado.
+      <div key={`${estado}-${e.id}`} className="group relative">
+        <Link
+          href={`/eventos-2026/${e.notion_id ?? e.id}`}
+          onClick={() => setAberto(false)}
+          className="relative flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] pl-5 pr-11 py-3.5 transition-all hover:border-white/20 hover:bg-white/[0.05]">
+          <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: cor }} />
+          <div className="min-w-0 flex-1">
+            <p className="text-[9px] tracking-[0.25em] uppercase" style={{ color: cor }}>{e.video_estado}</p>
+            <p className="text-[14px] text-white/90 truncate mt-1">{e.cliente || e.referencia || '—'}</p>
+            <p className="text-[10px] text-white/30 mt-0.5 font-mono">
+              {e.referencia || 's/referência'} · {dataCurta(e.data_evento)}
             </p>
           </div>
-        ) : (
-          <span className="text-[10px] tracking-[0.2em] uppercase shrink-0" style={{ color: `${VERDE}cc` }}>entregue</span>
-        )}
-        <span className="text-white/20 group-hover:text-white group-hover:translate-x-0.5 transition-all">→</span>
-      </Link>
+          {estado === 'curso' && dias !== null ? (
+            <div className="text-right shrink-0">
+              <p className="text-2xl font-extralight leading-none" style={{ color: corPrazo }}>
+                {dias < 0 ? `+${Math.abs(dias)}` : dias}
+              </p>
+              <p className="text-[9px] tracking-[0.2em] uppercase mt-1" style={{ color: `${corPrazo}99` }}>
+                {dias < 0 ? 'dias atraso' : dias === 1 ? 'dia p/ prazo' : 'dias p/ prazo'}
+              </p>
+            </div>
+          ) : (
+            <span className="text-[10px] tracking-[0.2em] uppercase shrink-0" style={{ color: `${VERDE}cc` }}>entregue</span>
+          )}
+        </Link>
+        <button
+          onClick={() => ocultar(e.id)}
+          title="Tirar da lista"
+          aria-label={`Tirar ${e.cliente || e.referencia || 'este vídeo'} da lista`}
+          className="absolute top-1/2 right-3 -translate-y-1/2 w-6 h-6 rounded-full border border-white/10 bg-black/40 text-white/35 text-[11px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 hover:border-white/40 hover:text-white transition-all">
+          ✕
+        </button>
+      </div>
     )
   }
 
@@ -243,6 +277,19 @@ export function VideosDrawer() {
                 </>
               )}
             </div>
+
+            {/* Rodapé — linhas tiradas da lista */}
+            {nOcultos > 0 && (
+              <div className="px-6 py-3 border-t border-white/[0.06] flex items-center justify-between gap-3">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-white/30">
+                  {nOcultos} fora da lista
+                </p>
+                <button onClick={reporTodos}
+                  className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-full border border-white/12 text-white/50 hover:text-white hover:border-white/35 transition-all">
+                  Repor todos
+                </button>
+              </div>
+            )}
           </aside>
         </>,
         document.body
