@@ -29,8 +29,14 @@ export type VideoEvento = {
 const LARANJA  = '#fb923c'
 const VERDE    = '#4ade80'
 const VERMELHO = '#f87171'
+const VIOLETA  = '#a78bfa'   // Em Revisão — falta o Rui rever o vídeo
 
 const EM_CURSO = ['Em Edição', 'Em Revisão', 'Finalizado']
+
+// Cor do estado dentro da secção Em edição
+function corEstado(estado: string | null | undefined): string {
+  return estado === 'Em Revisão' ? VIOLETA : LARANJA
+}
 
 // Prazo de entrega do vídeo: data do evento + 180 dias úteis (mesma regra do
 // sino do admin e do painel do editor).
@@ -82,6 +88,8 @@ export function VideosDrawer() {
   const [carregando, setCarregando] = useState(true)
   // Linhas que o admin tirou da lista — só neste browser
   const [ocultos, setOcultos] = useState<string[]>([])
+  // Ids a gravar estado neste momento (desativa o botão entretanto)
+  const [aGravar, setAGravar] = useState<Record<string, boolean>>({})
 
   useEffect(() => {
     setMontado(true)
@@ -100,6 +108,33 @@ export function VideosDrawer() {
   }
   function ocultar(id: string) { guardarOcultos(Array.from(new Set([...ocultos, id]))) }
   function reporTodos() { guardarOcultos([]) }
+
+  // Alterna Em Edição ⇄ Em Revisão sem sair da gaveta. Grava no evento e, se
+  // houver referência, também nas definições do portal — igual ao que o select
+  // da ficha do evento faz.
+  async function alterarEstado(v: VideoEvento, novo: string) {
+    const anterior = v.video_estado
+    setVideos(prev => prev.map(x => x.id === v.id ? { ...x, video_estado: novo } : x))
+    setAGravar(id => ({ ...id, [v.id]: true }))
+    try {
+      const res = await fetch(`/api/eventos-notion/${v.notion_id ?? v.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ video_estado: novo }),
+      })
+      if (!res.ok) throw new Error(String(res.status))
+      if (v.referencia) {
+        await fetch('/api/portais', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referencia: v.referencia, updates: { settings: { video_estado: novo } } }),
+        })
+      }
+    } catch {
+      setVideos(prev => prev.map(x => x.id === v.id ? { ...x, video_estado: anterior } : x))
+      alert('Não consegui gravar o estado do vídeo. Tenta outra vez.')
+    } finally {
+      setAGravar(id => { const { [v.id]: _, ...resto } = id; return resto })
+    }
+  }
 
   useEffect(() => {
     fetch('/api/videos-estados')
@@ -132,21 +167,24 @@ export function VideosDrawer() {
   const nOcultos = videos.filter(v => ocultos.includes(v.id)).length
 
   const linha = (e: VideoEvento, estado: 'curso' | 'entregue') => {
-    const cor = estado === 'curso' ? LARANJA : VERDE
+    const cor = estado === 'curso' ? corEstado(e.video_estado) : VERDE
     const prazo = estado === 'curso' && e.data_evento ? prazoVideo(e.data_evento) : null
     const dias = prazo ? diasAte(prazo) : null
     const corPrazo = dias === null ? cor : dias <= 30 ? VERMELHO : LARANJA
+    const emRevisao = e.video_estado === 'Em Revisão'
+    const gravando = !!aGravar[e.id]
     return (
-      // O ✕ fica fora do <Link> (âncora não pode conter botões) e só aparece
-      // ao passar o rato ou com foco de teclado.
-      <div key={`${estado}-${e.id}`} className="group relative">
+      // Os botões ficam fora do <Link> (uma âncora não pode conter botões).
+      <div key={`${estado}-${e.id}`} className="group relative flex items-stretch gap-2">
         <Link
           href={`/eventos-2026/${e.notion_id ?? e.id}`}
           onClick={() => setAberto(false)}
-          className="relative flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] pl-5 pr-11 py-3.5 transition-all hover:border-white/20 hover:bg-white/[0.05]">
+          className="relative flex-1 min-w-0 flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] pl-5 pr-4 py-3.5 transition-all hover:border-white/20 hover:bg-white/[0.05]">
           <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: cor }} />
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] tracking-[0.25em] uppercase" style={{ color: cor }}>{e.video_estado}</p>
+            <p className="text-[9px] tracking-[0.25em] uppercase" style={{ color: cor }}>
+              {e.video_estado}{emRevisao ? ' · falta rever' : ''}
+            </p>
             <p className="text-[14px] text-white/90 truncate mt-1">{e.cliente || e.referencia || '—'}</p>
             <p className="text-[10px] text-white/30 mt-0.5 font-mono">
               {e.referencia || 's/referência'} · {dataCurta(e.data_evento)}
@@ -165,13 +203,33 @@ export function VideosDrawer() {
             <span className="text-[10px] tracking-[0.2em] uppercase shrink-0" style={{ color: `${VERDE}cc` }}>entregue</span>
           )}
         </Link>
-        <button
-          onClick={() => ocultar(e.id)}
-          title="Tirar da lista"
-          aria-label={`Tirar ${e.cliente || e.referencia || 'este vídeo'} da lista`}
-          className="absolute top-1/2 right-3 -translate-y-1/2 w-6 h-6 rounded-full border border-white/10 bg-black/40 text-white/35 text-[11px] leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 hover:border-white/40 hover:text-white transition-all">
-          ✕
-        </button>
+
+        {/* Ações da linha */}
+        <div className="shrink-0 flex flex-col items-center justify-center gap-1.5">
+          <button
+            onClick={() => ocultar(e.id)}
+            title="Tirar da lista"
+            aria-label={`Tirar ${e.cliente || e.referencia || 'este vídeo'} da lista`}
+            className="w-7 h-7 rounded-full border border-white/10 bg-black/40 text-white/30 text-[11px] leading-none flex items-center justify-center hover:border-white/40 hover:text-white transition-all">
+            ✕
+          </button>
+          {estado === 'curso' && (
+            <button
+              onClick={() => alterarEstado(e, emRevisao ? 'Em Edição' : 'Em Revisão')}
+              disabled={gravando}
+              title={emRevisao ? 'Já revi — voltar a Em Edição' : 'Marcar Em Revisão (falta eu rever o vídeo)'}
+              aria-label={emRevisao ? 'Voltar a Em Edição' : 'Marcar Em Revisão'}
+              className="w-7 h-7 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40"
+              style={{
+                borderColor: emRevisao ? `${VIOLETA}99` : 'rgba(255,255,255,0.10)',
+                background: emRevisao ? `${VIOLETA}1f` : 'rgba(0,0,0,0.4)',
+                color: emRevisao ? VIOLETA : 'rgba(255,255,255,0.35)',
+                opacity: emRevisao || gravando ? 1 : undefined,
+              }}>
+              {gravando ? '…' : '👁'}
+            </button>
+          )}
+        </div>
       </div>
     )
   }
