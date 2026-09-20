@@ -1076,7 +1076,7 @@ function FreelancerDetailInner() {
               ocupa toda a largura, em desktop fica 1/3. */}
           {proximoCasamento && (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-              <div onClick={() => setTab('casamentos')}
+              <div onClick={() => { setPendingExpandCasamentoId(proximoCasamento.id); setTab('casamentos') }}
                 className="cursor-pointer prox-casamento-glow fade-in-1 bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all">
                 <p className="text-[11px] tracking-[0.5em] text-gold/80 uppercase font-light mb-3">Próximo Casamento</p>
                 <div className="flex items-end justify-between gap-4 flex-wrap">
