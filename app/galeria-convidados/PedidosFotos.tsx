@@ -15,17 +15,36 @@ type Pedido = {
   fotos_enviadas_em?: string | null; impressao_preparada_em?: string | null
   envio_erro?: string | null; envio_auto?: boolean
 }
+// Números que o robô não encontrou na pasta. O motivo vem de
+// auto_enviar_fotos.py em envio_erro: "Fotos em falta na pasta: 1992, 4218-2".
+function fotosEmFalta(p: Pedido): string[] {
+  const m = (p.envio_erro ?? '').match(/em falta na pasta:\s*(.+)$/i)
+  if (!m) return []
+  return m[1].split(',').map(x => x.trim()).filter(Boolean)
+}
+
 // Mensagem pré-feita para o WhatsApp: numeração do pedido não bate com as fotos.
+// Quando o robô já disse quais os números em falta, a mensagem nomeia-os, para o
+// cliente saber exatamente o que tem de corrigir.
 function msgNumeracao(p: Pedido, fotos: string[]): string {
   const primeiro = (p.nome || '').trim().split(/\s+/)[0] || ''
+  const falta = fotosEmFalta(p)
+  const uma = falta.length === 1
+  const corpo = falta.length
+    ? [
+        `No entanto, não conseguimos localizar ${uma ? 'a fotografia' : 'as fotografias'} com ${uma ? 'o número' : 'os números'} ${falta.join(', ')}.`,
+        `Pedimos que confirme ${uma ? 'esse número' : 'esses números'} no seu pedido, para podermos enviar ${uma ? 'a fotografia' : 'as fotografias'}.`,
+      ]
+    : ['No entanto, detetámos que a numeração indicada não corresponde às fotografias existentes. Solicitamos que verifique novamente o seu pedido de fotografias, para as podermos enviar.']
   return [
     `Olá${primeiro ? ' ' + primeiro : ''}, muito obrigado pela aquisição das fotografias${p.noivos ? ' do casamento ' + p.noivos.trim() : ''}.`,
     '',
-    'No entanto, detetámos que a numeração indicada não corresponde às fotografias existentes. Solicitamos que verifique novamente o seu pedido de fotografias, para as podermos enviar.',
+    ...corpo,
     '',
     `Pedido: ${p.pedido}`,
     `Nº de fotografias adquiridas: ${p.quantidade}`,
     ...(fotos.length ? [`Números indicados: ${fotos.join(', ')}`] : []),
+    ...(falta.length ? [`${uma ? 'Número' : 'Números'} em falta: ${falta.join(', ')}`] : []),
     '',
     'Obrigado,',
     'RL Photo Video',
