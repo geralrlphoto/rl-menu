@@ -682,7 +682,7 @@ function Eventos2026Inner() {
               <div className="[&>div>button]:bg-black/40 [&>div>button]:backdrop-blur-md [&>div>button]:border-white/20">
                 <ReferenciasDropdown events={events} anoFiltro={anoFiltro} />
               </div>
-              <VideosDrawer eventos={events} ano={anoFiltro} />
+              <VideosDrawer />
               <button onClick={() => setShowNovoEvento(true)}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-[#d8b85a] hover:shadow-[0_8px_30px_-8px_rgba(201,168,76,0.6)] transition-all uppercase">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

@@ -5,10 +5,13 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 
 // Botão 🎬 Vídeos no topo de /eventos-2026: abre uma gaveta à direita com os
-// vídeos em edição e os já entregues, na temporada que está a ser vista.
+// vídeos em edição e os já entregues de TODOS os anos (não só a temporada que
+// está a ser vista), separados por ano dentro de cada secção.
 //   Em curso  → video_estado 'Em Edição' | 'Em Revisão' | 'Finalizado'
 //   Entregues → video_estado 'Entregue'
 // Ficam de fora 'Aguardar' (ainda não arrancou) e 'S/SERVIÇO' (sem vídeo).
+// Os dados vêm de /api/videos-estados (só as colunas necessárias, já filtrado
+// por estado — pedido uma única vez por carregamento da página).
 
 export type VideoEvento = {
   id: string
@@ -17,14 +20,11 @@ export type VideoEvento = {
   cliente: string
   data_evento: string
   local: string
-  tipo_servico?: string[]
-  valor_liquido: number | null
-  valor_video?: number | null
   video_estado: string | null
 }
 
-const LARANJA = '#fb923c'
-const VERDE   = '#4ade80'
+const LARANJA  = '#fb923c'
+const VERDE    = '#4ade80'
 const VERMELHO = '#f87171'
 
 const EM_CURSO = ['Em Edição', 'Em Revisão', 'Finalizado']
@@ -49,21 +49,42 @@ function dataCurta(iso: string) {
   if (isNaN(d.getTime())) return '—'
   return `${String(d.getDate()).padStart(2, '0')} ${MESES[d.getMonth()]} ${d.getFullYear()}`
 }
+function anoDe(iso: string): string {
+  const a = (iso ?? '').slice(0, 4)
+  return /^\d{4}$/.test(a) ? a : 's/data'
+}
 function diasAte(d: Date) {
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
   return Math.round((d.getTime() - hoje.getTime()) / 86400000)
 }
 
-function temVideo(e: VideoEvento) {
-  const servicos = (e.tipo_servico ?? []).join(' ').toUpperCase()
-  return /V.DEO/.test(servicos) || (e.valor_video ?? 0) > 0 || (e.valor_liquido ?? 0) > 0
+// Agrupa por ano, do mais recente para o mais antigo
+function porAno(lista: VideoEvento[], crescente: boolean) {
+  const grupos = new Map<string, VideoEvento[]>()
+  for (const v of lista) {
+    const ano = anoDe(v.data_evento)
+    if (!grupos.has(ano)) grupos.set(ano, [])
+    grupos.get(ano)!.push(v)
+  }
+  return Array.from(grupos.entries()).sort((a, b) =>
+    crescente ? a[0].localeCompare(b[0]) : b[0].localeCompare(a[0]))
 }
 
-export function VideosDrawer({ eventos, ano }: { eventos: VideoEvento[]; ano: number }) {
+export function VideosDrawer() {
   const [aberto, setAberto] = useState(false)
   const [montado, setMontado] = useState(false)
+  const [videos, setVideos] = useState<VideoEvento[]>([])
+  const [carregando, setCarregando] = useState(true)
 
   useEffect(() => { setMontado(true) }, [])
+
+  useEffect(() => {
+    fetch('/api/videos-estados')
+      .then(r => r.json())
+      .then(d => setVideos(d.videos ?? []))
+      .catch(() => {/* silencioso */})
+      .finally(() => setCarregando(false))
+  }, [])
 
   useEffect(() => {
     if (!aberto) return
@@ -74,19 +95,22 @@ export function VideosDrawer({ eventos, ano }: { eventos: VideoEvento[]; ano: nu
     return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = antes }
   }, [aberto])
 
-  const comVideo = eventos.filter(temVideo)
-  const emCurso = comVideo
-    .filter(e => EM_CURSO.includes(String(e.video_estado ?? '')))
+  // Em curso: o casamento mais antigo primeiro (é o mais urgente)
+  const emCurso = videos
+    .filter(v => EM_CURSO.includes(String(v.video_estado ?? '')))
     .sort((a, b) => (a.data_evento ?? '').localeCompare(b.data_evento ?? ''))
-  const entregues = comVideo
-    .filter(e => e.video_estado === 'Entregue')
+  // Entregues: o mais recente primeiro
+  const entregues = videos
+    .filter(v => v.video_estado === 'Entregue')
     .sort((a, b) => (b.data_evento ?? '').localeCompare(a.data_evento ?? ''))
+
+  const anos = Array.from(new Set(videos.map(v => anoDe(v.data_evento)))).sort((a, b) => b.localeCompare(a))
 
   const linha = (e: VideoEvento, estado: 'curso' | 'entregue') => {
     const cor = estado === 'curso' ? LARANJA : VERDE
     const prazo = estado === 'curso' && e.data_evento ? prazoVideo(e.data_evento) : null
     const dias = prazo ? diasAte(prazo) : null
-    const corPrazo = dias === null ? cor : dias < 0 ? VERMELHO : dias <= 30 ? VERMELHO : LARANJA
+    const corPrazo = dias === null ? cor : dias <= 30 ? VERMELHO : LARANJA
     return (
       <Link
         key={`${estado}-${e.id}`}
@@ -118,6 +142,15 @@ export function VideosDrawer({ eventos, ano }: { eventos: VideoEvento[]; ano: nu
     )
   }
 
+  // Separador de ano dentro de cada secção
+  const separadorAno = (ano: string, n: number, cor: string) => (
+    <div className="flex items-center gap-3 px-1 pt-3 pb-0.5">
+      <span className="font-cormorant text-xl font-light leading-none" style={{ color: `${cor}dd` }}>{ano}</span>
+      <div className="flex-1 h-px" style={{ background: `${cor}1f` }} />
+      <span className="text-[9px] tracking-[0.2em] uppercase text-white/25 tabular-nums">{n} {n === 1 ? 'vídeo' : 'vídeos'}</span>
+    </div>
+  )
+
   const seccao = (titulo: string, cor: string, lista: VideoEvento[], estado: 'curso' | 'entregue') => (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-3 px-1 pt-2">
@@ -127,7 +160,12 @@ export function VideosDrawer({ eventos, ano }: { eventos: VideoEvento[]; ano: nu
       </div>
       {lista.length === 0
         ? <p className="text-white/25 text-[11px] italic px-1 py-2">Nenhum vídeo nesta fase.</p>
-        : lista.map(e => linha(e, estado))}
+        : porAno(lista, estado === 'curso').map(([ano, doAno]) => (
+            <div key={`${titulo}-${ano}`} className="flex flex-col gap-2">
+              {separadorAno(ano, doAno.length, cor)}
+              {doAno.map(v => linha(v, estado))}
+            </div>
+          ))}
     </div>
   )
 
@@ -135,7 +173,7 @@ export function VideosDrawer({ eventos, ano }: { eventos: VideoEvento[]; ano: nu
     <>
       <button
         onClick={() => setAberto(true)}
-        title="Ver vídeos em edição e entregues"
+        title="Ver vídeos em edição e entregues (todos os anos)"
         aria-label="Ver vídeos em edição e entregues"
         className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl border border-white/20 bg-black/40 backdrop-blur-md text-white/80 font-bold text-xs tracking-widest uppercase hover:border-gold/60 hover:text-gold transition-all">
         <span className="text-sm leading-none">🎬</span>
@@ -170,7 +208,9 @@ export function VideosDrawer({ eventos, ano }: { eventos: VideoEvento[]; ano: nu
             <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[9px] tracking-[0.4em] uppercase text-white/40">Temporada {ano}</p>
+                  <p className="text-[9px] tracking-[0.4em] uppercase text-white/40">
+                    {anos.length > 0 ? `Todas as temporadas · ${anos[anos.length - 1]}–${anos[0]}` : 'Todas as temporadas'}
+                  </p>
                   <h2 className="font-cormorant text-3xl font-light text-white mt-1">Vídeos</h2>
                   <p className="text-[11px] mt-1">
                     <span style={{ color: LARANJA }}>{emCurso.length} em edição</span>
@@ -190,7 +230,9 @@ export function VideosDrawer({ eventos, ano }: { eventos: VideoEvento[]; ano: nu
 
             {/* Listas */}
             <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-5">
-              {emCurso.length === 0 && entregues.length === 0 ? (
+              {carregando ? (
+                <p className="text-center text-white/25 text-xs tracking-widest uppercase py-16">A carregar…</p>
+              ) : emCurso.length === 0 && entregues.length === 0 ? (
                 <p className="text-center text-white/25 text-xs tracking-widest uppercase py-16">
                   Sem vídeos em edição ou entregues
                 </p>
