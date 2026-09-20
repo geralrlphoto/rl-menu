@@ -109,6 +109,16 @@ export function VideosDrawer() {
   function ocultar(id: string) { guardarOcultos(Array.from(new Set([...ocultos, id]))) }
   function reporTodos() { guardarOcultos([]) }
 
+  // Marca o vídeo como Entregue. Confirma primeiro porque o estado é visível
+  // no portal dos noivos (Estado das Entregas lê o evento).
+  function marcarEntregue(v: VideoEvento) {
+    const nome = v.cliente || v.referencia || 'este casamento'
+    if (!confirm(`Marcar o vídeo de ${nome} como ENTREGUE?
+
+Actualiza a ficha do evento e o portal dos noivos.`)) return
+    alterarEstado(v, 'Entregue')
+  }
+
   // Alterna Em Edição ⇄ Em Revisão sem sair da gaveta. Grava no evento e, se
   // houver referência, também nas definições do portal — igual ao que o select
   // da ficha do evento faz.
@@ -205,29 +215,39 @@ export function VideosDrawer() {
         </Link>
 
         {/* Ações da linha */}
-        <div className="shrink-0 flex flex-col items-center justify-center gap-1.5">
+        <div className="shrink-0 flex flex-col items-center justify-center gap-1">
           <button
             onClick={() => ocultar(e.id)}
             title="Tirar da lista"
             aria-label={`Tirar ${e.cliente || e.referencia || 'este vídeo'} da lista`}
-            className="w-7 h-7 rounded-full border border-white/10 bg-black/40 text-white/30 text-[11px] leading-none flex items-center justify-center hover:border-white/40 hover:text-white transition-all">
+            className="w-7 h-6 rounded-full border border-white/10 bg-black/40 text-white/30 text-[11px] leading-none flex items-center justify-center hover:border-white/40 hover:text-white transition-all">
             ✕
           </button>
           {estado === 'curso' && (
-            <button
-              onClick={() => alterarEstado(e, emRevisao ? 'Em Edição' : 'Em Revisão')}
-              disabled={gravando}
-              title={emRevisao ? 'Já revi — voltar a Em Edição' : 'Marcar Em Revisão (falta eu rever o vídeo)'}
-              aria-label={emRevisao ? 'Voltar a Em Edição' : 'Marcar Em Revisão'}
-              className="w-7 h-7 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40"
-              style={{
-                borderColor: emRevisao ? `${VIOLETA}99` : 'rgba(255,255,255,0.10)',
-                background: emRevisao ? `${VIOLETA}1f` : 'rgba(0,0,0,0.4)',
-                color: emRevisao ? VIOLETA : 'rgba(255,255,255,0.35)',
-                opacity: emRevisao || gravando ? 1 : undefined,
-              }}>
-              {gravando ? '…' : '👁'}
-            </button>
+            <>
+              <button
+                onClick={() => alterarEstado(e, emRevisao ? 'Em Edição' : 'Em Revisão')}
+                disabled={gravando}
+                title={emRevisao ? 'Já revi — voltar a Em Edição' : 'Marcar Em Revisão (falta eu rever o vídeo)'}
+                aria-label={emRevisao ? 'Voltar a Em Edição' : 'Marcar Em Revisão'}
+                className="w-7 h-6 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40"
+                style={{
+                  borderColor: emRevisao ? `${VIOLETA}99` : 'rgba(255,255,255,0.10)',
+                  background: emRevisao ? `${VIOLETA}1f` : 'rgba(0,0,0,0.4)',
+                  color: emRevisao ? VIOLETA : 'rgba(255,255,255,0.35)',
+                }}>
+                {gravando ? '…' : '👁'}
+              </button>
+              <button
+                onClick={() => marcarEntregue(e)}
+                disabled={gravando}
+                title="Marcar vídeo como Entregue (atualiza a ficha do evento e o portal dos noivos)"
+                aria-label="Marcar vídeo como Entregue"
+                className="w-7 h-6 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40 hover:brightness-125"
+                style={{ borderColor: `${VERDE}55`, background: `${VERDE}14`, color: VERDE }}>
+                {gravando ? '…' : '✓'}
+              </button>
+            </>
           )}
         </div>
       </div>
