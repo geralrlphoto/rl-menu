@@ -390,17 +390,15 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     switch (id) {
 
       case 'cover': return (
-        <div className="h-full w-full flex items-center px-8 sm:px-16 lg:px-24">
-          <div className="rl-in w-full max-w-3xl">
-            <img src={`/logo_rl_gold.png`} alt="RL Photo · Video" className="w-16 opacity-85 mb-10" />
-            <p className="eyebrow mb-7">{nome || 'Para vocês'}</p>
-            <h1 style={{ fontSize: 'clamp(46px,7.4vw,112px)' }}>
-              Proposta<br /><em>criativa</em>
-            </h1>
-            <div className="rl-rule h-px w-12 mt-9 mb-8" style={{ background: 'var(--g)', opacity: .6 }} />
-            <p className="lead" style={{ maxWidth: '470px' }}>{pp.subtitle}</p>
-            <p className="hint mt-12">{total} cenas &middot; setas para avançar</p>
-          </div>
+        <div className="rl-in h-full w-full flex flex-col items-center justify-center text-center px-8">
+          <img src={`/logo_rl_gold.png`} alt="RL Photo · Video" className="w-16 opacity-85 mb-8" />
+          <p className="eyebrow mb-6">{nome || 'Para vocês'}</p>
+          <h1 style={{ fontSize: 'clamp(40px,5.6vw,84px)' }}>
+            Proposta<br /><em>criativa</em>
+          </h1>
+          <div className="h-px w-12 mt-7 mb-7" style={{ background: 'var(--g)', opacity: .6 }} />
+          <p className="lead" style={{ maxWidth: '440px' }}>{pp.subtitle}</p>
+          <p className="hint mt-9">{total} cenas &middot; setas para avançar</p>
         </div>
       )
 
@@ -649,16 +647,14 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       }
 
       case 'invest': return (
-        <div className="h-full w-full flex items-center px-8 sm:px-16 lg:px-24">
-          <div className="rl-in w-full max-w-3xl">
-            <h2 style={{ fontSize: 'clamp(42px,6.4vw,92px)' }}>O <em>investimento</em></h2>
-            <div className="rl-rule h-px w-12 mt-8 mb-9" style={{ background: 'var(--g)', opacity: .6 }} />
-            <p className="lead" style={{ maxWidth: '520px' }}>
-              As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o
-              retorno eterno de cada momento que nunca mais poderão reviver, apenas recordar.
-            </p>
-            <p className="hint mt-12">Três propostas a seguir</p>
-          </div>
+        <div className="rl-in h-full w-full flex flex-col items-center justify-center text-center px-8">
+          <h2 style={{ fontSize: 'clamp(40px,5.4vw,80px)' }}>O <em>investimento</em></h2>
+          <div className="h-px w-12 mt-7 mb-7" style={{ background: 'var(--g)', opacity: .6 }} />
+          <p className="lead" style={{ maxWidth: '480px' }}>
+            As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o
+            retorno eterno de cada momento que nunca mais poderão reviver, apenas recordar.
+          </p>
+          <p className="hint mt-9">Três propostas a seguir</p>
         </div>
       )
 
