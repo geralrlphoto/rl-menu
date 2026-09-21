@@ -723,6 +723,13 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const maxPrestacoes = Math.max(1, Math.min(mesesAteLimite > 0 ? mesesAteLimite : maxPorValor, maxPorValor))
         const nPlano        = Math.min(Math.max(1, planoN[idx] ?? maxPrestacoes), maxPrestacoes)
         const valorMes      = nPlano > 0 ? reforco / nPlano : 0
+        const mesesAteEvento = dataEvento
+          ? Math.max(0, (dataEvento.getFullYear() - hojeD.getFullYear()) * 12 + (dataEvento.getMonth() - hojeD.getMonth()))
+          : 0
+        const limiteLabel = limitePlano
+          ? limitePlano.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
+          : ''
+        const nomeEvento = 'o casamento'
         const mesLabel = (d: Date) => d.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
         const mesFim   = limitePlano ? new Date(limitePlano.getFullYear(), limitePlano.getMonth(), 1) : null
         const mesIni   = mesFim ? new Date(mesFim.getFullYear(), mesFim.getMonth() - (nPlano - 1), 1) : null
@@ -876,6 +883,11 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
                       {formaOpen[idx] && (
                         <div style={{ border: '1px solid var(--line-soft)', padding: 'clamp(10px,1.7vh,15px) 16px' }}>
+                          {dataEvento && (
+                            <p className="meta mb-3" style={{ color: 'var(--g)' }}>
+                              Faltam {mesesAteEvento} {mesesAteEvento === 1 ? 'mês' : 'meses'} para {nomeEvento}
+                            </p>
+                          )}
                           <div className="flex flex-wrap items-center justify-between gap-x-7 gap-y-3">
 
                             <div className="flex items-center gap-3">
@@ -901,7 +913,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                           </div>
 
                           <p className="hint mt-3" style={{ lineHeight: 1.55 }}>
-                            {mesIni && mesFim ? `De ${mesLabel(mesIni)} a ${mesLabel(mesFim)}. ` : ''}
+                            {mesIni && mesFim ? `De ${mesLabel(mesIni)} a ${mesLabel(mesFim)}` : ''}
+                            {limiteLabel ? `, liquidado até ${limiteLabel}` : ''}
+                            {mesIni && mesFim ? '. ' : ''}
                             Mínimo {MIN_PRESTACAO} € por prestação. A adjudicação e o valor final ficam de fora.
                           </p>
                         </div>
