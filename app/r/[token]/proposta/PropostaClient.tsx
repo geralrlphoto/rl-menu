@@ -2,9 +2,28 @@
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent, Proposta, ExtraServico, FONTS, TITLE_SIZES } from '../LeadPageClient'
+import { CSS_BRIEFING } from '../../../_briefing/estilo'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
+
+// Cada slide é uma cena, como no briefing /nova-lead: etiqueta em mono e
+// um título em romano com a ênfase em itálico dourado.
+const CENAS: Record<string, { cena: string; titulo: string; em: string }> = {
+  cover:   { cena: 'Antes de rodar', titulo: 'Proposta',            em: 'criativa'     },
+  about:   { cena: 'Cena 01',        titulo: 'Quem está',           em: 'atrás da câmara' },
+  intro:   { cena: 'Cena 02',        titulo: 'Quem são os',         em: 'nossos noivos' },
+  relive:  { cena: 'Cena 03',        titulo: 'O vosso',             em: 'portal'       },
+  blank:   { cena: 'Cena 04',        titulo: 'Como imaginam',       em: 'o vosso dia'  },
+  blank2:  { cena: 'Cena 05',        titulo: 'O grande',            em: 'dia'          },
+  invest:  { cena: 'Cena 06',        titulo: 'O',                   em: 'investimento' },
+  'pkg-0': { cena: 'Proposta 01',    titulo: 'A',                   em: 'primeira'     },
+  'pkg-1': { cena: 'Proposta 02',    titulo: 'A',                   em: 'segunda'      },
+  'pkg-2': { cena: 'Proposta 03',    titulo: 'A',                   em: 'terceira'     },
+  final:   { cena: 'Cena 07',        titulo: 'Fica para',           em: 'sempre'       },
+  cta:     { cena: 'Ficha técnica',  titulo: 'Informações',         em: 'gerais'       },
+  contact: { cena: 'Fim',            titulo: 'Vamos contar esta',   em: 'história'     },
+}
 
 function titlePosStyle(pos: string, isAdmin: boolean): React.CSSProperties {
   const t = isAdmin ? '76px' : '52px'
@@ -343,7 +362,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               <h1 className="font-cormorant text-3xl font-light italic text-white/90">Proposta</h1>
               <h1 className="font-cormorant text-3xl font-light italic" style={{ color: '#C9A84C' }}>Criativa</h1>
             </div>
-            <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.35)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
             <div className="w-full flex flex-col gap-3">
               <input type="password" placeholder="Introduz a password" value={pwInput}
                 onChange={e => setPwInput(e.target.value)}
@@ -372,15 +390,17 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     switch (id) {
 
       case 'cover': return (
-        <div className="rl-in flex flex-col items-center justify-center h-full text-center px-8 gap-6">
-          <img src={`/logo_rl_gold.png`} alt="RL" className="w-36 sm:w-44 opacity-80 mb-2" />
-          <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
-          <div>
-            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
-            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.accentColor, lineHeight: 1.1 }}>Criativa</h1>
+        <div className="h-full w-full flex items-center px-8 sm:px-16 lg:px-24">
+          <div className="rl-in w-full max-w-3xl">
+            <img src={`/logo_rl_gold.png`} alt="RL Photo · Video" className="w-16 opacity-85 mb-10" />
+            <p className="eyebrow mb-7">{nome || 'Para vocês'}</p>
+            <h1 style={{ fontSize: 'clamp(46px,7.4vw,112px)' }}>
+              Proposta<br /><em>criativa</em>
+            </h1>
+            <div className="rl-rule h-px w-12 mt-9 mb-8" style={{ background: 'var(--g)', opacity: .6 }} />
+            <p className="lead" style={{ maxWidth: '470px' }}>{pp.subtitle}</p>
+            <p className="hint mt-12">{total} cenas &middot; setas para avançar</p>
           </div>
-          <p className="text-[11px] tracking-[0.5em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <p className={`${fontClass(typo.bodyFont)} text-lg sm:text-xl italic opacity-60`} style={{ color: typo.bodyColor }}>{pp.subtitle}</p>
         </div>
       )
 
@@ -389,7 +409,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
           {/* Título — posição editável */}
           <div className="absolute" style={titlePosStyle(pp.about?.titlePos || 'top-right', isAdmin)}>
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            <h2 
               style={{ fontSize: 'clamp(2rem,4vw,3.4rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
               {pp.about?.title || 'Sobre Nós'}
             </h2>
@@ -468,8 +488,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             </div>
           )}
           <div className="relative z-10 h-full flex flex-col justify-center px-12 sm:px-20" style={{ maxWidth: '58%' }}>
-            <p className="text-[10px] tracking-[0.5em] uppercase mb-5" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            <h2 
               style={{ fontSize: 'clamp(1.4rem, 3.8vw, 3rem)', color: '#ffffff', lineHeight: 1.2 }}>
               {pp.couple?.title || 'Os nossos noivos'}
             </h2>
@@ -484,9 +503,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
             {/* Esquerda — texto */}
             <div className="rl-in flex flex-col gap-6 flex-1">
-              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              <h2 
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-                Portal dos Noivos
+                Portal dos <em>Noivos</em>
               </h2>
               <div className="flex flex-col gap-3">
                 {[
@@ -524,7 +543,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
             {/* Esquerda — texto */}
             <div className="rl-in flex flex-col gap-5 flex-1">
-              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              <h2 
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
                 {pp.grandeDia?.title || 'o grande dia'}
               </h2>
@@ -564,17 +583,14 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             )}
             <div className={`relative z-10 flex flex-col gap-8 ${blankPhoto ? 'text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
               style={{ maxWidth: blankPhoto ? '52%' : '680px', paddingLeft: blankPhoto ? 'clamp(5rem, 14vw, 12rem)' : undefined }}>
-              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              <h2 
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
-                Como imaginam o vosso dia?
+                Como imaginam <em>o vosso dia?</em>
               </h2>
-              <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
               <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7 }}>
                 O que é que torna este dia verdadeiramente único para vocês?<br />
                 Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
               </p>
-              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
             </div>
             {/* Botão upload inline — só admin */}
             {isAdmin && (
@@ -601,26 +617,23 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             )}
             {introPhoto ? (
               <div className="relative z-10 h-full flex flex-col justify-center" style={{ maxWidth: '54%', paddingLeft: 'clamp(5rem, 14vw, 12rem)' }}>
-                <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em] mb-6`}
+                <p className="mb-6"
                   style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.95)', lineHeight: 1.1 }}>
-                  Quem são os meus noivos?
+                  Quem são os <em>meus noivos?</em>
                 </p>
-                <p className="text-[11px] tracking-[0.45em] mb-6" style={{ color: typo.accentColor }}>&#9670;</p>
                 <p className={`${fontClass(typo.bodyFont)} text-xl italic font-light leading-relaxed`} style={{ color: 'rgba(255,255,255,0.85)' }}>
                   &ldquo;{pp.intro}&rdquo;
                 </p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-                <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                <p 
                   style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>
-                  Quem são os meus noivos?
+                  Quem são os <em>meus noivos?</em>
                 </p>
-                <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
                 <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
                   &ldquo;{pp.intro}&rdquo;
                 </p>
-                <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
               </div>
             )}
             {isAdmin && (
@@ -636,17 +649,16 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       }
 
       case 'invest': return (
-        <div className="rl-in flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-2xl mx-auto">
-          <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
-            style={{ fontSize: 'clamp(2.5rem,7vw,5rem)', color: typo.titleColor, lineHeight: 1.0 }}>
-            Investimento
-          </h2>
-          <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
-            style={{ fontSize: 'clamp(0.9rem,1.8vw,1.1rem)', color: typo.bodyColor, maxWidth: '480px' }}>
-            As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o retorno eterno de cada momento que nunca mais poderão reviver — apenas recordar.
-          </p>
+        <div className="h-full w-full flex items-center px-8 sm:px-16 lg:px-24">
+          <div className="rl-in w-full max-w-3xl">
+            <h2 style={{ fontSize: 'clamp(42px,6.4vw,92px)' }}>O <em>investimento</em></h2>
+            <div className="rl-rule h-px w-12 mt-8 mb-9" style={{ background: 'var(--g)', opacity: .6 }} />
+            <p className="lead" style={{ maxWidth: '520px' }}>
+              As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o
+              retorno eterno de cada momento que nunca mais poderão reviver, apenas recordar.
+            </p>
+            <p className="hint mt-12">Três propostas a seguir</p>
+          </div>
         </div>
       )
 
@@ -943,9 +955,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16 py-8">
           <div className="rl-in w-full max-w-5xl flex flex-col gap-6">
 
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            <h2 
               style={{ fontSize: 'clamp(1.6rem,3.5vw,2.8rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-              Informações Gerais
+              Informações <em>gerais</em>
             </h2>
 
             <div className="h-px" style={{ background: `${typo.accentColor}25` }} />
@@ -1003,9 +1015,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
           {/* Left — text content */}
           <div className="rl-in flex flex-col gap-6 flex-1">
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            <h2 
               style={{ fontSize: 'clamp(1.8rem,4vw,3.2rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-              Vamos contar<br />esta história<br />juntos?
+              Vamos contar<br />esta história<br /><em>juntos?</em>
             </h2>
 
             {/* divider */}
@@ -1057,17 +1069,14 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             )}
             <div className={`relative z-10 flex flex-col gap-8 ${finalPhoto ? 'text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
               style={{ maxWidth: finalPhoto ? '52%' : '680px', paddingLeft: finalPhoto ? 'clamp(5rem, 14vw, 12rem)' : undefined }}>
-              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              <h2 
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
                 O que gostaram mais até agora?
               </h2>
-              <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
               <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7 }}>
                 Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
                 A vossa opinião ajuda-nos a construir algo verdadeiramente único para vocês.
               </p>
-              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
             </div>
             {isAdmin && (
               <label className="absolute bottom-6 right-6 z-20 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[10px] tracking-[0.2em] uppercase transition-all"
@@ -1087,7 +1096,13 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
   // ── Main presentation ─────────────────────────────────────────────────────
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0a0a0a' }}>
+    <div className="nlead relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0a0a0a' }}>
+
+      {/* Sistema de estilo partilhado com os briefings (/nova-lead) */}
+      <style>{CSS_BRIEFING}</style>
+
+      {/* Grão de película */}
+      <div className="fx-grain" aria-hidden="true" />
 
       {/* Animações — entradas escalonadas e realces */}
       <style>{`
@@ -1195,27 +1210,25 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         }} />
       </div>
 
-      {/* Segmentos clicáveis */}
-      <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5 z-30">
+      {/* Fotogramas — um por slide, como no briefing */}
+      <div className={`absolute left-6 sm:left-10 right-6 sm:right-10 flex items-center gap-1.5 z-30 ${isAdmin ? 'bottom-6' : 'bottom-7'}`}>
         {slides.map((_, i) => (
           <button key={i} onClick={() => goTo(i)}
-            aria-label={`Ir para o slide ${i + 1} de ${total}`}
-            className="flex items-center justify-center py-3">
-            <span className="block transition-all duration-500"
-              style={{
-                width:  i === current ? '30px' : '14px',
-                height: '2px',
-                background: i === current ? '#E8B43C' : i < current ? 'rgba(201,168,76,0.45)' : 'rgba(201,168,76,0.16)',
-              }}
-            />
+            aria-label={`Ir para a cena ${i + 1} de ${total}`}
+            className="flex-1 flex items-center py-3">
+            <span className={`fotograma${i === current ? ' agora' : i < current ? ' feito' : ''}`} />
           </button>
         ))}
       </div>
 
-      {/* Contador */}
-      <p className="absolute bottom-5 right-6 text-[10px] tracking-[0.3em] z-30" style={{ color: 'rgba(201,168,76,0.5)' }}>
-        {String(current + 1).padStart(2, '0')}
-        <span style={{ color: 'rgba(201,168,76,0.22)' }}> / {String(total).padStart(2, '0')}</span>
+      {/* Etiqueta da cena e contador */}
+      {current > 0 && (
+        <p className={`eyebrow absolute left-6 sm:left-10 z-30 ${isAdmin ? 'top-16' : 'top-8'}`}>
+          {CENAS[slides[current]]?.cena || ''}
+        </p>
+      )}
+      <p className={`meta absolute right-6 sm:right-10 z-30 ${isAdmin ? 'top-16' : 'top-8'}`}>
+        {String(current + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
       </p>
 
       {/* ══ EDITOR PANEL ══ */}
