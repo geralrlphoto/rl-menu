@@ -147,6 +147,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
   const [extrasSelected, setExtrasSelected] = useState<Record<number, string[]>>({})
   const [formaOpen,      setFormaOpen]      = useState<Record<number, boolean>>({})
   const [escolhida,      setEscolhida]      = useState<number | null>(null)
+  const [planoN,         setPlanoN]         = useState<Record<number, number>>({})
 
   // Editor
   const [editorOpen,      setEditorOpen]      = useState(false)
@@ -656,6 +657,24 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               { v: `${valorFinal.toLocaleString('pt-PT')} €`,  l: 'Após o dia' },
             ]
           : []
+        // ── Plano de pagamento do reforço ─────────────────────────
+        // Divide o valor a liquidar até 30 dias antes do casamento em
+        // prestações mensais, nunca abaixo de 200 €.
+        const MIN_PRESTACAO = 200
+        const dataEvento = content.evento?.data ? new Date(`${content.evento.data}T00:00:00`) : null
+        const limitePlano = dataEvento ? new Date(dataEvento.getTime() - 30 * 86400000) : null
+        const hojeD = new Date()
+        const mesesAteLimite = limitePlano
+          ? Math.max(0, (limitePlano.getFullYear() - hojeD.getFullYear()) * 12 + (limitePlano.getMonth() - hojeD.getMonth()))
+          : 0
+        const maxPorValor   = Math.floor(reforco / MIN_PRESTACAO)
+        const maxPrestacoes = Math.max(1, Math.min(mesesAteLimite > 0 ? mesesAteLimite : maxPorValor, maxPorValor))
+        const nPlano        = Math.min(Math.max(1, planoN[idx] ?? maxPrestacoes), maxPrestacoes)
+        const valorMes      = nPlano > 0 ? reforco / nPlano : 0
+        const mesLabel = (d: Date) => d.toLocaleDateString('pt-PT', { month: 'long', year: 'numeric' })
+        const mesFim   = limitePlano ? new Date(limitePlano.getFullYear(), limitePlano.getMonth(), 1) : null
+        const mesIni   = mesFim ? new Date(mesFim.getFullYear(), mesFim.getMonth() - (nPlano - 1), 1) : null
+        const planoPossivel = reforco >= MIN_PRESTACAO
         return (
           <div className="flex items-center justify-center h-full w-full px-3 sm:px-8">
             <div className={`relative w-full overflow-hidden ${isAtiva ? 'rl-glow' : ''}`}
@@ -665,6 +684,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                 border: isAtiva ? '1px solid var(--g)' : '1px solid var(--line)',
                 background: 'rgba(216,190,147,0.018)',
                 transition: 'border-color .45s var(--ease)',
+                maxHeight: 'calc(100dvh - 96px)',
+                overflowY: 'auto',
               }}>
 
               {/* Perfuração esquerda */}
@@ -787,6 +808,53 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                           ))
                         : <p className="hint">Sem serviços extras definidos</p>}
                     </div>
+                  )}
+
+                  {/* Calculadora do plano de pagamento */}
+                  {planoPossivel && (
+                    <>
+                      <button type="button"
+                        onClick={() => setFormaOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                        className="flex items-center gap-3 w-full text-left"
+                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                        <span className="meta" style={{ color: 'var(--g)' }}>Plano de pagamento</span>
+                        <span className="flex-1 h-px" style={{ background: 'var(--line-soft)' }} />
+                        <span className="meta">{formaOpen[idx] ? 'Fechar' : 'Calcular'}</span>
+                      </button>
+
+                      {formaOpen[idx] && (
+                        <div style={{ border: '1px solid var(--line-soft)', padding: 'clamp(10px,1.7vh,15px) 16px' }}>
+                          <div className="flex flex-wrap items-center justify-between gap-x-7 gap-y-3">
+
+                            <div className="flex items-center gap-3">
+                              <span className="hint">{reforco.toLocaleString('pt-PT')} € em</span>
+                              <button type="button" aria-label="Menos uma prestação"
+                                disabled={nPlano <= 1}
+                                onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.max(1, nPlano - 1) }))}
+                                style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano <= 1 ? 'not-allowed' : 'pointer', opacity: nPlano <= 1 ? .3 : 1, lineHeight: 1 }}>&minus;</button>
+                              <span style={{ fontFamily: 'var(--fs)', fontSize: '28px', lineHeight: 1, color: 'var(--tx)', minWidth: '34px', textAlign: 'center' }}>{nPlano}</span>
+                              <button type="button" aria-label="Mais uma prestação"
+                                disabled={nPlano >= maxPrestacoes}
+                                onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.min(maxPrestacoes, nPlano + 1) }))}
+                                style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano >= maxPrestacoes ? 'not-allowed' : 'pointer', opacity: nPlano >= maxPrestacoes ? .3 : 1, lineHeight: 1 }}>+</button>
+                              <span className="hint">{nPlano === 1 ? 'prestação' : 'prestações'}</span>
+                            </div>
+
+                            <div className="flex items-baseline gap-3">
+                              <p style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(26px,3.8vh,38px)', lineHeight: 1, color: 'var(--g)' }}>
+                                {valorMes.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                              </p>
+                              <span className="hint">por mês</span>
+                            </div>
+                          </div>
+
+                          <p className="hint mt-3" style={{ lineHeight: 1.55 }}>
+                            {mesIni && mesFim ? `De ${mesLabel(mesIni)} a ${mesLabel(mesFim)}. ` : ''}
+                            Mínimo {MIN_PRESTACAO} € por prestação. A adjudicação e o valor final ficam de fora.
+                          </p>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {escolhida === idx ? (
