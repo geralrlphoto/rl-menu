@@ -619,7 +619,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       case 'pkg-2': {
         const idx = parseInt(id.split('-')[1])
         const proposta: Proposta = content.propostas?.[idx] || { nome: '', servicos_foto: [], servicos_video: [], valor: '' }
-        const isAtiva = (pp.propostaAtiva ?? 0) === idx
+        const isAtiva = (pp.propostaAtiva ?? 1) === idx
         const labels = ['1', '2', '3']
         const hasFoto  = (proposta.servicos_foto  || []).length > 0
         const hasVideo = (proposta.servicos_video || []).length > 0
@@ -1176,7 +1176,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                   {[0,1,2].map(i => (
                     <button key={i} onClick={() => setPage('propostaAtiva', i)}
                       className="flex-1 py-2 rounded-lg text-xs transition-all"
-                      style={(pp.propostaAtiva ?? 0) === i
+                      style={(pp.propostaAtiva ?? 1) === i
                         ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
                         : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       {content.propostas?.[i]?.nome || `Proposta ${['1','2','3'][i]}`}

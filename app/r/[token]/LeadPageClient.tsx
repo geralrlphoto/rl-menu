@@ -259,7 +259,7 @@ export const DEFAULT_CONTENT: PageContent = {
       { title: 'Premium', description: 'Fotografia + Vídeo cinematográfico com highlights do dia e música personalizada.', price: 'Sob consulta' },
       { title: 'Luxe', description: 'Pacote completo com álbum premium, second shooter, pré-wedding e vídeo completo.', price: 'Sob consulta' },
     ],
-    propostaAtiva: 0,
+    propostaAtiva: 1,
     ctaText: 'Falemos sobre o vosso dia especial',
     typography: {
       titleFont: 'cormorant', titleSize: 'xl', titleColor: '#ffffff',
@@ -284,7 +284,7 @@ function merge(saved: any): PageContent {
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
     extras_proposta: saved.extras_proposta || [],
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 1, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 

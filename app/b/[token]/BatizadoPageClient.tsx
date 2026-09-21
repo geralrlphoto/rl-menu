@@ -240,7 +240,7 @@ export const DEFAULT_BATIZADO_CONTENT: BatizadoContent = {
       { title: 'Premium',   description: 'Fotografia + Vídeo cinematográfico com highlights do evento e música personalizada.', price: 'Sob consulta' },
       { title: 'Luxe',      description: 'Pacote completo com álbum premium, second shooter e vídeo completo do dia.', price: 'Sob consulta' },
     ],
-    propostaAtiva: 0,
+    propostaAtiva: 1,
     ctaText: 'Falemos sobre este momento especial',
     typography: {
       titleFont: 'cormorant', titleSize: 'xl', titleColor: '#ffffff',
@@ -275,7 +275,7 @@ export function mergeBatizado(saved: any): BatizadoContent {
       menino:    { ...DEFAULT_BATIZADO_CONTENT.propostaPage.menino,    ...(saved.propostaPage?.menino    || {}) },
       grandeDia: { ...DEFAULT_BATIZADO_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) },
       packages:  saved.propostaPage?.packages  || DEFAULT_BATIZADO_CONTENT.propostaPage.packages,
-      propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0,
+      propostaAtiva: saved.propostaPage?.propostaAtiva ?? 1,
       typography: { ...DEFAULT_BATIZADO_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) },
     },
   }

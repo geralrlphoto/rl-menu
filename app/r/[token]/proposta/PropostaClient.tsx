@@ -66,7 +66,7 @@ function mergeContent(saved: any): PageContent {
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
     extras_proposta: saved.extras_proposta || [],
-    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, couple: { ...DEFAULT_CONTENT.propostaPage.couple, ...(saved.propostaPage?.couple || {}) }, reflexao: { ...DEFAULT_CONTENT.propostaPage.reflexao, ...(saved.propostaPage?.reflexao || {}) }, final: { ...DEFAULT_CONTENT.propostaPage.final, ...(saved.propostaPage?.final || {}) }, slidePhotos: { ...(saved.propostaPage?.slidePhotos || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 0, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
+    propostaPage: { ...DEFAULT_CONTENT.propostaPage, ...(saved.propostaPage || {}), about: { ...DEFAULT_CONTENT.propostaPage.about, ...(saved.propostaPage?.about || {}) }, relive: { ...DEFAULT_CONTENT.propostaPage.relive, ...(saved.propostaPage?.relive || {}) }, couple: { ...DEFAULT_CONTENT.propostaPage.couple, ...(saved.propostaPage?.couple || {}) }, reflexao: { ...DEFAULT_CONTENT.propostaPage.reflexao, ...(saved.propostaPage?.reflexao || {}) }, final: { ...DEFAULT_CONTENT.propostaPage.final, ...(saved.propostaPage?.final || {}) }, slidePhotos: { ...(saved.propostaPage?.slidePhotos || {}) }, grandeDia: { ...DEFAULT_CONTENT.propostaPage.grandeDia, ...(saved.propostaPage?.grandeDia || {}) }, packages: saved.propostaPage?.packages || DEFAULT_CONTENT.propostaPage.packages, propostaAtiva: saved.propostaPage?.propostaAtiva ?? 1, typography: { ...DEFAULT_CONTENT.propostaPage.typography, ...(saved.propostaPage?.typography || {}) } },
   }
 }
 
@@ -664,7 +664,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       case 'pkg-2': {
         const idx = parseInt(id.split('-')[1])
         const proposta: Proposta = content.propostas?.[idx] || { nome: '', servicos_foto: [], servicos_video: [], valor: '' }
-        const isAtiva = (pp.propostaAtiva ?? 0) === idx
+        const isAtiva = (pp.propostaAtiva ?? 1) === idx
         const labels = ['1', '2', '3']
         const hasFoto  = (proposta.servicos_foto  || []).length > 0
         const hasVideo = (proposta.servicos_video || []).length > 0
@@ -1361,7 +1361,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   {[0,1,2].map(i => (
                     <button key={i} onClick={() => setPage('propostaAtiva', i)}
                       className="flex-1 py-2 rounded-lg text-xs transition-all"
-                      style={(pp.propostaAtiva ?? 0) === i
+                      style={(pp.propostaAtiva ?? 1) === i
                         ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
                         : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
                       {content.propostas?.[i]?.nome || `Proposta ${['1','2','3'][i]}`}
