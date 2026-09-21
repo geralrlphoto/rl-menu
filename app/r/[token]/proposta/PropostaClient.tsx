@@ -694,14 +694,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           : proposta.valor
             ? (proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`)
             : ''
-        const perf = {
-          width: '26px',
-          flexShrink: 0,
-          backgroundImage: 'repeating-linear-gradient(to bottom, rgba(243,237,226,.16) 0 10px, transparent 10px 26px)',
-          backgroundSize: '12px 100%',
-          backgroundRepeat: 'repeat-y',
-          backgroundPosition: 'center top',
-        } as React.CSSProperties
         const momentos = restante > 0
           ? [
               { v: `${ADJUDICACAO.toLocaleString('pt-PT')} €`, l: 'Hoje, reserva a data' },
@@ -735,210 +727,167 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const mesIni   = mesFim ? new Date(mesFim.getFullYear(), mesFim.getMonth() - (nPlano - 1), 1) : null
         const planoPossivel = reforco >= MIN_PRESTACAO
         return (
-          <div className="flex items-center justify-center h-full w-full px-3 sm:px-8">
-            <div className={`relative w-full overflow-hidden ${isAtiva ? 'rl-glow' : ''}`}
-              style={{
-                maxWidth: '1040px',
-                display: 'flex',
-                border: isAtiva ? '1px solid var(--g)' : '1px solid var(--line)',
-                background: 'rgba(216,190,147,0.018)',
-                transition: 'border-color .45s var(--ease)',
-                maxHeight: 'calc(100dvh - 96px)',
-                overflowY: 'auto',
-              }}>
+          <div className="flex items-center justify-center h-full w-full px-4 sm:px-8">
+            <div className="relative w-full" style={{ maxWidth: '980px' }}>
 
-              {/* Perfuração esquerda */}
-              <div className="hidden sm:block" style={{ ...perf, borderRight: '1px solid var(--line-soft)' }} aria-hidden="true" />
+              {/* Entalhes do picotado */}
+              <span className="rl-notch" aria-hidden="true" style={{ position: 'absolute', top: '-10px', right: '282px', width: '20px', height: '20px', borderRadius: '50%', background: 'var(--ink)', border: '1px solid var(--line)', borderBottom: 'none', borderLeft: 'none', transform: 'rotate(45deg)' }} />
+              <span className="rl-notch" aria-hidden="true" style={{ position: 'absolute', bottom: '-10px', right: '282px', width: '20px', height: '20px', borderRadius: '50%', background: 'var(--ink)', border: '1px solid var(--line)', borderTop: 'none', borderRight: 'none', transform: 'rotate(45deg)' }} />
 
-              <div className="flex-1 min-w-0 relative">
+              <div className={`rl-tkt ${isAtiva ? 'rl-glow' : ''}`}
+                style={{
+                  border: isAtiva ? '1px solid var(--g)' : '1px solid var(--line)',
+                  background: 'rgba(216,190,147,0.02)',
+                  maxHeight: 'calc(100dvh - 96px)',
+                  overflowY: 'auto',
+                  transition: 'border-color .45s var(--ease)',
+                }}>
 
-                {/* Numeral gigante em contorno, cortado pela moldura */}
-                <span aria-hidden="true" style={{
-                  position: 'absolute', right: '-18px', top: '-46px', zIndex: 0,
-                  fontFamily: 'var(--fs)', fontStyle: 'italic', fontWeight: 300,
-                  fontSize: 'clamp(150px,30vh,300px)', lineHeight: 1,
-                  color: 'transparent', WebkitTextStroke: '1px rgba(216,190,147,.13)',
-                  pointerEvents: 'none', userSelect: 'none',
-                }}>{labels[idx]}</span>
+              {/* ── Corpo: o que entra ───────────────────────────── */}
+              <div className="flex-1 min-w-0 flex flex-col"
+                style={{ padding: 'clamp(18px,3vh,30px) clamp(20px,3vw,34px)' }}>
 
-                {/* Cabeçalho do fotograma */}
-                <div className="relative flex items-center justify-between gap-4 px-5 sm:px-9"
-                  style={{ zIndex: 1, height: 'clamp(40px,5.2vh,50px)', borderBottom: '1px solid var(--line-soft)' }}>
-                  <p className="meta" style={{ color: 'var(--g)' }}>
-                    {proposta.nome || `Proposta ${labels[idx]}`}
-                  </p>
-                  {isAtiva
-                    ? <span className="meta" style={{ color: 'var(--ink)', background: 'var(--g)', padding: '5px 12px' }}>A mais escolhida</span>
-                    : <span className="meta">Fotograma {labels[idx]} de 3</span>}
+                <div className="flex items-center justify-between gap-4 mb-5">
+                  <p className="meta" style={{ color: 'var(--g)' }}>{proposta.nome || `Proposta ${labels[idx]}`}</p>
+                  {isAtiva && (
+                    <span className="meta" style={{ color: 'var(--ink)', background: 'var(--g)', padding: '4px 11px' }}>A mais escolhida</span>
+                  )}
                 </div>
 
-                {/* O preço é o herói */}
-                <div className="relative px-5 sm:px-9 flex flex-wrap items-end justify-between gap-x-10 gap-y-5"
-                  style={{ paddingTop: 'clamp(13px,2.4vh,21px)', paddingBottom: 'clamp(13px,2.4vh,21px)', zIndex: 1, borderBottom: '1px solid var(--line-soft)' }}>
-                  <div>
-                    <p className="meta mb-2">{selectedExtras.length > 0 ? 'Total com extras' : 'Investimento total'}</p>
-                    <p style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(44px,6.8vh,78px)', lineHeight: .88, color: 'var(--g)' }}>
-                      {displayValor || 'Sob consulta'}
-                    </p>
-                    {selectedExtras.length > 0 && baseValor > 0 && (
-                      <p className="hint mt-3">
-                        base {proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`} mais {selectedExtras.length} extra{selectedExtras.length > 1 ? 's' : ''}
-                      </p>
+                {hasAny ? (
+                  <div className="flex gap-6 sm:gap-10 flex-1">
+                    {hasFoto && (
+                      <div className="flex-1 min-w-0">
+                        <p className="meta mb-3" style={{ color: 'var(--g)' }}>Fotografia</p>
+                        <ul className="flex flex-col" style={{ gap: 'clamp(4px,0.85vh,8px)' }}>
+                          {(proposta.servicos_foto || []).map((s, i) => (
+                            <li key={i} style={{ fontFamily: 'var(--fd)', fontWeight: 300, fontSize: 'clamp(13px,1.85vh,15px)', lineHeight: 1.4, color: 'var(--tx-mid)' }}>{s}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {hasFoto && hasVideo && <div className="w-px self-stretch" style={{ background: 'var(--line-soft)' }} />}
+                    {hasVideo && (
+                      <div className="flex-1 min-w-0">
+                        <p className="meta mb-3" style={{ color: 'var(--g)' }}>Vídeo</p>
+                        <ul className="flex flex-col" style={{ gap: 'clamp(4px,0.85vh,8px)' }}>
+                          {(proposta.servicos_video || []).map((s, i) => (
+                            <li key={i} style={{ fontFamily: 'var(--fd)', fontWeight: 300, fontSize: 'clamp(13px,1.85vh,15px)', lineHeight: 1.4, color: 'var(--tx-mid)' }}>{s}</li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </div>
+                ) : (
+                  <p className="hint flex-1">Serviços a definir no CRM</p>
+                )}
 
-                  {/* Os três momentos, à vista em vez de escondidos */}
-                  {momentos.length > 0 && (
-                    <div className="flex items-stretch">
-                      {momentos.map((m, i) => (
-                        <div key={i} className="px-4 sm:px-5 first:pl-0 last:pr-0"
-                          style={{ borderRight: i < 2 ? '1px solid var(--line-soft)' : 'none' }}>
-                          <p style={{ fontFamily: 'var(--fs)', fontSize: 'clamp(19px,2.7vh,25px)', lineHeight: 1.1, color: 'var(--tx)' }}>{m.v}</p>
-                          <p className="hint mt-1.5" style={{ maxWidth: '96px', lineHeight: 1.45 }}>{m.l}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                {proposta.notas && <p className="hint mt-4" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{proposta.notas}</p>}
 
-                {/* Créditos: o que entra */}
-                <div className="relative px-5 sm:px-9" style={{ paddingTop: 'clamp(13px,2.2vh,21px)', paddingBottom: 'clamp(13px,2.2vh,21px)', zIndex: 1, borderBottom: '1px solid var(--line-soft)' }}>
-                  {hasAny ? (
-                    <div className="flex gap-7 sm:gap-10">
-                      {hasFoto && (
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-4">
-                            <span className="meta" style={{ color: 'var(--g)' }}>Fotografia</span>
-                            <div className="flex-1 h-px" style={{ background: 'var(--line-soft)' }} />
-                          </div>
-                          <ul className="flex flex-col" style={{ gap: 'clamp(4px,0.85vh,8px)' }}>
-                            {(proposta.servicos_foto || []).map((s, i) => (
-                              <li key={i} style={{ fontFamily: 'var(--fd)', fontWeight: 300, fontSize: 'clamp(13px,1.85vh,15px)', lineHeight: 1.4, color: 'var(--tx-mid)' }}>{s}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      {hasFoto && hasVideo && <div className="w-px self-stretch" style={{ background: 'var(--line-soft)' }} />}
-                      {hasVideo && (
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-3 mb-4">
-                            <span className="meta" style={{ color: 'var(--g)' }}>Vídeo</span>
-                            <div className="flex-1 h-px" style={{ background: 'var(--line-soft)' }} />
-                          </div>
-                          <ul className="flex flex-col" style={{ gap: 'clamp(4px,0.85vh,8px)' }}>
-                            {(proposta.servicos_video || []).map((s, i) => (
-                              <li key={i} style={{ fontFamily: 'var(--fd)', fontWeight: 300, fontSize: 'clamp(13px,1.85vh,15px)', lineHeight: 1.4, color: 'var(--tx-mid)' }}>{s}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <p className="hint text-center">Serviços a definir no CRM</p>
-                  )}
-
-                  {proposta.notas && (
-                    <p className="hint mt-5" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{proposta.notas}</p>
-                  )}
-                </div>
-
-                {/* Rodapé: extras e decisão */}
-                <div className="relative px-5 sm:px-9 flex flex-col gap-3" style={{ paddingTop: 'clamp(11px,1.9vh,18px)', paddingBottom: 'clamp(11px,1.9vh,18px)', zIndex: 1 }}>
-                  <button type="button"
-                    onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
-                    className="flex items-center gap-3 w-full text-left"
-                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                    <span className="meta" style={{ color: 'var(--g)' }}>Serviços extras</span>
-                    {selectedExtras.length > 0 && (
-                      <span className="meta" style={{ color: 'var(--ink)', background: 'var(--g)', padding: '2px 8px' }}>{selectedExtras.length}</span>
-                    )}
-                    <span className="flex-1 h-px" style={{ background: 'var(--line-soft)' }} />
-                    <span className="meta">{extrasOpen[idx] ? 'Fechar' : 'Abrir'}</span>
+                {/* Botões de abrir extras e plano */}
+                <div className="flex flex-wrap gap-2 mt-5">
+                  <button type="button" className={`pill${extrasOpen[idx] ? ' on' : ''}`}
+                    onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}>
+                    Serviços extras{selectedExtras.length > 0 ? ` (${selectedExtras.length})` : ''}
                   </button>
-
-                  {extrasOpen[idx] && (
-                    <div className="flex flex-wrap gap-2">
-                      {(content.extras_proposta || []).length > 0
-                        ? (content.extras_proposta || []).map((e, i) => (
-                            <button key={i} type="button" onClick={() => toggleExtraSlide(e.nome)}
-                              className={`pill${selectedExtras.includes(e.nome) ? ' on' : ''}`}>
-                              {e.nome}
-                            </button>
-                          ))
-                        : <p className="hint">Sem serviços extras definidos</p>}
-                    </div>
-                  )}
-
-                  {/* Calculadora do plano de pagamento */}
                   {planoPossivel && (
-                    <>
-                      <button type="button"
-                        onClick={() => setFormaOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
-                        className="flex items-center gap-3 w-full text-left"
-                        style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
-                        <span className="meta" style={{ color: 'var(--g)' }}>Plano de pagamento</span>
-                        <span className="flex-1 h-px" style={{ background: 'var(--line-soft)' }} />
-                        <span className="meta">{formaOpen[idx] ? 'Fechar' : 'Calcular'}</span>
-                      </button>
-
-                      {formaOpen[idx] && (
-                        <div style={{ border: '1px solid var(--line-soft)', padding: 'clamp(10px,1.7vh,15px) 16px' }}>
-                          {dataEvento && (
-                            <p className="meta mb-3" style={{ color: 'var(--g)' }}>
-                              Faltam {mesesAteEvento} {mesesAteEvento === 1 ? 'mês' : 'meses'} para {nomeEvento}
-                            </p>
-                          )}
-                          <div className="flex flex-wrap items-center justify-between gap-x-7 gap-y-3">
-
-                            <div className="flex items-center gap-3">
-                              <span className="hint">{reforco.toLocaleString('pt-PT')} € em</span>
-                              <button type="button" aria-label="Menos uma prestação"
-                                disabled={nPlano <= 1}
-                                onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.max(1, nPlano - 1) }))}
-                                style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano <= 1 ? 'not-allowed' : 'pointer', opacity: nPlano <= 1 ? .3 : 1, lineHeight: 1 }}>&minus;</button>
-                              <span style={{ fontFamily: 'var(--fs)', fontSize: '28px', lineHeight: 1, color: 'var(--tx)', minWidth: '34px', textAlign: 'center' }}>{nPlano}</span>
-                              <button type="button" aria-label="Mais uma prestação"
-                                disabled={nPlano >= maxPrestacoes}
-                                onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.min(maxPrestacoes, nPlano + 1) }))}
-                                style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano >= maxPrestacoes ? 'not-allowed' : 'pointer', opacity: nPlano >= maxPrestacoes ? .3 : 1, lineHeight: 1 }}>+</button>
-                              <span className="hint">{nPlano === 1 ? 'prestação' : 'prestações'}</span>
-                            </div>
-
-                            <div className="flex items-baseline gap-3">
-                              <p style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(26px,3.8vh,38px)', lineHeight: 1, color: 'var(--g)' }}>
-                                {valorMes.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                              </p>
-                              <span className="hint">por mês</span>
-                            </div>
-                          </div>
-
-                          <p className="hint mt-3" style={{ lineHeight: 1.55 }}>
-                            {mesIni && mesFim ? `De ${mesLabel(mesIni)} a ${mesLabel(mesFim)}` : ''}
-                            {limiteLabel ? `, liquidado até ${limiteLabel}` : ''}
-                            {mesIni && mesFim ? '. ' : ''}
-                            Mínimo {MIN_PRESTACAO} € por prestação. A adjudicação e o valor final ficam de fora.
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {escolhida === idx ? (
-                    <a href={`/r/${token}`} className="btn mt-1" style={{ width: '100%' }}>
-                      <span className="fill" />
-                      Escolhida &middot; confirmar
-                    </a>
-                  ) : (
-                    <button type="button" onClick={() => setEscolhida(idx)} className="btn mt-1" style={{ width: '100%' }}>
-                      <span className="fill" />
-                      Escolher esta proposta
+                    <button type="button" className={`pill${formaOpen[idx] ? ' on' : ''}`}
+                      onClick={() => setFormaOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}>
+                      Plano de pagamento
                     </button>
                   )}
                 </div>
+
+                {extrasOpen[idx] && (
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {(content.extras_proposta || []).length > 0
+                      ? (content.extras_proposta || []).map((e, i) => (
+                          <button key={i} type="button" onClick={() => toggleExtraSlide(e.nome)}
+                            className={`pill${selectedExtras.includes(e.nome) ? ' on' : ''}`}>{e.nome}</button>
+                        ))
+                      : <p className="hint">Sem serviços extras definidos</p>}
+                  </div>
+                )}
+
+                {planoPossivel && formaOpen[idx] && (
+                  <div className="mt-3" style={{ border: '1px solid var(--line-soft)', padding: 'clamp(10px,1.7vh,15px) 15px' }}>
+                    {dataEvento && (
+                      <p className="meta mb-3" style={{ color: 'var(--g)' }}>
+                        Faltam {mesesAteEvento} {mesesAteEvento === 1 ? 'mês' : 'meses'} para {nomeEvento}
+                      </p>
+                    )}
+                    <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className="hint">{reforco.toLocaleString('pt-PT')} € em</span>
+                        <button type="button" aria-label="Menos uma prestação" disabled={nPlano <= 1}
+                          onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.max(1, nPlano - 1) }))}
+                          style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano <= 1 ? 'not-allowed' : 'pointer', opacity: nPlano <= 1 ? .3 : 1, lineHeight: 1 }}>&minus;</button>
+                        <span style={{ fontFamily: 'var(--fs)', fontSize: '26px', lineHeight: 1, color: 'var(--tx)', minWidth: '32px', textAlign: 'center' }}>{nPlano}</span>
+                        <button type="button" aria-label="Mais uma prestação" disabled={nPlano >= maxPrestacoes}
+                          onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.min(maxPrestacoes, nPlano + 1) }))}
+                          style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano >= maxPrestacoes ? 'not-allowed' : 'pointer', opacity: nPlano >= maxPrestacoes ? .3 : 1, lineHeight: 1 }}>+</button>
+                        <span className="hint">{nPlano === 1 ? 'prestação' : 'prestações'}</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <p style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(24px,3.4vh,34px)', lineHeight: 1, color: 'var(--g)' }}>
+                          {valorMes.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                        </p>
+                        <span className="hint">por mês</span>
+                      </div>
+                    </div>
+                    <p className="hint mt-3" style={{ lineHeight: 1.55 }}>
+                      {mesIni && mesFim ? `De ${mesLabel(mesIni)} a ${mesLabel(mesFim)}` : ''}
+                      {limiteLabel ? `, liquidado até ${limiteLabel}` : ''}
+                      {mesIni && mesFim ? '. ' : ''}
+                      Mínimo {MIN_PRESTACAO} € por prestação. A adjudicação e o valor final ficam de fora.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {/* Perfuração direita */}
-              <div className="hidden sm:block" style={{ ...perf, borderLeft: '1px solid var(--line-soft)' }} aria-hidden="true" />
+              {/* ── Talão: o dinheiro e a decisão ────────────────── */}
+              <div className="rl-stub flex flex-col"
+                style={{ padding: 'clamp(18px,3vh,30px) clamp(18px,2vw,26px)' }}>
+
+                <p style={{ fontFamily: 'var(--fs)', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(46px,7vh,76px)', lineHeight: .85, color: 'var(--g)', opacity: .45 }}>
+                  {labels[idx]}
+                </p>
+
+                <p className="meta mt-5 mb-2">{selectedExtras.length > 0 ? 'Total com extras' : 'Investimento total'}</p>
+                <p style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(38px,5.4vh,58px)', lineHeight: 1, color: 'var(--g)' }}>
+                  {displayValor || 'Sob consulta'}
+                </p>
+                {selectedExtras.length > 0 && baseValor > 0 && (
+                  <p className="hint mt-2">base {proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`}</p>
+                )}
+
+                {momentos.length > 0 && (
+                  <div className="mt-5 flex flex-col" style={{ borderTop: '1px solid var(--line-soft)' }}>
+                    {momentos.map((m, i) => (
+                      <div key={i} className="flex items-baseline justify-between gap-3"
+                        style={{ paddingTop: 'clamp(7px,1.3vh,11px)', paddingBottom: 'clamp(7px,1.3vh,11px)', borderBottom: i < momentos.length - 1 ? '1px solid var(--line-soft)' : 'none' }}>
+                        <span className="hint" style={{ maxWidth: '150px', lineHeight: 1.4 }}>{m.l}</span>
+                        <span style={{ fontFamily: 'var(--fs)', fontSize: 'clamp(17px,2.4vh,22px)', lineHeight: 1.1, color: 'var(--tx)', whiteSpace: 'nowrap' }}>{m.v}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex-1" style={{ minHeight: '16px' }} />
+
+                {escolhida === idx ? (
+                  <a href={`/r/${token}`} className="btn" style={{ width: '100%' }}>
+                    <span className="fill" />
+                    Escolhida
+                  </a>
+                ) : (
+                  <button type="button" onClick={() => setEscolhida(idx)} className="btn" style={{ width: '100%' }}>
+                    <span className="fill" />
+                    Escolher esta
+                  </button>
+                )}
+                </div>
+              </div>
             </div>
           </div>
         )
@@ -1118,6 +1067,13 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         .rl-in > *:nth-child(n+9) { animation-delay: 0.82s }
         .rl-glow { animation: rlGlow 3.6s ease-in-out infinite }
         .rl-rule { transform-origin: left center; animation: rlDraw 0.9s cubic-bezier(0.22,1,0.36,1) 0.5s both }
+        .rl-tkt { display: flex }
+        .rl-tkt .rl-stub { width: 292px; flex-shrink: 0; border-left: 1px dashed rgba(216,190,147,.34) }
+        @media (max-width: 760px) {
+          .rl-tkt { flex-direction: column }
+          .rl-tkt .rl-stub { width: 100%; border-left: none; border-top: 1px dashed rgba(216,190,147,.34) }
+          .rl-notch { display: none }
+        }
         .rl-cta { transition: transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s ease, background 0.25s ease }
         .rl-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(201,168,76,0.22) }
         @media (prefers-reduced-motion: reduce) {
