@@ -291,19 +291,19 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
   )
 
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+    <main className="min-h-screen flex items-center justify-center bg-[#0b0a08]">
       <p className="text-white/20 tracking-[0.3em] text-xs uppercase animate-pulse">A carregar...</p>
     </main>
   )
   if (notFound) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#0a0a0a]">
+    <main className="min-h-screen flex items-center justify-center bg-[#0b0a08]">
       <p className="text-white/20 tracking-[0.3em] text-xs uppercase">Página não disponível</p>
     </main>
   )
 
   // ── Password gate ─────────────────────────────────────────────────────────
   if (locked) return (
-    <main className="min-h-screen flex items-center justify-center px-6" style={{ background: '#0a0a0a' }}>
+    <main className="min-h-screen flex items-center justify-center px-6" style={{ background: '#0b0a08' }}>
       <div className="w-full max-w-sm">
         <div className="relative" style={{ border: '0.5px solid rgba(201,168,76,0.3)', background: 'linear-gradient(135deg, #1c1408 0%, #0f0c07 50%, #1c1408 100%)' }}>
           <div className="absolute top-0 left-0 w-8 h-8"  style={{ borderTop: '1px solid rgba(201,168,76,0.6)', borderLeft:  '1px solid rgba(201,168,76,0.6)' }} />
@@ -403,9 +403,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               <div className="absolute inset-0"
                 style={{ backgroundImage: `url(${pp.relive.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center right' }} />
               <div className="absolute inset-0"
-                style={{ background: 'linear-gradient(to right, #0a0a0a 35%, #0a0a0a99 60%, transparent 100%)' }} />
+                style={{ background: 'linear-gradient(to right, #0b0a08 35%, #0b0a0899 60%, transparent 100%)' }} />
               <div className="absolute inset-0"
-                style={{ background: 'linear-gradient(to right, #0a0a0a 20%, transparent 55%)' }} />
+                style={{ background: 'linear-gradient(to right, #0b0a08 20%, transparent 55%)' }} />
             </>
           )}
           {/* Conteúdo */}
@@ -485,9 +485,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               <div className="absolute inset-0"
                 style={{ backgroundImage: `url(${pp.momentos.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center right' }} />
               <div className="absolute inset-0"
-                style={{ background: 'linear-gradient(to right, #0a0a0a 35%, #0a0a0a99 60%, transparent 100%)' }} />
+                style={{ background: 'linear-gradient(to right, #0b0a08 35%, #0b0a0899 60%, transparent 100%)' }} />
               <div className="absolute inset-0"
-                style={{ background: 'linear-gradient(to right, #0a0a0a 20%, transparent 55%)' }} />
+                style={{ background: 'linear-gradient(to right, #0b0a08 20%, transparent 55%)' }} />
             </>
           )}
           {/* Conteúdo */}
@@ -548,9 +548,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               <div className="absolute inset-0"
                 style={{ backgroundImage: `url(${pp.menino.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center right' }} />
               <div className="absolute inset-0"
-                style={{ background: 'linear-gradient(to right, #0a0a0a 35%, #0a0a0a99 60%, transparent 100%)' }} />
+                style={{ background: 'linear-gradient(to right, #0b0a08 35%, #0b0a0899 60%, transparent 100%)' }} />
               <div className="absolute inset-0"
-                style={{ background: 'linear-gradient(to right, #0a0a0a 20%, transparent 55%)' }} />
+                style={{ background: 'linear-gradient(to right, #0b0a08 20%, transparent 55%)' }} />
             </>
           )}
           {/* Conteúdo */}
@@ -915,12 +915,10 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
   // ── Main presentation ─────────────────────────────────────────────────────
   return (
-    <div className="nlead relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0a0a0a' }}>
+    <div className="nlead relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0b0a08' }}>
       <style>{CSS_BRIEFING}</style>
       <div className="fx-grain" aria-hidden="true" />
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
-      <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 40% 40% at 50% 48%, rgba(232,180,60,0.08) 0%, transparent 60%)' }} />
+      <div className="absolute inset-0" style={{ background: 'var(--ink)' }} />
 
       {/* Admin bar */}
       {isAdmin && (
