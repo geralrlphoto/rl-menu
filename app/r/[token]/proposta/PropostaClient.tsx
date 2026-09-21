@@ -391,14 +391,14 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'cover': return (
         <div className="rl-in h-full w-full flex flex-col items-center justify-center text-center px-8">
-          <img src={`/logo_rl_gold.png`} alt="RL Photo · Video" className="w-16 opacity-85 mb-8" />
+          <img src={`/logo_rl_gold.png`} alt="RL Photo · Video" className="opacity-85 mb-6" style={{ width: 'clamp(112px, 19vh, 176px)' }} />
           <p className="eyebrow mb-6">{nome || 'Para vocês'}</p>
           <h1 style={{ fontSize: 'clamp(40px,5.6vw,84px)' }}>
             Proposta<br /><em>criativa</em>
           </h1>
           <div className="h-px w-12 mt-7 mb-7" style={{ background: 'var(--g)', opacity: .6 }} />
           <p className="lead" style={{ maxWidth: '440px' }}>{pp.subtitle}</p>
-          <p className="hint mt-9">{total} cenas &middot; setas para avançar</p>
+          <p className="hint mt-7">{total} cenas &middot; setas para avançar</p>
         </div>
       )
 
