@@ -495,13 +495,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
             <div className="flex flex-col gap-8 max-w-xl">
               {/* Título */}
               <div>
-                <h2 className={`${fontClass(typo.titleFont)} font-light tracking-[0.18em] uppercase`}
-                  style={{ fontSize: 'clamp(1.4rem,3.2vw,2.4rem)', color: typo.titleColor, lineHeight: 1.15 }}>
-                  Os Momentos
-                </h2>
-                <h2 className={`${fontClass(typo.titleFont)} font-light tracking-[0.18em] uppercase`}
-                  style={{ fontSize: 'clamp(1.4rem,3.2vw,2.4rem)', color: typo.accentColor, lineHeight: 1.2 }}>
-                  que Registamos
+                <h2 style={{ fontSize: 'clamp(1.8rem,3.8vw,2.9rem)', lineHeight: 1.15 }}>
+                  Os momentos<br /><em>que registamos</em>
                 </h2>
                 <div className="mt-4 w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
               </div>
@@ -581,7 +576,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
       case 'intro': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-          <p  style={{ fontSize: 'clamp(1.2rem,2.8vw,2rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>Sobre o Batizado</p>
+          <h2 style={{ fontSize: 'clamp(1.4rem,3vw,2.2rem)', lineHeight: 1.1 }}>Sobre o <em>batizado</em></h2>
           <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
             &ldquo;{pp.intro}&rdquo;
           </p>

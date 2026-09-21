@@ -616,20 +616,19 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             )}
             {introPhoto ? (
               <div className="relative z-10 h-full flex flex-col justify-center" style={{ maxWidth: '54%', paddingLeft: 'clamp(5rem, 14vw, 12rem)' }}>
-                <p className="mb-6"
-                  style={{ fontSize: 'clamp(1.5rem,3.5vw,2.6rem)', color: 'rgba(255,255,255,0.95)', lineHeight: 1.1 }}>
+                <h2 className="mb-6"
+                  style={{ fontSize: 'clamp(1.6rem,3.6vw,2.8rem)', color: 'rgba(255,255,255,0.95)', lineHeight: 1.1 }}>
                   Quem são os <em>meus noivos?</em>
-                </p>
+                </h2>
                 <p className={`${fontClass(typo.bodyFont)} text-xl italic font-light leading-relaxed`} style={{ color: 'rgba(255,255,255,0.85)' }}>
                   &ldquo;{pp.intro}&rdquo;
                 </p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-                <p 
-                  style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>
+                <h2 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', lineHeight: 1.1 }}>
                   Quem são os <em>meus noivos?</em>
-                </p>
+                </h2>
                 <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
                   &ldquo;{pp.intro}&rdquo;
                 </p>
