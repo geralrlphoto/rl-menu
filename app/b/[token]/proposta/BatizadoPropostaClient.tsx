@@ -146,6 +146,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
   const [extrasOpen,     setExtrasOpen]     = useState<Record<number, boolean>>({})
   const [extrasSelected, setExtrasSelected] = useState<Record<number, string[]>>({})
   const [formaOpen,      setFormaOpen]      = useState<Record<number, boolean>>({})
+  const [escolhida,      setEscolhida]      = useState<number | null>(null)
 
   // Editor
   const [editorOpen,      setEditorOpen]      = useState(false)
@@ -640,157 +641,170 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
           ? formatValorNum(totalValor)
           : proposta.valor ? (proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`) : ''
 
+        const perf = {
+          width: '26px',
+          flexShrink: 0,
+          backgroundImage: 'repeating-linear-gradient(to bottom, rgba(243,237,226,.16) 0 10px, transparent 10px 26px)',
+          backgroundSize: '12px 100%',
+          backgroundRepeat: 'repeat-y',
+          backgroundPosition: 'center top',
+        } as React.CSSProperties
+        const momentos = restante > 0
+          ? [
+              { v: `${ADJUDICACAO.toLocaleString('pt-PT')} €`, l: 'Hoje, reserva a data' },
+              { v: `${reforco.toLocaleString('pt-PT')} €`,     l: 'Até 30 dias antes' },
+              { v: `${valorFinal.toLocaleString('pt-PT')} €`,  l: 'No próprio dia' },
+            ]
+          : []
         return (
-          <div className="flex items-center justify-center h-full w-full px-6 sm:px-12">
-            <div className="relative w-full max-w-4xl flex"
-              style={{ border: `0.5px solid ${typo.accentColor}33`, minHeight: 'clamp(340px, 62vh, 480px)' }}>
-              <div className="absolute top-0 left-0 w-10 h-10"   style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft:  `1px solid ${typo.accentColor}` }} />
-              <div className="absolute top-0 right-0 w-10 h-10"  style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
-              <div className="absolute bottom-0 left-0 w-10 h-10"  style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft:  `1px solid ${typo.accentColor}` }} />
-              <div className="absolute bottom-0 right-0 w-10 h-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
+          <div className="flex items-center justify-center h-full w-full px-3 sm:px-8">
+            <div className={`relative w-full overflow-hidden ${isAtiva ? 'rl-glow' : ''}`}
+              style={{
+                maxWidth: '1040px',
+                display: 'flex',
+                border: isAtiva ? '1px solid var(--g)' : '1px solid var(--line)',
+                background: 'rgba(216,190,147,0.018)',
+                transition: 'border-color .45s var(--ease)',
+              }}>
 
-              {/* Painel esquerdo */}
-              <div className="relative flex flex-col justify-between"
-                style={{ width: '38%', background: `linear-gradient(170deg, ${typo.accentColor}12 0%, ${typo.accentColor}04 100%)`, borderRight: `0.5px solid ${typo.accentColor}22`, padding: '44px 32px 36px', overflow: 'hidden' }}>
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
-                  <span className={`${fontClass(typo.pkgTitleFont)} italic`}
-                    style={{ fontSize: 'clamp(14rem,30vw,26rem)', color: `${typo.accentColor}09`, lineHeight: 1, userSelect: 'none' }}>
-                    {labels[idx]}
-                  </span>
-                </div>
-                <div className="relative z-10">
-                  <p className="text-[9px] tracking-[0.55em] uppercase mb-3" style={{ color: `${typo.accentColor}80` }}>Proposta {labels[idx]}</p>
-                  <h2 className={`${fontClass(typo.pkgTitleFont)} italic font-light leading-tight`}
-                    style={{ fontSize: 'clamp(1.6rem,3.5vw,2.5rem)', color: typo.pkgTitleColor }}>
+              {/* Perfuração esquerda */}
+              <div className="hidden sm:block" style={{ ...perf, borderRight: '1px solid var(--line-soft)' }} aria-hidden="true" />
+
+              <div className="flex-1 min-w-0 relative">
+
+                {/* Numeral gigante em contorno, cortado pela moldura */}
+                <span aria-hidden="true" style={{
+                  position: 'absolute', right: '-18px', top: '-46px', zIndex: 0,
+                  fontFamily: 'var(--fs)', fontStyle: 'italic', fontWeight: 300,
+                  fontSize: 'clamp(150px,30vh,300px)', lineHeight: 1,
+                  color: 'transparent', WebkitTextStroke: '1px rgba(216,190,147,.13)',
+                  pointerEvents: 'none', userSelect: 'none',
+                }}>{labels[idx]}</span>
+
+                {/* Cabeçalho do fotograma */}
+                <div className="relative flex items-center justify-between gap-4 px-5 sm:px-9"
+                  style={{ zIndex: 1, height: 'clamp(40px,5.2vh,50px)', borderBottom: '1px solid var(--line-soft)' }}>
+                  <p className="meta" style={{ color: 'var(--g)' }}>
                     {proposta.nome || `Proposta ${labels[idx]}`}
-                  </h2>
-                  <div className="mt-4 w-10 h-px" style={{ background: typo.accentColor }} />
+                  </p>
+                  {isAtiva
+                    ? <span className="meta" style={{ color: 'var(--ink)', background: 'var(--g)', padding: '5px 12px' }}>A mais escolhida</span>
+                    : <span className="meta">Fotograma {labels[idx]} de 3</span>}
                 </div>
-                <div className="relative z-10">
-                  {displayValor ? (
-                    <>
-                      <p className="text-[9px] tracking-[0.4em] uppercase mb-1" style={{ color: `${typo.accentColor}60` }}>
-                        {selectedExtras.length > 0 ? 'Total c/ Extras' : 'Investimento'}
-                      </p>
-                      <p className={`${fontClass(typo.pkgTitleFont)} italic`}
-                        style={{ fontSize: 'clamp(1.5rem,3vw,2.2rem)', color: typo.accentColor, lineHeight: 1.1, transition: 'all 0.3s ease' }}>
-                        {displayValor}
-                      </p>
-                    </>
-                  ) : (
-                    <p className="text-[10px] tracking-widest uppercase" style={{ color: `${typo.accentColor}30` }}>Sob consulta</p>
-                  )}
-                </div>
-              </div>
 
-              {/* Painel direito */}
-              <div className="flex-1 flex flex-col gap-4 justify-center" style={{ padding: '40px 36px 36px' }}>
-                {hasAny ? (
-                  <div className={`flex gap-8 ${hasFoto && hasVideo ? '' : 'items-start'}`}>
-                    {hasFoto && (
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-[9px] tracking-[0.45em] uppercase" style={{ color: `${typo.accentColor}70` }}>Fotografia</span>
-                          <div className="flex-1 h-px" style={{ background: `${typo.accentColor}20` }} />
-                        </div>
-                        <div className="flex flex-col gap-2.5">
-                          {(proposta.servicos_foto || []).map((s, i) => (
-                            <div key={i} className="flex items-start gap-2.5">
-                              <span style={{ color: typo.accentColor, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '20px', color: typo.bodyColor }}>{s}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {hasFoto && hasVideo && <div className="w-px self-stretch" style={{ background: `${typo.accentColor}15` }} />}
-                    {hasVideo && (
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-4">
-                          <span className="text-[9px] tracking-[0.45em] uppercase" style={{ color: `${typo.accentColor}70` }}>Vídeo</span>
-                          <div className="flex-1 h-px" style={{ background: `${typo.accentColor}20` }} />
-                        </div>
-                        <div className="flex flex-col gap-2.5">
-                          {(proposta.servicos_video || []).map((s, i) => (
-                            <div key={i} className="flex items-start gap-2.5">
-                              <span style={{ color: typo.accentColor, fontSize: '0.5rem', marginTop: '5px', flexShrink: 0 }}>◆</span>
-                              <p className={`${fontClass(typo.bodyFont)} font-light leading-snug`} style={{ fontSize: '20px', color: typo.bodyColor }}>{s}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+                {/* O preço é o herói */}
+                <div className="relative px-5 sm:px-9 flex flex-wrap items-end justify-between gap-x-10 gap-y-5"
+                  style={{ paddingTop: 'clamp(13px,2.4vh,21px)', paddingBottom: 'clamp(13px,2.4vh,21px)', zIndex: 1, borderBottom: '1px solid var(--line-soft)' }}>
+                  <div>
+                    <p className="meta mb-2">{selectedExtras.length > 0 ? 'Total com extras' : 'Investimento total'}</p>
+                    <p style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(44px,6.8vh,78px)', lineHeight: .88, color: 'var(--g)' }}>
+                      {displayValor || 'Sob consulta'}
+                    </p>
+                    {selectedExtras.length > 0 && baseValor > 0 && (
+                      <p className="hint mt-3">
+                        base {proposta.valor.trim().includes('€') ? proposta.valor : `${proposta.valor} €`} mais {selectedExtras.length} extra{selectedExtras.length > 1 ? 's' : ''}
+                      </p>
                     )}
                   </div>
-                ) : (
-                  <p className="text-[10px] tracking-[0.4em] uppercase opacity-25 text-center" style={{ color: typo.bodyColor }}>Serviços a definir</p>
-                )}
-                {proposta.notas && (
-                  <div className="px-4 py-3 rounded-lg" style={{ background: `${typo.accentColor}08`, border: `0.5px solid ${typo.accentColor}25` }}>
-                    <p className="text-[9px] tracking-[0.4em] uppercase mb-2" style={{ color: `${typo.accentColor}70` }}>Notas</p>
-                    <p className={`${fontClass(typo.bodyFont)} font-light italic leading-relaxed`}
-                      style={{ fontSize: '15px', color: typo.bodyColor, opacity: 0.75, whiteSpace: 'pre-wrap' }}>{proposta.notas}</p>
-                  </div>
-                )}
-                {/* Extras */}
-                <div>
-                  <button onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
-                    className="flex items-center gap-2 px-4 py-2 transition-all w-full"
-                    style={{ border: `0.5px solid ${typo.accentColor}50`, color: typo.accentColor, background: `${typo.accentColor}0D` }}>
-                    <span className="text-[10px] tracking-[0.35em] uppercase flex-1 text-left">✦ Serviços Extras</span>
-                    {selectedExtras.length > 0 && <span className="text-[9px] px-1.5 py-0.5 rounded-full mr-1 font-semibold" style={{ background: typo.accentColor, color: '#0d0b07' }}>{selectedExtras.length}</span>}
-                    <span className="text-xs" style={{ display: 'inline-block', transition: 'transform 0.2s', transform: extrasOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
-                  </button>
-                  {extrasOpen[idx] && (
-                    <div className="flex flex-col gap-1.5 pt-3 px-1" style={{ borderLeft: `0.5px solid ${typo.accentColor}25` }}>
-                      {(content.extras_proposta || []).length > 0 ? (
-                        (content.extras_proposta || []).map((e, i) => {
-                          const isOn = selectedExtras.includes(e.nome)
-                          return (
-                            <button key={i} onClick={() => toggleExtraSlide(e.nome)}
-                              className="flex items-center gap-2.5 w-full text-left px-2 py-1.5 rounded-lg transition-all"
-                              style={isOn ? { background: `${typo.accentColor}15`, border: `0.5px solid ${typo.accentColor}45` } : { background: 'transparent', border: '0.5px solid transparent' }}>
-                              <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[9px]"
-                                style={isOn ? { background: typo.accentColor, color: '#0d0b07' } : { border: `0.5px solid ${typo.accentColor}45`, color: 'transparent' }}>
-                                {isOn ? '✓' : ''}
-                              </span>
-                              <p className={`${fontClass(typo.bodyFont)} font-light flex-1 leading-snug`}
-                                style={{ fontSize: '20px', color: isOn ? typo.bodyColor : `${typo.bodyColor}99` }}>{e.nome}</p>
-                            </button>
-                          )
-                        })
-                      ) : <p className="text-[11px] italic px-2" style={{ color: `${typo.bodyColor}40` }}>Sem serviços extras definidos</p>}
-                    </div>
-                  )}
-                </div>
-                {/* Forma investimento */}
-                <div>
-                  <button onClick={() => setFormaOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
-                    className="flex items-center gap-2 px-4 py-2 transition-all w-full mt-1"
-                    style={{ border: `0.5px solid ${typo.accentColor}30`, color: `${typo.bodyColor}BB`, background: `${typo.accentColor}06` }}>
-                    <span className="text-[10px] tracking-[0.35em] uppercase flex-1 text-left">◈ Forma de Investimento</span>
-                    <span className="text-xs" style={{ display: 'inline-block', transition: 'transform 0.2s', transform: formaOpen[idx] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
-                  </button>
-                  {formaOpen[idx] && (
-                    <div className="flex flex-col gap-0 mt-2" style={{ borderLeft: `0.5px solid ${typo.accentColor}20` }}>
-                      {[
-                        { label: 'Adjudicação', sub: 'Reserva da data', val: '400 €', n: 1 },
-                        { label: 'Reforço', sub: '80% do valor em falta', val: restante > 0 ? `${reforco.toLocaleString('pt-PT')} €` : '—', n: 2 },
-                        { label: 'Valor Final', sub: 'Restante no dia do evento', val: restante > 0 ? `${valorFinal.toLocaleString('pt-PT')} €` : '—', n: 3 },
-                      ].map(row => (
-                        <div key={row.n} className="flex items-center gap-3 px-3 py-2.5" style={{ borderBottom: row.n < 3 ? `0.5px solid ${typo.accentColor}12` : 'none' }}>
-                          <div className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 text-[9px] font-semibold"
-                            style={{ background: `${typo.accentColor}25`, color: typo.accentColor }}>{row.n}</div>
-                          <div className="flex-1">
-                            <p className="text-[9px] tracking-[0.3em] uppercase mb-0.5" style={{ color: `${typo.accentColor}70` }}>{row.label}</p>
-                            <p className={`${fontClass(typo.bodyFont)} font-light text-[11px]`} style={{ color: `${typo.bodyColor}80` }}>{row.sub}</p>
-                          </div>
-                          <p className={`${fontClass(typo.pkgTitleFont)} italic`} style={{ fontSize: '16px', color: typo.accentColor }}>{row.val}</p>
+
+                  {/* Os três momentos, à vista em vez de escondidos */}
+                  {momentos.length > 0 && (
+                    <div className="flex items-stretch">
+                      {momentos.map((m, i) => (
+                        <div key={i} className="px-4 sm:px-5 first:pl-0 last:pr-0"
+                          style={{ borderRight: i < 2 ? '1px solid var(--line-soft)' : 'none' }}>
+                          <p style={{ fontFamily: 'var(--fs)', fontSize: 'clamp(19px,2.7vh,25px)', lineHeight: 1.1, color: 'var(--tx)' }}>{m.v}</p>
+                          <p className="hint mt-1.5" style={{ maxWidth: '96px', lineHeight: 1.45 }}>{m.l}</p>
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
+
+                {/* Créditos: o que entra */}
+                <div className="relative px-5 sm:px-9" style={{ paddingTop: 'clamp(13px,2.2vh,21px)', paddingBottom: 'clamp(13px,2.2vh,21px)', zIndex: 1, borderBottom: '1px solid var(--line-soft)' }}>
+                  {hasAny ? (
+                    <div className="flex gap-7 sm:gap-10">
+                      {hasFoto && (
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-4">
+                            <span className="meta" style={{ color: 'var(--g)' }}>Fotografia</span>
+                            <div className="flex-1 h-px" style={{ background: 'var(--line-soft)' }} />
+                          </div>
+                          <ul className="flex flex-col" style={{ gap: 'clamp(4px,0.85vh,8px)' }}>
+                            {(proposta.servicos_foto || []).map((s, i) => (
+                              <li key={i} style={{ fontFamily: 'var(--fd)', fontWeight: 300, fontSize: 'clamp(13px,1.85vh,15px)', lineHeight: 1.4, color: 'var(--tx-mid)' }}>{s}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {hasFoto && hasVideo && <div className="w-px self-stretch" style={{ background: 'var(--line-soft)' }} />}
+                      {hasVideo && (
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-3 mb-4">
+                            <span className="meta" style={{ color: 'var(--g)' }}>Vídeo</span>
+                            <div className="flex-1 h-px" style={{ background: 'var(--line-soft)' }} />
+                          </div>
+                          <ul className="flex flex-col" style={{ gap: 'clamp(4px,0.85vh,8px)' }}>
+                            {(proposta.servicos_video || []).map((s, i) => (
+                              <li key={i} style={{ fontFamily: 'var(--fd)', fontWeight: 300, fontSize: 'clamp(13px,1.85vh,15px)', lineHeight: 1.4, color: 'var(--tx-mid)' }}>{s}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="hint text-center">Serviços a definir no CRM</p>
+                  )}
+
+                  {proposta.notas && (
+                    <p className="hint mt-5" style={{ whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>{proposta.notas}</p>
+                  )}
+                </div>
+
+                {/* Rodapé: extras e decisão */}
+                <div className="relative px-5 sm:px-9 flex flex-col gap-3" style={{ paddingTop: 'clamp(11px,1.9vh,18px)', paddingBottom: 'clamp(11px,1.9vh,18px)', zIndex: 1 }}>
+                  <button type="button"
+                    onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                    className="flex items-center gap-3 w-full text-left"
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0 }}>
+                    <span className="meta" style={{ color: 'var(--g)' }}>Serviços extras</span>
+                    {selectedExtras.length > 0 && (
+                      <span className="meta" style={{ color: 'var(--ink)', background: 'var(--g)', padding: '2px 8px' }}>{selectedExtras.length}</span>
+                    )}
+                    <span className="flex-1 h-px" style={{ background: 'var(--line-soft)' }} />
+                    <span className="meta">{extrasOpen[idx] ? 'Fechar' : 'Abrir'}</span>
+                  </button>
+
+                  {extrasOpen[idx] && (
+                    <div className="flex flex-wrap gap-2">
+                      {(content.extras_proposta || []).length > 0
+                        ? (content.extras_proposta || []).map((e, i) => (
+                            <button key={i} type="button" onClick={() => toggleExtraSlide(e.nome)}
+                              className={`pill${selectedExtras.includes(e.nome) ? ' on' : ''}`}>
+                              {e.nome}
+                            </button>
+                          ))
+                        : <p className="hint">Sem serviços extras definidos</p>}
+                    </div>
+                  )}
+
+                  {escolhida === idx ? (
+                    <a href={`/b/${token}`} className="btn mt-1" style={{ width: '100%' }}>
+                      <span className="fill" />
+                      Escolhida &middot; confirmar
+                    </a>
+                  ) : (
+                    <button type="button" onClick={() => setEscolhida(idx)} className="btn mt-1" style={{ width: '100%' }}>
+                      <span className="fill" />
+                      Escolher esta proposta
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Perfuração direita */}
+              <div className="hidden sm:block" style={{ ...perf, borderLeft: '1px solid var(--line-soft)' }} aria-hidden="true" />
             </div>
           </div>
         )
