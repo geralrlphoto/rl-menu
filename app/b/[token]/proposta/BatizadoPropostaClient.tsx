@@ -653,7 +653,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
           ? [
               { v: `${ADJUDICACAO.toLocaleString('pt-PT')} €`, l: 'Hoje, reserva a data' },
               { v: `${reforco.toLocaleString('pt-PT')} €`,     l: 'Até 30 dias antes' },
-              { v: `${valorFinal.toLocaleString('pt-PT')} €`,  l: 'No próprio dia' },
+              { v: `${valorFinal.toLocaleString('pt-PT')} €`,  l: 'Após o dia' },
             ]
           : []
         return (
