@@ -162,6 +162,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [extrasSelected, setExtrasSelected] = useState<Record<number, string[]>>({})
   const [formaOpen,      setFormaOpen]      = useState<Record<number, boolean>>({})
   const [escolhida,      setEscolhida]      = useState<number | null>(null)
+  const [videoOn,        setVideoOn]        = useState(false)
 
   // Editor
   const [editorOpen,    setEditorOpen]    = useState(false)
@@ -389,36 +390,53 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           {/* Título — posição editável */}
           <div className="absolute" style={titlePosStyle(pp.about?.titlePos || 'top-right', isAdmin)}>
             <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
-              style={{ fontSize: 'clamp(1.6rem,3.5vw,2.6rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
+              style={{ fontSize: 'clamp(2rem,4vw,3.4rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
               {pp.about?.title || 'Sobre Nós'}
             </h2>
             <div className="mt-2" style={{ width: '36px', height: '1px', background: `${typo.accentColor}66`, marginLeft: 'auto' }} />
           </div>
 
           {/* Conteúdo: foto + vídeo — tamanhos iguais */}
-          <div className="flex flex-row items-center gap-10 sm:gap-14 w-full max-w-5xl justify-center">
+          <div className="flex flex-row items-center gap-10 sm:gap-16 w-full max-w-7xl justify-center">
 
             {/* Foto vertical */}
-            <div className="relative flex-shrink-0" style={{ width: 'clamp(180px,24vw,300px)', height: 'clamp(260px,36vw,430px)' }}>
+            <div className="relative flex-shrink-0" style={{ width: 'clamp(220px,26vw,400px)', height: 'clamp(320px,52vh,560px)' }}>
               <div className="absolute -top-2 -left-2 w-6 h-6" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -top-2 -right-2 w-6 h-6" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -bottom-2 -left-2 w-6 h-6" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -bottom-2 -right-2 w-6 h-6" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
               {pp.about?.photo
-                ? <img src={pp.about.photo} alt="" className="w-full h-full object-cover" />
+                ? <div className="w-full h-full overflow-hidden">
+                    <img src={pp.about.photo} alt="" className="rl-ken w-full h-full object-cover" />
+                  </div>
                 : <div className="w-full h-full" style={{ background: 'rgba(201,168,76,0.06)', border: '0.5px solid rgba(201,168,76,0.25)' }} />
               }
             </div>
 
             {/* Vídeo — mesmo tamanho que a foto */}
-            <div className="relative flex-shrink-0" style={{ width: 'clamp(180px,24vw,300px)', height: 'clamp(260px,36vw,430px)' }}>
+            <div className="relative flex-shrink-0" style={{ width: 'clamp(220px,26vw,400px)', height: 'clamp(320px,52vh,560px)' }}>
               <div className="absolute -top-2 -left-2 w-6 h-6 z-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -top-2 -right-2 w-6 h-6 z-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -bottom-2 -left-2 w-6 h-6 z-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -bottom-2 -right-2 w-6 h-6 z-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
               {pp.about?.videoUrl && toEmbed(pp.about.videoUrl)
-                ? <iframe src={toEmbed(pp.about.videoUrl)} className="w-full h-full"
-                    style={{ border: 'none' }} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
+                ? (videoOn
+                    ? <iframe
+                        src={`${toEmbed(pp.about.videoUrl)}${toEmbed(pp.about.videoUrl)!.includes('?') ? '&' : '?'}autoplay=1`}
+                        className="w-full h-full"
+                        style={{ border: 'none' }} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen />
+                    : <button type="button" onClick={() => setVideoOn(true)}
+                        aria-label="Reproduzir vídeo"
+                        className="rl-cta w-full h-full flex flex-col items-center justify-center gap-4"
+                        style={{ background: `${typo.accentColor}0A`, border: `0.5px solid ${typo.accentColor}40` }}>
+                        <span className="flex items-center justify-center rounded-full"
+                          style={{ width: '64px', height: '64px', border: `1px solid ${typo.accentColor}99` }}>
+                          <svg width="20" height="22" viewBox="0 0 20 22" fill="none" aria-hidden="true">
+                            <path d="M3 2.2v17.6L18 11 3 2.2z" fill={typo.accentColor} fillOpacity="0.85" />
+                          </svg>
+                        </span>
+                        <span className="text-[10px] tracking-[0.35em] uppercase" style={{ color: `${typo.accentColor}AA` }}>Ver vídeo</span>
+                      </button>)
                 : <div className="w-full h-full flex flex-col items-center justify-center gap-2"
                     style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)' }}>
                     <span style={{ color: `${typo.accentColor}44`, fontSize: '1.5rem' }}>▶</span>
@@ -540,7 +558,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <div className="relative h-full w-full overflow-hidden flex items-center">
             {blankPhoto && (
               <img src={blankPhoto} alt=""
-                className="absolute inset-0 w-full h-full object-cover object-right"
+                className="rl-ken-left absolute inset-0 w-full h-full object-cover object-right"
                 style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
               />
             )}
@@ -577,7 +595,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <div className="relative h-full w-full overflow-hidden">
             {introPhoto && (
               <img src={introPhoto} alt=""
-                className="absolute inset-0 w-full h-full object-cover object-right"
+                className="rl-ken-left absolute inset-0 w-full h-full object-cover object-right"
                 style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
               />
             )}
@@ -1033,7 +1051,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <div className="relative h-full w-full overflow-hidden flex items-center">
             {finalPhoto && (
               <img src={finalPhoto} alt=""
-                className="absolute inset-0 w-full h-full object-cover object-right"
+                className="rl-ken-left absolute inset-0 w-full h-full object-cover object-right"
                 style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
               />
             )}
@@ -1073,7 +1091,11 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       {/* Animações — entradas escalonadas e realces */}
       <style>{`
-        @keyframes rlRise { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes rlRise { from { opacity: 0; transform: translateY(42px) scale(0.97) } to { opacity: 1; transform: translateY(0) scale(1) } }
+        @keyframes rlKen { from { transform: scale(1.04) } to { transform: scale(1.16) } }
+        @keyframes rlKenLeft { from { transform: scale(1.14) translateX(1.2%) } to { transform: scale(1.04) translateX(-1.2%) } }
+        .rl-ken { animation: rlKen 18s ease-out both }
+        .rl-ken-left { animation: rlKenLeft 20s ease-out both }
         @keyframes rlGlow { 0%, 100% { box-shadow: 0 0 44px rgba(201,168,76,0.10) } 50% { box-shadow: 0 0 74px rgba(201,168,76,0.22) } }
         @keyframes rlDraw { from { transform: scaleX(0) } to { transform: scaleX(1) } }
         .rl-in > * { animation: rlRise 0.72s cubic-bezier(0.22,1,0.36,1) both }
@@ -1091,7 +1113,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         .rl-cta { transition: transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s ease, background 0.25s ease }
         .rl-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(201,168,76,0.22) }
         @media (prefers-reduced-motion: reduce) {
-          .rl-in > *, .rl-glow, .rl-rule { animation: none !important }
+          .rl-in > *, .rl-glow, .rl-rule, .rl-ken, .rl-ken-left { animation: none !important }
         }
       `}</style>
 
@@ -1128,7 +1150,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               <img
                 src={pp.slidePhotos[slides[current]]}
                 alt=""
-                className="absolute inset-0 w-full h-full object-cover object-right"
+                className="rl-ken-left absolute inset-0 w-full h-full object-cover object-right"
                 style={{
                   maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
                   WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)',
