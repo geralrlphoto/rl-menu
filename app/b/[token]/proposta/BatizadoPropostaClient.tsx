@@ -2,9 +2,20 @@
 
 import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_BATIZADO_CONTENT, BatizadoContent, Proposta, ExtraServico, FONTS, TITLE_SIZES, mergeBatizado } from '../BatizadoPageClient'
+import { CSS_BRIEFING } from '../../../_briefing/estilo'
 
 const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MASTER_TOKEN = 'batizado-maquete'
+
+// Cada slide e uma cena, como no briefing /nova-lead.
+const CENAS: Record<string, { cena: string }> = {
+  cover: { cena: 'Antes de rodar' }, about: { cena: 'Cena 01' }, menino: { cena: 'Cena 02' },
+  intro: { cena: 'Cena 03' }, relive: { cena: 'Cena 04' }, blank: { cena: 'Cena 05' },
+  blank2: { cena: 'Cena 06' }, reflexao: { cena: 'Cena 07' }, invest: { cena: 'Cena 08' },
+  'pkg-0': { cena: 'Proposta 01' }, 'pkg-1': { cena: 'Proposta 02' }, 'pkg-2': { cena: 'Proposta 03' },
+  final: { cena: 'Cena 09' }, cta: { cena: 'Ficha tecnica' }, contact: { cena: 'Fim' },
+}
+
 
 function titlePosStyle(pos: string, isAdmin: boolean): React.CSSProperties {
   const t = isAdmin ? '76px' : '52px'
@@ -306,7 +317,6 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               <h1 className="font-cormorant text-3xl font-light italic text-white/90">Proposta</h1>
               <h1 className="font-cormorant text-3xl font-light italic" style={{ color: '#C9A84C' }}>Criativa</h1>
             </div>
-            <p className="text-[11px] tracking-[0.45em]" style={{ color: 'rgba(201,168,76,0.35)' }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
             <div className="w-full flex flex-col gap-3">
               <input type="password" placeholder="Introduz a password" value={pwInput}
                 onChange={e => setPwInput(e.target.value)}
@@ -335,22 +345,24 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
     switch (id) {
 
       case 'cover': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6">
-          <img src={`/logo_rl_gold.png`} alt="RL" className="w-28 sm:w-36 opacity-80 mb-2" />
-          <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
-          <div>
-            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.titleColor, lineHeight: 1 }}>Proposta</h1>
-            <h1 className={`${fontClass(typo.titleFont)} ${sizeClass(typo.titleSize)} font-light uppercase tracking-[0.18em]`} style={{ color: typo.accentColor, lineHeight: 1.1 }}>Criativa</h1>
+        <div className="h-full w-full flex items-center px-8 sm:px-16 lg:px-24">
+          <div className="w-full max-w-3xl">
+            <img src={`/logo_rl_gold.png`} alt="RL Photo · Video" className="w-16 opacity-85 mb-10" />
+            <p className="eyebrow mb-7">{nome || 'Para vocês'}</p>
+            <h1 style={{ fontSize: 'clamp(46px,7.4vw,112px)' }}>
+              Proposta<br /><em>criativa</em>
+            </h1>
+            <div className="h-px w-12 mt-9 mb-8" style={{ background: 'var(--g)', opacity: .6 }} />
+            <p className="lead" style={{ maxWidth: '470px' }}>{pp.subtitle}</p>
+            <p className="hint mt-12">{total} cenas &middot; setas para avançar</p>
           </div>
-          <p className="text-[11px] tracking-[0.5em]" style={{ color: `${typo.accentColor}66` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <p className={`${fontClass(typo.bodyFont)} text-lg sm:text-xl italic opacity-60`} style={{ color: typo.bodyColor }}>{pp.subtitle}</p>
         </div>
       )
 
       case 'about': return (
         <div className="relative h-full w-full flex items-center justify-center px-10 sm:px-16">
           <div className="absolute" style={titlePosStyle(pp.about?.titlePos || 'top-right', isAdmin)}>
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            <h2 
               style={{ fontSize: 'clamp(1.2rem,2.8vw,2rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
               {pp.about?.title || 'Sobre Nós'}
             </h2>
@@ -400,11 +412,11 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
           <div className="relative z-10 flex items-center justify-start w-full max-w-5xl px-8 sm:px-16">
             <div className="flex flex-col gap-10 max-w-xl">
               <div>
-                <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                <h2 
                   style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.titleColor, lineHeight: 1.1 }}>
                   O Que
                 </h2>
-                <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                <h2 
                   style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.accentColor, lineHeight: 1.1 }}>
                   Inclui
                 </h2>
@@ -443,7 +455,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16">
           <div className="flex flex-row items-center gap-2 sm:gap-3 w-full max-w-5xl">
             <div className="flex flex-col gap-5 flex-1">
-              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              <h2 
                 style={{ fontSize: 'clamp(1.4rem,3.2vw,2.4rem)', color: typo.titleColor, lineHeight: 1.15 }}>
                 {pp.grandeDia?.title || 'O Dia do Batizado'}
               </h2>
@@ -544,19 +556,17 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
           {/* Conteúdo */}
           <div className="relative z-10 flex items-center justify-start w-full max-w-5xl px-8 sm:px-16">
             <div className="flex flex-col gap-6">
-              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
               <div>
-                <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                <h2 
                   style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.titleColor, lineHeight: 1.2 }}>
                   Quem é o nosso
                 </h2>
-                <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+                <h2 
                   style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.titleColor, lineHeight: 1.2 }}>
                   Menino/a?
                 </h2>
                 <div className="mt-5 w-12 h-px" style={{ background: `${typo.accentColor}60` }} />
               </div>
-              <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
             </div>
           </div>
           {/* Indicador admin quando não há foto */}
@@ -571,39 +581,32 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
       case 'intro': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-          <p className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`} style={{ fontSize: 'clamp(1.2rem,2.8vw,2rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>Sobre o Batizado</p>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
+          <p  style={{ fontSize: 'clamp(1.2rem,2.8vw,2rem)', color: 'rgba(255,255,255,0.2)', lineHeight: 1.1 }}>Sobre o Batizado</p>
           <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
             &ldquo;{pp.intro}&rdquo;
           </p>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
         </div>
       )
 
       case 'reflexao': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+          <h2 
             style={{ fontSize: 'clamp(1.4rem,3.2vw,2.4rem)', color: typo.titleColor, lineHeight: 1.3 }}>
             Como imaginam o vosso dia?
           </h2>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
           <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
             O que é que torna este batizado verdadeiramente único para vocês?<br />
             Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
           </p>
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
         </div>
       )
 
       case 'invest': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-2xl mx-auto">
-          <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+          <h2 
             style={{ fontSize: 'clamp(2rem,5.5vw,4rem)', color: typo.titleColor, lineHeight: 1.0 }}>
             Investimento
           </h2>
-          <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <p className={`${fontClass(typo.bodyFont)} font-light leading-relaxed`}
             style={{ fontSize: '20px', color: typo.bodyColor, maxWidth: '480px' }}>
             As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o retorno eterno de cada momento que nunca mais poderão reviver — apenas recordar.
@@ -798,7 +801,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       case 'cta': return (
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16 py-8">
           <div className="w-full max-w-5xl flex flex-col gap-6">
-            <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+            <h2 
               style={{ fontSize: 'clamp(1.2rem,2.8vw,2rem)', color: typo.titleColor, lineHeight: 1.1 }}>
               Informações Gerais
             </h2>
@@ -853,7 +856,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
             {/* Coluna esquerda — texto */}
             <div className="flex flex-col gap-6 flex-1">
-              <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+              <h2 
                 style={{ fontSize: 'clamp(1.6rem,3.8vw,3rem)', color: typo.accentColor, lineHeight: 1.25 }}>
                 Vamos contar<br />esta história<br />juntos?
               </h2>
@@ -895,17 +898,14 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
       case 'final': return (
         <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-10 max-w-3xl mx-auto">
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
-          <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
+          <h2 
             style={{ fontSize: 'clamp(1.3rem,3vw,2.2rem)', color: typo.titleColor, lineHeight: 1.3 }}>
             O que gostaram mais até agora?
           </h2>
-          <p className="text-[11px] tracking-[0.45em]" style={{ color: `${typo.accentColor}66` }}>&#9670;</p>
           <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7, maxWidth: '520px' }}>
             Há algum momento, detalhe ou serviço que vos tocou de forma especial?<br />
             A vossa opinião ajuda-nos a construir algo verdadeiramente único para este dia.
           </p>
-          <p className="text-[10px] tracking-[0.5em] uppercase" style={{ color: `${typo.accentColor}55` }}>&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
         </div>
       )
 
@@ -915,7 +915,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
   // ── Main presentation ─────────────────────────────────────────────────────
   return (
-    <div className="relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0a0a0a' }}>
+    <div className="nlead relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0a0a0a' }}>
+      <style>{CSS_BRIEFING}</style>
+      <div className="fx-grain" aria-hidden="true" />
       <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 40% 40% at 50% 48%, rgba(232,180,60,0.08) 0%, transparent 60%)' }} />
@@ -962,15 +964,24 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 18l6-6-6-6"/></svg>
       </button>
 
-      {/* Dots */}
-      <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-2 z-30">
+      {/* Fotogramas */}
+      <div className={`absolute left-6 sm:left-10 right-6 sm:right-10 flex items-center gap-1.5 z-30 ${isAdmin ? 'bottom-6' : 'bottom-7'}`}>
         {slides.map((_, i) => (
-          <button key={i} onClick={() => goTo(i)} className="rounded-full transition-all duration-300"
-            style={{ width: i === current ? '20px' : '6px', height: '6px', background: i === current ? '#C9A84C' : 'rgba(201,168,76,0.25)' }} />
+          <button key={i} onClick={() => goTo(i)}
+            aria-label={`Ir para a cena ${i + 1} de ${total}`}
+            className="flex-1 flex items-center py-3">
+            <span className={`fotograma${i === current ? ' agora' : i < current ? ' feito' : ''}`} />
+          </button>
         ))}
       </div>
-      <p className="absolute bottom-6 right-6 text-[10px] tracking-widest z-30" style={{ color: 'rgba(201,168,76,0.3)' }}>
-        {current + 1} / {total}
+
+      {current > 0 && (
+        <p className={`eyebrow absolute left-6 sm:left-10 z-30 ${isAdmin ? 'top-16' : 'top-8'}`}>
+          {CENAS[slides[current]]?.cena || ''}
+        </p>
+      )}
+      <p className={`meta absolute right-6 sm:right-10 z-30 ${isAdmin ? 'top-16' : 'top-8'}`}>
+        {String(current + 1).padStart(2, '0')} / {String(total).padStart(2, '0')}
       </p>
 
       {/* ══ EDITOR PANEL ══ */}
