@@ -54,12 +54,14 @@ function mergeContent(saved: any): PageContent {
 // ── Slide transition wrapper ──────────────────────────────────────────────────
 function SlideIn({ children, dir }: { children: React.ReactNode; dir: 'right' | 'left' }) {
   const [vis, setVis] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setVis(true), 30); return () => clearTimeout(t) }, [])
+  useEffect(() => { const t = setTimeout(() => setVis(true), 20); return () => clearTimeout(t) }, [])
+  const ease = 'cubic-bezier(0.22,1,0.36,1)'
   return (
     <div style={{
       opacity: vis ? 1 : 0,
-      transform: vis ? 'translateX(0px)' : `translateX(${dir === 'right' ? '48px' : '-48px'})`,
-      transition: 'opacity 0.5s cubic-bezier(0.22,1,0.36,1), transform 0.5s cubic-bezier(0.22,1,0.36,1)',
+      transform: vis ? 'translateX(0px) scale(1)' : `translateX(${dir === 'right' ? '64px' : '-64px'}) scale(0.986)`,
+      filter: vis ? 'blur(0px)' : 'blur(7px)',
+      transition: `opacity 0.7s ${ease}, transform 0.7s ${ease}, filter 0.7s ${ease}`,
       height: '100%',
       width: '100%',
     }}>
@@ -159,6 +161,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [extrasOpen,     setExtrasOpen]     = useState<Record<number, boolean>>({})
   const [extrasSelected, setExtrasSelected] = useState<Record<number, string[]>>({})
   const [formaOpen,      setFormaOpen]      = useState<Record<number, boolean>>({})
+  const [escolhida,      setEscolhida]      = useState<number | null>(null)
 
   // Editor
   const [editorOpen,    setEditorOpen]    = useState(false)
@@ -368,7 +371,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     switch (id) {
 
       case 'cover': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 gap-6">
+        <div className="rl-in flex flex-col items-center justify-center h-full text-center px-8 gap-6">
           <img src={`/logo_rl_gold.png`} alt="RL" className="w-36 sm:w-44 opacity-80 mb-2" />
           <p className="text-[10px] tracking-[0.5em] text-white/25 uppercase">{nome || 'Para vocês'}</p>
           <div>
@@ -462,7 +465,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <div className="flex flex-row items-center gap-2 sm:gap-3 w-full max-w-5xl">
 
             {/* Esquerda — texto */}
-            <div className="flex flex-col gap-6 flex-1">
+            <div className="rl-in flex flex-col gap-6 flex-1">
               <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
                 Portal dos Noivos
@@ -502,7 +505,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           <div className="flex flex-row items-center gap-2 sm:gap-3 w-full max-w-5xl">
 
             {/* Esquerda — texto */}
-            <div className="flex flex-col gap-5 flex-1">
+            <div className="rl-in flex flex-col gap-5 flex-1">
               <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
                 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
                 {pp.grandeDia?.title || 'o grande dia'}
@@ -615,7 +618,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       }
 
       case 'invest': return (
-        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-2xl mx-auto">
+        <div className="rl-in flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-2xl mx-auto">
           <p className="text-[10px] tracking-[0.5em] text-white/20 uppercase">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</p>
           <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
             style={{ fontSize: 'clamp(2.5rem,7vw,5rem)', color: typo.titleColor, lineHeight: 1.0 }}>
@@ -666,8 +669,22 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             : ''
         return (
           <div className="flex items-center justify-center h-full w-full px-6 sm:px-12">
-            <div className="relative w-full max-w-4xl flex"
-              style={{ border: `0.5px solid ${typo.accentColor}33`, minHeight: 'clamp(340px, 62vh, 480px)' }}>
+            <div className={`relative w-full max-w-4xl flex ${isAtiva ? 'rl-glow' : ''}`}
+              style={{
+                border: isAtiva ? `1px solid ${typo.accentColor}` : `0.5px solid ${typo.accentColor}33`,
+                minHeight: 'clamp(340px, 62vh, 480px)',
+                transition: 'border 0.45s ease',
+              }}>
+
+              {/* Faixa — proposta em destaque */}
+              {isAtiva && (
+                <div className="absolute left-1/2 z-20 px-5 py-1.5"
+                  style={{ top: '-14px', transform: 'translateX(-50%)', background: typo.accentColor, whiteSpace: 'nowrap' }}>
+                  <span className="text-[9px] tracking-[0.4em] uppercase font-semibold" style={{ color: '#0d0b07' }}>
+                    A mais escolhida
+                  </span>
+                </div>
+              )}
 
               {/* Cantos decorativos */}
               <div className="absolute top-0 left-0 w-10 h-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
@@ -727,7 +744,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               </div>
 
               {/* Painel direito — serviços */}
-              <div className="flex-1 flex flex-col gap-4 justify-center" style={{ padding: '40px 36px 36px' }}>
+              <div className="rl-in flex-1 flex flex-col gap-4 justify-center" style={{ padding: '40px 36px 36px' }}>
 
                 {/* Serviços principais */}
                 {hasAny ? (
@@ -881,6 +898,23 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                   )}
                 </div>
 
+                {/* Escolher esta proposta */}
+                <div className="pt-1">
+                  {escolhida === idx ? (
+                    <a href={`/r/${token}`}
+                      className="rl-cta flex items-center justify-center gap-2.5 w-full px-4 py-3.5 text-[10px] tracking-[0.35em] uppercase font-semibold"
+                      style={{ background: typo.accentColor, color: '#0d0b07' }}>
+                      &#10003;&nbsp; Escolhida &middot; Confirmar
+                    </a>
+                  ) : (
+                    <button onClick={() => setEscolhida(idx)}
+                      className="rl-cta flex items-center justify-center gap-2.5 w-full px-4 py-3.5 text-[10px] tracking-[0.35em] uppercase"
+                      style={{ background: `${typo.accentColor}14`, border: `0.5px solid ${typo.accentColor}`, color: typo.accentColor }}>
+                      Escolher esta proposta
+                    </button>
+                  )}
+                </div>
+
               </div>
             </div>
           </div>
@@ -889,7 +923,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       case 'cta': return (
         <div className="flex items-center justify-center h-full w-full px-8 sm:px-16 py-8">
-          <div className="w-full max-w-5xl flex flex-col gap-6">
+          <div className="rl-in w-full max-w-5xl flex flex-col gap-6">
 
             <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
               style={{ fontSize: 'clamp(1.6rem,3.5vw,2.8rem)', color: typo.titleColor, lineHeight: 1.1 }}>
@@ -950,7 +984,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           </svg>
 
           {/* Left — text content */}
-          <div className="flex flex-col gap-6 flex-1">
+          <div className="rl-in flex flex-col gap-6 flex-1">
             <h2 className={`${fontClass(typo.titleFont)} font-light uppercase tracking-[0.18em]`}
               style={{ fontSize: 'clamp(1.8rem,4vw,3.2rem)', color: typo.titleColor, lineHeight: 1.1 }}>
               Vamos contar<br />esta história<br />juntos?
@@ -1037,6 +1071,30 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   return (
     <div className="relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0a0a0a' }}>
 
+      {/* Animações — entradas escalonadas e realces */}
+      <style>{`
+        @keyframes rlRise { from { opacity: 0; transform: translateY(24px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes rlGlow { 0%, 100% { box-shadow: 0 0 44px rgba(201,168,76,0.10) } 50% { box-shadow: 0 0 74px rgba(201,168,76,0.22) } }
+        @keyframes rlDraw { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+        .rl-in > * { animation: rlRise 0.72s cubic-bezier(0.22,1,0.36,1) both }
+        .rl-in > *:nth-child(1) { animation-delay: 0.10s }
+        .rl-in > *:nth-child(2) { animation-delay: 0.19s }
+        .rl-in > *:nth-child(3) { animation-delay: 0.28s }
+        .rl-in > *:nth-child(4) { animation-delay: 0.37s }
+        .rl-in > *:nth-child(5) { animation-delay: 0.46s }
+        .rl-in > *:nth-child(6) { animation-delay: 0.55s }
+        .rl-in > *:nth-child(7) { animation-delay: 0.64s }
+        .rl-in > *:nth-child(8) { animation-delay: 0.73s }
+        .rl-in > *:nth-child(n+9) { animation-delay: 0.82s }
+        .rl-glow { animation: rlGlow 3.6s ease-in-out infinite }
+        .rl-rule { transform-origin: left center; animation: rlDraw 0.9s cubic-bezier(0.22,1,0.36,1) 0.5s both }
+        .rl-cta { transition: transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s ease, background 0.25s ease }
+        .rl-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(201,168,76,0.22) }
+        @media (prefers-reduced-motion: reduce) {
+          .rl-in > *, .rl-glow, .rl-rule { animation: none !important }
+        }
+      `}</style>
+
       {/* Fundo degradé */}
       <div className="absolute inset-0" style={{ background: 'linear-gradient(160deg, #0e0b07 0%, #1a1206 30%, #0e0b07 70%, #060504 100%)' }} />
       <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 75% 65% at 50% 48%, rgba(201,168,76,0.18) 0%, rgba(160,120,40,0.07) 45%, transparent 70%)' }} />
@@ -1105,23 +1163,37 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         </svg>
       </button>
 
-      {/* Dots — indicador de posição */}
-      <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-2 z-30">
+      {/* Progresso — barra contínua no fundo do ecrã */}
+      <div className="absolute bottom-0 left-0 right-0 z-30" style={{ height: '2px', background: 'rgba(201,168,76,0.10)' }}>
+        <div style={{
+          height: '100%',
+          width: `${((current + 1) / total) * 100}%`,
+          background: 'linear-gradient(90deg, rgba(201,168,76,0.5) 0%, #E8B43C 100%)',
+          transition: 'width 0.65s cubic-bezier(0.22,1,0.36,1)',
+        }} />
+      </div>
+
+      {/* Segmentos clicáveis */}
+      <div className="absolute bottom-3 left-0 right-0 flex items-center justify-center gap-1.5 z-30">
         {slides.map((_, i) => (
           <button key={i} onClick={() => goTo(i)}
-            className="rounded-full transition-all duration-300"
-            style={{
-              width:   i === current ? '20px' : '6px',
-              height:  '6px',
-              background: i === current ? '#C9A84C' : 'rgba(201,168,76,0.25)',
-            }}
-          />
+            aria-label={`Ir para o slide ${i + 1} de ${total}`}
+            className="flex items-center justify-center py-3">
+            <span className="block transition-all duration-500"
+              style={{
+                width:  i === current ? '30px' : '14px',
+                height: '2px',
+                background: i === current ? '#E8B43C' : i < current ? 'rgba(201,168,76,0.45)' : 'rgba(201,168,76,0.16)',
+              }}
+            />
+          </button>
         ))}
       </div>
 
       {/* Contador */}
-      <p className="absolute bottom-6 right-6 text-[10px] tracking-widest z-30" style={{ color: 'rgba(201,168,76,0.3)' }}>
-        {current + 1} / {total}
+      <p className="absolute bottom-5 right-6 text-[10px] tracking-[0.3em] z-30" style={{ color: 'rgba(201,168,76,0.5)' }}>
+        {String(current + 1).padStart(2, '0')}
+        <span style={{ color: 'rgba(201,168,76,0.22)' }}> / {String(total).padStart(2, '0')}</span>
       </p>
 
       {/* ══ EDITOR PANEL ══ */}
