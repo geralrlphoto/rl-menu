@@ -3131,6 +3131,59 @@ function ReenviarEmailButton({ referencia }: { referencia: string }) {
   )
 }
 
+// ─── Histórico do evento ─────────────────────────────────────────────────────
+//  Alimentado por gatilhos na base de dados, não por esta interface: qualquer
+//  alteração de estado, envio de link, contrato, pré-wedding ou pagamento fica
+//  registado venha de onde vier (ficha, portal, robô ou API).
+type HistLinha = { id: string; tipo: string; titulo: string; detalhe: string | null; created_at: string }
+
+function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referencia?: string }) {
+  const [hist, setHist] = useState<HistLinha[]>([])
+  const [loaded, setLoaded] = useState(false)
+
+  useEffect(() => {
+    const qs = new URLSearchParams()
+    if (eventoId) qs.set('evento_id', eventoId)
+    if (referencia) qs.set('ref', referencia)
+    if (!eventoId && !referencia) { setLoaded(true); return }
+    fetch(`/api/evento-historico?${qs.toString()}`)
+      .then(r => r.json())
+      .then(d => setHist(Array.isArray(d.historico) ? d.historico : []))
+      .catch(() => {})
+      .finally(() => setLoaded(true))
+  }, [eventoId, referencia])
+
+  const quando = (iso: string) => new Date(iso).toLocaleString('pt-PT', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  })
+
+  return (
+    <Section title="Histórico" right={
+      hist.length > 0 ? <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{hist.length} {hist.length === 1 ? 'ação' : 'ações'}</span> : undefined
+    }>
+      {!loaded ? (
+        <p className="text-xs text-white/30">A carregar…</p>
+      ) : hist.length === 0 ? (
+        <p className="text-xs text-white/30">
+          Sem ações registadas. O histórico passa a guardar tudo a partir de agora.
+        </p>
+      ) : (
+        <ol className="flex flex-col gap-4 pl-4 border-l border-white/[0.08]">
+          {hist.map(h => (
+            <li key={h.id} className="relative">
+              <span className="absolute -left-[22px] top-1.5 w-[7px] h-[7px] rounded-full bg-gold"
+                style={{ boxShadow: '0 0 8px rgba(201,164,92,0.6)' }} />
+              <p className="text-sm text-white/80 leading-snug">{h.titulo}</p>
+              {h.detalhe && <p className="text-[11px] text-white/35 mt-0.5">{h.detalhe}</p>}
+              <p className="text-[11px] text-white/30 mt-1">{quando(h.created_at)}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+    </Section>
+  )
+}
+
 // ─── Notas privadas do admin (livre, autosalva em evento_notas) ─────────────
 function NotasSection({ referencia }: { referencia?: string }) {
   const [nota, setNota] = useState('')
@@ -5019,6 +5072,9 @@ export default function EventoPage() {
             <EditCheck label="Alerta 30 dias úteis enviado" checked={e.alerta_30du} field="alerta_30du" eventId={e.id} onSaved={handleSaved} />
           </div>
         </Section>
+
+        {/* ── Histórico de tudo o que aconteceu neste evento ── */}
+        <HistoricoSection eventoId={e.id} referencia={e.referencia ?? undefined} />
 
         {/* ── Revisão do Vídeo (enviada pelo editor via Frame.io) ── */}
         {e.referencia && <RevisaoVideoAdmin referencia={e.referencia} />}
