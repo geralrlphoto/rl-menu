@@ -250,26 +250,30 @@ export default function CalendarClient({
     })
   }
 
-  // Mensagem de aviso da reunião para o cliente (dia, hora e link)
-  function reuniaoWaHref(): string | null {
-    if (!reuniaoWaBase || !reuniaoDate) return null
-    const primeiro = (reuniaoContacto?.nome ?? '').trim().split(/\s+/)[0] || ''
-    const local = reuniaoLink || MAPS_LINK
-    const linha = reuniaoTipo === 'Videochamada'
-      ? `Videochamada (Google Meet):\n${reuniaoLink || MEET_LINK}`
-      : (local === MAPS_LINK ? `Local: Estúdio RL Photo.Video\n${MAPS_LINK}` : `Local: ${local}`)
-    const texto = [
+  // Mensagem de aviso da reunião (dia, hora e link), partilhada pelos dois modais
+  function msgReuniao(nome: string, dateStr: string, hora: string, tipo: 'Presencial' | 'Videochamada', link: string) {
+    const primeiro = (nome ?? '').trim().split(/\s+/)[0] || ''
+    const alvo = link || (tipo === 'Videochamada' ? MEET_LINK : MAPS_LINK)
+    const linha = tipo === 'Videochamada'
+      ? `Videochamada (Google Meet):\n${alvo}`
+      : (alvo === MAPS_LINK ? `Local: Estúdio RL Photo.Video\n${MAPS_LINK}` : `Local: ${alvo}`)
+    return [
       `Olá${primeiro ? ' ' + primeiro : ''}, tudo bem?`,
       '',
       'Fica confirmada a nossa reunião:',
       '',
-      `Data: ${fmtDate(reuniaoDate)}`,
-      `Hora: ${reuniaoHora}`,
+      `Data: ${fmtDate(dateStr)}`,
+      `Hora: ${hora}`,
       linha,
       '',
       'Qualquer imprevisto é só dizer. Até já!',
       'Rui, RL Photo.Video',
     ].join('\n')
+  }
+
+  function reuniaoWaHref(): string | null {
+    if (!reuniaoWaBase || !reuniaoDate) return null
+    const texto = msgReuniao(reuniaoContacto?.nome ?? '', reuniaoDate, reuniaoHora, reuniaoTipo, reuniaoLink)
     return `${reuniaoWaBase}?text=${encodeURIComponent(texto)}`
   }
 
@@ -325,6 +329,90 @@ export default function CalendarClient({
       throw e
     } finally {
       setReuniaoSaving(false)
+    }
+  }
+
+  // ── Reunião fora do CRM (guardada como tarefa com hora) ────────────
+  const [rlOpen, setRlOpen]         = useState(false)
+  const [rlDate, setRlDate]         = useState<string>('')
+  const [rlNome, setRlNome]         = useState<string>('')
+  const [rlHora, setRlHora]         = useState<string>('15:00')
+  const [rlTipo, setRlTipo]         = useState<'Presencial' | 'Videochamada'>('Videochamada')
+  const [rlLink, setRlLink]         = useState<string>(MEET_LINK)
+  const [rlTelefone, setRlTelefone] = useState<string>('')
+  const [rlNota, setRlNota]         = useState<string>('')
+  const [rlSaving, setRlSaving]     = useState(false)
+
+  const rlWaBase = whatsappLink(rlTelefone)
+
+  function openReuniaoLivre(dateStr: string) {
+    setRlDate(dateStr); setRlNome(''); setRlHora('15:00')
+    setRlTipo('Videochamada'); setRlLink(MEET_LINK); setRlTelefone(''); setRlNota('')
+    setRlOpen(true)
+    setChooserDate(null)
+  }
+
+  function changeRlTipo(t: 'Presencial' | 'Videochamada') {
+    setRlTipo(t)
+    setRlLink(prev => {
+      if (t === 'Videochamada') return (!prev || prev === MAPS_LINK) ? MEET_LINK : prev
+      return prev === MEET_LINK ? MAPS_LINK : prev
+    })
+  }
+
+  async function handleSaveReuniaoLivre(comWhatsapp = false) {
+    if (!rlDate || !rlNome.trim()) return
+    const waHref = (comWhatsapp && rlWaBase)
+      ? `${rlWaBase}?text=${encodeURIComponent(msgReuniao(rlNome, rlDate, rlHora, rlTipo, rlLink))}`
+      : null
+    const waTab = waHref ? window.open('about:blank', '_blank') : null
+    setRlSaving(true)
+    try {
+      const descricao = [
+        rlTipo === 'Videochamada' ? 'Videochamada' : 'Presencial',
+        rlLink || null,
+        rlTelefone ? `Contacto: ${rlTelefone}` : null,
+        rlNota || null,
+      ].filter(Boolean).join('\n')
+      const res = await fetch('/api/tarefas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo:     `Reunião: ${rlNome.trim()}`,
+          descricao:  descricao || null,
+          data_prazo: rlDate,
+          hora:       rlHora || null,
+          status:     'NOVA',
+          evento_id:  null,
+        }),
+      })
+      const d = await res.json()
+      if (d.tarefa) {
+        setTarefas(prev => [...prev, {
+          id:         d.tarefa.id,
+          titulo:     d.tarefa.titulo,
+          descricao:  d.tarefa.descricao,
+          status:     d.tarefa.status,
+          data_prazo: d.tarefa.data_prazo,
+          hora:       d.tarefa.hora,
+          evento_id:  d.tarefa.evento_id ?? null,
+        }])
+        setRlOpen(false)
+        if (waHref) {
+          if (waTab) waTab.location.href = waHref
+          else window.open(waHref, '_blank', 'noopener')
+        }
+        window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: rlDate, resync: false } }))
+        startTransition(() => router.refresh())
+      } else {
+        waTab?.close()
+        alert('Erro ao guardar a reunião')
+      }
+    } catch (e) {
+      waTab?.close()
+      throw e
+    } finally {
+      setRlSaving(false)
     }
   }
 
@@ -1245,6 +1333,17 @@ export default function CalendarClient({
               </button>
 
               <button
+                onClick={() => openReuniaoLivre(chooserDate)}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/[0.04]"
+                style={{ background: 'rgba(201,168,76,0.08)', border: '1px solid rgba(201,168,76,0.25)' }}>
+                <span className="text-2xl">💻</span>
+                <div className="flex-1">
+                  <div className="text-sm text-white">Reunião (fora do CRM)</div>
+                  <div className="text-[10px] text-white/40 tracking-wider">Com qualquer pessoa, link Meet e aviso por WhatsApp</div>
+                </div>
+              </button>
+
+              <button
                 onClick={() => openPreWedding(chooserDate)}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/[0.04]"
                 style={{ background: 'rgba(79,195,195,0.08)', border: '1px solid rgba(79,195,195,0.25)' }}>
@@ -1341,6 +1440,96 @@ export default function CalendarClient({
               </svg>
               {reuniaoWaBase ? 'Agendar e avisar no WhatsApp' : 'Contacto sem número de WhatsApp'}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ────────────── Reunião fora do CRM ────────────── */}
+      {rlOpen && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto"
+          onClick={() => setRlOpen(false)}>
+          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border max-h-[90vh] overflow-y-auto"
+            style={{ borderColor: 'rgba(201,168,76,0.30)' }}
+            onClick={e => e.stopPropagation()}>
+            <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(201,168,76,0.70)' }}>💻 NOVA REUNIÃO</div>
+            <h2 className="text-lg font-light text-white tracking-wide mb-4">{fmtDate(rlDate)}</h2>
+
+            <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Com quem</label>
+            <input value={rlNome} onChange={e => setRlNome(e.target.value)}
+              placeholder="Nome da pessoa ou empresa"
+              autoFocus
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40 mb-3" />
+
+            <div className="flex gap-2 mb-3">
+              <div className="flex-1">
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Hora</label>
+                <input type="time" value={rlHora} onChange={e => setRlHora(e.target.value)}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40" />
+              </div>
+              <div className="flex-1">
+                <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Tipo</label>
+                <select value={rlTipo} onChange={e => changeRlTipo(e.target.value as any)}
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C9A84C]/40">
+                  <option value="Videochamada">Videochamada</option>
+                  <option value="Presencial">Presencial</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase">
+                {rlTipo === 'Videochamada' ? 'Link Meet' : 'Local'}
+              </label>
+              {rlLink !== (rlTipo === 'Videochamada' ? MEET_LINK : MAPS_LINK) && (
+                <button type="button"
+                  onClick={() => setRlLink(rlTipo === 'Videochamada' ? MEET_LINK : MAPS_LINK)}
+                  className="text-[9px] tracking-[0.2em] uppercase px-2 py-1 rounded-md transition-colors"
+                  style={{ background: 'rgba(201,168,76,0.10)', border: '1px solid rgba(201,168,76,0.30)', color: '#C9A84C' }}>
+                  {rlTipo === 'Videochamada' ? 'Usar Meet RL' : 'Usar estúdio RL'}
+                </button>
+              )}
+            </div>
+            <input value={rlLink} onChange={e => setRlLink(e.target.value)}
+              placeholder={rlTipo === 'Videochamada' ? 'https://meet.google.com/…' : 'Morada / sala'}
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40 mb-3" />
+
+            <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Número de WhatsApp (opcional)</label>
+            <input value={rlTelefone} onChange={e => setRlTelefone(e.target.value)}
+              placeholder="912 345 678"
+              inputMode="tel"
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40 mb-3" />
+
+            <textarea value={rlNota} onChange={e => setRlNota(e.target.value)}
+              placeholder="Notas (opcional)"
+              rows={2}
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/40 mb-4 resize-none" />
+
+            <div className="flex gap-3">
+              <button onClick={() => handleSaveReuniaoLivre(false)}
+                disabled={rlSaving || !rlNome.trim()}
+                className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
+                style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.45)', color: '#C9A84C' }}>
+                {rlSaving ? 'A guardar…' : 'Agendar Reunião'}
+              </button>
+              <button onClick={() => setRlOpen(false)}
+                className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70">
+                Cancelar
+              </button>
+            </div>
+
+            <button onClick={() => handleSaveReuniaoLivre(true)}
+              disabled={rlSaving || !rlNome.trim() || !rlWaBase}
+              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-40"
+              style={{ background: 'rgba(37,211,102,0.12)', border: '1px solid rgba(37,211,102,0.40)', color: '#25D366' }}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.17 8.17 0 0 1-1.25-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.41a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.25 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.24-1.47-1.38-1.72-.15-.25-.02-.38.1-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29Z"/>
+              </svg>
+              {rlWaBase ? 'Agendar e avisar no WhatsApp' : 'Escreve o número para avisar no WhatsApp'}
+            </button>
+
+            <div className="mt-3 text-[10px] text-white/30 tracking-wider">
+              Fica guardada como tarefa com hora, visível no calendário e nos Time Blocks.
+            </div>
           </div>
         </div>
       )}
