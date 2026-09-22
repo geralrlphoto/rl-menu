@@ -5,6 +5,11 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import TimeBlocks from './TimeBlocks'
 import { linkPublico } from '@/lib/site-url'
+import { whatsappLink } from '@/lib/crm'
+
+// Links fixos usados nas reuniões de CRM (iguais aos da ficha /crm/[id])
+const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
+const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
 
 export type CalEvent = {
   id: string
@@ -232,9 +237,45 @@ export default function CalendarClient({
   const [reuniaoSaving, setReuniaoSaving]   = useState(false)
   const [reuniaoLoading, setReuniaoLoading] = useState(false)
 
+  // Contacto escolhido no modal (para nome + número de WhatsApp)
+  const reuniaoContacto = reuniaoContactos.find(c => c.id === reuniaoCrmId) ?? null
+  const reuniaoWaBase   = whatsappLink(reuniaoContacto?.contato)
+
+  // Troca de tipo: preenche automaticamente o link fixo que usamos nas reuniões
+  function changeReuniaoTipo(t: 'Presencial' | 'Videochamada') {
+    setReuniaoTipo(t)
+    setReuniaoLink(prev => {
+      if (t === 'Videochamada') return (!prev || prev === MAPS_LINK) ? MEET_LINK : prev
+      return prev === MEET_LINK ? MAPS_LINK : prev
+    })
+  }
+
+  // Mensagem de aviso da reunião para o cliente (dia, hora e link)
+  function reuniaoWaHref(): string | null {
+    if (!reuniaoWaBase || !reuniaoDate) return null
+    const primeiro = (reuniaoContacto?.nome ?? '').trim().split(/\s+/)[0] || ''
+    const local = reuniaoLink || MAPS_LINK
+    const linha = reuniaoTipo === 'Videochamada'
+      ? `Videochamada (Google Meet):\n${reuniaoLink || MEET_LINK}`
+      : (local === MAPS_LINK ? `Local: Estúdio RL Photo.Video\n${MAPS_LINK}` : `Local: ${local}`)
+    const texto = [
+      `Olá${primeiro ? ' ' + primeiro : ''}, tudo bem?`,
+      '',
+      'Fica confirmada a nossa reunião:',
+      '',
+      `Data: ${fmtDate(reuniaoDate)}`,
+      `Hora: ${reuniaoHora}`,
+      linha,
+      '',
+      'Qualquer imprevisto é só dizer. Até já!',
+      'Rui, RL Photo.Video',
+    ].join('\n')
+    return `${reuniaoWaBase}?text=${encodeURIComponent(texto)}`
+  }
+
   function openReuniao(dateStr: string) {
     setReuniaoDate(dateStr)
-    setReuniaoCrmId(''); setReuniaoHora('15:00'); setReuniaoTipo('Presencial'); setReuniaoLink('')
+    setReuniaoCrmId(''); setReuniaoHora('15:00'); setReuniaoTipo('Presencial'); setReuniaoLink(MAPS_LINK)
     setReuniaoOpen(true)
     setChooserDate(null)
     // Carrega contactos só na primeira vez
@@ -247,8 +288,11 @@ export default function CalendarClient({
     }
   }
 
-  async function handleSaveReuniao() {
+  async function handleSaveReuniao(comWhatsapp = false) {
     if (!reuniaoCrmId || !reuniaoDate || !reuniaoHora) return
+    // O separador tem de abrir no clique, senão o browser bloqueia o popup
+    const waHref = comWhatsapp ? reuniaoWaHref() : null
+    const waTab  = waHref ? window.open('about:blank', '_blank') : null
     setReuniaoSaving(true)
     try {
       const res = await fetch('/api/calendario-add/reuniao', {
@@ -265,12 +309,20 @@ export default function CalendarClient({
       const d = await res.json()
       if (res.ok) {
         setReuniaoOpen(false)
+        if (waHref) {
+          if (waTab) waTab.location.href = waHref
+          else window.open(waHref, '_blank', 'noopener')
+        }
         // Salta o TimeBlocks para o dia da reunião + força re-sync
         window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: reuniaoDate, resync: true } }))
         startTransition(() => router.refresh())
       } else {
+        waTab?.close()
         alert(d.error ?? 'Erro ao guardar reunião')
       }
+    } catch (e) {
+      waTab?.close()
+      throw e
     } finally {
       setReuniaoSaving(false)
     }
@@ -1241,7 +1293,7 @@ export default function CalendarClient({
               </div>
               <div className="flex-1">
                 <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Tipo</label>
-                <select value={reuniaoTipo} onChange={e => setReuniaoTipo(e.target.value as any)}
+                <select value={reuniaoTipo} onChange={e => changeReuniaoTipo(e.target.value as any)}
                   className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40">
                   <option value="Presencial">Presencial</option>
                   <option value="Videochamada">Videochamada</option>
@@ -1249,15 +1301,25 @@ export default function CalendarClient({
               </div>
             </div>
 
-            <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">
-              {reuniaoTipo === 'Videochamada' ? 'Link Meet' : 'Local (opcional)'}
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase">
+                {reuniaoTipo === 'Videochamada' ? 'Link Meet' : 'Local'}
+              </label>
+              {reuniaoLink !== (reuniaoTipo === 'Videochamada' ? MEET_LINK : MAPS_LINK) && (
+                <button type="button"
+                  onClick={() => setReuniaoLink(reuniaoTipo === 'Videochamada' ? MEET_LINK : MAPS_LINK)}
+                  className="text-[9px] tracking-[0.2em] uppercase px-2 py-1 rounded-md transition-colors"
+                  style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                  {reuniaoTipo === 'Videochamada' ? 'Usar Meet RL' : 'Usar estúdio RL'}
+                </button>
+              )}
+            </div>
             <input value={reuniaoLink} onChange={e => setReuniaoLink(e.target.value)}
               placeholder={reuniaoTipo === 'Videochamada' ? 'https://meet.google.com/…' : 'Morada / sala'}
               className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C084FC]/40 mb-4" />
 
             <div className="flex gap-3">
-              <button onClick={handleSaveReuniao}
+              <button onClick={() => handleSaveReuniao(false)}
                 disabled={reuniaoSaving || !reuniaoCrmId}
                 className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
                 style={{ background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.45)', color: '#C084FC' }}>
@@ -1268,6 +1330,17 @@ export default function CalendarClient({
                 Cancelar
               </button>
             </div>
+
+            {/* Agendar e avisar o cliente no WhatsApp (dia, hora e link) */}
+            <button onClick={() => handleSaveReuniao(true)}
+              disabled={reuniaoSaving || !reuniaoCrmId || !reuniaoWaBase}
+              className="w-full mt-2 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-40"
+              style={{ background: 'rgba(37,211,102,0.12)', border: '1px solid rgba(37,211,102,0.40)', color: '#25D366' }}>
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.17 8.17 0 0 1-1.25-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.41a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.25 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.24-1.47-1.38-1.72-.15-.25-.02-.38.1-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29Z"/>
+              </svg>
+              {reuniaoWaBase ? 'Agendar e avisar no WhatsApp' : 'Contacto sem número de WhatsApp'}
+            </button>
           </div>
         </div>
       )}
