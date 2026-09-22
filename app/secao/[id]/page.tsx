@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import MagazineViewer from './MagazineViewer'
 import EnvioAutoToggle from '@/app/components/EnvioAutoToggle'
-import './menu-geral.css'
+import MenuGrid, { type MenuItem } from './MenuGrid'
+import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
 export const revalidate = 60
 
@@ -163,40 +164,6 @@ function iconFor(label: string): JSX.Element {
 }
 
 /* ── Cartão (interno ou externo) ─────────────────────────────── */
-function Tile({
-  href, label, idx, internal,
-}: { href: string; label: string; idx: number; internal: boolean }) {
-  const meta = metaFor(label)
-  const icon = iconFor(label)
-  const content = (
-    <>
-      <span className="tile-sweep" />
-      <div className="tile-row">
-        <div className="tile-num">{String(idx).padStart(2, '0')}</div>
-        <div className="tile-icon">{icon}</div>
-        <div className="tile-body">
-          <p className="tile-name">{label}</p>
-          <p className="tile-desc">{meta.desc}</p>
-        </div>
-        <span className={`tile-arrow ${internal ? 'is-internal' : 'is-external'}`}>
-          {internal ? '→' : '↗'}
-        </span>
-      </div>
-    </>
-  )
-  if (internal) {
-    return (
-      <Link href={href} className="tile">
-        {content}
-      </Link>
-    )
-  }
-  return (
-    <a href={href} target="_blank" rel="noopener noreferrer" className="tile">
-      {content}
-    </a>
-  )
-}
 
 export default async function SecaoPage({ params }: Props) {
   const { id } = await params
@@ -298,85 +265,66 @@ export default async function SecaoPage({ params }: Props) {
 
   /* ── Agrupar visualmente (Operação / Clientes / Equipa & Metas)
        só para Menu Geral. Mantém ordem original. */
-  const groupTitles = { op: 'Operação', cli: 'Clientes', eq: 'Equipa & Metas' } as const
-  const grouped: Record<'op' | 'cli' | 'eq', Btn[]> = { op: [], cli: [], eq: [] }
-  allButtons.forEach(b => {
-    const g = metaFor(b.label).group
-    grouped[g].push(b)
-  })
-  let counter = 0
+  // Ordem: Operação, Clientes, Equipa & Metas. A numeração segue essa ordem
+  // e não muda quando se filtra, para cada secção ter sempre o mesmo número.
+  const ordemGrupos = ['op', 'cli', 'eq'] as const
+  const itensMenu: MenuItem[] = ordemGrupos
+    .flatMap(g => allButtons.filter(b => metaFor(b.label).group === g))
+    .map((b, i) => {
+      const meta = metaFor(b.label)
+      return {
+        href: b.href,
+        label: b.label,
+        desc: meta.desc,
+        group: meta.group,
+        internal: b.internal,
+        idx: i + 1,
+        icon: iconFor(b.label),
+      }
+    })
+
+  const ehMenuGeral = section.name?.toUpperCase().includes('GERAL')
 
   return (
-    <main className="rl-mg">
-      {/* ── Voltar ────────────────────────────────────────── */}
-      <div className="rl-mg-back-row">
-        <Link href="/photo" className="rl-mg-back">
-          <span className="chev">‹</span> Voltar ao Menu
+    <main className="nlead" style={{ minHeight: '100vh', background: 'var(--ink)' }}>
+      <style>{CSS_BRIEFING}</style>
+      <div className="fx-grain" aria-hidden="true" />
+
+      <div style={{ maxWidth: '1180px', margin: '0 auto', padding: 'clamp(28px,5vh,56px) clamp(20px,4vw,48px) 80px' }}>
+
+        {/* ── Voltar ──────────────────────────────────────── */}
+        <Link href="/photo" className="btn-ghost" style={{ marginBottom: 'clamp(30px,6vh,58px)' }}>
+          ‹&nbsp; Voltar ao menu
         </Link>
+
+        {/* ── Cabeçalho ───────────────────────────────────── */}
+        <header style={{ marginBottom: 'clamp(28px,5vh,50px)' }}>
+          <p className="eyebrow">RL Photo &middot; Video &middot; Back-office</p>
+          <h1 style={{ fontSize: 'clamp(42px,6vw,86px)', marginTop: '20px' }}>
+            {ehMenuGeral ? <>Menu <em>geral</em></> : section.name}
+          </h1>
+          <div className="h-px" style={{ width: '48px', height: '1px', background: 'var(--g)', opacity: .6, marginTop: '26px' }} />
+        </header>
+
+        {/* ── Interruptor do envio automático (só na secção Cliente, admin) ── */}
+        {isAdmin && section.name?.toUpperCase().includes('CLIENTE') && (
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 30px' }}>
+            <EnvioAutoToggle />
+          </div>
+        )}
+
+        {/* Revista de fotos (só quando há fotos) */}
+        {(images && images.length > 0) && (
+          <div style={{ marginBottom: '38px' }}>
+            <MagazineViewer images={images ?? []} sectionId={id} isAdmin={isAdmin} />
+          </div>
+        )}
+
+        {/* ── Secções: procura, filtros e cartões ─────────── */}
+        {itensMenu.length > 0
+          ? <MenuGrid items={itensMenu} />
+          : <p className="lead" style={{ padding: '54px 0', textAlign: 'center' }}>Sem conteúdo ainda</p>}
       </div>
-
-      {/* ── Cabeçalho de marca ─────────────────────────── */}
-      <header className="rl-mg-head">
-        <div className="rl-mg-mono" aria-hidden="true">
-          <span>RL</span>
-        </div>
-        <p className="rl-mg-eyebrow">RL Photo · Video — Back-office</p>
-        <h1 className="rl-mg-title">
-          {section.name?.toUpperCase().includes('GERAL') ? (
-            <>MENU <em>Geral</em></>
-          ) : (
-            section.name
-          )}
-        </h1>
-        <hr className="rl-mg-rule" />
-      </header>
-
-      {/* ── Interruptor do envio automático (só na secção Cliente, admin) ── */}
-      {isAdmin && section.name?.toUpperCase().includes('CLIENTE') && (
-        <div style={{ display: 'flex', justifyContent: 'center', margin: '0 0 22px' }}>
-          <EnvioAutoToggle />
-        </div>
-      )}
-
-      {/* Revista de fotos (só quando há fotos) */}
-      {(images && images.length > 0) && (
-        <MagazineViewer
-          images={images ?? []}
-          sectionId={id}
-          isAdmin={isAdmin}
-        />
-      )}
-
-      {/* ── Cartões agrupados ───────────────────────────── */}
-      {allButtons.length > 0 ? (
-        <div className="rl-mg-groups">
-          {(['op', 'cli', 'eq'] as const).map(gKey => {
-            const items = grouped[gKey]
-            if (items.length === 0) return null
-            return (
-              <section key={gKey} className="rl-mg-group">
-                <p className="rl-mg-group-label">{groupTitles[gKey]}</p>
-                <div className="rl-mg-grid">
-                  {items.map(btn => {
-                    counter += 1
-                    return (
-                      <Tile
-                        key={btn.href + counter}
-                        href={btn.href}
-                        label={btn.label}
-                        idx={counter}
-                        internal={btn.internal}
-                      />
-                    )
-                  })}
-                </div>
-              </section>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="rl-mg-empty">Sem conteúdo ainda</div>
-      )}
     </main>
   )
 }
