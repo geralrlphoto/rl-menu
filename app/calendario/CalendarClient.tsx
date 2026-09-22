@@ -823,17 +823,17 @@ export default function CalendarClient({
   })
 
   return (
-    <div className="min-h-screen bg-[#080808]">
+    <div className="min-h-screen bg-[#080808] overflow-x-hidden">
 
       {/* ── Barra de comando (fica colada ao topo) ───────────────────── */}
       <div className="sticky top-0 z-30 backdrop-blur-xl bg-[#080808]/85 border-b border-white/[0.07]">
-        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-2 sm:gap-4">
           <Link href="/secao/490653af-115b-4a9b-9d88-902c1a60f9c1"
             title="Voltar ao menu"
             className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-[#C9A84C] hover:border-[#C9A84C]/40 transition-all">
             ‹
           </Link>
-          <div className="leading-tight">
+          <div className="leading-tight hidden sm:block">
             <div className="text-[9px] tracking-[0.4em] text-white/25 uppercase">RL Photo.Video</div>
             <div className="text-[13px] tracking-[0.35em] text-[#C9A84C] uppercase">Calendário</div>
           </div>
@@ -842,7 +842,7 @@ export default function CalendarClient({
             <div className="flex items-center rounded-xl border border-white/10 overflow-hidden">
               <button onClick={prevMonth} title="Mês anterior"
                 className="w-9 h-9 text-white/40 hover:text-[#C9A84C] hover:bg-white/[0.04] transition-all">‹</button>
-              <div className="px-3 sm:px-4 text-center min-w-[120px] sm:min-w-[140px]">
+              <div className="px-2 sm:px-4 text-center min-w-[104px] sm:min-w-[140px]">
                 <div className="text-[13px] tracking-[0.25em] uppercase text-white">{MESES[viewMonth]}</div>
                 <div className="text-[9px] tracking-[0.3em] text-[#C9A84C]/60">{viewYear}</div>
               </div>
@@ -860,7 +860,7 @@ export default function CalendarClient({
         {/* Fita dos meses do ano */}
         <div className="max-w-[1500px] mx-auto px-4 sm:px-6 pb-2.5 flex items-center gap-2">
           <button onClick={() => setViewYear(y => y - 1)}
-            className="h-7 px-2 flex-shrink-0 rounded-md text-[10px] tracking-widest text-white/25 hover:text-[#C9A84C] transition-colors">
+            className="h-7 px-1.5 sm:px-2 flex-shrink-0 rounded-md text-[10px] tracking-widest text-white/25 hover:text-[#C9A84C] transition-colors">
             ‹ {viewYear - 1}
           </button>
           <div className="flex-1 grid grid-cols-6 sm:grid-cols-12 gap-1">
@@ -881,7 +881,7 @@ export default function CalendarClient({
             ))}
           </div>
           <button onClick={() => setViewYear(y => y + 1)}
-            className="h-7 px-2 flex-shrink-0 rounded-md text-[10px] tracking-widest text-white/25 hover:text-[#C9A84C] transition-colors">
+            className="h-7 px-1.5 sm:px-2 flex-shrink-0 rounded-md text-[10px] tracking-widest text-white/25 hover:text-[#C9A84C] transition-colors">
             {viewYear + 1} ›
           </button>
         </div>
