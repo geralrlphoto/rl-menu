@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import TimeBlocks from './TimeBlocks'
@@ -79,6 +79,42 @@ const TIPO_LABELS: Record<TeamEntry['tipo'], string> = {
   edicao_fotos:  '🖼',
   edicao_album:  '📘',
   edicao_video:  '🎬',
+}
+
+type FiltroKey = 'casamento' | 'pw' | 'reuniao' | 'tarefa' | 'equipa'
+
+const FILTRO_META: { key: FiltroKey; label: string; cor: string }[] = [
+  { key: 'casamento', label: 'Casamentos',  cor: '#C9A84C' },
+  { key: 'pw',        label: 'Pré-Wedding', cor: '#4FC3C3' },
+  { key: 'reuniao',   label: 'Reuniões',    cor: '#C084FC' },
+  { key: 'tarefa',    label: 'Tarefas',     cor: '#60A5FA' },
+  { key: 'equipa',    label: 'Equipa',      cor: '#4ADE80' },
+]
+
+const TIPO_NOMES: Record<TeamEntry['tipo'], string> = {
+  confirmacao:   'confirmação',
+  edicao_fotos:  'ed. fotos',
+  edicao_album:  'ed. álbum',
+  edicao_video:  'ed. vídeo',
+}
+
+// YYYY-MM-DD a partir de um Date local (sem passar por UTC)
+function isoDe(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// Etiqueta de um item dentro da célula do dia
+function Pill({ cor, riscado, children }: { cor: string; riscado?: boolean; children: React.ReactNode }) {
+  return (
+    <div className="flex items-stretch gap-1.5 rounded-md overflow-hidden"
+      style={{ background: cor + '1A', opacity: riscado ? 0.65 : 1 }}>
+      <span className="w-[3px] flex-shrink-0" style={{ background: cor }} />
+      <span className="py-[3px] pr-1 text-[10px] leading-tight truncate"
+        style={{ color: cor, textDecoration: riscado ? 'line-through' : 'none' }}>
+        {children}
+      </span>
+    </div>
+  )
 }
 
 const TIPO_COLORS: Record<TeamEntry['tipo'], { bg: string; border: string; text: string }> = {
@@ -701,287 +737,436 @@ export default function CalendarClient({
     return ev + pw + te + re + ta
   })
 
+  // ── Filtros por tipo (a legenda antiga passou a ligar/desligar) ────────
+  const [filtros, setFiltros] = useState<Record<FiltroKey, boolean>>({
+    casamento: true, pw: true, reuniao: true, tarefa: true, equipa: true,
+  })
+
+  const prefixoMes = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}`
+  const noMes = (iso: string | null | undefined) => !!iso && iso.startsWith(prefixoMes)
+  const contagensMes: Record<FiltroKey, number> = {
+    casamento: events.filter(e => noMes(e.data_evento)).length,
+    pw:        preWeddings.filter(p => noMes(p.data_evento)).length,
+    reuniao:   reunioes.filter(r => noMes(r.reuniao_data)).length,
+    tarefa:    tarefas.filter(t => noMes(t.data_prazo)).length,
+    equipa:    teamEntries.filter(t => noMes(t.data_calendar)).length,
+  }
+
+  // ── Agenda de um dia, já com os filtros aplicados ──────────────────────
+  type AgendaItem = { key: string; label: string; cor: string; hora: string | null; sel: SelectedItem }
+  function agendaDoDia(iso: string): AgendaItem[] {
+    const out: AgendaItem[] = []
+    if (filtros.casamento) for (const e of events) {
+      if (e.data_evento?.startsWith(iso)) out.push({ key: `ev-${e.id}`, label: e.cliente || e.referencia, cor: '#C9A84C', hora: null, sel: { kind: 'event', data: e } })
+    }
+    if (filtros.pw) for (const p of preWeddings) {
+      if (p.data_evento.startsWith(iso)) out.push({ key: `pw-${p.id}`, label: `Pré-wedding · ${p.nomes}`, cor: '#4FC3C3', hora: p.hora ? p.hora.slice(0, 5) : null, sel: { kind: 'pw', data: p } })
+    }
+    if (filtros.reuniao) for (const r of reunioes) {
+      if (r.reuniao_data.startsWith(iso)) out.push({ key: `re-${r.id}`, label: `Reunião · ${r.nome}`, cor: '#C084FC', hora: r.reuniao_hora ? r.reuniao_hora.slice(0, 5) : null, sel: { kind: 'reuniao', data: r } })
+    }
+    if (filtros.tarefa) for (const t of tarefas) {
+      if (t.data_prazo.startsWith(iso)) out.push({
+        key: `ta-${t.id}`, label: t.titulo,
+        cor: t.status === 'CONCLUIDA' ? '#86EFAC' : t.status === 'PENDENTE' ? '#FB923C' : '#60A5FA',
+        hora: t.hora ? t.hora.slice(0, 5) : null, sel: { kind: 'tarefa', data: t },
+      })
+    }
+    if (filtros.equipa) for (const t of teamEntries) {
+      if (t.data_calendar.startsWith(iso)) out.push({
+        key: `te-${t.id}`,
+        label: `${t.freelancer_nome} · ${t.status === 'indisponivel' ? 'indisponível' : TIPO_NOMES[t.tipo]}`,
+        cor: t.status === 'indisponivel' ? '#F87171' : TIPO_COLORS[t.tipo].text,
+        hora: null, sel: { kind: 'team', data: t },
+      })
+    }
+    return out.sort((a, b) => (a.hora ?? '99:99').localeCompare(b.hora ?? '99:99'))
+  }
+
+  const hojeIso     = isoDe(today)
+  const agendaHoje  = agendaDoDia(hojeIso)
+  const proximosDias = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i + 1)
+    const iso = isoDe(d)
+    return { iso, itens: agendaDoDia(iso) }
+  }).filter(d => d.itens.length > 0)
+
+  // Próximo casamento a contar de hoje
+  const proximoCasamento = events
+    .filter(e => e.data_evento && e.data_evento.slice(0, 10) >= hojeIso)
+    .sort((a, b) => a.data_evento!.localeCompare(b.data_evento!))[0] ?? null
+  const diasAteCasamento = proximoCasamento
+    ? Math.round(
+        (new Date(proximoCasamento.data_evento!.slice(0, 10) + 'T00:00:00').getTime()
+          - new Date(hojeIso + 'T00:00:00').getTime()) / 86400000
+      )
+    : null
+
+  function irParaHoje() {
+    setViewYear(today.getFullYear())
+    setViewMonth(today.getMonth())
+  }
+
+  // ── Atalhos de teclado: setas mudam de mês, H volta a hoje ─────────────
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      const alvo = e.target as HTMLElement | null
+      if (alvo && (/^(INPUT|TEXTAREA|SELECT)$/.test(alvo.tagName) || alvo.isContentEditable)) return
+      if (selected || chooserDate || addTaskDate || reuniaoOpen || pwOpen || rlOpen) return
+      if (e.key === 'ArrowLeft') { e.preventDefault(); prevMonth() }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); nextMonth() }
+      else if (e.key === 'h' || e.key === 'H') { e.preventDefault(); irParaHoje() }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   return (
     <div className="min-h-screen bg-[#080808]">
-      {/* Header */}
-      <div className="h-14 flex items-center justify-center border-b border-white/[0.06]">
-        <h1 className="text-sm font-light tracking-[0.5em] text-white uppercase">
-          RL <span className="text-[#C9A84C]">PHOTO</span>.VIDEO
-        </h1>
-      </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        {/* Voltar */}
-        <Link href="/secao/490653af-115b-4a9b-9d88-902c1a60f9c1"
-          className="inline-flex items-center gap-2 text-xs tracking-widest text-white/30 hover:text-[#C9A84C] transition-colors mb-8">
-          ‹ VOLTAR AO MENU
-        </Link>
-
-        {/* Título + Botão Google Sync */}
-        <div className="mb-8 flex items-end justify-between gap-3 flex-wrap">
-          <div>
-            <p className="text-xs tracking-[0.4em] text-white/25 uppercase mb-1">RL PHOTO.VIDEO</p>
-            <h1 className="text-2xl font-light tracking-widest text-[#C9A84C] uppercase">CALENDÁRIO</h1>
-            <div className="mt-3 h-px w-16 bg-[#C9A84C]/40" />
-          </div>
-          <GoogleSyncButton />
-        </div>
-
-        {/* Month strip */}
-        <div className="flex gap-1 mb-6 overflow-x-auto pb-1">
-          {MESES.map((m, i) => (
-            <button key={i} onClick={() => setViewMonth(i)}
-              className={`flex-shrink-0 flex flex-col items-center px-3 py-2 rounded-lg text-xs transition-all duration-200 ${
-                i === viewMonth
-                  ? 'bg-[#C9A84C] text-black font-semibold'
-                  : 'border border-white/[0.08] text-white/40 hover:border-[#C9A84C]/40 hover:text-white/70'
-              }`}>
-              <span className="tracking-wider uppercase">{m.slice(0, 3)}</span>
-              {monthCounts[i] > 0 && (
-                <span className={`text-[10px] mt-0.5 font-bold ${i === viewMonth ? 'text-black/70' : 'text-[#C9A84C]/60'}`}>
-                  {monthCounts[i]}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-
-        {/* Nav + year */}
-        <div className="flex items-center justify-between mb-4">
-          <button onClick={prevMonth}
-            className="w-9 h-9 flex items-center justify-center border border-white/10 rounded-lg text-white/40 hover:text-[#C9A84C] hover:border-[#C9A84C]/40 transition-all text-lg">
+      {/* ── Barra de comando (fica colada ao topo) ───────────────────── */}
+      <div className="sticky top-0 z-30 backdrop-blur-xl bg-[#080808]/85 border-b border-white/[0.07]">
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
+          <Link href="/secao/490653af-115b-4a9b-9d88-902c1a60f9c1"
+            title="Voltar ao menu"
+            className="w-9 h-9 flex-shrink-0 flex items-center justify-center rounded-lg border border-white/10 text-white/40 hover:text-[#C9A84C] hover:border-[#C9A84C]/40 transition-all">
             ‹
-          </button>
-          <div className="text-center">
-            <span className="text-white font-light text-lg tracking-widest uppercase">{MESES[viewMonth]}</span>
-            <span className="text-[#C9A84C]/60 text-sm ml-3 tracking-wider">{viewYear}</span>
+          </Link>
+          <div className="leading-tight">
+            <div className="text-[9px] tracking-[0.4em] text-white/25 uppercase">RL Photo.Video</div>
+            <div className="text-[13px] tracking-[0.35em] text-[#C9A84C] uppercase">Calendário</div>
           </div>
-          <button onClick={nextMonth}
-            className="w-9 h-9 flex items-center justify-center border border-white/10 rounded-lg text-white/40 hover:text-[#C9A84C] hover:border-[#C9A84C]/40 transition-all text-lg">
-            ›
-          </button>
+
+          <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center rounded-xl border border-white/10 overflow-hidden">
+              <button onClick={prevMonth} title="Mês anterior"
+                className="w-9 h-9 text-white/40 hover:text-[#C9A84C] hover:bg-white/[0.04] transition-all">‹</button>
+              <div className="px-3 sm:px-4 text-center min-w-[120px] sm:min-w-[140px]">
+                <div className="text-[13px] tracking-[0.25em] uppercase text-white">{MESES[viewMonth]}</div>
+                <div className="text-[9px] tracking-[0.3em] text-[#C9A84C]/60">{viewYear}</div>
+              </div>
+              <button onClick={nextMonth} title="Mês seguinte"
+                className="w-9 h-9 text-white/40 hover:text-[#C9A84C] hover:bg-white/[0.04] transition-all">›</button>
+            </div>
+            <button onClick={irParaHoje}
+              className="h-9 px-3 rounded-xl border border-[#C9A84C]/35 bg-[#C9A84C]/10 text-[#C9A84C] text-[10px] tracking-[0.25em] uppercase hover:bg-[#C9A84C]/20 transition-all">
+              Hoje
+            </button>
+            <div className="hidden sm:block"><GoogleSyncButton /></div>
+          </div>
         </div>
 
-        {/* Calendar grid */}
-        <div className="border border-white/[0.06] rounded-xl overflow-hidden">
-          <div className="grid grid-cols-7 border-b border-white/[0.06]">
-            {DIAS_SEMANA.map(d => (
-              <div key={d} className="py-2 text-center text-[10px] tracking-[0.2em] text-white/25 uppercase font-medium">
-                {d}
-              </div>
+        {/* Fita dos meses do ano */}
+        <div className="max-w-[1500px] mx-auto px-4 sm:px-6 pb-2.5 flex items-center gap-2">
+          <button onClick={() => setViewYear(y => y - 1)}
+            className="h-7 px-2 flex-shrink-0 rounded-md text-[10px] tracking-widest text-white/25 hover:text-[#C9A84C] transition-colors">
+            ‹ {viewYear - 1}
+          </button>
+          <div className="flex-1 grid grid-cols-6 sm:grid-cols-12 gap-1">
+            {MESES.map((m, i) => (
+              <button key={i} onClick={() => setViewMonth(i)}
+                className={`h-8 rounded-lg text-[10px] tracking-[0.15em] uppercase transition-all ${
+                  i === viewMonth
+                    ? 'bg-[#C9A84C] text-black font-semibold shadow-[0_0_20px_-4px_rgba(201,168,76,0.6)]'
+                    : 'border border-white/[0.07] text-white/35 hover:text-white/80 hover:border-[#C9A84C]/35'
+                }`}>
+                {m.slice(0, 3)}
+                {monthCounts[i] > 0 && (
+                  <span className={`ml-1 text-[9px] ${i === viewMonth ? 'text-black/60' : 'text-[#C9A84C]/50'}`}>
+                    {monthCounts[i]}
+                  </span>
+                )}
+              </button>
             ))}
           </div>
+          <button onClick={() => setViewYear(y => y + 1)}
+            className="h-7 px-2 flex-shrink-0 rounded-md text-[10px] tracking-widest text-white/25 hover:text-[#C9A84C] transition-colors">
+            {viewYear + 1} ›
+          </button>
+        </div>
+      </div>
 
-          <div className="grid grid-cols-7">
-            {Array.from({ length: totalCells }, (_, i) => {
-              const col = i % 7
-              let day: number
-              let isCurrentMonth = true
+      <div className="max-w-[1500px] mx-auto px-4 sm:px-6 py-5">
 
-              if (i < firstDay) {
-                day = daysInPrev - firstDay + i + 1
-                isCurrentMonth = false
-              } else if (i >= firstDay + daysInMonth) {
-                day = i - firstDay - daysInMonth + 1
-                isCurrentMonth = false
-              } else {
-                day = i - firstDay + 1
-              }
+        {/* ── Filtros (a antiga legenda, agora a servir para alguma coisa) ── */}
+        <div className="flex flex-wrap items-center gap-1.5 mb-4">
+          <span className="text-[9px] tracking-[0.3em] text-white/20 uppercase mr-1">Mostrar</span>
+          {FILTRO_META.map(f => {
+            const on = filtros[f.key]
+            return (
+              <button key={f.key} onClick={() => setFiltros(prev => ({ ...prev, [f.key]: !prev[f.key] }))}
+                className="h-7 px-2.5 rounded-lg text-[10px] tracking-wider flex items-center gap-1.5 transition-all"
+                style={on
+                  ? { background: f.cor + '22', border: `1px solid ${f.cor}55`, color: f.cor }
+                  : { background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }}>
+                <span className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                  style={{ background: on ? f.cor : 'rgba(255,255,255,0.2)' }} />
+                {f.label}
+                <span className="opacity-50">{contagensMes[f.key]}</span>
+              </button>
+            )
+          })}
+          <span className="ml-auto hidden lg:block text-[10px] text-white/20 tracking-wider">
+            ← → muda de mês · H volta a hoje
+          </span>
+        </div>
 
-              const dayEvents   = isCurrentMonth ? events.filter(e => startsOn(e.data_evento, viewYear, viewMonth, day)) : []
-              const dayPws      = isCurrentMonth ? preWeddings.filter(p => startsOn(p.data_evento, viewYear, viewMonth, day)) : []
-              const dayTeam     = isCurrentMonth ? teamEntries.filter(t => startsOn(t.data_calendar, viewYear, viewMonth, day)) : []
-              const dayReunioes = isCurrentMonth ? reunioes.filter(r => startsOn(r.reuniao_data, viewYear, viewMonth, day)) : []
-              const dayTarefas  = isCurrentMonth ? tarefas.filter(t => startsOn(t.data_prazo, viewYear, viewMonth, day)) : []
+        <div className="flex flex-col xl:flex-row gap-5 items-start">
 
-              const isToday = isCurrentMonth
-                && day === today.getDate()
-                && viewMonth === today.getMonth()
-                && viewYear === today.getFullYear()
-              const isSunday  = col === 0
-              const isLastRow = i >= totalCells - 7
-              const isLastCol = col === 6
-
-              // max visible items
-              const MAX = 4
-              const allItems = [
-                ...dayEvents.map(e => ({ kind: 'event' as const, e })),
-                ...dayPws.map(p => ({ kind: 'pw' as const, p })),
-                ...dayTeam.map(t => ({ kind: 'team' as const, t })),
-                ...dayReunioes.map(r => ({ kind: 'reuniao' as const, r })),
-                ...dayTarefas.map(t => ({ kind: 'tarefa' as const, t })),
-              ]
-              const visible  = allItems.slice(0, MAX)
-              const overflow = allItems.length - MAX
-
-              return (
-                <div key={i}
-                  onClick={() => { if (isCurrentMonth) openChooser(viewYear, viewMonth, day) }}
-                  className={`group relative min-h-[96px] p-1.5 flex flex-col cursor-pointer transition-colors
-                    ${!isLastRow ? 'border-b border-white/[0.04]' : ''}
-                    ${!isLastCol ? 'border-r border-white/[0.04]' : ''}
-                    ${isCurrentMonth ? 'hover:bg-white/[0.02]' : 'bg-white/[0.01]'}
-                  `}>
-                  {/* Day number */}
-                  <div className="flex items-center justify-between mb-1 flex-shrink-0">
-                    <div className={`w-6 h-6 flex items-center justify-center rounded-full text-xs
-                      ${isToday ? 'bg-[#C9A84C] text-black font-semibold' : ''}
-                      ${!isToday && isCurrentMonth && !isSunday ? 'text-white/60' : ''}
-                      ${!isToday && isCurrentMonth && isSunday ? 'text-red-400/60' : ''}
-                      ${!isCurrentMonth ? 'text-white/15' : ''}
-                    `}>
-                      {day}
-                    </div>
-                    {isCurrentMonth && (
-                      <span className="text-[14px] leading-none text-white/0 group-hover:text-[#C9A84C]/70 transition-colors pr-0.5"
-                        title="Adicionar tarefa">＋</span>
-                    )}
+          {/* ── Grelha do mês ──────────────────────────────────────── */}
+          <div className="flex-1 min-w-0 w-full">
+            <div className="rounded-2xl border border-white/[0.07] overflow-hidden bg-white/[0.012]">
+              <div className="grid grid-cols-7 border-b border-white/[0.07]">
+                {DIAS_SEMANA.map((d, i) => (
+                  <div key={d}
+                    className={`py-2.5 text-center text-[9px] tracking-[0.3em] uppercase ${
+                      i === 0 ? 'text-red-400/35' : i === 6 ? 'text-[#C9A84C]/35' : 'text-white/25'
+                    }`}>
+                    {d}
                   </div>
+                ))}
+              </div>
 
-                  <div className="flex flex-col gap-0.5 overflow-hidden flex-1">
-                    {visible.map((item, idx) => {
-                      if (item.kind === 'event') {
-                        const ev = item.e
-                        return (
-                          <button key={`ev-${ev.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'event', data: ev }) }} className="text-left w-full">
-                            <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
-                              style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.25)', color: '#C9A84C' }}>
-                              {ev.cliente || ev.referencia}
-                            </div>
-                          </button>
-                        )
-                      }
-                      if (item.kind === 'pw') {
-                        const pw = item.p
-                        return (
-                          <button key={`pw-${pw.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'pw', data: pw }) }} className="text-left w-full">
-                            <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
-                              style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.25)', color: '#4FC3C3' }}>
-                              📷 {pw.nomes}
-                            </div>
-                          </button>
-                        )
-                      }
-                      if (item.kind === 'reuniao') {
-                        const r = item.r
-                        return (
-                          <button key={`re-${r.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'reuniao', data: r }) }} className="text-left w-full">
-                            <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
-                              style={{ background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.28)', color: '#C084FC' }}>
-                              🤝 {r.nome.split(' ')[0]}
-                            </div>
-                          </button>
-                        )
-                      }
-                      if (item.kind === 'tarefa') {
-                        const ta = item.t
-                        const linkedEvent = ta.evento_id ? eventsById.get(ta.evento_id) : null
-                        // If linked to event → gold; otherwise color by status
-                        const statusCol = ta.status === 'CONCLUIDA'
-                          ? { bg: 'rgba(74,222,128,0.10)', border: 'rgba(74,222,128,0.25)', text: '#86EFAC' }
-                          : ta.status === 'PENDENTE'
-                          ? { bg: 'rgba(251,146,60,0.12)', border: 'rgba(251,146,60,0.28)', text: '#FB923C' }
-                          : linkedEvent
-                          ? { bg: 'rgba(201,168,76,0.12)', border: 'rgba(201,168,76,0.30)', text: '#C9A84C' }
-                          : { bg: 'rgba(96,165,250,0.12)', border: 'rgba(96,165,250,0.28)', text: '#60A5FA' }
-                        const horaStr = ta.hora ? ta.hora.slice(0, 5) : null
-                        const icon = linkedEvent ? '🔗' : '📝'
-                        return (
-                          <button key={`ta-${ta.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'tarefa', data: ta }) }} className="text-left w-full">
-                            <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
-                              style={{
-                                background: statusCol.bg,
-                                border: `1px solid ${statusCol.border}`,
-                                color: statusCol.text,
-                                textDecoration: ta.status === 'CONCLUIDA' ? 'line-through' : 'none',
-                                opacity: ta.status === 'CONCLUIDA' ? 0.7 : 1,
-                              }}>
-                              {icon} {horaStr ? <span className="opacity-70">{horaStr}</span> : null} {ta.titulo}
-                            </div>
-                          </button>
-                        )
-                      }
-                      // team entry
-                      const t = item.t
-                      const col = TIPO_COLORS[t.tipo]
-                      const isIndis = t.status === 'indisponivel'
-                      return (
-                        <button key={`te-${t.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'team', data: t }) }} className="text-left w-full">
-                          <div className="px-1.5 py-0.5 rounded text-[10px] leading-tight truncate"
-                            style={{
-                              background: isIndis ? 'rgba(239,68,68,0.10)' : col.bg,
-                              border: `1px solid ${isIndis ? 'rgba(239,68,68,0.25)' : col.border}`,
-                              color: isIndis ? '#F87171' : col.text,
-                            }}>
-                            {isIndis ? '✕' : TIPO_LABELS[t.tipo]} {t.freelancer_nome.split(' ')[0]}
+              <div className="grid grid-cols-7">
+                {Array.from({ length: totalCells }, (_, i) => {
+                  const col = i % 7
+                  let day: number
+                  let isCurrentMonth = true
+
+                  if (i < firstDay) {
+                    day = daysInPrev - firstDay + i + 1
+                    isCurrentMonth = false
+                  } else if (i >= firstDay + daysInMonth) {
+                    day = i - firstDay - daysInMonth + 1
+                    isCurrentMonth = false
+                  } else {
+                    day = i - firstDay + 1
+                  }
+
+                  const dayEvents   = isCurrentMonth && filtros.casamento ? events.filter(e => startsOn(e.data_evento, viewYear, viewMonth, day)) : []
+                  const dayPws      = isCurrentMonth && filtros.pw        ? preWeddings.filter(p => startsOn(p.data_evento, viewYear, viewMonth, day)) : []
+                  const dayTeam     = isCurrentMonth && filtros.equipa    ? teamEntries.filter(t => startsOn(t.data_calendar, viewYear, viewMonth, day)) : []
+                  const dayReunioes = isCurrentMonth && filtros.reuniao   ? reunioes.filter(r => startsOn(r.reuniao_data, viewYear, viewMonth, day)) : []
+                  const dayTarefas  = isCurrentMonth && filtros.tarefa    ? tarefas.filter(t => startsOn(t.data_prazo, viewYear, viewMonth, day)) : []
+
+                  const isToday = isCurrentMonth
+                    && day === today.getDate()
+                    && viewMonth === today.getMonth()
+                    && viewYear === today.getFullYear()
+                  const isSunday  = col === 0
+                  const isWeekend = col === 0 || col === 6
+                  const isLastRow = i >= totalCells - 7
+                  const isLastCol = col === 6
+
+                  const MAX = 4
+                  const allItems = [
+                    ...dayEvents.map(e => ({ kind: 'event' as const, e })),
+                    ...dayPws.map(p => ({ kind: 'pw' as const, p })),
+                    ...dayTeam.map(t => ({ kind: 'team' as const, t })),
+                    ...dayReunioes.map(r => ({ kind: 'reuniao' as const, r })),
+                    ...dayTarefas.map(t => ({ kind: 'tarefa' as const, t })),
+                  ]
+                  const visible  = allItems.slice(0, MAX)
+                  const overflow = allItems.length - MAX
+
+                  return (
+                    <div key={i}
+                      onClick={() => { if (isCurrentMonth) openChooser(viewYear, viewMonth, day) }}
+                      className={`group relative min-h-[124px] p-2 flex flex-col cursor-pointer transition-colors
+                        ${!isLastRow ? 'border-b border-white/[0.05]' : ''}
+                        ${!isLastCol ? 'border-r border-white/[0.05]' : ''}
+                        ${isCurrentMonth
+                          ? (isWeekend ? 'bg-white/[0.022] hover:bg-white/[0.045]' : 'hover:bg-white/[0.035]')
+                          : 'bg-black/40'}
+                      `}>
+                      {isToday && (
+                        <>
+                          <span className="absolute inset-0 pointer-events-none ring-1 ring-inset ring-[#C9A84C]/45" />
+                          <span className="absolute inset-0 pointer-events-none bg-gradient-to-b from-[#C9A84C]/[0.10] to-transparent" />
+                        </>
+                      )}
+
+                      {/* Número do dia */}
+                      <div className="relative flex items-center justify-between mb-1.5 flex-shrink-0">
+                        <div className={`w-6 h-6 flex items-center justify-center rounded-full text-[11px] tabular-nums
+                          ${isToday ? 'bg-[#C9A84C] text-black font-semibold shadow-[0_0_14px_-2px_rgba(201,168,76,0.8)]' : ''}
+                          ${!isToday && isCurrentMonth && !isSunday ? 'text-white/55' : ''}
+                          ${!isToday && isCurrentMonth && isSunday ? 'text-red-400/55' : ''}
+                          ${!isCurrentMonth ? 'text-white/[0.12]' : ''}
+                        `}>
+                          {day}
+                        </div>
+                        {isCurrentMonth && (
+                          <span className="text-[15px] leading-none text-transparent group-hover:text-[#C9A84C]/60 transition-colors"
+                            title="Adicionar neste dia">＋</span>
+                        )}
+                      </div>
+
+                      <div className="relative flex flex-col gap-1 overflow-hidden flex-1">
+                        {visible.map((item) => {
+                          if (item.kind === 'event') {
+                            const ev = item.e
+                            return (
+                              <button key={`ev-${ev.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'event', data: ev }) }} className="text-left w-full">
+                                <Pill cor="#C9A84C">{ev.cliente || ev.referencia}</Pill>
+                              </button>
+                            )
+                          }
+                          if (item.kind === 'pw') {
+                            const pw = item.p
+                            return (
+                              <button key={`pw-${pw.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'pw', data: pw }) }} className="text-left w-full">
+                                <Pill cor="#4FC3C3">📷 {pw.nomes}</Pill>
+                              </button>
+                            )
+                          }
+                          if (item.kind === 'reuniao') {
+                            const r = item.r
+                            return (
+                              <button key={`re-${r.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'reuniao', data: r }) }} className="text-left w-full">
+                                <Pill cor="#C084FC">🤝 {r.nome.split(' ')[0]}</Pill>
+                              </button>
+                            )
+                          }
+                          if (item.kind === 'tarefa') {
+                            const ta = item.t
+                            const linkedEvent = ta.evento_id ? eventsById.get(ta.evento_id) : null
+                            const cor = ta.status === 'CONCLUIDA' ? '#86EFAC'
+                              : ta.status === 'PENDENTE' ? '#FB923C'
+                              : linkedEvent ? '#C9A84C'
+                              : '#60A5FA'
+                            const horaStr = ta.hora ? ta.hora.slice(0, 5) : null
+                            return (
+                              <button key={`ta-${ta.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'tarefa', data: ta }) }} className="text-left w-full">
+                                <Pill cor={cor} riscado={ta.status === 'CONCLUIDA'}>
+                                  {linkedEvent ? '🔗 ' : '📝 '}
+                                  {horaStr ? <span className="opacity-60 tabular-nums">{horaStr} </span> : null}
+                                  {ta.titulo}
+                                </Pill>
+                              </button>
+                            )
+                          }
+                          const t = item.t
+                          const tc = TIPO_COLORS[t.tipo]
+                          const isIndis = t.status === 'indisponivel'
+                          return (
+                            <button key={`te-${t.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'team', data: t }) }} className="text-left w-full">
+                              <Pill cor={isIndis ? '#F87171' : tc.text}>
+                                {isIndis ? '✕' : TIPO_LABELS[t.tipo]} {t.freelancer_nome.split(' ')[0]}
+                              </Pill>
+                            </button>
+                          )
+                        })}
+
+                        {overflow > 0 && (
+                          <div className="text-[9px] text-white/25 pl-1 group-hover:text-[#C9A84C]/70 transition-colors">
+                            +{overflow} mais
                           </div>
-                        </button>
-                      )
-                    })}
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
 
-                    {overflow > 0 && (
-                      <div className="text-[9px] text-white/30 px-1">+{overflow} mais</div>
-                    )}
+            <div className="mt-3 flex flex-wrap items-center gap-3 text-[10px] text-white/25 tracking-wider">
+              <span>Clica num dia para criar tarefa, reunião ou pré-wedding.</span>
+              <span className="ml-auto text-white/[0.15]">
+                {events.length} eventos · {preWeddings.length} pré-weddings · {teamEntries.filter(t => t.status === 'confirmado').length} confirmações · {tarefas.length} tarefas
+              </span>
+            </div>
+          </div>
+
+          {/* ── Coluna lateral ─────────────────────────────────────── */}
+          <aside className="w-full xl:w-[330px] flex-shrink-0 space-y-4">
+
+            {/* Hoje */}
+            <div className="rounded-2xl border border-[#C9A84C]/25 bg-gradient-to-b from-[#C9A84C]/[0.07] to-transparent p-4">
+              <div className="flex items-baseline justify-between mb-2">
+                <span className="text-[9px] tracking-[0.4em] text-[#C9A84C]/70 uppercase">Hoje</span>
+                <span className="text-[10px] text-white/30 tracking-wider">
+                  {today.getDate()} {MESES[today.getMonth()].slice(0, 3).toLowerCase()}
+                </span>
+              </div>
+              <div className="text-lg font-light text-white tracking-wide mb-3 capitalize">
+                {new Date(hojeIso + 'T00:00:00').toLocaleDateString('pt-PT', { weekday: 'long' })}
+              </div>
+              {agendaHoje.length === 0 ? (
+                <div className="text-[11px] text-white/25 tracking-wider">Nada marcado para hoje.</div>
+              ) : (
+                <div className="space-y-1.5">
+                  {agendaHoje.map(it => (
+                    <button key={it.key} onClick={() => setSelected(it.sel)}
+                      className="w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-left transition-colors hover:bg-white/[0.06]"
+                      style={{ background: it.cor + '14' }}>
+                      <span className="w-0.5 h-7 rounded-full flex-shrink-0" style={{ background: it.cor }} />
+                      <span className="text-[10px] tabular-nums text-white/40 w-9 flex-shrink-0">{it.hora ?? '—'}</span>
+                      <span className="text-xs text-white/80 truncate">{it.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Próximo casamento */}
+            {proximoCasamento && (
+              <div className="rounded-2xl border border-white/[0.07] p-4">
+                <div className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-2">Próximo casamento</div>
+                <div className="flex items-end justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm text-[#C9A84C] truncate">
+                      {proximoCasamento.cliente || proximoCasamento.referencia}
+                    </div>
+                    <div className="text-[10px] text-white/30 tracking-wider mt-0.5">
+                      {fmtDate(proximoCasamento.data_evento!.slice(0, 10))}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-2xl font-light text-white leading-none tabular-nums">{diasAteCasamento}</div>
+                    <div className="text-[9px] tracking-[0.2em] text-white/30 uppercase">
+                      {diasAteCasamento === 0 ? 'hoje' : diasAteCasamento === 1 ? 'dia' : 'dias'}
+                    </div>
                   </div>
                 </div>
-              )
-            })}
-          </div>
-        </div>
+              </div>
+            )}
 
-        {/* Legend */}
-        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[10px] text-white/30 tracking-wider">
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#C9A84C]" />Hoje
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(201,168,76,0.15)', border: '1px solid rgba(201,168,76,0.25)' }} />
-            Casamento
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.25)' }} />
-            Pré-Wedding
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(192,132,252,0.12)', border: '1px solid rgba(192,132,252,0.28)' }} />
-            🤝 Reunião CRM
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.28)' }} />
-            ✓ Confirmado
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.25)' }} />
-            ✕ Indisponível
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(251,146,60,0.12)', border: '1px solid rgba(251,146,60,0.28)' }} />
-            🖼 Ed. Fotos
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.28)' }} />
-            📘 Ed. Álbum
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.28)' }} />
-            🎬 Ed. Vídeo
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded" style={{ background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.28)' }} />
-            📝 Tarefa
-          </span>
-          <span className="ml-auto text-white/20">
-            {events.length} eventos · {preWeddings.length} pré-weddings · {teamEntries.filter(t => t.status === 'confirmado').length} confirmações · {tarefas.length} tarefas
-          </span>
-        </div>
+            {/* Próximos 7 dias */}
+            <div className="rounded-2xl border border-white/[0.07] p-4">
+              <div className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-3">Próximos 7 dias</div>
+              {proximosDias.length === 0 ? (
+                <div className="text-[11px] text-white/25 tracking-wider">Semana livre.</div>
+              ) : (
+                <div className="space-y-3">
+                  {proximosDias.map(dia => (
+                    <div key={dia.iso}>
+                      <div className="text-[10px] tracking-[0.2em] text-white/30 uppercase mb-1.5">
+                        {DIAS_SEMANA[new Date(dia.iso + 'T00:00:00').getDay()]} {Number(dia.iso.slice(8, 10))}
+                      </div>
+                      {dia.itens.map(it => (
+                        <button key={it.key} onClick={() => setSelected(it.sel)}
+                          className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left hover:bg-white/[0.04] transition-colors">
+                          <span className="w-0.5 h-5 rounded-full flex-shrink-0" style={{ background: it.cor }} />
+                          <span className="text-[10px] tabular-nums text-white/35 w-9 flex-shrink-0">{it.hora ?? '—'}</span>
+                          <span className="text-[11px] text-white/70 truncate">{it.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-        <div className="mt-3 text-[10px] text-white/30 tracking-wider">
-          💡 Clica num dia para adicionar tarefa, reunião CRM ou pré-wedding — aparece logo nos Time Blocks.
+            <div className="sm:hidden"><GoogleSyncButton /></div>
+          </aside>
         </div>
 
         {/* Time Blocks */}
         <TimeBlocks events={events} tarefas={tarefas} preWeddings={preWeddings} reunioes={reunioes} />
       </div>
+
 
       {/* Modal */}
       {selected && (
