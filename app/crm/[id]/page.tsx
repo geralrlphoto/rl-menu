@@ -155,6 +155,10 @@ export default function ClientePage() {
     }
     const { error } = await supabase.from('crm_contacts').update(formToSave).eq('id', id)
     if (!error) {
+      // A data da reunião mudou: o painel /photo tem de refletir isso já
+      if (formToSave.reuniao_data !== original.reuniao_data || formToSave.reuniao_hora !== original.reuniao_hora) {
+        fetch('/api/revalidate-photo', { method: 'POST' }).catch(() => {})
+      }
       setForm(formToSave)
       setOriginal(formToSave)
       if (form.status !== original.status) loadHistorico()
@@ -334,6 +338,8 @@ export default function ClientePage() {
     }).eq('id', id)
     if (!error) {
       const enviadaAt = new Date().toISOString()
+      // Faz o painel /photo mostrar já a reunião nos Próximos 30 dias
+      fetch('/api/revalidate-photo', { method: 'POST' }).catch(() => {})
       setForm(f => ({ ...f, status: 'Reunião Agendada', reuniao_tipo: tipo, reuniao_link: link, reuniao_enviada_at: enviadaAt }))
       setOriginal(f => ({ ...f, status: 'Reunião Agendada', reuniao_data: form.reuniao_data, reuniao_hora: form.reuniao_hora, reuniao_tipo: tipo, reuniao_link: link, reuniao_enviada_at: enviadaAt }))
       // Enviar email ao cliente se tiver email

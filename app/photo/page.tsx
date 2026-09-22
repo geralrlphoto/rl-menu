@@ -248,6 +248,23 @@ export default async function PhotoDashboard() {
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
   const eventosSemana = await getSemana()
+
+  // Reuniões marcadas nas fichas de CRM, na mesma janela de 30 dias
+  const getReunioes = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('crm_contacts')
+        .select('id, nome, reuniao_data, reuniao_hora, reuniao_tipo')
+        .gte('reuniao_data', semanaDias[0])
+        .lte('reuniao_data', semanaDias[DIAS_AGENDA - 1])
+        .order('reuniao_data', { ascending: true })
+        .limit(80)
+      return data ?? []
+    },
+    [`photo-agenda30-reunioes-${semanaDias[0]}`],
+    { revalidate: 1800, tags: ['photo-dashboard'] }
+  )
+  const reunioesSemana = await getReunioes()
+
   const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
   const semana = semanaDias.map((iso, i) => {
@@ -262,6 +279,9 @@ export default async function PhotoDashboard() {
       novoMes: i === 0 || d.getUTCDate() === 1,
       mesLongo: MESES_LONGOS[d.getUTCMonth()],
       eventos: eventosSemana.filter((e: any) => e.data_evento === iso),
+      reunioes: reunioesSemana
+        .filter((r: any) => r.reuniao_data === iso)
+        .sort((a: any, b: any) => String(a.reuniao_hora ?? '').localeCompare(String(b.reuniao_hora ?? ''))),
     }
   })
 
@@ -457,6 +477,7 @@ export default async function PhotoDashboard() {
   ]
   const totalCasamentosSemana = eventosSemana.filter((e: any) => e.data_evento <= semanaDias[6]).length
   const totalCasamentos30 = eventosSemana.length
+  const totalReunioes30 = reunioesSemana.length
 
 
 
@@ -545,6 +566,7 @@ export default async function PhotoDashboard() {
           <span className="text-[10px] tracking-[0.45em] uppercase text-white/35">Próximos 30 dias</span>
           <span className="text-[10px] text-white/25">
             {totalCasamentos30} casamento{totalCasamentos30 !== 1 ? 's' : ''}
+            {totalReunioes30 > 0 && ` · ${totalReunioes30} ${totalReunioes30 === 1 ? 'reunião' : 'reuniões'}`}
           </span>
           <div className="flex-1 h-px bg-white/[0.07]" />
           <span className="hidden sm:inline text-[9px] tracking-[0.3em] uppercase text-white/20">desliza →</span>
@@ -559,7 +581,7 @@ export default async function PhotoDashboard() {
 
           <div className="agenda-scroll flex gap-2 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
             {semana.map((d, i) => {
-              const cheio = d.eventos.length > 0
+              const cheio = d.eventos.length > 0 || d.reunioes.length > 0
               return (
                 <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
                   {/* Mês por cima do primeiro dia e de cada dia 1 */}
@@ -583,7 +605,7 @@ export default async function PhotoDashboard() {
                     </div>
 
                     <div className="mt-2.5 flex flex-col gap-1.5">
-                      {d.eventos.length === 0 && <span className="text-[10px] text-white/15">—</span>}
+                      {d.eventos.length === 0 && d.reunioes.length === 0 && <span className="text-[10px] text-white/15">—</span>}
                       {d.eventos.map((e: any) => (
                         <Link key={e.id} href={`/eventos-2026/${e.id}`}
                           className="group block rounded-lg px-2 py-1.5 bg-white/[0.03] hover:bg-[#C9A84C]/10 border border-white/[0.05] hover:border-[#C9A84C]/35 transition-all">
@@ -591,6 +613,19 @@ export default async function PhotoDashboard() {
                             {(e.cliente ?? '').trim() || e.referencia}
                           </p>
                           {e.local && <p className="text-[9px] text-white/35 truncate mt-0.5">{e.local}</p>}
+                        </Link>
+                      ))}
+                      {/* Reuniões marcadas no CRM: tracejado, para nao se confundirem com casamentos */}
+                      {d.reunioes.map((r: any) => (
+                        <Link key={`r-${r.id}`} href={`/crm/${r.id}`}
+                          className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-[#C9A84C]/10"
+                          style={{ borderColor: 'rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.04)' }}>
+                          <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: 'rgba(201,168,76,0.8)' }}>
+                            Reunião{r.reuniao_hora ? ` ${String(r.reuniao_hora).slice(0, 5)}` : ''}
+                          </p>
+                          <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">
+                            {(r.nome ?? '').trim() || 'Sem nome'}
+                          </p>
                         </Link>
                       ))}
                     </div>
