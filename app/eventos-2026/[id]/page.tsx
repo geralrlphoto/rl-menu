@@ -3135,10 +3135,14 @@ function ReenviarEmailButton({ referencia }: { referencia: string }) {
 //  Alimentado por gatilhos na base de dados, não por esta interface: qualquer
 //  alteração de estado, envio de link, contrato, pré-wedding ou pagamento fica
 //  registado venha de onde vier (ficha, portal, robô ou API).
-type HistLinha = { id: string; tipo: string; titulo: string; detalhe: string | null; created_at: string }
+type HistLinha = {
+  id: string; tipo: string; titulo: string; detalhe: string | null
+  created_at: string; origem?: 'evento' | 'lead'
+}
 
 function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referencia?: string }) {
   const [hist, setHist] = useState<HistLinha[]>([])
+  const [lead, setLead] = useState<{ id: string; nome: string } | null>(null)
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
@@ -3148,7 +3152,7 @@ function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referen
     if (!eventoId && !referencia) { setLoaded(true); return }
     fetch(`/api/evento-historico?${qs.toString()}`)
       .then(r => r.json())
-      .then(d => setHist(Array.isArray(d.historico) ? d.historico : []))
+      .then(d => { setHist(Array.isArray(d.historico) ? d.historico : []); setLead(d.lead ?? null) })
       .catch(() => {})
       .finally(() => setLoaded(true))
   }, [eventoId, referencia])
@@ -3168,17 +3172,36 @@ function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referen
           Sem ações registadas. O histórico passa a guardar tudo a partir de agora.
         </p>
       ) : (
-        <ol className="flex flex-col gap-4 pl-4 border-l border-white/[0.08]">
-          {hist.map(h => (
-            <li key={h.id} className="relative">
-              <span className="absolute -left-[22px] top-1.5 w-[7px] h-[7px] rounded-full bg-gold"
-                style={{ boxShadow: '0 0 8px rgba(201,164,92,0.6)' }} />
-              <p className="text-sm text-white/80 leading-snug">{h.titulo}</p>
-              {h.detalhe && <p className="text-[11px] text-white/35 mt-0.5">{h.detalhe}</p>}
-              <p className="text-[11px] text-white/30 mt-1">{quando(h.created_at)}</p>
-            </li>
-          ))}
-        </ol>
+        <>
+          {lead && (
+            <p className="text-[10px] text-white/30 -mt-1">
+              Inclui a fase de lead de <span className="text-white/50">{lead.nome.trim()}</span>, vinda do CRM.
+            </p>
+          )}
+          <ol className="flex flex-col gap-4 pl-4 border-l border-white/[0.08]">
+            {hist.map(h => {
+              const ehLead = h.origem === 'lead'
+              return (
+                <li key={h.id} className="relative">
+                  <span className="absolute -left-[22px] top-1.5 w-[7px] h-[7px] rounded-full"
+                    style={ehLead
+                      ? { background: 'rgba(255,255,255,0.22)' }
+                      : { background: '#c9a45c', boxShadow: '0 0 8px rgba(201,164,92,0.6)' }} />
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <p className={`text-sm leading-snug ${ehLead ? 'text-white/55' : 'text-white/80'}`}>{h.titulo}</p>
+                    {ehLead && (
+                      <span className="text-[8px] tracking-[0.25em] uppercase text-white/25 border border-white/10 rounded px-1.5 py-0.5">
+                        Lead
+                      </span>
+                    )}
+                  </div>
+                  {h.detalhe && <p className="text-[11px] text-white/35 mt-0.5">{h.detalhe}</p>}
+                  <p className="text-[11px] text-white/30 mt-1">{quando(h.created_at)}</p>
+                </li>
+              )
+            })}
+          </ol>
+        </>
       )}
     </Section>
   )
