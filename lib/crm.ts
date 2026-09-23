@@ -70,6 +70,51 @@ export function whatsappLink(contato: string | null | undefined, texto?: string)
   return texto ? `https://wa.me/${n}?text=${encodeURIComponent(texto)}` : `https://wa.me/${n}`
 }
 
+const ASSINATURA = ['Com os melhores cumprimentos,', 'RL PhotoVideo', '', 'Visite-nos: www.rlphotovideo.pt']
+
+function quandoReuniao(data?: string | null, hora?: string | null): string {
+  const h = (hora ?? '').slice(0, 5)
+  const m = (data ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  const d = m ? `${m[3]}/${m[2]}` : ''
+  return [d && `dia ${d}`, h && `às ${h}`].filter(Boolean).join(' ')
+}
+
+/* Lembrete enviado 1 hora antes da reunião */
+export function mensagemLembreteReuniao(nome: string | null | undefined, portalUrl: string, hora?: string | null): string {
+  const quem = (nome ?? '').trim()
+  const h = (hora ?? '').slice(0, 5)
+  return [
+    `Olá${quem ? ' ' + quem : ''}! 🤍`,
+    '',
+    `Falta 1 hora para a nossa reunião${h ? ` (hoje às ${h})` : ''}.`,
+    '',
+    'Para entrarem, acedam ao link da reunião através do vosso portal:',
+    portalUrl,
+    '',
+    'Recomendamos que assistam à reunião através de um computador, para uma melhor experiência.',
+    '',
+    'Até já!',
+    '',
+    ...ASSINATURA,
+  ].join('\n')
+}
+
+/* Envio do portal da reunião (o link da reunião está dentro do portal) */
+export function mensagemPortalReuniao(nome: string | null | undefined, portalUrl: string, data?: string | null, hora?: string | null): string {
+  const quem = (nome ?? '').trim()
+  const quando = quandoReuniao(data, hora)
+  return [
+    `Olá${quem ? ' ' + quem : ''}! 🤍`,
+    '',
+    `Aqui está o vosso portal da reunião${quando ? `, marcada para ${quando}` : ''}:`,
+    portalUrl,
+    '',
+    'No portal encontram o link de acesso à reunião. Recomendamos que assistam através de um computador.',
+    '',
+    ...ASSINATURA,
+  ].join('\n')
+}
+
 /* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
 export function mensagemBoasVindas(nome: string | null | undefined): string {
   const quem = (nome ?? '').trim()
@@ -82,10 +127,7 @@ export function mensagemBoasVindas(nome: string | null | undefined): string {
     '',
     'Que dia e hora durante a semana vos dá mais jeito?',
     '',
-    'Com os melhores cumprimentos,',
-    'RL PhotoVideo',
-    '',
-    'Visite-nos: www.rlphotovideo.pt',
+    ...ASSINATURA,
   ].join('\n')
 }
 

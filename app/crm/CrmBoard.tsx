@@ -3,9 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { linkPublico } from '@/lib/site-url'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, whatsappLink, mensagemBoasVindas, telLink, type ColunaKey,
+  fmtDataCurta, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -28,6 +29,10 @@ export type Contact = {
   proxima_acao: string | null
   proxima_acao_data: string | null
   motivo_nao_fechou: string | null
+  reuniao_data?: string | null
+  reuniao_hora?: string | null
+  page_token?: string | null
+  page_tipo?: string | null
 }
 
 export const statusColor: Record<string, string> = {
@@ -91,6 +96,30 @@ export function ContactButtons({ c, size = 'sm' }: { c: Contact; size?: 'sm' | '
       )}
     </div>
   )
+}
+
+/* ── Botão que abre o WhatsApp com a mensagem escrita e regista o envio no histórico ── */
+function WhatsAppMsgButton({ c, texto, evento, label }: { c: Contact; texto: string; evento: string; label: string }) {
+  const href = whatsappLink(c.contato, texto)
+  if (!href) return null
+  return (
+    <a
+      href={href}
+      target="_blank" rel="noopener noreferrer"
+      onClick={e => {
+        e.stopPropagation()
+        supabase.from('crm_status_history').insert({ contact_id: c.id, evento }).then(() => {})
+      }}
+      className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 transition-colors"
+    >
+      {label}
+    </a>
+  )
+}
+
+function portalUrl(c: Contact): string | null {
+  if (!c.page_token) return null
+  return linkPublico(`/${c.page_tipo === 'batizado' ? 'b' : 'r'}/${c.page_token}`)
 }
 
 function AcaoLinha({ c }: { c: Contact }) {
@@ -182,19 +211,18 @@ export function KanbanCard({ c, coluna, diasNoPasso, onOpen, onStatusChange, dra
         {c.orcamento && <span className="text-gold text-xs font-semibold whitespace-nowrap">{c.orcamento} €</span>}
       </div>
 
-      {coluna === 'nova' && whatsappLink(c.contato) && (
-        <a
-          href={whatsappLink(c.contato, mensagemBoasVindas(c.nome))!}
-          target="_blank" rel="noopener noreferrer"
-          onClick={e => {
-            e.stopPropagation()
-            supabase.from('crm_status_history').insert({ contact_id: c.id, evento: 'WhatsApp de boas-vindas enviado' }).then(() => {})
-          }}
-          className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 transition-colors"
-        >
-          Enviar boas-vindas
-        </a>
+      {coluna === 'nova' && (
+        <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome)} evento="WhatsApp de boas-vindas enviado" label="Enviar boas-vindas" />
       )}
+
+      {coluna === 'reuniao' && whatsappLink(c.contato) && (portalUrl(c) ? (
+        <div className="flex flex-col gap-1.5">
+          <WhatsAppMsgButton c={c} texto={mensagemPortalReuniao(c.nome, portalUrl(c)!, c.reuniao_data, c.reuniao_hora)} evento="WhatsApp portal da reunião enviado" label="Enviar portal da reunião" />
+          <WhatsAppMsgButton c={c} texto={mensagemLembreteReuniao(c.nome, portalUrl(c)!, c.reuniao_hora)} evento="WhatsApp lembrete 1h enviado" label="Lembrete: falta 1 hora" />
+        </div>
+      ) : (
+        <div className="text-[11px] text-white/30">Cria o portal na ficha da lead para enviar pelo WhatsApp.</div>
+      ))}
 
       {coluna !== 'encerrada' && (c.contato || c.email) && (
         <div className="pt-1 border-t border-white/5">
