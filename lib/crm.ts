@@ -116,14 +116,44 @@ export function mensagemPortalReuniao(nome: string | null | undefined, portalUrl
 
 /* Follow up pelo WhatsApp: só fica disponível 3 dias depois da reunião */
 export const FOLLOW_WA_DIAS = 3
+/* 2.º follow up: 8 dias depois do 1.º, se não houver resposta */
+export const FOLLOW2_WA_DIAS = 8
 
-// Dias que faltam para o follow up ficar disponível (0 = já pode enviar)
-export function diasParaFollowUp(reuniaoData: string | null | undefined): number {
-  const m = (reuniaoData ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+// Dias que faltam para passarem `dias` dias sobre `data` (0 = já pode enviar)
+export function diasParaFollowUp(data: string | null | undefined, dias = FOLLOW_WA_DIAS): number {
+  let ymd = data ?? ''
+  if (ymd.length > 10) {
+    // timestamp: usa o dia local
+    const d = new Date(ymd)
+    if (!isNaN(d.getTime())) ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  }
+  const m = ymd.match(/^(\d{4})-(\d{2})-(\d{2})/)
   if (!m) return 0
   const [hy, hm, hd] = hojeISO().split('-').map(Number)
   const passados = Math.round((Date.UTC(hy, hm - 1, hd) - Date.UTC(+m[1], +m[2] - 1, +m[3])) / 86400000)
-  return Math.max(0, FOLLOW_WA_DIAS - passados)
+  return Math.max(0, dias - passados)
+}
+
+export function mensagemFollowUp2(nome: string | null | undefined, dataCasamento?: string | null): string {
+  const quem = (nome ?? '').trim()
+  const m = (dataCasamento ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  const dia = m ? ` (${m[3]}/${m[2]}/${m[1]})` : ''
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    `Sabemos que preparar um casamento traz mil decisões ao mesmo tempo, e não queremos ser mais uma preocupação. Só não queríamos deixar de vos dizer, uma última vez, o quanto gostávamos de estar convosco no vosso dia${dia}.`,
+    '',
+    'Continuamos a pensar em vocês e na história que queremos contar: aquele primeiro olhar, o abraço apertado dos vossos pais, a pista cheia até ao fim da noite. São momentos que só acontecem uma vez e merecem ser guardados por quem sente verdadeiramente o vosso dia.',
+    '',
+    'A vossa data ainda está livre na nossa agenda, mas não a conseguimos segurar por muito mais tempo. Se o vosso coração também diz que sim, basta uma mensagem e fica reservada só para vocês.',
+    '',
+    'E se entretanto escolheram outro caminho, está tudo bem. Foi um prazer enorme conhecer-vos e desejamos-vos um dia inesquecível.',
+    '',
+    'Um abraço grande,',
+    'RL PhotoVideo',
+    '',
+    'Visite-nos: www.rlphotovideo.pt',
+  ].join('\n')
 }
 
 export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?: string | null): string {

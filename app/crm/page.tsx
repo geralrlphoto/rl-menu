@@ -140,7 +140,7 @@ export default function CRMPage() {
   const [dropCol, setDropCol] = useState<ColunaKey | null>(null)
   // Última mudança de status (vinda do histórico) das leads em Follow Up
   const [ultimaMudanca, setUltimaMudanca] = useState<Record<string, string>>({})
-  const [waEnviados, setWaEnviados] = useState<Record<string, string[]>>({})
+  const [waEnviados, setWaEnviados] = useState<Record<string, Record<string, string>>>({})
 
   useEffect(() => {
     try { setAtencaoAberta(localStorage.getItem('crm_atencao_aberta') === '1') } catch {}
@@ -239,11 +239,11 @@ export default function CRMPage() {
   const waIdsKey = contacts.filter(c => ['nova', 'reuniao', 'follow'].includes(colunaDe(c.status))).map(c => c.id).sort().join(',')
   useEffect(() => {
     if (!waIdsKey) return
-    supabase.from('crm_status_history').select('contact_id,evento')
+    supabase.from('crm_status_history').select('contact_id,evento,created_at')
       .in('contact_id', waIdsKey.split(',')).like('evento', 'WhatsApp%')
       .then(({ data }) => {
-        const m: Record<string, string[]> = {}
-        for (const h of data ?? []) (m[h.contact_id] ||= []).push(h.evento)
+        const m: Record<string, Record<string, string>> = {}
+        for (const h of data ?? []) (m[h.contact_id] ||= {})[h.evento] = h.created_at
         setWaEnviados(prev => ({ ...prev, ...m }))
       })
   }, [waIdsKey])
@@ -595,8 +595,8 @@ export default function CRMPage() {
                         c={c}
                         coluna={col.key}
                         diasNoPasso={daysSince(ultimaMudanca[c.id] || c.status_updated_at || c.data_entrada)}
-                        enviados={waEnviados[c.id] ?? []}
-                        onEnviado={ev => setWaEnviados(prev => ({ ...prev, [c.id]: [...(prev[c.id] ?? []), ev] }))}
+                        enviados={waEnviados[c.id] ?? {}}
+                        onEnviado={ev => setWaEnviados(prev => ({ ...prev, [c.id]: { ...(prev[c.id] ?? {}), [ev]: new Date().toISOString() } }))}
                         onPortal={token => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, page_token: token } : x))}
                         onOpen={() => setDrawerId(c.id)}
                         onStatusChange={handleStatusChange}

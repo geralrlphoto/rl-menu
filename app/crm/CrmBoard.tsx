@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { linkPublico } from '@/lib/site-url'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, diasParaFollowUp, telLink, type ColunaKey,
+  fmtDataCurta, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -104,7 +104,7 @@ function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPor
   /* Com onPortal, o texto recebe o link do portal; se a lead ainda não tiver portal, é criado no clique */
   texto: string | ((portal: string) => string)
   evento: string; label: string
-  enviados: string[]; onEnviado: (evento: string) => void
+  enviados: Record<string, string>; onEnviado: (evento: string) => void
   onPortal?: (token: string) => void
 }) {
   const [aCriar, setACriar] = useState(false)
@@ -115,7 +115,7 @@ function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPor
     : whatsappLink(c.contato, portal ? texto(portal) : '')
   if (!href) return null
   // Depois de enviado fica bloqueado (o registo no histórico é a fonte de verdade)
-  if (enviados.includes(evento)) {
+  if (evento in enviados) {
     return (
       <div onClick={e => e.stopPropagation()}
         className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none">
@@ -185,7 +185,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
   c: Contact
   coluna: ColunaKey
   diasNoPasso: number
-  enviados: string[]
+  enviados: Record<string, string>  // evento → quando foi enviado
   onEnviado: (evento: string) => void
   onPortal: (token: string) => void
   onOpen: () => void
@@ -277,7 +277,25 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
 
       {coluna === 'follow' && whatsappLink(c.contato) && (() => {
         const faltam = diasParaFollowUp(c.reuniao_data || c.status_updated_at)
-        if (faltam > 0 && !enviados.includes('WhatsApp follow-up enviado')) return (
+        const enviado1 = enviados['WhatsApp follow-up enviado']
+        if (enviado1) {
+          const faltam2 = diasParaFollowUp(enviado1, FOLLOW2_WA_DIAS)
+          return (
+            <div className="flex flex-col gap-1.5">
+              <WhatsAppMsgButton c={c} texto="" evento="WhatsApp follow-up enviado" label="Follow up" enviados={enviados} onEnviado={onEnviado} />
+              {faltam2 > 0 && !('WhatsApp 2.º follow-up enviado' in enviados) ? (
+                <div onClick={e => e.stopPropagation()}
+                  title="O 2.º follow up fica disponível 8 dias depois do 1.º, se não houver resposta"
+                  className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none">
+                  🔒 2.º Follow up · {faltam2 === 1 ? 'Falta 1 dia' : `Faltam ${faltam2} dias`}
+                </div>
+              ) : (
+                <WhatsAppMsgButton c={c} texto={mensagemFollowUp2(c.nome, c.data_casamento)} evento="WhatsApp 2.º follow-up enviado" label="2.º Follow up" enviados={enviados} onEnviado={onEnviado} />
+              )}
+            </div>
+          )
+        }
+        if (faltam > 0) return (
           <div onClick={e => e.stopPropagation()}
             title="O follow up pelo WhatsApp fica disponível 3 dias depois da reunião"
             className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none">
