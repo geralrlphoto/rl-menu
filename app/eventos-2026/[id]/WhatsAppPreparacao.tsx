@@ -119,8 +119,15 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
       {!reserva && (!carregado ? (
         <div className={`${base} border-white/10 text-white/30`}>A carregar…</div>
       ) : enviadoEm ? (
-        <div className={`${base} border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none`}>
-          ✓ Link enviado a {new Date(enviadoEm).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} · à espera da escolha
+        <div className="flex gap-2">
+          <div className={`${base} flex-1 border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none`}>
+            ✓ Link enviado a {new Date(enviadoEm).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} · à espera da escolha
+          </div>
+          {/* Volta a mostrar o botão verde para mandar o link outra vez */}
+          <button onClick={() => setEnviadoEm(null)} title="Enviar o link outra vez"
+            className={`${base} shrink-0 border-white/10 text-white/45 hover:text-green-400 hover:border-green-500/40`}>
+            ↺ Reenviar
+          </button>
         </div>
       ) : href ? (
         <a href={href} target="_blank" rel="noopener noreferrer"

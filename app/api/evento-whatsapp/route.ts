@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   const ev = await eventoPreparacao(eventoId)
   if (!ev) return NextResponse.json({ error: 'evento não encontrado' }, { status: 404 })
   const { error } = await sb().from('eventos_whatsapp_envios')
-    .upsert({ evento_id: ev.id, evento }, { onConflict: 'evento_id,evento', ignoreDuplicates: true })
+    .upsert({ evento_id: ev.id, evento, created_at: new Date().toISOString() }, { onConflict: 'evento_id,evento' })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   revalidateTag('photo-whatsapp', { expire: 0 })
   return NextResponse.json({ ok: true })
