@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import EventoTarefas from './EventoTarefas'
+import WhatsAppPreparacao from './WhatsAppPreparacao'
 
 // ─── Serviços extra ────────────────────────────────────────────────────────────
 const SERVICOS_OPCOES = [
@@ -5405,13 +5406,16 @@ export default function EventoPage() {
         </DrawerBloco>
 
         <BlocoHeader num="VI">Comunicação com os Noivos</BlocoHeader>
-        {e.referencia && (
-          <DrawerBloco label="Comunicação com os Noivos" sub="Notificações enviadas e mensagens dos noivos.">
-            <RespostaRapidaNoivos referencia={e.referencia} />
-            <NotificacaoNoivosSection referencia={e.referencia} />
-            <MensagensNoivosSection referencia={e.referencia} />
-          </DrawerBloco>
-        )}
+        <DrawerBloco label="Comunicação com os Noivos" sub="Notificações enviadas e mensagens dos noivos.">
+          <WhatsAppPreparacao e={e} />
+          {e.referencia && (
+            <>
+              <RespostaRapidaNoivos referencia={e.referencia} />
+              <NotificacaoNoivosSection referencia={e.referencia} />
+              <MensagensNoivosSection referencia={e.referencia} />
+            </>
+          )}
+        </DrawerBloco>
 
         <BlocoHeader num="VII">Equipa & Tarefas</BlocoHeader>
 

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import {
-  whatsappLink, mensagemLembreteReuniao, mensagemFollowUp, mensagemFollowUp2,
+  whatsappLink, mensagemLembreteReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemReuniaoPreparacao,
 } from '@/lib/crm'
 
 /* Tarefa de WhatsApp da faixa "Próximos 30 dias" do /photo.
@@ -12,8 +12,8 @@ import {
    envio no histórico da lead (o mesmo registo que os botões do /crm usam). */
 
 export type WaTarefa = {
-  tipo: 'lembrete' | 'follow1' | 'follow2'
-  contactId: string
+  tipo: 'lembrete' | 'follow1' | 'follow2' | 'preparacao'
+  contactId: string    // id da lead no CRM; em 'preparacao' é o id do evento
   nome: string
   contato: string | null
   reuniaoHora: string | null
@@ -26,11 +26,13 @@ const CONFIG = {
   lembrete: { rotulo: 'Lembrete 1h', evento: 'WhatsApp lembrete 1h enviado' },
   follow1: { rotulo: '1.º Follow up', evento: 'WhatsApp follow-up enviado' },
   follow2: { rotulo: '2.º Follow up', evento: 'WhatsApp 2.º follow-up enviado' },
+  preparacao: { rotulo: 'Reunião preparação', evento: 'reuniao_preparacao' },
 }
 
 function textoDe(t: WaTarefa): string {
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
   if (t.tipo === 'follow1') return mensagemFollowUp(t.nome, t.dataCasamento)
+  if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome)
   return mensagemFollowUp2(t.nome, t.dataCasamento)
 }
 
@@ -55,13 +57,21 @@ export function WaTarefaChip({ t }: { t: WaTarefa }) {
 
   // Futura, já enviada ou sem telefone: não envia daqui (sem telefone abre a ficha)
   if (enviado || t.futura) return <div className={cls} style={estilo} title={t.futura ? 'Fica disponível neste dia' : undefined}>{corpo}</div>
-  if (!href) return <Link href={`/crm/${t.contactId}`} className={cls} style={estilo} title="Sem telefone válido na ficha">{corpo}</Link>
+  const ficha = t.tipo === 'preparacao' ? `/eventos-2026/${t.contactId}` : `/crm/${t.contactId}`
+  if (!href) return <Link href={ficha} className={cls} style={estilo} title="Sem telefone válido na ficha">{corpo}</Link>
 
   return (
     <a href={href} target="_blank" rel="noopener noreferrer" className={`${cls} hover:bg-green-500/10`} style={estilo}
       title={`Enviar ${cfg.rotulo.toLowerCase()} pelo WhatsApp`}
       onClick={() => {
         setEnviado(true)
+        if (t.tipo === 'preparacao') {
+          fetch('/api/evento-whatsapp', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventoId: t.contactId, evento: cfg.evento }),
+          }).catch(() => {})
+          return
+        }
         supabase.from('crm_status_history').insert({ contact_id: t.contactId, evento: cfg.evento })
           .then(() => { fetch('/api/revalidate-photo?tag=whatsapp', { method: 'POST' }).catch(() => {}) })
       }}>

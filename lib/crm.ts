@@ -71,6 +71,7 @@ export function whatsappLink(contato: string | null | undefined, texto?: string)
 }
 
 const ASSINATURA = ['Com os melhores cumprimentos,', 'RL PhotoVideo', '', 'Visite-nos: www.rlphotovideo.pt']
+const ASSINATURA_ABRACO = ['Um abraço grande,', 'RL PhotoVideo', '', 'Visite-nos: www.rlphotovideo.pt']
 
 function quandoReuniao(data?: string | null, hora?: string | null): string {
   const h = (hora ?? '').slice(0, 5)
@@ -203,6 +204,34 @@ export function mensagemFecho(nome: string | null | undefined, dataCasamento?: s
     'RL PhotoVideo',
     '',
     'Visite-nos: www.rlphotovideo.pt',
+  ].join('\n')
+}
+
+/* "Ana e Pedro" a partir dos primeiros nomes; senão o campo cliente arrumado */
+export function nomeNoivos(cliente?: string | null, nomeNoiva?: string | null, nomeNoivo?: string | null): string {
+  const primeiro = (n?: string | null) => (n ?? '').trim().split(/\s+/)[0] ?? ''
+  const cap = (s: string) => s.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (_, a, b) => a + b.toUpperCase()).replace(/ E /g, ' e ')
+  const a = primeiro(nomeNoiva), b = primeiro(nomeNoivo)
+  if (a && b) return cap(`${a} e ${b}`)
+  const c = (cliente ?? '').trim()
+  return c ? cap(c) : a || b ? cap(a || b) : ''
+}
+
+/* Reunião de preparação do dia: ~15 dias antes do casamento (ficha do evento e /photo) */
+export const PREPARACAO_DIAS = 15
+
+export function mensagemReuniaoPreparacao(nome: string | null | undefined): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Está quase! Faltam cerca de duas semanas para o vosso casamento e nós já estamos a contar os dias.',
+    '',
+    'Gostávamos de marcar uma pequena reunião convosco para falarmos sobre o vosso dia: os horários, algumas dicas e sugestões nossas, e ajustar os últimos detalhes para que tudo corra na perfeição e vocês só tenham de aproveitar.',
+    '',
+    'Que dia e hora vos dá mais jeito nos próximos dias? Pode ser presencial ou por videochamada, como preferirem.',
+    '',
+    ...ASSINATURA_ABRACO,
   ].join('\n')
 }
 

@@ -6,7 +6,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem } from '@/app/components/AgendaItem'
-import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS } from '@/lib/crm'
+import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, nomeNoivos } from '@/lib/crm'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -330,6 +330,43 @@ export default async function PhotoDashboard() {
     else if (!env['WhatsApp 2.º follow-up enviado']) push('follow2', somaDias(lisboaISO(new Date(env1)), FOLLOW2_WA_DIAS))
   }
   const waAgenda = waTarefas.filter(t => !ocultos.has(chaveWa(t)))
+  // Reunião de preparação: casamentos a até 30 + 15 dias; a tarefa cai 15 dias antes do evento
+  const getPreparacao = unstable_cache(
+    async () => {
+      const ate = somaDias(hojeLx, DIAS_AGENDA + PREPARACAO_DIAS)
+      const { data: evs } = await supabase.from('eventos_2026')
+        .select('id, referencia, cliente, data_evento')
+        .gte('data_evento', somaDias(hojeLx, 1)).lte('data_evento', ate).limit(150)
+      const lista = evs ?? []
+      if (lista.length === 0) return { evs: [], tels: [], env: [] }
+      const refs = lista.map((e: any) => e.referencia).filter(Boolean)
+      const [{ data: tels }, { data: env }] = await Promise.all([
+        refs.length
+          ? supabase.from('dados_contrato_cps').select('referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs)
+          : Promise.resolve({ data: [] as any[] }),
+        supabase.from('eventos_whatsapp_envios').select('evento_id').eq('evento', 'reuniao_preparacao').in('evento_id', lista.map((e: any) => e.id)),
+      ])
+      return { evs: lista, tels: tels ?? [], env: env ?? [] }
+    },
+    [`photo-wa-preparacao-${hojeLx}`],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
+  )
+  const prep = await getPreparacao()
+  const prepEnviados = new Set((prep.env as any[]).map(x => x.evento_id))
+  for (const ev of prep.evs as any[]) {
+    if (prepEnviados.has(ev.id)) continue
+    const c = (prep.tels as any[]).find(t => t.referencia_evento === ev.referencia)
+    const devido = somaDias(ev.data_evento, -PREPARACAO_DIAS)
+    const t = {
+      tipo: 'preparacao' as const, contactId: ev.id,
+      nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
+      contato: c?.tel_noiva || c?.tel_noivo || null,
+      reuniaoHora: null, dataCasamento: ev.data_evento,
+      dia: devido < hojeLx ? hojeLx : devido,
+      atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
+    }
+    if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
+  }
   const waPorEnviar = waAgenda.filter(t => !t.futura).length
 
   const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
