@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
   // diferentes (ex.: "Ana e Rui" a 27/06 e "ANA E RUI" a 31/07). Resolver só
   // pelo nome faria colisão e misturava as pastas. Por isso a chave principal é
   // nome + data; só se recorre ao nome isolado quando esse nome é único.
-  const { data: evs } = await sb.from('eventos_2026').select('cliente, referencia, data_evento, pasta_fotos').not('pasta_fotos', 'is', null)
+  const { data: evs } = await sb.from('eventos_2026').select('cliente, referencia, data_evento, pasta_fotos, nome_crianca').not('pasta_fotos', 'is', null)
   // Canoniza qualquer data (ISO "2026-07-31" ou "31 / 07 / 2026") em "AAAAMMDD".
   const dkey = (s: any): string => {
     const g = String(s ?? '').match(/\d+/g)
@@ -85,16 +85,27 @@ export async function GET(req: NextRequest) {
     if (y.length !== 4) return ''
     return y + mo.padStart(2, '0').slice(-2) + d.padStart(2, '0').slice(-2)
   }
+  // Palavras "com significado" de um nome (sem acentos, 3+ letras, sem as
+  // genéricas "batizado", "casamento"...).
+  const GENERICAS = new Set(['batizado', 'batismo', 'casamento', 'noivos'])
+  const palavras = (s: any) => new Set(
+    String(s ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .split(/[^a-z0-9]+/).filter(w => w.length >= 3 && !GENERICAS.has(w)))
   const byRef = new Map<string, string>()         // "cas01926rl" → pasta
   const byNameDate = new Map<string, string>()   // "anarui|20260731" → pasta
   const byName = new Map<string, string>()        // "anarui" → pasta
   const nameCount = new Map<string, number>()     // nº de eventos com esse nome
-  const byDate = new Map<string, string>()        // "20260808" → pasta
-  const dateCount = new Map<string, number>()     // nº de eventos com pasta nessa data
+  // Eventos por data, com as palavras dos nomes (clientes + crianças do batizado)
+  // para desempatar quando o nome escrito no pedido não bate com a ficha.
+  const byDate = new Map<string, { pasta: string; palavras: Set<string> }[]>()
   for (const ev of (evs ?? []) as any[]) {
     if (!ev.pasta_fotos) continue
     const dk = dkey(ev.data_evento)
-    if (dk) { byDate.set(dk, ev.pasta_fotos); dateCount.set(dk, (dateCount.get(dk) ?? 0) + 1) }
+    if (dk) {
+      const lista = byDate.get(dk) ?? []
+      lista.push({ pasta: ev.pasta_fotos, palavras: palavras(`${ev.cliente ?? ''} ${ev.nome_crianca ?? ''}`) })
+      byDate.set(dk, lista)
+    }
     const nk = norm(ev.cliente)
     if (nk) {
       if (dk) byNameDate.set(nk + '|' + dk, ev.pasta_fotos)
@@ -121,9 +132,16 @@ export async function GET(req: NextRequest) {
     if (nc <= 1) { const n = byName.get(nk); if (n) return n }
     // Último recurso: o nome escrito pelo cliente não bate com NENHUMA ficha
     // (ex.: batizado com a ficha em nome dos pais, "Joana e Hugo", e o pedido
-    // como "Batizado Eva e Caetana"). Se houver UM ÚNICO evento com pasta
-    // nessa data, é esse. Com dois ou mais na mesma data, não arrisca.
-    if (nc === 0 && dk && dateCount.get(dk) === 1) return byDate.get(dk) ?? null
+    // como "Batizado Eva e Caetana"). Entre os eventos dessa data, fica o
+    // ÚNICO que partilha palavras do nome (clientes ou crianças); se só houver
+    // um evento nessa data, é esse. Em caso de dúvida, não arrisca.
+    if (nc === 0 && dk) {
+      const lista = byDate.get(dk) ?? []
+      if (lista.length === 1) return lista[0].pasta
+      const pw = palavras(p.noivos)
+      const hits = lista.filter(e => [...pw].some(w => e.palavras.has(w)))
+      if (hits.length === 1) return hits[0].pasta
+    }
     return null
   }
   const comPasta = (arr: any[]) => arr.map((p: any) => ({ ...p, pasta: resolvePasta(p) }))
