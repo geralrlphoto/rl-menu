@@ -126,16 +126,20 @@ export function diasParaFollowUp(reuniaoData: string | null | undefined): number
   return Math.max(0, FOLLOW_WA_DIAS - passados)
 }
 
-export function mensagemFollowUp(nome: string | null | undefined): string {
+export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?: string | null): string {
   const quem = (nome ?? '').trim()
+  const m = (dataCasamento ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  const dia = m ? ` a ${m[3]}/${m[2]}/${m[1]}` : ''
   return [
     `Olá${quem ? ' ' + quem : ''}! 🤍`,
     '',
-    'Ficámos com um sorriso depois da nossa reunião. Foi mesmo especial sentir a ligação que se criou entre nós, e é exatamente essa ligação que adoramos ter com os nossos noivos e que depois se vê nas imagens do vosso dia.',
+    'Ficámos com um sorriso depois da nossa reunião. Sentimos mesmo uma ligação especial convosco, e é exatamente essa ligação que depois se vê nas imagens do vosso dia.',
     '',
-    'Passámos só para saber se já conseguiram rever com calma a nossa proposta no vosso portal e se ficou alguma questão no ar.',
+    `Queremos muito fazer parte do vosso casamento${dia}! Como as datas vão ficando preenchidas, gostávamos de vos garantir já o vosso dia na nossa agenda.`,
     '',
-    'Seja qual for a vossa decisão, foi um enorme prazer conhecer-vos. Estamos aqui para o que precisarem. 💛',
+    'Já tiveram oportunidade de rever a proposta no vosso portal? Se estiver tudo bem, basta darem-nos o ok e tratamos já de bloquear a data em vosso nome.',
+    '',
+    'Se tiverem alguma dúvida, estamos aqui para vos ajudar. 💛',
     '',
     'Um abraço,',
     'RL PhotoVideo',

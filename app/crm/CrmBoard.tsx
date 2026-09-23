@@ -284,7 +284,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
             🔒 Follow up · {faltam === 1 ? 'Falta 1 dia' : `Faltam ${faltam} dias`}
           </div>
         )
-        return <WhatsAppMsgButton c={c} texto={mensagemFollowUp(c.nome)} evento="WhatsApp follow-up enviado" label="Follow up" enviados={enviados} onEnviado={onEnviado} />
+        return <WhatsAppMsgButton c={c} texto={mensagemFollowUp(c.nome, c.data_casamento)} evento="WhatsApp follow-up enviado" label="Follow up" enviados={enviados} onEnviado={onEnviado} />
       })()}
 
       {coluna !== 'encerrada' && (c.contato || c.email) && (
