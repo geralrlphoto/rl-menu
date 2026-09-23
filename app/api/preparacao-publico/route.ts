@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, UUID_RE } from '@/lib/preparacao'
+import { MEET_LINK } from '@/lib/crm'
 
 // Público (link enviado aos noivos por WhatsApp): /preparacao/<id do evento>.
 // GET mostra os horários livres; POST reserva um e avisa o admin por email.
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
 <tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Reunião de preparação marcada</td></tr>
 <tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(ev.nome || ev.cliente || '')}</td></tr>
 <tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.7;font-family:Arial,sans-serif">
-<b style="color:#fff">${esc(quando)}</b><br/>${esc(formato)}<br/>
+<b style="color:#fff">${esc(quando)}</b><br/>${esc(formato)}: <a href="${MEET_LINK}" style="color:#C9A84C">${MEET_LINK.replace('https://', '')}</a><br/>
 Casamento: ${ev.data_evento ? esc(fmtDataLonga(ev.data_evento)) : '—'}${ev.local ? ` · ${esc(ev.local)}` : ''}</td></tr>
 <tr><td style="padding:0 32px 30px"><a href="${SITE_BASE}/eventos-2026/${ev.id}" style="display:inline-block;background:#C9A84C;color:#000;text-decoration:none;font-family:Arial,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;border-radius:8px">Abrir ficha do evento</a></td></tr>
 </table></td></tr></table></body></html>`

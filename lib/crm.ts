@@ -220,6 +220,8 @@ export function nomeNoivos(cliente?: string | null, nomeNoiva?: string | null, n
 
 /* Reunião de preparação do dia: ~15 dias antes do casamento (ficha do evento e /photo) */
 export const PREPARACAO_DIAS = 15
+/* Sala fixa de videochamada da RL (a mesma das reuniões do CRM) */
+export const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 
 export function mensagemReuniaoPreparacao(nome: string | null | undefined, eventoId?: string | null): string {
   const quem = (nome ?? '').trim()
@@ -234,6 +236,9 @@ export function mensagemReuniaoPreparacao(nome: string | null | undefined, event
     ...(link
       ? ['A reunião é por videochamada. Escolham aqui o dia e a hora que vos dá mais jeito:', link]
       : ['A reunião é por videochamada. Que dia e hora vos dá mais jeito nos próximos dias?']),
+    '',
+    'No dia e à hora marcados, é só entrarem na videochamada por este link:',
+    MEET_LINK,
     '',
     ...ASSINATURA_ABRACO,
   ].join('\n')
