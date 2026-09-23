@@ -4,6 +4,8 @@ import { unstable_cache } from 'next/cache'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
 import { TarefasCard } from '@/app/components/TarefasCard'
+import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
+import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS } from '@/lib/crm'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -265,6 +267,53 @@ export default async function PhotoDashboard() {
   )
   const reunioesSemana = await getReunioes()
 
+  // Tarefas de WhatsApp do CRM (lembrete 1h e follow ups), com as mesmas regras dos botões do /crm.
+  // Tag própria: um envio só refaz esta leitura, não o painel todo.
+  const getWaTarefas = unstable_cache(
+    async () => {
+      const { data: leads } = await supabase.from('crm_contacts')
+        .select('id, nome, contato, status, reuniao_data, reuniao_hora, data_casamento, status_updated_at')
+        .in('status', [...REUNIAO_STATUSES, ...FOLLOW_STATUSES])
+        .limit(300)
+      const ids = (leads ?? []).map((l: any) => l.id)
+      if (ids.length === 0) return { leads: [], hist: [] }
+      const { data: hist } = await supabase.from('crm_status_history')
+        .select('contact_id, evento, created_at')
+        .in('contact_id', ids).like('evento', 'WhatsApp%')
+      return { leads: leads ?? [], hist: hist ?? [] }
+    },
+    [`photo-wa-tarefas-${semanaDias[0]}`],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
+  )
+  const waDados = await getWaTarefas()
+  const somaDias = (iso: string, n: number) => {
+    const d = new Date(iso.slice(0, 10) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n)
+    return d.toISOString().split('T')[0]
+  }
+  const difDias = (a: string, b: string) => Math.round((Date.parse(a + 'T12:00:00Z') - Date.parse(b + 'T12:00:00Z')) / 86400000)
+  const waTarefas: (WaTarefa & { dia: string })[] = []
+  for (const l of waDados.leads as any[]) {
+    const env: Record<string, string> = {}
+    for (const h of waDados.hist as any[]) if (h.contact_id === l.id) env[h.evento] = h.created_at
+    const base = { contactId: l.id, nome: l.nome ?? '', contato: l.contato ?? null, reuniaoHora: l.reuniao_hora ?? null, dataCasamento: l.data_casamento ?? null }
+    const push = (tipo: WaTarefa['tipo'], devido: string) => {
+      const dia = devido < hojeLx ? hojeLx : devido
+      waTarefas.push({ ...base, tipo, dia, atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx })
+    }
+    if (REUNIAO_STATUSES.includes(l.status)) {
+      // Lembrete: só no próprio dia da reunião
+      if (l.reuniao_data === hojeLx && l.reuniao_hora && !env['WhatsApp lembrete 1h enviado']) push('lembrete', hojeLx)
+      continue
+    }
+    if (env['WhatsApp fecho enviado']) continue // já aceitaram
+    const inicio = l.reuniao_data || (l.status_updated_at ? lisboaISO(new Date(l.status_updated_at)) : null)
+    if (!inicio) continue
+    const env1 = env['WhatsApp follow-up enviado']
+    if (!env1) push('follow1', somaDias(inicio, FOLLOW_WA_DIAS))
+    else if (!env['WhatsApp 2.º follow-up enviado']) push('follow2', somaDias(lisboaISO(new Date(env1)), FOLLOW2_WA_DIAS))
+  }
+  const waPorEnviar = waTarefas.filter(t => !t.futura).length
+
   const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
   const semana = semanaDias.map((iso, i) => {
@@ -282,6 +331,7 @@ export default async function PhotoDashboard() {
       reunioes: reunioesSemana
         .filter((r: any) => r.reuniao_data === iso)
         .sort((a: any, b: any) => String(a.reuniao_hora ?? '').localeCompare(String(b.reuniao_hora ?? ''))),
+      whatsapp: waTarefas.filter(t => t.dia === iso).sort((a, b) => b.atrasoDias - a.atrasoDias),
     }
   })
 
@@ -568,6 +618,11 @@ export default async function PhotoDashboard() {
             {totalCasamentos30} casamento{totalCasamentos30 !== 1 ? 's' : ''}
             {totalReunioes30 > 0 && ` · ${totalReunioes30} ${totalReunioes30 === 1 ? 'reunião' : 'reuniões'}`}
           </span>
+          {waPorEnviar > 0 && (
+            <span className="text-[10px] text-green-400/80">
+              {waPorEnviar} WhatsApp por enviar hoje
+            </span>
+          )}
           <div className="flex-1 h-px bg-white/[0.07]" />
           <span className="hidden sm:inline text-[9px] tracking-[0.3em] uppercase text-white/20">desliza →</span>
           <Link href="/calendario" className="text-[9px] tracking-[0.3em] uppercase text-white/25 hover:text-[#C9A84C] transition-colors">
@@ -581,7 +636,7 @@ export default async function PhotoDashboard() {
 
           <div className="agenda-scroll flex gap-2 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
             {semana.map((d, i) => {
-              const cheio = d.eventos.length > 0 || d.reunioes.length > 0
+              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0
               return (
                 <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
                   {/* Mês por cima do primeiro dia e de cada dia 1 */}
@@ -605,7 +660,7 @@ export default async function PhotoDashboard() {
                     </div>
 
                     <div className="mt-2.5 flex flex-col gap-1.5">
-                      {d.eventos.length === 0 && d.reunioes.length === 0 && <span className="text-[10px] text-white/15">—</span>}
+                      {!cheio && <span className="text-[10px] text-white/15">—</span>}
                       {d.eventos.map((e: any) => (
                         <Link key={e.id} href={`/eventos-2026/${e.id}`}
                           className="group block rounded-lg px-2 py-1.5 bg-white/[0.03] hover:bg-[#C9A84C]/10 border border-white/[0.05] hover:border-[#C9A84C]/35 transition-all">
@@ -628,6 +683,8 @@ export default async function PhotoDashboard() {
                           </p>
                         </Link>
                       ))}
+                      {/* WhatsApp a enviar (lembrete 1h e follow ups): verde tracejado; no próprio dia envia com um clique */}
+                      {d.whatsapp.map(t => <WaTarefaChip key={`w-${t.contactId}-${t.tipo}`} t={t} />)}
                     </div>
                   </div>
                 </div>

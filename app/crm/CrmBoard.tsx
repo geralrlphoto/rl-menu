@@ -147,7 +147,8 @@ function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPor
           if (w) w.location.href = link; else window.open(link, '_blank')
         }
         onEnviado(evento)
-        supabase.from('crm_status_history').insert({ contact_id: c.id, evento }).then(() => {})
+        supabase.from('crm_status_history').insert({ contact_id: c.id, evento })
+          .then(() => { fetch('/api/revalidate-photo?tag=whatsapp', { method: 'POST' }).catch(() => {}) })
       }}
       className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 transition-colors"
     >
