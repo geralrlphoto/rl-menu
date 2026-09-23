@@ -5,6 +5,7 @@ import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
+import { AgendaItem } from '@/app/components/AgendaItem'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS } from '@/lib/crm'
 
 // Server-render por request — não tenta gerar estaticamente no build.
@@ -267,6 +268,22 @@ export default async function PhotoDashboard() {
   )
   const reunioesSemana = await getReunioes()
 
+  // Itens escondidos com o ✕ (só desta faixa; o resto da app não é afetado)
+  const getOcultos = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('photo_agenda_ocultos').select('chave').limit(2000)
+      return (data ?? []).map((o: any) => o.chave as string)
+    },
+    ['photo-agenda-ocultos'],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-agenda-ocultos'] }
+  )
+  const ocultos = new Set(await getOcultos())
+  const chaveEvento = (e: any) => `evento:${e.id}`
+  const chaveReuniao = (r: any) => `reuniao:${r.id}:${r.reuniao_data}`
+  const chaveWa = (t: { contactId: string; tipo: string }) => `wa:${t.contactId}:${t.tipo}`
+  const eventosAgenda = eventosSemana.filter((e: any) => !ocultos.has(chaveEvento(e)))
+  const reunioesAgenda = reunioesSemana.filter((r: any) => !ocultos.has(chaveReuniao(r)))
+
   // Tarefas de WhatsApp do CRM (lembrete 1h e follow ups), com as mesmas regras dos botões do /crm.
   // Tag própria: um envio só refaz esta leitura, não o painel todo.
   const getWaTarefas = unstable_cache(
@@ -312,7 +329,8 @@ export default async function PhotoDashboard() {
     if (!env1) push('follow1', somaDias(inicio, FOLLOW_WA_DIAS))
     else if (!env['WhatsApp 2.º follow-up enviado']) push('follow2', somaDias(lisboaISO(new Date(env1)), FOLLOW2_WA_DIAS))
   }
-  const waPorEnviar = waTarefas.filter(t => !t.futura).length
+  const waAgenda = waTarefas.filter(t => !ocultos.has(chaveWa(t)))
+  const waPorEnviar = waAgenda.filter(t => !t.futura).length
 
   const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
@@ -327,11 +345,11 @@ export default async function PhotoDashboard() {
       // Mostra o mês por cima do primeiro dia e sempre que muda
       novoMes: i === 0 || d.getUTCDate() === 1,
       mesLongo: MESES_LONGOS[d.getUTCMonth()],
-      eventos: eventosSemana.filter((e: any) => e.data_evento === iso),
-      reunioes: reunioesSemana
+      eventos: eventosAgenda.filter((e: any) => e.data_evento === iso),
+      reunioes: reunioesAgenda
         .filter((r: any) => r.reuniao_data === iso)
         .sort((a: any, b: any) => String(a.reuniao_hora ?? '').localeCompare(String(b.reuniao_hora ?? ''))),
-      whatsapp: waTarefas.filter(t => t.dia === iso).sort((a, b) => b.atrasoDias - a.atrasoDias),
+      whatsapp: waAgenda.filter(t => t.dia === iso).sort((a, b) => b.atrasoDias - a.atrasoDias),
     }
   })
 
@@ -526,8 +544,8 @@ export default async function PhotoDashboard() {
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
   const totalCasamentosSemana = eventosSemana.filter((e: any) => e.data_evento <= semanaDias[6]).length
-  const totalCasamentos30 = eventosSemana.length
-  const totalReunioes30 = reunioesSemana.length
+  const totalCasamentos30 = eventosAgenda.length
+  const totalReunioes30 = reunioesAgenda.length
 
 
 
@@ -662,17 +680,20 @@ export default async function PhotoDashboard() {
                     <div className="mt-2.5 flex flex-col gap-1.5">
                       {!cheio && <span className="text-[10px] text-white/15">—</span>}
                       {d.eventos.map((e: any) => (
-                        <Link key={e.id} href={`/eventos-2026/${e.id}`}
+                        <AgendaItem key={e.id} chave={chaveEvento(e)}>
+                        <Link href={`/eventos-2026/${e.id}`}
                           className="group block rounded-lg px-2 py-1.5 bg-white/[0.03] hover:bg-[#C9A84C]/10 border border-white/[0.05] hover:border-[#C9A84C]/35 transition-all">
                           <p className="text-[11px] text-white/85 group-hover:text-white leading-tight truncate uppercase tracking-wide">
                             {(e.cliente ?? '').trim() || e.referencia}
                           </p>
                           {e.local && <p className="text-[9px] text-white/35 truncate mt-0.5">{e.local}</p>}
                         </Link>
+                        </AgendaItem>
                       ))}
                       {/* Reuniões marcadas no CRM: tracejado, para nao se confundirem com casamentos */}
                       {d.reunioes.map((r: any) => (
-                        <Link key={`r-${r.id}`} href={`/crm/${r.id}`}
+                        <AgendaItem key={`r-${r.id}`} chave={chaveReuniao(r)}>
+                        <Link href={`/crm/${r.id}`}
                           className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-[#C9A84C]/10"
                           style={{ borderColor: 'rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.04)' }}>
                           <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: 'rgba(201,168,76,0.8)' }}>
@@ -682,9 +703,12 @@ export default async function PhotoDashboard() {
                             {(r.nome ?? '').trim() || 'Sem nome'}
                           </p>
                         </Link>
+                        </AgendaItem>
                       ))}
                       {/* WhatsApp a enviar (lembrete 1h e follow ups): verde tracejado; no próprio dia envia com um clique */}
-                      {d.whatsapp.map(t => <WaTarefaChip key={`w-${t.contactId}-${t.tipo}`} t={t} />)}
+                      {d.whatsapp.map(t => (
+                        <AgendaItem key={`w-${t.contactId}-${t.tipo}`} chave={chaveWa(t)}><WaTarefaChip t={t} /></AgendaItem>
+                      ))}
                     </div>
                   </div>
                 </div>
