@@ -186,7 +186,10 @@ export function KanbanCard({ c, coluna, diasNoPasso, onOpen, onStatusChange, dra
         <a
           href={whatsappLink(c.contato, mensagemBoasVindas(c.nome))!}
           target="_blank" rel="noopener noreferrer"
-          onClick={e => e.stopPropagation()}
+          onClick={e => {
+            e.stopPropagation()
+            supabase.from('crm_status_history').insert({ contact_id: c.id, evento: 'WhatsApp de boas-vindas enviado' }).then(() => {})
+          }}
           className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 transition-colors"
         >
           Enviar boas-vindas
@@ -272,7 +275,7 @@ export function EncerrarModal({ nome, inicial, onCancel, onConfirm }: {
 }
 
 /* ── PAINEL LATERAL (ficha rápida) ── */
-type Historico = { id: string; status_de: string | null; status_para: string | null; created_at: string }
+type Historico = { id: string; status_de: string | null; status_para: string | null; evento: string | null; created_at: string }
 
 export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
   c: Contact
@@ -297,7 +300,7 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
     setExtra(null)
     supabase.from('crm_contacts').select('notas,mensagem').eq('id', c.id).single()
       .then(({ data }) => { if (vivo) { setExtra({ notas: data?.notas ?? '', mensagem: data?.mensagem ?? '' }); setNotas(data?.notas ?? '') } })
-    supabase.from('crm_status_history').select('id,status_de,status_para,created_at').eq('contact_id', c.id).order('created_at', { ascending: false }).limit(30)
+    supabase.from('crm_status_history').select('id,status_de,status_para,evento,created_at').eq('contact_id', c.id).order('created_at', { ascending: false }).limit(30)
       .then(({ data }) => { if (vivo) setHistorico(data ?? []) })
     return () => { vivo = false }
   }, [c.id, c.status])
@@ -446,8 +449,10 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
                   <li key={h.id} className="pl-4 relative">
                     <span className="absolute -left-[5px] top-1.5 w-2 h-2 rounded-full bg-gold/60" />
                     <div className="text-xs text-white/70">
-                      {h.status_de ? <><span className="text-white/35">{h.status_de}</span> → </> : <span className="text-white/35">Entrou como </span>}
-                      <span className="text-white">{h.status_para}</span>
+                      {h.evento ? <span className="text-green-400">{h.evento}</span> : <>
+                        {h.status_de ? <><span className="text-white/35">{h.status_de}</span> → </> : <span className="text-white/35">Entrou como </span>}
+                        <span className="text-white">{h.status_para}</span>
+                      </>}
                     </div>
                     <div className="text-[10px] text-white/25 mt-0.5">
                       {new Date(h.created_at).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}

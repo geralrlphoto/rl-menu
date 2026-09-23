@@ -75,7 +75,7 @@ export async function GET(req: NextRequest) {
   if (lead) {
     const { data: hl } = await supabase
       .from('crm_status_history')
-      .select('id,status_de,status_para,created_at')
+      .select('id,status_de,status_para,evento,created_at')
       .eq('contact_id', lead.id)
       .order('created_at', { ascending: false })
       .limit(60)
@@ -84,7 +84,7 @@ export async function GET(req: NextRequest) {
       linhas.push({
         id: `lead-${h.id}`,
         tipo: 'lead',
-        titulo: h.status_de ? `${h.status_de} → ${h.status_para}` : `Entrou como ${h.status_para}`,
+        titulo: h.evento ? h.evento : h.status_de ? `${h.status_de} → ${h.status_para}` : `Entrou como ${h.status_para}`,
         detalhe: null,
         created_at: h.created_at,
         origem: 'lead',

@@ -978,6 +978,7 @@ export async function GET() {
           .from('crm_status_history')
           .select('contact_id, created_at')
           .in('contact_id', follow.map(l => l.id))
+          .is('evento', null)
           .order('created_at', { ascending: false })
         for (const h of (hist ?? []) as any[]) if (!ultimaMudanca.has(h.contact_id)) ultimaMudanca.set(h.contact_id, h.created_at)
       }

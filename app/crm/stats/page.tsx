@@ -91,6 +91,7 @@ export default function StatsPage() {
       .then(({ data }) => { setContacts(data ?? []); setLoading(false) })
     supabase.from('crm_status_history')
       .select('contact_id,status_de,status_para,created_at')
+      .is('evento', null)
       .order('created_at', { ascending: true })
       .limit(5000)
       .then(({ data }) => setHistorico(data ?? []))

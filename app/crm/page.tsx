@@ -226,7 +226,7 @@ export default function CRMPage() {
   useEffect(() => {
     if (!followIdsKey) return
     supabase.from('crm_status_history').select('contact_id,created_at')
-      .in('contact_id', followIdsKey.split(',')).order('created_at', { ascending: false })
+      .in('contact_id', followIdsKey.split(',')).is('evento', null).order('created_at', { ascending: false })
       .then(({ data }) => {
         const m: Record<string, string> = {}
         for (const h of data ?? []) if (!m[h.contact_id]) m[h.contact_id] = h.created_at

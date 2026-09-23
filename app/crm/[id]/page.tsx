@@ -83,10 +83,10 @@ export default function ClientePage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [loading, setLoading] = useState(true)
-  const [historico, setHistorico] = useState<{ id: string; status_de: string | null; status_para: string | null; created_at: string }[]>([])
+  const [historico, setHistorico] = useState<{ id: string; status_de: string | null; status_para: string | null; evento: string | null; created_at: string }[]>([])
 
   const loadHistorico = () => {
-    supabase.from('crm_status_history').select('id,status_de,status_para,created_at')
+    supabase.from('crm_status_history').select('id,status_de,status_para,evento,created_at')
       .eq('contact_id', id).order('created_at', { ascending: false }).limit(50)
       .then(({ data }) => setHistorico(data ?? []))
   }
@@ -508,8 +508,10 @@ export default function ClientePage() {
               {historico.map(h => (
                 <li key={h.id} className="flex items-center justify-between gap-4 text-sm">
                   <span className="text-white/70">
-                    {h.status_de ? <><span className="text-white/35">{h.status_de}</span> → </> : <span className="text-white/35">Entrou como </span>}
-                    {h.status_para}
+                    {h.evento ? <span className="text-green-400">{h.evento}</span> : <>
+                      {h.status_de ? <><span className="text-white/35">{h.status_de}</span> → </> : <span className="text-white/35">Entrou como </span>}
+                      {h.status_para}
+                    </>}
                   </span>
                   <span className="text-xs text-white/30 whitespace-nowrap">
                     {new Date(h.created_at).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
