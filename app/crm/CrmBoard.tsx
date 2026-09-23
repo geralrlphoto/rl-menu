@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { linkPublico } from '@/lib/site-url'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, telLink, type ColunaKey,
+  fmtDataCurta, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, diasParaFollowUp, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -274,6 +274,18 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
           <WhatsAppMsgButton c={c} texto={mensagemLembreteReuniao(c.nome, c.reuniao_hora)} evento="WhatsApp lembrete 1h enviado" label="Lembrete: falta 1 hora" enviados={enviados} onEnviado={onEnviado} />
         </div>
       )}
+
+      {coluna === 'follow' && whatsappLink(c.contato) && (() => {
+        const faltam = diasParaFollowUp(c.reuniao_data || c.status_updated_at)
+        if (faltam > 0 && !enviados.includes('WhatsApp follow-up enviado')) return (
+          <div onClick={e => e.stopPropagation()}
+            title="O follow up pelo WhatsApp fica disponível 3 dias depois da reunião"
+            className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none">
+            🔒 Follow up · {faltam === 1 ? 'Falta 1 dia' : `Faltam ${faltam} dias`}
+          </div>
+        )
+        return <WhatsAppMsgButton c={c} texto={mensagemFollowUp(c.nome)} evento="WhatsApp follow-up enviado" label="Follow up" enviados={enviados} onEnviado={onEnviado} />
+      })()}
 
       {coluna !== 'encerrada' && (c.contato || c.email) && (
         <div className="pt-1 border-t border-white/5">

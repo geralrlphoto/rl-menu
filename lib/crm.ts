@@ -114,6 +114,36 @@ export function mensagemPortalReuniao(nome: string | null | undefined, portalUrl
   ].join('\n')
 }
 
+/* Follow up pelo WhatsApp: só fica disponível 3 dias depois da reunião */
+export const FOLLOW_WA_DIAS = 3
+
+// Dias que faltam para o follow up ficar disponível (0 = já pode enviar)
+export function diasParaFollowUp(reuniaoData: string | null | undefined): number {
+  const m = (reuniaoData ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!m) return 0
+  const [hy, hm, hd] = hojeISO().split('-').map(Number)
+  const passados = Math.round((Date.UTC(hy, hm - 1, hd) - Date.UTC(+m[1], +m[2] - 1, +m[3])) / 86400000)
+  return Math.max(0, FOLLOW_WA_DIAS - passados)
+}
+
+export function mensagemFollowUp(nome: string | null | undefined): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}! 🤍`,
+    '',
+    'Ficámos com um sorriso depois da nossa reunião. Foi mesmo especial sentir a ligação que se criou entre nós, e é exatamente essa ligação que adoramos ter com os nossos noivos e que depois se vê nas imagens do vosso dia.',
+    '',
+    'Passámos só para saber se já conseguiram rever com calma a nossa proposta no vosso portal e se ficou alguma questão no ar.',
+    '',
+    'Seja qual for a vossa decisão, foi um enorme prazer conhecer-vos. Estamos aqui para o que precisarem. 💛',
+    '',
+    'Um abraço,',
+    'RL PhotoVideo',
+    '',
+    'Visite-nos: www.rlphotovideo.pt',
+  ].join('\n')
+}
+
 /* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
 export function mensagemBoasVindas(nome: string | null | undefined): string {
   const quem = (nome ?? '').trim()

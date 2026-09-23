@@ -235,8 +235,8 @@ export default function CRMPage() {
       })
   }, [followIdsKey])
 
-  // Mensagens de WhatsApp já enviadas (para bloquear os botões): só Nova Entrada e Reunião
-  const waIdsKey = contacts.filter(c => ['nova', 'reuniao'].includes(colunaDe(c.status))).map(c => c.id).sort().join(',')
+  // Mensagens de WhatsApp já enviadas (para bloquear os botões): Nova Entrada, Reunião e Follow Up
+  const waIdsKey = contacts.filter(c => ['nova', 'reuniao', 'follow'].includes(colunaDe(c.status))).map(c => c.id).sort().join(',')
   useEffect(() => {
     if (!waIdsKey) return
     supabase.from('crm_status_history').select('contact_id,evento')
