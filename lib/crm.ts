@@ -84,7 +84,7 @@ export function mensagemLembreteReuniao(nome: string | null | undefined, hora?: 
   const quem = (nome ?? '').trim()
   const h = (hora ?? '').slice(0, 5)
   return [
-    `Olá${quem ? ' ' + quem : ''}! 🤍`,
+    `Olá${quem ? ' ' + quem : ''}!`,
     '',
     `Falta 1 hora para a nossa reunião${h ? ` (hoje às ${h})` : ''}.`,
     '',
@@ -103,7 +103,7 @@ export function mensagemPortalReuniao(nome: string | null | undefined, portalUrl
   const quem = (nome ?? '').trim()
   const quando = quandoReuniao(data, hora)
   return [
-    `Olá${quem ? ' ' + quem : ''}! 🤍`,
+    `Olá${quem ? ' ' + quem : ''}!`,
     '',
     `Aqui está o vosso portal da reunião${quando ? `, marcada para ${quando}` : ''}:`,
     portalUrl,
@@ -129,19 +129,19 @@ export function diasParaFollowUp(reuniaoData: string | null | undefined): number
 export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?: string | null): string {
   const quem = (nome ?? '').trim()
   const m = (dataCasamento ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
-  const dia = m ? ` a ${m[3]}/${m[2]}/${m[1]}` : ''
+  const dia = m ? ` (${m[3]}/${m[2]}/${m[1]})` : ''
   return [
-    `Olá${quem ? ' ' + quem : ''}! 🤍`,
+    `Olá${quem ? ' ' + quem : ''}!`,
     '',
-    'Ficámos com um sorriso depois da nossa reunião. Sentimos mesmo uma ligação especial convosco, e é exatamente essa ligação que depois se vê nas imagens do vosso dia.',
+    'Ainda estamos a sorrir com a nossa reunião. Há casais com quem sentimos logo que existe algo especial, e convosco foi exatamente assim. A vossa energia, a cumplicidade entre os dois, a forma como falaram do vosso dia... é isto que nos faz amar o que fazemos.',
     '',
-    `Queremos muito fazer parte do vosso casamento${dia}! Como as datas vão ficando preenchidas, gostávamos de vos garantir já o vosso dia na nossa agenda.`,
+    `Já nos imaginamos no vosso casamento${dia}: os nervos antes da cerimónia, os olhares trocados quando ninguém está a ver, as gargalhadas na festa, as lágrimas de quem mais gosta de vocês. Queremos muito ser nós a guardar tudo isso para sempre.`,
     '',
-    'Já tiveram oportunidade de rever a proposta no vosso portal? Se estiver tudo bem, basta darem-nos o ok e tratamos já de bloquear a data em vosso nome.',
+    'Por isso, gostávamos de bloquear já a vossa data na nossa agenda, antes que outro casal a reserve. Basta um "sim" da vossa parte e o dia fica guardado só para vocês.',
     '',
-    'Se tiverem alguma dúvida, estamos aqui para vos ajudar. 💛',
+    'Se ainda tiverem alguma dúvida, estamos aqui para vos ajudar em tudo o que precisarem.',
     '',
-    'Um abraço,',
+    'Um abraço grande,',
     'RL PhotoVideo',
     '',
     'Visite-nos: www.rlphotovideo.pt',
@@ -152,7 +152,7 @@ export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?
 export function mensagemBoasVindas(nome: string | null | undefined): string {
   const quem = (nome ?? '').trim()
   return [
-    `Olá${quem ? ' ' + quem : ''}! 🤍`,
+    `Olá${quem ? ' ' + quem : ''}!`,
     '',
     'Obrigado pelo vosso contacto. Já recebemos e lemos com atenção as respostas ao vosso formulário.',
     '',
