@@ -89,9 +89,12 @@ export async function GET(req: NextRequest) {
   const byNameDate = new Map<string, string>()   // "anarui|20260731" → pasta
   const byName = new Map<string, string>()        // "anarui" → pasta
   const nameCount = new Map<string, number>()     // nº de eventos com esse nome
+  const byDate = new Map<string, string>()        // "20260808" → pasta
+  const dateCount = new Map<string, number>()     // nº de eventos com pasta nessa data
   for (const ev of (evs ?? []) as any[]) {
     if (!ev.pasta_fotos) continue
     const dk = dkey(ev.data_evento)
+    if (dk) { byDate.set(dk, ev.pasta_fotos); dateCount.set(dk, (dateCount.get(dk) ?? 0) + 1) }
     const nk = norm(ev.cliente)
     if (nk) {
       if (dk) byNameDate.set(nk + '|' + dk, ev.pasta_fotos)
@@ -114,7 +117,13 @@ export async function GET(req: NextRequest) {
     // Sem data a bater: usa o nome só se NÃO houver ambiguidade (um único
     // casamento com esse nome). Se houver mais do que um, não arrisca — devolve
     // null e o pedido fica por resolver, em vez de ir para a pasta errada.
-    if ((nameCount.get(nk) ?? 0) <= 1) return byName.get(nk) ?? null
+    const nc = nameCount.get(nk) ?? 0
+    if (nc <= 1) { const n = byName.get(nk); if (n) return n }
+    // Último recurso: o nome escrito pelo cliente não bate com NENHUMA ficha
+    // (ex.: batizado com a ficha em nome dos pais, "Joana e Hugo", e o pedido
+    // como "Batizado Eva e Caetana"). Se houver UM ÚNICO evento com pasta
+    // nessa data, é esse. Com dois ou mais na mesma data, não arrisca.
+    if (nc === 0 && dk && dateCount.get(dk) === 1) return byDate.get(dk) ?? null
     return null
   }
   const comPasta = (arr: any[]) => arr.map((p: any) => ({ ...p, pasta: resolvePasta(p) }))
