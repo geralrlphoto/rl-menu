@@ -178,16 +178,15 @@ export default function PreparacaoPage() {
                 Vamos falar sobre os horários do vosso dia, partilhar dicas e sugestões e ajustar os últimos detalhes.
                 Se precisarem de mudar alguma coisa, é só dizerem-nos pelo WhatsApp.
               </p>
-              <a href={MEET_LINK} target="_blank" rel="noopener noreferrer"
-                className="mt-6 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 flex items-center gap-4 text-left hover:border-[#C9A84C]/50 transition-colors">
+              <div className="mt-6 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 flex items-center gap-4 text-left">
                 <span className="shrink-0 w-10 h-10 rounded-full border flex items-center justify-center" style={{ borderColor: 'rgba(201,168,76,0.4)', color: GOLD }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="2.5" y="6" width="13" height="12" rx="2" /><path d="M15.5 10.5l6-3.5v10l-6-3.5" strokeLinejoin="round" /></svg>
                 </span>
                 <span className="min-w-0">
                   <span className="block text-[10px] tracking-[0.3em] uppercase text-white/40">Link da videochamada</span>
-                  <span className="block text-sm text-white/85 truncate">{MEET_LINK.replace('https://', '')}</span>
+                  <span className="block text-sm text-white/85 leading-snug mt-0.5">Encontra-se na mensagem que vos enviámos por WhatsApp.</span>
                 </span>
-              </a>
+              </div>
               <a href={googleCalUrl(reserva, nome)} target="_blank" rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center gap-2 rounded-full border px-6 py-3 text-[11px] tracking-[0.25em] uppercase transition-all hover:bg-[#C9A84C] hover:text-black"
                 style={{ borderColor: GOLD, color: GOLD }}>
