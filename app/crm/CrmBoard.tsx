@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, whatsappLink, telLink, type ColunaKey,
+  fmtDataCurta, whatsappLink, mensagemBoasVindas, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -181,6 +181,17 @@ export function KanbanCard({ c, coluna, diasNoPasso, onOpen, onStatusChange, dra
         <StatusSelect value={c.status} onChange={s => onStatusChange(c.id, s)} />
         {c.orcamento && <span className="text-gold text-xs font-semibold whitespace-nowrap">{c.orcamento} €</span>}
       </div>
+
+      {coluna === 'nova' && whatsappLink(c.contato) && (
+        <a
+          href={whatsappLink(c.contato, mensagemBoasVindas(c.nome))!}
+          target="_blank" rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+          className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 transition-colors"
+        >
+          Enviar boas-vindas
+        </a>
+      )}
 
       {coluna !== 'encerrada' && (c.contato || c.email) && (
         <div className="pt-1 border-t border-white/5">

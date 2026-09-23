@@ -60,13 +60,30 @@ export function parseOrcamento(v: string | null | undefined): number {
 }
 
 // Número para wa.me: só dígitos; números PT de 9 dígitos ganham o 351
-export function whatsappLink(contato: string | null | undefined): string | null {
+export function whatsappLink(contato: string | null | undefined, texto?: string): string | null {
   let n = (contato ?? '').replace(/[^\d+]/g, '')
   if (!n) return null
   if (n.startsWith('+')) n = n.slice(1)
   else if (n.startsWith('00')) n = n.slice(2)
   else if (n.length === 9) n = '351' + n
-  return n.length >= 9 ? `https://wa.me/${n}` : null
+  if (n.length < 9) return null
+  return texto ? `https://wa.me/${n}?text=${encodeURIComponent(texto)}` : `https://wa.me/${n}`
+}
+
+/* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
+export function mensagemBoasVindas(nome: string | null | undefined): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}! 🤍`,
+    '',
+    'Obrigado pelo vosso contacto. Já recebemos e lemos com atenção as respostas ao vosso formulário.',
+    '',
+    'Gostávamos de vos ligar para uma conversa rápida de apenas 2 minutos, sem vos tomar muito tempo.',
+    '',
+    'Que dia e hora durante a semana vos dá mais jeito?',
+    '',
+    'Rui',
+  ].join('\n')
 }
 
 export function telLink(contato: string | null | undefined): string | null {
