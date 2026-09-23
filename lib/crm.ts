@@ -80,7 +80,7 @@ function quandoReuniao(data?: string | null, hora?: string | null): string {
 }
 
 /* Lembrete enviado 1 hora antes da reunião */
-export function mensagemLembreteReuniao(nome: string | null | undefined, portalUrl: string, hora?: string | null): string {
+export function mensagemLembreteReuniao(nome: string | null | undefined, hora?: string | null): string {
   const quem = (nome ?? '').trim()
   const h = (hora ?? '').slice(0, 5)
   return [
@@ -88,8 +88,7 @@ export function mensagemLembreteReuniao(nome: string | null | undefined, portalU
     '',
     `Falta 1 hora para a nossa reunião${h ? ` (hoje às ${h})` : ''}.`,
     '',
-    'Para entrarem, acedam ao link da reunião através do vosso portal:',
-    portalUrl,
+    'Para entrarem, acedam ao link da reunião através do vosso portal.',
     '',
     'Recomendamos que assistam à reunião através de um computador, para uma melhor experiência.',
     '',
