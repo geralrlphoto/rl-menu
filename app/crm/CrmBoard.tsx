@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { linkPublico } from '@/lib/site-url'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
+  fmtDataCurta, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -304,6 +304,10 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
         )
         return <WhatsAppMsgButton c={c} texto={mensagemFollowUp(c.nome, c.data_casamento)} evento="WhatsApp follow-up enviado" label="Follow up" enviados={enviados} onEnviado={onEnviado} />
       })()}
+
+      {coluna === 'follow' && (
+        <WhatsAppMsgButton c={c} texto={mensagemFecho(c.nome, c.data_casamento, portalUrl(c))} evento="WhatsApp fecho enviado" label="Aceitaram a proposta" enviados={enviados} onEnviado={onEnviado} />
+      )}
 
       {coluna !== 'encerrada' && (c.contato || c.email) && (
         <div className="pt-1 border-t border-white/5">

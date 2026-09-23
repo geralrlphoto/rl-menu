@@ -178,6 +178,34 @@ export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?
   ].join('\n')
 }
 
+/* Fecho: o casal aceitou a proposta (só na coluna Follow Up) */
+export function mensagemFecho(nome: string | null | undefined, dataCasamento?: string | null, portalUrl?: string | null): string {
+  const quem = (nome ?? '').trim()
+  const m = (dataCasamento ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  const dia = m ? ` (${m[3]}/${m[2]}/${m[1]})` : ''
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    `Que alegria enorme! Muito obrigado por nos escolherem para contar a vossa história. É uma honra fazer parte do vosso casamento${dia} e mal podemos esperar por esse dia.`,
+    '',
+    'Para avançarmos, só precisam de:',
+    `1. Aceder ao vosso portal da reunião${portalUrl ? `: ${portalUrl}` : ''}`,
+    '2. Confirmar a proposta',
+    '3. Preencher o formulário com os vossos dados',
+    '',
+    'Assim que recebermos os vossos dados, vamos preparar o vosso portal dos noivos e o contrato.',
+    '',
+    'Importante: quando receberem o portal dos noivos, têm 48 horas para efetuar a reserva. Só assim o vosso dia fica efetivamente reservado na nossa agenda.',
+    '',
+    'Mais uma vez, obrigado pela vossa confiança. Vamos criar juntos memórias para a vida!',
+    '',
+    'Um abraço grande,',
+    'RL PhotoVideo',
+    '',
+    'Visite-nos: www.rlphotovideo.pt',
+  ].join('\n')
+}
+
 /* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
 export function mensagemBoasVindas(nome: string | null | undefined): string {
   const quem = (nome ?? '').trim()

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import {
   mensagemBoasVindas, mensagemPortalReuniao, mensagemLembreteReuniao,
-  mensagemFollowUp, mensagemFollowUp2, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS,
+  mensagemFollowUp, mensagemFollowUp2, mensagemFecho, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS,
 } from '@/lib/crm'
 
 /* ──────────────────────────────────────────────────────────────
@@ -227,7 +227,7 @@ const ETAPAS: Etapa[] = [
   {
     id: 'follow', icon: '↻', titulo: 'Follow up', coluna: 'Follow Up', cor: '#fbbf24',
     resumo: `Ficaram de pensar. O 1.º follow up desbloqueia ${FOLLOW_WA_DIAS} dias depois da reunião e o 2.º ${FOLLOW2_WA_DIAS} dias depois do 1.º.`,
-    passos: [`Dia ${FOLLOW_WA_DIAS}: 1.º FOLLOW UP (emoção + bloquear a data)`, `+${FOLLOW2_WA_DIAS} dias sem resposta: 2.º FOLLOW UP`, 'Responderam? Não envies o seguinte'],
+    passos: [`Dia ${FOLLOW_WA_DIAS}: 1.º FOLLOW UP (emoção + bloquear a data)`, `+${FOLLOW2_WA_DIAS} dias sem resposta: 2.º FOLLOW UP`, 'Disseram que sim? ACEITARAM A PROPOSTA'],
     dica: 'Nunca pressiones. Um follow up caloroso vale mais do que dez insistências.',
   },
   {
@@ -259,6 +259,7 @@ function mensagensDa(etapaId: string, origem: Origem): Msg[] {
     case 'follow': return [
       { id: 'f1', label: '1.º follow up', quando: `${FOLLOW_WA_DIAS} dias após a reunião`, texto: mensagemFollowUp(EX.nome, EX.casamento), botao: 'Follow up' },
       { id: 'f2', label: '2.º follow up', quando: `${FOLLOW2_WA_DIAS} dias após o 1.º`, texto: mensagemFollowUp2(EX.nome, EX.casamento), botao: '2.º Follow up' },
+      { id: 'fecho', label: 'Aceitaram a proposta', quando: 'Quando dizem que sim', texto: mensagemFecho(EX.nome, EX.casamento, EX.portal), botao: 'Aceitaram a proposta' },
     ]
     default: return []
   }
