@@ -140,6 +140,7 @@ export default function CRMPage() {
   const [dropCol, setDropCol] = useState<ColunaKey | null>(null)
   // Última mudança de status (vinda do histórico) das leads em Follow Up
   const [ultimaMudanca, setUltimaMudanca] = useState<Record<string, string>>({})
+  const [waEnviados, setWaEnviados] = useState<Record<string, string[]>>({})
 
   useEffect(() => {
     try { setAtencaoAberta(localStorage.getItem('crm_atencao_aberta') === '1') } catch {}
@@ -233,6 +234,19 @@ export default function CRMPage() {
         setUltimaMudanca(prev => ({ ...prev, ...m }))
       })
   }, [followIdsKey])
+
+  // Mensagens de WhatsApp já enviadas (para bloquear os botões): só Nova Entrada e Reunião
+  const waIdsKey = contacts.filter(c => ['nova', 'reuniao'].includes(colunaDe(c.status))).map(c => c.id).sort().join(',')
+  useEffect(() => {
+    if (!waIdsKey) return
+    supabase.from('crm_status_history').select('contact_id,evento')
+      .in('contact_id', waIdsKey.split(',')).like('evento', 'WhatsApp%')
+      .then(({ data }) => {
+        const m: Record<string, string[]> = {}
+        for (const h of data ?? []) (m[h.contact_id] ||= []).push(h.evento)
+        setWaEnviados(prev => ({ ...prev, ...m }))
+      })
+  }, [waIdsKey])
 
 
   useEffect(() => {
@@ -581,6 +595,8 @@ export default function CRMPage() {
                         c={c}
                         coluna={col.key}
                         diasNoPasso={daysSince(ultimaMudanca[c.id] || c.status_updated_at || c.data_entrada)}
+                        enviados={waEnviados[c.id] ?? []}
+                        onEnviado={ev => setWaEnviados(prev => ({ ...prev, [c.id]: [...(prev[c.id] ?? []), ev] }))}
                         onOpen={() => setDrawerId(c.id)}
                         onStatusChange={handleStatusChange}
                         dragging={draggingId === c.id}
