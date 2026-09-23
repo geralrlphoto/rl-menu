@@ -82,7 +82,10 @@ export function mensagemBoasVindas(nome: string | null | undefined): string {
     '',
     'Que dia e hora durante a semana vos dá mais jeito?',
     '',
-    'Rui',
+    'Com os melhores cumprimentos,',
+    'RL PhotoVideo',
+    '',
+    'Visite-nos: www.rlphotovideo.pt',
   ].join('\n')
 }
 
