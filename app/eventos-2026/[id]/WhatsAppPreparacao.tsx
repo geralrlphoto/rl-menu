@@ -16,6 +16,8 @@ function fmtDia(iso: string) {
 }
 
 export default function WhatsAppPreparacao({ e }: { e: any }) {
+  // A ficha traz o id do Notion em e.id; o id interno (usado nas reservas) vem em _supabase_id
+  const evId: string = e._supabase_id ?? e.id
   const [enviadoEm, setEnviadoEm] = useState<string | null>(null)
   const [carregado, setCarregado] = useState(false)
   const [quem, setQuem] = useState<'noiva' | 'noivo'>(e.tel_noiva ? 'noiva' : 'noivo')
@@ -30,18 +32,18 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
 
   useEffect(() => {
     setCarregado(false)
-    fetch(`/api/evento-whatsapp?eventoId=${e.id}`).then(r => r.json()).then(d => {
+    fetch(`/api/evento-whatsapp?eventoId=${evId}`).then(r => r.json()).then(d => {
       const env = (d.envios ?? []).find((x: any) => x.evento === 'reuniao_preparacao')
       setEnviadoEm(env?.created_at ?? null)
     }).catch(() => {}).finally(() => setCarregado(true))
     carregarSlots()
-  }, [e.id])
+  }, [evId])
 
   const nome = nomeNoivos(e.cliente, e.nome_noiva, e.nome_noivo)
   const tel = quem === 'noiva' ? e.tel_noiva : e.tel_noivo
-  const href = whatsappLink(tel, mensagemReuniaoPreparacao(nome, e.id))
-  const linkNoivos = linkPublico(`/preparacao/${e.id}`)
-  const reserva = slots.find(s => s.evento_id === e.id) ?? null
+  const href = whatsappLink(tel, mensagemReuniaoPreparacao(nome, evId))
+  const linkNoivos = linkPublico(`/preparacao/${evId}`)
+  const reserva = slots.find(s => s.evento_id === evId) ?? null
   const livres = slots.filter(s => !s.evento_id).length
 
   let faltam: number | null = null
@@ -126,7 +128,7 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
             setEnviadoEm(new Date().toISOString())
             fetch('/api/evento-whatsapp', {
               method: 'POST', headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ eventoId: e.id, evento: 'reuniao_preparacao' }),
+              body: JSON.stringify({ eventoId: evId, evento: 'reuniao_preparacao' }),
             }).then(r => r.json()).then(d => { if (!d?.ok) setEnviadoEm(null) }).catch(() => setEnviadoEm(null))
           }}
           className={`${base} border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50`}>

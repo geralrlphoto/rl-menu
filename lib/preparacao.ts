@@ -14,12 +14,18 @@ export function hojeLisboa(): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
 }
 
-/* Evento + nome do casal (primeiros nomes do contrato, senão o campo cliente) */
+/* Evento + nome do casal (primeiros nomes do contrato, senão o campo cliente).
+   Aceita o id interno ou o id do Notion (a ficha /eventos-2026/<id> usa o do Notion)
+   e devolve sempre o id interno em `id`. */
 export async function eventoPreparacao(eventoId: string) {
   const sb = sbAdmin()
-  const { data: ev } = await sb.from('eventos_2026')
-    .select('id, referencia, cliente, data_evento, local')
-    .eq('id', eventoId).maybeSingle()
+  let ev: any = null
+  for (const tabela of ['eventos_2026', 'eventos_2027']) {
+    const { data } = await sb.from(tabela)
+      .select('id, referencia, cliente, data_evento, local')
+      .or(`id.eq.${eventoId},notion_id.eq.${eventoId}`).limit(1).maybeSingle()
+    if (data) { ev = data; break }
+  }
   if (!ev) return null
   let c: any = null
   if (ev.referencia) {

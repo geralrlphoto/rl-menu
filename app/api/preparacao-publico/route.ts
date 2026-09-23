@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   if (!ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })
 
   const sb = sbAdmin()
-  const { data: minha } = await sb.from('preparacao_slots').select('id, data, hora, formato').eq('evento_id', e).maybeSingle()
+  const { data: minha } = await sb.from('preparacao_slots').select('id, data, hora, formato').eq('evento_id', ev.id).maybeSingle()
   let livres: any[] = []
   if (!minha) {
     // Do dia seguinte até à véspera do casamento
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
 
   // Reserva só se o horário ainda estiver livre (o índice único impede 2 reservas do mesmo casal)
   const { data: slot, error } = await sbAdmin().from('preparacao_slots')
-    .update({ evento_id: e, formato, reservado_em: new Date().toISOString() })
+    .update({ evento_id: ev.id, formato, reservado_em: new Date().toISOString() })
     .eq('id', slotId).is('evento_id', null)
     .select('data, hora').maybeSingle()
   if (error) {
