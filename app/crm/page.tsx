@@ -597,6 +597,7 @@ export default function CRMPage() {
                         diasNoPasso={daysSince(ultimaMudanca[c.id] || c.status_updated_at || c.data_entrada)}
                         enviados={waEnviados[c.id] ?? []}
                         onEnviado={ev => setWaEnviados(prev => ({ ...prev, [c.id]: [...(prev[c.id] ?? []), ev] }))}
+                        onPortal={token => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, page_token: token } : x))}
                         onOpen={() => setDrawerId(c.id)}
                         onStatusChange={handleStatusChange}
                         dragging={draggingId === c.id}

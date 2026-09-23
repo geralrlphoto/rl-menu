@@ -99,11 +99,20 @@ export function ContactButtons({ c, size = 'sm' }: { c: Contact; size?: 'sm' | '
 }
 
 /* ── Botão que abre o WhatsApp com a mensagem escrita e regista o envio no histórico ── */
-function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado }: {
-  c: Contact; texto: string; evento: string; label: string
+function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPortal }: {
+  c: Contact
+  /* Com onPortal, o texto recebe o link do portal; se a lead ainda não tiver portal, é criado no clique */
+  texto: string | ((portal: string) => string)
+  evento: string; label: string
   enviados: string[]; onEnviado: (evento: string) => void
+  onPortal?: (token: string) => void
 }) {
-  const href = whatsappLink(c.contato, texto)
+  const [aCriar, setACriar] = useState(false)
+  const portal = portalUrl(c)
+  const semPortal = !!onPortal && !portal
+  const href = typeof texto === 'string'
+    ? whatsappLink(c.contato, texto)
+    : whatsappLink(c.contato, portal ? texto(portal) : '')
   if (!href) return null
   // Depois de enviado fica bloqueado (o registo no histórico é a fonte de verdade)
   if (enviados.includes(evento)) {
@@ -118,14 +127,31 @@ function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado }: {
     <a
       href={href}
       target="_blank" rel="noopener noreferrer"
-      onClick={e => {
+      onClick={async e => {
         e.stopPropagation()
+        if (semPortal) {
+          e.preventDefault()
+          if (aCriar) return
+          // Abre já a janela (senão o browser bloqueia) e só depois de criado o portal aponta para o WhatsApp
+          const w = window.open('', '_blank')
+          setACriar(true)
+          const res = await fetch('/api/lead-page/toggle-publish', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: c.id, publish: true }),
+          }).then(r => r.json()).catch(() => null)
+          setACriar(false)
+          if (!res?.token) { w?.close(); alert('Não foi possível criar o portal desta lead.'); return }
+          onPortal!(res.token)
+          const url = portalUrl({ ...c, page_token: res.token })!
+          const link = whatsappLink(c.contato, (texto as (p: string) => string)(url))!
+          if (w) w.location.href = link; else window.open(link, '_blank')
+        }
         onEnviado(evento)
         supabase.from('crm_status_history').insert({ contact_id: c.id, evento }).then(() => {})
       }}
       className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 transition-colors"
     >
-      {label}
+      {aCriar ? 'A criar portal…' : label}
     </a>
   )
 }
@@ -155,12 +181,13 @@ function AcaoLinha({ c }: { c: Contact }) {
 }
 
 /* ── CARTÃO DO QUADRO ── */
-export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onOpen, onStatusChange, dragging, onDragStart, onDragEnd }: {
+export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPortal, onOpen, onStatusChange, dragging, onDragStart, onDragEnd }: {
   c: Contact
   coluna: ColunaKey
   diasNoPasso: number
   enviados: string[]
   onEnviado: (evento: string) => void
+  onPortal: (token: string) => void
   onOpen: () => void
   onStatusChange: (id: string, s: string) => void
   dragging: boolean
@@ -230,14 +257,12 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onOpen
         <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome)} evento="WhatsApp de boas-vindas enviado" label="Boas-vindas" enviados={enviados} onEnviado={onEnviado} />
       )}
 
-      {coluna === 'reuniao' && whatsappLink(c.contato) && (portalUrl(c) ? (
+      {coluna === 'reuniao' && whatsappLink(c.contato) && (
         <div className="flex flex-col gap-1.5">
-          <WhatsAppMsgButton c={c} texto={mensagemPortalReuniao(c.nome, portalUrl(c)!, c.reuniao_data, c.reuniao_hora)} evento="WhatsApp portal da reunião enviado" label="Portal da reunião" enviados={enviados} onEnviado={onEnviado} />
-          <WhatsAppMsgButton c={c} texto={mensagemLembreteReuniao(c.nome, portalUrl(c)!, c.reuniao_hora)} evento="WhatsApp lembrete 1h enviado" label="Lembrete: falta 1 hora" enviados={enviados} onEnviado={onEnviado} />
+          <WhatsAppMsgButton c={c} texto={p => mensagemPortalReuniao(c.nome, p, c.reuniao_data, c.reuniao_hora)} evento="WhatsApp portal da reunião enviado" label="Portal da reunião" enviados={enviados} onEnviado={onEnviado} onPortal={onPortal} />
+          <WhatsAppMsgButton c={c} texto={p => mensagemLembreteReuniao(c.nome, p, c.reuniao_hora)} evento="WhatsApp lembrete 1h enviado" label="Lembrete: falta 1 hora" enviados={enviados} onEnviado={onEnviado} onPortal={onPortal} />
         </div>
-      ) : (
-        <div className="text-[11px] text-white/30">Cria o portal na ficha da lead para enviar pelo WhatsApp.</div>
-      ))}
+      )}
 
       {coluna !== 'encerrada' && (c.contato || c.email) && (
         <div className="pt-1 border-t border-white/5">
