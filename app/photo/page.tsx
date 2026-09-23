@@ -338,7 +338,19 @@ export default async function PhotoDashboard() {
         .select('id, referencia, cliente, data_evento')
         .gte('data_evento', somaDias(hojeLx, 1)).lte('data_evento', ate).limit(150)
       const lista = evs ?? []
-      if (lista.length === 0) return { evs: [], tels: [], env: [] }
+      // Reuniões de preparação já marcadas pelos noivos, na janela da faixa
+      const { data: marcadas } = await supabase.from('preparacao_slots')
+        .select('id, data, hora, formato, evento_id').not('evento_id', 'is', null)
+        .gte('data', hojeLx).lte('data', semanaDias[DIAS_AGENDA - 1]).order('hora')
+      const idsM = [...new Set((marcadas ?? []).map((m: any) => m.evento_id))]
+      const { data: evsM } = idsM.length
+        ? await supabase.from('eventos_2026').select('id, cliente').in('id', idsM)
+        : { data: [] as any[] }
+      const prepMarcadas = (marcadas ?? []).map((m: any) => ({ ...m, cliente: (evsM ?? []).find((x: any) => x.id === m.evento_id)?.cliente ?? '' }))
+      const { data: todasReservas } = lista.length
+        ? await supabase.from('preparacao_slots').select('evento_id').in('evento_id', lista.map((e: any) => e.id))
+        : { data: [] as any[] }
+      if (lista.length === 0) return { evs: [], tels: [], env: [], marcadas: prepMarcadas, reservados: [] }
       const refs = lista.map((e: any) => e.referencia).filter(Boolean)
       const [{ data: tels }, { data: env }] = await Promise.all([
         refs.length
@@ -346,15 +358,18 @@ export default async function PhotoDashboard() {
           : Promise.resolve({ data: [] as any[] }),
         supabase.from('eventos_whatsapp_envios').select('evento_id').eq('evento', 'reuniao_preparacao').in('evento_id', lista.map((e: any) => e.id)),
       ])
-      return { evs: lista, tels: tels ?? [], env: env ?? [] }
+      return { evs: lista, tels: tels ?? [], env: env ?? [], marcadas: prepMarcadas, reservados: (todasReservas ?? []).map((r: any) => r.evento_id) }
     },
     [`photo-wa-preparacao-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
   )
   const prep = await getPreparacao()
   const prepEnviados = new Set((prep.env as any[]).map(x => x.evento_id))
+  const prepReservados = new Set(prep.reservados as string[])
+  const chavePrep = (m: any) => `reuniao:prep-${m.id}:${m.data}`
+  const prepAgenda = (prep.marcadas as any[]).filter(m => !ocultos.has(chavePrep(m)))
   for (const ev of prep.evs as any[]) {
-    if (prepEnviados.has(ev.id)) continue
+    if (prepEnviados.has(ev.id) || prepReservados.has(ev.id)) continue
     const c = (prep.tels as any[]).find(t => t.referencia_evento === ev.referencia)
     const devido = somaDias(ev.data_evento, -PREPARACAO_DIAS)
     const t = {
@@ -386,6 +401,7 @@ export default async function PhotoDashboard() {
       reunioes: reunioesAgenda
         .filter((r: any) => r.reuniao_data === iso)
         .sort((a: any, b: any) => String(a.reuniao_hora ?? '').localeCompare(String(b.reuniao_hora ?? ''))),
+      preparacoes: prepAgenda.filter(m => m.data === iso),
       whatsapp: waAgenda.filter(t => t.dia === iso).sort((a, b) => b.atrasoDias - a.atrasoDias),
     }
   })
@@ -582,7 +598,7 @@ export default async function PhotoDashboard() {
   ]
   const totalCasamentosSemana = eventosSemana.filter((e: any) => e.data_evento <= semanaDias[6]).length
   const totalCasamentos30 = eventosAgenda.length
-  const totalReunioes30 = reunioesAgenda.length
+  const totalReunioes30 = reunioesAgenda.length + prepAgenda.length
 
 
 
@@ -691,7 +707,7 @@ export default async function PhotoDashboard() {
 
           <div className="agenda-scroll flex gap-2 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
             {semana.map((d, i) => {
-              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0
+              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0 || d.preparacoes.length > 0
               return (
                 <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
                   {/* Mês por cima do primeiro dia e de cada dia 1 */}
@@ -738,6 +754,21 @@ export default async function PhotoDashboard() {
                           </p>
                           <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">
                             {(r.nome ?? '').trim() || 'Sem nome'}
+                          </p>
+                        </Link>
+                        </AgendaItem>
+                      ))}
+                      {/* Reuniões de preparação marcadas pelos noivos no link */}
+                      {d.preparacoes.map((m: any) => (
+                        <AgendaItem key={`p-${m.id}`} chave={chavePrep(m)}>
+                        <Link href={`/eventos-2026/${m.evento_id}`}
+                          className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-[#C9A84C]/10"
+                          style={{ borderColor: 'rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.04)' }}>
+                          <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: 'rgba(201,168,76,0.8)' }}>
+                            Preparação {m.hora} · {m.formato === 'Presencial' ? 'Pres.' : 'Vídeo'}
+                          </p>
+                          <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">
+                            {(m.cliente ?? '').trim() || 'Noivos'}
                           </p>
                         </Link>
                         </AgendaItem>

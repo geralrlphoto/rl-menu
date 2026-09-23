@@ -32,7 +32,7 @@ const CONFIG = {
 function textoDe(t: WaTarefa): string {
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
   if (t.tipo === 'follow1') return mensagemFollowUp(t.nome, t.dataCasamento)
-  if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome)
+  if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome, t.contactId)
   return mensagemFollowUp2(t.nome, t.dataCasamento)
 }
 

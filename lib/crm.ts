@@ -1,4 +1,5 @@
 // Regras partilhadas do CRM (quadro /crm, ficha /crm/[id], sino do admin e estatísticas).
+import { linkPublico } from '@/lib/site-url'
 
 export const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Follow Up 1','Follow Up 2','Follow Up 3','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
 
@@ -220,8 +221,9 @@ export function nomeNoivos(cliente?: string | null, nomeNoiva?: string | null, n
 /* Reunião de preparação do dia: ~15 dias antes do casamento (ficha do evento e /photo) */
 export const PREPARACAO_DIAS = 15
 
-export function mensagemReuniaoPreparacao(nome: string | null | undefined): string {
+export function mensagemReuniaoPreparacao(nome: string | null | undefined, eventoId?: string | null): string {
   const quem = (nome ?? '').trim()
+  const link = eventoId ? linkPublico(`/preparacao/${eventoId}`) : null
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
@@ -229,7 +231,9 @@ export function mensagemReuniaoPreparacao(nome: string | null | undefined): stri
     '',
     'Gostávamos de marcar uma pequena reunião convosco para falarmos sobre o vosso dia: os horários, algumas dicas e sugestões nossas, e ajustar os últimos detalhes para que tudo corra na perfeição e vocês só tenham de aproveitar.',
     '',
-    'Que dia e hora vos dá mais jeito nos próximos dias? Pode ser presencial ou por videochamada, como preferirem.',
+    ...(link
+      ? ['Escolham aqui o dia e a hora que vos dá mais jeito, presencial ou por videochamada:', link]
+      : ['Que dia e hora vos dá mais jeito nos próximos dias? Pode ser presencial ou por videochamada, como preferirem.']),
     '',
     ...ASSINATURA_ABRACO,
   ].join('\n')

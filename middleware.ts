@@ -198,6 +198,9 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/partilha-token') ||
     pathname.startsWith('/r/') ||
     pathname.startsWith('/b/') ||
+    // Marcação da reunião de preparação pelos noivos (link do WhatsApp)
+    pathname.startsWith('/preparacao/') ||
+    pathname.startsWith('/api/preparacao-publico') ||
     pathname.startsWith('/secao/') ||
     pathname.startsWith('/api/batizado/') ||
     pathname.startsWith('/api/lead-page/view') ||
