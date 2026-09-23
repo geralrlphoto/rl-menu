@@ -45,6 +45,11 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
   const linkNoivos = linkPublico(`/preparacao/${evId}`)
   const reserva = slots.find(s => s.evento_id === evId) ?? null
   const livres = slots.filter(s => !s.evento_id).length
+  // O que este casal vê no link: horários livres a partir de amanhã e antes do casamento
+  const amanha = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` })()
+  const dataCas = e.data_evento ? String(e.data_evento).slice(0, 10) : null
+  const serveEste = (s: Slot) => s.data >= amanha && (!dataCas || s.data < dataCas)
+  const visiveis = slots.filter(s => !s.evento_id && serveEste(s)).length
 
   let faltam: number | null = null
   if (e.data_evento) {
@@ -146,7 +151,9 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
       ))}
 
       <div className="flex items-center justify-between gap-3 text-[10px]">
-        <a href={linkNoivos} target="_blank" rel="noopener noreferrer" className="text-white/35 hover:text-gold truncate">Ver a página dos noivos ↗</a>
+        <a href={linkNoivos} target="_blank" rel="noopener noreferrer" className="text-white/35 hover:text-gold truncate">
+          Ver a página dos noivos ↗ <span className={visiveis ? 'text-green-400/80' : 'text-amber-400'}>· {visiveis === 0 ? 'não vêem nenhum horário' : `vêem ${visiveis} horário${visiveis === 1 ? '' : 's'}`}</span>
+        </a>
         <button onClick={() => setGerir(v => !v)} className="shrink-0 tracking-[0.2em] uppercase text-white/45 hover:text-gold">
           {gerir ? 'Fechar' : `Disponibilidade (${livres} livre${livres === 1 ? '' : 's'})`}
         </button>
@@ -155,7 +162,10 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
       {/* Disponibilidade comum a todos os casais */}
       {gerir && (
         <div className="rounded-lg border border-white/10 bg-black/30 p-3 flex flex-col gap-3">
-          <p className="text-white/40 text-[11px] leading-relaxed">Horários que qualquer casal pode escolher. Quando um casal marca, o horário fica ocupado para os outros.</p>
+          <p className="text-white/40 text-[11px] leading-relaxed">
+            Horários que qualquer casal pode escolher. Quando um casal marca, o horário fica ocupado para os outros.
+            {dataCas && <> Cada casal só vê os horários <span className="text-white/70">antes do seu casamento</span>; a cinzento estão os que este casal não vê.</>}
+          </p>
           <div className="flex flex-wrap items-center gap-2">
             <input type="date" value={novaData} onChange={ev => setNovaData(ev.target.value)}
               className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-gold [color-scheme:dark]" />
@@ -179,7 +189,8 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
                         {s.hora} · {(s.cliente ?? '').trim() || 'Reservado'}
                       </span>
                     ) : (
-                      <span key={s.id} className="group text-[11px] pl-2 pr-1 py-1 rounded-md border border-white/12 text-white/75 flex items-center gap-1">
+                      <span key={s.id} title={serveEste(s) ? undefined : 'Depois do casamento deste casal (ou já passou): não aparece no link deles'}
+                        className={`group text-[11px] pl-2 pr-1 py-1 rounded-md border flex items-center gap-1 ${serveEste(s) ? 'border-white/12 text-white/75' : 'border-white/5 text-white/25 line-through decoration-white/20'}`}>
                         {s.hora}
                         <button onClick={() => remover(s.id)} aria-label="Remover horário" className="w-4 h-4 rounded text-white/30 hover:text-red-400">✕</button>
                       </span>
