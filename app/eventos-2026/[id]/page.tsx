@@ -5096,6 +5096,303 @@ export default function EventoPage() {
           </div>
         </Section>
 
+        {/* ── Ações Fotografia ── */}
+        <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
+          style={{ background: 'rgba(56,130,246,0.04)', border: '1px solid rgba(56,130,246,0.18)', boxShadow: '0 0 24px rgba(56,130,246,0.08), 0 0 6px rgba(56,130,246,0.06)' }}>
+          <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Ações Fotografia</h2>
+          <div className="flex flex-col gap-4">
+            {[
+              { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      urlKey: 'selecao',      api: '/api/send-selecao-email', prazoDias: 30 },
+              { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   urlKey: 'prewedding',   api: '/api/send-prewedding-email' },
+              { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', urlKey: 'fotos_finais', api: '/api/send-fotos-finais-email', prazoDias: 30, prazoDesde: 'selecao_recebida' as const },
+              { label: 'Galerias Online',   state: galeriasEnviada,     setState: setGaleriasEnviada,     key: 'galerias_enviada',     urlKey: 'galerias',     api: '/api/send-galerias-email', prazoDias: 7 },
+              { label: 'Enviar Maquete',    state: maqueteEnviada,      setState: setMaqueteEnviada,      key: 'maquete_enviada',      urlKey: 'maquete',      api: '/api/send-maquete-email' },
+            ].map(({ label, state, setState, key, urlKey, api, prazoDias, prazoDesde }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoDias?: number; prazoDesde?: 'selecao_recebida' }, i, arr) => {
+              const url = actionUrls[urlKey] ?? ''
+              const hasUrl = url.trim().length > 0
+              // Prazo a contar da data do casamento (só nas ações com regra)
+              const alertaOff = !!alertasOff[urlKey]
+              let prazoTxt = '', prazoPassou = false, prazoAviso = false
+              // Base do prazo: data do casamento, ou o dia em que os noivos entregaram a seleção
+              const basePrazo = prazoDesde === 'selecao_recebida' ? selecaoRecebida : evento?.data_evento
+              if (prazoDias && basePrazo) {
+                const lim = new Date(basePrazo + 'T12:00:00')
+                lim.setDate(lim.getDate() + prazoDias)
+                const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                const dias = Math.round((lim.getTime() - hoje.getTime()) / 86400000)
+                prazoPassou = dias < 0
+                // Aviso a laranja nos últimos 5 dias — exceto Galerias Online, que só avisa quando passa
+                prazoAviso = dias >= 0 && dias <= 5 && urlKey !== 'galerias'
+                prazoTxt = `${prazoAviso ? '⚠ ' : ''}Prazo ${prazoDias} dias · até ${lim.toLocaleDateString('pt-PT')}${dias < 0 ? ` · ${Math.abs(dias)}d atraso` : dias === 0 ? ' · termina hoje' : ` · faltam ${dias}d`}`
+              }
+              async function alternarAlerta() {
+                if (!evento?.referencia) return
+                const novo = !alertaOff
+                setAlertasOff(prev => ({ ...prev, [urlKey]: novo }))
+                await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_alerta_off`]: novo } } }) })
+              }
+              return (
+              <div key={key}>
+                {/* Row: label + date + send button */}
+                <div className="flex items-center justify-between gap-3 mb-2">
+                  <div>
+                    <p className="text-sm text-white/70">{label}</p>
+                    <p className="text-xs mt-0.5 font-mono">
+                      {state
+                        ? <span className="text-green-400/70">{new Date(state).toLocaleDateString('pt-PT')}</span>
+                        : <span className="text-white/25">Pendente</span>
+                      }
+                    </p>
+                    {/* Prazo da entrega — só enquanto está pendente */}
+                    {!state && prazoTxt && (
+                      <p className={`text-[10px] mt-1 tracking-wide ${alertaOff ? 'text-white/25 line-through' : prazoPassou ? 'text-red-400' : prazoAviso ? 'text-orange-400' : 'text-white/35'}`}>
+                        {prazoTxt}
+                      </p>
+                    )}
+                    {!state && prazoDias && alertaOff && (
+                      <p className="text-[10px] mt-0.5 text-white/35">Alerta desligado · não conta como atraso</p>
+                    )}
+                    {prazoDesde === 'selecao_recebida' && (
+                      <label className="flex items-center gap-2 mt-2 text-[10px] tracking-wide text-white/45">
+                        Seleção recebida dos noivos
+                        <input
+                          type="date"
+                          value={selecaoRecebida}
+                          onChange={async ev => {
+                            const v = ev.target.value
+                            setSelecaoRecebida(v)
+                            if (!evento?.referencia) return
+                            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { selecao_recebida: v || null } } }) })
+                          }}
+                          className="bg-zinc-900 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-2 py-1 text-[11px] text-white/75 focus:outline-none [color-scheme:dark]"
+                        />
+                      </label>
+                    )}
+                    {!state && prazoDesde === 'selecao_recebida' && !selecaoRecebida && (
+                      <p className="text-[10px] mt-1 text-white/30">O prazo de 30 dias começa quando indicares esta data</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Desligar/ligar o alerta de prazo desta entrega */}
+                    {!state && prazoDias && prazoTxt && (
+                      <button
+                        onClick={alternarAlerta}
+                        title={alertaOff ? 'Ligar alerta de prazo' : 'Desligar alerta de prazo (não conta como atraso)'}
+                        className={`h-9 px-3 flex items-center gap-1.5 rounded-xl border text-[10px] tracking-[0.15em] uppercase transition-all ${alertaOff
+                          ? 'border-white/10 text-white/35 hover:text-white/70 hover:border-white/25'
+                          : 'border-amber-400/30 text-amber-300/80 hover:bg-amber-400/10 hover:border-amber-400/50'}`}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                          <path d="M13.73 21a2 2 0 01-3.46 0" />
+                          {alertaOff && <path d="M3 3l18 18" />}
+                        </svg>
+                        {alertaOff ? 'Ligar alerta' : 'Desligar alerta'}
+                      </button>
+                    )}
+                    {state && (
+                      <button
+                        onClick={async () => {
+                          if (!evento?.referencia) return
+                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: null } } }) })
+                          setState(null)
+                        }}
+                        className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                        title="Repor como Pendente"
+                      >✕</button>
+                    )}
+                    <button
+                      disabled={!hasUrl}
+                      onClick={async () => {
+                        if (!evento?.referencia || !hasUrl) return
+                        const today = new Date().toISOString().split('T')[0]
+                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today, [`${urlKey}_url`]: url } } }) })
+                        setState(today)
+                        const emailRes = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url, referencia: evento.referencia }) })
+                        if (!emailRes.ok) {
+                          const err = await emailRes.json().catch(() => ({}))
+                          alert(err?.error ?? 'Erro ao enviar email')
+                        }
+                      }}
+                      className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
+                        state ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                        : hasUrl ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
+                        : 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
+                      }`}
+                    >
+                      {state ? '✓ Enviado' : !hasUrl ? '🔒 Bloqueado' : label}
+                    </button>
+                  </div>
+                </div>
+                {/* URL input */}
+                <div className="flex items-center gap-2">
+                  <input
+                    type="url"
+                    placeholder="Cole aqui o URL para desbloquear..."
+                    value={url}
+                    onChange={e => setActionUrls(prev => ({ ...prev, [urlKey]: e.target.value }))}
+                    onBlur={async () => {
+                      if (!evento?.referencia) {
+                        alert('❌ Este evento não tem referência preenchida em Supabase (eventos_2026.referencia). O URL NÃO foi guardado. Preenche a coluna "referencia" da row deste evento no Supabase e tenta de novo.')
+                        return
+                      }
+                      const res = await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: url } } }) })
+                      if (!res.ok) {
+                        const err = await res.json().catch(() => ({}))
+                        alert(`❌ Falhou a guardar o URL: ${err?.error ?? res.statusText}`)
+                      }
+                    }}
+                    className="flex-1 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 placeholder-white/20 focus:outline-none focus:border-blue-400/40 transition-colors"
+                  />
+                  {url && (
+                    <button
+                      onClick={async () => {
+                        if (!evento?.referencia) return
+                        const newUrls = { ...actionUrls, [urlKey]: '' }
+                        setActionUrls(newUrls)
+                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: '' } } }) })
+                      }}
+                      className="text-white/20 hover:text-white/50 transition-colors text-xs"
+                    >✕</button>
+                  )}
+                </div>
+                {i < arr.length - 1 && <div className="h-px bg-white/5 mt-4" />}
+              </div>
+            )})}
+          </div>
+        </div>
+
+        {/* ── Ações Vídeo ── */}
+        <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
+          style={{ background: 'rgba(180,140,40,0.04)', border: '1px solid rgba(180,140,40,0.2)', boxShadow: '0 0 24px rgba(180,140,40,0.07), 0 0 6px rgba(180,140,40,0.05)' }}>
+          <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(200,165,80,0.75)' }}>Ações Vídeo</h2>
+          <div className="flex flex-col gap-4">
+            {[
+              { label: 'Vídeo Pré-Wedding', state: videoPreWeddingEnviada, setState: setVideoPreWeddingEnviada, key: 'video_prewedding_enviada', urlKey: 'video_prewedding', api: '/api/send-video-prewedding-email' },
+              { label: 'Wedding Film', state: weddingFilmEnviada, setState: setWeddingFilmEnviada, key: 'wedding_film_enviada', urlKey: 'wedding_film', api: '/api/send-wedding-film-email', prazoUteis: 180 },
+              { label: 'Same Day Edit', state: sameDayEditEnviada, setState: setSameDayEditEnviada, key: 'same_day_edit_enviada', urlKey: 'same_day_edit', api: '/api/send-same-day-edit-email' },
+              { label: 'Teaser / Trailer', state: teaserEnviada, setState: setTeaserEnviada, key: 'teaser_enviada', urlKey: 'teaser', api: '/api/send-teaser-email' },
+            ].map(({ label, state, setState, key, urlKey, api, prazoUteis }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoUteis?: number }) => {
+              const url = videoActionUrls[urlKey] ?? ''
+              const hasUrl = url.trim().length > 0
+              // Wedding Film: prazo de 180 dias úteis (seg–sex) após o casamento,
+              // aviso a laranja nos últimos 30 dias, vermelho quando passa.
+              const alertaOff = !!alertasOff[urlKey]
+              let prazoTxt = '', prazoPassou = false, prazoAviso = false
+              if (prazoUteis && evento?.data_evento) {
+                const lim = new Date(String(evento.data_evento).slice(0, 10) + 'T12:00:00')
+                let c = 0
+                while (c < prazoUteis) { lim.setDate(lim.getDate() + 1); const w = lim.getDay(); if (w !== 0 && w !== 6) c++ }
+                const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
+                const dias = Math.round((lim.getTime() - hoje.getTime()) / 86400000)
+                prazoPassou = dias < 0
+                prazoAviso = dias >= 0 && dias <= 30
+                prazoTxt = `${prazoAviso ? '⚠ ' : ''}Prazo ${prazoUteis} dias úteis · até ${lim.toLocaleDateString('pt-PT')}${dias < 0 ? ` · ${Math.abs(dias)}d atraso` : dias === 0 ? ' · termina hoje' : ` · faltam ${dias}d`}`
+              }
+              async function alternarAlerta() {
+                if (!evento?.referencia) return
+                const novo = !alertaOff
+                setAlertasOff(prev => ({ ...prev, [urlKey]: novo }))
+                await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_alerta_off`]: novo } } }) })
+              }
+              return (
+                <div key={key}>
+                  <div className="flex items-center justify-between gap-3 mb-2">
+                    <div>
+                      <p className="text-sm text-white/70">{label}</p>
+                      <p className="text-xs mt-0.5 font-mono">
+                        {state
+                          ? <span className="text-green-400/70">{new Date(state).toLocaleDateString('pt-PT')}</span>
+                          : <span className="text-white/25">Pendente</span>
+                        }
+                      </p>
+                      {!state && prazoTxt && (
+                        <p className={`text-[10px] mt-1 tracking-wide ${alertaOff ? 'text-white/25 line-through' : prazoPassou ? 'text-red-400' : prazoAviso ? 'text-orange-400' : 'text-white/35'}`}>
+                          {prazoTxt}
+                        </p>
+                      )}
+                      {!state && prazoUteis && alertaOff && (
+                        <p className="text-[10px] mt-0.5 text-white/35">Alerta desligado · não conta como atraso</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {!state && prazoUteis && prazoTxt && (
+                        <button
+                          onClick={alternarAlerta}
+                          title={alertaOff ? 'Ligar alerta de prazo' : 'Desligar alerta de prazo (não conta como atraso)'}
+                          className={`h-9 px-3 flex items-center gap-1.5 rounded-xl border text-[10px] tracking-[0.15em] uppercase transition-all ${alertaOff
+                            ? 'border-white/10 text-white/35 hover:text-white/70 hover:border-white/25'
+                            : 'border-amber-400/30 text-amber-300/80 hover:bg-amber-400/10 hover:border-amber-400/50'}`}>
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
+                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                            <path d="M13.73 21a2 2 0 01-3.46 0" />
+                            {alertaOff && <path d="M3 3l18 18" />}
+                          </svg>
+                          {alertaOff ? 'Ligar alerta' : 'Desligar alerta'}
+                        </button>
+                      )}
+                      {state && (
+                        <button
+                          onClick={async () => {
+                            if (!evento?.referencia) return
+                            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: null } } }) })
+                            setState(null)
+                          }}
+                          className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                          title="Repor como Pendente"
+                        >✕</button>
+                      )}
+                      <button
+                        disabled={!hasUrl}
+                        onClick={async () => {
+                          if (!evento?.referencia || !hasUrl) return
+                          const today = new Date().toISOString().split('T')[0]
+                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today, [`${urlKey}_url`]: url } } }) })
+                          setState(today)
+                          const emailRes = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url, referencia: evento.referencia }) })
+                          if (!emailRes.ok) {
+                            const err = await emailRes.json().catch(() => ({}))
+                            alert(err?.error ?? 'Erro ao enviar email')
+                          }
+                        }}
+                        className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
+                          state ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                          : hasUrl ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
+                          : 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
+                        }`}
+                      >
+                        {state ? '✓ Enviado' : !hasUrl ? '🔒 Bloqueado' : label}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="url"
+                      placeholder="Cole aqui o URL para desbloquear..."
+                      value={url}
+                      onChange={e => setVideoActionUrls(prev => ({ ...prev, [urlKey]: e.target.value }))}
+                      onBlur={async () => {
+                        if (!evento?.referencia) return
+                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: url } } }) })
+                      }}
+                      className="flex-1 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 placeholder-white/20 focus:outline-none focus:border-yellow-400/30 transition-colors"
+                    />
+                    {url && (
+                      <button
+                        onClick={async () => {
+                          if (!evento?.referencia) return
+                          setVideoActionUrls(prev => ({ ...prev, [urlKey]: '' }))
+                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: '' } } }) })
+                        }}
+                        className="text-white/20 hover:text-white/50 transition-colors text-xs"
+                      >✕</button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
         {/* ── Histórico de tudo o que aconteceu neste evento ── */}
         <HistoricoSection eventoId={e.id} referencia={e.referencia ?? undefined} />
 
@@ -5573,171 +5870,6 @@ export default function EventoPage() {
           </div>
         </div>
 
-        {/* ── Ações Fotografia ── */}
-        <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
-          style={{ background: 'rgba(56,130,246,0.04)', border: '1px solid rgba(56,130,246,0.18)', boxShadow: '0 0 24px rgba(56,130,246,0.08), 0 0 6px rgba(56,130,246,0.06)' }}>
-          <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Ações Fotografia</h2>
-          <div className="flex flex-col gap-4">
-            {[
-              { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      urlKey: 'selecao',      api: '/api/send-selecao-email', prazoDias: 30 },
-              { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   urlKey: 'prewedding',   api: '/api/send-prewedding-email' },
-              { label: 'Fotos Finais',      state: fotosFinaisEnviada,  setState: setFotosFinaisEnviada,  key: 'fotos_finais_enviada', urlKey: 'fotos_finais', api: '/api/send-fotos-finais-email', prazoDias: 30, prazoDesde: 'selecao_recebida' as const },
-              { label: 'Galerias Online',   state: galeriasEnviada,     setState: setGaleriasEnviada,     key: 'galerias_enviada',     urlKey: 'galerias',     api: '/api/send-galerias-email', prazoDias: 7 },
-              { label: 'Enviar Maquete',    state: maqueteEnviada,      setState: setMaqueteEnviada,      key: 'maquete_enviada',      urlKey: 'maquete',      api: '/api/send-maquete-email' },
-            ].map(({ label, state, setState, key, urlKey, api, prazoDias, prazoDesde }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoDias?: number; prazoDesde?: 'selecao_recebida' }, i, arr) => {
-              const url = actionUrls[urlKey] ?? ''
-              const hasUrl = url.trim().length > 0
-              // Prazo a contar da data do casamento (só nas ações com regra)
-              const alertaOff = !!alertasOff[urlKey]
-              let prazoTxt = '', prazoPassou = false, prazoAviso = false
-              // Base do prazo: data do casamento, ou o dia em que os noivos entregaram a seleção
-              const basePrazo = prazoDesde === 'selecao_recebida' ? selecaoRecebida : evento?.data_evento
-              if (prazoDias && basePrazo) {
-                const lim = new Date(basePrazo + 'T12:00:00')
-                lim.setDate(lim.getDate() + prazoDias)
-                const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
-                const dias = Math.round((lim.getTime() - hoje.getTime()) / 86400000)
-                prazoPassou = dias < 0
-                // Aviso a laranja nos últimos 5 dias — exceto Galerias Online, que só avisa quando passa
-                prazoAviso = dias >= 0 && dias <= 5 && urlKey !== 'galerias'
-                prazoTxt = `${prazoAviso ? '⚠ ' : ''}Prazo ${prazoDias} dias · até ${lim.toLocaleDateString('pt-PT')}${dias < 0 ? ` · ${Math.abs(dias)}d atraso` : dias === 0 ? ' · termina hoje' : ` · faltam ${dias}d`}`
-              }
-              async function alternarAlerta() {
-                if (!evento?.referencia) return
-                const novo = !alertaOff
-                setAlertasOff(prev => ({ ...prev, [urlKey]: novo }))
-                await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_alerta_off`]: novo } } }) })
-              }
-              return (
-              <div key={key}>
-                {/* Row: label + date + send button */}
-                <div className="flex items-center justify-between gap-3 mb-2">
-                  <div>
-                    <p className="text-sm text-white/70">{label}</p>
-                    <p className="text-xs mt-0.5 font-mono">
-                      {state
-                        ? <span className="text-green-400/70">{new Date(state).toLocaleDateString('pt-PT')}</span>
-                        : <span className="text-white/25">Pendente</span>
-                      }
-                    </p>
-                    {/* Prazo da entrega — só enquanto está pendente */}
-                    {!state && prazoTxt && (
-                      <p className={`text-[10px] mt-1 tracking-wide ${alertaOff ? 'text-white/25 line-through' : prazoPassou ? 'text-red-400' : prazoAviso ? 'text-orange-400' : 'text-white/35'}`}>
-                        {prazoTxt}
-                      </p>
-                    )}
-                    {!state && prazoDias && alertaOff && (
-                      <p className="text-[10px] mt-0.5 text-white/35">Alerta desligado · não conta como atraso</p>
-                    )}
-                    {prazoDesde === 'selecao_recebida' && (
-                      <label className="flex items-center gap-2 mt-2 text-[10px] tracking-wide text-white/45">
-                        Seleção recebida dos noivos
-                        <input
-                          type="date"
-                          value={selecaoRecebida}
-                          onChange={async ev => {
-                            const v = ev.target.value
-                            setSelecaoRecebida(v)
-                            if (!evento?.referencia) return
-                            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { selecao_recebida: v || null } } }) })
-                          }}
-                          className="bg-zinc-900 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-2 py-1 text-[11px] text-white/75 focus:outline-none [color-scheme:dark]"
-                        />
-                      </label>
-                    )}
-                    {!state && prazoDesde === 'selecao_recebida' && !selecaoRecebida && (
-                      <p className="text-[10px] mt-1 text-white/30">O prazo de 30 dias começa quando indicares esta data</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* Desligar/ligar o alerta de prazo desta entrega */}
-                    {!state && prazoDias && prazoTxt && (
-                      <button
-                        onClick={alternarAlerta}
-                        title={alertaOff ? 'Ligar alerta de prazo' : 'Desligar alerta de prazo (não conta como atraso)'}
-                        className={`h-9 px-3 flex items-center gap-1.5 rounded-xl border text-[10px] tracking-[0.15em] uppercase transition-all ${alertaOff
-                          ? 'border-white/10 text-white/35 hover:text-white/70 hover:border-white/25'
-                          : 'border-amber-400/30 text-amber-300/80 hover:bg-amber-400/10 hover:border-amber-400/50'}`}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                          <path d="M13.73 21a2 2 0 01-3.46 0" />
-                          {alertaOff && <path d="M3 3l18 18" />}
-                        </svg>
-                        {alertaOff ? 'Ligar alerta' : 'Desligar alerta'}
-                      </button>
-                    )}
-                    {state && (
-                      <button
-                        onClick={async () => {
-                          if (!evento?.referencia) return
-                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: null } } }) })
-                          setState(null)
-                        }}
-                        className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
-                        title="Repor como Pendente"
-                      >✕</button>
-                    )}
-                    <button
-                      disabled={!hasUrl}
-                      onClick={async () => {
-                        if (!evento?.referencia || !hasUrl) return
-                        const today = new Date().toISOString().split('T')[0]
-                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today, [`${urlKey}_url`]: url } } }) })
-                        setState(today)
-                        const emailRes = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url, referencia: evento.referencia }) })
-                        if (!emailRes.ok) {
-                          const err = await emailRes.json().catch(() => ({}))
-                          alert(err?.error ?? 'Erro ao enviar email')
-                        }
-                      }}
-                      className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
-                        state ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                        : hasUrl ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
-                        : 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
-                      }`}
-                    >
-                      {state ? '✓ Enviado' : !hasUrl ? '🔒 Bloqueado' : label}
-                    </button>
-                  </div>
-                </div>
-                {/* URL input */}
-                <div className="flex items-center gap-2">
-                  <input
-                    type="url"
-                    placeholder="Cole aqui o URL para desbloquear..."
-                    value={url}
-                    onChange={e => setActionUrls(prev => ({ ...prev, [urlKey]: e.target.value }))}
-                    onBlur={async () => {
-                      if (!evento?.referencia) {
-                        alert('❌ Este evento não tem referência preenchida em Supabase (eventos_2026.referencia). O URL NÃO foi guardado. Preenche a coluna "referencia" da row deste evento no Supabase e tenta de novo.')
-                        return
-                      }
-                      const res = await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: url } } }) })
-                      if (!res.ok) {
-                        const err = await res.json().catch(() => ({}))
-                        alert(`❌ Falhou a guardar o URL: ${err?.error ?? res.statusText}`)
-                      }
-                    }}
-                    className="flex-1 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 placeholder-white/20 focus:outline-none focus:border-blue-400/40 transition-colors"
-                  />
-                  {url && (
-                    <button
-                      onClick={async () => {
-                        if (!evento?.referencia) return
-                        const newUrls = { ...actionUrls, [urlKey]: '' }
-                        setActionUrls(newUrls)
-                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: '' } } }) })
-                      }}
-                      className="text-white/20 hover:text-white/50 transition-colors text-xs"
-                    >✕</button>
-                  )}
-                </div>
-                {i < arr.length - 1 && <div className="h-px bg-white/5 mt-4" />}
-              </div>
-            )})}
-          </div>
-        </div>
-
         {/* ── Fotos Convidados (Email 15d / CTT 30d) ── */}
         <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
           style={{ background: 'rgba(56,130,246,0.04)', border: '1px solid rgba(56,130,246,0.18)' }}>
@@ -5830,138 +5962,6 @@ export default function EventoPage() {
                     )}
                     {evento?.referencia && (
                       <WorkflowAdminButton referencia={evento.referencia} workflowKey={workflowKey} label={label} workflow={workflow} onWorkflowChange={setWorkflow} />
-                    )}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* ── Ações Vídeo ── */}
-        <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
-          style={{ background: 'rgba(180,140,40,0.04)', border: '1px solid rgba(180,140,40,0.2)', boxShadow: '0 0 24px rgba(180,140,40,0.07), 0 0 6px rgba(180,140,40,0.05)' }}>
-          <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(200,165,80,0.75)' }}>Ações Vídeo</h2>
-          <div className="flex flex-col gap-4">
-            {[
-              { label: 'Vídeo Pré-Wedding', state: videoPreWeddingEnviada, setState: setVideoPreWeddingEnviada, key: 'video_prewedding_enviada', urlKey: 'video_prewedding', api: '/api/send-video-prewedding-email' },
-              { label: 'Wedding Film', state: weddingFilmEnviada, setState: setWeddingFilmEnviada, key: 'wedding_film_enviada', urlKey: 'wedding_film', api: '/api/send-wedding-film-email', prazoUteis: 180 },
-              { label: 'Same Day Edit', state: sameDayEditEnviada, setState: setSameDayEditEnviada, key: 'same_day_edit_enviada', urlKey: 'same_day_edit', api: '/api/send-same-day-edit-email' },
-              { label: 'Teaser / Trailer', state: teaserEnviada, setState: setTeaserEnviada, key: 'teaser_enviada', urlKey: 'teaser', api: '/api/send-teaser-email' },
-            ].map(({ label, state, setState, key, urlKey, api, prazoUteis }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoUteis?: number }) => {
-              const url = videoActionUrls[urlKey] ?? ''
-              const hasUrl = url.trim().length > 0
-              // Wedding Film: prazo de 180 dias úteis (seg–sex) após o casamento,
-              // aviso a laranja nos últimos 30 dias, vermelho quando passa.
-              const alertaOff = !!alertasOff[urlKey]
-              let prazoTxt = '', prazoPassou = false, prazoAviso = false
-              if (prazoUteis && evento?.data_evento) {
-                const lim = new Date(String(evento.data_evento).slice(0, 10) + 'T12:00:00')
-                let c = 0
-                while (c < prazoUteis) { lim.setDate(lim.getDate() + 1); const w = lim.getDay(); if (w !== 0 && w !== 6) c++ }
-                const hoje = new Date(); hoje.setHours(12, 0, 0, 0)
-                const dias = Math.round((lim.getTime() - hoje.getTime()) / 86400000)
-                prazoPassou = dias < 0
-                prazoAviso = dias >= 0 && dias <= 30
-                prazoTxt = `${prazoAviso ? '⚠ ' : ''}Prazo ${prazoUteis} dias úteis · até ${lim.toLocaleDateString('pt-PT')}${dias < 0 ? ` · ${Math.abs(dias)}d atraso` : dias === 0 ? ' · termina hoje' : ` · faltam ${dias}d`}`
-              }
-              async function alternarAlerta() {
-                if (!evento?.referencia) return
-                const novo = !alertaOff
-                setAlertasOff(prev => ({ ...prev, [urlKey]: novo }))
-                await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_alerta_off`]: novo } } }) })
-              }
-              return (
-                <div key={key}>
-                  <div className="flex items-center justify-between gap-3 mb-2">
-                    <div>
-                      <p className="text-sm text-white/70">{label}</p>
-                      <p className="text-xs mt-0.5 font-mono">
-                        {state
-                          ? <span className="text-green-400/70">{new Date(state).toLocaleDateString('pt-PT')}</span>
-                          : <span className="text-white/25">Pendente</span>
-                        }
-                      </p>
-                      {!state && prazoTxt && (
-                        <p className={`text-[10px] mt-1 tracking-wide ${alertaOff ? 'text-white/25 line-through' : prazoPassou ? 'text-red-400' : prazoAviso ? 'text-orange-400' : 'text-white/35'}`}>
-                          {prazoTxt}
-                        </p>
-                      )}
-                      {!state && prazoUteis && alertaOff && (
-                        <p className="text-[10px] mt-0.5 text-white/35">Alerta desligado · não conta como atraso</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {!state && prazoUteis && prazoTxt && (
-                        <button
-                          onClick={alternarAlerta}
-                          title={alertaOff ? 'Ligar alerta de prazo' : 'Desligar alerta de prazo (não conta como atraso)'}
-                          className={`h-9 px-3 flex items-center gap-1.5 rounded-xl border text-[10px] tracking-[0.15em] uppercase transition-all ${alertaOff
-                            ? 'border-white/10 text-white/35 hover:text-white/70 hover:border-white/25'
-                            : 'border-amber-400/30 text-amber-300/80 hover:bg-amber-400/10 hover:border-amber-400/50'}`}>
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5">
-                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                            <path d="M13.73 21a2 2 0 01-3.46 0" />
-                            {alertaOff && <path d="M3 3l18 18" />}
-                          </svg>
-                          {alertaOff ? 'Ligar alerta' : 'Desligar alerta'}
-                        </button>
-                      )}
-                      {state && (
-                        <button
-                          onClick={async () => {
-                            if (!evento?.referencia) return
-                            await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: null } } }) })
-                            setState(null)
-                          }}
-                          className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
-                          title="Repor como Pendente"
-                        >✕</button>
-                      )}
-                      <button
-                        disabled={!hasUrl}
-                        onClick={async () => {
-                          if (!evento?.referencia || !hasUrl) return
-                          const today = new Date().toISOString().split('T')[0]
-                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [key]: today, [`${urlKey}_url`]: url } } }) })
-                          setState(today)
-                          const emailRes = await fetch(api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email_noiva: evento.email_noiva, nome_noiva: evento.nome_noiva, nome_noivo: evento.nome_noivo, url, referencia: evento.referencia }) })
-                          if (!emailRes.ok) {
-                            const err = await emailRes.json().catch(() => ({}))
-                            alert(err?.error ?? 'Erro ao enviar email')
-                          }
-                        }}
-                        className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-[0.2em] uppercase border transition-all ${
-                          state ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                          : hasUrl ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30 hover:bg-yellow-500/30'
-                          : 'bg-white/[0.03] text-white/20 border-white/10 cursor-not-allowed'
-                        }`}
-                      >
-                        {state ? '✓ Enviado' : !hasUrl ? '🔒 Bloqueado' : label}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="url"
-                      placeholder="Cole aqui o URL para desbloquear..."
-                      value={url}
-                      onChange={e => setVideoActionUrls(prev => ({ ...prev, [urlKey]: e.target.value }))}
-                      onBlur={async () => {
-                        if (!evento?.referencia) return
-                        await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: url } } }) })
-                      }}
-                      className="flex-1 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 placeholder-white/20 focus:outline-none focus:border-yellow-400/30 transition-colors"
-                    />
-                    {url && (
-                      <button
-                        onClick={async () => {
-                          if (!evento?.referencia) return
-                          setVideoActionUrls(prev => ({ ...prev, [urlKey]: '' }))
-                          await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { [`${urlKey}_url`]: '' } } }) })
-                        }}
-                        className="text-white/20 hover:text-white/50 transition-colors text-xs"
-                      >✕</button>
                     )}
                   </div>
                 </div>
