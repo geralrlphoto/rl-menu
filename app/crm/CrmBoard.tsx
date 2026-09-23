@@ -257,7 +257,18 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
         <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome)} evento="WhatsApp de boas-vindas enviado" label="Boas-vindas" enviados={enviados} onEnviado={onEnviado} />
       )}
 
-      {coluna === 'reuniao' && whatsappLink(c.contato) && (
+      {coluna === 'reuniao' && whatsappLink(c.contato) && !(c.reuniao_data && c.reuniao_hora) && (
+        <Link
+          href={`/crm/${c.id}`}
+          onClick={e => e.stopPropagation()}
+          title="Preenche a data e a hora da reunião na ficha para desbloquear o envio"
+          className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-white/10 text-white/40 bg-white/[0.03] hover:text-white/70 hover:border-white/25 transition-colors"
+        >
+          🔒 Agendar reunião
+        </Link>
+      )}
+
+      {coluna === 'reuniao' && whatsappLink(c.contato) && c.reuniao_data && c.reuniao_hora && (
         <div className="flex flex-col gap-1.5">
           <WhatsAppMsgButton c={c} texto={p => mensagemPortalReuniao(c.nome, p, c.reuniao_data, c.reuniao_hora)} evento="WhatsApp portal da reunião enviado" label="Portal da reunião" enviados={enviados} onEnviado={onEnviado} onPortal={onPortal} />
           <WhatsAppMsgButton c={c} texto={p => mensagemLembreteReuniao(c.nome, p, c.reuniao_hora)} evento="WhatsApp lembrete 1h enviado" label="Lembrete: falta 1 hora" enviados={enviados} onEnviado={onEnviado} onPortal={onPortal} />
