@@ -33,7 +33,6 @@ export default function PreparacaoPage() {
   const [reserva, setReserva] = useState<Reserva | null>(null)
   const [dia, setDia] = useState<string | null>(null)
   const [slotId, setSlotId] = useState<string | null>(null)
-  const [formato, setFormato] = useState<'Presencial' | 'Videochamada'>('Videochamada')
   const [aEnviar, setAEnviar] = useState(false)
   const [aviso, setAviso] = useState('')
 
@@ -56,7 +55,7 @@ export default function PreparacaoPage() {
     setAEnviar(true); setAviso('')
     const d = await fetch('/api/preparacao-publico', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ e: id, slotId, formato }),
+      body: JSON.stringify({ e: id, slotId }),
     }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
     setAEnviar(false)
     if (d.ok) { setReserva(d.reserva); return }
@@ -94,7 +93,7 @@ export default function PreparacaoPage() {
         {estado === 'ok' && !reserva && (
           <>
             <p className="text-center text-white/70 italic text-lg sm:text-xl leading-relaxed" style={SERIF}>
-              {nome ? `Olá ${nome}! ` : ''}Escolham o dia e a hora que vos dá mais jeito para conversarmos sobre o vosso dia.
+              {nome ? `Olá ${nome}! ` : ''}Escolham o dia e a hora que vos dá mais jeito para conversarmos, por videochamada, sobre o vosso dia.
             </p>
 
             {aviso && <p className="mt-6 text-center text-sm text-amber-300/90">{aviso}</p>}
@@ -133,18 +132,6 @@ export default function PreparacaoPage() {
                       </button>
                     )
                   })}
-                </div>
-
-                {/* Formato */}
-                <p className="mt-8 mb-3 text-[10px] tracking-[0.35em] uppercase text-white/35">3 · Como preferem</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {(['Videochamada', 'Presencial'] as const).map(f => (
-                    <button key={f} onClick={() => setFormato(f)}
-                      className="rounded-lg border py-3 text-sm tracking-[0.15em] uppercase transition-all"
-                      style={{ borderColor: formato === f ? GOLD : 'rgba(255,255,255,0.1)', color: formato === f ? GOLD : 'rgba(255,255,255,0.5)', background: formato === f ? 'rgba(201,168,76,0.08)' : 'transparent' }}>
-                      {f}
-                    </button>
-                  ))}
                 </div>
 
                 <button onClick={confirmar} disabled={!slotId || aEnviar}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, UUID_RE, FORMATOS } from '@/lib/preparacao'
+import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, UUID_RE } from '@/lib/preparacao'
 
 // Público (link enviado aos noivos por WhatsApp): /preparacao/<id do evento>.
 // GET mostra os horários livres; POST reserva um e avisa o admin por email.
@@ -30,8 +30,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { e, slotId, formato } = await req.json().catch(() => ({}))
-  if (!UUID_RE.test(e ?? '') || !UUID_RE.test(slotId ?? '') || !FORMATOS.includes(formato)) {
+  // A reunião de preparação é sempre por videochamada
+  const { e, slotId } = await req.json().catch(() => ({}))
+  const formato = 'Videochamada'
+  if (!UUID_RE.test(e ?? '') || !UUID_RE.test(slotId ?? '')) {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
   }
   const ev = await eventoPreparacao(e)

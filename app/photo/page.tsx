@@ -765,7 +765,7 @@ export default async function PhotoDashboard() {
                           className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-[#C9A84C]/10"
                           style={{ borderColor: 'rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.04)' }}>
                           <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: 'rgba(201,168,76,0.8)' }}>
-                            Preparação {m.hora} · {m.formato === 'Presencial' ? 'Pres.' : 'Vídeo'}
+                            Preparação {m.hora} · Vídeo
                           </p>
                           <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">
                             {(m.cliente ?? '').trim() || 'Noivos'}
