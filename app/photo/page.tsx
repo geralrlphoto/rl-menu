@@ -350,18 +350,26 @@ export default async function PhotoDashboard() {
       const { data: todasReservas } = lista.length
         ? await supabase.from('preparacao_slots').select('evento_id').in('evento_id', lista.map((e: any) => e.id))
         : { data: [] as any[] }
-      if (lista.length === 0) return { evs: [], tels: [], env: [], briefings: [], marcadas: prepMarcadas, reservados: [] }
+      if (lista.length === 0) return { evs: [], tels: [], env: [], briefings: [], equipaComBriefing: [], marcadas: prepMarcadas, reservados: [] }
       const refs = lista.map((e: any) => e.referencia).filter(Boolean)
       const ids = lista.map((e: any) => e.id)
-      const [{ data: tels }, { data: env }, { data: briefings }] = await Promise.all([
+      const [{ data: tels }, { data: env }, { data: briefings }, { data: equipaBf }] = await Promise.all([
         refs.length
           ? supabase.from('dados_contrato_cps').select('referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs)
           : Promise.resolve({ data: [] as any[] }),
         supabase.from('eventos_whatsapp_envios').select('evento_id, evento, created_at')
           .in('evento', ['reuniao_preparacao', 'lembrete_briefing', 'lembrete_preparacao']).in('evento_id', ids),
         supabase.from('preparacao_eventos').select('evento_id, briefing_enviado_em').in('evento_id', ids),
+        // Briefing já enviado à equipa (algum freelancer do casamento tem o link)
+        refs.length
+          ? supabase.from('freelancer_casamentos').select('referencia').in('referencia', refs).not('briefing_url', 'is', null)
+          : Promise.resolve({ data: [] as any[] }),
       ])
-      return { evs: lista, tels: tels ?? [], env: env ?? [], briefings: briefings ?? [], marcadas: prepMarcadas, reservados: (todasReservas ?? []).map((r: any) => r.evento_id) }
+      return {
+        evs: lista, tels: tels ?? [], env: env ?? [], briefings: briefings ?? [],
+        equipaComBriefing: [...new Set((equipaBf ?? []).map((x: any) => x.referencia))],
+        marcadas: prepMarcadas, reservados: (todasReservas ?? []).map((r: any) => r.evento_id),
+      }
     },
     [`photo-wa-preparacao-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
@@ -424,6 +432,21 @@ export default async function PhotoDashboard() {
   }
   const waPorEnviar = waAgenda.filter(t => !t.futura).length
 
+  // Enviar o briefing à equipa: 3 dias antes do evento, enquanto ninguém da equipa o tiver recebido
+  const BRIEFING_EQUIPA_DIAS = 3
+  const equipaJaTem = new Set(prep.equipaComBriefing as string[])
+  const chaveBriefingEquipa = (id: string) => `evento:briefing-equipa:${id}`
+  const briefingEquipa = (prep.evs as any[])
+    .filter(ev => !equipaJaTem.has(ev.referencia) && !ocultos.has(chaveBriefingEquipa(ev.id)))
+    .map(ev => {
+      const devido = somaDias(ev.data_evento, -BRIEFING_EQUIPA_DIAS)
+      return {
+        id: ev.id, nome: nomeNoivos(ev.cliente), dataEvento: ev.data_evento,
+        dia: devido < hojeLx ? hojeLx : devido, futura: devido > hojeLx,
+        faltam: difDias(ev.data_evento, hojeLx),
+      }
+    })
+
   const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
   const semana = semanaDias.map((iso, i) => {
@@ -442,6 +465,7 @@ export default async function PhotoDashboard() {
         .filter((r: any) => r.reuniao_data === iso)
         .sort((a: any, b: any) => String(a.reuniao_hora ?? '').localeCompare(String(b.reuniao_hora ?? ''))),
       preparacoes: prepAgenda.filter(m => m.data === iso),
+      briefingEquipa: briefingEquipa.filter(b => b.dia === iso),
       whatsapp: waAgenda.filter(t => t.dia === iso).sort((a, b) => b.atrasoDias - a.atrasoDias),
     }
   })
@@ -748,7 +772,7 @@ export default async function PhotoDashboard() {
 
           <div className="agenda-scroll flex gap-2 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
             {semana.map((d, i) => {
-              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0 || d.preparacoes.length > 0
+              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0 || d.preparacoes.length > 0 || d.briefingEquipa.length > 0
               return (
                 <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
                   {/* Mês por cima do primeiro dia e de cada dia 1 */}
@@ -811,6 +835,19 @@ export default async function PhotoDashboard() {
                           <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">
                             {(m.cliente ?? '').trim() || 'Noivos'}
                           </p>
+                        </Link>
+                        </AgendaItem>
+                      ))}
+                      {/* Enviar o briefing à equipa (abre a ficha, onde está o envio) */}
+                      {d.briefingEquipa.map(b => (
+                        <AgendaItem key={`be-${b.id}`} chave={chaveBriefingEquipa(b.id)}>
+                        <Link href={`/eventos-2026/${b.id}`} title="Abrir a ficha para enviar o briefing à equipa"
+                          className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-amber-400/10"
+                          style={{ borderColor: b.futura ? 'rgba(251,191,36,0.15)' : 'rgba(251,191,36,0.45)', background: b.futura ? 'transparent' : 'rgba(251,191,36,0.05)' }}>
+                          <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: b.futura ? 'rgba(251,191,36,0.45)' : '#fbbf24' }}>
+                            Briefing à equipa{!b.futura && b.faltam >= 0 ? ` · ${b.faltam === 0 ? 'hoje' : b.faltam === 1 ? 'amanhã' : `faltam ${b.faltam}d`}` : ''}
+                          </p>
+                          <p className={`text-[11px] leading-tight truncate mt-0.5 ${b.futura ? 'text-white/45' : 'text-white/85 group-hover:text-white'}`}>{b.nome || 'Evento'}</p>
                         </Link>
                         </AgendaItem>
                       ))}
