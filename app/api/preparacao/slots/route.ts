@@ -6,10 +6,14 @@ import { sbAdmin, hojeLisboa, UUID_RE } from '@/lib/preparacao'
 // GET lista os horários a partir de hoje; POST acrescenta; DELETE remove um livre;
 // PATCH { id, libertar: true } cancela a reserva de um horário.
 
-export async function GET() {
+// ?tipo=prewedding para a disponibilidade das sessões pré-wedding (por defeito: reunião de preparação)
+const tipoDe = (v: string | null | undefined) => (v === 'prewedding' ? 'prewedding' : 'preparacao')
+
+export async function GET(req: NextRequest) {
   const sb = sbAdmin()
   const { data, error } = await sb.from('preparacao_slots')
-    .select('id, data, hora, evento_id, formato, reservado_em')
+    .select('id, data, hora, local, evento_id, formato, reservado_em')
+    .eq('tipo', tipoDe(req.nextUrl.searchParams.get('tipo')))
     .gte('data', hojeLisboa()).order('data').order('hora').limit(300)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const ids = [...new Set((data ?? []).map(s => s.evento_id).filter(Boolean))] as string[]
@@ -22,12 +26,14 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { data, hora } = await req.json().catch(() => ({}))
+  const { data, hora, tipo, local } = await req.json().catch(() => ({}))
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data ?? '') || !/^\d{2}:\d{2}$/.test(hora ?? '')) {
     return NextResponse.json({ error: 'Data ou hora inválida' }, { status: 400 })
   }
   if (data < hojeLisboa()) return NextResponse.json({ error: 'Essa data já passou' }, { status: 400 })
-  const { error } = await sbAdmin().from('preparacao_slots').upsert({ data, hora }, { onConflict: 'data,hora', ignoreDuplicates: true })
+  const linha: Record<string, string> = { data, hora, tipo: tipoDe(tipo) }
+  if (typeof local === 'string' && local.trim()) linha.local = local.trim().slice(0, 200)
+  const { error } = await sbAdmin().from('preparacao_slots').upsert(linha, { onConflict: 'tipo,data,hora', ignoreDuplicates: true })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

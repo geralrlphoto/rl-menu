@@ -16,10 +16,10 @@ export async function GET(req: NextRequest) {
   if (!ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })
 
   const sb = sbAdmin()
-  const { data: minha } = await sb.from('preparacao_slots').select('id, data, hora, formato').eq('evento_id', ev.id).maybeSingle()
+  const { data: minha } = await sb.from('preparacao_slots').select('id, data, hora, formato').eq('tipo', 'preparacao').eq('evento_id', ev.id).maybeSingle()
   // Horários livres do dia seguinte até à véspera do evento (também servem para alterar a data)
   const amanha = new Date(hojeLisboa() + 'T12:00:00Z'); amanha.setUTCDate(amanha.getUTCDate() + 1)
-  let q = sb.from('preparacao_slots').select('id, data, hora').is('evento_id', null)
+  let q = sb.from('preparacao_slots').select('id, data, hora').eq('tipo', 'preparacao').is('evento_id', null)
     .gte('data', amanha.toISOString().slice(0, 10)).order('data').order('hora').limit(200)
   if (ev.data_evento) q = q.lt('data', ev.data_evento)
   const { data: livresData } = await q
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
 
   const sb = sbAdmin()
   // Alterar a data: liberta a marcação atual e tenta a nova; se falhar, repõe a antiga
-  const { data: anterior } = await sb.from('preparacao_slots').select('id, data, hora').eq('evento_id', ev.id).maybeSingle()
+  const { data: anterior } = await sb.from('preparacao_slots').select('id, data, hora').eq('tipo', 'preparacao').eq('evento_id', ev.id).maybeSingle()
   const { data: prep } = await sb.from('preparacao_eventos').select('reativado_ate, briefing_enviado_em').eq('evento_id', ev.id).maybeSingle()
   if (estadoLink(ev.data_evento, anterior ?? null, prep?.reativado_ate).expirado) {
     return NextResponse.json({ error: 'Este link já expirou. Falem connosco pelo WhatsApp, por favor.' }, { status: 410 })
@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
   // Reserva só se o horário ainda estiver livre (o índice único impede 2 reservas do mesmo casal)
   const { data: slot, error } = await sb.from('preparacao_slots')
     .update({ evento_id: ev.id, formato, reservado_em: new Date().toISOString() })
-    .eq('id', slotId).is('evento_id', null)
+    .eq('id', slotId).eq('tipo', 'preparacao').is('evento_id', null)
     .select('data, hora').maybeSingle()
   if (error || !slot) {
     if (anterior) {
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         .eq('id', anterior.id).is('evento_id', null)
     }
     if (error) {
-      const jaTem = /preparacao_slots_evento_unico|duplicate/i.test(error.message)
+      const jaTem = /evento_tipo_unico|duplicate/i.test(error.message)
       return NextResponse.json({ error: jaTem ? 'Já têm uma reunião marcada.' : 'Não foi possível marcar.' }, { status: 409 })
     }
     return NextResponse.json({ error: 'Esse horário acabou de ser escolhido. Escolham outro, por favor.' }, { status: 409 })

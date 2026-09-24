@@ -7,6 +7,7 @@ import Link from 'next/link'
 import EventoTarefas from './EventoTarefas'
 import WhatsAppPreparacao from './WhatsAppPreparacao'
 import BriefingNoivos from './BriefingNoivos'
+import WhatsAppPreWedding from './WhatsAppPreWedding'
 
 // ─── Serviços extra ────────────────────────────────────────────────────────────
 const SERVICOS_OPCOES = [
@@ -2726,7 +2727,7 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
 // ─── BookingSection (Marcação Sessão/Reunião) — sincroniza com portal ───────
 type BookingSlot = { id: string; date: string; time: string; local: string }
 
-function BookingSectionFicha({ referencia }: { referencia?: string }) {
+function BookingSectionFicha({ referencia, evento }: { referencia?: string; evento?: any }) {
   const [loading, setLoading] = useState(true)
   const [exists, setExists]   = useState(false)
   const [tipo, setTipo]       = useState<'sessao' | 'reuniao'>('sessao')
@@ -2979,6 +2980,9 @@ function BookingSectionFicha({ referencia }: { referencia?: string }) {
       {!temServico && (
         <p className="text-[11px] text-white/30 italic">Este evento não tem serviço de Pré-Wedding. Marca a caixa acima se o serviço estiver contratado para desbloquear a marcação.</p>
       )}
+
+      {/* Marcação da sessão pelos noivos, por link enviado no WhatsApp */}
+      {temServico && evento && tipoEvento === 'casamento' && <WhatsAppPreWedding e={evento} />}
 
       {/* Proposta de Pré-Wedding — email automático a 60 dias do casamento */}
       <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-4 flex flex-col gap-2">
@@ -3741,7 +3745,7 @@ function DrawerBloco({ label, sub, children, width = 820, defaultOpen = false }:
 }
 
 // ─── Drawer Agendamento & Notas (abre da direita, tabs, fecha) ────────────────
-function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
+function AgendamentoNotasDrawer({ referencia, evento }: { referencia?: string; evento?: any }) {
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<'marcacao' | 'notas'>('marcacao')
 
@@ -3807,7 +3811,7 @@ function AgendamentoNotasDrawer({ referencia }: { referencia?: string }) {
         {/* Conteúdo */}
         <div style={{ padding: 20 }}>
           {open && (tab === 'marcacao'
-            ? <BookingSectionFicha referencia={referencia} />
+            ? <BookingSectionFicha referencia={referencia} evento={evento} />
             : <NotasSection referencia={referencia} />)}
         </div>
       </aside>
@@ -4566,7 +4570,7 @@ export default function EventoPage() {
       <BlocoHeader num="III">Agendamento & Notas</BlocoHeader>
 
       {/* ── Marcação + Notas em painel lateral (drawer) ── */}
-      <AgendamentoNotasDrawer referencia={e.referencia ?? undefined} />
+      <AgendamentoNotasDrawer referencia={e.referencia ?? undefined} evento={e} />
 
       <BlocoHeader num="IV">Comercial</BlocoHeader>
 

@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const sb = sbAdmin()
   const [{ data: reserva }, { data: prep }] = await Promise.all([
-    sb.from('preparacao_slots').select('data, hora').eq('evento_id', ev.id).maybeSingle(),
+    sb.from('preparacao_slots').select('data, hora').eq('tipo', 'preparacao').eq('evento_id', ev.id).maybeSingle(),
     sb.from('preparacao_eventos').select('briefing_enviado_em, reativado_ate').eq('evento_id', ev.id).maybeSingle(),
   ])
   if (estadoLink(ev.data_evento, reserva ?? null, prep?.reativado_ate).expirado) {

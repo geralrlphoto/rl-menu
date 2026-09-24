@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const sb = sbAdmin()
   const [{ data: prep }, { data: reserva }] = await Promise.all([
     sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, briefing_atualizado_em, reativado_ate').eq('evento_id', ev.id).maybeSingle(),
-    sb.from('preparacao_slots').select('data, hora').eq('evento_id', ev.id).maybeSingle(),
+    sb.from('preparacao_slots').select('data, hora').eq('tipo', 'preparacao').eq('evento_id', ev.id).maybeSingle(),
   ])
   return NextResponse.json({
     ok: true,

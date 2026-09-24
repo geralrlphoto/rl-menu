@@ -201,6 +201,9 @@ export async function middleware(request: NextRequest) {
     // Marcação da reunião de preparação pelos noivos (link do WhatsApp)
     pathname.startsWith('/preparacao/') ||
     pathname.startsWith('/api/preparacao-publico') ||
+    // Marcação da sessão pré-wedding pelos noivos (link do WhatsApp)
+    pathname.startsWith('/prewedding/') ||
+    pathname.startsWith('/api/prewedding-publico') ||
     pathname.startsWith('/secao/') ||
     pathname.startsWith('/api/batizado/') ||
     pathname.startsWith('/api/lead-page/view') ||

@@ -6,7 +6,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
-import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
+import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -333,14 +333,15 @@ export default async function PhotoDashboard() {
   // Reunião de preparação: casamentos a até 30 + 15 dias; a tarefa cai 15 dias antes do evento
   const getPreparacao = unstable_cache(
     async () => {
-      const ate = somaDias(hojeLx, DIAS_AGENDA + PREPARACAO_DIAS)
+      // Até onde é preciso olhar: o alerta mais antecipado é o do pré-wedding (30 dias)
+      const ate = somaDias(hojeLx, DIAS_AGENDA + Math.max(PREPARACAO_DIAS, PREWEDDING_ALERTA_DIAS))
       const { data: evs } = await supabase.from('eventos_2026')
         .select('id, referencia, cliente, data_evento, tipo_evento, nome_crianca')
         .gte('data_evento', somaDias(hojeLx, 1)).lte('data_evento', ate).limit(150)
       const lista = evs ?? []
       // Reuniões de preparação já marcadas pelos noivos, na janela da faixa
       const { data: marcadas } = await supabase.from('preparacao_slots')
-        .select('id, data, hora, formato, evento_id').not('evento_id', 'is', null)
+        .select('id, tipo, data, hora, local, formato, evento_id').not('evento_id', 'is', null)
         .gte('data', hojeLx).lte('data', semanaDias[DIAS_AGENDA - 1]).order('hora')
       const idsM = [...new Set((marcadas ?? []).map((m: any) => m.evento_id))]
       const { data: evsM } = idsM.length
@@ -348,27 +349,34 @@ export default async function PhotoDashboard() {
         : { data: [] as any[] }
       const prepMarcadas = (marcadas ?? []).map((m: any) => ({ ...m, cliente: (evsM ?? []).find((x: any) => x.id === m.evento_id)?.cliente ?? '' }))
       const { data: todasReservas } = lista.length
-        ? await supabase.from('preparacao_slots').select('evento_id').in('evento_id', lista.map((e: any) => e.id))
+        ? await supabase.from('preparacao_slots').select('evento_id, tipo').in('evento_id', lista.map((e: any) => e.id))
         : { data: [] as any[] }
-      if (lista.length === 0) return { evs: [], tels: [], env: [], briefings: [], equipaComBriefing: [], marcadas: prepMarcadas, reservados: [] }
+      if (lista.length === 0) return { evs: [], tels: [], env: [], briefings: [], equipaComBriefing: [], comPreWedding: [], marcadas: prepMarcadas, reservados: [], reservadosPw: [] }
       const refs = lista.map((e: any) => e.referencia).filter(Boolean)
       const ids = lista.map((e: any) => e.id)
-      const [{ data: tels }, { data: env }, { data: briefings }, { data: equipaBf }] = await Promise.all([
+      const [{ data: tels }, { data: env }, { data: briefings }, { data: equipaBf }, { data: pwPortais }] = await Promise.all([
         refs.length
           ? supabase.from('dados_contrato_cps').select('referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs)
           : Promise.resolve({ data: [] as any[] }),
         supabase.from('eventos_whatsapp_envios').select('evento_id, evento, created_at')
-          .in('evento', ['reuniao_preparacao', 'lembrete_briefing', 'lembrete_preparacao']).in('evento_id', ids),
+          .in('evento', ['reuniao_preparacao', 'lembrete_briefing', 'lembrete_preparacao', 'prewedding_link']).in('evento_id', ids),
         supabase.from('preparacao_eventos').select('evento_id, briefing_enviado_em').in('evento_id', ids),
         // Briefing já enviado à equipa (algum freelancer do casamento tem o link)
         refs.length
           ? supabase.from('freelancer_casamentos').select('referencia').in('referencia', refs).not('briefing_url', 'is', null)
           : Promise.resolve({ data: [] as any[] }),
+        // Casamentos com serviço pré-wedding (caixa na ficha › Marcação)
+        refs.length
+          ? supabase.from('portais').select('referencia').in('referencia', refs).eq('settings->>preWeddingServico', 'true')
+          : Promise.resolve({ data: [] as any[] }),
       ])
       return {
         evs: lista, tels: tels ?? [], env: env ?? [], briefings: briefings ?? [],
         equipaComBriefing: [...new Set((equipaBf ?? []).map((x: any) => x.referencia))],
-        marcadas: prepMarcadas, reservados: (todasReservas ?? []).map((r: any) => r.evento_id),
+        comPreWedding: (pwPortais ?? []).map((x: any) => x.referencia),
+        marcadas: prepMarcadas,
+        reservados: (todasReservas ?? []).filter((r: any) => r.tipo !== 'prewedding').map((r: any) => r.evento_id),
+        reservadosPw: (todasReservas ?? []).filter((r: any) => r.tipo === 'prewedding').map((r: any) => r.evento_id),
       }
     },
     [`photo-wa-preparacao-${hojeLx}`],
@@ -383,6 +391,8 @@ export default async function PhotoDashboard() {
   const prepReservados = new Set(prep.reservados as string[])
   const chavePrep = (m: any) => `reuniao:prep-${m.id}:${m.data}`
   const prepAgenda = (prep.marcadas as any[]).filter(m => !ocultos.has(chavePrep(m)))
+  const reservadosPw = new Set(prep.reservadosPw as string[])
+  const comPreWedding = new Set(prep.comPreWedding as string[])
   const dadosEvento = (ev: any) => {
     const c = (prep.tels as any[]).find(t => t.referencia_evento === ev.referencia)
     return {
@@ -418,8 +428,23 @@ export default async function PhotoDashboard() {
     }
     if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
   }
+  // Marcar pré-wedding: 30 dias antes do casamento, se tiver o serviço e ainda não houver link nem sessão
+  for (const ev of prep.evs as any[]) {
+    if (!comPreWedding.has(ev.referencia) || ehBatizado(ev.tipo_evento)) continue
+    if (envPorEvento[ev.id]?.prewedding_link || reservadosPw.has(ev.id)) continue
+    const devido = somaDias(ev.data_evento, -PREWEDDING_ALERTA_DIAS)
+    const t = {
+      tipo: 'prewedding' as const, contactId: ev.id, ...dadosEvento(ev),
+      reuniaoHora: null, dataCasamento: ev.data_evento,
+      dia: devido < hojeLx ? hojeLx : devido,
+      atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
+    }
+    if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
+  }
+
   // Lembrete 1h antes da reunião de preparação: no próprio dia da reunião
   for (const m of prep.marcadas as any[]) {
+    if (m.tipo === 'prewedding') continue
     if (m.data !== hojeLx || envPorEvento[m.evento_id]?.lembrete_preparacao) continue
     const ev = (prep.evs as any[]).find(e => e.id === m.evento_id)
     const d = ev ? dadosEvento(ev) : { nome: m.cliente ?? '', contato: null, batizado: null }
@@ -830,11 +855,12 @@ export default async function PhotoDashboard() {
                           className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-[#C9A84C]/10"
                           style={{ borderColor: 'rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.04)' }}>
                           <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: 'rgba(201,168,76,0.8)' }}>
-                            Preparação {m.hora} · Vídeo
+                            {m.tipo === 'prewedding' ? `Pré-wedding ${m.hora}` : `Preparação ${m.hora} · Vídeo`}
                           </p>
                           <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">
                             {(m.cliente ?? '').trim() || 'Noivos'}
                           </p>
+                          {m.tipo === 'prewedding' && m.local && <p className="text-[9px] text-white/35 truncate mt-0.5">{m.local}</p>}
                         </Link>
                         </AgendaItem>
                       ))}

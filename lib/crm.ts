@@ -298,6 +298,25 @@ export function mensagemLembretePreparacao(nome: string | null | undefined, hora
   ].join('\n')
 }
 
+/* Sessão pré-wedding: alerta no /photo a 30 dias do casamento (se tiver o serviço) */
+export const PREWEDDING_ALERTA_DIAS = 30
+
+export function mensagemPreWedding(nome: string | null | undefined, eventoId: string): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Chegou uma das partes que mais adoramos: a vossa sessão pré-wedding! É o momento perfeito para ficarem à vontade connosco e com a câmara, e para criarmos juntos imagens lindas antes do grande dia.',
+    '',
+    'Escolham aqui o dia, a hora e o local que mais gostarem, entre os que temos disponíveis:',
+    linkPublico(`/prewedding/${eventoId}`),
+    '',
+    'Se precisarem de alterar a data, basta voltarem ao mesmo link e clicarem em "Alterar data da sessão".',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
 /* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
 export function mensagemBoasVindas(nome: string | null | undefined): string {
   const quem = (nome ?? '').trim()
