@@ -12,7 +12,7 @@ type Reserva = { data: string; hora: string; local: string | null }
 
 const SERIF = { fontFamily: "'Cormorant Garamond', serif" }
 const GOLD = '#C9A84C'
-const HERO = '/eventos-hero-2026.webp'
+const HERO = '/prewedding-hero.webp' // foto do Guia Pré-Wedding do portal (casal ao pôr do sol)
 const SEMANA = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
 const DURACAO_MIN = 120
 
@@ -108,7 +108,7 @@ export default function PreWeddingPage() {
 
       {/* ── Foto ── */}
       <section className="relative h-[46vh] min-h-[320px] lg:h-screen lg:sticky lg:top-0 overflow-hidden">
-        <img src={HERO} alt="" className="absolute inset-0 w-full h-full object-cover scale-105 animate-[kenburns_18s_ease-out_forwards]" />
+        <img src={HERO} alt="" className="absolute inset-0 w-full h-full object-cover scale-105 animate-[kenburns_18s_ease-out_forwards]" style={{ objectPosition: '42% 50%' }} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 to-black/10" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#070707] via-transparent to-transparent lg:hidden" />
         <div className="relative h-full flex flex-col justify-end lg:justify-center px-6 sm:px-12 pb-10 lg:pb-0 max-w-xl">
