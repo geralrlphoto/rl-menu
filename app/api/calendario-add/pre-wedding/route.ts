@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { identidadeParaRef } from '@/lib/portal-identidade'
 
 function db() {
   return createClient(
@@ -30,14 +31,29 @@ export async function POST(req: Request) {
   const supabase = db()
 
   // Carrega settings atuais
-  const { data: row, error: fetchErr } = await supabase
+  const { data: existing, error: fetchErr } = await supabase
     .from('portais')
     .select('settings, noiva, noivo')
     .eq('referencia', referencia)
-    .single()
+    .maybeSingle()
 
-  if (fetchErr || !row) {
-    return NextResponse.json({ error: 'Portal não encontrado para esta referência' }, { status: 404 })
+  if (fetchErr) return NextResponse.json({ error: fetchErr.message }, { status: 500 })
+
+  // Casamento ainda sem portal: cria a linha já com a identidade dos noivos
+  // (CPS ou ficha do evento) só para guardar o PW. Criar o portal depois
+  // (POST /api/portais) preserva estas settings.
+  let row = existing
+  if (!row) {
+    const seed = await identidadeParaRef(supabase, referencia)
+    const { data: created, error: insErr } = await supabase
+      .from('portais')
+      .insert({ referencia, ...seed.row, settings: seed.settings })
+      .select('settings, noiva, noivo')
+      .single()
+    if (insErr || !created) {
+      return NextResponse.json({ error: insErr?.message ?? 'Não foi possível guardar o PW' }, { status: 500 })
+    }
+    row = created
   }
 
   const settings = row.settings ?? {}

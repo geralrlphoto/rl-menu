@@ -591,6 +591,7 @@ export default function CalendarClient({
       const d = await res.json()
       if (res.ok) {
         setPwOpen(false)
+        setPwPortais([]) // recarrega a lista na próxima abertura (PW / portal novos)
         // Salta o TimeBlocks para o dia do PW + força re-sync
         window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: pwDate, resync: true } }))
         startTransition(() => router.refresh())
@@ -1790,10 +1791,9 @@ export default function CalendarClient({
                     <div className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-black/30 divide-y divide-white/5">
                       {lista.length === 0 && <div className="px-3 py-2 text-xs text-white/40">Nenhum casamento encontrado</div>}
                       {lista.map(p => (
-                        <button key={p.referencia} type="button" disabled={p.sem_portal}
+                        <button key={p.referencia} type="button"
                           onClick={() => setPwReferencia(p.referencia)}
-                          title={p.sem_portal ? 'Este casamento ainda não tem portal. Cria o portal para poder marcar o PW.' : undefined}
-                          className="w-full text-left px-3 py-2 hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+                          className="w-full text-left px-3 py-2 hover:bg-white/5">
                           <div className="text-sm text-white truncate">{nomesDe(p) || '(sem nome)'}</div>
                           <div className="text-[11px] text-white/40">
                             {p.referencia}

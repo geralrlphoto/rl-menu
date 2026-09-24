@@ -11,7 +11,7 @@ function db() {
 // GET /api/calendario-add/portais-list — lista dos portais (casamentos)
 // para escolher onde marcar um pré-wedding.
 // Inclui também os casamentos de eventos_2026 que ainda não têm portal
-// (sem_portal: true), para se ver que existem; não podem receber PW.
+// (sem_portal: true), marcar o PW cria-lhes a linha em portais.
 // Devolve { portais: [{ referencia, noiva, noivo, cliente, data_evento, has_pw, pw_date, pw_time, sem_portal }] }
 export async function GET() {
   const supabase = db()
