@@ -251,6 +251,9 @@ export function mensagemReuniaoPreparacao(nome: string | null | undefined, event
     '',
     'No dia e à hora marcados, é só entrarem na videochamada por este link:',
     MEET_LINK,
+    ...(link
+      ? ['', 'Se precisarem de alterar a data, basta voltarem ao mesmo link e clicarem em "Alterar data da reunião". O calendário volta a aparecer com os horários disponíveis.']
+      : []),
     '',
     ...ASSINATURA_ABRACO,
   ].join('\n')

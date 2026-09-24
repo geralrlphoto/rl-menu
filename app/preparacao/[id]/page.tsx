@@ -63,6 +63,7 @@ export default function PreparacaoPage() {
   const [aEnviar, setAEnviar] = useState(false)
   const [aviso, setAviso] = useState('')
   const [acabouDeMarcar, setAcabouDeMarcar] = useState(false)
+  const [aAlterar, setAAlterar] = useState(false)
 
   const carregar = () => {
     fetch(`/api/preparacao-publico?e=${id}`).then(r => r.json()).then(d => {
@@ -81,7 +82,7 @@ export default function PreparacaoPage() {
   const meses = useMemo(() => [...new Set(slots.map(s => s.data.slice(0, 7)))].sort(), [slots])
   const horas = slots.filter(s => s.data === dia)
   const escolhido = slots.find(s => s.id === slotId) ?? null
-  const passo = reserva ? 3 : escolhido ? 3 : dia ? 2 : 1
+  const passo = escolhido ? 3 : dia ? 2 : 1
 
   // Textos que mudam entre casamento e batizado
   const oEvento = batizado ? (crianca ? `o batizado de ${crianca}` : 'o batizado') : 'o vosso dia'
@@ -115,10 +116,14 @@ export default function PreparacaoPage() {
     setAEnviar(true); setAviso('')
     const d = await fetch('/api/preparacao-publico', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ e: id, slotId }),
+      body: JSON.stringify({ e: id, slotId, alterar: aAlterar }),
     }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
     setAEnviar(false)
-    if (d.ok) { setReserva(d.reserva); setAcabouDeMarcar(true); return }
+    if (d.ok) {
+      setReserva(d.reserva); setAcabouDeMarcar(true); setAAlterar(false); setSlotId(null); setDia(null)
+      carregar() // o horário antigo volta a ficar livre na lista
+      return
+    }
     setAviso(d.error || 'Não foi possível marcar.')
     setSlotId(null); carregar()
   }
@@ -169,7 +174,7 @@ export default function PreparacaoPage() {
           )}
 
           {/* ── Confirmado ── */}
-          {estado === 'ok' && reserva && (
+          {estado === 'ok' && reserva && !aAlterar && (
             <div className="flex flex-col items-center text-center pt-4 lg:pt-16">
               <div className="relative w-24 h-24">
                 {acabouDeMarcar && Array.from({ length: 14 }).map((_, i) => (
@@ -203,12 +208,27 @@ export default function PreparacaoPage() {
                 style={{ borderColor: GOLD, color: GOLD }}>
                 + Adicionar ao calendário
               </a>
+              <button onClick={() => { setAAlterar(true); setAcabouDeMarcar(false); setAviso('') }}
+                className="mt-4 text-[11px] tracking-[0.25em] uppercase text-white/45 hover:text-[#C9A84C] underline underline-offset-4 decoration-white/20 transition-colors">
+                Alterar data da reunião
+              </button>
             </div>
           )}
 
           {/* ── Escolher ── */}
-          {estado === 'ok' && !reserva && (
+          {estado === 'ok' && (!reserva || aAlterar) && (
             <>
+              {/* A alterar: lembra o horário atual, que se mantém até confirmarem outro */}
+              {reserva && aAlterar && (
+                <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <p className="text-[10px] tracking-[0.3em] uppercase text-white/40">Marcada atualmente</p>
+                    <p className="text-xl font-light mt-0.5 truncate" style={SERIF}>{diaLongo(reserva.data)} · {reserva.hora}</p>
+                  </div>
+                  <button onClick={() => { setAAlterar(false); setSlotId(null); setDia(null) }}
+                    className="shrink-0 text-[10px] tracking-[0.25em] uppercase text-white/45 hover:text-[#C9A84C] transition-colors">Manter</button>
+                </div>
+              )}
               {/* Progresso */}
               <div className="flex items-center gap-3 mb-8">
                 {['O dia', 'A hora', 'Confirmar'].map((t, i) => {
@@ -311,7 +331,7 @@ export default function PreparacaoPage() {
                       className="relative overflow-hidden mt-5 w-full rounded-xl py-4 text-[12px] font-semibold tracking-[0.3em] uppercase transition-all disabled:opacity-25 enabled:hover:shadow-[0_0_30px_rgba(201,168,76,0.35)]"
                       style={{ background: GOLD, color: '#000' }}>
                       {escolhido && !aEnviar && <span className="absolute inset-y-0 -left-1/3 w-1/3 bg-white/30 skew-x-[-20deg] animate-[brilho_2.4s_ease-in-out_infinite]" />}
-                      <span className="relative">{aEnviar ? 'A marcar…' : 'Confirmar reunião'}</span>
+                      <span className="relative">{aEnviar ? 'A marcar…' : aAlterar ? 'Confirmar nova data' : 'Confirmar reunião'}</span>
                     </button>
                   </div>
                 </>
