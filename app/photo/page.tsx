@@ -5,7 +5,7 @@ import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
-import { AgendaItem } from '@/app/components/AgendaItem'
+import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 
 // Server-render por request — não tenta gerar estaticamente no build.
@@ -274,7 +274,7 @@ export default async function PhotoDashboard() {
       const { data } = await supabase.from('photo_agenda_ocultos').select('chave').limit(2000)
       return (data ?? []).map((o: any) => o.chave as string)
     },
-    ['photo-agenda-ocultos'],
+    ['photo-agenda-ocultos-v2'],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-agenda-ocultos'] }
   )
   const ocultos = new Set(await getOcultos())
@@ -696,6 +696,7 @@ export default async function PhotoDashboard() {
             </span>
           )}
           <div className="flex-1 h-px bg-white/[0.07]" />
+          <ReporEscondidos n={ocultos.size} />
           <span className="hidden sm:inline text-[9px] tracking-[0.3em] uppercase text-white/20">desliza →</span>
           <Link href="/calendario" className="text-[9px] tracking-[0.3em] uppercase text-white/25 hover:text-[#C9A84C] transition-colors">
             Calendário →

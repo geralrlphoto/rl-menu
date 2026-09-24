@@ -2,6 +2,24 @@
 
 import { useState } from 'react'
 
+/* Botão do cabeçalho da faixa: volta a mostrar tudo o que foi escondido com o ✕ */
+export function ReporEscondidos({ n }: { n: number }) {
+  const [estado, setEstado] = useState<'ok' | 'a' | 'feito'>('ok')
+  if (n === 0 || estado === 'feito') return null
+  return (
+    <button type="button" disabled={estado === 'a'} title="Voltar a mostrar os itens escondidos com o ✕"
+      onClick={() => {
+        setEstado('a')
+        fetch('/api/agenda-ocultar', { method: 'DELETE' }).then(r => r.json())
+          .then(d => { if (d?.ok) { setEstado('feito'); window.location.reload() } else setEstado('ok') })
+          .catch(() => setEstado('ok'))
+      }}
+      className="text-[9px] tracking-[0.3em] uppercase text-white/25 hover:text-[#C9A84C] transition-colors disabled:opacity-40">
+      ↺ Repor {n} escondido{n === 1 ? '' : 's'}
+    </button>
+  )
+}
+
 /* Item da faixa "Próximos 30 dias" com um ✕ para o esconder só dali.
    Some logo no ecrã; o servidor guarda a chave para não voltar a aparecer. */
 export function AgendaItem({ chave, children }: { chave: string; children: React.ReactNode }) {
