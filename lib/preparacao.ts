@@ -36,10 +36,39 @@ export async function eventoPreparacao(eventoId: string) {
   }
   return {
     id: ev.id as string, referencia: ev.referencia, cliente: ev.cliente, data_evento: ev.data_evento, local: ev.local,
+    local_cerimonia: (ev.local_cerimonia ?? null) as string | null, hora_inicio: (ev.hora_inicio ?? null) as string | null,
     nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
     batizado: ehBatizado(ev.tipo_evento),
     crianca: ((ev.nome_crianca ?? '') as string).trim().split(/\s+/)[0] || null,
   }
+}
+
+/* "YYYY-MM-DD HH:MM" na hora de Lisboa */
+export function agoraLisboa(): string {
+  return new Intl.DateTimeFormat('sv-SE', { timeZone: 'Europe/Lisbon', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())
+}
+
+/* Duração considerada para a reunião antes de o link expirar */
+const REUNIAO_MIN = 60
+
+/* O link dos noivos expira quando a reunião acaba (hora marcada + 1h) ou, sem
+   reunião marcada, no dia do evento. "Reativar link" na ficha abre-o de novo. */
+export function estadoLink(
+  dataEvento: string | null | undefined,
+  reserva: { data: string; hora: string } | null,
+  reativadoAte: string | null | undefined,
+): { expirado: boolean; expiraEm: string | null } {
+  if (reativadoAte && new Date(reativadoAte).getTime() > Date.now()) return { expirado: false, expiraEm: null }
+  const agora = agoraLisboa()
+  let limite: string | null = null
+  if (reserva) {
+    const [h, m] = reserva.hora.split(':').map(Number)
+    const d = new Date(`${reserva.data}T00:00:00Z`); d.setUTCMinutes(h * 60 + m + REUNIAO_MIN)
+    limite = d.toISOString().slice(0, 16).replace('T', ' ')
+  } else if (dataEvento) {
+    limite = `${String(dataEvento).slice(0, 10)} 00:00`
+  }
+  return { expirado: !!limite && agora >= limite, expiraEm: limite }
 }
 
 export function fmtDataLonga(iso: string): string {

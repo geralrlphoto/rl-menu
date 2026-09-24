@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import EventoTarefas from './EventoTarefas'
 import WhatsAppPreparacao from './WhatsAppPreparacao'
+import BriefingNoivos from './BriefingNoivos'
 
 // ─── Serviços extra ────────────────────────────────────────────────────────────
 const SERVICOS_OPCOES = [
@@ -5408,6 +5409,7 @@ export default function EventoPage() {
         <BlocoHeader num="VI">Comunicação com os Noivos</BlocoHeader>
         <DrawerBloco label="Comunicação com os Noivos" sub="Notificações enviadas e mensagens dos noivos.">
           <WhatsAppPreparacao e={e} />
+          <BriefingNoivos e={e} />
           {e.referencia && (
             <>
               <RespostaRapidaNoivos referencia={e.referencia} />

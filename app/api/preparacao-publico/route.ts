@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, UUID_RE } from '@/lib/preparacao'
+import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE } from '@/lib/preparacao'
 import { MEET_LINK } from '@/lib/crm'
 
 // Público (link enviado aos noivos por WhatsApp): /preparacao/<id do evento>.
@@ -24,7 +24,18 @@ export async function GET(req: NextRequest) {
   if (ev.data_evento) q = q.lt('data', ev.data_evento)
   const { data: livresData } = await q
   const livres = livresData ?? []
-  return NextResponse.json({ ok: true, nome: ev.nome, dataEvento: ev.data_evento, batizado: ev.batizado, crianca: ev.crianca, reserva: minha ?? null, slots: livres })
+  const { data: prep } = await sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, reativado_ate').eq('evento_id', ev.id).maybeSingle()
+  const { expirado } = estadoLink(ev.data_evento, minha ?? null, prep?.reativado_ate)
+  return NextResponse.json({
+    ok: true, nome: ev.nome, dataEvento: ev.data_evento, batizado: ev.batizado, crianca: ev.crianca,
+    expirado, reserva: minha ?? null, slots: expirado ? [] : livres,
+    // Briefing só nos casamentos; pré-preenchido com o que já está na ficha
+    briefing: ev.batizado ? null : {
+      respostas: prep?.briefing ?? null,
+      enviadoEm: prep?.briefing_enviado_em ?? null,
+      prefill: { nome_noivos: ev.nome, local_cerimonia: ev.local_cerimonia || ev.local || '', hora_cerimonia: (ev.hora_inicio ?? '').slice(0, 5) },
+    },
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -40,6 +51,10 @@ export async function POST(req: NextRequest) {
   const sb = sbAdmin()
   // Alterar a data: liberta a marcação atual e tenta a nova; se falhar, repõe a antiga
   const { data: anterior } = await sb.from('preparacao_slots').select('id, data, hora').eq('evento_id', ev.id).maybeSingle()
+  const { data: prep } = await sb.from('preparacao_eventos').select('reativado_ate').eq('evento_id', ev.id).maybeSingle()
+  if (estadoLink(ev.data_evento, anterior ?? null, prep?.reativado_ate).expirado) {
+    return NextResponse.json({ error: 'Este link já expirou. Falem connosco pelo WhatsApp, por favor.' }, { status: 410 })
+  }
   if (anterior && !alterar) return NextResponse.json({ error: 'Já têm uma reunião marcada.' }, { status: 409 })
   if (anterior) {
     if (anterior.id === slotId) return NextResponse.json({ error: 'Esse já é o horário marcado.' }, { status: 409 })

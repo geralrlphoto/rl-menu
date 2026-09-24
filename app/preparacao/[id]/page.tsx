@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { MEET_LINK } from '@/lib/crm'
+import BriefingForm, { type BriefingInfo } from './BriefingForm'
 
 /* Página pública (link do WhatsApp): os noivos escolhem o dia e a hora da
    reunião de preparação do casamento (sempre por videochamada) a partir da
@@ -64,11 +65,14 @@ export default function PreparacaoPage() {
   const [aviso, setAviso] = useState('')
   const [acabouDeMarcar, setAcabouDeMarcar] = useState(false)
   const [aAlterar, setAAlterar] = useState(false)
+  const [expirado, setExpirado] = useState(false)
+  const [briefing, setBriefing] = useState<BriefingInfo | null>(null)
+  const [vista, setVista] = useState<'reuniao' | 'briefing'>('reuniao')
 
   const carregar = () => {
     fetch(`/api/preparacao-publico?e=${id}`).then(r => r.json()).then(d => {
       if (!d.ok) { setEstado('erro'); return }
-      setNome(d.nome); setDataEvento(d.dataEvento); setBatizado(!!d.batizado); setCrianca(d.crianca ?? null); setSlots(d.slots ?? []); setReserva(d.reserva)
+      setNome(d.nome); setDataEvento(d.dataEvento); setBatizado(!!d.batizado); setCrianca(d.crianca ?? null); setExpirado(!!d.expirado); setBriefing(d.briefing ?? null); setSlots(d.slots ?? []); setReserva(d.reserva)
       const primeiro: string | undefined = d.slots?.[0]?.data
       setMes(prev => prev ?? (primeiro
         ? { y: +primeiro.slice(0, 4), m: +primeiro.slice(5, 7) - 1 }
@@ -173,8 +177,45 @@ export default function PreparacaoPage() {
             <p className="text-white/60 italic text-xl" style={SERIF}>Este link não é válido. Falem connosco pelo WhatsApp, por favor.</p>
           )}
 
+          {/* ── Link expirado ── */}
+          {estado === 'ok' && expirado && (
+            <div className="flex flex-col items-center text-center pt-4 lg:pt-20">
+              <div className="w-16 h-16 rounded-full border flex items-center justify-center text-2xl" style={{ borderColor: 'rgba(201,168,76,0.5)', color: GOLD }}>✦</div>
+              <p className="text-3xl sm:text-4xl font-light mt-8 leading-tight" style={SERIF}>
+                {reserva ? 'A nossa reunião já aconteceu' : 'Este link já não está ativo'}
+              </p>
+              <p className="text-white/50 text-sm mt-5 leading-relaxed max-w-sm">
+                Obrigado{nome ? `, ${nome}` : ''}! Qualquer alteração, falem connosco pelo WhatsApp.
+              </p>
+            </div>
+          )}
+
+          {/* ── Separadores: reunião e briefing (só casamentos) ── */}
+          {estado === 'ok' && !expirado && briefing && (
+            <div className="mb-10 grid grid-cols-2 gap-1 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-1">
+              {([
+                ['reuniao', 'Reunião', !!reserva],
+                ['briefing', 'Briefing', !!briefing.enviadoEm],
+              ] as const).map(([k, t, feito]) => (
+                <button key={k} onClick={() => { setVista(k); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                  className="rounded-xl py-3 text-[11px] tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-2"
+                  style={{ background: vista === k ? 'rgba(201,168,76,0.14)' : 'transparent', color: vista === k ? GOLD : 'rgba(255,255,255,0.45)' }}>
+                  <span className="w-4 h-4 rounded-full border text-[9px] flex items-center justify-center"
+                    style={{ borderColor: feito ? GOLD : 'rgba(255,255,255,0.2)', background: feito ? GOLD : 'transparent', color: '#000' }}>{feito ? '✓' : ''}</span>
+                  {t}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── Briefing ── */}
+          {estado === 'ok' && !expirado && briefing && vista === 'briefing' && (
+            <BriefingForm eventoId={id} info={briefing}
+              onEnviado={(respostas, enviadoEm) => setBriefing(b => b ? { ...b, respostas, enviadoEm } : b)} />
+          )}
+
           {/* ── Confirmado ── */}
-          {estado === 'ok' && reserva && !aAlterar && (
+          {estado === 'ok' && !expirado && vista === 'reuniao' && reserva && !aAlterar && (
             <div className="flex flex-col items-center text-center pt-4 lg:pt-16">
               <div className="relative w-24 h-24">
                 {acabouDeMarcar && Array.from({ length: 14 }).map((_, i) => (
@@ -212,11 +253,27 @@ export default function PreparacaoPage() {
                 className="mt-4 text-[11px] tracking-[0.25em] uppercase text-white/45 hover:text-[#C9A84C] underline underline-offset-4 decoration-white/20 transition-colors">
                 Alterar data da reunião
               </button>
+
+              {/* Convite para o briefing, logo a seguir à marcação */}
+              {briefing && (
+                <button onClick={() => { setVista('briefing'); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                  className="mt-10 w-full max-w-sm rounded-2xl border px-5 py-4 flex items-center gap-4 text-left transition-all hover:-translate-y-0.5"
+                  style={{ borderColor: briefing.enviadoEm ? 'rgba(255,255,255,0.1)' : 'rgba(201,168,76,0.5)', background: briefing.enviadoEm ? 'rgba(255,255,255,0.02)' : 'rgba(201,168,76,0.08)' }}>
+                  <span className="shrink-0 w-10 h-10 rounded-full border flex items-center justify-center" style={{ borderColor: 'rgba(201,168,76,0.5)', color: GOLD }}>
+                    {briefing.enviadoEm ? '✓' : '✎'}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[10px] tracking-[0.3em] uppercase" style={{ color: GOLD }}>{briefing.enviadoEm ? 'Briefing enviado' : 'Antes da reunião'}</span>
+                    <span className="block text-sm text-white/85 leading-snug mt-0.5">{briefing.enviadoEm ? 'Ver ou corrigir as vossas respostas' : 'Preencham o briefing do vosso dia'}</span>
+                  </span>
+                  <span className="text-white/40">›</span>
+                </button>
+              )}
             </div>
           )}
 
           {/* ── Escolher ── */}
-          {estado === 'ok' && (!reserva || aAlterar) && (
+          {estado === 'ok' && !expirado && vista === 'reuniao' && (!reserva || aAlterar) && (
             <>
               {/* A alterar: lembra o horário atual, que se mantém até confirmarem outro */}
               {reserva && aAlterar && (

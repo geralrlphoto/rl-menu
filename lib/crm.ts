@@ -246,7 +246,9 @@ export function mensagemReuniaoPreparacao(nome: string | null | undefined, event
     `Gostávamos de marcar uma pequena reunião convosco para falarmos sobre ${batizado ? 'esse dia' : 'o vosso dia'}: os horários, algumas dicas e sugestões nossas, e ajustar os últimos detalhes para que tudo corra na perfeição e vocês só tenham de aproveitar.`,
     '',
     ...(link
-      ? ['A reunião é por videochamada. Escolham aqui o dia e a hora que vos dá mais jeito:', link]
+      ? [batizado
+          ? 'A reunião é por videochamada. Escolham aqui o dia e a hora que vos dá mais jeito:'
+          : 'A reunião é por videochamada. Escolham aqui o dia e a hora que vos dá mais jeito e, no mesmo link, preencham o briefing do vosso dia (ajuda-nos a preparar a reunião):', link]
       : ['A reunião é por videochamada. Que dia e hora vos dá mais jeito nos próximos dias?']),
     '',
     'No dia e à hora marcados, é só entrarem na videochamada por este link:',
