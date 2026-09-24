@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
     briefing: ev.batizado ? null : {
       respostas: prep?.briefing ?? null,
       enviadoEm: prep?.briefing_enviado_em ?? null,
-      prefill: { nome_noivos: ev.nome, local_cerimonia: ev.local_cerimonia || ev.local || '', hora_cerimonia: (ev.hora_inicio ?? '').slice(0, 5) },
+      prefill: { nome_noivos: ev.nome, local_cerimonia: ev.local_cerimonia || ev.local || '', local_festa: ev.local || '', hora_cerimonia: (ev.hora_inicio ?? '').slice(0, 5) },
     },
   })
 }
