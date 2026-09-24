@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sbAdmin, eventoPreparacao, estadoLink, UUID_RE } from '@/lib/preparacao'
 import { camposBriefing, limparBriefing } from '@/lib/briefing'
+import { sincronizarBriefingPortal } from '@/lib/briefingPortal'
 
 // Admin (ficha do evento): briefing dos noivos e estado do link /preparacao/<id>.
 // GET  ?eventoId=  → briefing + se o link está ativo
@@ -32,17 +33,27 @@ export async function PATCH(req: NextRequest) {
   if (!UUID_RE.test(eventoId ?? '')) return NextResponse.json({ error: 'pedido inválido' }, { status: 400 })
   const ev = await eventoPreparacao(eventoId)
   if (!ev) return NextResponse.json({ error: 'evento não encontrado' }, { status: 404 })
+  const limpo = limparBriefing(briefing, camposBriefing(ev.batizado))
   const { error } = await sbAdmin().from('preparacao_eventos')
-    .upsert({ evento_id: ev.id, briefing: limparBriefing(briefing, camposBriefing(ev.batizado)), briefing_atualizado_em: new Date().toISOString() }, { onConflict: 'evento_id' })
+    .upsert({ evento_id: ev.id, briefing: limpo, briefing_atualizado_em: new Date().toISOString() }, { onConflict: 'evento_id' })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+  const portal = ev.batizado ? null : await sincronizarBriefingPortal(ev.referencia, limpo).catch(() => null)
+  return NextResponse.json({ ok: true, portal })
 }
 
 export async function POST(req: NextRequest) {
-  const { eventoId, reativar } = await req.json().catch(() => ({}))
-  if (!UUID_RE.test(eventoId ?? '') || !reativar) return NextResponse.json({ error: 'pedido inválido' }, { status: 400 })
+  const { eventoId, reativar, sincronizar } = await req.json().catch(() => ({}))
+  if (!UUID_RE.test(eventoId ?? '') || !(reativar || sincronizar)) return NextResponse.json({ error: 'pedido inválido' }, { status: 400 })
   const ev = await eventoPreparacao(eventoId)
   if (!ev) return NextResponse.json({ error: 'evento não encontrado' }, { status: 404 })
+
+  // Botão "Sincronizar com o portal" (ex.: o portal foi criado depois do briefing)
+  if (sincronizar) {
+    const { data: prep } = await sbAdmin().from('preparacao_eventos').select('briefing').eq('evento_id', ev.id).maybeSingle()
+    const res = await sincronizarBriefingPortal(ev.referencia, prep?.briefing ?? null)
+    return NextResponse.json({ ok: res.ok, motivo: res.ok ? null : res.motivo })
+  }
+
   const ate = new Date(Date.now() + 7 * 86400000).toISOString()
   const { error } = await sbAdmin().from('preparacao_eventos')
     .upsert({ evento_id: ev.id, reativado_ate: ate }, { onConflict: 'evento_id' })

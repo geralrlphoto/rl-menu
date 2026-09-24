@@ -28,6 +28,7 @@ export default function BriefingNoivos({ e }: { e: any }) {
   const [editar, setEditar] = useState(false)
   const [draft, setDraft] = useState<RespostasBriefing>({})
   const [aGuardar, setAGuardar] = useState(false)
+  const [sync, setSync] = useState<string | null>(null)
 
   const carregar = () =>
     fetch(`/api/preparacao/evento?eventoId=${evId}`).then(r => r.json()).then(d => { if (d.ok) setSt(d) }).catch(() => {})
@@ -41,6 +42,14 @@ export default function BriefingNoivos({ e }: { e: any }) {
       body: JSON.stringify({ eventoId: evId, reativar: true }),
     }).catch(() => {})
     carregar()
+  }
+  async function sincronizar() {
+    setSync('A sincronizar…')
+    const d = await fetch('/api/preparacao/evento', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventoId: evId, sincronizar: true }),
+    }).then(r => r.json()).catch(() => ({ ok: false, motivo: 'sem ligação' }))
+    setSync(d.ok ? '✓ Portal atualizado' : d.motivo === 'sem portal' ? 'Este casamento ainda não tem portal' : `Não foi possível (${d.motivo ?? 'erro'})`)
   }
   async function guardar() {
     setAGuardar(true)
@@ -118,10 +127,21 @@ export default function BriefingNoivos({ e }: { e: any }) {
                     </button>
                   </>
                 ) : (
+                  <>
+                  {!st.batizado && st.briefing && (
+                    <span className="flex items-center gap-2">
+                      {sync && <span className="text-[10px] text-white/45">{sync}</span>}
+                      <button onClick={sincronizar} title="Passa as respostas para a sub-página BRIEFING do portal dos noivos (só acrescenta)"
+                        className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-lg border border-white/10 text-white/50 hover:text-gold hover:border-gold/40">
+                        ⇄ Sincronizar com o portal
+                      </button>
+                    </span>
+                  )}
                   <button onClick={() => { setDraft({ ...(st.briefing ?? {}) }); setEditar(true) }}
                     className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-lg border border-white/10 text-white/50 hover:text-gold hover:border-gold/40">
                     ✎ Editar respostas
                   </button>
+                  </>
                 )}
               </div>
             </div>

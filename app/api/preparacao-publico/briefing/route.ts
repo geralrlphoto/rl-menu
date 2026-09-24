@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sbAdmin, eventoPreparacao, estadoLink, fmtDataLonga, UUID_RE } from '@/lib/preparacao'
 import { camposBriefing, emFaltaBriefing, limparBriefing, valorBriefing } from '@/lib/briefing'
+import { sincronizarBriefingPortal } from '@/lib/briefingPortal'
 
 // Público (link /preparacao/<id>): os noivos enviam ou corrigem o briefing pré-casamento.
 // Fica em preparacao_eventos e o admin recebe um email com as respostas.
@@ -35,6 +36,9 @@ export async function POST(req: NextRequest) {
     briefing_enviado_em: prep?.briefing_enviado_em ?? agora, briefing_atualizado_em: agora,
   }, { onConflict: 'evento_id' })
   if (error) return NextResponse.json({ error: 'Não foi possível guardar. Tentem de novo.' }, { status: 500 })
+
+  // Casamentos: passa as respostas para a sub-página BRIEFING do portal (só acrescenta)
+  if (!ev.batizado) await sincronizarBriefingPortal(ev.referencia, r).catch(() => null)
 
   // Email ao admin com as respostas (não bloqueia a resposta aos noivos)
   const linhas = campos.map(c => {
