@@ -5,6 +5,9 @@ import Link from 'next/link'
 import {
   mensagemBoasVindas, mensagemPortalReuniao, mensagemLembreteReuniao,
   mensagemFollowUp, mensagemFollowUp2, mensagemFecho, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS,
+  mensagemPreWedding, mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
+  mensagemReuniaoPreparacao, mensagemLembreteBriefing, mensagemLembretePreparacao,
+  PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS,
 } from '@/lib/crm'
 
 /* ──────────────────────────────────────────────────────────────
@@ -187,56 +190,171 @@ Adorávamos mostrar-vos porque vale a pena.` },
 ]
 
 /* ── Etapas do percurso ── */
-type Msg = { id: string; label: string; quando: string; texto: string; botao?: string }
+type Msg = { id: string; label: string; quando: string; texto: string; botao?: string; onde?: string }
+type Fase = 'lead' | 'preparar' | 'entregar'
+type Regra = { quando: string; oque: string; onde: string }
 type Etapa = {
   id: string
+  fase: Fase
   icon: string
   titulo: string
-  coluna: string
+  coluna: string // onde vive na app (coluna do CRM, ficha, /photo…)
   cor: string // cor do acento (hex)
   resumo: string
   passos: string[]
+  regras?: Regra[]
   dica: string
 }
 
+const FASES: { id: Fase; titulo: string; sub: string }[] = [
+  { id: 'lead', titulo: 'Conquistar', sub: 'De lead a casal RL' },
+  { id: 'preparar', titulo: 'Preparar o dia', sub: 'Do contrato ao grande dia' },
+  { id: 'entregar', titulo: 'Entregar', sub: 'Das galerias ao álbum' },
+]
+
 const ETAPAS: Etapa[] = [
   {
-    id: 'contacto', icon: '✦', titulo: 'Primeiro contacto', coluna: 'Antes do CRM', cor: '#C9A84C',
+    id: 'contacto', fase: 'lead', icon: '✦', titulo: 'Primeiro contacto', coluna: 'Antes do CRM', cor: '#C9A84C',
     resumo: 'O casal chega até nós. Respondemos depressa e levamo-los ao formulário.',
     passos: ['Escolhe a origem da lead', 'Envia a 1.ª mensagem no mesmo dia', 'Sem resposta? Segue os lembretes'],
+    regras: [
+      { quando: 'Mesmo dia', oque: '1.ª mensagem de resposta', onde: 'Copiar e enviar' },
+      { quando: '1 a 7 dias sem resposta', oque: 'Lembretes conforme a origem', onde: 'Copiar e enviar' },
+    ],
     dica: 'Quem responde primeiro cria a primeira ligação e fica logo à frente.',
   },
   {
-    id: 'nova', icon: '✉', titulo: 'Nova entrada', coluna: 'Nova Entrada', cor: '#f87171',
+    id: 'nova', fase: 'lead', icon: '✉', titulo: 'Nova entrada', coluna: 'Nova Entrada', cor: '#f87171',
     resumo: 'Formulário preenchido. A lead aparece no CRM e pedimos uma hora para uma chamada de 2 minutos.',
     passos: ['No card, clica em ENVIAR BOAS-VINDAS', 'Os noivos dizem o dia e a hora', 'Liga e segue o guião da chamada'],
+    regras: [
+      { quando: 'Assim que entra', oque: 'Boas-vindas pelo WhatsApp (pede dia e hora)', onde: '/crm · card Nova Entrada' },
+      { quando: 'Depois de enviado', oque: 'Fica "✓ Enviado" e registado no histórico', onde: '/crm' },
+    ],
     dica: 'Sorri enquanto falas, ouve-se do outro lado. E deixa-os falar mais do que tu.',
   },
   {
-    id: 'reuniao', icon: '◷', titulo: 'Reunião agendada', coluna: 'Reunião Agendada', cor: '#c084fc',
+    id: 'reuniao', fase: 'lead', icon: '◷', titulo: 'Reunião agendada', coluna: 'Reunião Agendada', cor: '#c084fc',
     resumo: 'Marcaram a reunião. Na ficha preenches data, hora e tipo; só aí os botões de WhatsApp desbloqueiam.',
     passos: ['Ficha da lead › Marcação de Reunião › Enviar', 'No card, clica em PORTAL DA REUNIÃO', 'No dia, 1 hora antes: LEMBRETE'],
+    regras: [
+      { quando: 'Sem data e hora na ficha', oque: 'Botões bloqueados: 🔒 Agendar reunião', onde: '/crm/[id] › Marcação de Reunião' },
+      { quando: 'Logo após marcar', oque: 'Portal da reunião (cria o portal se não existir)', onde: '/crm · card' },
+      { quando: 'No dia da reunião', oque: 'Lembrete 1 hora antes', onde: '/crm · card + calendário /photo' },
+    ],
     dica: 'Confirma que receberam mesmo o portal e que o conseguiram abrir num computador.',
   },
   {
-    id: 'proposta', icon: '❖', titulo: 'Reunião e proposta', coluna: 'Reunião Agendada', cor: '#60a5fa',
+    id: 'proposta', fase: 'lead', icon: '❖', titulo: 'Reunião e proposta', coluna: 'Reunião Agendada', cor: '#60a5fa',
     resumo: 'A reunião acontece e o DFP fica disponível no portal. Ou fecham logo, ou a lead passa para Follow Up.',
     passos: ['Ouve primeiro, apresenta depois', 'Deixa o DFP disponível no portal', 'Fecharam? Mensagem de boas-vindas à família RL'],
     dica: 'A proposta encaixa melhor depois de perceberes o que o casal valoriza.',
   },
   {
-    id: 'follow', icon: '↻', titulo: 'Follow up', coluna: 'Follow Up', cor: '#fbbf24',
+    id: 'follow', fase: 'lead', icon: '↻', titulo: 'Follow up', coluna: 'Follow Up', cor: '#fbbf24',
     resumo: `Ficaram de pensar. O 1.º follow up desbloqueia ${FOLLOW_WA_DIAS} dias depois da reunião e o 2.º ${FOLLOW2_WA_DIAS} dias depois do 1.º.`,
     passos: [`Dia ${FOLLOW_WA_DIAS}: 1.º FOLLOW UP (emoção + bloquear a data)`, `+${FOLLOW2_WA_DIAS} dias sem resposta: 2.º FOLLOW UP`, 'Disseram que sim? ACEITARAM A PROPOSTA'],
+    regras: [
+      { quando: `${FOLLOW_WA_DIAS} dias após a reunião`, oque: '1.º follow up (contagem decrescente até lá)', onde: '/crm · card + /photo' },
+      { quando: `${FOLLOW2_WA_DIAS} dias após o 1.º`, oque: '2.º follow up, se não responderem', onde: '/crm · card + /photo' },
+      { quando: 'Quando dizem que sim', oque: 'Aceitaram a proposta (reserva em 48h)', onde: '/crm · card' },
+    ],
     dica: 'Nunca pressiones. Um follow up caloroso vale mais do que dez insistências.',
   },
   {
-    id: 'decisao', icon: '◆', titulo: 'Decisão', coluna: 'Encerrada', cor: '#4ade80',
+    id: 'decisao', fase: 'lead', icon: '◆', titulo: 'Decisão', coluna: 'Encerrada', cor: '#4ade80',
     resumo: 'Fecharam ou não. Em ambos os casos, regista no CRM. O motivo de um "não" é ouro para as estatísticas.',
     passos: ['Arrasta o card para Encerrada', 'Escolhe Fechou ou Não fechou + motivo', 'Tens objeções? Usa as respostas prontas'],
     dica: 'O pós-fecho é o início da relação, não o fim. Celebra com eles!',
   },
+
+  /* ═══════════ PREPARAR O DIA ═══════════ */
+  {
+    id: 'contrato', fase: 'preparar', icon: '✍', titulo: 'Contrato e reserva', coluna: 'Portal da reunião › Portal dos noivos', cor: '#34d399',
+    resumo: 'Os noivos confirmam a proposta no portal da reunião e preenchem os dados. Preparamos o portal dos noivos e o contrato; a data só fica reservada depois de fazerem a reserva.',
+    passos: ['Confirmam a proposta e preenchem os dados', 'Em 2 a 3 dias recebem o portal dos noivos e o contrato', 'Têm 48 horas para fazer a reserva'],
+    regras: [
+      { quando: 'Depois de aceitarem', oque: 'Confirmar proposta + formulário de dados', onde: 'Portal da reunião (/r/…)' },
+      { quando: '2 a 3 dias', oque: 'Portal dos noivos e contrato CPS prontos', onde: 'Portal dos noivos' },
+      { quando: '48 horas após o portal', oque: 'Reserva feita = data efetivamente bloqueada', onde: 'Pagamentos no portal' },
+    ],
+    dica: 'Um portal cuidado nos primeiros dias dá confiança para tudo o que vem a seguir.',
+  },
+  {
+    id: 'prewedding', fase: 'preparar', icon: '❦', titulo: 'Sessão pré-wedding', coluna: 'Ficha › Marcação + /photo', cor: '#f472b6',
+    resumo: `Só se o casamento tiver o serviço (caixa "Tem serviço Pré-Wedding" na ficha). ${PREWEDDING_ALERTA_DIAS} dias antes do casamento o calendário avisa; os noivos escolhem dia, hora e local num link.`,
+    passos: ['Na ficha › Marcação, põe horários com local sugerido', `${PREWEDDING_ALERTA_DIAS} dias antes: envia o link pelo WhatsApp`, 'Na véspera: lembrete com hora, local e Guia Pré-Wedding'],
+    regras: [
+      { quando: `${PREWEDDING_ALERTA_DIAS} dias antes do casamento`, oque: 'Alerta "Marcar pré-wedding" (se tiver o serviço)', onde: 'Calendário /photo' },
+      { quando: `${LEMBRETE_PREWEDDING_DIAS} dias sem marcar`, oque: 'Lembrar pré-wedding', onde: 'Calendário /photo' },
+      { quando: 'Quando marcam', oque: 'Email para ti + sessão no calendário com o local', onde: 'Email + /photo' },
+      { quando: 'Véspera da sessão', oque: 'Lembrete com hora, local e Guia Pré-Wedding', onde: 'Calendário /photo' },
+      { quando: 'Até à véspera do casamento', oque: 'Os noivos podem alterar a data no mesmo link', onde: '/prewedding/…' },
+    ],
+    dica: 'A sessão pré-wedding é o ensaio da confiança: no dia do casamento já vos conhecem a câmara.',
+  },
+  {
+    id: 'preparacao', fase: 'preparar', icon: '☷', titulo: 'Briefing e reunião de preparação', coluna: 'Ficha › Comunicação com os Noivos + /photo', cor: '#a78bfa',
+    resumo: `${PREPARACAO_DIAS} dias antes do evento, os noivos recebem um link: primeiro preenchem o briefing, depois marcam a videochamada de preparação. As respostas vão para a ficha e para o BRIEFING do portal.`,
+    passos: [`${PREPARACAO_DIAS} dias antes: envia o link pelo WhatsApp`, 'Os noivos enviam o briefing e marcam a reunião', 'No dia: lembrete 1 hora antes com o link do Meet'],
+    regras: [
+      { quando: `${PREPARACAO_DIAS} dias antes do evento`, oque: 'Tarefa "Reunião preparação"', onde: 'Calendário /photo + ficha' },
+      { quando: 'Primeiro', oque: 'Briefing obrigatório (a reunião fica bloqueada até o enviarem)', onde: '/preparacao/…' },
+      { quando: `${LEMBRETE_BRIEFING_DIAS} dias sem briefing`, oque: 'Lembrar briefing', onde: 'Calendário /photo' },
+      { quando: 'Quando enviam / marcam', oque: 'Email para ti + BRIEFING do portal atualizado', onde: 'Email + portal dos noivos' },
+      { quando: 'No dia da reunião', oque: 'Lembrete 1 hora antes (videochamada)', onde: 'Calendário /photo' },
+      { quando: '1 hora depois da reunião', oque: 'O link expira (podes reativar 7 dias)', onde: 'Ficha' },
+    ],
+    dica: 'Quanto mais souberem os noivos sobre o dia, mais descansados chegam. E nós também.',
+  },
+  {
+    id: 'equipa', fase: 'preparar', icon: '◎', titulo: 'Briefing à equipa', coluna: 'Ficha › Briefing + /photo', cor: '#fb923c',
+    resumo: 'O BRIEFING do portal (cronograma, mapas, fichas do noivo e da noiva, contactos) segue para os fotógrafos e videógrafos do casamento.',
+    passos: ['Confirma a equipa na ficha', '3 dias antes: envia o briefing à equipa', 'A equipa vê o briefing no seu painel'],
+    regras: [
+      { quando: '3 dias antes do evento', oque: 'Lembrete "Briefing à equipa"', onde: 'Calendário /photo' },
+      { quando: 'Até alguém da equipa o receber', oque: 'O lembrete fica ativo até ao dia', onde: 'Calendário /photo' },
+    ],
+    dica: 'Uma equipa bem informada é uma equipa invisível no dia, e é isso que queremos.',
+  },
+  {
+    id: 'dia', fase: 'preparar', icon: '♥', titulo: 'O grande dia', coluna: 'Calendário /photo', cor: '#C9A84C',
+    resumo: 'O casamento aparece no calendário do painel. A partir do dia seguinte começam a contar os prazos das entregas.',
+    passos: ['Equipa no terreno com o briefing', 'Pastas e backups no próprio dia', 'No dia seguinte arrancam os prazos'],
+    regras: [
+      { quando: 'Dia seguinte', oque: 'Seleção de Fotos passa sozinha a "Em Seleção" no portal', onde: 'Portal dos noivos' },
+    ],
+    dica: 'Hoje só há uma regra: fazer o casal sentir que foi o dia mais bonito das suas vidas.',
+  },
+
+  /* ═══════════ ENTREGAR ═══════════ */
+  {
+    id: 'entregas', fase: 'entregar', icon: '▣', titulo: 'Entregas', coluna: 'Ficha › Estado das Entregas + /photo', cor: '#38bdf8',
+    resumo: 'Cada entrega tem um prazo a contar do casamento (ou da seleção). O painel avisa a laranja nos últimos dias e a vermelho quando passa.',
+    passos: ['Galeria online e fotos para seleção', 'Os noivos escolhem as fotos; seguem as fotos finais', 'Vídeo e álbum dentro do prazo'],
+    regras: [
+      { quando: '7 dias após o casamento', oque: 'Galerias Online', onde: 'Ficha › Ações Fotografia' },
+      { quando: '30 dias após o casamento', oque: 'Fotos para Seleção', onde: 'Ficha › Ações Fotografia' },
+      { quando: '30 dias após a seleção', oque: 'Fotos Finais', onde: 'Ficha › Estado das Entregas' },
+      { quando: '30 dias após a aprovação', oque: 'Álbum', onde: 'Álbuns por entregar' },
+      { quando: '180 dias úteis após o casamento', oque: 'Wedding Film (aviso nos últimos 30 dias)', onde: 'Ficha + sino + /photo' },
+      { quando: 'Prazos a terminar em 5 dias', oque: 'Aviso a laranja; em atraso a vermelho', onde: 'Painel /photo (gaveta +)' },
+    ],
+    dica: 'Entregar antes do prazo é a forma mais simples de surpreender quem já nos confiou tudo.',
+  },
+  {
+    id: 'satisfacao', fase: 'entregar', icon: '★', titulo: 'Satisfação', coluna: 'Portal dos noivos › Área SAT', cor: '#facc15',
+    resumo: 'Tudo entregue. Pedimos a opinião dos noivos: é a melhor forma de melhorarmos e a melhor publicidade que existe.',
+    passos: ['Confirma que está tudo entregue', 'Convida a dar satisfação no portal', 'Agradece e partilha (com autorização)'],
+    regras: [
+      { quando: 'Depois da última entrega', oque: 'Botão DAR SATISFAÇÃO', onde: 'Portal › Área SAT Noivos' },
+    ],
+    dica: 'Um casal feliz traz o próximo casal. Fecha a jornada com o mesmo carinho com que a começaste.',
+  },
 ]
+
+/* Todas as regras com prazo, pela ordem da jornada (tabela no fim da página) */
+const EX_EVENTO = 'exemplo'
 
 function mensagensDa(etapaId: string, origem: Origem): Msg[] {
   switch (etapaId) {
@@ -260,6 +378,19 @@ function mensagensDa(etapaId: string, origem: Origem): Msg[] {
       { id: 'f1', label: '1.º follow up', quando: `${FOLLOW_WA_DIAS} dias após a reunião`, texto: mensagemFollowUp(EX.nome, EX.casamento), botao: 'Follow up' },
       { id: 'f2', label: '2.º follow up', quando: `${FOLLOW2_WA_DIAS} dias após o 1.º`, texto: mensagemFollowUp2(EX.nome, EX.casamento), botao: '2.º Follow up' },
       { id: 'fecho', label: 'Aceitaram a proposta', quando: 'Quando dizem que sim', texto: mensagemFecho(EX.nome, EX.casamento, EX.portal), botao: 'Aceitaram a proposta' },
+    ]
+    case 'contrato': return [
+      { id: 'fecho', label: 'Aceitaram a proposta', quando: 'Quando dizem que sim', texto: mensagemFecho(EX.nome, EX.casamento, EX.portal), botao: 'Aceitaram a proposta' },
+    ]
+    case 'prewedding': return [
+      { id: 'pw', label: 'Marcar pré-wedding', quando: `${PREWEDDING_ALERTA_DIAS} dias antes do casamento`, texto: mensagemPreWedding(EX.nome, EX_EVENTO), onde: 'Ficha + /photo' },
+      { id: 'pw2', label: 'Lembrar pré-wedding', quando: `${LEMBRETE_PREWEDDING_DIAS} dias sem marcar`, texto: mensagemLembreteMarcarPreWedding(EX.nome, EX_EVENTO), onde: 'Calendário /photo' },
+      { id: 'pw3', label: 'Véspera da sessão', quando: 'Dia anterior', texto: mensagemVesperaPreWedding(EX.nome, '17:30', 'Praia da Ursa, Sintra'), onde: 'Calendário /photo' },
+    ]
+    case 'preparacao': return [
+      { id: 'pr', label: 'Briefing e reunião', quando: `${PREPARACAO_DIAS} dias antes do evento`, texto: mensagemReuniaoPreparacao(EX.nome, EX_EVENTO), onde: 'Ficha + /photo' },
+      { id: 'pr2', label: 'Lembrar briefing', quando: `${LEMBRETE_BRIEFING_DIAS} dias sem briefing`, texto: mensagemLembreteBriefing(EX.nome, EX_EVENTO), onde: 'Calendário /photo' },
+      { id: 'pr3', label: 'Lembrete 1 hora', quando: 'No dia da reunião', texto: mensagemLembretePreparacao(EX.nome, '18:00'), onde: 'Calendário /photo' },
     ]
     default: return []
   }
@@ -523,39 +654,51 @@ export default function FollowUpPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
         <Link href="/crm" className="absolute top-5 left-4 sm:left-8 text-xs tracking-[0.3em] text-white/60 hover:text-gold transition-colors uppercase">‹ Voltar ao CRM</Link>
         <div className="relative h-full max-w-[1200px] mx-auto px-4 sm:px-8 flex flex-col justify-center">
-          <span className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-gold/80">Percurso da lead</span>
-          <h1 className="text-5xl sm:text-7xl font-light text-gold mt-2 leading-none" style={SERIF}>Follow Up</h1>
+          <span className="text-[10px] sm:text-xs tracking-[0.4em] uppercase text-gold/80">Follow up · Jornada do cliente</span>
+          <h1 className="text-5xl sm:text-7xl font-light text-gold mt-2 leading-none" style={SERIF}>Da lead à última entrega</h1>
           <div className="w-20 h-px bg-gold/70 my-5" />
           <p className="text-white/70 text-base sm:text-xl italic max-w-xl leading-relaxed" style={SERIF}>
-            O seguimento é onde a maioria desiste. É exatamente por isso que é onde nós nos destacamos.
+            O seguimento é onde a maioria desiste. É exatamente por isso que é onde nós nos destacamos, do primeiro olá ao álbum entregue.
           </p>
         </div>
       </header>
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-8">
-        {/* ── STEPPER ── */}
+        {/* ── STEPPER por fases (desliza na horizontal) ── */}
         <nav aria-label="Etapas" className="relative -mt-10 sm:-mt-12 z-10 rounded-2xl border border-white/10 bg-black/70 backdrop-blur-md p-3 sm:p-4">
-          <div className="relative grid grid-cols-6 gap-1">
-            <div className="absolute left-[8.33%] right-[8.33%] top-[18px] sm:top-[22px] h-px bg-white/10" />
-            <div className="absolute left-[8.33%] top-[18px] sm:top-[22px] h-px transition-all duration-500"
-              style={{ width: `${(etapaIdx / (ETAPAS.length - 1)) * 83.33}%`, background: `linear-gradient(90deg, #C9A84C, ${etapa.cor})` }} />
-            {ETAPAS.map((e, i) => {
-              const ativa = i === etapaIdx
-              const feita = i < etapaIdx
+          <div className="flex gap-4 overflow-x-auto pb-1">
+            {FASES.map(f => {
+              const lista = ETAPAS.map((e, i) => ({ e, i })).filter(x => x.e.fase === f.id)
+              const faseAtiva = etapa.fase === f.id
               return (
-                <button key={e.id} onClick={() => irPara(i)} className="relative flex flex-col items-center gap-1.5 group" aria-current={ativa ? 'step' : undefined}>
-                  <span className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-sm sm:text-base border transition-all duration-300 ${
-                    ativa ? 'scale-110 text-black' : feita ? 'text-white/80 bg-[#1a1a1a]' : 'text-white/35 bg-[#111] group-hover:text-white/70'
-                  }`}
-                    style={{ borderColor: ativa || feita ? e.cor : 'rgba(255,255,255,0.12)', background: ativa ? e.cor : undefined, boxShadow: ativa ? `0 0 24px ${e.cor}66` : undefined }}>
-                    {feita ? '✓' : e.icon}
-                  </span>
-                  <span className={`hidden sm:block text-[10px] tracking-[0.15em] uppercase text-center leading-tight transition-colors ${ativa ? 'text-white' : 'text-white/35 group-hover:text-white/60'}`}>{e.titulo}</span>
-                </button>
+                <div key={f.id} className="shrink-0 flex flex-col">
+                  <div className={`px-1 mb-2 text-[9px] tracking-[0.35em] uppercase transition-colors ${faseAtiva ? 'text-gold' : 'text-white/30'}`}>
+                    {f.titulo} <span className="normal-case tracking-normal text-white/25">· {f.sub}</span>
+                  </div>
+                  <div className="flex items-start">
+                    {lista.map(({ e, i }, k) => {
+                      const ativa = i === etapaIdx
+                      const feita = i < etapaIdx
+                      return (
+                        <div key={e.id} className="flex items-start">
+                          <button onClick={() => irPara(i)} className="relative w-[76px] flex flex-col items-center gap-1.5 group" aria-current={ativa ? 'step' : undefined}>
+                            <span className={`w-10 h-10 rounded-full flex items-center justify-center text-sm border transition-all duration-300 ${
+                              ativa ? 'scale-110 text-black' : feita ? 'text-white/80 bg-[#1a1a1a]' : 'text-white/35 bg-[#111] group-hover:text-white/70'
+                            }`}
+                              style={{ borderColor: ativa || feita ? e.cor : 'rgba(255,255,255,0.12)', background: ativa ? e.cor : undefined, boxShadow: ativa ? `0 0 24px ${e.cor}66` : undefined }}>
+                              {feita ? '✓' : e.icon}
+                            </span>
+                            <span className={`text-[9px] tracking-[0.1em] uppercase text-center leading-tight transition-colors ${ativa ? 'text-white' : 'text-white/35 group-hover:text-white/60'}`}>{e.titulo}</span>
+                          </button>
+                          {k < lista.length - 1 && <span className="mt-5 w-3 h-px shrink-0" style={{ background: feita ? e.cor : 'rgba(255,255,255,0.12)' }} />}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               )
             })}
           </div>
-          <div className="sm:hidden text-center text-[11px] tracking-[0.2em] uppercase text-white mt-2">{etapaIdx + 1}. {etapa.titulo}</div>
         </nav>
 
         {/* ── ETAPA ATIVA ── */}
@@ -563,7 +706,8 @@ export default function FollowUpPage() {
           <div className="min-w-0">
             <div className="flex items-center gap-3 flex-wrap">
               <span className="text-[10px] tracking-[0.35em] uppercase" style={{ color: etapa.cor }}>Etapa {etapaIdx + 1} de {ETAPAS.length}</span>
-              <span className="text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full border border-white/10 text-white/50">Coluna CRM · {etapa.coluna}</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase px-2.5 py-1 rounded-full border border-white/10 text-white/50">Onde · {etapa.coluna}</span>
+              <span className="text-[10px] tracking-[0.2em] uppercase text-white/30">{FASES.find(f => f.id === etapa.fase)?.titulo}</span>
             </div>
             <h2 className="text-4xl sm:text-5xl font-light text-white mt-3" style={SERIF}>{etapa.titulo}</h2>
             <p className="text-white/55 mt-3 leading-relaxed max-w-2xl">{etapa.resumo}</p>
@@ -577,6 +721,20 @@ export default function FollowUpPage() {
                 </li>
               ))}
             </ol>
+
+            {/* Regras e prazos desta etapa */}
+            {etapa.regras && etapa.regras.length > 0 && (
+              <div className="mt-6 rounded-2xl border border-white/8 bg-white/[0.02] overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-white/5 text-[10px] tracking-[0.3em] uppercase" style={{ color: etapa.cor }}>Regras e prazos</div>
+                {etapa.regras.map((r, i) => (
+                  <div key={i} className="grid grid-cols-1 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_minmax(0,1.2fr)] gap-x-4 gap-y-0.5 px-4 py-2.5 border-b border-white/[0.04] last:border-0 text-sm">
+                    <span className="text-white/85">{r.quando}</span>
+                    <span className="text-white/55">{r.oque}</span>
+                    <span className="text-white/30 text-xs sm:text-right self-center">{r.onde}</span>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Origem (só no primeiro contacto) */}
             {etapa.id === 'contacto' && (
@@ -611,7 +769,9 @@ export default function FollowUpPage() {
                         </span>
                         {m.botao
                           ? <span className="shrink-0 text-[9px] tracking-[0.15em] uppercase px-2 py-1 rounded-md border border-green-500/30 text-green-400 bg-green-500/10">Botão no CRM</span>
-                          : <span className="shrink-0 text-[9px] tracking-[0.15em] uppercase px-2 py-1 rounded-md border border-white/10 text-white/35">Copiar</span>}
+                          : m.onde
+                            ? <span className="shrink-0 text-[9px] tracking-[0.15em] uppercase px-2 py-1 rounded-md border border-green-500/30 text-green-400 bg-green-500/10">{m.onde}</span>
+                            : <span className="shrink-0 text-[9px] tracking-[0.15em] uppercase px-2 py-1 rounded-md border border-white/10 text-white/35">Copiar</span>}
                       </button>
                     )
                   })}
@@ -676,8 +836,9 @@ export default function FollowUpPage() {
               </>
             ) : (
               <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-8 text-center">
-                <div className="text-5xl text-green-400/80" style={SERIF}>Fechado</div>
-                <p className="text-white/40 text-sm mt-3">Sem mensagens automáticas nesta etapa. Regista a decisão no CRM.</p>
+                <div className="text-6xl" style={{ ...SERIF, color: etapa.cor }}>{etapa.icon}</div>
+                <div className="text-3xl text-white/85 mt-3" style={SERIF}>{etapa.titulo}</div>
+                <p className="text-white/40 text-sm mt-3 leading-relaxed">Sem mensagens de WhatsApp nesta etapa. Segue as regras e os prazos ao lado.</p>
               </div>
             )}
           </aside>
@@ -689,6 +850,34 @@ export default function FollowUpPage() {
             <SimuladorFollowUp onVer={verNoSimulador} />
           </section>
         )}
+
+        {/* ── TODAS AS REGRAS NUM SÓ SÍTIO ── */}
+        <section className="mt-20">
+          <div className="text-[10px] tracking-[0.35em] uppercase text-gold/70">Consulta rápida</div>
+          <h2 className="text-3xl sm:text-4xl font-light text-white mt-2" style={SERIF}>Todas as regras e prazos</h2>
+          <p className="text-white/40 text-sm mt-2">Clica numa linha para ir à etapa.</p>
+          <div className="mt-6 flex flex-col gap-6">
+            {FASES.map(f => (
+              <div key={f.id} className="rounded-2xl border border-white/8 overflow-hidden">
+                <div className="px-4 py-3 bg-white/[0.03] border-b border-white/5 flex items-baseline gap-3">
+                  <span className="text-xl font-light text-gold" style={SERIF}>{f.titulo}</span>
+                  <span className="text-[10px] tracking-[0.25em] uppercase text-white/30">{f.sub}</span>
+                </div>
+                {ETAPAS.map((e, i) => ({ e, i })).filter(x => x.e.fase === f.id).flatMap(({ e, i }) =>
+                  (e.regras ?? []).map((r, k) => (
+                    <button key={`${e.id}-${k}`} onClick={() => { irPara(i); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                      className="w-full text-left grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.6fr)_minmax(0,1.2fr)] gap-x-4 gap-y-0.5 px-4 py-2.5 border-b border-white/[0.04] last:border-0 text-sm hover:bg-white/[0.03] transition-colors">
+                      <span className="text-[11px] tracking-[0.1em] uppercase self-center" style={{ color: e.cor }}>{e.icon} {e.titulo}</span>
+                      <span className="text-white/85">{r.quando}</span>
+                      <span className="text-white/55">{r.oque}</span>
+                      <span className="text-white/30 text-xs sm:text-right self-center">{r.onde}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* ── OBJEÇÕES ── */}
         <section className="mt-20">
