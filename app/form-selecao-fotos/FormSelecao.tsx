@@ -7,7 +7,8 @@ import { CSS } from './styles'
 // Formulário de seleção de fotografias, usado pelo casamento e pelo batizado.
 // Mesmo fluxo do formulário do Tally (FOTOS P/SELEÇÃO): a submissão grava em
 // fotos_selecao (Supabase) e cria a página no Notion.
-// Cada secção é um card que abre e se preenche foto a foto.
+// Cada secção é um card que abre com uma caixa de texto livre: as fotos
+// separam-se por linhas, vírgulas ou ponto e vírgula.
 
 export type Seccao = {
   name: string      // coluna em fotos_selecao
@@ -26,6 +27,11 @@ export type FormSelecaoProps = {
   seccoes: Seccao[]
 }
 
+// Divide o texto livre de uma secção nas fotografias indicadas.
+function separar(texto: string) {
+  return texto.split(/[\n,;]+/).map(v => v.trim()).filter(Boolean)
+}
+
 function plural(n: number) {
   return n === 1 ? '1 fotografia' : `${n} fotografias`
 }
@@ -34,8 +40,8 @@ export default function FormSelecao({
   tipo, eyebrow, nomeLabel, nomePlaceholder, dataLabel, refPlaceholder, exemplo, iniciais, seccoes,
 }: FormSelecaoProps) {
   const [dados, setDados]     = useState({ nome_noivos: '', date: '', referencia: '' })
-  const [fotos, setFotos]     = useState<Record<string, string[]>>(
-    () => Object.fromEntries(seccoes.map(s => [s.name, ['']]))
+  const [fotos, setFotos]     = useState<Record<string, string>>(
+    () => Object.fromEntries(seccoes.map(s => [s.name, '']))
   )
   const [sending, setSending] = useState(false)
   const [sent, setSent]       = useState(false)
@@ -59,7 +65,7 @@ export default function FormSelecao({
     })
   }, [])
 
-  const preenchidas = (name: string) => (fotos[name] ?? []).filter(v => v.trim()).length
+  const preenchidas = (name: string) => separar(fotos[name] ?? '').length
   const total = seccoes.reduce((acc, s) => acc + preenchidas(s.name), 0)
 
   function toggle(name: string) {
@@ -69,17 +75,6 @@ export default function FormSelecao({
     // barra de carregamento enquanto a lista da secção não aparece
     setACarregar(p => [...p, name])
     setTimeout(() => setACarregar(p => p.filter(n => n !== name)), 750)
-  }
-
-  function addFoto(name: string) {
-    setFotos(p => ({ ...p, [name]: [...p[name], ''] }))
-    setAbertas(p => p.includes(name) ? p : [...p, name])
-  }
-  function setFoto(name: string, i: number, valor: string) {
-    setFotos(p => ({ ...p, [name]: p[name].map((v, j) => j === i ? valor : v) }))
-  }
-  function removeFoto(name: string, i: number) {
-    setFotos(p => ({ ...p, [name]: p[name].filter((_, j) => j !== i) }))
   }
 
   async function submit(e: React.FormEvent) {
@@ -94,7 +89,7 @@ export default function FormSelecao({
 
     const payload: Record<string, string> = { ...dados, tipo }
     for (const s of seccoes) {
-      payload[s.name] = fotos[s.name].map(v => v.trim()).filter(Boolean).join('; ')
+      payload[s.name] = separar(fotos[s.name]).join('; ')
     }
 
     setSending(true)
@@ -162,7 +157,8 @@ export default function FormSelecao({
                 <h2>Instruções para Envio da Seleção</h2>
                 <p>
                   Ao preencherem o formulário, deverão indicar em cada secção as fotografias que
-                  pretendem que sejam editadas, uma de cada vez.
+                  pretendem que sejam editadas. Podem escrevê-las todas seguidas, separadas por vírgulas
+                  ou uma por linha.
                 </p>
                 <p>
                   A numeração deve ser colocada exatamente como aparece na galeria e deverá conter
@@ -227,29 +223,13 @@ export default function FormSelecao({
                                 <span className="track"><span className="bar" /></span>
                                 <p className="lbl">A carregar fotografias</p>
                               </div>
-                            ) : fotos[s.name].length > 0 ? (
-                              <div className="fotolist">
-                                {fotos[s.name].map((valor, i) => (
-                                  <div className="fotorow" key={i}>
-                                    <span className="idx">{i + 1}.</span>
-                                    <input type="text" placeholder={exemplo} value={valor}
-                                      onChange={e => setFoto(s.name, i, e.target.value)}
-                                      onKeyDown={e => {
-                                        if (e.key === 'Enter') { e.preventDefault(); addFoto(s.name) }
-                                      }} />
-                                    <button type="button" className="rm" title="Remover"
-                                      onClick={() => removeFoto(s.name, i)}>✕</button>
-                                  </div>
-                                ))}
-                              </div>
                             ) : (
-                              <p className="vazio">Sem fotografias nesta secção.</p>
-                            )}
-
-                            {!aCarregar.includes(s.name) && (
-                              <button type="button" className="addfoto" onClick={() => addFoto(s.name)}>
-                                + Adicionar fotografia
-                              </button>
+                              <>
+                                <textarea className="fototxt" value={fotos[s.name]}
+                                  placeholder={`Ex.: ${exemplo}, ${exemplo.replace(/\d+$/, m => String(Number(m) + 1).padStart(m.length, '0'))}, …`}
+                                  onChange={e => setFotos(p => ({ ...p, [s.name]: e.target.value }))} />
+                                <p className="fotohint">Separem por vírgulas ou uma por linha</p>
+                              </>
                             )}
                           </div>
                         )}

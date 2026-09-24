@@ -100,19 +100,11 @@ export const CSS = `
 .self .fhead label{margin-bottom:0;}
 .self .count{font-family:var(--fm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-dim);}
 .self .count.has{color:var(--g);}
-.self .fotolist{display:flex;flex-direction:column;gap:12px;margin-bottom:14px;}
-.self .fotorow{display:flex;align-items:center;gap:12px;}
-.self .fotorow .idx{font-family:var(--fm);font-size:11px;letter-spacing:.06em;color:var(--tx-dim);width:30px;flex:none;}
-.self .fotorow input{flex:1;background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--tx);
-  font-family:var(--fd);font-weight:300;font-size:clamp(16px,1.4vw,20px);padding:6px 0 10px;outline:none;transition:border-color .4s var(--ease);}
-.self .fotorow input::placeholder{color:var(--tx-dim);}
-.self .fotorow input:focus{border-color:var(--g);}
-.self .fotorow .rm{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--tx-mid);cursor:pointer;font-size:13px;transition:.3s;}
-.self .fotorow .rm:hover{border-color:var(--g);color:var(--g);}
-.self .addfoto{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--g);background:transparent;
-  border:1px solid var(--line);border-radius:40px;padding:12px 22px;cursor:pointer;transition:.3s var(--ease);}
-.self .addfoto:hover{border-color:var(--g);background:rgba(216,190,147,.06);}
-.self .vazio{font-family:var(--fm);font-size:10px;letter-spacing:.12em;color:var(--tx-dim);margin-bottom:14px;}
+.self .fototxt{width:100%;min-height:140px;resize:vertical;background:transparent;border:1px solid var(--line);border-radius:10px;color:var(--tx);
+  font-family:var(--fd);font-weight:300;font-size:clamp(16px,1.4vw,20px);line-height:1.5;padding:14px 16px;outline:none;transition:border-color .4s var(--ease);}
+.self .fototxt::placeholder{color:var(--tx-dim);}
+.self .fototxt:focus{border-color:var(--g);}
+.self .fotohint{font-family:var(--fm);font-size:10px;letter-spacing:.12em;color:var(--tx-dim);margin-top:10px;}
 .self .totalgeral{display:flex;align-items:baseline;justify-content:space-between;gap:16px;border-top:1px solid var(--line-soft);padding-top:24px;}
 .self .totalgeral .k{font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx);}
 .self .totalgeral .v{font-family:var(--fd);font-weight:200;font-size:clamp(34px,4vw,52px);color:var(--g);line-height:.9;}
