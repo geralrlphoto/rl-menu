@@ -317,6 +317,47 @@ export function mensagemPreWedding(nome: string | null | undefined, eventoId: st
   ].join('\n')
 }
 
+/* Lembrar a marcação do pré-wedding: link enviado há 5 dias e sessão por marcar */
+export const LEMBRETE_PREWEDDING_DIAS = 5
+
+export function mensagemLembreteMarcarPreWedding(nome: string | null | undefined, eventoId: string): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Esperamos que esteja tudo a correr bem com os preparativos.',
+    '',
+    'Passámos só para lembrar que ainda falta escolherem o dia da vossa sessão pré-wedding. Estamos mesmo com vontade de a fazer convosco! Os horários disponíveis estão aqui:',
+    linkPublico(`/prewedding/${eventoId}`),
+    '',
+    'Se nenhum dia vos der jeito, digam-nos e combinamos juntos.',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* Lembrete na véspera da sessão pré-wedding (hora, local e o Guia Pré-Wedding do portal) */
+export function mensagemVesperaPreWedding(nome: string | null | undefined, hora?: string | null, local?: string | null, referencia?: string | null): string {
+  const quem = (nome ?? '').trim()
+  const h = (hora ?? '').slice(0, 5)
+  const l = (local ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    `Amanhã é o dia da vossa sessão pré-wedding${h ? `, às ${h}` : ''}! Estamos mesmo entusiasmados.`,
+    ...(l ? ['', `Local: ${l}`, `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l)}`] : []),
+    '',
+    'Antes da sessão, espreitem o Guia Pré-Wedding que está dentro do vosso portal dos noivos. Lá encontram algumas dicas sobre a roupa, o que levar e como aproveitar ao máximo este momento.',
+    ...(referencia ? [linkPublico(`/portal-cliente/ref/${encodeURIComponent(referencia)}`)] : []),
+    '',
+    'Venham descontraídos e a divertir-se. Nós tratamos do resto!',
+    '',
+    'Até amanhã!',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
 /* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
 export function mensagemBoasVindas(nome: string | null | undefined): string {
   const quem = (nome ?? '').trim()

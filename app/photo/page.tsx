@@ -6,7 +6,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
-import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
+import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -359,7 +359,7 @@ export default async function PhotoDashboard() {
           ? supabase.from('dados_contrato_cps').select('referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs)
           : Promise.resolve({ data: [] as any[] }),
         supabase.from('eventos_whatsapp_envios').select('evento_id, evento, created_at')
-          .in('evento', ['reuniao_preparacao', 'lembrete_briefing', 'lembrete_preparacao', 'prewedding_link']).in('evento_id', ids),
+          .in('evento', ['reuniao_preparacao', 'lembrete_briefing', 'lembrete_preparacao', 'prewedding_link', 'lembrete_marcar_prewedding', 'lembrete_prewedding']).in('evento_id', ids),
         supabase.from('preparacao_eventos').select('evento_id, briefing_enviado_em').in('evento_id', ids),
         // Briefing já enviado à equipa (algum freelancer do casamento tem o link)
         refs.length
@@ -438,6 +438,36 @@ export default async function PhotoDashboard() {
       reuniaoHora: null, dataCasamento: ev.data_evento,
       dia: devido < hojeLx ? hojeLx : devido,
       atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
+    }
+    if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
+  }
+
+  // Lembrar a marcação do pré-wedding: link enviado há 5 dias e sessão ainda por marcar
+  for (const ev of prep.evs as any[]) {
+    const envios = envPorEvento[ev.id] ?? {}
+    if (!envios.prewedding_link || envios.lembrete_marcar_prewedding || reservadosPw.has(ev.id)) continue
+    const devido = somaDias(lisboaISO(new Date(envios.prewedding_link)), LEMBRETE_PREWEDDING_DIAS)
+    const t = {
+      tipo: 'lembrete_marcar_pw' as const, contactId: ev.id, ...dadosEvento(ev),
+      reuniaoHora: null, dataCasamento: ev.data_evento,
+      dia: devido < hojeLx ? hojeLx : devido,
+      atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
+    }
+    if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
+  }
+
+  // Véspera da sessão pré-wedding: lembrete com hora, local e o Guia Pré-Wedding do portal
+  const amanhaLx = somaDias(hojeLx, 1)
+  for (const m of prep.marcadas as any[]) {
+    if (m.tipo !== 'prewedding' || envPorEvento[m.evento_id]?.lembrete_prewedding) continue
+    if (m.data !== amanhaLx && m.data !== hojeLx) continue // na véspera (e ainda no próprio dia, se ficou por enviar)
+    const ev = (prep.evs as any[]).find(e => e.id === m.evento_id)
+    const d = ev ? dadosEvento(ev) : { nome: m.cliente ?? '', contato: null, batizado: null }
+    const t = {
+      tipo: 'vespera_pw' as const, contactId: m.evento_id, ...d,
+      reuniaoHora: m.hora, local: m.local ?? null, referencia: ev?.referencia ?? null,
+      dataCasamento: ev?.data_evento ?? null,
+      dia: hojeLx, atrasoDias: 0, futura: false,
     }
     if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
   }

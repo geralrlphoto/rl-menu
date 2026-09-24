@@ -5,7 +5,7 @@ import { eventoPreparacao } from '@/lib/preparacao'
 
 // Registo das mensagens de WhatsApp enviadas a partir da ficha do evento
 // (e do /photo). GET diz o que já foi enviado; POST regista um envio.
-const EVENTOS = ['reuniao_preparacao', 'lembrete_briefing', 'lembrete_preparacao', 'prewedding_link']
+const EVENTOS = ['reuniao_preparacao', 'lembrete_briefing', 'lembrete_preparacao', 'prewedding_link', 'lembrete_marcar_prewedding', 'lembrete_prewedding']
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const sb = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)

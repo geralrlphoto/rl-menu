@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import {
   whatsappLink, mensagemLembreteReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemReuniaoPreparacao,
   mensagemLembreteBriefing, mensagemLembretePreparacao, mensagemPreWedding,
+  mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
 } from '@/lib/crm'
 
 /* Tarefa de WhatsApp da faixa "Próximos 30 dias" do /photo.
@@ -13,13 +14,15 @@ import {
    envio no histórico da lead (o mesmo registo que os botões do /crm usam). */
 
 export type WaTarefa = {
-  tipo: 'lembrete' | 'follow1' | 'follow2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding'
+  tipo: 'lembrete' | 'follow1' | 'follow2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw'
   contactId: string    // id da lead no CRM; nos tipos de evento (preparação e lembretes) é o id do evento
   nome: string
   contato: string | null
   reuniaoHora: string | null
   dataCasamento: string | null
   batizado?: { crianca: string | null } | null
+  local?: string | null       // pré-wedding: local da sessão
+  referencia?: string | null  // pré-wedding: link do portal dos noivos (Guia Pré-Wedding)
   atrasoDias: number   // > 0 quando o dia já passou
   futura: boolean      // ainda não é o dia: só informativa
 }
@@ -32,10 +35,12 @@ const CONFIG = {
   lembrete_briefing: { rotulo: 'Lembrar briefing', evento: 'lembrete_briefing' },
   lembrete_prep: { rotulo: 'Preparação · lembrete', evento: 'lembrete_preparacao' },
   prewedding: { rotulo: 'Marcar pré-wedding', evento: 'prewedding_link' },
+  lembrete_marcar_pw: { rotulo: 'Lembrar pré-wedding', evento: 'lembrete_marcar_prewedding' },
+  vespera_pw: { rotulo: 'Pré-wedding amanhã · lembrete', evento: 'lembrete_prewedding' },
 }
 
 /* Tarefas ligadas ao evento (registo em eventos_whatsapp_envios); as outras são do CRM */
-const DO_EVENTO = new Set(['preparacao', 'lembrete_briefing', 'lembrete_prep', 'prewedding'])
+const DO_EVENTO = new Set(['preparacao', 'lembrete_briefing', 'lembrete_prep', 'prewedding', 'lembrete_marcar_pw', 'vespera_pw'])
 
 function textoDe(t: WaTarefa): string {
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
@@ -44,6 +49,8 @@ function textoDe(t: WaTarefa): string {
   if (t.tipo === 'lembrete_briefing') return mensagemLembreteBriefing(t.nome, t.contactId, t.batizado)
   if (t.tipo === 'lembrete_prep') return mensagemLembretePreparacao(t.nome, t.reuniaoHora)
   if (t.tipo === 'prewedding') return mensagemPreWedding(t.nome, t.contactId)
+  if (t.tipo === 'lembrete_marcar_pw') return mensagemLembreteMarcarPreWedding(t.nome, t.contactId)
+  if (t.tipo === 'vespera_pw') return mensagemVesperaPreWedding(t.nome, t.reuniaoHora, t.local, t.referencia)
   return mensagemFollowUp2(t.nome, t.dataCasamento)
 }
 
