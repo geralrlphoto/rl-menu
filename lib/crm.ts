@@ -337,7 +337,7 @@ export function mensagemLembreteMarcarPreWedding(nome: string | null | undefined
 }
 
 /* Lembrete na véspera da sessão pré-wedding (hora, local e o Guia Pré-Wedding do portal) */
-export function mensagemVesperaPreWedding(nome: string | null | undefined, hora?: string | null, local?: string | null, referencia?: string | null): string {
+export function mensagemVesperaPreWedding(nome: string | null | undefined, hora?: string | null, local?: string | null, _referencia?: string | null): string {
   const quem = (nome ?? '').trim()
   const h = (hora ?? '').slice(0, 5)
   const l = (local ?? '').trim()
@@ -348,7 +348,6 @@ export function mensagemVesperaPreWedding(nome: string | null | undefined, hora?
     ...(l ? ['', `Local: ${l}`, `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(l)}`] : []),
     '',
     'Antes da sessão, espreitem o Guia Pré-Wedding que está dentro do vosso portal dos noivos. Lá encontram algumas dicas sobre a roupa, o que levar e como aproveitar ao máximo este momento.',
-    ...(referencia ? [linkPublico(`/portal-cliente/ref/${encodeURIComponent(referencia)}`)] : []),
     '',
     'Venham descontraídos e a divertir-se. Nós tratamos do resto!',
     '',
