@@ -6,7 +6,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
-import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
+import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -350,25 +350,52 @@ export default async function PhotoDashboard() {
       const { data: todasReservas } = lista.length
         ? await supabase.from('preparacao_slots').select('evento_id').in('evento_id', lista.map((e: any) => e.id))
         : { data: [] as any[] }
-      if (lista.length === 0) return { evs: [], tels: [], env: [], marcadas: prepMarcadas, reservados: [] }
+      if (lista.length === 0) return { evs: [], tels: [], env: [], briefings: [], marcadas: prepMarcadas, reservados: [] }
       const refs = lista.map((e: any) => e.referencia).filter(Boolean)
-      const [{ data: tels }, { data: env }] = await Promise.all([
+      const ids = lista.map((e: any) => e.id)
+      const [{ data: tels }, { data: env }, { data: briefings }] = await Promise.all([
         refs.length
           ? supabase.from('dados_contrato_cps').select('referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs)
           : Promise.resolve({ data: [] as any[] }),
-        supabase.from('eventos_whatsapp_envios').select('evento_id').eq('evento', 'reuniao_preparacao').in('evento_id', lista.map((e: any) => e.id)),
+        supabase.from('eventos_whatsapp_envios').select('evento_id, evento, created_at')
+          .in('evento', ['reuniao_preparacao', 'lembrete_briefing', 'lembrete_preparacao']).in('evento_id', ids),
+        supabase.from('preparacao_eventos').select('evento_id, briefing_enviado_em').in('evento_id', ids),
       ])
-      return { evs: lista, tels: tels ?? [], env: env ?? [], marcadas: prepMarcadas, reservados: (todasReservas ?? []).map((r: any) => r.evento_id) }
+      return { evs: lista, tels: tels ?? [], env: env ?? [], briefings: briefings ?? [], marcadas: prepMarcadas, reservados: (todasReservas ?? []).map((r: any) => r.evento_id) }
     },
     [`photo-wa-preparacao-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
   )
   const prep = await getPreparacao()
-  const prepEnviados = new Set((prep.env as any[]).map(x => x.evento_id))
+  // Envios por evento: { evento_id: { reuniao_preparacao: data, lembrete_briefing: data, … } }
+  const envPorEvento: Record<string, Record<string, string>> = {}
+  for (const x of prep.env as any[]) (envPorEvento[x.evento_id] ||= {})[x.evento] = x.created_at
+  const prepEnviados = new Set(Object.keys(envPorEvento).filter(id => envPorEvento[id].reuniao_preparacao))
+  const briefingFeito = new Set((prep.briefings as any[]).filter(b => b.briefing_enviado_em).map(b => b.evento_id))
   const prepReservados = new Set(prep.reservados as string[])
   const chavePrep = (m: any) => `reuniao:prep-${m.id}:${m.data}`
   const prepAgenda = (prep.marcadas as any[]).filter(m => !ocultos.has(chavePrep(m)))
+  const dadosEvento = (ev: any) => {
+    const c = (prep.tels as any[]).find(t => t.referencia_evento === ev.referencia)
+    return {
+      nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
+      contato: c?.tel_noiva || c?.tel_noivo || null,
+      batizado: ehBatizado(ev.tipo_evento) ? { crianca: ev.nome_crianca ?? null } : null,
+    }
+  }
   for (const ev of prep.evs as any[]) {
+    const envios = envPorEvento[ev.id] ?? {}
+    // Lembrar o briefing: link enviado há 3 dias, briefing por preencher e reunião por marcar
+    if (envios.reuniao_preparacao && !envios.lembrete_briefing && !briefingFeito.has(ev.id) && !prepReservados.has(ev.id)) {
+      const devido = somaDias(lisboaISO(new Date(envios.reuniao_preparacao)), LEMBRETE_BRIEFING_DIAS)
+      const t = {
+        tipo: 'lembrete_briefing' as const, contactId: ev.id, ...dadosEvento(ev),
+        reuniaoHora: null, dataCasamento: ev.data_evento,
+        dia: devido < hojeLx ? hojeLx : devido,
+        atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
+      }
+      if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
+    }
     if (prepEnviados.has(ev.id) || prepReservados.has(ev.id)) continue
     const c = (prep.tels as any[]).find(t => t.referencia_evento === ev.referencia)
     const devido = somaDias(ev.data_evento, -PREPARACAO_DIAS)
@@ -380,6 +407,18 @@ export default async function PhotoDashboard() {
       batizado: ehBatizado(ev.tipo_evento) ? { crianca: ev.nome_crianca ?? null } : null,
       dia: devido < hojeLx ? hojeLx : devido,
       atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
+    }
+    if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
+  }
+  // Lembrete 1h antes da reunião de preparação: no próprio dia da reunião
+  for (const m of prep.marcadas as any[]) {
+    if (m.data !== hojeLx || envPorEvento[m.evento_id]?.lembrete_preparacao) continue
+    const ev = (prep.evs as any[]).find(e => e.id === m.evento_id)
+    const d = ev ? dadosEvento(ev) : { nome: m.cliente ?? '', contato: null, batizado: null }
+    const t = {
+      tipo: 'lembrete_prep' as const, contactId: m.evento_id, ...d,
+      reuniaoHora: m.hora, dataCasamento: ev?.data_evento ?? null,
+      dia: hojeLx, atrasoDias: 0, futura: false,
     }
     if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
   }

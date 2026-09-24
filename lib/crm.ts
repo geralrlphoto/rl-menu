@@ -259,6 +259,45 @@ export function mensagemReuniaoPreparacao(nome: string | null | undefined, event
   ].join('\n')
 }
 
+/* Lembrete: o link foi enviado há 3 dias e o briefing continua por preencher */
+export const LEMBRETE_BRIEFING_DIAS = 3
+
+export function mensagemLembreteBriefing(nome: string | null | undefined, eventoId: string, batizado?: { crianca?: string | null } | null): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Esperamos que esteja tudo a correr bem com os preparativos.',
+    '',
+    `Passámos só para lembrar que ainda falta preencher o briefing ${batizado ? 'do batizado' : 'do vosso dia'}. Leva poucos minutos e ajuda-nos muito a preparar a nossa reunião e ${batizado ? 'esse dia' : 'o vosso dia'}. Depois de o enviarem, já podem escolher o dia e a hora da reunião:`,
+    linkPublico(`/preparacao/${eventoId}`),
+    '',
+    'Qualquer dúvida, estamos aqui para vos ajudar.',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* Lembrete 1 hora antes da reunião de preparação (videochamada) */
+export function mensagemLembretePreparacao(nome: string | null | undefined, hora?: string | null): string {
+  const quem = (nome ?? '').trim()
+  const h = (hora ?? '').slice(0, 5)
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    `Daqui a 1 hora${h ? ` (às ${h})` : ''} temos a nossa videochamada de preparação.`,
+    '',
+    'Para entrarem, basta clicarem neste link:',
+    MEET_LINK,
+    '',
+    'Recomendamos que usem um computador, para uma melhor experiência.',
+    '',
+    'Até já!',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
 /* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
 export function mensagemBoasVindas(nome: string | null | undefined): string {
   const quem = (nome ?? '').trim()
