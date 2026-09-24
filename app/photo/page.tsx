@@ -6,7 +6,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem } from '@/app/components/AgendaItem'
-import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, nomeNoivos } from '@/lib/crm'
+import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -335,7 +335,7 @@ export default async function PhotoDashboard() {
     async () => {
       const ate = somaDias(hojeLx, DIAS_AGENDA + PREPARACAO_DIAS)
       const { data: evs } = await supabase.from('eventos_2026')
-        .select('id, referencia, cliente, data_evento')
+        .select('id, referencia, cliente, data_evento, tipo_evento, nome_crianca')
         .gte('data_evento', somaDias(hojeLx, 1)).lte('data_evento', ate).limit(150)
       const lista = evs ?? []
       // Reuniões de preparação já marcadas pelos noivos, na janela da faixa
@@ -377,6 +377,7 @@ export default async function PhotoDashboard() {
       nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
       contato: c?.tel_noiva || c?.tel_noivo || null,
       reuniaoHora: null, dataCasamento: ev.data_evento,
+      batizado: ehBatizado(ev.tipo_evento) ? { crianca: ev.nome_crianca ?? null } : null,
       dia: devido < hojeLx ? hojeLx : devido,
       atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
     }

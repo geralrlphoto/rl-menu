@@ -15,6 +15,7 @@ type Reserva = { data: string; hora: string; formato: string }
 const SERIF = { fontFamily: "'Cormorant Garamond', serif" }
 const GOLD = '#C9A84C'
 const HERO = '/eventos-hero-2026.webp'
+const HERO_BATIZADO = '/batizado-hero.webp'
 const SEMANA = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
 const DURACAO_MIN = 45
 
@@ -29,7 +30,7 @@ function hojeLisboa() {
 }
 
 /* Link "Adicionar ao Google Calendar" (hora de Lisboa) */
-function googleCalUrl(r: Reserva, nome: string) {
+function googleCalUrl(r: Reserva, nome: string, evento: string) {
   const [h, m] = r.hora.split(':').map(Number)
   const ini = r.data.replace(/-/g, '') + 'T' + String(h).padStart(2, '0') + String(m).padStart(2, '0') + '00'
   const fimMin = h * 60 + m + DURACAO_MIN
@@ -39,7 +40,7 @@ function googleCalUrl(r: Reserva, nome: string) {
     text: 'Reunião de preparação · RL PhotoVideo',
     dates: `${ini}/${fim}`,
     ctz: 'Europe/Lisbon',
-    details: `Videochamada com a RL PhotoVideo para prepararmos o vosso casamento${nome ? ` (${nome})` : ''}: horários, dicas e últimos ajustes.
+    details: `Videochamada com a RL PhotoVideo para prepararmos ${evento}${nome ? ` (${nome})` : ''}: horários, dicas e últimos ajustes.
 
 Videochamada: ${MEET_LINK}`,
     location: MEET_LINK,
@@ -52,6 +53,8 @@ export default function PreparacaoPage() {
   const [estado, setEstado] = useState<'carregar' | 'erro' | 'ok'>('carregar')
   const [nome, setNome] = useState('')
   const [dataEvento, setDataEvento] = useState<string | null>(null)
+  const [batizado, setBatizado] = useState(false)
+  const [crianca, setCrianca] = useState<string | null>(null)
   const [slots, setSlots] = useState<Slot[]>([])
   const [reserva, setReserva] = useState<Reserva | null>(null)
   const [dia, setDia] = useState<string | null>(null)
@@ -64,7 +67,7 @@ export default function PreparacaoPage() {
   const carregar = () => {
     fetch(`/api/preparacao-publico?e=${id}`).then(r => r.json()).then(d => {
       if (!d.ok) { setEstado('erro'); return }
-      setNome(d.nome); setDataEvento(d.dataEvento); setSlots(d.slots ?? []); setReserva(d.reserva)
+      setNome(d.nome); setDataEvento(d.dataEvento); setBatizado(!!d.batizado); setCrianca(d.crianca ?? null); setSlots(d.slots ?? []); setReserva(d.reserva)
       const primeiro: string | undefined = d.slots?.[0]?.data
       setMes(prev => prev ?? (primeiro
         ? { y: +primeiro.slice(0, 4), m: +primeiro.slice(5, 7) - 1 }
@@ -79,6 +82,10 @@ export default function PreparacaoPage() {
   const horas = slots.filter(s => s.data === dia)
   const escolhido = slots.find(s => s.id === slotId) ?? null
   const passo = reserva ? 3 : escolhido ? 3 : dia ? 2 : 1
+
+  // Textos que mudam entre casamento e batizado
+  const oEvento = batizado ? (crianca ? `o batizado de ${crianca}` : 'o batizado') : 'o vosso dia'
+  const rotuloEvento = batizado ? 'O batizado' : 'O vosso casamento'
 
   const faltamCasamento = dataEvento
     ? Math.round((dUTC(dataEvento).getTime() - dUTC(hojeLisboa()).getTime()) / 86400000)
@@ -123,7 +130,11 @@ export default function PreparacaoPage() {
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" />
       {/* ── Foto (fixa no desktop) ── */}
       <section className="relative h-[46vh] min-h-[320px] lg:h-screen lg:sticky lg:top-0 overflow-hidden">
-        <img src={HERO} alt="" className="absolute inset-0 w-full h-full object-cover scale-105 animate-[kenburns_18s_ease-out_forwards]" />
+        {/* Só mostra a foto depois de saber se é casamento ou batizado (evita trocar a meio) */}
+        {estado !== 'carregar' && (
+          <img src={batizado ? HERO_BATIZADO : HERO} alt="" className="absolute inset-0 w-full h-full object-cover scale-105 animate-[kenburns_18s_ease-out_forwards]"
+            style={{ objectPosition: batizado ? '50% 40%' : '50% 50%' }} />
+        )}
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/55 to-black/10" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#070707] via-transparent to-transparent lg:hidden" />
         <div className="relative h-full flex flex-col justify-end lg:justify-center px-6 sm:px-12 pb-10 lg:pb-0 max-w-xl">
@@ -133,7 +144,7 @@ export default function PreparacaoPage() {
           </h1>
           <div className="h-px mt-6 mb-5 origin-left animate-[linha_.9s_.35s_ease-out_both]" style={{ background: GOLD, width: 72 }} />
           <p className="text-white/80 text-lg sm:text-xl italic leading-relaxed animate-[fadeUp_.7s_.25s_ease-out_both]" style={SERIF}>
-            {nome ? `${nome}, ` : ''}vamos preparar juntos o vosso dia: horários, dicas e os últimos detalhes.
+            {nome ? `${nome}, ` : ''}vamos preparar juntos {oEvento}: horários, dicas e os últimos detalhes.
           </p>
           {faltamCasamento !== null && faltamCasamento > 0 && (
             <div className="mt-7 flex items-baseline gap-3 animate-[fadeUp_.7s_.4s_ease-out_both]">
@@ -175,7 +186,7 @@ export default function PreparacaoPage() {
               <p className="text-4xl sm:text-5xl font-light mt-3 leading-tight" style={SERIF}>{diaLongo(reserva.data)}</p>
               <p className="mt-3 text-sm tracking-[0.3em] uppercase" style={{ color: GOLD }}>{reserva.hora} · Videochamada</p>
               <p className="text-white/45 text-sm mt-8 leading-relaxed max-w-sm">
-                Vamos falar sobre os horários do vosso dia, partilhar dicas e sugestões e ajustar os últimos detalhes.
+                Vamos falar sobre os horários {batizado ? 'desse dia' : 'do vosso dia'}, partilhar dicas e sugestões e ajustar os últimos detalhes.
                 Se precisarem de mudar alguma coisa, é só dizerem-nos pelo WhatsApp.
               </p>
               <div className="mt-6 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 flex items-center gap-4 text-left">
@@ -187,7 +198,7 @@ export default function PreparacaoPage() {
                   <span className="block text-sm text-white/85 leading-snug mt-0.5">Encontra-se na mensagem que vos enviámos por WhatsApp.</span>
                 </span>
               </div>
-              <a href={googleCalUrl(reserva, nome)} target="_blank" rel="noopener noreferrer"
+              <a href={googleCalUrl(reserva, nome, batizado ? oEvento : 'o vosso casamento')} target="_blank" rel="noopener noreferrer"
                 className="mt-8 inline-flex items-center gap-2 rounded-full border px-6 py-3 text-[11px] tracking-[0.25em] uppercase transition-all hover:bg-[#C9A84C] hover:text-black"
                 style={{ borderColor: GOLD, color: GOLD }}>
                 + Adicionar ao calendário
@@ -252,7 +263,7 @@ export default function PreparacaoPage() {
                               border: `1px solid ${sel ? GOLD : tem ? 'rgba(201,168,76,0.35)' : casamento ? 'rgba(201,168,76,0.4)' : 'transparent'}`,
                               boxShadow: sel ? '0 0 24px rgba(201,168,76,0.35)' : undefined,
                             }}
-                            title={casamento ? 'O vosso casamento' : undefined}>
+                            title={casamento ? rotuloEvento : undefined}>
                             {+iso.slice(8)}
                             {tem && !sel && <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full" style={{ background: GOLD }} />}
                             {casamento && <span className="absolute -top-1 -right-1 text-[10px]" style={{ color: GOLD }}>♥</span>}
@@ -262,7 +273,7 @@ export default function PreparacaoPage() {
                     </div>
                     <p className="text-[10px] text-white/30 mt-4 flex items-center gap-4">
                       <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ background: GOLD }} /> Com horários</span>
-                      {dataEvento && <span className="flex items-center gap-1.5"><span style={{ color: GOLD }}>♥</span> O vosso casamento</span>}
+                      {dataEvento && <span className="flex items-center gap-1.5"><span style={{ color: GOLD }}>♥</span> {rotuloEvento}</span>}
                     </p>
                   </div>
 

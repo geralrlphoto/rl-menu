@@ -18,6 +18,7 @@ export type WaTarefa = {
   contato: string | null
   reuniaoHora: string | null
   dataCasamento: string | null
+  batizado?: { crianca: string | null } | null
   atrasoDias: number   // > 0 quando o dia já passou
   futura: boolean      // ainda não é o dia: só informativa
 }
@@ -32,7 +33,7 @@ const CONFIG = {
 function textoDe(t: WaTarefa): string {
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
   if (t.tipo === 'follow1') return mensagemFollowUp(t.nome, t.dataCasamento)
-  if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome, t.contactId)
+  if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome, t.contactId, t.batizado)
   return mensagemFollowUp2(t.nome, t.dataCasamento)
 }
 

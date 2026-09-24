@@ -1,7 +1,7 @@
 // Reunião de preparação do dia: disponibilidade comum (preparacao_slots) e
 // dados do casal. Usado pelas rotas /api/preparacao* e pelo /photo.
 import { createClient } from '@supabase/supabase-js'
-import { nomeNoivos } from '@/lib/crm'
+import { nomeNoivos, ehBatizado } from '@/lib/crm'
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export const FORMATOS = ['Presencial', 'Videochamada'] as const
@@ -22,7 +22,7 @@ export async function eventoPreparacao(eventoId: string) {
   let ev: any = null
   for (const tabela of ['eventos_2026', 'eventos_2027']) {
     const { data } = await sb.from(tabela)
-      .select('id, referencia, cliente, data_evento, local')
+      .select('*')
       .or(`id.eq.${eventoId},notion_id.eq.${eventoId}`).limit(1).maybeSingle()
     if (data) { ev = data; break }
   }
@@ -34,7 +34,12 @@ export async function eventoPreparacao(eventoId: string) {
       .order('id', { ascending: false }).limit(1).maybeSingle()
     c = data
   }
-  return { ...ev, nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo) }
+  return {
+    id: ev.id as string, referencia: ev.referencia, cliente: ev.cliente, data_evento: ev.data_evento, local: ev.local,
+    nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
+    batizado: ehBatizado(ev.tipo_evento),
+    crianca: ((ev.nome_crianca ?? '') as string).trim().split(/\s+/)[0] || null,
+  }
 }
 
 export function fmtDataLonga(iso: string): string {

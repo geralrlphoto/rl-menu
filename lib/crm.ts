@@ -223,15 +223,27 @@ export const PREPARACAO_DIAS = 15
 /* Sala fixa de videochamada da RL (a mesma das reuniões do CRM) */
 export const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 
-export function mensagemReuniaoPreparacao(nome: string | null | undefined, eventoId?: string | null): string {
+/* Batizado: tipo_evento vem como texto JSON (["BATIZADO"]) ou array */
+export function ehBatizado(tipoEvento: unknown): boolean {
+  return /batiz/i.test(typeof tipoEvento === 'string' ? tipoEvento : JSON.stringify(tipoEvento ?? ''))
+}
+
+/* "o batizado do Vicente" com o primeiro nome da criança; sem nome, "o batizado" */
+export function oBatizado(crianca?: string | null): string {
+  const n = (crianca ?? '').trim().split(/\s+/)[0]
+  return n ? `o batizado de ${n}` : 'o batizado'
+}
+
+export function mensagemReuniaoPreparacao(nome: string | null | undefined, eventoId?: string | null, batizado?: { crianca?: string | null } | null): string {
   const quem = (nome ?? '').trim()
   const link = eventoId ? linkPublico(`/preparacao/${eventoId}`) : null
+  const evento = batizado ? oBatizado(batizado.crianca) : 'o vosso casamento'
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
-    'Está quase! Faltam cerca de duas semanas para o vosso casamento e nós já estamos a contar os dias.',
+    `Está quase! Faltam cerca de duas semanas para ${evento} e nós já estamos a contar os dias.`,
     '',
-    'Gostávamos de marcar uma pequena reunião convosco para falarmos sobre o vosso dia: os horários, algumas dicas e sugestões nossas, e ajustar os últimos detalhes para que tudo corra na perfeição e vocês só tenham de aproveitar.',
+    `Gostávamos de marcar uma pequena reunião convosco para falarmos sobre ${batizado ? 'esse dia' : 'o vosso dia'}: os horários, algumas dicas e sugestões nossas, e ajustar os últimos detalhes para que tudo corra na perfeição e vocês só tenham de aproveitar.`,
     '',
     ...(link
       ? ['A reunião é por videochamada. Escolham aqui o dia e a hora que vos dá mais jeito:', link]

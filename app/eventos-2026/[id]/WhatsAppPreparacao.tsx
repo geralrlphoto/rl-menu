@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { whatsappLink, mensagemReuniaoPreparacao, nomeNoivos, PREPARACAO_DIAS } from '@/lib/crm'
+import { whatsappLink, mensagemReuniaoPreparacao, nomeNoivos, ehBatizado, PREPARACAO_DIAS } from '@/lib/crm'
 import { linkPublico } from '@/lib/site-url'
 
 /* Reunião de preparação do dia (horários, dicas, ajustes):
@@ -41,7 +41,8 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
 
   const nome = nomeNoivos(e.cliente, e.nome_noiva, e.nome_noivo)
   const tel = quem === 'noiva' ? e.tel_noiva : e.tel_noivo
-  const href = whatsappLink(tel, mensagemReuniaoPreparacao(nome, evId))
+  const batizado = ehBatizado(e.tipo_evento)
+  const href = whatsappLink(tel, mensagemReuniaoPreparacao(nome, evId, batizado ? { crianca: e.nome_crianca } : null))
   const linkNoivos = linkPublico(`/preparacao/${evId}`)
   const reserva = slots.find(s => s.evento_id === evId) ?? null
   const livres = slots.filter(s => !s.evento_id).length
@@ -89,7 +90,7 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
           <span className="text-[10px] tracking-[0.3em] uppercase text-green-400/80 font-semibold">Reunião de preparação do dia</span>
           <p className="text-white/45 text-xs mt-1 leading-relaxed">
             Pelo WhatsApp segue um link onde os noivos escolhem o dia e a hora da tua disponibilidade.
-            Aparece no calendário do painel {PREPARACAO_DIAS} dias antes do casamento.
+            Aparece no calendário do painel {PREPARACAO_DIAS} dias antes do {batizado ? 'batizado' : 'casamento'}.
           </p>
         </div>
         {faltam !== null && faltam >= 0 && (
@@ -164,7 +165,7 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
         <div className="rounded-lg border border-white/10 bg-black/30 p-3 flex flex-col gap-3">
           <p className="text-white/40 text-[11px] leading-relaxed">
             Horários que qualquer casal pode escolher. Quando um casal marca, o horário fica ocupado para os outros.
-            {dataCas && <> Cada casal só vê os horários <span className="text-white/70">antes do seu casamento</span>; a cinzento estão os que este casal não vê.</>}
+            {dataCas && <> Cada casal só vê os horários <span className="text-white/70">antes do seu evento</span>; a cinzento estão os que este casal não vê.</>}
           </p>
           <div className="flex flex-wrap items-center gap-2">
             <input type="date" value={novaData} onChange={ev => setNovaData(ev.target.value)}
@@ -189,7 +190,7 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
                         {s.hora} · {(s.cliente ?? '').trim() || 'Reservado'}
                       </span>
                     ) : (
-                      <span key={s.id} title={serveEste(s) ? undefined : 'Depois do casamento deste casal (ou já passou): não aparece no link deles'}
+                      <span key={s.id} title={serveEste(s) ? undefined : 'Depois do evento deste casal (ou já passou): não aparece no link deles'}
                         className={`group text-[11px] pl-2 pr-1 py-1 rounded-md border flex items-center gap-1 ${serveEste(s) ? 'border-white/12 text-white/75' : 'border-white/5 text-white/25 line-through decoration-white/20'}`}>
                         {s.hora}
                         <button onClick={() => remover(s.id)} aria-label="Remover horário" className="w-4 h-4 rounded text-white/30 hover:text-red-400">✕</button>
