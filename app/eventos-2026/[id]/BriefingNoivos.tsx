@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CAMPOS_BRIEFING, campoAtivo, valorBriefing, type RespostasBriefing } from '@/lib/briefing'
+import { camposBriefing, campoAtivo, valorBriefing, type RespostasBriefing } from '@/lib/briefing'
 
 /* Ficha do evento › Comunicação com os Noivos:
    estado do link /preparacao/<id> (ativo/expirado + Reativar) e o briefing
@@ -73,16 +73,16 @@ export default function BriefingNoivos({ e }: { e: any }) {
         )}
       </div>
 
-      {/* Briefing (só casamentos) */}
-      {!st.batizado && (
+      {/* Briefing (casamento ou batizado) */}
+      {(
         <div className="border-t border-white/5 pt-3">
           <button onClick={() => setAberto(v => !v)} className="w-full flex items-center justify-between gap-3 text-left">
             <span>
-              <span className="text-[10px] tracking-[0.3em] uppercase text-gold/80 font-semibold">Briefing pré-casamento</span>
+              <span className="text-[10px] tracking-[0.3em] uppercase text-gold/80 font-semibold">{st.batizado ? 'Briefing do batizado' : 'Briefing pré-casamento'}</span>
               <span className="block text-[11px] mt-0.5">
                 {st.enviadoEm
                   ? <span className="text-green-400">✓ Preenchido a {fmt(st.enviadoEm)}{st.atualizadoEm && st.atualizadoEm !== st.enviadoEm ? ` · atualizado a ${fmt(st.atualizadoEm)}` : ''}</span>
-                  : <span className="text-white/35">Os noivos ainda não preencheram (está no mesmo link da reunião)</span>}
+                  : <span className="text-white/35">{st.batizado ? 'Os pais' : 'Os noivos'} ainda não preencheram (está no mesmo link da reunião)</span>}
               </span>
             </span>
             <span className={`text-white/30 text-xs transition-transform ${aberto ? 'rotate-180' : ''}`}>▼</span>
@@ -90,7 +90,7 @@ export default function BriefingNoivos({ e }: { e: any }) {
 
           {aberto && (
             <div className="mt-3 flex flex-col gap-2">
-              {CAMPOS_BRIEFING.filter(c => campoAtivo(c, editar ? draft : (st.briefing ?? {}))).map(c => editar ? (
+              {camposBriefing(st.batizado).filter(c => campoAtivo(c, editar ? draft : (st.briefing ?? {}))).map(c => editar ? (
                 <label key={c.key} className="flex flex-col gap-1">
                   <span className="text-[10px] tracking-[0.2em] uppercase text-white/35">{c.label}</span>
                   {c.tipo === 'longo'

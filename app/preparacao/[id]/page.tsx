@@ -218,7 +218,7 @@ export default function PreparacaoPage() {
 
           {/* ── Briefing ── */}
           {estado === 'ok' && !expirado && briefing && vista === 'briefing' && (
-            <BriefingForm eventoId={id} info={briefing}
+            <BriefingForm eventoId={id} info={briefing} batizado={batizado} crianca={crianca}
               onEnviado={(respostas, enviadoEm) => {
                 const primeira = !briefing.enviadoEm
                 setBriefing(b => b ? { ...b, respostas, enviadoEm } : b)
@@ -277,7 +277,7 @@ export default function PreparacaoPage() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[10px] tracking-[0.3em] uppercase" style={{ color: GOLD }}>{briefing.enviadoEm ? 'Briefing enviado' : 'Antes da reunião'}</span>
-                    <span className="block text-sm text-white/85 leading-snug mt-0.5">{briefing.enviadoEm ? 'Ver ou corrigir as vossas respostas' : 'Preencham o briefing do vosso dia'}</span>
+                    <span className="block text-sm text-white/85 leading-snug mt-0.5">{briefing.enviadoEm ? 'Ver ou corrigir as vossas respostas' : batizado ? 'Preencham o briefing do batizado' : 'Preencham o briefing do vosso dia'}</span>
                   </span>
                   <span className="text-white/40">›</span>
                 </button>

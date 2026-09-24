@@ -40,6 +40,7 @@ export async function eventoPreparacao(eventoId: string) {
     nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
     batizado: ehBatizado(ev.tipo_evento),
     crianca: ((ev.nome_crianca ?? '') as string).trim().split(/\s+/)[0] || null,
+    nome_crianca_completo: ((ev.nome_crianca ?? '') as string).trim() || null,
   }
 }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sbAdmin, eventoPreparacao, estadoLink, UUID_RE } from '@/lib/preparacao'
-import { limparBriefing } from '@/lib/briefing'
+import { camposBriefing, limparBriefing } from '@/lib/briefing'
 
 // Admin (ficha do evento): briefing dos noivos e estado do link /preparacao/<id>.
 // GET  ?eventoId=  → briefing + se o link está ativo
@@ -33,7 +33,7 @@ export async function PATCH(req: NextRequest) {
   const ev = await eventoPreparacao(eventoId)
   if (!ev) return NextResponse.json({ error: 'evento não encontrado' }, { status: 404 })
   const { error } = await sbAdmin().from('preparacao_eventos')
-    .upsert({ evento_id: ev.id, briefing: limparBriefing(briefing), briefing_atualizado_em: new Date().toISOString() }, { onConflict: 'evento_id' })
+    .upsert({ evento_id: ev.id, briefing: limparBriefing(briefing, camposBriefing(ev.batizado)), briefing_atualizado_em: new Date().toISOString() }, { onConflict: 'evento_id' })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })
 }

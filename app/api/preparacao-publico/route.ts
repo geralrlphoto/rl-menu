@@ -29,11 +29,13 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({
     ok: true, nome: ev.nome, dataEvento: ev.data_evento, batizado: ev.batizado, crianca: ev.crianca,
     expirado, reserva: minha ?? null, slots: expirado ? [] : livres,
-    // Briefing só nos casamentos; pré-preenchido com o que já está na ficha
-    briefing: ev.batizado ? null : {
+    // Briefing (casamento ou batizado), pré-preenchido com o que já está na ficha
+    briefing: {
       respostas: prep?.briefing ?? null,
       enviadoEm: prep?.briefing_enviado_em ?? null,
-      prefill: { nome_noivos: ev.nome, local_cerimonia: ev.local_cerimonia || ev.local || '', local_festa: ev.local || '', hora_cerimonia: (ev.hora_inicio ?? '').slice(0, 5) },
+      prefill: ev.batizado
+        ? { nome_crianca: ev.nome_crianca_completo || ev.crianca || '', nome_pais: ev.nome, local_cerimonia: ev.local_cerimonia || ev.local || '', hora_cerimonia: (ev.hora_inicio ?? '').slice(0, 5) }
+        : { nome_noivos: ev.nome, local_cerimonia: ev.local_cerimonia || ev.local || '', local_festa: ev.local || '', hora_cerimonia: (ev.hora_inicio ?? '').slice(0, 5) },
     },
   })
 }
@@ -55,8 +57,8 @@ export async function POST(req: NextRequest) {
   if (estadoLink(ev.data_evento, anterior ?? null, prep?.reativado_ate).expirado) {
     return NextResponse.json({ error: 'Este link já expirou. Falem connosco pelo WhatsApp, por favor.' }, { status: 410 })
   }
-  // Nos casamentos, primeiro o briefing e só depois a marcação
-  if (!ev.batizado && !prep?.briefing_enviado_em && !anterior) {
+  // Primeiro o briefing e só depois a marcação
+  if (!prep?.briefing_enviado_em && !anterior) {
     return NextResponse.json({ error: 'Preencham e enviem primeiro o briefing, por favor.' }, { status: 409 })
   }
   if (anterior && !alterar) return NextResponse.json({ error: 'Já têm uma reunião marcada.' }, { status: 409 })

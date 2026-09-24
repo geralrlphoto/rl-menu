@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { CAMPOS_BRIEFING, campoAtivo, emFaltaBriefing, type RespostasBriefing } from '@/lib/briefing'
+import { camposBriefing, campoAtivo, emFaltaBriefing, type RespostasBriefing } from '@/lib/briefing'
 
 /* Formulário do briefing pré-casamento dentro da página /preparacao/<id>.
    Pré-preenchido com o que já está na ficha; pode ser corrigido enquanto o link estiver ativo. */
@@ -15,9 +15,11 @@ export type BriefingInfo = {
   prefill: RespostasBriefing
 }
 
-export default function BriefingForm({ eventoId, info, onEnviado }: {
+export default function BriefingForm({ eventoId, info, onEnviado, batizado = false, crianca = null }: {
   eventoId: string
   info: BriefingInfo
+  batizado?: boolean
+  crianca?: string | null
   onEnviado: (respostas: RespostasBriefing, enviadoEm: string) => void
 }) {
   const primeiraVez = !info.enviadoEm
@@ -27,8 +29,9 @@ export default function BriefingForm({ eventoId, info, onEnviado }: {
   const [tentou, setTentou] = useState(false)
   const [ok, setOk] = useState(false)
 
-  const falta = useMemo(() => emFaltaBriefing(r), [r])
-  const visiveis = CAMPOS_BRIEFING.filter(c => campoAtivo(c, r))
+  const campos = camposBriefing(batizado)
+  const falta = useMemo(() => emFaltaBriefing(r, campos), [r, campos])
+  const visiveis = campos.filter(c => campoAtivo(c, r))
   const obrig = visiveis.filter(c => c.obrigatorio).length
   const feitos = obrig - falta.length
   const set = (k: string, v: string) => { setR(p => ({ ...p, [k]: v })); setOk(false) }
@@ -58,12 +61,14 @@ export default function BriefingForm({ eventoId, info, onEnviado }: {
     <div className="flex flex-col">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] tracking-[0.35em] uppercase" style={{ color: GOLD }}>Briefing pré-casamento</p>
-          <h2 className="text-3xl sm:text-4xl font-light mt-2" style={SERIF}>Contem-nos como vai ser o vosso dia</h2>
+          <p className="text-[10px] tracking-[0.35em] uppercase" style={{ color: GOLD }}>{batizado ? 'Briefing do batizado' : 'Briefing pré-casamento'}</p>
+          <h2 className="text-3xl sm:text-4xl font-light mt-2" style={SERIF}>
+            {batizado ? `Contem-nos como vai ser o batizado${crianca ? ` de ${crianca}` : ''}` : 'Contem-nos como vai ser o vosso dia'}
+          </h2>
         </div>
       </div>
       <p className="text-white/45 text-sm mt-3 leading-relaxed">
-        Primeiro o briefing, depois a marcação da reunião. Estas respostas ajudam-nos a preparar a reunião e o vosso dia, e podem voltar a este link para corrigir o que quiserem.
+        Primeiro o briefing, depois a marcação da reunião. Estas respostas ajudam-nos a preparar a reunião e {batizado ? 'esse dia' : 'o vosso dia'}, e podem voltar a este link para corrigir o que quiserem.
       </p>
 
       {/* Progresso */}

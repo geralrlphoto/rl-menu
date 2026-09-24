@@ -40,20 +40,39 @@ export const CAMPOS_BRIEFING: CampoBriefing[] = [
   { key: 'outras', label: 'Outras informações', tipo: 'longo', obrigatorio: false, placeholder: 'Tudo o que achem importante sabermos' },
 ]
 
+/* Briefing do batizado (mesmo fluxo, perguntas próprias) */
+export const CAMPOS_BRIEFING_BATIZADO: CampoBriefing[] = [
+  { key: 'nome_crianca', label: 'Nome da criança', tipo: 'texto', obrigatorio: true },
+  { key: 'nome_pais', label: 'Nome dos pais', tipo: 'texto', obrigatorio: true },
+  { key: 'local_cerimonia', label: 'Local da cerimónia', tipo: 'texto', obrigatorio: true, placeholder: 'Igreja / capela' },
+  { key: 'hora_cerimonia', label: 'Hora da cerimónia', tipo: 'hora', obrigatorio: true },
+  { key: 'local_festa', label: 'Local da festa', tipo: 'texto', obrigatorio: true },
+  { key: 'morada_preparacao', label: 'Morada da preparação', tipo: 'texto', obrigatorio: true, placeholder: 'Onde se vão preparar antes da cerimónia' },
+  { key: 'contacto_alt', label: 'Contacto alternativo', tipo: 'texto', obrigatorio: true, placeholder: 'Nome e telemóvel' },
+  { key: 'padrinhos', label: 'Padrinhos e madrinhas', tipo: 'texto', obrigatorio: true, placeholder: 'Nomes' },
+  { key: 'momentos_cerimonia', label: 'Há algum momento especial na cerimónia que não possamos perder?', tipo: 'longo', obrigatorio: false, placeholder: 'Leituras, entrada, homenagens…' },
+  { key: 'equipa_animacao', label: 'Equipa de animação', tipo: 'texto', obrigatorio: true, placeholder: 'Nome da equipa (ou "Não temos")' },
+  { key: 'animacao_criancas', label: 'Animação para as crianças?', tipo: 'simnao', obrigatorio: true, detalhe: 'O quê e em que momento?' },
+  { key: 'bolo', label: 'Corte do bolo', tipo: 'simnao', obrigatorio: true, detalhe: 'A que hora, aproximadamente?' },
+  { key: 'outras', label: 'Outras informações', tipo: 'longo', obrigatorio: false, placeholder: 'Tudo o que achem importante sabermos' },
+]
+
+export const camposBriefing = (batizado: boolean) => (batizado ? CAMPOS_BRIEFING_BATIZADO : CAMPOS_BRIEFING)
+
 export type RespostasBriefing = Record<string, string>
 
 /* Devolve a lista de campos obrigatórios por preencher (vazia = pode enviar) */
-export function emFaltaBriefing(r: RespostasBriefing): string[] {
-  return CAMPOS_BRIEFING
+export function emFaltaBriefing(r: RespostasBriefing, campos: CampoBriefing[] = CAMPOS_BRIEFING): string[] {
+  return campos
     .filter(c => c.obrigatorio && campoAtivo(c, r) && !(r[c.key] ?? '').trim())
     .map(c => c.label)
 }
 
 /* Só guarda as chaves conhecidas, como texto e com tamanho limitado */
-export function limparBriefing(entrada: unknown): RespostasBriefing {
+export function limparBriefing(entrada: unknown, campos: CampoBriefing[] = CAMPOS_BRIEFING): RespostasBriefing {
   const r: RespostasBriefing = {}
   const src = (entrada && typeof entrada === 'object') ? entrada as Record<string, unknown> : {}
-  for (const c of CAMPOS_BRIEFING) {
+  for (const c of campos) {
     for (const k of [c.key, `${c.key}_detalhe`]) {
       if (!campoAtivo(c, src as RespostasBriefing)) continue
       const v = src[k]
