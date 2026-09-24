@@ -65,6 +65,11 @@ export default function FormSelecao({
     })
   }, [])
 
+  // "LG-0001; LG-0002; LG-0003" a partir do exemplo
+  const exemploLista = [0, 1, 2]
+    .map(k => exemplo.replace(/\d+$/, m => String(Number(m) + k).padStart(m.length, '0')))
+    .join('; ')
+
   const preenchidas = (name: string) => separar(fotos[name] ?? '').length
   const total = seccoes.reduce((acc, s) => acc + preenchidas(s.name), 0)
 
@@ -157,14 +162,14 @@ export default function FormSelecao({
                 <h2>Instruções para Envio da Seleção</h2>
                 <p>
                   Ao preencherem o formulário, deverão indicar em cada secção as fotografias que
-                  pretendem que sejam editadas. Podem escrevê-las todas seguidas, separadas por vírgulas
-                  ou uma por linha.
+                  pretendem que sejam editadas. Podem escrevê-las todas seguidas, separando cada
+                  fotografia com ponto e vírgula (;).
                 </p>
                 <p>
                   A numeração deve ser colocada exatamente como aparece na galeria e deverá conter
                   {' '}{iniciais} seguidas do número da fotografia.
                 </p>
-                <div className="ex">Exemplo: {exemplo}</div>
+                <div className="ex">Exemplo: {exemploLista}</div>
                 <p>
                   É fundamental que a identificação seja inserida corretamente e respeitando este
                   formato. Caso contrário, o nosso sistema poderá não conseguir reconhecer a
@@ -226,9 +231,9 @@ export default function FormSelecao({
                             ) : (
                               <>
                                 <textarea className="fototxt" value={fotos[s.name]}
-                                  placeholder={`Ex.: ${exemplo}, ${exemplo.replace(/\d+$/, m => String(Number(m) + 1).padStart(m.length, '0'))}, …`}
+                                  placeholder={`Ex.: ${exemploLista}`}
                                   onChange={e => setFotos(p => ({ ...p, [s.name]: e.target.value }))} />
-                                <p className="fotohint">Separem por vírgulas ou uma por linha</p>
+                                <p className="fotohint">Separem cada fotografia com ;</p>
                               </>
                             )}
                           </div>
