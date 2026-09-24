@@ -1633,7 +1633,10 @@ function TrabalhoRLSection({ downloads, relatorios, locked, isAdmin, linkAdmin, 
   // Admin: cola o link do material aqui mesmo (fica no projeto e passa a ser o 1.º download)
   const [link, setLink] = useState(linkAdmin ?? '')
   const [guardado, setGuardado] = useState(false)
+  const [editarLink, setEditarLink] = useState(false)
   useEffect(() => { setLink(linkAdmin ?? '') }, [linkAdmin])
+  // Um só botão: o link guardado pelo admin manda; senão o primeiro da equipa
+  const principal = downloads[0] ?? ''
   const RD_CAMPOS: { key: keyof RelatorioDiario; label: string }[] = [
     { key: 'gravado',         label: 'O que foi gravado' },
     { key: 'tipoCerimonia',   label: 'Tipo de cerimónia' },
@@ -1655,46 +1658,46 @@ function TrabalhoRLSection({ downloads, relatorios, locked, isAdmin, linkAdmin, 
       <div className="rounded-2xl border border-gold/25 p-4 sm:p-5 space-y-5"
         style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.5), rgba(11,11,11,0.55))' }}>
 
-        {/* Download do material — bloqueado até o estado passar a "Em Edição" */}
+        {/* Download do material: um só botão (o link do admin, senão o da equipa).
+            Bloqueado até o estado passar a "Em Edição". */}
         <div>
           <Label>Download do Material</Label>
-          {isAdmin && onGuardarLink && (
-            <div className="mt-1 mb-3 flex flex-wrap items-center gap-2">
-              <input value={link} onChange={e => { setLink(e.target.value); setGuardado(false) }}
-                placeholder="Cola aqui o link de download (WeTransfer, Drive, Dropbox…)"
-                className="flex-1 min-w-[220px] bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
-              <button type="button" onClick={() => { onGuardarLink(link.trim()); setGuardado(true) }}
-                disabled={link.trim() === (linkAdmin ?? '')}
-                className="text-[10px] px-3 py-2 rounded-lg bg-gold text-black font-bold tracking-widest uppercase disabled:opacity-40">
-                Guardar link
-              </button>
-              {guardado && <span className="text-[10px] text-emerald-300">✓ Guardado, o editor já o vê</span>}
-            </div>
-          )}
-          {downloads.length === 0 ? (
+          {!principal ? (
             <p className="text-[12px] text-white/30 italic mt-1">Sem link de download ainda.</p>
           ) : locked ? (
             <div className="mt-1">
-              <div className="flex flex-wrap gap-2">
-                {downloads.map((_, i) => (
-                  <span key={i} aria-disabled="true" title="Coloca o estado do vídeo em &quot;Em Edição&quot; para desbloquear"
-                    className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-white/30 font-semibold tracking-wider uppercase cursor-not-allowed select-none">
-                    🔒 Download{downloads.length > 1 ? ` ${i + 1}` : ''}
-                  </span>
-                ))}
-              </div>
+              <span aria-disabled="true" title="Coloca o estado do vídeo em &quot;Em Edição&quot; para desbloquear"
+                className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/10 text-white/30 font-semibold tracking-wider uppercase cursor-not-allowed select-none">
+                🔒 Download
+              </span>
               <p className="text-[11px] text-gold/60 mt-2">Coloca o estado do vídeo em <span className="text-gold font-semibold">“Em Edição”</span> para desbloquear o download.</p>
             </div>
           ) : (
-            <div className="flex flex-wrap gap-2 mt-1">
-              {downloads.map((u, i) => (
-                <a key={i} href={u} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-gold/15 border border-gold/35 text-gold font-semibold tracking-wider uppercase hover:bg-gold/25 transition-all">
-                  ↓ Download{downloads.length > 1 ? ` ${i + 1}` : ''}
-                </a>
-              ))}
-            </div>
+            <a href={principal} target="_blank" rel="noopener noreferrer"
+              className="mt-1 inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-gold/15 border border-gold/35 text-gold font-semibold tracking-wider uppercase hover:bg-gold/25 transition-all">
+              ↓ Download
+            </a>
           )}
+
+          {/* Admin: definir ou trocar o link (o editor só vê o botão) */}
+          {isAdmin && onGuardarLink && (editarLink || !principal ? (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input value={link} onChange={e => { setLink(e.target.value); setGuardado(false) }} autoFocus={!!principal}
+                placeholder="Cola aqui o link de download (WeTransfer, Drive, Dropbox…)"
+                className="flex-1 min-w-[220px] bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+              <button type="button" onClick={() => { onGuardarLink(link.trim()); setGuardado(true); setEditarLink(false) }}
+                disabled={!link.trim() || link.trim() === (linkAdmin ?? '')}
+                className="text-[10px] px-3 py-2 rounded-lg bg-gold text-black font-bold tracking-widest uppercase disabled:opacity-40">
+                Guardar link
+              </button>
+              {principal && <button type="button" onClick={() => { setEditarLink(false); setLink(linkAdmin ?? '') }} className="text-[10px] tracking-widest uppercase text-white/40 hover:text-white/70">Cancelar</button>}
+            </div>
+          ) : (
+            <div className="mt-2 flex items-center gap-3">
+              <button type="button" onClick={() => setEditarLink(true)} className="text-[10px] tracking-widest uppercase text-white/35 hover:text-gold">✎ Alterar link</button>
+              {guardado && <span className="text-[10px] text-emerald-300">✓ Guardado, o editor já o vê</span>}
+            </div>
+          ))}
         </div>
 
         {/* Relatório(s) diário(s) da equipa */}
