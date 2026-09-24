@@ -453,12 +453,13 @@ export default function CalendarClient({
   }
 
   // ── Pré-Wedding modal ──────────────────────────────────────────────────
-  type PortalRow = { referencia: string; noiva: string; noivo: string; has_pw: boolean; pw_date: string | null; pw_time: string | null }
+  type PortalRow = { referencia: string; noiva: string; noivo: string; cliente: string; data_evento: string | null; has_pw: boolean; pw_date: string | null; pw_time: string | null; sem_portal: boolean }
   type FreelancerRow = { id: string; nome: string; status: string | null }
   const [pwOpen, setPwOpen]       = useState(false)
   const [pwDate, setPwDate]       = useState<string>('')
   const [pwPortais, setPwPortais] = useState<PortalRow[]>([])
   const [pwReferencia, setPwReferencia] = useState<string>('')
+  const [pwBusca, setPwBusca]     = useState<string>('')
   const [pwHora, setPwHora]       = useState<string>('14:00')
   const [pwLocal, setPwLocal]     = useState<string>('')
   const [pwSaving, setPwSaving]   = useState(false)
@@ -484,7 +485,7 @@ export default function CalendarClient({
 
   function openPreWedding(dateStr: string) {
     setPwDate(dateStr)
-    setPwReferencia(''); setPwHora('14:00'); setPwLocal(''); setPwFreelancerId('')
+    setPwReferencia(''); setPwBusca(''); setPwHora('14:00'); setPwLocal(''); setPwFreelancerId('')
     setPwOpen(true)
     setChooserDate(null)
     if (pwPortais.length === 0) {
@@ -1758,19 +1759,54 @@ export default function CalendarClient({
             <h2 className="text-lg font-light text-white tracking-wide mb-4">{fmtDate(pwDate)}</h2>
 
             <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Casamento</label>
-            <select value={pwReferencia} onChange={e => setPwReferencia(e.target.value)}
-              disabled={pwLoading}
-              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4FC3C3]/40 mb-3">
-              <option value="">{pwLoading ? 'A carregar portais…' : '— Escolhe casamento —'}</option>
-              {pwPortais.map(p => {
-                const nomes = [p.noiva, p.noivo].filter(Boolean).join(' & ')
+            {(() => {
+              const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+              const nomesDe = (p: PortalRow) => [p.noiva, p.noivo].filter(Boolean).join(' & ') || p.cliente
+              const sel = pwPortais.find(p => p.referencia === pwReferencia)
+              if (sel) {
                 return (
-                  <option key={p.referencia} value={p.referencia}>
-                    {p.referencia}{nomes ? ` · ${nomes}` : ''}{p.has_pw ? `  (já tem PW ${p.pw_date})` : ''}
-                  </option>
+                  <div className="flex items-center gap-2 w-full bg-black/30 border border-[#4FC3C3]/40 rounded-lg px-3 py-2 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm text-white truncate">{nomesDe(sel) || '(sem nome)'}</div>
+                      <div className="text-[11px] text-white/40">{sel.referencia}{sel.has_pw ? ` · já tem PW ${sel.pw_date}` : ''}</div>
+                    </div>
+                    <button type="button" onClick={() => { setPwReferencia(''); setPwBusca('') }}
+                      className="text-[11px] text-[#4FC3C3] hover:underline shrink-0">Trocar</button>
+                  </div>
                 )
-              })}
-            </select>
+              }
+              const termos = norm(pwBusca).split(/\s+/).filter(Boolean)
+              const lista = pwPortais.filter(p => {
+                const alvo = norm(`${p.referencia} ${p.noiva} ${p.noivo} ${p.cliente}`)
+                return termos.every(t => alvo.includes(t))
+              })
+              return (
+                <div className="mb-3">
+                  <input value={pwBusca} onChange={e => setPwBusca(e.target.value)} autoFocus
+                    disabled={pwLoading}
+                    placeholder={pwLoading ? 'A carregar portais…' : 'Procurar por nome dos noivos ou referência'}
+                    className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#4FC3C3]/40" />
+                  {!pwLoading && (
+                    <div className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-black/30 divide-y divide-white/5">
+                      {lista.length === 0 && <div className="px-3 py-2 text-xs text-white/40">Nenhum casamento encontrado</div>}
+                      {lista.map(p => (
+                        <button key={p.referencia} type="button" disabled={p.sem_portal}
+                          onClick={() => setPwReferencia(p.referencia)}
+                          title={p.sem_portal ? 'Este casamento ainda não tem portal. Cria o portal para poder marcar o PW.' : undefined}
+                          className="w-full text-left px-3 py-2 hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent">
+                          <div className="text-sm text-white truncate">{nomesDe(p) || '(sem nome)'}</div>
+                          <div className="text-[11px] text-white/40">
+                            {p.referencia}
+                            {p.sem_portal ? ' · sem portal' : ''}
+                            {p.has_pw ? ` · já tem PW ${p.pw_date}` : ''}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
 
             <div className="flex gap-2 mb-3">
               <div className="flex-1">
