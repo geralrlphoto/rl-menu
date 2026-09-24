@@ -1626,7 +1626,14 @@ function EditarDadosModal({
 
 // ── Material + Relatório Diário enviados pela RL ───────────────────────────
 //  Mostrado no topo do projeto expandido quando o trabalho vem da RL (modo real).
-function TrabalhoRLSection({ downloads, relatorios, locked }: { downloads: string[]; relatorios: RelatorioDiario[]; locked?: boolean }) {
+function TrabalhoRLSection({ downloads, relatorios, locked, isAdmin, linkAdmin, onGuardarLink }: {
+  downloads: string[]; relatorios: RelatorioDiario[]; locked?: boolean
+  isAdmin?: boolean; linkAdmin?: string; onGuardarLink?: (url: string) => void
+}) {
+  // Admin: cola o link do material aqui mesmo (fica no projeto e passa a ser o 1.º download)
+  const [link, setLink] = useState(linkAdmin ?? '')
+  const [guardado, setGuardado] = useState(false)
+  useEffect(() => { setLink(linkAdmin ?? '') }, [linkAdmin])
   const RD_CAMPOS: { key: keyof RelatorioDiario; label: string }[] = [
     { key: 'gravado',         label: 'O que foi gravado' },
     { key: 'tipoCerimonia',   label: 'Tipo de cerimónia' },
@@ -1651,6 +1658,19 @@ function TrabalhoRLSection({ downloads, relatorios, locked }: { downloads: strin
         {/* Download do material — bloqueado até o estado passar a "Em Edição" */}
         <div>
           <Label>Download do Material</Label>
+          {isAdmin && onGuardarLink && (
+            <div className="mt-1 mb-3 flex flex-wrap items-center gap-2">
+              <input value={link} onChange={e => { setLink(e.target.value); setGuardado(false) }}
+                placeholder="Cola aqui o link de download (WeTransfer, Drive, Dropbox…)"
+                className="flex-1 min-w-[220px] bg-black/30 border border-white/[0.08] rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-white/25 focus:outline-none focus:border-gold/40" />
+              <button type="button" onClick={() => { onGuardarLink(link.trim()); setGuardado(true) }}
+                disabled={link.trim() === (linkAdmin ?? '')}
+                className="text-[10px] px-3 py-2 rounded-lg bg-gold text-black font-bold tracking-widest uppercase disabled:opacity-40">
+                Guardar link
+              </button>
+              {guardado && <span className="text-[10px] text-emerald-300">✓ Guardado, o editor já o vê</span>}
+            </div>
+          )}
           {downloads.length === 0 ? (
             <p className="text-[12px] text-white/30 italic mt-1">Sem link de download ainda.</p>
           ) : locked ? (
@@ -2145,8 +2165,13 @@ function ProjectCard({
           style={{ background: 'linear-gradient(180deg, rgba(11,11,11,0.4), rgba(11,11,11,0.7))' }}>
 
           {/* Material + Relatório enviados pela RL */}
-          {((p.rlDownloads && p.rlDownloads.length > 0) || (p.rlRelatorios && p.rlRelatorios.length > 0)) && (
-            <TrabalhoRLSection downloads={p.rlDownloads ?? []} relatorios={p.rlRelatorios ?? []} locked={p.stage === 'Novo Projeto'} />
+          {((p.rlDownloads && p.rlDownloads.length > 0) || (p.rlRelatorios && p.rlRelatorios.length > 0) || p.clientLink || isAdmin) && (
+            <TrabalhoRLSection
+              // O link guardado pelo admin (clientLink) vem primeiro; seguem-se os dos relatórios da equipa
+              downloads={Array.from(new Set([p.clientLink, ...(p.rlDownloads ?? [])].map(u => (u ?? '').trim()).filter(Boolean)))}
+              relatorios={p.rlRelatorios ?? []} locked={p.stage === 'Novo Projeto'}
+              isAdmin={isAdmin} linkAdmin={p.clientLink}
+              onGuardarLink={url => onChange({ clientLink: url } as any)} />
           )}
 
           {/* Workflow */}
