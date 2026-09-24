@@ -105,6 +105,7 @@ export const CSS = `
 .self .fototxt::placeholder{color:var(--tx-dim);}
 .self .fototxt:focus{border-color:var(--g);}
 .self .fotohint{font-family:var(--fm);font-size:10px;letter-spacing:.12em;color:var(--tx-dim);margin-top:10px;}
+.self .fotohint.erro{color:#e0a0a0;}
 .self .totalgeral{display:flex;align-items:baseline;justify-content:space-between;gap:16px;border-top:1px solid var(--line-soft);padding-top:24px;}
 .self .totalgeral .k{font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx);}
 .self .totalgeral .v{font-family:var(--fd);font-weight:200;font-size:clamp(34px,4vw,52px);color:var(--g);line-height:.9;}

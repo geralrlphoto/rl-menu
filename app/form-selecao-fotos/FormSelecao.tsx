@@ -8,7 +8,7 @@ import { CSS } from './styles'
 // Mesmo fluxo do formulário do Tally (FOTOS P/SELEÇÃO): a submissão grava em
 // fotos_selecao (Supabase) e cria a página no Notion.
 // Cada secção é um card que abre com uma caixa de texto livre: as fotos
-// separam-se por linhas, vírgulas ou ponto e vírgula.
+// separam-se obrigatoriamente por vírgulas (senão o envio fica bloqueado).
 
 export type Seccao = {
   name: string      // coluna em fotos_selecao
@@ -27,9 +27,15 @@ export type FormSelecaoProps = {
   seccoes: Seccao[]
 }
 
-// Divide o texto livre de uma secção nas fotografias indicadas.
+// Divide o texto livre de uma secção nas fotografias indicadas (por vírgula).
 function separar(texto: string) {
-  return texto.split(/[\n,;]+/).map(v => v.trim()).filter(Boolean)
+  return texto.split(',').map(v => v.trim()).filter(Boolean)
+}
+
+// Uma foto não pode ter espaços, ; ou mudanças de linha: sinal de que duas
+// fotografias ficaram juntas sem vírgula.
+function malSeparada(texto: string) {
+  return separar(texto).some(v => /[\s;]/.test(v))
 }
 
 function plural(n: number) {
@@ -68,7 +74,7 @@ export default function FormSelecao({
   // "LG-0001; LG-0002; LG-0003" a partir do exemplo
   const exemploLista = [0, 1, 2]
     .map(k => exemplo.replace(/\d+$/, m => String(Number(m) + k).padStart(m.length, '0')))
-    .join('; ')
+    .join(', ')
 
   const preenchidas = (name: string) => separar(fotos[name] ?? '').length
   const total = seccoes.reduce((acc, s) => acc + preenchidas(s.name), 0)
@@ -89,6 +95,13 @@ export default function FormSelecao({
     // Nenhuma secção é obrigatória; só não faz sentido enviar uma seleção vazia.
     if (total === 0) {
       setErro('Indiquem pelo menos uma fotografia antes de enviar.')
+      return
+    }
+
+    const erradas = seccoes.filter(s => malSeparada(fotos[s.name]))
+    if (erradas.length) {
+      setErro(`Separem cada fotografia com vírgula (,). Corrijam: ${erradas.map(s => s.label).join(', ')}.`)
+      setAbertas(p => [...new Set([...p, ...erradas.map(s => s.name)])])
       return
     }
 
@@ -162,8 +175,9 @@ export default function FormSelecao({
                 <h2>Instruções para Envio da Seleção</h2>
                 <p>
                   Ao preencherem o formulário, deverão indicar em cada secção as fotografias que
-                  pretendem que sejam editadas. Podem escrevê-las todas seguidas, separando cada
-                  fotografia com vírgula (,) ou ponto e vírgula (;).
+                  pretendem que sejam editadas. Podem escrevê-las todas seguidas, separando
+                  obrigatoriamente cada fotografia com vírgula (,). Sem vírgulas, a seleção não
+                  pode ser enviada.
                 </p>
                 <p>
                   A numeração deve ser colocada exatamente como aparece na galeria e deverá conter
@@ -233,7 +247,9 @@ export default function FormSelecao({
                                 <textarea className="fototxt" value={fotos[s.name]}
                                   placeholder={`Ex.: ${exemploLista}`}
                                   onChange={e => setFotos(p => ({ ...p, [s.name]: e.target.value }))} />
-                                <p className="fotohint">Separem cada fotografia com , ou ;</p>
+                                {malSeparada(fotos[s.name])
+                                  ? <p className="fotohint erro">Falta a vírgula entre fotografias. Ex.: {exemploLista}</p>
+                                  : <p className="fotohint">Separem cada fotografia com vírgula (,)</p>}
                               </>
                             )}
                           </div>
