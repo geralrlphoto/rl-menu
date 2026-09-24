@@ -163,7 +163,7 @@ export default function FormSelecao({
                 <p>
                   Ao preencherem o formulário, deverão indicar em cada secção as fotografias que
                   pretendem que sejam editadas. Podem escrevê-las todas seguidas, separando cada
-                  fotografia com ponto e vírgula (;).
+                  fotografia com vírgula (,) ou ponto e vírgula (;).
                 </p>
                 <p>
                   A numeração deve ser colocada exatamente como aparece na galeria e deverá conter
@@ -233,7 +233,7 @@ export default function FormSelecao({
                                 <textarea className="fototxt" value={fotos[s.name]}
                                   placeholder={`Ex.: ${exemploLista}`}
                                   onChange={e => setFotos(p => ({ ...p, [s.name]: e.target.value }))} />
-                                <p className="fotohint">Separem cada fotografia com ;</p>
+                                <p className="fotohint">Separem cada fotografia com , ou ;</p>
                               </>
                             )}
                           </div>
