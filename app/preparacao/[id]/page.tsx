@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams } from 'next/navigation'
 import { MEET_LINK } from '@/lib/crm'
 import BriefingForm, { type BriefingInfo } from './BriefingForm'
@@ -68,11 +68,18 @@ export default function PreparacaoPage() {
   const [expirado, setExpirado] = useState(false)
   const [briefing, setBriefing] = useState<BriefingInfo | null>(null)
   const [vista, setVista] = useState<'reuniao' | 'briefing'>('reuniao')
+  const [acabouBriefing, setAcabouBriefing] = useState(false)
+  const vistaInicial = useRef(false)
 
   const carregar = () => {
     fetch(`/api/preparacao-publico?e=${id}`).then(r => r.json()).then(d => {
       if (!d.ok) { setEstado('erro'); return }
-      setNome(d.nome); setDataEvento(d.dataEvento); setBatizado(!!d.batizado); setCrianca(d.crianca ?? null); setExpirado(!!d.expirado); setBriefing(d.briefing ?? null); setSlots(d.slots ?? []); setReserva(d.reserva)
+      setNome(d.nome); setDataEvento(d.dataEvento); setBatizado(!!d.batizado); setCrianca(d.crianca ?? null); setExpirado(!!d.expirado); setBriefing(d.briefing ?? null);
+      // Casamentos: primeiro o briefing; só abre na reunião se já o enviaram ou já marcaram
+      if (!vistaInicial.current) {
+        vistaInicial.current = true
+        if (d.briefing && !d.briefing.enviadoEm && !d.reserva) setVista('briefing')
+      } setSlots(d.slots ?? []); setReserva(d.reserva)
       const primeiro: string | undefined = d.slots?.[0]?.data
       setMes(prev => prev ?? (primeiro
         ? { y: +primeiro.slice(0, 4), m: +primeiro.slice(5, 7) - 1 }
@@ -194,14 +201,15 @@ export default function PreparacaoPage() {
           {estado === 'ok' && !expirado && briefing && (
             <div className="mb-10 grid grid-cols-2 gap-1 rounded-2xl border border-white/[0.08] bg-white/[0.02] p-1">
               {([
-                ['reuniao', 'Reunião', !!reserva],
-                ['briefing', 'Briefing', !!briefing.enviadoEm],
-              ] as const).map(([k, t, feito]) => (
-                <button key={k} onClick={() => { setVista(k); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
-                  className="rounded-xl py-3 text-[11px] tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-2"
-                  style={{ background: vista === k ? 'rgba(201,168,76,0.14)' : 'transparent', color: vista === k ? GOLD : 'rgba(255,255,255,0.45)' }}>
+                ['briefing', '1 · Briefing', !!briefing.enviadoEm, false],
+                ['reuniao', '2 · Reunião', !!reserva, !briefing.enviadoEm && !reserva],
+              ] as const).map(([k, t, feito, bloqueado]) => (
+                <button key={k} disabled={bloqueado} title={bloqueado ? 'Enviem primeiro o briefing' : undefined}
+                  onClick={() => { setVista(k); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+                  className="rounded-xl py-3 text-[11px] tracking-[0.3em] uppercase transition-all flex items-center justify-center gap-2 disabled:cursor-not-allowed"
+                  style={{ background: vista === k ? 'rgba(201,168,76,0.14)' : 'transparent', color: vista === k ? GOLD : bloqueado ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.45)' }}>
                   <span className="w-4 h-4 rounded-full border text-[9px] flex items-center justify-center"
-                    style={{ borderColor: feito ? GOLD : 'rgba(255,255,255,0.2)', background: feito ? GOLD : 'transparent', color: '#000' }}>{feito ? '✓' : ''}</span>
+                    style={{ borderColor: feito ? GOLD : 'rgba(255,255,255,0.2)', background: feito ? GOLD : 'transparent', color: '#000' }}>{feito ? '✓' : bloqueado ? '🔒' : ''}</span>
                   {t}
                 </button>
               ))}
@@ -211,7 +219,12 @@ export default function PreparacaoPage() {
           {/* ── Briefing ── */}
           {estado === 'ok' && !expirado && briefing && vista === 'briefing' && (
             <BriefingForm eventoId={id} info={briefing}
-              onEnviado={(respostas, enviadoEm) => setBriefing(b => b ? { ...b, respostas, enviadoEm } : b)} />
+              onEnviado={(respostas, enviadoEm) => {
+                const primeira = !briefing.enviadoEm
+                setBriefing(b => b ? { ...b, respostas, enviadoEm } : b)
+                // Depois do 1.º envio passa logo para a marcação da reunião
+                if (primeira && !reserva) { setAcabouBriefing(true); setVista('reuniao'); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+              }} />
           )}
 
           {/* ── Confirmado ── */}
@@ -275,6 +288,12 @@ export default function PreparacaoPage() {
           {/* ── Escolher ── */}
           {estado === 'ok' && !expirado && vista === 'reuniao' && (!reserva || aAlterar) && (
             <>
+              {acabouBriefing && (
+                <div className="mb-8 rounded-2xl border border-[#C9A84C]/40 bg-[#C9A84C]/10 px-5 py-4 animate-[fadeUp_.5s_ease-out_both]">
+                  <p className="text-[10px] tracking-[0.3em] uppercase" style={{ color: GOLD }}>✓ Briefing enviado</p>
+                  <p className="text-xl font-light mt-1" style={SERIF}>Obrigado! Agora escolham o dia e a hora da nossa reunião.</p>
+                </div>
+              )}
               {/* A alterar: lembra o horário atual, que se mantém até confirmarem outro */}
               {reserva && aAlterar && (
                 <div className="mb-8 rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-4 flex items-center justify-between gap-4">

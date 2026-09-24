@@ -10,6 +10,12 @@ export type CampoBriefing = {
   obrigatorio: boolean
   placeholder?: string
   detalhe?: string // simnao: texto do campo que abre quando é "Sim"
+  se?: { key: string; valor: string } // só aparece (e só é obrigatório) quando outro campo tem este valor
+}
+
+/* O campo aplica-se a estas respostas? (campos condicionais, ex.: tipo de civil) */
+export function campoAtivo(c: CampoBriefing, r: RespostasBriefing): boolean {
+  return !c.se || (r[c.se.key] ?? '') === c.se.valor
 }
 
 export const CAMPOS_BRIEFING: CampoBriefing[] = [
@@ -17,6 +23,9 @@ export const CAMPOS_BRIEFING: CampoBriefing[] = [
   { key: 'local_cerimonia', label: 'Local da cerimónia', tipo: 'texto', obrigatorio: true },
   { key: 'hora_cerimonia', label: 'Hora da cerimónia', tipo: 'hora', obrigatorio: true },
   { key: 'celebracao', label: 'Tipo de celebração', tipo: 'opcoes', opcoes: ['Civil', 'Religiosa'], obrigatorio: true },
+  { key: 'celebracao_civil', label: 'Cerimónia civil com', tipo: 'opcoes', opcoes: ['Conservatória', 'Celebrante', 'Outro'], obrigatorio: true, se: { key: 'celebracao', valor: 'Civil' } },
+  { key: 'celebracao_civil_outro', label: 'Qual?', tipo: 'texto', obrigatorio: true, se: { key: 'celebracao_civil', valor: 'Outro' } },
+  { key: 'votos', label: 'Vai haver votos durante a cerimónia?', tipo: 'opcoes', opcoes: ['Sim', 'Não'], obrigatorio: true },
   { key: 'morada_prep_noivo', label: 'Morada da preparação do noivo', tipo: 'texto', obrigatorio: true },
   { key: 'contacto_alt_noivo', label: 'Contacto alternativo ao noivo', tipo: 'texto', obrigatorio: true, placeholder: 'Nome e telemóvel' },
   { key: 'morada_prep_noiva', label: 'Morada da preparação da noiva', tipo: 'texto', obrigatorio: true },
@@ -35,7 +44,7 @@ export type RespostasBriefing = Record<string, string>
 /* Devolve a lista de campos obrigatórios por preencher (vazia = pode enviar) */
 export function emFaltaBriefing(r: RespostasBriefing): string[] {
   return CAMPOS_BRIEFING
-    .filter(c => c.obrigatorio && !(r[c.key] ?? '').trim())
+    .filter(c => c.obrigatorio && campoAtivo(c, r) && !(r[c.key] ?? '').trim())
     .map(c => c.label)
 }
 
@@ -45,6 +54,7 @@ export function limparBriefing(entrada: unknown): RespostasBriefing {
   const src = (entrada && typeof entrada === 'object') ? entrada as Record<string, unknown> : {}
   for (const c of CAMPOS_BRIEFING) {
     for (const k of [c.key, `${c.key}_detalhe`]) {
+      if (!campoAtivo(c, src as RespostasBriefing)) continue
       const v = src[k]
       if (typeof v === 'string' && v.trim()) r[k] = v.trim().slice(0, 2000)
     }

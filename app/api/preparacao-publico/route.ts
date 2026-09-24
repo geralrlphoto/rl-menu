@@ -51,9 +51,13 @@ export async function POST(req: NextRequest) {
   const sb = sbAdmin()
   // Alterar a data: liberta a marcação atual e tenta a nova; se falhar, repõe a antiga
   const { data: anterior } = await sb.from('preparacao_slots').select('id, data, hora').eq('evento_id', ev.id).maybeSingle()
-  const { data: prep } = await sb.from('preparacao_eventos').select('reativado_ate').eq('evento_id', ev.id).maybeSingle()
+  const { data: prep } = await sb.from('preparacao_eventos').select('reativado_ate, briefing_enviado_em').eq('evento_id', ev.id).maybeSingle()
   if (estadoLink(ev.data_evento, anterior ?? null, prep?.reativado_ate).expirado) {
     return NextResponse.json({ error: 'Este link já expirou. Falem connosco pelo WhatsApp, por favor.' }, { status: 410 })
+  }
+  // Nos casamentos, primeiro o briefing e só depois a marcação
+  if (!ev.batizado && !prep?.briefing_enviado_em && !anterior) {
+    return NextResponse.json({ error: 'Preencham e enviem primeiro o briefing, por favor.' }, { status: 409 })
   }
   if (anterior && !alterar) return NextResponse.json({ error: 'Já têm uma reunião marcada.' }, { status: 409 })
   if (anterior) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CAMPOS_BRIEFING, valorBriefing, type RespostasBriefing } from '@/lib/briefing'
+import { CAMPOS_BRIEFING, campoAtivo, valorBriefing, type RespostasBriefing } from '@/lib/briefing'
 
 /* Ficha do evento › Comunicação com os Noivos:
    estado do link /preparacao/<id> (ativo/expirado + Reativar) e o briefing
@@ -90,7 +90,7 @@ export default function BriefingNoivos({ e }: { e: any }) {
 
           {aberto && (
             <div className="mt-3 flex flex-col gap-2">
-              {CAMPOS_BRIEFING.map(c => editar ? (
+              {CAMPOS_BRIEFING.filter(c => campoAtivo(c, editar ? draft : (st.briefing ?? {}))).map(c => editar ? (
                 <label key={c.key} className="flex flex-col gap-1">
                   <span className="text-[10px] tracking-[0.2em] uppercase text-white/35">{c.label}</span>
                   {c.tipo === 'longo'

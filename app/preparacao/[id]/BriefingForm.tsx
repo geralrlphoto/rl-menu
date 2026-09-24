@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { CAMPOS_BRIEFING, emFaltaBriefing, type RespostasBriefing } from '@/lib/briefing'
+import { CAMPOS_BRIEFING, campoAtivo, emFaltaBriefing, type RespostasBriefing } from '@/lib/briefing'
 
 /* Formulário do briefing pré-casamento dentro da página /preparacao/<id>.
    Pré-preenchido com o que já está na ficha; pode ser corrigido enquanto o link estiver ativo. */
@@ -20,6 +20,7 @@ export default function BriefingForm({ eventoId, info, onEnviado }: {
   info: BriefingInfo
   onEnviado: (respostas: RespostasBriefing, enviadoEm: string) => void
 }) {
+  const primeiraVez = !info.enviadoEm
   const [r, setR] = useState<RespostasBriefing>(() => ({ ...info.prefill, ...(info.respostas ?? {}) }))
   const [aEnviar, setAEnviar] = useState(false)
   const [erro, setErro] = useState('')
@@ -27,7 +28,8 @@ export default function BriefingForm({ eventoId, info, onEnviado }: {
   const [ok, setOk] = useState(false)
 
   const falta = useMemo(() => emFaltaBriefing(r), [r])
-  const obrig = CAMPOS_BRIEFING.filter(c => c.obrigatorio).length
+  const visiveis = CAMPOS_BRIEFING.filter(c => campoAtivo(c, r))
+  const obrig = visiveis.filter(c => c.obrigatorio).length
   const feitos = obrig - falta.length
   const set = (k: string, v: string) => { setR(p => ({ ...p, [k]: v })); setOk(false) }
 
@@ -47,7 +49,7 @@ export default function BriefingForm({ eventoId, info, onEnviado }: {
     if (!d.ok) { setErro(d.error || 'Não foi possível enviar.'); return }
     setOk(true)
     onEnviado(r, d.enviadoEm)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    if (!primeiraVez) window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const inputCls = 'w-full bg-white/[0.03] border rounded-xl px-4 py-3 text-[15px] text-white placeholder:text-white/20 focus:outline-none focus:border-[#C9A84C] focus:bg-white/[0.05] transition-colors'
@@ -61,7 +63,7 @@ export default function BriefingForm({ eventoId, info, onEnviado }: {
         </div>
       </div>
       <p className="text-white/45 text-sm mt-3 leading-relaxed">
-        Estas respostas ajudam-nos a preparar a reunião e o vosso dia. Podem voltar a este link e corrigir o que quiserem.
+        Primeiro o briefing, depois a marcação da reunião. Estas respostas ajudam-nos a preparar a reunião e o vosso dia, e podem voltar a este link para corrigir o que quiserem.
       </p>
 
       {/* Progresso */}
@@ -79,7 +81,7 @@ export default function BriefingForm({ eventoId, info, onEnviado }: {
       )}
 
       <div className="mt-8 flex flex-col gap-7">
-        {CAMPOS_BRIEFING.map((c, i) => {
+        {visiveis.map((c, i) => {
           const v = r[c.key] ?? ''
           const emFalta = tentou && c.obrigatorio && !v.trim()
           return (
@@ -101,7 +103,7 @@ export default function BriefingForm({ eventoId, info, onEnviado }: {
               )}
 
               {(c.tipo === 'opcoes' || c.tipo === 'simnao') && (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${(c.opcoes ?? ['Sim', 'Não']).length}, minmax(0, 1fr))` }}>
                   {(c.opcoes ?? ['Sim', 'Não']).map(o => {
                     const ativo = v === o
                     return (
