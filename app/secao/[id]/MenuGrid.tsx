@@ -18,18 +18,19 @@ type Grupo = 'all' | 'op' | 'cli' | 'eq'
 const GRUPOS: { k: Grupo; n: string }[] = [
   { k: 'all', n: 'Tudo' },
   { k: 'op', n: 'Operação' },
-  { k: 'cli', n: 'Estratégias Social Media' },
+  { k: 'cli', n: 'Clientes' },
   { k: 'eq', n: 'Equipa & Metas' },
 ]
 
 const NOME_GRUPO: Record<'op' | 'cli' | 'eq', string> = {
-  op: 'Operação', cli: 'Estratégias Social Media', eq: 'Equipa & Metas',
+  op: 'Operação', cli: 'Clientes', eq: 'Equipa & Metas',
 }
 
 // Ignora acentos e maiúsculas: "orcamento" encontra "Orçamento"
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
-export default function MenuGrid({ items }: { items: MenuItem[] }) {
+// `nomes` troca o nome de um grupo só nesta secção (ex.: Menu Geral: Clientes → Estratégias Social Media)
+export default function MenuGrid({ items, nomes }: { items: MenuItem[]; nomes?: Partial<Record<'op' | 'cli' | 'eq', string>> }) {
   const [q, setQ] = useState('')
   const [grupo, setGrupo] = useState<Grupo>('all')
   const [sel, setSel] = useState(0)
@@ -189,7 +190,7 @@ export default function MenuGrid({ items }: { items: MenuItem[] }) {
             <button key={g.k} type="button" onClick={() => setGrupo(g.k)}
               aria-pressed={grupo === g.k}
               className={`pill${grupo === g.k ? ' on' : ''}`}>
-              {g.n} <span style={{ opacity: .55 }}>{contagem[g.k]}</span>
+              {(g.k !== 'all' && nomes?.[g.k]) || g.n} <span style={{ opacity: .55 }}>{contagem[g.k]}</span>
             </button>
           ))}
         </div>
@@ -201,7 +202,7 @@ export default function MenuGrid({ items }: { items: MenuItem[] }) {
         const aberto = naFila >= 0 ? naFila : 0
         return (
           <section key={fila.g} className="mg-seccao">
-            <p className="eyebrow mg-rotulo">{NOME_GRUPO[fila.g]}</p>
+            <p className="eyebrow mg-rotulo">{nomes?.[fila.g] ?? NOME_GRUPO[fila.g]}</p>
             <div className="mg-fila">
               {fila.itens.map((it, i) => {
                 const estaAberto = i === aberto
