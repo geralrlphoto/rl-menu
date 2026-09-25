@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE } from '@/lib/preparacao'
+import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE, HORAS_OUTRO } from '@/lib/preparacao'
 import { MEET_LINK } from '@/lib/crm'
 
 // Público (link enviado aos noivos por WhatsApp): /preparacao/<id do evento>.
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   const { expirado } = estadoLink(ev.data_evento, minha ?? null, prep?.reativado_ate)
   return NextResponse.json({
     ok: true, nome: ev.nome, dataEvento: ev.data_evento, batizado: ev.batizado, crianca: ev.crianca,
-    expirado, reserva: minha ?? null, slots: expirado ? [] : livres,
+    expirado, reserva: minha ?? null, slots: expirado ? [] : livres, horasOutro: HORAS_OUTRO,
     // Briefing (casamento ou batizado), pré-preenchido com o que já está na ficha
     briefing: {
       respostas: prep?.briefing ?? null,
@@ -42,10 +42,26 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   // A reunião de preparação é sempre por videochamada
-  const { e, slotId, alterar } = await req.json().catch(() => ({}))
+  const body = await req.json().catch(() => ({}))
+  const { e, alterar } = body
+  let slotId: string | undefined = body.slotId
+  // "Outro dia e horário": dia útil e hora escolhidos pelos noivos, fora dos horários publicados
+  const outro: { data?: string; hora?: string } | null = body.outro ?? null
   const formato = 'Videochamada'
-  if (!UUID_RE.test(e ?? '') || !UUID_RE.test(slotId ?? '')) {
+  if (!UUID_RE.test(e ?? '') || (!outro && !UUID_RE.test(slotId ?? ''))) {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
+  }
+  if (outro) {
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(outro.data ?? '') ? new Date(outro.data + 'T12:00:00Z') : null
+    if (!d || isNaN(d.getTime()) || !HORAS_OUTRO.includes(outro.hora ?? '')) {
+      return NextResponse.json({ error: 'Escolham um dia e uma hora válidos.' }, { status: 400 })
+    }
+    if (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
+      return NextResponse.json({ error: 'Ao fim de semana não é possível. Escolham um dia útil, por favor.' }, { status: 400 })
+    }
+    if (outro.data! <= hojeLisboa()) {
+      return NextResponse.json({ error: 'Escolham um dia a partir de amanhã, por favor.' }, { status: 400 })
+    }
   }
   const ev = await eventoPreparacao(e)
   if (!ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })
@@ -62,6 +78,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Preencham e enviem primeiro o briefing, por favor.' }, { status: 409 })
   }
   if (anterior && !alterar) return NextResponse.json({ error: 'Já têm uma reunião marcada.' }, { status: 409 })
+
+  // "Outro dia e horário": usa o horário se já existir livre, senão cria-o só para este casal
+  let criado: string | null = null
+  if (outro) {
+    if (ev.data_evento && outro.data! >= ev.data_evento) {
+      return NextResponse.json({ error: `Escolham um dia antes ${ev.batizado ? 'do batizado' : 'do casamento'}, por favor.` }, { status: 400 })
+    }
+    const { data: existente } = await sb.from('preparacao_slots').select('id, evento_id')
+      .eq('tipo', 'preparacao').eq('data', outro.data!).eq('hora', outro.hora!).maybeSingle()
+    if (existente && existente.evento_id && existente.evento_id !== ev.id) {
+      return NextResponse.json({ error: 'Esse horário já está ocupado. Escolham outro, por favor.' }, { status: 409 })
+    }
+    if (existente) slotId = existente.id
+    else {
+      const { data: novo, error: errNovo } = await sb.from('preparacao_slots')
+        .insert({ tipo: 'preparacao', data: outro.data, hora: outro.hora }).select('id').single()
+      if (errNovo || !novo) return NextResponse.json({ error: 'Não foi possível marcar.' }, { status: 500 })
+      slotId = criado = novo.id
+    }
+  }
+
   if (anterior) {
     if (anterior.id === slotId) return NextResponse.json({ error: 'Esse já é o horário marcado.' }, { status: 409 })
     await sb.from('preparacao_slots').update({ evento_id: null, formato: null, reservado_em: null }).eq('id', anterior.id)
@@ -73,6 +110,8 @@ export async function POST(req: NextRequest) {
     .eq('id', slotId).eq('tipo', 'preparacao').is('evento_id', null)
     .select('data, hora').maybeSingle()
   if (error || !slot) {
+    // O horário criado para o pedido não pode ficar como disponibilidade pública
+    if (criado) await sb.from('preparacao_slots').delete().eq('id', criado).is('evento_id', null)
     if (anterior) {
       await sb.from('preparacao_slots').update({ evento_id: ev.id, formato, reservado_em: new Date().toISOString() })
         .eq('id', anterior.id).is('evento_id', null)
@@ -95,7 +134,7 @@ export async function POST(req: NextRequest) {
 <tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Reunião de preparação ${antes ? 'alterada' : 'marcada'}</td></tr>
 <tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(ev.nome || ev.cliente || '')}</td></tr>
 <tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.7;font-family:Arial,sans-serif">
-${antes ? `<span style="text-decoration:line-through;color:rgba(255,255,255,.4)">${esc(antes)}</span><br/>` : ''}<b style="color:#fff">${esc(quando)}</b><br/>${esc(formato)}: <a href="${MEET_LINK}" style="color:#C9A84C">${MEET_LINK.replace('https://', '')}</a><br/>
+${antes ? `<span style="text-decoration:line-through;color:rgba(255,255,255,.4)">${esc(antes)}</span><br/>` : ''}<b style="color:#fff">${esc(quando)}</b><br/>${outro ? '<span style="color:#e8b04c">Dia e hora escolhidos pelos noivos, fora da disponibilidade publicada.</span><br/>' : ''}${esc(formato)}: <a href="${MEET_LINK}" style="color:#C9A84C">${MEET_LINK.replace('https://', '')}</a><br/>
 ${ev.batizado ? `Batizado${ev.crianca ? ` de ${esc(ev.crianca)}` : ''}` : 'Casamento'}: ${ev.data_evento ? esc(fmtDataLonga(ev.data_evento)) : '—'}${ev.local ? ` · ${esc(ev.local)}` : ''}</td></tr>
 <tr><td style="padding:0 32px 30px"><a href="${SITE_BASE}/eventos-2026/${ev.id}" style="display:inline-block;background:#C9A84C;color:#000;text-decoration:none;font-family:Arial,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;border-radius:8px">Abrir ficha do evento</a></td></tr>
 </table></td></tr></table></body></html>`
@@ -105,7 +144,7 @@ ${ev.batizado ? `Batizado${ev.crianca ? ` de ${esc(ev.crianca)}` : ''}` : 'Casam
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>', to: [ADMIN_EMAIL],
-        subject: `Reunião de preparação${ev.batizado ? ' (batizado)' : ''} ${antes ? 'alterada' : 'marcada'}: ${ev.nome || ev.cliente} (${quando})`, html,
+        subject: `Reunião de preparação${ev.batizado ? ' (batizado)' : ''} ${antes ? 'alterada' : 'marcada'}${outro ? ' (outro horário)' : ''}: ${ev.nome || ev.cliente} (${quando})`, html,
       }),
     })
   } catch { /* a reserva fica feita na mesma */ }

@@ -70,6 +70,10 @@ export default function PreparacaoPage() {
   const [vista, setVista] = useState<'reuniao' | 'briefing'>('reuniao')
   const [acabouBriefing, setAcabouBriefing] = useState(false)
   const vistaInicial = useRef(false)
+  // "Outro dia e horário": qualquer dia útil até à véspera do evento, fora da disponibilidade publicada
+  const [outro, setOutro] = useState(false)
+  const [outroHora, setOutroHora] = useState<string | null>(null)
+  const [horasOutro, setHorasOutro] = useState<string[]>([])
 
   const carregar = () => {
     fetch(`/api/preparacao-publico?e=${id}`).then(r => r.json()).then(d => {
@@ -79,7 +83,7 @@ export default function PreparacaoPage() {
       if (!vistaInicial.current) {
         vistaInicial.current = true
         if (d.briefing && !d.briefing.enviadoEm && !d.reserva) setVista('briefing')
-      } setSlots(d.slots ?? []); setReserva(d.reserva)
+      } setSlots(d.slots ?? []); setReserva(d.reserva); setHorasOutro(d.horasOutro ?? [])
       const primeiro: string | undefined = d.slots?.[0]?.data
       setMes(prev => prev ?? (primeiro
         ? { y: +primeiro.slice(0, 4), m: +primeiro.slice(5, 7) - 1 }
@@ -90,9 +94,28 @@ export default function PreparacaoPage() {
   useEffect(carregar, [id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const diasComSlots = useMemo(() => new Set(slots.map(s => s.data)), [slots])
-  const meses = useMemo(() => [...new Set(slots.map(s => s.data.slice(0, 7)))].sort(), [slots])
+  // Dias úteis (seg a sex) de amanhã até à véspera do evento; sem evento, os próximos 3 meses
+  const diasUteis = useMemo(() => {
+    const set = new Set<string>()
+    const d = dUTC(hojeLisboa()); d.setUTCDate(d.getUTCDate() + 1)
+    const fim = dataEvento ? dUTC(dataEvento) : new Date(d.getTime() + 92 * 86400000)
+    for (; d < fim; d.setUTCDate(d.getUTCDate() + 1)) {
+      if (d.getUTCDay() !== 0 && d.getUTCDay() !== 6) set.add(ymd(d))
+    }
+    return set
+  }, [dataEvento])
+  const diasAtivos = outro ? diasUteis : diasComSlots
+  const meses = useMemo(() => [...new Set([...diasAtivos].map(s => s.slice(0, 7)))].sort(), [diasAtivos])
   const horas = slots.filter(s => s.data === dia)
-  const escolhido = slots.find(s => s.id === slotId) ?? null
+  const escolhido: { data: string; hora: string } | null = outro
+    ? (dia && outroHora ? { data: dia, hora: outroHora } : null)
+    : slots.find(s => s.id === slotId) ?? null
+
+  const mudarModo = (novo: boolean) => {
+    setOutro(novo); setDia(null); setSlotId(null); setOutroHora(null); setAviso('')
+    const alvo = [...(novo ? diasUteis : diasComSlots)].sort()[0]
+    if (alvo) setMes({ y: +alvo.slice(0, 4), m: +alvo.slice(5, 7) - 1 })
+  }
   const passo = escolhido ? 3 : dia ? 2 : 1
 
   // Textos que mudam entre casamento e batizado
@@ -123,20 +146,23 @@ export default function PreparacaoPage() {
   }
 
   async function confirmar() {
-    if (!slotId) return
+    if (!escolhido) return
     setAEnviar(true); setAviso('')
     const d = await fetch('/api/preparacao-publico', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ e: id, slotId, alterar: aAlterar }),
+      body: JSON.stringify(outro
+        ? { e: id, outro: { data: escolhido.data, hora: escolhido.hora }, alterar: aAlterar }
+        : { e: id, slotId, alterar: aAlterar }),
     }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
     setAEnviar(false)
     if (d.ok) {
       setReserva(d.reserva); setAcabouDeMarcar(true); setAAlterar(false); setSlotId(null); setDia(null)
+      setOutro(false); setOutroHora(null)
       carregar() // o horário antigo volta a ficar livre na lista
       return
     }
     setAviso(d.error || 'Não foi possível marcar.')
-    setSlotId(null); carregar()
+    setSlotId(null); setOutroHora(null); carregar()
   }
 
   return (
@@ -326,10 +352,17 @@ export default function PreparacaoPage() {
 
               {aviso && <p className="mb-5 rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-200">{aviso}</p>}
 
-              {slots.length === 0 ? (
+              {slots.length === 0 && !outro ? (
                 <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-8 text-center">
                   <p className="text-2xl font-light" style={SERIF}>Sem horários de momento</p>
-                  <p className="text-white/45 text-sm mt-3">Respondam-nos pelo WhatsApp e combinamos juntos o melhor dia.</p>
+                  <p className="text-white/45 text-sm mt-3">Escolham um dia útil e uma hora que vos dê jeito.</p>
+                  {diasUteis.size > 0 && (
+                    <button onClick={() => mudarModo(true)}
+                      className="mt-6 inline-flex rounded-full border px-6 py-3 text-[11px] tracking-[0.25em] uppercase transition-all hover:bg-[#C9A84C] hover:text-black"
+                      style={{ borderColor: GOLD, color: GOLD }}>
+                      Escolher dia e horário
+                    </button>
+                  )}
                 </div>
               ) : (
                 <>
@@ -346,11 +379,11 @@ export default function PreparacaoPage() {
                       {SEMANA.map((s, i) => <span key={i} className="text-[10px] tracking-[0.2em] text-white/30 pb-2">{s}</span>)}
                       {grelha.map((iso, i) => {
                         if (!iso) return <span key={i} />
-                        const tem = diasComSlots.has(iso)
+                        const tem = diasAtivos.has(iso)
                         const sel = iso === dia
                         const casamento = iso === dataEvento
                         return (
-                          <button key={iso} disabled={!tem} onClick={() => { setDia(iso); setSlotId(null) }}
+                          <button key={iso} disabled={!tem} onClick={() => { setDia(iso); setSlotId(null); setOutroHora(null) }}
                             className={`relative aspect-square rounded-xl text-base sm:text-lg tabular-nums transition-all duration-200 ${tem ? 'hover:scale-105' : 'cursor-default'}`}
                             style={{
                               ...SERIF,
@@ -368,19 +401,29 @@ export default function PreparacaoPage() {
                       })}
                     </div>
                     <p className="text-[10px] text-white/30 mt-4 flex items-center gap-4">
-                      <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ background: GOLD }} /> Com horários</span>
+                      <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full" style={{ background: GOLD }} /> {outro ? 'Dias úteis (seg. a sex.)' : 'Com horários'}</span>
                       {dataEvento && <span className="flex items-center gap-1.5"><span style={{ color: GOLD }}>♥</span> {rotuloEvento}</span>}
                     </p>
                   </div>
+
+                  {/* Outro dia e horário (fora da disponibilidade; fins de semana não) */}
+                  {(slots.length > 0 || outro) && diasUteis.size > 0 && (
+                    <button onClick={() => mudarModo(!outro)}
+                      className="mt-4 w-full rounded-xl border border-dashed border-white/15 px-4 py-3 text-left text-sm text-white/60 hover:border-[#C9A84C]/60 hover:text-white transition-colors flex items-center justify-between gap-3">
+                      <span>{outro ? 'Voltar aos horários disponíveis' : 'Nenhum destes dias dá jeito? Escolham outro dia e horário'}</span>
+                      <span style={{ color: GOLD }}>{outro ? '‹' : '›'}</span>
+                    </button>
+                  )}
+                  {outro && <p className="mt-2 text-[11px] text-white/35">Só de segunda a sexta. Ao fim de semana não é possível.</p>}
 
                   {/* Horas */}
                   <div className={`transition-all duration-500 ${dia ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-1 pointer-events-none'}`}>
                     <p className="mt-8 mb-3 text-[10px] tracking-[0.35em] uppercase text-white/40">{dia ? diaLongo(dia) : 'Escolham primeiro o dia'}</p>
                     <div key={dia ?? 'nenhum'} className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                      {horas.map((s, i) => {
-                        const ativo = s.id === slotId
+                      {(outro ? horasOutro.map(h => ({ id: h, hora: h })) : horas).map((s, i) => {
+                        const ativo = outro ? s.hora === outroHora : s.id === slotId
                         return (
-                          <button key={s.id} onClick={() => setSlotId(s.id)}
+                          <button key={s.id} onClick={() => outro ? setOutroHora(s.hora) : setSlotId(s.id)}
                             className="rounded-xl border py-3.5 text-xl tabular-nums transition-all duration-200 hover:-translate-y-0.5 animate-[fadeUp_.35s_ease-out_both]"
                             style={{ ...SERIF, animationDelay: `${i * 45}ms`, borderColor: ativo ? GOLD : 'rgba(255,255,255,0.1)', background: ativo ? GOLD : 'rgba(255,255,255,0.02)', color: ativo ? '#000' : 'rgba(255,255,255,0.9)' }}>
                             {s.hora}
