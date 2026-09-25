@@ -45,8 +45,12 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { eventoId, reativar, sincronizar, confirmarPedido, descartarPedido } = await req.json().catch(() => ({}))
-  const confirmar = Number.isInteger(confirmarPedido)
+  const { eventoId, reativar, sincronizar, confirmarPedido, descartarPedido, marcarOpcao } = await req.json().catch(() => ({}))
+  // marcarOpcao: dia e hora escolhidos pelo admin (ex.: os noivos só disseram "de manhã")
+  const propria: OpcaoHorario | null = marcarOpcao && /^\d{4}-\d{2}-\d{2}$/.test(marcarOpcao.data ?? '') && /^\d{2}:\d{2}$/.test(marcarOpcao.hora ?? '')
+    ? { data: marcarOpcao.data, hora: marcarOpcao.hora } : null
+  if (marcarOpcao && !propria) return NextResponse.json({ error: 'Dia ou hora inválidos' }, { status: 400 })
+  const confirmar = Number.isInteger(confirmarPedido) || !!propria
   if (!UUID_RE.test(eventoId ?? '') || !(reativar || sincronizar || confirmar || descartarPedido)) return NextResponse.json({ error: 'pedido inválido' }, { status: 400 })
   const ev = await eventoPreparacao(eventoId)
   if (!ev) return NextResponse.json({ error: 'evento não encontrado' }, { status: 404 })
@@ -55,7 +59,7 @@ export async function POST(req: NextRequest) {
   if (confirmar || descartarPedido) {
     const sb = sbAdmin()
     const { data: prep } = await sb.from('preparacao_eventos').select('pedido_horario').eq('evento_id', ev.id).maybeSingle()
-    const opcao: OpcaoHorario | undefined = prep?.pedido_horario?.[confirmarPedido]
+    const opcao: OpcaoHorario | undefined = propria ?? prep?.pedido_horario?.[confirmarPedido]
     if (confirmar) {
       if (!opcao) return NextResponse.json({ error: 'Opção não encontrada' }, { status: 404 })
       const res = await reservarOpcao(ev.id, opcao)

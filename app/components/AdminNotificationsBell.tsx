@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { whatsappLink, mensagemReuniaoAceite, mensagemReuniaoIndisponivel, MEET_LINK } from '@/lib/crm'
+import { whatsappLink, mensagemReuniaoAceite, mensagemReuniaoIndisponivel, mensagemReuniaoProposta, MODELOS_INDISPONIVEL, MEET_LINK } from '@/lib/crm'
 
 type Notif = {
   id: string
@@ -99,7 +99,11 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
   // Pedidos de reunião: filtro do ícone de calendário + janela Aceitar/Indisponível
   const [soPedidos, setSoPedidos] = useState(false)
   const [pedidoAberto, setPedidoAberto] = useState<Notif | null>(null)
-  const [pedidoFase, setPedidoFase] = useState<{ tipo: 'aceite'; opcao: Opcao } | { tipo: 'indisponivel' } | null>(null)
+  const [pedidoFase, setPedidoFase] = useState<{ tipo: 'aceite'; opcao: Opcao; proposta?: boolean } | { tipo: 'indisponivel'; modelo: number } | null>(null)
+  const [aEscolherModelo, setAEscolherModelo] = useState(false)
+  const [modelo, setModelo] = useState(0)
+  const [propData, setPropData] = useState('')
+  const [propHora, setPropHora] = useState('')
   const [pedidoAGuardar, setPedidoAGuardar] = useState(false)
   const [pedidoErro, setPedidoErro] = useState('')
   const [respondidos, setRespondidos] = useState<Set<string>>(new Set())
@@ -158,10 +162,10 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
     } catch {}
   }
 
-  async function responderPedido(n: Notif, acao: { confirmarPedido: number; opcao: Opcao } | { descartarPedido: true }) {
+  async function responderPedido(n: Notif, acao: { confirmarPedido: number; opcao: Opcao } | { marcarOpcao: Opcao } | { descartarPedido: true; modelo: number }) {
     if (!n.pedido) return
     setPedidoAGuardar(true); setPedidoErro('')
-    const body = 'opcao' in acao ? { confirmarPedido: acao.confirmarPedido } : acao
+    const body = 'opcao' in acao ? { confirmarPedido: acao.confirmarPedido } : 'marcarOpcao' in acao ? acao : { descartarPedido: true }
     const d = await fetch('/api/preparacao/evento', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ eventoId: n.pedido.eventoId, ...body }),
@@ -169,7 +173,9 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
     setPedidoAGuardar(false)
     if (!d.ok) { setPedidoErro(d.error ?? 'Não foi possível guardar'); return }
     setRespondidos(prev => new Set(prev).add(n.id))
-    setPedidoFase('opcao' in acao ? { tipo: 'aceite', opcao: acao.opcao } : { tipo: 'indisponivel' })
+    setPedidoFase('opcao' in acao ? { tipo: 'aceite', opcao: acao.opcao }
+      : 'marcarOpcao' in acao ? { tipo: 'aceite', opcao: acao.marcarOpcao, proposta: true }
+      : { tipo: 'indisponivel', modelo: acao.modelo })
     fetchNotifs(true)
   }
 
@@ -492,7 +498,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                               ) : (
                                 <span className="text-[10px] text-white/30">{fmtRel(n.sent_at)}</span>
                               )}
-                              <button onClick={() => n.pedido ? (setPedidoAberto(n), setPedidoFase(null), setPedidoErro('')) : setPreviewNotif(n)}
+                              <button onClick={() => n.pedido ? (setPedidoAberto(n), setPedidoFase(null), setPedidoErro(''), setAEscolherModelo(false), setModelo(0), setPropData(''), setPropHora('')) : setPreviewNotif(n)}
                                 className="text-[9px] tracking-[0.18em] uppercase font-bold text-white/45 hover:text-gold border border-white/10 hover:border-gold/40 px-2 py-0.5 rounded transition-all">
                                 {n.pedido ? 'Responder' : 'Ver Mais'}
                               </button>
@@ -530,11 +536,14 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
         const n = pedidoAberto
         const p = n.pedido!
         const tels = ([['Noiva', p.tel_noiva], ['Noivo', p.tel_noivo]] as const).filter(([, t]) => !!t)
+        const pedidoQuando = p.opcoes.map(diaHora).join(' ou ')
         const msg = pedidoFase?.tipo === 'aceite'
-          ? mensagemReuniaoAceite(p.nome, diaHora(pedidoFase.opcao))
+          ? (pedidoFase.proposta ? mensagemReuniaoProposta(p.nome, diaHora(pedidoFase.opcao)) : mensagemReuniaoAceite(p.nome, diaHora(pedidoFase.opcao)))
           : pedidoFase?.tipo === 'indisponivel'
-            ? mensagemReuniaoIndisponivel(p.nome, p.eventoId, p.opcoes.map(diaHora).join(' ou '))
+            ? mensagemReuniaoIndisponivel(p.nome, p.eventoId, pedidoQuando, pedidoFase.modelo)
             : ''
+        // Pré-visualização de cada resposta: só o corpo (sem o link da videochamada e a assinatura)
+        const previa = (i: number) => mensagemReuniaoIndisponivel(p.nome, p.eventoId, pedidoQuando, i).split('A reunião é por videochamada')[0].trim()
         const fechar = () => { if (!pedidoAGuardar) { setPedidoAberto(null); setPedidoFase(null); setPedidoErro('') } }
         return (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4" onClick={fechar}>
@@ -571,18 +580,55 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                     {p.mensagem && (
                       <p className="rounded-xl border-l-2 border-gold/60 bg-white/[0.03] px-4 py-3 text-sm italic text-white/75 whitespace-pre-wrap">“{p.mensagem}”</p>
                     )}
+                    {/* Nós escolhemos o dia e a hora (vai na mensagem) */}
+                    <div className="rounded-xl border border-white/10 bg-white/[0.02] px-4 py-3">
+                      <p className="text-[9px] tracking-[0.3em] uppercase text-white/35 mb-2">Escolher nós o dia e a hora</p>
+                      <div className="flex items-center gap-2">
+                        <input type="date" value={propData} onChange={ev => setPropData(ev.target.value)}
+                          className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm text-white [color-scheme:dark] focus:outline-none focus:border-gold/50" />
+                        <input type="time" value={propHora} onChange={ev => setPropHora(ev.target.value)} step={900}
+                          className="w-[92px] bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm text-white [color-scheme:dark] focus:outline-none focus:border-gold/50" />
+                        <button disabled={pedidoAGuardar || !propData || !propHora}
+                          onClick={() => responderPedido(n, { marcarOpcao: { data: propData, hora: propHora } })}
+                          className="shrink-0 text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-2 rounded-lg border border-gold/50 text-gold hover:bg-gold hover:text-black disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-gold">
+                          Marcar
+                        </button>
+                      </div>
+                    </div>
                     {pedidoErro && <p className="text-[11px] text-red-300">{pedidoErro}</p>}
-                    <button disabled={pedidoAGuardar} onClick={() => responderPedido(n, { descartarPedido: true })}
-                      className="mt-1 w-full rounded-xl border border-red-400/30 text-red-300 hover:bg-red-500/10 py-2.5 text-[10px] font-bold tracking-[0.25em] uppercase disabled:opacity-40">
-                      {pedidoAGuardar ? 'A guardar…' : 'Indisponível'}
-                    </button>
+                    {!aEscolherModelo ? (
+                      <button disabled={pedidoAGuardar} onClick={() => setAEscolherModelo(true)}
+                        className="mt-1 w-full rounded-xl border border-red-400/30 text-red-300 hover:bg-red-500/10 py-2.5 text-[10px] font-bold tracking-[0.25em] uppercase disabled:opacity-40">
+                        Indisponível
+                      </button>
+                    ) : (
+                      <div className="mt-1 rounded-xl border border-red-400/25 bg-red-500/[0.04] p-3 flex flex-col gap-2">
+                        <p className="text-[9px] tracking-[0.3em] uppercase text-red-300/80">Indisponível · escolhe a resposta</p>
+                        {MODELOS_INDISPONIVEL.map((t, i) => (
+                          <button key={t} onClick={() => setModelo(i)}
+                            className={`text-left rounded-lg border px-3 py-2 transition-colors ${modelo === i ? 'border-gold/60 bg-gold/10' : 'border-white/10 hover:border-white/25'}`}>
+                            <span className={`block text-[11px] font-semibold ${modelo === i ? 'text-gold' : 'text-white/75'}`}>{i + 1}. {t}</span>
+                            {modelo === i && (
+                              <span className="block mt-1.5 text-[11px] leading-relaxed text-white/55 whitespace-pre-wrap">{previa(i)}</span>
+                            )}
+                          </button>
+                        ))}
+                        <div className="flex gap-2 mt-1">
+                          <button onClick={() => setAEscolherModelo(false)} className="text-[10px] tracking-[0.2em] uppercase px-3 py-2 text-white/40 hover:text-white/70">Cancelar</button>
+                          <button disabled={pedidoAGuardar} onClick={() => responderPedido(n, { descartarPedido: true, modelo })}
+                            className="flex-1 rounded-lg bg-red-500/80 hover:bg-red-500 text-white py-2 text-[10px] font-bold tracking-[0.2em] uppercase disabled:opacity-40">
+                            {pedidoAGuardar ? 'A guardar…' : 'Recusar e preparar mensagem'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
                     <p className={`text-sm ${pedidoFase.tipo === 'aceite' ? 'text-emerald-300' : 'text-amber-300'}`}>
                       {pedidoFase.tipo === 'aceite'
-                        ? <>✓ Reunião marcada para <span className="first-letter:uppercase">{diaHora(pedidoFase.opcao)}</span>.</>
-                        : 'Pedido recusado. Os noivos podem voltar a escolher no link.'}
+                        ? <>✓ Reunião marcada para {diaHora(pedidoFase.opcao)}{pedidoFase.proposta ? ' (escolhida por nós)' : ''}.</>
+                        : `Pedido recusado (${MODELOS_INDISPONIVEL[pedidoFase.modelo]}). Os noivos podem voltar a escolher no link.`}
                     </p>
                     <p className="text-[11px] text-white/45">Envia agora a mensagem por WhatsApp{pedidoFase.tipo === 'aceite' ? ', com o link da videochamada' : ''}:</p>
                     <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-[11px] leading-relaxed text-white/70 font-sans">{msg}</pre>

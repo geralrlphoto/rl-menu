@@ -251,15 +251,50 @@ export function mensagemReuniaoAceite(nome: string | null | undefined, quando: s
   ].join('\n')
 }
 
-export function mensagemReuniaoIndisponivel(nome: string | null | undefined, eventoId: string, quando: string): string {
+/* Nós escolhemos o dia e a hora (ex.: os noivos só disseram "só de manhã") */
+export function mensagemReuniaoProposta(nome: string | null | undefined, quando: string): string {
   const quem = (nome ?? '').trim()
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
-    `Obrigado pelo vosso pedido. Infelizmente não temos disponibilidade para ${quando}.`,
+    `Obrigado pela vossa mensagem. Não conseguimos no horário que pediram, por isso reservámos a nossa reunião de preparação para ${quando}.`,
     '',
-    'Podem escolher outro dia e hora neste link:',
-    linkPublico(`/preparacao/${eventoId}`),
+    'Se não vos der jeito, respondam-nos por aqui e ajustamos.',
+    '',
+    'No dia e à hora marcados, é só entrarem na videochamada por este link:',
+    MEET_LINK,
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* 3 respostas para "Indisponível" (o admin escolhe uma no sino) */
+export const MODELOS_INDISPONIVEL = ['Escolher outro no link', 'Pedir outros dias', 'Combinar por chamada'] as const
+
+export function mensagemReuniaoIndisponivel(nome: string | null | undefined, eventoId: string, quando: string, modelo = 0): string {
+  const quem = (nome ?? '').trim()
+  const corpo = modelo === 1
+    ? [
+        `Obrigado pelo vosso pedido. Para ${quando} a nossa agenda já está preenchida.`,
+        '',
+        'Podem dizer-nos, por aqui, outros dias e horas que vos deem jeito? Nós adaptamo-nos o mais possível.',
+      ]
+    : modelo === 2
+      ? [
+          `Obrigado pelo vosso pedido. Infelizmente não temos disponibilidade para ${quando}.`,
+          '',
+          'Para ser mais fácil, podemos ligar-vos para combinarmos juntos o melhor dia e hora? Digam-nos qual o melhor momento para falarmos.',
+        ]
+      : [
+          `Obrigado pelo vosso pedido. Infelizmente não temos disponibilidade para ${quando}.`,
+          '',
+          'Podem escolher outro dia e hora neste link:',
+          linkPublico(`/preparacao/${eventoId}`),
+        ]
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    ...corpo,
     '',
     'A reunião é por videochamada, neste link:',
     MEET_LINK,
