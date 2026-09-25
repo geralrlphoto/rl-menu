@@ -18,12 +18,12 @@ type Grupo = 'all' | 'op' | 'cli' | 'eq'
 const GRUPOS: { k: Grupo; n: string }[] = [
   { k: 'all', n: 'Tudo' },
   { k: 'op', n: 'Operação' },
-  { k: 'cli', n: 'Estratégias Social Media' },
+  { k: 'cli', n: 'Clientes' },
   { k: 'eq', n: 'Equipa & Metas' },
 ]
 
 const NOME_GRUPO: Record<'op' | 'cli' | 'eq', string> = {
-  op: 'Operação', cli: 'Estratégias Social Media', eq: 'Equipa & Metas',
+  op: 'Operação', cli: 'Clientes', eq: 'Equipa & Metas',
 }
 
 // Ignora acentos e maiúsculas: "orcamento" encontra "Orçamento"
