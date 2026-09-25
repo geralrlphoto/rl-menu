@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import WhatsAppPhone from '@/app/components/WhatsAppPhone'
 import { whatsappLink, mensagemReuniaoAceite, mensagemReuniaoIndisponivel, mensagemReuniaoProposta, MODELOS_INDISPONIVEL, MEET_LINK } from '@/lib/crm'
 
 type Notif = {
@@ -104,6 +105,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
   const [modelo, setModelo] = useState(0)
   const [propData, setPropData] = useState('')
   const [propHora, setPropHora] = useState('')
+  const [copiado, setCopiado] = useState(false)
   const [pedidoAGuardar, setPedidoAGuardar] = useState(false)
   const [pedidoErro, setPedidoErro] = useState('')
   const [respondidos, setRespondidos] = useState<Set<string>>(new Set())
@@ -498,7 +500,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                               ) : (
                                 <span className="text-[10px] text-white/30">{fmtRel(n.sent_at)}</span>
                               )}
-                              <button onClick={() => n.pedido ? (setPedidoAberto(n), setPedidoFase(null), setPedidoErro(''), setAEscolherModelo(false), setModelo(0), setPropData(''), setPropHora('')) : setPreviewNotif(n)}
+                              <button onClick={() => n.pedido ? (setPedidoAberto(n), setPedidoFase(null), setPedidoErro(''), setAEscolherModelo(false), setModelo(0), setPropData(''), setPropHora(''), setCopiado(false)) : setPreviewNotif(n)}
                                 className="text-[9px] tracking-[0.18em] uppercase font-bold text-white/45 hover:text-gold border border-white/10 hover:border-gold/40 px-2 py-0.5 rounded transition-all">
                                 {n.pedido ? 'Responder' : 'Ver Mais'}
                               </button>
@@ -542,13 +544,11 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
           : pedidoFase?.tipo === 'indisponivel'
             ? mensagemReuniaoIndisponivel(p.nome, p.eventoId, pedidoQuando, pedidoFase.modelo)
             : ''
-        // Pré-visualização de cada resposta: só o corpo (sem o link da videochamada e a assinatura)
-        const previa = (i: number) => mensagemReuniaoIndisponivel(p.nome, p.eventoId, pedidoQuando, i).split('A reunião é por videochamada')[0].trim()
         const fechar = () => { if (!pedidoAGuardar) { setPedidoAberto(null); setPedidoFase(null); setPedidoErro('') } }
         return (
           <div className="fixed inset-0 z-[120] flex items-center justify-center p-4" onClick={fechar}>
             <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-            <div className="relative w-full max-w-md rounded-2xl border border-gold/30 bg-[#0f0c08] shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="relative w-full max-w-md max-h-[94vh] overflow-y-auto rounded-2xl border border-gold/30 bg-[#0f0c08] shadow-2xl" onClick={e => e.stopPropagation()}>
               <div className="h-0.5 bg-gold/60" />
               <div className="px-6 pt-5 pb-4 border-b border-white/[0.06] flex items-start justify-between gap-4">
                 <div className="min-w-0">
@@ -608,11 +608,12 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                           <button key={t} onClick={() => setModelo(i)}
                             className={`text-left rounded-lg border px-3 py-2 transition-colors ${modelo === i ? 'border-gold/60 bg-gold/10' : 'border-white/10 hover:border-white/25'}`}>
                             <span className={`block text-[11px] font-semibold ${modelo === i ? 'text-gold' : 'text-white/75'}`}>{i + 1}. {t}</span>
-                            {modelo === i && (
-                              <span className="block mt-1.5 text-[11px] leading-relaxed text-white/55 whitespace-pre-wrap">{previa(i)}</span>
-                            )}
                           </button>
                         ))}
+                        {/* Pré-visualização da resposta escolhida, no telemóvel */}
+                        <div className="mt-1">
+                          <WhatsAppPhone texto={mensagemReuniaoIndisponivel(p.nome, p.eventoId, pedidoQuando, modelo)} nome={p.nome || n.freelancer_nome} altura={260} />
+                        </div>
                         <div className="flex gap-2 mt-1">
                           <button onClick={() => setAEscolherModelo(false)} className="text-[10px] tracking-[0.2em] uppercase px-3 py-2 text-white/40 hover:text-white/70">Cancelar</button>
                           <button disabled={pedidoAGuardar} onClick={() => responderPedido(n, { descartarPedido: true, modelo })}
@@ -630,8 +631,14 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                         ? <>✓ Reunião marcada para {diaHora(pedidoFase.opcao)}{pedidoFase.proposta ? ' (escolhida por nós)' : ''}.</>
                         : `Pedido recusado (${MODELOS_INDISPONIVEL[pedidoFase.modelo]}). Os noivos podem voltar a escolher no link.`}
                     </p>
-                    <p className="text-[11px] text-white/45">Envia agora a mensagem por WhatsApp{pedidoFase.tipo === 'aceite' ? ', com o link da videochamada' : ''}:</p>
-                    <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-[11px] leading-relaxed text-white/70 font-sans">{msg}</pre>
+                    <WhatsAppPhone texto={msg} nome={p.nome || n.freelancer_nome} altura={300} />
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="text-[11px] text-white/40">{tels.length ? 'Envia pelo botão ou copia' : 'Copia e envia à mão'}</span>
+                      <button onClick={async () => { try { await navigator.clipboard.writeText(msg); setCopiado(true); setTimeout(() => setCopiado(false), 2000) } catch { /* sem clipboard */ } }}
+                        className={`shrink-0 rounded-lg border px-2.5 py-1 text-[10px] tracking-widest uppercase transition-all ${copiado ? 'border-green-500/40 text-green-400 bg-green-500/10' : 'border-white/10 text-white/45 hover:text-gold hover:border-gold/40'}`}>
+                        {copiado ? '✓ Copiado' : 'Copiar'}
+                      </button>
+                    </div>
                     {tels.length ? (
                       <div className="flex gap-2">
                         {tels.map(([quem, tel]) => (
@@ -642,7 +649,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                         ))}
                       </div>
                     ) : (
-                      <p className="text-[11px] text-amber-300/80">Sem telefone na ficha do evento. Copia a mensagem acima.</p>
+                      <p className="text-[11px] text-amber-300/80">Sem telefone no contrato deste evento.</p>
                     )}
                     <p className="text-[10px] text-white/30">Videochamada: {MEET_LINK.replace('https://', '')}</p>
                   </>
