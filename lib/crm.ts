@@ -234,6 +234,40 @@ export function oBatizado(crianca?: string | null): string {
   return n ? `o batizado de ${n}` : 'o batizado'
 }
 
+/* Resposta ao pedido de "outro horário" dos noivos (sino do admin) */
+export function mensagemReuniaoAceite(nome: string | null | undefined, quando: string): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    `Confirmamos a nossa reunião de preparação para ${quando}.`,
+    '',
+    'No dia e à hora marcados, é só entrarem na videochamada por este link:',
+    MEET_LINK,
+    '',
+    'Até lá!',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+export function mensagemReuniaoIndisponivel(nome: string | null | undefined, eventoId: string, quando: string): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    `Obrigado pelo vosso pedido. Infelizmente não temos disponibilidade para ${quando}.`,
+    '',
+    'Podem escolher outro dia e hora neste link:',
+    linkPublico(`/preparacao/${eventoId}`),
+    '',
+    'A reunião é por videochamada, neste link:',
+    MEET_LINK,
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
 export function mensagemReuniaoPreparacao(nome: string | null | undefined, eventoId?: string | null, batizado?: { crianca?: string | null } | null): string {
   const quem = (nome ?? '').trim()
   const link = eventoId ? linkPublico(`/preparacao/${eventoId}`) : null

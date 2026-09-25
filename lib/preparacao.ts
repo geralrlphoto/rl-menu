@@ -99,6 +99,7 @@ export async function eventoPreparacao(eventoId: string) {
     batizado: ehBatizado(ev.tipo_evento),
     crianca: ((ev.nome_crianca ?? '') as string).trim().split(/\s+/)[0] || null,
     nome_crianca_completo: ((ev.nome_crianca ?? '') as string).trim() || null,
+    tel_noiva: (ev.tel_noiva ?? null) as string | null, tel_noivo: (ev.tel_noivo ?? null) as string | null,
   }
 }
 

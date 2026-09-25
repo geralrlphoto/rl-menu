@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import { whatsappLink, mensagemReuniaoAceite, mensagemReuniaoIndisponivel, MEET_LINK } from '@/lib/crm'
 
 type Notif = {
   id: string
@@ -29,7 +30,23 @@ type Notif = {
     album?: string | null
   }
   mensagem?: string | null
+  // Pedido de "outro horário" da reunião de preparação
+  pedido?: {
+    eventoId: string
+    nome: string
+    data_evento: string | null
+    batizado: boolean
+    tel_noiva: string | null
+    tel_noivo: string | null
+    opcoes: { data: string; hora: string }[]
+    mensagem: string | null
+    reserva: { data: string; hora: string } | null
+  }
 }
+
+type Opcao = { data: string; hora: string }
+const diaHora = (o: Opcao) =>
+  `${new Date(o.data + 'T12:00:00Z').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })} às ${o.hora}`
 
 const LS_KEY = 'admin_notif_last_seen'
 const LS_DISMISSED = 'admin_notif_dismissed'
@@ -79,6 +96,13 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
   const [freelancers, setFreelancers] = useState<Array<{ id: string; nome: string; status?: string | null }>>([])
   const [forwardingTo, setForwardingTo] = useState<string>('')
   const [forwardState, setForwardState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
+  // Pedidos de reunião: filtro do ícone de calendário + janela Aceitar/Indisponível
+  const [soPedidos, setSoPedidos] = useState(false)
+  const [pedidoAberto, setPedidoAberto] = useState<Notif | null>(null)
+  const [pedidoFase, setPedidoFase] = useState<{ tipo: 'aceite'; opcao: Opcao } | { tipo: 'indisponivel' } | null>(null)
+  const [pedidoAGuardar, setPedidoAGuardar] = useState(false)
+  const [pedidoErro, setPedidoErro] = useState('')
+  const [respondidos, setRespondidos] = useState<Set<string>>(new Set())
   const buttonRef = useRef<HTMLButtonElement | null>(null)
   const popRef = useRef<HTMLDivElement | null>(null)
 
@@ -122,25 +146,42 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
   }
 
   // Fetch notifs ao montar + ao voltar à aba (sem interval)
+  const cancelledRef = useRef(false)
+  async function fetchNotifs(fresh = false) {
+    // Não faz poll quando o separador está em segundo plano — poupa egress.
+    if (typeof document !== 'undefined' && document.hidden) return
+    try {
+      const res = await fetch(`/api/admin-notifications${fresh ? '?fresh=1' : ''}`, { cache: 'no-store' })
+      if (!res.ok) return
+      const data = await res.json()
+      if (!cancelledRef.current) setNotifs(data.notifications ?? [])
+    } catch {}
+  }
+
+  async function responderPedido(n: Notif, acao: { confirmarPedido: number; opcao: Opcao } | { descartarPedido: true }) {
+    if (!n.pedido) return
+    setPedidoAGuardar(true); setPedidoErro('')
+    const body = 'opcao' in acao ? { confirmarPedido: acao.confirmarPedido } : acao
+    const d = await fetch('/api/preparacao/evento', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventoId: n.pedido.eventoId, ...body }),
+    }).then(r => r.json()).catch(() => ({ error: 'Sem ligação' }))
+    setPedidoAGuardar(false)
+    if (!d.ok) { setPedidoErro(d.error ?? 'Não foi possível guardar'); return }
+    setRespondidos(prev => new Set(prev).add(n.id))
+    setPedidoFase('opcao' in acao ? { tipo: 'aceite', opcao: acao.opcao } : { tipo: 'indisponivel' })
+    fetchNotifs(true)
+  }
+
   useEffect(() => {
-    let cancelled = false
-    async function fetchNotifs() {
-      // Não faz poll quando o separador está em segundo plano — poupa egress.
-      if (typeof document !== 'undefined' && document.hidden) return
-      try {
-        const res = await fetch('/api/admin-notifications', { cache: 'no-store' })
-        if (!res.ok) return
-        const data = await res.json()
-        if (!cancelled) setNotifs(data.notifications ?? [])
-      } catch {}
-    }
+    cancelledRef.current = false
     fetchNotifs()
     // Sem setInterval: atualiza ao montar e sempre que voltas à aba
     // (visibilidade/foco). Não faz pedidos enquanto não estás a olhar — poupa egress.
     const onVis = () => { if (!document.hidden) fetchNotifs() }
     document.addEventListener('visibilitychange', onVis)
     window.addEventListener('focus', onVis)
-    return () => { cancelled = true; document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', onVis) }
+    return () => { cancelledRef.current = true; document.removeEventListener('visibilitychange', onVis); window.removeEventListener('focus', onVis) }
   }, [])
 
   // Lista de freelancers (para o seletor de reencaminhar) — só carrega quando o modal abre
@@ -219,7 +260,8 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
   }, [open])
 
   // Lista visível na vista principal (exclui dispensadas)
-  const visibleNotifs = notifs.filter(n => !dismissed.has(n.id))
+  const visibleNotifs = notifs.filter(n => !dismissed.has(n.id) && !respondidos.has(n.id))
+  const pedidos = notifs.filter(n => n.tipo === 'pedido_reuniao' && !respondidos.has(n.id))
   // Contador de não lidas usa só as visíveis para não 'piscar' por notifs antigas dispensadas
   const unreadCount = lastSeen
     ? visibleNotifs.filter(n => (n.sent_at || '') > lastSeen).length
@@ -227,7 +269,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
 
   // Lista a renderizar conforme o modo
   // No histórico aplicamos pesquisa de texto + filtro de referência
-  const baseList = showHistory ? notifs : visibleNotifs
+  const baseList = soPedidos ? pedidos : showHistory ? notifs : visibleNotifs
   const q = searchQuery.trim().toLowerCase()
   const listToRender = baseList.filter(n => {
     if (filterRef && (n.referencia ?? '') !== filterRef) return false
@@ -309,7 +351,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-2">
               <p className="text-[11px] tracking-[0.35em] uppercase text-gold/85 font-semibold">
-                {showHistory ? 'Histórico' : 'Notificações'}
+                {soPedidos ? 'Pedidos de reunião' : showHistory ? 'Histórico' : 'Notificações'}
               </p>
               {!showHistory && unreadCount > 0 && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/30 tracking-wider uppercase font-bold">
@@ -323,15 +365,25 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
               )}
             </div>
             <div className="flex items-center gap-2">
-              {!showHistory && unreadCount > 0 && (
+              <button onClick={() => { setSoPedidos(v => !v); setShowHistory(false); setSearchQuery(''); setFilterRef('') }}
+                title="Pedidos de reunião dos noivos"
+                className={`relative w-7 h-7 flex items-center justify-center rounded-lg border transition-colors ${
+                  soPedidos ? 'bg-gold/20 border-gold/50 text-gold' : pedidos.length ? 'border-gold/35 text-gold/85 hover:bg-gold/10' : 'border-white/10 text-white/35 hover:text-gold hover:border-gold/30'
+                }`}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="3" y="5" width="18" height="16" rx="2" /><path strokeLinecap="round" d="M16 3v4M8 3v4M3 10h18" /></svg>
+                {pedidos.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full bg-gold text-black text-[9px] font-bold flex items-center justify-center">{pedidos.length}</span>
+                )}
+              </button>
+              {!soPedidos && !showHistory && unreadCount > 0 && (
                 <button onClick={markAllAsRead}
                   className="text-[9px] tracking-wider uppercase text-white/40 hover:text-gold transition-colors">
                   Marcar lidas
                 </button>
               )}
-              <button onClick={() => { setShowHistory(s => !s); setSearchQuery(''); setFilterRef('') }}
+              <button onClick={() => { if (soPedidos) setSoPedidos(false); else setShowHistory(s => !s); setSearchQuery(''); setFilterRef('') }}
                 className="text-[9px] tracking-wider uppercase text-white/40 hover:text-gold transition-colors">
-                {showHistory ? '← Voltar' : 'Ver todas'}
+                {showHistory || soPedidos ? '← Voltar' : 'Ver todas'}
               </button>
               <button onClick={() => setOpen(false)}
                 className="w-6 h-6 flex items-center justify-center rounded text-white/30 hover:text-white/70 hover:bg-white/[0.04] transition-colors"
@@ -399,7 +451,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
               <div className="px-4 py-8 text-center">
                 <p className="text-3xl opacity-20 mb-2">✉</p>
                 <p className="text-[11px] text-white/35 italic">
-                  {showHistory ? 'Sem histórico' : 'Sem notificações'}
+                  {soPedidos ? 'Sem pedidos de reunião' : showHistory ? 'Sem histórico' : 'Sem notificações'}
                 </p>
               </div>
             ) : (
@@ -440,9 +492,9 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                               ) : (
                                 <span className="text-[10px] text-white/30">{fmtRel(n.sent_at)}</span>
                               )}
-                              <button onClick={() => setPreviewNotif(n)}
+                              <button onClick={() => n.pedido ? (setPedidoAberto(n), setPedidoFase(null), setPedidoErro('')) : setPreviewNotif(n)}
                                 className="text-[9px] tracking-[0.18em] uppercase font-bold text-white/45 hover:text-gold border border-white/10 hover:border-gold/40 px-2 py-0.5 rounded transition-all">
-                                Ver Mais
+                                {n.pedido ? 'Responder' : 'Ver Mais'}
                               </button>
                             </div>
                             {n.referencia && <p className="text-[9px] text-white/30 mt-1">{fmtRel(n.sent_at)}</p>}
@@ -472,6 +524,88 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
         </div>,
         document.body
       )}
+
+      {/* ── Modal Pedido de Reunião · Aceitar / Indisponível ───── */}
+      {pedidoAberto?.pedido && mounted && createPortal((() => {
+        const n = pedidoAberto
+        const p = n.pedido!
+        const tels = ([['Noiva', p.tel_noiva], ['Noivo', p.tel_noivo]] as const).filter(([, t]) => !!t)
+        const msg = pedidoFase?.tipo === 'aceite'
+          ? mensagemReuniaoAceite(p.nome, diaHora(pedidoFase.opcao))
+          : pedidoFase?.tipo === 'indisponivel'
+            ? mensagemReuniaoIndisponivel(p.nome, p.eventoId, p.opcoes.map(diaHora).join(' ou '))
+            : ''
+        const fechar = () => { if (!pedidoAGuardar) { setPedidoAberto(null); setPedidoFase(null); setPedidoErro('') } }
+        return (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4" onClick={fechar}>
+            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+            <div className="relative w-full max-w-md rounded-2xl border border-gold/30 bg-[#0f0c08] shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+              <div className="h-0.5 bg-gold/60" />
+              <div className="px-6 pt-5 pb-4 border-b border-white/[0.06] flex items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <p className="text-[10px] tracking-[0.35em] uppercase text-gold/80">Pedido de reunião</p>
+                  <p className="text-xl text-white mt-1 truncate">{p.nome || n.freelancer_nome}</p>
+                  <p className="text-[11px] text-white/40 mt-0.5">
+                    {n.referencia ? `${n.referencia} · ` : ''}{p.batizado ? 'Batizado' : 'Casamento'}{p.data_evento ? ` a ${new Date(p.data_evento.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', timeZone: 'UTC' })}` : ''}
+                  </p>
+                </div>
+                <button onClick={fechar} className="w-7 h-7 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white">✕</button>
+              </div>
+
+              <div className="px-6 py-5 flex flex-col gap-3">
+                {!pedidoFase ? (
+                  <>
+                    {p.reserva && <p className="text-[11px] text-white/40">Marcada atualmente: {diaHora(p.reserva)}</p>}
+                    {p.opcoes.map((o, i) => (
+                      <div key={i} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                        <div className="min-w-0">
+                          <p className="text-[9px] tracking-[0.3em] uppercase text-white/35">Opção {i + 1}</p>
+                          <p className="text-sm text-white/90 first-letter:uppercase">{diaHora(o)}</p>
+                        </div>
+                        <button disabled={pedidoAGuardar} onClick={() => responderPedido(n, { confirmarPedido: i, opcao: o })}
+                          className="shrink-0 text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-2 rounded-lg bg-gold text-black hover:brightness-110 disabled:opacity-40">
+                          Aceitar
+                        </button>
+                      </div>
+                    ))}
+                    {p.mensagem && (
+                      <p className="rounded-xl border-l-2 border-gold/60 bg-white/[0.03] px-4 py-3 text-sm italic text-white/75 whitespace-pre-wrap">“{p.mensagem}”</p>
+                    )}
+                    {pedidoErro && <p className="text-[11px] text-red-300">{pedidoErro}</p>}
+                    <button disabled={pedidoAGuardar} onClick={() => responderPedido(n, { descartarPedido: true })}
+                      className="mt-1 w-full rounded-xl border border-red-400/30 text-red-300 hover:bg-red-500/10 py-2.5 text-[10px] font-bold tracking-[0.25em] uppercase disabled:opacity-40">
+                      {pedidoAGuardar ? 'A guardar…' : 'Indisponível'}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <p className={`text-sm ${pedidoFase.tipo === 'aceite' ? 'text-emerald-300' : 'text-amber-300'}`}>
+                      {pedidoFase.tipo === 'aceite'
+                        ? <>✓ Reunião marcada para <span className="first-letter:uppercase">{diaHora(pedidoFase.opcao)}</span>.</>
+                        : 'Pedido recusado. Os noivos podem voltar a escolher no link.'}
+                    </p>
+                    <p className="text-[11px] text-white/45">Envia agora a mensagem por WhatsApp{pedidoFase.tipo === 'aceite' ? ', com o link da videochamada' : ''}:</p>
+                    <pre className="max-h-48 overflow-y-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-[11px] leading-relaxed text-white/70 font-sans">{msg}</pre>
+                    {tels.length ? (
+                      <div className="flex gap-2">
+                        {tels.map(([quem, tel]) => (
+                          <a key={quem} href={whatsappLink(tel, msg) ?? '#'} target="_blank" rel="noopener noreferrer"
+                            className="flex-1 text-center rounded-xl bg-[#25D366] text-black py-2.5 text-[10px] font-bold tracking-[0.2em] uppercase hover:brightness-110">
+                            WhatsApp {quem}
+                          </a>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-amber-300/80">Sem telefone na ficha do evento. Copia a mensagem acima.</p>
+                    )}
+                    <p className="text-[10px] text-white/30">Videochamada: {MEET_LINK.replace('https://', '')}</p>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })(), document.body)}
 
       {/* ── Modal Preview · Ver Mais ──────────────────────────── */}
       {previewNotif && mounted && createPortal(

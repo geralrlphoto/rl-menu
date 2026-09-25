@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { eventoPreparacao } from '@/lib/preparacao'
 import { ENCERRADA_STATUSES, FOLLOW_PARADO_DIAS, FOLLOW_STATUSES, daysSince, fmtDataCurta, hojeISO } from '@/lib/crm'
 
 function db() {
@@ -37,6 +38,7 @@ const TIPO_LABELS: Record<string, string> = {
   entrega_projeto:          'Entrega do Projeto · Editor',
   crm_acao_atrasada:        'CRM · Próxima Ação Atrasada',
   crm_follow_parado:        'CRM · Follow Up Parado',
+  pedido_reuniao:           'Pedido de Reunião',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -67,6 +69,7 @@ const TIPO_ICONS: Record<string, string> = {
   entrega_projeto:          '📦',
   crm_acao_atrasada:        '⏰',
   crm_follow_parado:        '⚠',
+  pedido_reuniao:           '📅',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -108,6 +111,18 @@ type Notif = {
     album?: string | null
   }
   mensagem?: string | null
+  // Pedido de "outro horário" (reunião de preparação): dados para a janela Aceitar/Indisponível
+  pedido?: {
+    eventoId: string
+    nome: string
+    data_evento: string | null
+    batizado: boolean
+    tel_noiva: string | null
+    tel_noivo: string | null
+    opcoes: { data: string; hora: string }[]
+    mensagem: string | null
+    reserva: { data: string; hora: string } | null
+  }
 }
 
 // Cache em memória (por instância serverless) — colapsa múltiplos separadores
@@ -117,8 +132,10 @@ type Notif = {
 const NOTIF_TTL_MS = 45_000
 let notifCache: { at: number; payload: any } | null = null
 
-export async function GET() {
-  if (notifCache && Date.now() - notifCache.at < NOTIF_TTL_MS) {
+export async function GET(req: Request) {
+  // ?fresh=1 salta a cache (ex.: logo depois de responder a um pedido de reunião)
+  const fresh = new URL(req.url).searchParams.get('fresh') === '1'
+  if (!fresh && notifCache && Date.now() - notifCache.at < NOTIF_TTL_MS) {
     return NextResponse.json(notifCache.payload)
   }
   const supabase = db()
@@ -1014,6 +1031,45 @@ export async function GET() {
       }
     } catch (err) {
       console.warn('[admin-notifications] crm alertas read failed:', err)
+    }
+
+    // ── Pedidos de reunião de preparação ("Outro horário" dos noivos) ──
+    //    Ficam em preparacao_eventos.pedido_horario até o admin aceitar ou dizer indisponível.
+    try {
+      const { data: pedidos } = await supabase
+        .from('preparacao_eventos')
+        .select('evento_id, pedido_horario, pedido_em, pedido_mensagem')
+        .not('pedido_horario', 'is', null)
+        .limit(50)
+      for (const p of (pedidos ?? []) as any[]) {
+        const ev = await eventoPreparacao(p.evento_id)
+        if (!ev) continue
+        const { data: reserva } = await supabase.from('preparacao_slots').select('data, hora')
+          .eq('tipo', 'preparacao').eq('evento_id', ev.id).maybeSingle()
+        const opcoes = (p.pedido_horario ?? []) as { data: string; hora: string }[]
+        const fmtOp = (o: { data: string; hora: string }) => `${fmtDataCurta(o.data)} às ${o.hora}`
+        notifications.push({
+          id: `pedido_reuniao::${ev.id}::${p.pedido_em}`,
+          tipo: 'pedido_reuniao',
+          tipo_label: TIPO_LABELS.pedido_reuniao,
+          tipo_icon: TIPO_ICONS.pedido_reuniao,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: ev.nome || ev.cliente || '—',
+          local: opcoes.map(fmtOp).join(' ou '),
+          data_casamento: ev.data_evento ?? null,
+          referencia: ev.referencia ?? null,
+          url: `/eventos-2026/${ev.id}`,
+          sent_at: p.pedido_em ?? new Date().toISOString(),
+          mensagem: p.pedido_mensagem ?? null,
+          pedido: {
+            eventoId: ev.id, nome: ev.nome || ev.cliente || '', data_evento: ev.data_evento ?? null, batizado: ev.batizado,
+            tel_noiva: ev.tel_noiva, tel_noivo: ev.tel_noivo, opcoes, mensagem: p.pedido_mensagem ?? null, reserva: reserva ?? null,
+          },
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] pedidos reuniao read failed:', err)
     }
 
     // Ordenar por sent_at DESC
