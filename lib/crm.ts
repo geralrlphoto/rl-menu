@@ -291,13 +291,11 @@ export function mensagemReuniaoIndisponivel(nome: string | null | undefined, eve
           'Podem escolher outro dia e hora neste link:',
           linkPublico(`/preparacao/${eventoId}`),
         ]
+  // Sem o link da videochamada: ainda não há reunião marcada
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
     ...corpo,
-    '',
-    'A reunião é por videochamada, neste link:',
-    MEET_LINK,
     '',
     ...ASSINATURA_ABRACO,
   ].join('\n')

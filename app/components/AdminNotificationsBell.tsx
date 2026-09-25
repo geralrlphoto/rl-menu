@@ -651,7 +651,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                     ) : (
                       <p className="text-[11px] text-amber-300/80">Sem telefone no contrato deste evento.</p>
                     )}
-                    <p className="text-[10px] text-white/30">Videochamada: {MEET_LINK.replace('https://', '')}</p>
+                    {pedidoFase.tipo === 'aceite' && <p className="text-[10px] text-white/30">Videochamada: {MEET_LINK.replace('https://', '')}</p>}
                   </>
                 )}
               </div>
