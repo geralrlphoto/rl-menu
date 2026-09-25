@@ -322,7 +322,7 @@ export default async function SecaoPage({ params }: Props) {
 
         {/* ── Secções: procura, filtros e cartões ─────────── */}
         {itensMenu.length > 0
-          ? <MenuGrid items={itensMenu} nomes={ehMenuGeral ? { cli: 'Estratégias Social Media' } : undefined} />
+          ? <MenuGrid items={itensMenu} />
           : <p className="lead" style={{ padding: '54px 0', textAlign: 'center' }}>Sem conteúdo ainda</p>}
       </div>
     </main>
