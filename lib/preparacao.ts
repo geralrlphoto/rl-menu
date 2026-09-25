@@ -6,7 +6,7 @@ import { nomeNoivos, ehBatizado } from '@/lib/crm'
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 export const FORMATOS = ['Presencial', 'Videochamada'] as const
 // "Outro dia e horário": horas que os noivos podem escolher fora da disponibilidade (só dias úteis)
-export const HORAS_OUTRO = Array.from({ length: 26 }, (_, i) => `${String(9 + Math.floor(i / 2)).padStart(2, '0')}:${i % 2 ? '30' : '00'}`)
+export const HORAS_OUTRO = ['10:00', '11:00', '12:00', '17:00', '18:00', '19:00', '20:00']
 
 export function sbAdmin() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)

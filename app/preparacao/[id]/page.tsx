@@ -360,7 +360,7 @@ export default function PreparacaoPage() {
                     <button onClick={() => mudarModo(true)}
                       className="mt-6 inline-flex rounded-full border px-6 py-3 text-[11px] tracking-[0.25em] uppercase transition-all hover:bg-[#C9A84C] hover:text-black"
                       style={{ borderColor: GOLD, color: GOLD }}>
-                      Escolher dia e horário
+                      Outro horário
                     </button>
                   )}
                 </div>
@@ -409,12 +409,12 @@ export default function PreparacaoPage() {
                   {/* Outro dia e horário (fora da disponibilidade; fins de semana não) */}
                   {(slots.length > 0 || outro) && diasUteis.size > 0 && (
                     <button onClick={() => mudarModo(!outro)}
-                      className="mt-4 w-full rounded-xl border border-dashed border-white/15 px-4 py-3 text-left text-sm text-white/60 hover:border-[#C9A84C]/60 hover:text-white transition-colors flex items-center justify-between gap-3">
-                      <span>{outro ? 'Voltar aos horários disponíveis' : 'Nenhum destes dias dá jeito? Escolham outro dia e horário'}</span>
-                      <span style={{ color: GOLD }}>{outro ? '‹' : '›'}</span>
+                      className="mt-4 w-full rounded-xl border py-3.5 text-[11px] tracking-[0.3em] uppercase transition-all hover:bg-[#C9A84C] hover:text-black"
+                      style={{ borderColor: GOLD, color: GOLD }}>
+                      {outro ? '‹ Horários disponíveis' : 'Outro horário'}
                     </button>
                   )}
-                  {outro && <p className="mt-2 text-[11px] text-white/35">Só de segunda a sexta. Ao fim de semana não é possível.</p>}
+                  {outro && <p className="mt-2 text-[11px] text-white/35">De segunda a sexta, das 10h às 12h ou das 17h às 20h. Ao fim de semana não é possível.</p>}
 
                   {/* Horas */}
                   <div className={`transition-all duration-500 ${dia ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-1 pointer-events-none'}`}>
