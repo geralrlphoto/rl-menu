@@ -14,7 +14,7 @@ type Estado = {
   atualizadoEm: string | null
   link: { expirado: boolean; expiraEm: string | null; reativadoAte: string | null } | null
   reserva: { data: string; hora: string } | null
-  pedido: { opcoes: { data: string; hora: string }[]; em: string | null } | null
+  pedido: { opcoes: { data: string; hora: string }[]; em: string | null; mensagem: string | null } | null
 }
 
 const fmtDia = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })
@@ -110,6 +110,9 @@ export default function BriefingNoivos({ e }: { e: any }) {
               </div>
             ))}
           </div>
+          {st.pedido.mensagem && (
+            <p className="mt-2 rounded-lg border-l-2 border-gold/60 bg-white/[0.03] px-3 py-2 text-sm italic text-white/80 whitespace-pre-wrap">{st.pedido.mensagem}</p>
+          )}
           <div className="flex items-center justify-between mt-2">
             <span className="text-[10px] text-white/45">{pedidoMsg ?? (st.pedido.em ? `Pedido a ${fmt(st.pedido.em)}` : '')}</span>
             <button onClick={() => responderPedido({ descartarPedido: true })}

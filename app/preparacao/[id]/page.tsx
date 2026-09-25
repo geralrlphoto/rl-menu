@@ -75,7 +75,8 @@ export default function PreparacaoPage() {
   const [outro, setOutro] = useState(false)
   // Até 2 opções (dias diferentes); ficam como pedido até a RL confirmar
   const [opcoes, setOpcoes] = useState<{ data: string; hora: string }[]>([])
-  const [pedido, setPedido] = useState<{ opcoes: { data: string; hora: string }[]; em: string | null } | null>(null)
+  const [pedido, setPedido] = useState<{ opcoes: { data: string; hora: string }[]; em: string | null; mensagem?: string | null } | null>(null)
+  const [mensagem, setMensagem] = useState('')
   const [aPedir, setAPedir] = useState(false)
   const [acabouDePedir, setAcabouDePedir] = useState(false)
   const [horasOutro, setHorasOutro] = useState<string[]>([])
@@ -184,12 +185,12 @@ export default function PreparacaoPage() {
     setAEnviar(true); setAviso('')
     const d = await fetch('/api/preparacao-publico', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ e: id, pedido: opcoes }),
+      body: JSON.stringify({ e: id, pedido: opcoes, mensagem }),
     }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
     setAEnviar(false)
     if (!d.ok) { setAviso(d.error || 'Não foi possível enviar o pedido.'); return }
     setPedido(d.pedido); setAcabouDePedir(true); setAPedir(false); setAAlterar(false)
-    setOutro(false); setOpcoes([]); setDia(null)
+    setOutro(false); setOpcoes([]); setDia(null); setMensagem('')
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -363,10 +364,13 @@ export default function PreparacaoPage() {
                   </div>
                 ))}
               </div>
+              {pedido.mensagem && (
+                <p className="mt-3 w-full max-w-sm rounded-2xl border-l-2 border-[#C9A84C]/60 bg-white/[0.03] px-5 py-3 text-left italic text-white/75 whitespace-pre-wrap" style={SERIF}>“{pedido.mensagem}”</p>
+              )}
               <p className="text-white/45 text-sm mt-8 leading-relaxed max-w-sm">
                 Este horário carece de confirmação da nossa parte. Vamos ver a nossa agenda e confirmamos convosco pelo WhatsApp.
               </p>
-              <button onClick={() => { setAPedir(true); setAcabouDePedir(false); mudarModo(true) }}
+              <button onClick={() => { setAPedir(true); setAcabouDePedir(false); mudarModo(true); setMensagem(pedido.mensagem ?? '') }}
                 className="mt-6 text-[11px] tracking-[0.25em] uppercase text-white/45 hover:text-[#C9A84C] underline underline-offset-4 decoration-white/20 transition-colors">
                 Alterar pedido
               </button>
@@ -519,6 +523,11 @@ export default function PreparacaoPage() {
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="2.5" y="6" width="13" height="12" rx="2" /><path d="M15.5 10.5l6-3.5v10l-6-3.5" strokeLinejoin="round" /></svg>
                       </span>
                     </div>
+                    {outro && (
+                      <textarea value={mensagem} onChange={ev => setMensagem(ev.target.value.slice(0, 500))} rows={3}
+                        placeholder="Querem deixar-nos uma mensagem? (opcional)"
+                        className="mt-4 w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[15px] text-white placeholder:text-white/25 focus:outline-none focus:border-[#C9A84C] transition-colors" />
+                    )}
                     <button onClick={confirmar} disabled={!escolhido || aEnviar}
                       className="relative overflow-hidden mt-5 w-full rounded-xl py-4 text-[12px] font-semibold tracking-[0.3em] uppercase transition-all disabled:opacity-25 enabled:hover:shadow-[0_0_30px_rgba(201,168,76,0.35)]"
                       style={{ background: GOLD, color: '#000' }}>

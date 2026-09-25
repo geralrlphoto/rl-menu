@@ -32,12 +32,12 @@ export async function GET(req: NextRequest) {
   if (ev.data_evento) q = q.lt('data', ev.data_evento)
   const { data: livresData } = await q
   const livres = livresData ?? []
-  const { data: prep } = await sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, reativado_ate, pedido_horario, pedido_em').eq('evento_id', ev.id).maybeSingle()
+  const { data: prep } = await sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, reativado_ate, pedido_horario, pedido_em, pedido_mensagem').eq('evento_id', ev.id).maybeSingle()
   const { expirado } = estadoLink(ev.data_evento, minha ?? null, prep?.reativado_ate)
   return NextResponse.json({
     ok: true, nome: ev.nome, dataEvento: ev.data_evento, batizado: ev.batizado, crianca: ev.crianca,
     expirado, reserva: minha ?? null, slots: expirado ? [] : livres, horasOutro: HORAS_OUTRO,
-    pedido: prep?.pedido_horario ? { opcoes: prep.pedido_horario, em: prep.pedido_em } : null,
+    pedido: prep?.pedido_horario ? { opcoes: prep.pedido_horario, em: prep.pedido_em, mensagem: prep.pedido_mensagem ?? null } : null,
     // Briefing (casamento ou batizado), pré-preenchido com o que já está na ficha
     briefing: {
       respostas: prep?.briefing ?? null,
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   if ((!demo && !UUID_RE.test(e ?? '')) || (!pedido && !(demo ? slotId : UUID_RE.test(slotId ?? '')))) {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
   }
-  if (pedido) return pedirOutroHorario(e, pedido, demo)
+  if (pedido) return pedirOutroHorario(e, pedido, demo, body.mensagem)
 
   // Simulação: responde como se tivesse marcado, sem gravar nem enviar email
   if (demo) {
@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
 
   revalidateTag('photo-whatsapp', { expire: 0 })
   // Marcaram um horário publicado: um pedido de "outro horário" pendente deixa de fazer sentido
-  await sb.from('preparacao_eventos').update({ pedido_horario: null, pedido_em: null }).eq('evento_id', ev.id)
+  await sb.from('preparacao_eventos').update({ pedido_horario: null, pedido_em: null, pedido_mensagem: null }).eq('evento_id', ev.id)
 
   // Email para o admin (não bloqueia a resposta aos noivos se falhar)
   const quando = `${fmtDataLonga(slot.data)} às ${slot.hora}`
@@ -139,15 +139,17 @@ ${ev.batizado ? `Batizado${ev.crianca ? ` de ${esc(ev.crianca)}` : ''}` : 'Casam
 
 /* "Outro horário": guarda até 2 opções e avisa o admin. Só fica marcado quando a RL
    confirmar uma delas na ficha do evento. */
-async function pedirOutroHorario(e: string, pedido: unknown, demo: boolean) {
+async function pedirOutroHorario(e: string, pedido: unknown, demo: boolean, msg: unknown) {
   const ev = demo ? null : await eventoPreparacao(e)
   if (!demo && !ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })
   const dataEvento = demo ? demoPreparacao().dataEvento : ev!.data_evento
   const r = validarPedido(pedido, dataEvento, !!ev?.batizado)
   if ('erro' in r) return NextResponse.json({ error: r.erro }, { status: 400 })
   const opcoes = r.opcoes
+  // Pequena mensagem opcional dos noivos (máx. 500 caracteres)
+  const mensagem = typeof msg === 'string' && msg.trim() ? msg.trim().slice(0, 500) : null
   const agora = new Date().toISOString()
-  if (demo) return NextResponse.json({ ok: true, pedido: { opcoes, em: agora } })
+  if (demo) return NextResponse.json({ ok: true, pedido: { opcoes, em: agora, mensagem } })
 
   const sb = sbAdmin()
   const [{ data: reserva }, { data: prep }] = await Promise.all([
@@ -161,7 +163,7 @@ async function pedirOutroHorario(e: string, pedido: unknown, demo: boolean) {
     return NextResponse.json({ error: 'Preencham e enviem primeiro o briefing, por favor.' }, { status: 409 })
   }
   const { error } = await sb.from('preparacao_eventos')
-    .upsert({ evento_id: ev!.id, pedido_horario: opcoes, pedido_em: agora }, { onConflict: 'evento_id' })
+    .upsert({ evento_id: ev!.id, pedido_horario: opcoes, pedido_em: agora, pedido_mensagem: mensagem }, { onConflict: 'evento_id' })
   if (error) return NextResponse.json({ error: 'Não foi possível enviar o pedido.' }, { status: 500 })
 
   const lista = opcoes.map((o, i) => `<b style="color:#fff">Opção ${i + 1}:</b> ${esc(fmtDataLonga(o.data))} às ${esc(o.hora)}`).join('<br/>')
@@ -172,6 +174,7 @@ async function pedirOutroHorario(e: string, pedido: unknown, demo: boolean) {
 <tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(ev!.nome || ev!.cliente || '')}</td></tr>
 <tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.8;font-family:Arial,sans-serif">
 ${reserva ? `Marcada atualmente: ${esc(fmtDataLonga(reserva.data))} às ${esc(reserva.hora)}<br/>` : ''}${lista}<br/>
+${mensagem ? `<div style="margin:14px 0 4px;padding:12px 14px;border-left:2px solid #C9A84C;background:rgba(255,255,255,.04);color:#fff;font-style:italic;white-space:pre-wrap">${esc(mensagem)}</div>` : ''}
 <span style="color:rgba(255,255,255,.45);font-size:13px">Confirma uma das opções na ficha do evento.</span></td></tr>
 <tr><td style="padding:0 32px 30px"><a href="${SITE_BASE}/eventos-2026/${ev!.id}" style="display:inline-block;background:#C9A84C;color:#000;text-decoration:none;font-family:Arial,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;border-radius:8px">Abrir ficha do evento</a></td></tr>
 </table></td></tr></table></body></html>`
@@ -186,7 +189,7 @@ ${reserva ? `Marcada atualmente: ${esc(fmtDataLonga(reserva.data))} às ${esc(re
     })
   } catch { /* o pedido fica guardado na mesma */ }
 
-  return NextResponse.json({ ok: true, pedido: { opcoes, em: agora } })
+  return NextResponse.json({ ok: true, pedido: { opcoes, em: agora, mensagem } })
 }
 
 function esc(s: string) {

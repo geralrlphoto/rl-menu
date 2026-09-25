@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   if (!ev) return NextResponse.json({ ok: true, briefing: null, link: null })
   const sb = sbAdmin()
   const [{ data: prep }, { data: reserva }] = await Promise.all([
-    sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, briefing_atualizado_em, reativado_ate, pedido_horario, pedido_em').eq('evento_id', ev.id).maybeSingle(),
+    sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, briefing_atualizado_em, reativado_ate, pedido_horario, pedido_em, pedido_mensagem').eq('evento_id', ev.id).maybeSingle(),
     sb.from('preparacao_slots').select('data, hora').eq('tipo', 'preparacao').eq('evento_id', ev.id).maybeSingle(),
   ])
   return NextResponse.json({
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     enviadoEm: prep?.briefing_enviado_em ?? null,
     atualizadoEm: prep?.briefing_atualizado_em ?? null,
     reserva: reserva ?? null,
-    pedido: prep?.pedido_horario ? { opcoes: prep.pedido_horario, em: prep.pedido_em } : null,
+    pedido: prep?.pedido_horario ? { opcoes: prep.pedido_horario, em: prep.pedido_em, mensagem: prep.pedido_mensagem ?? null } : null,
     link: { ...estadoLink(ev.data_evento, reserva ?? null, prep?.reativado_ate), reativadoAte: prep?.reativado_ate ?? null },
   })
 }
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
       if (res.erro) return NextResponse.json({ error: res.erro }, { status: 409 })
       revalidateTag('photo-whatsapp', { expire: 0 })
     }
-    await sb.from('preparacao_eventos').update({ pedido_horario: null, pedido_em: null }).eq('evento_id', ev.id)
+    await sb.from('preparacao_eventos').update({ pedido_horario: null, pedido_em: null, pedido_mensagem: null }).eq('evento_id', ev.id)
     return NextResponse.json({ ok: true })
   }
 
