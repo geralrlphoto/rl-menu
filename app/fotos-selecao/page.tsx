@@ -39,10 +39,11 @@ async function patchRow(id: string, field: string, value: any) {
 }
 
 // ── Célula editável ───────────────────────────────────────────────────────────
-function EditCell({ value, field, rowId, onSaved, type = 'text', placeholder = '—' }: {
+function EditCell({ value, field, rowId, onSaved, type = 'text', placeholder = '—', format }: {
   value: string | null; field: string; rowId: string
   onSaved: (field: string, val: any) => void
   type?: 'text' | 'date'; placeholder?: string
+  format?: (v: string) => string
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft]     = useState(value ?? '')
@@ -75,7 +76,7 @@ function EditCell({ value, field, rowId, onSaved, type = 'text', placeholder = '
         {type === 'date'
           ? <span className="text-white/70 text-sm">{fmt(value) ?? <span className="text-white/20 italic text-xs">{placeholder}</span>}</span>
           : value
-            ? <span className="text-white/80 text-sm">{value}</span>
+            ? <span className="text-white/80 text-sm">{format ? format(value) : value}</span>
             : <span className="text-white/20 italic text-xs">{placeholder}</span>
         }
       </span>
@@ -96,6 +97,21 @@ const FICHA_SECTIONS = [
   { label: 'Sala e Animação',field: 'sala_animacao' as const },
   { label: 'Fotos p/Álbum',  field: 'fotos_album' as const },
 ]
+
+// Lista de fotos guardada com ";" → mostrada com ","
+const fmtLista = (v: string) => v.replace(/\s*;\s*/g, ', ').replace(/,\s*$/, '')
+
+// Nº de fotos numa secção: lista "LA_2280; LA_2282" ou número simples ("45")
+function contarFotos(v: string | null): number {
+  const s = (v ?? '').trim()
+  if (!s || s === '—') return 0
+  if (/^\d+$/.test(s)) return parseInt(s, 10)
+  return s.split(/[;,\n]+/).map(x => x.trim()).filter(Boolean).length
+}
+
+// Total da seleção (Fotos p/Álbum fica de fora: é um subconjunto)
+const totalFotos = (row: FotoSelecao) =>
+  FICHA_SECTIONS.filter(s => s.field !== 'fotos_album').reduce((n, s) => n + contarFotos(row[s.field]), 0)
 
 function printFicha(row: FotoSelecao) {
   const w = window.open('', '_blank', 'width=900,height=700')
@@ -127,13 +143,14 @@ function printFicha(row: FotoSelecao) {
         <span><strong>Referência:</strong> ${row.referencia || '—'}</span>
         <span><strong>Data Evento:</strong> ${fmt(row.date) ?? '—'}</span>
         <span><strong>Data Entrada:</strong> ${fmt(row.data_entrada) ?? '—'}</span>
+        <span><strong>Total de Fotos:</strong> ${totalFotos(row)}</span>
       </div>
     </div>
     <div class="grid">
       ${FICHA_SECTIONS.map(s => `
         <div class="field">
-          <div class="field-label">${s.label}</div>
-          <div class="field-value">${row[s.field] || '—'}</div>
+          <div class="field-label">${s.label}${contarFotos(row[s.field]) ? ` (${contarFotos(row[s.field])})` : ''}</div>
+          <div class="field-value">${row[s.field] ? fmtLista(row[s.field]) : '—'}</div>
         </div>
       `).join('')}
     </div>
@@ -668,12 +685,18 @@ function FichaModal({ row, onClose, onSaved }: {
 
           {/* Contagens — grid 4 col */}
           <div>
-            <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase mb-3">Contagem de Fotos</p>
+            <div className="flex items-baseline justify-between mb-3">
+              <p className="text-[9px] tracking-[0.35em] text-white/20 uppercase">Contagem de Fotos</p>
+              <p className="text-[10px] tracking-[0.25em] text-gold/80 uppercase">Total: <span className="text-gold text-sm font-semibold">{totalFotos(row)}</span> fotos</p>
+            </div>
             <div className="grid grid-cols-4 gap-3">
               {FICHA_SECTIONS.map(({ label, field }) => (
                 <div key={field} className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-3">
-                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase block mb-1">{label}</span>
-                  <EditCell value={row[field]} field={field} rowId={row.id} onSaved={onSaved} placeholder="—" />
+                  <span className="text-[8px] tracking-[0.3em] text-white/25 uppercase flex justify-between mb-1">
+                    {label}
+                    {contarFotos(row[field]) > 0 && <span className="text-gold/70 tracking-normal">{contarFotos(row[field])}</span>}
+                  </span>
+                  <EditCell value={row[field]} field={field} rowId={row.id} onSaved={onSaved} placeholder="—" format={fmtLista} />
                 </div>
               ))}
             </div>
