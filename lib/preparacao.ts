@@ -88,7 +88,7 @@ export async function eventoPreparacao(eventoId: string) {
   let c: any = null
   if (ev.referencia) {
     const { data } = await sb.from('dados_contrato_cps')
-      .select('nome_noiva, nome_noivo').eq('referencia_evento', ev.referencia)
+      .select('nome_noiva, nome_noivo, tel_noiva, tel_noivo').eq('referencia_evento', ev.referencia)
       .order('id', { ascending: false }).limit(1).maybeSingle()
     c = data
   }
@@ -99,7 +99,8 @@ export async function eventoPreparacao(eventoId: string) {
     batizado: ehBatizado(ev.tipo_evento),
     crianca: ((ev.nome_crianca ?? '') as string).trim().split(/\s+/)[0] || null,
     nome_crianca_completo: ((ev.nome_crianca ?? '') as string).trim() || null,
-    tel_noiva: (ev.tel_noiva ?? null) as string | null, tel_noivo: (ev.tel_noivo ?? null) as string | null,
+    // Telefones vêm do contrato (dados_contrato_cps)
+    tel_noiva: (c?.tel_noiva ?? null) as string | null, tel_noivo: (c?.tel_noivo ?? null) as string | null,
   }
 }
 
