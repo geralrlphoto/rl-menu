@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE, HORAS_OUTRO, DEMO_ID, demoPreparacao } from '@/lib/preparacao'
+import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE, HORAS_OUTRO, DEMO_ID, demoPreparacao, validarPedido } from '@/lib/preparacao'
 import { MEET_LINK } from '@/lib/crm'
 
 // Público (link enviado aos noivos por WhatsApp): /preparacao/<id do evento>.
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const demo = demoPreparacao()
     return NextResponse.json({
       ok: true, nome: demo.nome, dataEvento: demo.dataEvento, batizado: false, crianca: null,
-      expirado: false, reserva: null, slots: demo.slots, horasOutro: HORAS_OUTRO,
+      expirado: false, reserva: null, slots: demo.slots, horasOutro: HORAS_OUTRO, pedido: null,
       briefing: { respostas: null, enviadoEm: null, prefill: { nome_noivos: demo.nome, local_cerimonia: demo.local, local_festa: demo.local, hora_cerimonia: '16:00' } },
     })
   }
@@ -32,11 +32,12 @@ export async function GET(req: NextRequest) {
   if (ev.data_evento) q = q.lt('data', ev.data_evento)
   const { data: livresData } = await q
   const livres = livresData ?? []
-  const { data: prep } = await sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, reativado_ate').eq('evento_id', ev.id).maybeSingle()
+  const { data: prep } = await sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, reativado_ate, pedido_horario, pedido_em').eq('evento_id', ev.id).maybeSingle()
   const { expirado } = estadoLink(ev.data_evento, minha ?? null, prep?.reativado_ate)
   return NextResponse.json({
     ok: true, nome: ev.nome, dataEvento: ev.data_evento, batizado: ev.batizado, crianca: ev.crianca,
     expirado, reserva: minha ?? null, slots: expirado ? [] : livres, horasOutro: HORAS_OUTRO,
+    pedido: prep?.pedido_horario ? { opcoes: prep.pedido_horario, em: prep.pedido_em } : null,
     // Briefing (casamento ou batizado), pré-preenchido com o que já está na ficha
     briefing: {
       respostas: prep?.briefing ?? null,
@@ -51,33 +52,20 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   // A reunião de preparação é sempre por videochamada
   const body = await req.json().catch(() => ({}))
-  const { e, alterar } = body
-  let slotId: string | undefined = body.slotId
-  // "Outro dia e horário": dia útil e hora escolhidos pelos noivos, fora dos horários publicados
-  const outro: { data?: string; hora?: string } | null = body.outro ?? null
+  const { e, alterar, slotId } = body
+  // "Outro horário": até 2 opções (dias úteis diferentes) que aguardam confirmação da RL
+  const pedido: unknown = body.pedido
   const formato = 'Videochamada'
   const demo = e === DEMO_ID
-  if ((!demo && !UUID_RE.test(e ?? '')) || (!outro && !(demo ? slotId : UUID_RE.test(slotId ?? '')))) {
+  if ((!demo && !UUID_RE.test(e ?? '')) || (!pedido && !(demo ? slotId : UUID_RE.test(slotId ?? '')))) {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
   }
-  if (outro) {
-    const d = /^\d{4}-\d{2}-\d{2}$/.test(outro.data ?? '') ? new Date(outro.data + 'T12:00:00Z') : null
-    if (!d || isNaN(d.getTime()) || !HORAS_OUTRO.includes(outro.hora ?? '')) {
-      return NextResponse.json({ error: 'Escolham um dia e uma hora válidos.' }, { status: 400 })
-    }
-    if (d.getUTCDay() === 0 || d.getUTCDay() === 6) {
-      return NextResponse.json({ error: 'Ao fim de semana não é possível. Escolham um dia útil, por favor.' }, { status: 400 })
-    }
-    if (outro.data! <= hojeLisboa()) {
-      return NextResponse.json({ error: 'Escolham um dia a partir de amanhã, por favor.' }, { status: 400 })
-    }
-  }
+  if (pedido) return pedirOutroHorario(e, pedido, demo)
+
   // Simulação: responde como se tivesse marcado, sem gravar nem enviar email
   if (demo) {
-    const d = demoPreparacao()
-    const s = outro ? { data: outro.data!, hora: outro.hora! } : d.slots.find(x => x.id === slotId)
+    const s = demoPreparacao().slots.find(x => x.id === slotId)
     if (!s) return NextResponse.json({ error: 'Esse horário já não existe.' }, { status: 409 })
-    if (s.data >= d.dataEvento) return NextResponse.json({ error: 'Escolham um dia antes do casamento, por favor.' }, { status: 400 })
     return NextResponse.json({ ok: true, reserva: { data: s.data, hora: s.hora, formato } })
   }
   const ev = await eventoPreparacao(e)
@@ -96,26 +84,6 @@ export async function POST(req: NextRequest) {
   }
   if (anterior && !alterar) return NextResponse.json({ error: 'Já têm uma reunião marcada.' }, { status: 409 })
 
-  // "Outro dia e horário": usa o horário se já existir livre, senão cria-o só para este casal
-  let criado: string | null = null
-  if (outro) {
-    if (ev.data_evento && outro.data! >= ev.data_evento) {
-      return NextResponse.json({ error: `Escolham um dia antes ${ev.batizado ? 'do batizado' : 'do casamento'}, por favor.` }, { status: 400 })
-    }
-    const { data: existente } = await sb.from('preparacao_slots').select('id, evento_id')
-      .eq('tipo', 'preparacao').eq('data', outro.data!).eq('hora', outro.hora!).maybeSingle()
-    if (existente && existente.evento_id && existente.evento_id !== ev.id) {
-      return NextResponse.json({ error: 'Esse horário já está ocupado. Escolham outro, por favor.' }, { status: 409 })
-    }
-    if (existente) slotId = existente.id
-    else {
-      const { data: novo, error: errNovo } = await sb.from('preparacao_slots')
-        .insert({ tipo: 'preparacao', data: outro.data, hora: outro.hora }).select('id').single()
-      if (errNovo || !novo) return NextResponse.json({ error: 'Não foi possível marcar.' }, { status: 500 })
-      slotId = criado = novo.id
-    }
-  }
-
   if (anterior) {
     if (anterior.id === slotId) return NextResponse.json({ error: 'Esse já é o horário marcado.' }, { status: 409 })
     await sb.from('preparacao_slots').update({ evento_id: null, formato: null, reservado_em: null }).eq('id', anterior.id)
@@ -127,8 +95,6 @@ export async function POST(req: NextRequest) {
     .eq('id', slotId).eq('tipo', 'preparacao').is('evento_id', null)
     .select('data, hora').maybeSingle()
   if (error || !slot) {
-    // O horário criado para o pedido não pode ficar como disponibilidade pública
-    if (criado) await sb.from('preparacao_slots').delete().eq('id', criado).is('evento_id', null)
     if (anterior) {
       await sb.from('preparacao_slots').update({ evento_id: ev.id, formato, reservado_em: new Date().toISOString() })
         .eq('id', anterior.id).is('evento_id', null)
@@ -141,6 +107,8 @@ export async function POST(req: NextRequest) {
   }
 
   revalidateTag('photo-whatsapp', { expire: 0 })
+  // Marcaram um horário publicado: um pedido de "outro horário" pendente deixa de fazer sentido
+  await sb.from('preparacao_eventos').update({ pedido_horario: null, pedido_em: null }).eq('evento_id', ev.id)
 
   // Email para o admin (não bloqueia a resposta aos noivos se falhar)
   const quando = `${fmtDataLonga(slot.data)} às ${slot.hora}`
@@ -151,7 +119,7 @@ export async function POST(req: NextRequest) {
 <tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Reunião de preparação ${antes ? 'alterada' : 'marcada'}</td></tr>
 <tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(ev.nome || ev.cliente || '')}</td></tr>
 <tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.7;font-family:Arial,sans-serif">
-${antes ? `<span style="text-decoration:line-through;color:rgba(255,255,255,.4)">${esc(antes)}</span><br/>` : ''}<b style="color:#fff">${esc(quando)}</b><br/>${outro ? '<span style="color:#e8b04c">Dia e hora escolhidos pelos noivos, fora da disponibilidade publicada.</span><br/>' : ''}${esc(formato)}: <a href="${MEET_LINK}" style="color:#C9A84C">${MEET_LINK.replace('https://', '')}</a><br/>
+${antes ? `<span style="text-decoration:line-through;color:rgba(255,255,255,.4)">${esc(antes)}</span><br/>` : ''}<b style="color:#fff">${esc(quando)}</b><br/>${esc(formato)}: <a href="${MEET_LINK}" style="color:#C9A84C">${MEET_LINK.replace('https://', '')}</a><br/>
 ${ev.batizado ? `Batizado${ev.crianca ? ` de ${esc(ev.crianca)}` : ''}` : 'Casamento'}: ${ev.data_evento ? esc(fmtDataLonga(ev.data_evento)) : '—'}${ev.local ? ` · ${esc(ev.local)}` : ''}</td></tr>
 <tr><td style="padding:0 32px 30px"><a href="${SITE_BASE}/eventos-2026/${ev.id}" style="display:inline-block;background:#C9A84C;color:#000;text-decoration:none;font-family:Arial,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;border-radius:8px">Abrir ficha do evento</a></td></tr>
 </table></td></tr></table></body></html>`
@@ -161,12 +129,64 @@ ${ev.batizado ? `Batizado${ev.crianca ? ` de ${esc(ev.crianca)}` : ''}` : 'Casam
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>', to: [ADMIN_EMAIL],
-        subject: `Reunião de preparação${ev.batizado ? ' (batizado)' : ''} ${antes ? 'alterada' : 'marcada'}${outro ? ' (outro horário)' : ''}: ${ev.nome || ev.cliente} (${quando})`, html,
+        subject: `Reunião de preparação${ev.batizado ? ' (batizado)' : ''} ${antes ? 'alterada' : 'marcada'}: ${ev.nome || ev.cliente} (${quando})`, html,
       }),
     })
   } catch { /* a reserva fica feita na mesma */ }
 
   return NextResponse.json({ ok: true, reserva: { data: slot.data, hora: slot.hora, formato } })
+}
+
+/* "Outro horário": guarda até 2 opções e avisa o admin. Só fica marcado quando a RL
+   confirmar uma delas na ficha do evento. */
+async function pedirOutroHorario(e: string, pedido: unknown, demo: boolean) {
+  const ev = demo ? null : await eventoPreparacao(e)
+  if (!demo && !ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })
+  const dataEvento = demo ? demoPreparacao().dataEvento : ev!.data_evento
+  const r = validarPedido(pedido, dataEvento, !!ev?.batizado)
+  if ('erro' in r) return NextResponse.json({ error: r.erro }, { status: 400 })
+  const opcoes = r.opcoes
+  const agora = new Date().toISOString()
+  if (demo) return NextResponse.json({ ok: true, pedido: { opcoes, em: agora } })
+
+  const sb = sbAdmin()
+  const [{ data: reserva }, { data: prep }] = await Promise.all([
+    sb.from('preparacao_slots').select('data, hora').eq('tipo', 'preparacao').eq('evento_id', ev!.id).maybeSingle(),
+    sb.from('preparacao_eventos').select('reativado_ate, briefing_enviado_em').eq('evento_id', ev!.id).maybeSingle(),
+  ])
+  if (estadoLink(ev!.data_evento, reserva ?? null, prep?.reativado_ate).expirado) {
+    return NextResponse.json({ error: 'Este link já expirou. Falem connosco pelo WhatsApp, por favor.' }, { status: 410 })
+  }
+  if (!prep?.briefing_enviado_em && !reserva) {
+    return NextResponse.json({ error: 'Preencham e enviem primeiro o briefing, por favor.' }, { status: 409 })
+  }
+  const { error } = await sb.from('preparacao_eventos')
+    .upsert({ evento_id: ev!.id, pedido_horario: opcoes, pedido_em: agora }, { onConflict: 'evento_id' })
+  if (error) return NextResponse.json({ error: 'Não foi possível enviar o pedido.' }, { status: 500 })
+
+  const lista = opcoes.map((o, i) => `<b style="color:#fff">Opção ${i + 1}:</b> ${esc(fmtDataLonga(o.data))} às ${esc(o.hora)}`).join('<br/>')
+  const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Georgia,serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 12px"><tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#111;border:1px solid rgba(201,168,76,.35);border-radius:14px">
+<tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Pedido de reunião · aguarda confirmação</td></tr>
+<tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(ev!.nome || ev!.cliente || '')}</td></tr>
+<tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.8;font-family:Arial,sans-serif">
+${reserva ? `Marcada atualmente: ${esc(fmtDataLonga(reserva.data))} às ${esc(reserva.hora)}<br/>` : ''}${lista}<br/>
+<span style="color:rgba(255,255,255,.45);font-size:13px">Confirma uma das opções na ficha do evento.</span></td></tr>
+<tr><td style="padding:0 32px 30px"><a href="${SITE_BASE}/eventos-2026/${ev!.id}" style="display:inline-block;background:#C9A84C;color:#000;text-decoration:none;font-family:Arial,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;border-radius:8px">Abrir ficha do evento</a></td></tr>
+</table></td></tr></table></body></html>`
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'RL Photo.Video <geral@rlphotovideo.pt>', to: [ADMIN_EMAIL],
+        subject: `Pedido de reunião (confirmar): ${ev!.nome || ev!.cliente}`, html,
+      }),
+    })
+  } catch { /* o pedido fica guardado na mesma */ }
+
+  return NextResponse.json({ ok: true, pedido: { opcoes, em: agora } })
 }
 
 function esc(s: string) {

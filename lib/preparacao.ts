@@ -8,6 +8,47 @@ export const FORMATOS = ['Presencial', 'Videochamada'] as const
 // "Outro dia e horário": horas que os noivos podem escolher fora da disponibilidade (só dias úteis)
 export const HORAS_OUTRO = ['10:00', '11:00', '12:00', '17:00', '18:00', '19:00', '20:00']
 
+export type OpcaoHorario = { data: string; hora: string }
+
+/* Valida o pedido de "outro horário": 1 a 2 opções, em dias úteis diferentes,
+   de amanhã até à véspera do evento e só nas horas de HORAS_OUTRO. */
+export function validarPedido(pedido: unknown, dataEvento: string | null, batizado = false): { opcoes: OpcaoHorario[] } | { erro: string } {
+  if (!Array.isArray(pedido) || pedido.length < 1 || pedido.length > 2) return { erro: 'Escolham uma ou duas opções.' }
+  const opcoes: OpcaoHorario[] = []
+  for (const o of pedido) {
+    const data = String(o?.data ?? ''), hora = String(o?.hora ?? '')
+    const d = /^\d{4}-\d{2}-\d{2}$/.test(data) ? new Date(data + 'T12:00:00Z') : null
+    if (!d || isNaN(d.getTime()) || !HORAS_OUTRO.includes(hora)) return { erro: 'Escolham um dia e uma hora válidos.' }
+    if (d.getUTCDay() === 0 || d.getUTCDay() === 6) return { erro: 'Ao fim de semana não é possível. Escolham um dia útil, por favor.' }
+    if (data <= hojeLisboa()) return { erro: 'Escolham um dia a partir de amanhã, por favor.' }
+    if (dataEvento && data >= dataEvento) return { erro: `Escolham um dia antes ${batizado ? 'do batizado' : 'do casamento'}, por favor.` }
+    if (opcoes.some(x => x.data === data)) return { erro: 'As duas opções têm de ser em dias diferentes.' }
+    opcoes.push({ data, hora })
+  }
+  return { opcoes: opcoes.sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora)) }
+}
+
+/* Admin confirma uma opção do pedido: usa o horário se existir livre (senão cria-o já
+   reservado) e liberta a marcação anterior do casal. */
+export async function reservarOpcao(eventoId: string, o: OpcaoHorario): Promise<{ erro?: string }> {
+  const sb = sbAdmin()
+  const { data: existente } = await sb.from('preparacao_slots').select('id, evento_id')
+    .eq('tipo', 'preparacao').eq('data', o.data).eq('hora', o.hora).maybeSingle()
+  if (existente?.evento_id === eventoId) return {}
+  if (existente?.evento_id) return { erro: 'Esse horário já está ocupado por outro casal.' }
+  const { data: anterior } = await sb.from('preparacao_slots').select('id').eq('tipo', 'preparacao').eq('evento_id', eventoId).maybeSingle()
+  if (anterior) await sb.from('preparacao_slots').update({ evento_id: null, formato: null, reservado_em: null }).eq('id', anterior.id)
+  const reserva = { evento_id: eventoId, formato: 'Videochamada', reservado_em: new Date().toISOString() }
+  const { error } = existente
+    ? await sb.from('preparacao_slots').update(reserva).eq('id', existente.id).is('evento_id', null)
+    : await sb.from('preparacao_slots').insert({ tipo: 'preparacao', data: o.data, hora: o.hora, ...reserva })
+  if (error) {
+    if (anterior) await sb.from('preparacao_slots').update(reserva).eq('id', anterior.id).is('evento_id', null)
+    return { erro: 'Não foi possível marcar.' }
+  }
+  return {}
+}
+
 /* Simulação: /preparacao/demo mostra um casal fictício. Nada é gravado nem enviado por email. */
 export const DEMO_ID = 'demo'
 export function demoPreparacao() {

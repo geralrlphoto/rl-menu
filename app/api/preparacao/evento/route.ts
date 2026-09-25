@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sbAdmin, eventoPreparacao, estadoLink, UUID_RE } from '@/lib/preparacao'
+import { revalidateTag } from 'next/cache'
+import { sbAdmin, eventoPreparacao, estadoLink, UUID_RE, reservarOpcao, type OpcaoHorario } from '@/lib/preparacao'
 import { camposBriefing, limparBriefing } from '@/lib/briefing'
 import { sincronizarBriefingPortal } from '@/lib/briefingPortal'
 
@@ -15,7 +16,7 @@ export async function GET(req: NextRequest) {
   if (!ev) return NextResponse.json({ ok: true, briefing: null, link: null })
   const sb = sbAdmin()
   const [{ data: prep }, { data: reserva }] = await Promise.all([
-    sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, briefing_atualizado_em, reativado_ate').eq('evento_id', ev.id).maybeSingle(),
+    sb.from('preparacao_eventos').select('briefing, briefing_enviado_em, briefing_atualizado_em, reativado_ate, pedido_horario, pedido_em').eq('evento_id', ev.id).maybeSingle(),
     sb.from('preparacao_slots').select('data, hora').eq('tipo', 'preparacao').eq('evento_id', ev.id).maybeSingle(),
   ])
   return NextResponse.json({
@@ -24,6 +25,8 @@ export async function GET(req: NextRequest) {
     briefing: prep?.briefing ?? null,
     enviadoEm: prep?.briefing_enviado_em ?? null,
     atualizadoEm: prep?.briefing_atualizado_em ?? null,
+    reserva: reserva ?? null,
+    pedido: prep?.pedido_horario ? { opcoes: prep.pedido_horario, em: prep.pedido_em } : null,
     link: { ...estadoLink(ev.data_evento, reserva ?? null, prep?.reativado_ate), reativadoAte: prep?.reativado_ate ?? null },
   })
 }
@@ -42,10 +45,26 @@ export async function PATCH(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const { eventoId, reativar, sincronizar } = await req.json().catch(() => ({}))
-  if (!UUID_RE.test(eventoId ?? '') || !(reativar || sincronizar)) return NextResponse.json({ error: 'pedido inválido' }, { status: 400 })
+  const { eventoId, reativar, sincronizar, confirmarPedido, descartarPedido } = await req.json().catch(() => ({}))
+  const confirmar = Number.isInteger(confirmarPedido)
+  if (!UUID_RE.test(eventoId ?? '') || !(reativar || sincronizar || confirmar || descartarPedido)) return NextResponse.json({ error: 'pedido inválido' }, { status: 400 })
   const ev = await eventoPreparacao(eventoId)
   if (!ev) return NextResponse.json({ error: 'evento não encontrado' }, { status: 404 })
+
+  // Pedido de "outro horário" dos noivos: confirmar uma das opções (fica marcada) ou descartar
+  if (confirmar || descartarPedido) {
+    const sb = sbAdmin()
+    const { data: prep } = await sb.from('preparacao_eventos').select('pedido_horario').eq('evento_id', ev.id).maybeSingle()
+    const opcao: OpcaoHorario | undefined = prep?.pedido_horario?.[confirmarPedido]
+    if (confirmar) {
+      if (!opcao) return NextResponse.json({ error: 'Opção não encontrada' }, { status: 404 })
+      const res = await reservarOpcao(ev.id, opcao)
+      if (res.erro) return NextResponse.json({ error: res.erro }, { status: 409 })
+      revalidateTag('photo-whatsapp', { expire: 0 })
+    }
+    await sb.from('preparacao_eventos').update({ pedido_horario: null, pedido_em: null }).eq('evento_id', ev.id)
+    return NextResponse.json({ ok: true })
+  }
 
   // Botão "Sincronizar com o portal" (ex.: o portal foi criado depois do briefing)
   if (sincronizar) {

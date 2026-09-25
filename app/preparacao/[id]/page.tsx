@@ -73,7 +73,11 @@ export default function PreparacaoPage() {
   const vistaInicial = useRef(false)
   // "Outro dia e horário": qualquer dia útil até à véspera do evento, fora da disponibilidade publicada
   const [outro, setOutro] = useState(false)
-  const [outroHora, setOutroHora] = useState<string | null>(null)
+  // Até 2 opções (dias diferentes); ficam como pedido até a RL confirmar
+  const [opcoes, setOpcoes] = useState<{ data: string; hora: string }[]>([])
+  const [pedido, setPedido] = useState<{ opcoes: { data: string; hora: string }[]; em: string | null } | null>(null)
+  const [aPedir, setAPedir] = useState(false)
+  const [acabouDePedir, setAcabouDePedir] = useState(false)
   const [horasOutro, setHorasOutro] = useState<string[]>([])
 
   const carregar = () => {
@@ -84,7 +88,7 @@ export default function PreparacaoPage() {
       if (!vistaInicial.current) {
         vistaInicial.current = true
         if (d.briefing && !d.briefing.enviadoEm && !d.reserva) setVista('briefing')
-      } setSlots(d.slots ?? []); setReserva(d.reserva); setHorasOutro(d.horasOutro ?? [])
+      } setSlots(d.slots ?? []); setReserva(d.reserva); setHorasOutro(d.horasOutro ?? []); setPedido(d.pedido ?? null)
       const primeiro: string | undefined = d.slots?.[0]?.data
       setMes(prev => prev ?? (primeiro
         ? { y: +primeiro.slice(0, 4), m: +primeiro.slice(5, 7) - 1 }
@@ -109,11 +113,21 @@ export default function PreparacaoPage() {
   const meses = useMemo(() => [...new Set([...diasAtivos].map(s => s.slice(0, 7)))].sort(), [diasAtivos])
   const horas = slots.filter(s => s.data === dia)
   const escolhido: { data: string; hora: string } | null = outro
-    ? (dia && outroHora ? { data: dia, hora: outroHora } : null)
+    ? opcoes[0] ?? null
     : slots.find(s => s.id === slotId) ?? null
+  const opcaoDoDia = opcoes.find(o => o.data === dia)?.hora ?? null
+  // Escolher a hora de um dia: substitui a opção desse dia; um 3.º dia substitui a última
+  const escolherHora = (hora: string) => {
+    if (!dia) return
+    setOpcoes(prev => {
+      const outros = prev.filter(o => o.data !== dia)
+      const base = outros.length >= 2 ? outros.slice(0, 1) : outros
+      return [...base, { data: dia, hora }].sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora))
+    })
+  }
 
   const mudarModo = (novo: boolean) => {
-    setOutro(novo); setDia(null); setSlotId(null); setOutroHora(null); setAviso('')
+    setOutro(novo); setDia(null); setSlotId(null); setOpcoes([]); setAviso('')
     const alvo = [...(novo ? diasUteis : diasComSlots)].sort()[0]
     if (alvo) setMes({ y: +alvo.slice(0, 4), m: +alvo.slice(5, 7) - 1 })
   }
@@ -148,22 +162,35 @@ export default function PreparacaoPage() {
 
   async function confirmar() {
     if (!escolhido) return
+    if (outro) return solicitar()
     setAEnviar(true); setAviso('')
     const d = await fetch('/api/preparacao-publico', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(outro
-        ? { e: id, outro: { data: escolhido.data, hora: escolhido.hora }, alterar: aAlterar }
-        : { e: id, slotId, alterar: aAlterar }),
+      body: JSON.stringify({ e: id, slotId, alterar: aAlterar }),
     }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
     setAEnviar(false)
     if (d.ok) {
       setReserva(d.reserva); setAcabouDeMarcar(true); setAAlterar(false); setSlotId(null); setDia(null)
-      setOutro(false); setOutroHora(null)
+      setPedido(null); setAPedir(false)
       if (!demo) carregar() // o horário antigo volta a ficar livre na lista
       return
     }
     setAviso(d.error || 'Não foi possível marcar.')
-    setSlotId(null); setOutroHora(null); carregar()
+    setSlotId(null); carregar()
+  }
+
+  // "Outro horário": envia o pedido (1 ou 2 opções); só fica marcado quando a RL confirmar
+  async function solicitar() {
+    setAEnviar(true); setAviso('')
+    const d = await fetch('/api/preparacao-publico', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ e: id, pedido: opcoes }),
+    }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
+    setAEnviar(false)
+    if (!d.ok) { setAviso(d.error || 'Não foi possível enviar o pedido.'); return }
+    setPedido(d.pedido); setAcabouDePedir(true); setAPedir(false); setAAlterar(false)
+    setOutro(false); setOpcoes([]); setDia(null)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   return (
@@ -294,6 +321,11 @@ export default function PreparacaoPage() {
                 style={{ borderColor: GOLD, color: GOLD }}>
                 + Adicionar ao calendário
               </a>
+              {pedido && (
+                <p className="mt-6 w-full max-w-sm rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-sm text-amber-100 text-left">
+                  Pediram outro horário ({pedido.opcoes.map(o => `${diaLongo(o.data)} às ${o.hora}`).join(' ou ')}). Carece de confirmação da nossa parte; até lá mantém-se esta data.
+                </p>
+              )}
               <button onClick={() => { setAAlterar(true); setAcabouDeMarcar(false); setAviso('') }}
                 className="mt-4 text-[11px] tracking-[0.25em] uppercase text-white/45 hover:text-[#C9A84C] underline underline-offset-4 decoration-white/20 transition-colors">
                 Alterar data da reunião
@@ -317,8 +349,32 @@ export default function PreparacaoPage() {
             </div>
           )}
 
+          {/* ── Pedido enviado: aguarda confirmação da RL ── */}
+          {estado === 'ok' && !expirado && vista === 'reuniao' && !reserva && pedido && !aPedir && (
+            <div className="flex flex-col items-center text-center pt-4 lg:pt-16 animate-[fadeUp_.5s_ease-out_both]">
+              <div className="w-20 h-20 rounded-full border flex items-center justify-center text-3xl" style={{ borderColor: 'rgba(201,168,76,0.5)', color: GOLD }}>⧗</div>
+              <p className="text-white/60 italic text-xl mt-8" style={SERIF}>{acabouDePedir ? 'Pedido enviado!' : 'Pedido de reunião'}</p>
+              <p className="text-3xl sm:text-4xl font-light mt-3 leading-tight" style={SERIF}>Aguarda a nossa confirmação</p>
+              <div className="mt-8 w-full max-w-sm flex flex-col gap-2">
+                {pedido.opcoes.map((o, i) => (
+                  <div key={i} className="rounded-2xl border border-white/10 bg-white/[0.03] px-5 py-3 text-left">
+                    <span className="block text-[10px] tracking-[0.3em] uppercase text-white/40">Opção {i + 1}</span>
+                    <span className="block text-xl font-light" style={SERIF}>{diaLongo(o.data)} · {o.hora}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-white/45 text-sm mt-8 leading-relaxed max-w-sm">
+                Este horário carece de confirmação da nossa parte. Vamos ver a nossa agenda e confirmamos convosco pelo WhatsApp.
+              </p>
+              <button onClick={() => { setAPedir(true); setAcabouDePedir(false); mudarModo(true) }}
+                className="mt-6 text-[11px] tracking-[0.25em] uppercase text-white/45 hover:text-[#C9A84C] underline underline-offset-4 decoration-white/20 transition-colors">
+                Alterar pedido
+              </button>
+            </div>
+          )}
+
           {/* ── Escolher ── */}
-          {estado === 'ok' && !expirado && vista === 'reuniao' && (!reserva || aAlterar) && (
+          {estado === 'ok' && !expirado && vista === 'reuniao' && (!reserva || aAlterar) && (!pedido || aPedir || !!reserva) && (
             <>
               {acabouBriefing && (
                 <div className="mb-8 rounded-2xl border border-[#C9A84C]/40 bg-[#C9A84C]/10 px-5 py-4 animate-[fadeUp_.5s_ease-out_both]">
@@ -339,7 +395,7 @@ export default function PreparacaoPage() {
               )}
               {/* Progresso */}
               <div className="flex items-center gap-3 mb-8">
-                {['O dia', 'A hora', 'Confirmar'].map((t, i) => {
+                {['O dia', 'A hora', outro ? 'Solicitar' : 'Confirmar'].map((t, i) => {
                   const n = i + 1; const feito = passo > n; const ativo = passo === n
                   return (
                     <div key={t} className="flex items-center gap-3 flex-1 last:flex-none">
@@ -387,13 +443,14 @@ export default function PreparacaoPage() {
                         if (!iso) return <span key={i} />
                         const tem = diasAtivos.has(iso)
                         const sel = iso === dia
+                        const comOpcao = outro && opcoes.some(o => o.data === iso)
                         const casamento = iso === dataEvento
                         return (
-                          <button key={iso} disabled={!tem} onClick={() => { setDia(iso); setSlotId(null); setOutroHora(null) }}
+                          <button key={iso} disabled={!tem} onClick={() => { setDia(iso); setSlotId(null) }}
                             className={`relative aspect-square rounded-xl text-base sm:text-lg tabular-nums transition-all duration-200 ${tem ? 'hover:scale-105' : 'cursor-default'}`}
                             style={{
                               ...SERIF,
-                              background: sel ? GOLD : tem ? 'rgba(201,168,76,0.08)' : 'transparent',
+                              background: sel ? GOLD : comOpcao ? 'rgba(201,168,76,0.32)' : tem ? 'rgba(201,168,76,0.08)' : 'transparent',
                               color: sel ? '#000' : tem ? '#fff' : casamento ? GOLD : 'rgba(255,255,255,0.18)',
                               border: `1px solid ${sel ? GOLD : tem ? 'rgba(201,168,76,0.35)' : casamento ? 'rgba(201,168,76,0.4)' : 'transparent'}`,
                               boxShadow: sel ? '0 0 24px rgba(201,168,76,0.35)' : undefined,
@@ -420,16 +477,16 @@ export default function PreparacaoPage() {
                       {outro ? '‹ Horários disponíveis' : 'Outro horário'}
                     </button>
                   )}
-                  {outro && <p className="mt-2 text-[11px] text-white/35">De segunda a sexta, das 10h às 12h ou das 17h às 20h. Ao fim de semana não é possível.</p>}
+                  {outro && <p className="mt-2 text-[11px] text-white/35">De segunda a sexta, das 10h às 12h ou das 17h às 20h. Ao fim de semana não é possível. Podem indicar até dois dias diferentes.</p>}
 
                   {/* Horas */}
                   <div className={`transition-all duration-500 ${dia ? 'opacity-100 translate-y-0' : 'opacity-40 translate-y-1 pointer-events-none'}`}>
                     <p className="mt-8 mb-3 text-[10px] tracking-[0.35em] uppercase text-white/40">{dia ? diaLongo(dia) : 'Escolham primeiro o dia'}</p>
                     <div key={dia ?? 'nenhum'} className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                       {(outro ? horasOutro.map(h => ({ id: h, hora: h })) : horas).map((s, i) => {
-                        const ativo = outro ? s.hora === outroHora : s.id === slotId
+                        const ativo = outro ? s.hora === opcaoDoDia : s.id === slotId
                         return (
-                          <button key={s.id} onClick={() => outro ? setOutroHora(s.hora) : setSlotId(s.id)}
+                          <button key={s.id} onClick={() => outro ? escolherHora(s.hora) : setSlotId(s.id)}
                             className="rounded-xl border py-3.5 text-xl tabular-nums transition-all duration-200 hover:-translate-y-0.5 animate-[fadeUp_.35s_ease-out_both]"
                             style={{ ...SERIF, animationDelay: `${i * 45}ms`, borderColor: ativo ? GOLD : 'rgba(255,255,255,0.1)', background: ativo ? GOLD : 'rgba(255,255,255,0.02)', color: ativo ? '#000' : 'rgba(255,255,255,0.9)' }}>
                             {s.hora}
@@ -444,9 +501,19 @@ export default function PreparacaoPage() {
                     <div className="flex items-center justify-between gap-4">
                       <div className="min-w-0">
                         <p className="text-[10px] tracking-[0.3em] uppercase text-white/40">Videochamada · cerca de {DURACAO_MIN} min</p>
-                        <p className="text-2xl font-light mt-1 truncate" style={SERIF}>
-                          {escolhido ? `${diaLongo(escolhido.data)} · ${escolhido.hora}` : 'Escolham um horário'}
-                        </p>
+                        {outro ? (
+                          opcoes.length ? opcoes.map((o, i) => (
+                            <p key={o.data} className="text-xl font-light mt-1 flex items-center gap-3" style={SERIF}>
+                              <span className="truncate"><span className="text-white/40 text-base">Opção {i + 1}:</span> {diaLongo(o.data)} · {o.hora}</span>
+                              <button onClick={() => setOpcoes(prev => prev.filter(x => x.data !== o.data))} aria-label="Remover opção"
+                                className="shrink-0 text-xs text-white/35 hover:text-white">✕</button>
+                            </p>
+                          )) : <p className="text-2xl font-light mt-1" style={SERIF}>Escolham até dois dias</p>
+                        ) : (
+                          <p className="text-2xl font-light mt-1 truncate" style={SERIF}>
+                            {escolhido ? `${diaLongo(escolhido.data)} · ${escolhido.hora}` : 'Escolham um horário'}
+                          </p>
+                        )}
                       </div>
                       <span className="shrink-0 w-10 h-10 rounded-full border flex items-center justify-center" style={{ borderColor: 'rgba(201,168,76,0.4)', color: GOLD }}>
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="2.5" y="6" width="13" height="12" rx="2" /><path d="M15.5 10.5l6-3.5v10l-6-3.5" strokeLinejoin="round" /></svg>
@@ -456,8 +523,9 @@ export default function PreparacaoPage() {
                       className="relative overflow-hidden mt-5 w-full rounded-xl py-4 text-[12px] font-semibold tracking-[0.3em] uppercase transition-all disabled:opacity-25 enabled:hover:shadow-[0_0_30px_rgba(201,168,76,0.35)]"
                       style={{ background: GOLD, color: '#000' }}>
                       {escolhido && !aEnviar && <span className="absolute inset-y-0 -left-1/3 w-1/3 bg-white/30 skew-x-[-20deg] animate-[brilho_2.4s_ease-in-out_infinite]" />}
-                      <span className="relative">{aEnviar ? 'A marcar…' : aAlterar ? 'Confirmar nova data' : 'Confirmar reunião'}</span>
+                      <span className="relative">{aEnviar ? (outro ? 'A enviar…' : 'A marcar…') : outro ? 'Solicitar reunião' : aAlterar ? 'Confirmar nova data' : 'Confirmar reunião'}</span>
                     </button>
+                    {outro && <p className="mt-3 text-[11px] text-white/40 text-center">O pedido carece de confirmação da nossa parte.</p>}
                   </div>
                 </>
               )}

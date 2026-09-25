@@ -13,7 +13,11 @@ type Estado = {
   enviadoEm: string | null
   atualizadoEm: string | null
   link: { expirado: boolean; expiraEm: string | null; reativadoAte: string | null } | null
+  reserva: { data: string; hora: string } | null
+  pedido: { opcoes: { data: string; hora: string }[]; em: string | null } | null
 }
+
+const fmtDia = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })
 
 const fmt = (iso: string) => new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 const fmtLimite = (s: string) => {
@@ -29,6 +33,7 @@ export default function BriefingNoivos({ e }: { e: any }) {
   const [draft, setDraft] = useState<RespostasBriefing>({})
   const [aGuardar, setAGuardar] = useState(false)
   const [sync, setSync] = useState<string | null>(null)
+  const [pedidoMsg, setPedidoMsg] = useState<string | null>(null)
 
   const carregar = () =>
     fetch(`/api/preparacao/evento?eventoId=${evId}`).then(r => r.json()).then(d => { if (d.ok) setSt(d) }).catch(() => {})
@@ -41,6 +46,15 @@ export default function BriefingNoivos({ e }: { e: any }) {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ eventoId: evId, reativar: true }),
     }).catch(() => {})
+    carregar()
+  }
+  async function responderPedido(acao: { confirmarPedido: number } | { descartarPedido: true }) {
+    setPedidoMsg('A guardar…')
+    const d = await fetch('/api/preparacao/evento', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventoId: evId, ...acao }),
+    }).then(r => r.json()).catch(() => ({ error: 'sem ligação' }))
+    setPedidoMsg(d.ok ? null : d.error ?? 'Erro')
     carregar()
   }
   async function sincronizar() {
@@ -81,6 +95,28 @@ export default function BriefingNoivos({ e }: { e: any }) {
           </button>
         )}
       </div>
+
+      {/* Pedido de "outro horário" dos noivos: aguarda confirmação */}
+      {st.pedido && (
+        <div className="border-t border-white/5 pt-3">
+          <p className="text-[10px] tracking-[0.3em] uppercase text-amber-400 font-semibold">Pedido de reunião · aguarda confirmação</p>
+          {st.reserva && <p className="text-[11px] text-white/40 mt-1">Marcada atualmente: {fmtDia(st.reserva.data)} às {st.reserva.hora}</p>}
+          <div className="mt-2 flex flex-col gap-1.5">
+            {st.pedido.opcoes.map((o, i) => (
+              <div key={i} className="flex items-center justify-between gap-3 rounded-lg border border-amber-400/20 bg-amber-400/[0.05] px-3 py-2">
+                <span className="text-sm text-white/85">Opção {i + 1}: <span className="capitalize">{fmtDia(o.data)}</span> às {o.hora}</span>
+                <button onClick={() => responderPedido({ confirmarPedido: i })}
+                  className="shrink-0 text-[10px] font-bold tracking-[0.2em] uppercase px-3 py-1.5 rounded-lg bg-gold text-black">Confirmar</button>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center justify-between mt-2">
+            <span className="text-[10px] text-white/45">{pedidoMsg ?? (st.pedido.em ? `Pedido a ${fmt(st.pedido.em)}` : '')}</span>
+            <button onClick={() => responderPedido({ descartarPedido: true })}
+              className="text-[10px] tracking-[0.2em] uppercase text-white/35 hover:text-white/70">Descartar pedido</button>
+          </div>
+        </div>
+      )}
 
       {/* Briefing (casamento ou batizado) */}
       {(
