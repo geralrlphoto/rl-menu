@@ -51,6 +51,7 @@ Videochamada: ${MEET_LINK}`,
 
 export default function PreparacaoPage() {
   const { id } = useParams<{ id: string }>()
+  const demo = id === 'demo' // simulação: casal fictício, nada é gravado
   const [estado, setEstado] = useState<'carregar' | 'erro' | 'ok'>('carregar')
   const [nome, setNome] = useState('')
   const [dataEvento, setDataEvento] = useState<string | null>(null)
@@ -158,7 +159,7 @@ export default function PreparacaoPage() {
     if (d.ok) {
       setReserva(d.reserva); setAcabouDeMarcar(true); setAAlterar(false); setSlotId(null); setDia(null)
       setOutro(false); setOutroHora(null)
-      carregar() // o horário antigo volta a ficar livre na lista
+      if (!demo) carregar() // o horário antigo volta a ficar livre na lista
       return
     }
     setAviso(d.error || 'Não foi possível marcar.')
@@ -200,6 +201,11 @@ export default function PreparacaoPage() {
       {/* ── Marcação ── */}
       <section className="relative px-5 sm:px-10 xl:px-16 py-10 lg:py-16 flex flex-col">
         <div className="w-full max-w-[560px] mx-auto lg:mx-0">
+          {demo && (
+            <p className="mb-6 rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-xs text-amber-200">
+              Simulação: casal fictício. Nada é gravado nem enviado.
+            </p>
+          )}
           {estado === 'carregar' && (
             <div className="flex flex-col gap-3 animate-pulse">
               <div className="h-4 w-40 rounded bg-white/5" /><div className="h-72 rounded-2xl bg-white/[0.03]" />

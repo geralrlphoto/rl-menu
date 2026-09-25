@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { sbAdmin, eventoPreparacao, estadoLink, fmtDataLonga, UUID_RE } from '@/lib/preparacao'
+import { sbAdmin, eventoPreparacao, estadoLink, fmtDataLonga, UUID_RE, DEMO_ID } from '@/lib/preparacao'
 import { camposBriefing, emFaltaBriefing, limparBriefing, valorBriefing } from '@/lib/briefing'
 import { sincronizarBriefingPortal } from '@/lib/briefingPortal'
 
@@ -11,6 +11,13 @@ const SITE_BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.rlphotovid
 
 export async function POST(req: NextRequest) {
   const { e, respostas } = await req.json().catch(() => ({}))
+  // Simulação (/preparacao/demo): valida como a sério, mas não grava nem envia email
+  if (e === DEMO_ID) {
+    const campos = camposBriefing(false)
+    const falta = emFaltaBriefing(limparBriefing(respostas, campos), campos)
+    if (falta.length) return NextResponse.json({ error: `Falta preencher: ${falta.join(', ')}` }, { status: 400 })
+    return NextResponse.json({ ok: true, enviadoEm: new Date().toISOString() })
+  }
   if (!UUID_RE.test(e ?? '')) return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
   const ev = await eventoPreparacao(e)
   if (!ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })

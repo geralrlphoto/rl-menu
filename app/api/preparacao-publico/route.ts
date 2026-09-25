@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE, HORAS_OUTRO } from '@/lib/preparacao'
+import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE, HORAS_OUTRO, DEMO_ID, demoPreparacao } from '@/lib/preparacao'
 import { MEET_LINK } from '@/lib/crm'
 
 // Público (link enviado aos noivos por WhatsApp): /preparacao/<id do evento>.
@@ -11,6 +11,14 @@ const SITE_BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.rlphotovid
 
 export async function GET(req: NextRequest) {
   const e = req.nextUrl.searchParams.get('e') ?? ''
+  if (e === DEMO_ID) {
+    const demo = demoPreparacao()
+    return NextResponse.json({
+      ok: true, nome: demo.nome, dataEvento: demo.dataEvento, batizado: false, crianca: null,
+      expirado: false, reserva: null, slots: demo.slots, horasOutro: HORAS_OUTRO,
+      briefing: { respostas: null, enviadoEm: null, prefill: { nome_noivos: demo.nome, local_cerimonia: demo.local, local_festa: demo.local, hora_cerimonia: '16:00' } },
+    })
+  }
   if (!UUID_RE.test(e)) return NextResponse.json({ error: 'Link inválido' }, { status: 400 })
   const ev = await eventoPreparacao(e)
   if (!ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })
@@ -48,7 +56,8 @@ export async function POST(req: NextRequest) {
   // "Outro dia e horário": dia útil e hora escolhidos pelos noivos, fora dos horários publicados
   const outro: { data?: string; hora?: string } | null = body.outro ?? null
   const formato = 'Videochamada'
-  if (!UUID_RE.test(e ?? '') || (!outro && !UUID_RE.test(slotId ?? ''))) {
+  const demo = e === DEMO_ID
+  if ((!demo && !UUID_RE.test(e ?? '')) || (!outro && !(demo ? slotId : UUID_RE.test(slotId ?? '')))) {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
   }
   if (outro) {
@@ -62,6 +71,14 @@ export async function POST(req: NextRequest) {
     if (outro.data! <= hojeLisboa()) {
       return NextResponse.json({ error: 'Escolham um dia a partir de amanhã, por favor.' }, { status: 400 })
     }
+  }
+  // Simulação: responde como se tivesse marcado, sem gravar nem enviar email
+  if (demo) {
+    const d = demoPreparacao()
+    const s = outro ? { data: outro.data!, hora: outro.hora! } : d.slots.find(x => x.id === slotId)
+    if (!s) return NextResponse.json({ error: 'Esse horário já não existe.' }, { status: 409 })
+    if (s.data >= d.dataEvento) return NextResponse.json({ error: 'Escolham um dia antes do casamento, por favor.' }, { status: 400 })
+    return NextResponse.json({ ok: true, reserva: { data: s.data, hora: s.hora, formato } })
   }
   const ev = await eventoPreparacao(e)
   if (!ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })

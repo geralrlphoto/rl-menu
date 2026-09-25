@@ -8,6 +8,21 @@ export const FORMATOS = ['Presencial', 'Videochamada'] as const
 // "Outro dia e horário": horas que os noivos podem escolher fora da disponibilidade (só dias úteis)
 export const HORAS_OUTRO = ['10:00', '11:00', '12:00', '17:00', '18:00', '19:00', '20:00']
 
+/* Simulação: /preparacao/demo mostra um casal fictício. Nada é gravado nem enviado por email. */
+export const DEMO_ID = 'demo'
+export function demoPreparacao() {
+  const dia = (n: number) => { const d = new Date(hojeLisboa() + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d }
+  const ymd = (d: Date) => d.toISOString().slice(0, 10)
+  // Alguns horários "publicados" nos próximos dias úteis
+  const slots: { id: string; data: string; hora: string }[] = []
+  for (let n = 1; slots.length < 9 && n < 30; n++) {
+    const d = dia(n)
+    if (d.getUTCDay() === 0 || d.getUTCDay() === 6 || n % 2) continue
+    for (const hora of ['18:00', '19:00', '20:00']) slots.push({ id: `demo-${ymd(d)}-${hora}`, data: ymd(d), hora })
+  }
+  return { nome: 'Ana e Pedro', dataEvento: ymd(dia(45)), local: 'Quinta de Simulação', slots }
+}
+
 export function sbAdmin() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
