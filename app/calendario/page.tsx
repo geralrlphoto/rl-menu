@@ -181,6 +181,30 @@ export default async function CalendarioPage() {
     reuniao_link: r.reuniao_link ?? null,
   }))
 
+  // ── 4a. Reuniões de preparação / pré-wedding marcadas pelos noivos no link ─
+  const { data: slotsRaw } = await supabase
+    .from('preparacao_slots')
+    .select('id, tipo, data, hora, local, formato, evento_id')
+    .not('evento_id', 'is', null)
+  const idsSlots = [...new Set((slotsRaw ?? []).map((m: any) => m.evento_id))]
+  const { data: evsSlots } = idsSlots.length
+    ? await supabase.from('eventos_2026').select('id, cliente, referencia').in('id', idsSlots)
+    : { data: [] as any[] }
+  for (const m of (slotsRaw ?? []) as any[]) {
+    const ev = (evsSlots ?? []).find((x: any) => x.id === m.evento_id)
+    const pw = m.tipo === 'prewedding'
+    reunioes.push({
+      id:           `prep-${m.id}`,
+      nome:         (ev?.cliente ?? '').trim() || ev?.referencia || 'Noivos',
+      reuniao_data: m.data,
+      reuniao_hora: m.hora ? String(m.hora).slice(0, 5) : null,
+      reuniao_tipo: pw ? 'Pré-wedding' : `Preparação${m.formato ? ' · ' + m.formato : ''}`,
+      reuniao_link: pw && m.local ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.local)}` : null,
+      origem:       pw ? 'prewedding' : 'preparacao',
+      evento_id:    m.evento_id,
+    })
+  }
+
   // ── 4b. Tarefas (calendar tasks) ──────────────────────────────────────────
   const { data: tarefasRaw } = await supabase
     .from('tarefas')

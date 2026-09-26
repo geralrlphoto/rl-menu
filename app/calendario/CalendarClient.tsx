@@ -49,6 +49,9 @@ export type ReuniaoEvent = {
   reuniao_hora: string | null
   reuniao_tipo: string | null  // Presencial | Videochamada
   reuniao_link: string | null
+  // Reuniões marcadas pelos noivos no link de preparação (não são fichas de CRM)
+  origem?: 'crm' | 'preparacao' | 'prewedding'
+  evento_id?: string | null
 }
 
 export type TarefaEvent = {
@@ -1040,7 +1043,7 @@ export default function CalendarClient({
                             const r = item.r
                             return (
                               <button key={`re-${r.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'reuniao', data: r }) }} className="text-left w-full">
-                                <Pill cor="#C084FC">🤝 {r.nome.split(' ')[0]}</Pill>
+                                <Pill cor="#C084FC">🤝 {r.origem && r.origem !== 'crm' ? r.nome : r.nome.split(' ')[0]}</Pill>
                               </button>
                             )
                           }
@@ -1179,7 +1182,7 @@ export default function CalendarClient({
         </div>
 
         {/* Time Blocks */}
-        <TimeBlocks events={events} tarefas={tarefas} preWeddings={preWeddings} reunioes={reunioes} />
+        <TimeBlocks events={events} tarefas={tarefas} preWeddings={preWeddings} reunioes={reunioes.filter(r => !r.origem || r.origem === 'crm')} />
       </div>
 
 
@@ -1253,7 +1256,7 @@ export default function CalendarClient({
               return (
                 <>
                   <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
-                    REUNIÃO CRM · {r.reuniao_tipo || 'Presencial'}
+                    {r.origem && r.origem !== 'crm' ? 'REUNIÃO NOIVOS' : 'REUNIÃO CRM'} · {r.reuniao_tipo || 'Presencial'}
                   </div>
                   <h2 className="text-xl font-light text-white tracking-wide mb-4">{r.nome}</h2>
                   <div className="space-y-2 mb-6">
@@ -1270,16 +1273,26 @@ export default function CalendarClient({
                     )}
                   </div>
                   <div className="flex gap-3">
-                    <Link href={`/crm/${r.id}`}
-                      className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                      style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
-                      Ver Ficha CRM
-                    </Link>
-                    <button onClick={() => handleDeleteReuniao(r.id, r.reuniao_data)}
-                      className="px-4 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                      style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
-                      Eliminar
-                    </button>
+                    {r.origem && r.origem !== 'crm' ? (
+                      <Link href={`/eventos-2026/${r.evento_id}`}
+                        className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                        style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                        Ver Ficha do Evento
+                      </Link>
+                    ) : (
+                      <>
+                        <Link href={`/crm/${r.id}`}
+                          className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                          style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                          Ver Ficha CRM
+                        </Link>
+                        <button onClick={() => handleDeleteReuniao(r.id, r.reuniao_data)}
+                          className="px-4 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                          style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
+                          Eliminar
+                        </button>
+                      </>
+                    )}
                     <CloseBtn onClose={() => setSelected(null)} />
                   </div>
                 </>

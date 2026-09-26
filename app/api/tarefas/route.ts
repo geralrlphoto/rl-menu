@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -110,5 +111,6 @@ export async function POST(req: Request) {
   }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  revalidateTag('photo-reunioes-tarefa', { expire: 0 })
   return NextResponse.json({ tarefa: data })
 }

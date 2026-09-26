@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -173,6 +174,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     error = retry.error
   }
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  revalidateTag('photo-reunioes-tarefa', { expire: 0 })
   return NextResponse.json({ ok: true })
 }
 
@@ -187,5 +189,6 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
 
   const { error } = await db().from('tarefas').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  revalidateTag('photo-reunioes-tarefa', { expire: 0 })
   return NextResponse.json({ ok: true })
 }

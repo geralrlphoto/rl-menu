@@ -269,6 +269,22 @@ export default async function PhotoDashboard() {
   )
   const reunioesSemana = await getReunioes()
 
+  // Reuniões criadas como tarefa no calendário ("Reunião: Nome"). Tag própria: o /api/tarefas só refaz esta leitura
+  const getReunioesTarefa = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('tarefas')
+        .select('id, titulo, data_prazo, hora')
+        .ilike('titulo', 'Reuni%')
+        .gte('data_prazo', semanaDias[0])
+        .lte('data_prazo', semanaDias[DIAS_AGENDA - 1])
+        .limit(80)
+      return data ?? []
+    },
+    [`photo-agenda30-reunioes-tarefa-${semanaDias[0]}`],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-reunioes-tarefa'] }
+  )
+  const reunioesTarefa = await getReunioesTarefa()
+
   // Itens escondidos com o ✕ (só desta faixa; o resto da app não é afetado)
   const getOcultos = unstable_cache(
     async () => {
@@ -283,7 +299,14 @@ export default async function PhotoDashboard() {
   const chaveReuniao = (r: any) => `reuniao:${r.id}:${r.reuniao_data}`
   const chaveWa = (t: { contactId: string; tipo: string }) => `wa:${t.contactId}:${t.tipo}`
   const eventosAgenda = eventosSemana.filter((e: any) => !ocultos.has(chaveEvento(e)))
-  const reunioesAgenda = reunioesSemana.filter((r: any) => !ocultos.has(chaveReuniao(r)))
+  const reunioesAgenda = [
+    ...reunioesSemana,
+    // Tarefas "Reunião: Nome" entram como reunião, a abrir o calendário
+    ...(reunioesTarefa as any[]).map(t => ({
+      id: `tarefa-${t.id}`, nome: String(t.titulo ?? '').replace(/^Reuni[aã]o:\s*/i, ''),
+      reuniao_data: t.data_prazo, reuniao_hora: t.hora ?? null, href: '/calendario',
+    })),
+  ].filter((r: any) => !ocultos.has(chaveReuniao(r)))
 
   // Tarefas de WhatsApp do CRM (lembrete 1h e follow ups), com as mesmas regras dos botões do /crm.
   // Tag própria: um envio só refaz esta leitura, não o painel todo.
@@ -867,7 +890,7 @@ export default async function PhotoDashboard() {
                       {/* Reuniões marcadas no CRM: tracejado, para nao se confundirem com casamentos */}
                       {d.reunioes.map((r: any) => (
                         <AgendaItem key={`r-${r.id}`} chave={chaveReuniao(r)}>
-                        <Link href={`/crm/${r.id}`}
+                        <Link href={r.href ?? `/crm/${r.id}`}
                           className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-[#C9A84C]/10"
                           style={{ borderColor: 'rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.04)' }}>
                           <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: 'rgba(201,168,76,0.8)' }}>
