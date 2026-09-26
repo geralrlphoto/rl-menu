@@ -32,6 +32,8 @@ type Props = {
 type Meta = { desc: string; group: 'op' | 'cli' | 'eq' }
 function metaFor(label: string): Meta {
   const k = label.toUpperCase().trim()
+  if (k.includes('FUNIL'))
+    return { desc: 'Da atração do casal à recomendação', group: 'cli' }
   if (k.includes('NEWSLETTER'))
     return { desc: 'Campanhas e subscritores', group: 'cli' }
   if (k.includes('CASAMENTO') || k.includes('EVENTOS 2026'))
@@ -74,6 +76,12 @@ function metaFor(label: string): Meta {
 /* ── Ícone de linha fina (stroke 1.3) por nome ─────────────── */
 function iconFor(label: string): JSX.Element {
   const k = label.toUpperCase().trim()
+  // Funil de crescimento / gravata-borboleta
+  if (k.includes('FUNIL')) return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 5c4 0 6 4 8 5.5v3C8 15 6 19 2 19Z" /><path d="M22 5c-4 0-6 4-8 5.5v3c2 1.5 4 5.5 8 5.5Z" /><circle cx="12" cy="12" r="2" />
+    </svg>
+  )
   // Newsletter / email
   if (k.includes('NEWSLETTER')) return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
@@ -209,6 +217,7 @@ export default async function SecaoPage({ params }: Props) {
   ) {
     extraButtons.push(
       { href: '/social-media', label: 'Social Media', internal: true },
+      { href: '/crescimento', label: 'Funil de Crescimento', internal: true },
     )
   }
 
