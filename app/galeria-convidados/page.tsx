@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import PedidosFotos from './PedidosFotos'
+import EnviarFormularioWhatsApp from './EnviarFormularioWhatsApp'
 
 // Fotos Convidados — painel de pedidos de fotografias (admin).
 export default function GaleriaConvidadosPage() {
@@ -29,6 +30,7 @@ export default function GaleriaConvidadosPage() {
               style={{ background: '#c8a866', color: '#0b0a08', boxShadow: '0 0 24px -6px rgba(200,168,102,0.6)' }}>
               ＋ Formulário de Fotos
             </Link>
+            <EnviarFormularioWhatsApp />
           </div>
         </header>
 
