@@ -70,17 +70,11 @@ const FASES: Fase[] = [
   {
     n: 6, nome: 'Entregar', en: 'Adopter', lado: 'dir', estado: 'parte',
     objetivo: 'Recebem tudo a tempo e com a qualidade que esperavam.',
-    naRL: ['Galeria online em 7 dias', 'Proposta de Trash the Dress com a galeria online', 'Fotos para seleção em 30 dias', 'Álbum e filme', 'Estado das Entregas sempre visível no portal'],
+    naRL: ['Galeria online em 7 dias', 'Fotos para seleção em 30 dias', 'Álbum e filme', 'Estado das Entregas sempre visível no portal'],
     ferramentas: [{ label: 'Seleção de fotos', href: '/fotos-selecao' }, { label: 'Álbuns', href: '/albuns-casamento' }, { label: 'Casamentos', href: '/casamentos' }],
-    medir: ['Entregas dentro do prazo (%)', 'Casais que compram o Trash the Dress (%)', 'NSC: nota média e % de casais com 4 ou 5 estrelas'],
-    falta: ['Proposta de Trash the Dress enviada com a galeria online', 'Pedido automático da NSC depois da última entrega'],
+    medir: ['Entregas dentro do prazo (%)', 'Dias até à galeria e ao filme', 'NSC: nota média e % de casais com 4 ou 5 estrelas'],
+    falta: ['Pedido automático da NSC depois da última entrega'],
     extras: [{
-      etiqueta: 'Venda extra', marca: '+ extra',
-      titulo: 'Trash the Dress',
-      quando: 'Com a galeria online (7 dias depois)',
-      texto: 'A sessão depois do casamento. Os noivos estão a ver as primeiras fotos, com as emoções frescas, e o vestido ainda está à mão. Junto com a galeria online vai a proposta do Trash the Dress (fotografia e vídeo). A sessão é marcada durante a semana, como diz o contrato.',
-      link: { label: 'Orçamento Serviço', href: '/orcamento-servico' },
-    }, {
       etiqueta: 'Pedir a NSC', marca: '★ NSC',
       titulo: 'Nota de Satisfação do Cliente',
       quando: 'Depois da última entrega (filme ou álbum)',
@@ -91,10 +85,17 @@ const FASES: Fase[] = [
   {
     n: 7, nome: 'Fidelizar', en: 'Loyalist', lado: 'dir', estado: 'parte',
     objetivo: 'Voltam a escolher-nos para os momentos seguintes.',
-    naRL: ['Batizados dos filhos', 'Sessões de família e aniversários'],
-    ferramentas: [{ label: 'Batizados', href: '/portal-batizado' }, { label: 'CRM', href: '/crm' }],
-    medir: ['Clientes que voltam (batizado, família)'],
-    falta: ['Convite a antigos noivos para batizado ou sessão de família (1 ano depois)'],
+    naRL: ['Trash the Dress no 1.º aniversário de casamento', 'Batizados dos filhos', 'Sessões de família e aniversários'],
+    ferramentas: [{ label: 'Orçamento Serviço', href: '/orcamento-servico' }, { label: 'Batizados', href: '/portal-batizado' }, { label: 'CRM', href: '/crm' }],
+    medir: ['Casais que compram o Trash the Dress (%)', 'Clientes que voltam (batizado, família)'],
+    falta: ['Proposta de Trash the Dress enviada no 1.º aniversário de casamento', 'Convite a antigos noivos para batizado ou sessão de família'],
+    extras: [{
+      etiqueta: 'Venda extra', marca: '+ extra',
+      titulo: 'Trash the Dress',
+      quando: '1.º aniversário de casamento',
+      texto: 'Depois de todas as entregas, quando fazem um ano de casados, enviamos a proposta da sessão Trash the Dress (fotografia e vídeo): uma forma de celebrar o aniversário e voltar a vestir o vestido. É também o momento de nos lembrarem para o que vem a seguir (batizado, família). A sessão é marcada durante a semana, como diz o contrato.',
+      link: { label: 'Orçamento Serviço', href: '/orcamento-servico' },
+    }],
   },
   {
     n: 8, nome: 'Recomendar', en: 'Advocate', lado: 'dir', estado: 'parte',
