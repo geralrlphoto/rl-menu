@@ -317,14 +317,6 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
         <WhatsAppMsgButton c={c} texto={mensagemFecho(c.nome, c.data_casamento, portalUrl(c))} evento="WhatsApp fecho enviado" label="Aceitaram a proposta" enviados={enviados} onEnviado={onEnviado} />
       )}
 
-      {c.page_token && (
-        <a href={`/${c.page_tipo === 'batizado' ? 'b' : 'r'}/${c.page_token}/proposta`} target="_blank" rel="noopener noreferrer"
-          onClick={e => e.stopPropagation()}
-          className="block text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-purple-400/30 text-purple-300 bg-purple-400/[0.06] hover:bg-purple-400/15 hover:border-purple-400/60 transition-colors">
-          Ver Proposta Criativa
-        </a>
-      )}
-
       {coluna !== 'encerrada' && (c.contato || c.email) && (
         <div className="pt-1 border-t border-white/5">
           <ContactButtons c={c} proposta={false} />

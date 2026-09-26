@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import './crm-tiles.css'
+import PropostaPicker from './PropostaPicker'
 import {
   DROP_STATUS, colunaDe, daysSince, estadoAcao, parseOrcamento, type ColunaKey,
 } from '@/lib/crm'
@@ -350,9 +351,12 @@ export default function CRMPage() {
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
 
         <div className="relative flex-1 flex flex-col px-5 sm:px-10 pt-5 sm:pt-7 pb-5 sm:pb-7">
-          <Link href="/photo" className="self-start text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase">
-            ‹ Menu
-          </Link>
+          <div className="flex items-start justify-between gap-3">
+            <Link href="/photo" className="text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase">
+              ‹ Menu
+            </Link>
+            {!loading && <PropostaPicker contacts={contacts} />}
+          </div>
 
           <div className="flex-1 flex flex-col justify-center py-8 max-w-xl">
             <p className="text-[10px] tracking-[0.45em] uppercase text-white/45">RL Photo.Video · Gestão de Leads</p>
