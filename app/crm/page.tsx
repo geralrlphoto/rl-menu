@@ -355,7 +355,7 @@ export default function CRMPage() {
             <Link href="/photo" className="text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase">
               ‹ Menu
             </Link>
-            {!loading && <PropostaPicker contacts={contacts} />}
+            {!loading && <PropostaPicker />}
           </div>
 
           <div className="flex-1 flex flex-col justify-center py-8 max-w-xl">
