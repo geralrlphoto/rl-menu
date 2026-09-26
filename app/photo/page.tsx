@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import RelatorioDiarioBanner from './RelatorioDiarioBanner'
 import { unstable_cache } from 'next/cache'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
@@ -951,53 +952,8 @@ export default async function PhotoDashboard() {
         </div>
       </section>
 
-      {/* ── Relatório Diário Banner ─────────────────────────────────────────── */}
-      <div className="border-t border-white/[0.06] bg-[#060606] px-4 sm:px-10 py-12 sm:py-16">
-        <div className="w-full max-w-6xl mx-auto">
-          <div className="relative rounded-2xl border border-white/[0.08] bg-[#0d0d0d] px-8 sm:px-12 pt-10 pb-10 overflow-hidden">
-            <div className="absolute top-0 left-0 w-2/3 h-[2px] bg-gradient-to-r from-[#C9A84C]/70 via-[#C9A84C]/20 to-transparent" />
-            <p className="text-[9px] tracking-[0.55em] text-white/20 uppercase mb-6">RL PHOTO · VIDEO</p>
-            <div className="mb-9">
-              <p className="text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-white uppercase">
-                RELATÓRIO
-              </p>
-              <svg className="absolute w-0 h-0" aria-hidden="true" style={{ overflow: 'hidden' }}>
-                <defs>
-                  <filter id="papel-machucado" x="-10%" y="-15%" width="120%" height="130%">
-                    <feTurbulence type="fractalNoise" baseFrequency="0.04 0.07" numOctaves="4" seed="11" result="noise" />
-                    <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G" />
-                  </filter>
-                </defs>
-              </svg>
-              <p
-                className="text-[clamp(3rem,9vw,5.5rem)] font-black tracking-tighter leading-[0.85] text-[#C9A84C] uppercase"
-                style={{ filter: 'url(#papel-machucado)' }}
-              >
-                DIÁRIO
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-8">
-              <p className="text-white/30 text-sm leading-relaxed max-w-xs">
-                Eventos, leads, portais e prazos —{' '}
-                <span className="text-white/50 italic">tudo num só lugar</span>, em tempo real.
-              </p>
-              <div className="flex flex-col items-start sm:items-end gap-2 shrink-0">
-                <Link
-                  href="/relatorio-diario"
-                  className="flex items-center gap-3 px-7 py-3.5 rounded-full border border-white/60 text-white font-black text-sm tracking-[0.2em] uppercase transition-all duration-300 hover:border-white hover:bg-white/[0.05]"
-                  style={{ boxShadow: '0 0 18px rgba(255,255,255,0.15), 0 0 40px rgba(255,255,255,0.05)' }}
-                >
-                  ENTRAR
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
-                  </svg>
-                </Link>
-                <p className="text-[9px] tracking-[0.35em] text-white/15 uppercase">GERADO A PEDIDO</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      {/* ── Relatório Diário Banner (primeira página de jornal) ─────────────── */}
+      <RelatorioDiarioBanner />
 
       {/* ── Redes Sociais ───────────────────────────────────────────────────── */}
       <div className="border-t border-white/[0.06] bg-[#060606] px-6 py-5 flex items-center justify-center gap-2 sm:gap-4">
