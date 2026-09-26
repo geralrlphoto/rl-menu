@@ -20,8 +20,8 @@ type Fase = {
   medir: string[]
   falta?: string[]
   estado: Estado
-  // Momento-chave desta fase: venda extra (pré-wedding aos 60 dias) ou pedido da NSC
-  extra?: { etiqueta: string; marca: string; titulo: string; texto: string; quando: string; link: { label: string; href: string; externo?: boolean } }
+  // Momentos-chave desta fase: vendas extra (pré-wedding, Trash the Dress) e pedido da NSC
+  extras?: { etiqueta: string; marca: string; titulo: string; texto: string; quando: string; link: { label: string; href: string; externo?: boolean } }[]
 }
 
 const FASES: Fase[] = [
@@ -59,28 +59,34 @@ const FASES: Fase[] = [
     naRL: ['Portal dos noivos com as 11 sub-páginas', 'Proposta de pré-wedding 60 dias antes do casamento', 'Briefing pré-casamento e reunião de preparação', 'Pré-wedding (quando o compram)'],
     ferramentas: [{ label: 'Portais', href: '/portais-clientes' }, { label: 'Casamentos', href: '/casamentos' }],
     medir: ['Casais que compram o pré-wedding depois da proposta (%)', 'Briefings preenchidos', 'Reuniões de preparação marcadas'],
-    extra: {
+    extras: [{
       etiqueta: 'Venda extra', marca: '+ extra',
       titulo: 'Pré-wedding aos 60 dias',
       quando: '60 dias antes do casamento',
       texto: 'Os noivos já confiam em nós e o casamento está perto: é o melhor momento para um extra. Sai uma mensagem com a página de pré-wedding do site para fecharem mais um serviço. Liga-se na ficha de cada evento (Proposta de Pré-Wedding) e sai sozinha.',
       link: { label: 'Página de pré-wedding do site', href: 'https://rlphotovideo.pt/pre-wedding-entrada', externo: true },
-    },
+    }],
   },
   {
     n: 6, nome: 'Entregar', en: 'Adopter', lado: 'dir', estado: 'parte',
     objetivo: 'Recebem tudo a tempo e com a qualidade que esperavam.',
-    naRL: ['Galeria online em 7 dias', 'Fotos para seleção em 30 dias', 'Álbum e filme', 'Estado das Entregas sempre visível no portal'],
+    naRL: ['Galeria online em 7 dias', 'Proposta de Trash the Dress com a galeria online', 'Fotos para seleção em 30 dias', 'Álbum e filme', 'Estado das Entregas sempre visível no portal'],
     ferramentas: [{ label: 'Seleção de fotos', href: '/fotos-selecao' }, { label: 'Álbuns', href: '/albuns-casamento' }, { label: 'Casamentos', href: '/casamentos' }],
-    medir: ['Entregas dentro do prazo (%)', 'Dias até à galeria e ao filme', 'NSC: nota média e % de casais com 4 ou 5 estrelas'],
-    falta: ['Pedido automático da NSC depois da última entrega'],
-    extra: {
+    medir: ['Entregas dentro do prazo (%)', 'Casais que compram o Trash the Dress (%)', 'NSC: nota média e % de casais com 4 ou 5 estrelas'],
+    falta: ['Proposta de Trash the Dress enviada com a galeria online', 'Pedido automático da NSC depois da última entrega'],
+    extras: [{
+      etiqueta: 'Venda extra', marca: '+ extra',
+      titulo: 'Trash the Dress',
+      quando: 'Com a galeria online (7 dias depois)',
+      texto: 'A sessão depois do casamento. Os noivos estão a ver as primeiras fotos, com as emoções frescas, e o vestido ainda está à mão. Junto com a galeria online vai a proposta do Trash the Dress (fotografia e vídeo). A sessão é marcada durante a semana, como diz o contrato.',
+      link: { label: 'Orçamento Serviço', href: '/orcamento-servico' },
+    }, {
       etiqueta: 'Pedir a NSC', marca: '★ NSC',
       titulo: 'Nota de Satisfação do Cliente',
       quando: 'Depois da última entrega (filme ou álbum)',
       texto: 'É quando os noivos já viveram tudo, do primeiro contacto à última entrega. Enviamos o link da Área SAT do portal (1 a 5 estrelas e um comentário). Quem dá 4 ou 5 estrelas segue logo para o pedido de review no Google (fase 08 · Recomendar). Quem dá menos, ligamos para perceber o que falhou.',
       link: { label: 'Portais · Área SAT', href: '/portais-clientes' },
-    },
+    }],
   },
   {
     n: 7, nome: 'Fidelizar', en: 'Loyalist', lado: 'dir', estado: 'parte',
@@ -217,9 +223,9 @@ export default function FunilCrescimento() {
                     {String(f.n).padStart(2, '0')}
                   </text>
                   <circle cx={centroX(i, f.lado)} cy={r1(CY + meia((i + 0.5) / nl) + 16)} r={3.4} fill={ESTADOS[f.estado].cor} />
-                  {f.extra && (
-                    <text x={centroX(i, f.lado)} y={r1(CY + meia((i + 0.5) / nl) + 34)} textAnchor="middle" className="fc-seg-x">{f.extra.marca}</text>
-                  )}
+                  {(f.extras ?? []).map((x, k) => (
+                    <text key={k} x={centroX(i, f.lado)} y={r1(CY + meia((i + 0.5) / nl) + 34 + k * 14)} textAnchor="middle" className="fc-seg-x">{x.marca}</text>
+                  ))}
                 </g>
               )
             })}
@@ -285,23 +291,23 @@ export default function FunilCrescimento() {
             </div>
           </div>
 
-          {fase.extra && (
-            <div className="fc-extra">
+          {(fase.extras ?? []).map(x => (
+            <div key={x.titulo} className="fc-extra">
               <div className="fc-extra-topo">
-                <p className="flabel" style={{ marginBottom: 0 }}>{fase.extra.etiqueta}</p>
-                <span className="meta">{fase.extra.quando}</span>
+                <p className="flabel" style={{ marginBottom: 0 }}>{x.etiqueta}</p>
+                <span className="meta">{x.quando}</span>
               </div>
-              <p className="fc-extra-t">{fase.extra.titulo}</p>
-              <p className="fc-extra-d">{fase.extra.texto}</p>
-              {fase.extra.link.externo ? (
-                <a href={fase.extra.link.href} target="_blank" rel="noopener noreferrer" className="fc-link fc-extra-l">
-                  {fase.extra.link.label} <span>↗</span>
+              <p className="fc-extra-t">{x.titulo}</p>
+              <p className="fc-extra-d">{x.texto}</p>
+              {x.link.externo ? (
+                <a href={x.link.href} target="_blank" rel="noopener noreferrer" className="fc-link fc-extra-l">
+                  {x.link.label} <span>↗</span>
                 </a>
               ) : (
-                <Link href={fase.extra.link.href} className="fc-link fc-extra-l">{fase.extra.link.label} <span>→</span></Link>
+                <Link href={x.link.href} className="fc-link fc-extra-l">{x.link.label} <span>→</span></Link>
               )}
             </div>
-          )}
+          ))}
 
           {fase.falta && (
             <div className="fc-falta">
@@ -383,7 +389,7 @@ const CSS = `
 .fc .fc-link span{color:var(--g);transition:transform .3s var(--ease);}
 .fc .fc-link:hover{border-color:var(--g);background:rgba(216,190,147,.07);}
 .fc .fc-link:hover span{transform:translateX(3px);}
-.fc .fc-extra{margin-top:26px;border:1px solid rgba(216,190,147,.45);border-radius:14px;padding:18px 22px;background:linear-gradient(120deg,rgba(216,190,147,.10),rgba(216,190,147,.02));}
+.fc .fc-extra{margin-top:18px;border:1px solid rgba(216,190,147,.45);border-radius:14px;padding:18px 22px;background:linear-gradient(120deg,rgba(216,190,147,.10),rgba(216,190,147,.02));}
 .fc .fc-extra-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;}
 .fc .fc-extra-t{font-family:var(--fs);font-weight:300;font-size:clamp(24px,2.4vw,32px);color:var(--tx);margin-top:8px;}
 .fc .fc-extra-d{color:var(--tx-mid);font-size:14.5px;line-height:1.6;margin-top:6px;max-width:70ch;}
