@@ -67,7 +67,7 @@ export function StatusSelect({ value, onChange, className = '' }: { value: strin
 }
 
 /* ── Botões rápidos: WhatsApp, telefone, email ── */
-export function ContactButtons({ c, size = 'sm' }: { c: Contact; size?: 'sm' | 'md' }) {
+export function ContactButtons({ c, size = 'sm', proposta = true }: { c: Contact; size?: 'sm' | 'md'; proposta?: boolean }) {
   const wa = whatsappLink(c.contato)
   const tel = telLink(c.contato)
   const box = size === 'md' ? 'w-9 h-9' : 'w-7 h-7'
@@ -94,7 +94,7 @@ export function ContactButtons({ c, size = 'sm' }: { c: Contact; size?: 'sm' | '
           <svg className={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.9 5.3a2 2 0 002.2 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         </a>
       )}
-      {c.page_token && (
+      {proposta && c.page_token && (
         <a href={`/${c.page_tipo === 'batizado' ? 'b' : 'r'}/${c.page_token}/proposta`} target="_blank" rel="noopener noreferrer"
           onClick={stop} title="Ver Proposta Criativa"
           className={`${base} border-purple-400/20 text-purple-300/70 hover:text-purple-300 hover:border-purple-400/50`}>
@@ -317,9 +317,17 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
         <WhatsAppMsgButton c={c} texto={mensagemFecho(c.nome, c.data_casamento, portalUrl(c))} evento="WhatsApp fecho enviado" label="Aceitaram a proposta" enviados={enviados} onEnviado={onEnviado} />
       )}
 
+      {c.page_token && (
+        <a href={`/${c.page_tipo === 'batizado' ? 'b' : 'r'}/${c.page_token}/proposta`} target="_blank" rel="noopener noreferrer"
+          onClick={e => e.stopPropagation()}
+          className="block text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-purple-400/30 text-purple-300 bg-purple-400/[0.06] hover:bg-purple-400/15 hover:border-purple-400/60 transition-colors">
+          Ver Proposta Criativa
+        </a>
+      )}
+
       {coluna !== 'encerrada' && (c.contato || c.email) && (
         <div className="pt-1 border-t border-white/5">
-          <ContactButtons c={c} />
+          <ContactButtons c={c} proposta={false} />
         </div>
       )}
     </div>
