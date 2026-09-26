@@ -4,8 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 
 /* Funil em gravata-borboleta aplicado à RL PhotoVideo.
-   Esquerda: conquistar o casal (até ao contrato). Centro: a experiência.
-   Direita: fazer crescer (fidelizar, recomendar, embaixadores). */
+   Esquerda: tudo antes do dia (conquistar, fechar e preparar, com o pré-wedding).
+   Centro: o dia do casamento, a experiência.
+   Direita: depois do dia (entregar, fidelizar, recomendar, embaixadores). */
 
 type Estado = 'feito' | 'parte' | 'falta'
 type Fase = {
@@ -53,9 +54,9 @@ const FASES: Fase[] = [
     medir: ['Proposta → contrato (%)', 'Dias entre a lead e o contrato'],
   },
   {
-    n: 5, nome: 'Viver', en: 'Adopter', lado: 'dir', estado: 'feito',
-    objetivo: 'Vivem a experiência RL até ao grande dia.',
-    naRL: ['Portal dos noivos com as 11 sub-páginas', 'Proposta de pré-wedding 60 dias antes do casamento', 'Briefing pré-casamento e reunião de preparação', 'O dia do casamento'],
+    n: 5, nome: 'Preparar', en: 'Adopter', lado: 'esq', estado: 'feito',
+    objetivo: 'Preparamos o grande dia com os noivos e vendemos o extra.',
+    naRL: ['Portal dos noivos com as 11 sub-páginas', 'Proposta de pré-wedding 60 dias antes do casamento', 'Briefing pré-casamento e reunião de preparação', 'Pré-wedding (quando o compram)'],
     ferramentas: [{ label: 'Portais', href: '/portais-clientes' }, { label: 'Casamentos', href: '/casamentos' }],
     medir: ['Casais que compram o pré-wedding depois da proposta (%)', 'Briefings preenchidos', 'Reuniões de preparação marcadas'],
     extra: {
@@ -66,15 +67,22 @@ const FASES: Fase[] = [
     },
   },
   {
-    n: 6, nome: 'Fidelizar', en: 'Loyalist', lado: 'dir', estado: 'parte',
-    objetivo: 'Recebem tudo a tempo e com qualidade, e voltam.',
-    naRL: ['Galeria online em 7 dias e seleção em 30 dias', 'Álbum e filme', 'Estado das Entregas sempre visível no portal', 'Batizados e sessões de família'],
-    ferramentas: [{ label: 'Seleção de fotos', href: '/fotos-selecao' }, { label: 'Álbuns', href: '/albuns-casamento' }, { label: 'Batizados', href: '/portal-batizado' }],
-    medir: ['Entregas dentro do prazo (%)', 'Clientes que voltam (batizado, família)'],
+    n: 6, nome: 'Entregar', en: 'Adopter', lado: 'dir', estado: 'feito',
+    objetivo: 'Recebem tudo a tempo e com a qualidade que esperavam.',
+    naRL: ['Galeria online em 7 dias', 'Fotos para seleção em 30 dias', 'Álbum e filme', 'Estado das Entregas sempre visível no portal'],
+    ferramentas: [{ label: 'Seleção de fotos', href: '/fotos-selecao' }, { label: 'Álbuns', href: '/albuns-casamento' }, { label: 'Casamentos', href: '/casamentos' }],
+    medir: ['Entregas dentro do prazo (%)', 'Dias até à galeria e ao filme'],
+  },
+  {
+    n: 7, nome: 'Fidelizar', en: 'Loyalist', lado: 'dir', estado: 'parte',
+    objetivo: 'Voltam a escolher-nos para os momentos seguintes.',
+    naRL: ['Batizados dos filhos', 'Sessões de família e aniversários'],
+    ferramentas: [{ label: 'Batizados', href: '/portal-batizado' }, { label: 'CRM', href: '/crm' }],
+    medir: ['Clientes que voltam (batizado, família)'],
     falta: ['Convite a antigos noivos para batizado ou sessão de família (1 ano depois)'],
   },
   {
-    n: 7, nome: 'Recomendar', en: 'Advocate', lado: 'dir', estado: 'parte',
+    n: 8, nome: 'Recomendar', en: 'Advocate', lado: 'dir', estado: 'parte',
     objetivo: 'Ficam tão satisfeitos que falam de nós.',
     naRL: ['Área de satisfação no portal (DAR SATISFAÇÃO)', 'Filme e álbum partilhados com a família'],
     ferramentas: [{ label: 'Portais · Satisfação', href: '/portais-clientes' }],
@@ -82,7 +90,7 @@ const FASES: Fase[] = [
     falta: ['Pedido de review no Google, automático, depois da entrega do filme ou do álbum'],
   },
   {
-    n: 8, nome: 'Embaixador', en: 'Brand Ambassador', lado: 'dir', estado: 'falta',
+    n: 9, nome: 'Embaixador', en: 'Brand Ambassador', lado: 'dir', estado: 'falta',
     objetivo: 'Trazem-nos novos casais.',
     naRL: ['Fotos dos convidados levam a marca RL a quem esteve no casamento'],
     ferramentas: [{ label: 'Fotos Convidados', href: '/galeria-convidados' }],
@@ -98,9 +106,9 @@ const ESTADOS: Record<Estado, { t: string; cor: string }> = {
 }
 
 const PASSOS = [
-  { t: 'Pedido de review', d: 'Depois da entrega do filme ou do álbum, uma mensagem com o link direto para a review no Google. É a forma mais barata de chegar a novos casais.', fase: 7 },
-  { t: 'Origem das leads', d: 'Registar no CRM de onde veio cada lead e quem a recomendou. Mostra quais os canais que realmente trazem casamentos.', fase: 8 },
-  { t: 'Voltar a ser cliente', d: 'Um ano depois do casamento, convite para uma sessão de família ou para o batizado. O casal já confia em nós.', fase: 6 },
+  { t: 'Pedido de review', d: 'Depois da entrega do filme ou do álbum, uma mensagem com o link direto para a review no Google. É a forma mais barata de chegar a novos casais.', fase: 8 },
+  { t: 'Origem das leads', d: 'Registar no CRM de onde veio cada lead e quem a recomendou. Mostra quais os canais que realmente trazem casamentos.', fase: 9 },
+  { t: 'Voltar a ser cliente', d: 'Um ano depois do casamento, convite para uma sessão de família ou para o batizado. O casal já confia em nós.', fase: 7 },
 ]
 
 /* ── Geometria da gravata (viewBox 1000 × 440) ───────────────────── */
@@ -113,8 +121,14 @@ const meia = (t: number) => NECK + (OPEN - NECK) * Math.pow(1 - t, 1.6)
 // 1 casa decimal: evita diferenças de arredondamento entre servidor e browser (hidratação)
 const r1 = (v: number) => Math.round(v * 10) / 10
 
+// Fases de cada lado (esquerda 5, direita 4)
+const N_ESQ = FASES.filter(f => f.lado === 'esq').length
+const N_DIR = FASES.filter(f => f.lado === 'dir').length
+const nLado = (lado: 'esq' | 'dir') => (lado === 'esq' ? N_ESQ : N_DIR)
+
 function segmento(i: number, lado: 'esq' | 'dir') {
-  const t0 = i / 4, t1 = (i + 1) / 4
+  const n = nLado(lado)
+  const t0 = i / n, t1 = (i + 1) / n
   const pts = (a: number, b: number, topo: boolean) => {
     const out: string[] = []
     for (let k = 0; k <= 12; k++) {
@@ -131,7 +145,7 @@ function segmento(i: number, lado: 'esq' | 'dir') {
 }
 // centro horizontal de cada segmento (para a etiqueta)
 const centroX = (i: number, lado: 'esq' | 'dir') => {
-  const x = X0 + (XN - X0) * ((i + 0.5) / 4)
+  const x = X0 + (XN - X0) * ((i + 0.5) / nLado(lado))
   return r1(lado === 'esq' ? x : W - x)
 }
 
@@ -152,16 +166,17 @@ export default function FunilCrescimento() {
           <p className="eyebrow">Estratégia · Crescimento</p>
           <h1>Funil de <em>crescimento</em></h1>
           <p className="lead fc-lead">
-            Um casamento compra-se uma vez, mas um casal feliz traz outros. À esquerda conquistamos o casal até ao contrato.
-            No centro está a experiência que lhe damos. À direita, essa experiência transforma-se em recomendações e em novos casais.
+            Um casamento compra-se uma vez, mas um casal feliz traz outros. À esquerda está tudo o que acontece antes do dia:
+            conquistar o casal, fechar o contrato e preparar o casamento, com o pré-wedding como extra. No centro está o dia do
+            casamento, a experiência. À direita, depois do dia, essa experiência transforma-se em recomendações e em novos casais.
           </p>
         </header>
 
         {/* Gravata-borboleta */}
         <section className="fc-gravata sobe" style={{ animationDelay: '.15s' }}>
           <div className="fc-lados">
-            <span>Conquistar o casal</span>
-            <span>Fazer crescer</span>
+            <span>Antes do dia</span>
+            <span>Depois do dia</span>
           </div>
           <svg viewBox={`0 0 ${W} ${H}`} className="fc-svg" role="group" aria-label="Fases do funil de crescimento">
             <defs>
@@ -172,10 +187,11 @@ export default function FunilCrescimento() {
             </defs>
 
             {FASES.map(f => {
-              // i conta da ponta (0) para o nó (3): à direita a fase 5 fica junto ao nó
-              const i = f.lado === 'esq' ? f.n - 1 : 8 - f.n
+              // i conta da ponta (0) para o nó: à direita a primeira fase depois do dia fica junto ao nó
+              const i = f.lado === 'esq' ? f.n - 1 : N_ESQ + N_DIR - f.n
+              const nl = nLado(f.lado)
               // Mais intenso junto ao nó, como na gravata original
-              const perto = i
+              const perto = (i / (nl - 1)) * 3
               const on = f.n === sel
               return (
                 <g key={f.n} className={`fc-seg${on ? ' on' : ''}`} onClick={() => setSel(f.n)}
@@ -188,23 +204,23 @@ export default function FunilCrescimento() {
                     transform={`rotate(-90 ${centroX(i, f.lado)} ${CY})`} textAnchor="middle" dominantBaseline="middle">
                     {f.nome}
                   </text>
-                  <text x={centroX(i, f.lado)} y={r1(CY - meia((i + 0.5) / 4) - 16)} className="fc-seg-n" textAnchor="middle">
+                  <text x={centroX(i, f.lado)} y={r1(CY - meia((i + 0.5) / nl) - 16)} className="fc-seg-n" textAnchor="middle">
                     {String(f.n).padStart(2, '0')}
                   </text>
-                  <circle cx={centroX(i, f.lado)} cy={r1(CY + meia((i + 0.5) / 4) + 16)} r={3.4} fill={ESTADOS[f.estado].cor} />
+                  <circle cx={centroX(i, f.lado)} cy={r1(CY + meia((i + 0.5) / nl) + 16)} r={3.4} fill={ESTADOS[f.estado].cor} />
                   {f.extra && (
-                    <text x={centroX(i, f.lado)} y={r1(CY + meia((i + 0.5) / 4) + 34)} textAnchor="middle" className="fc-seg-x">+ extra</text>
+                    <text x={centroX(i, f.lado)} y={r1(CY + meia((i + 0.5) / nl) + 34)} textAnchor="middle" className="fc-seg-x">+ extra</text>
                   )}
                 </g>
               )
             })}
 
-            {/* Nó: a experiência do cliente */}
+            {/* Nó: o dia do casamento, a experiência */}
             <g>
               <circle cx={CX} cy={CY} r={70} fill="url(#fcNo)" stroke="#d8be93" strokeWidth={1.2} />
               <circle cx={CX} cy={CY} r={82} fill="none" stroke="rgba(216,190,147,.45)" strokeWidth={1} strokeDasharray="3 6" className="fc-orbita" />
-              <text x={CX} y={CY - 14} textAnchor="middle" className="fc-no-t1">A experiência</text>
-              <text x={CX} y={CY + 8} textAnchor="middle" className="fc-no-t2">RL</text>
+              <text x={CX} y={CY - 16} textAnchor="middle" className="fc-no-t1">A experiência</text>
+              <text x={CX} y={CY + 8} textAnchor="middle" className="fc-no-t2">O dia</text>
               <text x={CX} y={CY + 30} textAnchor="middle" className="fc-no-t3">aprender · mudar · melhorar</text>
             </g>
 
@@ -234,7 +250,7 @@ export default function FunilCrescimento() {
         <section key={fase.n} className="fc-detalhe">
           <div className="fc-det-topo">
             <div>
-              <p className="meta">{fase.lado === 'esq' ? 'Conquistar o casal' : 'Fazer crescer'} · {fase.en}</p>
+              <p className="meta">{fase.lado === 'esq' ? 'Antes do dia' : 'Depois do dia'} · {fase.en}</p>
               <h2><span className="fc-num">{String(fase.n).padStart(2, '0')}</span> {fase.nome}</h2>
               <p className="fc-obj">{fase.objetivo}</p>
             </div>
@@ -283,7 +299,7 @@ export default function FunilCrescimento() {
 
           <div className="fc-nav">
             <button type="button" className="btn-ghost" disabled={sel === 1} onClick={() => setSel(s => Math.max(1, s - 1))}>‹ Anterior</button>
-            <button type="button" className="btn-ghost" disabled={sel === 8} onClick={() => setSel(s => Math.min(8, s + 1))}>Seguinte ›</button>
+            <button type="button" className="btn-ghost" disabled={sel === FASES.length} onClick={() => setSel(s => Math.min(FASES.length, s + 1))}>Seguinte ›</button>
           </div>
         </section>
 
