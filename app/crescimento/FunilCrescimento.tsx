@@ -19,6 +19,8 @@ type Fase = {
   medir: string[]
   falta?: string[]
   estado: Estado
+  // Venda extra nesta fase (ex.: pré-wedding aos 60 dias)
+  extra?: { titulo: string; texto: string; quando: string; link: { label: string; href: string } }
 }
 
 const FASES: Fase[] = [
@@ -53,9 +55,15 @@ const FASES: Fase[] = [
   {
     n: 5, nome: 'Viver', en: 'Adopter', lado: 'dir', estado: 'feito',
     objetivo: 'Vivem a experiência RL até ao grande dia.',
-    naRL: ['Portal dos noivos com as 11 sub-páginas', 'Briefing pré-casamento e reunião de preparação', 'Pré-wedding', 'O dia do casamento'],
+    naRL: ['Portal dos noivos com as 11 sub-páginas', 'Proposta de pré-wedding 60 dias antes do casamento', 'Briefing pré-casamento e reunião de preparação', 'O dia do casamento'],
     ferramentas: [{ label: 'Portais', href: '/portais-clientes' }, { label: 'Casamentos', href: '/casamentos' }],
-    medir: ['Briefings preenchidos', 'Reuniões de preparação marcadas', 'Mensagens e dúvidas no portal'],
+    medir: ['Casais que compram o pré-wedding depois da proposta (%)', 'Briefings preenchidos', 'Reuniões de preparação marcadas'],
+    extra: {
+      titulo: 'Pré-wedding aos 60 dias',
+      quando: '60 dias antes do casamento',
+      texto: 'Os noivos já confiam em nós e o casamento está perto: é o melhor momento para um extra. Sai uma mensagem com a página de pré-wedding do site para fecharem mais um serviço. Liga-se na ficha de cada evento (Proposta de Pré-Wedding) e sai sozinha.',
+      link: { label: 'Página de pré-wedding do site', href: 'https://rlphotovideo.pt/pre-wedding-entrada' },
+    },
   },
   {
     n: 6, nome: 'Fidelizar', en: 'Loyalist', lado: 'dir', estado: 'parte',
@@ -184,6 +192,9 @@ export default function FunilCrescimento() {
                     {String(f.n).padStart(2, '0')}
                   </text>
                   <circle cx={centroX(i, f.lado)} cy={r1(CY + meia((i + 0.5) / 4) + 16)} r={3.4} fill={ESTADOS[f.estado].cor} />
+                  {f.extra && (
+                    <text x={centroX(i, f.lado)} y={r1(CY + meia((i + 0.5) / 4) + 34)} textAnchor="middle" className="fc-seg-x">+ extra</text>
+                  )}
                 </g>
               )
             })}
@@ -249,6 +260,20 @@ export default function FunilCrescimento() {
             </div>
           </div>
 
+          {fase.extra && (
+            <div className="fc-extra">
+              <div className="fc-extra-topo">
+                <p className="flabel" style={{ marginBottom: 0 }}>Venda extra</p>
+                <span className="meta">{fase.extra.quando}</span>
+              </div>
+              <p className="fc-extra-t">{fase.extra.titulo}</p>
+              <p className="fc-extra-d">{fase.extra.texto}</p>
+              <a href={fase.extra.link.href} target="_blank" rel="noopener noreferrer" className="fc-link fc-extra-l">
+                {fase.extra.link.label} <span>↗</span>
+              </a>
+            </div>
+          )}
+
           {fase.falta && (
             <div className="fc-falta">
               <p className="flabel" style={{ color: '#e59a88' }}>Ainda falta</p>
@@ -298,6 +323,7 @@ const CSS = `
 .fc .fc-seg-t{font-family:var(--fs);font-weight:400;font-size:25px;letter-spacing:.04em;fill:rgba(243,237,226,.8);pointer-events:none;}
 .fc .fc-seg.on .fc-seg-t{fill:#f3ede2;}
 .fc .fc-seg-n{font-family:var(--fm);font-size:11px;letter-spacing:.2em;fill:rgba(216,190,147,.75);pointer-events:none;}
+.fc .fc-seg-x{font-family:var(--fm);font-size:9px;letter-spacing:.18em;text-transform:uppercase;fill:#d8be93;pointer-events:none;}
 .fc .fc-no-t1{font-family:var(--fs);font-style:italic;font-size:17px;fill:rgba(243,237,226,.75);}
 .fc .fc-no-t2{font-family:var(--fs);font-size:30px;fill:#d8be93;letter-spacing:.08em;}
 .fc .fc-no-t3{font-family:var(--fm);font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;fill:rgba(243,237,226,.45);}
@@ -328,6 +354,11 @@ const CSS = `
 .fc .fc-link span{color:var(--g);transition:transform .3s var(--ease);}
 .fc .fc-link:hover{border-color:var(--g);background:rgba(216,190,147,.07);}
 .fc .fc-link:hover span{transform:translateX(3px);}
+.fc .fc-extra{margin-top:26px;border:1px solid rgba(216,190,147,.45);border-radius:14px;padding:18px 22px;background:linear-gradient(120deg,rgba(216,190,147,.10),rgba(216,190,147,.02));}
+.fc .fc-extra-topo{display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.fc .fc-extra-t{font-family:var(--fs);font-weight:300;font-size:clamp(24px,2.4vw,32px);color:var(--tx);margin-top:8px;}
+.fc .fc-extra-d{color:var(--tx-mid);font-size:14.5px;line-height:1.6;margin-top:6px;max-width:70ch;}
+.fc .fc-extra-l{display:inline-flex;margin-top:14px;}
 .fc .fc-falta{margin-top:26px;border:1px dashed rgba(229,154,136,.4);border-radius:14px;padding:16px 20px;background:rgba(229,154,136,.04);}
 .fc .fc-falta li::before{background:#e59a88;}
 .fc .fc-nav{display:flex;justify-content:space-between;margin-top:26px;}
