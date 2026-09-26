@@ -94,6 +94,13 @@ export function ContactButtons({ c, size = 'sm' }: { c: Contact; size?: 'sm' | '
           <svg className={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.9 5.3a2 2 0 002.2 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
         </a>
       )}
+      {c.page_token && (
+        <a href={`/${c.page_tipo === 'batizado' ? 'b' : 'r'}/${c.page_token}/proposta`} target="_blank" rel="noopener noreferrer"
+          onClick={stop} title="Ver Proposta Criativa"
+          className={`${base} border-purple-400/20 text-purple-300/70 hover:text-purple-300 hover:border-purple-400/50`}>
+          <svg className={icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6M7 3h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+        </a>
+      )}
     </div>
   )
 }
