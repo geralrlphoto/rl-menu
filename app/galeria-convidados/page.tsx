@@ -25,11 +25,6 @@ export default function GaleriaConvidadosPage() {
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-[12px] font-bold tracking-wider uppercase transition-all border border-white/15 text-white/70 hover:border-[#c8a866] hover:text-[#c8a866]">
               ? Apoio ao Cliente
             </Link>
-            <Link href="/adquirir-fotografias" target="_blank"
-              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-[12px] font-bold tracking-wider uppercase transition-all"
-              style={{ background: '#c8a866', color: '#0b0a08', boxShadow: '0 0 24px -6px rgba(200,168,102,0.6)' }}>
-              ＋ Formulário de Fotos
-            </Link>
             <EnviarFormularioWhatsApp />
           </div>
         </header>
