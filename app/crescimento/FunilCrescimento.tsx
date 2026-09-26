@@ -28,9 +28,9 @@ const FASES: Fase[] = [
   {
     n: 1, nome: 'Atrair', en: 'Attract', lado: 'esq', estado: 'feito',
     objetivo: 'Os casais descobrem a RL pela primeira vez.',
-    naRL: ['Instagram e blog com casamentos reais', 'Site e filmes no Vimeo', 'Quintas onde já trabalhámos', 'Convidados que nos viram a trabalhar'],
+    naRL: ['Instagram e blog com casamentos reais', 'Site e filmes no Vimeo', 'Parcerias com quintas: Quinta Lagus Resort e Quinta dos Plátanos', 'Convidados que nos viram a trabalhar'],
     ferramentas: [{ label: 'Social Media', href: '/social-media' }, { label: 'Redes', href: '/redes' }],
-    medir: ['Leads por mês', 'Origem de cada lead (Instagram, site, recomendação, quinta)'],
+    medir: ['Leads por mês', 'Origem de cada lead (Instagram, site, recomendação, quinta parceira)', 'Leads vindas de cada quinta parceira'],
   },
   {
     n: 2, nome: 'Nutrir', en: 'Nurture', lado: 'esq', estado: 'feito',
@@ -95,7 +95,7 @@ const FASES: Fase[] = [
     naRL: ['Fotos dos convidados levam a marca RL a quem esteve no casamento'],
     ferramentas: [{ label: 'Fotos Convidados', href: '/galeria-convidados' }],
     medir: ['Leads que vieram por recomendação', 'Casais que recomendaram alguém'],
-    falta: ['Pergunta "Quem vos recomendou?" no CRM, ligada ao casal que recomendou', 'Agradecimento ou oferta a quem recomenda', 'Parcerias com quintas e wedding planners'],
+    falta: ['Pergunta "Quem vos recomendou?" no CRM, ligada ao casal que recomendou', 'Agradecimento ou oferta a quem recomenda', 'Novas parcerias com quintas e wedding planners (além da Lagus Resort e dos Plátanos)'],
   },
 ]
 
