@@ -20,8 +20,8 @@ type Fase = {
   medir: string[]
   falta?: string[]
   estado: Estado
-  // Venda extra nesta fase (ex.: pré-wedding aos 60 dias)
-  extra?: { titulo: string; texto: string; quando: string; link: { label: string; href: string } }
+  // Momento-chave desta fase: venda extra (pré-wedding aos 60 dias) ou pedido da NSC
+  extra?: { etiqueta: string; marca: string; titulo: string; texto: string; quando: string; link: { label: string; href: string; externo?: boolean } }
 }
 
 const FASES: Fase[] = [
@@ -60,18 +60,27 @@ const FASES: Fase[] = [
     ferramentas: [{ label: 'Portais', href: '/portais-clientes' }, { label: 'Casamentos', href: '/casamentos' }],
     medir: ['Casais que compram o pré-wedding depois da proposta (%)', 'Briefings preenchidos', 'Reuniões de preparação marcadas'],
     extra: {
+      etiqueta: 'Venda extra', marca: '+ extra',
       titulo: 'Pré-wedding aos 60 dias',
       quando: '60 dias antes do casamento',
       texto: 'Os noivos já confiam em nós e o casamento está perto: é o melhor momento para um extra. Sai uma mensagem com a página de pré-wedding do site para fecharem mais um serviço. Liga-se na ficha de cada evento (Proposta de Pré-Wedding) e sai sozinha.',
-      link: { label: 'Página de pré-wedding do site', href: 'https://rlphotovideo.pt/pre-wedding-entrada' },
+      link: { label: 'Página de pré-wedding do site', href: 'https://rlphotovideo.pt/pre-wedding-entrada', externo: true },
     },
   },
   {
-    n: 6, nome: 'Entregar', en: 'Adopter', lado: 'dir', estado: 'feito',
+    n: 6, nome: 'Entregar', en: 'Adopter', lado: 'dir', estado: 'parte',
     objetivo: 'Recebem tudo a tempo e com a qualidade que esperavam.',
     naRL: ['Galeria online em 7 dias', 'Fotos para seleção em 30 dias', 'Álbum e filme', 'Estado das Entregas sempre visível no portal'],
     ferramentas: [{ label: 'Seleção de fotos', href: '/fotos-selecao' }, { label: 'Álbuns', href: '/albuns-casamento' }, { label: 'Casamentos', href: '/casamentos' }],
-    medir: ['Entregas dentro do prazo (%)', 'Dias até à galeria e ao filme'],
+    medir: ['Entregas dentro do prazo (%)', 'Dias até à galeria e ao filme', 'NSC: nota média e % de casais com 4 ou 5 estrelas'],
+    falta: ['Pedido automático da NSC depois da última entrega'],
+    extra: {
+      etiqueta: 'Pedir a NSC', marca: '★ NSC',
+      titulo: 'Nota de Satisfação do Cliente',
+      quando: 'Depois da última entrega (filme ou álbum)',
+      texto: 'É quando os noivos já viveram tudo, do primeiro contacto à última entrega. Enviamos o link da Área SAT do portal (1 a 5 estrelas e um comentário). Quem dá 4 ou 5 estrelas segue logo para o pedido de review no Google (fase 08 · Recomendar). Quem dá menos, ligamos para perceber o que falhou.',
+      link: { label: 'Portais · Área SAT', href: '/portais-clientes' },
+    },
   },
   {
     n: 7, nome: 'Fidelizar', en: 'Loyalist', lado: 'dir', estado: 'parte',
@@ -86,7 +95,7 @@ const FASES: Fase[] = [
     objetivo: 'Ficam tão satisfeitos que falam de nós.',
     naRL: ['Área de satisfação no portal (DAR SATISFAÇÃO)', 'Filme e álbum partilhados com a família'],
     ferramentas: [{ label: 'Portais · Satisfação', href: '/portais-clientes' }],
-    medir: ['Nota média de satisfação', 'Número de reviews no Google'],
+    medir: ['NSC (nota média e % de 4 ou 5 estrelas)', 'Número de reviews no Google'],
     falta: ['Pedido de review no Google, automático, depois da entrega do filme ou do álbum'],
   },
   {
@@ -209,7 +218,7 @@ export default function FunilCrescimento() {
                   </text>
                   <circle cx={centroX(i, f.lado)} cy={r1(CY + meia((i + 0.5) / nl) + 16)} r={3.4} fill={ESTADOS[f.estado].cor} />
                   {f.extra && (
-                    <text x={centroX(i, f.lado)} y={r1(CY + meia((i + 0.5) / nl) + 34)} textAnchor="middle" className="fc-seg-x">+ extra</text>
+                    <text x={centroX(i, f.lado)} y={r1(CY + meia((i + 0.5) / nl) + 34)} textAnchor="middle" className="fc-seg-x">{f.extra.marca}</text>
                   )}
                 </g>
               )
@@ -279,14 +288,18 @@ export default function FunilCrescimento() {
           {fase.extra && (
             <div className="fc-extra">
               <div className="fc-extra-topo">
-                <p className="flabel" style={{ marginBottom: 0 }}>Venda extra</p>
+                <p className="flabel" style={{ marginBottom: 0 }}>{fase.extra.etiqueta}</p>
                 <span className="meta">{fase.extra.quando}</span>
               </div>
               <p className="fc-extra-t">{fase.extra.titulo}</p>
               <p className="fc-extra-d">{fase.extra.texto}</p>
-              <a href={fase.extra.link.href} target="_blank" rel="noopener noreferrer" className="fc-link fc-extra-l">
-                {fase.extra.link.label} <span>↗</span>
-              </a>
+              {fase.extra.link.externo ? (
+                <a href={fase.extra.link.href} target="_blank" rel="noopener noreferrer" className="fc-link fc-extra-l">
+                  {fase.extra.link.label} <span>↗</span>
+                </a>
+              ) : (
+                <Link href={fase.extra.link.href} className="fc-link fc-extra-l">{fase.extra.link.label} <span>→</span></Link>
+              )}
             </div>
           )}
 
