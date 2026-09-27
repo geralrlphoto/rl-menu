@@ -2,6 +2,9 @@
 
 import { Suspense, useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
+import DataPT from '@/app/components/DataPT'
+
+const FASES = ['ADJUDICAÇÃO', 'REFORÇO', 'FINAL']
 
 const METODOS = [
   { label: 'MB WAY', value: 'MBWAY' },
@@ -16,6 +19,9 @@ function RegistarPagamentoInner() {
 
   const [noivos, setNoivos] = useState(noivosParam)
   const [referencia, setReferencia] = useState(refParam)
+  const [email, setEmail] = useState('')
+  const [dataCasamento, setDataCasamento] = useState('')
+  const [fase, setFase] = useState('')
   const [valor, setValor] = useState('')
   const [metodo, setMetodo] = useState('MBWAY')
   const [file, setFile] = useState<File | null>(null)
@@ -33,11 +39,16 @@ function RegistarPagamentoInner() {
     setErro(null)
   }
 
-  const podeEnviar = noivos.trim() && Number(valor) > 0 && file && !sending
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const podeEnviar = !sending
 
   async function submit() {
     setErro(null)
     if (!noivos.trim()) return setErro('Falta o nome dos noivos.')
+    if (!emailOk) return setErro('Indica um email válido.')
+    if (!referencia.trim()) return setErro('Falta a referência do evento.')
+    if (!dataCasamento) return setErro('Falta a data do casamento/batizado.')
+    if (!fase) return setErro('Escolhe a fase do pagamento.')
     if (!(Number(valor) > 0)) return setErro('Indica um valor válido.')
     if (!file) return setErro('Anexa o comprovativo.')
     setSending(true)
@@ -51,7 +62,7 @@ function RegistarPagamentoInner() {
       // 2) Regista o pagamento + envia emails
       const res = await fetch('/api/registar-pagamento-noivos', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome_noivos: noivos.trim(), referencia: referencia.trim(), valor: Number(valor), metodo, comprovativo_url: up.url }),
+        body: JSON.stringify({ nome_noivos: noivos.trim(), email: email.trim(), referencia: referencia.trim(), data_casamento: dataCasamento, valor: Number(valor), fase, metodo, comprovativo_url: up.url }),
       })
       const d = await res.json().catch(() => ({}))
       if (!res.ok || !d.ok) throw new Error(d?.error || 'Não foi possível registar o pagamento.')
@@ -82,23 +93,46 @@ function RegistarPagamentoInner() {
       <div className="max-w-xl mx-auto">
         <p className="text-[11px] tracking-[0.34em] uppercase text-[#d8be93] mb-2">RL Photo · Video</p>
         <h1 className="text-4xl font-light leading-tight" style={{ fontFamily: 'Georgia,serif' }}>Registar <em className="text-[#d8be93]">Pagamento</em></h1>
-        <p className="text-white/50 mt-3 leading-relaxed text-[15px]">Preenche o valor e anexa o comprovativo. Recebes um recibo por email e a equipa fica logo a saber.</p>
+        <p className="text-white/50 mt-3 leading-relaxed text-[15px]">Qualquer pagamento deve ser acompanhado deste registo, para ficar tudo registado na nossa plataforma. Recebem um recibo por email e a equipa fica logo a saber.</p>
+        <div className="mt-5 rounded-xl border border-[#d8be93]/25 bg-[#d8be93]/[0.05] px-4 py-3 text-[14px] text-white/70 leading-relaxed">
+          MB WAY para o contacto <span className="text-[#d8be93]">916 162 728</span> (Liliana Gonçalves).<br />
+          A referência do evento deve ser escrita tal como vos foi dada, por exemplo <span className="text-[#d8be93]">CAS_026_26_RL</span>.
+        </div>
 
         <div className="mt-10 grid gap-7">
           <div>
-            <label className={labelCls}>Nome dos noivos</label>
+            <label className={labelCls}>Nome dos noivos/pais</label>
             <input className={noivosParam ? lockedInput : input} value={noivos} readOnly={!!noivosParam}
               onChange={e => setNoivos(e.target.value)} placeholder="Ana & Miguel" />
           </div>
           <div>
-            <label className={labelCls}>Referência {referencia ? '' : <span className="text-white/25 normal-case tracking-normal">(opcional)</span>}</label>
+            <label className={labelCls}>Email</label>
+            <input type="email" className={input} value={email} onChange={e => setEmail(e.target.value)} placeholder="nome@email.com" />
+          </div>
+          <div>
+            <label className={labelCls}>Referência do evento</label>
             <input className={refParam ? lockedInput : input} value={referencia} readOnly={!!refParam}
               onChange={e => setReferencia(e.target.value)} placeholder="CAS_000_26_RL" />
+          </div>
+          <div>
+            <label className={labelCls}>Data do casamento/batizado</label>
+            <DataPT value={dataCasamento} onChange={setDataCasamento} className="w-full border-b border-white/15 text-lg font-light py-2 outline-none justify-between" />
           </div>
           <div>
             <label className={labelCls}>Valor pago (€)</label>
             <input type="number" inputMode="decimal" min="0" step="0.01" className={input} value={valor}
               onChange={e => setValor(e.target.value)} placeholder="0,00" />
+          </div>
+          <div>
+            <label className={labelCls}>Fase do pagamento</label>
+            <div className="grid grid-cols-3 gap-2">
+              {FASES.map(f => (
+                <button key={f} type="button" onClick={() => setFase(f)}
+                  className={`rounded-lg border py-3 text-sm transition-all ${fase === f ? 'border-[#d8be93] bg-[#d8be93]/10 text-[#d8be93]' : 'border-white/10 text-white/60 hover:border-white/25'}`}>
+                  {f.charAt(0) + f.slice(1).toLowerCase()}
+                </button>
+              ))}
+            </div>
           </div>
           <div>
             <label className={labelCls}>Método de pagamento</label>

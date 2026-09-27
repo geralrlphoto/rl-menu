@@ -15,7 +15,7 @@ const FORMULARIOS: Formulario[] = [
   {
     nome: 'Registo de Pagamento',
     quando: 'Sempre que fazem um pagamento',
-    abrir: [{ rotulo: 'Abrir', href: 'https://tally.so/r/A72PQB' }],
+    abrir: [{ rotulo: 'Abrir', href: '/registar-pagamento' }],
   },
   {
     nome: 'Marcação do Pré-Wedding',

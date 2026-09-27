@@ -195,7 +195,7 @@ function SettingsPanel({ settings, referencia, blocks, onSaved, onCancel }: {
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',
     dadosContratoUrl: '/contrato-cps/batizado',
-    pagamentosRegistoUrl: 'https://tally.so/r/A72PQB',
+    pagamentosRegistoUrl: '/registar-pagamento',
   }
   const [form, setForm] = useState({ hiddenNav: [] as string[], ...settings, guiaLinks: { ...DEFAULT_GUIA_LINKS, ...(settings.guiaLinks ?? {}) } })
   const [saving, setSaving] = useState(false)

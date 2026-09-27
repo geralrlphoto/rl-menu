@@ -904,7 +904,7 @@ function PortalSubPageContent() {
     fotosVerMaisUrl: '',
     fotosConvidadosUrl: 'https://tally.so/r/w56N86',
     dadosContratoUrl: '/contrato-cps/batizado',
-    pagamentosRegistoUrl: 'https://tally.so/r/A72PQB',
+    pagamentosRegistoUrl: '/registar-pagamento',
   }
   const [guiaLinks, setGuiaLinks] = useState<{blogUrl?:string,fotosSelecaoUrl?:string,fotosVerMaisUrl?:string,fotosConvidadosUrl?:string,dadosContratoUrl?:string,pagamentosRegistoUrl?:string}>(DEFAULT_GUIA_LINKS)
   const [parceiros, setParceiros] = useState<Array<{imageUrl:string;url?:string}>>([])
@@ -1156,8 +1156,8 @@ function PortalSubPageContent() {
       setPortalExtras(ps.valorExtras ?? null)
       const loadedGuiaLinks = { ...(ps.guiaLinks ?? {}) }
       // Migrate old payment URL to correct one
-      if (loadedGuiaLinks.pagamentosRegistoUrl === 'https://tally.so/r/81Gxyo') {
-        loadedGuiaLinks.pagamentosRegistoUrl = 'https://tally.so/r/A72PQB'
+      if (/tally\.so\/r\/(81Gxyo|A72PQB)/.test(loadedGuiaLinks.pagamentosRegistoUrl ?? '')) {
+        loadedGuiaLinks.pagamentosRegistoUrl = '/registar-pagamento'
       }
       setGuiaLinks({ ...DEFAULT_GUIA_LINKS, ...loadedGuiaLinks })
       setParceiros(ps.parceiros ?? [])

@@ -63,6 +63,7 @@ function cardPagamento(o: any): string {
         <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
           ${[
             ['Referência', o.referencia || '—'],
+            ...(o.fase ? [['Fase', o.fase]] : []),
             ['Método', o.metodo || '—'],
             ['Data', o.data],
           ].map(([k, v]) => `<tr>
@@ -101,6 +102,10 @@ export async function POST(req: NextRequest) {
   const metodo = String(b.metodo ?? '').trim()
   const comprovativo_url = String(b.comprovativo_url ?? '').trim() || null
   const valor = Number(b.valor)
+  // Campos que vinham do Tally (LIQUIDAÇÃO/COMPROVATIVOS)
+  const emailForm = String(b.email ?? '').trim() || null
+  const fase = String(b.fase ?? '').trim()
+  const dataCasForm = /^\d{4}-\d{2}-\d{2}$/.test(String(b.data_casamento ?? '')) ? String(b.data_casamento) : null
 
   if (!nome_noivos) return NextResponse.json({ ok: false, error: 'Falta o nome dos noivos.' }, { status: 400 })
   if (!Number.isFinite(valor) || valor <= 0) return NextResponse.json({ ok: false, error: 'Indica um valor válido.' }, { status: 400 })
@@ -123,6 +128,9 @@ export async function POST(req: NextRequest) {
     emailNoivaAddr = (cps?.email_noiva || cps?.email_noivo || '').trim() || null
     data_casamento = cps?.data_casamento ?? null
   }
+  // O que os noivos escreveram no formulário tem prioridade sobre o contrato
+  if (emailForm) emailNoivaAddr = emailForm
+  if (dataCasForm) data_casamento = dataCasForm
 
   // Grava o pagamento em pagamentos_noivos (aparece em /financas).
   try {
@@ -131,14 +139,17 @@ export async function POST(req: NextRequest) {
       referencia: referencia || null,
       data_casamento,
       data_pagamento: hoje,
+      fase_pagamento: fase ? [fase] : null,
       metodo_pagamento: metodo ? [metodo] : [],
       valor_liquidado: valor,
+      email_cliente: emailNoivaAddr,
+      comprovativo_url,
       atualizado: false,
     })
   } catch { /* não bloqueia o envio dos emails */ }
 
   const dataFmt = `${hoje.slice(8, 10)}/${hoje.slice(5, 7)}/${hoje.slice(0, 4)}`
-  const payload = { nome_noivos, referencia, valor, metodo, data: dataFmt, comprovativo_url }
+  const payload = { nome_noivos, referencia, valor, fase, metodo, data: dataFmt, comprovativo_url }
 
   // Email ao admin (sempre) + recibo à noiva (se tivermos email).
   const cardHtml = cardPagamento(payload)
