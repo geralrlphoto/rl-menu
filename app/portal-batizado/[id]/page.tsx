@@ -1,5 +1,6 @@
 ﻿'use client'
 
+import SolicitarIbanBtn from '@/app/components/SolicitarIbanBtn'
 import React, { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
@@ -4029,11 +4030,12 @@ function PortalSubPageContent() {
                       <>
                         <NotionBlocks blocks={beforeNumerario} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : undefined} />
                         {numerarioIdx !== -1 && (
-                          <div className="my-5">
+                          <div className="my-5 flex flex-wrap gap-3">
                             <a href={`/registar-pagamento?ref=${encodeURIComponent(portalSettingsObj?.referencia ?? refParam ?? portalRef ?? '')}&noivos=${encodeURIComponent([portalSettingsObj?.noiva ?? portalSettingsObj?.mae, portalSettingsObj?.noivo ?? portalSettingsObj?.pai].filter(Boolean).join(' & '))}&data=${encodeURIComponent(String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10))}`} target="_blank" rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold text-black font-semibold text-sm tracking-wide hover:bg-gold/80 transition-all">
                               Registar Pagamento
                             </a>
+                            <SolicitarIbanBtn referencia={portalSettingsObj?.referencia ?? refParam ?? portalRef ?? ''} nomeNoivos={[portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & ')} />
                           </div>
                         )}
                         {(() => {
