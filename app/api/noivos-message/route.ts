@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const referencia   = String(body?.referencia ?? '').trim()
     const titulo       = String(body?.titulo ?? '').trim()
     const mensagem     = String(body?.mensagem ?? '').trim()
-    const nome_noivos  = String(body?.nome_noivos ?? '').trim() || null
+    let nome_noivos    = String(body?.nome_noivos ?? '').trim() || null
     const email_noiva  = String(body?.email_noiva ?? '').trim() || null
 
     if (!referencia) return NextResponse.json({ ok: false, error: 'referencia required' }, { status: 400 })
@@ -48,6 +48,11 @@ export async function POST(req: NextRequest) {
       .maybeSingle()
 
     const settings = (portalRow?.settings ?? {}) as Record<string, any>
+    // Sem nome no pedido (ex.: clicaram antes de o portal carregar): usa o do portal
+    if (!nome_noivos) {
+      nome_noivos = [settings.noiva ?? settings.mae, settings.noivo ?? settings.pai]
+        .map(n => String(n ?? '').trim()).filter(Boolean).join(' & ') || null
+    }
     const messages = Array.isArray(settings.noivos_messages) ? settings.noivos_messages : []
     const newMessage = {
       id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,

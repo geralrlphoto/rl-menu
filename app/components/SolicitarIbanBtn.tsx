@@ -9,7 +9,7 @@ import { useState } from 'react'
 
 const WHATSAPP_RL = '351912932768'
 
-export default function SolicitarIbanBtn({ referencia, nomeNoivos }: { referencia: string; nomeNoivos: string }) {
+export default function SolicitarIbanBtn({ referencia, nomeNoivos, pronto = true }: { referencia: string; nomeNoivos: string; pronto?: boolean }) {
   const [pedido, setPedido] = useState(false)
   const quem = nomeNoivos.trim()
   const texto = [
@@ -17,6 +17,13 @@ export default function SolicitarIbanBtn({ referencia, nomeNoivos }: { referenci
     'Podem enviar-nos o IBAN para fazermos o pagamento por transferência?',
     'Obrigado!',
   ].join('\n')
+
+  // Enquanto as definições do portal carregam, o nome ainda não é conhecido
+  if (!pronto) return (
+    <span className="inline-flex items-center gap-2 px-6 py-3 rounded-xl border border-gold/30 text-gold/50 font-semibold text-sm tracking-wide">
+      A preparar…
+    </span>
+  )
 
   return (
     <a href={`https://wa.me/${WHATSAPP_RL}?text=${encodeURIComponent(texto)}`} target="_blank" rel="noopener noreferrer"

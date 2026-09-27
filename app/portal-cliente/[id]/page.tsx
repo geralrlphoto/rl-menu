@@ -4830,7 +4830,7 @@ function PortalSubPageContent() {
                               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold text-black font-semibold text-sm tracking-wide hover:bg-gold/80 transition-all">
                               Registar Pagamento
                             </a>
-                            <SolicitarIbanBtn referencia={portalSettingsObj?.referencia ?? refParam ?? portalRef ?? ''} nomeNoivos={nomeNoivos(eventoData?.cliente, portalSettingsObj?.noiva || eventoData?.nome_noiva, portalSettingsObj?.noivo || eventoData?.nome_noivo)} />
+                            <SolicitarIbanBtn pronto={Object.keys(portalSettingsObj ?? {}).length > 0} referencia={portalSettingsObj?.referencia ?? refParam ?? portalRef ?? ''} nomeNoivos={nomeNoivos(eventoData?.cliente, portalSettingsObj?.noiva || eventoData?.nome_noiva, portalSettingsObj?.noivo || eventoData?.nome_noivo)} />
                           </div>
                         )}
                         {(() => {
