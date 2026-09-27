@@ -80,6 +80,22 @@ function fmtRel(iso: string): string {
   } catch { return '' }
 }
 
+/* Categorias do dropdown do painel: cada tipo de notificação cai numa */
+type Categoria = 'todas' | 'pagamentos' | 'selecao' | 'relatorio' | 'outros'
+const CATEGORIAS: { key: Categoria; label: string }[] = [
+  { key: 'todas', label: 'Todas' },
+  { key: 'pagamentos', label: 'Pagamentos' },
+  { key: 'selecao', label: 'Seleção de Fotos' },
+  { key: 'relatorio', label: 'Relatório Diário' },
+  { key: 'outros', label: 'Outros' },
+]
+function categoriaDe(tipo: string): Categoria {
+  if (tipo === 'pagamento') return 'pagamentos'
+  if (tipo === 'nova_selecao') return 'selecao'
+  if (tipo === 'relatorio_diario_enviado') return 'relatorio'
+  return 'outros'
+}
+
 export function AdminNotificationsBell({ compact = false }: { compact?: boolean } = {}) {
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [lastSeen, setLastSeen] = useState<string | null>(null)
@@ -99,7 +115,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
   const [forwardState, setForwardState] = useState<'idle' | 'saving' | 'done' | 'error'>('idle')
   // Pedidos de reunião: filtro do ícone de calendário + janela Aceitar/Indisponível
   const [soPedidos, setSoPedidos] = useState(false)
-  const [soPagamentos, setSoPagamentos] = useState(false)
+  const [categoria, setCategoria] = useState<Categoria>('todas')
   const [pedidoAberto, setPedidoAberto] = useState<Notif | null>(null)
   const [pedidoFase, setPedidoFase] = useState<{ tipo: 'aceite'; opcao: Opcao; proposta?: boolean } | { tipo: 'indisponivel'; modelo: number } | null>(null)
   const [aEscolherModelo, setAEscolherModelo] = useState(false)
@@ -271,7 +287,6 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
   // Lista visível na vista principal (exclui dispensadas)
   const visibleNotifs = notifs.filter(n => !dismissed.has(n.id) && !respondidos.has(n.id))
   const pedidos = notifs.filter(n => n.tipo === 'pedido_reuniao' && !respondidos.has(n.id))
-  const pagamentos = notifs.filter(n => n.tipo === 'pagamento')
   // Contador de não lidas usa só as visíveis para não 'piscar' por notifs antigas dispensadas
   const unreadCount = lastSeen
     ? visibleNotifs.filter(n => (n.sent_at || '') > lastSeen).length
@@ -279,7 +294,8 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
 
   // Lista a renderizar conforme o modo
   // No histórico aplicamos pesquisa de texto + filtro de referência
-  const baseList = soPedidos ? pedidos : soPagamentos ? pagamentos : showHistory ? notifs : visibleNotifs
+  const listaModo = showHistory ? notifs : visibleNotifs
+  const baseList = soPedidos ? pedidos : listaModo.filter(n => categoria === 'todas' || categoriaDe(n.tipo) === categoria)
   const q = searchQuery.trim().toLowerCase()
   const listToRender = baseList.filter(n => {
     if (filterRef && (n.referencia ?? '') !== filterRef) return false
@@ -361,7 +377,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
           <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-2">
               <p className="text-[11px] tracking-[0.35em] uppercase text-gold/85 font-semibold">
-                {soPedidos ? 'Pedidos de reunião' : soPagamentos ? 'Pagamentos' : showHistory ? 'Histórico' : 'Notificações'}
+                {soPedidos ? 'Pedidos de reunião' : showHistory ? 'Histórico' : 'Notificações'}
               </p>
               {!showHistory && unreadCount > 0 && (
                 <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-gold/20 text-gold border border-gold/30 tracking-wider uppercase font-bold">
@@ -375,14 +391,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
               )}
             </div>
             <div className="flex items-center gap-2">
-              <button onClick={() => { setSoPagamentos(v => !v); setSoPedidos(false); setShowHistory(false); setSearchQuery(''); setFilterRef('') }}
-                title="Pagamentos (pedidos de IBAN)"
-                className={`w-7 h-7 flex items-center justify-center rounded-lg border transition-colors ${
-                  soPagamentos ? 'bg-gold/20 border-gold/50 text-gold' : 'border-white/10 text-white/35 hover:text-gold hover:border-gold/30'
-                }`}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><rect x="2" y="5" width="20" height="14" rx="2" /><path strokeLinecap="round" d="M2 10h20M6 15h4" /></svg>
-              </button>
-              <button onClick={() => { setSoPedidos(v => !v); setSoPagamentos(false); setShowHistory(false); setSearchQuery(''); setFilterRef('') }}
+              <button onClick={() => { setSoPedidos(v => !v); setShowHistory(false); setSearchQuery(''); setFilterRef('') }}
                 title="Pedidos de reunião dos noivos"
                 className={`relative w-7 h-7 flex items-center justify-center rounded-lg border transition-colors ${
                   soPedidos ? 'bg-gold/20 border-gold/50 text-gold' : pedidos.length ? 'border-gold/35 text-gold/85 hover:bg-gold/10' : 'border-white/10 text-white/35 hover:text-gold hover:border-gold/30'
@@ -392,15 +401,15 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
                   <span className="absolute -top-1.5 -right-1.5 min-w-[15px] h-[15px] px-0.5 rounded-full bg-gold text-black text-[9px] font-bold flex items-center justify-center">{pedidos.length}</span>
                 )}
               </button>
-              {!soPedidos && !soPagamentos && !showHistory && unreadCount > 0 && (
+              {!soPedidos && !showHistory && unreadCount > 0 && (
                 <button onClick={markAllAsRead}
                   className="text-[9px] tracking-wider uppercase text-white/40 hover:text-gold transition-colors">
                   Marcar lidas
                 </button>
               )}
-              <button onClick={() => { if (soPedidos) setSoPedidos(false); else if (soPagamentos) setSoPagamentos(false); else setShowHistory(s => !s); setSearchQuery(''); setFilterRef('') }}
+              <button onClick={() => { if (soPedidos) setSoPedidos(false); else setShowHistory(s => !s); setSearchQuery(''); setFilterRef('') }}
                 className="text-[9px] tracking-wider uppercase text-white/40 hover:text-gold transition-colors">
-                {showHistory || soPedidos || soPagamentos ? '← Voltar' : 'Ver todas'}
+                {showHistory || soPedidos ? '← Voltar' : 'Ver todas'}
               </button>
               <button onClick={() => setOpen(false)}
                 className="w-6 h-6 flex items-center justify-center rounded text-white/30 hover:text-white/70 hover:bg-white/[0.04] transition-colors"
@@ -409,6 +418,20 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
               </button>
             </div>
           </div>
+
+          {/* Categorias (dropdown) */}
+          {!soPedidos && (
+            <div className="px-4 py-2 border-b border-white/[0.05] flex items-center gap-2">
+              <label className="text-[9px] tracking-[0.3em] uppercase text-gold/55 shrink-0">Categoria</label>
+              <select value={categoria} onChange={e => setCategoria(e.target.value as Categoria)}
+                className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-2 py-1.5 text-[11px] text-white outline-none focus:border-gold/45 [color-scheme:dark] transition-colors">
+                {CATEGORIAS.map(c => {
+                  const n = c.key === 'todas' ? listaModo.length : listaModo.filter(x => categoriaDe(x.tipo) === c.key).length
+                  return <option key={c.key} value={c.key} className="bg-neutral-900">{c.label} ({n})</option>
+                })}
+              </select>
+            </div>
+          )}
 
           {/* Sub-header em modo histórico */}
           {showHistory && dismissed.size > 0 && (
@@ -468,7 +491,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
               <div className="px-4 py-8 text-center">
                 <p className="text-3xl opacity-20 mb-2">✉</p>
                 <p className="text-[11px] text-white/35 italic">
-                  {soPedidos ? 'Sem pedidos de reunião' : soPagamentos ? 'Sem pagamentos' : showHistory ? 'Sem histórico' : 'Sem notificações'}
+                  {soPedidos ? 'Sem pedidos de reunião' : categoria !== 'todas' ? `Sem notificações em ${CATEGORIAS.find(c => c.key === categoria)?.label}` : showHistory ? 'Sem histórico' : 'Sem notificações'}
                 </p>
               </div>
             ) : (
