@@ -26,6 +26,7 @@ const TIPO_LABELS: Record<string, string> = {
   album_aprovado:           'Álbum Aprovado pelos Noivos',
   mensagem_noivos:          'Mensagem dos Noivos',
   pagamento:                'Pagamentos',
+  pagamento_registado:      'Pagamento Registado',
   blog_subscriber:          'Nova Subscrição do Blog',
   nova_candidatura:         'Nova Candidatura de Recrutamento',
   video_prazo:              'Prazo de Entrega do Vídeo',
@@ -59,6 +60,7 @@ const TIPO_ICONS: Record<string, string> = {
   album_aprovado:           '✓',
   mensagem_noivos:          '💬',
   pagamento:                '💳',
+  pagamento_registado:      '💶',
   blog_subscriber:          '✉',
   nova_candidatura:         '✦',
   video_prazo:              '🎬',
@@ -115,6 +117,7 @@ type Notif = {
     album?: string | null
   }
   mensagem?: string | null
+  comprovativo_url?: string | null   // pagamento registado pelos noivos
   // Pedido de "outro horário" (reunião de preparação): dados para a janela Aceitar/Indisponível
   pedido?: {
     eventoId: string
@@ -635,10 +638,12 @@ export async function GET(req: Request) {
           if (!m?.id || !m?.ts) continue
           // Pedidos de IBAN (botão Solicitar IBAN do portal) contam como Pagamentos
           const tipoMsg = m.titulo === 'Pedido de IBAN' ? 'pagamento' : 'mensagem_noivos'
+          // Já respondido (ex.: IBAN enviado pela ficha) fica assinalado
+          const respondido = tipoMsg === 'pagamento' && Array.isArray(m.respostas) && m.respostas.length > 0
           notifications.push({
             id: `mensagem_noivos::${p.referencia}::${m.id}`,
             tipo: tipoMsg,
-            tipo_label: TIPO_LABELS[tipoMsg],
+            tipo_label: respondido ? 'Pagamentos · IBAN enviado ✓' : TIPO_LABELS[tipoMsg],
             tipo_icon: TIPO_ICONS[tipoMsg],
             casamento_id: '',
             freelancer_id: '',
@@ -1086,6 +1091,43 @@ export async function GET(req: Request) {
       }
     } catch (err) {
       console.warn('[admin-notifications] pedidos reuniao read failed:', err)
+    }
+
+    // ── Pagamentos registados pelos NOIVOS (formulário Registar Pagamento ou Tally), últimos 60 dias ──
+    //    Os lançados pelo admin no /financas ficam de fora: não têm comprovativo nem
+    //    resposta do Tally e o método vem em "MBWay"/"Transferência" (o formulário grava em maiúsculas).
+    try {
+      const desde = new Date(Date.now() - 60 * 86400000).toISOString()
+      const { data: pags } = await supabase.from('pagamentos_noivos')
+        .select('id, created_at, nome_noivos, referencia, valor_liquidado, fase_pagamento, metodo_pagamento, comprovativo_url, tally_response_id')
+        .gte('created_at', desde).order('created_at', { ascending: false }).limit(80)
+      const METODOS_FORM = ['MBWAY', 'TRANSFERENCIA', 'NUMERÁRIO']
+      for (const g of (pags ?? []) as any[]) {
+        const metodos: string[] = Array.isArray(g.metodo_pagamento) ? g.metodo_pagamento : []
+        const doNoivos = !!g.comprovativo_url || !!g.tally_response_id || metodos.some(x => METODOS_FORM.includes(x))
+        if (!doNoivos) continue
+        const valor = g.valor_liquidado != null ? `${Number(g.valor_liquidado).toLocaleString('pt-PT', { minimumFractionDigits: 2 })} €` : '—'
+        const fase = Array.isArray(g.fase_pagamento) && g.fase_pagamento[0] ? g.fase_pagamento[0] : null
+        const metodo = metodos[0] ?? null
+        notifications.push({
+          id: `pagamento_registado::${g.id}`,
+          tipo: 'pagamento_registado',
+          tipo_label: TIPO_LABELS.pagamento_registado,
+          tipo_icon: TIPO_ICONS.pagamento_registado,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: g.nome_noivos || '—',
+          local: [valor, fase, metodo].filter(Boolean).join(' · '),
+          data_casamento: null,
+          referencia: g.referencia ?? null,
+          url: '/financas',
+          sent_at: g.created_at,
+          mensagem: `Pagamento de ${valor}${fase ? `, fase ${fase}` : ''}${metodo ? `, por ${metodo}` : ''}.`,
+          comprovativo_url: g.comprovativo_url ?? null,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] pagamentos registados read failed:', err)
     }
 
     // ── Reuniões de preparação marcadas pelos noivos no link /preparacao (últimos 60 dias) ──

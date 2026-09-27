@@ -22,9 +22,12 @@ export async function POST(req: NextRequest) {
     const referencia = String(body?.referencia ?? '').trim()
     const messageId  = String(body?.messageId ?? '').trim()
     const texto      = String(body?.texto ?? '').trim()
+    // Alternativa ao messageId: responde a todas as mensagens ainda sem resposta com este título
+    // (ex.: 'Pedido de IBAN', quando o admin envia o IBAN pela ficha)
+    const titulo     = String(body?.titulo ?? '').trim()
 
-    if (!referencia || !messageId || !texto) {
-      return NextResponse.json({ ok: false, error: 'referencia, messageId e texto required' }, { status: 400 })
+    if (!referencia || (!messageId && !titulo) || !texto) {
+      return NextResponse.json({ ok: false, error: 'referencia, messageId (ou titulo) e texto required' }, { status: 400 })
     }
 
     const supabase = db()
@@ -38,13 +41,21 @@ export async function POST(req: NextRequest) {
 
     const settings = (portalRow.settings ?? {}) as Record<string, any>
     const messages = Array.isArray(settings.noivos_messages) ? settings.noivos_messages : []
-    const idx = messages.findIndex((m: any) => m?.id === messageId)
-    if (idx === -1) return NextResponse.json({ ok: false, error: 'mensagem não encontrada' }, { status: 404 })
+    const alvos = messageId
+      ? messages.map((m: any, i: number) => (m?.id === messageId ? i : -1)).filter((i: number) => i !== -1)
+      : messages.map((m: any, i: number) => (m?.titulo === titulo && !(Array.isArray(m?.respostas) && m.respostas.length) ? i : -1)).filter((i: number) => i !== -1)
+    if (alvos.length === 0) {
+      // Por título sem pendentes não é erro: não havia nada por responder
+      if (!messageId) return NextResponse.json({ ok: true, respondidas: 0 })
+      return NextResponse.json({ ok: false, error: 'mensagem não encontrada' }, { status: 404 })
+    }
 
     const agora = new Date().toISOString()
     const resposta = { id: `r_${Date.now()}`, texto, ts: agora }
-    const respostas = Array.isArray(messages[idx].respostas) ? messages[idx].respostas : []
-    messages[idx] = { ...messages[idx], respostas: [...respostas, resposta], lida: true }
+    for (const idx of alvos) {
+      const respostas = Array.isArray(messages[idx].respostas) ? messages[idx].respostas : []
+      messages[idx] = { ...messages[idx], respostas: [...respostas, resposta], lida: true }
+    }
 
     // Adiciona também uma notificação ao sino do portal dos noivos.
     const notifs = Array.isArray(settings.noivos_notifications) ? settings.noivos_notifications : []
@@ -58,7 +69,7 @@ export async function POST(req: NextRequest) {
     const newSettings = { ...settings, noivos_messages: messages, noivos_notifications: [notif, ...notifs] }
     await supabase.from('portais').update({ settings: newSettings }).ilike('referencia', referencia)
 
-    return NextResponse.json({ ok: true, resposta })
+    return NextResponse.json({ ok: true, resposta, respondidas: alvos.length })
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err?.message ?? 'erro' }, { status: 500 })
   }

@@ -18,6 +18,7 @@ type Notif = {
   url: string
   sent_at: string
   referencia?: string | null
+  comprovativo_url?: string | null
   urls?: {
     selecao?: string | null
     provas?: string | null
@@ -91,7 +92,7 @@ const CATEGORIAS: { key: Categoria; label: string }[] = [
   { key: 'outros', label: 'Outros' },
 ]
 function categoriaDe(tipo: string): Categoria {
-  if (tipo === 'pagamento') return 'pagamentos'
+  if (tipo === 'pagamento' || tipo === 'pagamento_registado') return 'pagamentos'
   if (tipo === 'reuniao_marcada' || tipo === 'pedido_reuniao' || tipo === 'booking_reservado') return 'reunioes'
   if (tipo === 'nova_selecao') return 'selecao'
   if (tipo === 'relatorio_diario_enviado') return 'relatorio'
@@ -852,7 +853,20 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
 
             {/* Footer */}
             <div className="px-6 py-3 border-t border-white/[0.05] bg-black/30 flex items-center justify-between gap-3 flex-wrap">
-              {previewNotif.tipo === 'pagamento' ? (
+              {previewNotif.tipo === 'pagamento_registado' ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {previewNotif.comprovativo_url && (
+                    <a href={previewNotif.comprovativo_url} target="_blank" rel="noopener noreferrer"
+                      className="px-4 py-1.5 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-gold/50 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
+                      📎 Ver comprovativo
+                    </a>
+                  )}
+                  <a href={previewNotif.url}
+                    className="text-[10px] tracking-[0.25em] uppercase font-bold text-gold/85 hover:text-gold transition-colors">
+                    Ver em Finanças →
+                  </a>
+                </div>
+              ) : previewNotif.tipo === 'pagamento' ? (
                 <a href={previewNotif.url}
                   className="px-4 py-1.5 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-gold/50 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
                   Comunicação Noivos →

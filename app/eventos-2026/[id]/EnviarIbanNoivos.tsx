@@ -76,7 +76,15 @@ export default function EnviarIbanNoivos({ e }: { e: any }) {
         <div className={`${base} border-white/10 text-white/30`}>Sem telemóvel nos Dados do Casal</div>
       ) : href ? (
         <a href={href} target="_blank" rel="noopener noreferrer"
-          onClick={() => { setEnviado(true); try { localStorage.setItem(CHAVE_IBAN, formatarIban(ibanLimpo)) } catch { /* sem storage */ } }}
+          onClick={() => {
+            setEnviado(true)
+            try { localStorage.setItem(CHAVE_IBAN, formatarIban(ibanLimpo)) } catch { /* sem storage */ }
+            // Os pedidos de IBAN por responder ficam respondidos (Atendimento do portal + sino)
+            if (ref) fetch('/api/noivos-message/responder', {
+              method: 'POST', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ referencia: ref, titulo: 'Pedido de IBAN', texto: 'Enviámos-vos o IBAN por WhatsApp. Depois da transferência, registem o pagamento com o comprovativo na página Pagamentos.' }),
+            }).catch(() => {})
+          }}
           className={`${base} border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50`}>
           {enviado ? '✓ Aberto no WhatsApp · enviar outra vez' : 'Enviar IBAN pelo WhatsApp'}
         </a>
