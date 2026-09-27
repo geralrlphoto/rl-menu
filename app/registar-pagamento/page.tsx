@@ -16,11 +16,12 @@ function RegistarPagamentoInner() {
   const params = useSearchParams()
   const refParam = params.get('ref') ?? ''
   const noivosParam = params.get('noivos') ?? ''
+  const dataParam = /^\d{4}-\d{2}-\d{2}$/.test(params.get('data') ?? '') ? params.get('data')! : ''
 
   const [noivos, setNoivos] = useState(noivosParam)
   const [referencia, setReferencia] = useState(refParam)
   const [email, setEmail] = useState('')
-  const [dataCasamento, setDataCasamento] = useState('')
+  const [dataCasamento, setDataCasamento] = useState(dataParam)
   const [fase, setFase] = useState('')
   const [valor, setValor] = useState('')
   const [metodo, setMetodo] = useState('MBWAY')
@@ -31,7 +32,7 @@ function RegistarPagamentoInner() {
   const [erro, setErro] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { setNoivos(noivosParam); setReferencia(refParam) }, [noivosParam, refParam])
+  useEffect(() => { setNoivos(noivosParam); setReferencia(refParam); if (dataParam) setDataCasamento(dataParam) }, [noivosParam, refParam, dataParam])
 
   function pickFile(f: File | null) {
     setFile(f)
