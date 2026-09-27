@@ -32,6 +32,8 @@ type Props = {
 type Meta = { desc: string; group: 'op' | 'cli' | 'eq' }
 function metaFor(label: string): Meta {
   const k = label.toUpperCase().trim()
+  if (k.includes('FORMUL'))
+    return { desc: 'Todos os formulários dos noivos', group: 'cli' }
   if (k.includes('FUNIL'))
     return { desc: 'Da atração do casal à recomendação', group: 'cli' }
   if (k.includes('NEWSLETTER'))
@@ -76,6 +78,12 @@ function metaFor(label: string): Meta {
 /* ── Ícone de linha fina (stroke 1.3) por nome ─────────────── */
 function iconFor(label: string): JSX.Element {
   const k = label.toUpperCase().trim()
+  // Formulários / prancheta
+  if (k.includes('FORMUL')) return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3" />
+    </svg>
+  )
   // Funil de crescimento / gravata-borboleta
   if (k.includes('FUNIL')) return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
@@ -218,6 +226,7 @@ export default async function SecaoPage({ params }: Props) {
     extraButtons.push(
       { href: '/social-media', label: 'Social Media', internal: true },
       { href: '/crescimento', label: 'Funil de Crescimento', internal: true },
+      { href: '/formularios', label: 'Formulários', internal: true },
     )
   }
 
