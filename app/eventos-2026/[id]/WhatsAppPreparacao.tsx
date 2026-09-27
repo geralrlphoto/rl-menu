@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { whatsappLink, mensagemReuniaoPreparacao, nomeNoivos, ehBatizado, PREPARACAO_DIAS } from '@/lib/crm'
 import { linkPublico } from '@/lib/site-url'
+import DataPT from '@/app/components/DataPT'
 
 /* Reunião de preparação do dia (horários, dicas, ajustes):
    - botão de WhatsApp com o link /preparacao/<id> para os noivos escolherem o horário;
@@ -168,8 +169,8 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
             {dataCas && <> Cada casal só vê os horários <span className="text-white/70">antes do seu evento</span>; a cinzento estão os que este casal não vê.</>}
           </p>
           <div className="flex flex-wrap items-center gap-2">
-            <input type="date" value={novaData} onChange={ev => setNovaData(ev.target.value)}
-              className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-gold [color-scheme:dark]" />
+            <DataPT value={novaData} onChange={setNovaData}
+              className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-gold" />
             <input type="time" value={novaHora} onChange={ev => setNovaHora(ev.target.value)} step={900}
               className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-gold [color-scheme:dark]" />
             <button onClick={acrescentar} disabled={!novaData || !novaHora}
