@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import SolicitarIbanBtn from '@/app/components/SolicitarIbanBtn'
+import { nomeNoivos } from '@/lib/crm'
 import React, { useEffect, useState, useCallback, useRef, Suspense } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
@@ -4315,7 +4316,7 @@ function PortalSubPageContent() {
                         'BLOG':                     { icon: '✍️', label: 'Ver Blog',             url: guiaLinks.blogUrl },
                         'FOTOS CONVIDADOS':          { icon: '📷', label: 'Solicitar Fotos',      url: guiaLinks.fotosConvidadosUrl },
                         'DADOS PARA CONTRATO - CPS': { icon: '📋', label: 'Preencher Dados',      url: withRef(guiaLinks.dadosContratoUrl) },
-                        'PAGAMENTOS/REGISTO':        { icon: '💳', label: 'Registar Pagamento',   url: `/registar-pagamento?ref=${encodeURIComponent(portalSettingsObj?.referencia ?? refParam ?? portalRef ?? '')}&noivos=${encodeURIComponent([portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & '))}&data=${encodeURIComponent(String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10))}` },
+                        'PAGAMENTOS/REGISTO':        { icon: '💳', label: 'Registar Pagamento',   url: `/registar-pagamento?ref=${encodeURIComponent(portalSettingsObj?.referencia ?? refParam ?? portalRef ?? '')}&noivos=${encodeURIComponent(nomeNoivos(eventoData?.cliente, portalSettingsObj?.noiva || eventoData?.nome_noiva, portalSettingsObj?.noivo || eventoData?.nome_noivo))}&data=${encodeURIComponent(String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10))}` },
                       }
                       // find the column_list that contains the 4 section callouts
                       const colListIdx = blocks.findIndex(b =>
@@ -4825,11 +4826,11 @@ function PortalSubPageContent() {
                         <NotionBlocks blocks={beforeNumerario} hiddenNav={settings.hiddenNav} backUrl={fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined} />
                         {numerarioIdx !== -1 && (
                           <div className="my-5 flex flex-wrap gap-3">
-                            <a href={`/registar-pagamento?ref=${encodeURIComponent(portalSettingsObj?.referencia ?? refParam ?? portalRef ?? '')}&noivos=${encodeURIComponent([portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & '))}&data=${encodeURIComponent(String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10))}`} target="_blank" rel="noopener noreferrer"
+                            <a href={`/registar-pagamento?ref=${encodeURIComponent(portalSettingsObj?.referencia ?? refParam ?? portalRef ?? '')}&noivos=${encodeURIComponent(nomeNoivos(eventoData?.cliente, portalSettingsObj?.noiva || eventoData?.nome_noiva, portalSettingsObj?.noivo || eventoData?.nome_noivo))}&data=${encodeURIComponent(String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10))}`} target="_blank" rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gold text-black font-semibold text-sm tracking-wide hover:bg-gold/80 transition-all">
                               Registar Pagamento
                             </a>
-                            <SolicitarIbanBtn referencia={portalSettingsObj?.referencia ?? refParam ?? portalRef ?? ''} nomeNoivos={[portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & ')} />
+                            <SolicitarIbanBtn referencia={portalSettingsObj?.referencia ?? refParam ?? portalRef ?? ''} nomeNoivos={nomeNoivos(eventoData?.cliente, portalSettingsObj?.noiva || eventoData?.nome_noiva, portalSettingsObj?.noivo || eventoData?.nome_noivo)} />
                           </div>
                         )}
                         {(() => {
