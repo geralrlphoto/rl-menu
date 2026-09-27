@@ -40,6 +40,7 @@ const TIPO_LABELS: Record<string, string> = {
   crm_acao_atrasada:        'CRM · Próxima Ação Atrasada',
   crm_follow_parado:        'CRM · Follow Up Parado',
   pedido_reuniao:           'Pedido de Reunião',
+  reuniao_marcada:          'Reunião de Preparação Marcada',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -72,6 +73,7 @@ const TIPO_ICONS: Record<string, string> = {
   crm_acao_atrasada:        '⏰',
   crm_follow_parado:        '⚠',
   pedido_reuniao:           '📅',
+  reuniao_marcada:          '📅',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -1074,6 +1076,38 @@ export async function GET(req: Request) {
       }
     } catch (err) {
       console.warn('[admin-notifications] pedidos reuniao read failed:', err)
+    }
+
+    // ── Reuniões de preparação marcadas pelos noivos no link /preparacao (últimos 60 dias) ──
+    try {
+      const desde = new Date(Date.now() - 60 * 86400000).toISOString()
+      const { data: marcadas } = await supabase.from('preparacao_slots')
+        .select('id, data, hora, formato, local, evento_id, reservado_em')
+        .neq('tipo', 'prewedding').not('evento_id', 'is', null).gte('reservado_em', desde).limit(60)
+      const ids = [...new Set((marcadas ?? []).map((m: any) => m.evento_id))]
+      const { data: evs } = ids.length
+        ? await supabase.from('eventos_2026').select('id, cliente, referencia, data_evento').in('id', ids)
+        : { data: [] as any[] }
+      for (const m of (marcadas ?? []) as any[]) {
+        const ev = (evs ?? []).find((e: any) => e.id === m.evento_id)
+        notifications.push({
+          id: `reuniao_marcada::${m.evento_id}::${m.id}`,
+          tipo: 'reuniao_marcada',
+          tipo_label: TIPO_LABELS.reuniao_marcada,
+          tipo_icon: TIPO_ICONS.reuniao_marcada,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: ev?.cliente || '—',
+          local: `${fmtDataCurta(m.data)} às ${String(m.hora ?? '').slice(0, 5)}${m.formato ? ` · ${m.formato}` : ''}`,
+          data_casamento: ev?.data_evento ?? null,
+          referencia: ev?.referencia ?? null,
+          url: `/eventos-2026/${m.evento_id}`,
+          sent_at: m.reservado_em,
+          mensagem: `Reunião de preparação marcada para ${fmtDataCurta(m.data)} às ${String(m.hora ?? '').slice(0, 5)}${m.formato ? ` (${m.formato}${m.local ? `, ${m.local}` : ''})` : ''}.`,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] reunioes marcadas read failed:', err)
     }
 
     // Ordenar por sent_at DESC

@@ -81,16 +81,18 @@ function fmtRel(iso: string): string {
 }
 
 /* Categorias do dropdown do painel: cada tipo de notificação cai numa */
-type Categoria = 'todas' | 'pagamentos' | 'selecao' | 'relatorio' | 'outros'
+type Categoria = 'todas' | 'pagamentos' | 'reunioes' | 'selecao' | 'relatorio' | 'outros'
 const CATEGORIAS: { key: Categoria; label: string }[] = [
   { key: 'todas', label: 'Todas' },
   { key: 'pagamentos', label: 'Pagamentos' },
+  { key: 'reunioes', label: 'Reuniões' },
   { key: 'selecao', label: 'Seleção de Fotos' },
   { key: 'relatorio', label: 'Relatório Diário' },
   { key: 'outros', label: 'Outros' },
 ]
 function categoriaDe(tipo: string): Categoria {
   if (tipo === 'pagamento') return 'pagamentos'
+  if (tipo === 'reuniao_marcada' || tipo === 'pedido_reuniao' || tipo === 'booking_reservado') return 'reunioes'
   if (tipo === 'nova_selecao') return 'selecao'
   if (tipo === 'relatorio_diario_enviado') return 'relatorio'
   return 'outros'
