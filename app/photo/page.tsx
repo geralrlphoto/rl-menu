@@ -353,6 +353,44 @@ export default async function PhotoDashboard() {
     if (!env1) push('follow1', somaDias(inicio, FOLLOW_WA_DIAS))
     else if (!env['WhatsApp 2.º follow-up enviado']) push('follow2', somaDias(lisboaISO(new Date(env1)), FOLLOW2_WA_DIAS))
   }
+  // Reuniões criadas como tarefa ("Reunião: Liliana e André") também têm lembrete 1h no próprio dia.
+  // O telefone vem da ficha do CRM cujo nome contém todos os nomes da tarefa.
+  const reunioesTarefaHoje = (reunioesTarefa as any[]).filter(t => t.data_prazo === hojeLx && t.hora)
+  const semAcentos = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+  const nomesDe = (s: string) => semAcentos(s).split(/[^a-z]+/).filter(p => p.length > 1 && p !== 'e')
+  const getLembretesTarefa = unstable_cache(
+    async () => {
+      const primeiros = [...new Set(reunioesTarefaHoje.map(t => nomesDe(String(t.titulo).replace(/^Reuni[aã]o:\s*/i, ''))[0]).filter(Boolean))]
+      if (primeiros.length === 0) return { contactos: [], enviados: [] }
+      const { data: contactos } = await supabase.from('crm_contacts')
+        .select('id, nome, contato').or(primeiros.map(p => `nome.ilike.%${p}%`).join(',')).limit(100)
+      const ids = (contactos ?? []).map((c: any) => c.id)
+      const { data: enviados } = ids.length
+        ? await supabase.from('crm_status_history').select('contact_id').in('contact_id', ids)
+            .eq('evento', 'WhatsApp lembrete 1h enviado').gte('created_at', hojeLx)
+        : { data: [] as any[] }
+      return { contactos: contactos ?? [], enviados: (enviados ?? []).map((e: any) => e.contact_id as string) }
+    },
+    [`photo-wa-lembrete-tarefa-${hojeLx}-${reunioesTarefaHoje.map(t => t.id).join(',')}`],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
+  )
+  const lembTarefa = reunioesTarefaHoje.length ? await getLembretesTarefa() : { contactos: [], enviados: [] }
+  for (const r of reunioesTarefaHoje) {
+    const nome = String(r.titulo ?? '').replace(/^Reuni[aã]o:\s*/i, '')
+    const procurados = nomesDe(nome)
+    const ficha = (lembTarefa.contactos as any[]).find(c => {
+      const nomesFicha = nomesDe(c.nome ?? '')
+      return procurados.length > 0 && procurados.every(p => nomesFicha.includes(p)) && c.contato
+    })
+    if (!ficha) continue
+    // Evita duplicar quando a ficha do CRM já gerou o lembrete para hoje
+    if (lembTarefa.enviados.includes(ficha.id) || waTarefas.some(t => t.tipo === 'lembrete' && t.contactId === ficha.id)) continue
+    waTarefas.push({
+      tipo: 'lembrete', contactId: ficha.id, nome, contato: ficha.contato,
+      reuniaoHora: String(r.hora).slice(0, 5), dataCasamento: null,
+      dia: hojeLx, atrasoDias: 0, futura: false,
+    })
+  }
   const waAgenda = waTarefas.filter(t => !ocultos.has(chaveWa(t)))
   // Reunião de preparação: casamentos a até 30 + 15 dias; a tarefa cai 15 dias antes do evento
   const getPreparacao = unstable_cache(
