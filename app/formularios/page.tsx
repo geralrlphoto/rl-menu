@@ -19,7 +19,7 @@ export default function FormulariosPage() {
           <p className="eyebrow">RL Photo &middot; Video &middot; Noivos</p>
           <h1 style={{ fontSize: 'clamp(42px,6vw,80px)', marginTop: '20px' }}>Formulários</h1>
           <div style={{ width: '48px', height: '1px', background: 'var(--g)', opacity: .6, marginTop: '26px' }} />
-          <p className="lead" style={{ marginTop: '22px' }}>Todos os formulários que os noivos preenchem, pela ordem em que os recebem.</p>
+          <p className="lead" style={{ marginTop: '22px' }}>Todos os formulários que os noivos preenchem, pela ordem em que os recebem, e os portais que vêem.</p>
         </header>
         <ListaFormularios />
       </div>
