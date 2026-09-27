@@ -42,6 +42,7 @@ function googleCalUrl(r: Reserva, nome: string) {
 
 export default function PreWeddingPage() {
   const { id } = useParams<{ id: string }>()
+  const demo = id === 'demo' // simulação: casal fictício, nada é gravado
   const [estado, setEstado] = useState<'carregar' | 'erro' | 'ok'>('carregar')
   const [nome, setNome] = useState('')
   const [dataEvento, setDataEvento] = useState<string | null>(null)
@@ -96,7 +97,7 @@ export default function PreWeddingPage() {
       body: JSON.stringify({ e: id, slotId, alterar: aAlterar }),
     }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
     setAEnviar(false)
-    if (d.ok) { setReserva(d.reserva); setAcabouDeMarcar(true); setAAlterar(false); setSlotId(null); setDia(null); carregar(); return }
+    if (d.ok) { setReserva(d.reserva); setAcabouDeMarcar(true); setAAlterar(false); setSlotId(null); setDia(null); if (!demo) carregar(); return }
     setAviso(d.error || 'Não foi possível marcar.')
     setSlotId(null); carregar()
   }
@@ -132,6 +133,11 @@ export default function PreWeddingPage() {
       {/* ── Marcação ── */}
       <section className="relative px-5 sm:px-10 xl:px-16 py-10 lg:py-16">
         <div className="w-full max-w-[560px] mx-auto lg:mx-0">
+          {demo && (
+            <p className="mb-6 rounded-lg border border-amber-400/30 bg-amber-400/10 px-4 py-2.5 text-xs text-amber-200">
+              Simulação: casal fictício. Nada é gravado nem enviado.
+            </p>
+          )}
           {estado === 'carregar' && <div className="h-72 rounded-2xl bg-white/[0.03] animate-pulse" />}
           {estado === 'erro' && <p className="text-white/60 italic text-xl" style={SERIF}>Este link não é válido. Falem connosco pelo WhatsApp, por favor.</p>}
 

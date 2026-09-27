@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE } from '@/lib/preparacao'
+import { sbAdmin, hojeLisboa, eventoPreparacao, fmtDataLonga, estadoLink, UUID_RE, DEMO_ID, demoPreparacao } from '@/lib/preparacao'
 
 // Público (link enviado aos noivos por WhatsApp): /prewedding/<id do evento>.
 // Os noivos escolhem dia, hora e local sugerido da sessão pré-wedding a partir da
@@ -12,6 +12,14 @@ const TIPO = 'prewedding'
 
 export async function GET(req: NextRequest) {
   const e = req.nextUrl.searchParams.get('e') ?? ''
+  // Simulação (/prewedding/demo): casal fictício, nada é gravado nem enviado
+  if (e === DEMO_ID) {
+    const demo = demoPreparacao()
+    return NextResponse.json({
+      ok: true, nome: demo.nome, dataEvento: demo.dataEvento, expirado: false, reserva: null,
+      slots: demo.slots.map(x => ({ ...x, local: 'Praia da Adraga' })),
+    })
+  }
   if (!UUID_RE.test(e)) return NextResponse.json({ error: 'Link inválido' }, { status: 400 })
   const ev = await eventoPreparacao(e)
   if (!ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })
@@ -34,6 +42,10 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const { e, slotId, alterar } = await req.json().catch(() => ({}))
+  if (e === DEMO_ID) {
+    const [data, hora] = [String(slotId ?? '').slice(5, 15), String(slotId ?? '').slice(16)]
+    return NextResponse.json({ ok: true, reserva: { data, hora, local: 'Praia da Adraga' } })
+  }
   if (!UUID_RE.test(e ?? '') || !UUID_RE.test(slotId ?? '')) {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
   }
