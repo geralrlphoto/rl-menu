@@ -56,8 +56,53 @@ export function fmtDataCurta(data: string | null | undefined): string {
 }
 
 export function parseOrcamento(v: string | null | undefined): number {
+  // Escalões do formulário: valor de referência (o topo, ou 3.000 € no último)
+  const escalao = ['Até 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €'].indexOf((v ?? '').trim())
+  if (escalao !== -1) return [2000, 2500, 3000, 3000][escalao]
   const n = parseFloat((v ?? '').toString().replace(/[^\d.,]/g, '').replace(',', '.'))
   return isNaN(n) ? 0 : n
+}
+
+// ── Qualificação automática da lead (orçamento + data) ─────────────────────
+// Escalões do formulário de nova lead. Os orçamentos antigos em texto livre
+// ("2000", "1200€", "2000-3000", "2,5 mil") também são lidos: conta o valor mais alto.
+export const ESCALOES_ORCAMENTO = ['Até 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €']
+export type Qualificacao = 'QUENTE' | 'MORNA' | 'FRIA'
+
+/* Índice do escalão (0 a 3) ou null quando não há valor (ex.: "Não sei") */
+export function escalaoOrcamento(v: string | null | undefined): number | null {
+  const t = (v ?? '').trim()
+  const exato = ESCALOES_ORCAMENTO.indexOf(t)
+  if (exato !== -1) return exato
+  const valores: number[] = []
+  for (const m of t.matchAll(/(\d+(?:[.,]\d+)?)\s*(k|mil)\b/gi)) valores.push(parseFloat(m[1].replace(',', '.')) * 1000)
+  for (const m of t.matchAll(/\d[\d.\s]*/g)) {
+    const n = Number(m[0].replace(/[.\s]/g, ''))
+    if (n >= 100) valores.push(n)
+  }
+  if (!valores.length) return null
+  const max = Math.max(...valores)
+  return max <= 2000 ? 0 : max <= 2500 ? 1 : max <= 3000 ? 2 : 3
+}
+
+/* Fria: até 2.000 € ou sem data · Quente: 2.500 €+ com data · Morna: o resto (inclui orçamento por definir) */
+export function qualificarLead(orcamento: string | null | undefined, dataCasamento: string | null | undefined): Qualificacao {
+  const e = escalaoOrcamento(orcamento)
+  if (!dataCasamento || e === 0) return 'FRIA'
+  if (e !== null && e >= 2) return 'QUENTE'
+  return 'MORNA'
+}
+
+export const QUALIFICACAO_UI: Record<Qualificacao, { icone: string; rotulo: string; classe: string }> = {
+  QUENTE: { icone: '🔥', rotulo: 'Quente', classe: 'bg-red-500/15 text-red-300 border-red-500/35' },
+  MORNA:  { icone: '🌤', rotulo: 'Morna',  classe: 'bg-amber-500/15 text-amber-200 border-amber-500/35' },
+  FRIA:   { icone: '❄️', rotulo: 'Fria',   classe: 'bg-sky-500/15 text-sky-200 border-sky-500/35' },
+}
+
+/* Orçamento para mostrar: os escalões já trazem "€"; os valores soltos ganham-no */
+export const fmtOrcamento = (v: string | null | undefined) => {
+  const t = (v ?? '').trim()
+  return !t ? '' : t.includes('€') ? t : `${t} €`
 }
 
 // Número para wa.me: só dígitos; números PT de 9 dígitos ganham o 351

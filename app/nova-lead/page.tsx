@@ -10,6 +10,7 @@
 import { useState, useEffect, useRef } from 'react'
 
 import { CSS_BRIEFING as CSS } from '../_briefing/estilo'
+import { ESCALOES_ORCAMENTO } from '@/lib/crm'
 
 // ── Opções ────────────────────────────────────────────────────────────────────
 const TIPO_EVENTO    = ['Casamento', 'Batizado', 'Casamento e Batizado']
@@ -535,8 +536,8 @@ export default function NovaLeadPage() {
                     ))}
                   </div>
                 </div>
-                <LeadInput label="Orçamento previsto (sensivelmente)" value={form.orcamento}
-                  onChange={v => set('orcamento', v)} placeholder="Ex: 2.000 a 3.000€" required />
+                <LeadSelect label="Orçamento previsto (sensivelmente)" value={form.orcamento}
+                  onChange={v => set('orcamento', v)} options={ESCALOES_ORCAMENTO} required />
               </div>
             )}
 

@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import SeloQualificacao from '@/app/components/SeloQualificacao'
+import { fmtOrcamento } from '@/lib/crm'
 
 const WHATSAPP     = 'https://wa.me/351912932768'
 const DEFAULT_HERO = 'https://portal.rlphotovideo.pt/casamentos-2028.webp'
@@ -668,7 +670,11 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       {isAdmin && (
         <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-sm border-b border-white/5">
           <a href="/crm" className="text-[10px] tracking-widest text-white/25 hover:text-white/50 transition-colors uppercase">‹ CRM</a>
-          <span className="text-[10px] tracking-widest text-white/20 uppercase">Admin · Página do Cliente</span>
+          <span className="flex items-center gap-2">
+            <span className="text-[10px] tracking-widest text-white/20 uppercase">Admin · Página do Cliente</span>
+            {contact && <SeloQualificacao orcamento={contact.orcamento} dataCasamento={contact.data_casamento} />}
+            {contact?.orcamento && <span className="text-[10px] text-white/40">{fmtOrcamento(contact.orcamento)}</span>}
+          </span>
           <div className="flex items-center gap-2">
             <button onClick={() => setEditingHero(true)}
               className="text-[10px] px-2.5 py-1 border border-white/10 rounded text-white/40 hover:text-white hover:border-white/30 transition-all uppercase tracking-wider">

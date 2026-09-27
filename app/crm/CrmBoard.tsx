@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { linkPublico } from '@/lib/site-url'
+import SeloQualificacao from '@/app/components/SeloQualificacao'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
+  fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -258,7 +259,10 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
 
       <div className="flex items-center justify-between gap-2">
         <StatusSelect value={c.status} onChange={s => onStatusChange(c.id, s)} />
-        {c.orcamento && <span className="text-gold text-xs font-semibold whitespace-nowrap">{c.orcamento} €</span>}
+        <span className="flex items-center gap-1.5">
+          <SeloQualificacao orcamento={c.orcamento} dataCasamento={c.data_casamento} />
+          {c.orcamento && <span className="text-gold text-xs font-semibold whitespace-nowrap">{fmtOrcamento(c.orcamento)}</span>}
+        </span>
       </div>
 
       {coluna === 'nova' && (
@@ -480,7 +484,8 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
             <h2 className="text-2xl font-light text-white leading-tight">{c.nome || 'Sem nome'}</h2>
             <div className="flex items-center gap-3 flex-wrap">
               <StatusSelect value={c.status} onChange={s => onStatusChange(c.id, s)} />
-              {c.orcamento && <span className="text-gold text-sm font-semibold">{c.orcamento} €</span>}
+              <SeloQualificacao orcamento={c.orcamento} dataCasamento={c.data_casamento} />
+              {c.orcamento && <span className="text-gold text-sm font-semibold">{fmtOrcamento(c.orcamento)}</span>}
             </div>
             <ContactButtons c={c} size="md" />
           </div>

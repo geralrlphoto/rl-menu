@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { qualificarLead } from '@/lib/crm'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -47,7 +48,7 @@ export async function POST(req: NextRequest) {
       num_convidados:  num_convidados ?? '',
       mensagem:        [zona_residencia ? `Zona: ${zona_residencia}` : '', mensagem ?? ''].filter(Boolean).join('\n\n'),
       status:          'Por Contactar',
-      lead_prioridade: 'Alta',
+      lead_prioridade: qualificarLead(orcamento, data_casamento), // QUENTE / MORNA / FRIA
       data_entrada:    new Date().toISOString().slice(0, 10),
     })
 

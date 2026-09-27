@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import './crm-tiles.css'
 import PropostaPicker from './PropostaPicker'
 import {
-  DROP_STATUS, colunaDe, daysSince, estadoAcao, parseOrcamento, type ColunaKey,
+  DROP_STATUS, colunaDe, daysSince, estadoAcao, parseOrcamento, fmtOrcamento, type ColunaKey,
 } from '@/lib/crm'
 import { EncerrarModal, KanbanCard, LeadDrawer, StatusSelect, type Contact } from './CrmBoard'
 
@@ -50,7 +50,7 @@ function MiniTable({ contacts, onStatusChange, onOpen, borderColor, rowHover }: 
           <div className="flex items-center justify-between gap-2">
             <StatusSelect value={c.status} onChange={s => onStatusChange(c.id, s)} className="flex-shrink-0" />
             <span className="text-white/70 text-xs font-medium whitespace-nowrap">
-              {c.orcamento ? `${c.orcamento} €` : '—'}
+              {c.orcamento ? fmtOrcamento(c.orcamento) : '—'}
             </span>
           </div>
         </div>
