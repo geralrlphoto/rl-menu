@@ -25,6 +25,7 @@ const TIPO_LABELS: Record<string, string> = {
   nova_tarefa_atribuida:    'Tarefa enviada entre membros',
   album_aprovado:           'Álbum Aprovado pelos Noivos',
   mensagem_noivos:          'Mensagem dos Noivos',
+  pagamento:                'Pagamentos',
   blog_subscriber:          'Nova Subscrição do Blog',
   nova_candidatura:         'Nova Candidatura de Recrutamento',
   video_prazo:              'Prazo de Entrega do Vídeo',
@@ -56,6 +57,7 @@ const TIPO_ICONS: Record<string, string> = {
   nova_tarefa_atribuida:    '✈',
   album_aprovado:           '✓',
   mensagem_noivos:          '💬',
+  pagamento:                '💳',
   blog_subscriber:          '✉',
   nova_candidatura:         '✦',
   video_prazo:              '🎬',
@@ -629,11 +631,13 @@ export async function GET(req: Request) {
         const msgs = Array.isArray(s.noivos_messages) ? s.noivos_messages : []
         for (const m of msgs) {
           if (!m?.id || !m?.ts) continue
+          // Pedidos de IBAN (botão Solicitar IBAN do portal) contam como Pagamentos
+          const tipoMsg = m.titulo === 'Pedido de IBAN' ? 'pagamento' : 'mensagem_noivos'
           notifications.push({
             id: `mensagem_noivos::${p.referencia}::${m.id}`,
-            tipo: 'mensagem_noivos',
-            tipo_label: TIPO_LABELS.mensagem_noivos,
-            tipo_icon: TIPO_ICONS.mensagem_noivos,
+            tipo: tipoMsg,
+            tipo_label: TIPO_LABELS[tipoMsg],
+            tipo_icon: TIPO_ICONS[tipoMsg],
             casamento_id: '',
             freelancer_id: '',
             freelancer_nome: m.nome_noivos ?? p.referencia ?? '—',
