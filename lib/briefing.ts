@@ -5,7 +5,7 @@
 export type CampoBriefing = {
   key: string
   label: string
-  tipo: 'texto' | 'longo' | 'hora' | 'opcoes' | 'simnao'
+  tipo: 'texto' | 'longo' | 'hora' | 'numero' | 'opcoes' | 'simnao'
   opcoes?: string[]
   obrigatorio: boolean
   placeholder?: string
@@ -23,6 +23,7 @@ export const CAMPOS_BRIEFING: CampoBriefing[] = [
   { key: 'local_cerimonia', label: 'Local da cerimónia', tipo: 'texto', obrigatorio: true },
   { key: 'hora_cerimonia', label: 'Hora da cerimónia', tipo: 'hora', obrigatorio: true },
   { key: 'local_festa', label: 'Local da festa', tipo: 'texto', obrigatorio: true },
+  { key: 'num_convidados', label: 'Número de convidados', tipo: 'numero', obrigatorio: true, placeholder: 'Número aproximado' },
   { key: 'celebracao', label: 'Tipo de celebração', tipo: 'opcoes', opcoes: ['Civil', 'Religiosa'], obrigatorio: true },
   { key: 'celebracao_civil', label: 'Cerimónia civil com', tipo: 'opcoes', opcoes: ['Conservatória', 'Celebrante', 'Outro'], obrigatorio: true, se: { key: 'celebracao', valor: 'Civil' } },
   { key: 'celebracao_civil_outro', label: 'Qual?', tipo: 'texto', obrigatorio: true, se: { key: 'celebracao_civil', valor: 'Outro' } },

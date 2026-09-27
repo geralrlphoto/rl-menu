@@ -102,6 +102,11 @@ export default function BriefingForm({ eventoId, info, onEnviado, batizado = fal
                   className={`${inputCls} [color-scheme:dark]`} style={{ borderColor: emFalta ? GOLD : 'rgba(255,255,255,0.1)' }} />
               )}
 
+              {c.tipo === 'numero' && (
+                <input type="text" inputMode="numeric" value={v} onChange={e => set(c.key, e.target.value.replace(/\D/g, ''))} placeholder={c.placeholder}
+                  className={inputCls} style={{ borderColor: emFalta ? GOLD : 'rgba(255,255,255,0.1)' }} />
+              )}
+
               {c.tipo === 'longo' && (
                 <textarea value={v} onChange={e => set(c.key, e.target.value)} rows={3} placeholder={c.placeholder}
                   className={`${inputCls} resize-y`} style={{ borderColor: emFalta ? GOLD : 'rgba(255,255,255,0.1)' }} />
