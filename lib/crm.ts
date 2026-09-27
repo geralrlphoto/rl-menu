@@ -57,7 +57,7 @@ export function fmtDataCurta(data: string | null | undefined): string {
 
 export function parseOrcamento(v: string | null | undefined): number {
   // Escalões do formulário: valor de referência (o topo, ou 3.000 € no último)
-  const escalao = ['Até 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €'].indexOf((v ?? '').trim())
+  const escalao = ['1.000 € a 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €'].indexOf((v ?? '').trim())
   if (escalao !== -1) return [2000, 2500, 3000, 3000][escalao]
   const n = parseFloat((v ?? '').toString().replace(/[^\d.,]/g, '').replace(',', '.'))
   return isNaN(n) ? 0 : n
@@ -66,7 +66,7 @@ export function parseOrcamento(v: string | null | undefined): number {
 // ── Qualificação automática da lead (orçamento + data) ─────────────────────
 // Escalões do formulário de nova lead. Os orçamentos antigos em texto livre
 // ("2000", "1200€", "2000-3000", "2,5 mil") também são lidos: conta o valor mais alto.
-export const ESCALOES_ORCAMENTO = ['Até 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €']
+export const ESCALOES_ORCAMENTO = ['1.000 € a 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €']
 export type Qualificacao = 'QUENTE' | 'MORNA' | 'FRIA'
 
 /* Índice do escalão (0 a 3) ou null quando não há valor (ex.: "Não sei") */
