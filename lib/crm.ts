@@ -71,7 +71,7 @@ export function whatsappLink(contato: string | null | undefined, texto?: string)
   return texto ? `https://wa.me/${n}?text=${encodeURIComponent(texto)}` : `https://wa.me/${n}`
 }
 
-const ASSINATURA = ['Com os melhores cumprimentos,', 'RL PhotoVideo', '', 'Visite-nos: www.rlphotovideo.pt']
+export const ASSINATURA = ['Com os melhores cumprimentos,', 'RL PhotoVideo', '', 'Visite-nos: www.rlphotovideo.pt']
 const ASSINATURA_ABRACO = ['Um abraço grande,', 'RL PhotoVideo', '', 'Visite-nos: www.rlphotovideo.pt']
 
 function quandoReuniao(data?: string | null, hora?: string | null): string {

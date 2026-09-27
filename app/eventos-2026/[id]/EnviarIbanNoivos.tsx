@@ -1,13 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { whatsappLink, nomeNoivos } from '@/lib/crm'
-import { linkPublico } from '@/lib/site-url'
+import { whatsappLink, nomeNoivos, ASSINATURA } from '@/lib/crm'
 
 /* Ficha › Comunicação com os Noivos › Enviar IBAN.
    Resposta ao botão "Solicitar IBAN" do portal: escreve-se só o IBAN e segue
-   pelo WhatsApp uma mensagem pronta, com a referência e o link para registar o
-   pagamento. O último IBAN usado fica guardado neste browser. */
+   pelo WhatsApp uma mensagem pronta, com a referência e a indicação para
+   registarem o pagamento no portal. O último IBAN usado fica guardado neste browser. */
 
 const CHAVE_IBAN = 'rl_iban_pagamentos'
 
@@ -28,7 +27,6 @@ export default function EnviarIbanNoivos({ e }: { e: any }) {
   const ibanLimpo = iban.replace(/\s+/g, '')
   const ibanValido = /^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/i.test(ibanLimpo)
   const ref = e.referencia ?? ''
-  const linkRegisto = linkPublico(`/registar-pagamento?ref=${encodeURIComponent(ref)}&noivos=${encodeURIComponent(nome)}${e.data_evento ? `&data=${String(e.data_evento).slice(0, 10)}` : ''}`)
 
   const texto = [
     `Olá${nome ? ' ' + nome : ''}!`,
@@ -38,11 +36,9 @@ export default function EnviarIbanNoivos({ e }: { e: any }) {
     `IBAN: ${formatarIban(ibanLimpo)}`,
     ...(ref ? [`No descritivo, indiquem a referência ${ref}.`] : []),
     '',
-    'Depois da transferência, registem o pagamento com o comprovativo neste link:',
-    linkRegisto,
+    'Depois da transferência, registem o pagamento com o comprovativo no vosso portal, na página Pagamentos, no botão Registar Pagamento.',
     '',
-    'Obrigado!',
-    'RL Photo.Video',
+    ...ASSINATURA,
   ].join('\n')
   const href = ibanValido ? whatsappLink(tel, texto) : null
 
@@ -53,7 +49,7 @@ export default function EnviarIbanNoivos({ e }: { e: any }) {
       <div>
         <span className="text-[10px] tracking-[0.3em] uppercase text-gold/85 font-semibold">Enviar IBAN aos noivos</span>
         <p className="text-white/45 text-xs mt-1 leading-relaxed">
-          Escreve o IBAN e segue pelo WhatsApp uma mensagem pronta, com a referência e o link para registarem o pagamento.
+          Escreve o IBAN e segue pelo WhatsApp uma mensagem pronta, com a referência e a indicação para registarem o pagamento no portal.
         </p>
       </div>
 
