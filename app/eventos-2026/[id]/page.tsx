@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import EventoTarefas from './EventoTarefas'
 import WhatsAppPreparacao from './WhatsAppPreparacao'
+import EnviarIbanNoivos from './EnviarIbanNoivos'
 import BriefingNoivos from './BriefingNoivos'
 import WhatsAppPreWedding from './WhatsAppPreWedding'
 
@@ -3822,6 +3823,9 @@ function AgendamentoNotasDrawer({ referencia, evento }: { referencia?: string; e
 // ─── Página principal ──────────────────────────────────────────────────────────
 export default function EventoPage() {
   const { id } = useParams<{ id: string }>()
+  // ?abrir=comunicacao (ex.: pedido de IBAN no sino) abre logo Comunicação com os Noivos
+  const [abrirComunicacao, setAbrirComunicacao] = useState(false)
+  useEffect(() => { setAbrirComunicacao(new URLSearchParams(window.location.search).get('abrir') === 'comunicacao') }, [])
   const router = useRouter()
   const [navRef, setNavRef] = useState('')
   const [navLoading, setNavLoading] = useState(false)
@@ -5411,7 +5415,8 @@ export default function EventoPage() {
         </DrawerBloco>
 
         <BlocoHeader num="VI">Comunicação com os Noivos</BlocoHeader>
-        <DrawerBloco label="Comunicação com os Noivos" sub="Notificações enviadas e mensagens dos noivos.">
+        <DrawerBloco label="Comunicação com os Noivos" sub="Notificações enviadas e mensagens dos noivos." defaultOpen={abrirComunicacao}>
+          <EnviarIbanNoivos e={e} />
           <WhatsAppPreparacao e={e} />
           <BriefingNoivos e={e} />
           {e.referencia && (

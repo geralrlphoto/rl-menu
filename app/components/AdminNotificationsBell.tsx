@@ -852,10 +852,17 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
 
             {/* Footer */}
             <div className="px-6 py-3 border-t border-white/[0.05] bg-black/30 flex items-center justify-between gap-3 flex-wrap">
-              <a href={`/freelancers/${previewNotif.freelancer_id}`}
-                className="text-[10px] tracking-[0.25em] uppercase font-bold text-gold/85 hover:text-gold transition-colors">
-                Ir à ficha do membro →
-              </a>
+              {previewNotif.tipo === 'pagamento' ? (
+                <a href={previewNotif.url}
+                  className="px-4 py-1.5 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-gold/50 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
+                  Comunicação Noivos →
+                </a>
+              ) : (
+                <a href={`/freelancers/${previewNotif.freelancer_id}`}
+                  className="text-[10px] tracking-[0.25em] uppercase font-bold text-gold/85 hover:text-gold transition-colors">
+                  Ir à ficha do membro →
+                </a>
+              )}
               <div className="flex items-center gap-2">
                 {/* Botão Reencaminhar — só para notifs de álbum */}
                 {(previewNotif.tipo === 'album_aprovado' || previewNotif.tipo === 'album' || previewNotif.tipo === 'status_album') && (

@@ -652,6 +652,16 @@ export async function GET(req: Request) {
           })
         }
       }
+      // Pedidos de IBAN abrem a ficha do evento já em Comunicação com os Noivos
+      const refsIban = [...new Set(notifications.filter(n => n.tipo === 'pagamento' && n.referencia).map(n => n.referencia as string))]
+      if (refsIban.length) {
+        const { data: evsIban } = await supabase.from('eventos_2026').select('id, referencia').in('referencia', refsIban)
+        for (const n of notifications) {
+          if (n.tipo !== 'pagamento') continue
+          const ev = (evsIban ?? []).find((e: any) => e.referencia === n.referencia)
+          if (ev) n.url = `/eventos-2026/${ev.id}?abrir=comunicacao`
+        }
+      }
     } catch (err) {
       console.warn('[admin-notifications] noivos_messages read failed:', err)
     }
