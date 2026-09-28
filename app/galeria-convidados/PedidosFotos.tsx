@@ -51,21 +51,23 @@ function msgNumeracao(p: Pedido, fotos: string[]): string {
   ].join('\n')
 }
 
-// Mensagem pré-feita para o WhatsApp: pede ao cliente que confirme (ou não)
-// as fotografias adquiridas no casamento antes de avançarmos.
+// Mensagem pré-feita para o WhatsApp: pede ao cliente que confirme se recebeu
+// (ou não) as fotografias adquiridas no casamento, com a morada de envio.
 function msgConfirmacao(p: Pedido, fotos: string[]): string {
   const primeiro = (p.nome || '').trim().split(/\s+/)[0] || ''
   const uma = fotos.length === 1
+  const morada = (p.morada || '').trim()
   return [
     `Olá${primeiro ? ' ' + primeiro : ''}, muito obrigado pela aquisição das fotografias${p.noivos ? ' do casamento ' + p.noivos.trim() : ''}.`,
     '',
-    `Antes de avançarmos, pedimos que confirme se ${uma ? 'a fotografia indicada está correta' : 'as fotografias indicadas estão corretas'}:`,
+    `Pedimos que nos confirme se já recebeu ${uma ? 'a fotografia' : 'as fotografias'} e se está tudo em ordem:`,
     '',
     `Pedido: ${p.pedido}`,
     `Nº de fotografias adquiridas: ${p.quantidade}`,
     ...(fotos.length ? [`${uma ? 'Número' : 'Números'}: ${fotos.join(', ')}`] : []),
+    ...(morada ? [`Morada de envio: ${morada}`] : []),
     '',
-    `Responda por favor com CONFIRMO se estiver tudo certo, ou indique ${uma ? 'o número' : 'os números'} que pretende alterar.`,
+    `Responda por favor com RECEBI se estiver tudo certo. Caso ainda não ${uma ? 'a' : 'as'} tenha recebido, ou a morada não esteja correta, diga-nos para resolvermos.`,
     '',
     'Obrigado,',
     'RL Photo Video',
@@ -619,7 +621,7 @@ export default function PedidosFotos() {
                   )}
                   {whatsappLink(p.telefone) && (
                     <a href={whatsappLink(p.telefone)! + '?text=' + encodeURIComponent(msgConfirmacao(p, fotos))} target="_blank" rel="noopener noreferrer"
-                      title="Pedir ao cliente que confirme as fotografias adquiridas"
+                      title="Pedir ao cliente que confirme se recebeu as fotografias e a morada"
                       className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-all hover:bg-[#25D366]/10"
                       style={{ borderColor: 'rgba(37,211,102,0.35)', color: '#4ade80' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
