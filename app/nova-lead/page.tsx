@@ -55,6 +55,68 @@ function LeadInput({ label, type = 'text', value, onChange, placeholder, require
   )
 }
 
+// Calendário próprio em PT-PT: o <input type="date"> nativo segue a língua do
+// browser/sistema e aparecia em inglês (dd/mm/yyyy). Valor continua ISO yyyy-mm-dd.
+const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+const DIAS_PT = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
+const pad2 = (n: number) => String(n).padStart(2, '0')
+
+function LeadDate({ label, value, onChange, required }: {
+  label: string; value: string; onChange: (v: string) => void; required?: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const hoje = new Date()
+  const sel = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(value + 'T00:00:00') : null
+  const [vista, setVista] = useState(() => sel ?? hoje)
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const fora = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', fora)
+    return () => document.removeEventListener('mousedown', fora)
+  }, [open])
+
+  const ano = vista.getFullYear(), mes = vista.getMonth()
+  const offset = (new Date(ano, mes, 1).getDay() + 6) % 7 // semana começa à segunda
+  const nDias = new Date(ano, mes + 1, 0).getDate()
+  const celulas: (number | null)[] = [...Array(offset).fill(null), ...Array.from({ length: nDias }, (_, i) => i + 1)]
+  const iso = (d: number) => `${ano}-${pad2(mes + 1)}-${pad2(d)}`
+  const hojeIso = `${hoje.getFullYear()}-${pad2(hoje.getMonth() + 1)}-${pad2(hoje.getDate())}`
+  const texto = sel ? `${pad2(sel.getDate())}/${pad2(sel.getMonth() + 1)}/${sel.getFullYear()}` : ''
+
+  return (
+    <div ref={ref} style={{ position: 'relative' }}>
+      <label className="flabel">{label}{required && <span className="opt"> *</span>}</label>
+      <button type="button" onClick={() => { setVista(sel ?? hoje); setOpen(o => !o) }} className="finput"
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', textAlign: 'left', cursor: 'pointer', color: texto ? undefined : 'rgba(243,237,226,.4)' }}>
+        <span>{texto || 'dd/mm/aaaa'}</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d8be93" strokeWidth="1.5"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></svg>
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', zIndex: 50, top: '100%', left: 0, marginTop: 8, width: 300, maxWidth: '100%', background: '#141210', border: '1px solid rgba(216,190,147,.3)', borderRadius: 14, padding: 16, boxShadow: '0 20px 50px rgba(0,0,0,.6)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <button type="button" aria-label="Mês anterior" onClick={() => setVista(new Date(ano, mes - 1, 1))} style={{ color: '#d8be93', padding: '4px 10px', fontSize: 18 }}>‹</button>
+            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: 20, color: '#f3ede2' }}>{MESES_PT[mes]} {ano}</span>
+            <button type="button" aria-label="Mês seguinte" onClick={() => setVista(new Date(ano, mes + 1, 1))} style={{ color: '#d8be93', padding: '4px 10px', fontSize: 18 }}>›</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, textAlign: 'center' }}>
+            {DIAS_PT.map(d => <span key={d} style={{ fontFamily: 'Space Mono, monospace', fontSize: 10, letterSpacing: '.08em', color: 'rgba(216,190,147,.7)', paddingBottom: 6 }}>{d}</span>)}
+            {celulas.map((d, i) => d === null ? <span key={'v' + i} /> : (() => {
+              const ativo = value === iso(d), eHoje = hojeIso === iso(d)
+              return (
+                <button key={d} type="button" onClick={() => { onChange(iso(d)); setOpen(false) }}
+                  style={{ height: 34, borderRadius: 999, fontSize: 14, color: ativo ? '#0b0a09' : '#f3ede2', background: ativo ? '#d8be93' : 'transparent', border: eHoje && !ativo ? '1px solid rgba(216,190,147,.5)' : '1px solid transparent', cursor: 'pointer' }}>
+                  {d}
+                </button>
+              )
+            })())}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function LeadSelect({ label, value, onChange, options, required }: {
   label: string; value: string; onChange: (v: string) => void; options: string[]; required?: boolean
 }) {
@@ -456,7 +518,7 @@ export default function NovaLeadPage() {
                   <p className="flabel">Tipo de evento <span className="opt">*</span></p>
                   <PillToggle options={TIPO_EVENTO} value={form.tipoEvento} onChange={v => set('tipoEvento', v)} />
                 </div>
-                <LeadInput label="Data do evento" type="date" value={form.dataEvento} onChange={v => set('dataEvento', v)} required />
+                <LeadDate label="Data do evento" value={form.dataEvento} onChange={v => set('dataEvento', v)} required />
                 <LeadInput label="Local do evento (cerimónia + quinta)" value={form.local} onChange={v => set('local', v)}
                   placeholder="Ex: Igreja X + Quinta Y" required />
                 <div className="space-y-2">
