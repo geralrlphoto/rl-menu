@@ -60,14 +60,31 @@ const FUNCAO_COR: Record<string, string> = {
 }
 
 // Número em formato WhatsApp: assume Portugal quando vem só com 9 dígitos
-function linkWhatsapp(contato?: string | null): string | null {
+function linkWhatsapp(contato?: string | null, texto?: string): string | null {
   const so = (contato ?? '').replace(/[^\d+]/g, '')
   if (!so) return null
   let digitos = so.replace(/\D/g, '')
   if (digitos.startsWith('00')) digitos = digitos.slice(2)
   if (digitos.length < 9) return null
   if (digitos.length === 9) digitos = `351${digitos}`
-  return `https://wa.me/${digitos}`
+  return texto ? `https://wa.me/${digitos}?text=${encodeURIComponent(texto)}` : `https://wa.me/${digitos}`
+}
+
+// Boas-vindas ao freelancer que preencheu o formulário (sem emojis: no wa.me viram "?")
+function mensagemBoasVindasFreelancer(nome?: string | null): string {
+  const primeiro = (nome ?? '').trim().split(/\s+/)[0]
+  return [
+    primeiro ? `Olá ${primeiro}, tudo bem?` : 'Olá, tudo bem?',
+    '',
+    'Bem-vindo! Recebemos o teu formulário, obrigado pelo interesse em trabalhar connosco.',
+    '',
+    'Agora vamos ver com atenção as tuas edições e o teu trabalho. Em breve entramos em contacto contigo com mais informações.',
+    '',
+    'Um abraço grande,',
+    'RL PhotoVideo',
+    '',
+    'Visite-nos: www.rlphotovideo.pt',
+  ].join('\n')
 }
 
 function funcaoStyle(f: string | null) {
@@ -470,7 +487,7 @@ export default function NovosFreelancersPage() {
 
               const cor = FUNCAO_COR[f.funcao ?? ''] ?? '#94a3b8'
               const aberto = expanded === f.id
-              const wa = linkWhatsapp(f.telefone)
+              const wa = linkWhatsapp(f.telefone, mensagemBoasVindasFreelancer(f.nome))
 
               return (
                 <div key={f.id}
