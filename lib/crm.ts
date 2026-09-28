@@ -69,7 +69,7 @@ export function parseOrcamento(v: string | null | undefined): number {
 export const ESCALOES_ORCAMENTO = ['1.000 € a 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €']
 // Escalões mostrados no /nova-lead conforme o que pretendem: fotografia E vídeo
 // ou só um dos dois (fotografia ou vídeo têm os mesmos intervalos).
-export const ESCALOES_FOTO_VIDEO = ['2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €']
+export const ESCALOES_FOTO_VIDEO = ['1.500 € a 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €']
 export const ESCALOES_UM_SERVICO = ['1.000 € a 1.500 €', '1.500 € a 2.000 €']
 export type Qualificacao ='QUENTE' | 'MORNA' | 'FRIA'
 
