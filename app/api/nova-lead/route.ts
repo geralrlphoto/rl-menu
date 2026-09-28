@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       tipo_evento,
       orcamento,
       num_convidados,
+      motivo_contacto,
       estilo,
       visao_20anos,
       trabalho_favorito,
@@ -46,7 +47,11 @@ export async function POST(req: NextRequest) {
       tipo_evento:     tipo_evento ?? '',
       orcamento:       orcamento ?? '',
       num_convidados:  num_convidados ?? '',
-      mensagem:        [zona_residencia ? `Zona: ${zona_residencia}` : '', mensagem ?? ''].filter(Boolean).join('\n\n'),
+      mensagem:        [
+        zona_residencia ? `Zona: ${zona_residencia}` : '',
+        motivo_contacto ? `Motivo do contacto: ${motivo_contacto}` : '',
+        mensagem ?? '',
+      ].filter(Boolean).join('\n\n'),
       status:          'Por Contactar',
       lead_prioridade: qualificarLead(orcamento, data_casamento), // QUENTE / MORNA / FRIA
       data_entrada:    new Date().toISOString().slice(0, 10),
@@ -68,6 +73,7 @@ export async function POST(req: NextRequest) {
       ['Como nos Encontrou',como_chegou],
       ['Serviços',          Array.isArray(servicos) ? servicos.join(', ') : servicos],
       ['Orçamento',         orcamento],
+      ['Motivo do contacto', motivo_contacto],
       ['Estilo',            estilo],
       ['Visão a 20 anos',   visao_20anos],
       ['Trabalho favorito', trabalho_favorito],

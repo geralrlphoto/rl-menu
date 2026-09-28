@@ -164,6 +164,7 @@ const FORM_DEFAULT = {
   email:            '',
   zonaResidencia:   '',
   comoChegou:       '',
+  motivoContacto:   '',
   estilo:           [] as string[],
   visao20anos:      '',
   trabalhoFavorito: '',
@@ -217,6 +218,7 @@ export default function NovaLeadPage() {
       if (!form.numConvidados.trim()) return 'O número de convidados é obrigatório.'
     }
     if (s === 3) {
+      if (!form.motivoContacto.trim()) return 'Contem-nos porque motivo nos estão a contactar.'
       if (form.estilo.length === 0) return 'Escolham pelo menos um estilo.'
       if (!form.visao20anos.trim()) return 'Contem-nos como imaginam olhar para as fotos daqui a 20 anos.'
       if (!form.trabalhoFavorito.trim()) return 'Indiquem um trabalho nosso que vos emocionou (ou escrevam "nenhum").'
@@ -273,6 +275,7 @@ export default function NovaLeadPage() {
           orcamento:         form.orcamento,
           num_convidados:    form.numConvidados,
           zona_residencia:   form.zonaResidencia,
+          motivo_contacto:   form.motivoContacto,
           estilo:            form.estilo.join(', '),
           visao_20anos:      form.visao20anos,
           trabalho_favorito: form.trabalhoFavorito,
@@ -533,6 +536,11 @@ export default function NovaLeadPage() {
             {/* ── Passo 3: perguntas que ninguém faz ─── */}
             {step === 3 && (
               <div className="space-y-11">
+                <div className="space-y-3">
+                  <p className="quest">Porque motivo nos estão a <em>contactar?</em> <span className="hint">*</span></p>
+                  <textarea value={form.motivoContacto} onChange={e => set('motivoContacto', e.target.value)} rows={3}
+                    placeholder="O que vos fez escolher-nos, o que procuram..." className="finput" />
+                </div>
                 <div className="space-y-3">
                   <div>
                     <p className="quest">Qual é o <em>vosso estilo?</em> <span className="hint">*</span></p>
