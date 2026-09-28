@@ -10,7 +10,7 @@
 import { useState, useEffect, useRef } from 'react'
 
 import { CSS_BRIEFING as CSS } from '../_briefing/estilo'
-import { ESCALOES_ORCAMENTO } from '@/lib/crm'
+import { ESCALOES_FOTO_VIDEO, ESCALOES_UM_SERVICO } from '@/lib/crm'
 
 // ── Opções ────────────────────────────────────────────────────────────────────
 const TIPO_EVENTO    = ['Casamento', 'Batizado', 'Casamento e Batizado']
@@ -206,6 +206,11 @@ export default function NovaLeadPage() {
     setForm(p => ({ ...p, [k]: v }))
   }
 
+  // Escalões de orçamento dependem do que pretendem: só um serviço (fotografia
+  // ou vídeo) ou os dois. Sem nenhum escolhido mostra os de fotografia + vídeo.
+  const umServico = form.servicos.includes('Fotografia') !== form.servicos.includes('Vídeo')
+  const escaloes = umServico ? ESCALOES_UM_SERVICO : ESCALOES_FOTO_VIDEO
+
   function validateStep(s: number): string | null {
     if (s === 0) {
       if (!form.nome.trim()) return 'Digam-nos como se chamam.'
@@ -226,7 +231,7 @@ export default function NovaLeadPage() {
     }
     if (s === 4) {
       if (form.servicos.length === 0) return 'Escolham pelo menos um serviço.'
-      if (!form.orcamento.trim()) return 'Indiquem um orçamento previsto.'
+      if (!escaloes.includes(form.orcamento)) return 'Indiquem um orçamento previsto.'
     }
     if (s === 5) {
       if (!form.contato.trim()) return 'O telemóvel é obrigatório.'
@@ -606,8 +611,8 @@ export default function NovaLeadPage() {
                     ))}
                   </div>
                 </div>
-                <LeadSelect label="Orçamento previsto (sensivelmente)" value={form.orcamento}
-                  onChange={v => set('orcamento', v)} options={ESCALOES_ORCAMENTO} required />
+                <LeadSelect label="Orçamento previsto (sensivelmente)" value={escaloes.includes(form.orcamento) ? form.orcamento : ''}
+                  onChange={v => set('orcamento', v)} options={escaloes} required />
               </div>
             )}
 

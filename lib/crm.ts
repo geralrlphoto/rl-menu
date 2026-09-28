@@ -57,8 +57,8 @@ export function fmtDataCurta(data: string | null | undefined): string {
 
 export function parseOrcamento(v: string | null | undefined): number {
   // Escalões do formulário: valor de referência (o topo, ou 3.000 € no último)
-  const escalao = ['1.000 € a 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €'].indexOf((v ?? '').trim())
-  if (escalao !== -1) return [2000, 2500, 3000, 3000][escalao]
+  const escalao = ['1.000 € a 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €', '1.000 € a 1.500 €', '1.500 € a 2.000 €'].indexOf((v ?? '').trim())
+  if (escalao !== -1) return [2000, 2500, 3000, 3000, 1500, 2000][escalao]
   const n = parseFloat((v ?? '').toString().replace(/[^\d.,]/g, '').replace(',', '.'))
   return isNaN(n) ? 0 : n
 }
@@ -67,7 +67,11 @@ export function parseOrcamento(v: string | null | undefined): number {
 // Escalões do formulário de nova lead. Os orçamentos antigos em texto livre
 // ("2000", "1200€", "2000-3000", "2,5 mil") também são lidos: conta o valor mais alto.
 export const ESCALOES_ORCAMENTO = ['1.000 € a 2.000 €', '2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €']
-export type Qualificacao = 'QUENTE' | 'MORNA' | 'FRIA'
+// Escalões mostrados no /nova-lead conforme o que pretendem: fotografia E vídeo
+// ou só um dos dois (fotografia ou vídeo têm os mesmos intervalos).
+export const ESCALOES_FOTO_VIDEO = ['2.000 € a 2.500 €', '2.500 € a 3.000 €', 'Mais de 3.000 €']
+export const ESCALOES_UM_SERVICO = ['1.000 € a 1.500 €', '1.500 € a 2.000 €']
+export type Qualificacao ='QUENTE' | 'MORNA' | 'FRIA'
 
 /* Índice do escalão (0 a 3) ou null quando não há valor (ex.: "Não sei") */
 export function escalaoOrcamento(v: string | null | undefined): number | null {
