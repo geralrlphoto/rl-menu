@@ -13,6 +13,7 @@ type Pedido = {
   origem: string | null; responsavel: string | null; metodo_pagamento: string | null; mbway_conta: string | null
   enviado_para_id: string | null; enviado_para_ids?: string[] | null; enviado_para_nome: string | null; enviado_em: string | null
   fotos_enviadas_em?: string | null; impressao_preparada_em?: string | null
+  confirmacao_pedida_em?: string | null
   envio_erro?: string | null; envio_auto?: boolean
 }
 // Números que o robô não encontrou na pasta. O motivo vem de
@@ -174,6 +175,13 @@ export default function PedidosFotos() {
     }
     setEnviandoTicket(null)
     setTimeout(() => setTicketMsg(null), 8000)
+  }
+  // Clique em "Confirmar fotos": o WhatsApp abre noutro separador e aqui fica
+  // registada a data do pedido de confirmação.
+  function marcarConfirmacao(p: Pedido) {
+    const agora = new Date().toISOString()
+    setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, confirmacao_pedida_em: agora } : x))
+    fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, confirmacao_pedida: true }) }).catch(() => {})
   }
   const [fazendoPastaId, setFazendoPastaId] = useState<string | null>(null)
   // "Fazer Pasta" (papel): repõe impressao_preparada_em a null para o robô local
@@ -594,6 +602,11 @@ export default function PedidosFotos() {
                     {p.impressao_preparada_em ? `✓ Pasta criada · ${fmtDate(p.impressao_preparada_em)}` : '⏳ Impressão por preparar'}
                   </div>
                 )}
+                {p.confirmacao_pedida_em && (
+                  <div className="mt-3 ml-2 inline-flex items-center gap-1.5 text-[11px] px-2.5 py-1 rounded-full border border-emerald-500/30 text-emerald-300/90 bg-emerald-500/10">
+                    ✓ Confirmação pedida · {fmtDate(p.confirmacao_pedida_em)}
+                  </div>
+                )}
                 <div className="flex items-center gap-2 mt-3 flex-wrap">
                   <button onClick={() => iniciarEdicao(p)}
                     className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border border-gold/30 text-gold hover:bg-gold/10 transition-all">
@@ -621,6 +634,7 @@ export default function PedidosFotos() {
                   )}
                   {whatsappLink(p.telefone) && (
                     <a href={whatsappLink(p.telefone)! + '?text=' + encodeURIComponent(msgConfirmacao(p, fotos))} target="_blank" rel="noopener noreferrer"
+                      onClick={() => marcarConfirmacao(p)}
                       title="Pedir ao cliente que confirme se recebeu as fotografias e a morada"
                       className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-all hover:bg-[#25D366]/10"
                       style={{ borderColor: 'rgba(37,211,102,0.35)', color: '#4ade80' }}>

@@ -9,7 +9,7 @@ function db() {
   )
 }
 
-const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, estado, origem, responsavel, metodo_pagamento, mbway_conta, created_at, enviado_para_id, enviado_para_nome, enviado_em, fotos_enviadas_em, impressao_preparada_em, envio_erro, envio_auto'
+const COLS = 'id, pedido, nome, email, telefone, noivos, data_casamento, morada, formato, quantidade, subtotal, portes, total, mensagem, fotografias, comprovativo_url, referencia, estado, origem, responsavel, metodo_pagamento, mbway_conta, created_at, enviado_para_id, enviado_para_nome, enviado_em, fotos_enviadas_em, impressao_preparada_em, confirmacao_pedida_em, envio_erro, envio_auto'
 
 // Primeiros nomes de "Ana e Simão" / "Filipa Paulista & João Bolota", sem
 // acentos nem maiúsculas, para comparar o que o convidado escreveu à mão.
@@ -129,6 +129,8 @@ export async function PATCH(req: NextRequest) {
   const updates: Record<string, any> = {}
   if (referencia !== undefined) updates.referencia = (typeof referencia === 'string' && referencia.trim()) ? referencia.trim() : null
   if (estado !== undefined) updates.estado = (estado === 'Entregue' || estado === 'Impressão') ? estado : 'Aguardar'
+  // Botão "Confirmar fotos" (WhatsApp): regista quando foi pedida a confirmação.
+  if (body.confirmacao_pedida === true) updates.confirmacao_pedida_em = new Date().toISOString()
   if (Object.keys(updates).length === 0) return NextResponse.json({ error: 'nada a atualizar' }, { status: 400 })
   const { error } = await supabase.from('photo_orders').update(updates).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
