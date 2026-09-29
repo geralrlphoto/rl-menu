@@ -280,6 +280,10 @@ export const DETALHES_PROPOSTAS: Record<string, { explicacao: string; oferta?: s
     explicacao: 'Um serviço completo, com fotografia e filme, que já inclui um álbum 25×25.',
     oferta: 'Se fecharem com a BASIC, oferecemos o serviço de drone, no valor de 300 €.',
   },
+  ESSENCIAL: {
+    explicacao: 'Uma cobertura mais completa do dia, com uma equipa de 4 pessoas (2 fotógrafos e 2 videógrafos) e a experiência de fazerem o pré-wedding.',
+    oferta: 'Se fecharem com a ESSENCIAL, oferecemos o serviço de drone e o pré-wedding em vídeo.',
+  },
 }
 
 export const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
