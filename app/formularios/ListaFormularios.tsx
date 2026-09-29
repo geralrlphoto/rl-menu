@@ -11,6 +11,12 @@ const NOTA_DEMO = 'Abre uma simulação com um casal fictício: nada é gravado 
 
 const FORMULARIOS: Item[] = [
   {
+    nome: 'Rollup (casamentos)',
+    quando: 'QR do rollup: para quem ainda não nos conhece',
+    abrir: [{ rotulo: 'Abrir', href: '/rollup' }],
+    qr: '/qr-rollup.png',
+  },
+  {
     nome: 'Boas-vindas',
     quando: 'Logo depois de fecharem',
     abrir: [{ rotulo: 'Abrir', href: '/boas-vindas' }],
