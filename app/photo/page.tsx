@@ -392,6 +392,33 @@ export default async function PhotoDashboard() {
     })
   }
   const waAgenda = waTarefas.filter(t => !ocultos.has(chaveWa(t)))
+  // Agradecer a escolha da proposta: tarefas "WhatsApp: agradecer X" do calendário, com a mensagem já escrita
+  const getObrigado = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('tarefas')
+        .select('id, titulo, descricao, data_prazo')
+        .ilike('titulo', 'WhatsApp: agradecer%')
+        .neq('status', 'CONCLUIDA')
+        .lte('data_prazo', semanaDias[DIAS_AGENDA - 1])
+        .limit(30)
+      return data ?? []
+    },
+    [`photo-wa-obrigado-${semanaDias[0]}`],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-reunioes-tarefa'] }
+  )
+  for (const ta of (await getObrigado()) as any[]) {
+    const d = String(ta.descricao ?? '')
+    const devido = String(ta.data_prazo)
+    const t = {
+      tipo: 'obrigado' as const, contactId: ta.id,
+      nome: String(ta.titulo).replace(/^WhatsApp:\s*agradecer\s*/i, ''),
+      contato: (d.match(/^Contacto:\s*(.+)$/m) ?? [])[1]?.trim() ?? null,
+      mensagem: (d.match(/^Mensagem:\n([\s\S]+)$/m) ?? [])[1]?.trim() ?? '',
+      reuniaoHora: null, dataCasamento: null,
+      dia: devido < hojeLx ? hojeLx : devido, atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
+    }
+    if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
+  }
   // Reunião de preparação: casamentos a até 30 + 15 dias; a tarefa cai 15 dias antes do evento
   const getPreparacao = unstable_cache(
     async () => {

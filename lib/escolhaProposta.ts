@@ -2,6 +2,7 @@
 // Cria para hoje a tarefa do calendário "WhatsApp: agradecer <nomes>", com o
 // telefone e a mensagem já escrita (o calendário mostra o botão de WhatsApp com ela).
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { revalidateTag } from 'next/cache'
 import { mensagemObrigadoEscolha, nomeNoivos, NOMES_PROPOSTAS } from '@/lib/crm'
 
 const hojeLisboa = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
@@ -29,4 +30,5 @@ export async function criarTarefaObrigado(sb: SupabaseClient, token: string, bat
     mensagemObrigadoEscolha(c.nome, batizado),
   ].filter(Boolean).join('\n')
   await sb.from('tarefas').insert({ titulo, descricao, data_prazo: hoje, hora: horaLisboa(), status: 'NOVA', evento_id: null })
+  revalidateTag('photo-reunioes-tarefa', { expire: 0 }) // aparece já na faixa do /photo
 }

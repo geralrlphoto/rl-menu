@@ -14,8 +14,8 @@ import {
    envio no histórico da lead (o mesmo registo que os botões do /crm usam). */
 
 export type WaTarefa = {
-  tipo: 'lembrete' | 'follow1' | 'follow2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw'
-  contactId: string    // id da lead no CRM; nos tipos de evento (preparação e lembretes) é o id do evento
+  tipo: 'lembrete' | 'follow1' | 'follow2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
+  contactId: string    // id da lead no CRM; nos tipos de evento (preparação e lembretes) é o id do evento; em 'obrigado' é o id da tarefa
   nome: string
   contato: string | null
   reuniaoHora: string | null
@@ -25,6 +25,7 @@ export type WaTarefa = {
   referencia?: string | null  // pré-wedding: link do portal dos noivos (Guia Pré-Wedding)
   atrasoDias: number   // > 0 quando o dia já passou
   futura: boolean      // ainda não é o dia: só informativa
+  mensagem?: string    // 'obrigado': texto já escrito na tarefa do calendário
 }
 
 const CONFIG = {
@@ -37,12 +38,14 @@ const CONFIG = {
   prewedding: { rotulo: 'Marcar pré-wedding', evento: 'prewedding_link' },
   lembrete_marcar_pw: { rotulo: 'Lembrar pré-wedding', evento: 'lembrete_marcar_prewedding' },
   vespera_pw: { rotulo: 'Pré-wedding amanhã · lembrete', evento: 'lembrete_prewedding' },
+  obrigado: { rotulo: 'Agradecer escolha', evento: '' },
 }
 
 /* Tarefas ligadas ao evento (registo em eventos_whatsapp_envios); as outras são do CRM */
 const DO_EVENTO = new Set(['preparacao', 'lembrete_briefing', 'lembrete_prep', 'prewedding', 'lembrete_marcar_pw', 'vespera_pw'])
 
 function textoDe(t: WaTarefa): string {
+  if (t.tipo === 'obrigado') return t.mensagem ?? ''
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
   if (t.tipo === 'follow1') return mensagemFollowUp(t.nome, t.dataCasamento)
   if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome, t.contactId, t.batizado)
@@ -76,7 +79,7 @@ export function WaTarefaChip({ t }: { t: WaTarefa }) {
 
   // Futura, já enviada ou sem telefone: não envia daqui (sem telefone abre a ficha)
   if (enviado || t.futura) return <div className={cls} style={estilo} title={t.futura ? 'Fica disponível neste dia' : undefined}>{corpo}</div>
-  const ficha = DO_EVENTO.has(t.tipo) ? `/eventos-2026/${t.contactId}` : `/crm/${t.contactId}`
+  const ficha = t.tipo === 'obrigado' ? '/calendario' : DO_EVENTO.has(t.tipo) ? `/eventos-2026/${t.contactId}` : `/crm/${t.contactId}`
   if (!href) return <Link href={ficha} className={cls} style={estilo} title="Sem telefone válido na ficha">{corpo}</Link>
 
   return (
@@ -84,6 +87,14 @@ export function WaTarefaChip({ t }: { t: WaTarefa }) {
       title={`Enviar ${rotulo.toLowerCase()} pelo WhatsApp`}
       onClick={() => {
         setEnviado(true)
+        // Tarefa do calendário: enviar = concluir
+        if (t.tipo === 'obrigado') {
+          fetch(`/api/tarefas/${t.contactId}`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: 'CONCLUIDA' }),
+          }).catch(() => {})
+          return
+        }
         if (DO_EVENTO.has(t.tipo)) {
           fetch('/api/evento-whatsapp', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
