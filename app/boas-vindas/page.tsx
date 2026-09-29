@@ -30,7 +30,7 @@ const MARCAS: Marca[] = [
     contactos: [
       TELEFONE,
       { rotulo: 'Email', valor: 'geral.rlmedia@gmail.com', href: 'mailto:geral.rlmedia@gmail.com' },
-      { rotulo: 'Instagram', valor: '@rl_media_audiovisual', href: 'https://www.instagram.com/rl_media_audiovisual/' },
+      { rotulo: 'Instagram', valor: '@rl_prod_audiovisual', href: 'https://www.instagram.com/rl_prod_audiovisual/' },
     ],
   },
 ]
