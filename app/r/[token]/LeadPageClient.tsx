@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { fmtOrcamento } from '@/lib/crm'
 
@@ -753,6 +754,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           </div>
         </section>
       )}
+
+      {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
+      <PorqueReuniao tipo="casamento" />
 
       {/* ── CARD REUNIÃO ── */}
       <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>

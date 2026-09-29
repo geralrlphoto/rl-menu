@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 
 const WHATSAPP      = 'https://wa.me/351912932768'
 const DEFAULT_HERO  = 'https://portal.rlphotovideo.pt/casamentos-2028.webp'
@@ -814,6 +815,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           </div>
         </section>
       )}
+
+      {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
+      <PorqueReuniao tipo="batizado" />
 
       {/* ── CARD REUNIÃO ── */}
       <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
