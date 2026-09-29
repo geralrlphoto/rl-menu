@@ -278,6 +278,8 @@ export function mensagemObrigadoEscolha(nome: string | null | undefined, batizad
     '',
     'Assim que recebermos os vossos dados para o contrato, vamos preparar o vosso Portal e entregá-lo nos próximos dias. É lá que vão acompanhar tudo o que vamos construir juntos.',
     '',
+    `Quanto à adjudicação: assim que receberem o Portal, têm 48 horas para a efetuar e reservar efetivamente ${batizado ? 'o dia do batizado' : 'o vosso dia'}. Basta irem a Pagamentos, onde está toda a informação sobre como proceder.`,
+    '',
     'Qualquer dúvida, estamos aqui para vós.',
     '',
     ...ASSINATURA_ABRACO,
