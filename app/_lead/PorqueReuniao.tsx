@@ -33,9 +33,10 @@ const PAINEIS: Record<Tipo, Painel[]> = {
   ],
 }
 
-export default function PorqueReuniao({ tipo }: { tipo: Tipo }) {
+// fotos: as do próprio portal (hero + portfólio), uma por painel; em falta, fica a de PAINEIS
+export default function PorqueReuniao({ tipo, fotos = [] }: { tipo: Tipo; fotos?: string[] }) {
   const [aberto, setAberto] = useState(0)
-  const paineis = PAINEIS[tipo]
+  const paineis = PAINEIS[tipo].map((p, i) => fotos[i] ? { ...p, img: fotos[i], pos: 'center' } : p)
 
   return (
     <section id="sec-conversa" className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)', borderTop: '1px solid var(--line-soft)' }}>

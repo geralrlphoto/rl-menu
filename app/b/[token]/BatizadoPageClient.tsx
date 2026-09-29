@@ -817,7 +817,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       )}
 
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
-      <PorqueReuniao tipo="batizado" />
+      <PorqueReuniao tipo="batizado" fotos={[heroImage === DEFAULT_HERO ? '' : heroImage, ...portfolio.photos]} />
 
       {/* ── CARD REUNIÃO ── */}
       <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
