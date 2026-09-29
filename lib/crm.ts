@@ -273,6 +273,15 @@ export const PREPARACAO_DIAS = 15
 /* Nomes das 3 propostas (casamento e batizado), pela ordem do CRM */
 export const NOMES_PROPOSTAS = ['BASIC', 'ESSENCIAL', 'SIGNATURE'] as const
 
+/* O que se diz de cada proposta no portal (as notas da proposta no CRM, se houver,
+   substituem a explicação; a oferta aparece sempre em destaque) */
+export const DETALHES_PROPOSTAS: Record<string, { explicacao: string; oferta?: string }> = {
+  BASIC: {
+    explicacao: 'Um serviço completo, com fotografia e filme, que já inclui um álbum 25×25.',
+    oferta: 'Se fecharem com a BASIC, oferecemos o serviço de drone, no valor de 300 €.',
+  },
+}
+
 export const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 
 /* Batizado: tipo_evento vem como texto JSON (["BATIZADO"]) ou array */

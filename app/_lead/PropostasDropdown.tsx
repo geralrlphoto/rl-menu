@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { NOMES_PROPOSTAS } from '@/lib/crm'
+import { NOMES_PROPOSTAS, DETALHES_PROPOSTAS } from '@/lib/crm'
 
 /* A proposta no portal da reunião (/r casamento, /b batizado), em vez do PDF:
    desdobra-se para baixo com as 3 propostas do CRM (page_content.propostas),
@@ -12,8 +12,9 @@ import { NOMES_PROPOSTAS } from '@/lib/crm'
 type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string }
 type Extra = { nome: string; valor: string }
 
+// Texto por defeito quando a proposta não tem notas nem detalhes em DETALHES_PROPOSTAS
 const EXPLICACAO = [
-  'O essencial, bem contado: a nossa qualidade no vosso dia, sem complicar.',
+  'Fotografia e filme, com a nossa qualidade no vosso dia.',
   'O equilíbrio entre fotografia e filme, para reviverem o dia de várias formas.',
   'A experiência completa: cada detalhe e cada emoção, do primeiro ao último momento.',
 ]
@@ -54,12 +55,15 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, pd
               const aberta = detalhe === p.i
               const sel = escolhida === p.i
               const base = num(p.valor)
+              const nome = p.nome || NOMES_PROPOSTAS[p.i] || `Proposta ${k + 1}`
+              const det = DETALHES_PROPOSTAS[nome.trim().toUpperCase()]
               return (
                 <article key={p.i} className={`pd-card${top ? ' top' : ''}${sel ? ' sel' : ''}`} style={{ animationDelay: `${aberto ? 150 + k * 120 : 0}ms` }}>
                   {top && <span className="pd-badge">✦ A mais escolhida</span>}
                   <span className="pd-n">Proposta {String(k + 1).padStart(2, '0')}</span>
-                  <h3 className="pd-nome">{p.nome || NOMES_PROPOSTAS[p.i] || `Proposta ${k + 1}`}</h3>
-                  <p className="pd-exp">{p.notas?.trim() || EXPLICACAO[p.i] || EXPLICACAO[0]}</p>
+                  <h3 className="pd-nome">{nome}</h3>
+                  <p className="pd-exp">{p.notas?.trim() || det?.explicacao || EXPLICACAO[p.i] || EXPLICACAO[0]}</p>
+                  {det?.oferta && <p className="pd-oferta"><b>✦ Oferta</b>{det.oferta}</p>}
 
                   <div className="pd-valor">
                     <b>{base > 0 && somaExtras > 0 ? euros(base + somaExtras) : mostraValor(p.valor)}</b>
@@ -139,6 +143,8 @@ const CSS = `
 .pd-n{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--g);}
 .pd-nome{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(30px,3vw,38px);line-height:1.05;color:var(--tx,#f3ede2);margin:10px 0 0;}
 .pd-exp{margin:12px 0 0;color:var(--tx-mid);font-size:14.5px;line-height:1.65;min-height:3.3em;}
+.pd-oferta{margin:16px 0 0;padding:12px 14px;border-radius:12px;border:1px dashed rgba(216,190,147,.55);background:rgba(216,190,147,.08);color:var(--tx,#f3ede2);font-size:14px;line-height:1.55;}
+.pd-oferta b{display:block;margin-bottom:4px;font-family:'Space Mono',monospace;font-weight:400;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);}
 .pd-valor{margin-top:20px;padding-top:18px;border-top:1px solid var(--line-soft);}
 .pd-valor b{display:block;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:40px;line-height:1;color:var(--g);}
 .pd-valor small{display:block;margin-top:6px;font-size:12px;color:var(--tx-dim);}
