@@ -730,8 +730,69 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const nomeP = proposta.nome || NOMES_PROPOSTAS[idx]
         const det = DETALHES_PROPOSTAS[(nomeP || '').trim().toUpperCase()]
         const inclui = !!incluiOpen[idx]
+        const opcoesAbertas = !!extrasOpen[idx] || (planoPossivel && !!formaOpen[idx])
+        const painelOpcoes = (<>
+              {extrasOpen[idx] && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {(content.extras_proposta || []).length > 0
+                    ? (content.extras_proposta || []).map((e, i) => (
+                        <button key={i} type="button" onClick={() => toggleExtraSlide(e.nome)}
+                          className={`pill${selectedExtras.includes(e.nome) ? ' on' : ''}`}>{e.nome}</button>
+                      ))
+                    : <p className="hint">Sem serviços extras definidos</p>}
+                </div>
+              )}
+
+              {planoPossivel && formaOpen[idx] && (
+                <div className="mt-3" style={{ border: '1px solid var(--line-soft)', borderRadius: 12, padding: 'clamp(10px,1.7vh,15px) 15px' }}>
+                  {dataEvento && (
+                    <p className="meta mb-3" style={{ color: 'var(--g)' }}>
+                      Faltam {mesesAteEvento} {mesesAteEvento === 1 ? 'mês' : 'meses'} para {nomeEvento}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="hint">{reforco.toLocaleString('pt-PT')} € em</span>
+                      <button type="button" aria-label="Menos uma prestação" disabled={nPlano <= 1}
+                        onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.max(1, nPlano - 1) }))}
+                        style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano <= 1 ? 'not-allowed' : 'pointer', opacity: nPlano <= 1 ? .3 : 1, lineHeight: 1 }}>&minus;</button>
+                      <span style={{ fontFamily: 'var(--fs)', fontSize: '26px', lineHeight: 1, color: 'var(--tx)', minWidth: '32px', textAlign: 'center' }}>{nPlano}</span>
+                      <button type="button" aria-label="Mais uma prestação" disabled={nPlano >= maxPrestacoes}
+                        onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.min(maxPrestacoes, nPlano + 1) }))}
+                        style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano >= maxPrestacoes ? 'not-allowed' : 'pointer', opacity: nPlano >= maxPrestacoes ? .3 : 1, lineHeight: 1 }}>+</button>
+                      <span className="hint">{nPlano === 1 ? 'prestação' : 'prestações'}</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <p style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(24px,3.4vh,34px)', lineHeight: 1, color: 'var(--g)' }}>
+                        {valorMes.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                      </p>
+                      <span className="hint">por mês</span>
+                    </div>
+                  </div>
+                  <p className="hint mt-3" style={{ lineHeight: 1.55 }}>
+                    {mesIni && mesFim ? `De ${mesLabel(mesIni)} a ${mesLabel(mesFim)}` : ''}
+                    {limiteLabel ? `, liquidado até ${limiteLabel}` : ''}
+                    {mesIni && mesFim ? '. ' : ''}
+                    Mínimo {MIN_PRESTACAO} € por prestação. A adjudicação e o valor final ficam de fora.
+                  </p>
+                </div>
+              )}
+        </>)
         return (
           <div className="rl-pwrap" style={{ paddingTop: isAdmin ? 216 : 180 }}>
+            {/* Computador: extras e plano de pagamento abrem num painel à esquerda */}
+            {opcoesAbertas && (
+              <aside className="rl-pleft">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="meta" style={{ color: 'var(--g)' }}>
+                    {extrasOpen[idx] && planoPossivel && formaOpen[idx] ? 'Extras e pagamento' : extrasOpen[idx] ? 'Serviços extras' : 'Plano de pagamento'}
+                  </p>
+                  <button type="button" aria-label="Fechar" className="rl-pfechar"
+                    onClick={() => { setExtrasOpen(prev => ({ ...prev, [idx]: false })); setFormaOpen(prev => ({ ...prev, [idx]: false })) }}>×</button>
+                </div>
+                {painelOpcoes}
+              </aside>
+            )}
             <div className={`rl-pcard${isAtiva ? ' top' : ''}`}>
               {isAtiva && <span className="rl-pbadge">✦ A mais escolhida</span>}
 
@@ -788,51 +849,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 )}
               </div>
 
-              {extrasOpen[idx] && (
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {(content.extras_proposta || []).length > 0
-                    ? (content.extras_proposta || []).map((e, i) => (
-                        <button key={i} type="button" onClick={() => toggleExtraSlide(e.nome)}
-                          className={`pill${selectedExtras.includes(e.nome) ? ' on' : ''}`}>{e.nome}</button>
-                      ))
-                    : <p className="hint">Sem serviços extras definidos</p>}
-                </div>
-              )}
-
-              {planoPossivel && formaOpen[idx] && (
-                <div className="mt-3" style={{ border: '1px solid var(--line-soft)', borderRadius: 12, padding: 'clamp(10px,1.7vh,15px) 15px' }}>
-                  {dataEvento && (
-                    <p className="meta mb-3" style={{ color: 'var(--g)' }}>
-                      Faltam {mesesAteEvento} {mesesAteEvento === 1 ? 'mês' : 'meses'} para {nomeEvento}
-                    </p>
-                  )}
-                  <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
-                    <div className="flex items-center gap-3">
-                      <span className="hint">{reforco.toLocaleString('pt-PT')} € em</span>
-                      <button type="button" aria-label="Menos uma prestação" disabled={nPlano <= 1}
-                        onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.max(1, nPlano - 1) }))}
-                        style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano <= 1 ? 'not-allowed' : 'pointer', opacity: nPlano <= 1 ? .3 : 1, lineHeight: 1 }}>&minus;</button>
-                      <span style={{ fontFamily: 'var(--fs)', fontSize: '26px', lineHeight: 1, color: 'var(--tx)', minWidth: '32px', textAlign: 'center' }}>{nPlano}</span>
-                      <button type="button" aria-label="Mais uma prestação" disabled={nPlano >= maxPrestacoes}
-                        onClick={() => setPlanoN(p => ({ ...p, [idx]: Math.min(maxPrestacoes, nPlano + 1) }))}
-                        style={{ width: '28px', height: '28px', border: '1px solid var(--line)', background: 'transparent', color: 'var(--g)', cursor: nPlano >= maxPrestacoes ? 'not-allowed' : 'pointer', opacity: nPlano >= maxPrestacoes ? .3 : 1, lineHeight: 1 }}>+</button>
-                      <span className="hint">{nPlano === 1 ? 'prestação' : 'prestações'}</span>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <p style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(24px,3.4vh,34px)', lineHeight: 1, color: 'var(--g)' }}>
-                        {valorMes.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
-                      </p>
-                      <span className="hint">por mês</span>
-                    </div>
-                  </div>
-                  <p className="hint mt-3" style={{ lineHeight: 1.55 }}>
-                    {mesIni && mesFim ? `De ${mesLabel(mesIni)} a ${mesLabel(mesFim)}` : ''}
-                    {limiteLabel ? `, liquidado até ${limiteLabel}` : ''}
-                    {mesIni && mesFim ? '. ' : ''}
-                    Mínimo {MIN_PRESTACAO} € por prestação. A adjudicação e o valor final ficam de fora.
-                  </p>
-                </div>
-              )}
+              {/* Telemóvel: extras e plano abrem por baixo, dentro do cartão */}
+              <div className="rl-pbaixo">{painelOpcoes}</div>
 
               <div className="mt-6">
                 {escolhida === idx ? (
@@ -1055,6 +1073,13 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         }
         /* Cartão da proposta: mesmo desenho do desdobrável do portal (PropostasDropdown) */
         .rl-pwrap { display: flex; align-items: center; justify-content: center; gap: 22px; width: 100%; height: 100%; padding-left: 16px; padding-right: 16px; padding-bottom: 44px; box-sizing: border-box }
+        .rl-pleft { width: 100%; max-width: 360px; max-height: calc(100dvh - 240px); overflow-y: auto; scrollbar-width: none; padding: 30px 26px; border-radius: 20px; border: 1px solid rgba(216,190,147,.3); background: rgba(216,190,147,.03); align-self: center; animation: rlPEntra .45s cubic-bezier(.2,.7,.2,1) both }
+        .rl-pfechar { background: none; border: none; color: var(--tx-dim); font-size: 22px; line-height: 1; cursor: pointer }
+        .rl-pfechar:hover { color: var(--g) }
+        @keyframes rlPEntra { from { opacity: 0; transform: translateX(18px) } to { opacity: 1; transform: none } }
+        @media (min-width: 901px) { .rl-pcard .rl-pbaixo { display: none } }
+        @media (max-width: 900px) { .rl-pleft { display: none } }
+        @media (max-width: 1260px) { .rl-pwrap:has(.rl-pleft) .rl-pside { display: none } }
         .rl-pside { width: 100%; max-width: 360px; max-height: calc(100dvh - 240px); overflow-y: auto; scrollbar-width: none; padding: 34px 28px; border-radius: 20px; border: 1px solid var(--line-soft); background: rgba(255,255,255,.015); align-self: center }
         .rl-pside.top { border-color: rgba(216,190,147,.3) }
         .rl-pside-t { font-family: var(--fs); font-weight: 300; font-size: 28px; line-height: 1.1; color: var(--tx); margin: 8px 0 0 }
