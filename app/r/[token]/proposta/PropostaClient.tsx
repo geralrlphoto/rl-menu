@@ -406,22 +406,22 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       )
 
       case 'about': return (
-        <div className="relative h-full w-full flex items-center justify-center px-10 sm:px-16">
+        <div className="relative h-full w-full flex flex-col items-center justify-center px-6 sm:px-16" style={{ paddingTop: 150, paddingBottom: 56 }}>
 
-          {/* Título — posição editável */}
-          <div className="absolute" style={titlePosStyle(pp.about?.titlePos || 'top-right', isAdmin)}>
-            <h2 
-              style={{ fontSize: 'clamp(2rem,4vw,3.4rem)', color: typo.titleColor, lineHeight: 1.1, whiteSpace: 'nowrap' }}>
-              {pp.about?.title || 'Sobre Nós'}
+          {/* Título: quem sou, antes do que fazemos ("Sobre nós" fica como etiqueta, editável) */}
+          <div className="text-center mb-8">
+            <p className="meta" style={{ color: typo.accentColor }}>{pp.about?.title || 'Sobre Nós'}</p>
+            <h2 style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(1.7rem,3.3vw,2.9rem)', color: typo.titleColor, lineHeight: 1.15, marginTop: 14 }}>
+              <span style={{ display: 'block' }}>Antes de vos contar o que fazemos,</span>
+              <em style={{ display: 'block', color: typo.accentColor, fontStyle: 'italic' }}>quero que saibam quem sou.</em>
             </h2>
-            <div className="mt-2" style={{ width: '36px', height: '1px', background: `${typo.accentColor}66`, marginLeft: 'auto' }} />
           </div>
 
           {/* Conteúdo: foto + vídeo — tamanhos iguais */}
           <div className="flex flex-row items-center gap-10 sm:gap-16 w-full max-w-7xl justify-center">
 
             {/* Foto vertical */}
-            <div className="relative flex-shrink-0" style={{ width: 'clamp(220px,26vw,400px)', height: 'clamp(320px,52vh,560px)' }}>
+            <div className="relative flex-shrink-0" style={{ width: 'clamp(200px,24vw,360px)', height: 'clamp(260px,44vh,480px)' }}>
               <div className="absolute -top-2 -left-2 w-6 h-6" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -top-2 -right-2 w-6 h-6" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -bottom-2 -left-2 w-6 h-6" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
@@ -435,7 +435,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             </div>
 
             {/* Vídeo — mesmo tamanho que a foto */}
-            <div className="relative flex-shrink-0" style={{ width: 'clamp(220px,26vw,400px)', height: 'clamp(320px,52vh,560px)' }}>
+            <div className="relative flex-shrink-0" style={{ width: 'clamp(200px,24vw,360px)', height: 'clamp(260px,44vh,480px)' }}>
               <div className="absolute -top-2 -left-2 w-6 h-6 z-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -top-2 -right-2 w-6 h-6 z-10" style={{ borderTop: `1px solid ${typo.accentColor}`, borderRight: `1px solid ${typo.accentColor}` }} />
               <div className="absolute -bottom-2 -left-2 w-6 h-6 z-10" style={{ borderBottom: `1px solid ${typo.accentColor}`, borderLeft: `1px solid ${typo.accentColor}` }} />
