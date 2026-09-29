@@ -3,6 +3,7 @@
 import React, { useEffect, useState, Suspense } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { prazoVideoDias } from '@/lib/crm'
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
@@ -166,6 +167,11 @@ function ContratoPageContent() {
   )
 
   const e = draft
+  // 7.1: o prazo estimado do vídeo segue o pacote (BASIC 180, ESSENCIAL 120, SIGNATURE 60 dias úteis)
+  const textoClausula = (key: string) => {
+    const t = clausulas[key] ?? DEFAULT_CLAUSULAS[key] ?? ''
+    return key === '7' ? t.replace(/(7\.1[^\n]*?)\d+( dias úteis)/, `$1${prazoVideoDias(e?.proposta)}$2`) : t
+  }
   const hoje = formatDate(new Date().toISOString().split('T')[0])
   const servicosFoto: string[] = evento.servico_foto ?? []
   const servicosVideo: string[] = evento.servico_video ?? []
@@ -390,14 +396,14 @@ function ContratoPageContent() {
               </h4>
               {editing && !readonly ? (
                 <textarea
-                  value={clausulas[key] ?? DEFAULT_CLAUSULAS[key] ?? ''}
+                  value={textoClausula(key)}
                   onChange={e => setClausulas(c => ({ ...c, [key]: e.target.value }))}
-                  rows={Math.max(4, (clausulas[key] ?? DEFAULT_CLAUSULAS[key] ?? '').split('\n').length + 2)}
+                  rows={Math.max(4, (textoClausula(key)).split('\n').length + 2)}
                   className="w-full border border-amber-300 bg-yellow-50 rounded px-3 py-2 text-sm leading-relaxed outline-none focus:border-amber-500 resize-y"
                 />
               ) : (
                 <div className="space-y-1.5 whitespace-pre-line">
-                  {(clausulas[key] ?? DEFAULT_CLAUSULAS[key] ?? '')}
+                  {(textoClausula(key))}
                 </div>
               )}
             </div>

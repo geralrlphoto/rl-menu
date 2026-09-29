@@ -292,6 +292,10 @@ export const PREPARACAO_DIAS = 15
 /* Nomes das 3 propostas (casamento e batizado), pela ordem do CRM */
 export const NOMES_PROPOSTAS = ['BASIC', 'ESSENCIAL', 'SIGNATURE'] as const
 
+/* Prazo estimado de entrega do vídeo (dias úteis) por pacote; sem pacote ou nome antigo fica 180 */
+export const PRAZO_VIDEO_DIAS: Record<string, number> = { BASIC: 180, ESSENCIAL: 120, SIGNATURE: 60 }
+export const prazoVideoDias = (proposta?: string | null) => PRAZO_VIDEO_DIAS[(proposta ?? '').trim().toUpperCase()] ?? 180
+
 /* O que se diz de cada proposta no portal (as notas da proposta no CRM, se houver,
    substituem a explicação; a oferta aparece sempre em destaque) */
 export const DETALHES_PROPOSTAS: Record<string, { explicacao: string; oferta?: string }> = {

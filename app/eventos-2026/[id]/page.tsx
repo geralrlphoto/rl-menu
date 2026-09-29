@@ -1,6 +1,6 @@
 'use client'
 
-import { NOMES_PROPOSTAS } from '@/lib/crm'
+import { NOMES_PROPOSTAS, PRAZO_VIDEO_DIAS } from '@/lib/crm'
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
@@ -2520,7 +2520,21 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
   )
 }
 
-function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; referencia?: string }) {
+function ContratoStatusSection({ eventoId, referencia, proposta, onSaved }: {
+  eventoId: string; referencia?: string; proposta?: string | null; onSaved: (field: string, val: any) => void
+}) {
+  // Pacote do contrato: é a mesma "Proposta Escolhida" do Comercial e define o prazo do vídeo (cláusula 7.1)
+  const [pacote, setPacote] = useState((proposta ?? '').trim().toUpperCase())
+  useEffect(() => { setPacote((proposta ?? '').trim().toUpperCase()) }, [proposta])
+  async function escolherPacote(p: string) {
+    const novo = pacote === p ? '' : p
+    setPacote(novo)
+    await fetch(`/api/eventos-notion/${eventoId}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ proposta: novo || null }),
+    })
+    onSaved('proposta', novo || null)
+  }
   const [disponivel, setDisponivel] = useState<boolean | null>(null)
   const [settingsBlockId, setSettingsBlockId] = useState<string | null>(null)
   const [portalSettings, setPortalSettings] = useState<any>(null)
@@ -2723,6 +2737,21 @@ function ContratoStatusSection({ eventoId, referencia }: { eventoId: string; ref
             </>
           )}
         </div>
+      </div>
+      {/* Pacote: prazo estimado de entrega do vídeo que vai para o contrato */}
+      <div className="flex flex-wrap gap-2 mt-3">
+        {Object.entries(PRAZO_VIDEO_DIAS).map(([nome, dias]) => {
+          const on = pacote === nome
+          return (
+            <label key={nome} className={`flex items-center gap-2.5 px-3 py-2 rounded-lg border cursor-pointer transition-all ${on ? 'border-gold/50 bg-gold/10' : 'border-white/10 bg-white/[0.02] hover:border-gold/30'}`}>
+              <input type="checkbox" checked={on} onChange={() => escolherPacote(nome)} className="accent-[#c9a84c] w-3.5 h-3.5" />
+              <span className="flex flex-col leading-tight">
+                <span className={`text-[11px] font-semibold tracking-[0.2em] ${on ? 'text-gold' : 'text-white/70'}`}>{nome}</span>
+                <span className="text-[10px] text-white/40">Vídeo: prazo estimado {dias} dias úteis</span>
+              </span>
+            </label>
+          )
+        })}
       </div>
     </div>
   )
@@ -4568,7 +4597,7 @@ export default function EventoPage() {
       {/* ── Contratos (movido do fundo da página para junto do Portal) ── */}
       <div className="print:hidden mt-5 bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 flex flex-col gap-4">
         <h2 className="text-[10px] tracking-[0.35em] text-gold uppercase">Contratos</h2>
-        <ContratoStatusSection eventoId={e.id} referencia={e.referencia ?? undefined} />
+        <ContratoStatusSection eventoId={e.id} referencia={e.referencia ?? undefined} proposta={e.proposta} onSaved={handleSaved} />
         <ContratoUpload eventId={e.id} contratoUrl={e.contratos} onSaved={handleSaved} />
       </div>
 
