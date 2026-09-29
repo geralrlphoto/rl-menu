@@ -6,8 +6,8 @@ import { NOMES_PROPOSTAS, DETALHES_PROPOSTAS } from '@/lib/crm'
 /* A proposta no portal da reunião (/r casamento, /b batizado), em vez do PDF:
    desdobra-se para baixo com as 3 propostas do CRM (page_content.propostas),
    cada uma com uma frase a explicá-la (as notas da proposta ou um texto por defeito),
-   o que inclui (fotografia / vídeo) ao tocar, a "mais escolhida" em destaque
-   (propostaPage.propostaAtiva) e os extras que somam ao total. O PDF fica como opção. */
+   o que inclui (fotografia / vídeo) ao tocar
+   e os extras que somam ao total. O PDF fica como opção. */
 
 type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string }
 type Extra = { nome: string; valor: string }
@@ -76,7 +76,6 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, pd
               const det = DETALHES_PROPOSTAS[nome.trim().toUpperCase()]
               return (
                 <article key={p.i} className={`pd-card${top ? ' top' : ''}${sel ? ' sel' : ''}`} style={{ animationDelay: `${aberto ? 150 + k * 120 : 0}ms` }}>
-                  {top && <span className="pd-badge">✦ A mais escolhida</span>}
                   <span className="pd-n">Proposta {String(k + 1).padStart(2, '0')}</span>
                   <h3 className="pd-nome">{nome}</h3>
                   <p className="pd-exp">{p.notas?.trim() || det?.explicacao || EXPLICACAO[p.i] || EXPLICACAO[0]}</p>
@@ -156,7 +155,6 @@ const CSS = `
 .pd-card.top{border-color:rgba(216,190,147,.55);background:radial-gradient(120% 90% at 50% 0%,rgba(216,190,147,.13),transparent 60%),rgba(255,255,255,.02);box-shadow:0 30px 70px -35px rgba(216,190,147,.5);}
 @media (min-width:861px){.pd-grid.n3 .pd-card.top{transform:translateY(-14px);} .pd-grid.n3 .pd-card.top:hover{transform:translateY(-18px);}}
 .pd-card.sel{border-color:var(--g);}
-.pd-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);white-space:nowrap;padding:6px 14px;border-radius:999px;background:var(--g);color:#0b0a08;font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;}
 .pd-n{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--g);}
 .pd-nome{font-family:'Cormorant Garamond',serif;font-weight:300;font-size:clamp(30px,3vw,38px);line-height:1.05;color:var(--tx,#f3ede2);margin:10px 0 0;}
 .pd-exp{margin:12px 0 0;color:var(--tx-mid);font-size:14.5px;line-height:1.65;min-height:3.3em;}
