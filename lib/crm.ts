@@ -284,6 +284,10 @@ export const DETALHES_PROPOSTAS: Record<string, { explicacao: string; oferta?: s
     explicacao: 'Uma cobertura mais completa do dia, com uma equipa de 4 pessoas (2 fotógrafos e 2 videógrafos) e a experiência de fazerem o pré-wedding.',
     oferta: 'Se fecharem com a ESSENCIAL, oferecemos o serviço de drone e o pré-wedding em vídeo.',
   },
+  SIGNATURE: {
+    explicacao: 'A experiência vivida no próprio dia: com o Same Day Edit, as emoções voltam a ser vividas ainda durante a festa, num dos momentos mais altos do casamento.',
+    oferta: 'Se fecharem com a SIGNATURE, oferecemos o serviço de drone e o pré-wedding em vídeo, e entregamos o vídeo final em 60 dias.',
+  },
 }
 
 export const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
