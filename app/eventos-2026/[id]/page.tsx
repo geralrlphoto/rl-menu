@@ -1,5 +1,6 @@
 'use client'
 
+import { NOMES_PROPOSTAS } from '@/lib/crm'
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
@@ -950,6 +951,8 @@ function EditSelect({ label, value, field, eventId, options, onSaved }: {
         <select value={value ?? ''} onChange={e => onChange(e.target.value)}
           className="w-full appearance-none bg-white/[0.04] border border-white/10 hover:border-gold/30 focus:border-gold/50 rounded-xl px-4 py-2.5 text-sm text-white/80 focus:outline-none transition-colors cursor-pointer pr-8">
           <option value="" className="bg-zinc-900">— Selecionar —</option>
+          {/* Valor antigo que já não está na lista (ex.: "Proposta 2") continua visível */}
+          {value && !options.includes(value) && <option value={value} className="bg-zinc-900">{value}</option>}
           {options.map(o => <option key={o} value={o} className="bg-zinc-900">{o}</option>)}
         </select>
         <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-white/30 text-xs">▾</span>
@@ -4589,7 +4592,7 @@ export default function EventoPage() {
             value={e.proposta}
             field="proposta"
             eventId={e.id}
-            options={['PROPOSTA 1', 'PROPOSTA 2', 'PROPOSTA 3']}
+            options={[...NOMES_PROPOSTAS]}
             onSaved={handleSaved}
           />
           {/* Serviços incluídos na proposta */}
