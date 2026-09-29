@@ -4,6 +4,7 @@ type Item = {
   quando: string
   abrir: Link_[]
   nota?: string // ex.: abre uma simulação ou um portal de teste
+  qr?: string // imagem do QR code que abre este item (ver e descarregar)
 }
 
 const NOTA_DEMO = 'Abre uma simulação com um casal fictício: nada é gravado nem enviado.'
@@ -13,6 +14,7 @@ const FORMULARIOS: Item[] = [
     nome: 'Boas-vindas',
     quando: 'Logo depois de fecharem',
     abrir: [{ rotulo: 'Abrir', href: '/boas-vindas' }],
+    qr: '/qr-boas-vindas.png',
   },
   {
     nome: 'Dados para Contrato CPS',
@@ -90,6 +92,12 @@ function Lista({ titulo, itens }: { titulo: string; itens: Item[] }) {
                   {l.rotulo} ↗
                 </a>
               ))}
+              {f.qr && (
+                <>
+                  <a href={f.qr} target="_blank" rel="noopener noreferrer" className="pill">QR code ↗</a>
+                  <a href={f.qr} download className="pill">Download ↓</a>
+                </>
+              )}
             </div>
           </div>
         ))}
