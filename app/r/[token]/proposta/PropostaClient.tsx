@@ -779,7 +779,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               )}
         </>)
         return (
-          <div className="rl-pwrap" style={{ paddingTop: isAdmin ? 216 : 180 }}>
+          <div className="rl-pwrap" style={{ top: 180 }}>
             {/* Computador: extras e plano de pagamento abrem num painel à esquerda */}
             {opcoesAbertas && (
               <aside className="rl-pleft">
@@ -852,7 +852,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               {/* Telemóvel: extras e plano abrem por baixo, dentro do cartão */}
               <div className="rl-pbaixo">{painelOpcoes}</div>
 
-              <div className="mt-6">
+              <div className="rl-pescolher">
                 {escolhida === idx ? (
                   <a href={`/r/${token}`} className="btn" style={{ width: '100%' }}>
                     <span className="fill" />
@@ -1072,15 +1072,16 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           .rl-notch { display: none }
         }
         /* Cartão da proposta: mesmo desenho do desdobrável do portal (PropostasDropdown) */
-        .rl-pwrap { display: flex; align-items: center; justify-content: center; gap: 22px; width: 100%; height: 100%; padding-left: 16px; padding-right: 16px; padding-bottom: 44px; box-sizing: border-box }
-        .rl-pleft { width: 100%; max-width: 360px; max-height: calc(100dvh - 240px); overflow-y: auto; scrollbar-width: none; padding: 30px 26px; border-radius: 20px; border: 1px solid rgba(216,190,147,.3); background: rgba(216,190,147,.03); align-self: center; animation: rlPEntra .45s cubic-bezier(.2,.7,.2,1) both }
+        /* Área fixa entre o logótipo (topo) e a barra dos slides (fundo): nada se sobrepõe */
+        .rl-pwrap { position: absolute; left: 0; right: 0; bottom: 72px; display: flex; align-items: center; justify-content: center; gap: 22px; padding: 0 16px; box-sizing: border-box }
+        .rl-pleft { width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; scrollbar-width: none; padding: 30px 26px; border-radius: 20px; border: 1px solid rgba(216,190,147,.3); background: rgba(216,190,147,.03); align-self: center; animation: rlPEntra .45s cubic-bezier(.2,.7,.2,1) both }
         .rl-pfechar { background: none; border: none; color: var(--tx-dim); font-size: 22px; line-height: 1; cursor: pointer }
         .rl-pfechar:hover { color: var(--g) }
         @keyframes rlPEntra { from { opacity: 0; transform: translateX(18px) } to { opacity: 1; transform: none } }
         @media (min-width: 901px) { .rl-pcard .rl-pbaixo { display: none } }
         @media (max-width: 900px) { .rl-pleft { display: none } }
         @media (max-width: 1260px) { .rl-pwrap:has(.rl-pleft) .rl-pside { display: none } }
-        .rl-pside { width: 100%; max-width: 360px; max-height: calc(100dvh - 240px); overflow-y: auto; scrollbar-width: none; padding: 34px 28px; border-radius: 20px; border: 1px solid var(--line-soft); background: rgba(255,255,255,.015); align-self: center }
+        .rl-pside { width: 100%; max-width: 360px; max-height: 100%; overflow-y: auto; scrollbar-width: none; padding: 34px 28px; border-radius: 20px; border: 1px solid var(--line-soft); background: rgba(255,255,255,.015); align-self: center }
         .rl-pside.top { border-color: rgba(216,190,147,.3) }
         .rl-pside-t { font-family: var(--fs); font-weight: 300; font-size: 28px; line-height: 1.1; color: var(--tx); margin: 8px 0 0 }
         .rl-pside ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px }
@@ -1088,8 +1089,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         .rl-pside li::before { content: ""; position: absolute; left: 0; top: .65em; width: 10px; height: 1px; background: var(--g) }
         @media (min-width: 901px) { .rl-pcard .rl-pver, .rl-pcard .rl-pinclui { display: none } }
         @media (max-width: 900px) { .rl-pside { display: none } }
-        .rl-pcard { position: relative; width: 100%; max-width: 460px; max-height: calc(100dvh - 240px); overflow-y: auto; padding: 34px 28px 26px; border-radius: 20px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)); scrollbar-width: none }
+        .rl-pcard { position: relative; width: 100%; max-width: 460px; max-height: 100%; overflow-y: auto; padding: 34px 28px 26px; border-radius: 20px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)); scrollbar-width: none }
         .rl-pcard::-webkit-scrollbar { display: none }
+        .rl-pescolher { position: sticky; bottom: -26px; margin: 22px -28px -26px; padding: 16px 28px 26px; background: linear-gradient(to top, #121110 70%, rgba(18,17,16,0)) }
         .rl-pcard.top { border-color: rgba(216,190,147,.55); background: radial-gradient(120% 90% at 50% 0%, rgba(216,190,147,.13), transparent 60%), rgba(255,255,255,.02); box-shadow: 0 30px 70px -35px rgba(216,190,147,.5) }
         .rl-pbadge { display: inline-block; margin-bottom: 14px; white-space: nowrap; padding: 6px 14px; border-radius: 999px; background: var(--g); color: #0b0a08; font-family: var(--fm); font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase }
         .rl-pnome { font-family: var(--fs); font-weight: 300; font-size: clamp(32px, 5vh, 42px); line-height: 1.05; color: var(--tx); margin: 10px 0 0 }
