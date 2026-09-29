@@ -168,13 +168,14 @@ export default async function CalendarioPage() {
   // ── 4. CRM Reuniões ───────────────────────────────────────────────────────
   const { data: reunioesRaw } = await supabase
     .from('crm_contacts')
-    .select('id, nome, reuniao_data, reuniao_hora, reuniao_tipo, reuniao_link')
+    .select('id, nome, contato, reuniao_data, reuniao_hora, reuniao_tipo, reuniao_link')
     .not('reuniao_data', 'is', null)
     .order('reuniao_data', { ascending: true })
 
   const reunioes: ReuniaoEvent[] = (reunioesRaw ?? []).map((r: any) => ({
     id:           r.id,
     nome:         r.nome ?? '—',
+    contato:      r.contato ?? null,
     reuniao_data: r.reuniao_data,
     reuniao_hora: r.reuniao_hora ?? null,
     reuniao_tipo: r.reuniao_tipo ?? null,

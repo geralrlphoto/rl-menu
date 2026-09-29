@@ -49,6 +49,7 @@ export type ReuniaoEvent = {
   reuniao_hora: string | null
   reuniao_tipo: string | null  // Presencial | Videochamada
   reuniao_link: string | null
+  contato?: string | null      // telefone do contacto CRM (WhatsApp)
   // Reuniões marcadas pelos noivos no link de preparação (não são fichas de CRM)
   origem?: 'crm' | 'preparacao' | 'prewedding'
   evento_id?: string | null
@@ -560,6 +561,60 @@ export default function CalendarClient({
     } else {
       const d = await res.json().catch(() => ({}))
       alert(d.error ?? 'Erro ao eliminar')
+    }
+  }
+
+  // ── Editar reunião CRM (remarcar dia/hora) ────────────────────────────
+  const [editingReuniao, setEditingReuniao] = useState(false)
+  const [erData, setErData]     = useState('')
+  const [erHora, setErHora]     = useState('')
+  const [erTipo, setErTipo]     = useState<'Presencial' | 'Videochamada'>('Presencial')
+  const [erLink, setErLink]     = useState('')
+  const [erSaving, setErSaving] = useState(false)
+  // Reunião CRM cuja data/hora acabou de mudar: o WhatsApp passa a avisar da nova data
+  const [reuniaoRemarcadaId, setReuniaoRemarcadaId] = useState<string | null>(null)
+
+  // Ao fechar o modal ou abrir outro item, sai do modo de edição
+  const selectedReuniaoId = selected?.kind === 'reuniao' ? selected.data.id : null
+  useEffect(() => { setEditingReuniao(false) }, [selectedReuniaoId])
+
+  function startEditReuniao(r: ReuniaoEvent) {
+    setErData(r.reuniao_data.slice(0, 10))
+    setErHora((r.reuniao_hora ?? '15:00').slice(0, 5))
+    setErTipo(r.reuniao_tipo === 'Videochamada' ? 'Videochamada' : 'Presencial')
+    setErLink(r.reuniao_link ?? (r.reuniao_tipo === 'Videochamada' ? MEET_LINK : MAPS_LINK))
+    setEditingReuniao(true)
+  }
+
+  function changeErTipo(t: 'Presencial' | 'Videochamada') {
+    setErTipo(t)
+    setErLink(prev => {
+      if (t === 'Videochamada') return (!prev || prev === MAPS_LINK) ? MEET_LINK : prev
+      return prev === MEET_LINK ? MAPS_LINK : prev
+    })
+  }
+
+  async function handleUpdateReuniao() {
+    if (selected?.kind !== 'reuniao' || !erData || !erHora) return
+    const antes = selected.data
+    setErSaving(true)
+    try {
+      const res = await fetch('/api/calendario-add/reuniao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ crm_id: antes.id, data: erData, hora: erHora, tipo: erTipo, link: erLink || null, remarcar: true }),
+      })
+      const d = await res.json().catch(() => ({}))
+      if (!res.ok) { alert(d.error ?? 'Erro ao guardar reunião'); return }
+      const atualizada: ReuniaoEvent = { ...antes, reuniao_data: erData, reuniao_hora: erHora, reuniao_tipo: erTipo, reuniao_link: erLink || null }
+      const mudou = erData !== antes.reuniao_data.slice(0, 10) || erHora !== (antes.reuniao_hora ?? '').slice(0, 5)
+      if (mudou) setReuniaoRemarcadaId(antes.id)
+      setEditingReuniao(false)
+      setSelected({ kind: 'reuniao', data: atualizada })
+      window.dispatchEvent(new CustomEvent('timeblocks-set-day', { detail: { day: erData, resync: true } }))
+      startTransition(() => router.refresh())
+    } finally {
+      setErSaving(false)
     }
   }
 
@@ -1253,6 +1308,51 @@ export default function CalendarClient({
 
             {selected.kind === 'reuniao' && (() => {
               const r = selected.data
+              const eCrm = !r.origem || r.origem === 'crm'
+              const reWaBase = eCrm ? whatsappLink(r.contato) : null
+              const remarcada = reuniaoRemarcadaId === r.id
+              const reTipo: 'Presencial' | 'Videochamada' = r.reuniao_tipo === 'Videochamada' ? 'Videochamada' : 'Presencial'
+              const reWaHref = reWaBase
+                ? `${reWaBase}?text=${encodeURIComponent(msgReuniao(r.nome, r.reuniao_data.slice(0, 10), (r.reuniao_hora ?? '').slice(0, 5), reTipo, r.reuniao_link ?? '', remarcada))}`
+                : null
+              const inputCls = 'bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40 [color-scheme:dark]'
+              if (eCrm && editingReuniao) return (
+                <>
+                  <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
+                    EDITAR REUNIÃO CRM
+                  </div>
+                  <h2 className="text-xl font-light text-white tracking-wide mb-4">{r.nome}</h2>
+                  <div className="flex gap-2 mb-3">
+                    <input type="date" value={erData} onChange={e => setErData(e.target.value)} className={`flex-1 ${inputCls}`} />
+                    <input type="time" value={erHora} onChange={e => setErHora(e.target.value)} className={`flex-1 ${inputCls}`} />
+                  </div>
+                  <div className="flex gap-2 mb-3">
+                    {(['Presencial', 'Videochamada'] as const).map(t => (
+                      <button key={t} onClick={() => changeErTipo(t)}
+                        className="flex-1 py-2 rounded-lg text-sm transition-colors"
+                        style={erTipo === t
+                          ? { background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.45)', color: '#C084FC' }
+                          : { background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.4)' }}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                  <input value={erLink} onChange={e => setErLink(e.target.value)}
+                    placeholder={erTipo === 'Videochamada' ? 'Link do Meet' : 'Local / link do Maps'}
+                    className={`w-full mb-4 ${inputCls}`} />
+                  <div className="flex gap-3">
+                    <button onClick={handleUpdateReuniao} disabled={erSaving || !erData || !erHora}
+                      className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
+                      style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                      {erSaving ? 'A guardar…' : 'Guardar'}
+                    </button>
+                    <button onClick={() => setEditingReuniao(false)}
+                      className="px-4 py-2.5 border border-white/10 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors">
+                      Cancelar
+                    </button>
+                  </div>
+                </>
+              )
               return (
                 <>
                   <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
@@ -1272,6 +1372,25 @@ export default function CalendarClient({
                       </Row>
                     )}
                   </div>
+                  {eCrm && (
+                    <div className="flex gap-2 mb-3">
+                      <button onClick={() => startEditReuniao(r)}
+                        className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                        style={{ background: 'rgba(192,132,252,0.06)', border: '1px solid rgba(192,132,252,0.25)', color: '#C084FC' }}>
+                        Editar dia e hora
+                      </button>
+                      {reWaHref && (
+                        <a href={reWaHref} target="_blank" rel="noopener noreferrer"
+                          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
+                          style={{ background: 'rgba(37,211,102,0.12)', border: '1px solid rgba(37,211,102,0.40)', color: '#25D366' }}>
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38a9.87 9.87 0 0 0 4.74 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 18.15h-.01a8.2 8.2 0 0 1-4.18-1.15l-.3-.18-3.11.82.83-3.04-.2-.31a8.17 8.17 0 0 1-1.25-4.38c0-4.54 3.7-8.23 8.24-8.23 2.2 0 4.27.86 5.82 2.41a8.18 8.18 0 0 1 2.41 5.83c0 4.54-3.7 8.23-8.25 8.23Zm4.52-6.16c-.25-.12-1.47-.72-1.69-.81-.23-.08-.39-.12-.56.13-.16.24-.64.8-.78.97-.14.16-.29.18-.54.06-.25-.13-1.05-.39-1.99-1.23-.74-.66-1.24-1.47-1.38-1.72-.15-.25-.02-.38.1-.51.11-.11.25-.29.37-.43.13-.15.17-.25.25-.41.08-.17.04-.31-.02-.43-.06-.12-.56-1.34-.76-1.84-.2-.48-.41-.42-.56-.43h-.48c-.17 0-.43.06-.66.31-.23.25-.86.85-.86 2.07 0 1.22.89 2.4 1.01 2.56.12.17 1.75 2.67 4.23 3.74.59.26 1.05.41 1.41.52.59.19 1.13.16 1.56.1.47-.07 1.47-.6 1.67-1.18.21-.58.21-1.07.15-1.18-.06-.1-.23-.16-.48-.29Z"/>
+                          </svg>
+                          {remarcada ? 'Avisar nova data' : 'WhatsApp'}
+                        </a>
+                      )}
+                    </div>
+                  )}
                   <div className="flex gap-3">
                     {r.origem && r.origem !== 'crm' ? (
                       <Link href={`/eventos-2026/${r.evento_id}`}

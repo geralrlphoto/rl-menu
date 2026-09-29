@@ -12,25 +12,31 @@ function db() {
 // Body: { crm_id: string, data: 'YYYY-MM-DD', hora: 'HH:MM', tipo?: 'Presencial' | 'Videochamada', link?: string }
 export async function POST(req: Request) {
   const body = await req.json()
-  const { crm_id, data, hora, tipo, link } = body
+  const { crm_id, data, hora, tipo, link, remarcar } = body
 
   if (!crm_id || !data || !hora) {
     return NextResponse.json({ error: 'crm_id, data e hora são obrigatórios' }, { status: 400 })
   }
 
-  const { error } = await db()
+  const supabase = db()
+  // Remarcar (editar no calendário) só muda dia/hora/tipo/link: o status do CRM fica como está
+  const { error } = await supabase
     .from('crm_contacts')
     .update({
       reuniao_data: data,
       reuniao_hora: hora,
       reuniao_tipo: tipo ?? 'Presencial',
       reuniao_link: link ?? null,
-      status: 'Reunião Agendada',
+      ...(remarcar ? {} : { status: 'Reunião Agendada' }),
       updated_at: new Date().toISOString(),
     })
     .eq('id', crm_id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // O bloco antigo nos Time Blocks sai; o novo é gerado no resync do novo dia
+  if (remarcar) await supabase.from('time_blocks').delete().eq('evento_id', crm_id)
+
   return NextResponse.json({ ok: true })
 }
 
