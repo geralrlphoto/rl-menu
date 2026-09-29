@@ -107,6 +107,8 @@ export default function Rollup() {
   const [fase, setFase] = useState<'desfocado' | 'focado' | 'disparado'>('desfocado')
   const [ponto, setPonto] = useState({ x: 50, y: 50 })
   const [flash, setFlash] = useState(0)
+  // As secções de baixo só existem depois do primeiro disparo (e ficam, mesmo com "Tirar outra")
+  const [desbloqueado, setDesbloqueado] = useState(false)
   const visor = useRef<HTMLDivElement>(null)
 
   function focar(e: React.MouseEvent<HTMLDivElement>) {
@@ -126,7 +128,7 @@ export default function Rollup() {
     somObturador()
     try { navigator.vibrate?.(35) } catch {}
     setFlash(f => f + 1)
-    setTimeout(() => setFase('disparado'), 120)
+    setTimeout(() => { setFase('disparado'); setDesbloqueado(true) }, 120)
   }
 
   // Data do casamento
@@ -200,6 +202,7 @@ export default function Rollup() {
         </div>
       </section>
 
+      {desbloqueado && <div className="desbloq">
       {/* ── 2. Rolo de filme ── */}
       <section className="rolo-sec" id="rolo">
         <div className="cab rv">
@@ -293,6 +296,7 @@ export default function Rollup() {
         <img src="/portal-noivos/mono-gold.png" alt="" />
         <div className="hint">RL Photo &middot; Video &middot; Wedding Moments</div>
       </footer>
+      </div>}
     </main>
   )
 }
@@ -427,6 +431,9 @@ const CSS = `
 @supports (animation-timeline: view()){
   .ru .rv{animation:ruSobe linear both;animation-timeline:view();animation-range:entry 0% entry 70%;}
 }
+
+/* Secções de baixo: aparecem enquanto a polaroid se revela */
+.ru .desbloq{animation:ruFade 1.2s 1.5s var(--ease) both;}
 
 @keyframes ruPisca{50%{opacity:.15}}
 @keyframes ruRespira{50%{transform:scale(1.08)}}
