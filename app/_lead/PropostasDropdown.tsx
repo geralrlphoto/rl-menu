@@ -87,7 +87,7 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, pd
                   </div>
 
                   <button type="button" className={`pd-escolher${sel ? ' on' : ''}`} onClick={() => setEscolhida(sel ? null : p.i)}>
-                    {sel ? '✓ Gostamos desta' : 'Gostamos desta'}
+                    {sel ? '✓ A nossa escolha' : 'A nossa escolha'}
                   </button>
                 </article>
               )
