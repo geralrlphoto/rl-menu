@@ -731,7 +731,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const det = DETALHES_PROPOSTAS[(nomeP || '').trim().toUpperCase()]
         const inclui = !!incluiOpen[idx]
         return (
-          <div className="flex items-center justify-center h-full w-full px-4 sm:px-8" style={{ paddingTop: 'clamp(100px,14vh,130px)', paddingBottom: 'clamp(40px,7vh,70px)' }}>
+          <div className="rl-pwrap" style={{ paddingTop: isAdmin ? 216 : 180 }}>
             <div className={`rl-pcard${isAtiva ? ' top' : ''}`}>
               {isAtiva && <span className="rl-pbadge">✦ A mais escolhida</span>}
 
@@ -848,6 +848,26 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 )}
               </div>
             </div>
+
+            {/* Ao lado (computador): o que está incluído, sempre à vista */}
+            <aside className={`rl-pside${isAtiva ? ' top' : ''}`}>
+              <p className="meta" style={{ color: 'var(--g)' }}>O que inclui</p>
+              <h4 className="rl-pside-t">{nomeP}</h4>
+              {hasAny ? (<>
+                {hasFoto && (<>
+                  <p className="meta" style={{ margin: '22px 0 10px' }}>Fotografia</p>
+                  <ul>{(proposta.servicos_foto || []).map((sv, i) => <li key={i}>{sv}</li>)}</ul>
+                </>)}
+                {hasVideo && (<>
+                  <p className="meta" style={{ margin: '22px 0 10px' }}>Filme</p>
+                  <ul>{(proposta.servicos_video || []).map((sv, i) => <li key={i}>{sv}</li>)}</ul>
+                </>)}
+                {selectedExtras.length > 0 && (<>
+                  <p className="meta" style={{ margin: '22px 0 10px' }}>Extras escolhidos</p>
+                  <ul>{selectedExtras.map((sv, i) => <li key={i}>{sv}</li>)}</ul>
+                </>)}
+              </>) : <p className="hint" style={{ marginTop: 16 }}>Serviços a definir no CRM</p>}
+            </aside>
           </div>
         )
       }
@@ -1034,7 +1054,16 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           .rl-notch { display: none }
         }
         /* Cartão da proposta: mesmo desenho do desdobrável do portal (PropostasDropdown) */
-        .rl-pcard { position: relative; width: 100%; max-width: 460px; max-height: calc(100dvh - 200px); overflow-y: auto; padding: 34px 28px 26px; border-radius: 20px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)); scrollbar-width: none }
+        .rl-pwrap { display: flex; align-items: center; justify-content: center; gap: 22px; width: 100%; height: 100%; padding-left: 16px; padding-right: 16px; padding-bottom: 44px; box-sizing: border-box }
+        .rl-pside { width: 100%; max-width: 360px; max-height: calc(100dvh - 240px); overflow-y: auto; scrollbar-width: none; padding: 34px 28px; border-radius: 20px; border: 1px solid var(--line-soft); background: rgba(255,255,255,.015); align-self: center }
+        .rl-pside.top { border-color: rgba(216,190,147,.3) }
+        .rl-pside-t { font-family: var(--fs); font-weight: 300; font-size: 28px; line-height: 1.1; color: var(--tx); margin: 8px 0 0 }
+        .rl-pside ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 9px }
+        .rl-pside li { position: relative; padding-left: 22px; font-family: var(--fd); font-weight: 300; font-size: 15px; line-height: 1.5; color: var(--tx-mid) }
+        .rl-pside li::before { content: ""; position: absolute; left: 0; top: .65em; width: 10px; height: 1px; background: var(--g) }
+        @media (min-width: 901px) { .rl-pcard .rl-pver, .rl-pcard .rl-pinclui { display: none } }
+        @media (max-width: 900px) { .rl-pside { display: none } }
+        .rl-pcard { position: relative; width: 100%; max-width: 460px; max-height: calc(100dvh - 240px); overflow-y: auto; padding: 34px 28px 26px; border-radius: 20px; border: 1px solid var(--line); background: linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.01)); scrollbar-width: none }
         .rl-pcard::-webkit-scrollbar { display: none }
         .rl-pcard.top { border-color: rgba(216,190,147,.55); background: radial-gradient(120% 90% at 50% 0%, rgba(216,190,147,.13), transparent 60%), rgba(255,255,255,.02); box-shadow: 0 30px 70px -35px rgba(216,190,147,.5) }
         .rl-pbadge { display: inline-block; margin-bottom: 14px; white-space: nowrap; padding: 6px 14px; border-radius: 999px; background: var(--g); color: #0b0a08; font-family: var(--fm); font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase }
