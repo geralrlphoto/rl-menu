@@ -21,7 +21,7 @@ const MARCAS: Marca[] = [
     nome: 'RL Photo.Video', sub: 'Fotografia · Vídeo', site: 'rlphotovideo.pt', href: 'https://rlphotovideo.pt', logo: '/portal-noivos/logo-gold.png',
     contactos: [
       TELEFONE,
-      { rotulo: 'Email', valor: 'geral@rlphotovideo.pt', href: 'mailto:geral@rlphotovideo.pt' },
+      { rotulo: 'Email', valor: 'geral.rlphoto@gmail.com', href: 'mailto:geral.rlphoto@gmail.com' },
       { rotulo: 'Instagram', valor: '@rlphoto_fotografia.video', href: 'https://www.instagram.com/rlphoto_fotografia.video/' },
     ],
   },
@@ -29,7 +29,7 @@ const MARCAS: Marca[] = [
     nome: 'RL Prod', sub: 'Produção audiovisual', site: 'rlprod.pt', href: 'https://rlprod.pt', logo: '/logo-rl-prod-branco.png',
     contactos: [
       TELEFONE,
-      { rotulo: 'Email', valor: 'geral.rlmedia@gmail.com', href: 'mailto:geral.rlmedia@gmail.com' },
+      { rotulo: 'Email', valor: 'geral.rlprod@gmail.com', href: 'mailto:geral.rlprod@gmail.com' },
       { rotulo: 'Instagram', valor: '@rl_prod_audiovisual', href: 'https://www.instagram.com/rl_prod_audiovisual/' },
     ],
   },

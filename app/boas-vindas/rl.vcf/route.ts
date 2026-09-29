@@ -7,7 +7,7 @@ const VCARD = [
   'FN:RL Photo.Video',
   'ORG:RL Photo.Video',
   'TEL;TYPE=CELL:+351912932768',
-  'EMAIL;TYPE=WORK:geral@rlphotovideo.pt',
+  'EMAIL;TYPE=WORK:geral.rlphoto@gmail.com',
   'URL:https://rlphotovideo.pt',
   'URL:https://rlprod.pt',
   'X-SOCIALPROFILE;TYPE=instagram:https://www.instagram.com/rlphoto_fotografia.video/',
