@@ -1,4 +1,4 @@
-/* Cartão de contacto (vCard) do botão "Guardar contacto" da página de boas-vindas. */
+/* Cartão de contacto (vCard) da RL Photo.Video: botão "Guardar contacto" do /rollup. */
 
 const VCARD = [
   'BEGIN:VCARD',
@@ -9,7 +9,6 @@ const VCARD = [
   'TEL;TYPE=CELL:+351912932768',
   'EMAIL;TYPE=WORK:geral.rlphoto@gmail.com',
   'URL:https://rlphotovideo.pt',
-  'URL:https://rlprod.pt',
   'X-SOCIALPROFILE;TYPE=instagram:https://www.instagram.com/rlphoto_fotografia.video/',
   'END:VCARD',
 ].join('\r\n')

@@ -1,12 +1,12 @@
 import type { Metadata } from 'next'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
-/* Boas-vindas: página aberta pelo QR code impresso.
-   Abertura em ecrã inteiro (foto + monograma + título letra a letra) e,
-   por baixo, ligar, WhatsApp, guardar contacto e as duas marcas, cada uma
-   com o seu site e os seus contactos. */
+/* Boas-vindas: página aberta pelo QR code impresso. Só RL Prod
+   (os casamentos da RL Photo.Video têm a página /rollup).
+   Abertura em ecrã inteiro (foto + logótipo + título letra a letra) e,
+   por baixo, ligar, WhatsApp, guardar contacto e a marca com o site e os contactos. */
 
-export const metadata: Metadata = { title: 'RL Photo.Video · Bem-vindos' }
+export const metadata: Metadata = { title: 'RL Prod · Bem-vindos' }
 
 const TEL = '+351912932768'
 const WHATSAPP = 'https://wa.me/351912932768'
@@ -17,14 +17,6 @@ type Marca = { nome: string; sub: string; site: string; href: string; logo: stri
 const TELEFONE: Contacto = { rotulo: 'Contacto', valor: '912 932 768', href: `tel:${TEL}` }
 
 const MARCAS: Marca[] = [
-  {
-    nome: 'RL Photo.Video', sub: 'Fotografia · Vídeo', site: 'rlphotovideo.pt', href: 'https://rlphotovideo.pt', logo: '/portal-noivos/logo-gold.png',
-    contactos: [
-      TELEFONE,
-      { rotulo: 'Email', valor: 'geral.rlphoto@gmail.com', href: 'mailto:geral.rlphoto@gmail.com' },
-      { rotulo: 'Instagram', valor: '@rlphoto_fotografia.video', href: 'https://www.instagram.com/rlphoto_fotografia.video/' },
-    ],
-  },
   {
     nome: 'RL Prod', sub: 'Produção audiovisual', site: 'rlprod.pt', href: 'https://rlprod.pt', logo: '/logo-rl-prod-branco.png',
     contactos: [
@@ -146,8 +138,8 @@ export default function BoasVindasPage() {
 
       <section className="hero">
         <div className="hero-img" aria-hidden="true" />
-        <img className="mono" src="/portal-noivos/mono-gold.png" alt="RL" />
-        <p className="eyebrow">RL Photo &middot; Video</p>
+        <img className="mono" src="/logo-rl-prod-branco.png" alt="RL Prod" style={{ width: 96, marginLeft: -48 }} />
+        <p className="eyebrow">RL Prod &middot; Audiovisual</p>
         <Titulo />
         <div className="linha" />
         <p className="frase">Que bom ter-vos por aqui.</p>
@@ -165,13 +157,13 @@ export default function BoasVindasPage() {
             <b>WhatsApp</b>
           </a>
         </div>
-        <a href="/boas-vindas/rl.vcf" className="guardar rv">
+        <a href="/boas-vindas/rlprod.vcf" className="guardar rv">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M12 4v11m0 0l-4-4m4 4l4-4M5 20h14" /></svg>
           Guardar contacto
         </a>
 
         <section className="sec">
-          <div className="sec-t rv"><h2>As nossas <em>marcas</em></h2><span className="hint">Visitem-nos</span></div>
+          <div className="sec-t rv"><h2>Visite-<em>nos</em></h2><span className="hint">RL Prod</span></div>
           <div className="marcas">
             {MARCAS.map(m => (
               <div key={m.href}>
@@ -200,8 +192,8 @@ export default function BoasVindasPage() {
 
       <footer className="fim rv">
         <p>Até <em>já.</em></p>
-        <img src="/portal-noivos/mono-gold.png" alt="" />
-        <div className="hint">RL Photo &middot; Video &middot; Wedding Moments</div>
+        <img src="/logo-rl-prod-branco.png" alt="" />
+        <div className="hint">RL Prod &middot; Produção audiovisual</div>
       </footer>
     </main>
   )

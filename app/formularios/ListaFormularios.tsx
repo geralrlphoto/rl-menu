@@ -17,8 +17,8 @@ const FORMULARIOS: Item[] = [
     qr: '/qr-rollup.png',
   },
   {
-    nome: 'Boas-vindas',
-    quando: 'Logo depois de fecharem',
+    nome: 'Boas-vindas (RL Prod)',
+    quando: 'QR da RL Prod: contactos e site da produtora',
     abrir: [{ rotulo: 'Abrir', href: '/boas-vindas' }],
     qr: '/qr-boas-vindas.png',
   },
