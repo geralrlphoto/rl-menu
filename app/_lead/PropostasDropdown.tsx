@@ -7,7 +7,7 @@ import { NOMES_PROPOSTAS, DETALHES_PROPOSTAS } from '@/lib/crm'
    desdobra-se para baixo com as 3 propostas do CRM (page_content.propostas),
    cada uma com uma frase a explicá-la (as notas da proposta ou um texto por defeito),
    o que inclui (fotografia / vídeo) ao tocar
-   e os extras que somam ao total. O PDF fica como opção. */
+   e os extras que somam ao total. */
 
 type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string }
 type Extra = { nome: string; valor: string }
@@ -23,7 +23,7 @@ const num = (v: string) => { const n = Number(String(v ?? '').replace(/[^\d,]/g,
 const euros = (n: number) => `${n.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} €`
 const mostraValor = (v: string) => num(v) > 0 ? euros(num(v)) : (v || 'Sob consulta')
 
-export default function PropostasDropdown({ aberto, propostas, extras, ativa, pdfUrl, tipo, token, isAdmin }: {
+export default function PropostasDropdown({ aberto, propostas, extras, ativa, tipo, token, isAdmin }: {
   aberto: boolean; propostas: Proposta[]; extras: Extra[]; ativa: number; pdfUrl: string | null; tipo: 'casamento' | 'batizado'
   token: string; isAdmin: boolean
 }) {
@@ -130,7 +130,6 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, pd
           {escolhida !== null && (
             <p className="pd-fim">{isAdmin ? 'Modo admin: a escolha não é gravada nem abre o contrato.' : 'Ótima escolha. Vamos ao contrato.'}</p>
           )}
-          {pdfUrl && <a className="pd-pdf" href={pdfUrl} target="_blank" rel="noopener noreferrer">Preferem em PDF? Abrir a proposta ↗</a>}
         </div>
       </div>
     </div>
@@ -184,8 +183,6 @@ const CSS = `
 .pd-chips button.on span{color:var(--g);}
 .pd-nota{text-align:center;margin-top:12px;font-size:12.5px;color:var(--tx-dim);}
 .pd-fim{text-align:center;margin-top:34px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:var(--g);animation:pdSobe .6s ease both;}
-.pd-pdf{display:block;width:max-content;margin:30px auto 0;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim);text-decoration:underline;text-underline-offset:4px;}
-.pd-pdf:hover{color:var(--g);}
 @keyframes pdSobe{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 @media (max-width:860px){
   .pd-grid.n3,.pd-grid.n2{grid-template-columns:1fr;gap:26px;}
