@@ -270,6 +270,9 @@ export function nomeNoivos(cliente?: string | null, nomeNoiva?: string | null, n
 /* Reunião de preparação do dia: ~15 dias antes do casamento (ficha do evento e /photo) */
 export const PREPARACAO_DIAS = 15
 /* Sala fixa de videochamada da RL (a mesma das reuniões do CRM) */
+/* Nomes das 3 propostas (casamento e batizado), pela ordem do CRM */
+export const NOMES_PROPOSTAS = ['BASIC', 'ESSENCIAL', 'SIGNATURE'] as const
+
 export const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 
 /* Batizado: tipo_evento vem como texto JSON (["BATIZADO"]) ou array */

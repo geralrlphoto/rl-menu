@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
 import { MOTIVOS_NAO_FECHOU, colunaDe } from '@/lib/crm'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
+import { NOMES_PROPOSTAS } from '@/lib/crm'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
@@ -208,9 +209,9 @@ export default function ClientePage() {
   ]
 
   const DEFAULT_PROPOSTAS: Proposta[] = [
-    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], valor: '' },
-    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], valor: '' },
-    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: NOMES_PROPOSTAS[0], servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: NOMES_PROPOSTAS[1], servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: NOMES_PROPOSTAS[2], servicos_foto: [], servicos_video: [], valor: '' },
   ]
   const [propostas, setPropostas] = useState<Proposta[]>(DEFAULT_PROPOSTAS)
   const [extrasGlobais, setExtrasGlobais] = useState<ExtraServico[]>([])

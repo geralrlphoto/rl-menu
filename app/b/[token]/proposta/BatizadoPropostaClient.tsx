@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_BATIZADO_CONTENT, BatizadoContent, Proposta, ExtraServico, FONTS, TITLE_SIZES, mergeBatizado } from '../BatizadoPageClient'
 import { CSS_BRIEFING } from '../../../_briefing/estilo'
+import { NOMES_PROPOSTAS } from '@/lib/crm'
 
 const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MASTER_TOKEN = 'batizado-maquete'
@@ -691,7 +692,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                 style={{ padding: 'clamp(18px,3vh,30px) clamp(20px,3vw,34px)' }}>
 
                 <div className="flex items-center justify-between gap-4 mb-5">
-                  <p className="meta" style={{ color: 'var(--g)' }}>{proposta.nome || `Proposta ${labels[idx]}`}</p>
+                  <p className="meta" style={{ color: 'var(--g)' }}>{proposta.nome || NOMES_PROPOSTAS[idx]}</p>
                   {isAtiva && (
                     <span className="meta" style={{ color: 'var(--ink)', background: 'var(--g)', padding: '4px 11px' }}>A mais escolhida</span>
                   )}
@@ -1174,7 +1175,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                       style={(pp.propostaAtiva ?? 1) === i
                         ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
                         : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {content.propostas?.[i]?.nome || `Proposta ${['1','2','3'][i]}`}
+                      {content.propostas?.[i]?.nome || NOMES_PROPOSTAS[i]}
                     </button>
                   ))}
                 </div>

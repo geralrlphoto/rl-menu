@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent, Proposta, ExtraServico, FONTS, TITLE_SIZES } from '../LeadPageClient'
 import { CSS_BRIEFING } from '../../../_briefing/estilo'
+import { NOMES_PROPOSTAS } from '@/lib/crm'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
@@ -747,7 +748,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 style={{ padding: 'clamp(18px,3vh,30px) clamp(20px,3vw,34px)' }}>
 
                 <div className="flex items-center justify-between gap-4 mb-5">
-                  <p className="meta" style={{ color: 'var(--g)' }}>{proposta.nome || `Proposta ${labels[idx]}`}</p>
+                  <p className="meta" style={{ color: 'var(--g)' }}>{proposta.nome || NOMES_PROPOSTAS[idx]}</p>
                   {isAtiva && (
                     <span className="meta" style={{ color: 'var(--ink)', background: 'var(--g)', padding: '4px 11px' }}>A mais escolhida</span>
                   )}
@@ -1296,9 +1297,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                     ['blank',  'Como imaginam o dia?'],
                     ['blank2', 'O Grande Dia'],
                     ['invest', 'Investimento'],
-                    ['pkg-0',  'Proposta 1'],
-                    ['pkg-1',  'Proposta 2'],
-                    ['pkg-2',  'Proposta 3'],
+                    ['pkg-0',  NOMES_PROPOSTAS[0]],
+                    ['pkg-1',  NOMES_PROPOSTAS[1]],
+                    ['pkg-2',  NOMES_PROPOSTAS[2]],
                     ['final',  'O que gostaram mais?'],
                     ['cta',    'Informações Gerais'],
                     ['contact','Contactos'],
@@ -1363,7 +1364,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                       style={(pp.propostaAtiva ?? 1) === i
                         ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
                         : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {content.propostas?.[i]?.nome || `Proposta ${['1','2','3'][i]}`}
+                      {content.propostas?.[i]?.nome || NOMES_PROPOSTAS[i]}
                     </button>
                   ))}
                 </div>
@@ -1374,7 +1375,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                     const sv = p?.servicos_video?.filter(Boolean) || []
                     return (
                       <div key={i} className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">{p?.nome || `Proposta ${['1','2','3'][i]}`}</p>
+                        <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">{p?.nome || NOMES_PROPOSTAS[i]}</p>
                         {sf.length > 0 && <><p className="text-[9px] text-white/20 mt-1">📷 Foto</p>{sf.map((s, j) => <p key={j} className="text-[11px] text-white/35 ml-2">◆ {s}</p>)}</>}
                         {sv.length > 0 && <><p className="text-[9px] text-white/20 mt-1">🎥 Vídeo</p>{sv.map((s, j) => <p key={j} className="text-[11px] text-white/35 ml-2">◆ {s}</p>)}</>}
                         {p?.valor && <p className="text-[11px] text-gold/60 mt-1 font-mono">{p.valor}</p>}

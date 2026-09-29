@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import type { PageContent } from '@/app/r/[token]/LeadPageClient'
+import { NOMES_PROPOSTAS } from '@/lib/crm'
 
 const GOLD = '#C9A84C'
 const DARK = '#0d0b07'
@@ -177,7 +178,7 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
                 <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 52, color: GOLD, lineHeight: 1 }}>{labels[idx]}</span>
                 <div>
                   <p style={{ margin: '0 0 3px', fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 8, letterSpacing: '0.45em', color: `${GOLD}70`, textTransform: 'uppercase' }}>Proposta</p>
-                  <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 22, color: '#ffffff', fontWeight: 300, letterSpacing: '0.04em' }}>{proposta.nome || `Proposta ${labels[idx]}`}</p>
+                  <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 22, color: '#ffffff', fontWeight: 300, letterSpacing: '0.04em' }}>{proposta.nome || NOMES_PROPOSTAS[idx]}</p>
                 </div>
               </div>
               <img src={LOGO_URL} alt="RL" style={{ height: 32, opacity: 0.65, alignSelf: 'center' }} />

@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { NOMES_PROPOSTAS } from '@/lib/crm'
 
 /* A proposta no portal da reunião (/r casamento, /b batizado), em vez do PDF:
    desdobra-se para baixo com as 3 propostas do CRM (page_content.propostas),
@@ -57,7 +58,7 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, pd
                 <article key={p.i} className={`pd-card${top ? ' top' : ''}${sel ? ' sel' : ''}`} style={{ animationDelay: `${aberto ? 150 + k * 120 : 0}ms` }}>
                   {top && <span className="pd-badge">✦ A mais escolhida</span>}
                   <span className="pd-n">Proposta {String(k + 1).padStart(2, '0')}</span>
-                  <h3 className="pd-nome">{p.nome || `Proposta ${k + 1}`}</h3>
+                  <h3 className="pd-nome">{p.nome || NOMES_PROPOSTAS[p.i] || `Proposta ${k + 1}`}</h3>
                   <p className="pd-exp">{p.notas?.trim() || EXPLICACAO[p.i] || EXPLICACAO[0]}</p>
 
                   <div className="pd-valor">

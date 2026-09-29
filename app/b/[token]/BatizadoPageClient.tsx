@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
+import { NOMES_PROPOSTAS } from '@/lib/crm'
 
 const WHATSAPP      = 'https://wa.me/351912932768'
 const DEFAULT_HERO  = 'https://portal.rlphotovideo.pt/casamentos-2028.webp'
@@ -217,9 +218,9 @@ export const DEFAULT_BATIZADO_CONTENT: BatizadoContent = {
   },
   proposta: { password: '', buttonLabel: 'Ver Proposta Criativa' },
   propostas: [
-    { nome: 'Proposta 1', servicos_foto: [], servicos_video: [], valor: '' },
-    { nome: 'Proposta 2', servicos_foto: [], servicos_video: [], valor: '' },
-    { nome: 'Proposta 3', servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: NOMES_PROPOSTAS[0], servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: NOMES_PROPOSTAS[1], servicos_foto: [], servicos_video: [], valor: '' },
+    { nome: NOMES_PROPOSTAS[2], servicos_foto: [], servicos_video: [], valor: '' },
   ],
   extras_proposta: [] as ExtraServico[],
   propostaPage: {
