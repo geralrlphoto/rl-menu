@@ -3,23 +3,36 @@ import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
 /* Boas-vindas: página aberta pelo QR code impresso.
    Abertura em ecrã inteiro (foto + monograma + título letra a letra) e,
-   por baixo, todas as ligações da RL: ligar, WhatsApp, guardar contacto,
-   email, Instagram e os sites das duas marcas. */
+   por baixo, ligar, WhatsApp, guardar contacto e as duas marcas, cada uma
+   com o seu site e os seus contactos. */
 
 export const metadata: Metadata = { title: 'RL Photo.Video · Bem-vindos' }
 
 const TEL = '+351912932768'
 const WHATSAPP = 'https://wa.me/351912932768'
 
-const CONTACTOS = [
-  { rotulo: 'Email', valor: 'geral@rlphotovideo.pt', href: 'mailto:geral@rlphotovideo.pt' },
-  { rotulo: 'Telefone', valor: '912 932 768', href: `tel:${TEL}` },
-  { rotulo: 'Instagram', valor: '@rlphoto_fotografia.video', href: 'https://www.instagram.com/rlphoto_fotografia.video/' },
-]
+type Contacto = { rotulo: string; valor: string; href: string }
+type Marca = { nome: string; sub: string; site: string; href: string; logo: string; contactos: Contacto[] }
 
-const MARCAS = [
-  { nome: 'RL Photo.Video', sub: 'Fotografia · Vídeo', site: 'rlphotovideo.pt', href: 'https://rlphotovideo.pt', logo: '/portal-noivos/logo-gold.png' },
-  { nome: 'RL Prod', sub: 'Produção audiovisual', site: 'rlprod.pt', href: 'https://rlprod.pt', logo: '/logo-rl-prod-branco.png' },
+const TELEFONE: Contacto = { rotulo: 'Contacto', valor: '912 932 768', href: `tel:${TEL}` }
+
+const MARCAS: Marca[] = [
+  {
+    nome: 'RL Photo.Video', sub: 'Fotografia · Vídeo', site: 'rlphotovideo.pt', href: 'https://rlphotovideo.pt', logo: '/portal-noivos/logo-gold.png',
+    contactos: [
+      TELEFONE,
+      { rotulo: 'Email', valor: 'geral@rlphotovideo.pt', href: 'mailto:geral@rlphotovideo.pt' },
+      { rotulo: 'Instagram', valor: '@rlphoto_fotografia.video', href: 'https://www.instagram.com/rlphoto_fotografia.video/' },
+    ],
+  },
+  {
+    nome: 'RL Prod', sub: 'Produção audiovisual', site: 'rlprod.pt', href: 'https://rlprod.pt', logo: '/logo-rl-prod-branco.png',
+    contactos: [
+      TELEFONE,
+      { rotulo: 'Email', valor: 'geral.rlmedia@gmail.com', href: 'mailto:geral.rlmedia@gmail.com' },
+      { rotulo: 'Instagram', valor: '@rl_media_audiovisual', href: 'https://www.instagram.com/rl_media_audiovisual/' },
+    ],
+  },
 ]
 
 const externo = { target: '_blank', rel: 'noopener noreferrer' }
@@ -28,9 +41,10 @@ const CSS = `
 .bv{overflow-x:hidden;}
 /* ── Abertura ── */
 .bv .hero{position:relative;height:100svh;min-height:580px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;padding:0 20px clamp(40px,8vh,72px);}
-.bv .hero-img{position:absolute;inset:0;background:url('/eventos-hero-2026.webp') center 30%/cover no-repeat;transform-origin:50% 40%;animation:bvKen 16s cubic-bezier(.2,.6,.2,1) both;}
+.bv .hero-img{position:absolute;inset:0;background:url('/boas-vindas-camera.webp') 40% center/cover no-repeat;transform-origin:40% 50%;animation:bvKen 16s cubic-bezier(.2,.6,.2,1) both;}
+@media (max-width:700px){.bv .hero-img{background-image:url('/boas-vindas-camera-m.webp');background-position:center;top:-26%;bottom:auto;height:126%;}}
 .bv .hero::after{content:"";position:absolute;inset:0;background:
-  linear-gradient(180deg,rgba(11,10,8,.55) 0%,rgba(11,10,8,.05) 28%,rgba(11,10,8,.25) 55%,rgba(11,10,8,.92) 82%,var(--ink) 100%);}
+  linear-gradient(180deg,rgba(11,10,8,.35) 0%,rgba(11,10,8,0) 25%,rgba(11,10,8,.1) 52%,rgba(11,10,8,.9) 80%,var(--ink) 100%);}
 .bv .hero > *:not(.hero-img){position:relative;z-index:2;}
 .bv .mono{position:absolute!important;top:clamp(28px,6vh,56px);left:50%;width:54px;margin-left:-27px;opacity:0;animation:bvFade 1.6s .3s var(--ease) forwards;filter:drop-shadow(0 0 18px rgba(216,190,147,.35));}
 .bv .titulo{font-family:var(--fs);font-weight:300;font-size:clamp(64px,19vw,150px);line-height:.9;letter-spacing:-.02em;color:var(--tx);margin:18px 0 0;}
@@ -73,7 +87,9 @@ const CSS = `
 .bv .row:hover .s,.bv .row:hover .n{color:var(--g);}
 .bv .row:hover .s{transform:translate(3px,-3px);}
 
-.bv .marcas{display:grid;gap:14px;}
+.bv .marcas{display:grid;gap:clamp(40px,7vh,56px);}
+.bv .marca-ct{margin-top:6px;padding:0 4px;}
+.bv .marca-ct .row:first-child{border-top:none;}
 .bv .marca{position:relative;display:flex;align-items:center;gap:20px;padding:22px;border-radius:16px;text-decoration:none;overflow:hidden;
   background:radial-gradient(120% 140% at 0% 0%,rgba(216,190,147,.10),transparent 55%),var(--ink-2);border:1px solid var(--line-soft);transition:.5s var(--ease);}
 .bv .marca::before{content:"";position:absolute;inset:-1px;border-radius:16px;padding:1px;background:linear-gradient(120deg,transparent 30%,var(--g),transparent 70%);background-size:250% 100%;
@@ -155,30 +171,28 @@ export default function BoasVindasPage() {
         </a>
 
         <section className="sec">
-          <div className="sec-t rv"><h2>Falem <em>connosco</em></h2><span className="hint">Sempre por perto</span></div>
-          <nav>
-            {CONTACTOS.map((c, i) => (
-              <a key={c.href} href={c.href} className="row rv" {...(c.href.startsWith('http') ? externo : {})}>
-                <span className="n">{String(i + 1).padStart(2, '0')}</span>
-                <span className="t"><span className="r">{c.rotulo}</span><span className="v">{c.valor}</span></span>
-                <Seta />
-              </a>
-            ))}
-          </nav>
-        </section>
-
-        <section className="sec">
           <div className="sec-t rv"><h2>As nossas <em>marcas</em></h2><span className="hint">Visitem-nos</span></div>
           <div className="marcas">
             {MARCAS.map(m => (
-              <a key={m.href} href={m.href} className="marca rv" {...externo}>
-                <span className="lg"><img src={m.logo} alt="" /></span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span className="nm" style={{ display: 'block' }}>{m.nome}</span>
-                  <span className="sb" style={{ display: 'block' }}>{m.sub}</span>
-                  <span className="st" style={{ display: 'block' }}>{m.site} ↗</span>
-                </span>
-              </a>
+              <div key={m.href}>
+                <a href={m.href} className="marca rv" {...externo}>
+                  <span className="lg"><img src={m.logo} alt="" /></span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span className="nm" style={{ display: 'block' }}>{m.nome}</span>
+                    <span className="sb" style={{ display: 'block' }}>{m.sub}</span>
+                    <span className="st" style={{ display: 'block' }}>{m.site} ↗</span>
+                  </span>
+                </a>
+                <nav className="marca-ct">
+                  {m.contactos.map((c, i) => (
+                    <a key={c.href} href={c.href} className="row rv" {...(c.href.startsWith('http') ? externo : {})}>
+                      <span className="n">{String(i + 1).padStart(2, '0')}</span>
+                      <span className="t"><span className="r">{c.rotulo}</span><span className="v">{c.valor}</span></span>
+                      <Seta />
+                    </a>
+                  ))}
+                </nav>
+              </div>
             ))}
           </div>
         </section>
