@@ -28,7 +28,6 @@ export async function POST(req: Request) {
       reuniao_tipo: tipo ?? 'Presencial',
       reuniao_link: link ?? null,
       ...(remarcar ? {} : { status: 'Reunião Agendada' }),
-      updated_at: new Date().toISOString(),
     })
     .eq('id', crm_id)
 
@@ -57,7 +56,6 @@ export async function DELETE(req: Request) {
       reuniao_hora: null,
       reuniao_tipo: null,
       reuniao_link: null,
-      updated_at: new Date().toISOString(),
     })
     .eq('id', crmId)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
