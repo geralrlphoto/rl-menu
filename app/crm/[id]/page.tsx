@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
 import { MOTIVOS_NAO_FECHOU, colunaDe } from '@/lib/crm'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
+import { rotuloFase, rotuloDecisao, type Respostas } from '@/lib/qualificacao'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
@@ -467,6 +468,32 @@ export default function ClientePage() {
       <div className="h-px bg-gold/20 mb-8" />
 
       <div className="flex flex-col gap-6">
+
+        {/* Respostas do bloco "Preparem a reunião" do portal (só leitura) */}
+        {(() => {
+          const q = (form as unknown as { qualificacao?: Respostas | null }).qualificacao
+          if (!q) return null
+          const tipo = /batiz/i.test(form.tipo_evento ?? '') && !/casam/i.test(form.tipo_evento ?? '') ? 'batizado' : 'casamento'
+          const linhas: [string, string | undefined][] = [
+            ['Em que ponto', rotuloFase(tipo, q.fase)],
+            ['Decisão', rotuloDecisao(q.decisao)],
+            ['Momentos', q.momentos?.join(', ')],
+            ['Valorizam', q.valorizam?.join(', ')],
+            ['Sobre eles', q.historia],
+          ]
+          return (
+            <div className="bg-gold/[0.04] border border-gold/25 rounded-2xl p-6 flex flex-col gap-3">
+              <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Preparem a reunião · respostas do portal</h2>
+              {linhas.filter(([, v]) => v).map(([k, v]) => (
+                <div key={k} className="grid grid-cols-[110px_1fr] gap-3 text-sm">
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-white/35 pt-0.5">{k}</span>
+                  <span className="text-white/85 whitespace-pre-line">{v}</span>
+                </div>
+              ))}
+              {form.qualificacao_em && <p className="text-[10px] tracking-widest text-white/25 uppercase mt-1">Respondido a {new Date(form.qualificacao_em).toLocaleDateString('pt-PT')}</p>}
+            </div>
+          )
+        })()}
 
         {/* Dados Pessoais */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">

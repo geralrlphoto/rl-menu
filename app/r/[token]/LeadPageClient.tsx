@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import PrepararReuniao from '@/app/_lead/PrepararReuniao'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { fmtOrcamento } from '@/lib/crm'
 
@@ -918,6 +919,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         </div>
         {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
       </section>
+
+      {/* ── PREPAREM A REUNIÃO (qualificação sem falar de valores) ── */}
+      <PrepararReuniao token={token} tipo="casamento" isAdmin={isAdmin} />
 
       {/* ── VÍDEO ── */}
       {(video.urls.some(u => u) || isAdmin) && (

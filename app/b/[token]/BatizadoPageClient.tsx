@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import PrepararReuniao from '@/app/_lead/PrepararReuniao'
 
 const WHATSAPP      = 'https://wa.me/351912932768'
 const DEFAULT_HERO  = 'https://portal.rlphotovideo.pt/casamentos-2028.webp'
@@ -970,6 +971,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         </div>
         {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
       </section>
+
+      {/* ── PREPAREM A REUNIÃO (qualificação sem falar de valores) ── */}
+      <PrepararReuniao token={token} tipo="batizado" isAdmin={isAdmin} />
 
       {/* ── VÍDEO ── */}
       {(video.urls.some(u => u) || isAdmin) && (
