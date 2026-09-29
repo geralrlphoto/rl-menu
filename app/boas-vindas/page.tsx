@@ -18,11 +18,11 @@ const LIGACOES: Ligacao[] = [
 ]
 
 const CSS_LIGACOES = `
-.nlead .lig{display:flex;align-items:center;gap:18px;padding:20px 22px;border:1px solid var(--line-soft);border-radius:12px;
+.nlead .lig{display:flex;align-items:center;gap:14px;padding:20px 18px;border:1px solid var(--line-soft);border-radius:12px;
   text-decoration:none;transition:.4s var(--ease);}
 .nlead .lig:hover{border-color:var(--g);background:rgba(216,190,147,.05);}
-.nlead .lig .r{font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);width:92px;flex:none;}
-.nlead .lig .v{font-family:var(--fd);font-weight:300;font-size:18px;color:var(--tx);flex:1;min-width:0;overflow-wrap:anywhere;}
+.nlead .lig .r{font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);width:84px;flex:none;}
+.nlead .lig .v{font-family:var(--fd);font-weight:300;font-size:clamp(15px,4.2vw,18px);color:var(--tx);flex:1;min-width:0;overflow-wrap:anywhere;}
 .nlead .lig .s{color:var(--tx-dim);transition:.4s var(--ease);}
 .nlead .lig:hover .s{color:var(--g);transform:translateX(3px);}
 `
