@@ -257,6 +257,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/registar-pagamento') ||
     pathname.startsWith('/boas-vindas') ||
     pathname.startsWith('/rollup') ||
+    pathname.startsWith('/api/rollup-reuniao') ||
     pathname.startsWith('/api/registar-pagamento-noivos') ||
     pathname.startsWith('/api/fotos-auto') ||
     pathname.startsWith('/portal-media') ||

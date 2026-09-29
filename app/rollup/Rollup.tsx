@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
+import MarcarReuniao, { CSS_MARCAR } from './MarcarReuniao'
 
 /* Rollup interativo: 1) o ecrã é o visor de uma câmara (tocar para focar,
    disparar com flash e som), 2) a foto revela-se numa polaroid, 3) rolo de
@@ -154,7 +155,7 @@ export default function Rollup() {
 
   return (
     <main className="nlead ru" style={{ minHeight: '100vh', background: 'var(--ink)' }}>
-      <style>{CSS_BRIEFING + CSS}</style>
+      <style>{CSS_BRIEFING + CSS + CSS_MARCAR}</style>
       <div className="fx-grain" aria-hidden="true" />
 
       {/* ── 1. Visor da câmara ── */}
@@ -250,6 +251,9 @@ export default function Rollup() {
           </div>
         )}
 
+        <MarcarReuniao
+          dataCasamento={data ? `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}` : ''}
+          whatsapp={hrefWa} />
         <a href="/nova-lead" className="proposta">
           <b>Pedir proposta</b>
           <small>Leva só alguns minutos</small>
@@ -385,11 +389,10 @@ const CSS = `
 .ru .unid{font-family:var(--fs);font-style:italic;font-size:26px;color:var(--tx);margin:2px 0 0;}
 .ru .quando{font-family:var(--fd);font-weight:300;font-size:17px;color:var(--tx-mid);margin:18px 0 0;}
 .ru .guardem{font-family:var(--fs);font-style:italic;font-size:20px;color:var(--tx);margin:8px 0 0;}
-.ru .proposta{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 16px;margin-top:40px;border-radius:14px;text-decoration:none;
-  background:linear-gradient(135deg,#e6d0a6,var(--g) 45%,var(--g-deep));color:var(--ink);box-shadow:0 10px 40px -12px rgba(216,190,147,.55);transition:.4s var(--ease);}
-.ru .proposta::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.55),transparent);transform:skewX(-20deg);animation:ruBrilho 4.5s 1s ease-in-out infinite;}
+.ru .proposta{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 16px;margin-top:12px;border-radius:14px;text-decoration:none;
+  border:1px solid rgba(216,190,147,.5);color:var(--g);background:rgba(216,190,147,.04);transition:.4s var(--ease);}
 .ru .proposta b{font-family:var(--fm);font-weight:400;font-size:11px;letter-spacing:.3em;text-transform:uppercase;}
-.ru .proposta small{font-family:var(--fs);font-style:italic;font-size:16px;opacity:.75;}
+.ru .proposta small{font-family:var(--fs);font-style:italic;font-size:15px;color:var(--tx-mid);}
 .ru .acoes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;}
 .ru .btn-g{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:22px 12px;border-radius:14px;text-decoration:none;transition:.4s var(--ease);
   border:1px solid rgba(216,190,147,.5);color:var(--g);background:rgba(216,190,147,.04);}
