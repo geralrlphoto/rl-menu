@@ -252,8 +252,7 @@ export default function Rollup() {
         )}
 
         <MarcarReuniao
-          dataCasamento={data ? `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}` : ''}
-          whatsapp={hrefWa} />
+          dataCasamento={data ? `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}` : ''} />
         <a href="/nova-lead" className="proposta">
           <b>Pedir proposta</b>
           <small>Leva só alguns minutos</small>

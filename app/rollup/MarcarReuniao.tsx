@@ -4,10 +4,13 @@ import { useEffect, useMemo, useState } from 'react'
 
 /* Marcar reunião a partir do rollup: dias → horas → presencial/videochamada →
    nomes e telefone. Usa os horários livres da reunião de preparação
-   (/api/rollup-reuniao). Os horários só carregam quando se abre o painel. */
+   (/api/rollup-reuniao). Os horários só carregam quando se abre o painel.
+   "Outro horário" (como na preparação): dias úteis, até 2 opções em dias
+   diferentes; fica como pedido até a RL confirmar. */
 
 type Slot = { id: string; data: string; hora: string }
 type Reserva = { data: string; hora: string; formato: string; link: string }
+type Opcao = { data: string; hora: string }
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const DIAS_LONGOS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
@@ -16,10 +19,23 @@ const MESES_LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho'
 
 const d = (iso: string) => new Date(iso + 'T12:00:00')
 const longa = (iso: string) => { const x = d(iso); return `${DIAS_LONGOS[x.getDay()]}, ${x.getDate()} de ${MESES_LONGOS[x.getMonth()]}` }
+const ymd = (x: Date) => `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
 
-export default function MarcarReuniao({ dataCasamento, whatsapp }: { dataCasamento: string; whatsapp: string }) {
+// Dias úteis de amanhã até ~5 semanas (para o "Outro horário")
+function diasUteis(): string[] {
+  const out: string[] = []
+  const x = new Date(); x.setHours(12, 0, 0, 0)
+  for (let i = 1; i <= 35; i++) {
+    x.setDate(x.getDate() + 1)
+    if (x.getDay() !== 0 && x.getDay() !== 6) out.push(ymd(x))
+  }
+  return out
+}
+
+export default function MarcarReuniao({ dataCasamento }: { dataCasamento: string }) {
   const [aberto, setAberto] = useState(false)
   const [slots, setSlots] = useState<Slot[] | null>(null)
+  const [horasOutro, setHorasOutro] = useState<string[]>([])
   const [erroCarregar, setErroCarregar] = useState(false)
   const [dia, setDia] = useState('')
   const [slotId, setSlotId] = useState('')
@@ -30,27 +46,56 @@ export default function MarcarReuniao({ dataCasamento, whatsapp }: { dataCasamen
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [reserva, setReserva] = useState<Reserva | null>(null)
+  // Outro horário
+  const [outro, setOutro] = useState(false)
+  const [opcoes, setOpcoes] = useState<Opcao[]>([])
+  const [mensagem, setMensagem] = useState('')
+  const [pedidoOk, setPedidoOk] = useState<Opcao[] | null>(null)
 
   function carregar() {
     setErroCarregar(false)
     fetch('/api/rollup-reuniao', { cache: 'no-store' })
       .then(r => r.json())
-      .then(j => { if (!j.ok) throw 0; setSlots(j.slots); if (j.slots[0]) setDia(j.slots[0].data) })
+      .then(j => {
+        if (!j.ok) throw 0
+        setSlots(j.slots); setHorasOutro(j.horasOutro ?? [])
+        if (j.slots[0]) setDia(j.slots[0].data)
+        else { setOutro(true); setDia('') } // sem horários livres: vai direto ao "Outro horário"
+      })
       .catch(() => setErroCarregar(true))
   }
   useEffect(() => { if (aberto && !slots) carregar() }, [aberto]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const dias = useMemo(() => [...new Set((slots ?? []).map(s => s.data))], [slots])
+  const uteis = useMemo(diasUteis, [])
+  const dias = useMemo(() => outro ? uteis : [...new Set((slots ?? []).map(s => s.data))], [slots, outro, uteis])
   const horas = (slots ?? []).filter(s => s.data === dia)
   const escolhido = (slots ?? []).find(s => s.id === slotId)
+  const opcaoDoDia = opcoes.find(o => o.data === dia)?.hora
+  const dadosOk = nome.trim().length >= 2 && tel.replace(/\D/g, '').length >= 9
+
+  function mudarModo(novo: boolean) {
+    setOutro(novo); setSlotId(''); setOpcoes([]); setErro('')
+    setDia(novo ? '' : (slots?.[0]?.data ?? ''))
+  }
+
+  // Uma opção por dia; no máximo duas (a mais recente substitui a segunda)
+  function escolherHora(hora: string) {
+    setOpcoes(prev => {
+      const outros = prev.filter(o => o.data !== dia)
+      const base = outros.length >= 2 ? outros.slice(0, 1) : outros
+      return [...base, { data: dia, hora }].sort((a, b) => (a.data + a.hora).localeCompare(b.data + b.hora))
+    })
+  }
 
   async function confirmar() {
-    if (!escolhido) return setErro('Escolham um horário, por favor.')
+    if (outro ? opcoes.length === 0 : !escolhido) return setErro('Escolham um horário, por favor.')
     setErro(''); setEnviando(true)
     try {
       const r = await fetch('/api/rollup-reuniao', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ slotId, nome, contato: tel, formato, dataCasamento, site }),
+        body: JSON.stringify(outro
+          ? { pedido: opcoes, mensagem, nome, contato: tel, formato, dataCasamento, site }
+          : { slotId, nome, contato: tel, formato, dataCasamento, site }),
       })
       const j = await r.json().catch(() => ({}))
       if (!r.ok) {
@@ -59,7 +104,8 @@ export default function MarcarReuniao({ dataCasamento, whatsapp }: { dataCasamen
         if (r.status === 409) { setSlotId(''); setSlots(null); carregar() }
         return
       }
-      setReserva(j.reserva)
+      if (outro) setPedidoOk(j.pedido.opcoes)
+      else setReserva(j.reserva)
     } catch {
       setErro('Sem ligação. Tentem outra vez, por favor.')
     } finally {
@@ -79,6 +125,15 @@ export default function MarcarReuniao({ dataCasamento, whatsapp }: { dataCasamen
     </div>
   )
 
+  if (pedidoOk) return (
+    <div className="mr-ok">
+      <p className="eyebrow">Pedido enviado</p>
+      <p className="mr-ok-t">Obrigado<em>!</em></p>
+      <p className="mr-ok-q">{pedidoOk.map(o => <span key={o.data}>{longa(o.data)} às {o.hora}<br /></span>)}</p>
+      <p className="hint" style={{ marginTop: 14 }}>Vamos confirmar convosco o dia e a hora pelo WhatsApp, muito em breve.</p>
+    </div>
+  )
+
   return (
     <div>
       <button className={`mr-btn${aberto ? ' on' : ''}`} onClick={() => setAberto(a => !a)} aria-expanded={aberto}>
@@ -90,31 +145,48 @@ export default function MarcarReuniao({ dataCasamento, whatsapp }: { dataCasamen
         <div className="mr-painel">
           {erroCarregar && <p className="mr-erro">Não foi possível carregar os horários. <button onClick={carregar}>Tentar outra vez</button></p>}
           {!slots && !erroCarregar && <p className="hint" style={{ textAlign: 'center' }}>A carregar horários…</p>}
-          {slots && slots.length === 0 && (
-            <p className="mr-vazio">De momento não temos horários livres.<br />
-              <a href={whatsapp} target="_blank" rel="noopener noreferrer">Combinem connosco pelo WhatsApp ↗</a></p>
-          )}
 
-          {slots && slots.length > 0 && (
+          {slots && (
             <>
-              <p className="mr-lbl">Dia</p>
+              {slots.length === 0 && <p className="mr-vazio">De momento não temos horários livres. Indiquem o dia e a hora que vos dão jeito.</p>}
+              <p className="mr-lbl">{outro ? 'Dia (seg. a sex.)' : 'Dia'}</p>
               <div className="mr-dias">
                 {dias.map(iso => {
                   const x = d(iso)
+                  const comOpcao = outro && opcoes.some(o => o.data === iso)
                   return (
-                    <button key={iso} className={iso === dia ? 'on' : ''} onClick={() => { setDia(iso); setSlotId('') }}>
+                    <button key={iso} className={`${iso === dia ? 'on' : ''}${comOpcao ? ' marcado' : ''}`} onClick={() => { setDia(iso); setSlotId('') }}>
                       <span>{DIAS[x.getDay()]}</span><b>{x.getDate()}</b><span>{MESES[x.getMonth()]}</span>
                     </button>
                   )
                 })}
               </div>
+              {slots.length > 0 && (
+                <button className="mr-outro" onClick={() => mudarModo(!outro)}>
+                  {outro ? '‹ Horários disponíveis' : 'Nenhum dá jeito? Outro horário'}
+                </button>
+              )}
+              {outro && <p className="mr-nota">De segunda a sexta, das 10h às 12h ou das 17h às 20h. Podem indicar até dois dias diferentes.</p>}
 
-              <p className="mr-lbl">Hora</p>
-              <div className="mr-horas">
-                {horas.map(s => (
-                  <button key={s.id} className={s.id === slotId ? 'on' : ''} onClick={() => setSlotId(s.id)}>{s.hora}</button>
-                ))}
-              </div>
+              {dia && (
+                <>
+                  <p className="mr-lbl">Hora</p>
+                  <div className="mr-horas">
+                    {outro
+                      ? horasOutro.map(h => <button key={h} className={h === opcaoDoDia ? 'on' : ''} onClick={() => escolherHora(h)}>{h}</button>)
+                      : horas.map(s => <button key={s.id} className={s.id === slotId ? 'on' : ''} onClick={() => setSlotId(s.id)}>{s.hora}</button>)}
+                  </div>
+                </>
+              )}
+
+              {outro && opcoes.length > 0 && (
+                <div className="mr-opcoes">
+                  {opcoes.map((o, i) => (
+                    <span key={o.data}>Opção {i + 1}: {longa(o.data)} às {o.hora}
+                      <button aria-label="Remover" onClick={() => setOpcoes(p => p.filter(x => x.data !== o.data))}>×</button></span>
+                  ))}
+                </div>
+              )}
 
               <p className="mr-lbl">Como preferem</p>
               <div className="mr-formato">
@@ -131,11 +203,19 @@ export default function MarcarReuniao({ dataCasamento, whatsapp }: { dataCasamen
               <input className="mr-in" value={tel} onChange={e => setTel(e.target.value)} placeholder="912 345 678" inputMode="tel" autoComplete="tel" />
               <input className="mr-hp" tabIndex={-1} autoComplete="off" value={site} onChange={e => setSite(e.target.value)} aria-hidden="true" />
 
-              {escolhido && <p className="mr-resumo">{longa(escolhido.data)} às {escolhido.hora}</p>}
+              {outro && (
+                <>
+                  <p className="mr-lbl">Mensagem (opcional)</p>
+                  <textarea className="mr-in" rows={2} value={mensagem} onChange={e => setMensagem(e.target.value)} placeholder="Ex.: a partir das 18h é melhor para nós" />
+                </>
+              )}
+
+              {!outro && escolhido && <p className="mr-resumo">{longa(escolhido.data)} às {escolhido.hora}</p>}
               {erro && <p className="mr-erro">{erro}</p>}
-              <button className="mr-conf" onClick={confirmar} disabled={enviando || !slotId || nome.trim().length < 2 || tel.replace(/\D/g, '').length < 9}>
-                {enviando ? 'A marcar…' : 'Confirmar reunião'}
+              <button className="mr-conf" onClick={confirmar} disabled={enviando || !dadosOk || (outro ? opcoes.length === 0 : !slotId)}>
+                {enviando ? (outro ? 'A enviar…' : 'A marcar…') : outro ? 'Solicitar reunião' : 'Confirmar reunião'}
               </button>
+              {outro && <p className="mr-nota" style={{ textAlign: 'center' }}>O pedido carece de confirmação da nossa parte.</p>}
             </>
           )}
         </div>
@@ -159,19 +239,26 @@ export const CSS_MARCAR = `
 .ru .mr-dias button{flex:none;width:58px;padding:10px 0;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--tx-mid);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:.3s var(--ease);}
 .ru .mr-dias button span{font-family:var(--fm);font-size:9px;letter-spacing:.14em;text-transform:uppercase;}
 .ru .mr-dias button b{font-family:var(--fs);font-weight:300;font-size:26px;line-height:1.1;color:var(--tx);}
+.ru .mr-dias button.marcado{border-color:rgba(216,190,147,.6);}
+.ru .mr-dias button.marcado::after{content:"";width:5px;height:5px;border-radius:50%;background:var(--g);margin-top:3px;}
 .ru .mr-horas,.ru .mr-formato{display:flex;flex-wrap:wrap;gap:8px;}
 .ru .mr-horas button,.ru .mr-formato button{padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:transparent;color:var(--tx);font-family:var(--fd);font-size:15px;cursor:pointer;transition:.3s var(--ease);}
 .ru .mr-formato button{flex:1;}
 .ru .mr-dias button.on,.ru .mr-horas button.on,.ru .mr-formato button.on{border-color:var(--g);background:rgba(216,190,147,.14);color:var(--g);}
 .ru .mr-dias button.on b{color:var(--g);}
+.ru .mr-outro{display:block;margin:12px 0 0;background:none;border:none;padding:0;cursor:pointer;font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);text-decoration:underline;text-underline-offset:4px;}
+.ru .mr-nota{font-family:var(--fd);font-size:13px;color:var(--tx-dim);line-height:1.6;margin:10px 0 0;}
+.ru .mr-opcoes{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+.ru .mr-opcoes span{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:10px;border:1px solid rgba(216,190,147,.4);background:rgba(216,190,147,.08);font-family:var(--fd);font-size:14px;color:var(--tx);}
+.ru .mr-opcoes button{background:none;border:none;color:var(--tx-dim);font-size:20px;line-height:1;cursor:pointer;}
 .ru .mr-in{width:100%;box-sizing:border-box;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;padding:13px 14px;color:var(--tx);font-family:var(--fd);font-size:16px;}
+.ru textarea.mr-in{resize:none;}
 .ru .mr-in:focus{outline:none;border-color:var(--g);}
 .ru .mr-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0;}
 .ru .mr-resumo{text-align:center;font-family:var(--fs);font-style:italic;font-size:19px;color:var(--g);margin:20px 0 0;}
 .ru .mr-erro{text-align:center;font-family:var(--fd);font-size:14px;color:#e8a0a0;margin:14px 0 0;}
 .ru .mr-erro button{background:none;border:none;color:var(--g);text-decoration:underline;cursor:pointer;font:inherit;}
-.ru .mr-vazio{text-align:center;font-family:var(--fd);font-size:15px;color:var(--tx-mid);line-height:1.7;margin:4px 0;}
-.ru .mr-vazio a{color:var(--g);}
+.ru .mr-vazio{text-align:center;font-family:var(--fd);font-size:15px;color:var(--tx-mid);line-height:1.7;margin:4px 0 12px;}
 .ru .mr-conf{width:100%;margin-top:18px;padding:16px;border-radius:12px;border:none;cursor:pointer;background:var(--g);color:var(--ink);font-family:var(--fm);font-size:11px;letter-spacing:.26em;text-transform:uppercase;transition:.3s var(--ease);}
 .ru .mr-conf:disabled{opacity:.4;cursor:default;}
 .ru .mr-ok{margin-top:40px;text-align:center;padding:28px 20px;border-radius:14px;border:1px solid var(--g);background:radial-gradient(120% 140% at 50% 0%,rgba(216,190,147,.14),transparent 60%);animation:ruSobe .7s var(--ease) both;}

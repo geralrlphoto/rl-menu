@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
-import { sbAdmin, hojeLisboa, fmtDataLonga, UUID_RE } from '@/lib/preparacao'
+import { sbAdmin, hojeLisboa, fmtDataLonga, UUID_RE, HORAS_OUTRO, validarPedido } from '@/lib/preparacao'
 import { MEET_LINK, qualificarLead } from '@/lib/crm'
 
 // Público (/rollup): os noivos que ainda não são clientes marcam reunião na mesma
 // disponibilidade das reuniões de preparação (preparacao_slots, tipo 'preparacao').
 // GET lista os horários livres; POST apanha o horário (sai da disponibilidade) e cria
 // a lead no CRM já com "Reunião Agendada", que aparece no calendário. O admin recebe email.
+// "Outro horário" (como na preparação): até 2 opções em dias úteis; a lead entra como
+// "Por Contactar" com as opções na mensagem e o admin confirma a reunião no calendário/CRM.
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const SITE_BASE = process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.rlphotovideo.pt'
@@ -22,7 +24,7 @@ export async function GET() {
     .eq('tipo', 'preparacao').is('evento_id', null).gte('data', amanha())
     .order('data').order('hora').limit(80)
   if (error) return NextResponse.json({ error: 'Não foi possível carregar os horários.' }, { status: 500 })
-  return NextResponse.json({ ok: true, slots: (data ?? []).map(s => ({ ...s, hora: String(s.hora).slice(0, 5) })) })
+  return NextResponse.json({ ok: true, horasOutro: HORAS_OUTRO, slots: (data ?? []).map(s => ({ ...s, hora: String(s.hora).slice(0, 5) })) })
 }
 
 export async function POST(req: NextRequest) {
@@ -33,9 +35,10 @@ export async function POST(req: NextRequest) {
   const contato = String(b.contato ?? '').trim().slice(0, 40)
   const formato = b.formato === 'Presencial' ? 'Presencial' : 'Videochamada'
   const dataCasamento = /^\d{4}-\d{2}-\d{2}$/.test(b.dataCasamento ?? '') ? b.dataCasamento : ''
-  if (!UUID_RE.test(b.slotId ?? '')) return NextResponse.json({ error: 'Escolham um horário, por favor.' }, { status: 400 })
+  if (!b.pedido && !UUID_RE.test(b.slotId ?? '')) return NextResponse.json({ error: 'Escolham um horário, por favor.' }, { status: 400 })
   if (nome.length < 2) return NextResponse.json({ error: 'Digam-nos os vossos nomes, por favor.' }, { status: 400 })
   if (contato.replace(/\D/g, '').length < 9) return NextResponse.json({ error: 'Deixem um telefone válido, por favor.' }, { status: 400 })
+  if (b.pedido) return pedirOutroHorario(b.pedido, { nome, contato, formato, dataCasamento, mensagem: b.mensagem })
 
   const sb = sbAdmin()
   // Apanha o horário só se ainda estiver livre: sai da disponibilidade para mais ninguém o marcar
@@ -93,6 +96,54 @@ Casamento: ${dataCasamento ? esc(fmtDataLonga(dataCasamento)) : 'data por defini
   } catch { /* a marcação fica feita na mesma */ }
 
   return NextResponse.json({ ok: true, reserva: { data: slot.data, hora, formato, link } })
+}
+
+/* "Outro horário": guarda a lead com as opções pedidas; só fica marcado quando a RL confirmar. */
+async function pedirOutroHorario(pedido: unknown, l: { nome: string; contato: string; formato: string; dataCasamento: string; mensagem: unknown }) {
+  const r = validarPedido(pedido, null)
+  if ('erro' in r) return NextResponse.json({ error: r.erro }, { status: 400 })
+  const opcoes = r.opcoes
+  const msg = typeof l.mensagem === 'string' && l.mensagem.trim() ? l.mensagem.trim().slice(0, 500) : null
+  const linhas = opcoes.map((o, i) => `Opção ${i + 1}: ${fmtDataLonga(o.data)} às ${o.hora}`)
+
+  const { data: lead, error } = await sbAdmin().from('crm_contacts').insert({
+    nome:            l.nome,
+    contato:         l.contato,
+    data_casamento:  l.dataCasamento,
+    tipo_evento:     'Casamento',
+    como_chegou:     'Rollup',
+    mensagem:        [`Pediu reunião pelo QR do rollup (${l.formato}), a confirmar:`, ...linhas, msg ? `\nMensagem: ${msg}` : ''].filter(Boolean).join('\n'),
+    status:          'Por Contactar',
+    lead_prioridade: qualificarLead('', l.dataCasamento),
+    data_entrada:    hojeLisboa(),
+  }).select('id').single()
+  if (error || !lead) return NextResponse.json({ error: 'Não foi possível enviar o pedido. Tentem outra vez ou falem connosco pelo WhatsApp.' }, { status: 500 })
+
+  const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Georgia,serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 12px"><tr><td align="center">
+<table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#111;border:1px solid rgba(201,168,76,.35);border-radius:14px">
+<tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Pedido de reunião (rollup) · aguarda confirmação</td></tr>
+<tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(l.nome)}</td></tr>
+<tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.8;font-family:Arial,sans-serif">
+${opcoes.map((o, i) => `<b style="color:#fff">Opção ${i + 1}:</b> ${esc(fmtDataLonga(o.data))} às ${esc(o.hora)}`).join('<br/>')}<br/>
+${l.formato} · Telefone: ${esc(l.contato)}<br/>
+Casamento: ${l.dataCasamento ? esc(fmtDataLonga(l.dataCasamento)) : 'data por definir'}
+${msg ? `<div style="margin:14px 0 4px;padding:12px 14px;border-left:2px solid #C9A84C;background:rgba(255,255,255,.04);color:#fff;font-style:italic;white-space:pre-wrap">${esc(msg)}</div>` : '<br/>'}
+<span style="color:rgba(255,255,255,.45);font-size:13px">Marca a reunião na ficha CRM ou no calendário e avisa-os pelo WhatsApp.</span></td></tr>
+<tr><td style="padding:0 32px 30px"><a href="${SITE_BASE}/crm/${lead.id}" style="display:inline-block;background:#C9A84C;color:#000;text-decoration:none;font-family:Arial,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;border-radius:8px">Abrir ficha CRM</a></td></tr>
+</table></td></tr></table></body></html>`
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: 'RL Photo.Video <geral@rlphotovideo.pt>', to: [ADMIN_EMAIL],
+        subject: `Pedido de reunião (rollup, confirmar): ${l.nome}`, html,
+      }),
+    })
+  } catch { /* o pedido fica guardado na mesma */ }
+
+  return NextResponse.json({ ok: true, pedido: { opcoes, formato: l.formato } })
 }
 
 function esc(s: string) {
