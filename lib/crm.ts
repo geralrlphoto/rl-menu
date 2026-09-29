@@ -267,6 +267,23 @@ export function nomeNoivos(cliente?: string | null, nomeNoiva?: string | null, n
   return c ? cap(c) : a || b ? cap(a || b) : ''
 }
 
+/* Agradecimento depois de escolherem a proposta no portal ("A nossa escolha").
+   Vai na tarefa do calendário que o admin envia por WhatsApp. */
+export function mensagemObrigadoEscolha(nome: string | null | undefined, batizado = false): string {
+  const quem = nomeNoivos(nome)
+  return [
+    `Olá ${quem || 'a ambos'}!`,
+    '',
+    `Muito, muito obrigado por nos escolherem para ${batizado ? 'o batizado' : 'o vosso casamento'}. Ficámos mesmo felizes com a vossa decisão e já estamos entusiasmados por fazer parte de um dia tão especial.`,
+    '',
+    'Assim que recebermos os vossos dados para o contrato, vamos preparar o vosso Portal e entregá-lo nos próximos dias. É lá que vão acompanhar tudo o que vamos construir juntos.',
+    '',
+    'Qualquer dúvida, estamos aqui para vós.',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
 /* Reunião de preparação do dia: ~15 dias antes do casamento (ficha do evento e /photo) */
 export const PREPARACAO_DIAS = 15
 /* Sala fixa de videochamada da RL (a mesma das reuniões do CRM) */

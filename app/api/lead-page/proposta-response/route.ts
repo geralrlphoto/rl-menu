@@ -1,10 +1,11 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { criarTarefaObrigado, propostaValida } from '@/lib/escolhaProposta'
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const IMG_BASE    = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 
-function buildEmail(nome: string, action: 'confirmar' | 'rejeitar'): string {
+function buildEmail(nome: string, action: 'confirmar' | 'rejeitar', proposta: string | null = null): string {
   const confirmou = action === 'confirmar'
   return `<!DOCTYPE html>
 <html>
@@ -47,7 +48,7 @@ function buildEmail(nome: string, action: 'confirmar' | 'rejeitar'): string {
 
           <p style="margin:0;font-size:15px;color:#a09070;line-height:1.8;">
             ${confirmou
-              ? 'Os noivos <strong style="color:#c9b88a;font-weight:500;">confirmaram a proposta</strong><br>e foram enviados para o formulário do contrato.'
+              ? `Os noivos <strong style="color:#c9b88a;font-weight:500;">escolheram ${proposta ? 'a proposta ' + proposta : 'a proposta'}</strong><br>e foram enviados para o formulário do contrato.<br><br>No calendário de hoje ficou a tarefa para lhes enviares a mensagem de agradecimento por WhatsApp.`
               : 'Os noivos <strong style="color:#ef4444;font-weight:500;">rejeitaram a proposta.</strong><br>A sua página foi despublicada automaticamente.'}
           </p>
 
@@ -71,7 +72,10 @@ function buildEmail(nome: string, action: 'confirmar' | 'rejeitar'): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { token, action } = await req.json().catch(() => ({}))
+  const body = await req.json().catch(() => ({}))
+  const { token, action } = body
+  // Nome da proposta escolhida em "A nossa escolha" (BASIC / ESSENCIAL / SIGNATURE)
+  const proposta = propostaValida(body.proposta)
   if (!token || !['confirmar', 'rejeitar'].includes(action)) {
     return NextResponse.json({ error: 'token e action obrigatórios' }, { status: 400 })
   }
@@ -110,6 +114,9 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Tarefa no calendário: agradecer por WhatsApp (não bloqueia se falhar)
+  if (action === 'confirmar') await criarTarefaObrigado(supabase, token, false, proposta).catch(() => {})
+
   // Enviar email ao admin
   const emailRes = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -121,9 +128,9 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [ADMIN_EMAIL],
       subject: action === 'confirmar'
-        ? `✓ Proposta confirmada — ${contact.nome ?? 'Noivos'}`
+        ? `✓ Proposta ${proposta ?? 'confirmada'} escolhida: ${contact.nome ?? 'Noivos'}`
         : `✕ Proposta rejeitada — ${contact.nome ?? 'Noivos'}`,
-      html: buildEmail(contact.nome ?? 'Noivos', action),
+      html: buildEmail(contact.nome ?? 'Noivos', action, proposta),
     }),
   })
   const emailData = await emailRes.json().catch(() => ({}))

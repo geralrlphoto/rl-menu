@@ -1424,7 +1424,7 @@ export default function CalendarClient({
               const rmWaBase = whatsappLink(rm.tel)
               const reagendada = reagendadaId === ta.id
               const rmWaHref = rmWaBase
-                ? `${rmWaBase}?text=${encodeURIComponent(msgReuniao(rm.nome, ta.data_prazo, (ta.hora ?? '').slice(0, 5), rm.tipo, rm.alvo, reagendada))}`
+                ? `${rmWaBase}?text=${encodeURIComponent(rm.msg || msgReuniao(rm.nome, ta.data_prazo, (ta.hora ?? '').slice(0, 5), rm.tipo, rm.alvo, reagendada))}`
                 : null
               const statusCol = ta.status === 'CONCLUIDA'
                 ? { text: '#86EFAC', border: 'rgba(74,222,128,0.30)', bg: 'rgba(74,222,128,0.10)' }
@@ -2052,6 +2052,8 @@ function dadosReuniaoTarefa(ta: TarefaEvent) {
   const alvo = (d.match(/^(?:Link|Local):\s*(.+)$/m) ?? [])[1]
     ?? (d.match(/https?:\/\/\S+/) ?? [])[0] ?? ''
   const tel  = (d.match(/^Contacto:\s*(.+)$/m) ?? [])[1] ?? ''
+  // Tarefas com a mensagem já escrita (ex.: agradecer a escolha da proposta): o WhatsApp envia-a tal como está
+  const msg  = (d.match(/^Mensagem:\n([\s\S]+)$/m) ?? [])[1]?.trim() ?? ''
   const tipo: 'Presencial' | 'Videochamada' =
     /meet\.google\.com/.test(alvo) || /^Videochamada/m.test(d) ? 'Videochamada' : 'Presencial'
   const nome = ta.titulo.replace(/^Reunião:\s*/i, '').trim()
@@ -2059,7 +2061,7 @@ function dadosReuniaoTarefa(ta: TarefaEvent) {
   const url = !alvo ? ''
     : /^https?:\/\//.test(alvo) ? alvo
     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(alvo)}`
-  return { alvo: alvo.trim(), url, tel: tel.trim(), tipo, nome }
+  return { alvo: alvo.trim(), url, tel: tel.trim(), tipo, nome, msg }
 }
 
 function fmtDate(d: string) {

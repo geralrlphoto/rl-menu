@@ -23,8 +23,9 @@ const num = (v: string) => { const n = Number(String(v ?? '').replace(/[^\d,]/g,
 const euros = (n: number) => `${n.toLocaleString('pt-PT', { maximumFractionDigits: 0 })} €`
 const mostraValor = (v: string) => num(v) > 0 ? euros(num(v)) : (v || 'Sob consulta')
 
-export default function PropostasDropdown({ aberto, propostas, extras, ativa, pdfUrl, tipo }: {
+export default function PropostasDropdown({ aberto, propostas, extras, ativa, pdfUrl, tipo, token, isAdmin }: {
   aberto: boolean; propostas: Proposta[]; extras: Extra[]; ativa: number; pdfUrl: string | null; tipo: 'casamento' | 'batizado'
+  token: string; isAdmin: boolean
 }) {
   const lista = useMemo(() => propostas
     .map((p, i) => ({ ...p, i }))
@@ -32,6 +33,22 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, pd
   const [detalhe, setDetalhe] = useState<number | null>(null)
   const [escolhida, setEscolhida] = useState<number | null>(null)
   const [extrasOn, setExtrasOn] = useState<string[]>([])
+  const [aEnviar, setAEnviar] = useState(false)
+
+  // "A nossa escolha": regista a escolha (CRM "Fechou", email ao admin, tarefa de WhatsApp
+  // no calendário) e segue para o formulário do contrato. Em modo admin só marca no ecrã.
+  async function escolher(i: number, nome: string) {
+    setEscolhida(i)
+    if (isAdmin || aEnviar) return
+    setAEnviar(true)
+    try {
+      await fetch(tipo === 'batizado' ? '/api/batizado/proposta-response' : '/api/lead-page/proposta-response', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, action: 'confirmar', proposta: nome }),
+      })
+    } catch { /* segue para o contrato na mesma */ }
+    window.location.href = `/contrato-cps/${tipo}`
+  }
   const somaExtras = extras.filter(e => extrasOn.includes(e.nome)).reduce((a, e) => a + num(e.valor), 0)
 
   if (!lista.length) return null
@@ -86,8 +103,8 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, pd
                     </div>
                   </div>
 
-                  <button type="button" className={`pd-escolher${sel ? ' on' : ''}`} onClick={() => setEscolhida(sel ? null : p.i)}>
-                    {sel ? '✓ A nossa escolha' : 'A nossa escolha'}
+                  <button type="button" className={`pd-escolher${sel ? ' on' : ''}`} onClick={() => escolher(p.i, nome)} disabled={aEnviar}>
+                    {sel ? (aEnviar ? 'A seguir para o contrato…' : '✓ A nossa escolha') : 'A nossa escolha'}
                   </button>
                 </article>
               )
@@ -112,7 +129,7 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, pd
           )}
 
           {escolhida !== null && (
-            <p className="pd-fim">Ótima escolha. Falem connosco e damos o próximo passo juntos.</p>
+            <p className="pd-fim">{isAdmin ? 'Modo admin: a escolha não é gravada nem abre o contrato.' : 'Ótima escolha. Vamos ao contrato.'}</p>
           )}
           {pdfUrl && <a className="pd-pdf" href={pdfUrl} target="_blank" rel="noopener noreferrer">Preferem em PDF? Abrir a proposta ↗</a>}
         </div>

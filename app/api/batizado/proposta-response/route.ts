@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { criarTarefaObrigado, propostaValida } from '@/lib/escolhaProposta'
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const IMG_BASE    = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
@@ -71,7 +72,10 @@ function buildEmail(nome: string, action: 'confirmar' | 'rejeitar'): string {
 }
 
 export async function POST(req: NextRequest) {
-  const { token, action } = await req.json().catch(() => ({}))
+  const body = await req.json().catch(() => ({}))
+  const { token, action } = body
+  // Nome da proposta escolhida em "A nossa escolha" (BASIC / ESSENCIAL / SIGNATURE)
+  const proposta = propostaValida(body.proposta)
   if (!token || !['confirmar', 'rejeitar'].includes(action)) {
     return NextResponse.json({ error: 'token e action obrigatórios' }, { status: 400 })
   }
@@ -114,6 +118,9 @@ export async function POST(req: NextRequest) {
   await supabase.from('crm_contacts').update({ proposta_resposta: action }).eq('page_token', token)
   nome = nome || 'Família'
 
+  // Tarefa no calendário: agradecer por WhatsApp (não bloqueia se falhar)
+  if (action === 'confirmar') await criarTarefaObrigado(supabase, token, true, proposta).catch(() => {})
+
   await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -124,7 +131,7 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [ADMIN_EMAIL],
       subject: action === 'confirmar'
-        ? `✓ Proposta confirmada (Batizado) — ${nome}`
+        ? `✓ Proposta ${proposta ?? 'confirmada'} escolhida (Batizado): ${nome}`
         : `✕ Proposta rejeitada (Batizado) — ${nome}`,
       html: buildEmail(nome, action),
     }),

@@ -1132,7 +1132,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       {/* ── PROPOSTA (desdobra-se em vez do PDF) ── */}
       {propostaPdfUrl && (
         <PropostasDropdown aberto={propostaAberta} tipo="batizado" propostas={content.propostas} extras={content.extras_proposta}
-          ativa={content.propostaPage.propostaAtiva} pdfUrl={propostaPdfUrl} />
+          ativa={content.propostaPage.propostaAtiva} pdfUrl={propostaPdfUrl} token={token} isAdmin={isAdmin} />
       )}
 
       <div className="rlp-div" />

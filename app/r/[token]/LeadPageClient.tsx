@@ -1076,7 +1076,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       {/* ── PROPOSTA (desdobra-se em vez do PDF) ── */}
       {propostaPdfUrl && (
         <PropostasDropdown aberto={propostaAberta} tipo="casamento" propostas={content.propostas} extras={content.extras_proposta}
-          ativa={content.propostaPage.propostaAtiva} pdfUrl={propostaPdfUrl} />
+          ativa={content.propostaPage.propostaAtiva} pdfUrl={propostaPdfUrl} token={token} isAdmin={isAdmin} />
       )}
 
       <div className="rlp-div" />
