@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { fmtOrcamento } from '@/lib/crm'
@@ -470,6 +471,14 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   const [uploadError,    setUploadError]    = useState<string | null>(null)
   const [saveError,      setSaveError]      = useState<string | null>(null)
   const [propostaPdfUrl, setPropostaPdfUrl] = useState<string | null>(null)
+  // Proposta desdobrada no portal; ?proposta=1 abre-a sozinha e desce até ela
+  const [propostaAberta, setPropostaAberta] = useState(false)
+  useEffect(() => {
+    if (!propostaPdfUrl || typeof window === 'undefined') return
+    if (new URLSearchParams(window.location.search).get('proposta') !== '1') return
+    setPropostaAberta(true)
+    setTimeout(() => document.getElementById('sec-propostas')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 500)
+  }, [propostaPdfUrl])
 
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
@@ -1052,9 +1061,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                   <span className="fill" /><span className="dot" />{proposta.buttonLabel}
                 </a>
                 {propostaPdfUrl && (
-                  <a href={propostaPdfUrl} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost full">
-                    <span className="fill" /><span className="dot" />Ver Proposta PDF
-                  </a>
+                  <button type="button" onClick={() => setPropostaAberta(a => !a)} aria-expanded={propostaAberta} className="rlp-btn ghost full">
+                    <span className="fill" /><span className="dot" />{propostaAberta ? 'Fechar a proposta' : 'Ver a nossa proposta'}
+                  </button>
                 )}
               </div>
             </div>
@@ -1062,6 +1071,12 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         </FadeIn>
         </div>
       </section>
+
+      {/* ── PROPOSTA (desdobra-se em vez do PDF) ── */}
+      {propostaPdfUrl && (
+        <PropostasDropdown aberto={propostaAberta} tipo="casamento" propostas={content.propostas} extras={content.extras_proposta}
+          ativa={content.propostaPage.propostaAtiva} pdfUrl={propostaPdfUrl} />
+      )}
 
       <div className="rlp-div" />
 

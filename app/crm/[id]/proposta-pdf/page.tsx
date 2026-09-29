@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+export default async function Page({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ portal?: string }> }) {
   // Auth check
   const cookieStore = await cookies()
   const authCookie = cookieStore.get('rl_auth')
@@ -67,6 +67,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const saved = typeof contact.page_content === 'string'
     ? JSON.parse(contact.page_content || '{}')
     : (contact.page_content || {})
+
+  // "Gerar Proposta" (?portal=1): a proposta fica marcada como gerada e abre-se o
+  // portal do cliente com as propostas desdobradas, em vez da página para imprimir
+  if ((await searchParams).portal === '1') {
+    redirect(`/${saved?.tipo === 'batizado' ? 'b' : 'r'}/${token}?proposta=1`)
+  }
 
   const content = {
     ...DEFAULT_CONTENT,

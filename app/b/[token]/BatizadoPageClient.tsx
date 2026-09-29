@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 
 const WHATSAPP      = 'https://wa.me/351912932768'
@@ -445,6 +446,14 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
 
   // URL público do PDF da proposta (gerado pelo admin em /crm/[id]/proposta-pdf)
   const [propostaPdfUrl, setPropostaPdfUrl] = useState<string | null>(null)
+  // Proposta desdobrada no portal; ?proposta=1 abre-a sozinha e desce até ela
+  const [propostaAberta, setPropostaAberta] = useState(false)
+  useEffect(() => {
+    if (!propostaPdfUrl || typeof window === 'undefined') return
+    if (new URLSearchParams(window.location.search).get('proposta') !== '1') return
+    setPropostaAberta(true)
+    setTimeout(() => document.getElementById('sec-propostas')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 500)
+  }, [propostaPdfUrl])
 
   // Confirmação de reunião e proposta
   const [status,             setStatus]             = useState<string | null>(null)
@@ -1108,9 +1117,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                   <span className="fill" /><span className="dot" />{proposta.buttonLabel}
                 </a>
                 {propostaPdfUrl && (
-                  <a href={propostaPdfUrl} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost full">
-                    <span className="fill" /><span className="dot" />Ver Proposta PDF
-                  </a>
+                  <button type="button" onClick={() => setPropostaAberta(a => !a)} aria-expanded={propostaAberta} className="rlp-btn ghost full">
+                    <span className="fill" /><span className="dot" />{propostaAberta ? 'Fechar a proposta' : 'Ver a nossa proposta'}
+                  </button>
                 )}
               </div>
             </div>
@@ -1118,6 +1127,12 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         </FadeIn>
         </div>
       </section>
+
+      {/* ── PROPOSTA (desdobra-se em vez do PDF) ── */}
+      {propostaPdfUrl && (
+        <PropostasDropdown aberto={propostaAberta} tipo="batizado" propostas={content.propostas} extras={content.extras_proposta}
+          ativa={content.propostaPage.propostaAtiva} pdfUrl={propostaPdfUrl} />
+      )}
 
       <div className="rlp-div" />
 

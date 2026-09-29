@@ -272,7 +272,8 @@ export default function ClientePage() {
     const ok = await handleSavePropostas()
     setGerandoProposta(false)
     if (!ok) { win?.close(); return }
-    const url = `/crm/${id}/proposta-pdf`
+    // portal=1: em vez do PDF, abre o portal do cliente com a proposta desdobrada
+    const url = `/crm/${id}/proposta-pdf?portal=1`
     if (win) win.location.href = url
     else window.open(url, '_blank')
   }
@@ -570,12 +571,12 @@ export default function ClientePage() {
           />
         </div>
 
-        {/* Gerar Proposta PDF */}
+        {/* Gerar Proposta: mostra as propostas no portal do cliente */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Proposta PDF</h2>
-              <p className="text-[11px] text-white/30 mt-1">Guarda as propostas (com as notas) e gera o PDF</p>
+              <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Proposta no portal</h2>
+              <p className="text-[11px] text-white/30 mt-1">Guarda as propostas e mostra-as no portal do cliente (com opção de PDF)</p>
             </div>
             <button
               onClick={handleGerarProposta}
@@ -589,7 +590,7 @@ export default function ClientePage() {
             <div className="flex items-center justify-between bg-gold/5 border border-gold/20 rounded-xl px-4 py-3">
               <div className="flex items-center gap-2">
                 <span className="text-gold text-sm">✓</span>
-                <span className="text-[11px] text-gold/80">Botão PDF visível para o cliente</span>
+                <span className="text-[11px] text-gold/80">Proposta visível no portal do cliente</span>
               </div>
               <div className="flex items-center gap-3">
                 <a href={form.proposta_pdf_url} target="_blank" rel="noopener noreferrer"
