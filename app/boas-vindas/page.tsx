@@ -1,5 +1,10 @@
 import type { Metadata } from 'next'
+import { Saira_Extra_Condensed, JetBrains_Mono } from 'next/font/google'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
+
+// Letras da RL Prod (como no rlprod.pt): condensada grossa/fina + mono técnica
+const saira = Saira_Extra_Condensed({ subsets: ['latin'], weight: ['200', '300', '500', '800'], variable: '--f-saira' })
+const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--f-jb' })
 
 /* Boas-vindas: página aberta pelo QR code impresso. Só RL Prod
    (os casamentos da RL Photo.Video têm a página /rollup).
@@ -112,6 +117,21 @@ const CSS = `
 @keyframes bvGota{0%{transform:scaleY(0);opacity:1}60%{transform:scaleY(1);opacity:1}100%{transform:scaleY(1);opacity:0}}
 @keyframes bvBrilho{0%{left:-60%}35%,100%{left:130%}}
 @keyframes bvBorda{from{background-position:250% 0}to{background-position:-250% 0}}
+/* ── Letras RL Prod (sobrepõem as do briefing) ── */
+.nlead.bv{--fs:var(--f-saira),sans-serif;--fd:var(--f-saira),sans-serif;--fm:var(--f-jb),monospace;}
+.bv em,.bv .titulo em,.bv h2 em,.bv .fim p em{font-style:normal;}
+.bv .titulo{font-weight:800;text-transform:uppercase;letter-spacing:-.005em;line-height:.88;font-size:clamp(64px,20vw,150px);white-space:nowrap;}
+.bv .titulo em{font-weight:200;}
+.bv .frase{font-style:normal;font-weight:300;text-transform:uppercase;letter-spacing:.08em;font-size:clamp(17px,4.6vw,21px);}
+.bv .sec-t h2{font-weight:800;text-transform:uppercase;letter-spacing:0;font-size:clamp(40px,11vw,54px);line-height:.9;}
+.bv .sec-t h2 em{font-weight:200;}
+.bv .row .n{font-family:var(--fm);font-style:normal;font-size:12px;letter-spacing:.1em;}
+.bv .row .v{font-weight:500;font-size:clamp(20px,5.4vw,23px);letter-spacing:.02em;}
+.bv .marca .nm{font-weight:800;text-transform:uppercase;font-size:34px;letter-spacing:.01em;}
+.bv .marca .st{font-weight:500;font-size:18px;letter-spacing:.04em;}
+.bv .fim p{font-style:normal;font-weight:800;text-transform:uppercase;font-size:clamp(48px,13vw,72px);}
+.bv .fim p em{font-weight:200;}
+
 @media (prefers-reduced-motion:reduce){.bv *,.bv *::before,.bv *::after{animation-duration:.01s!important;animation-delay:0s!important;animation-iteration-count:1!important;}}
 `
 
@@ -132,7 +152,7 @@ function Titulo() {
 
 export default function BoasVindasPage() {
   return (
-    <main className="nlead bv" style={{ minHeight: '100vh', background: 'var(--ink)' }}>
+    <main className={`nlead bv ${saira.variable} ${jetbrains.variable}`}style={{ minHeight: '100vh', background: 'var(--ink)' }}>
       <style>{CSS_BRIEFING + CSS}</style>
       <div className="fx-grain" aria-hidden="true" />
 
