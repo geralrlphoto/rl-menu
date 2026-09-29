@@ -794,8 +794,6 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               </aside>
             )}
             <div className={`rl-pcard${isAtiva ? ' top' : ''}`}>
-              {isAtiva && <span className="rl-pbadge">✦ A mais escolhida</span>}
-
               <p className="meta" style={{ color: 'var(--g)' }}>Proposta {String(idx + 1).padStart(2, '0')}</p>
               <h3 className="rl-pnome">{nomeP}</h3>
               {(proposta.notas?.trim() || det?.explicacao) && <p className="rl-pexp">{proposta.notas?.trim() || det?.explicacao}</p>}
