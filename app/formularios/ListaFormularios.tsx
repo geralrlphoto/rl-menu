@@ -10,6 +10,11 @@ const NOTA_DEMO = 'Abre uma simulação com um casal fictício: nada é gravado 
 
 const FORMULARIOS: Item[] = [
   {
+    nome: 'Boas-vindas',
+    quando: 'Logo depois de fecharem',
+    abrir: [{ rotulo: 'Abrir', href: '/boas-vindas' }],
+  },
+  {
     nome: 'Dados para Contrato CPS',
     quando: 'Depois de fecharem, para fazer o contrato',
     abrir: [{ rotulo: 'Casamento', href: '/contrato-cps/casamento' }, { rotulo: 'Batizado', href: '/contrato-cps/batizado' }],
