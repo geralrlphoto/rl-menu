@@ -1862,7 +1862,12 @@ function PortalSubPageContent() {
       const validId = savedId && slots.some((s: {id: string}) => s.id === savedId) ? savedId : null
       setReservedSlotId(validId)
       setContratoDisponivel(ps.contratoDisponivel ?? false)
-      setContratoUrl(ps.contratoUrl ?? null)
+      // Links internos (/eventos-2026/<id>/contrato) são sempre recalculados a
+      // partir do evento do próprio portal — portais antigos herdaram do modelo
+      // o contrato de outro casal.
+      const storedContratoUrl: string | null = ps.contratoUrl ?? null
+      const contratoUrlInterno = !storedContratoUrl || storedContratoUrl.startsWith('/eventos-2026/')
+      setContratoUrl(contratoUrlInterno ? null : storedContratoUrl)
       setPortalSettingsObj(ps)
       const pt = ps.pageTitles ?? {}
       setPageTitles(pt)
@@ -1900,7 +1905,7 @@ function PortalSubPageContent() {
         setPagamentos(pd.payments ?? [])
         if (ed.found) {
           setEventoData(ed.evento)
-          if ((ps.contratoDisponivel ?? false) && !ps.contratoUrl) {
+          if ((ps.contratoDisponivel ?? false) && contratoUrlInterno) {
             setContratoUrl(`/eventos-2026/${ed.evento.id}/contrato`)
           }
           // Serviços da proposta directamente do Notion
