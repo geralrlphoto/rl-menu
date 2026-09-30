@@ -475,9 +475,18 @@ function dataCurta(v: string) {
   return dt.toLocaleDateString('pt-PT')
 }
 
-// Ticket médio = (foto real + vídeo) por evento, só conta eventos com valor
+// Mesma regra da API (/api/eventos-supabase):
+// FOTO = valor_real_foto ?? valor_foto · VÍDEO = valor_video ?? valor_liquido
+function valorFoto(e: Evento) {
+  return Number(e.valor_real_foto ?? e.valor_foto) || 0
+}
+function valorVideo(e: Evento) {
+  return Number(e.valor_video ?? e.valor_liquido) || 0
+}
+
+// Ticket médio = (foto + vídeo) por evento, só conta eventos com valor
 function valorEvento(e: Evento) {
-  return (e.valor_real_foto ?? 0) + (e.valor_liquido ?? 0)
+  return valorFoto(e) + valorVideo(e)
 }
 
 function ticketMedio(evs: Evento[]) {
@@ -647,8 +656,8 @@ function Eventos2026Inner() {
 
   const grouped = groupByMonth(filtered)
   const totalValor = events.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
-  const totalFoto = events.reduce((s, e) => s + (e.valor_real_foto ?? 0), 0)
-  const totalVideo = events.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
+  const totalFoto = events.reduce((s, e) => s + valorFoto(e), 0)
+  const totalVideo = events.reduce((s, e) => s + valorVideo(e), 0)
   const totalGeral = totalFoto + totalVideo
   const ticketAno = ticketMedio(events)
   const eventosComValor = events.filter(e => valorEvento(e) > 0).length
