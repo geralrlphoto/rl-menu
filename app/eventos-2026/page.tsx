@@ -484,9 +484,9 @@ function valorVideo(e: Evento) {
   return Number(e.valor_video ?? e.valor_liquido) || 0
 }
 
-// Ticket médio = (foto + vídeo) por evento, só conta eventos com valor
+// Ticket médio = só o valor do vídeo por evento, só conta eventos com valor
 function valorEvento(e: Evento) {
-  return valorFoto(e) + valorVideo(e)
+  return valorVideo(e)
 }
 
 function ticketMedio(evs: Evento[]) {
