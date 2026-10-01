@@ -3823,6 +3823,9 @@ function PortalSubPageContent() {
                         'QUINTA':    { icon: '◇', desc: 'Recinto, copo-de-água e espaços' },
                         'FESTA':     { icon: '◈', desc: 'Música, ambiente e momentos especiais' },
                       }
+                      // Nomes do casal no lugar de NOIVO / NOIVA (ex.: Ana & Joana)
+                      const [nomeNoiva, nomeNoivo] = nomesDoCasal(portalSettingsObj, eventoData)
+                      const nomeDaFicha = (k: string) => k === 'NOIVO' ? nomeNoivo : k === 'NOIVA' ? nomeNoiva : ''
                       const cardsGrid = childPages.length > 0 && (
                         <div className="mt-8">
                           <div className="flex items-end justify-between mb-4 gap-3 flex-wrap">
@@ -3848,7 +3851,10 @@ function PortalSubPageContent() {
                               .map(cp => {
                               const pageTitle = cp.child_page?.title ?? ''
                               const key = pageTitle.toUpperCase().trim()
-                              const meta = CARD_META[key] ?? { icon: '◆', desc: 'Aceder a esta secção do briefing' }
+                              const nomeFicha = nomeDaFicha(key)
+                              const meta = nomeFicha
+                                ? { icon: nomeFicha.charAt(0).toUpperCase(), desc: `Detalhes de ${nomeFicha} · contactos e logística` }
+                                : CARD_META[key] ?? { icon: '◆', desc: 'Aceder a esta secção do briefing' }
                               const isOpen = openFichaKey === key
                               // Default fields se ainda não houver
                               const defaultCampos: FichaCampo[] = [
@@ -3913,7 +3919,7 @@ function PortalSubPageContent() {
                                         {meta.icon}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] tracking-[0.35em] text-gold/65 uppercase mb-1.5 group-hover:text-gold/85 transition-colors">{pageTitle}</p>
+                                        <p className="text-[10px] tracking-[0.35em] text-gold/65 uppercase mb-1.5 group-hover:text-gold/85 transition-colors">{nomeFicha || pageTitle}</p>
                                         <p className="text-[12px] text-white/55 leading-relaxed">{meta.desc}</p>
                                       </div>
                                       <span className={`text-gold/60 text-xl transition-transform duration-300 shrink-0 ${isOpen ? 'rotate-90' : ''}`}>›</span>
@@ -4141,6 +4147,7 @@ function PortalSubPageContent() {
                                 enviarBriefingNode={enviarBtnSlot}
                                 equipaNode={equipaBox}
                                 fichasNode={cardsGrid}
+                                nomes={{ noivo: nomeNoivo, noiva: nomeNoiva }}
                               />
                             )
                             // Notion content (Briefing Geral) – mostrado entre o hero e o resto do briefing

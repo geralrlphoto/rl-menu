@@ -57,7 +57,52 @@ type Props = {
   enviarBriefingNode?: ReactNode
   equipaNode?: ReactNode
   fichasNode?: ReactNode
+  /** Nomes do casal: substituem "noivo"/"noiva" nos papéis dos contactos */
+  nomes?: { noivo?: string; noiva?: string }
 }
+
+/* Telefone → número para o wa.me (indicativo 351 quando vem sem indicativo) */
+function numeroWhatsApp(tel: string): string | null {
+  let d = tel.replace(/\D/g, '')
+  if (d.startsWith('00')) d = d.slice(2)
+  if (d.length === 9) d = `351${d}`
+  return d.length >= 11 ? d : null
+}
+
+/* "Contacto alternativo (noivo)" → "Contacto alternativo (Joana)" */
+function papelComNome(role: string, nomes?: { noivo?: string; noiva?: string }) {
+  if (!nomes) return role
+  return role.replace(/\b(noivo|noiva)\b/gi, m => (m.toLowerCase() === 'noivo' ? nomes.noivo : nomes.noiva) || m)
+}
+
+/* Morada para os botões e para mostrar. Aceita texto ou um link do Google Maps colado:
+   o Maps abre o próprio link, o Waze usa as coordenadas do link e o texto mostra o nome do sítio. */
+function destino(address: string): { texto: string; maps: string; waze: string } {
+  const a = address.trim()
+  if (/^https?:\/\//i.test(a)) {
+    const lugar = a.match(/\/place\/([^/@?]+)/)?.[1]
+    const texto = lugar ? decodeURIComponent(lugar.replace(/\+/g, ' ')) : 'Localização no mapa'
+    const c = a.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) ?? a.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+    const waze = c ? `https://waze.com/ul?ll=${c[1]},${c[2]}&navigate=yes` : `https://waze.com/ul?q=${encodeURIComponent(texto)}&navigate=yes`
+    return { texto, maps: a, waze }
+  }
+  return {
+    texto: a,
+    maps: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a)}`,
+    waze: `https://waze.com/ul?q=${encodeURIComponent(a)}&navigate=yes`,
+  }
+}
+
+/* "Preparação da noiva" → "Preparação · Ana" */
+function localComNome(label: string, nomes?: { noivo?: string; noiva?: string }) {
+  if (!nomes) return label
+  return label.replace(/\s+d[oa]\s+(noivo|noiva)\b/i, (m, q: string) => {
+    const nome = q.toLowerCase() === 'noivo' ? nomes.noivo : nomes.noiva
+    return nome ? ` · ${nome}` : m
+  })
+}
+
+const BOTAO_ACAO = 'inline-flex items-center gap-1 px-2 py-1 rounded-md border border-white/10 text-[10px] text-white/65 hover:text-gold hover:border-gold/40 transition-colors'
 
 const uid = () => `b-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 
@@ -316,7 +361,7 @@ function CronogramaSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
 
 // ─── Section: Mapas / Localizações ───────────────────────────────────────────
 
-function MapasSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function MapasSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void>; nomes?: { noivo?: string; noiva?: string } }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.mapas ?? [])
 
@@ -345,22 +390,25 @@ function MapasSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: b
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {list.map(p => {
-            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}`
+            const { texto, maps: mapsUrl, waze: wazeUrl } = destino(p.address)
             return (
-              <a key={p.id} href={mapsUrl} target="_blank" rel="noopener noreferrer"
-                className="block p-4 rounded-xl border border-white/[0.06] bg-white/[0.025] hover:border-gold/30 hover:bg-gold/[0.04] transition-all group">
+              <div key={p.id}
+                className="block p-4 rounded-xl border border-white/[0.06] bg-white/[0.025] hover:border-gold/30 hover:bg-gold/[0.04] transition-all">
                 <div className="flex items-start gap-3">
                   <span className="w-9 h-9 rounded-lg border border-gold/30 bg-gold/10 flex items-center justify-center text-gold text-base shrink-0">◉</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <p className="text-[10px] tracking-[0.3em] text-gold/65 uppercase truncate">{p.label || 'Local'}</p>
+                      <p className="text-[10px] tracking-[0.3em] text-gold/65 uppercase truncate">{localComNome(p.label || 'Local', nomes)}</p>
                       {p.time && <span className="text-[10px] text-gold tabular-nums">{p.time}</span>}
                     </div>
-                    <p className="text-[12px] text-white/75 leading-snug line-clamp-2">{p.address}</p>
-                    <p className="text-[9px] text-white/30 mt-1.5 tracking-widest uppercase group-hover:text-gold/60 transition-colors">Abrir no Maps ↗</p>
+                    <p className="text-[12px] text-white/75 leading-snug line-clamp-2 break-words">{texto}</p>
+                    <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+                      <a href={mapsUrl} target="_blank" rel="noopener noreferrer" className={BOTAO_ACAO}>Google Maps ↗</a>
+                      <a href={wazeUrl} target="_blank" rel="noopener noreferrer" className={BOTAO_ACAO}>Waze ↗</a>
+                    </div>
                   </div>
                 </div>
-              </a>
+              </div>
             )
           })}
         </div>
@@ -641,7 +689,7 @@ function RestricoesSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
 
 // ─── Section: Contactos Rápidos ──────────────────────────────────────────────
 
-function ContactosSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function ContactosSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void>; nomes?: { noivo?: string; noiva?: string } }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.contactos ?? [])
   const list = info.contactos ?? []
@@ -682,10 +730,14 @@ function ContactosSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmi
                 {ROLE_ICONS[c.role] ?? '◆'}
               </span>
               <div className="flex-1 min-w-0">
-                <p className="text-[9px] tracking-[0.3em] text-blue-300/70 uppercase mb-0.5 truncate">{c.role}</p>
+                <p className="text-[9px] tracking-[0.3em] text-blue-300/70 uppercase mb-0.5 truncate">{papelComNome(c.role, nomes)}</p>
                 <p className="text-[13px] text-white/90 font-medium truncate">{c.name || <span className="text-white/30 italic">—</span>}</p>
-                <div className="flex items-center gap-3 mt-1 flex-wrap">
-                  {c.phone && <a href={`tel:${c.phone}`} className="text-[10px] text-white/55 hover:text-gold inline-flex items-center gap-1 transition-colors">✆ {c.phone}</a>}
+                {c.phone && <p className="text-[10px] text-white/45 mt-0.5 tabular-nums">{c.phone}</p>}
+                <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+                  {c.phone && <a href={`tel:${c.phone.replace(/\s+/g, '')}`} className={BOTAO_ACAO}>✆ Ligar</a>}
+                  {c.phone && numeroWhatsApp(c.phone) && (
+                    <a href={`https://wa.me/${numeroWhatsApp(c.phone)}`} target="_blank" rel="noopener noreferrer" className={BOTAO_ACAO}>WhatsApp</a>
+                  )}
                   {c.email && <a href={`mailto:${c.email}`} className="text-[10px] text-white/55 hover:text-gold inline-flex items-center gap-1 transition-colors truncate">✉ {c.email}</a>}
                 </div>
               </div>
@@ -1288,7 +1340,7 @@ function VisaoGeralSection({ info, onJump }: { info: BriefingExt; onJump: (id: s
 
 export default function BriefingExtensions({
   info, isAdmin, teamView, onSave, pageTitle, dataEvento, local,
-  enviarBriefingNode, equipaNode, fichasNode,
+  enviarBriefingNode, equipaNode, fichasNode, nomes,
 }: Props) {
   const [viewMode, setViewMode] = useState<'admin' | 'client'>(isAdmin ? 'admin' : 'client')
   const effectiveAdmin = isAdmin && viewMode === 'admin'
@@ -1424,7 +1476,7 @@ export default function BriefingExtensions({
 
           {/* Operacional */}
           <CronogramaSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
-          <MapasSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          <MapasSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} nomes={nomes} />
 
           {/* Equipa + Fichas Individuais combinados num bloco visual */}
           <section id="equipa" className="space-y-4">
@@ -1444,7 +1496,7 @@ export default function BriefingExtensions({
           {/* Logística — grid 2 col */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <RestricoesSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
-            <ContactosSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+            <ContactosSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} nomes={nomes} />
           </div>
 
           <NotasSensiveisSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
