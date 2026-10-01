@@ -14,6 +14,7 @@
    ============================================================ */
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { SectionTitle } from './SectionTitle'
 import './fotografias.css'
 
@@ -346,6 +347,90 @@ function ShareGalleryButton({ url, storageKey }: { url: string; storageKey: stri
 }
 
 /* ───────────────────────────────────────────────────────────────
+   Como fazer a escolha — janela ao centro que explica aos noivos
+   como preparar a selecção num Word, pasta a pasta, antes de a
+   enviarem pelo formulário.
+   ─────────────────────────────────────────────────────────────── */
+function ComoEscolherButton({ enviarUrl }: { enviarUrl: string }) {
+  const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.body.style.overflow = prevOverflow
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <>
+      <button type="button" className="fp-btn ghost" onClick={() => setOpen(true)}>
+        Como fazer a escolha
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6" /><path d="M12 17h.01" />
+        </svg>
+      </button>
+
+      {open && createPortal(
+        <div className="portal-atmosphere fp-modal-root">
+        <div className="fp-modal-backdrop" onClick={() => setOpen(false)}>
+          <div className="fp-modal" role="dialog" aria-modal="true" aria-labelledby="fp-modal-title" onClick={e => e.stopPropagation()}>
+            <button type="button" className="fp-modal-close" onClick={() => setOpen(false)} aria-label="Fechar">×</button>
+            <div className="eyebrow">Seleção</div>
+            <h3 id="fp-modal-title">Como fazer a vossa <em>escolha</em></h3>
+
+            <ol className="fp-modal-steps">
+              <li>
+                <span className="n">01</span>
+                <p>Abram um <strong>documento Word</strong> e criem uma secção para cada pasta da galeria: <strong>Noivo</strong>, <strong>Noiva</strong>, <strong>Cerimónia</strong> e assim sucessivamente, pela mesma ordem.</p>
+              </li>
+              <li>
+                <span className="n">02</span>
+                <p>Percorram a galeria e, em cada secção do Word, escrevam as fotografias que escolheram dessa pasta.</p>
+              </li>
+              <li>
+                <span className="n">03</span>
+                <p>Escrevam o nome das fotografias <strong>exatamente como aparece na galeria</strong>, por exemplo <strong className="nw">RR-0001</strong>, <strong className="nw">RR-0002</strong>, <strong className="nw">RR-0003</strong> e assim por diante.</p>
+              </li>
+              <li>
+                <span className="n">04</span>
+                <p>Quando terminarem, cliquem em <strong>Enviar Seleção</strong> e copiem a vossa escolha do Word para dentro de cada secção do formulário.</p>
+              </li>
+            </ol>
+
+            <div className="fp-modal-example">
+              <div className="lbl">Exemplo no Word</div>
+              <div className="sec">NOIVO</div>
+              <div className="codes">RR-0001, RR-0002, RR-0003</div>
+              <div className="sec">NOIVA</div>
+              <div className="codes">RR-0045, RR-0046, RR-0052</div>
+              <div className="sec">CERIMÓNIA</div>
+              <div className="codes">RR-0120, RR-0124, RR-0131</div>
+            </div>
+
+            <div className="fp-modal-actions">
+              <a className="fp-btn available" href={enviarUrl} target="_blank" rel="noopener noreferrer">
+                Enviar Seleção
+                <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M7 17 17 7" /><path d="M9 7h8v8" />
+                </svg>
+              </a>
+              <button type="button" className="fp-btn ghost" onClick={() => setOpen(false)}>Percebido</button>
+            </div>
+          </div>
+        </div>
+        </div>,
+        document.body,
+      )}
+    </>
+  )
+}
+
+/* ───────────────────────────────────────────────────────────────
    FotografiasView (default export)
    ─────────────────────────────────────────────────────────────── */
 export function FotografiasView(props: FotografiasViewProps) {
@@ -428,6 +513,9 @@ export function FotografiasView(props: FotografiasViewProps) {
                   )}
                   {/* O card da selecção leva também o formulário: é por ali
                       que a escolha nos chega. */}
+                  {c.key === 'selecao' && (
+                    <ComoEscolherButton enviarUrl={props.enviarFotosUrl} />
+                  )}
                   {c.key === 'selecao' && (
                     <a className="fp-btn ghost" href={props.enviarFotosUrl} target="_blank" rel="noopener noreferrer">
                       Enviar Selecção
