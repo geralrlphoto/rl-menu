@@ -119,7 +119,7 @@ function resumoDoDia(data: string, dia: Extract<Resp, { estado: 'ok' }>['dia'], 
 
   if (avisos?.length) {
     const pior = avisos.find(a => a.nivel === 'red') ?? avisos.find(a => a.nivel === 'orange') ?? avisos[0]
-    frases.push(`Atenção ao aviso ${NIVEIS[pior.nivel]?.nome ?? ''} do IPMA (${pior.tipo.toLowerCase()}).`)
+    frases.push(`Atenção ao aviso ${NIVEIS[pior.nivel]?.nome ?? ''} (${pior.tipo.toLowerCase()}).`)
   }
   if ((dia.uv ?? 0) >= 6) frases.push('Índice UV elevado: convém ter protetor solar à mão.')
   return frases.join(' ')
@@ -141,7 +141,7 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
 
   if (r.estado !== 'ok') {
     const msg = r.estado === 'cedo'
-      ? `A previsão do IPMA para ${r.concelho} fica disponível cerca de 10 dias antes do evento.`
+      ? `A previsão para ${r.concelho} fica disponível cerca de 10 dias antes do evento.`
       : r.estado === 'sem-local'
         ? 'Não foi possível identificar o concelho do local do evento.'
         : 'Previsão indisponível de momento.'
