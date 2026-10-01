@@ -3,7 +3,7 @@
 // Linha pequena com o tempo previsto no cartão de cada casamento da agenda do /photo.
 // Usa a mesma rota do quadro do briefing; só pede para casamentos até 10 dias à frente.
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 
 const COR_AVISO: Record<string, string> = { yellow: '#facc15', orange: '#fb923c', red: '#ef4444' }
 const NOME_AVISO: Record<string, string> = { yellow: 'amarelo', orange: 'laranja', red: 'vermelho' }
@@ -14,7 +14,8 @@ type Prev = {
   avisos?: Array<{ nivel: string; tipo: string }>
 }
 
-export default function TempoChip({ local, data }: { local?: string | null; data?: string | null }) {
+/* `rotulo`: nome do sítio à frente (dias sem eventos); `vazio`: o que mostrar enquanto não há previsão */
+export default function TempoChip({ local, data, rotulo, vazio = null }: { local?: string | null; data?: string | null; rotulo?: string; vazio?: ReactNode }) {
   const [p, setP] = useState<Prev | null>(null)
 
   useEffect(() => {
@@ -25,7 +26,7 @@ export default function TempoChip({ local, data }: { local?: string | null; data
       .then(r => r.json()).then(setP).catch(() => {})
   }, [local, data])
 
-  if (p?.estado !== 'ok' || !p.dia) return null
+  if (p?.estado !== 'ok' || !p.dia) return <>{vazio}</>
   const { dia } = p
   const pior = p.avisos?.find(a => a.nivel === 'red') ?? p.avisos?.find(a => a.nivel === 'orange') ?? p.avisos?.[0]
   const titulo = [
@@ -39,6 +40,7 @@ export default function TempoChip({ local, data }: { local?: string | null; data
       <img src={`https://www.ipma.pt/bin/icons/svg/weather/w_ic_d_${String(dia.tipo).padStart(2, '0')}anim.svg`} alt="" className="w-4 h-4 -my-0.5" />
       <span>{dia.tMin}°/{dia.tMax}°</span>
       {dia.chuva != null && dia.chuva > 0 && <span className="text-sky-300/70">{dia.chuva}%</span>}
+      {rotulo && <span className="text-white/30">· {rotulo}</span>}
       {pior && <span className="ml-0.5 inline-block w-1.5 h-1.5 rounded-full" style={{ background: COR_AVISO[pior.nivel] ?? '#facc15' }} />}
     </p>
   )

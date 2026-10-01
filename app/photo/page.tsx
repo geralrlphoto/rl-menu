@@ -941,7 +941,8 @@ export default async function PhotoDashboard() {
                     </div>
 
                     <div className="mt-2.5 flex flex-col gap-1.5">
-                      {!cheio && <span className="text-[10px] text-white/15">—</span>}
+                      {/* Dia sem casamentos: tempo em Palmela (onde ficam quase todas as quintas) */}
+                      {d.eventos.length === 0 && <TempoChip local="Palmela" data={d.iso} rotulo="Palmela" vazio={!cheio ? <span className="text-[10px] text-white/15">—</span> : null} />}
                       {d.eventos.map((e: any) => (
                         <AgendaItem key={e.id} chave={chaveEvento(e)}>
                         <Link href={`/eventos-2026/${e.id}`}
