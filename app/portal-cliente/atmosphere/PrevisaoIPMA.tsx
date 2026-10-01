@@ -20,9 +20,12 @@ const VENTO: Record<number, string> = { 1: 'Fraco', 2: 'Moderado', 3: 'Forte', 4
 
 const icone = (tipo: number) => `https://www.ipma.pt/bin/icons/svg/weather/w_ic_d_${String(tipo).padStart(2, '0')}anim.svg`
 
+type Sol = { porDoSol: string | null; luzDourada: string | null }
+type Aviso = { nivel: string; tipo: string; texto: string; inicio: string; fim: string }
+
 type Resp =
-  | { estado: 'ok'; concelho: string; dia: { tMin: number | null; tMax: number | null; tipo: number; chuva: number | null; vento: string; ventoClasse: number | null; uv: number | null }; horas: Array<{ hora: string; temp: number | null; tipo: number; chuva: number | null; vento: string }> }
-  | { estado: 'cedo'; concelho: string; ate: string | null }
+  | { estado: 'ok'; concelho: string; sol?: Sol; avisos?: Aviso[]; dia: { tMin: number | null; tMax: number | null; tipo: number; chuva: number | null; vento: string; ventoClasse: number | null; uv: number | null }; horas: Array<{ hora: string; temp: number | null; tipo: number; chuva: number | null; vento: string }> }
+  | { estado: 'cedo'; concelho: string; ate: string | null; sol?: Sol }
   | { estado: 'sem-local' | 'passado' | 'sem-dados' | 'erro' }
 
 function dataLonga(iso: string) {
@@ -31,20 +34,70 @@ function dataLonga(iso: string) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+const hh = (t: string) => t.replace(':', 'h') // "19:13" → "19h13"
+
+const NIVEIS: Record<string, { nome: string; cor: string }> = {
+  yellow: { nome: 'amarelo', cor: '#facc15' },
+  orange: { nome: 'laranja', cor: '#fb923c' },
+  red: { nome: 'vermelho', cor: '#ef4444' },
+}
+
+/* Pôr do sol e luz dourada para as fotografias */
+function LinhaSol({ sol }: { sol?: Sol }) {
+  if (!sol?.porDoSol) return null
+  const itens = [
+    ['Pôr do sol', hh(sol.porDoSol)],
+    sol.luzDourada && ['Luz dourada', `${hh(sol.luzDourada)} às ${hh(sol.porDoSol)}`],
+  ].filter(Boolean) as string[][]
+  return (
+    <div className="mt-5 flex flex-wrap gap-x-8 gap-y-3 border-t border-white/[0.06] pt-4">
+      {itens.map(([k, v]) => (
+        <div key={k}>
+          <p className="text-[8px] tracking-[0.35em] text-gold/55 uppercase mb-1">{k}</p>
+          <p className="text-[14px] text-white/85">{v}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/* Avisos do IPMA para o dia (amarelo, laranja, vermelho) */
+function Avisos({ avisos, data }: { avisos?: Aviso[]; data: string }) {
+  if (!avisos?.length) return null
+  const hora = (iso: string, fallback: string) => iso.slice(0, 10) === data ? hh(iso.slice(11, 16)) : fallback
+  return (
+    <div className="mt-4 space-y-2">
+      {avisos.map((a, i) => {
+        const n = NIVEIS[a.nivel] ?? { nome: a.nivel, cor: '#facc15' }
+        return (
+          <div key={i} className="rounded-xl border px-3.5 py-2.5" style={{ borderColor: `${n.cor}55`, background: `${n.cor}12` }}>
+            <p className="text-[12px] font-semibold" style={{ color: n.cor }}>
+              Aviso {n.nome} · {a.tipo}
+              <span className="font-normal text-white/50"> · {hora(a.inicio, '0h00')} às {hora(a.fim, '24h00')}</span>
+            </p>
+            {a.texto && <p className="mt-0.5 text-[12px] text-white/60">{a.texto}</p>}
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 const RUMOS: Record<string, string> = {
   N: 'norte', NE: 'nordeste', E: 'leste', SE: 'sudeste', S: 'sul',
   SW: 'sudoeste', SO: 'sudoeste', W: 'oeste', O: 'oeste', NW: 'noroeste', NO: 'noroeste',
 }
 
 /* Pequeno texto com o resumo do dia, feito a partir dos números do IPMA */
-function resumoDoDia(data: string, dia: Extract<Resp, { estado: 'ok' }>['dia'], horas: Extract<Resp, { estado: 'ok' }>['horas']) {
+function resumoDoDia(data: string, dia: Extract<Resp, { estado: 'ok' }>['dia'], horas: Extract<Resp, { estado: 'ok' }>['horas'], avisos?: Aviso[]) {
   const diaSemana = dataLonga(data).split(',')[0]
   const max = dia.tMax ?? 0
   const sensacao = max >= 33 ? 'muito quente' : max >= 28 ? 'quente' : max >= 21 ? 'ameno' : max >= 15 ? 'fresco' : 'frio'
   const frases: string[] = []
 
   const temps = dia.tMin != null && dia.tMax != null ? `, entre ${dia.tMin}° e ${dia.tMax}°` : ''
-  frases.push(`${diaSemana} promete um dia ${sensacao}${temps}, com ${(TIPOS[dia.tipo] ?? 'céu variável').toLowerCase()}.`)
+  if ((dia.chuva ?? 0) >= 70) frases.push(`${diaSemana} deverá ser um dia de chuva${temps}.`)
+  else frases.push(`${diaSemana} promete um dia ${sensacao}${temps}, com ${(TIPOS[dia.tipo] ?? 'céu variável').toLowerCase()}.`)
 
   // Chuva: probabilidade do dia e a parte do dia em que é mais provável
   const chuva = dia.chuva ?? 0
@@ -54,7 +107,8 @@ function resumoDoDia(data: string, dia: Extract<Resp, { estado: 'ok' }>['dia'], 
     : ''
   if (chuva <= 10) frases.push('Não se espera chuva.')
   else if (chuva <= 40) frases.push(`Há alguma possibilidade de chuva (${chuva}%)${parte}.`)
-  else frases.push(`A chuva é provável (${chuva}%)${parte}.`)
+  else if (chuva < 70) frases.push(`A chuva é provável (${chuva}%)${parte}.`)
+  else frases.push(`Probabilidade de ${chuva}%${parte}.`)
 
   const meioDia = horas.find(h => h.hora === '12')
   if (meioDia?.temp != null) frases.push(`Por volta do meio-dia, cerca de ${meioDia.temp}°.`)
@@ -63,6 +117,10 @@ function resumoDoDia(data: string, dia: Extract<Resp, { estado: 'ok' }>['dia'], 
   const forca = dia.ventoClasse && VENTO[dia.ventoClasse] ? VENTO[dia.ventoClasse].toLowerCase() : ''
   if (rumo && forca) frases.push(`Vento ${forca} de ${rumo}.`)
 
+  if (avisos?.length) {
+    const pior = avisos.find(a => a.nivel === 'red') ?? avisos.find(a => a.nivel === 'orange') ?? avisos[0]
+    frases.push(`Atenção ao aviso ${NIVEIS[pior.nivel]?.nome ?? ''} do IPMA (${pior.tipo.toLowerCase()}).`)
+  }
   if ((dia.uv ?? 0) >= 6) frases.push('Índice UV elevado: convém ter protetor solar à mão.')
   return frases.join(' ')
 }
@@ -72,7 +130,7 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
 
   useEffect(() => {
     if (!local || !data) { setR({ estado: 'sem-dados' }); return }
-    fetch(`/api/previsao-ipma?local=${encodeURIComponent(local)}&data=${encodeURIComponent(data.slice(0, 10))}`)
+    fetch(`/api/previsao-ipma?local=${encodeURIComponent(local)}&data=${encodeURIComponent(data.slice(0, 10))}`, { cache: 'no-store' })
       .then(res => res.json()).then(setR).catch(() => setR({ estado: 'erro' }))
   }, [local, data])
 
@@ -87,13 +145,19 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
       : r.estado === 'sem-local'
         ? 'Não foi possível identificar o concelho do local do evento.'
         : 'Previsão indisponível de momento.'
-    return <div className={caixa}><p className="font-cormorant italic text-white/60" style={{ fontSize: '1.05rem' }}>{msg}</p></div>
+    return (
+      <div className={caixa}>
+        <p className="font-cormorant italic text-white/60" style={{ fontSize: '1.05rem' }}>{msg}</p>
+        {r.estado === 'cedo' && <LinhaSol sol={r.sol} />}
+      </div>
+    )
   }
 
   const { dia, horas } = r
   return (
     <div className={caixa}>
       <p className="text-[9px] tracking-[0.35em] text-gold/60 uppercase">{r.concelho} · {dataLonga(data!)}</p>
+      <Avisos avisos={r.avisos} data={data!.slice(0, 10)} />
 
       <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-4">
         <div className="flex items-center gap-3">
@@ -121,6 +185,8 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
         </div>
       </div>
 
+      <LinhaSol sol={r.sol} />
+
       {horas.length > 0 && (
         <div className="mt-5 flex overflow-x-auto border-t border-white/[0.06] pt-4">
           {horas.map(h => (
@@ -134,7 +200,7 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
         </div>
       )}
       <p className="mt-5 border-t border-white/[0.06] pt-4 font-cormorant italic text-white/70 leading-relaxed" style={{ fontSize: '1.08rem' }}>
-        {resumoDoDia(data!, dia, horas)}
+        {resumoDoDia(data!, dia, horas, r.avisos)}
       </p>
     </div>
   )
