@@ -6,6 +6,7 @@ import React, { useEffect, useState, useCallback, useRef, Suspense } from 'react
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer'
+import { BlocosComPrevisao } from '../atmosphere/PrevisaoIPMA'
 import BlockEditor from '../BlockEditor'
 import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
 import '../atmosphere/atmosphere.css'
@@ -4166,10 +4167,10 @@ function PortalSubPageContent() {
                             const backUrl = fromId ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}` : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : undefined
                             return (
                               <>
-                                {notionPre.length > 0 && <NotionBlocks blocks={notionPre} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
+                                {notionPre.length > 0 && <BlocosComPrevisao blocks={notionPre} local={eventoData?.local} data={eventoData?.data_evento} render={bs => <NotionBlocks blocks={bs} hiddenNav={settings.hiddenNav} backUrl={backUrl} />} />}
                                 {notionMid.length > 0 && <NotionBlocks blocks={notionMid} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
                                 {briefingExtBlock}
-                                {notionPost.length > 0 && <NotionBlocks blocks={notionPost} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
+                                {notionPost.length > 0 && <BlocosComPrevisao blocks={notionPost} local={eventoData?.local} data={eventoData?.data_evento} render={bs => <NotionBlocks blocks={bs} hiddenNav={settings.hiddenNav} backUrl={backUrl} />} />}
                               </>
                             )
                           })()}
