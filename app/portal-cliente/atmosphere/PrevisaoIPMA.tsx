@@ -157,6 +157,13 @@ export function BlocosComPrevisao({ blocks, local, data, render }: {
   while (fim < blocks.length && blocks[fim].type === 'paragraph' && !plainText(blocks[fim].paragraph?.rich_text ?? []).trim()) fim++
   const resto = blocks[fim]?.type === 'image' ? blocks.slice(fim + 1) : blocks.slice(idx + 1)
 
+  // Depois do dia do evento a secção inteira (título incluído) deixa de aparecer
+  const hoje = new Date().toLocaleDateString('sv-SE') // YYYY-MM-DD na hora local
+  if (data && data.slice(0, 10) < hoje) {
+    const semSecao = [...blocks.slice(0, idx), ...resto]
+    return semSecao.length > 0 ? <>{render(semSecao)}</> : null
+  }
+
   return (
     <>
       {render(blocks.slice(0, idx + 1))}
