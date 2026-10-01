@@ -24,15 +24,26 @@ type Prev = {
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 
-/* Concelho do IPMA cujo nome aparece no local (o nome mais comprido ganha: "Vila Nova de Gaia" antes de "Gaia") */
+/* Quintas habituais cujo local costuma vir sem concelho (confirmado pelo Rui) */
+const QUINTAS: Array<[string, string]> = [
+  ['quinta do david', 'Palmela'], ['quinta david', 'Palmela'], ['lagus', 'Palmela'],
+  ['algeruz', 'Palmela'], ['quinta do corvo', 'Palmela'], ['quinta das riscas', 'Palmela'],
+  ['quinta du alecrim', 'Palmela'], ['quinta dos platanos', 'Palmela'], ['colina do romao', 'Braga'],
+]
+
+/* Concelho do IPMA cujo nome aparece no local (o nome mais comprido ganha: "Vila Nova de Gaia" antes de "Gaia");
+   se o local não disser o concelho, procura nas quintas habituais */
 function concelhoDe(local: string, locais: Local[]): Local | null {
-  const txt = ` ${norm(local).replace(/[^a-z0-9]+/g, ' ')} `
+  const limpa = (s: string) => norm(s).replace(/[^a-z0-9]+/g, ' ').trim()
+  const txt = ` ${limpa(local)} `
   let melhor: Local | null = null
   for (const l of locais) {
-    const nome = norm(l.local).replace(/[^a-z0-9]+/g, ' ').trim()
-    if (nome && txt.includes(` ${nome} `) && (!melhor || nome.length > norm(melhor.local).length)) melhor = l
+    const nome = limpa(l.local)
+    if (nome && txt.includes(` ${nome} `) && (!melhor || nome.length > limpa(melhor.local).length)) melhor = l
   }
-  return melhor
+  if (melhor) return melhor
+  const quinta = QUINTAS.find(([k]) => txt.includes(` ${k} `))
+  return quinta ? locais.find(l => limpa(l.local) === limpa(quinta[1])) ?? null : null
 }
 
 /* Hora UTC (Date) em que o sol desce até `altitude` graus nesse dia (equação do nascer/pôr do sol) */
