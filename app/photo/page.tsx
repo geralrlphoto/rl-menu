@@ -8,6 +8,7 @@ import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
+import TempoChip from './TempoChip'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -949,6 +950,7 @@ export default async function PhotoDashboard() {
                             {(e.cliente ?? '').trim() || e.referencia}
                           </p>
                           {e.local && <p className="text-[9px] text-white/35 truncate mt-0.5">{e.local}</p>}
+                          <TempoChip local={e.local} data={e.data_evento} />
                         </Link>
                         </AgendaItem>
                       ))}
