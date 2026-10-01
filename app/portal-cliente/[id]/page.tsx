@@ -6,6 +6,7 @@ import React, { useEffect, useState, useCallback, useRef, Suspense } from 'react
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer'
+import { carregarNavPortal } from '@/lib/portalNav'
 import { BlocosComPrevisao } from '../atmosphere/PrevisaoIPMA'
 import BlockEditor from '../BlockEditor'
 import BriefingExtensions, { type BriefingExt } from './BriefingExtensions'
@@ -1619,25 +1620,7 @@ function PortalSubPageContent() {
   const [pageTitles, setPageTitles] = useState<Record<string, string>>({})
   // Lista de sub-páginas do portal pai — para a sidebar Atmosphère
   const [parentNavPages, setParentNavPages] = useState<Array<{ id: string; title: string }>>([])
-  useEffect(() => {
-    let cancelled = false
-    fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}`, { cache: 'no-store' })
-      .then(r => r.json())
-      .then(d => {
-        if (cancelled) return
-        const out: Array<{ id: string; title: string }> = []
-        const walk = (bs: any[]) => {
-          for (const b of bs ?? []) {
-            if (b.type === 'child_page') out.push({ id: b.id, title: b.child_page?.title ?? '' })
-            if (b.children) walk(b.children)
-          }
-        }
-        walk(d?.blocks ?? [])
-        setParentNavPages(out)
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [])
+  useEffect(() => carregarNavPortal(PORTAL_PAGE_ID, setParentNavPages), [])
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleInput, setTitleInput] = useState('')
   const [savingTitle, setSavingTitle] = useState(false)
@@ -1766,7 +1749,7 @@ function PortalSubPageContent() {
         // continua a ser preservado do portal individual.
         const [d, templateD] = await Promise.all([
           fetch(`/api/portais?ref=${encodeURIComponent(refParam)}`).then(r => r.json()),
-          fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`, { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+          fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&settingsOnly=1`, { cache: 'no-store' }).then(r => r.json()).catch(() => null),
         ])
         ps = d.portal?.settings ?? {}
 

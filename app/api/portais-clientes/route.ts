@@ -154,6 +154,17 @@ export async function GET(req: Request) {
     const isAdmin = !!rlAuth && rlAuth === process.env.AUTH_SECRET
     const bust = searchParams.get('bust') === '1'
 
+    // ?settingsOnly=1: só as definições do modelo (Supabase), sem ler o Notion.
+    // As sub-páginas pediam o modelo inteiro com bust=1 só para isto, e esse
+    // varrimento do Notion em cada visita era a causa dos 429.
+    if (searchParams.get('settingsOnly') === '1') {
+      const { data: row } = await supabase().from('portal_template_settings').select('settings').eq('page_id', id).maybeSingle()
+      if (row?.settings) {
+        const { portalPassword, ...safe } = row.settings as any
+        return NextResponse.json({ blocks: [], settings: safe, settingsBlockId: null }, { headers: { 'Cache-Control': 'no-store' } })
+      }
+    }
+
     // ── 1. Fetch Notion blocks (cached, busted when requested) ────────────────
     let blocks: any[]
     let notionSettings: any = { hiddenNav: [] }
