@@ -31,6 +31,42 @@ function dataLonga(iso: string) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+const RUMOS: Record<string, string> = {
+  N: 'norte', NE: 'nordeste', E: 'leste', SE: 'sudeste', S: 'sul',
+  SW: 'sudoeste', SO: 'sudoeste', W: 'oeste', O: 'oeste', NW: 'noroeste', NO: 'noroeste',
+}
+
+/* Pequeno texto com o resumo do dia, feito a partir dos números do IPMA */
+function resumoDoDia(data: string, dia: Extract<Resp, { estado: 'ok' }>['dia'], horas: Extract<Resp, { estado: 'ok' }>['horas']) {
+  const diaSemana = dataLonga(data).split(',')[0]
+  const max = dia.tMax ?? 0
+  const sensacao = max >= 33 ? 'muito quente' : max >= 28 ? 'quente' : max >= 21 ? 'ameno' : max >= 15 ? 'fresco' : 'frio'
+  const frases: string[] = []
+
+  const temps = dia.tMin != null && dia.tMax != null ? `, entre ${dia.tMin}° e ${dia.tMax}°` : ''
+  frases.push(`${diaSemana} promete um dia ${sensacao}${temps}, com ${(TIPOS[dia.tipo] ?? 'céu variável').toLowerCase()}.`)
+
+  // Chuva: probabilidade do dia e a parte do dia em que é mais provável
+  const chuva = dia.chuva ?? 0
+  const pico = horas.filter(h => h.chuva != null).sort((a, b) => (b.chuva ?? 0) - (a.chuva ?? 0))[0]
+  const parte = pico && (pico.chuva ?? 0) >= 15
+    ? (Number(pico.hora) < 12 ? ', sobretudo de manhã' : Number(pico.hora) < 18 ? ', sobretudo à tarde' : ', sobretudo à noite')
+    : ''
+  if (chuva <= 10) frases.push('Não se espera chuva.')
+  else if (chuva <= 40) frases.push(`Há alguma possibilidade de chuva (${chuva}%)${parte}.`)
+  else frases.push(`A chuva é provável (${chuva}%)${parte}.`)
+
+  const meioDia = horas.find(h => h.hora === '12')
+  if (meioDia?.temp != null) frases.push(`Por volta do meio-dia, cerca de ${meioDia.temp}°.`)
+
+  const rumo = RUMOS[dia.vento]
+  const forca = dia.ventoClasse && VENTO[dia.ventoClasse] ? VENTO[dia.ventoClasse].toLowerCase() : ''
+  if (rumo && forca) frases.push(`Vento ${forca} de ${rumo}.`)
+
+  if ((dia.uv ?? 0) >= 6) frases.push('Índice UV elevado: convém ter protetor solar à mão.')
+  return frases.join(' ')
+}
+
 export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: string | null }) {
   const [r, setR] = useState<Resp | null>(null)
 
@@ -41,7 +77,6 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
   }, [local, data])
 
   const caixa = 'my-5 rounded-2xl border border-white/10 bg-white/[0.02] px-5 py-5 sm:px-7 sm:py-6'
-  const fonte = <p className="mt-4 text-[9px] tracking-[0.3em] text-white/25 uppercase">Fonte: IPMA · atualiza automaticamente</p>
 
   if (!r) return <div className={caixa}><p className="text-xs text-white/35">A carregar a previsão…</p></div>
   if (r.estado === 'passado' || r.estado === 'sem-dados') return null
@@ -52,7 +87,7 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
       : r.estado === 'sem-local'
         ? 'Não foi possível identificar o concelho do local do evento.'
         : 'Previsão indisponível de momento.'
-    return <div className={caixa}><p className="font-cormorant italic text-white/60" style={{ fontSize: '1.05rem' }}>{msg}</p>{fonte}</div>
+    return <div className={caixa}><p className="font-cormorant italic text-white/60" style={{ fontSize: '1.05rem' }}>{msg}</p></div>
   }
 
   const { dia, horas } = r
@@ -98,7 +133,9 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
           ))}
         </div>
       )}
-      {fonte}
+      <p className="mt-5 border-t border-white/[0.06] pt-4 font-cormorant italic text-white/70 leading-relaxed" style={{ fontSize: '1.08rem' }}>
+        {resumoDoDia(data!, dia, horas)}
+      </p>
     </div>
   )
 }
