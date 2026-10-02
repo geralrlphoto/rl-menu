@@ -2,6 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { createClient } from '@supabase/supabase-js'
 import { identidadeParaRef } from '@/lib/portal-identidade'
+import { acessoPortal, podeUsarPortal } from '@/lib/portalAcesso'
+
+// Acesso: admin (rl_auth) tudo; equipa (fl_session) lê e altera portais por referência;
+// noivos (nv_session) só o próprio portal. Listas de todos os portais e criar/apagar: só admin.
+const semAcesso = () => NextResponse.json({ error: 'Sem acesso' }, { status: 401 })
 
 export const dynamic = 'force-dynamic'
 
@@ -26,6 +31,8 @@ function supabase() {
 // GET (no ref)            → all portals
 export async function GET(req: NextRequest) {
   const ref = req.nextUrl.searchParams.get('ref')
+  const acesso = await acessoPortal(req)
+  if (ref ? !podeUsarPortal(acesso, ref) : !acesso.admin) return semAcesso()
   const db = supabase()
   if (ref) {
     const { data, error } = await db.from('portais').select('*').ilike('referencia', ref).maybeSingle()
@@ -104,6 +111,7 @@ export async function GET(req: NextRequest) {
 
 // POST { referencia, noiva, noivo, data, local, valorFoto?, valorVideo?, valorExtras? }
 export async function POST(req: NextRequest) {
+  if (!(await acessoPortal(req)).admin) return semAcesso()
   try {
     const body = await req.json()
     const { referencia, noiva, noivo, data, local, valorFoto, valorVideo, valorExtras, tipoPortal } = body
@@ -158,6 +166,7 @@ export async function POST(req: NextRequest) {
 
 // DELETE ?ref=CAS_034_26_KP  → eliminar portal definitivamente
 export async function DELETE(req: NextRequest) {
+  if (!(await acessoPortal(req)).admin) return semAcesso()
   try {
     const ref = req.nextUrl.searchParams.get('ref')
     if (!ref) return NextResponse.json({ error: 'ref required' }, { status: 400 })
@@ -178,6 +187,7 @@ export async function DELETE(req: NextRequest) {
 // PUT { photoSettings: { heroImageUrl?, galleryUrls?, subpageHeaderUrl? }, tipoPortal?: 'casamento' | 'batizado' }
 // Sincroniza campos de foto nos portais do tipo indicado (omitir = todos)
 export async function PUT(req: NextRequest) {
+  if (!(await acessoPortal(req)).admin) return semAcesso()
   try {
     const { photoSettings, tipoPortal } = await req.json()
     if (!photoSettings) return NextResponse.json({ error: 'photoSettings required' }, { status: 400 })
@@ -212,6 +222,7 @@ export async function PATCH(req: NextRequest) {
     // Allow passing settings directly at top level (shorthand for updates.settings)
     const updates = _updates ?? (topSettings ? { settings: topSettings } : {})
     if (!referencia) return NextResponse.json({ error: 'referencia required' }, { status: 400 })
+    if (!podeUsarPortal(await acessoPortal(req), referencia)) return semAcesso()
 
     const db = supabase()
 

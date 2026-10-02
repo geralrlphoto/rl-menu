@@ -18,38 +18,44 @@ export async function middleware(request: NextRequest) {
   }
 
   // ── Portal dos Noivos (casamento / batizado) ─────────────────────────────
-  //   /portal-cliente/ref/<REF>   e   /portal-batizado/ref/<REF>
-  //   exigem sessão `nv_session` válida cuja referencia bate com a URL.
-  //
-  //   Bypass:
-  //     · admin (rl_auth válido)
-  //     · ?admin=1 na URL
-  //
-  //   Sem sessão → redirect /login-noivos OU /login-batizado consoante o portal
-  //   Sessão de outro casal → redirect para o portal próprio (não permite
-  //     ver portais alheios).
+  //   /portal-cliente/ref/<REF> e as sub-páginas /portal-cliente/<id>?portalRef=<REF>
+  //   (e o mesmo em /portal-batizado) exigem:
+  //     · admin (rl_auth válido), ou
+  //     · sessão `nv_session` cuja referencia bate com o portal, ou
+  //     · membro da equipa (fl_session), só nas sub-páginas (briefing no portal da equipa)
+  //   ?admin=1 já não abre nada sozinho: sem rl_auth vai para o login de admin.
+  //   Sem sessão → /login-noivos ou /login-batizado. Sessão de outro casal → portal próprio.
   const noivosMatch = pathname.match(/^\/(portal-cliente|portal-batizado)\/ref\/([^/?]+)/)
-  if (noivosMatch) {
+  const subMatch = !noivosMatch && searchParams.get('portalRef')
+    ? pathname.match(/^\/(portal-cliente|portal-batizado)\/([^/?]+)$/)
+    : null
+  if (noivosMatch || subMatch) {
     const adminAuth = request.cookies.get('rl_auth')?.value
-    const isAdmin = (adminAuth && adminAuth === process.env.AUTH_SECRET) ||
-      searchParams.get('admin') === '1'
+    const isAdmin = !!adminAuth && adminAuth === process.env.AUTH_SECRET
     if (!isAdmin) {
-      const refUrl = decodeURIComponent(noivosMatch[2])
-      const isBatizado = noivosMatch[1] === 'portal-batizado'
-      const nvCookie = request.cookies.get(NV_COOKIE_NAME)?.value
-      const session = await verifyNvSession(nvCookie)
-      if (!session) {
-        const loginPath = isBatizado ? '/login-batizado' : '/login-noivos'
-        const loginUrl = new URL(loginPath, request.url)
-        loginUrl.searchParams.set('next', `${pathname}${search}`)
-        return NextResponse.redirect(loginUrl)
+      if (searchParams.get('admin') === '1') {
+        return NextResponse.redirect(new URL('/login', request.url))
       }
-      // Sessão noutro casamento → manda-os para o portal próprio
-      if (session.referencia.toLowerCase() !== refUrl.toLowerCase()) {
-        const ownBase = session.tipo === 'batizado' ? '/portal-batizado' : '/portal-cliente'
-        return NextResponse.redirect(new URL(`${ownBase}/ref/${encodeURIComponent(session.referencia)}`, request.url))
+      const base = (noivosMatch ?? subMatch)![1]
+      const refUrl = noivosMatch ? decodeURIComponent(noivosMatch[2]) : searchParams.get('portalRef')!
+      const isBatizado = base === 'portal-batizado'
+      const equipa = subMatch ? await verifyFlSession(request.cookies.get('fl_session')?.value) : null
+      if (!equipa) {
+        const nvCookie = request.cookies.get(NV_COOKIE_NAME)?.value
+        const session = await verifyNvSession(nvCookie)
+        if (!session) {
+          const loginPath = isBatizado ? '/login-batizado' : '/login-noivos'
+          const loginUrl = new URL(loginPath, request.url)
+          loginUrl.searchParams.set('next', `${pathname}${search}`)
+          return NextResponse.redirect(loginUrl)
+        }
+        // Sessão noutro casamento → manda-os para o portal próprio
+        if (session.referencia.toLowerCase() !== refUrl.toLowerCase()) {
+          const ownBase = session.tipo === 'batizado' ? '/portal-batizado' : '/portal-cliente'
+          return NextResponse.redirect(new URL(`${ownBase}/ref/${encodeURIComponent(session.referencia)}`, request.url))
+        }
       }
-      // OK — sessão bate com a referencia da URL, deixa passar
+      // OK — sessão válida para este portal, deixa passar
     }
   }
 
