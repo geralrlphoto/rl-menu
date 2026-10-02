@@ -9,6 +9,9 @@ import { verifyNvSession, NV_COOKIE_NAME } from '@/lib/noivos-session'
  * podem emitir. Sem isto, o endpoint seria uma fábrica aberta de tokens e
  * a rota /p/[token] não valeria de nada.
  */
+// Links partilhados sempre com o domínio do portal RL, seja qual for o endereço onde se gerou
+const SITE = 'https://portal.rlphotovideo.pt'
+
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id') ?? ''
   const ref = req.nextUrl.searchParams.get('ref') ?? ''
@@ -29,7 +32,7 @@ export async function GET(req: NextRequest) {
 
   const token = await assinarPartilha({ id, ref, titulo })
   return NextResponse.json(
-    { token, url: `${req.nextUrl.origin}/p/${token}` },
+    { token, url: `${SITE}/p/${token}` },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
