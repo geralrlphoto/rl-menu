@@ -135,5 +135,60 @@ export async function saveSelecao(entrada: SelecaoFotos, tag = 'selecao-fotos') 
     console.error(`[${tag}] Notion save failed:`, e)
   )
 
+  // Começa a contar o prazo das Fotos Finais (30 dias) no casamento certo
+  await marcarSelecaoRecebida(mapped).catch(e => console.error(`[${tag}] selecao_recebida:`, e))
+
   return { id: saved?.id as string | null, error: null as string | null }
+}
+
+const semAcentos = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+const nomesDe = (t: string | null | undefined) =>
+  new Set(semAcentos(String(t ?? '')).split(/[^a-z]+/).filter(p => p.length >= 3 && !['casamento', 'batizado'].includes(p)))
+
+/**
+ * Encontra o casamento desta seleção. Os noivos raramente escrevem bem a
+ * referência ("Prestação de Serviços", "CAS_2208_26"), por isso:
+ *  1) referência válida que exista nos eventos;
+ *  2) senão, a data do casamento: um só evento nesse dia, ou o único cujo
+ *     cliente partilha um nome com os noivos.
+ * Sem certeza devolve null (fica para preencher à mão na ficha).
+ */
+export async function encontrarEventoDaSelecao(s: Pick<SelecaoFotos, 'referencia' | 'date' | 'nome_noivos'>): Promise<string | null> {
+  const sb = db()
+  const tabelas = ['eventos_2026', 'eventos_2027']
+  const ref = String(s.referencia ?? '').trim()
+  if (/^[A-Z]{3}_\d+_\d+_RL$/i.test(ref)) {
+    for (const t of tabelas) {
+      const { data } = await sb.from(t).select('referencia').ilike('referencia', ref).maybeSingle()
+      if (data?.referencia) return data.referencia
+    }
+  }
+  if (!s.date || !/^\d{4}-\d{2}-\d{2}$/.test(s.date)) return null
+  const candidatos: Array<{ referencia: string; cliente: string | null }> = []
+  for (const t of tabelas) {
+    const { data } = await sb.from(t).select('referencia, cliente').eq('data_evento', s.date)
+    for (const e of data ?? []) if (e.referencia) candidatos.push(e)
+  }
+  if (candidatos.length === 1) return candidatos[0].referencia
+  const meus = nomesDe(s.nome_noivos)
+  const comNome = candidatos.filter(c => [...nomesDe(c.cliente)].some(n => meus.has(n)))
+  return comNome.length === 1 ? comNome[0].referencia : null
+}
+
+/* Grava a data de entrada da seleção no portal do casamento (só se ainda não houver) */
+async function marcarSelecaoRecebida(s: SelecaoFotos) {
+  const ref = await encontrarEventoDaSelecao(s)
+  if (!ref) return
+  const sb = db()
+  const { data: portal } = await sb.from('portais').select('referencia, settings').ilike('referencia', ref).maybeSingle()
+  if (!portal) return
+  const settings = (portal.settings ?? {}) as Record<string, unknown>
+  if (settings.selecao_recebida) return
+  const dia = /^\d{4}-\d{2}-\d{2}$/.test(s.data_entrada) ? s.data_entrada : new Date().toISOString().slice(0, 10)
+  await sb.from('portais').update({ settings: { ...settings, selecao_recebida: dia }, updated_at: new Date().toISOString() }).eq('referencia', portal.referencia)
+  try {
+    const { revalidateTag, revalidatePath } = await import('next/cache')
+    revalidateTag('photo-portais', { expire: 0 })
+    revalidatePath('/photo')
+  } catch { /* fora de um pedido Next */ }
 }
