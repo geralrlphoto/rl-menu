@@ -61,6 +61,8 @@ type Props = {
   nomes?: { noivo?: string; noiva?: string }
   /** Portal de casamento: mostra "Sugerir base do dia" no cronograma */
   casamento?: boolean
+  /** Página partilhada (/p/…): só leitura, sem botão de partilhar */
+  partilhada?: boolean
 }
 
 /* Telefone → número para o wa.me (indicativo 351 quando vem sem indicativo) */
@@ -1075,9 +1077,38 @@ function calcProgress(info: BriefingExt) {
 
 // ─── Hero Premium ────────────────────────────────────────────────────────────
 
+/* Copia um link que abre só esta página do briefing (token assinado, válido 90 dias) */
+function BotaoPartilhar() {
+  const [estado, setEstado] = useState<'' | 'a-gerar' | 'copiado' | 'erro'>('')
+  async function partilhar() {
+    setEstado('a-gerar')
+    try {
+      const u = new URL(window.location.href)
+      const id = u.pathname.split('/').filter(Boolean).pop() ?? ''
+      const qs = new URLSearchParams({ id, ref: u.searchParams.get('portalRef') ?? '', titulo: u.searchParams.get('title') ?? 'BRIEFING' })
+      const r = await fetch(`/api/partilha-token?${qs}`, { cache: 'no-store' })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || !d?.url) throw new Error('sem link')
+      try { await navigator.clipboard.writeText(d.url) } catch { window.prompt('Copia o link desta página:', d.url) }
+      setEstado('copiado')
+      setTimeout(() => setEstado(''), 2500)
+    } catch {
+      setEstado('erro')
+      setTimeout(() => setEstado(''), 3000)
+    }
+  }
+  return (
+    <button onClick={partilhar} disabled={estado === 'a-gerar'} title="Copiar um link que abre só esta página"
+      className="px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5 disabled:opacity-50">
+      {estado === 'copiado' ? '✓ Link copiado' : estado === 'erro' ? 'Sem permissão' : estado === 'a-gerar' ? 'A gerar…' : '↗ Partilhar'}
+    </button>
+  )
+}
+
 function BriefingHero({
-  info, dataEvento, local, pageTitle, isAdmin, teamView, viewMode, setViewMode, onSave, enviarBriefingNode,
+  info, dataEvento, local, pageTitle, isAdmin, teamView, viewMode, setViewMode, onSave, enviarBriefingNode, podePartilhar,
 }: {
+  podePartilhar?: boolean
   info: BriefingExt
   dataEvento?: string | null
   local?: string | null
@@ -1219,6 +1250,7 @@ function BriefingHero({
               className="px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5">
               ▶ Apresentar
             </button>
+            {podePartilhar && <BotaoPartilhar />}
             {enviarBriefingNode}
           </div>
         </div>
@@ -1465,7 +1497,7 @@ function VisaoGeralSection({ info, onJump }: { info: BriefingExt; onJump: (id: s
 
 export default function BriefingExtensions({
   info, isAdmin, teamView, onSave, pageTitle, dataEvento, local,
-  enviarBriefingNode, equipaNode, fichasNode, nomes, casamento,
+  enviarBriefingNode, equipaNode, fichasNode, nomes, casamento, partilhada,
 }: Props) {
   const [viewMode, setViewMode] = useState<'admin' | 'client'>(isAdmin ? 'admin' : 'client')
   const effectiveAdmin = isAdmin && viewMode === 'admin'
@@ -1550,6 +1582,7 @@ export default function BriefingExtensions({
     <div className="briefing-premium">
       {/* HERO */}
       <BriefingHero
+        podePartilhar={!partilhada && !teamView}
         info={info}
         dataEvento={dataEvento}
         local={local}
