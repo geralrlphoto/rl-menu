@@ -1078,7 +1078,7 @@ function calcProgress(info: BriefingExt) {
 // ─── Hero Premium ────────────────────────────────────────────────────────────
 
 /* Copia um link que abre só esta página do briefing (token assinado, válido 90 dias) */
-function BotaoPartilhar() {
+export function BotaoPartilhar({ compacto = false }: { compacto?: boolean }) {
   const [estado, setEstado] = useState<'' | 'a-gerar' | 'copiado' | 'erro'>('')
   async function partilhar() {
     setEstado('a-gerar')
@@ -1099,7 +1099,9 @@ function BotaoPartilhar() {
   }
   return (
     <button onClick={partilhar} disabled={estado === 'a-gerar'} title="Copiar um link que abre só esta página"
-      className="px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5 disabled:opacity-50">
+      className={compacto
+        ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-sky-300/80 hover:text-sky-300 border border-sky-300/25 hover:border-sky-300/50 transition-all disabled:opacity-50'
+        : 'px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5 disabled:opacity-50'}>
       {estado === 'copiado' ? '✓ Link copiado' : estado === 'erro' ? 'Sem permissão' : estado === 'a-gerar' ? 'A gerar…' : '↗ Partilhar'}
     </button>
   )

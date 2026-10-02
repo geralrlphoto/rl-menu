@@ -9,7 +9,7 @@ import { NotionBlocks, plainText, richText, type Block } from '../NotionRenderer
 import { carregarNavPortal } from '@/lib/portalNav'
 import { BlocosComPrevisao } from '@/app/portal-cliente/atmosphere/PrevisaoIPMA'
 import BlockEditor from '../BlockEditor'
-import BriefingExtensions, { type BriefingExt } from '../../portal-cliente/[id]/BriefingExtensions'
+import BriefingExtensions, { type BriefingExt, BotaoPartilhar } from '../../portal-cliente/[id]/BriefingExtensions'
 import '../../portal-cliente/atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../../portal-cliente/atmosphere/PortalShell'
 import { ContratoView } from '../../portal-cliente/atmosphere/ContratoView'
@@ -2433,6 +2433,9 @@ function PortalSubPageContent() {
               </svg>
               Agenda
             </button>
+          )}
+          {isAdmin && !editing && !editingPhotos && !loading && !error && isBriefingPage && refParam && (
+            <BotaoPartilhar compacto />
           )}
           {isAdmin && !editing && !editingPhotos && !loading && !error && (
             <button onClick={handlePublicar} disabled={publishing}
