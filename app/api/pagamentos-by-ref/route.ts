@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { exigeAcessoRef } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -19,6 +20,8 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const ref = searchParams.get('ref')
   if (!ref) return NextResponse.json({ payments: [] })
+  const bloqueio = await exigeAcessoRef(req, ref) // admin ou os próprios noivos
+  if (bloqueio) return bloqueio
 
   const variants = refVariants(ref)
 

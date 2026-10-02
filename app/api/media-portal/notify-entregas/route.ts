@@ -1,7 +1,10 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 export async function POST(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { to, ref, nomeProjeto, cliente, entregas, entregaIndices } = await req.json()
 
   if (!to) return NextResponse.json({ ok: false, error: 'Email do cliente em falta' }, { status: 400 })

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 import { normalizarNumeros } from '@/lib/selecao-fotos-save'
 
@@ -10,6 +11,8 @@ function db() {
 }
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(_req) // só admin
+  if (bloqueio) return bloqueio
   const { id } = await params
   const { data, error } = await db().from('fotos_selecao').select('*').eq('id', id).maybeSingle()
   if (error) return NextResponse.json({ row: null, error: error.message }, { status: 500 })
@@ -17,6 +20,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { id } = await params
   const body = await req.json()
 
@@ -44,6 +49,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(_req) // só admin
+  if (bloqueio) return bloqueio
   const { id } = await params
   const { error } = await db().from('fotos_selecao').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

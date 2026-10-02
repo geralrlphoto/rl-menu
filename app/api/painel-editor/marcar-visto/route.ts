@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -13,6 +14,8 @@ function db() {
 export async function POST(req: NextRequest) {
   const { freelancer, referencia, notifId } = await req.json().catch(() => ({}))
   if (!freelancer) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
+  const bloqueio = await exigeAdminOuProprio(req, freelancer)
+  if (bloqueio) return bloqueio
   if (!referencia && !notifId) {
     return NextResponse.json({ error: 'referencia or notifId required' }, { status: 400 })
   }
@@ -44,7 +47,7 @@ export async function POST(req: NextRequest) {
 
   // Fallback: marca a notificação específica pelo id.
   if (updated === 0 && notifId) {
-    await supabase.from('freelancer_notificacoes').update({ lida: true }).eq('id', notifId)
+    await supabase.from('freelancer_notificacoes').update({ lida: true }).eq('id', notifId).eq('freelancer_id', freelancer)
   }
 
   return NextResponse.json({ ok: true, updated })

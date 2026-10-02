@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 // POST /api/contrato-cps/aprovar
@@ -576,6 +577,8 @@ export async function POST(req: NextRequest) {
 // ─── GET handler ──────────────────────────────────────────────────────────────
 // GET ?ref=CAS_011_26_RL → estado do contrato + url do portal (se aprovado)
 export async function GET(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   try {
     const referencia = req.nextUrl.searchParams.get('ref')
     if (!referencia) return NextResponse.json({ error: 'ref required' }, { status: 400 })

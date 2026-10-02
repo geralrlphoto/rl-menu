@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -10,6 +11,8 @@ function db() {
 
 // GET: estado da revisão de vídeo de um evento (para a ficha do admin).
 export async function GET(req: NextRequest) {
+  const bloqueio = await exigeSessao(req)
+  if (bloqueio) return bloqueio
   const referencia = req.nextUrl.searchParams.get('referencia')
   if (!referencia) return NextResponse.json({ error: 'referencia required' }, { status: 400 })
   const supabase = db()
@@ -21,6 +24,9 @@ export async function GET(req: NextRequest) {
 //   → guarda link + estado "Em Revisão" e notifica o admin (sino).
 export async function POST(req: NextRequest) {
   const { referencia, evento_id, freelancer, link, noivos, local } = await req.json().catch(() => ({}))
+  // Admin, ou o próprio editor a submeter em seu nome
+  const bloqueio = await exigeAdminOuProprio(req, freelancer)
+  if (bloqueio) return bloqueio
   if (!referencia || !link) {
     return NextResponse.json({ error: 'referencia e link obrigatórios' }, { status: 400 })
   }
@@ -57,6 +63,8 @@ export async function POST(req: NextRequest) {
 // PATCH: o admin aprova ou pede alterações na ficha do evento.
 //   → atualiza estado e notifica o editor (sino do painel do editor).
 export async function PATCH(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // aprovar/rejeitar é do admin
+  if (bloqueio) return bloqueio
   const { referencia, status, feedback } = await req.json().catch(() => ({}))
   if (!referencia || !status) {
     return NextResponse.json({ error: 'referencia e status obrigatórios' }, { status: 400 })

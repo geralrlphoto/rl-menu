@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
 const IMG_BASE  = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
@@ -12,6 +13,8 @@ function fmtData(d: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só o admin envia (destinatário vem do pedido)
+  if (bloqueio) return bloqueio
   const { email, nome, reuniao_data, reuniao_hora, reuniao_tipo, page_token, page_tipo } = await req.json().catch(() => ({}))
 
   if (!email || !reuniao_data || !reuniao_hora) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
+import { exigeSessao, exigeAdmin, exigeAdminOuProprio, ehAdmin, sessaoMembro, naoAutorizado } from '@/lib/api-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -21,6 +21,9 @@ export async function GET(req: NextRequest) {
   if (barrado) return barrado
 
   const fid = req.nextUrl.searchParams.get('freelancer_id')
+  // Membro da equipa só lê os próprios dados (o admin lê tudo)
+  const soProprio = await exigeAdminOuProprio(req, fid)
+  if (soProprio) return soProprio
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
   // Mostra encomendas enviadas a este fotógrafo, quer como destinatário único
   // (enviado_para_id), quer quando faz parte de um envio a vários (enviado_para_ids).

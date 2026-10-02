@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -17,6 +18,8 @@ function db() {
  * A resposta passa a aparecer no portal (página Atendimento) e na ficha.
  */
 export async function POST(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   try {
     const body = await req.json().catch(() => ({}))
     const referencia = String(body?.referencia ?? '').trim()

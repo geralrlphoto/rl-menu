@@ -12,7 +12,7 @@ function supabase() {
 }
 
 export async function GET(req: Request) {
-  const barrado = await exigeSessao(req)
+  const barrado = exigeAdmin(req) // devolve a linha completa (incl. password): só admin
   if (barrado) return barrado
 
   const { data, error } = await supabase()

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
@@ -32,6 +33,8 @@ const FIELD_MAP: Record<string, { key: string; type: string }> = {
 }
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { id } = await params
   const body = await req.json()
 
@@ -75,6 +78,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 }
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(_req) // só admin
+  if (bloqueio) return bloqueio
   const { id } = await params
   const supabase = db()
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)

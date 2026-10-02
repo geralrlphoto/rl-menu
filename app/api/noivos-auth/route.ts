@@ -159,15 +159,8 @@ export async function POST(req: NextRequest) {
   }
 
   if (candidates.length === 0) {
-    return NextResponse.json({
-      ok: false, reason: 'invalid_credentials',
-      debug: {
-        step: 'email_not_found',
-        email_normalizado: emailNorm,
-        notion_token_set: !!process.env.NOTION_TOKEN,
-        notion_token_first8: process.env.NOTION_TOKEN?.slice(0, 8) ?? null,
-      },
-    }, { status: 401 })
+    // Sem detalhes na resposta: não revelar se o email existe nem dados internos
+    return NextResponse.json({ ok: false, reason: 'invalid_credentials' }, { status: 401 })
   }
 
   // ── 2) Tenta a password em TODOS os candidatos ─────────────────────────
@@ -207,15 +200,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!matchedCandidate) {
-    return NextResponse.json({
-      ok: false, reason: 'invalid_credentials',
-      debug: {
-        step: 'password_mismatch_all',
-        candidates_tried: candidates.length,
-        entered_len: entered.length,
-        attempts,
-      },
-    }, { status: 401 })
+    return NextResponse.json({ ok: false, reason: 'invalid_credentials' }, { status: 401 })
   }
 
   const { referencia, tipoEventoRaw, nomeNoivos } = matchedCandidate

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 // Form interno — Dados para Contrato CPS
@@ -530,6 +531,8 @@ export async function POST(req: NextRequest) {
 // Usado pela ficha quando admin define tipo_evento manualmente (caso o
 // cliente não tenha preenchido o formulário CPS).
 export async function PATCH(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   try {
     const ref = req.nextUrl.searchParams.get('ref')
     if (!ref) return NextResponse.json({ error: 'ref required' }, { status: 400 })

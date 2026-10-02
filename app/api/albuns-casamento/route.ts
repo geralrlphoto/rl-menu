@@ -1,4 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { ehAdmin, sessaoNoivos, naoAutorizado, cabecalhoInterno } from '@/lib/api-guard'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -10,7 +12,9 @@ function db() {
   )
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { data, error } = await db()
     .from('albuns_casamento')
     .select('*')
@@ -20,6 +24,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const body = await req.json().catch(() => ({}))
   const { nome, ref_evento, num_fotografias, data_entrega_fotos, check_existing } = body
 
@@ -73,6 +79,13 @@ export async function PATCH(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const supabase = db()
+  // Admin altera tudo; os noivos só aprovam o álbum do próprio casamento
+  if (!ehAdmin(req)) {
+    const nv = await sessaoNoivos(req)
+    const { data: alb } = await supabase.from('albuns_casamento').select('ref_evento').eq('id', id).maybeSingle()
+    const proprio = !!nv && !!alb?.ref_evento && String(alb.ref_evento).toLowerCase() === nv.referencia.toLowerCase()
+    if (!proprio || status !== 'APROVADO' || data_aprovacao !== undefined || data_prevista_entrega !== undefined) return naoAutorizado()
+  }
   const updates: Record<string, any> = {}
   if (status !== undefined) updates.status = status
   if (data_aprovacao !== undefined) updates.data_aprovacao = data_aprovacao
@@ -104,14 +117,14 @@ export async function PATCH(req: NextRequest) {
       .eq('referencia_album', data.ref_evento)
 
     const ref = data.ref_evento
-    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
+    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`, { headers: cabecalhoInterno() }).then(r => r.json()).catch(() => null)
     const ev = eventoRes?.evento
     const nomeNoivos = ev?.cliente ?? (ev?.nome_noiva && ev?.nome_noivo ? `${ev.nome_noiva} & ${ev.nome_noivo}` : ev?.nome_noiva ?? ev?.nome_noivo ?? data.nome ?? ref)
 
     // Notify admin (email)
     fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/send-admin-notification`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...cabecalhoInterno() },
       body: JSON.stringify({ tipo: 'album_aprovado', nome_noivos: nomeNoivos, referencia: ref }),
     }).catch(() => null)
 
@@ -180,7 +193,7 @@ export async function PATCH(req: NextRequest) {
   // When PARA APROVAÇÃO (admin): email the bride
   if (status === 'PARA APROVAÇÃO' && data?.ref_evento) {
     const ref = data.ref_evento
-    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
+    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`, { headers: cabecalhoInterno() }).then(r => r.json()).catch(() => null)
     const emailNoiva = eventoRes?.evento?.email_noiva
     const nomeNoiva  = eventoRes?.evento?.nome_noiva ?? 'Cliente'
     if (emailNoiva) {

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { ehAdmin, sessaoNoivos } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 // Email do admin que recebe todos os registos de pagamento dos noivos.
@@ -129,7 +130,13 @@ export async function POST(req: NextRequest) {
     data_casamento = cps?.data_casamento ?? null
   }
   // O que os noivos escreveram no formulário tem prioridade sobre o contrato
-  if (emailForm) emailNoivaAddr = emailForm
+  // O email escrito no formulário só conta para o admin ou para os próprios noivos;
+  // caso contrário o recibo vai só para o email do contrato
+  if (emailForm) {
+    const nv = ehAdmin(req) ? null : await sessaoNoivos(req)
+    const confiavel = ehAdmin(req) || (!!nv && !!referencia && nv.referencia.toLowerCase() === referencia.toLowerCase())
+    if (confiavel || !emailNoivaAddr) emailNoivaAddr = confiavel ? emailForm : null
+  }
   if (dataCasForm) data_casamento = dataCasForm
 
   // Grava o pagamento em pagamentos_noivos (aparece em /financas).

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -13,6 +14,8 @@ function db() {
 //   Fica registado na ficha do cliente (Produção & Entregas).
 export async function POST(req: NextRequest) {
   const { referencia, evento_id, freelancer, link, noivos, local } = await req.json().catch(() => ({}))
+  const bloqueio = await exigeAdminOuProprio(req, freelancer)
+  if (bloqueio) return bloqueio
   if (!referencia || !link) {
     return NextResponse.json({ error: 'referencia e link obrigatórios' }, { status: 400 })
   }

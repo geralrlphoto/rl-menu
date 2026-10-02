@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAcessoRef } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 // POST /api/send-task-email
@@ -220,6 +221,8 @@ export async function POST(req: NextRequest) {
     const tipoInput  = (body.tipo === 'batizado' ? 'batizado' : (body.tipo === 'casamento' ? 'casamento' : null)) as 'casamento' | 'batizado' | null
 
     if (!referencia) return NextResponse.json({ error: 'referencia obrigatória' }, { status: 400 })
+    const bloqueio = await exigeAcessoRef(req, referencia) // admin ou os próprios noivos
+    if (bloqueio) return bloqueio
     if (!taskText)   return NextResponse.json({ error: 'taskText obrigatório' }, { status: 400 })
 
     const dados = await resolveDadosCliente(referencia)

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAcessoRef } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
@@ -93,6 +94,9 @@ function getProp(props: any, key: string, type: string): any {
 export async function GET(req: NextRequest) {
   const ref = req.nextUrl.searchParams.get('ref')
   if (!ref) return NextResponse.json({ error: 'ref required' }, { status: 400 })
+  // Admin, os noivos deste casamento ou a equipa (dados pessoais e valores)
+  const bloqueio = await exigeAcessoRef(req, ref, { equipa: true })
+  if (bloqueio) return bloqueio
 
   // 0. Cache em memória (90s) — evita repetir Notion + Supabase por visita.
   const hit = evCache.get(ref)

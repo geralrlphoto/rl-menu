@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa, cabecalhoInterno } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -25,6 +26,8 @@ function stageToVideoEstado(stage: string): string {
 export async function POST(req: NextRequest) {
   const { freelancer, referencia, evento_id, stage, local, data_casamento } =
     await req.json().catch(() => ({}))
+  const bloqueio = await exigeAdminOuProprio(req, freelancer)
+  if (bloqueio) return bloqueio
   if (!stage) return NextResponse.json({ error: 'stage required' }, { status: 400 })
   if (!referencia && !evento_id) {
     return NextResponse.json({ error: 'referencia or evento_id required' }, { status: 400 })
@@ -51,7 +54,7 @@ export async function POST(req: NextRequest) {
     try {
       const res = await fetch(`${req.nextUrl.origin}/api/eventos-notion/${eventId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...cabecalhoInterno() },
         body: JSON.stringify({ video_estado: videoEstado }),
       })
       synced = res.ok

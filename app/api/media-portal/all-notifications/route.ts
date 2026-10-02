@@ -28,6 +28,7 @@
    ============================================================ */
 
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 import { NextResponse } from 'next/server'
 
 function db() {
@@ -49,7 +50,9 @@ type Item = {
   href?: string
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   try {
     const { data: rows } = await db()
       .from('media_portais')

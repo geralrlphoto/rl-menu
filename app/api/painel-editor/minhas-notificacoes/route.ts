@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -13,6 +14,8 @@ function db() {
 export async function GET(req: NextRequest) {
   const freelancer = req.nextUrl.searchParams.get('freelancer')
   if (!freelancer) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
+  const bloqueio = await exigeAdminOuProprio(req, freelancer)
+  if (bloqueio) return bloqueio
   const supabase = db()
   const { data } = await supabase
     .from('freelancer_notificacoes')

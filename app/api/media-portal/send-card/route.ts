@@ -1,6 +1,9 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 
 export async function POST(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { to, ref, nome, cliente, tipo } = await req.json()
 
   const cardUrl = `https://portal.rlphotovideo.pt/portal-media/${ref}/card`

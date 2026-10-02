@@ -1,6 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
+import { exigeSessao, exigeAdmin, cabecalhoInterno, exigeAdminOuProprio, ehAdmin, sessaoMembro, naoAutorizado } from '@/lib/api-guard'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -11,6 +11,9 @@ export async function GET(req: NextRequest) {
   if (barrado) return barrado
 
   const fid = req.nextUrl.searchParams.get('freelancer_id')
+  // Membro da equipa só lê os próprios dados (o admin lê tudo)
+  const soProprio = await exigeAdminOuProprio(req, fid)
+  if (soProprio) return soProprio
   if (!fid) return NextResponse.json({ error: 'freelancer_id required' }, { status: 400 })
   const supabase = db()
   const { data, error } = await supabase.from('freelancer_album').select('*').eq('freelancer_id', fid).order('data_casamento')
@@ -136,7 +139,7 @@ export async function PATCH(req: NextRequest) {
 
       // When EM APROVAÇÃO: email the bride
       if (newStatus === 'EM APROVAÇÃO') {
-        const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => null)
+        const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`, { headers: cabecalhoInterno() }).then(r => r.json()).catch(() => null)
         const emailNoiva = eventoRes?.evento?.email_noiva
         const nomeNoiva  = eventoRes?.evento?.nome_noiva ?? 'Cliente'
         if (emailNoiva) {

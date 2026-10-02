@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -16,6 +17,8 @@ const ALLOWED_FIELDS = new Set([
 ])
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { id } = await params
   const body = await req.json()
 
@@ -36,6 +39,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(_req) // só admin
+  if (bloqueio) return bloqueio
   const { id } = await params
   const { error } = await db()
     .from('albuns_casamento')

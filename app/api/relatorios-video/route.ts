@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,6 +9,8 @@ const supabase = createClient(
 
 // GET /api/relatorios-video?referencia=CAS_036_26_RL
 export async function GET(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const referencia = req.nextUrl.searchParams.get('referencia')
 
   if (!referencia) {
@@ -87,6 +90,8 @@ export async function POST(req: NextRequest) {
 
 // DELETE /api/relatorios-video?id=UUID — admin reset
 export async function DELETE(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const id = req.nextUrl.searchParams.get('id')
   if (!id) return NextResponse.json({ error: 'id obrigatório' }, { status: 400 })
 

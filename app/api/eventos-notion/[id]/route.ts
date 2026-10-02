@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
@@ -102,6 +103,8 @@ function buildNotionValue(type: string, value: any): any {
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(req)
+  if (bloqueio) return bloqueio
   const { id } = await params
   try {
     const body = await req.json()
@@ -498,6 +501,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(_req)
+  if (bloqueio) return bloqueio
   const { id } = await params
   try {
     const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
@@ -775,6 +780,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(_req)
+  if (bloqueio) return bloqueio
   const { id } = await params  // Notion page ID
   const referencia  = _req.nextUrl.searchParams.get('referencia')
   const supabaseId  = _req.nextUrl.searchParams.get('supabaseId')

@@ -25,7 +25,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
+import { exigeSessao, exigeAdmin, exigeAdminOuProprio, ehAdmin, sessaoMembro, naoAutorizado } from '@/lib/api-guard'
 
 function db() {
   return createClient(
@@ -39,6 +39,9 @@ export async function GET(req: NextRequest) {
   if (barrado) return barrado
 
   const id = req.nextUrl.searchParams.get('id')
+  // Membro da equipa só lê os próprios dados (o admin lê tudo)
+  const soProprio = await exigeAdminOuProprio(req, id)
+  if (soProprio) return soProprio
   if (!id) return NextResponse.json({ ok: true, tarefas: [] })
 
   try {

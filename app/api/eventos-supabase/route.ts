@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeSessao } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 // SUPABASE-ONLY. Não vai ao Notion buscar nada.
@@ -24,6 +25,8 @@ const parseArr = (v: any): string[] => {
 }
 
 export async function GET(req: NextRequest) {
+  const bloqueio = await exigeSessao(req)
+  if (bloqueio) return bloqueio
   try {
     const anoParam = req.nextUrl.searchParams.get('ano')
     const ano = anoParam ? parseInt(anoParam) : 2026

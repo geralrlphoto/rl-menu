@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { ehAdmin, sessaoMembro, sessaoNoivos, naoAutorizado } from '@/lib/api-guard'
 
 const ADMIN_EMAIL  = 'geral.rlphoto@gmail.com'
 const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
@@ -116,6 +117,10 @@ function buildAlbumAprovadoEmail(nome_noivos: string, referencia: string): strin
 export async function POST(req: NextRequest) {
   const { tipo, freelancer_nome, nome_noivos, referencia, data_evento, local, email_noiva,
     funcao, telefone, zona, candidato_email, instagram, mensagem } = await req.json().catch(() => ({}))
+  // Candidaturas vêm do formulário público; os outros avisos exigem sessão (admin, equipa ou noivos)
+  if (tipo !== 'nova_candidatura' && !ehAdmin(req) && !(await sessaoMembro(req)) && !(await sessaoNoivos(req))) {
+    return naoAutorizado()
+  }
 
   // ── Nova candidatura de recrutamento ──────────────────────────────────────
   if (tipo === 'nova_candidatura') {
@@ -224,7 +229,8 @@ export async function POST(req: NextRequest) {
   // ── Pré-wedding reservado ─────────────────────────────────────────────────
   if (tipo === 'prewedding_reserva') {
     // Buscar email da noiva diretamente na ficha Notion
-    let emailNoivaFinal = email_noiva ?? null
+    // Só o admin indica o destinatário; para os outros vem da ficha
+    let emailNoivaFinal = ehAdmin(req) ? (email_noiva ?? null) : null
     if (!emailNoivaFinal && referencia) {
       emailNoivaFinal = await getEmailNoivaFromNotion(referencia)
       console.log('[prewedding_reserva] email_noiva da ficha Notion:', emailNoivaFinal)

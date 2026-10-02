@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeSessao, destinoDaEquipa, naoAutorizado } from '@/lib/api-guard'
 
 type Body = {
   to: string
@@ -21,6 +22,10 @@ export async function POST(req: NextRequest) {
 
   const { to, freelancerNome, noivos, referencia, entregaPrevista, diasAtraso, foto, dataCasamento } = body
 
+  // Só com sessão (admin ou equipa) e só para alguém da equipa / email geral da RL
+  const bloqueio = await exigeSessao(req)
+  if (bloqueio) return bloqueio
+  if (!(await destinoDaEquipa(to))) return naoAutorizado('destinatario_invalido')
   if (!to || !noivos || !entregaPrevista || typeof diasAtraso !== 'number') {
     return NextResponse.json({ ok: false, error: 'Faltam campos obrigatórios' }, { status: 400 })
   }

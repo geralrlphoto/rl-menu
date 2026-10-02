@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
+import { exigeSessao, exigeAdmin, exigeAdminOuProprio, ehAdmin, sessaoMembro, naoAutorizado } from '@/lib/api-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,6 +19,12 @@ export async function GET(req: Request) {
   const freelancer_id = searchParams.get('freelancer_id')
   const thread_id = searchParams.get('thread_id')
   const sent_by   = searchParams.get('sent_by')
+  // Membro da equipa: só as próprias notificações, as que enviou, ou uma conversa (thread)
+  if (!ehAdmin(req)) {
+    const membro = await sessaoMembro(req)
+    const ok = !!membro && (freelancer_id === membro.id || sent_by === membro.id || !!thread_id)
+    if (!ok) return naoAutorizado()
+  }
 
   // Constrói query
   let asc = thread_id ? true : false   // thread = chronological asc, lista = desc

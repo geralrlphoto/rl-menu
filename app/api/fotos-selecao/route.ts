@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeSessao } from '@/lib/api-guard'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -10,7 +12,9 @@ function db() {
   )
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const bloqueio = await exigeSessao(req) // admin ou equipa
+  if (bloqueio) return bloqueio
   const { data, error } = await db()
     .from('fotos_selecao')
     .select('*')
@@ -19,7 +23,9 @@ export async function GET() {
   return NextResponse.json({ rows: data ?? [] })
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { data, error } = await db()
     .from('fotos_selecao')
     .insert({ nome_noivos: 'Novo Registo' })

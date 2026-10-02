@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAcessoRef } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -33,6 +34,8 @@ export async function POST(req: NextRequest) {
     const email_noiva  = String(body?.email_noiva ?? '').trim() || null
 
     if (!referencia) return NextResponse.json({ ok: false, error: 'referencia required' }, { status: 400 })
+    const bloqueio = await exigeAcessoRef(req, referencia) // admin ou os próprios noivos
+    if (bloqueio) return bloqueio
     if (!mensagem)   return NextResponse.json({ ok: false, error: 'mensagem required' }, { status: 400 })
     if (mensagem.length > 2000) {
       return NextResponse.json({ ok: false, error: 'mensagem demasiado longa (máx 2000 caracteres)' }, { status: 400 })

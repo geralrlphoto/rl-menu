@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeSessao, destinoDaEquipa, naoAutorizado } from '@/lib/api-guard'
 
 // Proxy ao YouTube oEmbed para evitar CORS no browser.
 // Devolve: { title, author_name, thumbnail_url } ou { error }.
 export async function GET(req: NextRequest) {
+  const bloqueio = await exigeSessao(req)
+  if (bloqueio) return bloqueio
   const url = req.nextUrl.searchParams.get('url')
   if (!url) {
     return NextResponse.json({ error: 'Faltam parâmetro ?url' }, { status: 400 })

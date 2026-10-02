@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
@@ -33,6 +34,8 @@ function getProp(props: any, key: string, type: string): any {
 }
 
 export async function POST(req: NextRequest) {
+  const bloqueio = exigeAdmin(req)
+  if (bloqueio) return bloqueio
   try {
     const body = await req.json()
     const { referencia, cliente, data_evento, local, tipo_evento, tipo_servico, servicos_dia, fotografo, videografo, valor_foto, valor_video, valor_liquido } = body
@@ -105,6 +108,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
+  const bloqueio = exigeAdmin(req)
+  if (bloqueio) return bloqueio
   try {
     const anoParam = req.nextUrl.searchParams.get('ano')
     const ano = anoParam ? parseInt(anoParam) : null

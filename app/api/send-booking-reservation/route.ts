@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAcessoRef } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 // POST /api/send-booking-reservation
@@ -142,6 +143,8 @@ export async function POST(req: NextRequest) {
     const time  = String(body.time ?? '').trim()
     const local = String(body.local ?? '').trim()
 
+    const bloqueio = await exigeAcessoRef(req, referencia) // admin ou os próprios noivos
+    if (bloqueio) return bloqueio
     if (!referencia || !date || !time) {
       return NextResponse.json({ error: 'referencia/date/time obrigatórios' }, { status: 400 })
     }

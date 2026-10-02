@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 import { buildNewsletterHtml } from '../../_lib/newsletterTemplate'
 
@@ -11,6 +12,8 @@ export const dynamic = 'force-dynamic'
 
 // Devolve o HTML renderizado como vai ser enviado (com rotação de fotos e testemunhos)
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { id } = await params
 
   const { data: newsletter } = await supabase

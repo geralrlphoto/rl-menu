@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { exigeSessao, exigeAdmin } from '@/lib/api-guard'
+import { exigeSessao, exigeAdmin, exigeAdminOuProprio, ehAdmin, sessaoMembro, naoAutorizado } from '@/lib/api-guard'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +17,9 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const freelancer_id = searchParams.get('freelancer_id')
+  // Membro da equipa só lê os próprios dados (o admin lê tudo)
+  const soProprio = await exigeAdminOuProprio(req, freelancer_id)
+  if (soProprio) return soProprio
   let query = supabase()
     .from('freelancer_disponibilidade')
     .select('*')

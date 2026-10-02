@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -8,7 +9,9 @@ function db() {
   )
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   try {
     const { data, error } = await db()
       .from('pagamentos_noivos')
@@ -36,6 +39,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   try {
     let body: any = {}
     try { body = await req.json() } catch { /* sem body → linha vazia na página financas */ }

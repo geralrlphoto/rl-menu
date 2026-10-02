@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 import { FL_COOKIE_MAX_AGE, FL_COOKIE_NAME, makeFlSession, verifyFlSession } from '@/lib/freelancer-session'
 
@@ -36,12 +37,15 @@ export async function POST(req: NextRequest) {
 
   // ── Legacy: { id, password } usado pelo widget admin de teste ─────────
   if (id && !email) {
+    // Só o admin pode testar a password de um membro por id
+    const bloqueio = exigeAdmin(req)
+    if (bloqueio) return bloqueio
     const { data, error } = await supabase
       .from('freelancers')
       .select('id, password')
       .eq('id', id)
       .single()
-    if (error)        return NextResponse.json({ ok: false, reason: 'db_error', detail: error.message })
+    if (error)        return NextResponse.json({ ok: false, reason: 'db_error' })
     if (!data)        return NextResponse.json({ ok: false, reason: 'not_found' })
     if (!data.password) return NextResponse.json({ ok: false, reason: 'no_password' })
     const stored  = (data.password ?? '').trim().toLowerCase()

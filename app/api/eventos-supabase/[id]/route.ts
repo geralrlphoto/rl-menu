@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 // SUPABASE-ONLY. Single-event GET para /eventos-2026/[id] do admin.
@@ -50,6 +51,8 @@ const parseArr = (v: any): string[] => {
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const bloqueio = exigeAdmin(_req)
+  if (bloqueio) return bloqueio
   const { id } = await params
   try {
     const sb = supabase()

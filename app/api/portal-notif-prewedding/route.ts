@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { exigeAcessoRef, ehAdmin } from '@/lib/api-guard'
 
 const CARD_URL      = 'https://portal.rlphotovideo.pt/card_prewedding_marcar_mobile.png'
 const NOTION_TOKEN  = process.env.NOTION_TOKEN!
@@ -30,8 +31,11 @@ async function getEmailFromNotion(referencia: string): Promise<string | null> {
 export async function POST(req: NextRequest) {
   try {
     const { emailNoiva, referencia } = await req.json().catch(() => ({}))
+    const bloqueio = await exigeAcessoRef(req, referencia) // admin ou os próprios noivos
+    if (bloqueio) return bloqueio
 
-    let email = emailNoiva ?? null
+    // Só o admin pode indicar o destinatário; para os noivos vem sempre da ficha
+    let email = ehAdmin(req) ? (emailNoiva ?? null) : null
     if (!email && referencia) {
       email = await getEmailFromNotion(referencia)
     }

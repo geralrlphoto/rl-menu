@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -9,6 +10,8 @@ function db() {
 }
 
 export async function GET(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const id = req.nextUrl.searchParams.get('notion_page_id')
   if (!id) {
     // Return all assignments
@@ -26,6 +29,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { notion_page_id, editor, editor_album } = await req.json()
   if (!notion_page_id) return NextResponse.json({ error: 'notion_page_id required' }, { status: 400 })
   const upsertData: any = { notion_page_id, updated_at: new Date().toISOString() }

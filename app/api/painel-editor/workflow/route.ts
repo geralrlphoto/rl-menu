@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -12,6 +13,8 @@ function db() {
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('freelancer')
   if (!id) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
+  const bloqueio = await exigeAdminOuProprio(req, id)
+  if (bloqueio) return bloqueio
   const supabase = db()
   const { data } = await supabase
     .from('freelancers')
@@ -28,6 +31,8 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   const { freelancer, referencia, stage, musicas } = await req.json()
   if (!freelancer) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
+  const bloqueio = await exigeAdminOuProprio(req, freelancer)
+  if (bloqueio) return bloqueio
   const supabase = db()
 
   const { data: cur } = await supabase

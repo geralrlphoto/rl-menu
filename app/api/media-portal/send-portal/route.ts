@@ -1,4 +1,5 @@
 ﻿import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 import { NextRequest, NextResponse } from 'next/server'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 
@@ -8,6 +9,8 @@ const supabase = createClient(
 )
 
 export async function POST(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const { ref } = await req.json()
   if (!ref) return NextResponse.json({ error: 'ref em falta' }, { status: 400 })
 

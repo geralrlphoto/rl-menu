@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { exigeSessao, destinoDaEquipa, naoAutorizado } from '@/lib/api-guard'
 
 type Body = {
   to: string                // email do freelancer (destinatário)
@@ -23,6 +24,10 @@ export async function POST(req: NextRequest) {
 
   const { to, freelancerNome, titulo, descricao, projeto, prazo, hora, prioridade, status, adminEmail } = body
 
+  // Só com sessão (admin ou equipa) e só para alguém da equipa / email geral da RL
+  const bloqueio = await exigeSessao(req)
+  if (bloqueio) return bloqueio
+  if (!(await destinoDaEquipa(to))) return naoAutorizado('destinatario_invalido')
   if (!to || !titulo || !prazo || !prioridade) {
     return NextResponse.json({ ok: false, error: 'Faltam campos obrigatórios (to, titulo, prazo, prioridade)' }, { status: 400 })
   }

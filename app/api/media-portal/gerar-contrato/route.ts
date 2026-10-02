@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 import { NextRequest, NextResponse } from 'next/server'
 
 const supabase = createClient(
@@ -7,6 +8,8 @@ const supabase = createClient(
 )
 
 export async function POST(req: NextRequest) {
+  const bloqueio = exigeAdmin(req) // só admin
+  if (bloqueio) return bloqueio
   const body = await req.json()
   const { ref, ...ficha } = body
 

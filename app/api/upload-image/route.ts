@@ -16,8 +16,12 @@ export async function POST(req: Request) {
   const file = form.get('file') as File | null
   if (!file) return NextResponse.json({ error: 'Nenhum ficheiro enviado' }, { status: 400 })
 
-  // Create bucket if it doesn't exist yet
-  await supabase.storage.createBucket(BUCKET, { public: true }).catch(() => {})
+  // Rota pública (propostas, registo de pagamento): só imagens e PDF, até 20 MB.
+  // Impede alojar HTML/SVG ou outros ficheiros no domínio do Supabase.
+  const tipo = (file.type || '').toLowerCase()
+  const permitido = /^image\/(jpeg|png|webp|gif|heic|heif|avif)$/.test(tipo) || tipo === 'application/pdf'
+  if (!permitido) return NextResponse.json({ error: 'Tipo de ficheiro não permitido' }, { status: 415 })
+  if (file.size > 20 * 1024 * 1024) return NextResponse.json({ error: 'Ficheiro demasiado grande (máx. 20 MB)' }, { status: 413 })
 
   const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
 
