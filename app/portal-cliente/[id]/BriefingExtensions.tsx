@@ -59,6 +59,8 @@ type Props = {
   fichasNode?: ReactNode
   /** Nomes do casal: substituem "noivo"/"noiva" nos papéis dos contactos */
   nomes?: { noivo?: string; noiva?: string }
+  /** Portal de casamento: mostra "Sugerir base do dia" no cronograma */
+  casamento?: boolean
 }
 
 /* Telefone → número para o wa.me (indicativo 351 quando vem sem indicativo) */
@@ -128,6 +130,45 @@ const ROLE_ICONS: Record<string, string> = {
   'Padre':           '✝',
 }
 
+// ─── Gravação automática ─────────────────────────────────────────────────────
+// Enquanto uma secção está em edição, o rascunho grava sozinho 1,5 s depois de cada
+// alteração (sem entrada no histórico; o CONCLUIR continua a registar). Se houver
+// algo por gravar ao sair da página, o browser pede confirmação.
+
+type Gravar = (p: Partial<BriefingExt>, o?: { auto?: boolean }) => void | Promise<void>
+type EstadoGravacao = '' | 'a-gravar' | 'gravado' | 'erro'
+
+const porGravar = new Set<string>()
+
+function useAutoGravar(editing: boolean, draft: unknown, gravar: () => void | Promise<void>): EstadoGravacao {
+  const gravarRef = useRef(gravar)
+  gravarRef.current = gravar
+  const chave = useRef(Math.random().toString(36).slice(2))
+  const ultimo = useRef<string | null>(null)
+  const [estado, setEstado] = useState<EstadoGravacao>('')
+
+  useEffect(() => {
+    if (!editing) { ultimo.current = null; porGravar.delete(chave.current); setEstado(''); return }
+    const json = JSON.stringify(draft)
+    if (ultimo.current === null) { ultimo.current = json; return } // rascunho acabado de abrir
+    if (json === ultimo.current) return
+    porGravar.add(chave.current)
+    setEstado('a-gravar')
+    const t = setTimeout(async () => {
+      try {
+        await gravarRef.current()
+        ultimo.current = json
+        porGravar.delete(chave.current)
+        setEstado('gravado')
+      } catch { setEstado('erro') }
+    }, 1500)
+    return () => clearTimeout(t)
+  }, [editing, draft])
+
+  useEffect(() => () => { porGravar.delete(chave.current) }, [])
+  return estado
+}
+
 // ─── Section primitive ───────────────────────────────────────────────────────
 
 function Section({
@@ -172,9 +213,15 @@ function Section({
 }
 
 // Botão "Editar" / "Concluir" para cada secção
-function EditChip({ active, onClick, accent = 'gold' }: { active: boolean; onClick: () => void; accent?: 'gold' | 'emerald' }) {
+function EditChip({ active, onClick, accent = 'gold', estado = '' }: { active: boolean; onClick: () => void; accent?: 'gold' | 'emerald'; estado?: EstadoGravacao }) {
   if (active) {
     return (
+      <span className="inline-flex items-center gap-3">
+      {estado && (
+        <span className={`text-[10px] tracking-[0.2em] uppercase ${estado === 'erro' ? 'text-red-400/80' : 'text-white/40'}`}>
+          {estado === 'a-gravar' ? 'A gravar…' : estado === 'gravado' ? 'Gravado ✓' : 'Erro ao gravar'}
+        </span>
+      )}
       <button
         onClick={onClick}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-[11px] tracking-[0.28em] uppercase font-bold border border-emerald-500/45 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25 hover:border-emerald-500/65 transition-all"
@@ -185,6 +232,7 @@ function EditChip({ active, onClick, accent = 'gold' }: { active: boolean; onCli
         </svg>
         Concluir
       </button>
+      </span>
     )
   }
   return (
@@ -305,18 +353,70 @@ function Toolbar({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolea
 
 // ─── Section: Cronograma do Dia ──────────────────────────────────────────────
 
-function CronogramaSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+/* Base típica do dia a partir da hora da cerimónia (minutos relativos), com a sessão
+   de casal na luz dourada quando se sabe a hora. Só acrescenta o que ainda falta. */
+const BASE_DIA: Array<{ chave: string; titulo: (n?: { noivo?: string; noiva?: string }) => string; min: number; limite?: number }> = [
+  { chave: 'prep-noiva', titulo: n => n?.noiva ? `Preparação · ${n.noiva}` : 'Preparação da noiva', min: -180 },
+  { chave: 'prep-noivo', titulo: n => n?.noivo ? `Preparação · ${n.noivo}` : 'Preparação do noivo', min: -150 },
+  { chave: 'cerimonia', titulo: () => 'Cerimónia', min: 0 },
+  { chave: 'grupo', titulo: () => 'Cumprimentos e fotos de grupo', min: 40 },
+  { chave: 'cocktail', titulo: () => 'Cocktail', min: 60 },
+  { chave: 'salao', titulo: () => 'Entrada no salão', min: 150 },
+  { chave: 'danca', titulo: () => 'Primeira dança', min: 330, limite: 23 * 60 },
+  { chave: 'bolo', titulo: () => 'Corte do bolo', min: 600, limite: 23 * 60 + 30 },
+]
+const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`
+const aMinutos = (t?: string) => { const m = (t ?? '').match(/^(\d{1,2}):(\d{2})/); return m ? Number(m[1]) * 60 + Number(m[2]) : null }
+const tituloNorm = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+
+function CronogramaSection({ info, isAdmin, onSave, local, dataEvento, nomes, podeSugerir }: {
+  info: BriefingExt; isAdmin: boolean; onSave: Gravar; local?: string | null; dataEvento?: string | null; nomes?: { noivo?: string; noiva?: string }; podeSugerir?: boolean
+}) {
+  const [aSugerir, setASugerir] = useState(false)
+  const [avisoBase, setAvisoBase] = useState('')
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.cronograma ?? [])
 
   function startEdit() { setDraft(info.cronograma?.length ? info.cronograma.map(x => ({ ...x })) : [{ id: uid(), time: '', title: '', team: '', location: '' }]); setEditing(true) }
-  async function save() { await onSave({ cronograma: draft.filter(x => x.time || x.title) }); setEditing(false) }
+  const patchAtual = () => ({ cronograma: draft.filter(x => x.time || x.title) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   const sorted = useMemo(() => [...(info.cronograma ?? [])].sort((a, b) => (a.time || '').localeCompare(b.time || '')), [info.cronograma])
 
+  async function sugerirBase() {
+    const cerimonia = draft.find(x => tituloNorm(x.title).includes('cerimonia') && aMinutos(x.time) != null)
+    const c = aMinutos(cerimonia?.time)
+    if (c == null) { setAvisoBase('Escreve primeiro a hora da Cerimónia (momento "Cerimónia").'); return }
+    setAvisoBase('')
+    setASugerir(true)
+    // Luz dourada do dia, para a sessão de casal
+    let luz: number | null = null
+    if (local && dataEvento) {
+      const r = await fetch(`/api/previsao-ipma?local=${encodeURIComponent(local)}&data=${encodeURIComponent(dataEvento.slice(0, 10))}`, { cache: 'no-store' })
+        .then(x => x.json()).catch(() => null)
+      luz = aMinutos(r?.sol?.luzDourada)
+    }
+    const prep = (q: 'noiva' | 'noivo') => info.mapas?.find(m => tituloNorm(m.label).includes(`preparacao d${q === 'noiva' ? 'a' : 'o'} ${q}`))?.address ?? ''
+    const existentes = new Set(draft.map(x => tituloNorm(x.title)))
+    const novos = BASE_DIA
+      .map(b => {
+        const titulo = b.titulo(nomes)
+        const min = Math.min(c + b.min, b.limite ?? 24 * 60 - 1)
+        const location = b.chave === 'cerimonia' ? (local ?? '') : b.chave === 'prep-noiva' ? prep('noiva') : b.chave === 'prep-noivo' ? prep('noivo') : ''
+        return { id: uid(), time: hhmm(Math.max(0, min)), title: titulo, team: '', location: /^https?:/.test(location) ? '' : location }
+      })
+      .filter(n => !existentes.has(tituloNorm(n.title)) && !(n.title === 'Cerimónia' && cerimonia))
+    if (luz != null && !draft.some(x => tituloNorm(x.title).includes('sessao de casal'))) {
+      novos.push({ id: uid(), time: hhmm(luz), title: 'Sessão de casal · luz dourada', team: '', location: '' })
+    }
+    setDraft(d => [...d.filter(x => x.time || x.title), ...novos].sort((a, b) => (a.time || '').localeCompare(b.time || '')))
+    setASugerir(false)
+  }
+
   return (
     <Section id="cronograma" icon="⌚" label="Cronograma do Dia" title="Linha temporal do evento" subtitle={`${sorted.length} momento${sorted.length === 1 ? '' : 's'}`}
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -331,6 +431,11 @@ function CronogramaSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
             </div>
           ))}
           <AddBtn onClick={() => setDraft(d => [...d, { id: uid(), time: '', title: '', team: '', location: '' }])} label="Adicionar Momento" />
+          {podeSugerir && <button type="button" onClick={sugerirBase} disabled={aSugerir}
+            className="w-full py-2.5 rounded-xl border border-gold/30 bg-gold/[0.05] text-gold/80 hover:text-gold hover:bg-gold/[0.1] text-[11px] tracking-[0.3em] uppercase font-bold transition-all disabled:opacity-50">
+            {aSugerir ? 'A preparar…' : '✦ Sugerir base do dia'}
+          </button>}
+          {avisoBase && <p className="text-[11px] text-amber-300/80">{avisoBase}</p>}
         </div>
       ) : sorted.length === 0 ? (
         <EmptyState icon="⌚" msg="Sem cronograma definido." hint={isAdmin ? 'Clica em Editar para começar.' : undefined} />
@@ -361,18 +466,20 @@ function CronogramaSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
 
 // ─── Section: Mapas / Localizações ───────────────────────────────────────────
 
-function MapasSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void>; nomes?: { noivo?: string; noiva?: string } }) {
+function MapasSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar; nomes?: { noivo?: string; noiva?: string } }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.mapas ?? [])
 
   function startEdit() { setDraft(info.mapas?.length ? info.mapas.map(x => ({ ...x })) : [{ id: uid(), label: '', address: '', time: '' }]); setEditing(true) }
-  async function save() { await onSave({ mapas: draft.filter(x => x.label || x.address) }); setEditing(false) }
+  const patchAtual = () => ({ mapas: draft.filter(x => x.label || x.address) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   const list = info.mapas ?? []
 
   return (
     <Section id="mapas" icon="◉" label="Mapas & Localizações" title="Sítios do evento" subtitle={`${list.length} local${list.length === 1 ? '' : 'ais'}`}
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -419,7 +526,7 @@ function MapasSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt; isA
 
 // ─── Section: Momentos Obrigatórios (checklist) ──────────────────────────────
 
-function MomentosSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function MomentosSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.momentos ?? [])
   const list = info.momentos ?? []
@@ -435,7 +542,9 @@ function MomentosSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin
     ])
     setEditing(true)
   }
-  async function save() { await onSave({ momentos: draft.filter(x => x.label.trim()) }); setEditing(false) }
+  const patchAtual = () => ({ momentos: draft.filter(x => x.label.trim()) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   async function toggleDone(id: string) {
     const next = list.map(m => m.id === id ? { ...m, done: !m.done } : m)
@@ -448,7 +557,7 @@ function MomentosSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin
     <Section id="momentos" icon="✓" label="Momentos Obrigatórios" title="Checklist criativo"
       subtitle={list.length > 0 ? `${done} de ${list.length} confirmados` : 'Lista a definir'}
       accent="emerald"
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -484,17 +593,19 @@ function MomentosSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin
 
 // ─── Section: VIPs ────────────────────────────────────────────────────────────
 
-function VipsSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function VipsSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.vips ?? [])
   const list = info.vips ?? []
 
   function startEdit() { setDraft(list.length ? list.map(x => ({ ...x })) : [{ id: uid(), name: '', relation: '' }]); setEditing(true) }
-  async function save() { await onSave({ vips: draft.filter(x => x.name.trim()) }); setEditing(false) }
+  const patchAtual = () => ({ vips: draft.filter(x => x.name.trim()) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   return (
     <Section id="vips" icon="★" label="Convidados VIP" title="Pessoas importantes" subtitle={`${list.length} VIP${list.length === 1 ? '' : 's'}`}
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -529,17 +640,19 @@ function VipsSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: bo
 
 // ─── Section: Mood Board ─────────────────────────────────────────────────────
 
-function MoodboardSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function MoodboardSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.moodboard ?? [])
   const list = info.moodboard ?? []
 
   function startEdit() { setDraft(list.length ? list.map(x => ({ ...x })) : [{ id: uid(), url: '', caption: '' }]); setEditing(true) }
-  async function save() { await onSave({ moodboard: draft.filter(x => x.url.trim()) }); setEditing(false) }
+  const patchAtual = () => ({ moodboard: draft.filter(x => x.url.trim()) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   return (
     <Section id="moodboard" icon="◧" label="Mood Board" title="Referências visuais" subtitle={`${list.length} imagem${list.length === 1 ? '' : 'ns'}`}
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -574,17 +687,19 @@ function MoodboardSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmi
 
 // ─── Section: Playlist ───────────────────────────────────────────────────────
 
-function PlaylistSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function PlaylistSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.playlist ?? [])
   const list = info.playlist ?? []
 
   function startEdit() { setDraft(list.length ? list.map(x => ({ ...x })) : [{ id: uid(), moment: 'Entrada da Noiva', song: '', artist: '', url: '' }]); setEditing(true) }
-  async function save() { await onSave({ playlist: draft.filter(x => x.song.trim()) }); setEditing(false) }
+  const patchAtual = () => ({ playlist: draft.filter(x => x.song.trim()) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   return (
     <Section id="playlist" icon="♫" label="Playlist de Momentos" title="Música do evento" subtitle={`${list.length} música${list.length === 1 ? '' : 's'}`}
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -628,7 +743,7 @@ function PlaylistSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin
 
 // ─── Section: Restrições do Local ────────────────────────────────────────────
 
-function RestricoesSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function RestricoesSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.restricoes ?? [])
   const list = info.restricoes ?? []
@@ -641,12 +756,14 @@ function RestricoesSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
     ])
     setEditing(true)
   }
-  async function save() { await onSave({ restricoes: draft.filter(x => x.label.trim()) }); setEditing(false) }
+  const patchAtual = () => ({ restricoes: draft.filter(x => x.label.trim()) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   return (
     <Section id="restricoes" icon="◆" label="Restrições & Permissões" title="Regras do local" subtitle={`${list.length} item${list.length === 1 ? '' : 's'}`}
       accent="amber"
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -689,7 +806,7 @@ function RestricoesSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
 
 // ─── Section: Contactos Rápidos ──────────────────────────────────────────────
 
-function ContactosSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void>; nomes?: { noivo?: string; noiva?: string } }) {
+function ContactosSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar; nomes?: { noivo?: string; noiva?: string } }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.contactos ?? [])
   const list = info.contactos ?? []
@@ -701,12 +818,14 @@ function ContactosSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt;
     ])
     setEditing(true)
   }
-  async function save() { await onSave({ contactos: draft.filter(x => x.name.trim() || x.role.trim()) }); setEditing(false) }
+  const patchAtual = () => ({ contactos: draft.filter(x => x.name.trim() || x.role.trim()) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   return (
     <Section id="contactos" icon="✆" label="Contactos Rápidos" title="Fornecedores do evento" subtitle={`${list.length} contacto${list.length === 1 ? '' : 's'}`}
       accent="blue"
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -751,18 +870,20 @@ function ContactosSection({ info, isAdmin, onSave, nomes }: { info: BriefingExt;
 
 // ─── Section: Notas Sensíveis ────────────────────────────────────────────────
 
-function NotasSensiveisSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function NotasSensiveisSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.notasSensiveis ?? '')
 
   function startEdit() { setDraft(info.notasSensiveis ?? ''); setEditing(true) }
-  async function save() { await onSave({ notasSensiveis: draft.trim() }); setEditing(false) }
+  const patchAtual = () => ({ notasSensiveis: draft.trim() })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   return (
     <Section id="notas-sensiveis" icon="⚠" label="Notas Sensíveis" title="Informação a ter atenção"
       subtitle={info.notasSensiveis ? 'Atenção ao ler' : 'Alergias, conflitos, situações delicadas'}
       accent="rose"
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           <textarea value={draft} onChange={e => setDraft(e.target.value)}
@@ -782,7 +903,7 @@ function NotasSensiveisSection({ info, isAdmin, onSave }: { info: BriefingExt; i
 
 // ─── Section: Tarefas Pré-Evento ─────────────────────────────────────────────
 
-function TarefasPreSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: (p: Partial<BriefingExt>) => void | Promise<void> }) {
+function TarefasPreSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.tarefasPre ?? [])
   const list = info.tarefasPre ?? []
@@ -796,7 +917,9 @@ function TarefasPreSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
     ])
     setEditing(true)
   }
-  async function save() { await onSave({ tarefasPre: draft.filter(x => x.label.trim()) }); setEditing(false) }
+  const patchAtual = () => ({ tarefasPre: draft.filter(x => x.label.trim()) })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   async function toggleDone(id: string) {
     const next = list.map(t => t.id === id ? { ...t, done: !t.done } : t)
@@ -816,7 +939,7 @@ function TarefasPreSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
     <Section id="tarefas-pre" icon="◴" label="Tarefas Pré-Evento" title="Checklist preparatório"
       subtitle={list.length > 0 ? `${done} de ${list.length} concluídas` : 'Garantir que tudo está pronto'}
       accent="amber"
-      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
           {draft.map((row, idx) => (
@@ -873,18 +996,20 @@ function TarefasPreSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdm
 
 // ─── Section: Notas Privadas (admin only) ────────────────────────────────────
 
-function NotasPrivadasSection({ info, onSave, readOnly }: { info: BriefingExt; onSave: (p: Partial<BriefingExt>) => void | Promise<void>; readOnly?: boolean }) {
+function NotasPrivadasSection({ info, onSave, readOnly }: { info: BriefingExt; onSave: Gravar; readOnly?: boolean }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.notasPrivadas ?? '')
 
   function startEdit() { setDraft(info.notasPrivadas ?? ''); setEditing(true) }
-  async function save() { await onSave({ notasPrivadas: draft.trim() }); setEditing(false) }
+  const patchAtual = () => ({ notasPrivadas: draft.trim() })
+  async function save() { await onSave(patchAtual()); setEditing(false) }
+  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
   return (
     <Section id="notas-privadas" icon="◬" label="Notas Privadas · Apenas Equipa" title="Comentários internos"
       subtitle="O cliente NÃO vê esta secção"
       accent="blue"
-      action={readOnly ? undefined : <EditChip active={editing} onClick={editing ? save : startEdit} />}>
+      action={readOnly ? undefined : <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <textarea value={draft} onChange={e => setDraft(e.target.value)}
           rows={4} placeholder="Notas para a equipa que o cliente não deve ver…"
@@ -961,7 +1086,7 @@ function BriefingHero({
   teamView?: boolean
   viewMode: 'admin' | 'client'
   setViewMode: (v: 'admin' | 'client') => void
-  onSave: (p: Partial<BriefingExt>) => void | Promise<void>
+  onSave: Gravar
   enviarBriefingNode?: ReactNode
 }) {
   const status = info.status ?? 'rascunho'
@@ -1029,18 +1154,18 @@ function BriefingHero({
 
           {/* Cartão data/local */}
           {(dateLabel || local) && (
-            <div className="flex items-center gap-4 px-4 py-3 rounded-2xl border border-white/[0.08] bg-black/30">
+            <div className="flex items-center gap-4 px-4 py-3 rounded-2xl border border-white/[0.08] bg-black/30 max-w-full min-w-0">
               {dateLabel && (
-                <div>
+                <div className="shrink-0">
                   <p className="text-[8px] tracking-[0.35em] text-gold/55 uppercase mb-1">Data</p>
                   <p className="text-[13px] text-white font-medium tabular-nums">{dateLabel}</p>
                 </div>
               )}
               {dateLabel && local && <span className="w-px h-7 bg-white/10" />}
               {local && (
-                <div>
+                <div className="min-w-0">
                   <p className="text-[8px] tracking-[0.35em] text-gold/55 uppercase mb-1">Local</p>
-                  <p className="text-[13px] text-white font-medium truncate max-w-[180px]">{local}</p>
+                  <p className="text-[13px] text-white font-medium break-words sm:truncate sm:max-w-[180px]">{local}</p>
                 </div>
               )}
             </div>
@@ -1340,15 +1465,23 @@ function VisaoGeralSection({ info, onJump }: { info: BriefingExt; onJump: (id: s
 
 export default function BriefingExtensions({
   info, isAdmin, teamView, onSave, pageTitle, dataEvento, local,
-  enviarBriefingNode, equipaNode, fichasNode, nomes,
+  enviarBriefingNode, equipaNode, fichasNode, nomes, casamento,
 }: Props) {
   const [viewMode, setViewMode] = useState<'admin' | 'client'>(isAdmin ? 'admin' : 'client')
   const effectiveAdmin = isAdmin && viewMode === 'admin'
   const [activeId, setActiveId] = useState('visao')
   const contentRef = useRef<HTMLDivElement>(null)
 
+  // Aviso ao sair com alterações ainda por gravar
+  useEffect(() => {
+    const aviso = (e: BeforeUnloadEvent) => { if (porGravar.size) { e.preventDefault(); e.returnValue = '' } }
+    window.addEventListener('beforeunload', aviso)
+    return () => window.removeEventListener('beforeunload', aviso)
+  }, [])
+
   // Wrapper que regista no histórico automaticamente
-  async function saveWithLog(patch: Partial<BriefingExt>) {
+  async function saveWithLog(patch: Partial<BriefingExt>, o?: { auto?: boolean }) {
+    if (o?.auto) return onSave(patch)
     const action = describePatch(patch)
     const historico = [...(info.historico ?? []), { at: new Date().toISOString(), who: effectiveAdmin ? 'Admin' : 'Cliente', action }]
     await onSave({ ...patch, historico })
@@ -1475,7 +1608,7 @@ export default function BriefingExtensions({
         <div ref={contentRef} className="space-y-4 min-w-0">
 
           {/* Operacional */}
-          <CronogramaSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          <CronogramaSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} local={local} dataEvento={dataEvento} nomes={nomes} podeSugerir={casamento} />
           <MapasSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} nomes={nomes} />
 
           {/* Equipa + Fichas Individuais combinados num bloco visual */}

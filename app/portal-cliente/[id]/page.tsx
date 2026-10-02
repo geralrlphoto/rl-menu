@@ -1643,6 +1643,16 @@ function PortalSubPageContent() {
   /** 3 cenários editáveis (substitui leitura do Notion após migração). */
   const [pwCenarios, setPwCenarios] = useState<PwCenario[] | null>(null)
   const [briefingInfo, setBriefingInfo] = useState<Record<string, BriefingExt>>({})
+  // Equipa da ficha do evento (fotógrafos e videógrafos), mostrada na "Equipa atribuída" do briefing
+  const [equipaFicha, setEquipaFicha] = useState<Array<{ role: string; name: string }>>([])
+  useEffect(() => {
+    if (!refParam || !(searchParams.get('title') ?? '').toUpperCase().includes('BRIEFING')) return
+    const bonito = (n: string) => n.toLowerCase().replace(/(^|[\s-])\S/g, c => c.toUpperCase())
+    fetch(`/api/equipa-do-dia?ref=${encodeURIComponent(refParam)}`)
+      .then(r => r.json())
+      .then(d => setEquipaFicha((d?.equipa ?? []).map((e: { role: string; name: string }) => ({ role: e.role, name: bonito(e.name) }))))
+      .catch(() => {})
+  }, [refParam, searchParams])
 
   // Fichas Individuais (NOIVO / NOIVA / etc.) — accordion editável com
   // caixas de texto label + value que o admin/cliente preenche.
@@ -2212,11 +2222,22 @@ function PortalSubPageContent() {
   // Save genérico para todas as secções do BriefingExtensions
   async function handleSaveBriefingExt(patch: Partial<BriefingExt>) {
     if (!id) return
-    const existing = briefingInfo[id as string] ?? {}
-    const updated = { ...existing, ...patch }
-    const newBI = { ...briefingInfo, [id as string]: updated }
-    setBriefingInfo(newBI) // optimistic
-    await savePortalSettings({ ...portalSettingsObj, briefingInfo: newBI })
+    const pid = id as string
+    const junta = (bi: Record<string, any> | undefined) => ({ ...(bi ?? {}), [pid]: { ...(bi?.[pid] ?? {}), ...patch } })
+    // Atualiza as duas cópias locais: sem isto, gravar a seguir outra coisa do portal
+    // (ex.: uma ficha) reenviava o briefing antigo e apagava o que acabou de ser gravado
+    setBriefingInfo(prev => junta(prev)) // optimistic
+    setPortalSettingsObj((prev: any) => ({ ...prev, briefingInfo: junta(prev?.briefingInfo) }))
+    if (refParam) {
+      // Só o que mudou; o servidor junta ao que já está gravado
+      await fetch('/api/portais', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: refParam, briefingPatch: { pageId: pid, patch } }),
+      })
+    } else {
+      await savePortalSettings({ ...portalSettingsObj, briefingInfo: junta(briefingInfo) })
+    }
   }
 
   async function handleSaveCalloutLinks() {
@@ -4009,7 +4030,11 @@ function PortalSubPageContent() {
                           {(() => {
                             const ROLES = ['Fotógrafo', 'Videógrafo', 'Assistente', 'Editor']
                             const equipaBI = briefingInfo[id as string] ?? {}
-                            const equipa = equipaBI.equipa ?? []
+                            // Equipa escrita no briefing + quem está na ficha do evento (sem repetir nomes)
+                            const equipaManual = equipaBI.equipa ?? []
+                            const nomeNorm = (n: string) => n.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+                            const jaNaLista = new Set(equipaManual.map(e => nomeNorm(e.name ?? '')))
+                            const equipa = [...equipaManual, ...equipaFicha.filter(e => !jaNaLista.has(nomeNorm(e.name)))]
                             const ROLE_ICONS: Record<string, string> = {
                               'Fotógrafo':  '◉',
                               'Videógrafo': '▶',
@@ -4024,7 +4049,7 @@ function PortalSubPageContent() {
                                     <span className="w-8 h-8 rounded-lg border border-gold/35 bg-gold/[0.08] flex items-center justify-center text-gold text-sm">⌘</span>
                                     <div>
                                       <p className="text-[10px] tracking-[0.4em] text-gold/70 uppercase">Equipa Atribuída</p>
-                                      <p className="text-[11px] text-white/40 mt-0.5">{equipa.length > 0 ? `${equipa.length} profissional${equipa.length === 1 ? '' : 'is'}` : 'Define os profissionais deste evento'}</p>
+                                      <p className="text-[11px] text-white/40 mt-0.5">{equipa.length > 0 ? `${equipa.length} ${equipa.length === 1 ? 'profissional' : 'profissionais'}` : 'Define os profissionais deste evento'}</p>
                                     </div>
                                   </div>
                                   {!editingEquipa && (
@@ -4136,7 +4161,7 @@ function PortalSubPageContent() {
 
                             const briefingExtBlock = (
                               <BriefingExtensions
-                                info={equipaBI as BriefingExt}
+                                info={{ ...equipaBI, equipa } as BriefingExt}
                                 isAdmin={isAdmin}
                                 teamView={isFreelancerView}
                                 onSave={handleSaveBriefingExt}
@@ -4148,6 +4173,7 @@ function PortalSubPageContent() {
                                 equipaNode={equipaBox}
                                 fichasNode={cardsGrid}
                                 nomes={{ noivo: nomeNoivo, noiva: nomeNoiva }}
+                                casamento
                               />
                             )
                             // Notion content (Briefing Geral) – mostrado entre o hero e o resto do briefing

@@ -237,6 +237,15 @@ export async function PATCH(req: NextRequest) {
     if (updates.valorExtras !== undefined) settingsPatch.valorExtras = updates.valorExtras
     if (updates.settings !== undefined) Object.assign(settingsPatch, updates.settings)
 
+    // briefingPatch: só os campos alterados de uma página do briefing, juntos ao que já está
+    // gravado. Evita que uma cópia antiga no browser apague o que foi gravado entretanto.
+    const bp = body.briefingPatch
+    if (bp?.pageId && bp.patch && typeof bp.patch === 'object') {
+      const bi = { ...(settingsPatch.briefingInfo ?? {}) }
+      bi[bp.pageId] = { ...(bi[bp.pageId] ?? {}), ...bp.patch }
+      settingsPatch.briefingInfo = bi
+    }
+
     patch.settings = settingsPatch
 
     if (current) {

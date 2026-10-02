@@ -172,6 +172,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/portais') ||
     pathname.startsWith('/api/link-preview') ||
     pathname.startsWith('/api/previsao-ipma') ||
+    pathname.startsWith('/api/equipa-do-dia') ||
     pathname.startsWith('/api/pagamentos-by-ref') ||
     pathname.startsWith('/api/pagamentos-noivos') ||
     pathname.startsWith('/api/fotos-selecao') ||
