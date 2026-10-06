@@ -14,15 +14,16 @@ const CENAS: Record<string, { cena: string; titulo: string; em: string }> = {
   cover:   { cena: 'Antes de rodar', titulo: 'Proposta',            em: 'criativa'     },
   about:   { cena: 'Cena 01',        titulo: 'Quem está',           em: 'atrás da câmara' },
   intro:   { cena: 'Cena 02',        titulo: 'Quem são os',         em: 'nossos noivos' },
-  relive:  { cena: 'Cena 03',        titulo: 'O vosso',             em: 'portal'       },
-  blank:   { cena: 'Cena 04',        titulo: 'Como imaginam',       em: 'o vosso dia'  },
-  blank2:  { cena: 'Cena 05',        titulo: 'O grande',            em: 'dia'          },
-  invest:  { cena: 'Cena 06',        titulo: 'O',                   em: 'investimento' },
+  motivo:  { cena: 'Cena 03',        titulo: 'O que ainda',         em: 'vos faz pensar' },
+  relive:  { cena: 'Cena 04',        titulo: 'O vosso',             em: 'portal'       },
+  blank:   { cena: 'Cena 05',        titulo: 'Como imaginam',       em: 'o vosso dia'  },
+  blank2:  { cena: 'Cena 06',        titulo: 'O grande',            em: 'dia'          },
+  invest:  { cena: 'Cena 07',        titulo: 'O',                   em: 'investimento' },
   'pkg-0': { cena: 'Proposta 01',    titulo: 'A',                   em: 'primeira'     },
   'pkg-1': { cena: 'Proposta 02',    titulo: 'A',                   em: 'segunda'      },
   'pkg-2': { cena: 'Proposta 03',    titulo: 'A',                   em: 'terceira'     },
   'pkg-3': { cena: 'Proposta 04',    titulo: 'A',                   em: 'quarta'       },
-  final:   { cena: 'Cena 07',        titulo: 'Fica para',           em: 'sempre'       },
+  final:   { cena: 'Cena 08',        titulo: 'Fica para',           em: 'sempre'       },
   cta:     { cena: 'Ficha técnica',  titulo: 'Informações',         em: 'gerais'       },
   contact: { cena: 'Fim',            titulo: 'Vamos contar esta',   em: 'história'     },
 }
@@ -216,7 +217,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
   // A 4.ª proposta (DOCUMENTAL) só entra quando está ativada no CRM
   const idxPropostas = [0, 1, 2, 3].filter(i => propostaVisivel(content.propostas?.[i], i))
-  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
+  const slides = ['cover', 'about', 'intro', 'motivo', 'relive', 'blank', 'blank2', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -603,6 +604,49 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 <input type="file" accept="image/*" className="hidden"
                   onChange={e => { const f = e.target.files?.[0]; if (f) handleSlidePhotoUpload('blank', f) }} />
                 {uploadingSlidePhoto === 'blank' ? '⏳' : blankPhoto ? '✦ Trocar foto' : '⬆ Foto direita'}
+              </label>
+            )}
+          </div>
+        )
+      }
+
+
+      // Cena de conversa (sem formulário): os noivos dizem porque ainda não fecharam,
+      // para a proposta ir ao encontro do que procuram. As etiquetas só servem de ponto de partida.
+      case 'motivo': {
+        const motivoPhoto = pp.slidePhotos?.['motivo'] || ''
+        const pistas = ['O orçamento', 'Ainda estão a comparar', 'Encontrar o estilo certo', 'Confiar em quem vai estar lá', 'Prazos e entregas']
+        return (
+          <div className="relative h-full w-full overflow-hidden flex items-center">
+            {motivoPhoto && (
+              <img src={motivoPhoto} alt=""
+                className="rl-ken-left absolute inset-0 w-full h-full object-cover object-right"
+                style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
+              />
+            )}
+            <div className={`relative z-10 flex flex-col gap-7 ${motivoPhoto ? 'text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
+              style={{ maxWidth: motivoPhoto ? '54%' : '720px', paddingLeft: motivoPhoto ? 'clamp(5rem, 14vw, 12rem)' : undefined }}>
+              <h2 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+                O que ainda <em>vos faz pensar?</em>
+              </h2>
+              <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75 }}>
+                Ainda não fecharam a fotografia e o filme do vosso casamento, e há sempre uma razão.<br />
+                Contem-nos com toda a franqueza: o que vos tem feito esperar,
+                e o que precisam de sentir para saberem que é a escolha certa?
+              </p>
+              <div className={`flex flex-wrap gap-2 ${motivoPhoto ? '' : 'justify-center'}`}>
+                {pistas.map(t => (
+                  <span key={t} className="text-[11px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full"
+                    style={{ border: `1px solid ${typo.accentColor}55`, color: typo.accentColor }}>{t}</span>
+                ))}
+              </div>
+            </div>
+            {isAdmin && (
+              <label className="absolute bottom-6 right-6 z-20 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[10px] tracking-[0.2em] uppercase transition-all"
+                style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.4)', color: 'rgba(201,168,76,0.8)' }}>
+                <input type="file" accept="image/*" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleSlidePhotoUpload('motivo', f) }} />
+                {uploadingSlidePhoto === 'motivo' ? '⏳' : motivoPhoto ? '✦ Trocar foto' : '⬆ Foto direita'}
               </label>
             )}
           </div>
@@ -1334,6 +1378,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                     ['cover',  'Capa'],
                     ['about',  'Sobre Nós'],
                     ['intro',  'Quem são os noivos?'],
+                    ['motivo', 'O que ainda vos faz pensar?'],
                     ['relive', 'Portal dos Noivos'],
                     ['blank',  'Como imaginam o dia?'],
                     ['blank2', 'O Grande Dia'],

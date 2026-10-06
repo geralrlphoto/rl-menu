@@ -11,10 +11,10 @@ const MASTER_TOKEN = 'batizado-maquete'
 // Cada slide e uma cena, como no briefing /nova-lead.
 const CENAS: Record<string, { cena: string }> = {
   cover: { cena: 'Antes de rodar' }, about: { cena: 'Cena 01' }, menino: { cena: 'Cena 02' },
-  intro: { cena: 'Cena 03' }, relive: { cena: 'Cena 04' }, blank: { cena: 'Cena 05' },
-  blank2: { cena: 'Cena 06' }, reflexao: { cena: 'Cena 07' }, invest: { cena: 'Cena 08' },
+  motivo: { cena: 'Cena 03' }, intro: { cena: 'Cena 04' }, relive: { cena: 'Cena 05' }, blank: { cena: 'Cena 06' },
+  blank2: { cena: 'Cena 07' }, reflexao: { cena: 'Cena 08' }, invest: { cena: 'Cena 09' },
   'pkg-0': { cena: 'Proposta 01' }, 'pkg-1': { cena: 'Proposta 02' }, 'pkg-2': { cena: 'Proposta 03' }, 'pkg-3': { cena: 'Proposta 04' },
-  final: { cena: 'Cena 09' }, cta: { cena: 'Ficha tecnica' }, contact: { cena: 'Fim' },
+  final: { cena: 'Cena 10' }, cta: { cena: 'Ficha tecnica' }, contact: { cena: 'Fim' },
 }
 
 
@@ -178,7 +178,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
   // A 4.ª proposta (DOCUMENTAL) só entra quando está ativada no CRM
   const idxPropostas = [0, 1, 2, 3].filter(i => propostaVisivel(content.propostas?.[i], i))
-  const slides = ['cover', 'about', 'menino', 'intro', 'relive', 'blank', 'blank2', 'reflexao', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
+  const slides = ['cover', 'about', 'menino', 'motivo', 'intro', 'relive', 'blank', 'blank2', 'reflexao', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -574,6 +574,27 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
               <p className="text-[10px] tracking-widest uppercase" style={{ color: typo.accentColor }}>Adiciona foto no editor</p>
             </div>
           )}
+        </div>
+      )
+
+      // Cena de conversa (sem formulário): porque ainda não fecharam, para a proposta
+      // ir ao encontro do que procuram. As etiquetas só servem de ponto de partida.
+      case 'motivo': return (
+        <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-7 max-w-3xl mx-auto">
+          <h2 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+            O que ainda <em>vos faz pensar?</em>
+          </h2>
+          <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75 }}>
+            Ainda não fecharam a fotografia e o filme do batizado, e há sempre uma razão.<br />
+            Contem-nos com toda a franqueza: o que vos tem feito esperar,
+            e o que precisam de sentir para saberem que é a escolha certa?
+          </p>
+          <div className="flex flex-wrap gap-2 justify-center">
+            {['O orçamento', 'Ainda estão a comparar', 'Encontrar o estilo certo', 'Confiar em quem vai estar lá', 'Prazos e entregas'].map(t => (
+              <span key={t} className="text-[11px] tracking-[0.18em] uppercase px-3.5 py-2 rounded-full"
+                style={{ border: `1px solid ${typo.accentColor}55`, color: typo.accentColor }}>{t}</span>
+            ))}
+          </div>
         </div>
       )
 
