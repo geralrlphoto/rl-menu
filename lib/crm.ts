@@ -293,11 +293,14 @@ export const PREPARACAO_DIAS = 15
 export const NOMES_PROPOSTAS = ['BASIC', 'ESSENCIAL', 'SIGNATURE'] as const
 
 /* 4.ª proposta opcional (propostas[3]): só aparece aos noivos (Proposta Criativa,
-   portal e PDF) quando é ativada no CRM, com `ativa: true`. */
+   portal e PDF) quando é ativada no CRM, com `ativa: true`, e tem pelo menos um
+   serviço escolhido em Fotografia ou Vídeo. */
 export const PROPOSTA_OPCIONAL = 'DOCUMENTAL'
 export const NOMES_PROPOSTAS_TODAS = [...NOMES_PROPOSTAS, PROPOSTA_OPCIONAL] as const
 export const nomePropostaPadrao = (i: number): string => NOMES_PROPOSTAS_TODAS[i] ?? `PROPOSTA ${i + 1}`
-export const propostaVisivel = (p: { ativa?: boolean } | null | undefined, i: number) => i < NOMES_PROPOSTAS.length || !!p?.ativa
+export const propostaVisivel = (
+  p: { ativa?: boolean; servicos_foto?: string[]; servicos_video?: string[] } | null | undefined, i: number,
+) => i < NOMES_PROPOSTAS.length || (!!p?.ativa && ((p.servicos_foto?.length ?? 0) + (p.servicos_video?.length ?? 0)) > 0)
 
 /* Prazo estimado de entrega do vídeo (dias úteis) por pacote; sem pacote ou nome antigo fica 180 */
 export const PRAZO_VIDEO_DIAS: Record<string, number> = { BASIC: 180, ESSENCIAL: 120, SIGNATURE: 60 }

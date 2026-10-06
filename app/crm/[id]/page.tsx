@@ -703,7 +703,9 @@ export default function ClientePage() {
                 <div className="flex items-center justify-between gap-3 px-4 py-2.5"
                   style={{ background: proposta.ativa ? 'rgba(74,222,128,0.06)' : 'rgba(255,255,255,0.015)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                   <span className="text-xs" style={{ color: proposta.ativa ? '#4ade80' : 'rgba(255,255,255,0.4)' }}>
-                    {proposta.ativa ? '● Ativa: os noivos veem esta proposta' : '○ Desativada: os noivos não a veem'}
+                    {!proposta.ativa ? '○ Desativada: os noivos não a veem'
+                      : (proposta.servicos_foto.length + proposta.servicos_video.length) > 0 ? '● Ativa: os noivos veem esta proposta'
+                      : '● Ativa, mas sem serviços escolhidos: os noivos ainda não a veem'}
                   </span>
                   <button type="button" disabled={savingPropostas}
                     onClick={async () => {
