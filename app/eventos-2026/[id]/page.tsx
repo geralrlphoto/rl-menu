@@ -4151,6 +4151,7 @@ export default function EventoPage() {
               if (Array.isArray(val)) setEquipaEditorVideo(val)
               else if (val) setEquipaEditorVideo([val])
               if (Array.isArray(d.equipa?.videografo)) setEquipaVideo(d.equipa.videografo)
+              if (Array.isArray(d.equipa?.fotografo)) setEquipaFoto(d.equipa.fotografo)
             })
             .catch(() => {})
 
@@ -4361,6 +4362,23 @@ export default function EventoPage() {
         body: JSON.stringify({ status: albumStatus }),
       })
     }
+  }
+
+  // Guarda quem fotografou: mesmo campo que o Fotógrafo da secção Equipa
+  function saveFotografos(next: string[]) {
+    if (!evento) return
+    setEquipaFoto(next)
+    fetch('/api/evento-equipa', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        referencia: evento.referencia ?? '',
+        evento_id: evento.id,
+        local: evento.local ?? '',
+        data_casamento: evento.data_evento || null,
+        fotografo: next,
+      }),
+    }).catch(() => {})
   }
 
   // Recalcula e grava valor_liquido no Supabase sempre que uma despesa muda
@@ -4670,6 +4688,30 @@ export default function EventoPage() {
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
               </div>
+              {/* Quem fotografou: mesmo campo do Fotógrafo na secção Equipa.
+                  Pode ser mais do que um, por isso lista + adicionar. */}
+              {equipaFoto.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {equipaFoto.map(nome => (
+                    <span key={nome} className="inline-flex items-center gap-1 text-[10px] text-white/60 bg-white/5 border border-white/10 rounded-full pl-2 pr-1 py-0.5">
+                      {nome}
+                      <button
+                        onClick={() => saveFotografos(equipaFoto.filter(n => n !== nome))}
+                        className="text-white/30 hover:text-red-400 transition-colors leading-none"
+                        title={`Tirar ${nome}`}
+                      >×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <select
+                value=""
+                onChange={ev => { const nome = ev.target.value; if (nome && !equipaFoto.includes(nome)) saveFotografos([...equipaFoto, nome]) }}
+                className="bg-zinc-900 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-xs text-white/70 focus:outline-none w-full"
+              >
+                <option value="">{equipaFoto.length > 0 ? 'Juntar fotógrafo…' : 'Quem fotografou…'}</option>
+                {optionsFoto.filter(n => !equipaFoto.includes(n)).map(nome => <option key={nome} value={nome}>{nome}</option>)}
+              </select>
             </div>
             <div className="flex flex-col gap-1">
               <span className="text-[10px] tracking-[0.3em] text-white/25 uppercase">Valor Videógrafo</span>
@@ -5474,6 +5516,7 @@ export default function EventoPage() {
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.fotografo ?? []}
               options={optionsFoto}
+              syncValue={equipaFoto}
               onChanged={setEquipaFoto}
               unavailableNames={unavailableNames} />
             <EditEquipaField label="Videógrafo" field="videografo" multi={true}
