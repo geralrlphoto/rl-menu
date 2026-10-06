@@ -373,7 +373,8 @@ export default function PedidosFotos() {
   const pesquisados = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return pedidos
-    return pedidos.filter(p => [p.pedido, p.nome, p.noivos, p.email, p.telefone, p.referencia, p.data_casamento]
+    // Inclui os números das fotografias pedidas (ex.: 4218), para encontrar quem pediu uma foto
+    return pedidos.filter(p => [p.pedido, p.nome, p.noivos, p.email, p.telefone, p.referencia, p.data_casamento, p.fotografias]
       .filter(Boolean).some(v => String(v).toLowerCase().includes(q)))
   }, [pedidos, search])
 
@@ -696,7 +697,7 @@ export default function PedidosFotos() {
       <div className="flex items-center gap-2 mb-3 flex-wrap">
         <div className="relative flex-1 min-w-[220px]">
           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[13px]">⌕</span>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar por noivos, cliente, email, referência, pedido…" className={inputCls + ' w-full pl-9'} />
+          <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Pesquisar por noivos, cliente, email, referência, pedido, n.º da foto…" className={inputCls + ' w-full pl-9'} />
           {search && <button onClick={() => setSearch('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white text-[14px]">✕</button>}
         </div>
         <select value={sort} onChange={e => setSort(e.target.value)} className={inputCls + ' [color-scheme:dark] cursor-pointer'}>
