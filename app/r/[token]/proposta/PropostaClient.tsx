@@ -514,7 +514,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               </h2>
               <div className="flex flex-col gap-3">
                 {[
-                  'Acesso privado com e-mail e palavra-passe',
+                  'Um portal só vosso, do primeiro contacto à entrega',
                   'Fotografias, vídeos e documentos num só lugar',
                   'Seleção de fotos e estado das entregas',
                   'Contrato, pagamentos e cronograma sempre à mão',
