@@ -318,6 +318,9 @@ export const DETALHES_PROPOSTAS: Record<string, { explicacao: string; oferta?: s
     explicacao: 'A experiência vivida no próprio dia: com o Same Day Edit, as emoções voltam a ser vividas ainda durante a festa, num dos momentos mais altos do casamento.',
     oferta: 'Se fecharem com a SIGNATURE, oferecemos o serviço de drone e o pré-wedding em vídeo, e entregamos o vídeo final em 60 dias.',
   },
+  DOCUMENTAL: {
+    explicacao: 'Uma forma de documentar o vosso dia de forma profissional, com um orçamento mais contido, sem abdicar de toda a qualidade do nosso trabalho em fotografia e filme.',
+  },
 }
 
 export const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'

@@ -213,7 +213,9 @@ export default function ClientePage() {
     { nome: NOMES_PROPOSTAS[1], servicos_foto: [], servicos_video: [], valor: '' },
     { nome: NOMES_PROPOSTAS[2], servicos_foto: [], servicos_video: [], valor: '' },
     // 4.ª proposta opcional: só aparece aos noivos quando "ativa"
-    { nome: PROPOSTA_OPCIONAL, servicos_foto: [], servicos_video: [], valor: '', ativa: false },
+    { nome: PROPOSTA_OPCIONAL, ativa: false, valor: '',
+      servicos_foto: ['1 Fotógrafo', 'Rep. Todo Evento', '700 Fotografias Editadas', 'Entrega por Link'],
+      servicos_video: ['1 Videógrafo', 'Rep. Todo Evento', 'Vídeo até 20 min | Full HD', 'Entrega por Link'] },
   ]
   // Leads antigas só têm 3 propostas: acrescenta a opcional (desligada)
   const completarPropostas = (ps?: Proposta[] | null): Proposta[] =>
