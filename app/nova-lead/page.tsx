@@ -21,13 +21,12 @@ const ADICIONAIS_FOTO  = ['Pré-Wedding', 'Trash the Dress', 'Álbum Impresso', 
 const ADICIONAIS_VIDEO = ['Pré-Wedding', 'Trash the Dress', 'Drone', 'Same Day Edit', 'Vídeos Originais', 'Sessão de Família', 'Trailer']
 const ESTILO = ['Elegante', 'Minimalista', 'Romântico', 'Documental', 'Vibrante']
 
-// Passos 0 e 1 são a abertura; 2 a 5 são as quatro cenas do briefing
+// Passos 0 e 1 são a abertura (no 0 ficam nome e contactos); 2 a 4 são as três cenas do briefing
 const CENAS: Record<number, { cena: string; titulo: string; tituloEm: string; legenda: string; img: string; pos?: string }> = {
   1: { cena: 'Antes de rodar',   titulo: 'Bem-vindos à',        tituloEm: 'produção',       legenda: 'Pré-produção · onde tudo começa',        img: '/casamentos-2027.jpg' },
   2: { cena: 'Cena 01',          titulo: 'O vosso',             tituloEm: 'grande dia',     legenda: 'O cenário, a data, as pessoas',          img: '/newsletter/casamento-03.jpg', pos: 'center 35%' },
   3: { cena: 'Cena 02',          titulo: 'Perguntas que',       tituloEm: 'ninguém faz',    legenda: 'Porque cada história tem outro tom',      img: '/eventos-hero-2026.webp', pos: 'center 40%' },
   4: { cena: 'Cena 03',          titulo: 'O que vamos',         tituloEm: 'criar juntos',   legenda: 'Fotografia, filme e os detalhes que fazem a diferença', img: '/newsletter/casamento-09.jpg', pos: 'center 45%' },
-  5: { cena: 'Cena 04',          titulo: 'Onde vos',            tituloEm: 'encontramos',    legenda: 'Falta pouco para a primeira conversa',   img: '/casamentos-2026.jpg', pos: 'center 40%' },
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -173,7 +172,8 @@ const FORM_DEFAULT = {
   preocupacoes:     '',
 }
 
-const TOTAL_PASSOS = 6
+const TOTAL_PASSOS = 5
+const LS_INICIO = 'rl_nova_lead_inicio' // contactos já enviados por email (não repetir)
 
 // ── Página principal ──────────────────────────────────────────────────────────
 export default function NovaLeadPage() {
@@ -192,7 +192,7 @@ export default function NovaLeadPage() {
       if (saved) {
         const { step: savedStep, form: savedForm } = JSON.parse(saved)
         if (savedForm) setForm({ ...FORM_DEFAULT, ...savedForm })
-        if (typeof savedStep === 'number') setStep(savedStep)
+        if (typeof savedStep === 'number') setStep(Math.min(savedStep, TOTAL_PASSOS - 1))
       }
     } catch {}
   }, [])
@@ -214,6 +214,12 @@ export default function NovaLeadPage() {
   function validateStep(s: number): string | null {
     if (s === 0) {
       if (!form.nome.trim()) return 'Digam-nos como se chamam.'
+      if (!form.contato.trim()) return 'O telemóvel é obrigatório.'
+      if (form.contato.replace(/\D/g, '').length < 9) return 'O telemóvel parece estar incompleto.'
+      if (!form.email.trim()) return 'O e-mail é obrigatório.'
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return 'O e-mail parece estar incompleto.'
+      if (!form.zonaResidencia.trim()) return 'A zona de residência é obrigatória.'
+      if (!form.comoChegou) return 'Digam-nos como chegaram até nós.'
     }
     if (s === 2) {
       if (!form.tipoEvento) return 'Escolham o tipo de evento.'
@@ -233,13 +239,6 @@ export default function NovaLeadPage() {
       if (form.servicos.length === 0) return 'Escolham pelo menos um serviço.'
       if (!escaloes.includes(form.orcamento)) return 'Indiquem um orçamento previsto.'
     }
-    if (s === 5) {
-      if (!form.contato.trim()) return 'O telemóvel é obrigatório.'
-      if (!form.email.trim()) return 'O e-mail é obrigatório.'
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return 'O e-mail parece estar incompleto.'
-      if (!form.zonaResidencia.trim()) return 'A zona de residência é obrigatória.'
-      if (!form.comoChegou) return 'Digam-nos como chegaram até nós.'
-    }
     return null
   }
 
@@ -247,8 +246,20 @@ export default function NovaLeadPage() {
     const err = validateStep(step)
     if (err) { setErro(err); return }
     setErro('')
+    if (step === 0) avisarInicio()
     topRef.current?.scrollIntoView({ behavior: 'smooth' })
     setStep(s => s + 1)
+  }
+
+  // Ao sair da primeira página, o admin recebe logo nome e contactos por email
+  // (só uma vez para os mesmos dados, mesmo que voltem atrás e avancem outra vez)
+  function avisarInicio() {
+    const dados = { nome: form.nome, contato: form.contato, email: form.email, zona_residencia: form.zonaResidencia, como_chegou: form.comoChegou }
+    const assinatura = JSON.stringify(dados)
+    try { if (localStorage.getItem(LS_INICIO) === assinatura) return } catch {}
+    fetch('/api/nova-lead/inicio', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: assinatura, keepalive: true,
+    }).then(r => { if (r.ok) try { localStorage.setItem(LS_INICIO, assinatura) } catch {} }).catch(() => {})
   }
   function goBack() {
     setErro('')
@@ -257,7 +268,7 @@ export default function NovaLeadPage() {
   }
 
   async function handleSubmit() {
-    for (const s of [0, 2, 3, 4, 5]) {
+    for (const s of [0, 2, 3, 4]) {
       const err = validateStep(s)
       if (err) { setErro(err); setStep(s); return }
     }
@@ -413,11 +424,21 @@ export default function NovaLeadPage() {
             <p className="quest">Comecemos pelo início. <em>Como se chamam?</em></p>
             <div className="mt-5">
               <LeadInput label="Nome dos noivos / família" value={form.nome} onChange={v => set('nome', v)}
-                placeholder="Ex: Ana & João Silva" required onEnter={goNext} />
+                placeholder="Ex: Ana & João Silva" required />
+            </div>
+            <div className="mt-8 space-y-8">
+              <LeadInput label="Telemóvel" type="tel" value={form.contato} onChange={v => set('contato', v)}
+                placeholder="Ex: 912 345 678" required />
+              <LeadInput label="E-mail" type="email" value={form.email} onChange={v => set('email', v)}
+                placeholder="Ex: ana@email.com" required />
+              <LeadInput label="Zona de residência" value={form.zonaResidencia} onChange={v => set('zonaResidencia', v)}
+                placeholder="Ex: Lisboa, Setúbal..." required />
+              <LeadSelect label="Como chegaram até nós?" value={form.comoChegou} onChange={v => set('comoChegou', v)}
+                options={COMO_CHEGOU} required />
             </div>
             {erro && <p className="err mt-4">{erro}</p>}
             <div className="mt-7 flex items-center justify-between gap-4 flex-wrap">
-              <p className="hint">5 minutos · quatro cenas</p>
+              <p className="hint">5 minutos · três cenas</p>
               <button onClick={goNext} type="button" className="btn">
                 <span className="fill" />
                 Começar o nosso filme
@@ -438,7 +459,7 @@ export default function NovaLeadPage() {
 
   // ── Passos 1 a 5: imagem da cena ao lado + formulário ────────────────────
   const cena = CENAS[step]
-  const numCena = step >= 2 ? step - 1 : 0   // 1 a 4
+  const numCena = step >= 2 ? step - 1 : 0   // 1 a 3
 
   return (
     <div className="nlead relative" ref={topRef}>
@@ -480,8 +501,8 @@ export default function NovaLeadPage() {
             style={{ opacity: visible ? 1 : 0, transform: visible ? 'translateY(0)' : 'translateY(16px)' }}>
 
             <div className="flex items-center justify-between mb-8">
-              <p className="eyebrow">{step === 1 ? 'Pré-produção' : `${cena.cena} de 04`}</p>
-              {step >= 2 && <p className="meta">{String(numCena).padStart(2, '0')} / 04</p>}
+              <p className="eyebrow">{step === 1 ? 'Pré-produção' : `${cena.cena} de 03`}</p>
+              {step >= 2 && <p className="meta">{String(numCena).padStart(2, '0')} / 03</p>}
             </div>
 
             <h2 style={{ fontSize: 'clamp(38px,4.6vw,62px)' }}>
@@ -613,20 +634,6 @@ export default function NovaLeadPage() {
                 </div>
                 <LeadSelect label="Orçamento previsto (sensivelmente)" value={escaloes.includes(form.orcamento) ? form.orcamento : ''}
                   onChange={v => set('orcamento', v)} options={escaloes} required />
-              </div>
-            )}
-
-            {/* ── Passo 5: contactos ─── */}
-            {step === 5 && (
-              <div className="space-y-8">
-                <LeadInput label="Telemóvel" type="tel" value={form.contato} onChange={v => set('contato', v)}
-                  placeholder="Ex: 912 345 678" required />
-                <LeadInput label="E-mail" type="email" value={form.email} onChange={v => set('email', v)}
-                  placeholder="Ex: ana@email.com" required />
-                <LeadInput label="Zona de residência" value={form.zonaResidencia} onChange={v => set('zonaResidencia', v)}
-                  placeholder="Ex: Lisboa, Setúbal..." required />
-                <LeadSelect label="Como chegaram até nós?" value={form.comoChegou} onChange={v => set('comoChegou', v)}
-                  options={COMO_CHEGOU} required />
               </div>
             )}
 
