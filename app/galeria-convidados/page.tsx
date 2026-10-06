@@ -25,6 +25,10 @@ export default function GaleriaConvidadosPage() {
               className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-[12px] font-bold tracking-wider uppercase transition-all border border-white/15 text-white/70 hover:border-[#c8a866] hover:text-[#c8a866]">
               ? Apoio ao Cliente
             </Link>
+            <Link href="/ticket-fotos-dia" target="_blank"
+              className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-[12px] font-bold tracking-wider uppercase transition-all border border-white/15 text-white/70 hover:border-[#c8a866] hover:text-[#c8a866]">
+              ▤ Ticket
+            </Link>
             <EnviarFormularioWhatsApp />
           </div>
         </header>
