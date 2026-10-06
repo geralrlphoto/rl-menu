@@ -470,7 +470,7 @@ export default function NovaLeadPage() {
 
         {/* Imagem da cena — fixa no computador, faixa no topo no telemóvel */}
         <aside className="relative h-56 sm:h-72 lg:h-screen lg:sticky lg:top-0 overflow-hidden">
-          {[1, 2, 3, 4, 5].map(i => (
+          {[1, 2, 3, 4].map(i => (
             <div key={i} className={`cena-img${step === i ? ' on' : ''}`}
               style={{ backgroundImage: `url('${CENAS[i].img}')`, backgroundPosition: CENAS[i].pos ?? 'center' }} />
           ))}
@@ -488,7 +488,7 @@ export default function NovaLeadPage() {
             </p>
             {/* Fotogramas: um por cena */}
             <div className="flex gap-1.5 mt-5 max-w-xs">
-              {[1, 2, 3, 4].map(i => (
+              {[1, 2, 3].map(i => (
                 <span key={i} className={`fotograma${numCena === i ? ' agora' : numCena > i ? ' feito' : ''}`} />
               ))}
             </div>
