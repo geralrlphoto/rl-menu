@@ -216,7 +216,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   }, [token, isAdmin])
 
   // A 4.ª proposta (DOCUMENTAL) só entra quando está ativada no CRM
-  const idxPropostas = [0, 1, 2, 3].filter(i => propostaVisivel(content.propostas?.[i], i))
+  // Só entram propostas com serviços (e a DOCUMENTAL só quando ativada); na maquete mostra as três
+  const idxPropostas = [0, 1, 2, 3].filter(i => token === MASTER_TOKEN ? i < 3 : propostaVisivel(content.propostas?.[i], i))
   const slides = ['cover', 'about', 'intro', 'motivo', 'relive', 'blank', 'blank2', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
   const total  = slides.length
 
@@ -703,7 +704,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o
             retorno eterno de cada momento que nunca mais poderão reviver, apenas recordar.
           </p>
-          <p className="hint mt-9">{idxPropostas.length === 4 ? 'Quatro' : 'Três'} propostas a seguir</p>
+          {idxPropostas.length > 0 && <p className="hint mt-9">{idxPropostas.length === 1 ? 'Uma proposta a seguir' : `${['Nenhuma', 'Uma', 'Duas', 'Três', 'Quatro'][idxPropostas.length]} propostas a seguir`}</p>}
         </div>
       )
 

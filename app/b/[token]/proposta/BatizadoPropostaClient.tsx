@@ -177,7 +177,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
   }, [token, isAdmin])
 
   // A 4.ª proposta (DOCUMENTAL) só entra quando está ativada no CRM
-  const idxPropostas = [0, 1, 2, 3].filter(i => propostaVisivel(content.propostas?.[i], i))
+  // Só entram propostas com serviços (e a DOCUMENTAL só quando ativada); na maquete mostra as três
+  const idxPropostas = [0, 1, 2, 3].filter(i => token === MASTER_TOKEN ? i < 3 : propostaVisivel(content.propostas?.[i], i))
   const slides = ['cover', 'about', 'menino', 'motivo', 'intro', 'relive', 'blank', 'blank2', 'reflexao', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
   const total  = slides.length
 
