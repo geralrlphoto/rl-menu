@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import TimeBlocks from './TimeBlocks'
+import DisponibilidadePreparacao, { type SlotPreparacao } from '@/app/components/DisponibilidadePreparacao'
 import { linkPublico } from '@/lib/site-url'
 import { whatsappLink } from '@/lib/crm'
 
@@ -213,6 +214,11 @@ export default function CalendarClient({
   const today = new Date()
   const [viewYear, setViewYear]   = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
+  // Disponibilidade da reunião de preparação (a mesma da ficha do evento); só carrega ao abrir
+  const [dispOpen, setDispOpen]   = useState(false)
+  const [dispSlots, setDispSlots] = useState<SlotPreparacao[]>([])
+  const carregarDisp = () =>
+    fetch('/api/preparacao/slots').then(r => r.json()).then(d => { if (d.ok) setDispSlots(d.slots) }).catch(() => {})
   const [selected, setSelected]   = useState<SelectedItem | null>(null)
   const [tarefas, setTarefas]     = useState<TarefaEvent[]>(initialTarefas)
 
@@ -917,6 +923,11 @@ export default function CalendarClient({
               className="h-9 px-3 flex items-center rounded-xl border border-[#C084FC]/35 bg-[#C084FC]/10 text-[#C084FC] text-[10px] tracking-[0.25em] uppercase hover:bg-[#C084FC]/20 transition-all">
               🤝<span className="hidden sm:inline ml-1.5">Marcações</span>
             </a>
+            <button onClick={() => { if (!dispOpen) carregarDisp(); setDispOpen(v => !v) }}
+              title="Horários disponíveis para a reunião de preparação (comuns a todos os casais)"
+              className={`h-9 px-3 flex items-center rounded-xl border text-[10px] tracking-[0.25em] uppercase transition-all ${dispOpen ? 'border-[#C9A84C]/60 bg-[#C9A84C]/20 text-[#C9A84C]' : 'border-white/10 text-white/50 hover:text-[#C9A84C] hover:border-[#C9A84C]/40'}`}>
+              🗓<span className="hidden sm:inline ml-1.5">Disponibilidade</span>
+            </button>
             <div className="flex items-center rounded-xl border border-white/10 overflow-hidden">
               <button onClick={prevMonth} title="Mês anterior"
                 className="w-9 h-9 text-white/40 hover:text-[#C9A84C] hover:bg-white/[0.04] transition-all">‹</button>
@@ -934,6 +945,15 @@ export default function CalendarClient({
             <div className="hidden sm:block"><GoogleSyncButton /></div>
           </div>
         </div>
+
+        {dispOpen && (
+          <div className="max-w-[1500px] mx-auto px-4 sm:px-6 pb-3">
+            <div className="text-[10px] tracking-[0.3em] uppercase text-[#C9A84C]/80 mb-2">Disponibilidade · reunião de preparação</div>
+            <div className="max-h-[50vh] overflow-y-auto">
+              <DisponibilidadePreparacao slots={dispSlots} recarregar={carregarDisp} />
+            </div>
+          </div>
+        )}
 
         {/* Fita dos meses do ano */}
         <div className="max-w-[1500px] mx-auto px-4 sm:px-6 pb-2.5 flex items-center gap-2">

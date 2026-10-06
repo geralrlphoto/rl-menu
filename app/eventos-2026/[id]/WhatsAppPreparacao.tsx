@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react'
 import { whatsappLink, mensagemReuniaoPreparacao, nomeNoivos, ehBatizado, PREPARACAO_DIAS } from '@/lib/crm'
 import { linkPublico } from '@/lib/site-url'
-import DataPT from '@/app/components/DataPT'
+import DisponibilidadePreparacao, { type SlotPreparacao } from '@/app/components/DisponibilidadePreparacao'
 
 /* Reunião de preparação do dia (horários, dicas, ajustes):
    - botão de WhatsApp com o link /preparacao/<id> para os noivos escolherem o horário;
    - disponibilidade comum a todos os casais (preparacao_slots);
    - também aparece no /photo cerca de 15 dias antes do evento. */
 
-type Slot = { id: string; data: string; hora: string; evento_id: string | null; formato: string | null; cliente: string | null }
+type Slot = SlotPreparacao
 
 function fmtDia(iso: string) {
   return new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { weekday: 'short', day: '2-digit', month: 'short', timeZone: 'UTC' })
@@ -24,9 +24,6 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
   const [quem, setQuem] = useState<'noiva' | 'noivo'>(e.tel_noiva ? 'noiva' : 'noivo')
   const [slots, setSlots] = useState<Slot[]>([])
   const [gerir, setGerir] = useState(false)
-  const [novaData, setNovaData] = useState('')
-  const [novaHora, setNovaHora] = useState('')
-  const [erro, setErro] = useState('')
 
   const carregarSlots = () =>
     fetch('/api/preparacao/slots').then(r => r.json()).then(d => { if (d.ok) setSlots(d.slots) }).catch(() => {})
@@ -61,19 +58,6 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
     faltam = Math.round((new Date(String(e.data_evento).slice(0, 10) + 'T12:00:00').getTime() - hoje.getTime()) / 86400000)
   }
 
-  async function acrescentar() {
-    setErro('')
-    const d = await fetch('/api/preparacao/slots', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: novaData, hora: novaHora }),
-    }).then(r => r.json()).catch(() => ({ error: 'Sem ligação' }))
-    if (!d.ok) { setErro(d.error || 'Não foi possível acrescentar'); return }
-    setNovaHora(''); carregarSlots()
-  }
-  async function remover(id: string) {
-    await fetch(`/api/preparacao/slots?id=${id}`, { method: 'DELETE' }).catch(() => {})
-    carregarSlots()
-  }
   async function libertar(id: string) {
     if (!confirm('Cancelar esta marcação? O horário volta a ficar livre.')) return
     await fetch('/api/preparacao/slots', {
@@ -84,7 +68,6 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
   }
 
   const base = 'text-[11px] font-semibold tracking-wider uppercase text-center px-4 py-2.5 rounded-lg border transition-colors'
-  const porDia = slots.reduce<Record<string, Slot[]>>((acc, s) => { (acc[s.data] ||= []).push(s); return acc }, {})
 
   return (
     <div className="rounded-xl border border-green-500/20 bg-green-500/[0.04] p-4 flex flex-col gap-3">
@@ -172,48 +155,7 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
       </div>
 
       {/* Disponibilidade comum a todos os casais */}
-      {gerir && (
-        <div className="rounded-lg border border-white/10 bg-black/30 p-3 flex flex-col gap-3">
-          <p className="text-white/40 text-[11px] leading-relaxed">
-            Horários que qualquer casal pode escolher. Quando um casal marca, o horário fica ocupado para os outros.
-            {dataCas && <> Cada casal só vê os horários <span className="text-white/70">antes do seu evento</span>; a cinzento estão os que este casal não vê.</>}
-          </p>
-          <div className="flex flex-wrap items-center gap-2">
-            <DataPT value={novaData} onChange={setNovaData}
-              className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm focus:outline-none focus:border-gold" />
-            <input type="time" value={novaHora} onChange={ev => setNovaHora(ev.target.value)} step={900}
-              className="bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-sm text-white focus:outline-none focus:border-gold [color-scheme:dark]" />
-            <button onClick={acrescentar} disabled={!novaData || !novaHora}
-              className="px-3 py-1.5 rounded-lg bg-gold text-black text-[10px] font-bold tracking-[0.2em] uppercase disabled:opacity-40">+ Acrescentar</button>
-            {erro && <span className="text-[11px] text-red-400">{erro}</span>}
-          </div>
-          {slots.length === 0 ? (
-            <p className="text-white/30 text-xs">Ainda não há horários. Acrescenta a data e a hora acima.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {Object.entries(porDia).map(([dia, lista]) => (
-                <div key={dia} className="flex items-start gap-3">
-                  <span className="w-24 shrink-0 text-[11px] text-white/50 capitalize pt-1">{fmtDia(dia)}</span>
-                  <div className="flex flex-wrap gap-1.5">
-                    {lista.map(s => s.evento_id ? (
-                      <span key={s.id} title={`${s.cliente ?? ''} · ${s.formato ?? ''}`}
-                        className="text-[11px] px-2 py-1 rounded-md border border-gold/40 bg-gold/10 text-gold">
-                        {s.hora} · {(s.cliente ?? '').trim() || 'Reservado'}
-                      </span>
-                    ) : (
-                      <span key={s.id} title={serveEste(s) ? undefined : 'Depois do evento deste casal (ou já passou): não aparece no link deles'}
-                        className={`group text-[11px] pl-2 pr-1 py-1 rounded-md border flex items-center gap-1 ${serveEste(s) ? 'border-white/12 text-white/75' : 'border-white/5 text-white/25 line-through decoration-white/20'}`}>
-                        {s.hora}
-                        <button onClick={() => remover(s.id)} aria-label="Remover horário" className="w-4 h-4 rounded text-white/30 hover:text-red-400">✕</button>
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {gerir && <DisponibilidadePreparacao slots={slots} recarregar={carregarSlots} serveEste={serveEste} dataCas={dataCas} />}
     </div>
   )
 }
