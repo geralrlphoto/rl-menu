@@ -430,15 +430,19 @@ export async function POST(req: NextRequest) {
         const anoSufixo = String(ano).slice(2)
 
         let referencia = (data.referencia_evento ?? '').trim()
+        const autoGerada = !referencia
 
-        if (!referencia) {
-          // Fallback: auto-gera se o cliente não forneceu
-          const { count } = await sb
-            .from(table)
-            .select('*', { count: 'exact', head: true })
-            .ilike('referencia', `${prefix}_%`)
-          const proximoNum = String((count ?? 0) + 1).padStart(3, '0')
-          referencia = `${prefix}_${proximoNum}_${anoSufixo}_RL`
+        if (autoGerada) {
+          // Fallback: auto-gera se o cliente não forneceu. Usa o maior número já
+          // usado + 1 e confirma que está livre. (Antes contava as linhas: dois
+          // formulários seguidos sem referência recebiam a MESMA referência e o
+          // segundo casal escrevia por cima da ficha do primeiro.)
+          const { data: refs } = await sb.from(table).select('referencia').ilike('referencia', `${prefix}_%`)
+          const usadas = new Set((refs ?? []).map((r: any) => String(r.referencia ?? '').toUpperCase()))
+          let n = Math.max(0, ...[...usadas].filter(r => r.endsWith(`_${anoSufixo}_RL`))
+            .map(r => parseInt(r.split('_')[1] ?? '', 10)).filter(Number.isFinite)) + 1
+          while (usadas.has(`${prefix}_${String(n).padStart(3, '0')}_${anoSufixo}_RL`)) n++
+          referencia = `${prefix}_${String(n).padStart(3, '0')}_${anoSufixo}_RL`
         }
 
         // Carimba a referência resolvida na linha de dados_contrato_cps que
@@ -455,7 +459,8 @@ export async function POST(req: NextRequest) {
 
         // Verifica se já existe um registo com esta referência (caso o admin
         // o tenha criado antes do envio do formulário)
-        const { data: existing } = await sb
+        // (Uma referência auto-gerada é sempre nova: nunca atualiza a ficha de outro casal.)
+        const { data: existing } = autoGerada ? { data: null } : await sb
           .from(table)
           .select('id')
           .eq('referencia', referencia)
