@@ -312,6 +312,30 @@ export default function ClientePage() {
       return { ...p, [campo]: has ? atual.filter(s => s !== servico) : [...atual, servico] }
     }))
   }
+  // Lista de serviços partilhada por todas as leads (tabela crm_servicos_catalogo),
+  // editável aqui com o botão "Editar" de cada coluna. As listas acima são o fallback.
+  type Catalogo = { foto: string[]; video: string[] }
+  const [catalogo, setCatalogo] = useState<Catalogo>({ foto: SERVICOS_FOTO, video: SERVICOS_VIDEO })
+  useEffect(() => {
+    fetch('/api/crm-servicos').then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.foto && d?.video) setCatalogo({ foto: d.foto, video: d.video }) })
+      .catch(() => {})
+  }, [])
+  const guardarCatalogo = async (tipo: 'foto' | 'video', lista: string[], renomeado?: [string, string]) => {
+    const anterior = catalogo
+    const novo = { ...catalogo, [tipo]: lista }
+    setCatalogo(novo)
+    // Renomear também atualiza as propostas desta lead que já o tinham escolhido
+    if (renomeado) {
+      const campo = tipo === 'foto' ? 'servicos_foto' : 'servicos_video'
+      setPropostas(prev => prev.map(p => ({ ...p, [campo]: (p[campo] || []).map(s => s === renomeado[0] ? renomeado[1] : s) })))
+    }
+    const res = await fetch('/api/crm-servicos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(novo),
+    }).catch(() => null)
+    if (!res?.ok) { setCatalogo(anterior); alert('Não foi possível guardar a lista de serviços.') }
+  }
+
   const toggleExtraGlobal = (nome: string) => {
     setExtrasGlobais(prev => {
       const has = prev.some(e => e.nome === nome)
@@ -682,51 +706,14 @@ export default function ClientePage() {
                   {/* Serviços — duas colunas */}
                   <div className="grid grid-cols-2 gap-3">
 
-                    {/* Fotografia */}
-                    <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">📷 Fotografia</p>
-                      {SERVICOS_FOTO.map(s => {
-                        const active = (proposta.servicos_foto || []).includes(s)
-                        return (
-                          <button key={s} onClick={() => toggleServico(pi, 'servicos_foto', s)}
-                            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
-                            style={active
-                              ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
-                              : { background: 'transparent', border: '1px solid transparent' }}>
-                            <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
-                              style={active
-                                ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
-                                : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
-                              {active ? '✓' : ''}
-                            </span>
-                            <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-
-                    {/* Vídeo */}
-                    <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                      <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-1">🎥 Vídeo</p>
-                      {SERVICOS_VIDEO.map(s => {
-                        const active = (proposta.servicos_video || []).includes(s)
-                        return (
-                          <button key={s} onClick={() => toggleServico(pi, 'servicos_video', s)}
-                            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
-                            style={active
-                              ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
-                              : { background: 'transparent', border: '1px solid transparent' }}>
-                            <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
-                              style={active
-                                ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
-                                : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
-                              {active ? '✓' : ''}
-                            </span>
-                            <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
+                    <ColunaServicos titulo="📷 Fotografia" itens={catalogo.foto}
+                      selecionados={proposta.servicos_foto || []}
+                      onToggle={sv => toggleServico(pi, 'servicos_foto', sv)}
+                      onGuardar={(lista, ren) => guardarCatalogo('foto', lista, ren)} />
+                    <ColunaServicos titulo="🎥 Vídeo" itens={catalogo.video}
+                      selecionados={proposta.servicos_video || []}
+                      onToggle={sv => toggleServico(pi, 'servicos_video', sv)}
+                      onGuardar={(lista, ren) => guardarCatalogo('video', lista, ren)} />
                   </div>
 
                   {/* Resumo selecionados */}
@@ -1093,5 +1080,93 @@ export default function ClientePage() {
       </div>
 
     </main>
+  )
+}
+
+// ── Coluna de serviços da proposta, com "Editar" (renomear / remover) e "+ Adicionar" ──
+function ColunaServicos({ titulo, itens, selecionados, onToggle, onGuardar }: {
+  titulo: string
+  itens: string[]
+  selecionados: string[]
+  onToggle: (s: string) => void
+  onGuardar: (lista: string[], renomeado?: [string, string]) => void
+}) {
+  const [editar, setEditar] = useState(false)
+  const [novo, setNovo] = useState('')
+  // Serviços escolhidos que já não estão na lista continuam visíveis para se poderem desmarcar
+  const lista = [...itens, ...selecionados.filter(s => !itens.includes(s))]
+
+  const adicionar = () => {
+    const nome = novo.trim()
+    if (!nome) return
+    if (!itens.includes(nome)) onGuardar([...itens, nome])
+    setNovo('')
+  }
+  const renomear = (antigo: string, valor: string) => {
+    const nome = valor.trim()
+    if (!nome || nome === antigo || itens.includes(nome)) return
+    onGuardar(itens.map(s => s === antigo ? nome : s), [antigo, nome])
+  }
+  const remover = (nome: string) => {
+    if (!confirm(`Remover "${nome}" da lista de serviços? (As propostas que já o têm não mudam.)`)) return
+    onGuardar(itens.filter(s => s !== nome))
+  }
+
+  return (
+    <div className="flex flex-col gap-1.5 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className="flex items-center justify-between mb-1">
+        <p className="text-[9px] tracking-[0.4em] text-white/30 uppercase">{titulo}</p>
+        <button type="button" onClick={() => setEditar(e => !e)}
+          className="text-[9px] tracking-[0.2em] uppercase px-2 py-0.5 rounded-full transition-all"
+          style={editar
+            ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
+            : { color: '#C9A84C', border: '1px solid rgba(201,168,76,0.35)' }}>
+          {editar ? 'Concluir' : 'Editar'}
+        </button>
+      </div>
+
+      {lista.map(s => {
+        const active = selecionados.includes(s)
+        const naLista = itens.includes(s)
+        if (editar && naLista) return (
+          <div key={s} className="flex items-center gap-1.5">
+            <input defaultValue={s}
+              onBlur={e => renomear(s, e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+              className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-gold/50" />
+            <button type="button" onClick={() => remover(s)} title="Remover"
+              className="w-7 h-7 shrink-0 rounded-lg text-white/40 hover:text-red-400 hover:bg-white/5">×</button>
+          </div>
+        )
+        return (
+          <button key={s} type="button" onClick={() => onToggle(s)}
+            className="flex items-center gap-2 w-full text-left px-2 py-1.5 rounded-lg transition-all"
+            style={active
+              ? { background: 'rgba(201,168,76,0.12)', border: '1px solid rgba(201,168,76,0.35)' }
+              : { background: 'transparent', border: '1px solid transparent' }}>
+            <span className="w-4 h-4 rounded flex items-center justify-center shrink-0 text-[10px]"
+              style={active
+                ? { background: 'rgba(201,168,76,0.8)', color: '#0d0b07' }
+                : { background: 'rgba(255,255,255,0.06)', color: 'transparent', border: '1px solid rgba(255,255,255,0.12)' }}>
+              {active ? '✓' : ''}
+            </span>
+            <span className="text-xs leading-snug" style={{ color: active ? '#C9A84C' : 'rgba(255,255,255,0.45)' }}>{s}</span>
+          </button>
+        )
+      })}
+
+      {/* Acrescentar um serviço novo à lista (fica disponível em todas as leads) */}
+      <div className="flex items-center gap-1.5 mt-1">
+        <input value={novo} onChange={e => setNovo(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); adicionar() } }}
+          placeholder="Novo serviço"
+          className="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-gold/50" />
+        <button type="button" onClick={adicionar} disabled={!novo.trim()}
+          className="text-[9px] tracking-[0.2em] uppercase px-2.5 py-1.5 rounded-lg disabled:opacity-30"
+          style={{ color: '#C9A84C', border: '1px solid rgba(201,168,76,0.35)' }}>
+          + Adicionar
+        </button>
+      </div>
+    </div>
   )
 }
