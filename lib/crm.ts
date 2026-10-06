@@ -393,9 +393,10 @@ export function mensagemReuniaoIndisponivel(nome: string | null | undefined, eve
   ].join('\n')
 }
 
-export function mensagemReuniaoPreparacao(nome: string | null | undefined, eventoId?: string | null, batizado?: { crianca?: string | null } | null): string {
+export function mensagemReuniaoPreparacao(nome: string | null | undefined, eventoId?: string | null, batizado?: { crianca?: string | null } | null, soReuniao = false): string {
   const quem = (nome ?? '').trim()
-  const link = eventoId ? linkPublico(`/preparacao/${eventoId}`) : null
+  // soReuniao: link sem briefing, os noivos marcam logo a reunião
+  const link = eventoId ? linkPublico(`/preparacao/${eventoId}${soReuniao ? '?so=reuniao' : ''}`) : null
   const evento = batizado ? oBatizado(batizado.crianca) : 'o vosso casamento'
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
@@ -405,7 +406,9 @@ export function mensagemReuniaoPreparacao(nome: string | null | undefined, event
     `Gostávamos de marcar uma pequena reunião convosco para falarmos sobre ${batizado ? 'esse dia' : 'o vosso dia'}: os horários, algumas dicas e sugestões nossas, e ajustar os últimos detalhes para que tudo corra na perfeição e vocês só tenham de aproveitar.`,
     '',
     ...(link
-      ? [`A reunião é por videochamada. Neste link preencham primeiro o briefing ${batizado ? 'do batizado' : 'do vosso dia'} e, depois de o enviarem, escolham o dia e a hora que vos dá mais jeito:`, link]
+      ? [soReuniao
+          ? 'A reunião é por videochamada. Neste link escolham o dia e a hora que vos dá mais jeito:'
+          : `A reunião é por videochamada. Neste link preencham primeiro o briefing ${batizado ? 'do batizado' : 'do vosso dia'} e, depois de o enviarem, escolham o dia e a hora que vos dá mais jeito:`, link]
       : ['A reunião é por videochamada. Que dia e hora vos dá mais jeito nos próximos dias?']),
     '',
     'No dia e à hora marcados, é só entrarem na videochamada por este link:',

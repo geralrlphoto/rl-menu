@@ -912,7 +912,7 @@ export default function CalendarClient({
           </div>
 
           <div className="ml-auto flex items-center gap-2">
-            <a href="/preparacao/demo" target="_blank" rel="noopener noreferrer"
+            <a href="/preparacao/demo?so=reuniao" target="_blank" rel="noopener noreferrer"
               title="Página onde os noivos marcam a reunião (cada casal recebe o link /preparacao/<id> na ficha do evento)"
               className="h-9 px-3 flex items-center rounded-xl border border-[#C084FC]/35 bg-[#C084FC]/10 text-[#C084FC] text-[10px] tracking-[0.25em] uppercase hover:bg-[#C084FC]/20 transition-all">
               🤝<span className="hidden sm:inline ml-1.5">Marcações</span>

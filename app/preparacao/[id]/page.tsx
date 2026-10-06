@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
 import { MEET_LINK } from '@/lib/crm'
 import BriefingForm, { type BriefingInfo } from './BriefingForm'
 
@@ -52,6 +52,8 @@ Videochamada: ${MEET_LINK}`,
 export default function PreparacaoPage() {
   const { id } = useParams<{ id: string }>()
   const demo = id === 'demo' // simulação: casal fictício, nada é gravado
+  // Link "só reunião" (?so=reuniao): sem briefing, marcam logo a reunião
+  const soReuniao = useSearchParams().get('so') === 'reuniao'
   const [estado, setEstado] = useState<'carregar' | 'erro' | 'ok'>('carregar')
   const [nome, setNome] = useState('')
   const [dataEvento, setDataEvento] = useState<string | null>(null)
@@ -84,11 +86,11 @@ export default function PreparacaoPage() {
   const carregar = () => {
     fetch(`/api/preparacao-publico?e=${id}`).then(r => r.json()).then(d => {
       if (!d.ok) { setEstado('erro'); return }
-      setNome(d.nome); setDataEvento(d.dataEvento); setBatizado(!!d.batizado); setCrianca(d.crianca ?? null); setExpirado(!!d.expirado); setBriefing(d.briefing ?? null);
+      setNome(d.nome); setDataEvento(d.dataEvento); setBatizado(!!d.batizado); setCrianca(d.crianca ?? null); setExpirado(!!d.expirado); setBriefing(soReuniao ? null : d.briefing ?? null);
       // Casamentos: primeiro o briefing; só abre na reunião se já o enviaram ou já marcaram
       if (!vistaInicial.current) {
         vistaInicial.current = true
-        if (d.briefing && !d.briefing.enviadoEm && !d.reserva) setVista('briefing')
+        if (!soReuniao && d.briefing && !d.briefing.enviadoEm && !d.reserva) setVista('briefing')
       } setSlots(d.slots ?? []); setReserva(d.reserva); setHorasOutro(d.horasOutro ?? []); setPedido(d.pedido ?? null)
       const primeiro: string | undefined = d.slots?.[0]?.data
       setMes(prev => prev ?? (primeiro
@@ -167,7 +169,7 @@ export default function PreparacaoPage() {
     setAEnviar(true); setAviso('')
     const d = await fetch('/api/preparacao-publico', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ e: id, slotId, alterar: aAlterar }),
+      body: JSON.stringify({ e: id, slotId, alterar: aAlterar, soReuniao }),
     }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
     setAEnviar(false)
     if (d.ok) {
@@ -185,7 +187,7 @@ export default function PreparacaoPage() {
     setAEnviar(true); setAviso('')
     const d = await fetch('/api/preparacao-publico', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ e: id, pedido: opcoes, mensagem }),
+      body: JSON.stringify({ e: id, pedido: opcoes, mensagem, soReuniao }),
     }).then(r => r.json()).catch(() => ({ error: 'Sem ligação. Tentem de novo.' }))
     setAEnviar(false)
     if (!d.ok) { setAviso(d.error || 'Não foi possível enviar o pedido.'); return }

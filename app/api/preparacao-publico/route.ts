@@ -60,7 +60,9 @@ export async function POST(req: NextRequest) {
   if ((!demo && !UUID_RE.test(e ?? '')) || (!pedido && !(demo ? slotId : UUID_RE.test(slotId ?? '')))) {
     return NextResponse.json({ error: 'Pedido inválido' }, { status: 400 })
   }
-  if (pedido) return pedirOutroHorario(e, pedido, demo, body.mensagem)
+  // Link "só reunião" (?so=reuniao): marcam sem passar pelo briefing
+  const soReuniao = body.soReuniao === true
+  if (pedido) return pedirOutroHorario(e, pedido, demo, body.mensagem, soReuniao)
 
   // Simulação: responde como se tivesse marcado, sem gravar nem enviar email
   if (demo) {
@@ -79,7 +81,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Este link já expirou. Falem connosco pelo WhatsApp, por favor.' }, { status: 410 })
   }
   // Primeiro o briefing e só depois a marcação
-  if (!prep?.briefing_enviado_em && !anterior) {
+  if (!soReuniao && !prep?.briefing_enviado_em && !anterior) {
     return NextResponse.json({ error: 'Preencham e enviem primeiro o briefing, por favor.' }, { status: 409 })
   }
   if (anterior && !alterar) return NextResponse.json({ error: 'Já têm uma reunião marcada.' }, { status: 409 })
@@ -139,7 +141,7 @@ ${ev.batizado ? `Batizado${ev.crianca ? ` de ${esc(ev.crianca)}` : ''}` : 'Casam
 
 /* "Outro horário": guarda até 2 opções e avisa o admin. Só fica marcado quando a RL
    confirmar uma delas na ficha do evento. */
-async function pedirOutroHorario(e: string, pedido: unknown, demo: boolean, msg: unknown) {
+async function pedirOutroHorario(e: string, pedido: unknown, demo: boolean, msg: unknown, soReuniao: boolean) {
   const ev = demo ? null : await eventoPreparacao(e)
   if (!demo && !ev) return NextResponse.json({ error: 'Link inválido' }, { status: 404 })
   const dataEvento = demo ? demoPreparacao().dataEvento : ev!.data_evento
@@ -159,7 +161,7 @@ async function pedirOutroHorario(e: string, pedido: unknown, demo: boolean, msg:
   if (estadoLink(ev!.data_evento, reserva ?? null, prep?.reativado_ate).expirado) {
     return NextResponse.json({ error: 'Este link já expirou. Falem connosco pelo WhatsApp, por favor.' }, { status: 410 })
   }
-  if (!prep?.briefing_enviado_em && !reserva) {
+  if (!soReuniao && !prep?.briefing_enviado_em && !reserva) {
     return NextResponse.json({ error: 'Preencham e enviem primeiro o briefing, por favor.' }, { status: 409 })
   }
   const { error } = await sb.from('preparacao_eventos')

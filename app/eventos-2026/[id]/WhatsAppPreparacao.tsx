@@ -44,6 +44,8 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
   const tel = quem === 'noiva' ? e.tel_noiva : e.tel_noivo
   const batizado = ehBatizado(e.tipo_evento)
   const href = whatsappLink(tel, mensagemReuniaoPreparacao(nome, evId, batizado ? { crianca: e.nome_crianca } : null))
+  // Link só para a reunião: os noivos marcam sem preencher o briefing
+  const hrefSoReuniao = whatsappLink(tel, mensagemReuniaoPreparacao(nome, evId, batizado ? { crianca: e.nome_crianca } : null, true))
   const linkNoivos = linkPublico(`/preparacao/${evId}`)
   const reserva = slots.find(s => s.evento_id === evId) ?? null
   const livres = slots.filter(s => !s.evento_id).length
@@ -151,6 +153,14 @@ export default function WhatsAppPreparacao({ e }: { e: any }) {
       ) : (
         <div className={`${base} border-white/10 text-white/30`}>Sem telemóvel nos Dados do Casal</div>
       ))}
+
+      {!reserva && hrefSoReuniao && (
+        <a href={hrefSoReuniao} target="_blank" rel="noopener noreferrer"
+          title="Envia o link /preparacao/<id>?so=reuniao: os noivos marcam logo a reunião, sem briefing"
+          className={`${base} border-white/10 text-white/55 hover:text-green-400 hover:border-green-500/40`}>
+          Só reunião (sem briefing)
+        </a>
+      )}
 
       <div className="flex items-center justify-between gap-3 text-[10px]">
         <a href={linkNoivos} target="_blank" rel="noopener noreferrer" className="text-white/35 hover:text-gold truncate">
