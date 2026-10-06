@@ -251,12 +251,12 @@ export default function ClientePage() {
     // É inicializado no useEffect de carregamento e controlado por handleSetTipo
   }, [form.page_content])
 
-  const handleSavePropostas = async () => {
+  const handleSavePropostas = async (lista: Proposta[] = propostas) => {
     setSavingPropostas(true)
     const pc = typeof form.page_content === 'string'
       ? JSON.parse(form.page_content || '{}')
       : (form.page_content || {})
-    const newPc = { ...pc, propostas, extras_proposta: extrasGlobais, proposta: { ...(pc.proposta || {}), password: propostaPassword }, tipo: pageTipo }
+    const newPc = { ...pc, propostas: lista, extras_proposta: extrasGlobais, proposta: { ...(pc.proposta || {}), password: propostaPassword }, tipo: pageTipo }
     const { error } = await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
     if (!error) {
       setForm((f: Contact) => ({ ...f, page_content: newPc }))
@@ -652,7 +652,7 @@ export default function ClientePage() {
           <div className="flex items-center justify-between">
             <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Propostas Fotografia / Vídeo</h2>
             <button
-              onClick={handleSavePropostas}
+              onClick={() => handleSavePropostas()}
               disabled={savingPropostas}
               className={`px-4 py-2 rounded-xl text-xs font-semibold tracking-wider transition-all ${
                 savedPropostas ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
@@ -698,19 +698,26 @@ export default function ClientePage() {
                 <span className="text-white/30 text-xs transition-transform" style={{ display: 'inline-block', transform: propostaOpen[pi] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
               </button>
 
-              {/* Proposta opcional: interruptor para aparecer (ou não) na Proposta Criativa */}
+              {/* Proposta opcional: botão para ativar/desativar (grava logo, sem precisar de Guardar) */}
               {pi >= NOMES_PROPOSTAS.length && (
-                <button type="button" onClick={() => setProposta(pi, 'ativa', !proposta.ativa)}
-                  className="flex items-center justify-between gap-3 px-4 py-2.5 w-full text-left"
-                  style={{ background: proposta.ativa ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.015)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                  <span className="text-xs" style={{ color: proposta.ativa ? '#C9A84C' : 'rgba(255,255,255,0.4)' }}>
-                    {proposta.ativa ? 'Visível na Proposta Criativa' : 'Escondida da Proposta Criativa'}
+                <div className="flex items-center justify-between gap-3 px-4 py-2.5"
+                  style={{ background: proposta.ativa ? 'rgba(74,222,128,0.06)' : 'rgba(255,255,255,0.015)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span className="text-xs" style={{ color: proposta.ativa ? '#4ade80' : 'rgba(255,255,255,0.4)' }}>
+                    {proposta.ativa ? '● Ativa: os noivos veem esta proposta' : '○ Desativada: os noivos não a veem'}
                   </span>
-                  <span className="relative w-9 h-5 rounded-full shrink-0 transition-colors"
-                    style={{ background: proposta.ativa ? 'rgba(201,168,76,0.8)' : 'rgba(255,255,255,0.12)' }}>
-                    <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all" style={{ left: proposta.ativa ? 18 : 2 }} />
-                  </span>
-                </button>
+                  <button type="button" disabled={savingPropostas}
+                    onClick={async () => {
+                      const nova = propostas.map((p, i) => i === pi ? { ...p, ativa: !p.ativa } : p)
+                      setPropostas(nova)
+                      if (!(await handleSavePropostas(nova))) setPropostas(propostas)
+                    }}
+                    className="text-[10px] tracking-[0.2em] uppercase px-3 py-1.5 rounded-lg shrink-0 transition-all disabled:opacity-50"
+                    style={proposta.ativa
+                      ? { color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.15)' }
+                      : { background: 'rgba(201,168,76,0.85)', color: '#0d0b07', border: '1px solid rgba(201,168,76,0.85)' }}>
+                    {savingPropostas ? 'A gravar…' : proposta.ativa ? 'Desativar proposta' : 'Ativar proposta'}
+                  </button>
+                </div>
               )}
 
               {propostaOpen[pi] && (
