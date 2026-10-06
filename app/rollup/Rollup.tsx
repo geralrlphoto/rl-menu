@@ -111,6 +111,15 @@ export default function Rollup() {
   const [desbloqueado, setDesbloqueado] = useState(false)
   const visor = useRef<HTMLDivElement>(null)
 
+  // Contador de entradas (visto em /formularios): uma vez por sessão do browser
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('rollup_entrada')) return
+      sessionStorage.setItem('rollup_entrada', '1')
+    } catch {}
+    fetch('/api/rollup-reuniao/entradas', { method: 'POST', keepalive: true }).catch(() => {})
+  }, [])
+
   function focar(e: React.MouseEvent<HTMLDivElement>) {
     if (fase === 'disparado') return
     const r = visor.current?.getBoundingClientRect()

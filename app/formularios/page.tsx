@@ -1,12 +1,30 @@
 import Link from 'next/link'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
-import ListaFormularios from './ListaFormularios'
+import ListaFormularios, { type Entradas } from './ListaFormularios'
+import { sbAdmin } from '@/lib/preparacao'
+
+// O contador de entradas do rollup muda a cada visita: sem cache
+export const dynamic = 'force-dynamic'
+
+async function entradasRollup(): Promise<Entradas> {
+  try {
+    const sb = sbAdmin()
+    const desde = new Date(Date.now() - 30 * 864e5).toISOString()
+    const [t, r] = await Promise.all([
+      sb.from('rollup_entradas').select('id', { count: 'exact', head: true }),
+      sb.from('rollup_entradas').select('id', { count: 'exact', head: true }).gte('criado_em', desde),
+    ])
+    if (t.error || r.error) return null
+    return { total: t.count ?? 0, ultimos30: r.count ?? 0 }
+  } catch { return null }
+}
 
 /* Formulários: todos os formulários que os noivos preenchem, num só sítio,
    para abrir e verificar sem andar à procura. Os que são de cada casal
    (briefing, pré-wedding) abrem na simulação /demo, onde nada é gravado. */
 
-export default function FormulariosPage() {
+export default async function FormulariosPage() {
+  const entradas = await entradasRollup()
   return (
     <main className="nlead" style={{ minHeight: '100vh', background: 'var(--ink)' }}>
       <style>{CSS_BRIEFING}</style>
@@ -21,7 +39,7 @@ export default function FormulariosPage() {
           <div style={{ width: '48px', height: '1px', background: 'var(--g)', opacity: .6, marginTop: '26px' }} />
           <p className="lead" style={{ marginTop: '22px' }}>Todos os formulários que os noivos preenchem, pela ordem em que os recebem, e os portais que vêem.</p>
         </header>
-        <ListaFormularios />
+        <ListaFormularios entradas={entradas} />
       </div>
     </main>
   )

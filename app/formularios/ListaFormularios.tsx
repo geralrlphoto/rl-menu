@@ -5,6 +5,7 @@ type Item = {
   abrir: Link_[]
   nota?: string // ex.: abre uma simulação ou um portal de teste
   qr?: string // imagem do QR code que abre este item (ver e descarregar)
+  entradas?: boolean // mostra o contador de entradas (só o rollup)
 }
 
 const NOTA_DEMO = 'Abre uma simulação com um casal fictício: nada é gravado nem enviado.'
@@ -15,6 +16,7 @@ const FORMULARIOS: Item[] = [
     quando: 'QR do rollup: para quem ainda não nos conhece',
     abrir: [{ rotulo: 'Abrir', href: '/rollup' }],
     qr: '/qr-rollup.png',
+    entradas: true,
   },
   {
     nome: 'Boas-vindas (RL Prod)',
@@ -78,7 +80,9 @@ const PORTAIS: Item[] = [
   },
 ]
 
-function Lista({ titulo, itens }: { titulo: string; itens: Item[] }) {
+export type Entradas = { total: number; ultimos30: number } | null
+
+function Lista({ titulo, itens, entradas }: { titulo: string; itens: Item[]; entradas?: Entradas }) {
   return (
     <section style={{ marginBottom: '48px' }}>
       <p className="eyebrow" style={{ marginBottom: '8px' }}>{titulo}</p>
@@ -90,6 +94,11 @@ function Lista({ titulo, itens }: { titulo: string; itens: Item[] }) {
               <p style={{ fontSize: '18px', margin: 0 }}>{f.nome}</p>
               <p className="meta" style={{ marginTop: '6px' }}>{f.quando}</p>
               {f.nota && <p className="hint" style={{ marginTop: '6px' }}>{f.nota}</p>}
+              {f.entradas && entradas && (
+                <p className="meta" style={{ marginTop: '10px', color: 'var(--g)' }}>
+                  {entradas.total} {entradas.total === 1 ? 'entrada' : 'entradas'} · {entradas.ultimos30} nos últimos 30 dias
+                </p>
+              )}
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
               {f.abrir.map(l => (
@@ -112,10 +121,10 @@ function Lista({ titulo, itens }: { titulo: string; itens: Item[] }) {
   )
 }
 
-export default function ListaFormularios() {
+export default function ListaFormularios({ entradas }: { entradas?: Entradas }) {
   return (
     <div>
-      <Lista titulo="Formulários" itens={FORMULARIOS} />
+      <Lista titulo="Formulários" itens={FORMULARIOS} entradas={entradas} />
       <Lista titulo="Portais" itens={PORTAIS} />
     </div>
   )
