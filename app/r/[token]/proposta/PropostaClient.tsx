@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent, Proposta, ExtraServico, FONTS, TITLE_SIZES } from '../LeadPageClient'
 import { CSS_BRIEFING } from '../../../_briefing/estilo'
-import { DETALHES_PROPOSTAS, nomePropostaPadrao, propostaVisivel } from '@/lib/crm'
+import { DETALHES_PROPOSTAS, nomePropostaPadrao, propostaVisivel, ofertaDaProposta } from '@/lib/crm'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
@@ -846,7 +846,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               <p className="meta" style={{ color: 'var(--g)' }}>Proposta {String(idx + 1).padStart(2, '0')}</p>
               <h3 className="rl-pnome">{nomeP}</h3>
               {(proposta.notas?.trim() || det?.explicacao) && <p className="rl-pexp">{proposta.notas?.trim() || det?.explicacao}</p>}
-              {det?.oferta && <p className="rl-poferta"><b>✦ Oferta</b>{det.oferta}</p>}
+              {ofertaDaProposta(proposta, idx) && <p className="rl-poferta"><b>✦ Oferta</b>{ofertaDaProposta(proposta, idx)}</p>}
 
               <div className="rl-pvalor">
                 <p className="meta mb-2">{selectedExtras.length > 0 ? 'Total com extras' : 'Investimento total'}</p>

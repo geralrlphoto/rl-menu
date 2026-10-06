@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { DETALHES_PROPOSTAS, nomePropostaPadrao, propostaVisivel } from '@/lib/crm'
+import { DETALHES_PROPOSTAS, nomePropostaPadrao, propostaVisivel, ofertaDaProposta } from '@/lib/crm'
 
 /* A proposta no portal da reunião (/r casamento, /b batizado), em vez do PDF:
    desdobra-se para baixo com as 3 propostas do CRM (page_content.propostas),
@@ -9,7 +9,7 @@ import { DETALHES_PROPOSTAS, nomePropostaPadrao, propostaVisivel } from '@/lib/c
    o que inclui (fotografia / vídeo) ao tocar
    e os extras que somam ao total. */
 
-type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string; ativa?: boolean }
+type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string; ativa?: boolean; oferta?: string }
 type Extra = { nome: string; valor: string }
 
 // Texto por defeito quando a proposta não tem notas nem detalhes em DETALHES_PROPOSTAS
@@ -80,7 +80,7 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, ti
                   <span className="pd-n">Proposta {String(k + 1).padStart(2, '0')}</span>
                   <h3 className="pd-nome">{nome}</h3>
                   <p className="pd-exp">{p.notas?.trim() || det?.explicacao || EXPLICACAO[p.i] || EXPLICACAO[0]}</p>
-                  {det?.oferta && <p className="pd-oferta"><b>✦ Oferta</b>{det.oferta}</p>}
+                  {ofertaDaProposta(p, p.i) && <p className="pd-oferta"><b>✦ Oferta</b>{ofertaDaProposta(p, p.i)}</p>}
 
                   <div className="pd-valor">
                     <b>{base > 0 && somaExtras > 0 ? euros(base + somaExtras) : mostraValor(p.valor)}</b>

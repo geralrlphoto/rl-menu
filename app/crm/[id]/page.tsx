@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
 import { MOTIVOS_NAO_FECHOU, colunaDe } from '@/lib/crm'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
-import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL } from '@/lib/crm'
+import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL, ofertaDaProposta } from '@/lib/crm'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
@@ -182,7 +182,7 @@ export default function ClientePage() {
 
   // ── Propostas ────────────────────────────────────────────────────────────────
   type ExtraServico = { nome: string; valor: string }
-  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string; ativa?: boolean }
+  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string; ativa?: boolean; oferta?: string }
 
   const SERVICOS_FOTO = [
     '1 Fotógrafo', '2 Fotógrafos', 'Rep. Todo Evento',
@@ -781,6 +781,19 @@ export default function ClientePage() {
                       onChange={e => setProposta(pi, 'valor', e.target.value)}
                       placeholder="Ex: 3 500 €"
                       className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50"
+                    />
+                  </div>
+
+                  {/* Oferta: vem preenchida com a oferta estipulada e pode ser editada nesta lead.
+                      Vazia = sem oferta. Aparece na Proposta Criativa e no portal ("✦ Oferta"). */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs tracking-widest text-white/30 uppercase">✦ Oferta</label>
+                    <textarea
+                      value={proposta.oferta ?? ofertaDaProposta(proposta, pi)}
+                      onChange={e => setProposta(pi, 'oferta', e.target.value)}
+                      placeholder="Sem oferta"
+                      rows={2}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50 resize-none"
                     />
                   </div>
 

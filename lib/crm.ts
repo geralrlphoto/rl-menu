@@ -327,6 +327,13 @@ export const DETALHES_PROPOSTAS: Record<string, { explicacao: string; oferta?: s
   },
 }
 
+/* Oferta de uma proposta: a que foi escrita no CRM para esta lead (`oferta`, mesmo vazia
+   = sem oferta) ou, se nunca foi editada, a oferta estipulada em DETALHES_PROPOSTAS. */
+export function ofertaDaProposta(p: { nome?: string; oferta?: string } | null | undefined, i: number): string {
+  if (typeof p?.oferta === 'string') return p.oferta.trim()
+  return DETALHES_PROPOSTAS[(p?.nome || nomePropostaPadrao(i)).trim().toUpperCase()]?.oferta ?? ''
+}
+
 export const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 
 /* Batizado: tipo_evento vem como texto JSON (["BATIZADO"]) ou array */
