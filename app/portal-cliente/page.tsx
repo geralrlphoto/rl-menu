@@ -1082,7 +1082,9 @@ export default function PortalClientePage() {
           hiddenNav:   settings.hiddenNav,
           activeNavId: settings.activeNavId ?? null,
           pageTitles:  settings.pageTitles,
-          portalRefForLinks: settings.referencia ?? null,
+          // Portal de exemplo (aberto a partir da Proposta Criativa): os links das sub-páginas
+          // não levam ?portalRef=, senão o middleware trata-o como portal real e pede o login.
+          portalRefForLinks: null,
           hasTasks:    (settings.tasks ?? []).length > 0,
           deliveries:  buildDeliveriesFromSettings(settings),
         }}

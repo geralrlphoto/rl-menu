@@ -708,7 +708,8 @@ export default function PortalBatizadoPage() {
           hiddenNav:   settings.hiddenNav,
           activeNavId: settings.activeNavId ?? null,
           pageTitles:  settings.pageTitles,
-          portalRefForLinks: settings.referencia ?? null,
+          // Portal de exemplo: links sem ?portalRef= (senão o middleware pede o login)
+          portalRefForLinks: null,
           hasTasks:    (settings.tasks ?? []).length > 0,
           deliveries:  buildDeliveriesFromSettings(settings),
         }}

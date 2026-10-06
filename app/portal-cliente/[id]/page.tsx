@@ -1544,8 +1544,10 @@ function PortalSubPageContent() {
   const [isAdmin, setIsAdmin] = useState(false)
 
   useEffect(() => {
-    // Template sub-pages (no refParam) are always admin
-    if (!refParam) { setIsAdmin(true); return }
+    // Sub-páginas do portal de exemplo (sem refParam): admin só com sessão de admin,
+    // decidido mais abaixo pelo isAdmin da /api/portais-clientes (os noivos chegam
+    // aqui a partir da Proposta Criativa e não devem ver os controlos de edição).
+    if (!refParam) return
     // ?admin=1 na URL → activa admin imediatamente E persiste em sessionStorage
     // para que continue activo nas navegações seguintes sem ter de incluir o
     // parâmetro em todas as URLs.
@@ -1814,6 +1816,7 @@ function PortalSubPageContent() {
       } else {
         // Main portal: load settings from Notion
         const d = await fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&bust=1`, { cache: 'no-store' }).then(r => r.json())
+        setIsAdmin(!!d.isAdmin)
         ps = d.settings ?? {}
         settingsBlockIdVal = d.settingsBlockId ?? null
         // Auto-extract reference from portal page blocks if not in settings
