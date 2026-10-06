@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
 import { MOTIVOS_NAO_FECHOU, colunaDe } from '@/lib/crm'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
-import { NOMES_PROPOSTAS } from '@/lib/crm'
+import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL } from '@/lib/crm'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
@@ -182,7 +182,7 @@ export default function ClientePage() {
 
   // ── Propostas ────────────────────────────────────────────────────────────────
   type ExtraServico = { nome: string; valor: string }
-  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string }
+  type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string; ativa?: boolean }
 
   const SERVICOS_FOTO = [
     '1 Fotógrafo', '2 Fotógrafos', 'Rep. Todo Evento',
@@ -212,7 +212,12 @@ export default function ClientePage() {
     { nome: NOMES_PROPOSTAS[0], servicos_foto: [], servicos_video: [], valor: '' },
     { nome: NOMES_PROPOSTAS[1], servicos_foto: [], servicos_video: [], valor: '' },
     { nome: NOMES_PROPOSTAS[2], servicos_foto: [], servicos_video: [], valor: '' },
+    // 4.ª proposta opcional: só aparece aos noivos quando "ativa"
+    { nome: PROPOSTA_OPCIONAL, servicos_foto: [], servicos_video: [], valor: '', ativa: false },
   ]
+  // Leads antigas só têm 3 propostas: acrescenta a opcional (desligada)
+  const completarPropostas = (ps?: Proposta[] | null): Proposta[] =>
+    !ps ? DEFAULT_PROPOSTAS : ps.length >= DEFAULT_PROPOSTAS.length ? ps : [...ps, ...DEFAULT_PROPOSTAS.slice(ps.length)]
   const [propostas, setPropostas] = useState<Proposta[]>(DEFAULT_PROPOSTAS)
   const [extrasGlobais, setExtrasGlobais] = useState<ExtraServico[]>([])
   const [propostaOpen, setPropostaOpen] = useState<Record<number, boolean>>({ 0: true, 1: false, 2: false })
@@ -223,7 +228,7 @@ export default function ClientePage() {
   const originalPc = typeof original.page_content === 'string'
     ? JSON.parse(original.page_content || '{}')
     : (original.page_content || {})
-  const propostasDirty = JSON.stringify(propostas) !== JSON.stringify(originalPc.propostas ?? DEFAULT_PROPOSTAS)
+  const propostasDirty = JSON.stringify(propostas) !== JSON.stringify(completarPropostas(originalPc.propostas))
   const extrasDirty    = JSON.stringify(extrasGlobais) !== JSON.stringify(originalPc.extras_proposta ?? [])
   const tipoDirty      = pageTipo !== ((originalPc.tipo as string) || 'casamento')
   const isDirty = JSON.stringify(form) !== JSON.stringify(original) || propostasDirty || extrasDirty || tipoDirty
@@ -231,7 +236,7 @@ export default function ClientePage() {
   useEffect(() => {
     if (!form.page_content) return
     const pc = typeof form.page_content === 'string' ? JSON.parse(form.page_content) : form.page_content
-    if (pc?.propostas) setPropostas(pc.propostas)
+    if (pc?.propostas) setPropostas(completarPropostas(pc.propostas))
     if (pc?.extras_proposta?.length > 0) {
       setExtrasGlobais(pc.extras_proposta)
     } else {
@@ -301,7 +306,7 @@ export default function ClientePage() {
     setRevertendoProposta(false)
   }
 
-  const setProposta = (pi: number, key: keyof Proposta, value: string) => {
+  const setProposta = (pi: number, key: keyof Proposta, value: string | boolean) => {
     setPropostas(prev => prev.map((p, i) => i === pi ? { ...p, [key]: value } : p))
   }
   const toggleServico = (pi: number, campo: 'servicos_foto' | 'servicos_video', servico: string) => {
@@ -680,7 +685,7 @@ export default function ClientePage() {
                 className="flex items-center justify-between gap-3 px-4 py-3 w-full text-left transition-colors hover:bg-white/3"
                 style={{ background: 'rgba(255,255,255,0.02)' }}>
                 <div className="flex items-center gap-3">
-                  <span className="text-[10px] tracking-[0.4em] text-gold/60 uppercase shrink-0">Proposta {['1','2','3'][pi]}</span>
+                  <span className="text-[10px] tracking-[0.4em] text-gold/60 uppercase shrink-0">Proposta {pi + 1}</span>
                   {proposta.nome && <span className="text-sm text-white/60">{proposta.nome}</span>}
                   {(proposta.servicos_foto.length + proposta.servicos_video.length) > 0 && (
                     <span className="text-[9px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(201,168,76,0.12)', color: '#C9A84C', border: '0.5px solid rgba(201,168,76,0.3)' }}>
@@ -690,6 +695,21 @@ export default function ClientePage() {
                 </div>
                 <span className="text-white/30 text-xs transition-transform" style={{ display: 'inline-block', transform: propostaOpen[pi] ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
               </button>
+
+              {/* Proposta opcional: interruptor para aparecer (ou não) na Proposta Criativa */}
+              {pi >= NOMES_PROPOSTAS.length && (
+                <button type="button" onClick={() => setProposta(pi, 'ativa', !proposta.ativa)}
+                  className="flex items-center justify-between gap-3 px-4 py-2.5 w-full text-left"
+                  style={{ background: proposta.ativa ? 'rgba(201,168,76,0.08)' : 'rgba(255,255,255,0.015)', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <span className="text-xs" style={{ color: proposta.ativa ? '#C9A84C' : 'rgba(255,255,255,0.4)' }}>
+                    {proposta.ativa ? 'Visível na Proposta Criativa' : 'Escondida da Proposta Criativa'}
+                  </span>
+                  <span className="relative w-9 h-5 rounded-full shrink-0 transition-colors"
+                    style={{ background: proposta.ativa ? 'rgba(201,168,76,0.8)' : 'rgba(255,255,255,0.12)' }}>
+                    <span className="absolute top-0.5 w-4 h-4 rounded-full bg-white transition-all" style={{ left: proposta.ativa ? 18 : 2 }} />
+                  </span>
+                </button>
+              )}
 
               {propostaOpen[pi] && (
                 <div className="flex flex-col gap-4 p-4" style={{ background: 'rgba(255,255,255,0.01)' }}>

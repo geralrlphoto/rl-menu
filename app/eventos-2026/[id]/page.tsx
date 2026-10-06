@@ -1,6 +1,6 @@
 'use client'
 
-import { NOMES_PROPOSTAS, PRAZO_VIDEO_DIAS } from '@/lib/crm'
+import { NOMES_PROPOSTAS_TODAS, PRAZO_VIDEO_DIAS } from '@/lib/crm'
 import { useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
@@ -4621,7 +4621,7 @@ export default function EventoPage() {
             value={e.proposta}
             field="proposta"
             eventId={e.id}
-            options={[...NOMES_PROPOSTAS]}
+            options={[...NOMES_PROPOSTAS_TODAS]}
             onSaved={handleSaved}
           />
           {/* Serviços incluídos na proposta */}

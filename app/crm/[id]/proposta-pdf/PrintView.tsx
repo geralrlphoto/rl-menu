@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import type { PageContent } from '@/app/r/[token]/LeadPageClient'
-import { NOMES_PROPOSTAS } from '@/lib/crm'
+import { nomePropostaPadrao, propostaVisivel } from '@/lib/crm'
 
 const GOLD = '#C9A84C'
 const DARK = '#0d0b07'
@@ -160,6 +160,8 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
 
       {/* ── PÁGINAS DE PROPOSTA ── */}
       {content.propostas.map((proposta, idx) => {
+        // A 4.ª proposta (DOCUMENTAL) só entra no PDF quando está ativada no CRM
+        if (!propostaVisivel(proposta, idx)) return null
 
         const valor = parseVal(proposta.valor)
         const restante = valor > ADJUDICACAO ? valor - ADJUDICACAO : 0
@@ -167,7 +169,7 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
         const valorFinal = Math.round(restante * 0.2)
         const hasFoto = (proposta.servicos_foto || []).length > 0
         const hasVideo = (proposta.servicos_video || []).length > 0
-        const labels = ['1', '2', '3']
+        const labels = ['1', '2', '3', '4']
 
         return (
           <div key={idx} className="a4" style={{ background: '#ffffff', display: 'flex', flexDirection: 'column' }}>
@@ -178,7 +180,7 @@ export default function PrintView({ contact, content, autoPrint = true }: { cont
                 <span style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontStyle: 'italic', fontWeight: 300, fontSize: 52, color: GOLD, lineHeight: 1 }}>{labels[idx]}</span>
                 <div>
                   <p style={{ margin: '0 0 3px', fontFamily: 'Montserrat, sans-serif', fontWeight: 400, fontSize: 8, letterSpacing: '0.45em', color: `${GOLD}70`, textTransform: 'uppercase' }}>Proposta</p>
-                  <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 22, color: '#ffffff', fontWeight: 300, letterSpacing: '0.04em' }}>{proposta.nome || NOMES_PROPOSTAS[idx]}</p>
+                  <p style={{ margin: 0, fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 22, color: '#ffffff', fontWeight: 300, letterSpacing: '0.04em' }}>{proposta.nome || nomePropostaPadrao(idx)}</p>
                 </div>
               </div>
               <img src={LOGO_URL} alt="RL" style={{ height: 32, opacity: 0.65, alignSelf: 'center' }} />

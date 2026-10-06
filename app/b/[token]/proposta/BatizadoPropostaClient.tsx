@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_BATIZADO_CONTENT, BatizadoContent, Proposta, ExtraServico, FONTS, TITLE_SIZES, mergeBatizado } from '../BatizadoPageClient'
 import { CSS_BRIEFING } from '../../../_briefing/estilo'
-import { NOMES_PROPOSTAS } from '@/lib/crm'
+import { nomePropostaPadrao, propostaVisivel } from '@/lib/crm'
 
 const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MASTER_TOKEN = 'batizado-maquete'
@@ -13,7 +13,7 @@ const CENAS: Record<string, { cena: string }> = {
   cover: { cena: 'Antes de rodar' }, about: { cena: 'Cena 01' }, menino: { cena: 'Cena 02' },
   intro: { cena: 'Cena 03' }, relive: { cena: 'Cena 04' }, blank: { cena: 'Cena 05' },
   blank2: { cena: 'Cena 06' }, reflexao: { cena: 'Cena 07' }, invest: { cena: 'Cena 08' },
-  'pkg-0': { cena: 'Proposta 01' }, 'pkg-1': { cena: 'Proposta 02' }, 'pkg-2': { cena: 'Proposta 03' },
+  'pkg-0': { cena: 'Proposta 01' }, 'pkg-1': { cena: 'Proposta 02' }, 'pkg-2': { cena: 'Proposta 03' }, 'pkg-3': { cena: 'Proposta 04' },
   final: { cena: 'Cena 09' }, cta: { cena: 'Ficha tecnica' }, contact: { cena: 'Fim' },
 }
 
@@ -176,7 +176,9 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'menino', 'intro', 'relive', 'blank', 'blank2', 'reflexao', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
+  // A 4.ª proposta (DOCUMENTAL) só entra quando está ativada no CRM
+  const idxPropostas = [0, 1, 2, 3].filter(i => propostaVisivel(content.propostas?.[i], i))
+  const slides = ['cover', 'about', 'menino', 'intro', 'relive', 'blank', 'blank2', 'reflexao', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -612,11 +614,12 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
 
       case 'pkg-0':
       case 'pkg-1':
-      case 'pkg-2': {
+      case 'pkg-2':
+      case 'pkg-3': {
         const idx = parseInt(id.split('-')[1])
         const proposta: Proposta = content.propostas?.[idx] || { nome: '', servicos_foto: [], servicos_video: [], valor: '' }
         const isAtiva = (pp.propostaAtiva ?? 1) === idx
-        const labels = ['1', '2', '3']
+        const labels = ['1', '2', '3', '4']
         const hasFoto  = (proposta.servicos_foto  || []).length > 0
         const hasVideo = (proposta.servicos_video || []).length > 0
         const hasAny   = hasFoto || hasVideo
@@ -692,7 +695,7 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                 style={{ padding: 'clamp(18px,3vh,30px) clamp(20px,3vw,34px)' }}>
 
                 <div className="flex items-center justify-between gap-4 mb-5">
-                  <p className="meta" style={{ color: 'var(--g)' }}>{proposta.nome || NOMES_PROPOSTAS[idx]}</p>
+                  <p className="meta" style={{ color: 'var(--g)' }}>{proposta.nome || nomePropostaPadrao(idx)}</p>
                   {isAtiva && (
                     <span className="meta" style={{ color: 'var(--ink)', background: 'var(--g)', padding: '4px 11px' }}>A mais escolhida</span>
                   )}
@@ -1169,13 +1172,13 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Propostas</p>
                 <p className="text-[11px] text-white/30 leading-relaxed">Proposta em destaque:</p>
                 <div className="flex gap-1">
-                  {[0,1,2].map(i => (
+                  {idxPropostas.map(i => (
                     <button key={i} onClick={() => setPage('propostaAtiva', i)}
                       className="flex-1 py-2 rounded-lg text-xs transition-all"
                       style={(pp.propostaAtiva ?? 1) === i
                         ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
                         : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {content.propostas?.[i]?.nome || NOMES_PROPOSTAS[i]}
+                      {content.propostas?.[i]?.nome || nomePropostaPadrao(i)}
                     </button>
                   ))}
                 </div>

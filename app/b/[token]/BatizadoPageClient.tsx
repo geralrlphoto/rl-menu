@@ -142,7 +142,7 @@ export const TITLE_SIZES: { value: string; label: string; className: string }[] 
 ]
 
 export type ExtraServico = { nome: string; valor: string }
-export type Proposta     = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string }
+export type Proposta     = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string; ativa?: boolean }
 
 export type BatizadoContent = {
   hero:         { title: string; titleFont: string; titleSize: string; titleColor: string; brandLine: string; brandColor: string; imageUrl: string }

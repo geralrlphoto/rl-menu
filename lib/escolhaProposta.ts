@@ -3,7 +3,7 @@
 // telefone e a mensagem já escrita (o calendário mostra o botão de WhatsApp com ela).
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { revalidateTag } from 'next/cache'
-import { mensagemObrigadoEscolha, nomeNoivos, NOMES_PROPOSTAS } from '@/lib/crm'
+import { mensagemObrigadoEscolha, nomeNoivos, NOMES_PROPOSTAS_TODAS } from '@/lib/crm'
 
 const hojeLisboa = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
 const horaLisboa = () => new Intl.DateTimeFormat('pt-PT', { timeZone: 'Europe/Lisbon', hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date())
@@ -11,7 +11,7 @@ const horaLisboa = () => new Intl.DateTimeFormat('pt-PT', { timeZone: 'Europe/Li
 /* Só aceita nomes de proposta conhecidos (o pedido vem de uma página pública) */
 export function propostaValida(v: unknown): string | null {
   const n = typeof v === 'string' ? v.trim().toUpperCase() : ''
-  return (NOMES_PROPOSTAS as readonly string[]).includes(n) ? n : null
+  return (NOMES_PROPOSTAS_TODAS as readonly string[]).includes(n) ? n : null
 }
 
 export async function criarTarefaObrigado(sb: SupabaseClient, token: string, batizado: boolean, proposta: string | null) {

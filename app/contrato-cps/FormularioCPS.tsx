@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { NOMES_PROPOSTAS } from '@/lib/crm'
+import { NOMES_PROPOSTAS_TODAS } from '@/lib/crm'
 
 // Opções dos selects (default — o admin pode editar e gravamos em settings se necessário)
-const PROPOSTAS_DEFAULT: string[] = [...NOMES_PROPOSTAS]
+const PROPOSTAS_DEFAULT: string[] = [...NOMES_PROPOSTAS_TODAS]
 
 type Tipo = 'casamento' | 'batizado'
 

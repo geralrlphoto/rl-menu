@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { NOMES_PROPOSTAS, DETALHES_PROPOSTAS } from '@/lib/crm'
+import { DETALHES_PROPOSTAS, nomePropostaPadrao, propostaVisivel } from '@/lib/crm'
 
 /* A proposta no portal da reunião (/r casamento, /b batizado), em vez do PDF:
    desdobra-se para baixo com as 3 propostas do CRM (page_content.propostas),
@@ -9,7 +9,7 @@ import { NOMES_PROPOSTAS, DETALHES_PROPOSTAS } from '@/lib/crm'
    o que inclui (fotografia / vídeo) ao tocar
    e os extras que somam ao total. */
 
-type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string }
+type Proposta = { nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string; notas?: string; ativa?: boolean }
 type Extra = { nome: string; valor: string }
 
 // Texto por defeito quando a proposta não tem notas nem detalhes em DETALHES_PROPOSTAS
@@ -29,6 +29,7 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, ti
 }) {
   const lista = useMemo(() => propostas
     .map((p, i) => ({ ...p, i }))
+    .filter(p => propostaVisivel(p, p.i))
     .filter(p => p.valor || p.servicos_foto?.length || p.servicos_video?.length), [propostas])
   const [detalhe, setDetalhe] = useState<number | null>(null)
   const [escolhida, setEscolhida] = useState<number | null>(null)
@@ -61,7 +62,7 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, ti
           <div className="pd-cab">
             <span className="rlp-eyebrow c">A vossa proposta</span>
             <h2 className="rlp-h2" style={{ marginTop: 16, textAlign: 'center' }}>
-              {lista.length === 1 ? 'A forma de ' : `${lista.length === 2 ? 'Duas' : 'Três'} formas de `}<em>contar o vosso {tipo === 'batizado' ? 'batizado' : 'dia'}</em>
+              {lista.length === 1 ? 'A forma de ' : `${lista.length === 2 ? 'Duas' : lista.length === 3 ? 'Três' : 'Quatro'} formas de `}<em>contar o vosso {tipo === 'batizado' ? 'batizado' : 'dia'}</em>
             </h2>
             <p className="pd-lede">Pensadas para vós depois da nossa conversa. Toquem numa proposta para ver tudo o que inclui.</p>
           </div>
@@ -72,7 +73,7 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, ti
               const aberta = detalhe === p.i
               const sel = escolhida === p.i
               const base = num(p.valor)
-              const nome = p.nome || NOMES_PROPOSTAS[p.i] || `Proposta ${k + 1}`
+              const nome = p.nome || nomePropostaPadrao(p.i)
               const det = DETALHES_PROPOSTAS[nome.trim().toUpperCase()]
               return (
                 <article key={p.i} className={`pd-card${top ? ' top' : ''}${sel ? ' sel' : ''}`} style={{ animationDelay: `${aberto ? 150 + k * 120 : 0}ms` }}>
@@ -146,6 +147,7 @@ const CSS = `
 .pd-lede{margin-top:14px;text-align:center;color:var(--tx-mid);font-size:15px;line-height:1.7;max-width:48ch;}
 .pd-grid{display:grid;gap:18px;align-items:start;}
 .pd-grid.n3{grid-template-columns:repeat(3,1fr);}
+.pd-grid.n4{grid-template-columns:repeat(2,minmax(0,380px));justify-content:center;}
 .pd-grid.n2{grid-template-columns:repeat(2,minmax(0,380px));justify-content:center;}
 .pd-grid.n1{grid-template-columns:minmax(0,420px);justify-content:center;}
 .pd-card{position:relative;display:flex;flex-direction:column;padding:34px 26px 24px;border-radius:20px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(255,255,255,.01));transition:transform .5s cubic-bezier(.2,.7,.2,1),border-color .4s ease,box-shadow .5s ease;}
@@ -185,7 +187,7 @@ const CSS = `
 .pd-fim{text-align:center;margin-top:34px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:var(--g);animation:pdSobe .6s ease both;}
 @keyframes pdSobe{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
 @media (max-width:860px){
-  .pd-grid.n3,.pd-grid.n2{grid-template-columns:1fr;gap:26px;}
+  .pd-grid.n4,.pd-grid.n3,.pd-grid.n2{grid-template-columns:1fr;gap:26px;}
   .pd-card.top{order:-1;}
 }
 @media (prefers-reduced-motion:reduce){.pd,.pd-wrap,.pd-card,.pd-inclui{transition:none!important;animation:none!important;}}

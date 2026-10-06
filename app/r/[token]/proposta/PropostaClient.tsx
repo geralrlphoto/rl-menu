@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { DEFAULT_CONTENT, PageContent, Proposta, ExtraServico, FONTS, TITLE_SIZES } from '../LeadPageClient'
 import { CSS_BRIEFING } from '../../../_briefing/estilo'
-import { NOMES_PROPOSTAS, DETALHES_PROPOSTAS } from '@/lib/crm'
+import { DETALHES_PROPOSTAS, nomePropostaPadrao, propostaVisivel } from '@/lib/crm'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
@@ -21,6 +21,7 @@ const CENAS: Record<string, { cena: string; titulo: string; em: string }> = {
   'pkg-0': { cena: 'Proposta 01',    titulo: 'A',                   em: 'primeira'     },
   'pkg-1': { cena: 'Proposta 02',    titulo: 'A',                   em: 'segunda'      },
   'pkg-2': { cena: 'Proposta 03',    titulo: 'A',                   em: 'terceira'     },
+  'pkg-3': { cena: 'Proposta 04',    titulo: 'A',                   em: 'quarta'       },
   final:   { cena: 'Cena 07',        titulo: 'Fica para',           em: 'sempre'       },
   cta:     { cena: 'Ficha técnica',  titulo: 'Informações',         em: 'gerais'       },
   contact: { cena: 'Fim',            titulo: 'Vamos contar esta',   em: 'história'     },
@@ -213,7 +214,9 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .catch(() => { setNotFound(true); setLoading(false) })
   }, [token, isAdmin])
 
-  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', 'pkg-0', 'pkg-1', 'pkg-2', 'final', 'cta', 'contact']
+  // A 4.ª proposta (DOCUMENTAL) só entra quando está ativada no CRM
+  const idxPropostas = [0, 1, 2, 3].filter(i => propostaVisivel(content.propostas?.[i], i))
+  const slides = ['cover', 'about', 'intro', 'relive', 'blank', 'blank2', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -656,13 +659,14 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
             As memórias que criamos juntos duram uma vida inteira. O valor que investem hoje é o
             retorno eterno de cada momento que nunca mais poderão reviver, apenas recordar.
           </p>
-          <p className="hint mt-9">Três propostas a seguir</p>
+          <p className="hint mt-9">{idxPropostas.length === 4 ? 'Quatro' : 'Três'} propostas a seguir</p>
         </div>
       )
 
       case 'pkg-0':
       case 'pkg-1':
-      case 'pkg-2': {
+      case 'pkg-2':
+      case 'pkg-3': {
         const idx = parseInt(id.split('-')[1])
         const proposta: Proposta = content.propostas?.[idx] || { nome: '', servicos_foto: [], servicos_video: [], valor: '' }
         const isAtiva = (pp.propostaAtiva ?? 1) === idx
@@ -727,7 +731,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const mesIni   = mesFim ? new Date(mesFim.getFullYear(), mesFim.getMonth() - (nPlano - 1), 1) : null
         const planoPossivel = reforco >= MIN_PRESTACAO
         // Mesmo layout do cartão da proposta desdobrável do portal (app/_lead/PropostasDropdown.tsx)
-        const nomeP = proposta.nome || NOMES_PROPOSTAS[idx]
+        const nomeP = proposta.nome || nomePropostaPadrao(idx)
         const det = DETALHES_PROPOSTAS[(nomeP || '').trim().toUpperCase()]
         const inclui = !!incluiOpen[idx]
         const opcoesAbertas = !!extrasOpen[idx] || (planoPossivel && !!formaOpen[idx])
@@ -1334,9 +1338,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                     ['blank',  'Como imaginam o dia?'],
                     ['blank2', 'O Grande Dia'],
                     ['invest', 'Investimento'],
-                    ['pkg-0',  NOMES_PROPOSTAS[0]],
-                    ['pkg-1',  NOMES_PROPOSTAS[1]],
-                    ['pkg-2',  NOMES_PROPOSTAS[2]],
+                    ...idxPropostas.map(i => [`pkg-${i}`, content.propostas?.[i]?.nome || nomePropostaPadrao(i)]),
                     ['final',  'O que gostaram mais?'],
                     ['cta',    'Informações Gerais'],
                     ['contact','Contactos'],
@@ -1395,24 +1397,24 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 <p className="text-[9px] tracking-[0.3em] text-white/20 uppercase">Propostas</p>
                 <p className="text-[11px] text-white/30 leading-relaxed">Os serviços e valores são definidos na ficha do CRM. Seleciona qual a proposta em destaque:</p>
                 <div className="flex gap-1">
-                  {[0,1,2].map(i => (
+                  {idxPropostas.map(i => (
                     <button key={i} onClick={() => setPage('propostaAtiva', i)}
                       className="flex-1 py-2 rounded-lg text-xs transition-all"
                       style={(pp.propostaAtiva ?? 1) === i
                         ? { background: 'rgba(201,168,76,0.2)', color: '#C9A84C', border: '1px solid rgba(201,168,76,0.4)' }
                         : { background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.3)', border: '1px solid rgba(255,255,255,0.08)' }}>
-                      {content.propostas?.[i]?.nome || NOMES_PROPOSTAS[i]}
+                      {content.propostas?.[i]?.nome || nomePropostaPadrao(i)}
                     </button>
                   ))}
                 </div>
                 <div className="flex flex-col gap-2">
-                  {[0,1,2].map(i => {
+                  {idxPropostas.map(i => {
                     const p = content.propostas?.[i]
                     const sf = p?.servicos_foto?.filter(Boolean) || []
                     const sv = p?.servicos_video?.filter(Boolean) || []
                     return (
                       <div key={i} className="p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">{p?.nome || NOMES_PROPOSTAS[i]}</p>
+                        <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">{p?.nome || nomePropostaPadrao(i)}</p>
                         {sf.length > 0 && <><p className="text-[9px] text-white/20 mt-1">📷 Foto</p>{sf.map((s, j) => <p key={j} className="text-[11px] text-white/35 ml-2">◆ {s}</p>)}</>}
                         {sv.length > 0 && <><p className="text-[9px] text-white/20 mt-1">🎥 Vídeo</p>{sv.map((s, j) => <p key={j} className="text-[11px] text-white/35 ml-2">◆ {s}</p>)}</>}
                         {p?.valor && <p className="text-[11px] text-gold/60 mt-1 font-mono">{p.valor}</p>}
