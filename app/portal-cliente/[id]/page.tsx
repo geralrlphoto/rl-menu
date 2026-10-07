@@ -365,8 +365,10 @@ export function FilmePlayer({ titulo, legenda, imgUrl, url }: {
 // ── Bloco 4: fila dos tres videos secundarios ────────────────────────────
 /** Link de video -> URL de incorporacao. Devolve null se nao reconhecer. */
 function paraEmbed(url: string): string | null {
-  const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
-  if (vm) return `https://player.vimeo.com/video/${vm[1]}?dnt=1`
+  // Vídeos não listados (vimeo.com/ID/HASH): sem o h=HASH só abrem para quem tem sessão no Vimeo
+  const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\/([0-9a-f]{6,}))?/)
+  const vh = vm?.[2] ?? url.match(/[?&]h=([0-9a-f]+)/)?.[1]
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}?dnt=1${vh ? `&h=${vh}` : ''}`
   const yt = idYouTube(url)
   if (yt) return `https://www.youtube.com/embed/${yt}?rel=0`
   const gd = url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/)

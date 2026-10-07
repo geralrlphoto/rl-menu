@@ -39,8 +39,10 @@ function toEmbed(url: string) {
   if (!url) return ''
   const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/)
   if (yt) return `https://www.youtube.com/embed/${yt[1]}?rel=0`
-  const vm = url.match(/vimeo\.com\/(\d+)/)
-  if (vm) return `https://player.vimeo.com/video/${vm[1]}`
+  // Vídeos não listados (vimeo.com/ID/HASH): sem o h=HASH só abrem para quem tem sessão no Vimeo
+  const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\/([0-9a-f]{6,}))?/)
+  const vh = vm?.[2] ?? url.match(/[?&]h=([0-9a-f]+)/)?.[1]
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}${vh ? `?h=${vh}` : ''}`
   const gd = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/)
   if (gd) return `https://drive.google.com/file/d/${gd[1]}/preview`
   return url

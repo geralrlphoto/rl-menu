@@ -43,8 +43,10 @@ function toEmbed(url: string): string {
   if (!url) return ''
   const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/shorts\/)([A-Za-z0-9_-]{11})/)
   if (yt) return `https://www.youtube.com/embed/${yt[1]}`
-  const vm = url.match(/vimeo\.com\/(\d+)/)
-  if (vm) return `https://player.vimeo.com/video/${vm[1]}`
+  // Vídeos não listados (vimeo.com/ID/HASH): sem o h=HASH só abrem para quem tem sessão no Vimeo
+  const vm = url.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\/([0-9a-f]{6,}))?/)
+  const vh = vm?.[2] ?? url.match(/[?&]h=([0-9a-f]+)/)?.[1]
+  if (vm) return `https://player.vimeo.com/video/${vm[1]}${vh ? `?h=${vh}` : ''}`
   return url
 }
 
