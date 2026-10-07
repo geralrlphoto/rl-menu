@@ -102,6 +102,7 @@ function ContratoPageContent() {
       .then(r => r.json())
       .then(d => {
         if (d.event) { setEvento(d.event); setDraft(d.event) }
+        else if (d.error === 'nao_autorizado') setLoadError('nao_autorizado')
         else setLoadError(d.error ? `Não foi possível carregar o evento: ${d.error}` : 'Evento não encontrado.')
       })
       .catch(e => setLoadError(`Não foi possível carregar o evento: ${e?.message ?? 'falha de rede'}`))
@@ -158,11 +159,27 @@ function ContratoPageContent() {
   )
   if (!draft) return (
     <main className="min-h-screen flex flex-col items-center justify-center gap-4 bg-white px-6 text-center">
+      {loadError === 'nao_autorizado' ? (
+        <>
+          <span className="text-zinc-600 text-sm">A sessão terminou. Entra outra vez para ver o contrato.</span>
+          <div className="flex gap-3">
+            <a href={`/login-noivos?next=${encodeURIComponent(`/eventos-2026/${id}/contrato`)}`}
+              className="border border-zinc-300 rounded-full px-5 py-2 text-[11px] tracking-[0.2em] uppercase text-zinc-600 hover:border-amber-500 hover:text-amber-600">
+              Portal dos noivos
+            </a>
+            <a href={`/login?next=${encodeURIComponent(`/eventos-2026/${id}/contrato`)}`}
+              className="border border-zinc-300 rounded-full px-5 py-2 text-[11px] tracking-[0.2em] uppercase text-zinc-600 hover:border-amber-500 hover:text-amber-600">
+              Admin
+            </a>
+          </div>
+        </>
+      ) : (
       <span className="text-red-400 text-sm">{loadError ?? 'Evento não encontrado.'}</span>
-      <button onClick={carregar}
+      )}
+      {loadError !== 'nao_autorizado' && <button onClick={carregar}
         className="border border-zinc-300 rounded-full px-5 py-2 text-[11px] tracking-[0.2em] uppercase text-zinc-600 hover:border-amber-500 hover:text-amber-600">
         Tentar de novo
-      </button>
+      </button>}
     </main>
   )
 

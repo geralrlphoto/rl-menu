@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { exigeAdmin } from '@/lib/api-guard'
+import { ehAdmin, exigeAdmin, naoAutorizado } from '@/lib/api-guard'
+import { verifyNvSession, NV_COOKIE_NAME } from '@/lib/noivos-session'
 import { createClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 
@@ -501,8 +502,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const bloqueio = exigeAdmin(_req)
-  if (bloqueio) return bloqueio
+  // Admin vê tudo. Os noivos (nv_session) só vêem o próprio evento: a página
+  // /eventos-2026/<id>/contrato abre a partir do portal e precisa destes dados.
+  let refNoivos: string | null = null
+  if (!ehAdmin(_req)) {
+    const sessao = await verifyNvSession(_req.cookies.get(NV_COOKIE_NAME)?.value)
+    if (!sessao) return naoAutorizado()
+    refNoivos = sessao.referencia.trim().toLowerCase()
+  }
+  const responder = (event: any) =>
+    refNoivos && String(event?.referencia ?? '').trim().toLowerCase() !== refNoivos
+      ? naoAutorizado()
+      : NextResponse.json({ event })
   const { id } = await params
   try {
     const res = await fetch(`https://api.notion.com/v1/pages/${id}`, {
@@ -619,7 +630,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         // evento — só veio todo do Supabase.
         _orphan: !orphan.notion_id,
       }
-      return NextResponse.json({ event })
+      return responder(event)
     }
 
     const page = await res.json()
@@ -773,7 +784,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       notion_url:           page.url,
     }
 
-    return NextResponse.json({ event })
+    return responder(event)
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
