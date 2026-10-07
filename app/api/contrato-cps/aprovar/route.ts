@@ -469,7 +469,9 @@ export async function POST(req: NextRequest) {
 
     // Caso especial: resend=true ou portal já aprovado E completo mas com
     // password → só envia email (não recria portal nem altera aprovado_em)
-    if (contrato.aprovado_em && (resendOnly || (temPortalCompleto && password))) {
+    // Portal completo criado por outro caminho (sem aprovado_em) também conta:
+    // senão o resend caía na criação abaixo com password vazia e apagava a atual.
+    if ((resendOnly && (contrato.aprovado_em || temPortalCompleto)) || (contrato.aprovado_em && temPortalCompleto && password)) {
       const tipo = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
       const portalUrlExisting = tipo === 'batizado'
         ? `${SITE_BASE}/portal-batizado/ref/${encodeURIComponent(referencia)}`
@@ -479,6 +481,9 @@ export async function POST(req: NextRequest) {
       if (!pwd) {
         const { data: portalRow } = await sb.from('portais').select('settings').eq('referencia', referencia).maybeSingle()
         pwd = portalRow?.settings?.portalPassword || ''
+      }
+      if (!pwd) {
+        return NextResponse.json({ error: 'O portal não tem password. Define-a no campo PASSWORD e carrega em Guardar antes de enviar.' }, { status: 400 })
       }
       const clienteEmail = contrato.email_noiva || contrato.email_noivo
       let emailSent = false
@@ -500,6 +505,11 @@ export async function POST(req: NextRequest) {
         portalUrl: portalUrlExisting,
         error: emailError,
       })
+    }
+
+    // Reenviar nunca cria portal (viria sem password)
+    if (resendOnly) {
+      return NextResponse.json({ error: 'Ainda não há portal criado para este evento.' }, { status: 400 })
     }
 
     // Cria o portal conforme tipo
