@@ -2433,7 +2433,9 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
   // Uma row vazia (nascida de um PATCH de settings) escondia este passo e
   // deixava o portal a abrir sem nomes nem data, sem forma de o recriar.
   const portalVazio = data.portalCompleto === false
-  const portalAprovado = !!c.aprovado_em && !portalVazio
+  // Portal completo criado por outro caminho (ex.: /portais-clientes) também
+  // conta: a secção "Portal do Cliente" já mostra a password e os botões.
+  const portalAprovado = (!!c.aprovado_em && !portalVazio) || data.portalCompleto === true
 
   // ── STATE C: PORTAL JÁ APROVADO ───────────────────────────────────────────
   // Não renderiza aqui — o estado "Portal aprovado" (Editar/Abrir) é mostrado
