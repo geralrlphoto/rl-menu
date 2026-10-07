@@ -1,5 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Email do portal: fontes e fotos usadas para gerar a animação
+  outputFileTracingIncludes: {
+    '/api/contrato-cps/aprovar': ['./lib/email-assets/**/*'],
+  },
+  serverExternalPackages: ['@napi-rs/canvas', 'sharp'],
   typescript: {
     ignoreBuildErrors: true,
   },

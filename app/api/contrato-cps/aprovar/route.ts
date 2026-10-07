@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
+import { gerarHeroGif, buildPortalEmailV2, primeiroNome } from '@/lib/portalEmail'
+
+// Gerar a animação do email demora alguns segundos
+export const maxDuration = 60
 
 // POST /api/contrato-cps/aprovar
 // Body: { referencia: string }
@@ -230,72 +234,48 @@ async function fetchValoresEvento(sb: any, referencia: string): Promise<Record<s
 }
 
 // ─── Email ao cliente com link do portal ──────────────────────────────────────
-function buildPortalEmail(opts: {
-  nome_noivos: string | null | undefined
-  url: string
+// Design aprovado a 2026-10-07 (lib/portalEmail.ts): hero animado gerado com
+// os nomes e a data de cada casal/criança, guardado em portal-images.
+async function buildPortalEmail(opts: {
+  contrato: any
+  referencia: string
   tipo: 'casamento' | 'batizado'
-  data?: string
   password: string
-  emailCliente?: string | null
-}): string {
-  // Botão CTA aponta para a página de login específica do tipo de evento
-  // (não para o link directo do portal). Assim os clientes sempre autenticam
-  // com email + password no design certo (casamento vs batizado).
-  const loginUrl = opts.tipo === 'batizado'
-    ? `${SITE_BASE}/login-batizado`
-    : `${SITE_BASE}/login-noivos`
-  const primeiroNome = (opts.nome_noivos || '').split(/[\s&]/)[0] || 'Olá'
-  const tituloTipo = opts.tipo === 'batizado' ? 'O vosso espaço para o batizado' : 'O vosso espaço'
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
-        <tr><td style="padding:48px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
-            width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;opacity:0.9;" />
-          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;">Olá, ${primeiroNome}!</p>
-          <p style="margin:0;font-size:36px;font-weight:400;color:#f0e8d8;">${tituloTipo}</p>
-          <p style="margin:0 0 24px;font-size:36px;font-weight:400;font-style:italic;color:#c9a96e;">está pronto.</p>
-          <div style="margin:0 0 28px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">— · ◆ · —</div>
-          <p style="margin:0 0 28px;font-size:15px;color:#a09070;line-height:1.8;">
-            Criámos um espaço dedicado a vocês onde podem acompanhar todas as etapas,<br>
-            ${opts.tipo === 'casamento' ? 'desde a sessão pré-wedding até à entrega final' : 'desde a sessão até à entrega das fotos e do vídeo'}.
-          </p>
+  emailCliente: string
+}): Promise<string> {
+  const c = opts.contrato
+  let nomes: string
+  if (opts.tipo === 'batizado') {
+    nomes = primeiroNome(c.nome_crianca) || String(c.nome_noivos || '').trim()
+  } else {
+    const a = primeiroNome(c.nome_noiva)
+    const b = primeiroNome(c.nome_noivo)
+    nomes = a && b ? `${a} | ${b}` : String(c.nome_noivos || '').split(/\s*(?:&|e)\s*/i).map(primeiroNome).filter(Boolean).join(' | ')
+  }
+  if (!nomes) nomes = opts.referencia
 
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 18px;border:0.5px solid #6a5430;width:100%;max-width:380px;background:rgba(201,169,110,0.04);">
-            <tr><td style="padding:18px 24px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">✉ E-mail de acesso</p>
-              <p style="margin:0;font-size:14px;font-family:'Courier New',monospace;color:#f0e8d8;font-weight:500;word-break:break-all;">${opts.emailCliente ?? 'o e-mail da noiva'}</p>
-            </td></tr>
-            <tr><td style="border-top:0.5px solid #4a3a1e;padding:18px 24px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">🔑 Palavra-passe</p>
-              <p style="margin:0;font-size:22px;font-family:'Courier New',monospace;letter-spacing:0.15em;color:#f0e8d8;font-weight:600;">${opts.password}</p>
-            </td></tr>
-          </table>
+  // Hero animado; se falhar, usa a foto de fundo sem nomes
+  let heroUrl = `${SITE_BASE}/email/${opts.tipo}-bg.jpg`
+  try {
+    const gif = await gerarHeroGif({ tipo: opts.tipo, nomes, data: c.data_casamento })
+    const file = `email-portal/${opts.referencia}-${Date.now()}.gif`
+    const { error } = await db().storage.from('portal-images').upload(file, gif, { contentType: 'image/gif', upsert: true })
+    if (error) throw error
+    heroUrl = db().storage.from('portal-images').getPublicUrl(file).data.publicUrl
+  } catch (e) {
+    console.error('[contrato-cps/aprovar] hero gif', e)
+  }
 
-          <!-- BOTÃO BULLETPROOF aponta para a página de login dos noivos -->
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 16px;">
-            <tr>
-              <td align="center" style="border-radius:8px;background:#c9a96e;">
-                <a href="${loginUrl}" target="_blank"
-                  style="display:inline-block;padding:18px 48px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:0.4em;font-weight:700;border-radius:8px;mso-padding-alt:0;border:1px solid #c9a96e;">
-                  ENTRAR NO PORTAL &nbsp;→
-                </a>
-              </td>
-            </tr>
-          </table>
-
-          <p style="margin:24px 0 0;font-size:11px;color:#5a4a30;line-height:1.6;">
-            Caso o botão não funcione, copia este link:<br>
-            <a href="${loginUrl}" style="color:#c9a96e;text-decoration:underline;word-break:break-all;">${loginUrl}</a>
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
+  return buildPortalEmailV2({
+    tipo: opts.tipo,
+    heroUrl,
+    nomesAlt: nomes,
+    data: c.data_casamento,
+    email: opts.emailCliente,
+    password: opts.password,
+    loginUrl: opts.tipo === 'batizado' ? `${SITE_BASE}/login-batizado` : `${SITE_BASE}/login-noivos`,
+    siteBase: SITE_BASE,
+  })
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
@@ -492,7 +472,7 @@ export async function POST(req: NextRequest) {
         emailSent = await sendEmail(
           clienteEmail,
           tipo === 'batizado' ? '👶 O portal do batizado está pronto' : '💍 O portal do casamento está pronto',
-          buildPortalEmail({ nome_noivos: contrato.nome_noivos, url: portalUrlExisting, tipo, data: contrato.data_casamento, password: pwd, emailCliente: clienteEmail }),
+          await buildPortalEmail({ contrato, referencia, tipo, password: pwd, emailCliente: clienteEmail }),
         )
         if (!emailSent) emailError = 'Resend rejeitou o envio'
       } else {
@@ -533,14 +513,7 @@ export async function POST(req: NextRequest) {
         tipo === 'batizado'
           ? '👶 O portal do batizado está pronto'
           : '💍 O portal do casamento está pronto',
-        buildPortalEmail({
-          nome_noivos: contrato.nome_noivos,
-          url: portalUrl,
-          tipo,
-          data: contrato.data_casamento,
-          password,
-          emailCliente: clienteEmail,
-        })
+        await buildPortalEmail({ contrato, referencia, tipo, password, emailCliente: clienteEmail })
       )
     }
 
