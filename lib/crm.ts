@@ -540,6 +540,21 @@ export function mensagemVesperaPreWedding(nome: string | null | undefined, hora?
   ].join('\n')
 }
 
+/* Link para os noivos marcarem a reunião no calendário (/reuniao/<id da lead>) */
+export function mensagemMarcarReuniao(nome: string | null | undefined, id: string): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Obrigado pelo vosso contacto. Gostávamos muito de conhecer a vossa história e conversar sobre o vosso dia.',
+    '',
+    'Escolham aqui o dia e a hora que vos dá mais jeito para a nossa reunião (videochamada ou no estúdio):',
+    linkPublico(`/reuniao/${id}`),
+    '',
+    ...ASSINATURA,
+  ].join('\n')
+}
+
 /* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
 export function mensagemBoasVindas(nome: string | null | undefined): string {
   const quem = (nome ?? '').trim()

@@ -7,7 +7,7 @@ import { linkPublico } from '@/lib/site-url'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
+  fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -488,6 +488,23 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
               {c.orcamento && <span className="text-gold text-sm font-semibold">{fmtOrcamento(c.orcamento)}</span>}
             </div>
             <ContactButtons c={c} size="md" />
+            {colunaDe(c.status) !== 'encerrada' && whatsappLink(c.contato) && (() => {
+              const evento = 'WhatsApp marcar reunião enviado'
+              const enviado = historico.find(h => h.evento === evento)
+              return (
+                <a href={whatsappLink(c.contato, mensagemMarcarReuniao(c.nome, c.id))!} target="_blank" rel="noopener noreferrer"
+                  onClick={() => {
+                    supabase.from('crm_status_history').insert({ contact_id: c.id, evento }).select('id,status_de,status_para,evento,created_at').single()
+                      .then(({ data }) => { if (data) setHistorico(h => [data, ...h]) })
+                  }}
+                  title="Envia aos noivos o link do calendário para marcarem a reunião"
+                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 text-[11px] font-semibold tracking-wider uppercase transition-colors">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /></svg>
+                  WhatsApp · Marcar reunião
+                  {enviado && <span className="text-green-400/50 normal-case tracking-normal font-normal">· enviado {new Date(enviado.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}</span>}
+                </a>
+              )
+            })()}
           </div>
 
           {/* Próxima ação */}

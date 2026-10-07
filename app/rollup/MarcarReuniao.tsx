@@ -6,7 +6,9 @@ import { useEffect, useMemo, useState } from 'react'
    nomes e telefone. Usa os horários livres da reunião de preparação
    (/api/rollup-reuniao). Os horários só carregam quando se abre o painel.
    "Outro horário" (como na preparação): dias úteis, até 2 opções em dias
-   diferentes; fica como pedido até a RL confirmar. */
+   diferentes; fica como pedido até a RL confirmar.
+   Com leadId (página /reuniao/<id>, link do WhatsApp do CRM) a lead já existe:
+   não pede nomes nem telefone e a marcação atualiza essa lead. */
 
 type Slot = { id: string; data: string; hora: string }
 type Reserva = { data: string; hora: string; formato: string; link: string }
@@ -32,8 +34,8 @@ function diasUteis(): string[] {
   return out
 }
 
-export default function MarcarReuniao({ dataCasamento }: { dataCasamento: string }) {
-  const [aberto, setAberto] = useState(false)
+export default function MarcarReuniao({ dataCasamento, leadId }: { dataCasamento: string; leadId?: string }) {
+  const [aberto, setAberto] = useState(!!leadId)
   const [slots, setSlots] = useState<Slot[] | null>(null)
   const [horasOutro, setHorasOutro] = useState<string[]>([])
   const [erroCarregar, setErroCarregar] = useState(false)
@@ -71,7 +73,7 @@ export default function MarcarReuniao({ dataCasamento }: { dataCasamento: string
   const horas = (slots ?? []).filter(s => s.data === dia)
   const escolhido = (slots ?? []).find(s => s.id === slotId)
   const opcaoDoDia = opcoes.find(o => o.data === dia)?.hora
-  const dadosOk = nome.trim().length >= 2 && tel.replace(/\D/g, '').length >= 9
+  const dadosOk = !!leadId || nome.trim().length >= 2 && tel.replace(/\D/g, '').length >= 9
 
   function mudarModo(novo: boolean) {
     setOutro(novo); setSlotId(''); setOpcoes([]); setErro('')
@@ -94,8 +96,8 @@ export default function MarcarReuniao({ dataCasamento }: { dataCasamento: string
       const r = await fetch('/api/rollup-reuniao', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(outro
-          ? { pedido: opcoes, mensagem, nome, contato: tel, formato, dataCasamento, site }
-          : { slotId, nome, contato: tel, formato, dataCasamento, site }),
+          ? { pedido: opcoes, mensagem, nome, contato: tel, formato, dataCasamento, site, leadId }
+          : { slotId, nome, contato: tel, formato, dataCasamento, site, leadId }),
       })
       const j = await r.json().catch(() => ({}))
       if (!r.ok) {
@@ -197,10 +199,12 @@ export default function MarcarReuniao({ dataCasamento }: { dataCasamento: string
                 ))}
               </div>
 
-              <p className="mr-lbl">Os vossos nomes</p>
-              <input className="mr-in" value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex.: Ana e Pedro" autoComplete="name" />
-              <p className="mr-lbl">Telefone</p>
-              <input className="mr-in" value={tel} onChange={e => setTel(e.target.value)} placeholder="912 345 678" inputMode="tel" autoComplete="tel" />
+              {!leadId && <>
+                <p className="mr-lbl">Os vossos nomes</p>
+                <input className="mr-in" value={nome} onChange={e => setNome(e.target.value)} placeholder="Ex.: Ana e Pedro" autoComplete="name" />
+                <p className="mr-lbl">Telefone</p>
+                <input className="mr-in" value={tel} onChange={e => setTel(e.target.value)} placeholder="912 345 678" inputMode="tel" autoComplete="tel" />
+              </>}
               <input className="mr-hp" tabIndex={-1} autoComplete="off" value={site} onChange={e => setSite(e.target.value)} aria-hidden="true" />
 
               {outro && (
