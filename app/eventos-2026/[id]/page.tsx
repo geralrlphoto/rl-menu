@@ -2491,33 +2491,9 @@ function ContratoCPSAprovacaoSection({ referencia }: { referencia?: string }) {
     )
   }
 
-  // ── STATE A: CPS preenchido, contrato pendente de aprovação (amber) ───────
-  return (
-    <div className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/[0.05] p-4">
-      <div className="flex items-start gap-4">
-        <div className="text-3xl">📋</div>
-        <div className="flex-1">
-          <p className="text-[10px] tracking-[0.3em] text-amber-400/80 uppercase mb-1">
-            Contrato {isBatizado ? 'Batizado' : 'Casamento'} preenchido — Aguarda aprovação
-          </p>
-          <p className="text-sm text-white/85 mb-1">
-            <span className="font-medium">{c.nome_noivos}</span>
-            {c.created_at && (
-              <span className="text-white/40 text-xs ml-2">
-                · recebido {new Date(c.created_at).toLocaleString('pt-PT')}
-              </span>
-            )}
-          </p>
-          <p className="text-xs text-white/50 mb-2">
-            Email: {c.email_noiva || c.email_noivo || '—'}
-          </p>
-          <p className="text-xs text-amber-300/70 italic">
-            ↓ Vai à secção "Contrato de Prestação de Serviços" mais abaixo, gera, revê e aprova o contrato antes de criar o portal.
-          </p>
-        </div>
-      </div>
-    </div>
-  )
+  // ── STATE A: CPS preenchido, contrato pendente de aprovação ───────
+  // Sem aviso aqui: a secção "Contrato de Prestação de Serviços" já trata disto.
+  return null
 }
 
 function ContratoStatusSection({ eventoId, referencia, proposta, onSaved }: {
