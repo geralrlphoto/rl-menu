@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { linkPublico } from '@/lib/site-url'
+import DisponibilidadePreparacao, { type SlotPreparacao } from '@/app/components/DisponibilidadePreparacao'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
@@ -414,6 +415,9 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
   const [acao, setAcao] = useState(c.proxima_acao ?? '')
   const [acaoData, setAcaoData] = useState(c.proxima_acao_data ?? '')
   const [guardado, setGuardado] = useState('')
+  // Disponibilidade das reuniões (a mesma do /rollup e do link "Marcar reunião"); só carrega ao abrir
+  const [slots, setSlots] = useState<SlotPreparacao[] | null>(null)
+  const carregarSlots = () => fetch('/api/preparacao/slots').then(r => r.json()).then(d => { if (d.ok) setSlots(d.slots) }).catch(() => {})
 
   useEffect(() => {
     setAcao(c.proxima_acao ?? '')
@@ -505,6 +509,17 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
                 </a>
               )
             })()}
+            {colunaDe(c.status) !== 'encerrada' && (
+              <details onToggle={e => { if ((e.target as HTMLDetailsElement).open && !slots) carregarSlots() }} className="group">
+                <summary className="cursor-pointer list-none text-center text-[10px] tracking-[0.25em] uppercase text-gold/60 hover:text-gold py-1">
+                  A minha disponibilidade <span className="inline-block transition-transform group-open:rotate-180">▾</span>
+                </summary>
+                <div className="mt-2">
+                  {slots ? <DisponibilidadePreparacao slots={slots} recarregar={carregarSlots} />
+                    : <p className="text-xs text-white/30 text-center">A carregar…</p>}
+                </div>
+              </details>
+            )}
           </div>
 
           {/* Próxima ação */}
