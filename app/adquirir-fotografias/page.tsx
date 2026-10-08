@@ -207,7 +207,10 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="f-tel" placeholder="912 000 000" required></div>
-        <div class="field" id="fieldMorada" style="display:none"><label>Morada de envio <span class="opt">(obrigatória para papel)</span></label><input type="text" id="f-morada" placeholder="Rua, nº, código postal, localidade"></div>
+        <div class="field" id="fieldMorada" style="display:none"><label>Morada de envio <span class="opt">(obrigatória para papel)</span></label><input type="text" id="f-morada" placeholder="Rua, nº, andar, localidade"></div>
+      </div>
+      <div class="frow two" id="rowCp" style="display:none">
+        <div class="field"><label>Código postal <span class="opt">(obrigatório para papel)</span></label><input type="text" id="f-cp" inputmode="numeric" maxlength="8" placeholder="2900-000"></div>
       </div>
 
       <div class="field">
@@ -321,6 +324,8 @@ export default function AdquirirFotografiasPage() {
     var addFoto = document.getElementById('addFoto')!
 
     function fmt() { return (seg.querySelector('label.on') as HTMLElement).dataset.val! }
+    // Código postal PT: aceita 2900000 ou 2900-000 e devolve 2900-000 ('' se inválido)
+    function cpNorm(v: string) { var d = (v || '').replace(/\D/g, ''); return d.length === 7 ? d.slice(0, 4) + '-' + d.slice(4) : '' }
     function rowCount() { return fotoList.querySelectorAll('.fotorow').length }
     function n() { var v = rowCount(); return v < 1 ? 1 : v }
     function fotografiasValue() { return Array.prototype.map.call(fotoList.querySelectorAll('.fotorow input'), function (i: any) { return i.value.trim() }).filter(Boolean).join('\n') }
@@ -362,6 +367,7 @@ export default function AdquirirFotografiasPage() {
       // Morada só para papel (aí é obrigatória); em digital some.
       var fm = document.getElementById('fieldMorada')!
       fm.style.display = f === 'papel' ? '' : 'none'
+      document.getElementById('rowCp')!.style.display = f === 'papel' ? '' : 'none'
 
       var hint = document.getElementById('qtyHint')!
       if (f === 'papel') {
@@ -489,6 +495,10 @@ export default function AdquirirFotografiasPage() {
       if (!nome || !email || !tel) { alert('Por favor preencham nome, email e contacto.'); return }
       if (!noivos || !dataCasamento) { alert('Por favor indiquem o nome dos noivos e a data do casamento.'); return }
       if (f === 'papel' && !morada) { alert('Para formato em papel, indiquem a morada de envio.'); document.getElementById('f-morada')!.focus(); return }
+      // Código postal obrigatório em papel (formato 0000-000); junta-se à morada
+      var cp = cpNorm((document.getElementById('f-cp') as HTMLInputElement).value)
+      if (f === 'papel' && !cp) { alert('Para formato em papel, indiquem o código postal (0000-000).'); document.getElementById('f-cp')!.focus(); return }
+      if (f === 'papel') morada = morada + ', ' + cp
       if (!(upInput.files && upInput.files[0])) { alert('Por favor anexem o comprovativo de pagamento.'); document.getElementById('upload')!.scrollIntoView({ behavior: 'smooth', block: 'center' }); return }
 
       var sub = q * PRICE, portes = (f === 'papel' && q < FREE_FROM) ? PORTES : 0, total = sub + portes

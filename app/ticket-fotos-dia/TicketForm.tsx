@@ -169,7 +169,10 @@ const BODY = `
       </div>
       <div class="frow two">
         <div class="field"><label>Contacto telefónico</label><input type="tel" id="t-tel" placeholder="912 000 000"></div>
-        <div class="field" id="fieldMorada" style="display:none"><label>Morada de envio <span class="opt">(para papel)</span></label><input type="text" id="t-morada" placeholder="Rua, nº, código postal"></div>
+        <div class="field" id="fieldMorada" style="display:none"><label>Morada de envio <span class="opt">(para papel)</span></label><input type="text" id="t-morada" placeholder="Rua, nº, andar, localidade"></div>
+      </div>
+      <div class="frow two" id="rowCp" style="display:none">
+        <div class="field"><label>Código postal <span class="opt">(obrigatório para papel)</span></label><input type="text" id="t-cp" inputmode="numeric" maxlength="8" placeholder="2900-000"></div>
       </div>
 
       <div class="field">
@@ -249,6 +252,8 @@ export default function TicketForm() {
     var mbwaySel = document.getElementById('t-mbway') as HTMLSelectElement
 
     function fmt() { return (seg.querySelector('label.on') as HTMLElement).dataset.val! }
+    // Código postal PT: aceita 2900000 ou 2900-000 e devolve 2900-000 ('' se inválido)
+    function cpNorm(v: string) { var d = (v || '').replace(/\D/g, ''); return d.length === 7 ? d.slice(0, 4) + '-' + d.slice(4) : '' }
     function metodo() { return (segM.querySelector('label.on') as HTMLElement).dataset.val! }
     function rowCount() { return fotoList.querySelectorAll('.fotorow').length }
     function n() { return Math.max(1, rowCount()) }
@@ -275,6 +280,7 @@ export default function TicketForm() {
       if (f === 'papel') { hint.style.display = ''; if (q < FREE) { var falta = FREE - q; hint.innerHTML = 'Faltam <b>' + falta + '</b> ' + (falta === 1 ? 'fotografia' : 'fotografias') + ' para portes grátis.' } else { hint.innerHTML = '<b>Portes grátis</b> — ' + PORTES_GRATIS_A_PARTIR_DE + ' ou mais fotografias.' } } else { hint.style.display = 'none' }
       var fm = document.getElementById('fieldMorada')!
       fm.style.display = f === 'papel' ? '' : 'none'
+      document.getElementById('rowCp')!.style.display = f === 'papel' ? '' : 'none'
       syncBtn()
     }
     function gv(id: string) { return (document.getElementById(id) as HTMLInputElement).value.trim() }
@@ -290,6 +296,7 @@ export default function TicketForm() {
       if (!gv('t-noivos')) m.push('nome dos noivos')
       if (!gv('t-data')) m.push('data do casamento')
       if (fmt() === 'papel' && !gv('t-morada')) m.push('morada')
+      if (fmt() === 'papel' && !cpNorm(gv('t-cp'))) m.push('código postal')
       var inputs = Array.prototype.slice.call(fotoList.querySelectorAll('.fotorow input')) as HTMLInputElement[]
       if (inputs.length === 0 || inputs.some(i => !i.value.trim())) m.push('nº das fotografias')
       if (!metodo()) m.push('método de pagamento')
@@ -331,7 +338,7 @@ export default function TicketForm() {
     }
     resp.addEventListener('change', checkGate)
     mbwaySel.addEventListener('change', checkGate)
-    ;['t-nome', 't-email', 't-tel', 't-noivos', 't-data', 't-morada'].forEach(function (id) {
+    ;['t-nome', 't-email', 't-tel', 't-noivos', 't-data', 't-morada', 't-cp'].forEach(function (id) {
       document.getElementById(id)!.addEventListener('input', syncBtn)
     })
     checkGate()
@@ -417,6 +424,10 @@ export default function TicketForm() {
       if (!respSel.value || !mbway) { setMsg('Seleciona o responsável e a conta MB WAY.'); return }
       if (!nome || !email || !tel || !noivos || !data) { setMsg('Preenche todos os campos do cliente.'); return }
       if (f === 'papel' && !morada) { setMsg('Indica a morada para entrega em papel.'); return }
+      // Código postal obrigatório em papel (formato 0000-000); junta-se à morada
+      var cp = cpNorm(g('t-cp'))
+      if (f === 'papel' && !cp) { setMsg('Indica o código postal (0000-000) para entrega em papel.'); return }
+      if (f === 'papel') morada = morada + ', ' + cp
       if (!met) { setMsg('Escolhe o método de pagamento.'); return }
 
       var sub = q * PRICE, portes = (f === 'papel' && q < FREE) ? PORTES : 0, total = sub + portes
@@ -465,7 +476,7 @@ export default function TicketForm() {
     //     casamento de cada pedido. Assim nunca se misturam dois casamentos com o
     //     mesmo nome (ex.: "Ana e Rui") mas datas/eventos diferentes.
     document.getElementById('btnNovo')!.addEventListener('click', function () {
-      ;['t-nome', 't-email', 't-tel', 't-morada', 't-msg'].forEach(function (id) { var el = document.getElementById(id) as HTMLInputElement | null; if (el) el.value = '' })
+      ;['t-nome', 't-email', 't-tel', 't-morada', 't-cp', 't-msg'].forEach(function (id) { var el = document.getElementById(id) as HTMLInputElement | null; if (el) el.value = '' })
       ;['t-noivos', 't-data'].forEach(function (id) { var el = document.getElementById(id) as HTMLInputElement | null; if (el && !el.classList.contains('locked')) el.value = '' })
       seg.querySelectorAll('label').forEach(l => l.classList.remove('on')); (seg.querySelector('label[data-val="digital"]') as HTMLElement).classList.add('on')
       segM.querySelectorAll('label').forEach(l => l.classList.remove('on')); (segM.querySelector('label[data-val="Numerário"]') as HTMLElement).classList.add('on')
