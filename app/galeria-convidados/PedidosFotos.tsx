@@ -75,6 +75,28 @@ function msgConfirmacao(p: Pedido, fotos: string[]): string {
   ].join('\n')
 }
 
+// Mensagem pré-feita para o WhatsApp: a encomenda em papel ficou por levantar
+// nos CTT. Pede o levantamento com urgência; se voltar, novo envio custa 5 €
+// de portes ou o cliente levanta no estúdio.
+function msgLevantamentoCtt(p: Pedido, registo: string): string {
+  const primeiro = (p.nome || '').trim().split(/\s+/)[0] || ''
+  return [
+    `Olá${primeiro ? ' ' + primeiro : ''}, tudo bem?`,
+    '',
+    `Informamos que as fotografias${p.noivos ? ' do casamento ' + p.noivos.trim() : ''} se encontram para levantamento na estação dos CTT da sua área de residência.`,
+    '',
+    `Pedido: ${p.pedido}`,
+    ...(registo.trim() ? [`Nº de registo CTT: ${registo.trim()}`] : []),
+    '',
+    'Solicitamos, com urgência, o levantamento das mesmas.',
+    '',
+    'Caso não sejam levantadas e voltem para nós, para um novo envio será necessário um novo pagamento de 5 € de portes. Em alternativa, poderá levantá-las no nosso estúdio.',
+    '',
+    'Obrigado,',
+    'RL Photo Video',
+  ].join('\n')
+}
+
 type Evento = { referencia: string; cliente: string; data_evento: string }
 type Fotografo = { id: string; nome: string }
 type Grupo = { key: string; noivos: string; data: string | null; ts: number; origem: 'ticket' | 'adquirir'; itens: Pedido[] }
@@ -183,6 +205,8 @@ export default function PedidosFotos() {
     setPedidos(prev => prev.map(x => x.id === p.id ? { ...x, confirmacao_pedida_em: agora } : x))
     fetch('/api/pedidos-fotos', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id, confirmacao_pedida: true }) }).catch(() => {})
   }
+  // Nº de registo CTT por pedido, só para a mensagem de levantamento (não é guardado)
+  const [registoCtt, setRegistoCtt] = useState<Record<string, string>>({})
   const [fazendoPastaId, setFazendoPastaId] = useState<string | null>(null)
   // "Fazer Pasta" (papel): repõe impressao_preparada_em a null para o robô local
   // recriar a subpasta Impressão desta encomenda na próxima passagem. Serve para
@@ -660,6 +684,20 @@ export default function PedidosFotos() {
                     </button>
                   )}
                 </div>
+                {p.formato === 'papel' && whatsappLink(p.telefone) && (
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <input value={registoCtt[p.id] ?? ''} onChange={e => setRegistoCtt(s => ({ ...s, [p.id]: e.target.value }))}
+                      placeholder="Nº registo CTT"
+                      className="text-[11px] px-3 py-1.5 rounded-lg border border-white/15 bg-black/30 text-white/85 placeholder:text-white/30 focus:outline-none focus:border-emerald-400/50 w-[190px]" />
+                    <a href={whatsappLink(p.telefone)! + '?text=' + encodeURIComponent(msgLevantamentoCtt(p, registoCtt[p.id] ?? ''))} target="_blank" rel="noopener noreferrer"
+                      title="Avisar o cliente que as fotos estão para levantar nos CTT"
+                      className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-all hover:bg-[#25D366]/10"
+                      style={{ borderColor: 'rgba(37,211,102,0.35)', color: '#4ade80' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                      Aviso levantamento CTT
+                    </a>
+                  </div>
+                )}
                 {ticketMsg && ticketMsg.id === p.id && (
                   <p className={`mt-2 text-[11px] ${ticketMsg.ok ? 'text-emerald-300/85' : 'text-red-400/80'}`}>
                     {ticketMsg.ok ? '✓ ' : '⚠ '}{ticketMsg.txt}
