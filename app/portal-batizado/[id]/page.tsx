@@ -2738,7 +2738,7 @@ function PortalSubPageContent() {
                   <p className="text-[10px] text-white/30 tracking-wide">Cola o URL da sub-página do portal ou link externo para cada secção.</p>
                   {(['NOIVO', 'NOIVA', 'CERIMÓNIA', 'QUINTA'] as const).map(section => (
                     <div key={section} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06] space-y-2">
-                      <label className="block text-[10px] text-white/40 tracking-widest uppercase">{section}</label>
+                      <label className="block text-[10px] text-white/40 tracking-widest uppercase">{section === 'NOIVO' ? 'PAI' : section === 'NOIVA' ? 'MÃE' : section}</label>
                       <input
                         value={briefingForm[section] ?? ''}
                         onChange={e => setBriefingForm(prev => ({ ...prev, [section]: e.target.value }))}
@@ -3130,8 +3130,10 @@ function PortalSubPageContent() {
                       )
                       // Mapeia título do card → ícone + descrição (fallback genérico se outro título)
                       const CARD_META: Record<string, { icon: string; desc: string }> = {
-                        'NOIVO':     { icon: '♂', desc: 'Detalhes do noivo · contactos e logística' },
-                        'NOIVA':     { icon: '♀', desc: 'Detalhes da noiva · contactos e logística' },
+                        'NOIVO':     { icon: '♂', desc: 'Detalhes do pai · contactos e logística' },
+                        'NOIVA':     { icon: '♀', desc: 'Detalhes da mãe · contactos e logística' },
+                        'PAI':       { icon: '♂', desc: 'Detalhes do pai · contactos e logística' },
+                        'MÃE':       { icon: '♀', desc: 'Detalhes da mãe · contactos e logística' },
                         'CERIMÓNIA': { icon: '✦', desc: 'Local, horário e detalhes da cerimónia' },
                         'CERIMONIA': { icon: '✦', desc: 'Local, horário e detalhes da cerimónia' },
                         'QUINTA':    { icon: '◇', desc: 'Recinto, copo-de-água e espaços' },
@@ -3163,6 +3165,9 @@ function PortalSubPageContent() {
                               const pageTitle = cp.child_page?.title ?? ''
                               const key = pageTitle.toUpperCase().trim()
                               const meta = CARD_META[key] ?? { icon: '◆', desc: 'Aceder a esta secção do briefing' }
+                              // Batizado: as páginas do Notion chamam-se NOIVO/NOIVA (a chave
+                              // dos dados mantém-se), mas aqui mostram-se como PAI/MÃE
+                              const tituloVisivel = key === 'NOIVO' ? 'PAI' : key === 'NOIVA' ? 'MÃE' : pageTitle
                               const isOpen = openFichaKey === key
                               // Default fields se ainda não houver
                               const defaultCampos: FichaCampo[] = [
@@ -3227,7 +3232,7 @@ function PortalSubPageContent() {
                                         {meta.icon}
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="text-[10px] tracking-[0.35em] text-gold/65 uppercase mb-1.5 group-hover:text-gold/85 transition-colors">{pageTitle}</p>
+                                        <p className="text-[10px] tracking-[0.35em] text-gold/65 uppercase mb-1.5 group-hover:text-gold/85 transition-colors">{tituloVisivel}</p>
                                         <p className="text-[12px] text-white/55 leading-relaxed">{meta.desc}</p>
                                       </div>
                                       <span className={`text-gold/60 text-xl transition-transform duration-300 shrink-0 ${isOpen ? 'rotate-90' : ''}`}>›</span>
