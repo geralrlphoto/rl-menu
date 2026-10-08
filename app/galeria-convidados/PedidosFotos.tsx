@@ -97,6 +97,27 @@ function msgLevantamentoCtt(p: Pedido, registo: string): string {
   ].join('\n')
 }
 
+// Mensagem pré-feita para o WhatsApp: a encomenda em papel voltou por morada
+// incompleta. Levanta no estúdio ou paga 5 € de portes para novo envio.
+function msgDevolvidaMorada(p: Pedido, registo: string): string {
+  const primeiro = (p.nome || '').trim().split(/\s+/)[0] || ''
+  return [
+    `Olá${primeiro ? ' ' + primeiro : ''}, tudo bem?`,
+    '',
+    `Informamos que as fotografias${p.noivos ? ' do casamento ' + p.noivos.trim() : ''} foram devolvidas pelos CTT por morada incompleta.`,
+    '',
+    `Pedido: ${p.pedido}`,
+    ...(registo.trim() ? [`Nº de registo CTT: ${registo.trim()}`] : []),
+    '',
+    'Poderá efetuar o levantamento das mesmas no nosso estúdio, em horário a combinar, ou poderemos enviá-las novamente após a liquidação dos portes de envio no valor de 5 €.',
+    '',
+    'Ficamos a aguardar.',
+    '',
+    'Obrigado,',
+    'RL Photo Video',
+  ].join('\n')
+}
+
 type Evento = { referencia: string; cliente: string; data_evento: string }
 type Fotografo = { id: string; nome: string }
 type Grupo = { key: string; noivos: string; data: string | null; ts: number; origem: 'ticket' | 'adquirir'; itens: Pedido[] }
@@ -695,6 +716,13 @@ export default function PedidosFotos() {
                       style={{ borderColor: 'rgba(37,211,102,0.35)', color: '#4ade80' }}>
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                       Aviso levantamento CTT
+                    </a>
+                    <a href={whatsappLink(p.telefone)! + '?text=' + encodeURIComponent(msgDevolvidaMorada(p, registoCtt[p.id] ?? ''))} target="_blank" rel="noopener noreferrer"
+                      title="Avisar o cliente que as fotos foram devolvidas por morada incompleta"
+                      className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg border transition-all hover:bg-[#25D366]/10"
+                      style={{ borderColor: 'rgba(37,211,102,0.35)', color: '#4ade80' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+                      Devolvida (morada incompleta)
                     </a>
                   </div>
                 )}
