@@ -4382,6 +4382,15 @@ export default function EventoPage() {
     }).catch(() => {})
   }
 
+  // Valor Editor Vídeo / editor → pagamento pendente em /painel-editor/pagamentos
+  function syncPagamentoEditor(editorNome: string | undefined, valor: number) {
+    if (!evento?.referencia || !editorNome) return
+    fetch('/api/painel-editor/sync-pagamento', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: evento.referencia, editorNome, valor, local: evento.local, data_casamento: evento.data_evento }),
+    }).catch(() => {})
+  }
+
   function syncLiquido(overrides: { fotografo?: number; videografo?: number; editorVideo?: number } = {}) {
     if (!evento) return
     const vVideo  = evento.valor_video  ?? 0
@@ -4738,7 +4747,7 @@ export default function EventoPage() {
                 <input
                   type="number" value={valorEditorVideo}
                   onChange={ev => setValorEditorVideo(Number(ev.target.value))}
-                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_editor_video: val } } }) }); syncLiquido({ editorVideo: val }) }}
+                  onBlur={ev => { const val = Number(ev.target.value); if (e.referencia) fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { valor_editor_video: val } } }) }); syncLiquido({ editorVideo: val }); syncPagamentoEditor(equipaEditorVideo[0], val) }}
                   className="bg-white/5 border border-white/10 hover:border-gold/30 focus:border-gold/40 rounded-lg px-3 py-1.5 text-sm text-white/80 focus:outline-none w-full"
                 />
                 <span className="text-white/40 text-sm shrink-0">€</span>
@@ -4750,6 +4759,7 @@ export default function EventoPage() {
                   const nome = ev.target.value
                   const next = nome ? [nome] : []
                   setEquipaEditorVideo(next)
+                  syncPagamentoEditor(nome, valorEditorVideo)
                   fetch('/api/evento-equipa', {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
@@ -5527,7 +5537,7 @@ export default function EventoPage() {
               options={optionsAllTeam}
               unavailableNames={unavailableNames}
               syncValue={equipaEditorVideo}
-              onChanged={setEquipaEditorVideo} />
+              onChanged={val => { setEquipaEditorVideo(val); syncPagamentoEditor(val[0], valorEditorVideo) }} />
             <EditField label="Agendamento Email" value={e.agendamento_email} field="agendamento_email" eventId={e.id} onSaved={handleSaved} />
           </div>
 
