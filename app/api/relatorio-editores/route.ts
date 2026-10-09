@@ -8,6 +8,18 @@ function db() {
   )
 }
 
+function addWorkingDays(dateStr: string, days: number): string | null {
+  const d = new Date(dateStr + 'T00:00:00')
+  if (isNaN(d.getTime())) return null
+  let count = 0
+  while (count < days) {
+    d.setDate(d.getDate() + 1)
+    const day = d.getDay()
+    if (day !== 0 && day !== 6) count++
+  }
+  return d.toISOString().split('T')[0]
+}
+
 // POST: envia o(s) relatório(s) diário(s) do evento aos editores selecionados.
 //   Cria uma notificação no sino do portal de cada editor, com o link de
 //   download do conteúdo (relatorio_diario.downloadUrl) para descarregarem.
@@ -62,6 +74,29 @@ export async function POST(req: NextRequest) {
       tipo: 'relatorio_editor',
       lida: false,
     })
+  }
+
+  // Cada trabalho enviado é dinheiro a receber pelo editor: cria o pagamento
+  // pendente para aparecer em /painel-editor/pagamentos. Valor = "Valor Editor
+  // Vídeo" da ficha; prazo = entrega do vídeo (evento + 180 dias úteis).
+  if (referencia) {
+    const { data: portal } = await supabase
+      .from('portais').select('valor_editor_video:settings->>valor_editor_video')
+      .ilike('referencia', referencia).maybeSingle()
+    const valor = Number((portal as any)?.valor_editor_video) || 0
+    const descricao = [referencia, localStr].filter(Boolean).join(' — ')
+    const prazo = data_casamento ? addWorkingDays(String(data_casamento).slice(0, 10), 180) : null
+    for (const eid of editorIds) {
+      const { data: jaExiste } = await supabase
+        .from('freelancer_pagamentos').select('id')
+        .eq('freelancer_id', eid).ilike('descricao', `${referencia}%`)
+        .limit(1).maybeSingle()
+      if (jaExiste) continue
+      const { error: pagErr } = await supabase.from('freelancer_pagamentos').insert({
+        freelancer_id: eid, descricao, valor, data_prevista: prazo, status: 'PENDENTE',
+      })
+      if (pagErr) console.warn('[relatorio-editores] pagamento nao criado:', pagErr.message)
+    }
   }
 
   // ── Email (card TRABALHO EDIÇÃO) via Resend ──
