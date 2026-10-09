@@ -110,6 +110,34 @@ const CSS = `
 .tkt .cal-day:hover{background:rgba(216,190,147,.14);}
 .tkt .cal-day.sel{background:var(--g);color:#0b0a08;}
 .tkt .cal-day.empty{visibility:hidden;cursor:default;}
+/* caixa de confirmação: resumo antes de enviar o pedido */
+.tkt .cfm{position:fixed;inset:0;z-index:9500;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.74);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);}
+.tkt .cfm.open{display:flex;}
+.tkt .cfm__box{width:100%;max-width:560px;max-height:calc(100vh - 32px);overflow:auto;background:var(--ink-2);border:1px solid var(--g);border-radius:14px;padding:clamp(22px,4vw,34px);box-shadow:0 30px 80px rgba(0,0,0,.6);}
+.tkt .cfm__h{font-family:var(--fm);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--g);}
+.tkt .cfm__t{font-family:var(--fd);font-weight:200;font-size:clamp(26px,4vw,36px);line-height:1.1;margin-top:12px;}
+.tkt .cfm__t em{font-style:italic;color:var(--g);}
+.tkt .cfm__sub{color:var(--tx-mid);font-size:14px;line-height:1.6;margin-top:10px;}
+.tkt .cfm__fl{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-mid);margin-top:22px;}
+.tkt .cfm__fl b{color:var(--g);font-weight:400;}
+.tkt .cfm__fotos{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;}
+.tkt .cfm__fotos span{font-family:var(--fm);font-size:14px;letter-spacing:.04em;color:var(--g);border:1px solid var(--g);border-radius:30px;padding:7px 14px;background:rgba(216,190,147,.06);}
+.tkt .cfm__fotos span i{font-style:normal;color:var(--tx-dim);font-size:10px;margin-right:6px;}
+.tkt .cfm__rows{margin-top:20px;border-top:1px solid var(--line-soft);}
+.tkt .cfm__row{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--line-soft);font-size:14px;}
+.tkt .cfm__row .k{color:var(--tx-mid);flex:none;}
+.tkt .cfm__row .v{color:var(--tx);text-align:right;word-break:break-word;}
+.tkt .cfm__tot{display:flex;justify-content:space-between;align-items:baseline;padding-top:16px;}
+.tkt .cfm__tot span{font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;}
+.tkt .cfm__tot b{font-family:var(--fd);font-weight:200;font-size:clamp(30px,4vw,40px);color:var(--g);}
+.tkt .cfm__chk{display:flex;gap:12px;align-items:flex-start;cursor:pointer;margin-top:20px;padding:14px 16px;border:1px solid var(--line);border-radius:10px;font-size:14px;line-height:1.5;color:var(--tx);}
+.tkt .cfm__chk input{width:18px;height:18px;flex:none;margin-top:1px;accent-color:#d8be93;cursor:pointer;}
+.tkt .cfm__chk.on{border-color:var(--g);background:rgba(216,190,147,.06);}
+.tkt .cfm__acts{display:grid;grid-template-columns:1fr 1.4fr;gap:12px;margin-top:20px;}
+.tkt .cfm__acts button{font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;padding:17px 18px;border-radius:40px;cursor:pointer;border:1px solid var(--g);}
+.tkt .cfm__back{background:transparent;color:var(--g);}
+.tkt .cfm__ok{background:var(--g);color:var(--ink);}
+.tkt .cfm__ok:disabled{opacity:.4;cursor:not-allowed;}
 `
 
 const BODY = `
@@ -229,6 +257,23 @@ const BODY = `
     <button type="button" class="btn" id="btnNovo" style="max-width:300px;margin:30px auto 0;">+ Novo pedido</button>
   </div>
 </section>
+</div>
+
+<div class="cfm" id="cfm" role="dialog" aria-modal="true" aria-labelledby="cfmTitle">
+  <div class="cfm__box">
+    <div class="cfm__h">Resumo da encomenda</div>
+    <h2 class="cfm__t" id="cfmTitle">Confirma os <em>números.</em></h2>
+    <p class="cfm__sub">Revê com o cliente os números das fotografias antes de registar o pedido.</p>
+    <div class="cfm__fl">Fotografias · <b id="cfmQtd"></b></div>
+    <div class="cfm__fotos" id="cfmFotos"></div>
+    <div class="cfm__rows" id="cfmRows"></div>
+    <div class="cfm__tot"><span>Total</span><b id="cfmTotal"></b></div>
+    <label class="cfm__chk" id="cfmChkWrap"><input type="checkbox" id="cfmChk"><span>O cliente confirmou que os números das fotografias estão corretos.</span></label>
+    <div class="cfm__acts">
+      <button type="button" class="cfm__back" id="cfmBack">Corrigir</button>
+      <button type="button" class="cfm__ok" id="cfmOk" disabled>Confirmar pedido</button>
+    </div>
+  </div>
 </div>
 `
 
@@ -410,6 +455,31 @@ export default function TicketForm() {
       membros.forEach((m: any) => { var o = document.createElement('option'); o.value = m.id; o.textContent = m.nome; o.dataset.email = m.email || ''; sel.appendChild(o) })
     }).catch(() => {})
 
+    /* Caixa de confirmação: o pedido só segue depois de confirmado o resumo */
+    var confirmado = false
+    var cfm = document.getElementById('cfm')!
+    var cfmChk = document.getElementById('cfmChk') as HTMLInputElement
+    var cfmOk = document.getElementById('cfmOk') as HTMLButtonElement
+    function esc(s: string) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' } as any)[c]) }
+    function abrirResumo(fotos: string[], rows: [string, string][], total: string) {
+      document.getElementById('cfmQtd')!.textContent = fotos.length + (fotos.length === 1 ? ' fotografia' : ' fotografias')
+      document.getElementById('cfmFotos')!.innerHTML = fotos.map((x, i) => '<span><i>' + (i + 1) + '.</i>' + esc(x) + '</span>').join('')
+      document.getElementById('cfmRows')!.innerHTML = rows.map(r => '<div class="cfm__row"><span class="k">' + esc(r[0]) + '</span><span class="v">' + esc(r[1]) + '</span></div>').join('')
+      document.getElementById('cfmTotal')!.textContent = total
+      cfmChk.checked = false; cfmOk.disabled = true; document.getElementById('cfmChkWrap')!.classList.remove('on')
+      cfm.classList.add('open')
+    }
+    function fecharResumo() { cfm.classList.remove('open') }
+    cfmChk.addEventListener('change', function () { cfmOk.disabled = !cfmChk.checked; document.getElementById('cfmChkWrap')!.classList.toggle('on', cfmChk.checked) })
+    document.getElementById('cfmBack')!.addEventListener('click', fecharResumo)
+    cfm.addEventListener('click', function (e) { if (e.target === cfm) fecharResumo() })
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') fecharResumo() })
+    cfmOk.addEventListener('click', function () {
+      if (!cfmChk.checked) return
+      confirmado = true; fecharResumo()
+      document.getElementById('ticketForm')!.dispatchEvent(new Event('submit', { cancelable: true }))
+    })
+
     document.getElementById('ticketForm')!.addEventListener('submit', async function (e) {
       e.preventDefault()
       var g = (id: string) => (document.getElementById(id) as HTMLInputElement).value.trim()
@@ -431,6 +501,18 @@ export default function TicketForm() {
       if (!met) { setMsg('Escolhe o método de pagamento.'); return }
 
       var sub = q * PRICE, portes = (f === 'papel' && q < FREE) ? PORTES : 0, total = sub + portes
+      // Antes de registar, mostra o resumo para confirmar os números das fotografias.
+      if (!confirmado) {
+        setMsg('')
+        abrirResumo(fotosVal().split('\n').filter(Boolean), [
+          ['Cliente', nome], ['Noivos', noivos], ['Data do casamento', data],
+          ['Formato', f === 'papel' ? 'Papel' : 'Digital'],
+          ...(f === 'papel' ? [['Morada', morada]] : []),
+          ['Pagamento', met], ['Responsável', responsavel],
+        ] as [string, string][], euro(total))
+        return
+      }
+      confirmado = false
       var btn = document.getElementById('btnSubmit') as HTMLButtonElement
       btn.disabled = true; btn.textContent = 'A registar…'
       var ctrl = new AbortController()
