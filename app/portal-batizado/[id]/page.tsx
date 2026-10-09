@@ -1053,6 +1053,10 @@ function PortalSubPageContent() {
   const isPreWeddingPage  = false
   const isContratoPage    = title.toUpperCase().includes('CONTRATO')
   const isBriefingPage    = title.toUpperCase().includes('BRIEFING')
+  // Vista bloqueada para freelancers (igual ao portal de casamento): abrem o
+  // briefing via "Ver Briefing" no seu portal e só podem ver o briefing.
+  // Escondemos a navegação (sidebar, menu, Voltar, sino). Ativada com ?freelancer=1.
+  const isFreelancerView  = searchParams.get('freelancer') === '1'
   const isFotografiasPage = title.toUpperCase().includes('FOTOGRAF')
   const isFilmePage       = title.toUpperCase().includes('FILME') || title.toUpperCase().includes('NOSSO FILME')
   const isSatisfacaoPage   = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
@@ -2372,7 +2376,19 @@ function PortalSubPageContent() {
   }
 
   return (
-    <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+    <PortalShell sidebar={_atmSidebar} headerRight={isFreelancerView ? undefined : <NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+    {/* Vista freelancer: esconde a navegação para só se ver o briefing */}
+    {isFreelancerView && (
+      <style dangerouslySetInnerHTML={{ __html: `
+        .portal-atmosphere .sidebar nav,
+        .portal-atmosphere .sidebar .nav-label,
+        .portal-atmosphere .sidebar .mini,
+        .portal-atmosphere .menu-toggle,
+        .portal-atmosphere .atm-back,
+        .portal-atmosphere .cards-head,
+        .portal-atmosphere .cards-grid { display: none !important; }
+      ` }} />
+    )}
     <main className={isSobreViewMode ? 'relative sobre-view' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
       {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
       {isDesignPremium && (
@@ -3125,7 +3141,7 @@ function PortalSubPageContent() {
                             return i
                           })()
                         : -1
-                      const aceHidden = new Set(aceIdx !== -1 ? allOther.slice(aceIdx, aceEnd).map(b => b.id) : [])
+                      const aceHidden = new Set(isFreelancerView ? [] : (aceIdx !== -1 ? allOther.slice(aceIdx, aceEnd).map(b => b.id) : []))
                       const otherBlocks = allOther.filter(b =>
                         !aceHidden.has(b.id) &&
                         !(b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')) &&
@@ -3460,6 +3476,7 @@ function PortalSubPageContent() {
                               <BriefingExtensions
                                 info={{ ...equipaBI, equipa } as BriefingExt}
                                 isAdmin={isAdmin}
+                                teamView={isFreelancerView}
                                 onSave={handleSaveBriefingExt}
                                 pageTitle={title}
                                 portalRef={portalRef || refParam || undefined}
