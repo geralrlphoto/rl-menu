@@ -3911,6 +3911,8 @@ export default function EventoPage() {
   const [notifFotoEnviadaBy, setNotifFotoEnviadaBy] = useState<Record<string, string>>({})
   const [notifVideoEnviadaBy, setNotifVideoEnviadaBy] = useState<Record<string, string>>({})
   const [notifEditorFotosEnviadaBy, setNotifEditorFotosEnviadaBy] = useState<Record<string, string>>({})
+  const [notifEditorVideoEnviadaBy, setNotifEditorVideoEnviadaBy] = useState<Record<string, string>>({})
+  const [notifEditorVideoErro, setNotifEditorVideoErro] = useState<string | null>(null)
   const [sendingNotifPerson, setSendingNotifPerson] = useState<Record<string, boolean>>({})
   const [relatoriosVideo, setRelatoriosVideo] = useState<any[]>([])
   const [copiedVideoIdx, setCopiedVideoIdx] = useState<number | null>(null)
@@ -4255,6 +4257,9 @@ export default function EventoPage() {
                 const map: Record<string, string> = {}
                 for (const n of ev.videografo) map[String(n)] = s.notif_video_enviada
                 setNotifVideoEnviadaBy(map)
+              }
+              if (s.notif_editor_video_enviada_by && typeof s.notif_editor_video_enviada_by === 'object') {
+                setNotifEditorVideoEnviadaBy(s.notif_editor_video_enviada_by as Record<string, string>)
               }
               if (s.notif_editor_fotos_enviada_by && typeof s.notif_editor_fotos_enviada_by === 'object') {
                 setNotifEditorFotosEnviadaBy(s.notif_editor_fotos_enviada_by as Record<string, string>)
@@ -5773,6 +5778,90 @@ export default function EventoPage() {
                     })}
                     {notifEditorFotosErro && (
                       <p className="text-[9px] text-red-400/70 leading-relaxed mt-1">⚠ {notifEditorFotosErro}. Sem email? Adiciona na página Equipas de Trabalho.</p>
+                    )}
+                  </div>
+                )
+              })()}
+
+              {/* Notificação Editor de Vídeo — envia o trabalho de edição: cria o
+                  projeto em Novos Projetos do editor + email com o card TRABALHO EDIÇÃO */}
+              {(() => {
+                const nomes = equipaEditorVideo
+                const hasTeam = nomes.length > 0
+                return (
+                  <div className="flex flex-col gap-2 rounded-xl p-4" style={{ background: 'rgba(160,100,240,0.04)', border: '1px solid rgba(160,100,240,0.15)' }}>
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-white/30">Editor de Vídeo</p>
+                    {!hasTeam && (
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-white/20 flex-1">Pendente</span>
+                        <span className="px-3 py-2 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border bg-white/[0.03] text-white/20 border-white/10">🔒 Sem editor</span>
+                      </div>
+                    )}
+                    {nomes.map((nome) => {
+                      const enviadaEm = notifEditorVideoEnviadaBy[nome] ?? null
+                      const sending = sendingNotifPerson[`editorVideo::${nome}`] ?? false
+                      return (
+                        <div key={nome} className="flex items-center gap-2 py-1.5 border-t border-white/[0.04] first:border-t-0">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[11px] text-purple-300/80 truncate">{nome}</p>
+                            <p className="text-[10px] font-mono mt-0.5">
+                              {enviadaEm
+                                ? <span className="text-green-400/70">{new Date(enviadaEm).toLocaleDateString('pt-PT')}</span>
+                                : <span className="text-white/20">Pendente</span>
+                              }
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            {enviadaEm && (
+                              <button
+                                onClick={async () => {
+                                  if (!evento?.referencia) return
+                                  const next = { ...notifEditorVideoEnviadaBy }
+                                  delete next[nome]
+                                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_editor_video_enviada_by: next } } }) })
+                                  setNotifEditorVideoEnviadaBy(next)
+                                }}
+                                className="w-6 h-6 flex items-center justify-center rounded-full border border-white/10 text-white/30 hover:text-white/60 hover:border-white/30 transition-all text-xs"
+                                title="Repor como Pendente"
+                              >✕</button>
+                            )}
+                            <button
+                              disabled={sending}
+                              onClick={async () => {
+                                if (!evento?.referencia || sending) return
+                                setSendingNotifPerson(s => ({ ...s, [`editorVideo::${nome}`]: true }))
+                                setNotifEditorVideoErro(null)
+                                const today = new Date().toISOString().split('T')[0]
+                                const res = await fetch('/api/relatorio-editores', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ referencia: evento.referencia, evento_id: evento.id, editorNomes: [nome], local: evento.local, data_casamento: evento.data_evento }),
+                                })
+                                const d = await res.json().catch(() => ({}))
+                                if (res.ok && d.ok) {
+                                  const next = { ...notifEditorVideoEnviadaBy, [nome]: today }
+                                  await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: evento.referencia, updates: { settings: { notif_editor_video_enviada_by: next } } }) })
+                                  setNotifEditorVideoEnviadaBy(next)
+                                  if (!d.emailsSent) setNotifEditorVideoErro('Projeto criado, mas o email não seguiu')
+                                } else {
+                                  setNotifEditorVideoErro(d.error ?? 'Erro ao enviar')
+                                }
+                                setSendingNotifPerson(s => ({ ...s, [`editorVideo::${nome}`]: false }))
+                              }}
+                              className={`px-3 py-1.5 rounded-lg text-[10px] font-semibold tracking-[0.15em] uppercase border transition-all ${
+                                enviadaEm ? 'bg-green-500/15 text-green-400/80 border-green-500/25 hover:bg-green-500/25'
+                                : sending ? 'bg-purple-500/10 text-purple-300/50 border-purple-500/20 cursor-not-allowed'
+                                : 'bg-purple-500/15 text-purple-300 border-purple-500/25 hover:bg-purple-500/25'
+                              }`}
+                            >
+                              {sending ? '...' : enviadaEm ? '↻ Reenviar' : 'Notificar'}
+                            </button>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {notifEditorVideoErro && (
+                      <p className="text-[9px] text-red-400/70 leading-relaxed mt-1">⚠ {notifEditorVideoErro}. Sem email? Adiciona na página Equipas de Trabalho.</p>
                     )}
                   </div>
                 )

@@ -12,13 +12,22 @@ function db() {
 //   Cria uma notificação no sino do portal de cada editor, com o link de
 //   download do conteúdo (relatorio_diario.downloadUrl) para descarregarem.
 export async function POST(req: NextRequest) {
-  const { referencia, evento_id, editorIds, local, data_casamento } = await req.json()
+  const body = await req.json()
+  const { referencia, evento_id, local, data_casamento } = body
   if (!referencia && !evento_id) return NextResponse.json({ error: 'referencia or evento_id required' }, { status: 400 })
-  if (!Array.isArray(editorIds) || editorIds.length === 0) {
-    return NextResponse.json({ error: 'editorIds required' }, { status: 400 })
-  }
 
   const supabase = db()
+
+  // A ficha do evento guarda o Editor de Vídeo pelo nome; aqui resolve-se o id.
+  let editorIds: string[] = Array.isArray(body.editorIds) ? body.editorIds : []
+  if (editorIds.length === 0 && Array.isArray(body.editorNomes) && body.editorNomes.length) {
+    const alvo = body.editorNomes.map((n: string) => String(n).toLowerCase().trim())
+    const { data: fls } = await supabase.from('freelancers').select('id, nome')
+    editorIds = (fls ?? []).filter((f: any) => alvo.includes(String(f.nome ?? '').toLowerCase().trim())).map((f: any) => f.id)
+  }
+  if (editorIds.length === 0) {
+    return NextResponse.json({ error: 'Editor não encontrado na equipa' }, { status: 400 })
+  }
 
   // Reúne os relatórios do evento (com link de download, se existir)
   const { data: fcs } = referencia
