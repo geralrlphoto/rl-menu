@@ -767,7 +767,7 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
             : <span className="text-[9px] text-white/15 ml-auto opacity-0 group-hover/f:opacity-100 transition-opacity">✎</span>}
         </button>
         {open && (
-          <div className="absolute left-0 top-full mt-1 z-50 bg-[#111] border border-white/10 rounded-xl shadow-2xl py-1 min-w-[200px]">
+          <div className="absolute left-0 top-full mt-1 z-50 bg-[#111] border border-white/10 rounded-xl shadow-2xl py-1 min-w-[200px] max-h-72 overflow-y-auto">
             {options.map(opt => (
               <button key={opt} onClick={() => toggle(opt)}
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.05] transition-colors text-left">
@@ -839,7 +839,7 @@ function EditDropdownMulti({ label, value, field, eventId, options, onSaved }: {
             : <span className="text-[9px] text-white/15 ml-auto opacity-0 group-hover/f:opacity-100 transition-opacity">✎</span>}
         </button>
         {open && (
-          <div className="absolute left-0 top-full mt-1 z-50 bg-[#111] border border-white/10 rounded-xl shadow-2xl py-1 min-w-[200px]">
+          <div className="absolute left-0 top-full mt-1 z-50 bg-[#111] border border-white/10 rounded-xl shadow-2xl py-1 min-w-[200px] max-h-72 overflow-y-auto">
             {options.map(opt => (
               <button key={opt} onClick={() => toggle(opt)}
                 className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.05] transition-colors text-left">
@@ -4085,12 +4085,12 @@ export default function EventoPage() {
         if (!d.freelancers) return
         const foto = (d.freelancers as any[])
           .filter(f => f.status === 'FOTOGRAFO')
-          .map(f => (f.nome as string).toUpperCase())
+          .map(f => (f.nome as string).trim().toUpperCase())
         const video = (d.freelancers as any[])
           .filter(f => f.status === 'VIDEOGRAFO')
-          .map(f => (f.nome as string).toUpperCase())
+          .map(f => (f.nome as string).trim().toUpperCase())
         const all = (d.freelancers as any[])
-          .map(f => (f.nome as string).toUpperCase())
+          .map(f => (f.nome as string).trim().toUpperCase())
         if (foto.length > 0) setOptionsFoto(foto)
         if (video.length > 0) setOptionsVideo(video)
         if (all.length > 0) setOptionsAllTeam(all)
