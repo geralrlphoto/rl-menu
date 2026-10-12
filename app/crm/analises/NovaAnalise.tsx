@@ -7,7 +7,7 @@ import { supabase } from '@/lib/supabase'
 // escolhida, copia-o e abre a app Claude (o Claude Code faz a transcrição e
 // grava o relatório em crm_analises_reuniao).
 
-type LeadReuniao = { id: string; nome: string | null; reuniao_data: string | null; status: string | null }
+type LeadReuniao = { id: string; nome: string | null; reuniao_data: string | null; status: string | null; reuniao_gravacao: string | null }
 
 function montarPrompt(l: LeadReuniao, video: string) {
   return `És um analista especialista em reuniões de venda de fotografia e vídeo de casamento, com muitos anos a avaliar reuniões entre fotógrafos e noivos. És crítico, direto e exigente: não dás elogios vazios, apontas o que faz perder vendas e dizes exatamente o que mudar. Escreves em português de Portugal.
@@ -43,12 +43,16 @@ export default function NovaAnalise() {
   const [leadId, setLeadId] = useState('')
   const [video, setVideo] = useState('F:\\reunioes\\')
   const [copiado, setCopiado] = useState(false)
+  const [analisadas, setAnalisadas] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (!aberto || leads.length) return
-    supabase.from('crm_contacts').select('id,nome,reuniao_data,status')
+    // reuniao_gravacao é preenchido por analise_reunioes/sincronizar_gravacoes.py (data/hora do ficheiro)
+    supabase.from('crm_contacts').select('id,nome,reuniao_data,status,reuniao_gravacao')
       .not('reuniao_data', 'is', null).order('reuniao_data', { ascending: false }).limit(100)
       .then(({ data }) => setLeads((data ?? []) as LeadReuniao[]))
+    supabase.from('crm_analises_reuniao').select('contact_id')
+      .then(({ data }) => setAnalisadas(new Set((data ?? []).map(d => d.contact_id))))
   }, [aberto, leads.length])
 
   const lead = leads.find(l => l.id === leadId)
@@ -78,19 +82,25 @@ export default function NovaAnalise() {
 
             <label className="flex flex-col gap-1.5">
               <span className="text-xs tracking-widest text-white/30 uppercase">Noivos</span>
-              <select value={leadId} onChange={e => { setLeadId(e.target.value); setCopiado(false) }}
+              <select value={leadId} onChange={e => {
+                const l = leads.find(x => x.id === e.target.value)
+                setLeadId(e.target.value); setCopiado(false)
+                if (l?.reuniao_gravacao) setVideo(l.reuniao_gravacao)
+              }}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/50">
                 <option value="" className="bg-[#121212]">{leads.length ? 'Escolher lead…' : 'A carregar…'}</option>
                 {leads.map(l => (
                   <option key={l.id} value={l.id} className="bg-[#121212]">
-                    {l.nome} · {l.reuniao_data?.split('-').reverse().join('/')}
+                    {l.nome} · {l.reuniao_data?.split('-').reverse().join('/')}{analisadas.has(l.id) ? ' · ✓ analisada' : l.reuniao_gravacao ? ' · gravação' : ''}
                   </option>
                 ))}
               </select>
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs tracking-widest text-white/30 uppercase">Caminho do vídeo</span>
+              <span className="text-xs tracking-widest text-white/30 uppercase">
+                Caminho do vídeo{lead?.reuniao_gravacao && video === lead.reuniao_gravacao ? <span className="normal-case tracking-normal text-green-400/80"> · encontrado pela data da reunião</span> : ''}
+              </span>
               <input value={video} onChange={e => { setVideo(e.target.value); setCopiado(false) }}
                 placeholder="F:\reunioes\2026-09-14 13-59-28.mp4"
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-white/20 focus:outline-none focus:border-gold/50" />
