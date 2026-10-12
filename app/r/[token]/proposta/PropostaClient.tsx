@@ -12,12 +12,12 @@ const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
 // um título em romano com a ênfase em itálico dourado.
 const CENAS: Record<string, { cena: string; titulo: string; em: string }> = {
   cover:   { cena: 'Antes de rodar', titulo: 'Proposta',            em: 'criativa'     },
-  about:   { cena: 'Cena 01',        titulo: 'Quem está',           em: 'atrás da câmara' },
-  intro:   { cena: 'Cena 02',        titulo: 'Quem são os',         em: 'nossos noivos' },
-  motivo:  { cena: 'Cena 03',        titulo: 'O que ainda',         em: 'vos faz pensar' },
+  intro:   { cena: 'Cena 01',        titulo: 'Quem são os',         em: 'nossos noivos' },
+  blank:   { cena: 'Cena 02',        titulo: 'Como imaginam',       em: 'o vosso dia'  },
+  about:   { cena: 'Cena 03',        titulo: 'Quem está',           em: 'atrás da câmara' },
   relive:  { cena: 'Cena 04',        titulo: 'O vosso',             em: 'portal'       },
-  blank:   { cena: 'Cena 05',        titulo: 'Como imaginam',       em: 'o vosso dia'  },
-  blank2:  { cena: 'Cena 06',        titulo: 'O grande',            em: 'dia'          },
+  blank2:  { cena: 'Cena 05',        titulo: 'O grande',            em: 'dia'          },
+  motivo:  { cena: 'Cena 06',        titulo: 'O que ainda',         em: 'vos faz pensar' },
   invest:  { cena: 'Cena 07',        titulo: 'O',                   em: 'investimento' },
   'pkg-0': { cena: 'Proposta 01',    titulo: 'A',                   em: 'primeira'     },
   'pkg-1': { cena: 'Proposta 02',    titulo: 'A',                   em: 'segunda'      },
@@ -220,7 +220,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   // A 4.ª proposta (DOCUMENTAL) só entra quando está ativada no CRM
   // Só entram propostas com serviços (e a DOCUMENTAL só quando ativada); na maquete mostra as três
   const idxPropostas = [0, 1, 2, 3].filter(i => token === MASTER_TOKEN ? i < 3 : propostaVisivel(content.propostas?.[i], i))
-  const slides = ['cover', 'about', 'intro', 'motivo', 'relive', 'blank', 'blank2', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
+  // Primeiro o casal (quem são, como imaginam o dia), só depois nós; as dúvidas ficam mesmo antes dos preços
+  const slides = ['cover', 'intro', 'blank', 'about', 'relive', 'blank2', 'motivo', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
