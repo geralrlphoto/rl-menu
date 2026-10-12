@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Legend } from 'recharts'
 import RelatorioReuniao, { ANALISE_COLS, DIMENSOES, NotaAnel, fmtData, type Analise } from './RelatorioReuniao'
+import NovaAnalise from './NovaAnalise'
 
 type Lead = { id: string; nome: string | null; status: string | null }
 type Filtro = 'Todos' | 'Fechou' | 'Não fechou' | 'Em aberto'
@@ -96,10 +97,13 @@ export default function AnalisesPage() {
 
   return (
     <main className="min-h-screen px-4 sm:px-6 py-10 max-w-[1400px] mx-auto">
-      <div className="mb-8">
-        <Link href="/crm" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ CRM</Link>
-        <h1 className="text-4xl sm:text-5xl font-extralight tracking-[0.2em] text-white uppercase mt-3">Análise de Reuniões</h1>
-        <p className="text-white/30 text-sm mt-2">Avaliação crítica de cada reunião com noivos: o que funcionou, o que fez perder a venda e o que mudar.</p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <Link href="/crm" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ CRM</Link>
+          <h1 className="text-4xl sm:text-5xl font-extralight tracking-[0.2em] text-white uppercase mt-3">Análise de Reuniões</h1>
+          <p className="text-white/30 text-sm mt-2">Avaliação crítica de cada reunião com noivos: o que funcionou, o que fez perder a venda e o que mudar.</p>
+        </div>
+        <NovaAnalise />
       </div>
 
       {analises.length === 0 ? (
