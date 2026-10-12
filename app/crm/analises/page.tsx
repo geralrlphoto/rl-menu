@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { PolarAngleAxis, PolarGrid, PolarRadiusAxis, Radar, RadarChart, ResponsiveContainer, Legend } from 'recharts'
 import RelatorioReuniao, { ANALISE_COLS, DIMENSOES, NotaAnel, fmtData, type Analise } from './RelatorioReuniao'
 import NovaAnalise from './NovaAnalise'
+import PromptAnalistaPainel from './PromptAnalistaPainel'
 
 type Lead = { id: string; nome: string | null; status: string | null }
 type Filtro = 'Todos' | 'Fechou' | 'Não fechou' | 'Em aberto'
@@ -137,6 +138,8 @@ export default function AnalisesPage() {
           )}
         </div>
       </section>
+
+      <PromptAnalistaPainel />
 
       {analises.length === 0 ? (
         <p className="text-white/40 text-sm">Ainda não há reuniões analisadas.</p>

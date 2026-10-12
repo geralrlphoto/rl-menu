@@ -2,40 +2,13 @@
 
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { preencherPrompt } from './promptAnalista'
 
-// Botão "Analisar nova reunião": monta o prompt do analista crítico para a lead
+// Botão "Analisar nova reunião": preenche o prompt oficial do analista (promptAnalista.ts) para a lead
 // escolhida, copia-o e abre a app Claude (o Claude Code faz a transcrição e
 // grava o relatório em crm_analises_reuniao).
 
 type LeadReuniao = { id: string; nome: string | null; reuniao_data: string | null; status: string | null; reuniao_gravacao: string | null }
-
-function montarPrompt(l: LeadReuniao, video: string) {
-  return `És um analista especialista em reuniões de venda de fotografia e vídeo de casamento, com muitos anos a avaliar reuniões entre fotógrafos e noivos. És crítico, direto e exigente: não dás elogios vazios, apontas o que faz perder vendas e dizes exatamente o que mudar. Escreves em português de Portugal.
-
-Analisa a reunião gravada em:
-${video || '[CAMINHO DO VÍDEO]'}
-
-Lead no CRM: ${l.nome ?? ''} (crm_contacts.id = ${l.id}${l.reuniao_data ? `, reunião de ${l.reuniao_data}` : ''}, estado atual: ${l.status ?? 'sem estado'}).
-
-Processo:
-1. Extrai o áudio com ffmpeg (mono, 16 kHz) para o scratchpad.
-2. Transcreve com: python -I "C:\\Users\\Rui\\Desktop\\rui claude code\\analise_reunioes\\transcrever.py" <audio.wav> <saida.txt>. Guarda a transcrição em analise_reunioes\\AAAA-MM-DD Noivos.txt.
-3. Lê a transcrição inteira e avalia a reunião de forma crítica:
-   - Ligação (rapport): criou confiança e relação pessoal?
-   - Descoberta: percebeu o casal, o dia que imaginam, quem decide, orçamento e concorrência?
-   - Apresentação: ligou o valor ao que os noivos disseram valorizar, ou foi monólogo?
-   - Objeções: detetou e resolveu dúvidas, preço e concorrentes com respostas concretas?
-   - Fecho: pediu decisão no momento certo e saiu com próximo passo e data marcada?
-   Para cada ponto indica o minuto (mm:ss). Distingue o que é falha grave do que é detalhe.
-4. Insere uma linha em crm_analises_reuniao (Supabase awwbkmprgtwmnejeuiak) com contact_id = ${l.id}:
-   data_reuniao, duracao_min, ficheiro, nota (0-10, sê exigente), veredicto (1 frase crítica), resumo,
-   perfil {casal, evento, valores, orcamento, concorrencia},
-   scores {rapport, descoberta, apresentacao, objecoes, fecho} de 0 a 10,
-   pontos_fortes, pontos_fracos e melhorar como [{titulo, detalhe, momento, categoria, gravidade}]
-   (categoria: Descoberta | Apresentação | Objeções | Fecho; gravidade: alta | média | baixa),
-   proximos_passos como lista de textos.
-5. No fim, resume-me em poucas linhas a nota, as 3 falhas mais graves e o que fazer já com estes noivos.`
-}
 
 export default function NovaAnalise() {
   const [aberto, setAberto] = useState(false)
@@ -59,7 +32,7 @@ export default function NovaAnalise() {
 
   async function copiarEAbrir() {
     if (!lead) return
-    try { await navigator.clipboard.writeText(montarPrompt(lead, video.trim())) } catch { /* sem clipboard */ }
+    try { await navigator.clipboard.writeText(preencherPrompt(lead, video.trim())) } catch { /* sem clipboard */ }
     setCopiado(true)
     // Traz a app Claude para a frente (se estiver instalada; caso contrário não faz nada)
     window.location.href = 'claude://'
