@@ -8,6 +8,7 @@ import { SITE_URL, linkPublico } from '@/lib/site-url'
 import { MOTIVOS_NAO_FECHOU, colunaDe } from '@/lib/crm'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL, ofertaDaProposta } from '@/lib/crm'
+import RelatorioReuniao, { ANALISE_COLS, type Analise } from '../analises/RelatorioReuniao'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
@@ -93,6 +94,14 @@ export default function ClientePage() {
       .then(({ data }) => setHistorico(data ?? []))
   }
   useEffect(() => { loadHistorico() }, [id])
+
+  // Relatório(s) final(ais) da reunião, gerados a partir da gravação
+  const [analises, setAnalises] = useState<Analise[]>([])
+  useEffect(() => {
+    supabase.from('crm_analises_reuniao').select(ANALISE_COLS)
+      .eq('contact_id', id).order('data_reuniao', { ascending: false })
+      .then(({ data }) => setAnalises((data ?? []) as Analise[]))
+  }, [id])
 
   useEffect(() => {
     supabase.from('crm_contacts').select('*').eq('id', id).single().then(({ data }) => {
@@ -968,6 +977,23 @@ export default function ClientePage() {
             )}
           </div>
         </div>
+
+        {/* Relatório final da reunião (análise crítica da gravação) */}
+        {analises.length > 0 && (
+          <div className="bg-white/3 border border-gold/25 rounded-2xl p-6 flex flex-col gap-5">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Relatório da Reunião</h2>
+                <p className="text-[11px] text-white/25 mt-1">Análise crítica da gravação{analises.length > 1 ? ` · ${analises.length} reuniões` : ''}</p>
+              </div>
+              <Link href={`/crm/analises?id=${analises[0].id}`}
+                className="text-[10px] tracking-[0.2em] uppercase text-white/40 hover:text-gold transition-colors shrink-0">
+                Todas as análises →
+              </Link>
+            </div>
+            <RelatorioReuniao a={analises[0]} />
+          </div>
+        )}
 
         {/* Notas da Reunião */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
