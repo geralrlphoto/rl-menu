@@ -110,7 +110,13 @@ export default function AnalisesPage() {
         <div className="relative flex-1 flex flex-col px-5 sm:px-10 pt-5 sm:pt-7 pb-5 sm:pb-7">
           <div className="flex items-start justify-between gap-3">
             <Link href="/crm" className="text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase">‹ CRM</Link>
-            <NovaAnalise />
+            <div className="flex flex-wrap justify-end gap-2">
+              <Link href="/crm/melhorar"
+                className="inline-flex items-center gap-2 text-[11px] tracking-[0.2em] uppercase px-4 py-2.5 rounded-xl border border-white/25 text-white/85 bg-black/40 backdrop-blur-md hover:border-gold/60 hover:text-gold transition-all">
+                <span className="text-base leading-none">✦</span> O que melhorar
+              </Link>
+              <NovaAnalise />
+            </div>
           </div>
 
           <div className="flex-1 flex flex-col justify-center py-8 max-w-xl">
