@@ -28,10 +28,10 @@ function media(nums: number[]) {
 
 function KPI({ label, value, sub, color = 'text-white' }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="bg-white/3 border border-white/8 rounded-2xl p-5">
-      <p className="text-white/25 text-[10px] tracking-[0.3em] uppercase mb-3">{label}</p>
-      <p className={`text-3xl font-extralight ${color}`}>{value}</p>
-      {sub && <p className="text-white/25 text-[10px] mt-1 tracking-wider">{sub}</p>}
+    <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
+      <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">{label}</p>
+      <p className={`text-xl sm:text-2xl font-light ${color}`}>{value}</p>
+      {sub && <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">{sub}</p>}
     </div>
   )
 }
@@ -44,6 +44,7 @@ export default function AnalisesPage() {
   const [filtro, setFiltro] = useState<Filtro>('Todos')
   const [categoria, setCategoria] = useState<string | null>(null)
   const [busca, setBusca] = useState('')
+  const [porAnalisar, setPorAnalisar] = useState<number | null>(null)
 
   useEffect(() => {
     (async () => {
@@ -55,6 +56,8 @@ export default function AnalisesPage() {
         const { data: ls } = await supabase.from('crm_contacts').select('id,nome,status').in('id', ids)
         setLeads(Object.fromEntries((ls ?? []).map(l => [l.id, l])))
       }
+      const { data: grav } = await supabase.from('crm_contacts').select('id').not('reuniao_gravacao', 'is', null)
+      setPorAnalisar((grav ?? []).filter(g => !ids.includes(g.id)).length)
       setAnalises(lista)
       const pedido = new URLSearchParams(window.location.search).get('id')
       setSelId(pedido && lista.some(a => a.id === pedido) ? pedido : lista[0]?.id ?? null)
@@ -96,26 +99,48 @@ export default function AnalisesPage() {
   }
 
   return (
-    <main className="min-h-screen px-4 sm:px-6 py-10 max-w-[1400px] mx-auto">
-      <div className="mb-8 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
-        <div>
-          <Link href="/crm" className="text-xs tracking-[0.3em] text-white/20 hover:text-gold transition-colors uppercase">‹ CRM</Link>
-          <h1 className="text-4xl sm:text-5xl font-extralight tracking-[0.2em] text-white uppercase mt-3">Análise de Reuniões</h1>
-          <p className="text-white/30 text-sm mt-2">Avaliação crítica de cada reunião com noivos: o que funcionou, o que fez perder a venda e o que mudar.</p>
+    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1400px] mx-auto">
+      {/* ── CAPA ── */}
+      <section className="relative rounded-3xl overflow-hidden border border-white/10 mb-6 min-h-[440px] sm:min-h-[400px] flex flex-col">
+        <img src="/boas-vindas-camera.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[70%_center]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/65 to-black/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+
+        <div className="relative flex-1 flex flex-col px-5 sm:px-10 pt-5 sm:pt-7 pb-5 sm:pb-7">
+          <div className="flex items-start justify-between gap-3">
+            <Link href="/crm" className="text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase">‹ CRM</Link>
+            <NovaAnalise />
+          </div>
+
+          <div className="flex-1 flex flex-col justify-center py-8 max-w-xl">
+            <p className="text-[10px] tracking-[0.45em] uppercase text-white/45">RL Photo.Video · Reuniões com Noivos</p>
+            <h1 className="font-cormorant font-light text-gold text-5xl sm:text-7xl tracking-[0.08em] leading-none mt-3">Análise</h1>
+            <p className="font-cormorant font-light text-white/85 text-2xl sm:text-3xl tracking-[0.2em] uppercase mt-1">de Reuniões</p>
+            <div className="w-20 h-px bg-gold/70 my-5" />
+            <p className="font-cormorant italic text-white/80 text-lg sm:text-xl leading-snug">
+              Cada reunião vista por um olhar crítico: o que conquistou os noivos, o que fez perder a venda e o que mudar na próxima.
+            </p>
+            {porAnalisar != null && (
+              <p className="text-[11px] tracking-[0.2em] uppercase text-white/45 mt-4">
+                {analises.length} {analises.length === 1 ? 'analisada' : 'analisadas'} · {porAnalisar} {porAnalisar === 1 ? 'gravação' : 'gravações'} por analisar
+              </p>
+            )}
+          </div>
+
+          {analises.length > 0 && (
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+              <KPI label="Reuniões analisadas" value={String(analises.length)} />
+              <KPI label="Nota média" value={notaMedia != null ? notaMedia.toLocaleString('pt-PT') : '—'} sub="de 0 a 10" color={notaMedia != null && notaMedia >= 7.5 ? 'text-green-400' : notaMedia != null && notaMedia >= 5 ? 'text-yellow-300' : 'text-red-400'} />
+              <KPI label="Taxa de fecho" value={encerradas.length ? `${Math.round((fecharam / encerradas.length) * 100)}%` : '—'} sub={`${fecharam} de ${encerradas.length} encerradas`} color="text-gold" />
+              <KPI label="Ponto mais fraco" value={pior?.label ?? '—'} sub={pior ? `média ${medias[pior.key]?.toLocaleString('pt-PT')} / 10` : undefined} color="text-red-400" />
+            </div>
+          )}
         </div>
-        <NovaAnalise />
-      </div>
+      </section>
 
       {analises.length === 0 ? (
         <p className="text-white/40 text-sm">Ainda não há reuniões analisadas.</p>
       ) : (<>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-          <KPI label="Reuniões analisadas" value={String(analises.length)} />
-          <KPI label="Nota média" value={notaMedia != null ? notaMedia.toLocaleString('pt-PT') : '—'} sub="de 0 a 10" color={notaMedia != null && notaMedia >= 7.5 ? 'text-green-400' : notaMedia != null && notaMedia >= 5 ? 'text-yellow-300' : 'text-red-400'} />
-          <KPI label="Taxa de fecho" value={encerradas.length ? `${Math.round((fecharam / encerradas.length) * 100)}%` : '—'} sub={`${fecharam} de ${encerradas.length} encerradas`} color="text-gold" />
-          <KPI label="Ponto mais fraco" value={pior?.label ?? '—'} sub={pior ? `média ${medias[pior.key]?.toLocaleString('pt-PT')} / 10` : undefined} color="text-red-400" />
-        </div>
-
         <div className="grid lg:grid-cols-2 gap-3 mb-6">
           <div className="bg-white/3 border border-white/8 rounded-2xl p-5">
             <p className="text-white/25 text-[10px] tracking-[0.3em] uppercase mb-1">Perfil de vendedor</p>
