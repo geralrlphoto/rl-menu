@@ -89,13 +89,25 @@ export default function NovaAnalise() {
               }}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/50">
                 <option value="" className="bg-[#121212]">{leads.length ? 'Escolher reunião gravada…' : 'A carregar…'}</option>
-                {leads.map(l => (
-                  <option key={l.id} value={l.id} className="bg-[#121212]">
-                    {l.nome} · {l.reuniao_data?.split('-').reverse().join('/')}{analisadas.has(l.id) ? ' · ✓ analisada' : ''}
-                  </option>
+                {[
+                  { label: `Por analisar (${leads.filter(l => !analisadas.has(l.id)).length})`, itens: leads.filter(l => !analisadas.has(l.id)), marca: '' },
+                  { label: `Já analisadas (${leads.filter(l => analisadas.has(l.id)).length})`, itens: leads.filter(l => analisadas.has(l.id)), marca: '✓ ' },
+                ].filter(g => g.itens.length).map(g => (
+                  <optgroup key={g.label} label={g.label} className="bg-[#121212]">
+                    {g.itens.map(l => (
+                      <option key={l.id} value={l.id} className="bg-[#121212]">
+                        {g.marca}{l.nome} · {l.reuniao_data?.split('-').reverse().join('/')}
+                      </option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </label>
+            {lead && analisadas.has(lead.id) && (
+              <p className="-mt-2 text-[12px] text-yellow-200/80">
+                Esta reunião já tem relatório. Uma nova análise acrescenta outro, sem apagar o anterior.
+              </p>
+            )}
 
             <label className="flex flex-col gap-1.5">
               <span className="text-xs tracking-widest text-white/30 uppercase">
