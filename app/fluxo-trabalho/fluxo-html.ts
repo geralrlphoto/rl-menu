@@ -183,7 +183,7 @@ html.js .is-in .r{opacity:1;transform:none;}
 </main>
 
 <footer class="foot">
-  <div class="fm">RL Photo.Video · Wedding Moments<br><a href="mailto:geral.rlphoto@gmail.com">geral.rlphoto@gmail.com</a> · 912 832 788</div>
+  <div class="fm">RL Photo.Video · Wedding Moments<br><a href="mailto:geral.rlphoto@gmail.com">geral.rlphoto@gmail.com</a> · 912 932 768</div>
 </footer>
 
 <!-- DRAWER -->

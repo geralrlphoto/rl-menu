@@ -154,7 +154,7 @@ export default function ApoioFotografiasPage() {
           <h3>Ao vosso dispor.</h3>
           <p>
             Ficamos descansados. Se precisarem de mais alguma coisa, escrevam para
-            <strong> geral.rlphoto@gmail.com</strong> ou liguem para o <strong>912 832 788</strong>.
+            <strong> geral.rlphoto@gmail.com</strong> ou liguem para o <strong>912 932 768</strong>.
           </p>
         </div>
       )}
@@ -192,7 +192,7 @@ export default function ApoioFotografiasPage() {
           <h3>Não conseguimos enviar o aviso.</h3>
           <p>
             Falem connosco para <strong>geral.rlphoto@gmail.com</strong> ou para o
-            <strong> 912 832 788</strong>, com o número do ticket <strong>{dados.ticket}</strong>.
+            <strong> 912 932 768</strong>, com o número do ticket <strong>{dados.ticket}</strong>.
             Resolvemos o mais breve possível.
           </p>
         </div>
@@ -347,7 +347,7 @@ export default function ApoioFotografiasPage() {
         )}
 
         <footer className="foot">
-          <div className="fm">RL Photo.Video &nbsp;·&nbsp; <a href="mailto:geral.rlphoto@gmail.com">geral.rlphoto@gmail.com</a> &nbsp;·&nbsp; 912 832 788</div>
+          <div className="fm">RL Photo.Video &nbsp;·&nbsp; <a href="mailto:geral.rlphoto@gmail.com">geral.rlphoto@gmail.com</a> &nbsp;·&nbsp; 912 932 768</div>
         </footer>
       </div>
     </>

@@ -91,7 +91,7 @@ function buildEmailHtml(o: {
         </td></tr>
         <!-- Rodapé -->
         <tr><td style="background:#0b0a08;padding:18px 40px;text-align:center;">
-          <p style="margin:0;font-size:11px;color:#8c8170;">geral.rlphoto@gmail.com · 912 832 788</p>
+          <p style="margin:0;font-size:11px;color:#8c8170;">geral.rlphoto@gmail.com · 912 932 768</p>
         </td></tr>
       </table>
     </td></tr>

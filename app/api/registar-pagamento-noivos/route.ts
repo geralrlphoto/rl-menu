@@ -85,7 +85,7 @@ function cardPagamento(o: any): string {
       </td></tr>
       <tr><td style="background:#0a0805;padding:18px 48px;text-align:center;border-top:1px solid #241c11;">
         <p style="margin:0;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.3em;color:#9a855c;text-transform:uppercase;">RL Photo &middot; Video</p>
-        <p style="margin:5px 0 0;font-size:11px;color:#6a5f4c;">geral.rlphoto@gmail.com &middot; 912 832 788</p>
+        <p style="margin:5px 0 0;font-size:11px;color:#6a5f4c;">geral.rlphoto@gmail.com &middot; 912 932 768</p>
       </td></tr>
     </table>
   </td></tr>
