@@ -49,7 +49,7 @@ export default function NovaAnalise() {
     if (!aberto || leads.length) return
     // reuniao_gravacao é preenchido por analise_reunioes/sincronizar_gravacoes.py (data/hora do ficheiro)
     supabase.from('crm_contacts').select('id,nome,reuniao_data,status,reuniao_gravacao')
-      .not('reuniao_data', 'is', null).order('reuniao_data', { ascending: false }).limit(100)
+      .not('reuniao_gravacao', 'is', null).order('reuniao_data', { ascending: false }).limit(200)
       .then(({ data }) => setLeads((data ?? []) as LeadReuniao[]))
     supabase.from('crm_analises_reuniao').select('contact_id')
       .then(({ data }) => setAnalisadas(new Set((data ?? []).map(d => d.contact_id))))
@@ -81,17 +81,17 @@ export default function NovaAnalise() {
             </div>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs tracking-widest text-white/30 uppercase">Noivos</span>
+              <span className="text-xs tracking-widest text-white/30 uppercase">Reunião gravada</span>
               <select value={leadId} onChange={e => {
                 const l = leads.find(x => x.id === e.target.value)
                 setLeadId(e.target.value); setCopiado(false)
                 if (l?.reuniao_gravacao) setVideo(l.reuniao_gravacao)
               }}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-gold/50">
-                <option value="" className="bg-[#121212]">{leads.length ? 'Escolher lead…' : 'A carregar…'}</option>
+                <option value="" className="bg-[#121212]">{leads.length ? 'Escolher reunião gravada…' : 'A carregar…'}</option>
                 {leads.map(l => (
                   <option key={l.id} value={l.id} className="bg-[#121212]">
-                    {l.nome} · {l.reuniao_data?.split('-').reverse().join('/')}{analisadas.has(l.id) ? ' · ✓ analisada' : l.reuniao_gravacao ? ' · gravação' : ''}
+                    {l.nome} · {l.reuniao_data?.split('-').reverse().join('/')}{analisadas.has(l.id) ? ' · ✓ analisada' : ''}
                   </option>
                 ))}
               </select>
