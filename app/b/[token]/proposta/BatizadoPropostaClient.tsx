@@ -668,16 +668,16 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
         const momentos = restante > 0
           ? [
               { v: `${ADJUDICACAO.toLocaleString('pt-PT')} €`, l: 'Hoje, reserva a data' },
-              { v: `${reforco.toLocaleString('pt-PT')} €`,     l: 'Até 30 dias antes' },
+              { v: `${reforco.toLocaleString('pt-PT')} €`,     l: 'Até 2 dias antes' },
               { v: `${valorFinal.toLocaleString('pt-PT')} €`,  l: 'Após o dia' },
             ]
           : []
         // ── Plano de pagamento do reforço ─────────────────────────
-        // Divide o valor a liquidar até 30 dias antes do casamento em
+        // Divide o valor a liquidar até 2 dias antes do casamento em
         // prestações mensais, nunca abaixo de 200 €.
         const MIN_PRESTACAO = 200
         const dataEvento = content.evento?.data ? new Date(`${content.evento.data}T00:00:00`) : null
-        const limitePlano = dataEvento ? new Date(dataEvento.getTime() - 30 * 86400000) : null
+        const limitePlano = dataEvento ? new Date(dataEvento.getTime() - 2 * 86400000) : null
         const hojeD = new Date()
         const mesesAteLimite = limitePlano
           ? Math.max(0, (limitePlano.getFullYear() - hojeD.getFullYear()) * 12 + (limitePlano.getMonth() - hojeD.getMonth()))

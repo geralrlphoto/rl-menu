@@ -29,7 +29,7 @@ const CONDICOES = [
   },
   {
     titulo: '2. Forma de Pagamento',
-    texto: 'O valor total do serviço divide-se em três momentos: (1) Adjudicação de 400 € para reserva da data; (2) Reforço correspondente a 80% do valor restante, a liquidar até 30 dias antes do evento; (3) Valor final (20% restante) a pagar no próprio dia do casamento, antes do início do serviço.',
+    texto: 'O valor total do serviço divide-se em três momentos: (1) Adjudicação de 400 € para reserva da data; (2) Reforço correspondente a 80% do valor restante, a liquidar até 2 dias antes do evento; (3) Valor final (20% restante) a pagar no próprio dia do casamento, antes do início do serviço.',
   },
   {
     titulo: '3. Entrega dos Materiais',
