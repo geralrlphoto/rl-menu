@@ -48,8 +48,16 @@ Insere uma linha em crm_analises_reuniao (Supabase awwbkmprgtwmnejeuiak), contac
 - pontos_fortes, pontos_fracos, melhorar: [{titulo, detalhe, momento, categoria, gravidade}]; no detalhe dos fracos inclui a frase dita e o "devias ter dito"; categoria: Descoberta | Apresentação | Objeções | Fecho
 - proximos_passos: ações concretas para esta lead, incluindo uma mensagem de WhatsApp pronta a enviar (sem emojis)
 
+DEPOIS, ATUALIZA O PLANO "O QUE MELHORAR"
+Lê todas as análises em crm_analises_reuniao e o plano mais recente em crm_planos_melhoria. Insere uma linha nova em crm_planos_melhoria, reescrita com todas as reuniões (incluindo esta):
+- baseado_em: número total de análises
+- titulo (diagnóstico numa frase), diagnostico, regra_de_ouro
+- prioridades: [{titulo, porque, evidencia (com os nomes dos casais), como_fazer: [passos], diz_assim, nao_digas (frase real dita), metrica}], por ordem de impacto nas vendas
+- guiao: [{tempo, fase, objetivo, fazer}]; situacoes: [{quando, responde}]; o_que_manter: [texto]
+Mantém o que continua válido, sobe ou desce prioridades conforme os padrões novos e retira o que já foi corrigido nas reuniões mais recentes.
+
 NO FIM, RESPONDE-ME COM
-Nota e veredicto, as 3 falhas mais graves com o "devias ter dito", o padrão que se repete face às reuniões anteriores (se houver) e a mensagem de follow-up pronta a copiar.`
+Nota e veredicto, as 3 falhas mais graves com o "devias ter dito", o padrão que se repete face às reuniões anteriores (se houver), o que mudou no plano "O que melhorar" e a mensagem de follow-up pronta a copiar.`
 
 export function preencherPrompt(l: { id: string; nome: string | null; reuniao_data: string | null; status: string | null }, video: string) {
   return PROMPT_ANALISTA
