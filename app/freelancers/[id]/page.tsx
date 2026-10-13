@@ -2241,6 +2241,8 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   const [activeFilter, setActiveFilter] = useState<FilterTab>('Todos')
   const [search, setSearch] = useState('')
   const [sortOption, setSortOption] = useState('Mais próximos')
+  // Divisão por ano (2026 / 2027…) — começa no ano atual
+  const [anoSel, setAnoSel] = useState(String(new Date().getFullYear()))
 
   // Placeholder wedding images (rotation)
   const placeholderImgs = [
@@ -2256,8 +2258,12 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
 
   const sortedAll = [...casamentos].sort((a,b) => (a.data_casamento??'') < (b.data_casamento??'') ? -1 : 1)
 
+  const anoDe = (c: Casamento) => (c.data_casamento ?? '').slice(0, 4)
+  const anos = Array.from(new Set([String(new Date().getFullYear()), ...casamentos.map(anoDe).filter(Boolean)])).sort()
+
   // Aplicar filtros + pesquisa
   const filtered = sortedAll.filter(c => {
+    if (anoDe(c) && anoDe(c) !== anoSel) return false
     const dtu = daysUntil(c.data_casamento)
     const isPast = dtu !== null && dtu < 0
     if (activeFilter === 'Próximos' && isPast) return false
@@ -2311,6 +2317,21 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
       {/* ── FILTERS BAR ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-white/[0.06] p-4 backdrop-blur-md"
         style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
+        <div className="flex items-center gap-2 mb-4 pb-4 border-b border-white/[0.06]">
+          {anos.map(a => {
+            const n = casamentos.filter(c => anoDe(c) === a).length
+            return (
+              <button key={a} onClick={() => setAnoSel(a)}
+                className={`px-4 py-1.5 rounded-lg text-[13px] tracking-[0.15em] font-semibold transition-all ${
+                  anoSel === a
+                    ? 'bg-gold text-black'
+                    : 'border border-white/[0.08] text-white/45 hover:text-white/80 hover:bg-white/[0.03]'
+                }`}>
+                {a}<span className="ml-1.5 text-[10px] opacity-70">{n}</span>
+              </button>
+            )
+          })}
+        </div>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-1.5">
             {FILTER_TABS.map(t => (
