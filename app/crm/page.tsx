@@ -93,26 +93,34 @@ function ActionTile({ num, label, icon, href, onClick, external, primary, disabl
   primary?: boolean
   disabled?: boolean
 }) {
-  const cls = `crm-tile${primary ? ' is-primary' : ''}`
+  // Cartão horizontal: ícone num círculo dourado, número, nome e seta (estilo novo do painel)
+  const cls = 'group relative w-full flex items-center gap-3.5 rounded-[18px] border bg-[#111111]/90 px-4 py-3.5 text-left font-cond transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/45 hover:shadow-[0_0_30px_-16px_rgba(201,168,76,0.6)] disabled:opacity-50 disabled:cursor-wait'
+  const estilo = {
+    borderColor: primary ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.14)',
+    borderLeft: `2px solid rgba(201,168,76,${primary ? 0.9 : 0.35})`,
+    boxShadow: primary ? '0 0 30px -18px rgba(201,168,76,0.7)' : undefined,
+  }
   const inner = (
     <>
-      <span className="crm-tile-sweep" />
-      <span className="crm-tile-num">{String(num).padStart(2, '0')}</span>
-      <span className="crm-tile-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+      <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-[#C9A84C] transition-transform duration-300 group-hover:scale-110"
+        style={{ background: `rgba(201,168,76,${primary ? 0.2 : 0.1})` }}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className="w-[18px] h-[18px]">
           <path strokeLinecap="round" strokeLinejoin="round" d={ICONS[icon]} />
         </svg>
       </span>
-      <span className="crm-tile-name">{label}</span>
-      <span className={`crm-tile-arrow${external ? ' is-external' : ''}`}>{external ? '↗' : '→'}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] tracking-[0.15em] text-[#C9A84C]/60">{String(num).padStart(2, '0')}</span>
+        <span className="block text-[16px] font-semibold leading-tight text-white truncate">{label}</span>
+      </span>
+      <span className="shrink-0 text-white/25 transition-all group-hover:text-[#C9A84C] group-hover:translate-x-0.5">{external ? '↗' : '→'}</span>
     </>
   )
   if (href) {
     return external
-      ? <a href={href} target="_blank" rel="noopener noreferrer" className={cls}>{inner}</a>
-      : <Link href={href} className={cls}>{inner}</Link>
+      ? <a href={href} target="_blank" rel="noopener noreferrer" className={cls} style={estilo}>{inner}</a>
+      : <Link href={href} className={cls} style={estilo}>{inner}</Link>
   }
-  return <button type="button" onClick={onClick} disabled={disabled} className={cls}>{inner}</button>
+  return <button type="button" onClick={onClick} disabled={disabled} className={cls} style={estilo}>{inner}</button>
 }
 
 
@@ -467,7 +475,7 @@ export default function CRMPage() {
         <div className="mb-10">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Atalhos</p>
           <h2 className="font-semibold text-white text-[28px] leading-tight mt-1 mb-4">Ferramentas do CRM</h2>
-          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3 [&_.crm-tile]:!rounded-[18px]">
+          <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
             <ActionTile num={1} label="Nova Lead" icon="mais" href="/crm/nova" primary />
             <ActionTile num={2} label="Follow Up" icon="relogio" href="/crm/follow-up" />
             <ActionTile num={3} label="Estatísticas" icon="grafico" href="/crm/stats" />
