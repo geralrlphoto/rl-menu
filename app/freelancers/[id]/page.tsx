@@ -691,7 +691,7 @@ function FreelancerDetailInner() {
         viewAsFreelancer={viewAsFreelancer}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[252px] lg:pr-4 ${
+    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[216px] lg:pr-4 ${
       tab === null ? 'max-w-none'
         : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
         : 'max-w-3xl'
@@ -1927,127 +1927,66 @@ function SidebarNavAdmin({
     { key: 'definicoes' as AdminTabKey, label: 'Dados Pessoais', icon: '☻' },
   ]
 
+  // Menu lateral compacto (novo layout): 200px, letra condensada, item ativo em pill dourada suave
   return (
-    <aside
-      className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[240px] z-20 flex-col"
-      style={{
-        background: 'linear-gradient(180deg, #0a0805 0%, #0e0b07 50%, #0a0805 100%)',
-        borderRight: '0.5px solid rgba(201,164,92,0.18)',
-        boxShadow: 'inset -1px 0 30px rgba(201,164,92,0.04), 4px 0 24px rgba(0,0,0,0.45)',
-      }}
-    >
-      {/* Top corner ornaments */}
-      <div className="absolute top-0 left-0 w-[28px] h-[28px] pointer-events-none" style={{ borderTop: '0.5px solid rgba(201,164,92,0.25)', borderLeft: '0.5px solid rgba(201,164,92,0.25)' }} />
-      <div className="absolute top-0 right-0 w-[28px] h-[28px] pointer-events-none" style={{ borderTop: '0.5px solid rgba(201,164,92,0.25)', borderRight: '0.5px solid rgba(201,164,92,0.25)' }} />
-
-      {/* Logo — caixa gold com o logo RL Photo·Video */}
-      <div className="px-6 pt-9 pb-6 flex flex-col items-center">
-        <div className="w-16 h-16 rounded-2xl border border-gold/40 flex items-center justify-center overflow-hidden"
-          style={{
-            background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))',
-            boxShadow: '0 0 22px rgba(201,164,92,0.18)',
-          }}>
-          <img
-            src="/logo_rl_gold.png"
-            alt="RL Photo·Video"
-            className="w-11 h-11 object-contain"
-          />
+    <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[200px] z-20 flex-col font-cond bg-[#0b0b0b]" style={{ borderRight: '1px solid rgba(201,168,76,0.12)' }}>
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 px-5 pt-6 pb-5">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo_rl_gold.png" alt="RL Photo·Video" className="w-7 h-7 object-contain" />
+        <div className="min-w-0">
+          <p className="text-[12px] font-bold tracking-[0.14em] uppercase text-[#C9A84C] leading-none whitespace-nowrap">RL Photo.Video</p>
+          {!viewAsFreelancer && <p className="text-[10px] tracking-[0.25em] uppercase text-white/30 mt-1">Admin · Equipa</p>}
         </div>
-        {!viewAsFreelancer && (
-          <div className="flex items-center justify-center gap-2 mt-4">
-            <div className="h-px w-5" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.45))' }} />
-            <p className="text-[8px] tracking-[0.45em] uppercase" style={{ color: '#7a6340' }}>Admin</p>
-            <span className="text-[7px]" style={{ color: '#7a6340' }}>◆</span>
-            <p className="text-[8px] tracking-[0.45em] uppercase" style={{ color: '#7a6340' }}>Edição</p>
-            <div className="h-px w-5" style={{ background: 'linear-gradient(90deg, rgba(201,164,92,0.45), transparent)' }} />
-          </div>
-        )}
       </div>
 
-      <div className="h-px mx-7" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.25), transparent)' }} />
-
-      {/* User */}
+      {/* Membro */}
       {freelancer && (
-        <div className="px-6 py-5 flex items-center gap-4">
+        <div className="mx-3 mb-4 flex items-center gap-2.5 rounded-[14px] bg-white/[0.03] px-3 py-2.5" style={{ border: '1px solid rgba(201,168,76,0.14)' }}>
           {freelancer.foto_url ? (
-            <img src={freelancer.foto_url} alt={freelancer.nome}
-              className="w-11 h-11 rounded-full object-cover"
-              style={{ border: '0.5px solid #c9a96e', boxShadow: '0 0 14px rgba(201,164,92,0.22)' }} />
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={freelancer.foto_url} alt={freelancer.nome} className="w-8 h-8 rounded-full object-cover border border-[#C9A84C]/40 shrink-0" />
           ) : (
-            <div className="w-11 h-11 rounded-full flex items-center justify-center text-[14px]"
-              style={{ background: 'rgba(201,164,92,0.10)', border: '0.5px solid #c9a96e', color: '#c9a96e', fontStyle: 'italic', boxShadow: '0 0 14px rgba(201,164,92,0.22)' }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 shrink-0">
               {(freelancer.nome ?? '?').charAt(0)}
             </div>
           )}
-          <div className="min-w-0 flex-1">
-            <p className="text-[15px] truncate font-normal" style={{ color: '#f0e8d8' }}>{freelancer.nome}</p>
-            {freelancer.status && (
-              <p className="text-[9px] tracking-[0.4em] uppercase mt-1 italic" style={{ color: '#c9a96e', opacity: 0.75 }}>{freelancer.status}</p>
-            )}
+          <div className="min-w-0">
+            <p className="text-[14px] font-semibold text-white truncate leading-tight">{freelancer.nome}</p>
+            {freelancer.status && <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9A84C]/70 truncate">{freelancer.status}</p>}
           </div>
         </div>
       )}
 
-      <div className="h-px mx-7" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.18), transparent)' }} />
-
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-4 py-5 flex flex-col gap-0.5">
+      {/* Navegação */}
+      <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
         {items.map((it, i) => {
           const active = !it.href && tab === it.key
+          const cls = `group w-full flex items-center gap-2.5 rounded-full pl-3 pr-3 py-2 text-left text-[13px] tracking-[0.12em] uppercase transition-all ${
+            active ? 'bg-[#C9A84C]/12 text-white font-semibold shadow-[inset_2px_0_0_#C9A84C]' : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+          }`
           const inner = (
             <>
-              <span className="w-5 text-center text-[14px] transition-colors"
-                style={{ color: active ? '#c9a96e' : 'rgba(255,255,255,0.30)' }}>{it.icon}</span>
-              {active ? (
-                <span className="flex-1 text-[14px] italic" style={{ color: '#c9a96e' }}>{it.label}</span>
-              ) : (
-                <span className="flex-1 text-[10px] tracking-[0.3em] uppercase font-light text-white/45 group-hover:text-white/85 transition-colors">{it.label}</span>
-              )}
+              <span className={`w-4 text-center text-[12px] ${active ? 'text-[#C9A84C]' : 'text-white/25 group-hover:text-[#C9A84C]/70'}`}>{it.icon}</span>
+              <span className="truncate">{it.label}</span>
             </>
           )
-          const cls = "group relative w-full flex items-center gap-3 pl-4 pr-3 py-2.5 text-left transition-all"
-          const sty = {
-            background: active ? 'linear-gradient(90deg, rgba(201,164,92,0.10) 0%, rgba(201,164,92,0.02) 60%, transparent 100%)' : 'transparent',
-            borderLeft: active ? '1.5px solid #c9a96e' : '1.5px solid transparent',
-            boxShadow: active ? 'inset 12px 0 24px -16px rgba(201,164,92,0.5)' : 'none',
-          } as const
-          // Rota externa ao painel (ex.: /fluxo-trabalho) — <a> normal, não muda de tab.
-          if (it.href) {
-            return <a key={i} href={it.href} className={cls} style={sty}>{inner}</a>
-          }
-          return (
-            <button
-              key={i}
-              onClick={() => setTab(it.key)}
-              className={cls}
-              style={sty}
-            >
-              {inner}
-            </button>
-          )
+          if (it.href) return <a key={i} href={it.href} className={cls}>{inner}</a>
+          return <button key={i} onClick={() => setTab(it.key)} className={cls}>{inner}</button>
         })}
       </nav>
 
-      {/* Footer */}
-      <div className="px-6 py-5 mt-auto">
-        <div className="h-px mb-4" style={{ background: 'linear-gradient(90deg, transparent, rgba(201,164,92,0.25), transparent)' }} />
+      {/* Rodapé */}
+      <div className="px-5 py-4 border-t border-[#C9A84C]/10">
         {!viewAsFreelancer && (
           <a href={`/login?next=${encodeURIComponent(`/freelancers/${freelancer?.id ?? ''}?view=freelancer`)}`} target="_blank" rel="noopener noreferrer"
-            className="block text-[9px] tracking-[0.4em] uppercase transition-colors mb-3 text-center"
-            style={{ color: '#7a6340' }}
-            onMouseEnter={e => e.currentTarget.style.color = '#c9a96e'}
-            onMouseLeave={e => e.currentTarget.style.color = '#7a6340'}
+            className="block text-[11px] tracking-[0.2em] uppercase text-white/35 hover:text-[#C9A84C] transition-colors"
             title="Login como o membro (precisa do email + password dele)">
-            ↗ Ver como freelancer
+            ↗ Ver como membro
           </a>
         )}
-        <div className="text-center text-[10px] tracking-[0.4em]" style={{ color: '#5a4828' }}>—&nbsp;·&nbsp;◆&nbsp;·&nbsp;—</div>
-        <p className="text-[10px] italic text-center mt-2" style={{ color: '#5a4f3a' }}>© RL Photo · Video</p>
+        <p className="text-[10px] text-white/20 mt-2">© RL Photo.Video</p>
       </div>
-
-      {/* Bottom corner ornaments */}
-      <div className="absolute bottom-0 left-0 w-[28px] h-[28px] pointer-events-none" style={{ borderBottom: '0.5px solid rgba(201,164,92,0.25)', borderLeft: '0.5px solid rgba(201,164,92,0.25)' }} />
-      <div className="absolute bottom-0 right-0 w-[28px] h-[28px] pointer-events-none" style={{ borderBottom: '0.5px solid rgba(201,164,92,0.25)', borderRight: '0.5px solid rgba(201,164,92,0.25)' }} />
     </aside>
   )
 }
