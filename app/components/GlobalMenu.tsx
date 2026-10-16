@@ -317,11 +317,17 @@ function GlobalMenuInner() {
         {/* Footer */}
         <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} gap-2 px-4 py-3`}
           style={{ borderTop: `1px solid ${accent(0.07)}` }}>
-          {!mini && (
+          {!mini && (isMedia ? (
             <p className="font-cond text-[11px] truncate" style={{ color: 'rgba(255,255,255,0.25)' }}>
-              {isMedia ? '© RL PROD' : '© RL Photo · Video'}
+              © RL PROD
             </p>
-          )}
+          ) : (
+            // Logo dourado (o mesmo da Proposta Criativa); o PNG tem muita margem, por isso é recortado
+            <span className="flex items-center justify-center overflow-hidden shrink-0" style={{ width: '56px', height: '68px' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo_rl_gold.png" alt="RL Photo · Video" className="max-w-none opacity-85" style={{ width: '130px' }} />
+            </span>
+          ))}
           {comToggle && (
             <button
               onClick={toggleCompact}
