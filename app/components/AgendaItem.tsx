@@ -40,7 +40,7 @@ export function AgendaItem({ chave, children }: { chave: string; children: React
             body: JSON.stringify({ chave }),
           }).then(r => r.json()).then(d => { if (!d?.ok) setOculto(false) }).catch(() => setOculto(false))
         }}
-        className="absolute -top-1.5 -right-1.5 z-10 w-4 h-4 rounded-full flex items-center justify-center text-[9px] leading-none bg-[#1a1a1a] border border-white/15 text-white/50 hover:text-white hover:border-red-400/60 hover:bg-red-500/20 transition-all opacity-60 sm:opacity-0 sm:group-hover/item:opacity-100 focus:opacity-100"
+        className="absolute top-1 right-1 z-10 w-4 h-4 rounded-full flex items-center justify-center text-[9px] leading-none bg-[#1a1a1a] border border-white/15 text-white/50 hover:text-white hover:border-[#C9A84C]/60 hover:bg-[#C9A84C]/20 transition-all opacity-60 sm:opacity-0 sm:group-hover/item:opacity-100 focus:opacity-100"
       >
         ✕
       </button>

@@ -723,9 +723,9 @@ function Eventos2026Inner() {
             </div>
           </div>
 
-          <div className="grid lg:grid-cols-[1fr_300px] gap-8 lg:gap-14 items-center mt-10 sm:mt-14">
+          <div className="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_300px] gap-8 lg:gap-14 items-center mt-10 sm:mt-14">
             {/* Título + ano */}
-            <div>
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
                 <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">RL Photo.Video · Temporada</p>
                 <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">

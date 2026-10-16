@@ -867,10 +867,10 @@ export default async function PhotoDashboard() {
             <RelogioHero />
           </div>
 
-          <div className="flex-1 grid lg:grid-cols-[1fr_300px] gap-10 lg:gap-16 items-center">
+          <div className="flex-1 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_300px] gap-10 lg:gap-16 items-center">
 
             {/* Saudação */}
-            <div>
+            <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-3">
                 <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">
                   RL Photo.Video · Menu interno
@@ -909,12 +909,12 @@ export default async function PhotoDashboard() {
               {proximo && proximoInfo && (
                 <Link href={`/eventos-2026/${proximo.id}`}
                   className="group mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 max-w-xl rounded-[16px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-md px-4 py-3 shadow-[0_0_36px_-18px_rgba(201,168,76,0.5)] transition-all duration-300 hover:border-[#C9A84C]/55">
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 basis-full sm:basis-0">
                     <p className="font-cond text-[10px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]/85">{proximoInfo.tipo}</p>
-                    <p className="font-cond font-semibold text-white text-[16px] leading-tight truncate mt-0.5">
+                    <p className="font-cond font-semibold text-white text-[16px] leading-tight sm:truncate mt-0.5">
                       {(proximo.cliente ?? '').trim() || proximo.referencia}
                     </p>
-                    <p className="font-cond text-[12px] text-white/45 truncate mt-0.5 first-letter:uppercase">
+                    <p className="font-cond text-[12px] text-white/45 sm:truncate mt-0.5 first-letter:uppercase">
                       {proximoInfo.data}{proximo.local ? ` · ${proximo.local}` : ''}
                     </p>
                   </div>
@@ -1017,9 +1017,9 @@ export default async function PhotoDashboard() {
                 logo: <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none" /></svg> },
               { label: 'Email', href: 'https://mail.google.com', bg: '#ffffff',
                 logo: <svg viewBox="52 42 88 66" className="w-7 h-7"><path fill="#4285f4" d="M58 108h14V74L52 59v43c0 3.32 2.69 6 6 6" /><path fill="#34a853" d="M120 108h14c3.32 0 6-2.69 6-6V59l-20 15" /><path fill="#fbbc04" d="M120 48v26l20-15v-8c0-7.42-8.47-11.65-14.4-7.2" /><path fill="#ea4335" d="M72 74V48l24 18 24-18v26L96 92" /><path fill="#c5221f" d="M52 51v8l20 15V48l-5.6-4.2c-5.94-4.45-14.4-.22-14.4 7.2" /></svg> },
-              { label: 'Site', href: 'https://www.rlphotovideo.pt', bg: '#0b0b0b',
+              { label: 'Site', href: 'https://www.rlphotovideo.pt', bg: "radial-gradient(circle at 50% 40%, #1d1912, #0b0b0b 70%)",
                 // eslint-disable-next-line @next/next/no-img-element
-                logo: <img src="/logo_rl_gold.png" alt="" className="w-9 h-auto" /> },
+                logo: <img src="/logo_rl_gold.png" alt="" className="w-[52px] h-auto max-w-none" /> },
               { label: 'WhatsApp', href: 'https://web.whatsapp.com', bg: '#25D366',
                 logo: <svg viewBox="0 0 24 24" fill="#fff" className="w-7 h-7"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 2.5 1 3 .8 3.6.7.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.7 15.6 2.2 13.8 2.2 12 2.2 6.6 6.6 2.2 12 2.2c2.6 0 5.1 1 6.9 2.9 1.8 1.8 2.9 4.3 2.9 6.9 0 5.4-4.4 9.8-9.8 9.8zM20.5 3.5C18.2 1.2 15.2 0 12 0 5.4 0 .1 5.3.1 11.9c0 2.1.6 4.2 1.6 6L0 24l6.3-1.6c1.8 1 3.7 1.5 5.7 1.5 6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.4-8.5z" /></svg> },
               { label: 'Google Maps', href: 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62', bg: '#ffffff',
