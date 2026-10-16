@@ -8,6 +8,7 @@
 import '../../portal-cliente/atmosphere/atmosphere.css'
 import BriefingExtensions, { type BriefingExt } from '../../portal-cliente/[id]/BriefingExtensions'
 import { PrevisaoIPMA } from '../../portal-cliente/atmosphere/PrevisaoIPMA'
+import GuiaEquipa from './GuiaEquipa'
 
 type Ficha = { id: string; label: string; value: string }
 
@@ -22,6 +23,8 @@ function dataLonga(iso?: string | null) {
 const CSS = `
 .partilha-nova, .partilha-nova * { font-family: 'Roboto Condensed', sans-serif !important; }
 .partilha-nova h1.capa-titulo { font-weight: 700 !important; letter-spacing: -0.01em !important; }
+.partilha-nova .font-bold { font-weight: 700 !important; }
+.partilha-nova .font-semibold { font-weight: 600 !important; }
 .partilha-nova .briefing-premium section {
   border-radius: 22px !important; border-color: rgba(201,168,76,0.18) !important;
   background: rgba(17,17,17,0.92) !important; box-shadow: 0 0 44px -26px rgba(201,168,76,0.55) !important;
@@ -141,6 +144,7 @@ export default function BriefingPartilha({ info, fichas, equipa, nomes, casal, c
                 className="inline-flex items-center gap-2 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]">
                 Guardar PDF <span className="text-[#C9A84C]">↓</span>
               </button>
+              <GuiaEquipa />
             </div>
           </div>
         </div>
