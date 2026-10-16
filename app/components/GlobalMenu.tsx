@@ -404,9 +404,9 @@ function GlobalMenuInner() {
             </>
           ) : (
             // Logo dourado (o mesmo da Proposta Criativa); o PNG tem muita margem, por isso é recortado
-            <span className="flex items-center justify-center overflow-hidden" style={{ width: '48px', height: '64px' }}>
+            <span className="flex items-center justify-center overflow-hidden" style={{ width: '42px', height: '52px' }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo_rl_gold.png" alt="RL Photo · Video" className="max-w-none" style={{ width: '118px' }} />
+              <img src="/logo_rl_gold.png" alt="RL Photo · Video" className="max-w-none" style={{ width: '96px', marginTop: '3px' }} />
             </span>
           )}
         </Link>
