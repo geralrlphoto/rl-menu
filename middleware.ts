@@ -233,7 +233,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/podcast/') ||
     pathname.startsWith('/api/podcast/') ||
     pathname === '/sitemap.xml' ||
-    pathname === '/' ||
+    // A raiz (menu das 3 áreas) já não é pública: sem sessão de admin vai para o login
     pathname.startsWith('/wedding-mentor') ||
     pathname === '/newsletter' ||
     pathname.startsWith('/newsletter/') ||
