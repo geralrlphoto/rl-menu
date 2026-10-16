@@ -146,9 +146,9 @@ function GlobalMenuInner() {
         href={href}
         onClick={() => setOpen(false)}
         title={mini ? label : undefined}
-        className={`group relative flex items-center ${mini ? 'justify-center' : 'gap-3'} rounded-[16px] transition-all duration-200`}
+        className={`group relative flex items-center ${mini ? 'justify-center' : 'gap-2.5'} rounded-full transition-all duration-200`}
         style={{
-          padding: mini ? '7px 0' : '7px 10px',
+          padding: mini ? '5px 0' : '5px 8px',
           background: active ? '#141414' : 'transparent',
           border: `1px solid ${active ? 'rgba(255,255,255,0.08)' : 'transparent'}`,
           borderLeft: `2px solid ${active ? accent(0.95) : 'transparent'}`,
@@ -160,7 +160,7 @@ function GlobalMenuInner() {
         {/* Ícone em círculo, como os cartões do painel */}
         <span className="shrink-0 flex items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110"
           style={{
-            width: '34px', height: '34px',
+            width: '26px', height: '26px',
             color: active ? accent(0.95) : accent(0.6),
             background: active ? (isMedia ? 'rgba(255,255,255,0.10)' : `${gold}0.14)`) : (isMedia ? 'rgba(255,255,255,0.04)' : `${gold}0.06)`),
           }}>
@@ -169,11 +169,11 @@ function GlobalMenuInner() {
 
         {!mini && (
           <div className="flex-1 min-w-0">
-            <p className="font-cond text-[15px] leading-tight truncate transition-colors duration-200"
+            <p className="font-cond text-[14px] leading-tight truncate transition-colors duration-200"
               style={{ color: active ? '#fff' : 'rgba(255,255,255,0.68)' }}>
               {label}
             </p>
-            {sub && (
+            {false && sub && (
               <p className="font-cond text-[11.5px] leading-tight mt-0.5 truncate"
                 style={{ color: active ? accent(0.7) : 'rgba(255,255,255,0.3)' }}>
                 {sub}
@@ -227,12 +227,12 @@ function GlobalMenuInner() {
           style={{ background: `radial-gradient(120% 80% at 0% 0%, ${accent(0.08)}, transparent 70%)` }} />
 
         {/* Header */}
-        <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} px-4 py-5`}>
+        <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} px-4 py-3.5`}>
           <Link href={isMedia ? '/media' : '/photo'} onClick={() => setOpen(false)}
             className={`flex items-center ${mini ? '' : 'gap-3'} min-w-0`}>
             <span className="shrink-0 flex items-center justify-center rounded-full"
               style={{
-                width: '38px', height: '38px',
+                width: '30px', height: '30px',
                 border: `1px solid ${accent(0.35)}`,
                 background: `linear-gradient(140deg, ${accent(0.16)}, transparent)`,
                 color: accent(0.95),
@@ -294,7 +294,7 @@ function GlobalMenuInner() {
         )}
 
         {/* Nav links */}
-        <nav className={`relative flex-1 min-h-0 overflow-y-auto ${mini ? 'px-2.5' : 'px-3'} pb-4 flex flex-col gap-1`}>
+        <nav className={`relative flex-1 min-h-0 overflow-y-auto ${mini ? 'px-2.5' : 'px-3'} pb-4 flex flex-col gap-0.5`}>
           {/* Sino de Notificações — só no menu RL Photo (não no MEDIA) */}
           {!isMedia && (
             <>
@@ -658,7 +658,7 @@ function GlobalMenuInner() {
         data-global-menu
         className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-0 left-0 h-full z-[60] flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{
-          width: '264px',
+          width: '220px',
           background: '#0b0b0b',
           borderRight: `1px solid ${accent(0.12)}`,
           boxShadow: `4px 0 40px ${accent(0.06)}`,
