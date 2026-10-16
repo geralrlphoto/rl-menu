@@ -1250,12 +1250,12 @@ export default function TimeBlocks({
   }, [tarefas, heroBlock?.evento_id])
 
   return (
-    <section className="mt-8 rounded-2xl p-6 flex flex-col gap-5"
-      style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <section className="mt-8 rounded-[22px] p-4 sm:p-6 flex flex-col gap-5 min-w-0"
+      style={{ background: 'rgba(17,17,17,0.9)', border: '1px solid rgba(201,168,76,0.18)' }}>
 
       <div className="flex flex-wrap items-center gap-3 justify-between">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xs tracking-[0.35em] uppercase text-white/60">Time Blocks</h2>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 min-w-0">
+          <h2 className="text-[15px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C]">Time Blocks</h2>
           <div className="flex items-center gap-1">
             <button onClick={() => shiftDay(-1)}
               className="w-7 h-7 flex items-center justify-center border border-white/10 rounded-lg text-white/40 hover:text-[#C9A84C] hover:border-[#C9A84C]/40 transition-all">‹</button>
@@ -1284,7 +1284,7 @@ export default function TimeBlocks({
           </label>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <span className="text-[10px] text-white/30 tracking-wider">
             {blocks.length} bloco{blocks.length === 1 ? '' : 's'} · {totalPlannedH}h{String(totalPlannedM).padStart(2, '0')} planeados
           </span>

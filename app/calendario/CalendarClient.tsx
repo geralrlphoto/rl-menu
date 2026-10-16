@@ -90,10 +90,10 @@ type FiltroKey = 'casamento' | 'pw' | 'reuniao' | 'tarefa' | 'equipa'
 
 const FILTRO_META: { key: FiltroKey; label: string; cor: string }[] = [
   { key: 'casamento', label: 'Casamentos',  cor: '#C9A84C' },
-  { key: 'pw',        label: 'Pré-Wedding', cor: '#4FC3C3' },
-  { key: 'reuniao',   label: 'Reuniões',    cor: '#C084FC' },
-  { key: 'tarefa',    label: 'Tarefas',     cor: '#60A5FA' },
-  { key: 'equipa',    label: 'Equipa',      cor: '#4ADE80' },
+  { key: 'pw',        label: 'Pré-Wedding', cor: '#D9C48F' },
+  { key: 'reuniao',   label: 'Reuniões',    cor: '#B8975A' },
+  { key: 'tarefa',    label: 'Tarefas',     cor: '#E6D3A3' },
+  { key: 'equipa',    label: 'Equipa',      cor: '#A88A4A' },
 ]
 
 const TIPO_NOMES: Record<TeamEntry['tipo'], string> = {
@@ -123,10 +123,10 @@ function Pill({ cor, riscado, children }: { cor: string; riscado?: boolean; chil
 }
 
 const TIPO_COLORS: Record<TeamEntry['tipo'], { bg: string; border: string; text: string }> = {
-  confirmacao:  { bg: 'rgba(74,222,128,0.12)', border: 'rgba(74,222,128,0.28)', text: '#4ADE80' },
-  edicao_fotos: { bg: 'rgba(251,146,60,0.12)', border: 'rgba(251,146,60,0.28)', text: '#FB923C' },
-  edicao_album: { bg: 'rgba(167,139,250,0.12)', border: 'rgba(167,139,250,0.28)', text: '#A78BFA' },
-  edicao_video: { bg: 'rgba(96,165,250,0.12)', border: 'rgba(96,165,250,0.28)', text: '#60A5FA' },
+  confirmacao:  { bg: 'rgba(168,138,74,0.12)', border: 'rgba(168,138,74,0.28)', text: '#A88A4A' },
+  edicao_fotos: { bg: 'rgba(212,169,90,0.12)', border: 'rgba(212,169,90,0.28)', text: '#D4A95A' },
+  edicao_album: { bg: 'rgba(184,151,90,0.12)', border: 'rgba(184,151,90,0.28)', text: '#A78BFA' },
+  edicao_video: { bg: 'rgba(230,211,163,0.12)', border: 'rgba(230,211,163,0.28)', text: '#E6D3A3' },
 }
 
 function startsOn(dateStr: string | null | undefined, year: number, month: number, day: number) {
@@ -839,15 +839,15 @@ export default function CalendarClient({
       if (e.data_evento?.startsWith(iso)) out.push({ key: `ev-${e.id}`, label: e.cliente || e.referencia, cor: '#C9A84C', hora: null, sel: { kind: 'event', data: e } })
     }
     if (filtros.pw) for (const p of preWeddings) {
-      if (p.data_evento.startsWith(iso)) out.push({ key: `pw-${p.id}`, label: `Pré-wedding · ${p.nomes}`, cor: '#4FC3C3', hora: p.hora ? p.hora.slice(0, 5) : null, sel: { kind: 'pw', data: p } })
+      if (p.data_evento.startsWith(iso)) out.push({ key: `pw-${p.id}`, label: `Pré-wedding · ${p.nomes}`, cor: '#D9C48F', hora: p.hora ? p.hora.slice(0, 5) : null, sel: { kind: 'pw', data: p } })
     }
     if (filtros.reuniao) for (const r of reunioes) {
-      if (r.reuniao_data.startsWith(iso)) out.push({ key: `re-${r.id}`, label: `Reunião · ${r.nome}`, cor: '#C084FC', hora: r.reuniao_hora ? r.reuniao_hora.slice(0, 5) : null, sel: { kind: 'reuniao', data: r } })
+      if (r.reuniao_data.startsWith(iso)) out.push({ key: `re-${r.id}`, label: `Reunião · ${r.nome}`, cor: '#B8975A', hora: r.reuniao_hora ? r.reuniao_hora.slice(0, 5) : null, sel: { kind: 'reuniao', data: r } })
     }
     if (filtros.tarefa) for (const t of tarefas) {
       if (t.data_prazo.startsWith(iso)) out.push({
         key: `ta-${t.id}`, label: t.titulo,
-        cor: t.status === 'CONCLUIDA' ? '#86EFAC' : t.status === 'PENDENTE' ? '#FB923C' : '#60A5FA',
+        cor: t.status === 'CONCLUIDA' ? '#8F7A4E' : t.status === 'PENDENTE' ? '#D4A95A' : '#E6D3A3',
         hora: t.hora ? t.hora.slice(0, 5) : null, sel: { kind: 'tarefa', data: t },
       })
     }
@@ -855,7 +855,7 @@ export default function CalendarClient({
       if (t.data_calendar.startsWith(iso)) out.push({
         key: `te-${t.id}`,
         label: `${t.freelancer_nome} · ${t.status === 'indisponivel' ? 'indisponível' : TIPO_NOMES[t.tipo]}`,
-        cor: t.status === 'indisponivel' ? '#F87171' : TIPO_COLORS[t.tipo].text,
+        cor: t.status === 'indisponivel' ? '#7D6A45' : TIPO_COLORS[t.tipo].text,
         hora: null, sel: { kind: 'team', data: t },
       })
     }
@@ -902,7 +902,70 @@ export default function CalendarClient({
   })
 
   return (
-    <div className="min-h-screen bg-[#080808] overflow-x-hidden">
+    <div className="min-h-screen bg-[#080808] overflow-x-hidden font-cond">
+
+      {/* ── Capa: foto local da Vercel (não passa pelo Supabase), mês em grande ── */}
+      <section className="relative overflow-hidden min-h-[420px] lg:min-h-[480px] flex flex-col bg-[#070707]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/eventos-hero-2027.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_40%] grayscale opacity-35" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(95deg, #070707 0%, rgba(7,7,7,0.82) 40%, rgba(7,7,7,0.35) 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #080808 0%, transparent 45%)' }} />
+        <div className="absolute inset-0 opacity-40" style={{
+          backgroundImage: 'radial-gradient(rgba(201,168,76,0.18) 1px, transparent 1px)', backgroundSize: '22px 22px',
+          maskImage: 'radial-gradient(ellipse 55% 70% at 75% 40%, #000 20%, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 55% 70% at 75% 40%, #000 20%, transparent 75%)',
+        }} />
+        <div className="absolute top-0 bottom-0 left-5 sm:left-8 lg:left-12 w-px bg-[#C9A84C]/40" />
+
+        <div className="relative flex-1 max-w-[1500px] w-full mx-auto pl-10 sm:pl-14 lg:pl-20 pr-5 sm:pr-8 pt-16 lg:pt-10 pb-10 flex flex-col">
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex items-center gap-2.5 text-[12px] tracking-[0.25em] uppercase text-white/55">
+              <span className="w-2 h-2 rounded-full bg-[#C9A84C] shadow-[0_0_10px_#C9A84C]" />
+              Hoje · {today.getDate()} {MESES[today.getMonth()].slice(0, 3).toLowerCase()} {today.getFullYear()}
+            </p>
+            <Link href="/photo" className="text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Menu principal</Link>
+          </div>
+
+          <div className="mt-auto pt-14 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_320px] gap-8 items-end">
+            <div className="min-w-0">
+              <p className="text-[13px] sm:text-[16px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">Calendário</p>
+              <div className="flex items-end gap-3 sm:gap-5 mt-2">
+                <h1 className="font-bold uppercase text-white leading-[0.88] text-[56px] sm:text-[100px] lg:text-[124px] break-words">
+                  {MESES[viewMonth]}
+                </h1>
+                <span className="mb-2 sm:mb-4 text-[22px] sm:text-[34px] font-light text-[#C9A84C]">{viewYear}</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5 mt-6">
+                <button onClick={prevMonth} title="Mês anterior" aria-label="Mês anterior"
+                  className="w-11 h-11 rounded-full border border-white/15 hover:border-[#C9A84C]/60 bg-black/30 text-white/70 hover:text-[#C9A84C] text-xl transition-all">‹</button>
+                <button onClick={nextMonth} title="Mês seguinte" aria-label="Mês seguinte"
+                  className="w-11 h-11 rounded-full border border-white/15 hover:border-[#C9A84C]/60 bg-black/30 text-white/70 hover:text-[#C9A84C] text-xl transition-all">›</button>
+                <button onClick={irParaHoje}
+                  className="h-11 px-5 rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_30px_-12px_rgba(201,168,76,0.7)]">
+                  Hoje
+                </button>
+                <span className="hidden sm:inline text-[12px] text-white/30 ml-2">← → muda de mês · H volta a hoje</span>
+              </div>
+            </div>
+
+            {/* Números do mês */}
+            <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+              <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+                Este mês
+              </p>
+              <div className="grid grid-cols-3 gap-y-3 mt-3">
+                {FILTRO_META.map(f => (
+                  <div key={f.key}>
+                    <p className="text-[22px] font-semibold leading-none text-white">{contagensMes[f.key]}</p>
+                    <p className="text-[11px] mt-1" style={{ color: f.cor }}>{f.label}</p>
+                  </div>
+                ))}
+              </div>
+            </aside>
+          </div>
+        </div>
+      </section>
 
       {/* ── Barra de comando (fica colada ao topo) ───────────────────── */}
       <div className="sticky top-0 z-30 backdrop-blur-xl bg-[#080808]/85 border-b border-white/[0.07]">
@@ -914,32 +977,32 @@ export default function CalendarClient({
           </Link>
           <div className="leading-tight hidden sm:block">
             <div className="text-[9px] tracking-[0.4em] text-white/25 uppercase">RL Photo.Video</div>
-            <div className="text-[13px] tracking-[0.35em] text-[#C9A84C] uppercase">Calendário</div>
+            <div className="text-[15px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase">Calendário</div>
           </div>
 
           <div className="ml-auto flex items-center gap-2">
             <a href="/preparacao/demo?so=reuniao" target="_blank" rel="noopener noreferrer"
               title="Página onde os noivos marcam a reunião (cada casal recebe o link /preparacao/<id> na ficha do evento)"
-              className="h-9 px-3 flex items-center rounded-xl border border-[#C084FC]/35 bg-[#C084FC]/10 text-[#C084FC] text-[10px] tracking-[0.25em] uppercase hover:bg-[#C084FC]/20 transition-all">
+              className="h-9 px-4 flex items-center rounded-full border border-white/[0.14] bg-[#0e0e0e]/90 text-white/80 text-[14px] font-semibold hover:border-[#C9A84C]/50 hover:text-white transition-all">
               🤝<span className="hidden sm:inline ml-1.5">Marcações</span>
             </a>
             <button onClick={() => { if (!dispOpen) carregarDisp(); setDispOpen(v => !v) }}
               title="Horários disponíveis para a reunião de preparação (comuns a todos os casais)"
-              className={`h-9 px-3 flex items-center rounded-xl border text-[10px] tracking-[0.25em] uppercase transition-all ${dispOpen ? 'border-[#C9A84C]/60 bg-[#C9A84C]/20 text-[#C9A84C]' : 'border-white/10 text-white/50 hover:text-[#C9A84C] hover:border-[#C9A84C]/40'}`}>
+              className={`h-9 px-4 flex items-center rounded-full border text-[14px] font-semibold transition-all ${dispOpen ? 'border-[#C9A84C]/60 bg-[#C9A84C]/20 text-[#C9A84C]' : 'border-white/[0.14] bg-[#0e0e0e]/90 text-white/80 hover:text-white hover:border-[#C9A84C]/50'}`}>
               🗓<span className="hidden sm:inline ml-1.5">Disponibilidade</span>
             </button>
-            <div className="flex items-center rounded-xl border border-white/10 overflow-hidden">
+            <div className="hidden sm:flex items-center rounded-full border border-white/[0.14] overflow-hidden">
               <button onClick={prevMonth} title="Mês anterior"
                 className="w-9 h-9 text-white/40 hover:text-[#C9A84C] hover:bg-white/[0.04] transition-all">‹</button>
               <div className="px-2 sm:px-4 text-center min-w-[104px] sm:min-w-[140px]">
-                <div className="text-[13px] tracking-[0.25em] uppercase text-white">{MESES[viewMonth]}</div>
+                <div className="text-[15px] font-semibold tracking-[0.12em] uppercase text-white">{MESES[viewMonth]}</div>
                 <div className="text-[9px] tracking-[0.3em] text-[#C9A84C]/60">{viewYear}</div>
               </div>
               <button onClick={nextMonth} title="Mês seguinte"
                 className="w-9 h-9 text-white/40 hover:text-[#C9A84C] hover:bg-white/[0.04] transition-all">›</button>
             </div>
             <button onClick={irParaHoje}
-              className="h-9 px-3 rounded-xl border border-[#C9A84C]/35 bg-[#C9A84C]/10 text-[#C9A84C] text-[10px] tracking-[0.25em] uppercase hover:bg-[#C9A84C]/20 transition-all">
+              className="hidden sm:block h-9 px-4 rounded-full border border-[#C9A84C]/50 bg-[#C9A84C]/12 text-white text-[14px] font-semibold hover:bg-[#C9A84C]/25 transition-all">
               Hoje
             </button>
             <div className="hidden sm:block"><GoogleSyncButton /></div>
@@ -964,14 +1027,14 @@ export default function CalendarClient({
           <div className="flex-1 grid grid-cols-6 sm:grid-cols-12 gap-1">
             {MESES.map((m, i) => (
               <button key={i} onClick={() => setViewMonth(i)}
-                className={`h-8 rounded-lg text-[10px] tracking-[0.15em] uppercase transition-all ${
+                className={`h-8 rounded-full text-[12px] tracking-[0.08em] uppercase transition-all ${
                   i === viewMonth
-                    ? 'bg-[#C9A84C] text-black font-semibold shadow-[0_0_20px_-4px_rgba(201,168,76,0.6)]'
-                    : 'border border-white/[0.07] text-white/35 hover:text-white/80 hover:border-[#C9A84C]/35'
+                    ? 'border border-[#C9A84C]/60 bg-[#C9A84C]/18 text-[#C9A84C] font-semibold shadow-[0_0_20px_-6px_rgba(201,168,76,0.6)]'
+                    : 'border border-white/[0.08] text-white/45 hover:text-white hover:border-[#C9A84C]/35'
                 }`}>
                 {m.slice(0, 3)}
                 {monthCounts[i] > 0 && (
-                  <span className={`ml-1 text-[9px] ${i === viewMonth ? 'text-black/60' : 'text-[#C9A84C]/50'}`}>
+                  <span className={`ml-1 text-[10px] ${i === viewMonth ? 'text-[#C9A84C]/70' : 'text-[#C9A84C]/50'}`}>
                     {monthCounts[i]}
                   </span>
                 )}
@@ -989,12 +1052,12 @@ export default function CalendarClient({
 
         {/* ── Filtros (a antiga legenda, agora a servir para alguma coisa) ── */}
         <div className="flex flex-wrap items-center gap-1.5 mb-4">
-          <span className="text-[9px] tracking-[0.3em] text-white/20 uppercase mr-1">Mostrar</span>
+          <span className="text-[11px] tracking-[0.2em] text-[#C9A84C]/70 uppercase mr-1">Mostrar</span>
           {FILTRO_META.map(f => {
             const on = filtros[f.key]
             return (
               <button key={f.key} onClick={() => setFiltros(prev => ({ ...prev, [f.key]: !prev[f.key] }))}
-                className="h-7 px-2.5 rounded-lg text-[10px] tracking-wider flex items-center gap-1.5 transition-all"
+                className="h-8 px-3.5 rounded-full text-[13px] font-medium flex items-center gap-1.5 transition-all"
                 style={on
                   ? { background: f.cor + '22', border: `1px solid ${f.cor}55`, color: f.cor }
                   : { background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.25)' }}>
@@ -1005,21 +1068,18 @@ export default function CalendarClient({
               </button>
             )
           })}
-          <span className="ml-auto hidden lg:block text-[10px] text-white/20 tracking-wider">
-            ← → muda de mês · H volta a hoje
-          </span>
         </div>
 
         <div className="flex flex-col xl:flex-row gap-5 items-start">
 
           {/* ── Grelha do mês ──────────────────────────────────────── */}
           <div className="flex-1 min-w-0 w-full">
-            <div className="rounded-2xl border border-white/[0.07] overflow-hidden bg-white/[0.012]">
+            <div className="rounded-[22px] border border-[#C9A84C]/20 overflow-hidden bg-[#0f0f0f]/90 shadow-[0_0_60px_-30px_rgba(201,168,76,0.5)]">
               <div className="grid grid-cols-7 border-b border-white/[0.07]">
                 {DIAS_SEMANA.map((d, i) => (
                   <div key={d}
-                    className={`py-2.5 text-center text-[9px] tracking-[0.3em] uppercase ${
-                      i === 0 ? 'text-red-400/35' : i === 6 ? 'text-[#C9A84C]/35' : 'text-white/25'
+                    className={`py-3 text-center text-[12px] font-semibold tracking-[0.2em] uppercase ${
+                      i === 0 || i === 6 ? 'text-[#C9A84C]/70' : 'text-white/40'
                     }`}>
                     {d}
                   </div>
@@ -1087,10 +1147,10 @@ export default function CalendarClient({
 
                       {/* Número do dia */}
                       <div className="relative flex items-center justify-between mb-1.5 flex-shrink-0">
-                        <div className={`w-6 h-6 flex items-center justify-center rounded-full text-[11px] tabular-nums
-                          ${isToday ? 'bg-[#C9A84C] text-black font-semibold shadow-[0_0_14px_-2px_rgba(201,168,76,0.8)]' : ''}
+                        <div className={`w-7 h-7 flex items-center justify-center rounded-full text-[13px] tabular-nums
+                          ${isToday ? 'bg-[#C9A84C]/25 border border-[#C9A84C]/70 text-[#C9A84C] font-semibold shadow-[0_0_14px_-2px_rgba(201,168,76,0.7)]' : ''}
                           ${!isToday && isCurrentMonth && !isSunday ? 'text-white/55' : ''}
-                          ${!isToday && isCurrentMonth && isSunday ? 'text-red-400/55' : ''}
+                          ${!isToday && isCurrentMonth && isSunday ? 'text-white/55' : ''}
                           ${!isCurrentMonth ? 'text-white/[0.12]' : ''}
                         `}>
                           {day}
@@ -1115,7 +1175,7 @@ export default function CalendarClient({
                             const pw = item.p
                             return (
                               <button key={`pw-${pw.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'pw', data: pw }) }} className="text-left w-full">
-                                <Pill cor="#4FC3C3">📷 {pw.nomes}</Pill>
+                                <Pill cor="#D9C48F">📷 {pw.nomes}</Pill>
                               </button>
                             )
                           }
@@ -1123,17 +1183,17 @@ export default function CalendarClient({
                             const r = item.r
                             return (
                               <button key={`re-${r.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'reuniao', data: r }) }} className="text-left w-full">
-                                <Pill cor="#C084FC">🤝 {r.origem && r.origem !== 'crm' ? r.nome : r.nome.split(' ')[0]}</Pill>
+                                <Pill cor="#B8975A">🤝 {r.origem && r.origem !== 'crm' ? r.nome : r.nome.split(' ')[0]}</Pill>
                               </button>
                             )
                           }
                           if (item.kind === 'tarefa') {
                             const ta = item.t
                             const linkedEvent = ta.evento_id ? eventsById.get(ta.evento_id) : null
-                            const cor = ta.status === 'CONCLUIDA' ? '#86EFAC'
-                              : ta.status === 'PENDENTE' ? '#FB923C'
+                            const cor = ta.status === 'CONCLUIDA' ? '#8F7A4E'
+                              : ta.status === 'PENDENTE' ? '#D4A95A'
                               : linkedEvent ? '#C9A84C'
-                              : '#60A5FA'
+                              : '#E6D3A3'
                             const horaStr = ta.hora ? ta.hora.slice(0, 5) : null
                             return (
                               <button key={`ta-${ta.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'tarefa', data: ta }) }} className="text-left w-full">
@@ -1150,7 +1210,7 @@ export default function CalendarClient({
                           const isIndis = t.status === 'indisponivel'
                           return (
                             <button key={`te-${t.id}`} onClick={(e) => { e.stopPropagation(); setSelected({ kind: 'team', data: t }) }} className="text-left w-full">
-                              <Pill cor={isIndis ? '#F87171' : tc.text}>
+                              <Pill cor={isIndis ? '#7D6A45' : tc.text}>
                                 {isIndis ? '✕' : TIPO_LABELS[t.tipo]} {t.freelancer_nome.split(' ')[0]}
                               </Pill>
                             </button>
@@ -1181,7 +1241,7 @@ export default function CalendarClient({
           <aside className="w-full xl:w-[330px] flex-shrink-0 space-y-4">
 
             {/* Hoje */}
-            <div className="rounded-2xl border border-[#C9A84C]/25 bg-gradient-to-b from-[#C9A84C]/[0.07] to-transparent p-4">
+            <div className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/90 p-5 shadow-[0_0_40px_-22px_rgba(201,168,76,0.5)]">
               <div className="flex items-baseline justify-between mb-2">
                 <span className="text-[9px] tracking-[0.4em] text-[#C9A84C]/70 uppercase">Hoje</span>
                 <span className="text-[10px] text-white/30 tracking-wider">
@@ -1210,7 +1270,7 @@ export default function CalendarClient({
 
             {/* Próximo casamento */}
             {proximoCasamento && (
-              <div className="rounded-2xl border border-white/[0.07] p-4">
+              <div className="rounded-[22px] border border-[#C9A84C]/15 bg-[#111111]/90 p-5">
                 <div className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-2">Próximo casamento</div>
                 <div className="flex items-end justify-between gap-3">
                   <div className="min-w-0">
@@ -1232,7 +1292,7 @@ export default function CalendarClient({
             )}
 
             {/* Próximos 7 dias */}
-            <div className="rounded-2xl border border-white/[0.07] p-4">
+            <div className="rounded-[22px] border border-[#C9A84C]/15 bg-[#111111]/90 p-5">
               <div className="text-[9px] tracking-[0.4em] text-white/30 uppercase mb-3">Próximos 7 dias</div>
               {proximosDias.length === 0 ? (
                 <div className="text-[11px] text-white/25 tracking-wider">Semana livre.</div>
@@ -1270,7 +1330,7 @@ export default function CalendarClient({
       {selected && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4"
           onClick={() => setSelected(null)}>
-          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6"
+          <div className="w-full max-w-md bg-[#111111] rounded-[24px] p-6 shadow-[0_0_80px_-24px_rgba(201,168,76,0.45)]"
             style={{
               border: `1px solid ${
                 selected.kind === 'pw'      ? 'rgba(79,195,195,0.25)' :
@@ -1308,7 +1368,7 @@ export default function CalendarClient({
 
             {selected.kind === 'pw' && (
               <>
-                <div className="text-[10px] tracking-[0.4em] text-[#4FC3C3]/50 uppercase mb-1">PRÉ-WEDDING · {selected.data.referencia}</div>
+                <div className="text-[10px] tracking-[0.4em] text-[#D9C48F]/50 uppercase mb-1">PRÉ-WEDDING · {selected.data.referencia}</div>
                 <h2 className="text-xl font-light text-white tracking-wide mb-4">{selected.data.nomes}</h2>
                 <div className="space-y-2 mb-6">
                   <Row label="Data">{fmtDate(selected.data.data_evento)}</Row>
@@ -1318,12 +1378,12 @@ export default function CalendarClient({
                 <div className="flex gap-3">
                   <Link href="/pre-wedding"
                     className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                    style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.30)', color: '#4FC3C3' }}>
+                    style={{ background: 'rgba(79,195,195,0.10)', border: '1px solid rgba(79,195,195,0.30)', color: '#D9C48F' }}>
                     Ver Pré-Wedding
                   </Link>
                   <button onClick={() => handleDeletePreWedding(selected.data.referencia, selected.data.data_evento)}
                     className="px-4 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                    style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
+                    style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#7D6A45' }}>
                     Eliminar
                   </button>
                   <CloseBtn onClose={() => setSelected(null)} />
@@ -1340,7 +1400,7 @@ export default function CalendarClient({
               const reWaHref = reWaBase
                 ? `${reWaBase}?text=${encodeURIComponent(msgReuniao(r.nome, r.reuniao_data.slice(0, 10), (r.reuniao_hora ?? '').slice(0, 5), reTipo, r.reuniao_link ?? '', remarcada))}`
                 : null
-              const inputCls = 'bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40 [color-scheme:dark]'
+              const inputCls = 'bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#B8975A]/40 [color-scheme:dark]'
               if (eCrm && editingReuniao) return (
                 <>
                   <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
@@ -1356,7 +1416,7 @@ export default function CalendarClient({
                       <button key={t} onClick={() => changeErTipo(t)}
                         className="flex-1 py-2 rounded-lg text-sm transition-colors"
                         style={erTipo === t
-                          ? { background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.45)', color: '#C084FC' }
+                          ? { background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.45)', color: '#B8975A' }
                           : { background: 'transparent', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.4)' }}>
                         {t}
                       </button>
@@ -1368,7 +1428,7 @@ export default function CalendarClient({
                   <div className="flex gap-3">
                     <button onClick={handleUpdateReuniao} disabled={erSaving || !erData || !erHora}
                       className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
-                      style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                      style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#B8975A' }}>
                       {erSaving ? 'A guardar…' : 'Guardar'}
                     </button>
                     <button onClick={() => setEditingReuniao(false)}
@@ -1401,7 +1461,7 @@ export default function CalendarClient({
                     <div className="flex gap-2 mb-3">
                       <button onClick={() => startEditReuniao(r)}
                         className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                        style={{ background: 'rgba(192,132,252,0.06)', border: '1px solid rgba(192,132,252,0.25)', color: '#C084FC' }}>
+                        style={{ background: 'rgba(192,132,252,0.06)', border: '1px solid rgba(192,132,252,0.25)', color: '#B8975A' }}>
                         Editar dia e hora
                       </button>
                       {reWaHref && (
@@ -1420,19 +1480,19 @@ export default function CalendarClient({
                     {r.origem && r.origem !== 'crm' ? (
                       <Link href={`/eventos-2026/${r.evento_id}`}
                         className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                        style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                        style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#B8975A' }}>
                         Ver Ficha do Evento
                       </Link>
                     ) : (
                       <>
                         <Link href={`/crm/${r.id}`}
                           className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                          style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                          style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#B8975A' }}>
                           Ver Ficha CRM
                         </Link>
                         <button onClick={() => handleDeleteReuniao(r.id, r.reuniao_data)}
                           className="px-4 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                          style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
+                          style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#7D6A45' }}>
                           Eliminar
                         </button>
                       </>
@@ -1452,10 +1512,10 @@ export default function CalendarClient({
                 ? `${rmWaBase}?text=${encodeURIComponent(rm.msg || msgReuniao(rm.nome, ta.data_prazo, (ta.hora ?? '').slice(0, 5), rm.tipo, rm.alvo, reagendada))}`
                 : null
               const statusCol = ta.status === 'CONCLUIDA'
-                ? { text: '#86EFAC', border: 'rgba(74,222,128,0.30)', bg: 'rgba(74,222,128,0.10)' }
+                ? { text: '#8F7A4E', border: 'rgba(168,138,74,0.30)', bg: 'rgba(168,138,74,0.10)' }
                 : ta.status === 'PENDENTE'
-                ? { text: '#FB923C', border: 'rgba(251,146,60,0.30)', bg: 'rgba(251,146,60,0.10)' }
-                : { text: '#60A5FA', border: 'rgba(96,165,250,0.30)', bg: 'rgba(96,165,250,0.10)' }
+                ? { text: '#D4A95A', border: 'rgba(212,169,90,0.30)', bg: 'rgba(212,169,90,0.10)' }
+                : { text: '#E6D3A3', border: 'rgba(230,211,163,0.30)', bg: 'rgba(230,211,163,0.10)' }
               return (
                 <>
                   <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: statusCol.text + 'B0' }}>
@@ -1484,7 +1544,7 @@ export default function CalendarClient({
                           {rm.url && (
                             <a href={rm.url} target="_blank" rel="noopener noreferrer"
                               className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                              style={{ background: 'rgba(96,165,250,0.12)', border: '1px solid rgba(96,165,250,0.40)', color: '#60A5FA' }}>
+                              style={{ background: 'rgba(230,211,163,0.12)', border: '1px solid rgba(230,211,163,0.40)', color: '#E6D3A3' }}>
                               {rm.tipo === 'Videochamada' ? '💻 Entrar no Meet' : '📍 Ver no Maps'}
                             </a>
                           )}
@@ -1509,7 +1569,7 @@ export default function CalendarClient({
                         </button>
                         <button onClick={() => handleDeleteTask(ta.id)}
                           className="px-4 py-2.5 rounded-xl text-sm tracking-wider transition-colors"
-                          style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#F87171' }}>
+                          style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.30)', color: '#7D6A45' }}>
                           Eliminar
                         </button>
                         <CloseBtn onClose={() => setSelected(null)} />
@@ -1586,7 +1646,7 @@ export default function CalendarClient({
               const t = selected.data
               const isIndis = t.status === 'indisponivel'
               const c = isIndis
-                ? { text: '#F87171', border: 'rgba(239,68,68,0.30)', bg: 'rgba(239,68,68,0.10)' }
+                ? { text: '#7D6A45', border: 'rgba(239,68,68,0.30)', bg: 'rgba(239,68,68,0.10)' }
                 : { text: TIPO_COLORS[t.tipo].text, border: TIPO_COLORS[t.tipo].border, bg: TIPO_COLORS[t.tipo].bg }
               const tipoLabel = t.tipo === 'confirmacao' ? 'CONFIRMAÇÃO DE PRESENÇA'
                 : t.tipo === 'edicao_fotos'  ? 'EDIÇÃO DE FOTOS'
@@ -1626,7 +1686,7 @@ export default function CalendarClient({
       {addTaskDate && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4"
           onClick={() => setAddTaskDate(null)}>
-          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border border-[#C9A84C]/25"
+          <div className="w-full max-w-md bg-[#111111] rounded-[24px] p-6 shadow-[0_0_80px_-24px_rgba(201,168,76,0.45)] border border-[#C9A84C]/25"
             onClick={e => e.stopPropagation()}>
             <div className="text-[10px] tracking-[0.4em] text-[#C9A84C]/60 uppercase mb-1">📝 NOVA TAREFA</div>
             <h2 className="text-xl font-light text-white tracking-wide mb-4">{fmtDate(addTaskDate)}</h2>
@@ -1696,7 +1756,7 @@ export default function CalendarClient({
       {chooserDate && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center justify-center p-4"
           onClick={() => setChooserDate(null)}>
-          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border border-white/15"
+          <div className="w-full max-w-md bg-[#111111] rounded-[24px] p-6 shadow-[0_0_80px_-24px_rgba(201,168,76,0.45)] border border-white/15"
             onClick={e => e.stopPropagation()}>
             <div className="text-[10px] tracking-[0.4em] text-white/40 uppercase mb-1">+ NOVO EVENTO</div>
             <h2 className="text-lg font-light text-white tracking-wide mb-5">{fmtDate(chooserDate)}</h2>
@@ -1705,7 +1765,7 @@ export default function CalendarClient({
               <button
                 onClick={() => { openAddTask(parseInt(chooserDate.slice(0,4), 10), parseInt(chooserDate.slice(5,7), 10) - 1, parseInt(chooserDate.slice(8,10), 10)); setChooserDate(null) }}
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-colors hover:bg-white/[0.04]"
-                style={{ background: 'rgba(96,165,250,0.08)', border: '1px solid rgba(96,165,250,0.25)' }}>
+                style={{ background: 'rgba(230,211,163,0.08)', border: '1px solid rgba(230,211,163,0.25)' }}>
                 <span className="text-2xl">📝</span>
                 <div className="flex-1">
                   <div className="text-sm text-white">Tarefa</div>
@@ -1758,16 +1818,16 @@ export default function CalendarClient({
       {reuniaoOpen && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto"
           onClick={() => setReuniaoOpen(false)}>
-          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border max-h-[90vh] overflow-y-auto"
+          <div className="w-full max-w-md bg-[#111111] rounded-[24px] p-6 shadow-[0_0_80px_-24px_rgba(201,168,76,0.45)] border max-h-[90vh] overflow-y-auto"
             style={{ borderColor: 'rgba(192,132,252,0.30)' }}
             onClick={e => e.stopPropagation()}>
-            <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: '#C084FCB0' }}>🤝 NOVA REUNIÃO CRM</div>
+            <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: '#B8975AB0' }}>🤝 NOVA REUNIÃO CRM</div>
             <h2 className="text-lg font-light text-white tracking-wide mb-4">{fmtDate(reuniaoDate)}</h2>
 
             <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Contacto</label>
             <select value={reuniaoCrmId} onChange={e => setReuniaoCrmId(e.target.value)}
               disabled={reuniaoLoading}
-              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40 mb-3">
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#B8975A]/40 mb-3">
               <option value="">{reuniaoLoading ? 'A carregar contactos…' : '— Escolhe contacto —'}</option>
               {reuniaoContactos.map(c => (
                 <option key={c.id} value={c.id}>
@@ -1780,12 +1840,12 @@ export default function CalendarClient({
               <div className="flex-1">
                 <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Hora</label>
                 <input type="time" value={reuniaoHora} onChange={e => setReuniaoHora(e.target.value)}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40" />
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#B8975A]/40" />
               </div>
               <div className="flex-1">
                 <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Tipo</label>
                 <select value={reuniaoTipo} onChange={e => changeReuniaoTipo(e.target.value as any)}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#C084FC]/40">
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#B8975A]/40">
                   <option value="Presencial">Presencial</option>
                   <option value="Videochamada">Videochamada</option>
                 </select>
@@ -1800,20 +1860,20 @@ export default function CalendarClient({
                 <button type="button"
                   onClick={() => setReuniaoLink(reuniaoTipo === 'Videochamada' ? MEET_LINK : MAPS_LINK)}
                   className="text-[9px] tracking-[0.2em] uppercase px-2 py-1 rounded-md transition-colors"
-                  style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#C084FC' }}>
+                  style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#B8975A' }}>
                   {reuniaoTipo === 'Videochamada' ? 'Usar Meet RL' : 'Usar estúdio RL'}
                 </button>
               )}
             </div>
             <input value={reuniaoLink} onChange={e => setReuniaoLink(e.target.value)}
               placeholder={reuniaoTipo === 'Videochamada' ? 'https://meet.google.com/…' : 'Morada / sala'}
-              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#C084FC]/40 mb-4" />
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#B8975A]/40 mb-4" />
 
             <div className="flex gap-3">
               <button onClick={() => handleSaveReuniao(false)}
                 disabled={reuniaoSaving || !reuniaoCrmId}
                 className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
-                style={{ background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.45)', color: '#C084FC' }}>
+                style={{ background: 'rgba(192,132,252,0.15)', border: '1px solid rgba(192,132,252,0.45)', color: '#B8975A' }}>
                 {reuniaoSaving ? 'A guardar…' : 'Agendar Reunião'}
               </button>
               <button onClick={() => setReuniaoOpen(false)}
@@ -1840,7 +1900,7 @@ export default function CalendarClient({
       {rlOpen && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto"
           onClick={() => setRlOpen(false)}>
-          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border max-h-[90vh] overflow-y-auto"
+          <div className="w-full max-w-md bg-[#111111] rounded-[24px] p-6 shadow-[0_0_80px_-24px_rgba(201,168,76,0.45)] border max-h-[90vh] overflow-y-auto"
             style={{ borderColor: 'rgba(201,168,76,0.30)' }}
             onClick={e => e.stopPropagation()}>
             <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(201,168,76,0.70)' }}>💻 NOVA REUNIÃO</div>
@@ -1930,10 +1990,10 @@ export default function CalendarClient({
       {pwOpen && (
         <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto"
           onClick={() => setPwOpen(false)}>
-          <div className="w-full max-w-md bg-[#111] rounded-2xl p-6 border max-h-[90vh] overflow-y-auto"
+          <div className="w-full max-w-md bg-[#111111] rounded-[24px] p-6 shadow-[0_0_80px_-24px_rgba(201,168,76,0.45)] border max-h-[90vh] overflow-y-auto"
             style={{ borderColor: 'rgba(79,195,195,0.30)' }}
             onClick={e => e.stopPropagation()}>
-            <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: '#4FC3C3B0' }}>📷 NOVO PRÉ-WEDDING</div>
+            <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: '#D9C48FB0' }}>📷 NOVO PRÉ-WEDDING</div>
             <h2 className="text-lg font-light text-white tracking-wide mb-4">{fmtDate(pwDate)}</h2>
 
             <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Casamento</label>
@@ -1943,13 +2003,13 @@ export default function CalendarClient({
               const sel = pwPortais.find(p => p.referencia === pwReferencia)
               if (sel) {
                 return (
-                  <div className="flex items-center gap-2 w-full bg-black/30 border border-[#4FC3C3]/40 rounded-lg px-3 py-2 mb-3">
+                  <div className="flex items-center gap-2 w-full bg-black/30 border border-[#D9C48F]/40 rounded-lg px-3 py-2 mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="text-sm text-white truncate">{nomesDe(sel) || '(sem nome)'}</div>
                       <div className="text-[11px] text-white/40">{sel.referencia}{sel.has_pw ? ` · já tem PW ${sel.pw_date}` : ''}</div>
                     </div>
                     <button type="button" onClick={() => { setPwReferencia(''); setPwBusca('') }}
-                      className="text-[11px] text-[#4FC3C3] hover:underline shrink-0">Trocar</button>
+                      className="text-[11px] text-[#D9C48F] hover:underline shrink-0">Trocar</button>
                   </div>
                 )
               }
@@ -1963,7 +2023,7 @@ export default function CalendarClient({
                   <input value={pwBusca} onChange={e => setPwBusca(e.target.value)} autoFocus
                     disabled={pwLoading}
                     placeholder={pwLoading ? 'A carregar portais…' : 'Procurar por nome dos noivos ou referência'}
-                    className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#4FC3C3]/40" />
+                    className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D9C48F]/40" />
                   {!pwLoading && (
                     <div className="mt-1 max-h-56 overflow-y-auto rounded-lg border border-white/10 bg-black/30 divide-y divide-white/5">
                       {lista.length === 0 && <div className="px-3 py-2 text-xs text-white/40">Nenhum casamento encontrado</div>}
@@ -1989,14 +2049,14 @@ export default function CalendarClient({
               <div className="flex-1">
                 <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Hora</label>
                 <input type="time" value={pwHora} onChange={e => setPwHora(e.target.value)}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#4FC3C3]/40" />
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#D9C48F]/40" />
               </div>
             </div>
 
             <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">Local (opcional)</label>
             <input value={pwLocal} onChange={e => setPwLocal(e.target.value)}
               placeholder="ex.: Quinta da Aroeira"
-              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#4FC3C3]/40 mb-3" />
+              className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-[#D9C48F]/40 mb-3" />
 
             <label className="block text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">
               Membro da Equipa <span className="opacity-50 normal-case tracking-wide">(notifica e aparece no calendário dele)</span>
@@ -2004,7 +2064,7 @@ export default function CalendarClient({
             <select value={pwFreelancerId} onChange={e => setPwFreelancerId(e.target.value)}
               disabled={pwLoading || pwFreelancers.length === 0}
               className={`w-full bg-black/30 border rounded-lg px-3 py-2 text-sm text-white focus:outline-none mb-2 disabled:opacity-50 transition-colors ${
-                pwIndispMatch ? 'border-red-500/55 focus:border-red-500/70' : 'border-white/10 focus:border-[#4FC3C3]/40'
+                pwIndispMatch ? 'border-red-500/55 focus:border-red-500/70' : 'border-white/10 focus:border-[#D9C48F]/40'
               }`}>
               <option value="">— Sem atribuição —</option>
               {pwFreelancers.map(f => {
@@ -2051,7 +2111,7 @@ export default function CalendarClient({
               <button onClick={handleSavePreWedding}
                 disabled={pwSaving || !pwReferencia}
                 className="flex-1 py-2.5 rounded-xl text-sm tracking-wider transition-colors disabled:opacity-50"
-                style={{ background: 'rgba(79,195,195,0.15)', border: '1px solid rgba(79,195,195,0.45)', color: '#4FC3C3' }}>
+                style={{ background: 'rgba(79,195,195,0.15)', border: '1px solid rgba(79,195,195,0.45)', color: '#D9C48F' }}>
                 {pwSaving ? 'A guardar…' : 'Marcar Pré-Wedding'}
               </button>
               <button onClick={() => setPwOpen(false)}
