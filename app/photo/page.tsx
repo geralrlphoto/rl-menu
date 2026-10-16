@@ -1032,11 +1032,12 @@ export default async function PhotoDashboard() {
                 logo: <svg viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-7 h-7"><rect x="3" y="3" width="18" height="18" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.3" cy="6.7" r="1.1" fill="#fff" stroke="none" /></svg> },
               { label: 'Email', href: 'https://mail.google.com', bg: '#ffffff',
                 logo: <svg viewBox="52 42 88 66" className="w-7 h-7"><path fill="#4285f4" d="M58 108h14V74L52 59v43c0 3.32 2.69 6 6 6" /><path fill="#34a853" d="M120 108h14c3.32 0 6-2.69 6-6V59l-20 15" /><path fill="#fbbc04" d="M120 48v26l20-15v-8c0-7.42-8.47-11.65-14.4-7.2" /><path fill="#ea4335" d="M72 74V48l24 18 24-18v26L96 92" /><path fill="#c5221f" d="M52 51v8l20 15V48l-5.6-4.2c-5.94-4.45-14.4-.22-14.4 7.2" /></svg> },
+              { label: 'Fotografia', href: '/galerias', bg: '#000',
+                logo: <LogoWfolio className="w-10 h-10" /> },
+              // O logo da RL fica sempre ao meio (o círculo maior)
               { label: 'Site', href: 'https://www.rlphotovideo.pt', bg: "radial-gradient(circle at 50% 40%, #1d1912, #0b0b0b 70%)",
                 // eslint-disable-next-line @next/next/no-img-element
                 logo: <img src="/logo_rl_gold.png" alt="" className="w-[52px] h-auto max-w-none" /> },
-              { label: 'Fotografia', href: '/galerias', bg: '#000',
-                logo: <LogoWfolio className="w-10 h-10" /> },
               { label: 'Vimeo', href: '/videos', bg: '#1AB7EA',
                 logo: <svg viewBox="0 0 24 24" fill="#fff" className="w-7 h-7"><path d="M23.977 6.417c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881l-1.918-7.114c-.719-2.584-1.488-3.878-2.312-3.878-.179 0-.806.378-1.881 1.132L0 7.202a315.065 315.065 0 003.5-3.132C5.08 2.71 6.265 1.987 7.054 1.915c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.673 1.776 3.673.502 0 1.256-.796 2.265-2.386 1.004-1.59 1.543-2.797 1.615-3.624.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797z" /></svg> },
               { label: 'WhatsApp', href: 'https://web.whatsapp.com', bg: '#25D366',
