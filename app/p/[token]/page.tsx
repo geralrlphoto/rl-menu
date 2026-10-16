@@ -63,8 +63,8 @@ export default async function Page({ params }: { params: Promise<{ token: string
 
 /**
  * Briefing partilhado: lido no servidor e filtrado antes de ir para o browser.
- * Sai o que a equipa e os fornecedores precisam no dia; ficam de fora as notas
- * privadas e o histórico de alterações.
+ * Sai o que a equipa precisa no dia, incluindo as notas internas; fica de fora
+ * o histórico de alterações. Secções vazias não aparecem.
  */
 async function briefingPartilhado(id: string, ref: string) {
   const db = createClient(
@@ -81,7 +81,8 @@ async function briefingPartilhado(id: string, ref: string) {
       .eq('page_id', PORTAL_PAGE_ID).maybeSingle(),
   ])
   const st = (portal?.settings ?? {}) as Record<string, any>
-  const { notasPrivadas: _np, historico: _h, ...info } = (st.briefingInfo?.[id] ?? {}) as Record<string, any>
+  // O link é para a equipa: as notas internas vão; o histórico de alterações não
+  const { historico: _h, ...info } = (st.briefingInfo?.[id] ?? {}) as Record<string, any>
 
   const bonito = (n: string) => n.toLowerCase().replace(/(^|[\s-])\S/g, c => c.toUpperCase())
   const nome = (v: unknown) => (typeof v === 'string' && v.trim() ? bonito(v.trim()) : '')

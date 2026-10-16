@@ -1580,6 +1580,23 @@ export default function BriefingExtensions({
   // Helpers para mostrar/esconder em modo cliente
   const showAdminEditing = effectiveAdmin // pass to sections
 
+  // Link partilhado (/p/…): só aparecem as secções com alguma coisa preenchida
+  const s = (v?: string) => !!(v ?? '').trim()
+  const tem = {
+    cronograma:     !!info.cronograma?.some(x => s(x.time) || s(x.title)),
+    mapas:          !!info.mapas?.some(x => s(x.address) || s(x.label)),
+    momentos:       !!info.momentos?.some(x => s(x.label)),
+    vips:           !!info.vips?.some(x => s(x.name)),
+    moodboard:      !!info.moodboard?.some(x => s(x.url)),
+    playlist:       !!info.playlist?.some(x => s(x.song)),
+    restricoes:     !!info.restricoes?.some(x => s(x.label)),
+    contactos:      !!info.contactos?.some(x => s(x.name) || s(x.phone)),
+    notasSensiveis: s(info.notasSensiveis),
+    tarefasPre:     !!info.tarefasPre?.some(x => s(x.label)),
+    notasPrivadas:  s(info.notasPrivadas),
+  }
+  const ver = (k: keyof typeof tem) => !partilhada || tem[k]
+
   return (
     <div className="briefing-premium">
       {/* HERO */}
@@ -1643,35 +1660,41 @@ export default function BriefingExtensions({
         <div ref={contentRef} className="space-y-4 min-w-0">
 
           {/* Operacional */}
-          <CronogramaSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} local={local} dataEvento={dataEvento} nomes={nomes} podeSugerir={casamento} />
-          <MapasSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} nomes={nomes} />
+          {ver('cronograma') && <CronogramaSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} local={local} dataEvento={dataEvento} nomes={nomes} podeSugerir={casamento} />}
+          {ver('mapas') && <MapasSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} nomes={nomes} />}
 
           {/* Equipa + Fichas Individuais combinados num bloco visual */}
-          <section id="equipa" className="space-y-4">
-            {equipaNode}
-            {fichasNode}
-          </section>
+          {(!partilhada || equipaNode || fichasNode) && (
+            <section id="equipa" className="space-y-4">
+              {equipaNode}
+              {fichasNode}
+            </section>
+          )}
 
           {/* Criativos — grid 2 col */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <MomentosSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
-            <VipsSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
-          </div>
+          {(ver('momentos') || ver('vips')) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {ver('momentos') && <MomentosSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
+              {ver('vips') && <VipsSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
+            </div>
+          )}
 
-          <MoodboardSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
-          <PlaylistSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          {ver('moodboard') && <MoodboardSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
+          {ver('playlist') && <PlaylistSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
 
           {/* Logística — grid 2 col */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <RestricoesSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
-            <ContactosSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} nomes={nomes} />
-          </div>
+          {(ver('restricoes') || ver('contactos')) && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {ver('restricoes') && <RestricoesSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
+              {ver('contactos') && <ContactosSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} nomes={nomes} />}
+            </div>
+          )}
 
-          <NotasSensiveisSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
-          <TarefasPreSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />
+          {ver('notasSensiveis') && <NotasSensiveisSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
+          {ver('tarefasPre') && <TarefasPreSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
 
-          {/* Notas Privadas — admin (editável) ou equipa/freelancer (só leitura) */}
-          {(effectiveAdmin || teamView) && <NotasPrivadasSection info={info} onSave={saveWithLog} readOnly={!effectiveAdmin} />}
+          {/* Notas Privadas — admin (editável), equipa/freelancer e link partilhado (só leitura) */}
+          {(effectiveAdmin || teamView || (partilhada && tem.notasPrivadas)) && <NotasPrivadasSection info={info} onSave={saveWithLog} readOnly={!effectiveAdmin} />}
           {effectiveAdmin && <HistoricoSection info={info} />}
         </div>
       </div>

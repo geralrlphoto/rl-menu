@@ -3,7 +3,7 @@
 // Secção PREVISÃO METEOROLÓGICA do briefing: previsão do IPMA para o dia do
 // evento, no concelho do local. Substitui a imagem fixa que vinha do modelo.
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, type ReactNode } from 'react'
 import { plainText, type Block } from '../NotionRenderer'
 
 const TIPOS: Record<number, string> = {
@@ -125,7 +125,8 @@ function resumoDoDia(data: string, dia: Extract<Resp, { estado: 'ok' }>['dia'], 
   return frases.join(' ')
 }
 
-export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: string | null }) {
+// ocultarSemPrevisao: em vez da mensagem de "sem previsão", não mostra nada; titulo só aparece com previsão
+export function PrevisaoIPMA({ local, data, ocultarSemPrevisao = false, titulo }: { local?: string | null; data?: string | null; ocultarSemPrevisao?: boolean; titulo?: ReactNode }) {
   const [r, setR] = useState<Resp | null>(null)
 
   useEffect(() => {
@@ -140,22 +141,23 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
   if (r.estado === 'passado' || r.estado === 'sem-dados') return null
 
   if (r.estado !== 'ok') {
+    if (ocultarSemPrevisao && r.estado !== 'cedo') return null
     const msg = r.estado === 'cedo'
       ? `A previsão para ${r.concelho} fica disponível cerca de 10 dias antes do evento.`
       : r.estado === 'sem-local'
         ? 'Não foi possível identificar o concelho do local do evento.'
         : 'Previsão indisponível de momento.'
     return (
-      <div className={caixa}>
+      <>{titulo}<div className={caixa}>
         <p className="font-cormorant italic text-white/60" style={{ fontSize: '1.05rem' }}>{msg}</p>
         {r.estado === 'cedo' && <LinhaSol sol={r.sol} />}
-      </div>
+      </div></>
     )
   }
 
   const { dia, horas } = r
   return (
-    <div className={caixa}>
+    <>{titulo}<div className={caixa}>
       <p className="text-[9px] tracking-[0.35em] text-gold/60 uppercase">{r.concelho} · {dataLonga(data!)}</p>
       <Avisos avisos={r.avisos} data={data!.slice(0, 10)} />
 
@@ -202,7 +204,7 @@ export function PrevisaoIPMA({ local, data }: { local?: string | null; data?: st
       <p className="mt-5 border-t border-white/[0.06] pt-4 font-cormorant italic text-white/70 leading-relaxed" style={{ fontSize: '1.08rem' }}>
         {resumoDoDia(data!, dia, horas, r.avisos)}
       </p>
-    </div>
+    </div></>
   )
 }
 

@@ -77,13 +77,14 @@ export default function BriefingPartilha({ info, fichas, equipa, nomes, casal, c
           </>
         )}
 
+        {/* Previsão do tempo: só aparece (com o título) quando há previsão para mostrar */}
         {casal?.local && casal.data_evento && (
-          <>
-            <h2 className="font-cormorant font-light uppercase text-white mt-10 mb-2" style={{ fontSize: '1.5rem', letterSpacing: '0.12em' }}>
-              Previsão meteorológica
-            </h2>
-            <PrevisaoIPMA local={casal.local} data={casal.data_evento} />
-          </>
+          <PrevisaoIPMA local={casal.local} data={casal.data_evento} ocultarSemPrevisao
+            titulo={
+              <h2 className="font-cormorant font-light uppercase text-white mt-10 mb-2" style={{ fontSize: '1.5rem', letterSpacing: '0.12em' }}>
+                Previsão meteorológica
+              </h2>
+            } />
         )}
 
         <div className="mt-8">
