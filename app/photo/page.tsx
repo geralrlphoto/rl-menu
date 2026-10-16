@@ -12,9 +12,6 @@ import TempoChip from './TempoChip'
 import RelogioHero from './RelogioHero'
 import TempoSolLua from './TempoSolLua'
 import PesquisaRapida from './PesquisaRapida'
-import { Roboto_Condensed } from 'next/font/google'
-
-const cond = Roboto_Condensed({ subsets: ['latin'], weight: ['100', '300', '400', '500', '600', '700'], variable: '--font-cond' })
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -831,7 +828,7 @@ export default async function PhotoDashboard() {
 
 
   return (
-    <main className={`${cond.variable} min-h-screen bg-[#0b0b0b] flex flex-col`}>
+    <main className={`min-h-screen bg-[#0b0b0b] flex flex-col`}>
 
       {/* ── Hero: saudação, pulso do estúdio e prioridades ─────────────────── */}
       <section className="relative overflow-hidden shrink-0">
