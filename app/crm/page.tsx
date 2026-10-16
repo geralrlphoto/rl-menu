@@ -41,7 +41,7 @@ function MiniTable({ contacts, onStatusChange, onOpen, borderColor, rowHover }: 
   const total = sumOrcamento(contacts)
 
   return (
-    <div className={`rounded-xl border ${borderColor} overflow-hidden`}>
+    <div className={`rounded-[16px] border ${borderColor} overflow-hidden bg-[#111111]/80`}>
       {contacts.map((c, i) => (
         <div key={c.id} className={`flex flex-col gap-1.5 px-4 py-3 ${i > 0 ? `border-t ${borderColor}/30` : ''} ${rowHover} transition-colors`}>
           <button onClick={() => onOpen(c.id)} className="text-left text-white text-sm font-medium hover:text-gold transition-colors truncate">
@@ -55,9 +55,9 @@ function MiniTable({ contacts, onStatusChange, onOpen, borderColor, rowHover }: 
           </div>
         </div>
       ))}
-      <div className="flex items-center justify-between px-4 py-3 bg-green-500/20 border-t border-green-500/30">
-        <span className="text-xs tracking-widest uppercase text-green-400/70 font-semibold">Total</span>
-        <span className="text-green-400 font-bold text-sm">{total > 0 ? `${total.toLocaleString('pt-PT')} €` : '—'}</span>
+      <div className="flex items-center justify-between px-4 py-3 bg-[#C9A84C]/12 border-t border-[#C9A84C]/25">
+        <span className="text-xs tracking-widest uppercase text-[#C9A84C]/75 font-semibold">Total</span>
+        <span className="text-[#C9A84C] font-bold text-sm">{total > 0 ? `${total.toLocaleString('pt-PT')} €` : '—'}</span>
       </div>
     </div>
   )
@@ -342,290 +342,290 @@ export default function CRMPage() {
   const drawerContact = drawerId ? contacts.find(c => c.id === drawerId) ?? null : null
   const encerrarContact = encerrar ? contacts.find(c => c.id === encerrar.id) ?? null : null
 
+  // Temperaturas das leads em tons de dourado (mais forte = mais recente)
+  const TEMPERATURAS = [
+    { k: 'quente', nome: 'Quente', dias: '0–3 dias', leads: leadsQuente, a: 0.95 },
+    { k: 'morno', nome: 'Morno', dias: '4–10 dias', leads: leadsMorno, a: 0.65 },
+    { k: 'frio', nome: 'Frio', dias: '+10 dias', leads: leadsFrio, a: 0.4 },
+  ]
+  const ouro = (a: number) => `rgba(201,168,76,${a})`
+  const campoFiltro = 'rounded-full border border-white/[0.10] bg-white/[0.03] px-4 py-2.5 font-cond text-[14px] text-white focus:outline-none focus:border-[#C9A84C]/45'
+
   return (
-    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1400px] mx-auto">
+    <main className="min-h-screen overflow-x-clip font-cond bg-[#070707]">
 
-      {/* ── CABEÇALHO (banner com foto) ── */}
-      <section className="relative rounded-3xl overflow-hidden border border-white/10 mb-6 min-h-[440px] sm:min-h-[400px] flex flex-col">
-        <img src="/crm-hero.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%]" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-black/10" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/10 to-transparent" />
+      {/* ── CAPA (foto local da Vercel: não gasta egress do Supabase) ── */}
+      <section className="relative min-h-[640px] lg:min-h-[86vh] flex flex-col overflow-hidden">
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/crm-hero.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%] grayscale opacity-40 lg:opacity-55" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
+        </div>
+        <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+        <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+          Gestão de leads · {new Date().getFullYear()}
+        </p>
+        <span className="hidden lg:block absolute left-[34%] top-[26%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
+        <span className="hidden lg:block absolute left-[33.2%] top-[31%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
 
-        <div className="relative flex-1 flex flex-col px-5 sm:px-10 pt-5 sm:pt-7 pb-5 sm:pb-7">
-          <div className="flex items-start justify-between gap-3">
-            <Link href="/photo" className="text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase">
-              ‹ Menu
-            </Link>
-            {!loading && <PropostaPicker />}
-          </div>
-
-          <div className="flex-1 flex flex-col justify-center py-8 max-w-xl">
-            <p className="text-[10px] tracking-[0.45em] uppercase text-white/45">RL Photo.Video · Gestão de Leads</p>
-            <h1 className="font-cormorant font-light text-gold text-6xl sm:text-7xl tracking-[0.12em] leading-none mt-3">CRM</h1>
-            <div className="w-20 h-px bg-gold/70 my-5" />
-            <p className="font-cormorant italic text-white/80 text-lg sm:text-xl leading-snug">
-              {loading ? 'A carregar leads…' : `${contacts.length} leads · ${contagemReuniao} com reunião agendada · ${contagemFollow} em follow up`}
-            </p>
-          </div>
-
-          {!loading && (
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 [&>*:last-child]:col-span-2 lg:[&>*:last-child]:col-span-1">
-          <Kpi label="Taxa de fecho (mês)" value={taxaMes !== null ? `${taxaMes}%` : '—'}
-            sub={encerradasMes.length > 0 ? `${fecharamMes} de ${encerradasMes.length} encerradas` : 'Nenhuma encerrada este mês'} color="text-green-400" />
-          <Kpi label={`Taxa de fecho · Casamentos ${ANO_TAXA_FECHO}`} value={taxaAno !== null ? `${taxaAno}%` : '—'}
-            sub={encerradasAno.length > 0 ? `${fecharamAno} de ${encerradasAno.length} encerradas` : `Nenhuma lead de ${ANO_TAXA_FECHO} encerrada`} color="text-green-300" />
-          <Kpi label="Valor em Follow Up" value={valorFollow > 0 ? `${valorFollow.toLocaleString('pt-PT')} €` : '—'} color="text-gold" />
-          <Kpi label="Média até fechar" value={mediaDiasFecho !== null ? `${mediaDiasFecho} dias` : '—'} sub="Da entrada ao fecho" color="text-yellow-300" />
-          <Kpi label="Ações atrasadas" value={acoesAtrasadas}
-            sub={soAtrasadas ? 'A mostrar só estas. Clica para ver todas' : acoesAtrasadas > 0 ? 'Clica para ver só estas' : 'Tudo em dia'}
-            color={acoesAtrasadas > 0 ? 'text-red-400' : 'text-white/60'}
-            onClick={acoesAtrasadas > 0 || soAtrasadas ? () => setSoAtrasadas(v => !v) : undefined} active={soAtrasadas} />
+        <div className="relative flex-1 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px] gap-10 items-end pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-16 lg:pt-8 pb-12 lg:pb-16">
+          <div className="min-w-0 flex flex-col h-full">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <Link href="/photo" className="text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Menu principal</Link>
+              {!loading && <PropostaPicker />}
             </div>
+
+            <div className="mt-auto pt-16">
+              <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">RL Photo.Video</p>
+              <h1 className="font-bold uppercase text-white leading-[0.88] text-[72px] sm:text-[130px] lg:text-[160px] mt-2">CRM</h1>
+              <div className="flex items-center gap-4 mt-5">
+                <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+                <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
+                  Nova entrada · Reunião · <span className="text-[#C9A84C]">Follow up</span>
+                </p>
+              </div>
+              <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
+                {loading ? 'A carregar leads…' : `${contacts.length} leads · ${contagemReuniao} com reunião agendada · ${contagemFollow} em follow up`}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-8">
+                <Link href="/crm/nova"
+                  className="inline-flex items-center gap-2.5 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-7 py-3.5 text-[15px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]">
+                  Nova lead
+                  <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="2.4" strokeLinecap="round" className="w-4 h-4" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+                </Link>
+                <Link href="/crm/follow-up"
+                  className="inline-flex items-center gap-2 border border-white/15 hover:border-white/35 bg-black/30 px-6 py-3.5 text-[15px] font-semibold tracking-[0.18em] uppercase text-white/85 transition-all">
+                  / Follow up
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Números do pipeline */}
+          {!loading && (
+            <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+              <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+                Pipeline
+              </p>
+              <div className="grid grid-cols-2 mt-3">
+                {[
+                  { l: 'Taxa de fecho · mês', v: taxaMes !== null ? `${taxaMes}%` : '—', s: encerradasMes.length > 0 ? `${fecharamMes} de ${encerradasMes.length} encerradas` : 'Nenhuma este mês' },
+                  { l: `Taxa · casamentos ${ANO_TAXA_FECHO}`, v: taxaAno !== null ? `${taxaAno}%` : '—', s: encerradasAno.length > 0 ? `${fecharamAno} de ${encerradasAno.length}` : 'Sem encerradas' },
+                  { l: 'Valor em follow up', v: valorFollow > 0 ? `${valorFollow.toLocaleString('pt-PT')} €` : '—', s: `${contagemFollow} leads`, ouro: true },
+                  { l: 'Média até fechar', v: mediaDiasFecho !== null ? `${mediaDiasFecho} dias` : '—', s: 'da entrada ao fecho' },
+                ].map((x, i) => (
+                  <div key={x.l} className={`py-3 min-w-0 ${i % 2 === 0 ? 'pr-3 border-r border-white/[0.07]' : 'pl-3'} ${i < 2 ? 'border-b border-white/[0.07]' : ''}`}>
+                    <p className="text-[11px] text-white/50 truncate">{x.l}</p>
+                    <p className={`font-semibold text-[21px] leading-none mt-1.5 truncate ${x.ouro ? 'text-[#C9A84C]' : 'text-white'}`}>{x.v}</p>
+                    <p className="text-[10.5px] text-white/30 mt-1 truncate">{x.s}</p>
+                  </div>
+                ))}
+              </div>
+              {/* Ações atrasadas: clica para filtrar o quadro */}
+              <button onClick={acoesAtrasadas > 0 || soAtrasadas ? () => setSoAtrasadas(v => !v) : undefined}
+                className={`mt-3 w-full flex items-center justify-between gap-3 rounded-[14px] border px-3.5 py-2.5 text-left transition-all ${soAtrasadas ? 'border-[#C9A84C]/70 bg-[#C9A84C]/15' : 'border-white/[0.08] bg-black/30 hover:border-[#C9A84C]/40'}`}>
+                <span>
+                  <span className="block text-[11px] text-white/50">Ações atrasadas</span>
+                  <span className="block text-[11px] text-white/30">{soAtrasadas ? 'A mostrar só estas · clica para ver todas' : acoesAtrasadas > 0 ? 'Clica para ver só estas' : 'Tudo em dia'}</span>
+                </span>
+                <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-semibold text-[17px]"
+                  style={{ color: acoesAtrasadas > 0 ? '#C9A84C' : 'rgba(255,255,255,0.4)', background: ouro(acoesAtrasadas > 0 ? 0.15 : 0.05) }}>
+                  {acoesAtrasadas}
+                </span>
+              </button>
+            </aside>
           )}
         </div>
       </section>
 
-      {/* ── AÇÕES ── */}
-      <div className="mb-8 sm:mb-10">
-        <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3">
-          <ActionTile num={1} label="Nova Lead" icon="mais" href="/crm/nova" primary />
-          <ActionTile num={2} label="Follow Up" icon="relogio" href="/crm/follow-up" />
-          <ActionTile num={3} label="Estatísticas" icon="grafico" href="/crm/stats" />
-          <ActionTile num={4} label="Portais" icon="portais" href="/crm/portais" />
-          <ActionTile num={5} label="Maquete Casamento" icon="aneis" href="/r/85343645-b0d3-4412-ae78-795fd7f8ddf1" />
-          <ActionTile num={6} label="Maquete Batizado" icon="estrela" href="/b/batizado-maquete" />
-          <ActionTile num={7} label="Form. Noivos" icon="formulario" href="/nova-lead" external />
-          <ActionTile num={8} label="Form. Batizado" icon="formulario" href="/batizado" external />
-          <ActionTile num={9} label={syncing ? 'A sincronizar' : 'Sync Notion'} icon="sync" onClick={handleSync} disabled={syncing} />
-          <ActionTile num={10} label="Análise Reuniões" icon="analise" href="/crm/analises" />
-        </div>
-        {syncMsg && <p className="text-xs text-green-400/80 text-right mt-2">{syncMsg}</p>}
-      </div>
+      <div className="crm-ouro max-w-[1400px] mx-auto px-3 sm:px-6 pt-10 pb-12">
 
-
-      {/* ── PAINEL REQUER ATENÇÃO ── */}
-      {!loading && hasAlerts && (
-        <section className="mb-10">
-          <button onClick={toggleAtencao} className="w-full flex items-center gap-4 group">
-            <span className="text-xs tracking-[0.4em] uppercase text-white/30 font-light group-hover:text-white/60 transition-colors">Requer Atenção</span>
-            <span className="text-[11px] text-white/20">{leadsQuente.length} quentes · {leadsMorno.length} mornas · {leadsFrio.length} frias</span>
-            <div className="flex-1 h-px bg-white/5" />
-            <span className={`text-white/25 text-xs transition-transform duration-200 ${atencaoAberta ? 'rotate-180' : ''}`}>▼</span>
-          </button>
-
-          {atencaoAberta && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
-
-
-            {/* 🔴 QUENTE — 0 a 3 dias */}
-            <div>
-              <button onClick={() => toggleAlert('quente')} className="w-full text-left mb-3">
-                <div className="rounded-2xl border border-red-500/20 bg-red-500/5 px-5 py-4 hover:bg-red-500/10 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">🔥</span>
-                      <span className="text-sm tracking-[0.25em] uppercase font-semibold text-red-400">Quente</span>
-                      <span className="text-xs text-white/20 font-normal">0–3 dias</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-red-500/15 border border-red-500/25 text-red-400 px-2 py-0.5 rounded-full">{leadsQuente.length} leads</span>
-                      <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.quente ? 'rotate-180' : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold text-red-300 tracking-tight">
-                    {sumOrcamento(leadsQuente) > 0 ? `${sumOrcamento(leadsQuente).toLocaleString('pt-PT')} €` : '—'}
-                  </div>
-                  <div className="text-xs text-red-400/40 tracking-widest uppercase mt-1">Em pipeline</div>
-                </div>
-              </button>
-              {openAlerts.quente && (
-                leadsQuente.length > 0
-                  ? <MiniTable contacts={leadsQuente} onStatusChange={handleStatusChange} onOpen={setDrawerId} borderColor="border-red-500/20" headerColor="text-red-400/50" rowHover="hover:bg-red-500/5" />
-                  : <div className="text-center py-6 text-white/15 text-xs tracking-widest border border-red-500/10 rounded-xl">Sem leads</div>
-              )}
-            </div>
-
-            {/* 🟠 MORNO — 4 a 10 dias */}
-            <div>
-              <button onClick={() => toggleAlert('morno')} className="w-full text-left mb-3">
-                <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 px-5 py-4 hover:bg-orange-500/10 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">🌡</span>
-                      <span className="text-sm tracking-[0.25em] uppercase font-semibold text-orange-400">Morno</span>
-                      <span className="text-xs text-white/20 font-normal">4–10 dias</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-orange-500/15 border border-orange-500/25 text-orange-400 px-2 py-0.5 rounded-full">{leadsMorno.length} leads</span>
-                      <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.morno ? 'rotate-180' : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold text-orange-300 tracking-tight">
-                    {sumOrcamento(leadsMorno) > 0 ? `${sumOrcamento(leadsMorno).toLocaleString('pt-PT')} €` : '—'}
-                  </div>
-                  <div className="text-xs text-orange-400/40 tracking-widest uppercase mt-1">Em pipeline</div>
-                </div>
-              </button>
-              {openAlerts.morno && (
-                leadsMorno.length > 0
-                  ? <MiniTable contacts={leadsMorno} onStatusChange={handleStatusChange} onOpen={setDrawerId} borderColor="border-orange-500/20" headerColor="text-orange-400/50" rowHover="hover:bg-orange-500/5" />
-                  : <div className="text-center py-6 text-white/15 text-xs tracking-widest border border-orange-500/10 rounded-xl">Sem leads</div>
-              )}
-            </div>
-
-            {/* 🔵 FRIO — +10 dias */}
-            <div>
-              <button onClick={() => toggleAlert('frio')} className="w-full text-left mb-3">
-                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/5 px-5 py-4 hover:bg-blue-500/10 transition-colors">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base">❄️</span>
-                      <span className="text-sm tracking-[0.25em] uppercase font-semibold text-blue-400">Frio</span>
-                      <span className="text-xs text-white/20 font-normal">+10 dias</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-blue-500/15 border border-blue-500/25 text-blue-400 px-2 py-0.5 rounded-full">{leadsFrio.length} leads</span>
-                      <span className={`text-white/20 text-xs transition-transform duration-200 ${openAlerts.frio ? 'rotate-180' : ''}`}>▼</span>
-                    </div>
-                  </div>
-                  <div className="text-3xl font-bold text-blue-300 tracking-tight">
-                    {sumOrcamento(leadsFrio) > 0 ? `${sumOrcamento(leadsFrio).toLocaleString('pt-PT')} €` : '—'}
-                  </div>
-                  <div className="text-xs text-blue-400/40 tracking-widest uppercase mt-1">Em pipeline</div>
-                </div>
-              </button>
-              {openAlerts.frio && (
-                leadsFrio.length > 0
-                  ? <MiniTable contacts={leadsFrio} onStatusChange={handleStatusChange} onOpen={setDrawerId} borderColor="border-blue-500/20" headerColor="text-blue-400/50" rowHover="hover:bg-blue-500/5" />
-                  : <div className="text-center py-6 text-white/15 text-xs tracking-widest border border-blue-500/10 rounded-xl">Sem leads</div>
-              )}
-            </div>
-
+        {/* ── ATALHOS ── */}
+        <div className="mb-10">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Atalhos</p>
+          <h2 className="font-semibold text-white text-[28px] leading-tight mt-1 mb-4">Ferramentas do CRM</h2>
+          <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-10 gap-2.5 sm:gap-3 [&_.crm-tile]:!rounded-[18px]">
+            <ActionTile num={1} label="Nova Lead" icon="mais" href="/crm/nova" primary />
+            <ActionTile num={2} label="Follow Up" icon="relogio" href="/crm/follow-up" />
+            <ActionTile num={3} label="Estatísticas" icon="grafico" href="/crm/stats" />
+            <ActionTile num={4} label="Portais" icon="portais" href="/crm/portais" />
+            <ActionTile num={5} label="Maquete Casamento" icon="aneis" href="/r/85343645-b0d3-4412-ae78-795fd7f8ddf1" />
+            <ActionTile num={6} label="Maquete Batizado" icon="estrela" href="/b/batizado-maquete" />
+            <ActionTile num={7} label="Form. Noivos" icon="formulario" href="/nova-lead" external />
+            <ActionTile num={8} label="Form. Batizado" icon="formulario" href="/batizado" external />
+            <ActionTile num={9} label={syncing ? 'A sincronizar' : 'Sync Notion'} icon="sync" onClick={handleSync} disabled={syncing} />
+            <ActionTile num={10} label="Análise Reuniões" icon="analise" href="/crm/analises" />
           </div>
-          )}
-          <div className="h-px bg-white/5 mt-8" />
-        </section>
-      )}
+          {syncMsg && <p className="text-[13px] text-[#C9A84C] text-right mt-2">{syncMsg}</p>}
+        </div>
 
+        {/* ── REQUER ATENÇÃO ── */}
+        {!loading && hasAlerts && (
+          <section className="mb-10">
+            <button onClick={toggleAtencao} className="w-full flex flex-wrap items-end gap-3 text-left group">
+              <div>
+                <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Pipeline</p>
+                <h2 className="font-semibold text-white text-[28px] leading-tight mt-1">Requer atenção</h2>
+              </div>
+              <span className="mb-1.5 rounded-full border border-[#C9A84C]/30 bg-[#C9A84C]/10 px-3 py-0.5 text-[13px] text-[#C9A84C]">
+                {leadsQuente.length} quentes · {leadsMorno.length} mornas · {leadsFrio.length} frias
+              </span>
+              <div className="flex-1 h-px bg-[#C9A84C]/12 mb-4 min-w-[20px]" />
+              <span className="mb-2 w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-white/40 group-hover:text-[#C9A84C] group-hover:border-[#C9A84C]/40 transition-all">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 transition-transform duration-300" style={{ transform: atencaoAberta ? 'rotate(180deg)' : 'none' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                </svg>
+              </span>
+            </button>
 
-      {/* ── FILTROS ── */}
-      <div className="flex flex-wrap gap-3 mb-10">
-        <input
-          type="text"
-          placeholder="Pesquisar..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 w-full sm:w-64 tracking-wide"
-        />
-        <select
-          value={statusFilter}
-          onChange={e => setStatusFilter(e.target.value)}
-          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white/70 focus:outline-none focus:border-gold/40 tracking-wide"
-        >
-          {statuses.map(s => <option key={s} value={s} className="bg-zinc-900">{s}</option>)}
-        </select>
-        <select
-          value={yearFilter}
-          onChange={e => setYearFilter(e.target.value)}
-          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white/70 focus:outline-none focus:border-gold/40 tracking-wide"
-        >
-          {years.map(y => <option key={y} value={y} className="bg-zinc-900">{y === 'Todos' ? 'Todos os anos' : y}</option>)}
-        </select>
-        {soAtrasadas && (
-          <button onClick={() => setSoAtrasadas(false)}
-            className="px-3 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-xs text-red-400 tracking-wider">
-            Só ações atrasadas ×
-          </button>
-        )}
-        {isFiltering && (
-          <button
-            onClick={() => { setSearch(''); setStatusFilter('Todos'); setYearFilter('Todos'); setSoAtrasadas(false) }}
-            className="px-4 py-2.5 text-xs text-white/30 hover:text-white/60 tracking-widest uppercase transition-colors"
-          >
-            Limpar
-          </button>
-        )}
-      </div>
-      <p className="hidden md:block -mt-6 mb-4 text-[11px] text-white/20">Arrasta os cartões entre colunas. Clica num cartão para abrir a ficha rápida.</p>
-
-
-      {/* ── QUADRO (4 colunas) ── */}
-      {loading ? (
-        <div className="text-center py-32 text-white/15 tracking-[0.4em] text-xs uppercase">A carregar...</div>
-      ) : (
-        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-4">
-          <div className="grid grid-cols-[repeat(4,minmax(270px,1fr))] gap-4 items-start">
-            {COLUNAS.map(col => {
-              let items = filtered.filter(c => colunaDe(c.status) === col.key)
-              if (col.key === 'follow') {
-                // Há mais tempo em follow up primeiro
-                items = [...items].sort((a, b) => daysSince(b.status_updated_at || b.data_entrada) - daysSince(a.status_updated_at || a.data_entrada))
-              } else if (col.key !== 'nova') {
-                items = [...items].sort((a, b) => (b.status_updated_at || b.data_entrada || '').localeCompare(a.status_updated_at || a.data_entrada || ''))
-              }
-              const total = items.length
-              const visiveis = col.key === 'encerrada' ? items.slice(0, encerradaLimit) : items
-              const fecharam = col.key === 'encerrada' ? items.filter(c => c.status === 'Fechou').length : 0
-              const draggedCol = draggingId ? colunaDe(contacts.find(c => c.id === draggingId)?.status) : null
-              const isTarget = !!draggingId && dropCol === col.key && draggedCol !== col.key
-              return (
-                <section
-                  key={col.key}
-                  onDragOver={e => { if (!draggingId) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dropCol !== col.key) setDropCol(col.key) }}
-                  onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropCol(d => d === col.key ? null : d) }}
-                  onDrop={e => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); setDropCol(null); setDraggingId(null); if (id) handleDrop(col.key, id) }}
-                  className={`rounded-2xl border p-3 flex flex-col gap-3 min-h-[240px] transition-colors ${isTarget ? 'border-gold/50 bg-gold/[0.05]' : 'border-white/5 bg-white/[0.02]'}`}
-                >
-                  <div className="flex items-center justify-between px-1 pt-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-2 h-2 rounded-full ${col.accent}`} />
-                      <h2 className="text-xs tracking-[0.25em] uppercase font-semibold text-white/80">{col.label}</h2>
-                    </div>
-                    <span className="text-xs text-white/30">{total}</span>
-                  </div>
-                  <div className="flex items-center justify-between px-1 -mt-1 text-[11px] text-white/25 min-h-[16px]">
-                    <span>{sumOrcamento(items) > 0 ? `${sumOrcamento(items).toLocaleString('pt-PT')} €` : ''}</span>
-                    {col.key === 'encerrada' && total > 0 && <span>{fecharam} fecharam · {total - fecharam} não</span>}
-                  </div>
-                  {isTarget && (
-                    <div className="rounded-xl border border-dashed border-gold/40 py-4 text-center text-[11px] tracking-widest uppercase text-gold/70">
-                      {col.key === 'encerrada' ? 'Largar para encerrar' : `Mover para ${col.label}`}
-                    </div>
-                  )}
-                  {visiveis.length === 0 && !isTarget ? (
-                    <div className="text-center py-8 text-white/15 text-xs tracking-widest">Sem leads</div>
-                  ) : (
-                    visiveis.map(c => (
-                      <KanbanCard
-                        key={c.id}
-                        c={c}
-                        coluna={col.key}
-                        diasNoPasso={daysSince(ultimaMudanca[c.id] || c.status_updated_at || c.data_entrada)}
-                        enviados={waEnviados[c.id] ?? {}}
-                        onEnviado={ev => setWaEnviados(prev => ({ ...prev, [c.id]: { ...(prev[c.id] ?? {}), [ev]: new Date().toISOString() } }))}
-                        onPortal={token => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, page_token: token } : x))}
-                        onOpen={() => setDrawerId(c.id)}
-                        onStatusChange={handleStatusChange}
-                        dragging={draggingId === c.id}
-                        onDragStart={() => setDraggingId(c.id)}
-                        onDragEnd={() => { setDraggingId(null); setDropCol(null) }}
-                      />
-                    ))
-                  )}
-                  {col.key === 'encerrada' && total > encerradaLimit && (
-                    <button
-                      onClick={() => setEncerradaLimit(l => l + ENCERRADA_PAGE)}
-                      className="py-2 text-xs tracking-widest uppercase text-white/30 hover:text-gold transition-colors"
-                    >
-                      Ver mais ({total - encerradaLimit})
+            {atencaoAberta && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-6">
+                {TEMPERATURAS.map(t => (
+                  <div key={t.k}>
+                    <button onClick={() => toggleAlert(t.k)} className="w-full text-left mb-3">
+                      <div className="rounded-[22px] border bg-[#111111]/90 px-5 py-4 transition-all hover:-translate-y-0.5"
+                        style={{ borderColor: ouro(0.2), borderLeft: `2px solid ${ouro(t.a)}` }}>
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full" style={{ background: ouro(t.a), boxShadow: `0 0 8px ${ouro(t.a)}` }} />
+                            <span className="text-[15px] tracking-[0.15em] uppercase font-semibold" style={{ color: ouro(t.a) }}>{t.nome}</span>
+                            <span className="text-[12px] text-white/35">{t.dias}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[12px] rounded-full px-2.5 py-0.5" style={{ color: ouro(t.a), background: ouro(0.12) }}>{t.leads.length} leads</span>
+                            <span className={`text-white/30 text-[11px] transition-transform duration-200 ${openAlerts[t.k] ? 'rotate-180' : ''}`}>▼</span>
+                          </div>
+                        </div>
+                        <div className="text-[30px] font-bold leading-none text-white">
+                          {sumOrcamento(t.leads) > 0 ? `${sumOrcamento(t.leads).toLocaleString('pt-PT')} €` : '—'}
+                        </div>
+                        <div className="text-[11px] text-white/35 tracking-[0.15em] uppercase mt-1.5">Em pipeline</div>
+                      </div>
                     </button>
-                  )}
-                </section>
-              )
-            })}
+                    {openAlerts[t.k] && (
+                      t.leads.length > 0
+                        ? <MiniTable contacts={t.leads} onStatusChange={handleStatusChange} onOpen={setDrawerId} borderColor="border-[#C9A84C]/20" headerColor="text-[#C9A84C]/60" rowHover="hover:bg-[#C9A84C]/[0.05]" />
+                        : <div className="text-center py-6 text-white/25 text-[13px] border border-[#C9A84C]/10 rounded-[16px]">Sem leads</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ── FILTROS ── */}
+        <div className="flex flex-wrap items-center gap-2.5 mb-3">
+          <div className="relative w-full sm:w-64">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="1.8" strokeLinecap="round" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" aria-hidden>
+              <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+            </svg>
+            <input type="text" placeholder="Procurar lead…" value={search} onChange={e => setSearch(e.target.value)}
+              className={`${campoFiltro} w-full pl-10 placeholder-white/30`} />
           </div>
+          <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className={`${campoFiltro} text-white/80 [color-scheme:dark]`}>
+            {statuses.map(s => <option key={s} value={s} className="bg-zinc-900">{s === 'Todos' ? 'Todos os estados' : s}</option>)}
+          </select>
+          <select value={yearFilter} onChange={e => setYearFilter(e.target.value)} className={`${campoFiltro} text-white/80 [color-scheme:dark]`}>
+            {years.map(y => <option key={y} value={y} className="bg-zinc-900">{y === 'Todos' ? 'Todos os anos' : y}</option>)}
+          </select>
+          {soAtrasadas && (
+            <button onClick={() => setSoAtrasadas(false)}
+              className="rounded-full border border-[#C9A84C]/50 bg-[#C9A84C]/12 px-3.5 py-2 text-[13px] text-[#C9A84C]">
+              Só ações atrasadas ×
+            </button>
+          )}
+          {isFiltering && (
+            <button onClick={() => { setSearch(''); setStatusFilter('Todos'); setYearFilter('Todos'); setSoAtrasadas(false) }}
+              className="px-3 py-2 text-[13px] text-white/40 hover:text-[#C9A84C] transition-colors">
+              Limpar
+            </button>
+          )}
         </div>
-      )}
+        <p className="hidden md:block mb-5 text-[12px] text-white/30">Arrasta os cartões entre colunas. Clica num cartão para abrir a ficha rápida.</p>
+
+        {/* ── QUADRO (4 colunas) ── */}
+        {loading ? (
+          <div className="text-center py-32 text-white/30 text-[15px]">A carregar…</div>
+        ) : (
+          <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-4">
+            <div className="grid grid-cols-[repeat(4,minmax(270px,1fr))] gap-4 items-start">
+              {COLUNAS.map(col => {
+                let items = filtered.filter(c => colunaDe(c.status) === col.key)
+                if (col.key === 'follow') {
+                  // Há mais tempo em follow up primeiro
+                  items = [...items].sort((a, b) => daysSince(b.status_updated_at || b.data_entrada) - daysSince(a.status_updated_at || a.data_entrada))
+                } else if (col.key !== 'nova') {
+                  items = [...items].sort((a, b) => (b.status_updated_at || b.data_entrada || '').localeCompare(a.status_updated_at || a.data_entrada || ''))
+                }
+                const total = items.length
+                const visiveis = col.key === 'encerrada' ? items.slice(0, encerradaLimit) : items
+                const fecharam = col.key === 'encerrada' ? items.filter(c => c.status === 'Fechou').length : 0
+                const draggedCol = draggingId ? colunaDe(contacts.find(c => c.id === draggingId)?.status) : null
+                const isTarget = !!draggingId && dropCol === col.key && draggedCol !== col.key
+                const intensidade = { nova: 0.95, reuniao: 0.75, follow: 0.55, encerrada: 0.35 }[col.key]
+                return (
+                  <section
+                    key={col.key}
+                    onDragOver={e => { if (!draggingId) return; e.preventDefault(); e.dataTransfer.dropEffect = 'move'; if (dropCol !== col.key) setDropCol(col.key) }}
+                    onDragLeave={e => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDropCol(d => d === col.key ? null : d) }}
+                    onDrop={e => { e.preventDefault(); const id = e.dataTransfer.getData('text/plain'); setDropCol(null); setDraggingId(null); if (id) handleDrop(col.key, id) }}
+                    className={`rounded-[22px] border p-3 flex flex-col gap-3 min-h-[240px] transition-colors ${isTarget ? 'border-[#C9A84C]/55 bg-[#C9A84C]/[0.06]' : 'border-[#C9A84C]/[0.12] bg-[#111111]/80'}`}
+                    style={{ borderTop: `2px solid ${ouro(intensidade)}` }}
+                  >
+                    <div className="flex items-center justify-between px-1 pt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full" style={{ background: ouro(intensidade), boxShadow: `0 0 8px ${ouro(intensidade)}` }} />
+                        <h2 className="text-[15px] tracking-[0.12em] uppercase font-semibold text-white">{col.label}</h2>
+                      </div>
+                      <span className="rounded-full px-2.5 py-0.5 text-[12px] text-[#C9A84C]" style={{ background: ouro(0.12) }}>{total}</span>
+                    </div>
+                    <div className="flex items-center justify-between px-1 -mt-1 text-[12px] text-white/40 min-h-[16px]">
+                      <span>{sumOrcamento(items) > 0 ? `${sumOrcamento(items).toLocaleString('pt-PT')} €` : ''}</span>
+                      {col.key === 'encerrada' && total > 0 && <span>{fecharam} fecharam · {total - fecharam} não</span>}
+                    </div>
+                    {isTarget && (
+                      <div className="rounded-[16px] border border-dashed border-[#C9A84C]/45 py-4 text-center text-[12px] tracking-[0.15em] uppercase text-[#C9A84C]">
+                        {col.key === 'encerrada' ? 'Largar para encerrar' : `Mover para ${col.label}`}
+                      </div>
+                    )}
+                    {visiveis.length === 0 && !isTarget ? (
+                      <div className="text-center py-8 text-white/25 text-[13px]">Sem leads</div>
+                    ) : (
+                      visiveis.map(c => (
+                        <KanbanCard
+                          key={c.id}
+                          c={c}
+                          coluna={col.key}
+                          diasNoPasso={daysSince(ultimaMudanca[c.id] || c.status_updated_at || c.data_entrada)}
+                          enviados={waEnviados[c.id] ?? {}}
+                          onEnviado={ev => setWaEnviados(prev => ({ ...prev, [c.id]: { ...(prev[c.id] ?? {}), [ev]: new Date().toISOString() } }))}
+                          onPortal={token => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, page_token: token } : x))}
+                          onOpen={() => setDrawerId(c.id)}
+                          onStatusChange={handleStatusChange}
+                          dragging={draggingId === c.id}
+                          onDragStart={() => setDraggingId(c.id)}
+                          onDragEnd={() => { setDraggingId(null); setDropCol(null) }}
+                        />
+                      ))
+                    )}
+                    {col.key === 'encerrada' && total > encerradaLimit && (
+                      <button
+                        onClick={() => setEncerradaLimit(l => l + ENCERRADA_PAGE)}
+                        className="py-2 text-[13px] text-white/40 hover:text-[#C9A84C] transition-colors"
+                      >
+                        Ver mais ({total - encerradaLimit})
+                      </button>
+                    )}
+                  </section>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </div>
 
       {drawerContact && (
         <LeadDrawer c={drawerContact} onClose={closeDrawer} onStatusChange={handleStatusChange} onPatch={patchContact} />

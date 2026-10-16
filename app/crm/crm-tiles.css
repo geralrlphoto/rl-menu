@@ -128,3 +128,22 @@
   text-transform: uppercase;
   color: var(--ink);
 }
+
+/* Quadro do CRM só em dourado suave: as cores dos cartões (vermelho, roxo, verde…)
+   passam a tons de dourado. O tipo continua a ler-se pelo texto e pela intensidade. */
+.crm-ouro [class*="text-red"], .crm-ouro [class*="text-orange"], .crm-ouro [class*="text-amber"],
+.crm-ouro [class*="text-yellow"], .crm-ouro [class*="text-purple"], .crm-ouro [class*="text-violet"],
+.crm-ouro [class*="text-blue"], .crm-ouro [class*="text-sky"], .crm-ouro [class*="text-pink"],
+.crm-ouro [class*="text-rose"], .crm-ouro [class*="text-emerald"], .crm-ouro [class*="text-green"],
+.crm-ouro [class*="text-teal"], .crm-ouro [class*="text-cyan"] { color: #C9A84C !important; }
+.crm-ouro [class*="border-red"], .crm-ouro [class*="border-orange"], .crm-ouro [class*="border-amber"],
+.crm-ouro [class*="border-yellow"], .crm-ouro [class*="border-purple"], .crm-ouro [class*="border-violet"],
+.crm-ouro [class*="border-blue"], .crm-ouro [class*="border-sky"], .crm-ouro [class*="border-pink"],
+.crm-ouro [class*="border-rose"], .crm-ouro [class*="border-emerald"], .crm-ouro [class*="border-green"],
+.crm-ouro [class*="border-teal"], .crm-ouro [class*="border-cyan"] { border-color: rgba(201,168,76,0.35) !important; }
+.crm-ouro [class*="bg-red"], .crm-ouro [class*="bg-orange"], .crm-ouro [class*="bg-amber"],
+.crm-ouro [class*="bg-yellow"], .crm-ouro [class*="bg-purple"], .crm-ouro [class*="bg-violet"],
+.crm-ouro [class*="bg-blue"], .crm-ouro [class*="bg-sky"], .crm-ouro [class*="bg-pink"],
+.crm-ouro [class*="bg-rose"], .crm-ouro [class*="bg-emerald"], .crm-ouro [class*="bg-green"],
+.crm-ouro [class*="bg-teal"], .crm-ouro [class*="bg-cyan"] { background-color: rgba(201,168,76,0.12) !important; }
+.crm-ouro [draggable="true"] { border-radius: 16px !important; }
