@@ -352,7 +352,31 @@ function GlobalMenuInner() {
         { nome: 'Produção', hrefs: ['/fotos-selecao', '/albuns-casamento', '/freelancers'] },
         { nome: 'Gestão', hrefs: ['/financas', '/relatorio-diario', '/calendario'] },
       ]
-  const linkDe = (href: string) => (navLinks as any[]).find(l => l.href === href)
+  const EXTRA_LINKS = [{
+    href: '/tarefas', label: 'Tarefas', sub: 'Por fazer',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg>,
+  }]
+  const linkDe = (href: string) => ([...navLinks, ...EXTRA_LINKS] as any[]).find(l => l.href === href)
+
+  // Conteúdo do painel de cada grupo, em 4 colunas: destaque (com globo), dois cartões,
+  // cartão "mensagem" com botão, e a lista de atalhos do grupo
+  const PAINEIS: Record<string, { destaque: string; medidor: string; pares: Array<{ href: string; pill: string }>; mensagem: { href: string; frase: string; botao: string } }> = {
+    Clientes: {
+      destaque: '/crm', medidor: 'leads',
+      pares: [{ href: '/casamentos', pill: 'Agenda' }, { href: '/eventos-2026', pill: 'Fichas' }],
+      mensagem: { href: '/portais-clientes', frase: 'Os noivos acompanham tudo no seu portal.', botao: 'Abrir os portais' },
+    },
+    Produção: {
+      destaque: '/fotos-selecao', medidor: 'seleções',
+      pares: [{ href: '/albuns-casamento', pill: 'Álbuns' }, { href: '/freelancers', pill: 'Equipa' }],
+      mensagem: { href: '/tarefas', frase: 'Tudo o que falta fazer, num só sítio.', botao: 'Ver as tarefas' },
+    },
+    Gestão: {
+      destaque: '/financas', medidor: 'receitas',
+      pares: [{ href: '/calendario', pill: 'Agenda' }, { href: '/tarefas', pill: 'Por fazer' }],
+      mensagem: { href: '/relatorio-diario', frase: 'Como está o estúdio hoje, num relance.', botao: 'Abrir o relatório' },
+    },
+  }
 
   function abrirMega(nome: string | null) {
     if (fecharMega.current) clearTimeout(fecharMega.current)
@@ -430,63 +454,129 @@ function GlobalMenuInner() {
           )}
         </div>
       </div>
-      {/* Painel largo por baixo da barra (como um mega menu) */}
-      {!isMedia && (
-        <div className="absolute left-0 right-0 top-full z-50 px-6 xl:px-10 pt-2 pb-8 transition-all duration-200"
-          style={{
-            opacity: mega ? 1 : 0, visibility: mega ? 'visible' : 'hidden',
-            transform: mega ? 'translateY(0)' : 'translateY(-6px)',
-            background: 'linear-gradient(180deg, rgba(11,11,11,0.98) 70%, rgba(11,11,11,0))',
-          }}
-          onMouseEnter={() => abrirMega(mega)} onMouseLeave={sairMega}>
-          <div className="max-w-6xl mx-auto grid grid-cols-3 gap-5">
-            {GRUPOS.filter(g => g.hrefs.length > 1).map(g => {
-              const links = g.hrefs.map(linkDe).filter(Boolean) as any[]
-              const foco = mega === g.nome
-              return (
-                <div key={g.nome} onMouseEnter={() => setMega(g.nome)}
-                  className="rounded-[20px] border p-4 transition-all duration-300"
-                  style={{
-                    background: '#101213',
-                    borderColor: foco ? accent(0.35) : 'rgba(255,255,255,0.05)',
-                    boxShadow: foco ? `0 0 40px -18px ${accent(0.6)}` : 'none',
-                  }}>
-                  <div className="rounded-[16px] border border-white/[0.07] bg-[#191c1d]">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07]">
-                      <p className="font-cond font-semibold text-[16px] text-white">{g.nome}</p>
-                      <p className="font-cond text-[14px] text-white/45">{links.length}</p>
+      {/* Painel largo por baixo da barra: só o do grupo apontado, em 4 colunas */}
+      {!isMedia && (() => {
+        const g = GRUPOS.find(x => x.nome === mega)
+        const pn = g ? PAINEIS[g.nome] : null
+        const links = g ? (g.hrefs.map(linkDe).filter(Boolean) as any[]) : []
+        const dest = pn ? linkDe(pn.destaque) : null
+        const msg = pn ? linkDe(pn.mensagem.href) : null
+        const coluna = 'rounded-[20px] bg-[#0e1213] border border-white/[0.04] p-4 min-h-[250px] flex flex-col'
+        const cartao = 'rounded-[16px] border border-white/[0.08] bg-[#1a1f20] transition-all duration-200 hover:border-white/[0.18] hover:bg-[#202627]'
+        const pill = (aqui: boolean, texto: string) => (
+          <span className="shrink-0 rounded-full border px-2.5 py-0.5 font-cond text-[12.5px] font-semibold"
+            style={aqui
+              ? { color: '#0b0b0b', background: accent(0.85), borderColor: accent(0.85) }
+              : { color: accent(0.95), background: accent(0.12), borderColor: accent(0.3) }}>
+            {aqui ? 'Estás aqui' : texto}
+          </span>
+        )
+        return (
+          <div className="absolute left-0 right-0 top-full z-50 px-6 xl:px-10 pt-3 pb-10 transition-all duration-200"
+            style={{
+              opacity: pn ? 1 : 0, visibility: pn ? 'visible' : 'hidden',
+              transform: pn ? 'translateY(0)' : 'translateY(-6px)',
+              background: 'linear-gradient(180deg, rgba(11,11,11,0.98) 75%, rgba(11,11,11,0))',
+            }}
+            onMouseEnter={() => abrirMega(mega)} onMouseLeave={sairMega}>
+            {pn && g && dest && msg && (
+              <div key={g.nome} className="max-w-7xl mx-auto grid grid-cols-4 gap-5 [animation:megaIn_.25s_ease-out]">
+
+                {/* 1 · Destaque com globo pontilhado */}
+                <div className={`${coluna} relative overflow-hidden justify-end`}>
+                  <svg viewBox="0 0 200 200" className="absolute -top-6 left-1/2 -translate-x-1/2 w-[230px] h-[230px]" aria-hidden>
+                    <defs>
+                      <pattern id="mega-pontos" width="5" height="5" patternUnits="userSpaceOnUse">
+                        <circle cx="2.5" cy="2.5" r="0.9" fill={accent(0.55)} />
+                      </pattern>
+                      <radialGradient id="mega-luz" cx="40%" cy="35%">
+                        <stop offset="0%" stopColor="#fff" />
+                        <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+                      </radialGradient>
+                      <mask id="mega-mask"><circle cx="100" cy="100" r="78" fill="url(#mega-luz)" /></mask>
+                    </defs>
+                    <circle cx="100" cy="100" r="78" fill="url(#mega-pontos)" mask="url(#mega-mask)" />
+                    <ellipse cx="100" cy="100" rx="96" ry="34" fill="none" stroke={accent(0.45)} strokeWidth="0.8" transform="rotate(-38 100 100)" />
+                    <circle cx="152" cy="62" r="4" fill="none" stroke={accent(0.8)} strokeWidth="0.8" />
+                    <circle cx="152" cy="62" r="1.6" fill={accent(0.95)} />
+                  </svg>
+                  <Link href={dest.href} onClick={() => setMega(null)} className={`relative ${cartao} px-4 py-3.5 backdrop-blur-md`}>
+                    <div className="flex items-center gap-3">
+                      <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{dest.icon}</span>
+                      <span className="font-cond font-semibold text-[17px] text-white flex-1 truncate">{dest.label}</span>
+                      <span className="flex items-end gap-[2px] h-3" aria-hidden>
+                        {Array.from({ length: 9 }).map((_, i) => (
+                          <span key={i} className="w-[2px] rounded-full" style={{ height: '100%', background: i < 7 ? accent(0.9) : 'rgba(255,255,255,0.15)' }} />
+                        ))}
+                      </span>
+                      <span className="font-cond text-[13px] text-white/50">{pn.medidor}</span>
                     </div>
-                    <div className="p-2 flex flex-col gap-2">
-                      {links.map(l => {
-                        const aqui = isActive(l.href, l.exact)
-                        return (
-                          <Link key={l.href} href={l.href} onClick={() => setMega(null)}
-                            className="group/item flex items-center gap-3 rounded-[14px] border border-white/[0.07] bg-[#202425] px-3 py-2.5 transition-all duration-200 hover:border-white/[0.18] hover:bg-[#262a2b]">
-                            <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center transition-transform duration-300 group-hover/item:scale-110"
-                              style={{ color: accent(0.9), background: accent(0.1) }}>
-                              {l.icon}
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block font-cond font-semibold text-[15.5px] text-white truncate">{l.label}</span>
-                              <span className="block font-cond text-[13px] text-white/45 truncate">{l.sub}</span>
-                            </span>
-                            <span className="shrink-0 rounded-full border px-2.5 py-0.5 font-cond text-[12px] font-semibold"
-                              style={aqui
-                                ? { color: '#0b0b0b', background: accent(0.85), borderColor: accent(0.85) }
-                                : { color: accent(0.95), background: accent(0.1), borderColor: accent(0.3) }}>
-                              {aqui ? 'Estás aqui' : 'Abrir'}
-                            </span>
-                          </Link>
-                        )
-                      })}
+                    <p className="font-cond text-[14px] text-white/50 mt-1.5 pl-12">{dest.sub}</p>
+                  </Link>
+                </div>
+
+                {/* 2 · Dois cartões com pílula */}
+                <div className={`${coluna} justify-center gap-3`}>
+                  {pn.pares.map(par => {
+                    const l = linkDe(par.href)
+                    if (!l) return null
+                    return (
+                      <Link key={par.href} href={l.href} onClick={() => setMega(null)} className={`${cartao} px-4 py-3.5`}>
+                        <p className="font-cond font-semibold text-[17px] text-white">{l.label}</p>
+                        <div className="flex items-center justify-between gap-3 mt-1">
+                          <p className="font-cond text-[14px] text-white/50 truncate">{l.sub}</p>
+                          {pill(isActive(l.href, l.exact), par.pill)}
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+
+                {/* 3 · Cartão "mensagem" com botão */}
+                <div className={`${coluna} justify-center`}>
+                  <div className={`${cartao} hover:bg-[#1a1f20] px-4 py-4`}>
+                    <div className="flex items-center gap-3">
+                      <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14), border: `1px solid ${accent(0.3)}` }}>{msg.icon}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-cond font-semibold text-[17px] text-white truncate">{msg.label}</span>
+                        <span className="block font-cond text-[14px] text-white/50 truncate">{msg.sub}</span>
+                      </span>
+                      <span className="font-cond text-[13px] text-white/40">RL</span>
+                    </div>
+                    <p className="font-cond italic text-[14px] text-white/55 mt-3 pl-3 border-l-2 border-white/[0.12]">“{pn.mensagem.frase}”</p>
+                    <Link href={msg.href} onClick={() => setMega(null)}
+                      className="mt-3 flex items-center gap-2.5 rounded-[12px] bg-white/[0.10] hover:bg-white/[0.16] px-4 py-2.5 font-cond font-semibold text-[15px] text-white transition-colors">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill={accent(0.95)} aria-hidden><path d="M10 2.5l1.6 4.9 4.9 1.6-4.9 1.6L10 15.5l-1.6-4.9L3.5 9l4.9-1.6z" /></svg>
+                      {pn.mensagem.botao}
+                    </Link>
+                  </div>
+                </div>
+
+                {/* 4 · Lista de atalhos do grupo */}
+                <div className={`${coluna} justify-center`}>
+                  <div className="rounded-[16px] border border-white/[0.08] bg-[#1a1f20]">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
+                      <p className="font-cond font-semibold text-[17px] text-white">{g.nome}</p>
+                      <p className="font-cond text-[14px] text-white/45">{links.length} / {links.length}</p>
+                    </div>
+                    <div className="px-2 py-2 flex flex-col">
+                      {links.map(l => (
+                        <Link key={l.href} href={l.href} onClick={() => setMega(null)}
+                          className="flex items-center gap-3 rounded-[10px] px-2 py-2 hover:bg-white/[0.05] transition-colors">
+                          <span className="w-5 h-5 shrink-0 rounded-full flex items-center justify-center" style={{ background: accent(isActive(l.href, l.exact) ? 0.95 : 0.7) }}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#0b0b0b" strokeWidth="3.2" className="w-3 h-3" aria-hidden><path strokeLinecap="round" strokeLinejoin="round" d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                          </span>
+                          <span className="font-cond font-semibold text-[16px] text-white">{l.label}</span>
+                        </Link>
+                      ))}
                     </div>
                   </div>
                 </div>
-              )
-            })}
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Faixa fina riscada por baixo, a dourado */}
       <div className="h-[5px]" style={{
@@ -505,6 +595,7 @@ function GlobalMenuInner() {
         @media print {
           [data-global-menu] { display: none !important; }
         }
+        @keyframes megaIn { from { opacity: 0; transform: translateY(-8px) } to { opacity: 1; transform: none } }
       `}</style>
 
       {/* ── DESKTOP: barra de topo (nos paths colapsados fica só o botão flutuante) ── */}
