@@ -147,8 +147,8 @@ export function TarefasCard() {
           <aside className="fixed top-0 right-0 z-[91] h-[100dvh] flex flex-col"
             style={{
               width: 'min(460px, 100vw)',
-              background: 'linear-gradient(180deg, #12101a, #0a0910)',
-              borderLeft: `1px solid ${VIOLETA}40`,
+              background: '#0b0b0b',
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
               boxShadow: aberto ? '-30px 0 80px -20px rgba(0,0,0,0.75)' : 'none',
               transform: aberto ? 'translateX(0)' : 'translateX(100%)',
               transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
@@ -156,48 +156,49 @@ export function TarefasCard() {
             aria-hidden={!aberto}>
 
             {/* Cabeçalho */}
-            <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
-              <div className="flex items-start justify-between gap-4">
+            <div className="relative px-6 pt-7 pb-5 border-b border-white/[0.08] overflow-hidden">
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(90% 120% at 0% 0%, rgba(201,168,76,0.10), transparent 60%)' }} />
+              <div className="relative flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[9px] tracking-[0.4em] uppercase text-white/40">Prioridade</p>
-                  <h2 className="font-cormorant text-3xl font-light text-white mt-1">Tarefas</h2>
-                  <p className="text-[11px] mt-1">
-                    <span style={{ color: VIOLETA }}>{n} por fazer</span>
-                    {temAtraso && <><span className="text-white/25"> · </span><span style={{ color: VERMELHO }}>{atrasadas.length} com prazo passado</span></>}
-                  </p>
+                  <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Prioridade</p>
+                  <h2 className="font-cond font-bold text-[40px] leading-none text-white mt-2">Tarefas</h2>
+                  <div className="flex flex-wrap gap-2 mt-4 font-cond text-[13px]">
+                    <span className="rounded-full px-3 py-1" style={{ color: VIOLETA, background: `${VIOLETA}1a` }}>{n} por fazer</span>
+                    {temAtraso && <span className="rounded-full px-3 py-1" style={{ color: VERMELHO, background: `${VERMELHO}1a` }}>{atrasadas.length} com prazo passado</span>}
+                  </div>
                 </div>
                 <button onClick={() => setAberto(false)} aria-label="Fechar"
-                  className="w-9 h-9 rounded-full border border-white/10 text-white/40 hover:text-white hover:border-white/30 transition-all flex items-center justify-center">
+                  className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.04] text-white/50 hover:text-white hover:border-white/30 hover:rotate-90 transition-all duration-300 flex items-center justify-center">
                   ✕
                 </button>
               </div>
 
               {/* Nova tarefa */}
               <form onSubmit={e => { e.preventDefault(); adicionar() }}
-                className="mt-5 rounded-xl border p-3 flex flex-col gap-2.5"
-                style={{ borderColor: `${VIOLETA}40`, background: `${VIOLETA}0d` }}>
+                className="relative mt-5 rounded-[18px] border border-white/[0.08] bg-[#141414] p-4 flex flex-col gap-3"
+                style={{ borderLeft: `2px solid ${VIOLETA}` }}>
                 <input ref={inputRef} value={titulo} onChange={e => setTitulo(e.target.value)}
                   placeholder="Nova tarefa…"
-                  className="w-full bg-transparent text-[14px] text-white placeholder-white/30 focus:outline-none" />
+                  className="w-full bg-transparent font-cond text-[17px] text-white placeholder-white/30 focus:outline-none" />
                 {comNotas && (
                   <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2}
                     placeholder="Notas (opcional)"
                     className="w-full bg-white/[0.03] border border-white/10 rounded-lg px-2.5 py-1.5 text-[12px] text-white/80 placeholder-white/25 focus:outline-none focus:border-white/25 resize-none" />
                 )}
                 <div className="flex items-center gap-2">
-                  <label className="flex items-center gap-1.5 text-[10px] tracking-wide text-white/40">
+                  <label className="flex items-center gap-1.5 font-cond text-[12px] text-white/45">
                     Prazo
                     <input type="date" value={prazo} onChange={e => setPrazo(e.target.value)}
-                      className="bg-black/30 border border-white/10 rounded-lg px-2 py-1 text-[11px] text-white/75 focus:outline-none [color-scheme:dark]" />
+                      className="bg-black/30 border border-white/10 rounded-full px-3 py-1 text-[11px] text-white/75 focus:outline-none [color-scheme:dark]" />
                   </label>
                   {!comNotas && (
                     <button type="button" onClick={() => setComNotas(true)}
-                      className="text-[10px] text-white/35 hover:text-white/70 transition-colors">
+                      className="font-cond text-[12px] text-white/40 hover:text-white/75 transition-colors">
                       + notas
                     </button>
                   )}
                   <button type="submit" disabled={!titulo.trim() || aGravar}
-                    className="ml-auto px-4 py-1.5 rounded-lg text-[10px] font-bold tracking-[0.2em] uppercase text-black transition-all disabled:opacity-35"
+                    className="ml-auto px-5 py-2 rounded-full font-cond text-[14px] font-medium text-black transition-all hover:brightness-110 disabled:opacity-35"
                     style={{ background: VIOLETA }}>
                     {aGravar ? 'A gravar…' : 'Adicionar'}
                   </button>
@@ -206,45 +207,46 @@ export function TarefasCard() {
             </div>
 
             {/* Lista */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-2">
-              {tarefas === null && <p className="text-center text-white/25 text-xs tracking-widest uppercase py-16">A carregar…</p>}
+            <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-3">
+              {tarefas === null && <p className="text-center font-cond text-[16px] text-white/35 py-16">A carregar…</p>}
               {tarefas !== null && ordenadas.length === 0 && (
-                <p className="text-center text-white/25 text-xs tracking-widest uppercase py-16">Nada por fazer</p>
+                <p className="text-center font-cond text-[16px] text-white/35 py-16">Nada por fazer</p>
               )}
               {ordenadas.map(t => {
                 const d = t.data_prazo ? diasAte(t.data_prazo) : null
                 const corPrazo = d === null ? 'rgba(255,255,255,0.3)' : d < 0 ? VERMELHO : d <= 2 ? '#fb923c' : 'rgba(255,255,255,0.45)'
                 return (
-                  <div key={t.id} className="group relative flex items-start gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] pl-4 pr-3 py-3 transition-all hover:border-white/15">
+                  <div key={t.id} className="group relative flex items-center gap-3.5 rounded-[20px] border border-white/[0.08] bg-[#141414] pl-4 pr-4 py-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.18]"
+                    style={{ borderLeft: `2px solid ${d !== null && d < 0 ? VERMELHO : VIOLETA}` }}>
                     {/* Concluir — só tarefas normais; as mensagens dos noivos respondem-se em /tarefas */}
                     {t._is_noivos_msg ? (
-                      <span className="mt-0.5 w-5 h-5 rounded-full border border-white/15 flex items-center justify-center text-[10px] text-white/40 shrink-0" title="Mensagem dos noivos">💬</span>
+                      <span className="w-9 h-9 rounded-full bg-white/[0.05] flex items-center justify-center text-[13px] text-white/50 shrink-0" title="Mensagem dos noivos">💬</span>
                     ) : (
                       <button onClick={() => concluir(t)} disabled={aFechar === t.id}
                         title="Marcar como concluída"
-                        className="mt-0.5 w-5 h-5 rounded-full border shrink-0 flex items-center justify-center text-[11px] transition-all hover:scale-110 disabled:opacity-40"
-                        style={{ borderColor: `${VIOLETA}80`, color: VIOLETA }}
+                        className="w-9 h-9 rounded-full border shrink-0 flex items-center justify-center text-[13px] transition-all hover:scale-110 disabled:opacity-40"
+                        style={{ borderColor: `${VIOLETA}66`, color: VIOLETA, background: `${VIOLETA}14` }}
                         onMouseEnter={e => { e.currentTarget.style.background = VIOLETA; e.currentTarget.style.color = '#000' }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = VIOLETA }}>
+                        onMouseLeave={e => { e.currentTarget.style.background = `${VIOLETA}14`; e.currentTarget.style.color = VIOLETA }}>
                         {aFechar === t.id ? '…' : '✓'}
                       </button>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13.5px] text-white/90 leading-snug">{t.titulo}</p>
+                      <p className="font-cond text-[17px] text-white leading-snug">{t.titulo}</p>
                       {t.descricao && !t._is_noivos_msg && (
-                        <p className="text-[11px] text-white/35 mt-1 line-clamp-2 whitespace-pre-line">{t.descricao}</p>
+                        <p className="font-cond text-[13px] text-white/40 mt-1 line-clamp-2 whitespace-pre-line">{t.descricao}</p>
                       )}
                     </div>
                     <div className="text-right shrink-0">
                       {t.data_prazo ? (
                         <>
-                          <p className="text-[11px] font-medium" style={{ color: corPrazo }}>{fmt(t.data_prazo)}</p>
-                          <p className="text-[9px] tracking-wider uppercase mt-0.5" style={{ color: corPrazo }}>
+                          <p className="font-cond text-[14px] font-medium" style={{ color: corPrazo }}>{fmt(t.data_prazo)}</p>
+                          <p className="font-cond text-[11px] mt-0.5" style={{ color: corPrazo }}>
                             {d! < 0 ? `${Math.abs(d!)}d atraso` : d === 0 ? 'hoje' : `${d}d`}
                           </p>
                         </>
                       ) : (
-                        <p className="text-[10px] text-white/25">sem prazo</p>
+                        <p className="font-cond text-[12px] text-white/30">sem prazo</p>
                       )}
                     </div>
                   </div>
@@ -252,9 +254,9 @@ export function TarefasCard() {
               })}
             </div>
 
-            <div className="px-6 py-3 border-t border-white/[0.06]">
+            <div className="px-6 py-4 border-t border-white/[0.08]">
               <Link href="/tarefas" onClick={() => setAberto(false)}
-                className="text-[10px] tracking-[0.3em] uppercase text-white/35 hover:text-white transition-colors">
+                className="font-cond text-[14px] text-white/50 hover:text-[#C9A84C] transition-colors">
                 Abrir página das tarefas →
               </Link>
             </div>

@@ -96,39 +96,40 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
     const corDias = it.estado === 'atraso' ? VERMELHO : LARANJA
     const gravando = !!aGravar[chave(it)]
     const comAcoes = !!it.acao && !!it.ref
-    const btn = 'w-7 h-6 rounded-full border text-[11px] leading-none flex items-center justify-center transition-all disabled:opacity-40'
+    const btn = 'w-8 h-8 rounded-full border text-[12px] leading-none flex items-center justify-center transition-all hover:scale-110 disabled:opacity-40'
     const conteudo = (
       <>
-        <div className="min-w-0 flex-1">
-          <p className="text-[9px] tracking-[0.25em] uppercase" style={{ color: cor }}>{it.tipo}</p>
-          <p className="text-[14px] text-white/90 truncate mt-1">{it.nome}</p>
-          <p className="text-[10px] text-white/30 mt-0.5 font-mono">{it.ref}</p>
-        </div>
-        <div className="text-right shrink-0">
-          <p className="text-2xl font-extralight leading-none" style={{ color: corDias }}>
+        <div className="shrink-0 flex flex-col items-center w-14">
+          <span className="w-12 h-12 rounded-full flex items-center justify-center font-cond font-semibold leading-none"
+            style={{ color: corDias, background: `${corDias}1f`, fontSize: it.estado === 'aviso' && it.dias === 0 ? 14 : 20 }}>
             {it.estado === 'aviso' && it.dias === 0 ? 'Hoje' : it.dias}
-          </p>
-          <p className="text-[9px] tracking-[0.2em] uppercase mt-1" style={{ color: `${corDias}80` }}>
+          </span>
+          <span className="font-cond text-[11px] mt-1.5 whitespace-nowrap" style={{ color: `${corDias}cc` }}>
             {it.estado === 'atraso'
               ? (it.dias === 1 ? 'dia atraso' : 'dias atraso')
               : it.dias === 0 ? 'último dia' : it.dias === 1 ? 'dia' : 'dias'}
-          </p>
+          </span>
         </div>
-        {it.href && <span className="text-white/20 group-hover:text-white group-hover:translate-x-0.5 transition-all">→</span>}
+        <div className="min-w-0 flex-1">
+          <p className="font-cond text-[11px] font-medium tracking-[0.18em] uppercase" style={{ color: cor }}>{it.tipo}</p>
+          <p className="font-cond font-medium text-[20px] leading-tight text-white truncate mt-1">{it.nome}</p>
+          <p className="font-cond text-[12px] text-white/35 mt-0.5">{it.ref}</p>
+        </div>
+        {it.href && <span className="text-white/25 group-hover:text-[#C9A84C] group-hover:translate-x-0.5 transition-all">→</span>}
       </>
     )
-    const linhaCls = `flex items-center gap-4 pl-5 pr-4 ${comAcoes ? 'pt-3.5 pb-2' : 'py-3.5'}`
+    const linhaCls = `flex items-center gap-4 pl-4 pr-5 ${comAcoes ? 'pt-4 pb-2' : 'py-4'}`
     return (
       // O cartão não é o link: os botões não podem viver dentro de uma âncora.
-      <div key={key} className="group relative rounded-xl border border-white/[0.06] bg-white/[0.02] transition-all hover:border-white/20 hover:bg-white/[0.05] overflow-hidden">
-        <span className="absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full" style={{ background: cor }} />
+      <div key={key} className="group relative rounded-[22px] border border-white/[0.08] bg-[#141414] transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.18] overflow-hidden"
+        style={{ borderLeft: `2px solid ${cor}` }}>
         {it.href ? (
           <Link href={it.href} onClick={() => setAberto(false)} className={linhaCls}>{conteudo}</Link>
         ) : (
           <div className={linhaCls} title="Sem ficha encontrada para esta referência">{conteudo}</div>
         )}
         {comAcoes && (
-          <div className="flex items-center justify-end gap-1.5 pl-5 pr-3 pb-2.5">
+          <div className="flex items-center justify-end gap-2 pl-5 pr-4 pb-3">
             <button
               onClick={() => agir(it, 'entregue')}
               disabled={gravando}
@@ -154,11 +155,12 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
 
   const seccao = (titulo: string, cor: string, lista: EntregaAtraso[]) =>
     lista.length === 0 ? null : (
-      <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-3 px-1 pt-2">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-3 px-1 pt-2 pb-1">
           <span className="w-2 h-2 rounded-full" style={{ background: cor, boxShadow: `0 0 10px ${cor}` }} />
-          <span className="text-[10px] tracking-[0.3em] uppercase" style={{ color: cor }}>{titulo} · {lista.length}</span>
-          <div className="flex-1 h-px" style={{ background: `${cor}30` }} />
+          <span className="font-cond text-[12px] font-semibold tracking-[0.14em] uppercase" style={{ color: cor }}>{titulo}</span>
+          <span className="rounded-full px-2 py-0.5 font-cond text-[11px] font-semibold" style={{ color: cor, background: `${cor}1f` }}>{lista.length}</span>
+          <div className="flex-1 h-px bg-white/[0.08]" />
         </div>
         {lista.map((it, i) => linha(it, `${titulo}-${it.ref}-${it.tipo}-${i}`))}
       </div>
@@ -187,8 +189,8 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
             className="fixed top-0 right-0 z-[91] h-[100dvh] flex flex-col"
             style={{
               width: 'min(460px, 100vw)',
-              background: 'linear-gradient(180deg, #14100d, #0b0907)',
-              borderLeft: `1px solid ${corBotao}40`,
+              background: '#0b0b0b',
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
               boxShadow: aberto ? '-30px 0 80px -20px rgba(0,0,0,0.75)' : 'none',
               transform: aberto ? 'translateX(0)' : 'translateX(100%)',
               transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
@@ -196,28 +198,28 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
             aria-hidden={!aberto}>
 
             {/* Cabeçalho */}
-            <div className="px-6 pt-6 pb-4 border-b border-white/[0.06]">
-              <div className="flex items-start justify-between gap-4">
+            <div className="relative px-6 pt-7 pb-5 border-b border-white/[0.08] overflow-hidden">
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(90% 120% at 0% 0%, rgba(201,168,76,0.10), transparent 60%)' }} />
+              <div className="relative flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-[9px] tracking-[0.4em] uppercase text-white/40">Prioridade</p>
-                  <h2 className="font-cormorant text-3xl font-light text-white mt-1">{titulo}</h2>
-                  <p className="text-[11px] mt-1">
-                    <span style={{ color: VERMELHO }}>{porResolver.filter(i => i.estado === 'atraso').length} em atraso</span>
-                    <span className="text-white/25"> · </span>
-                    <span style={{ color: LARANJA }}>{porResolver.filter(i => i.estado === 'aviso').length} {avisoTitulo.toLowerCase().replace('termina', 'a terminar')}</span>
-                  </p>
+                  <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Prioridade</p>
+                  <h2 className="font-cond font-bold text-[40px] leading-none text-white mt-2">{titulo}</h2>
+                  <div className="flex flex-wrap gap-2 mt-4 font-cond text-[13px]">
+                    <span className="rounded-full px-3 py-1" style={{ color: VERMELHO, background: `${VERMELHO}1a` }}>{porResolver.filter(i => i.estado === 'atraso').length} em atraso</span>
+                    <span className="rounded-full px-3 py-1" style={{ color: LARANJA, background: `${LARANJA}1a` }}>{porResolver.filter(i => i.estado === 'aviso').length} {avisoTitulo.toLowerCase().replace('termina', 'a terminar')}</span>
+                  </div>
                 </div>
                 <button onClick={() => setAberto(false)} aria-label="Fechar"
-                  className="w-9 h-9 rounded-full border border-white/10 text-white/40 hover:text-white hover:border-white/30 transition-all flex items-center justify-center">
+                  className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.04] text-white/50 hover:text-white hover:border-white/30 hover:rotate-90 transition-all duration-300 flex items-center justify-center">
                   ✕
                 </button>
               </div>
 
               {/* Filtro por tipo */}
               {tipos.length > 1 && (
-                <div className="flex flex-wrap gap-1.5 mt-4">
+                <div className="relative flex flex-wrap gap-1.5 mt-4">
                   <button onClick={() => setFiltro(null)}
-                    className="px-3 py-1 rounded-full text-[9px] tracking-[0.2em] uppercase border transition-all"
+                    className="px-3 py-1.5 rounded-full font-cond text-[12px] border transition-all"
                     style={{ borderColor: filtro === null ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.08)', color: filtro === null ? '#fff' : 'rgba(255,255,255,0.4)' }}>
                     Todas · {porResolver.length}
                   </button>
@@ -226,7 +228,7 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
                     const cor = COR_TIPO[t] ?? '#94a3b8'
                     return (
                       <button key={t} onClick={() => setFiltro(on ? null : t)}
-                        className="px-3 py-1 rounded-full text-[9px] tracking-[0.2em] uppercase border transition-all"
+                        className="px-3 py-1.5 rounded-full font-cond text-[12px] border transition-all"
                         style={{ borderColor: on ? cor : 'rgba(255,255,255,0.08)', color: on ? cor : 'rgba(255,255,255,0.4)', background: on ? `${cor}14` : 'transparent' }}>
                         {t} · {porResolver.filter(i => i.tipo === t).length}
                       </button>
@@ -237,9 +239,9 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
             </div>
 
             {/* Listas */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-5">
+            <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-6">
               {atrasos.length === 0 && avisos.length === 0 && (
-                <p className="text-center text-white/25 text-xs tracking-widest uppercase py-16">Tudo em dia</p>
+                <p className="text-center font-cond text-[16px] text-white/35 py-16">Tudo em dia</p>
               )}
               {seccao('Em atraso', VERMELHO, atrasos)}
               {seccao(avisoTitulo, LARANJA, avisos)}
