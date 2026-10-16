@@ -898,7 +898,6 @@ export default async function PhotoDashboard() {
 
               <h1 className="font-cond font-bold text-white text-[44px] sm:text-[68px] leading-[1.02] tracking-[-0.01em] mt-5">
                 {saudacao}, <span className="text-[#C9A84C]">Rui</span>
-                <br />o estúdio em foco
               </h1>
               <p className="font-cond font-light text-white/60 text-lg sm:text-xl leading-relaxed mt-6 max-w-xl">
                 Entregas, agenda e tarefas num só sítio. Do primeiro contacto à última fotografia.
