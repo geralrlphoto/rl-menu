@@ -1599,8 +1599,8 @@ export default function BriefingExtensions({
 
   return (
     <div className="briefing-premium">
-      {/* HERO */}
-      <BriefingHero
+      {/* HERO — no link partilhado a página tem a sua própria capa */}
+      {!partilhada && <BriefingHero
         podePartilhar={!partilhada && !teamView}
         info={info}
         dataEvento={dataEvento}
@@ -1612,7 +1612,7 @@ export default function BriefingExtensions({
         setViewMode={setViewMode}
         onSave={saveWithLog}
         enviarBriefingNode={enviarBriefingNode}
-      />
+      />}
 
       {/* ── Banner: admin a ver como Cliente — explica como editar ── */}
       {isAdmin && viewMode === 'client' && (
