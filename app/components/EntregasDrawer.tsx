@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { WhatsAppMembro } from './WhatsAppMembro'
 
 export type EntregaAtraso = {
   tipo: string              // "Galeria Online", "Fotos p/ Seleção", "Vídeo"…
@@ -118,7 +119,11 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
         {it.href && <span className="text-white/25 group-hover:text-[#C9A84C] group-hover:translate-x-0.5 transition-all">→</span>}
       </>
     )
-    const linhaCls = `flex items-center gap-4 pl-4 pr-5 ${comAcoes ? 'pt-4 pb-2' : 'py-4'}`
+    const linhaCls = 'flex items-center gap-4 pl-4 pr-5 pt-4 pb-2'
+    const prazoTxt = it.estado === 'atraso'
+      ? `está com ${it.dias} ${it.dias === 1 ? 'dia' : 'dias'} de atraso`
+      : it.dias === 0 ? 'termina hoje' : `termina daqui a ${it.dias} ${it.dias === 1 ? 'dia' : 'dias'}`
+    const mensagem = `Olá,\n\n${it.tipo} de ${it.nome}${it.ref ? ` (${it.ref})` : ''}: ${prazoTxt}.\n\nConsegues tratar disto? Obrigado.`
     return (
       // O cartão não é o link: os botões não podem viver dentro de uma âncora.
       <div key={key} className="group relative rounded-[22px] border border-white/[0.08] bg-[#141414] transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.18] overflow-hidden"
@@ -128,8 +133,9 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
         ) : (
           <div className={linhaCls} title="Sem ficha encontrada para esta referência">{conteudo}</div>
         )}
-        {comAcoes && (
-          <div className="flex items-center justify-end gap-2 pl-5 pr-4 pb-3">
+        <div className="flex items-center justify-end gap-2 pl-5 pr-4 pb-3">
+          <WhatsAppMembro mensagem={mensagem} titulo={it.tipo} />
+          {comAcoes && (<>
             <button
               onClick={() => agir(it, 'entregue')}
               disabled={gravando}
@@ -147,8 +153,8 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
               className={`${btn} border-white/10 bg-black/40 text-white/30 hover:border-white/40 hover:text-white`}>
               {gravando ? '…' : '✕'}
             </button>
-          </div>
-        )}
+          </>)}
+        </div>
       </div>
     )
   }

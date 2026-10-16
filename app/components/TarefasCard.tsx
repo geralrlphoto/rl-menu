@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import { WhatsAppMembro } from './WhatsAppMembro'
 
 type Tarefa = {
   id: string
@@ -237,6 +238,10 @@ export function TarefasCard() {
                         <p className="font-cond text-[13px] text-white/40 mt-1 line-clamp-2 whitespace-pre-line">{t.descricao}</p>
                       )}
                     </div>
+                    {!t._is_noivos_msg && (
+                      <WhatsAppMembro titulo="Tarefa"
+                        mensagem={`Olá,\n\nTarefa: ${t.titulo}${t.descricao ? `\n${t.descricao}` : ''}${t.data_prazo ? `\nPrazo: ${fmt(t.data_prazo)}` : ''}\n\nObrigado.`} />
+                    )}
                     <div className="text-right shrink-0">
                       {t.data_prazo ? (
                         <>
