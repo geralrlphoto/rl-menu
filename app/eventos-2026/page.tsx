@@ -674,6 +674,13 @@ function Eventos2026Inner() {
 
   // ── Interação: anos, saltar para o mês, recolher meses ───────────────────
   const ANOS = Array.from(new Set([2025, 2026, 2027, 2028, anoFiltro])).sort()
+  const posAno = ANOS.indexOf(anoFiltro)
+  const anoAnterior = posAno > 0 ? ANOS[posAno - 1] : null
+  const anoSeguinte = posAno < ANOS.length - 1 ? ANOS[posAno + 1] : null
+  const irAno = (passo: -1 | 1) => {
+    const alvo = passo < 0 ? anoAnterior : anoSeguinte
+    if (alvo) router.push(`/eventos-2026?ano=${alvo}`)
+  }
   const mesesComEventos = Object.keys(grouped)
   const contagemTipo = (t: string) => t === 'Todos' ? events.length : events.filter(e => (e.tipo_evento ?? []).includes(t)).length
   const alternarMes = (k: string) => setRecolhidos(prev => {
@@ -737,9 +744,16 @@ function Eventos2026Inner() {
                   ))}
                 </div>
               </div>
-              <h1 className="font-cond font-bold text-white text-[36px] sm:text-[66px] leading-[1.02] mt-4 break-words">
-                Casamentos <span className="text-[#C9A84C]">{anoFiltro}</span>
-              </h1>
+              {/* Setas de cada lado: ‹ ano anterior · ano seguinte › */}
+              <div className="flex items-center gap-2 sm:gap-4 mt-4">
+                <button onClick={() => irAno(-1)} disabled={!anoAnterior} title={anoAnterior ? `Temporada ${anoAnterior}` : undefined} aria-label="Ano anterior"
+                  className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/15 hover:border-[#C9A84C]/60 bg-black/30 text-white/70 hover:text-[#C9A84C] text-xl sm:text-2xl transition-all disabled:opacity-20 disabled:pointer-events-none">‹</button>
+                <h1 className="min-w-0 font-cond font-bold text-white text-[32px] sm:text-[66px] leading-[1.02] break-words">
+                  Casamentos <span className="text-[#C9A84C]">{anoFiltro}</span>
+                </h1>
+                <button onClick={() => irAno(1)} disabled={!anoSeguinte} title={anoSeguinte ? `Temporada ${anoSeguinte}` : undefined} aria-label="Ano seguinte"
+                  className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 rounded-full border border-white/15 hover:border-[#C9A84C]/60 bg-black/30 text-white/70 hover:text-[#C9A84C] text-xl sm:text-2xl transition-all disabled:opacity-20 disabled:pointer-events-none">›</button>
+              </div>
               <p className="font-cond font-light text-white/60 text-lg sm:text-xl mt-3">
                 {loading ? 'A carregar eventos…' : `${casamentosCount} casamentos · ${events.length} eventos no total · ${realizados} já realizados`}
               </p>
