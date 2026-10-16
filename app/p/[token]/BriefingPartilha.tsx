@@ -140,10 +140,6 @@ export default function BriefingPartilha({ info, fichas, equipa, nomes, casal, c
               </div>
             )}
             <div className="nao-imprimir flex flex-wrap items-center gap-3 mt-7">
-              <button onClick={() => window.print()}
-                className="inline-flex items-center gap-2 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]">
-                Guardar PDF <span className="text-[#C9A84C]">↓</span>
-              </button>
               <GuiaEquipa />
             </div>
           </div>
