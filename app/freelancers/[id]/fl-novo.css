@@ -1,0 +1,52 @@
+/* Novo layout do painel do membro (só ativo com a classe .fl-novo).
+   Uma só cor: dourado suave #C9A84C. Letra: Roboto Condensed. */
+
+.fl-novo, .fl-novo * { font-family: "Roboto Condensed", system-ui, sans-serif !important; }
+.fl-novo .italic, .fl-novo [style*="italic"] { font-style: normal !important; }
+.fl-novo .font-light { font-weight: 300 !important; }
+
+/* Dourado suave em vez do dourado forte e das outras cores */
+.fl-novo .text-gold, .fl-novo [class*="text-gold/"] { color: #C9A84C !important; }
+.fl-novo [class*="text-red"], .fl-novo [class*="text-orange"], .fl-novo [class*="text-amber"],
+.fl-novo [class*="text-yellow"], .fl-novo [class*="text-purple"], .fl-novo [class*="text-violet"],
+.fl-novo [class*="text-blue"], .fl-novo [class*="text-sky"], .fl-novo [class*="text-pink"],
+.fl-novo [class*="text-rose"], .fl-novo [class*="text-emerald"], .fl-novo [class*="text-green"],
+.fl-novo [class*="text-teal"], .fl-novo [class*="text-cyan"], .fl-novo [class*="text-indigo"] { color: #C9A84C !important; }
+.fl-novo [class*="border-red"], .fl-novo [class*="border-orange"], .fl-novo [class*="border-amber"],
+.fl-novo [class*="border-yellow"], .fl-novo [class*="border-purple"], .fl-novo [class*="border-violet"],
+.fl-novo [class*="border-blue"], .fl-novo [class*="border-sky"], .fl-novo [class*="border-pink"],
+.fl-novo [class*="border-rose"], .fl-novo [class*="border-emerald"], .fl-novo [class*="border-green"],
+.fl-novo [class*="border-teal"], .fl-novo [class*="border-cyan"], .fl-novo [class*="border-indigo"] { border-color: rgba(201,168,76,0.35) !important; }
+.fl-novo [class*="bg-red"], .fl-novo [class*="bg-orange"], .fl-novo [class*="bg-amber"],
+.fl-novo [class*="bg-yellow"], .fl-novo [class*="bg-purple"], .fl-novo [class*="bg-violet"],
+.fl-novo [class*="bg-blue"], .fl-novo [class*="bg-sky"], .fl-novo [class*="bg-pink"],
+.fl-novo [class*="bg-rose"], .fl-novo [class*="bg-emerald"], .fl-novo [class*="bg-green"],
+.fl-novo [class*="bg-teal"], .fl-novo [class*="bg-cyan"], .fl-novo [class*="bg-indigo"] { background-color: rgba(201,168,76,0.12) !important; }
+.fl-novo [class*="from-rose"], .fl-novo [class*="from-red"], .fl-novo [class*="from-blue"],
+.fl-novo [class*="from-purple"], .fl-novo [class*="from-emerald"] { background-image: none !important; }
+
+/* Botões cheios a dourado passam a pill suave */
+.fl-novo button.bg-gold, .fl-novo a.bg-gold { background: rgba(201,168,76,0.18) !important; color: #fff !important; box-shadow: none !important; }
+.fl-novo main button.bg-gold, .fl-novo main a.bg-gold { border: 1px solid rgba(201,168,76,0.6) !important; border-radius: 999px !important; }
+.fl-novo main button.rounded-xl, .fl-novo main a.rounded-xl { border-radius: 999px !important; }
+
+/* Brilhos vermelhos a pulsar ficam um brilho dourado quieto */
+.fl-novo .bell-red-glow, .fl-novo .prazo-critico-glow, .fl-novo .prox-casamento-glow {
+  animation: none !important;
+  box-shadow: 0 0 26px -12px rgba(201,168,76,0.6), inset 0 0 0 1px rgba(201,168,76,0.3) !important;
+}
+.fl-novo [style*="244, 63, 94"], .fl-novo [style*="239, 68, 68"], .fl-novo [style*="40, 8, 12"] { background: #111 !important; box-shadow: none !important; }
+
+/* Caixas: cantos de 18px, fundo escuro limpo e risco dourado à esquerda */
+.fl-novo main .rounded-2xl, .fl-novo main .rounded-3xl { border-radius: 18px !important; }
+.fl-novo main .rounded-2xl[class*="border"]:not(button) { border-left: 2px solid rgba(201,168,76,0.4) !important; }
+
+/* Menu lateral */
+.fl-novo aside { background: #0b0b0b !important; border-right: 1px solid rgba(201,168,76,0.12) !important; box-shadow: none !important; }
+.fl-novo aside nav span { font-size: 13px !important; letter-spacing: 0.16em !important; text-transform: uppercase !important; }
+.fl-novo aside nav > * { border-radius: 0 999px 999px 0; }
+
+/* Lista "Crítico · Entrega" com altura fixa e scroll (não empurra o resto da página) */
+.fl-novo [style*="40, 8, 12"] .space-y-1\.5 { max-height: 300px; overflow-y: auto; padding-right: 4px; }
+.fl-novo .fl-critico .space-y-1\.5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; max-height: 220px; }
+.fl-novo .fl-critico .space-y-1\.5 > * { margin: 0 !important; }

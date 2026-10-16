@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget, MiniCalendar } from '@/app/components/FreelancerWidgets'
+import './fl-novo.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -549,6 +550,8 @@ function FreelancerDetailInner() {
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
+  // Novo layout (cartaz de cinema, dourado suave, Roboto Condensed): por agora só neste membro, para experimentar
+  const novoLayout = id === 'de13e327-edd1-4201-be75-288038167eae'
 
   function handleIntroHomeChange(val: string) {
     setIntroHome(val)
@@ -637,7 +640,7 @@ function FreelancerDetailInner() {
   ]
 
   return (
-    <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
+    <div className={`min-h-screen text-white relative overflow-x-clip${novoLayout ? ' fl-novo font-cond' : ''}`} style={{ background: novoLayout ? '#070707' : '#0B0B0B' }}>
       {/* ── Animações premium ─────────────────────────────────────────── */}
       <style jsx global>{`
         @keyframes proxCasamentoGlow {
@@ -898,6 +901,122 @@ function FreelancerDetailInner() {
 
         return (
           <>
+          {novoLayout ? (
+          /* ── CAPA nova (foto local da Vercel, sem egress do Supabase) ── */
+          <section className="relative -mx-4 sm:-mx-6 lg:mx-0 -mt-2 lg:mt-0 mb-8 min-h-[540px] lg:min-h-[72vh] flex flex-col overflow-hidden lg:rounded-[22px] border-y lg:border border-[#C9A84C]/15 fade-in-up">
+            <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/boas-vindas-camera.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-35 lg:opacity-55" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
+            </div>
+            <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+            <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+              Equipa RL · {new Date().getFullYear()}
+            </p>
+            <span className="hidden lg:block absolute left-[36%] top-[30%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]/90" />
+            <span className="hidden lg:block absolute left-[35.2%] top-[35%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
+
+            <div className="relative z-20 flex justify-end px-5 sm:px-8 pt-5 min-h-[56px]">
+              {/* Top-right: alerta prazos + notif + messages + profile chip */}
+              <div className="flex items-center gap-2 sm:gap-3 shrink-0 absolute top-3 right-3 sm:static"  style={{zIndex:20}}>
+                {/* Alerta de prazos críticos (Seleção de Fotos a expirar) */}
+                {prazosCriticos.length > 0 && (
+                  <button title={`${prazosCriticos.length} prazo${prazosCriticos.length === 1 ? '' : 's'} a terminar — Seleção de Fotos`}
+                    onClick={() => setTab('casamentos')}
+                    className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center bell-red-glow border-red-500/60 text-red-300 hover:text-red-200 hover:border-red-400/80">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 border border-red-300"
+                      style={{ boxShadow: '0 0 8px rgba(239,68,68,0.8)' }}>
+                      {prazosCriticos.length > 9 ? '9+' : prazosCriticos.length}
+                    </span>
+                  </button>
+                )}
+                {(() => {
+                  const notifNaoLidas = notificacoes.filter(n => !n.lida).length
+                  const hasUnread = notifNaoLidas > 0
+                  return (
+                    <button title={hasUnread ? `${notifNaoLidas} notificação${notifNaoLidas === 1 ? '' : 'ões'} por ler` : 'Notificações'}
+                      onClick={() => setTab('notificacoes')}
+                      className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center ${
+                        hasUnread
+                          ? 'bell-red-glow border-red-500/55 text-red-300 hover:text-red-200 hover:border-red-400/70'
+                          : 'border-white/15 text-white/70 hover:text-gold hover:border-gold/40'
+                      }`}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+                      {hasUnread && (
+                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 border border-red-300"
+                          style={{ boxShadow: '0 0 8px rgba(239,68,68,0.7)' }}>
+                          {notifNaoLidas > 9 ? '9+' : notifNaoLidas}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })()}
+                <button title="Mensagens"
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center relative">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                  {mensagensNaoLidas > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-gold text-black text-[10px] font-bold flex items-center justify-center px-1">
+                      {mensagensNaoLidas}
+                    </span>
+                  )}
+                </button>
+                <div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
+                    {freelancer?.foto_url
+                      ? <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
+                      : <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-sm font-bold">{primeiroNome.charAt(0).toUpperCase()}</div>
+                    }
+                  </div>
+                  <div className="block min-w-0">
+                    <p className="text-[11px] sm:text-[13px] font-semibold text-white truncate max-w-[80px] sm:max-w-[140px]">{primeiroNome}</p>
+                    <p className="hidden sm:block text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{isFotografo ? 'Fotógrafo' : 'Editor de Vídeo'}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative flex-1 flex flex-col justify-end pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pb-10 lg:pb-14 min-w-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border border-[#C9A84C]/50 mb-6 grayscale-[30%]">
+                {freelancer?.foto_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-[#C9A84C]/10 flex items-center justify-center text-[#C9A84C] text-2xl font-bold">
+                    {primeiroNome.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <p className="text-[13px] sm:text-[17px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">RL Photo.Video</p>
+              <h1 className="font-bold uppercase text-white leading-[0.88] text-[54px] sm:text-[100px] lg:text-[130px] mt-2 break-words">Olá, {primeiroNome}</h1>
+              <div className="flex items-center gap-4 mt-5">
+                <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+                <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
+                  {isFotografo ? 'Fotógrafo' : isVideografo ? 'Videógrafo' : (freelancer?.status ?? 'Equipa')} · <span className="text-[#C9A84C]">Painel criativo</span>
+                </p>
+              </div>
+              <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
+                {totalCasamentos} {totalCasamentos === 1 ? 'casamento' : 'casamentos'} · {totalEmEdicao} em edição · {totalAguardando} por começar
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-7">
+                <button onClick={() => setTab('casamentos')}
+                  className="fl-btn-principal inline-flex items-center gap-2.5 rounded-full border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]">
+                  Casamentos <span className="text-[#C9A84C]">→</span>
+                </button>
+                <button onClick={() => setTab('calendario')}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 hover:border-white/35 bg-black/30 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white/85 transition-all">
+                  / Calendário
+                </button>
+              </div>
+            </div>
+          </section>
+          ) : (
+          <>
           {/* ── HERO Card (estilo Painel Criativo) ─────────────────── */}
           <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6 fade-in-up"
             style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
@@ -997,6 +1116,8 @@ function FreelancerDetailInner() {
               </div>
             </div>
           </div>
+          </>
+          )}
 
           {/* ── CRÍTICO · ENTREGA — sobrepõe canto inferior direito do hero ── */}
           {(() => {
@@ -1014,8 +1135,8 @@ function FreelancerDetailInner() {
             } as const
 
             return (
-              <div className={`relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6 ${criticoOpen ? '-mt-24' : '-mt-16'}`}>
-                <div className={`lg:col-start-3 rounded-2xl border border-rose-500/35 backdrop-blur-sm transition-all duration-300 ${criticoOpen ? 'p-3.5' : 'p-2.5'}`}
+              <div className={`relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6 ${novoLayout ? '' : criticoOpen ? '-mt-24' : '-mt-16'}`}>
+                <div className={`${novoLayout ? 'fl-critico lg:col-span-3' : 'lg:col-start-3'} rounded-2xl border border-rose-500/35 backdrop-blur-sm transition-all duration-300 ${criticoOpen ? 'p-3.5' : 'p-2.5'}`}
                   style={{
                     background: 'linear-gradient(135deg, rgba(40,8,12,0.85), rgba(20,5,8,0.92))',
                     boxShadow: '0 0 28px -10px rgba(244,63,94,0.55), inset 0 0 0 1px rgba(244,63,94,0.06)',
@@ -1305,9 +1426,9 @@ function FreelancerDetailInner() {
               const totalEntregues = onTime + late
               const pctOn = totalEntregues > 0 ? Math.round((onTime / totalEntregues) * 100) : 0
               const segs = [
-                { value: onTime,  color: '#34d399', label: 'No prazo' },
-                { value: late,    color: '#ef4444', label: 'Fora prazo' },
-                { value: emCurso, color: '#C9A45C', label: 'Em curso' },
+                { value: onTime,  color: novoLayout ? '#C9A84C' : '#34d399', label: 'No prazo' },
+                { value: late,    color: novoLayout ? '#6b5a2c' : '#ef4444', label: 'Fora prazo' },
+                { value: emCurso, color: novoLayout ? '#e3cf96' : '#C9A45C', label: 'Em curso' },
               ]
               const sumAll = segs.reduce((s, x) => s + x.value, 0) || 1
               let cumPct = 0
