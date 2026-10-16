@@ -10,6 +10,7 @@ import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
 import RelogioHero from './RelogioHero'
+import TempoSolLua from './TempoSolLua'
 import { Roboto_Condensed } from 'next/font/google'
 
 const cond = Roboto_Condensed({ subsets: ['latin'], weight: ['100', '300', '400', '500', '600', '700'], variable: '--font-cond' })
@@ -846,7 +847,11 @@ export default async function PhotoDashboard() {
         <div className="absolute inset-0"
           style={{ background: 'linear-gradient(to bottom, #0b0b0b 0%, rgba(11,11,11,0.45) 20%, rgba(11,11,11,0.55) 65%, #0b0b0b 100%)' }} />
 
-        <div className="absolute top-4 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10 flex items-start gap-4">
+          {/* Tempo em Palmela com o arco do sol / lua */}
+          <div className="hidden md:block mt-2">
+            <TempoSolLua />
+          </div>
           <LogoutButton />
         </div>
 
