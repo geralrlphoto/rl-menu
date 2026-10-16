@@ -18,7 +18,7 @@ const MATERIAL = [
   'Panos de limpeza das lentes',
 ]
 
-const BLOCOS: Array<{ titulo: string; icone: string; itens: string[]; proibido?: string[] }> = [
+const BLOCOS: Array<{ titulo: string; icone: string; itens: string[]; proibido?: string[]; nota?: string }> = [
   {
     titulo: 'Apresentação',
     icone: '◆',
@@ -38,6 +38,19 @@ const BLOCOS: Array<{ titulo: string; icone: string; itens: string[]; proibido?:
       'Planos de pormenor: alianças, convites, flores, mesas, sapatos, vestido.',
       'Guardar sempre alguns segundos antes e depois de cada momento importante.',
     ],
+  },
+  {
+    titulo: 'Confidencialidade e redes sociais',
+    icone: '✕',
+    itens: [
+      'É expressamente proibido fazer qualquer tipo de publicação nas redes sociais sobre o casamento. O contrato com os noivos pode autorizar ou não esse tipo de conteúdo.',
+      'Se quiseres partilhar alguma coisa, tira a foto e envia-ma. Sou eu que publico, se estiver autorizado.',
+      'No dia do evento, menciona sempre que o trabalho é para a RL Photo.Video.',
+      'Não partilhes o teu Instagram pessoal com os noivos nem com os convidados.',
+      'Depois do casamento é expressamente proibido qualquer tipo de contacto com os noivos. Fazê-lo pode violar os termos do contrato entre a RL Photo.Video e os contratantes.',
+    ],
+    proibido: ['Publicar nas redes sociais', 'Partilhar o Instagram pessoal', 'Contactar os noivos depois do casamento'],
+    nota: 'São regras de boas práticas e de consciência profissional.',
   },
   {
     titulo: 'Boas práticas no dia',
@@ -147,6 +160,7 @@ export default function GuiaEquipa() {
                       </li>
                     ))}
                   </ul>
+                  {b.nota && <p className="mt-3 text-[13px] italic text-white/45">{b.nota}</p>}
                   {b.proibido && (
                     <div className="mt-4">
                       <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]/80 mb-2">Não é permitido</p>
