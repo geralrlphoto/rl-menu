@@ -27,12 +27,21 @@ export default function VideosPage() {
   const [aGravar, setAGravar] = useState(false)
   const [erro, setErro] = useState('')
   const [busca, setBusca] = useState('')
+  // Janela central de adicionar vídeo
+  const [modal, setModal] = useState(false)
 
   useEffect(() => {
     fetch('/api/videos-vimeo').then(r => r.json())
       .then(d => setVideos(d.videos ?? []))
       .catch(() => setVideos([]))
   }, [])
+
+  useEffect(() => {
+    if (!modal) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setModal(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [modal])
 
   async function adicionar(e: React.FormEvent) {
     e.preventDefault()
@@ -45,7 +54,7 @@ export default function VideosPage() {
       }).then(x => x.json())
       if (r.error) { setErro(r.error); return }
       setVideos(v => [r.video, ...(v ?? [])])
-      setUrl(''); setTitulo('')
+      setUrl(''); setTitulo(''); setModal(false)
     } catch {
       setErro('Não consegui gravar. Tenta outra vez.')
     } finally { setAGravar(false) }
@@ -60,55 +69,125 @@ export default function VideosPage() {
   const filtro = busca.trim().toLowerCase()
   const visiveis = (videos ?? []).filter(v => !filtro || (v.titulo ?? '').toLowerCase().includes(filtro) || v.url.toLowerCase().includes(filtro))
 
-  return (
-    <main className="min-h-screen px-3 sm:px-6 pt-16 pb-12 lg:py-8 max-w-[1200px] mx-auto overflow-x-clip">
+  // A capa usa o vídeo mais recente (a preto e branco); sem vídeos, a foto da temporada
+  const capaHero = (videos ?? []).find(v => v.thumb)?.thumb ?? '/eventos-hero-2026.webp'
 
-      {/* ── Topo ── */}
-      <section className="relative rounded-[28px] border border-[#C9A84C]/20 mb-8">
-        <div className="absolute inset-0 rounded-[28px] overflow-hidden">
-          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 60% 80% at 80% 30%, rgba(201,168,76,0.10), transparent 70%), #0e0e0e' }} />
-          <div className="absolute inset-0 opacity-40" style={{
-            backgroundImage: 'radial-gradient(rgba(201,168,76,0.18) 1px, transparent 1px)', backgroundSize: '24px 24px',
-            maskImage: 'radial-gradient(ellipse 60% 70% at 75% 40%, #000 20%, transparent 75%)',
-            WebkitMaskImage: 'radial-gradient(ellipse 60% 70% at 75% 40%, #000 20%, transparent 75%)',
-          }} />
+  return (
+    <main className="min-h-screen overflow-x-clip">
+
+      {/* ── Capa (estilo cartaz de cinema) ── */}
+      <section className="relative min-h-[620px] lg:min-h-[86vh] flex flex-col overflow-hidden bg-[#070707]">
+        {/* Imagem à direita, a preto e branco, a fundir com o preto */}
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={capaHero} alt="" className="absolute inset-0 w-full h-full object-cover grayscale opacity-40 lg:opacity-55" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
         </div>
 
-        <div className="relative px-5 sm:px-10 pt-5 sm:pt-6 pb-7 sm:pb-9">
-          <div className="flex items-center justify-between gap-3 flex-wrap">
-            <Link href="/photo" className="font-cond text-[14px] text-white/50 hover:text-[#C9A84C] transition-colors">‹ Menu principal</Link>
-            <a href={PASTA_VIMEO} target="_blank" rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-white/[0.14] hover:border-white/30 bg-[#0e0e0e]/90 px-5 py-2.5 font-cond font-semibold text-[15px] text-white transition-all">
-              <svg viewBox="0 0 24 24" fill="#C9A84C" className="w-4 h-4" aria-hidden><path d="M23.977 6.417c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881l-1.918-7.114c-.719-2.584-1.488-3.878-2.312-3.878-.179 0-.806.378-1.881 1.132L0 7.202a315.065 315.065 0 003.5-3.132C5.08 2.71 6.265 1.987 7.054 1.915c1.867-.18 3.016 1.1 3.447 3.838.465 2.953.789 4.789.971 5.507.539 2.45 1.131 3.673 1.776 3.673.502 0 1.256-.796 2.265-2.386 1.004-1.59 1.543-2.797 1.615-3.624.144-1.371-.395-2.061-1.614-2.061-.574 0-1.167.121-1.777.391 1.186-3.868 3.434-5.757 6.762-5.637 2.473.06 3.628 1.664 3.493 4.797z" /></svg>
-              Abrir a pasta no Vimeo
-            </a>
-          </div>
+        {/* Desenhos a traço dourado: claquete e película, como os esboços da referência */}
+        <svg className="pointer-events-none absolute right-[4%] top-[12%] w-[520px] max-w-[70vw] opacity-60" viewBox="0 0 520 420" fill="none" stroke="#C9A84C" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+          {/* Claquete */}
+          <path d="M300 250 l150 -40 l22 82 l-150 40 z" opacity="0.7" />
+          <path d="M296 236 l150 -40 l-6 -22 l-150 40 z" opacity="0.7" />
+          <path d="M320 228 l18 -26 M356 218 l18 -26 M392 208 l18 -26 M428 198 l14 -21" opacity="0.6" />
+          {/* Película a curvar */}
+          <path d="M40 60 C 140 20, 230 40, 270 120 S 330 230, 250 300" opacity="0.55" />
+          <path d="M62 86 C 150 52, 220 70, 252 138 S 300 236, 228 296" opacity="0.55" />
+          <path d="M76 66 l4 14 M106 56 l4 14 M138 50 l3 14 M170 48 l2 14 M202 52 l0 14 M230 64 l-3 13 M252 84 l-6 12" opacity="0.5" />
+          {/* Mira de focagem */}
+          <circle cx="420" cy="70" r="12" opacity="0.8" />
+          <path d="M420 52 v8 M420 80 v8 M402 70 h8 M430 70 h8" opacity="0.8" />
+        </svg>
 
-          <div className="mt-10 sm:mt-12 max-w-2xl">
-            <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">RL Photo.Video · Vimeo</p>
-            <h1 className="font-cond font-bold text-white text-[36px] sm:text-[60px] leading-[1.02] mt-3">Os nossos <span className="text-[#C9A84C]">vídeos</span></h1>
-            <p className="font-cond font-light text-white/60 text-lg mt-3">
-              Cola o link do vídeo e fica aqui um cartão com a capa, pronto a abrir.
+        {/* Linha vertical dourada à esquerda */}
+        <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+
+        {/* Texto vertical e indicação de descer, à direita */}
+        <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 font-cond text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+          Palmela · Portugal · {new Date().getFullYear()}
+        </p>
+        <div className="hidden md:flex absolute right-6 bottom-8 flex-col items-center gap-2">
+          <span className="font-cond text-[10px] tracking-[0.35em] uppercase text-white/30 [writing-mode:vertical-rl]">Descer</span>
+          <span className="w-px h-10 bg-white/20" />
+        </div>
+
+        {/* Ponto e anel, como na referência */}
+        <span className="hidden lg:block absolute left-[32%] top-[28%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
+        <span className="hidden lg:block absolute left-[31.2%] top-[33%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
+
+        <div className="relative flex-1 flex flex-col justify-between pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-16 lg:pt-8 pb-10 lg:pb-14">
+          {/* Topo: estado + voltar */}
+          <div className="flex items-center justify-between gap-4">
+            <p className="flex items-center gap-2.5 font-cond text-[12px] tracking-[0.25em] uppercase text-white/55">
+              <span className="w-2 h-2 rounded-full bg-[#C9A84C] shadow-[0_0_10px_#C9A84C]" />
+              {videos === null ? 'A carregar…' : `${videos.length} ${videos.length === 1 ? 'vídeo' : 'vídeos'} na biblioteca`}
             </p>
+            <Link href="/photo" className="font-cond text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Menu principal</Link>
           </div>
 
-          {/* Adicionar link */}
-          <form onSubmit={adicionar}
-            className="mt-7 rounded-[20px] border border-[#C9A84C]/30 bg-[#111111]/85 backdrop-blur-md p-3 sm:p-4 flex flex-col sm:flex-row gap-2.5 shadow-[0_0_40px_-22px_rgba(201,168,76,0.5)]">
-            <input value={url} onChange={e => setUrl(e.target.value)} type="url" required
-              placeholder="https://vimeo.com/…"
-              className="min-w-0 flex-[2] rounded-full border border-white/[0.10] bg-white/[0.03] px-4 py-2.5 font-cond text-[15px] text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/50" />
-            <input value={titulo} onChange={e => setTitulo(e.target.value)}
-              placeholder="Título (opcional)"
-              className="min-w-0 flex-1 rounded-full border border-white/[0.10] bg-white/[0.03] px-4 py-2.5 font-cond text-[15px] text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/50" />
-            <button type="submit" disabled={aGravar || !url.trim()}
-              className="shrink-0 rounded-full border border-[#C9A84C]/55 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/25 px-6 py-2.5 font-cond text-[15px] font-semibold text-white transition-all disabled:opacity-40">
-              {aGravar ? 'A adicionar…' : '+ Adicionar'}
-            </button>
-          </form>
-          {erro && <p className="font-cond text-[13px] text-[#C9A84C] mt-2 pl-2">{erro}</p>}
+          <div className="mt-auto pt-24">
+            <p className="font-cond text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">RL Photo.Video</p>
+            <h1 className="font-cond font-bold uppercase text-white leading-[0.88] tracking-[-0.01em] text-[72px] sm:text-[130px] lg:text-[170px] mt-2">
+              Vídeos
+            </h1>
+            <div className="flex items-center gap-4 mt-5">
+              <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+              <p className="font-cond text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
+                Casamentos · Pré-Wedding · <span className="text-[#C9A84C]">Filmes</span>
+              </p>
+            </div>
+            <p className="font-cond font-light text-white/45 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
+              Todos os filmes que entregámos, num só sítio. Cola o link do Vimeo e fica aqui um cartão com a capa, pronto a abrir.
+            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-8">
+              <button onClick={() => { setErro(''); setModal(true) }}
+                className="inline-flex items-center gap-2.5 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-7 py-3.5 font-cond text-[15px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]">
+                Adicionar vídeo
+                <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="2.4" strokeLinecap="round" className="w-4 h-4" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+              </button>
+              <a href={PASTA_VIMEO} target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 border border-white/15 hover:border-white/35 bg-black/30 px-6 py-3.5 font-cond text-[15px] font-semibold tracking-[0.18em] uppercase text-white/85 transition-all">
+                / Pasta no Vimeo
+              </a>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* ── Janela central: adicionar vídeo ── */}
+      {modal && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' }}
+          onClick={() => setModal(false)}>
+          <form onSubmit={adicionar} onClick={e => e.stopPropagation()}
+            className="w-full max-w-lg rounded-[24px] border border-[#C9A84C]/30 bg-[#111111] p-6 shadow-[0_0_80px_-24px_rgba(201,168,76,0.5)]">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Biblioteca</p>
+                <h3 className="font-cond font-bold text-[30px] leading-none text-white mt-1.5">Adicionar vídeo</h3>
+              </div>
+              <button type="button" onClick={() => setModal(false)} aria-label="Fechar"
+                className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.04] text-white/50 hover:text-white hover:rotate-90 transition-all duration-300 flex items-center justify-center">✕</button>
+            </div>
+            <label className="block font-cond text-[12px] tracking-[0.12em] uppercase text-white/45 mt-6 mb-1.5">Link do vídeo</label>
+            <input autoFocus value={url} onChange={e => setUrl(e.target.value)} type="url" required placeholder="https://vimeo.com/…"
+              className="w-full rounded-full border border-white/[0.12] bg-white/[0.03] px-4 py-3 font-cond text-[16px] text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/55" />
+            <label className="block font-cond text-[12px] tracking-[0.12em] uppercase text-white/45 mt-4 mb-1.5">Título (opcional)</label>
+            <input value={titulo} onChange={e => setTitulo(e.target.value)} placeholder="Se ficar vazio, usa o título do Vimeo"
+              className="w-full rounded-full border border-white/[0.12] bg-white/[0.03] px-4 py-3 font-cond text-[16px] text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/55" />
+            {erro && <p className="font-cond text-[13px] text-[#C9A84C] mt-3">{erro}</p>}
+            <div className="flex justify-end gap-2 mt-6">
+              <button type="button" onClick={() => setModal(false)} className="rounded-full px-4 py-2.5 font-cond text-[15px] text-white/50 hover:text-white transition-colors">Cancelar</button>
+              <button type="submit" disabled={aGravar || !url.trim()}
+                className="rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-2.5 font-cond text-[15px] font-semibold text-white transition-all disabled:opacity-40">
+                {aGravar ? 'A adicionar…' : 'Adicionar'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-6 pt-12 pb-12">
 
       {/* ── Cartões ── */}
       <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
@@ -162,6 +241,7 @@ export default function VideosPage() {
             </button>
           </div>
         ))}
+      </div>
       </div>
     </main>
   )
