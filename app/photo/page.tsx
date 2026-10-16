@@ -9,6 +9,7 @@ import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
+import FraseDoDia from './FraseDoDia'
 import { LogoWfolio } from '@/app/components/LogoWfolio'
 import RelogioHero from './RelogioHero'
 import TempoSolLua from './TempoSolLua'
@@ -1042,6 +1043,18 @@ export default async function PhotoDashboard() {
               )
             })}
           </div>
+        </div>
+      </section>
+
+      {/* ── Frase do dia (fundo pontilhado, letra manuscrita) ───────────────── */}
+      <section className="relative overflow-hidden py-16 sm:py-24 px-5">
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'radial-gradient(rgba(201,168,76,0.16) 1px, transparent 1px)', backgroundSize: '18px 18px',
+          maskImage: 'radial-gradient(ellipse 75% 70% at 50% 50%, #000 30%, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 75% 70% at 50% 50%, #000 30%, transparent 80%)',
+        }} />
+        <div className="relative">
+          <FraseDoDia dia={Math.floor(Date.parse(hojeLx + 'T12:00:00Z') / 86400000)} />
         </div>
       </section>
 
