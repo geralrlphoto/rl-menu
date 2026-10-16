@@ -10,6 +10,7 @@ import { carregarNavPortal } from '@/lib/portalNav'
 import { BlocosComPrevisao } from '../atmosphere/PrevisaoIPMA'
 import BlockEditor from '../BlockEditor'
 import BriefingExtensions, { type BriefingExt, BotaoPartilhar } from './BriefingExtensions'
+import BriefingPartilha from '../../p/[token]/BriefingPartilha'
 import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../atmosphere/PortalShell'
 import { ContratoView } from '../atmosphere/ContratoView'
@@ -2435,6 +2436,30 @@ function PortalSubPageContent() {
   const _atmBackHref = fromId
     ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
     : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'
+
+  // Equipa (painel do freelancer, ?freelancer=1, o que o Enviar Briefing desbloqueia):
+  // o briefing abre no layout novo, igual ao link partilhado mas sem o Guia,
+  // e só com as secções preenchidas (inclui as notas internas, não o histórico)
+  if (isFreelancerView && isBriefingPage && !loading && !error && id) {
+    const bi = briefingInfo[id as string] ?? {}
+    const manual = (bi.equipa ?? []).filter(e => e?.name)
+    const norm = (n: string) => n.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+    const jaTem = new Set(manual.map(e => norm(e.name)))
+    const equipaT = [...manual, ...equipaFicha.filter(e => !jaTem.has(norm(e.name)))]
+    const [noivaT, noivoT] = nomesDoCasal(portalSettingsObj, eventoData)
+    const { historico: _hist, ...semHistorico } = bi
+    return (
+      <BriefingPartilha
+        semGuia
+        info={{ ...semHistorico, equipa: equipaT }}
+        fichas={briefingFichas}
+        equipa={equipaT.map(e => ({ role: e.role, name: e.name }))}
+        nomes={{ noiva: noivaT, noivo: noivoT }}
+        casal={eventoData ? { cliente: eventoData.cliente ?? '', data_evento: eventoData.data_evento ?? null, local: eventoData.local ?? '' } : null}
+        capa={_atmEffectiveHeader || ''}
+      />
+    )
+  }
 
   if (_atmIsSimple && !loading) {
     const handleEditTitle = () => {

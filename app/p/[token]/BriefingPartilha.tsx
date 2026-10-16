@@ -49,13 +49,15 @@ const CSS = `
 @media print { .partilha-nova .nao-imprimir { display: none !important; } }
 `
 
-export default function BriefingPartilha({ info, fichas, equipa, nomes, casal, capa = '' }: {
+export default function BriefingPartilha({ info, fichas, equipa, nomes, casal, capa = '', semGuia = false }: {
   info: BriefingExt
   fichas: Record<string, Ficha[]>
   equipa: Array<{ role: string; name: string }>
   nomes: { noivo?: string; noiva?: string }
   casal: { cliente: string; data_evento: string | null; local: string } | null
   capa?: string
+  /** Vista da equipa no painel (Enviar Briefing): igual, mas sem o botão do Guia */
+  semGuia?: boolean
 }) {
   const tituloFicha = (k: string) => k === 'NOIVO' ? (nomes.noivo || 'Noivo') : k === 'NOIVA' ? (nomes.noiva || 'Noiva') : k
   const fichasVisiveis = Object.entries(fichas).filter(([, campos]) => campos.some(c => (c.value ?? '').trim()))
@@ -140,7 +142,7 @@ export default function BriefingPartilha({ info, fichas, equipa, nomes, casal, c
               </div>
             )}
             <div className="nao-imprimir flex flex-wrap items-center gap-3 mt-7">
-              <GuiaEquipa />
+              {!semGuia && <GuiaEquipa />}
             </div>
           </div>
         </div>
