@@ -29,11 +29,12 @@ export type VideoEvento = {
   editor?: { nome: string; id: string | null } | null
 }
 
-const LARANJA  = '#fb923c'
-const VERDE    = '#4ade80'
-const VERMELHO = '#f87171'
-const VIOLETA  = '#a78bfa'   // Em Revisão — falta o Rui rever o vídeo
-const AZUL     = '#7dd3fc'   // editor de vídeo
+// Só tons de dourado: o estado lê-se pela intensidade
+const LARANJA  = '#b8975a'   // em edição
+const VERDE    = '#C9A84C'   // entregue
+const VERMELHO = '#e6cf94'   // prazo a apertar (mais claro, salta à vista)
+const VIOLETA  = '#a88a4a'   // Em Revisão — falta o Rui rever o vídeo
+const AZUL     = '#d6c08c'   // editor de vídeo
 
 const EM_CURSO = ['Em Edição', 'Em Revisão', 'Finalizado']
 
@@ -316,11 +317,11 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
         onClick={() => setAberto(true)}
         title="Ver vídeos em edição e entregues (todos os anos)"
         aria-label="Ver vídeos em edição e entregues"
-        className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-xl border border-white/20 bg-black/40 backdrop-blur-md text-white/80 font-bold text-xs tracking-widest uppercase hover:border-gold/60 hover:text-gold transition-all">
-        <span className="text-sm leading-none">🎬</span>
+        className="inline-flex items-center gap-2 rounded-full border border-white/[0.14] hover:border-white/30 bg-[#0e0e0e]/90 backdrop-blur-md px-5 py-2.5 font-cond font-semibold text-[15px] text-white transition-all">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden><path d="M15 10l4.55-2.28A1 1 0 0121 8.62v6.76a1 1 0 01-1.45.9L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
         Vídeos
         {emCurso.length > 0 && (
-          <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[10px] tabular-nums"
+          <span className="ml-0.5 px-1.5 py-px rounded-full font-cond text-[12px] tabular-nums"
             style={{ background: `${LARANJA}22`, color: LARANJA, border: `1px solid ${LARANJA}55` }}>
             {emCurso.length}
           </span>
@@ -337,8 +338,8 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
             className="fixed top-0 right-0 z-[91] h-[100dvh] flex flex-col"
             style={{
               width: 'min(460px, 100vw)',
-              background: 'linear-gradient(180deg, #14100d, #0b0907)',
-              borderLeft: `1px solid ${LARANJA}40`,
+              background: '#0b0b0b',
+              borderLeft: '1px solid rgba(255,255,255,0.08)',
               boxShadow: aberto ? '-30px 0 80px -20px rgba(0,0,0,0.75)' : 'none',
               transform: aberto ? 'translateX(0)' : 'translateX(100%)',
               transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
@@ -352,7 +353,7 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
                   <p className="text-[9px] tracking-[0.4em] uppercase text-white/40">
                     {anos.length > 0 ? `Todas as temporadas · ${anos[anos.length - 1]}–${anos[0]}` : 'Todas as temporadas'}
                   </p>
-                  <h2 className="font-cormorant text-3xl font-light text-white mt-1">Vídeos</h2>
+                  <h2 className="font-cond font-bold text-[40px] leading-none text-white mt-2">Vídeos</h2>
                   <p className="text-[11px] mt-1">
                     <span style={{ color: LARANJA }}>{emCurso.length} em edição</span>
                     <span className="text-white/25"> · </span>

@@ -3,7 +3,6 @@
 import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import './eventos-topo.css'
 import { VideosDrawer } from './VideosDrawer'
 
 type Evento = {
@@ -152,14 +151,14 @@ function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onCl
     } finally { setSaving(false) }
   }
 
-  const inp = "w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
-  const lbl = "block text-[9px] text-white/30 tracking-widest uppercase mb-1"
+  const inp = "w-full bg-white/[0.04] border border-white/10 rounded-xl px-3 py-2 font-cond text-[15px] text-white/80 outline-none focus:border-gold/40 transition-colors placeholder:text-white/20"
+  const lbl = "block font-cond text-[11px] text-white/40 tracking-[0.12em] uppercase mb-1"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4" onClick={onClose}>
-      <div className="w-full max-w-lg bg-[#111] border border-white/[0.1] rounded-2xl p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <div className="w-full max-w-lg bg-[#111111] border border-[#C9A84C]/25 rounded-[24px] p-6 max-h-[90vh] overflow-y-auto shadow-[0_0_80px_-24px_rgba(201,168,76,0.45)]" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-sm font-bold tracking-[0.2em] text-gold uppercase">Novo Evento</h2>
+          <div><p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Temporada {anoFiltro}</p><h2 className="font-cond font-bold text-[30px] leading-none text-white mt-1.5">Novo evento</h2></div>
           <button onClick={onClose} className="text-white/30 hover:text-white/70 text-xl transition-colors">✕</button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -253,11 +252,11 @@ function NovoEventoModal({ onClose, onCreated, anoFiltro, totalEventos }: { onCl
           {err && <p className="text-xs text-red-400 bg-red-500/10 rounded-lg px-3 py-2">{err}</p>}
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs border border-white/10 text-white/40 hover:text-white/70 transition-all">
+              className="px-4 py-2.5 rounded-full font-cond text-[15px] border border-white/10 text-white/50 hover:text-white transition-all">
               Cancelar
             </button>
             <button type="submit" disabled={saving}
-              className="px-6 py-2 rounded-xl text-xs bg-gold text-black font-bold tracking-wide hover:bg-gold/80 transition-all disabled:opacity-50">
+              className="px-6 py-2.5 rounded-full border border-[#C9A84C]/55 bg-[#C9A84C]/15 font-cond text-[15px] font-semibold text-white hover:bg-[#C9A84C]/25 transition-all disabled:opacity-50">
               {saving ? 'A criar...' : 'Criar Evento'}
             </button>
           </div>
@@ -366,13 +365,13 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
     <div className="relative">
       <button
         onClick={() => setOpen(o => !o)}
-        className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/15 text-white/70 font-bold text-xs tracking-widest hover:bg-white/[0.04] hover:border-white/30 transition-all uppercase"
+        className="inline-flex items-center gap-2 rounded-full border border-white/[0.14] hover:border-white/30 bg-[#0e0e0e]/90 backdrop-blur-md px-5 py-2.5 font-cond font-semibold text-[15px] text-white transition-all"
       >
         <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
         </svg>
         Referências
-        <span className="text-[10px] text-white/30 normal-case tracking-normal">({totalUsadas}/{refsList.length})</span>
+        <span className="font-cond text-[12px] font-normal text-[#C9A84C]/70">{totalUsadas}/{refsList.length}</span>
       </button>
 
       {open && (
@@ -380,22 +379,22 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
           {/* Backdrop para fechar ao clicar fora */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           {/* Painel */}
-          <div className="absolute right-0 mt-2 w-[min(95vw,460px)] max-h-[70vh] overflow-hidden z-50 rounded-2xl border border-white/15 bg-[#0d0d0e] shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8)]">
+          <div className="absolute right-0 mt-2 w-[min(95vw,460px)] max-h-[70vh] overflow-hidden z-50 rounded-[20px] border border-[#C9A84C]/25 bg-[#111111] shadow-[0_24px_60px_-18px_rgba(0,0,0,0.9),0_0_30px_-14px_rgba(201,168,76,0.5)]">
             {/* Tabs */}
-            <div className="flex border-b border-white/10 text-[10px] tracking-widest uppercase font-bold">
+            <div className="flex border-b border-white/[0.08] font-cond text-[12px] font-semibold">
               {(['CAS_RL', 'CAS_KP', 'BAT_RL', 'BAT_KP'] as const).map(p => (
                 <button key={p} onClick={() => setPrefix(p)}
-                  className={`flex-1 px-2 py-3 transition-colors ${prefix === p ? 'text-gold bg-white/[0.03] border-b-2 border-gold' : 'text-white/40 hover:text-white/70'}`}>
+                  className={`flex-1 px-2 py-3 transition-colors ${prefix === p ? 'text-[#C9A84C] bg-[#C9A84C]/[0.06] border-b-2 border-[#C9A84C]' : 'text-white/40 hover:text-white/75'}`}>
                   {PREFIX_LABEL[p]}
                 </button>
               ))}
             </div>
             {/* Legenda */}
-            <div className="flex items-center justify-between px-4 py-2 text-[10px] tracking-widest text-white/40 uppercase border-b border-white/[0.05]">
+            <div className="flex items-center justify-between px-4 py-2 font-cond text-[12px] text-white/45 border-b border-white/[0.06]">
               <div className="flex items-center gap-3 flex-wrap">
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-red-500/70" /> Usada {totalUsadas}</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-yellow-400/80" /> Pendente {totalPendentes}</span>
-                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-500/70" /> Livre {totalLivres}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-[#C9A84C]" /> Usada {totalUsadas}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border border-[#C9A84C]" /> Pendente {totalPendentes}</span>
+                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-white/20" /> Livre {totalLivres}</span>
               </div>
               <span className="text-white/25">Ano {anoFiltro}</span>
             </div>
@@ -403,9 +402,9 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
             <div className="overflow-y-auto max-h-[55vh] py-2">
               {refsList.map(r => {
                 const styles = {
-                  usada:    { dot: 'bg-red-500/70',     text: 'text-red-300/85',     hover: 'hover:bg-red-500/[0.07]',     label: 'text-red-300/50' },
-                  pendente: { dot: 'bg-yellow-400/80',  text: 'text-yellow-300/85',  hover: 'hover:bg-yellow-500/[0.07]',  label: 'text-yellow-300/55' },
-                  livre:    { dot: 'bg-emerald-500/70', text: 'text-emerald-300/85', hover: 'hover:bg-emerald-500/[0.07]', label: 'text-emerald-300/40' },
+                  usada:    { dot: 'bg-[#C9A84C]',                text: 'text-white/80',       hover: 'hover:bg-[#C9A84C]/[0.06]', label: 'text-[#C9A84C]/70' },
+                  pendente: { dot: 'border border-[#C9A84C]',     text: 'text-[#C9A84C]',      hover: 'hover:bg-[#C9A84C]/[0.06]', label: 'text-[#C9A84C]/60' },
+                  livre:    { dot: 'bg-white/20',                 text: 'text-white/45',       hover: 'hover:bg-white/[0.04]',     label: 'text-white/30' },
                 }[r.estado]
                 return (
                   <div key={r.ref}
@@ -425,8 +424,8 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
                         title={r.estado === 'pendente' ? 'Remover pendente' : 'Marcar como pendente'}
                         className={`shrink-0 text-[9px] tracking-widest uppercase font-bold px-2 py-1 rounded border transition-all ${
                           r.estado === 'pendente'
-                            ? 'border-yellow-400/40 text-yellow-300/80 bg-yellow-400/10 hover:bg-yellow-400/20'
-                            : 'border-white/15 text-white/40 hover:border-yellow-400/40 hover:text-yellow-300/70'
+                            ? 'border-[#C9A84C]/45 text-[#C9A84C] bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20'
+                            : 'border-white/15 text-white/40 hover:border-[#C9A84C]/45 hover:text-[#C9A84C]'
                         }`}>
                         {r.estado === 'pendente' ? '× Pend' : '+ Pend'}
                       </button>
@@ -520,7 +519,7 @@ function TicketEvolucao({ events, anoFiltro, ticketAno }: { events: Evento[]; an
   const delta = ticketAnterior ? Math.round(((ticketAno - ticketAnterior) / ticketAnterior) * 100) : null
 
   return (
-    <div className="mt-3 rounded-2xl border border-gold/25 bg-black/55 backdrop-blur-md px-4 sm:px-6 py-4 sm:py-5">
+    <div className="mt-6 rounded-[22px] border border-[#C9A84C]/25 bg-[#111111]/80 backdrop-blur-md px-4 sm:px-6 py-4 sm:py-5">
       <div className="flex items-end justify-between gap-4 flex-wrap mb-5">
         <div>
           <p className="text-gold/80 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase">Evolução do ticket médio</p>
@@ -536,7 +535,7 @@ function TicketEvolucao({ events, anoFiltro, ticketAno }: { events: Evento[]; an
             <p className="text-gold text-sm font-light">{ticketAno.toLocaleString('pt-PT')} €</p>
           </div>
           {delta !== null && (
-            <span className={`text-xs px-2 py-1 rounded-full border ${delta >= 0 ? 'text-green-300 border-green-400/30 bg-green-500/10' : 'text-red-300 border-red-400/30 bg-red-500/10'}`}>
+            <span className={`font-cond text-[13px] px-2.5 py-1 rounded-full border ${delta >= 0 ? 'text-[#C9A84C] border-[#C9A84C]/40 bg-[#C9A84C]/15' : 'text-[#C9A84C]/60 border-[#C9A84C]/20 bg-transparent'}`}>
               {delta >= 0 ? '+' : ''}{delta}%
             </span>
           )}
@@ -552,7 +551,7 @@ function TicketEvolucao({ events, anoFiltro, ticketAno }: { events: Evento[]; an
             {m.ticket > 0 && (
               <span className="text-[8px] sm:text-[10px] text-white/60 mb-1 whitespace-nowrap">{Math.round(m.ticket / 100) / 10}k</span>
             )}
-            <div className={`w-full rounded-t-md ${m.ticket > 0 ? 'bg-white/20 group-hover:bg-gold/40' : 'bg-white/5'} transition-colors`}
+            <div className={`w-full rounded-t-md ${m.ticket > 0 ? 'bg-[#C9A84C]/25 group-hover:bg-[#C9A84C]/55' : 'bg-white/5'} transition-colors`}
               style={{ height: m.ticket > 0 ? `${(m.ticket / max) * 80}%` : '2px' }}
               title={m.ticket > 0 ? `${m.mes}: ${m.ticket.toLocaleString('pt-PT')} € (${m.n} eventos) · acumulado ${m.acumulado.toLocaleString('pt-PT')} €` : `${m.mes}: sem eventos`} />
           </div>
@@ -579,6 +578,8 @@ function Eventos2026Inner() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [showNovoEvento, setShowNovoEvento] = useState(false)
   const [showTicketEvolucao, setShowTicketEvolucao] = useState(false)
+  // Meses recolhidos (clicar no cabeçalho do mês)
+  const [recolhidos, setRecolhidos] = useState<Set<string>>(new Set())
   // Set de referencias com portal ativo (existe row em `portais`)
   const [portaisAtivos, setPortaisAtivos] = useState<Set<string>>(new Set())
   // Map ref(upper) → ISO timestamp do backup confirmado em /eventos-2026/[id]
@@ -671,369 +672,376 @@ function Eventos2026Inner() {
   const realizados = events.filter(e => e.data_evento && new Date(e.data_evento + 'T00:00:00') < today).length
   const heroSrc = [2026, 2027, 2028].includes(anoFiltro) ? `/eventos-hero-${anoFiltro}.webp` : '/eventos-hero-2026.webp'
 
+  // ── Interação: anos, saltar para o mês, recolher meses ───────────────────
+  const ANOS = Array.from(new Set([2025, 2026, 2027, 2028, anoFiltro])).sort()
+  const mesesComEventos = Object.keys(grouped)
+  const contagemTipo = (t: string) => t === 'Todos' ? events.length : events.filter(e => (e.tipo_evento ?? []).includes(t)).length
+  const alternarMes = (k: string) => setRecolhidos(prev => {
+    const n = new Set(prev); if (n.has(k)) n.delete(k); else n.add(k); return n
+  })
+  const irParaMes = (k: string) => {
+    setRecolhidos(prev => { const n = new Set(prev); n.delete(k); return n })
+    document.getElementById(`mes-${k}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+  const pilula = (ativo: boolean) =>
+    `shrink-0 rounded-full border px-3.5 py-1.5 font-cond text-[13.5px] font-medium transition-all ${ativo
+      ? 'border-[#C9A84C]/60 bg-[#C9A84C]/15 text-[#C9A84C]'
+      : 'border-white/[0.10] text-white/55 hover:border-[#C9A84C]/35 hover:text-white'}`
+  const botaoTopo = 'inline-flex items-center gap-2 rounded-full bg-[#0e0e0e]/90 backdrop-blur-md font-cond font-semibold text-[15px] text-white px-5 py-2.5 transition-all'
+
   return (
-    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-10 max-w-[1200px] mx-auto">
+    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-8 max-w-[1200px] mx-auto">
 
-      {/* ── CABEÇALHO (banner com foto) ── */}
-      <section className="relative rounded-3xl border border-white/10 mb-8 min-h-[460px] sm:min-h-[420px] flex flex-col">
-        <div className="absolute inset-0 rounded-3xl overflow-hidden">
-          <img src={heroSrc} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_40%]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/30" />
-        </div>
+      {/* ── HERO ─────────────────────────────────────────────────────────── */}
+      <section className="relative overflow-hidden rounded-[28px] border border-[#C9A84C]/20 mb-6">
+        <img src={heroSrc} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_40%] grayscale opacity-25" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(100deg, rgba(11,11,11,0.97) 0%, rgba(11,11,11,0.8) 50%, rgba(11,11,11,0.55) 100%)' }} />
+        <div className="absolute inset-0 opacity-40" style={{
+          backgroundImage: 'radial-gradient(rgba(201,168,76,0.18) 1px, transparent 1px)', backgroundSize: '24px 24px',
+          maskImage: 'radial-gradient(ellipse 60% 70% at 70% 40%, #000 20%, transparent 75%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 60% 70% at 70% 40%, #000 20%, transparent 75%)',
+        }} />
 
-        <div className="relative flex-1 flex flex-col px-5 sm:px-10 pt-5 sm:pt-7 pb-5 sm:pb-7">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <Link href="/casamentos" className="text-xs tracking-[0.3em] text-white/50 hover:text-gold transition-colors uppercase pt-2">
+        <div className="relative px-5 sm:px-10 pt-5 sm:pt-6 pb-7 sm:pb-9">
+          {/* Topo: voltar + ações */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <Link href="/casamentos" className="font-cond text-[14px] text-white/50 hover:text-[#C9A84C] transition-colors">
               ‹ Casamentos
             </Link>
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="[&>div>button]:bg-black/40 [&>div>button]:backdrop-blur-md [&>div>button]:border-white/20">
-                <ReferenciasDropdown events={events} anoFiltro={anoFiltro} />
-              </div>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <ReferenciasDropdown events={events} anoFiltro={anoFiltro} />
               <VideosDrawer />
               <button onClick={() => setShowNovoEvento(true)}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black font-bold text-xs tracking-widest hover:bg-[#d8b85a] hover:shadow-[0_8px_30px_-8px_rgba(201,168,76,0.6)] transition-all uppercase">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
+                className={`${botaoTopo} border border-[#C9A84C]/50 hover:border-[#C9A84C]/85 shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)]`}>
+                <svg className="w-3.5 h-3.5 text-[#C9A84C]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                Novo Evento
+                Novo evento
               </button>
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col justify-center py-8 max-w-2xl">
-            <p className="text-[10px] tracking-[0.45em] uppercase text-white/45">RL Photo.Video · Temporada {anoFiltro}</p>
-            <h1 className="font-cormorant font-light text-gold text-5xl sm:text-7xl tracking-[0.08em] leading-none mt-3">
-              Casamentos <span className="italic">{anoFiltro}</span>
-            </h1>
-            <div className="w-20 h-px bg-gold/70 my-5" />
-            <p className="font-cormorant italic text-white/80 text-lg sm:text-xl leading-snug">
-              {loading ? 'A carregar eventos…' : `${casamentosCount} casamentos · ${events.length} eventos no total · ${realizados} já realizados`}
-            </p>
-          </div>
-
-          {!loading && !error && events.length > 0 && (
-            <>
-            <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3">
-              <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
-                <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Fotografia</p>
-                <p className="text-xl sm:text-2xl font-light text-white">{totalFoto.toLocaleString('pt-PT')} <span className="text-white/40 text-base">€</span></p>
-                <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">Valor total</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
-                <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Vídeo</p>
-                <p className="text-xl sm:text-2xl font-light text-white">{totalVideo.toLocaleString('pt-PT')} <span className="text-white/40 text-base">€</span></p>
-                <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">Valor total</p>
-              </div>
-              <div className="rounded-2xl border border-gold/40 bg-black/45 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
-                <p className="text-gold/80 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Total Geral</p>
-                <p className="text-xl sm:text-2xl font-light text-gold">{totalGeral.toLocaleString('pt-PT')} <span className="text-gold/60 text-base">€</span></p>
-                <p className="text-gold/55 text-[10px] sm:text-[11px] mt-1">Foto + vídeo</p>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
-                <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Realizados</p>
-                <p className="text-xl sm:text-2xl font-light text-white">{realizados} <span className="text-white/40 text-base">de {events.length}</span></p>
-                <div className="h-1 rounded-full bg-white/10 mt-2 overflow-hidden">
-                  <div className="h-full bg-gold/80 rounded-full" style={{ width: `${events.length ? (realizados / events.length) * 100 : 0}%` }} />
+          <div className="grid lg:grid-cols-[1fr_300px] gap-8 lg:gap-14 items-center mt-10 sm:mt-14">
+            {/* Título + ano */}
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">RL Photo.Video · Temporada</p>
+                <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+                  {ANOS.map(a => (
+                    <button key={a} onClick={() => router.push(`/eventos-2026?ano=${a}`)}
+                      className={`rounded-full px-3 py-1 font-cond text-[13px] font-medium transition-all ${a === anoFiltro ? 'bg-[#C9A84C]/20 text-[#C9A84C]' : 'text-white/45 hover:text-white'}`}>
+                      {a}
+                    </button>
+                  ))}
                 </div>
               </div>
-              <div className="relative col-span-2 lg:col-span-1 rounded-2xl border border-white/10 bg-black/40 backdrop-blur-md px-4 sm:px-5 py-3 sm:py-4">
-                <button onClick={() => setShowTicketEvolucao(v => !v)}
-                  aria-label={showTicketEvolucao ? 'Fechar evolução do ticket médio' : 'Ver evolução do ticket médio'}
-                  title="Evolução do ticket médio"
-                  className={`absolute top-2.5 right-2.5 w-7 h-7 rounded-full border flex items-center justify-center transition-all ${showTicketEvolucao ? 'border-gold bg-gold text-black' : 'border-gold/50 text-gold hover:bg-gold/15'}`}>
-                  <svg className={`w-3.5 h-3.5 transition-transform ${showTicketEvolucao ? 'rotate-45' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-                  </svg>
-                </button>
-                <p className="text-white/50 text-[9px] sm:text-[10px] tracking-[0.25em] uppercase mb-1.5 sm:mb-2">Ticket Médio</p>
-                <p className="text-xl sm:text-2xl font-light text-white">{ticketAno.toLocaleString('pt-PT')} <span className="text-white/40 text-base">€</span></p>
-                <p className="text-white/45 text-[10px] sm:text-[11px] mt-1">Por evento · {eventosComValor} com valor</p>
-              </div>
+              <h1 className="font-cond font-bold text-white text-[44px] sm:text-[66px] leading-[1.02] mt-4">
+                Casamentos <span className="text-[#C9A84C]">{anoFiltro}</span>
+              </h1>
+              <p className="font-cond font-light text-white/60 text-lg sm:text-xl mt-3">
+                {loading ? 'A carregar eventos…' : `${casamentosCount} casamentos · ${events.length} eventos no total · ${realizados} já realizados`}
+              </p>
+              {!loading && events.length > 0 && (
+                <div className="mt-6 max-w-md">
+                  <div className="flex items-center justify-between font-cond text-[12px] text-white/45 mb-1.5">
+                    <span>Temporada realizada</span>
+                    <span className="text-[#C9A84C]">{Math.round((realizados / events.length) * 100)}%</span>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+                    <div className="h-full rounded-full bg-gradient-to-r from-[#C9A84C]/50 to-[#C9A84C] transition-all duration-700"
+                      style={{ width: `${(realizados / events.length) * 100}%` }} />
+                  </div>
+                </div>
+              )}
             </div>
-            {showTicketEvolucao && <TicketEvolucao events={events} anoFiltro={anoFiltro} ticketAno={ticketAno} />}
-            </>
-          )}
+
+            {/* Números da temporada */}
+            {!loading && !error && events.length > 0 && (
+              <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+                <div className="flex items-center justify-between">
+                  <p className="flex items-center gap-2 font-cond text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+                    Temporada em números
+                  </p>
+                  <button onClick={() => setShowTicketEvolucao(v => !v)}
+                    title="Evolução do ticket médio"
+                    aria-label={showTicketEvolucao ? 'Fechar evolução do ticket médio' : 'Ver evolução do ticket médio'}
+                    className={`w-7 h-7 rounded-full border flex items-center justify-center transition-all ${showTicketEvolucao ? 'border-[#C9A84C] bg-[#C9A84C]/25 text-[#C9A84C]' : 'border-[#C9A84C]/40 text-[#C9A84C] hover:bg-[#C9A84C]/15'}`}>
+                    <svg className={`w-3.5 h-3.5 transition-transform ${showTicketEvolucao ? 'rotate-45' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 mt-3">
+                  {[
+                    { rotulo: 'Fotografia', valor: totalFoto, sub: 'valor total' },
+                    { rotulo: 'Vídeo', valor: totalVideo, sub: 'valor total' },
+                    { rotulo: 'Total geral', valor: totalGeral, sub: 'foto + vídeo', destaque: true },
+                    { rotulo: 'Ticket médio', valor: ticketAno, sub: `${eventosComValor} com valor` },
+                  ].map((s, i) => (
+                    <div key={s.rotulo}
+                      className={`py-3 ${i % 2 === 0 ? 'pr-4 border-r border-white/[0.07]' : 'pl-4'} ${i < 2 ? 'border-b border-white/[0.07]' : ''}`}>
+                      <p className="font-cond text-[11px] text-white/50">{s.rotulo}</p>
+                      <p className={`font-cond font-semibold text-[21px] leading-none mt-1.5 ${s.destaque ? 'text-[#C9A84C]' : 'text-white'}`}>
+                        {s.valor.toLocaleString('pt-PT')} <span className="text-[13px] font-normal text-white/40">€</span>
+                      </p>
+                      <p className="font-cond text-[10.5px] text-white/30 mt-1">{s.sub}</p>
+                    </div>
+                  ))}
+                </div>
+              </aside>
+            )}
+          </div>
+
+          {showTicketEvolucao && <TicketEvolucao events={events} anoFiltro={anoFiltro} ticketAno={ticketAno} />}
         </div>
       </section>
+
       {showNovoEvento && (
         <NovoEventoModal onClose={() => setShowNovoEvento(false)} onCreated={loadEvents} anoFiltro={anoFiltro} totalEventos={events.length} />
       )}
 
-      {/* Próximos eventos */}
+      {/* ── PRÓXIMOS EVENTOS ─────────────────────────────────────────────── */}
       {!loading && !error && upcoming.length > 0 && (
-        <section className="mb-10">
-          <div className="flex items-center gap-4 mb-4">
-            <span className="text-[10px] tracking-[0.4em] uppercase text-white/35">Próximos eventos</span>
-            <div className="flex-1 h-px bg-white/5" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {upcoming.map((e, i) => {
-              const days = daysUntil(e.data_evento)
-              const dt = new Date(e.data_evento + 'T00:00:00')
-              const isToday = days === 0
-              return (
-                <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`} className={`ev-next${i === 0 ? ' is-first' : ''}`}>
-                  <span className="ev-next-sweep" />
-                  <div className="ev-next-top">
-                    <div className="ev-next-count">
-                      <span className="ev-next-num">{isToday ? 'Hoje' : days}</span>
-                      {!isToday && <span className="ev-next-unit">{days === 1 ? 'dia' : 'dias'}</span>}
+        <section className="mb-8">
+          <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Agenda</p>
+          <h2 className="font-cond font-semibold text-white text-[28px] leading-tight mt-1 mb-4">Próximos eventos</h2>
+          <div className="relative">
+            <div className="hidden sm:block absolute left-0 right-0 top-1/2 h-px bg-[#C9A84C]/10" />
+            <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {upcoming.map((e, i) => {
+                const days = daysUntil(e.data_evento)
+                const dt = new Date(e.data_evento + 'T00:00:00')
+                const isToday = days === 0
+                return (
+                  <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`}
+                    className="group relative block rounded-[22px] border border-[#C9A84C]/20 bg-[#111111]/95 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-[#C9A84C]/50 hover:shadow-[0_0_40px_-18px_rgba(201,168,76,0.6)]"
+                    style={{ borderLeft: `2px solid rgba(201,168,76,${i === 0 ? 0.85 : 0.4})` }}>
+                    <div className="flex items-center gap-3.5">
+                      <span className="w-12 h-12 shrink-0 rounded-full flex flex-col items-center justify-center bg-[#C9A84C]/12 text-[#C9A84C]"
+                        style={{ background: 'rgba(201,168,76,0.12)' }}>
+                        <span className="font-cond font-semibold text-[18px] leading-none">{isToday ? 'Hoje' : days}</span>
+                        {!isToday && <span className="font-cond text-[9px] text-[#C9A84C]/70 mt-0.5">{days === 1 ? 'dia' : 'dias'}</span>}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="font-cond text-[10.5px] font-medium tracking-[0.18em] uppercase text-[#C9A84C]/80">
+                          {i === 0 ? (isToday ? 'Hoje' : 'Próximo') : 'A seguir'}
+                        </p>
+                        <p className="font-cond font-semibold text-[18px] leading-tight text-white truncate mt-0.5">{e.cliente || e.referencia}</p>
+                      </div>
                     </div>
-                    {i === 0 && <span className="ev-next-badge">{isToday ? 'Hoje' : 'Próximo'}</span>}
-                  </div>
-                  <div className="ev-next-rule" />
-                  <div className="ev-next-body">
-                    <p className="ev-next-name">{e.cliente || e.referencia}</p>
-                    <p className="ev-next-ref">{e.referencia || 's/referência'}</p>
-                    <p className="ev-next-meta">{String(dt.getDate()).padStart(2, '0')} {MESES_FULL[dt.getMonth()]} · {e.local || '—'}</p>
-                  </div>
-                  <div className="ev-next-foot">
-                    <div className="ev-next-tags">
-                      {(e.tipo_evento ?? []).map(t => <span key={t} className="ev-next-tag">{t}</span>)}
+                    <p className="font-cond text-[13px] text-white/45 mt-3 truncate">
+                      {String(dt.getDate()).padStart(2, '0')} {MESES_FULL[dt.getMonth()]} · {e.local || '—'}
+                    </p>
+                    <div className="flex items-center justify-between gap-2 mt-3">
+                      <span className="font-cond text-[12px] text-[#C9A84C]/60">{e.referencia || 's/referência'}</span>
+                      <span className="text-white/25 group-hover:text-[#C9A84C] group-hover:translate-x-0.5 transition-all">→</span>
                     </div>
-                    <span className="ev-next-arrow">→</span>
-                  </div>
-                </Link>
-              )
-            })}
+                  </Link>
+                )
+              })}
+            </div>
           </div>
         </section>
       )}
 
-
-      {/* Filtros */}
-      <div className="flex flex-wrap gap-2 sm:gap-3 mb-6 sm:mb-10">
-        <input
-          type="text"
-          placeholder="Pesquisar cliente ou local..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/40 w-full sm:w-72"
-        />
-        <select
-          value={tipoFilter}
-          onChange={e => setTipoFilter(e.target.value)}
-          className="bg-white/5 border border-white/8 rounded-xl px-4 py-2.5 text-sm text-white/70 focus:outline-none focus:border-gold/40"
-        >
-          {['Todos','CASAMENTO','BATIZADO','ANIVERSÁRIO','SESSÃO FOTO','CORPORATIVO'].map(t => (
-            <option key={t} value={t} className="bg-zinc-900">{t}</option>
-          ))}
-        </select>
-        {(search || tipoFilter !== 'Todos') && (
-          <button onClick={() => { setSearch(''); setTipoFilter('Todos') }}
-            className="px-4 py-2.5 text-xs text-white/30 hover:text-white/60 tracking-widest uppercase transition-colors">
-            Limpar
-          </button>
+      {/* ── FILTROS (ficam presos no topo ao descer) ───────────────────────── */}
+      <div className="sticky top-0 z-20 -mx-3 sm:-mx-6 px-3 sm:px-6 py-3 mb-6 bg-[#0b0b0b]/90 backdrop-blur-md border-b border-[#C9A84C]/10">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="1.8" strokeLinecap="round" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" aria-hidden>
+              <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+            </svg>
+            <input type="text" placeholder="Procurar cliente, local ou referência…" value={search} onChange={e => setSearch(e.target.value)}
+              className="w-full rounded-full border border-white/[0.10] bg-white/[0.03] pl-10 pr-4 py-2 font-cond text-[14px] text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/45" />
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto">
+            {['Todos', ...TIPOS_EVENTO].map(t => {
+              const n = contagemTipo(t)
+              if (t !== 'Todos' && n === 0) return null
+              return (
+                <button key={t} onClick={() => setTipoFilter(t)} className={pilula(tipoFilter === t)}>
+                  {t === 'Todos' ? 'Todos' : t.charAt(0) + t.slice(1).toLowerCase()} <span className="opacity-60">{n}</span>
+                </button>
+              )
+            })}
+          </div>
+          {(search || tipoFilter !== 'Todos') && (
+            <button onClick={() => { setSearch(''); setTipoFilter('Todos') }}
+              className="font-cond text-[13px] text-white/40 hover:text-[#C9A84C] px-2 transition-colors">
+              Limpar
+            </button>
+          )}
+        </div>
+        {/* Saltar para o mês */}
+        {mesesComEventos.length > 1 && (
+          <div className="flex items-center gap-1.5 mt-2 overflow-x-auto">
+            <span className="font-cond text-[11px] tracking-[0.15em] uppercase text-white/30 mr-1 shrink-0">Ir para</span>
+            {mesesComEventos.map(k => (
+              <button key={k} onClick={() => irParaMes(k)}
+                className="shrink-0 rounded-full px-2.5 py-1 font-cond text-[12.5px] text-white/50 hover:text-[#C9A84C] hover:bg-[#C9A84C]/10 transition-colors">
+                {MESES[parseInt(k.slice(5, 7)) - 1]} <span className="text-white/25">{grouped[k].length}</span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
 
-      {loading && <div className="text-center py-32 text-white/20 tracking-widest text-xs uppercase">A carregar eventos...</div>}
-      {error && <div className="text-center py-20 text-red-400/60 text-sm">{error}<br/><span className="text-white/20 text-xs mt-2 block">Partilha a base de dados EVENTOS 2026 com a integração RL Sync no Notion.</span></div>}
+      {loading && <div className="text-center py-32 font-cond text-[15px] text-white/30">A carregar eventos…</div>}
+      {error && <div className="text-center py-20 font-cond text-[15px] text-white/50">{error}<br /><span className="text-white/25 text-[13px] mt-2 block">Partilha a base de dados EVENTOS 2026 com a integração RL Sync no Notion.</span></div>}
+      {!loading && !error && mesesComEventos.length === 0 && (
+        <div className="text-center py-24 font-cond text-[16px] text-white/35">Nenhum evento com estes filtros.</div>
+      )}
 
+      {/* ── MESES ────────────────────────────────────────────────────────── */}
       {!loading && !error && (
-        <div className="flex flex-col gap-12">
+        <div className="flex flex-col gap-10">
           {Object.entries(grouped).map(([monthKey, monthEvents]) => {
             const [year, month] = monthKey.split('-')
-            const mesNome = MESES[parseInt(month) - 1]
-
+            const fechado = recolhidos.has(monthKey)
+            const totalMes = monthEvents.reduce((s, e) => s + (e.valor_liquido ?? 0), 0)
             return (
-              <section key={monthKey}>
-                {/* Cabeçalho do mês */}
-                <div className="flex items-baseline gap-4 mb-5 pt-4">
-                  <span className="text-4xl font-bold text-white uppercase">{mesNome}</span>
-                  <span className="text-white/20 text-lg">{year}</span>
-                  <span className="text-white/15 text-sm">{monthEvents.length} eventos</span>
-                  <div className="flex-1 h-px bg-white/8 ml-2" />
-                </div>
+              <section key={monthKey} id={`mes-${monthKey}`} className="scroll-mt-32">
+                {/* Cabeçalho do mês: clica para recolher */}
+                <button onClick={() => alternarMes(monthKey)} className="group w-full flex items-end gap-3 sm:gap-4 mb-4 text-left">
+                  <div>
+                    <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]/80">{year}</p>
+                    <h2 className="font-cond font-bold text-white text-[30px] sm:text-[34px] leading-none mt-1">{MESES_FULL[parseInt(month) - 1]}</h2>
+                  </div>
+                  <span className="mb-1 rounded-full border border-[#C9A84C]/25 bg-[#C9A84C]/10 px-2.5 py-0.5 font-cond text-[12.5px] text-[#C9A84C]">
+                    {monthEvents.length} {monthEvents.length === 1 ? 'evento' : 'eventos'}
+                  </span>
+                  {totalMes > 0 && (
+                    <span className="mb-1 hidden sm:inline font-cond text-[13px] text-white/40">{totalMes.toLocaleString('pt-PT')} €</span>
+                  )}
+                  <div className="flex-1 h-px bg-[#C9A84C]/12 mb-3" />
+                  <span className="mb-1.5 w-8 h-8 rounded-full border border-white/10 flex items-center justify-center text-white/40 group-hover:text-[#C9A84C] group-hover:border-[#C9A84C]/40 transition-all">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 transition-transform duration-300" style={{ transform: fechado ? 'rotate(-90deg)' : 'none' }}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                    </svg>
+                  </span>
+                </button>
 
-                {/* Lista de eventos do mês */}
-                <div className="flex flex-col gap-2">
-                  {monthEvents.map(e => {
-                    const backupTs = e.referencia ? backupsFeitos.get(e.referencia.toUpperCase()) : null
-                    const hasBackup = !!backupTs
-                    return (
-                    <Link
-                      key={e.id}
-                      href={`/eventos-2026/${e.notion_id ?? e.id}`}
-                      className={`group flex items-center gap-3 sm:gap-5 px-3 sm:px-5 py-3 sm:py-4 border rounded-xl transition-all cursor-pointer relative ${
-                        hasBackup
-                          ? 'bg-amber-500/[0.06] hover:bg-amber-500/[0.10] border-amber-400/30 hover:border-amber-400/55'
-                          : 'bg-white/[0.02] hover:bg-white/[0.05] border-white/[0.06] hover:border-gold/20'
-                      }`}
-                      style={hasBackup ? { boxShadow: '0 0 18px -8px rgba(251, 191, 36, 0.25)' } : undefined}
-                    >
+                {!fechado && (
+                  <div className="flex flex-col gap-2.5">
+                    {monthEvents.map(e => {
+                      const backupTs = e.referencia ? backupsFeitos.get(e.referencia.toUpperCase()) : null
+                      const hasBackup = !!backupTs
+                      const passado = daysUntil(e.data_evento) < 0
+                      const portalAtivo = !!e.referencia && portaisAtivos.has(e.referencia.toUpperCase())
+                      const acoes = e.referencia ? acoesFoto.get(e.referencia.toUpperCase()) : undefined
+                      const isE = (v: string | null) => v === 'Entregue' || v === 'S/SERVIÇO'
+                      const nivel = (v: string | null) => isE(v) ? 1 : (!v || v === 'Aguardar') ? 0.18 : 0.55
+                      const entregas = [
+                        { t: 'Fotos', v: e.fotos_edicao_estado, d: 'M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2zM12 17a4 4 0 100-8 4 4 0 000 8z' },
+                        { t: 'Vídeo', v: e.video_estado, d: 'M15 10l4.55-2.28A1 1 0 0121 8.62v6.76a1 1 0 01-1.45.9L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z' },
+                        { t: 'Álbum', v: e.album_estado, d: 'M4 19.5A2.5 2.5 0 016.5 17H20V3H6.5A2.5 2.5 0 004 5.5v14zM20 17v4H6.5A2.5 2.5 0 014 18.5' },
+                      ]
+                      const equipa = [
+                        ...(e.fotografo ?? []).map(n => ({ l: 'F', n, papel: 'Fotógrafo' })),
+                        ...(e.videografo ?? []).map(n => ({ l: 'V', n, papel: 'Videógrafo' })),
+                        ...(e.editor_fotos ? [{ l: 'E', n: e.editor_fotos, papel: 'Editor de fotos' }] : []),
+                      ]
+                      return (
+                        <Link key={e.id} href={`/eventos-2026/${e.notion_id ?? e.id}`}
+                          className="group relative flex items-center gap-3 sm:gap-4 rounded-[18px] border border-[#C9A84C]/[0.14] bg-[#111111]/90 px-3 sm:px-4 py-3 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/45 hover:bg-[#141414] hover:shadow-[0_0_32px_-18px_rgba(201,168,76,0.6)]"
+                          style={{ borderLeft: `2px solid rgba(201,168,76,${hasBackup ? 0.9 : passado ? 0.25 : 0.5})` }}>
 
-                      {/* Data */}
-                      <div className="w-16 shrink-0 text-center">
-                        <div className="text-2xl font-bold text-white leading-none">{new Date(e.data_evento + 'T00:00:00').getDate()}</div>
-                        <div className="text-[10px] tracking-widest text-white/30 uppercase mt-0.5">{getDayOfWeek(e.data_evento)}</div>
-                      </div>
+                          {/* Data em círculo */}
+                          <div className="w-12 h-12 shrink-0 rounded-full flex flex-col items-center justify-center"
+                            style={{ background: `rgba(201,168,76,${passado ? 0.06 : 0.13})` }}>
+                            <span className="font-cond font-semibold text-[18px] leading-none" style={{ color: `rgba(201,168,76,${passado ? 0.55 : 1})` }}>
+                              {new Date(e.data_evento + 'T00:00:00').getDate()}
+                            </span>
+                            <span className="font-cond text-[9.5px] uppercase text-[#C9A84C]/55 mt-0.5">{getDayOfWeek(e.data_evento)}</span>
+                          </div>
 
-                      <div className="w-px h-10 bg-white/8 shrink-0" />
+                          {/* Cliente */}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-cond font-semibold text-[16.5px] text-white truncate">{e.cliente || e.referencia || '—'}</p>
+                            <p className="font-cond text-[12.5px] text-white/40 truncate mt-0.5">
+                              <span className={e.referencia ? 'text-[#C9A84C]/70' : 'italic'}>{e.referencia || 's/referência'}</span>
+                              {e.local && <> · {e.local}</>}
+                            </p>
+                          </div>
 
-                      {/* Cliente */}
-                      <div className="flex-1 min-w-0">
-                        <div className="text-white font-medium text-sm truncate">{e.cliente || e.referencia || '—'}</div>
-                        <div className="text-white/30 text-xs truncate mt-0.5 flex items-center gap-2">
-                          <span className={`font-mono shrink-0 ${e.referencia ? 'text-gold/60' : 'text-white/20 italic'}`}>
-                            {e.referencia || 's/referência'}
-                          </span>
-                          {(() => {
-                            const ativo = e.referencia && portaisAtivos.has(e.referencia.toUpperCase())
-                            return (
-                              <span className={`shrink-0 text-[9px] tracking-widest uppercase font-bold ${ativo ? 'text-emerald-400/80' : 'text-white/25'}`}>
-                                · Portal: {ativo ? 'Ativo' : 'Inativo'}
-                              </span>
-                            )
-                          })()}
-                          {e.local && <><span className="text-white/15 shrink-0">·</span><span className="truncate">{e.local}</span></>}
-                        </div>
-                      </div>
-
-                      {/* Tipo */}
-                      <div className="hidden sm:flex gap-1.5 shrink-0">
-                        {(e.tipo_evento ?? []).map(t => (
-                          <span key={t} className={`text-[10px] px-2 py-0.5 rounded-full border ${tipoColor[t] ?? 'bg-white/10 text-white/40 border-white/20'}`}>
-                            {t}
-                          </span>
-                        ))}
-                      </div>
-
-                      {/* Backup OK — só quando armazenamento_backup está confirmado */}
-                      {hasBackup && (
-                        <span
-                          className="inline-flex items-center gap-1.5 shrink-0 text-[10px] px-2.5 py-0.5 rounded-full border tracking-widest uppercase font-bold text-amber-300 bg-amber-400/15 border-amber-400/45"
-                          title={`Backup confirmado em ${backupTs ? new Date(backupTs).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}`}
-                        >
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                          Backup OK
-                        </span>
-                      )}
-
-                      {/* Equipa: Fotografo · Videografo · Editor */}
-                      {(e.fotografo?.length > 0 || e.videografo?.length > 0 || e.editor_fotos) && (
-                        <div className="hidden md:flex flex-col gap-0.5 shrink-0 max-w-[200px] text-[10px]">
-                          {e.fotografo?.length > 0 && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-blue-400/40 tracking-widest uppercase text-[8px] shrink-0">F</span>
-                              <span className="text-white/50 truncate">{e.fotografo.join(', ')}</span>
-                            </div>
-                          )}
-                          {e.videografo?.length > 0 && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-pink-400/40 tracking-widest uppercase text-[8px] shrink-0">V</span>
-                              <span className="text-white/50 truncate">{e.videografo.join(', ')}</span>
-                            </div>
-                          )}
-                          {e.editor_fotos && (
-                            <div className="flex items-center gap-1.5">
-                              <span className="text-emerald-400/40 tracking-widest uppercase text-[8px] shrink-0">E</span>
-                              <span className="text-white/50 truncate">{e.editor_fotos}</span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Ações Fotografia — ícone por cada ação já enviada */}
-                      {(() => {
-                        const acoes = e.referencia ? acoesFoto.get(e.referencia.toUpperCase()) : undefined
-                        const feitas = ACOES_FOTO.filter(a => acoes?.[a.chave])
-                        if (feitas.length === 0) return null
-                        // Tudo enviado → um só ícone a verde
-                        if (feitas.length === ACOES_FOTO.length) {
-                          const datas = ACOES_FOTO.map(a => `${a.label}: ${dataCurta(acoes![a.chave]!)}`).join(' · ')
-                          return (
-                            <div className="shrink-0 hidden sm:flex items-center gap-1"
-                              title={`Serviço de foto concluído — ${datas}`}>
-                              <span className="text-[11px] leading-none cursor-default" style={{ filter: FILTRO_VERDE }}>📷</span>
-                              <span className="text-[10px] leading-none text-green-400 font-bold cursor-default">✓</span>
-                            </div>
-                          )
-                        }
-                        return (
-                          <div className="shrink-0 hidden sm:flex items-center gap-2">
-                            {feitas.map(a => (
-                              <span
-                                key={a.chave}
-                                title={`${a.label} · enviado em ${dataCurta(acoes![a.chave]!)}`}
-                                className="flex items-center gap-[1px] text-[11px] leading-none cursor-default opacity-90 hover:opacity-100 transition-opacity"
-                              >
-                                {Array.from({ length: a.icones }).map((_, n) => <span key={n}>📷</span>)}
+                          {/* Tipo */}
+                          <div className="hidden lg:flex gap-1.5 shrink-0">
+                            {(e.tipo_evento ?? []).map(t => (
+                              <span key={t} className="rounded-full border border-[#C9A84C]/25 px-2.5 py-0.5 font-cond text-[11.5px] text-[#C9A84C]/85">
+                                {t.charAt(0) + t.slice(1).toLowerCase()}
                               </span>
                             ))}
                           </div>
-                        )
-                      })()}
 
-                      {/* Estado das entregas */}
-                      <div className="shrink-0 hidden sm:flex items-center gap-1 sm:pl-2 sm:border-l sm:border-white/8">
-                        {(() => {
-                          const isE = (v: string | null) => v === 'Entregue' || v === 'S/SERVIÇO'
-                          const items = [
-                            { label: '📷', val: e.fotos_edicao_estado, title: 'Fotos', colorir: false },
-                            { label: '🎬', val: e.video_estado,        title: 'Vídeo', colorir: true },
-                            { label: '📚', val: e.album_estado,        title: 'Álbum', colorir: false },
-                          ]
-                          // Sem colunas Supabase: fotos/álbum caem no boolean legado,
-                          // mas o vídeo é sempre mostrado (null conta como "Aguardar")
-                          const semColunas = items.every(i => i.val === null)
-                          return (
-                            <>
-                              {semColunas && (e.fotos_enviadas
-                                ? <span className="text-[10px] text-green-400/70 tracking-wider">✓ Entregue</span>
-                                : <span className="text-[10px] text-white/15 tracking-wider">Pendente</span>)}
-                              {items.map(({ label, val, title, colorir }) => {
-                                if (semColunas && !colorir) return null
-                                const filtro = colorir ? filtroVideo(val) : null
-                                return (
-                                  <span
-                                    key={title}
-                                    title={`${title}: ${val ?? 'Aguardar'}`}
-                                    className={`text-[11px] ${filtro ? 'opacity-95' : isE(val) ? 'opacity-90' : 'opacity-20 grayscale'}`}
-                                    style={filtro ? { filter: filtro } : undefined}
-                                  >{label}</span>
-                                )
-                              })}
-                            </>
-                          )
-                        })()}
-                      </div>
+                          {/* Portal e backup */}
+                          <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                            <span title={portalAtivo ? 'Portal ativo' : 'Sem portal'}
+                              className={`rounded-full border px-2.5 py-0.5 font-cond text-[11.5px] ${portalAtivo ? 'border-[#C9A84C]/40 bg-[#C9A84C]/12 text-[#C9A84C]' : 'border-white/[0.08] text-white/30'}`}>
+                              Portal
+                            </span>
+                            {hasBackup && (
+                              <span title={`Backup confirmado em ${new Date(backupTs!).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`}
+                                className="inline-flex items-center gap-1 rounded-full bg-[#C9A84C] px-2.5 py-0.5 font-cond text-[11.5px] font-semibold text-[#0b0b0b]">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+                                Backup
+                              </span>
+                            )}
+                          </div>
 
-                      {/* Valor */}
-                      {e.valor_liquido && (
-                        <div className="hidden sm:block text-gold text-sm font-semibold shrink-0 w-20 text-right">
-                          {e.valor_liquido.toLocaleString('pt-PT')} €
-                        </div>
-                      )}
+                          {/* Equipa: iniciais em círculo, o nome aparece ao passar o rato */}
+                          {equipa.length > 0 && (
+                            <div className="hidden md:flex items-center -space-x-1.5 shrink-0">
+                              {equipa.slice(0, 4).map((p, i) => (
+                                <span key={i} title={`${p.papel}: ${p.n}`}
+                                  className="w-7 h-7 rounded-full border border-[#0b0b0b] bg-[#1d1a14] flex items-center justify-center font-cond text-[11px] font-semibold text-[#C9A84C] transition-transform hover:-translate-y-0.5 hover:z-10">
+                                  {p.l}
+                                </span>
+                              ))}
+                            </div>
+                          )}
 
-                      {/* Botão eliminar */}
-                      <button
-                        onClick={ev => handleDelete(ev, e.id, e.notion_id, e.referencia)}
-                        disabled={deletingId === e.id}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1.5 rounded-lg hover:bg-red-500/15 text-white/20 hover:text-red-400 shrink-0"
-                      >
-                        {deletingId === e.id
-                          ? <span className="text-[10px] text-white/30">...</span>
-                          : <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-                        }
-                      </button>
-                    </Link>
-                    )
-                  })}
-                </div>
+                          {/* Ações Fotografia: 3 segmentos (galerias, seleção, finais) */}
+                          <div className="hidden sm:flex items-center gap-[3px] shrink-0"
+                            title={ACOES_FOTO.map(a => `${a.label}: ${acoes?.[a.chave] ? dataCurta(acoes[a.chave]!) : 'por enviar'}`).join(' · ')}>
+                            {ACOES_FOTO.map(a => (
+                              <span key={a.chave} className="w-2.5 h-1.5 rounded-full" style={{ background: acoes?.[a.chave] ? '#C9A84C' : 'rgba(201,168,76,0.15)' }} />
+                            ))}
+                          </div>
 
-                {/* Total do mês */}
-                <div className="flex justify-end mt-3">
-                  <span className="text-xs text-white/20 tracking-widest">
-                    Total: <span className="text-white/40 font-medium">
-                      {monthEvents.reduce((s, e) => s + (e.valor_liquido ?? 0), 0).toLocaleString('pt-PT')} €
-                    </span>
-                  </span>
-                </div>
+                          {/* Estado das entregas: ícones a dourado (cheio = entregue) */}
+                          <div className="hidden sm:flex items-center gap-1.5 shrink-0 pl-3 border-l border-white/[0.07]">
+                            {entregas.map(x => (
+                              <svg key={x.t} viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"
+                                className="w-4 h-4" style={{ opacity: nivel(x.v) }} aria-label={`${x.t}: ${x.v ?? 'Aguardar'}`}>
+                                <title>{`${x.t}: ${x.v ?? 'Aguardar'}`}</title>
+                                <path d={x.d} />
+                              </svg>
+                            ))}
+                          </div>
+
+                          {/* Valor */}
+                          {e.valor_liquido ? (
+                            <div className="hidden sm:block font-cond font-semibold text-[15px] text-[#C9A84C] shrink-0 w-20 text-right">
+                              {e.valor_liquido.toLocaleString('pt-PT')} €
+                            </div>
+                          ) : null}
+
+                          {/* Eliminar (aparece ao passar o rato) */}
+                          <button
+                            onClick={ev => handleDelete(ev, e.id, e.notion_id, e.referencia)}
+                            disabled={deletingId === e.id}
+                            title="Eliminar evento"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity w-8 h-8 rounded-full flex items-center justify-center text-white/25 hover:text-[#C9A84C] hover:bg-[#C9A84C]/10 shrink-0">
+                            {deletingId === e.id
+                              ? <span className="font-cond text-[12px] text-white/40">…</span>
+                              : <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /><path d="M9 6V4h6v2" /></svg>}
+                          </button>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                )}
               </section>
             )
           })}
