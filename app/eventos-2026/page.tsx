@@ -857,7 +857,7 @@ function Eventos2026Inner() {
             <input type="text" placeholder="Procurar cliente, local ou referência…" value={search} onChange={e => setSearch(e.target.value)}
               className="w-full rounded-full border border-white/[0.10] bg-white/[0.03] pl-10 pr-4 py-2 font-cond text-[14px] text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/45" />
           </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto sm:flex-1 min-w-0 pb-0.5">
+          <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto sm:flex-1 min-w-0">
             {['Todos', ...TIPOS_EVENTO].map(t => {
               const n = contagemTipo(t)
               if (t !== 'Todos' && n === 0) return null
@@ -877,7 +877,7 @@ function Eventos2026Inner() {
         </div>
         {/* Saltar para o mês */}
         {mesesComEventos.length > 1 && (
-          <div className="flex items-center gap-1.5 mt-2 overflow-x-auto">
+          <div className="flex flex-wrap items-center gap-1 mt-2">
             <span className="font-cond text-[11px] tracking-[0.15em] uppercase text-white/30 mr-1 shrink-0">Ir para</span>
             {mesesComEventos.map(k => (
               <button key={k} onClick={() => irParaMes(k)}
