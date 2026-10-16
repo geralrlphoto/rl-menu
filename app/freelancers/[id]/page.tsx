@@ -550,8 +550,8 @@ function FreelancerDetailInner() {
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
-  // Novo layout (cartaz de cinema, dourado suave, Roboto Condensed): por agora só neste membro, para experimentar
-  const novoLayout = id === 'de13e327-edd1-4201-be75-288038167eae'
+  // Novo layout (cartaz de cinema, dourado suave, Roboto Condensed) para todos os membros
+  const novoLayout = true
 
   function handleIntroHomeChange(val: string) {
     setIntroHome(val)
