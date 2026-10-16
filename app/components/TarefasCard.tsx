@@ -240,7 +240,7 @@ export function TarefasCard() {
                     </div>
                     {!t._is_noivos_msg && (
                       <WhatsAppMembro titulo="Tarefa"
-                        mensagem={`Olá,\n\nTarefa: ${t.titulo}${t.descricao ? `\n${t.descricao}` : ''}${t.data_prazo ? `\nPrazo: ${fmt(t.data_prazo)}` : ''}\n\nObrigado.`} />
+                        mensagem={`Olá boas tudo bem?\n\nOlha, tenho esta tarefa para ti: ${t.titulo}${t.descricao ? `\n${t.descricao}` : ''}${t.data_prazo ? `\nPrazo: ${fmt(t.data_prazo)}` : ''}\n\nObrigado.`} />
                     )}
                     <div className="text-right shrink-0">
                       {t.data_prazo ? (

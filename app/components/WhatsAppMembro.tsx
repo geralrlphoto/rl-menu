@@ -44,7 +44,8 @@ export function WhatsAppMembro({ mensagem, titulo = 'Enviar por WhatsApp' }: { m
   // Ao escolher o membro, a saudação passa a ter o nome dele
   function escolher(m: Membro) {
     setEscolhido(m)
-    setTexto(t => t.replace(/^Olá[^,\n]*,/, `Olá ${primeiroNome(m.nome)},`))
+    // "Olá boas tudo bem?" passa a "Olá Ana, boas tudo bem?"
+    setTexto(t => t.replace(/^Olá[^\n]*?,? (?=boas)/, `Olá ${primeiroNome(m.nome)}, `))
   }
 
   function enviar() {

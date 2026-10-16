@@ -123,7 +123,10 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
     const prazoTxt = it.estado === 'atraso'
       ? `está com ${it.dias} ${it.dias === 1 ? 'dia' : 'dias'} de atraso`
       : it.dias === 0 ? 'termina hoje' : `termina daqui a ${it.dias} ${it.dias === 1 ? 'dia' : 'dias'}`
-    const mensagem = `Olá,\n\n${it.tipo} de ${it.nome}${it.ref ? ` (${it.ref})` : ''}: ${prazoTxt}.\n\nConsegues tratar disto? Obrigado.`
+    // Tom informal: "Olha as fotos p/ Seleção de …"
+    const artigo = /^fotos/i.test(it.tipo) ? 'as' : /^v[ií]deo/i.test(it.tipo) ? 'o' : 'a'
+    const tipoTxt = it.tipo.charAt(0).toLowerCase() + it.tipo.slice(1)
+    const mensagem = `Olá boas tudo bem?\n\nOlha ${artigo} ${tipoTxt} de ${it.nome}${it.ref ? ` (${it.ref})` : ''}: ${prazoTxt}.\n\nConsegues tratar disto? Obrigado.`
     return (
       // O cartão não é o link: os botões não podem viver dentro de uma âncora.
       <div key={key} className="group relative rounded-[22px] border border-white/[0.08] bg-[#141414] transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.18] overflow-hidden"
