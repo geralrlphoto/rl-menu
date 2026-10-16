@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createClient } from '@supabase/supabase-js'
 import { verificarPartilha } from '@/lib/partilha-token'
 import PartilhaClient from './PartilhaClient'
 import BriefingPartilha from './BriefingPartilha'
+import LinkExpirado from './LinkExpirado'
 
 export const dynamic = 'force-dynamic'
 
@@ -71,6 +73,15 @@ async function briefingPartilhado(id: string, ref: string) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   )
+
+  // O link deixa de funcionar no dia a seguir ao casamento (hora de Lisboa).
+  // Lê só a data primeiro: se já expirou, não carrega mais nada. O admin continua a ver.
+  const { data: quando } = await db.from('eventos_2026').select('data_evento').ilike('referencia', ref).maybeSingle()
+  const hojeLx = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
+  const isAdmin = (await cookies()).get('rl_auth')?.value === process.env.AUTH_SECRET
+  if (quando?.data_evento && String(quando.data_evento).slice(0, 10) < hojeLx && !isAdmin) {
+    return <LinkExpirado />
+  }
   const [{ data: portal }, { data: ev }, { data: eq }, { data: modelo }] = await Promise.all([
     db.from('portais').select('settings').ilike('referencia', ref).maybeSingle(),
     db.from('eventos_2026').select('cliente, data_evento, local').ilike('referencia', ref).maybeSingle(),
