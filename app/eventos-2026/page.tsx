@@ -379,7 +379,7 @@ function ReferenciasDropdown({ events, anoFiltro }: { events: Evento[]; anoFiltr
           {/* Backdrop para fechar ao clicar fora */}
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           {/* Painel */}
-          <div className="absolute right-0 mt-2 w-[min(95vw,460px)] max-h-[70vh] overflow-hidden z-50 rounded-[20px] border border-[#C9A84C]/25 bg-[#111111] shadow-[0_24px_60px_-18px_rgba(0,0,0,0.9),0_0_30px_-14px_rgba(201,168,76,0.5)]">
+          <div className="fixed sm:absolute left-3 right-3 top-20 sm:top-auto sm:left-auto sm:right-0 sm:mt-2 sm:w-[460px] max-h-[70vh] overflow-hidden z-50 rounded-[20px] border border-[#C9A84C]/25 bg-[#111111] shadow-[0_24px_60px_-18px_rgba(0,0,0,0.9),0_0_30px_-14px_rgba(201,168,76,0.5)]">
             {/* Tabs */}
             <div className="flex border-b border-white/[0.08] font-cond text-[12px] font-semibold">
               {(['CAS_RL', 'CAS_KP', 'BAT_RL', 'BAT_KP'] as const).map(p => (
@@ -690,10 +690,11 @@ function Eventos2026Inner() {
   const botaoTopo = 'inline-flex items-center gap-2 rounded-full bg-[#0e0e0e]/90 backdrop-blur-md font-cond font-semibold text-[15px] text-white px-5 py-2.5 transition-all'
 
   return (
-    <main className="min-h-screen px-3 sm:px-6 py-6 sm:py-8 max-w-[1200px] mx-auto">
+    <main className="min-h-screen px-3 sm:px-6 pt-16 pb-8 lg:py-8 max-w-[1200px] mx-auto overflow-x-clip">
 
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden rounded-[28px] border border-[#C9A84C]/20 mb-6">
+      <section className="relative rounded-[28px] border border-[#C9A84C]/20 mb-6">
+        <div className="absolute inset-0 rounded-[28px] overflow-hidden">
         <img src={heroSrc} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_40%] grayscale opacity-25" />
         <div className="absolute inset-0" style={{ background: 'linear-gradient(100deg, rgba(11,11,11,0.97) 0%, rgba(11,11,11,0.8) 50%, rgba(11,11,11,0.55) 100%)' }} />
         <div className="absolute inset-0 opacity-40" style={{
@@ -701,6 +702,7 @@ function Eventos2026Inner() {
           maskImage: 'radial-gradient(ellipse 60% 70% at 70% 40%, #000 20%, transparent 75%)',
           WebkitMaskImage: 'radial-gradient(ellipse 60% 70% at 70% 40%, #000 20%, transparent 75%)',
         }} />
+        </div>
 
         <div className="relative px-5 sm:px-10 pt-5 sm:pt-6 pb-7 sm:pb-9">
           {/* Topo: voltar + ações */}
@@ -735,7 +737,7 @@ function Eventos2026Inner() {
                   ))}
                 </div>
               </div>
-              <h1 className="font-cond font-bold text-white text-[44px] sm:text-[66px] leading-[1.02] mt-4">
+              <h1 className="font-cond font-bold text-white text-[36px] sm:text-[66px] leading-[1.02] mt-4 break-words">
                 Casamentos <span className="text-[#C9A84C]">{anoFiltro}</span>
               </h1>
               <p className="font-cond font-light text-white/60 text-lg sm:text-xl mt-3">
@@ -855,7 +857,7 @@ function Eventos2026Inner() {
             <input type="text" placeholder="Procurar cliente, local ou referência…" value={search} onChange={e => setSearch(e.target.value)}
               className="w-full rounded-full border border-white/[0.10] bg-white/[0.03] pl-10 pr-4 py-2 font-cond text-[14px] text-white placeholder-white/30 focus:outline-none focus:border-[#C9A84C]/45" />
           </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto sm:flex-1 min-w-0 pb-0.5">
             {['Todos', ...TIPOS_EVENTO].map(t => {
               const n = contagemTipo(t)
               if (t !== 'Todos' && n === 0) return null
