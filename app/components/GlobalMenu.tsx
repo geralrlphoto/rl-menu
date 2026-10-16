@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import { usePathname, useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { AdminNotificationsBell } from './AdminNotificationsBell'
@@ -99,6 +99,9 @@ function GlobalMenuInner() {
   // Barra estreita (só ícones) — fica guardado entre visitas
   const [compact, setCompact] = useState(false)
   const [busca, setBusca] = useState('')
+  // Grupo da barra de topo com o painel aberto (ao passar o rato)
+  const [mega, setMega] = useState<string | null>(null)
+  const fecharMega = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     setCompact(localStorage.getItem('rl-menu-compacto') === '1')
@@ -351,8 +354,17 @@ function GlobalMenuInner() {
       ]
   const linkDe = (href: string) => (navLinks as any[]).find(l => l.href === href)
 
+  function abrirMega(nome: string | null) {
+    if (fecharMega.current) clearTimeout(fecharMega.current)
+    if (nome) setMega(nome)
+  }
+  function sairMega() {
+    if (fecharMega.current) clearTimeout(fecharMega.current)
+    fecharMega.current = setTimeout(() => setMega(null), 180)
+  }
+
   const BarraTopo = () => (
-    <header data-global-menu className="hidden lg:block relative z-40 print:hidden bg-[#0b0b0b]">
+    <header data-global-menu className="hidden lg:block relative z-40 print:hidden bg-[#0b0b0b]" onMouseLeave={sairMega}>
       <div className="h-16 px-6 xl:px-10 flex items-center gap-6">
         {/* Marca */}
         <Link href={isMedia ? '/media' : '/photo'} className="flex items-center gap-3 shrink-0 w-[220px]">
@@ -370,11 +382,11 @@ function GlobalMenuInner() {
           {GRUPOS.map(g => {
             const links = g.hrefs.map(linkDe).filter(Boolean)
             const ativo = links.some((l: any) => isActive(l.href, l.exact))
-            const corTexto = ativo ? accent(0.95) : 'rgba(255,255,255,0.82)'
+            const corTexto = ativo || mega === g.nome ? accent(0.95) : 'rgba(255,255,255,0.82)'
             if (links.length === 1) {
               const l: any = links[0]
               return (
-                <Link key={g.nome} href={l.href}
+                <Link key={g.nome} href={l.href} onMouseEnter={() => setMega(null)}
                   className="px-4 py-2 rounded-full font-cond text-[16px] font-medium transition-colors hover:bg-white/[0.05]"
                   style={{ color: corTexto }}>
                   {g.nome}
@@ -382,24 +394,15 @@ function GlobalMenuInner() {
               )
             }
             return (
-              <div key={g.nome} className="relative group">
-                <button className="flex items-center gap-1.5 px-4 py-2 rounded-full font-cond text-[16px] font-medium transition-colors group-hover:bg-white/[0.05]"
-                  style={{ color: corTexto }}>
-                  {g.nome}
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 opacity-50 transition-transform duration-200 group-hover:rotate-180" aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
-                  </svg>
-                </button>
-                {/* Painel suspenso: abre ao passar o rato (ou com o teclado) */}
-                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200">
-                  <div className="w-[260px] rounded-[20px] border bg-[#141414] p-2 flex flex-col gap-1"
-                    style={{ borderColor: accent(0.22), boxShadow: `0 24px 60px -18px rgba(0,0,0,0.9), 0 0 30px -14px ${accent(0.5)}` }}>
-                    {links.map((l: any) => (
-                      <NavItem key={l.href} href={l.href} label={l.label} sub={l.sub} icon={l.icon} exact={l.exact} />
-                    ))}
-                  </div>
-                </div>
-              </div>
+              <button key={g.nome} onMouseEnter={() => abrirMega(g.nome)} onClick={() => setMega(m => m === g.nome ? null : g.nome)}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full font-cond text-[16px] font-medium transition-colors"
+                style={{ color: corTexto, background: mega === g.nome ? 'rgba(255,255,255,0.05)' : 'transparent' }}>
+                {g.nome}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 opacity-50 transition-transform duration-200"
+                  style={{ transform: mega === g.nome ? 'rotate(180deg)' : 'none' }} aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
             )
           })}
         </nav>
@@ -427,6 +430,64 @@ function GlobalMenuInner() {
           )}
         </div>
       </div>
+      {/* Painel largo por baixo da barra (como um mega menu) */}
+      {!isMedia && (
+        <div className="absolute left-0 right-0 top-full z-50 px-6 xl:px-10 pt-2 pb-8 transition-all duration-200"
+          style={{
+            opacity: mega ? 1 : 0, visibility: mega ? 'visible' : 'hidden',
+            transform: mega ? 'translateY(0)' : 'translateY(-6px)',
+            background: 'linear-gradient(180deg, rgba(11,11,11,0.98) 70%, rgba(11,11,11,0))',
+          }}
+          onMouseEnter={() => abrirMega(mega)} onMouseLeave={sairMega}>
+          <div className="max-w-6xl mx-auto grid grid-cols-3 gap-5">
+            {GRUPOS.filter(g => g.hrefs.length > 1).map(g => {
+              const links = g.hrefs.map(linkDe).filter(Boolean) as any[]
+              const foco = mega === g.nome
+              return (
+                <div key={g.nome} onMouseEnter={() => setMega(g.nome)}
+                  className="rounded-[20px] border p-4 transition-all duration-300"
+                  style={{
+                    background: '#101213',
+                    borderColor: foco ? accent(0.35) : 'rgba(255,255,255,0.05)',
+                    boxShadow: foco ? `0 0 40px -18px ${accent(0.6)}` : 'none',
+                  }}>
+                  <div className="rounded-[16px] border border-white/[0.07] bg-[#191c1d]">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.07]">
+                      <p className="font-cond font-semibold text-[16px] text-white">{g.nome}</p>
+                      <p className="font-cond text-[14px] text-white/45">{links.length}</p>
+                    </div>
+                    <div className="p-2 flex flex-col gap-2">
+                      {links.map(l => {
+                        const aqui = isActive(l.href, l.exact)
+                        return (
+                          <Link key={l.href} href={l.href} onClick={() => setMega(null)}
+                            className="group/item flex items-center gap-3 rounded-[14px] border border-white/[0.07] bg-[#202425] px-3 py-2.5 transition-all duration-200 hover:border-white/[0.18] hover:bg-[#262a2b]">
+                            <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center transition-transform duration-300 group-hover/item:scale-110"
+                              style={{ color: accent(0.9), background: accent(0.1) }}>
+                              {l.icon}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-cond font-semibold text-[15.5px] text-white truncate">{l.label}</span>
+                              <span className="block font-cond text-[13px] text-white/45 truncate">{l.sub}</span>
+                            </span>
+                            <span className="shrink-0 rounded-full border px-2.5 py-0.5 font-cond text-[12px] font-semibold"
+                              style={aqui
+                                ? { color: '#0b0b0b', background: accent(0.85), borderColor: accent(0.85) }
+                                : { color: accent(0.95), background: accent(0.1), borderColor: accent(0.3) }}>
+                              {aqui ? 'Estás aqui' : 'Abrir'}
+                            </span>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Faixa fina riscada por baixo, a dourado */}
       <div className="h-[5px]" style={{
         background: `repeating-linear-gradient(90deg, ${accent(0.35)} 0 1px, transparent 1px 4px)`,
@@ -447,7 +508,7 @@ function GlobalMenuInner() {
       `}</style>
 
       {/* ── DESKTOP: barra de topo (nos paths colapsados fica só o botão flutuante) ── */}
-      {!isCollapsed && <BarraTopo />}
+      {!isCollapsed && BarraTopo()}
 
       {/* ── Botão hambúrguer/seta (mobile sempre; desktop só em paths colapsados) ── */}
       <button
