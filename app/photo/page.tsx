@@ -9,6 +9,9 @@ import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
+import { Roboto_Condensed } from 'next/font/google'
+
+const cond = Roboto_Condensed({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-cond' })
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -36,6 +39,12 @@ const sectionImages: Record<string, string> = {
 const fallbackImage = 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&q=80'
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+// "MENU FINANÇAS" → "Menu Finanças"; siglas curtas sozinhas (CRM) ficam como estão
+function tituloMenu(nome: string): string {
+  const palavras = nome.trim().split(/\s+/)
+  if (palavras.length === 1 && nome.length <= 4) return nome
+  return palavras.map(w => w.length <= 2 ? w.toLowerCase() : w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
+}
 function daysUntil(d: string): number {
   const today = new Date(); today.setHours(0,0,0,0)
   const target = new Date(d + 'T00:00:00')
@@ -812,131 +821,214 @@ export default async function PhotoDashboard() {
 
 
   return (
-    <main className="min-h-screen bg-[#080808] flex flex-col">
+    <main className={`${cond.variable} min-h-screen bg-[#0b0b0b] flex flex-col`}>
 
-      {/* ── Hero: saudação + data ─────────────────────────────────────────── */}
-      <section className="relative overflow-hidden shrink-0 border-b border-white/[0.06]">
-        <div className="absolute inset-0 bg-cover bg-[center_35%]"
-          style={{ backgroundImage: "url('/casamentos-2028.png')" }} />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(100deg, rgba(8,8,8,0.96) 0%, rgba(8,8,8,0.78) 45%, rgba(8,8,8,0.35) 100%)' }} />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, #080808 0%, transparent 55%)' }} />
+      {/* ── Hero: saudação, pulso do estúdio e prioridades ─────────────────── */}
+      <section className="relative overflow-hidden shrink-0">
+        {/* Foto esbatida a preto e branco, pontilhado e anéis finos ao centro */}
+        <div className="absolute inset-0 bg-cover bg-[center_35%] grayscale opacity-[0.22]"
+          style={{ backgroundImage: "url('/casamentos-2028.webp')" }} />
+        <div className="absolute inset-0"
+          style={{ background: 'radial-gradient(ellipse 55% 50% at 55% 38%, rgba(201,168,76,0.10), transparent 70%)' }} />
+        <div className="absolute inset-0 opacity-40"
+          style={{
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)',
+            backgroundSize: '26px 26px',
+            maskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
+          }} />
+        <svg className="pointer-events-none absolute left-[55%] top-[40%] -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] opacity-[0.09]"
+          viewBox="0 0 100 100" fill="none" stroke="#C9A84C" strokeWidth="0.1" aria-hidden>
+          <circle cx="50" cy="50" r="18" />
+          <circle cx="50" cy="50" r="30" strokeDasharray="0.5 1.2" />
+          <circle cx="50" cy="50" r="44" />
+        </svg>
+        <div className="absolute inset-0"
+          style={{ background: 'linear-gradient(to bottom, #0b0b0b 0%, rgba(11,11,11,0.45) 20%, rgba(11,11,11,0.55) 65%, #0b0b0b 100%)' }} />
 
         <div className="absolute top-4 right-4 z-10">
           <LogoutButton />
         </div>
 
-        <div className="relative max-w-6xl mx-auto px-5 sm:px-10 pt-16 sm:pt-20 pb-10 sm:pb-12">
-          <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo_rl_gold.png" alt="" className="h-9 w-auto opacity-80" />
-            <p className="text-[9px] tracking-[0.5em] text-white/40 uppercase">
-              RL <span className="text-[#C9A84C]/80">Photo</span>.Video · Menu interno
-            </p>
+        <div className="relative max-w-6xl mx-auto px-5 sm:px-10 pt-20 sm:pt-28 pb-10 sm:pb-14 lg:min-h-[86vh] flex flex-col">
+          <div className="flex-1 grid lg:grid-cols-[1fr_360px] gap-10 lg:gap-16 items-center">
+
+            {/* Saudação */}
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">
+                  RL Photo.Video · Menu interno
+                </p>
+                <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] backdrop-blur-md pl-3 pr-2.5 py-1.5 font-cond text-[13px] text-white/85">
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white/80" fill="currentColor" aria-hidden><path d="M21 3 3 10.5l7.5 2.6L13 21z" /></svg>
+                  <span className="inline-block first-letter:uppercase">{dataLonga}</span>
+                  <span className="w-2.5 h-2.5 rounded-full border-2 border-[#C9A84C]" />
+                </span>
+              </div>
+
+              <h1 className="font-cond font-bold text-white text-[44px] sm:text-[68px] leading-[1.02] tracking-[-0.01em] mt-5">
+                {saudacao}, <span className="text-[#C9A84C]">Rui</span>
+                <br />o estúdio em foco
+              </h1>
+              <p className="font-cond font-light text-white/60 text-lg sm:text-xl leading-relaxed mt-6 max-w-xl">
+                Entregas, agenda e tarefas num só sítio. Do primeiro contacto à última fotografia.
+              </p>
+
+              <div className="flex flex-wrap items-center gap-3 mt-8">
+                <Link href="/calendario"
+                  className="group inline-flex items-center gap-3 rounded-full bg-[#C9A84C] hover:bg-[#d8b95c] text-black font-cond font-medium text-lg px-7 py-3.5 shadow-[0_0_40px_-8px_rgba(201,168,76,0.6)] transition-all">
+                  Abrir calendário
+                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                </Link>
+                <Link href="/crm"
+                  className="inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-md text-white font-cond text-lg px-6 py-3.5 transition-all">
+                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#C9A84C]" fill="currentColor" aria-hidden>
+                    <path d="M10 2.5l1.6 4.9 4.9 1.6-4.9 1.6L10 15.5l-1.6-4.9L3.5 9l4.9-1.6zM18 13l.9 2.6 2.6.9-2.6.9L18 20l-.9-2.6-2.6-.9 2.6-.9z" />
+                  </svg>
+                  Abrir o CRM
+                </Link>
+              </div>
+            </div>
+
+            {/* Pulso do estúdio */}
+            <aside className="rounded-[28px] border border-[#C9A84C]/35 bg-[#141414]/75 backdrop-blur-xl p-7 shadow-[0_0_60px_-20px_rgba(201,168,76,0.45)]">
+              <p className="flex items-center gap-2.5 font-cond text-[12px] font-semibold tracking-[0.12em] uppercase text-white/90">
+                <span className="w-2 h-2 rounded-full bg-[#C9A84C] shadow-[0_0_10px_#C9A84C]" />
+                Pulso do estúdio · 30 dias
+              </p>
+              <div className="grid grid-cols-2 mt-6">
+                {[
+                  { rotulo: 'Esta semana', valor: totalCasamentosSemana, unidade: totalCasamentosSemana === 1 ? 'casamento' : 'casamentos', badge: `${totalCasamentos30} em 30d`, cor: '#C9A84C' },
+                  { rotulo: 'Reuniões', valor: totalReunioes30, unidade: 'marcadas', badge: '30d', cor: '#C9A84C' },
+                  { rotulo: 'WhatsApp', valor: waPorEnviar, unidade: 'por enviar', badge: 'hoje', cor: waPorEnviar > 0 ? '#4ade80' : 'rgba(255,255,255,0.4)' },
+                  { rotulo: 'Prazos', valor: avisos5 + atrasados, unidade: 'a vigiar', badge: atrasados > 0 ? `${atrasados} atraso` : '5d', cor: atrasados > 0 ? '#f87171' : avisos5 > 0 ? '#fb923c' : 'rgba(255,255,255,0.4)' },
+                ].map((s, i) => (
+                  <div key={s.rotulo}
+                    className={`py-4 ${i % 2 === 0 ? 'pr-5 border-r border-white/[0.08]' : 'pl-5'} ${i < 2 ? 'border-b border-white/[0.08]' : ''}`}>
+                    <p className="font-cond text-[12px] text-white/55">{s.rotulo}</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <span className="font-cond font-semibold text-white text-[26px] leading-none">{s.valor}</span>
+                      <span className="rounded-md px-1.5 py-0.5 font-cond text-[10px] font-semibold"
+                        style={{ color: s.cor, background: s.cor.startsWith('#') ? `${s.cor}22` : 'rgba(255,255,255,0.06)' }}>
+                        {s.badge}
+                      </span>
+                    </div>
+                    <p className="font-cond text-[11px] text-white/35 mt-1">{s.unidade}</p>
+                  </div>
+                ))}
+              </div>
+            </aside>
           </div>
 
-          <h1 className="font-cormorant font-light text-white text-5xl sm:text-7xl leading-[0.95] tracking-[0.02em] mt-7">
-            {saudacao}, <span className="italic text-[#C9A84C]">Rui</span>
-          </h1>
-          <p className="font-cormorant italic text-white/55 text-lg sm:text-xl mt-3 first-letter:uppercase">
-            {dataLonga}
-            {totalCasamentosSemana > 0 && (
-              <> · {totalCasamentosSemana} casamento{totalCasamentosSemana !== 1 ? 's' : ''} nos próximos 7 dias</>
-            )}
-          </p>
-
-          {/* Prioridades */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mt-9">
-            {prioridades.map(p => {
-              if ('tarefas' in p && p.tarefas) return <TarefasCard key="tarefas" />
-              const avisoN = 'aviso' in p ? (p.aviso as number) : 0
-              const itensGaveta = 'gaveta' in p ? (p.gaveta as EntregaAtraso[]) : []
-              const comGaveta = itensGaveta.length > 0
-              return (
-                <div key={p.rotulo} className="relative">
-                  <Link href={p.href}
-                    className="group block h-full rounded-2xl border px-4 sm:px-5 py-4 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5"
-                    style={{
-                      borderColor: p.n > 0 ? `${p.cor}55` : 'rgba(255,255,255,0.08)',
-                      background: p.n > 0 ? `${p.cor}10` : 'rgba(0,0,0,0.35)',
-                    }}>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className="text-3xl sm:text-4xl font-extralight leading-none" style={{ color: p.n > 0 ? p.cor : 'rgba(255,255,255,0.35)' }}>
-                        {p.n}
+          {/* Prioridades: quatro cartões ligados por uma linha fina */}
+          <div className="relative mt-14 lg:mt-16">
+            <div className="hidden lg:block absolute left-0 right-0 top-1/2 h-px bg-white/[0.08]" />
+            <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {prioridades.map(p => {
+                if ('tarefas' in p && p.tarefas) return <TarefasCard key="tarefas" />
+                const avisoN = 'aviso' in p ? (p.aviso as number) : 0
+                const itensGaveta = 'gaveta' in p ? (p.gaveta as EntregaAtraso[]) : []
+                const comGaveta = itensGaveta.length > 0
+                const ativo = p.n > 0
+                return (
+                  <div key={p.rotulo} className="relative">
+                    <Link href={p.href}
+                      className="group block h-full rounded-[22px] border border-white/[0.08] bg-[#141414]/90 backdrop-blur-md pl-5 pr-12 py-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.16]"
+                      style={{ borderLeft: `2px solid ${ativo ? p.cor : 'rgba(201,168,76,0.35)'}` }}>
+                      <div className="flex items-center gap-3.5">
+                        <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-cond font-semibold text-lg"
+                          style={{ color: ativo ? p.cor : 'rgba(201,168,76,0.75)', background: ativo ? `${p.cor}1f` : 'rgba(201,168,76,0.08)' }}>
+                          {p.n}
+                        </span>
+                        <span className="font-cond font-medium text-white text-[21px] leading-tight">{p.rotulo}</span>
+                      </div>
+                      <p className="font-cond text-[14px] text-white/50 leading-snug mt-3 pl-[54px]">
+                        {p.n === 0 && avisoN === 0 ? 'Tudo em dia' : p.sub}
                       </p>
-                      {!comGaveta && (
-                        <span className="text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all">→</span>
+                      {avisoN > 0 && (
+                        <p className="font-cond text-[13px] font-medium mt-1.5 pl-[54px]" style={{ color: '#fb923c' }}>
+                          {avisoN} {'avisoTexto' in p ? p.avisoTexto : ''}
+                        </p>
                       )}
-                    </div>
-                    <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mt-2.5">{p.rotulo}</p>
-                    <p className="text-[10px] text-white/30 mt-0.5">{p.n === 0 && avisoN === 0 ? 'Tudo em dia' : p.sub}</p>
-                    {avisoN > 0 && (
-                      <p className="text-[11px] mt-2 font-medium" style={{ color: '#fb923c' }}>
-                        ⚠ {avisoN} {'avisoTexto' in p ? p.avisoTexto : ''}
-                      </p>
+                      {!comGaveta && (
+                        <span className="absolute top-5 right-5 text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all">→</span>
+                      )}
+                    </Link>
+                    {/* + abre a gaveta com a lista; fica fora do Link para não haver botão dentro de link */}
+                    {comGaveta && (
+                      <div className="absolute top-4 right-4">
+                        <EntregasDrawer itens={itensGaveta}
+                          titulo={'titulo' in p ? p.titulo : undefined}
+                          avisoTitulo={'avisoTexto' in p && p.avisoTexto ? `Termina em ${p.avisoTexto.replace('a terminar em ', '')}` : undefined} />
+                      </div>
                     )}
-                  </Link>
-                  {/* + abre a gaveta com a lista; fica fora do Link para não haver botão dentro de link */}
-                  {comGaveta && (
-                    <div className="absolute top-3.5 right-3.5">
-                      <EntregasDrawer itens={itensGaveta}
-                        titulo={'titulo' in p ? p.titulo : undefined}
-                        avisoTitulo={'avisoTexto' in p && p.avisoTexto ? `Termina em ${p.avisoTexto.replace('a terminar em ', '')}` : undefined} />
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       </section>
 
       {/* ── Próximos 30 dias (scroll horizontal) ─────────────────────────── */}
-      <section className="max-w-6xl w-full mx-auto px-5 sm:px-10 pt-10">
-        <div className="flex items-center gap-4 mb-4">
-          <span className="text-[10px] tracking-[0.45em] uppercase text-white/35">Próximos 30 dias</span>
-          <span className="text-[10px] text-white/25">
-            {totalCasamentos30} casamento{totalCasamentos30 !== 1 ? 's' : ''}
-            {totalReunioes30 > 0 && ` · ${totalReunioes30} ${totalReunioes30 === 1 ? 'reunião' : 'reuniões'}`}
-          </span>
-          {waPorEnviar > 0 && (
-            <span className="text-[10px] text-green-400/80">
-              {waPorEnviar} WhatsApp por enviar hoje
+      <section className="max-w-6xl w-full mx-auto px-5 sm:px-10 pt-8">
+        <div className="flex flex-wrap items-end gap-x-5 gap-y-2 mb-5">
+          <div>
+            <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Agenda</p>
+            <h2 className="font-cond font-semibold text-white text-3xl sm:text-[34px] leading-tight mt-1">Próximos 30 dias</h2>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 pb-1.5 font-cond text-[13px]">
+            <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-white/70">
+              {totalCasamentos30} casamento{totalCasamentos30 !== 1 ? 's' : ''}
             </span>
-          )}
-          <div className="flex-1 h-px bg-white/[0.07]" />
-          <ReporEscondidos n={ocultos.size} />
-          <span className="hidden sm:inline text-[9px] tracking-[0.3em] uppercase text-white/20">desliza →</span>
-          <Link href="/calendario" className="text-[9px] tracking-[0.3em] uppercase text-white/25 hover:text-[#C9A84C] transition-colors">
-            Calendário →
-          </Link>
+            {totalReunioes30 > 0 && (
+              <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-white/70">
+                {totalReunioes30} {totalReunioes30 === 1 ? 'reunião' : 'reuniões'}
+              </span>
+            )}
+            {waPorEnviar > 0 && (
+              <span className="rounded-full border border-green-400/30 bg-green-400/10 px-3 py-1 text-green-400">
+                {waPorEnviar} WhatsApp por enviar hoje
+              </span>
+            )}
+          </div>
+          <div className="flex-1" />
+          <div className="flex items-center gap-4 pb-1.5">
+            <ReporEscondidos n={ocultos.size} />
+            <span className="hidden sm:inline font-cond text-[12px] text-white/30">desliza →</span>
+            <Link href="/calendario" className="font-cond text-[13px] text-white/60 hover:text-[#C9A84C] transition-colors">
+              Calendário →
+            </Link>
+          </div>
         </div>
 
         <div className="relative">
           {/* Esbatido na ponta direita: indica que há mais para a frente */}
-          <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-16 z-10 bg-gradient-to-l from-[#080808] to-transparent" />
+          <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-16 z-10 bg-gradient-to-l from-[#0b0b0b] to-transparent" />
 
-          <div className="agenda-scroll flex gap-2 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
+          <div className="agenda-scroll flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
             {semana.map((d, i) => {
               const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0 || d.preparacoes.length > 0 || d.briefingEquipa.length > 0
               return (
                 <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
                   {/* Mês por cima do primeiro dia e de cada dia 1 */}
-                  <p className="h-5 text-[9px] tracking-[0.35em] uppercase text-[#C9A84C]/60 pl-1">
+                  <p className="h-5 font-cond text-[11px] font-medium tracking-[0.18em] uppercase text-[#C9A84C]/75 pl-1">
                     {d.novoMes ? d.mesLongo : ''}
                   </p>
                   <div
-                    className="flex-1 rounded-xl border px-3 py-3 min-h-[118px] flex flex-col"
+                    className="flex-1 rounded-[18px] border px-3 py-3 min-h-[124px] flex flex-col bg-[#141414]/90"
                     style={{
-                      borderColor: i === 0 ? 'rgba(201,168,76,0.5)' : cheio ? 'rgba(201,168,76,0.22)' : 'rgba(255,255,255,0.06)',
-                      background: i === 0 ? 'rgba(201,168,76,0.07)' : cheio ? 'rgba(201,168,76,0.03)' : 'rgba(255,255,255,0.015)',
+                      borderColor: i === 0 ? 'rgba(201,168,76,0.55)' : cheio ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)',
+                      borderLeft: `2px solid ${i === 0 ? '#C9A84C' : cheio ? 'rgba(201,168,76,0.45)' : 'rgba(255,255,255,0.05)'}`,
+                      boxShadow: i === 0 ? '0 0 40px -18px rgba(201,168,76,0.6)' : undefined,
                     }}>
                     <div className="flex items-baseline justify-between">
-                      <span className="text-[9px] tracking-[0.25em] uppercase"
-                        style={{ color: i === 0 ? '#C9A84C' : d.fimDeSemana ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)' }}>
+                      <span className="font-cond text-[12px] font-medium"
+                        style={{ color: i === 0 ? '#C9A84C' : d.fimDeSemana ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)' }}>
                         {d.rotulo}
                       </span>
-                      <span className="font-cormorant text-xl leading-none" style={{ color: cheio ? '#fff' : 'rgba(255,255,255,0.3)' }}>
-                        {d.dia} <span className="text-[10px] text-white/30 font-sans">{d.mes}</span>
+                      <span className="font-cond font-semibold text-[22px] leading-none" style={{ color: cheio ? '#fff' : 'rgba(255,255,255,0.3)' }}>
+                        {d.dia} <span className="text-[11px] font-normal text-white/35">{d.mes}</span>
                       </span>
                     </div>
 
@@ -1013,30 +1105,33 @@ export default async function PhotoDashboard() {
       </section>
 
       {/* ── Menu ──────────────────────────────────────────────────────────── */}
-      <section className="max-w-6xl w-full mx-auto px-5 sm:px-10 pt-12 pb-14">
-        <div className="flex items-center gap-4 mb-4">
-          <span className="text-[10px] tracking-[0.45em] uppercase text-white/35">Menu</span>
-          <div className="flex-1 h-px bg-white/[0.07]" />
+      <section className="max-w-6xl w-full mx-auto px-5 sm:px-10 pt-14 pb-16">
+        <div className="mb-5">
+          <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Navegação</p>
+          <h2 className="font-cond font-semibold text-white text-3xl sm:text-[34px] leading-tight mt-1">Menu</h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {allItems.map((item, i) => (
             <Link key={item.id} href={item.href}
-              className="group relative overflow-hidden rounded-2xl border border-white/[0.07] hover:border-[#C9A84C]/45 transition-all duration-300"
-              style={{ height: '150px' }}>
-              <div className="absolute inset-0 bg-cover bg-center transition-transform duration-[1200ms] ease-out group-hover:scale-110"
+              className="group relative overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#141414] hover:border-[#C9A84C]/45 hover:-translate-y-0.5 transition-all duration-300"
+              style={{ height: '132px', borderLeft: '2px solid rgba(201,168,76,0.45)' }}>
+              {/* Foto só na metade direita, a desvanecer para o cartão */}
+              <div className="absolute inset-y-0 right-0 w-3/5 bg-cover bg-center grayscale-[60%] opacity-50 group-hover:opacity-75 group-hover:grayscale-0 transition-all duration-700 group-hover:scale-105"
                 style={{ backgroundImage: `url(${item.img})` }} />
-              <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/65 to-black/30 group-hover:from-black/80 transition-all duration-500" />
-              <div className="relative h-full flex flex-col justify-between p-5">
-                <span className="font-cormorant italic text-[#C9A84C]/70 text-lg leading-none">{String(i + 1).padStart(2, '0')}</span>
-                <div className="flex items-end justify-between gap-3">
-                  <span className="text-[13px] tracking-[0.28em] font-medium text-white/80 group-hover:text-white uppercase transition-colors">
-                    {item.name}
+              <div className="absolute inset-0 bg-gradient-to-r from-[#141414] via-[#141414]/90 to-[#141414]/10" />
+              <div className="relative h-full flex items-center justify-between gap-4 px-5">
+                <div className="flex items-center gap-3.5 min-w-0">
+                  <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-cond font-semibold text-lg text-[#C9A84C] bg-[#C9A84C]/10">
+                    {i + 1}
                   </span>
-                  <span className="w-8 h-8 rounded-full border border-[#C9A84C]/35 text-[#C9A84C] flex items-center justify-center shrink-0 transition-all duration-300 group-hover:bg-[#C9A84C] group-hover:text-black">
-                    →
+                  <span className="font-cond font-medium text-[21px] leading-tight text-white/90 group-hover:text-white transition-colors truncate">
+                    {tituloMenu(item.name)}
                   </span>
                 </div>
+                <span className="w-9 h-9 rounded-full border border-[#C9A84C]/40 bg-black/40 backdrop-blur text-[#C9A84C] flex items-center justify-center shrink-0 transition-all duration-300 group-hover:bg-[#C9A84C] group-hover:text-black">
+                  →
+                </span>
               </div>
             </Link>
           ))}

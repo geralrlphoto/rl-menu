@@ -14,6 +14,7 @@ module.exports = {
         sans: ['var(--font-inter)', 'sans-serif'],
         playfair: ['"Playfair Display"', 'Georgia', 'serif'],
         cormorant: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        cond: ['var(--font-cond)', '"Roboto Condensed"', 'sans-serif'],
       },
       animation: {
         marquee: 'marquee 30s linear infinite',

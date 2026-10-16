@@ -110,25 +110,25 @@ export function TarefasCard() {
   return (
     <div className="relative">
       <Link href="/tarefas"
-        className="group block h-full rounded-2xl border px-4 sm:px-5 py-4 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5"
-        style={{
-          borderColor: n > 0 ? `${VIOLETA}55` : 'rgba(255,255,255,0.08)',
-          background: n > 0 ? `${VIOLETA}10` : 'rgba(0,0,0,0.35)',
-        }}>
-        <p className="text-3xl sm:text-4xl font-extralight leading-none" style={{ color: n > 0 ? VIOLETA : 'rgba(255,255,255,0.35)' }}>
-          {tarefas === null ? '·' : n}
-        </p>
-        <p className="text-[10px] tracking-[0.22em] uppercase text-white/70 mt-2.5">Tarefas</p>
-        <p className="text-[10px] text-white/30 mt-0.5">{tarefas === null ? 'A carregar…' : n === 0 ? 'Tudo feito' : 'Por fazer'}</p>
+        className="group block h-full rounded-[22px] border border-white/[0.08] bg-[#141414]/90 backdrop-blur-md pl-5 pr-12 py-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.16]"
+        style={{ borderLeft: `2px solid ${n > 0 ? VIOLETA : 'rgba(201,168,76,0.35)'}` }}>
+        <div className="flex items-center gap-3.5">
+          <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-cond font-semibold text-lg"
+            style={{ color: n > 0 ? VIOLETA : 'rgba(201,168,76,0.75)', background: n > 0 ? `${VIOLETA}1f` : 'rgba(201,168,76,0.08)' }}>
+            {tarefas === null ? '·' : n}
+          </span>
+          <span className="font-cond font-medium text-white text-[21px] leading-tight">Tarefas</span>
+        </div>
+        <p className="font-cond text-[14px] text-white/50 leading-snug mt-3 pl-[54px]">{tarefas === null ? 'A carregar…' : n === 0 ? 'Tudo feito' : 'Por fazer'}</p>
         {temAtraso && (
-          <p className="text-[11px] mt-2 font-medium" style={{ color: VERMELHO }}>
-            ⚠ {atrasadas.length} com prazo passado
+          <p className="font-cond text-[13px] font-medium mt-1.5 pl-[54px]" style={{ color: VERMELHO }}>
+            {atrasadas.length} com prazo passado
           </p>
         )}
       </Link>
 
       {/* + fora do Link: abre a gaveta com a lista e o formulário */}
-      <div className="absolute top-3.5 right-3.5">
+      <div className="absolute top-4 right-4">
         <button onClick={() => setAberto(true)} title="Ver e adicionar tarefas" aria-label="Ver e adicionar tarefas"
           className="w-8 h-8 rounded-full border flex items-center justify-center text-lg leading-none transition-all hover:text-black hover:scale-105"
           style={{ borderColor: `${VIOLETA}66`, color: VIOLETA }}
