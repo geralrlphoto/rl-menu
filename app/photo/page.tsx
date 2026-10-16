@@ -974,11 +974,11 @@ export default async function PhotoDashboard() {
                 return (
                   <div key={p.rotulo} className="relative">
                     <Link href={p.href}
-                      className="group block h-full rounded-[22px] border border-white/[0.08] bg-[#141414]/90 backdrop-blur-md pl-5 pr-12 py-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.16]"
-                      style={{ borderLeft: `2px solid ${ativo ? p.cor : 'rgba(201,168,76,0.35)'}` }}>
+                      className="group block h-full rounded-[22px] border border-[#C9A84C]/20 bg-[#111111]/85 backdrop-blur-md pl-5 pr-12 py-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/45"
+                      style={{ borderLeft: `2px solid rgba(201,168,76,${ativo ? 0.7 : 0.35})` }}>
                       <div className="flex items-center gap-3.5">
                         <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-cond font-semibold text-lg"
-                          style={{ color: ativo ? p.cor : 'rgba(201,168,76,0.75)', background: ativo ? `${p.cor}1f` : 'rgba(201,168,76,0.08)' }}>
+                          style={{ color: ativo ? '#C9A84C' : 'rgba(201,168,76,0.6)', background: ativo ? 'rgba(201,168,76,0.14)' : 'rgba(201,168,76,0.06)' }}>
                           {p.n}
                         </span>
                         <span className="font-cond font-medium text-white text-[21px] leading-tight">{p.rotulo}</span>
@@ -987,7 +987,7 @@ export default async function PhotoDashboard() {
                         {p.n === 0 && avisoN === 0 ? 'Tudo em dia' : p.sub}
                       </p>
                       {avisoN > 0 && (
-                        <p className="font-cond text-[13px] font-medium mt-1.5 pl-[54px]" style={{ color: '#fb923c' }}>
+                        <p className="font-cond text-[13px] font-medium mt-1.5 pl-[54px] text-[#C9A84C]/85">
                           {avisoN} {'avisoTexto' in p ? p.avisoTexto : ''}
                         </p>
                       )}

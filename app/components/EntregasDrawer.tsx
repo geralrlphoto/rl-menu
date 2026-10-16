@@ -86,7 +86,8 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
 
   const porResolver = itens.filter(i => !feitos.includes(chave(i)))
   const temAtraso = porResolver.some(i => i.estado === 'atraso')
-  const corBotao = temAtraso ? VERMELHO : LARANJA
+  // O + segue o dourado suave dos cartões
+  const corBotao = '#C9A84C'
   const tipos = Array.from(new Set(porResolver.map(i => i.tipo)))
   const visiveis = filtro ? porResolver.filter(i => i.tipo === filtro) : porResolver
   const atrasos = visiveis.filter(i => i.estado === 'atraso').sort((a, b) => b.dias - a.dias)

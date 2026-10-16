@@ -15,7 +15,8 @@ type Tarefa = {
   _is_noivos_msg?: boolean
 }
 
-const VIOLETA = '#a78bfa'
+// Tudo em dourado suave, como os outros cartões do painel
+const VIOLETA = '#C9A84C'
 const VERMELHO = '#f87171'
 const MESES = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
 
@@ -111,18 +112,18 @@ export function TarefasCard() {
   return (
     <div className="relative">
       <Link href="/tarefas"
-        className="group block h-full rounded-[22px] border border-white/[0.08] bg-[#141414]/90 backdrop-blur-md pl-5 pr-12 py-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.16]"
-        style={{ borderLeft: `2px solid ${n > 0 ? VIOLETA : 'rgba(201,168,76,0.35)'}` }}>
+        className="group block h-full rounded-[22px] border border-[#C9A84C]/20 bg-[#111111]/85 backdrop-blur-md pl-5 pr-12 py-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/45"
+        style={{ borderLeft: `2px solid rgba(201,168,76,${n > 0 ? 0.7 : 0.35})` }}>
         <div className="flex items-center gap-3.5">
           <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-cond font-semibold text-lg"
-            style={{ color: n > 0 ? VIOLETA : 'rgba(201,168,76,0.75)', background: n > 0 ? `${VIOLETA}1f` : 'rgba(201,168,76,0.08)' }}>
+            style={{ color: n > 0 ? VIOLETA : 'rgba(201,168,76,0.6)', background: n > 0 ? 'rgba(201,168,76,0.14)' : 'rgba(201,168,76,0.06)' }}>
             {tarefas === null ? '·' : n}
           </span>
           <span className="font-cond font-medium text-white text-[21px] leading-tight">Tarefas</span>
         </div>
         <p className="font-cond text-[14px] text-white/50 leading-snug mt-3 pl-[54px]">{tarefas === null ? 'A carregar…' : n === 0 ? 'Tudo feito' : 'Por fazer'}</p>
         {temAtraso && (
-          <p className="font-cond text-[13px] font-medium mt-1.5 pl-[54px]" style={{ color: VERMELHO }}>
+          <p className="font-cond text-[13px] font-medium mt-1.5 pl-[54px] text-[#C9A84C]/85">
             {atrasadas.length} com prazo passado
           </p>
         )}
