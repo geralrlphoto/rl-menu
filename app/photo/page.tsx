@@ -11,6 +11,7 @@ import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PRE
 import TempoChip from './TempoChip'
 import RelogioHero from './RelogioHero'
 import TempoSolLua from './TempoSolLua'
+import PesquisaRapida from './PesquisaRapida'
 import { Roboto_Condensed } from 'next/font/google'
 
 const cond = Roboto_Condensed({ subsets: ['latin'], weight: ['100', '300', '400', '500', '600', '700'], variable: '--font-cond' })
@@ -253,14 +254,14 @@ export default async function PhotoDashboard() {
   const getSemana = unstable_cache(
     async () => {
       const { data } = await supabase.from('eventos_2026')
-        .select('id, referencia, cliente, data_evento, local')
+        .select('id, referencia, cliente, data_evento, local, tipo_evento')
         .gte('data_evento', semanaDias[0])
         .lte('data_evento', semanaDias[DIAS_AGENDA - 1])
         .order('data_evento', { ascending: true })
         .limit(80)
       return data ?? []
     },
-    [`photo-agenda30-${semanaDias[0]}`],
+    [`photo-agenda30-v2-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
   const eventosSemana = await getSemana()
@@ -815,6 +816,14 @@ export default async function PhotoDashboard() {
     { n: 0, rotulo: 'Tarefas', sub: '', cor: '#a78bfa', href: '/tarefas', tarefas: true },
     { n: albunsPorEntregar, rotulo: 'Álbuns por entregar', sub: 'Aprovados pelos noivos', cor: '#C9A84C', href: '/albuns-casamento' },
   ]
+  // Próximo evento (a faixa por baixo da saudação): o primeiro a partir de hoje
+  const proximo = (eventosSemana as any[]).find(e => e.data_evento >= hojeLx) ?? null
+  const proximoInfo = proximo ? {
+    dias: difDias(proximo.data_evento, hojeLx),
+    tipo: ehBatizado(proximo.tipo_evento) ? 'Próximo batizado' : 'Próximo casamento',
+    data: new Intl.DateTimeFormat('pt-PT', { weekday: 'long', day: 'numeric', month: 'short', timeZone: 'UTC' })
+      .format(new Date(proximo.data_evento + 'T12:00:00Z')),
+  } : null
   const totalCasamentosSemana = eventosSemana.filter((e: any) => e.data_evento <= semanaDias[6]).length
   const totalCasamentos30 = eventosAgenda.length
   const totalReunioes30 = reunioesAgenda.length + prepAgenda.length
@@ -897,7 +906,34 @@ export default async function PhotoDashboard() {
                   </svg>
                   Abrir o CRM
                 </Link>
+                <PesquisaRapida />
               </div>
+
+              {proximo && proximoInfo && (
+                <Link href={`/eventos-2026/${proximo.id}`}
+                  className="group mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 max-w-2xl rounded-[18px] border border-white/[0.08] bg-[#141414]/85 backdrop-blur-md px-5 py-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.16]"
+                  style={{ borderLeft: '2px solid #C9A84C' }}>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">{proximoInfo.tipo}</p>
+                    <p className="font-cond font-medium text-white text-[19px] leading-tight truncate mt-1">
+                      {(proximo.cliente ?? '').trim() || proximo.referencia}
+                    </p>
+                    <p className="font-cond text-[13px] text-white/50 truncate mt-0.5 first-letter:uppercase">
+                      {proximoInfo.data}{proximo.local ? ` · ${proximo.local}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="[&_p]:mt-0 [&_p]:text-[12px]">
+                      <TempoChip local={proximo.local} data={proximo.data_evento} />
+                    </div>
+                    <span className="rounded-full px-3 py-1 font-cond text-[13px] font-medium"
+                      style={{ color: proximoInfo.dias <= 1 ? '#0b0b0b' : '#C9A84C', background: proximoInfo.dias <= 1 ? '#C9A84C' : 'rgba(201,168,76,0.12)' }}>
+                      {proximoInfo.dias === 0 ? 'Hoje' : proximoInfo.dias === 1 ? 'Amanhã' : `Faltam ${proximoInfo.dias} dias`}
+                    </span>
+                    <span className="text-white/30 group-hover:text-[#C9A84C] group-hover:translate-x-0.5 transition-all">→</span>
+                  </div>
+                </Link>
+              )}
             </div>
 
             {/* Pulso do estúdio */}
