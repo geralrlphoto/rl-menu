@@ -143,42 +143,36 @@ function GlobalMenuInner() {
         href={href}
         onClick={() => setOpen(false)}
         title={mini ? label : undefined}
-        className={`group relative flex items-center ${mini ? 'justify-center' : 'gap-3'} rounded-xl transition-all duration-200`}
+        className={`group relative flex items-center ${mini ? 'justify-center' : 'gap-3'} rounded-[16px] transition-all duration-200`}
         style={{
-          padding: mini ? '10px 0' : '9px 10px',
-          background: active ? (isMedia ? 'rgba(255,255,255,0.05)' : `${gold}0.09)`) : 'transparent',
+          padding: mini ? '7px 0' : '7px 10px',
+          background: active ? '#141414' : 'transparent',
+          border: `1px solid ${active ? 'rgba(255,255,255,0.08)' : 'transparent'}`,
+          borderLeft: `2px solid ${active ? accent(0.95) : 'transparent'}`,
+          boxShadow: active ? `0 0 26px -14px ${accent(0.7)}` : 'none',
         }}
         onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.035)' }}
         onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
       >
-        {/* Barra dourada do item ativo */}
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-full transition-all duration-300"
+        {/* Ícone em círculo, como os cartões do painel */}
+        <span className="shrink-0 flex items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110"
           style={{
-            width: '2px',
-            height: active ? '60%' : '0%',
-            background: accent(0.9),
-            boxShadow: active ? `0 0 10px ${accent(0.5)}` : 'none',
-          }} />
-
-        <span className="shrink-0 flex items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-[1.06]"
-          style={{
-            width: '30px', height: '30px',
-            color: active ? accent(0.95) : accent(0.42),
-            background: active ? (isMedia ? 'rgba(255,255,255,0.07)' : `${gold}0.12)`) : 'rgba(255,255,255,0.03)',
-            border: `1px solid ${active ? accent(0.28) : 'rgba(255,255,255,0.05)'}`,
+            width: '34px', height: '34px',
+            color: active ? accent(0.95) : accent(0.6),
+            background: active ? (isMedia ? 'rgba(255,255,255,0.10)' : `${gold}0.14)`) : (isMedia ? 'rgba(255,255,255,0.04)' : `${gold}0.06)`),
           }}>
           {icon}
         </span>
 
         {!mini && (
           <div className="flex-1 min-w-0">
-            <p className="text-[12.5px] tracking-wide leading-tight truncate transition-colors duration-200"
-              style={{ color: active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.62)' }}>
+            <p className="font-cond text-[15px] leading-tight truncate transition-colors duration-200"
+              style={{ color: active ? '#fff' : 'rgba(255,255,255,0.68)' }}>
               {label}
             </p>
             {sub && (
-              <p className="text-[8.5px] leading-tight mt-0.5 truncate uppercase tracking-[0.2em]"
-                style={{ color: active ? accent(0.55) : 'rgba(255,255,255,0.18)' }}>
+              <p className="font-cond text-[11.5px] leading-tight mt-0.5 truncate"
+                style={{ color: active ? accent(0.7) : 'rgba(255,255,255,0.3)' }}>
                 {sub}
               </p>
             )}
@@ -194,8 +188,8 @@ function GlobalMenuInner() {
       href={isMedia ? '/photo' : '/media'}
       onClick={() => setOpen(false)}
       title={mini ? (isMedia ? 'RL Photo.Video' : 'RL PROD') : undefined}
-      className={`flex items-center ${mini ? 'justify-center' : 'gap-3'} rounded-xl transition-all duration-200`}
-      style={{ padding: mini ? '10px 0' : '9px 10px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.08)' }}
+      className={`flex items-center ${mini ? 'justify-center' : 'gap-3'} rounded-full transition-all duration-200`}
+      style={{ padding: mini ? '10px 0' : '9px 14px', background: 'rgba(255,255,255,0.045)', border: '1px solid rgba(255,255,255,0.08)' }}
       onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.09)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)' }}
       onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.045)'; e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
     >
@@ -206,7 +200,7 @@ function GlobalMenuInner() {
       </span>
       {!mini && (
         <>
-          <span className="text-[12px] tracking-wide font-medium flex-1" style={{ color: 'rgba(255,255,255,0.72)' }}>
+          <span className="font-cond text-[14px] font-medium flex-1" style={{ color: 'rgba(255,255,255,0.75)' }}>
             {isMedia ? 'RL Photo.Video' : 'RL PROD'}
           </span>
           <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '13px' }}>→</span>
@@ -233,22 +227,22 @@ function GlobalMenuInner() {
         <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} px-4 py-5`}>
           <Link href={isMedia ? '/media' : '/photo'} onClick={() => setOpen(false)}
             className={`flex items-center ${mini ? '' : 'gap-3'} min-w-0`}>
-            <span className="shrink-0 flex items-center justify-center rounded-xl"
+            <span className="shrink-0 flex items-center justify-center rounded-full"
               style={{
-                width: '34px', height: '34px',
+                width: '38px', height: '38px',
                 border: `1px solid ${accent(0.35)}`,
                 background: `linear-gradient(140deg, ${accent(0.16)}, transparent)`,
                 color: accent(0.95),
                 boxShadow: `0 0 18px -6px ${accent(0.6)}`,
               }}>
-              <span className="text-[11px] tracking-[0.1em] font-semibold">RL</span>
+              <span className="font-cond text-[13px] font-semibold">RL</span>
             </span>
             {!mini && (
               <div className="min-w-0">
-                <p className="text-[9.5px] tracking-[0.4em] uppercase font-semibold truncate" style={{ color: accent(0.8) }}>
+                <p className="font-cond text-[11px] tracking-[0.2em] uppercase font-medium truncate" style={{ color: accent(0.9) }}>
                   {isMedia ? 'RL PROD' : 'Photo · Video'}
                 </p>
-                <p className="text-[8px] tracking-[0.3em] uppercase mt-0.5" style={{ color: 'rgba(255,255,255,0.22)' }}>
+                <p className="font-cond font-semibold text-[17px] leading-tight text-white mt-0.5">
                   Admin
                 </p>
               </div>
@@ -281,7 +275,7 @@ function GlobalMenuInner() {
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 placeholder="Procurar…"
-                className="w-full rounded-xl pl-9 pr-8 py-2 text-[12px] text-white/80 placeholder-white/20 focus:outline-none transition-all duration-200"
+                className="w-full rounded-full pl-9 pr-8 py-2.5 font-cond text-[13px] text-white/80 placeholder-white/20 focus:outline-none transition-all duration-200"
                 style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
                 onFocus={ev => { ev.currentTarget.style.borderColor = accent(0.35); ev.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
                 onBlur={ev => { ev.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)'; ev.currentTarget.style.background = 'rgba(255,255,255,0.03)' }}
@@ -321,7 +315,7 @@ function GlobalMenuInner() {
         <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} gap-2 px-4 py-3`}
           style={{ borderTop: `1px solid ${accent(0.07)}` }}>
           {!mini && (
-            <p className="text-[8px] tracking-[0.35em] uppercase truncate" style={{ color: 'rgba(255,255,255,0.14)' }}>
+            <p className="font-cond text-[11px] truncate" style={{ color: 'rgba(255,255,255,0.25)' }}>
               {isMedia ? '© RL PROD' : '© RL Photo · Video'}
             </p>
           )}
@@ -329,7 +323,7 @@ function GlobalMenuInner() {
             <button
               onClick={toggleCompact}
               title={mini ? 'Alargar menu' : 'Encolher menu'}
-              className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-200 shrink-0"
+              className="w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 shrink-0"
               style={{ border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}
               onMouseEnter={ev => { ev.currentTarget.style.borderColor = accent(0.4); ev.currentTarget.style.color = accent(0.9) }}
               onMouseLeave={ev => { ev.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; ev.currentTarget.style.color = 'rgba(255,255,255,0.35)' }}
@@ -362,8 +356,8 @@ function GlobalMenuInner() {
           style={{
             width: compact ? '76px' : '230px',
             transition: 'width .28s cubic-bezier(.2,.7,.2,1)',
-            background: 'linear-gradient(180deg, rgba(8,7,5,0.97), rgba(4,4,6,0.97))',
-            borderRight: `1px solid ${accent(0.12)}`,
+            background: '#0b0b0b',
+            borderRight: '1px solid rgba(255,255,255,0.06)',
             boxShadow: '2px 0 30px rgba(0,0,0,0.45)',
           }}
         >
@@ -419,7 +413,7 @@ function GlobalMenuInner() {
         className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-0 left-0 h-full z-[60] flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-full'}`}
         style={{
           width: '264px',
-          background: 'linear-gradient(180deg, rgba(8,7,5,0.99), rgba(4,4,6,0.99))',
+          background: '#0b0b0b',
           borderRight: `1px solid ${accent(0.12)}`,
           boxShadow: `4px 0 40px ${accent(0.06)}`,
         }}
