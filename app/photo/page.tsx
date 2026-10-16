@@ -9,9 +9,10 @@ import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
+import RelogioHero from './RelogioHero'
 import { Roboto_Condensed } from 'next/font/google'
 
-const cond = Roboto_Condensed({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'], variable: '--font-cond' })
+const cond = Roboto_Condensed({ subsets: ['latin'], weight: ['100', '300', '400', '500', '600', '700'], variable: '--font-cond' })
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -627,7 +628,6 @@ export default async function PhotoDashboard() {
   // ── Saudação e data (hora de Lisboa) ────────────────────────────────────
   const horaLx = Number(new Intl.DateTimeFormat('pt-PT', { hour: 'numeric', hour12: false, timeZone: 'Europe/Lisbon' }).format(new Date()))
   const saudacao = horaLx < 6 ? 'Boa noite' : horaLx < 13 ? 'Bom dia' : horaLx < 20 ? 'Boa tarde' : 'Boa noite'
-  const dataLonga = new Intl.DateTimeFormat('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Lisbon' }).format(new Date())
 
   // ── Ações Fotografia com prazo: Galerias Online (7 dias) e Fotos p/ Seleção (30 dias)
   //   Regra: cada casamento com fotografia tem de ter as fotos na Galeria
@@ -853,15 +853,16 @@ export default async function PhotoDashboard() {
         <div className="relative max-w-6xl mx-auto px-5 sm:px-10 pt-20 sm:pt-28 pb-10 sm:pb-14 lg:min-h-[86vh] flex flex-col">
           <div className="flex-1 grid lg:grid-cols-[1fr_360px] gap-10 lg:gap-16 items-center">
 
-            {/* Saudação */}
+            {/* Relógio e saudação */}
             <div>
-              <div className="flex flex-wrap items-center gap-3">
+              <RelogioHero />
+              <div className="flex flex-wrap items-center gap-3 mt-10">
                 <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">
                   RL Photo.Video · Menu interno
                 </p>
                 <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] backdrop-blur-md pl-3 pr-2.5 py-1.5 font-cond text-[13px] text-white/85">
                   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 text-white/80" fill="currentColor" aria-hidden><path d="M21 3 3 10.5l7.5 2.6L13 21z" /></svg>
-                  <span className="inline-block first-letter:uppercase">{dataLonga}</span>
+                  <span>Palmela, PT</span>
                   <span className="w-2.5 h-2.5 rounded-full border-2 border-[#C9A84C]" />
                 </span>
               </div>
@@ -966,6 +967,31 @@ export default async function PhotoDashboard() {
                 )
               })}
             </div>
+          </div>
+
+          {/* Acesso rápido */}
+          <div className="flex flex-wrap items-center gap-2.5 mt-6">
+            {[
+              { label: 'Instagram', href: 'https://www.instagram.com/rlphoto_fotografia.video/', cor: '#E1306C',
+                svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><rect x="2" y="2" width="20" height="20" rx="5" /><circle cx="12" cy="12" r="4" /><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none" /></svg> },
+              { label: 'Email', href: 'mailto:geral@rlphotovideo.pt', cor: '#C9A84C',
+                svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5" /><path d="m3 6 9 7 9-7" /></svg> },
+              { label: 'Site', href: 'https://www.rlphotovideo.pt', cor: '#C9A84C',
+                svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><circle cx="12" cy="12" r="10" /><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg> },
+              { label: 'WhatsApp', href: 'https://web.whatsapp.com', cor: '#25D366',
+                svg: <svg viewBox="0 0 24 24" fill="currentColor" className="w-[18px] h-[18px]"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 2.5 1 3 .8 3.6.7.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.7 15.6 2.2 13.8 2.2 12 2.2 6.6 6.6 2.2 12 2.2c2.6 0 5.1 1 6.9 2.9 1.8 1.8 2.9 4.3 2.9 6.9 0 5.4-4.4 9.8-9.8 9.8zM20.5 3.5C18.2 1.2 15.2 0 12 0 5.4 0 .1 5.3.1 11.9c0 2.1.6 4.2 1.6 6L0 24l6.3-1.6c1.8 1 3.7 1.5 5.7 1.5 6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.4-8.5z" /></svg> },
+              { label: 'Google Maps', href: 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62', cor: '#4285F4',
+                svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z" /><circle cx="12" cy="10" r="2.5" /></svg> },
+            ].map(r => (
+              <a key={r.label} href={r.href} target={r.href.startsWith('mailto:') ? undefined : '_blank'} rel="noopener noreferrer"
+                className="group inline-flex items-center gap-2.5 rounded-full border border-white/[0.10] bg-[#141414]/90 backdrop-blur-md pl-3 pr-5 py-2.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.22]">
+                <span className="w-8 h-8 rounded-full flex items-center justify-center transition-transform group-hover:scale-110"
+                  style={{ color: r.cor, background: `${r.cor}1f` }}>
+                  {r.svg}
+                </span>
+                <span className="font-cond text-[15px] text-white/80 group-hover:text-white transition-colors">{r.label}</span>
+              </a>
+            ))}
           </div>
         </div>
       </section>
