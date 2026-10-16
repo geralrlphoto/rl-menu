@@ -317,17 +317,11 @@ function GlobalMenuInner() {
         {/* Footer */}
         <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} gap-2 px-4 py-3`}
           style={{ borderTop: `1px solid ${accent(0.07)}` }}>
-          {!mini && (isMedia ? (
+          {!mini && (
             <p className="font-cond text-[11px] truncate" style={{ color: 'rgba(255,255,255,0.25)' }}>
-              © RL PROD
+              {isMedia ? '© RL PROD' : '© RL Photo · Video'}
             </p>
-          ) : (
-            // Logo dourado (o mesmo da Proposta Criativa); o PNG tem muita margem, por isso é recortado
-            <span className="flex items-center justify-center overflow-hidden shrink-0" style={{ width: '56px', height: '68px' }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo_rl_gold.png" alt="RL Photo · Video" className="max-w-none opacity-85" style={{ width: '130px' }} />
-            </span>
-          ))}
+          )}
           {comToggle && (
             <button
               onClick={toggleCompact}
@@ -398,13 +392,23 @@ function GlobalMenuInner() {
       <div className="h-16 px-6 xl:px-10 flex items-center gap-6">
         {/* Marca */}
         <Link href={isMedia ? '/media' : '/photo'} className="flex items-center gap-3 shrink-0 w-[220px]">
-          <span className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{ border: `1px solid ${accent(0.4)}`, background: `linear-gradient(140deg, ${accent(0.16)}, transparent)`, color: accent(0.95), boxShadow: `0 0 18px -6px ${accent(0.6)}` }}>
-            <span className="font-cond text-[13px] font-semibold">RL</span>
-          </span>
-          <span className="font-cond text-[11px] tracking-[0.2em] uppercase font-medium" style={{ color: accent(0.9) }}>
-            {isMedia ? 'RL PROD' : 'Photo · Video'}
-          </span>
+          {isMedia ? (
+            <>
+              <span className="w-9 h-9 rounded-full flex items-center justify-center"
+                style={{ border: `1px solid ${accent(0.4)}`, background: `linear-gradient(140deg, ${accent(0.16)}, transparent)`, color: accent(0.95), boxShadow: `0 0 18px -6px ${accent(0.6)}` }}>
+                <span className="font-cond text-[13px] font-semibold">RL</span>
+              </span>
+              <span className="font-cond text-[11px] tracking-[0.2em] uppercase font-medium" style={{ color: accent(0.9) }}>
+                RL PROD
+              </span>
+            </>
+          ) : (
+            // Logo dourado (o mesmo da Proposta Criativa); o PNG tem muita margem, por isso é recortado
+            <span className="flex items-center justify-center overflow-hidden" style={{ width: '48px', height: '64px' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo_rl_gold.png" alt="RL Photo · Video" className="max-w-none" style={{ width: '118px' }} />
+            </span>
+          )}
         </Link>
 
         {/* Navegação ao centro */}
