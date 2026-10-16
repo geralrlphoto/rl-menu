@@ -148,7 +148,7 @@ function GlobalMenuInner() {
         title={mini ? label : undefined}
         className={`group relative flex items-center ${mini ? 'justify-center' : 'gap-2.5'} rounded-full transition-all duration-200`}
         style={{
-          padding: mini ? '5px 0' : '5px 8px',
+          padding: mini ? '3px 0' : '3px 8px',
           background: active ? '#141414' : 'transparent',
           border: `1px solid ${active ? 'rgba(255,255,255,0.08)' : 'transparent'}`,
           borderLeft: `2px solid ${active ? accent(0.95) : 'transparent'}`,
@@ -160,7 +160,7 @@ function GlobalMenuInner() {
         {/* Ícone em círculo, como os cartões do painel */}
         <span className="shrink-0 flex items-center justify-center rounded-full transition-transform duration-300 group-hover:scale-110"
           style={{
-            width: '26px', height: '26px',
+            width: '24px', height: '24px',
             color: active ? accent(0.95) : accent(0.6),
             background: active ? (isMedia ? 'rgba(255,255,255,0.10)' : `${gold}0.14)`) : (isMedia ? 'rgba(255,255,255,0.04)' : `${gold}0.06)`),
           }}>
@@ -227,7 +227,7 @@ function GlobalMenuInner() {
           style={{ background: `radial-gradient(120% 80% at 0% 0%, ${accent(0.08)}, transparent 70%)` }} />
 
         {/* Header */}
-        <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} px-4 py-3.5`}>
+        <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} px-4 py-3`}>
           <Link href={isMedia ? '/media' : '/photo'} onClick={() => setOpen(false)}
             className={`flex items-center ${mini ? '' : 'gap-3'} min-w-0`}>
             <span className="shrink-0 flex items-center justify-center rounded-full"
@@ -265,8 +265,8 @@ function GlobalMenuInner() {
           )}
         </div>
 
-        {/* Pesquisa — só com a barra larga */}
-        {!mini && (
+        {/* Pesquisa — retirada para o menu ficar baixo (há Ctrl+K no painel) */}
+        {false && !mini && (
           <div className="relative px-3 pb-3">
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'rgba(255,255,255,0.22)' }}>
@@ -294,7 +294,7 @@ function GlobalMenuInner() {
         )}
 
         {/* Nav links */}
-        <nav className={`relative flex-1 min-h-0 overflow-y-auto ${mini ? 'px-2.5' : 'px-3'} pb-4 flex flex-col gap-0.5`}>
+        <nav className={`relative flex-1 min-h-0 overflow-y-auto ${mini ? 'px-2.5' : 'px-3'} pb-3 flex flex-col gap-0`}>
           {/* Sino de Notificações — só no menu RL Photo (não no MEDIA) */}
           {!isMedia && (
             <>
@@ -315,7 +315,7 @@ function GlobalMenuInner() {
         </nav>
 
         {/* Footer */}
-        <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} gap-2 px-4 py-3`}
+        {comToggle && <div className={`relative flex items-center ${mini ? 'justify-center' : 'justify-between'} gap-2 px-4 py-3`}
           style={{ borderTop: `1px solid ${accent(0.07)}` }}>
           {!mini && (
             <p className="font-cond text-[11px] truncate" style={{ color: 'rgba(255,255,255,0.25)' }}>
@@ -337,7 +337,7 @@ function GlobalMenuInner() {
               </svg>
             </button>
           )}
-        </div>
+        </div>}
       </>
     )
   }
@@ -656,12 +656,12 @@ function GlobalMenuInner() {
       {/* Drawer (mobile sempre; desktop só em paths colapsados) */}
       <div
         data-global-menu
-        className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-0 left-0 h-full z-[60] flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-3 left-3 max-h-[calc(100dvh-24px)] rounded-[20px] overflow-hidden z-[60] flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-[115%]'}`}
         style={{
           width: '220px',
           background: '#0b0b0b',
-          borderRight: `1px solid ${accent(0.12)}`,
-          boxShadow: `4px 0 40px ${accent(0.06)}`,
+          border: `1px solid ${accent(0.14)}`,
+          boxShadow: `0 20px 50px -10px rgba(0,0,0,0.8)`,
         }}
       >
         <SidebarContent />

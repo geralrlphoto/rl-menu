@@ -691,7 +691,7 @@ function FreelancerDetailInner() {
         viewAsFreelancer={viewAsFreelancer}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[216px] lg:pr-4 ${
+    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[232px] lg:pr-4 ${
       tab === null ? 'max-w-none'
         : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
         : 'max-w-3xl'
@@ -1929,7 +1929,7 @@ function SidebarNavAdmin({
 
   // Menu lateral compacto (novo layout): 200px, letra condensada, item ativo em pill dourada suave
   return (
-    <aside className="hidden lg:flex fixed top-0 left-0 bottom-0 w-[200px] z-20 flex-col font-cond bg-[#0b0b0b]" style={{ borderRight: '1px solid rgba(201,168,76,0.12)' }}>
+    <aside className="hidden lg:flex fixed top-4 left-4 w-[200px] max-h-[calc(100vh-32px)] rounded-[20px] overflow-hidden z-20 flex-col font-cond bg-[#0b0b0b]" style={{ border: '1px solid rgba(201,168,76,0.14)', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.8)' }}>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 pt-6 pb-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1959,7 +1959,7 @@ function SidebarNavAdmin({
       )}
 
       {/* Navegação */}
-      <nav className="flex-1 overflow-y-auto px-3 flex flex-col gap-0.5">
+      <nav className="min-h-0 overflow-y-auto px-3 pb-3 flex flex-col gap-0.5">
         {items.map((it, i) => {
           const active = !it.href && tab === it.key
           const cls = `group w-full flex items-center gap-2.5 rounded-full pl-3 pr-3 py-2 text-left text-[13px] tracking-[0.12em] uppercase transition-all ${
