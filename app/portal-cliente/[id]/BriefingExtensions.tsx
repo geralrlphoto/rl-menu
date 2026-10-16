@@ -15,6 +15,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef, type ReactNode } from 'react'
+import { JanelaWhatsApp } from '@/app/components/WhatsAppMembro'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -1078,8 +1079,31 @@ function calcProgress(info: BriefingExt) {
 // ─── Hero Premium ────────────────────────────────────────────────────────────
 
 /* Copia um link que abre só esta página do briefing (token assinado, válido 90 dias) */
-export function BotaoPartilhar({ compacto = false }: { compacto?: boolean }) {
-  const [estado, setEstado] = useState<'' | 'a-gerar' | 'copiado' | 'erro'>('')
+const MESES_PT = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro']
+
+// Mensagem que segue com o link do briefing (sem emojis: no WhatsApp chegam como "?")
+function mensagemBriefing(url: string, c?: { casal?: string; data?: string | null; local?: string | null }) {
+  let data = ''
+  if (c?.data) {
+    const [a, m, d] = c.data.slice(0, 10).split('-').map(Number)
+    if (a && m && d) data = `${d} de ${MESES_PT[m - 1]}`
+  }
+  const sobre = [
+    c?.casal?.trim() ? `do casamento de ${c.casal.trim()}` : 'do próximo casamento',
+    data ? `, dia ${data}` : '',
+    c?.local?.trim() ? `, em ${c.local.trim()}` : '',
+  ].join('')
+  return `Olá boas tudo bem?\n\nSegue o briefing ${sobre}.\n\nTens lá o cronograma, os locais, a equipa e as notas internas. No botão "Guia da equipa" está o material a levar e como nos apresentamos no dia.\n\n${url}\n\nQualquer dúvida diz. Obrigado.`
+}
+
+// Partilhar: gera o link só desta página e abre a janela do WhatsApp com a
+// mensagem pronta, a equipa e um campo para outro número (fora da equipa).
+export function BotaoPartilhar({ compacto = false, contexto }: { compacto?: boolean; contexto?: { casal?: string; data?: string | null; local?: string | null } }) {
+  const [estado, setEstado] = useState<'' | 'a-gerar' | 'erro'>('')
+  const [link, setLink] = useState('')
+  const [aberto, setAberto] = useState(false)
+  const [copiado, setCopiado] = useState(false)
+
   async function partilhar() {
     setEstado('a-gerar')
     try {
@@ -1089,28 +1113,52 @@ export function BotaoPartilhar({ compacto = false }: { compacto?: boolean }) {
       const r = await fetch(`/api/partilha-token?${qs}`, { cache: 'no-store' })
       const d = await r.json().catch(() => ({}))
       if (!r.ok || !d?.url) throw new Error('sem link')
-      try { await navigator.clipboard.writeText(d.url) } catch { window.prompt('Copia o link desta página:', d.url) }
-      setEstado('copiado')
-      setTimeout(() => setEstado(''), 2500)
+      setLink(d.url)
+      setCopiado(false)
+      setAberto(true)
+      setEstado('')
     } catch {
       setEstado('erro')
       setTimeout(() => setEstado(''), 3000)
     }
   }
+
+  async function copiar() {
+    try { await navigator.clipboard.writeText(link) } catch { window.prompt('Copia o link desta página:', link) }
+    setCopiado(true)
+    setTimeout(() => setCopiado(false), 2500)
+  }
+
   return (
-    <button onClick={partilhar} disabled={estado === 'a-gerar'} title="Copiar um link que abre só esta página"
-      className={compacto
-        ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-sky-300/80 hover:text-sky-300 border border-sky-300/25 hover:border-sky-300/50 transition-all disabled:opacity-50'
-        : 'px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5 disabled:opacity-50'}>
-      {estado === 'copiado' ? '✓ Link copiado' : estado === 'erro' ? 'Sem permissão' : estado === 'a-gerar' ? 'A gerar…' : '↗ Partilhar'}
-    </button>
+    <>
+      <button onClick={partilhar} disabled={estado === 'a-gerar'} title="Enviar o link desta página por WhatsApp"
+        className={compacto
+          ? 'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-sky-300/80 hover:text-sky-300 border border-sky-300/25 hover:border-sky-300/50 transition-all disabled:opacity-50'
+          : 'px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5 disabled:opacity-50'}>
+        {estado === 'erro' ? 'Sem permissão' : estado === 'a-gerar' ? 'A gerar…' : '↗ Partilhar'}
+      </button>
+      <JanelaWhatsApp
+        aberto={aberto}
+        onFechar={() => setAberto(false)}
+        mensagem={link ? mensagemBriefing(link, contexto) : ''}
+        titulo="Partilhar briefing"
+        etiqueta="Briefing · WhatsApp"
+        extraAcoes={
+          <button onClick={copiar}
+            className="font-cond text-[14px] text-white/55 hover:text-white border border-white/12 hover:border-white/30 rounded-full px-4 py-2 transition-all">
+            {copiado ? '✓ Link copiado' : 'Copiar link'}
+          </button>
+        }
+      />
+    </>
   )
 }
 
 function BriefingHero({
-  info, dataEvento, local, pageTitle, isAdmin, teamView, viewMode, setViewMode, onSave, enviarBriefingNode, podePartilhar,
+  info, dataEvento, local, pageTitle, isAdmin, teamView, viewMode, setViewMode, onSave, enviarBriefingNode, podePartilhar, nomes,
 }: {
   podePartilhar?: boolean
+  nomes?: { noivo?: string; noiva?: string }
   info: BriefingExt
   dataEvento?: string | null
   local?: string | null
@@ -1252,7 +1300,7 @@ function BriefingHero({
               className="px-3 py-2 rounded-lg text-[10px] tracking-[0.25em] uppercase font-bold border border-white/12 bg-white/[0.04] text-white/65 hover:text-gold hover:border-gold/40 hover:bg-gold/[0.06] transition-all flex items-center gap-1.5">
               ▶ Apresentar
             </button>
-            {podePartilhar && <BotaoPartilhar />}
+            {podePartilhar && <BotaoPartilhar contexto={{ casal: [nomes?.noiva, nomes?.noivo].filter(Boolean).join(' e ') || undefined, data: dataEvento, local }} />}
             {enviarBriefingNode}
           </div>
         </div>
@@ -1602,6 +1650,7 @@ export default function BriefingExtensions({
       {/* HERO — no link partilhado a página tem a sua própria capa */}
       {!partilhada && <BriefingHero
         podePartilhar={!partilhada && !teamView}
+        nomes={nomes}
         info={info}
         dataEvento={dataEvento}
         local={local}
