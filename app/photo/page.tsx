@@ -974,7 +974,7 @@ export default async function PhotoDashboard() {
           </div>
 
           {/* Acesso rápido: logótipos em círculo, com zoom ao passar o rato */}
-          <div className="flex flex-wrap items-center gap-4 mt-8">
+          <div className="flex items-center justify-center gap-3 sm:gap-5 mt-10">
             {[
               { label: 'Instagram', href: 'https://www.instagram.com/rlphoto_fotografia.video/',
                 bg: 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)',
@@ -988,14 +988,18 @@ export default async function PhotoDashboard() {
                 logo: <svg viewBox="0 0 24 24" fill="#fff" className="w-7 h-7"><path d="M17.5 14.4c-.3-.1-1.8-.9-2-1-.3-.1-.5-.1-.7.1-.2.3-.8 1-.9 1.2-.2.2-.3.2-.6.1-.3-.1-1.3-.5-2.4-1.5-.9-.8-1.5-1.8-1.7-2.1-.2-.3 0-.5.1-.6l.4-.5c.2-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.9-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.1.2 2.1 3.2 5.1 4.5 2.5 1 3 .8 3.6.7.6-.1 1.8-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4zM12 21.8c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4C2.7 15.6 2.2 13.8 2.2 12 2.2 6.6 6.6 2.2 12 2.2c2.6 0 5.1 1 6.9 2.9 1.8 1.8 2.9 4.3 2.9 6.9 0 5.4-4.4 9.8-9.8 9.8zM20.5 3.5C18.2 1.2 15.2 0 12 0 5.4 0 .1 5.3.1 11.9c0 2.1.6 4.2 1.6 6L0 24l6.3-1.6c1.8 1 3.7 1.5 5.7 1.5 6.6 0 11.9-5.3 11.9-11.9 0-3.2-1.2-6.2-3.4-8.5z" /></svg> },
               { label: 'Google Maps', href: 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62', bg: '#ffffff',
                 logo: <svg viewBox="0 0 92.3 132.3" className="w-6 h-8"><path fill="#1a73e8" d="M60.2 2.2C55.8.8 51 0 46.1 0 32 0 19.3 6.4 10.8 16.5l21.8 18.3L60.2 2.2z" /><path fill="#ea4335" d="M10.8 16.5C4.1 24.5 0 34.9 0 46.1c0 8.7 1.7 15.7 4.6 22l28-33.3-21.8-18.3z" /><path fill="#4285f4" d="M46.2 28.5c9.8 0 17.7 7.9 17.7 17.7 0 4.3-1.6 8.3-4.2 11.4 0 0 13.9-16.6 27.5-32.7-5.6-10.8-15.3-19-27-22.7L32.6 34.8c3.3-3.8 8.1-6.3 13.6-6.3" /><path fill="#fbbc04" d="M46.2 63.8c-9.8 0-17.7-7.9-17.7-17.7 0-4.3 1.5-8.3 4.1-11.3l-28 33.3c4.8 10.6 12.8 19.2 21 29.9l34.1-40.5c-3.3 3.9-8.1 6.3-13.5 6.3" /><path fill="#34a853" d="M59.1 109.2c15.4-24.1 33.3-35 33.3-63 0-7.7-1.9-14.9-5.2-21.3L25.6 98c2.6 3.4 5.3 7.3 7.9 11.3 9.4 14.5 6.8 23.1 12.8 23.1s3.4-8.7 12.8-23.2" /></svg> },
-            ].map(r => (
+            ].map((r, i) => {
+              // Do centro para as pontas os círculos vão ficando mais pequenos
+              const escala = [0.7, 0.85, 1, 0.85, 0.7][i] ?? 0.7
+              return (
               <a key={r.label} href={r.href} target="_blank" rel="noopener noreferrer"
                 title={r.label} aria-label={r.label}
-                className="w-14 h-14 rounded-full flex items-center justify-center border border-white/[0.12] shadow-[0_8px_24px_-10px_rgba(0,0,0,0.8)] transition-transform duration-300 ease-out hover:scale-125 hover:shadow-[0_0_30px_-6px_rgba(201,168,76,0.55)]"
-                style={{ background: r.bg }}>
-                {r.logo}
+                className="shrink-0 rounded-full flex items-center justify-center border border-white/[0.12] shadow-[0_8px_24px_-10px_rgba(0,0,0,0.8)] transition-transform duration-300 ease-out hover:scale-125 hover:shadow-[0_0_30px_-6px_rgba(201,168,76,0.55)]"
+                style={{ background: r.bg, width: 68 * escala, height: 68 * escala }}>
+                <span className="flex items-center justify-center" style={{ transform: `scale(${escala * 1.15})` }}>{r.logo}</span>
               </a>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
