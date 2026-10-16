@@ -869,6 +869,18 @@ export default async function PhotoDashboard() {
             <RelogioHero />
           </div>
 
+          {/* Frase do dia, logo por baixo do relógio */}
+          <div className="relative -mt-4 mb-12 lg:mb-14">
+            <div className="absolute inset-x-0 -inset-y-6 pointer-events-none" style={{
+              backgroundImage: 'radial-gradient(rgba(201,168,76,0.16) 1px, transparent 1px)', backgroundSize: '18px 18px',
+              maskImage: 'radial-gradient(ellipse 60% 70% at 50% 50%, #000 25%, transparent 75%)',
+              WebkitMaskImage: 'radial-gradient(ellipse 60% 70% at 50% 50%, #000 25%, transparent 75%)',
+            }} />
+            <div className="relative">
+              <FraseDoDia compacta dia={Math.floor(Date.parse(hojeLx + 'T12:00:00Z') / 86400000)} />
+            </div>
+          </div>
+
           <div className="flex-1 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_300px] gap-10 lg:gap-16 items-center">
 
             {/* Saudação */}
@@ -1043,18 +1055,6 @@ export default async function PhotoDashboard() {
               )
             })}
           </div>
-        </div>
-      </section>
-
-      {/* ── Frase do dia (fundo pontilhado, letra manuscrita) ───────────────── */}
-      <section className="relative overflow-hidden py-16 sm:py-24 px-5">
-        <div className="absolute inset-0" style={{
-          backgroundImage: 'radial-gradient(rgba(201,168,76,0.16) 1px, transparent 1px)', backgroundSize: '18px 18px',
-          maskImage: 'radial-gradient(ellipse 75% 70% at 50% 50%, #000 30%, transparent 80%)',
-          WebkitMaskImage: 'radial-gradient(ellipse 75% 70% at 50% 50%, #000 30%, transparent 80%)',
-        }} />
-        <div className="relative">
-          <FraseDoDia dia={Math.floor(Date.parse(hojeLx + 'T12:00:00Z') / 86400000)} />
         </div>
       </section>
 

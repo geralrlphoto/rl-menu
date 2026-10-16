@@ -22,7 +22,7 @@ const FRASES: Array<{ texto: string; autor: string; sobre?: string }> = [
   { texto: 'Se as tuas fotografias não são boas o suficiente, é porque não estás perto o suficiente.', autor: 'Robert Capa' },
 ]
 
-export default function FraseDoDia({ dia }: { dia: number }) {
+export default function FraseDoDia({ dia, compacta = false }: { dia: number; compacta?: boolean }) {
   const [i, setI] = useState(dia % FRASES.length)
   const [visivel, setVisivel] = useState(true)
 
@@ -38,19 +38,19 @@ export default function FraseDoDia({ dia }: { dia: number }) {
 
   const f = FRASES[i]
   return (
-    <figure className="text-center max-w-4xl mx-auto px-2">
+    <figure className={`text-center mx-auto px-2 ${compacta ? "max-w-3xl" : "max-w-4xl"}`}>
       <blockquote
-        className="font-[Caveat] font-medium text-white/90 text-[30px] sm:text-[44px] leading-[1.25] transition-all duration-300"
+        className={`font-[Caveat] font-medium text-white/90 leading-[1.25] transition-all duration-300 ${compacta ? "text-[24px] sm:text-[32px]" : "text-[30px] sm:text-[44px]"}`}
         style={{ opacity: visivel ? 1 : 0, transform: visivel ? 'none' : 'translateY(6px)' }}>
         <span className="text-[#C9A84C]">“</span>{f.texto}<span className="text-[#C9A84C]">”</span>
       </blockquote>
-      <figcaption className="mt-6 flex flex-col items-center gap-1 transition-opacity duration-300" style={{ opacity: visivel ? 1 : 0 }}>
+      <figcaption className={`${compacta ? "mt-3" : "mt-6"} flex flex-col items-center gap-1 transition-opacity duration-300`} style={{ opacity: visivel ? 1 : 0 }}>
         <span className="h-px w-12 bg-[#C9A84C]/50 mb-2" />
         <span className="font-cond text-[13px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C]">{f.autor}</span>
         {f.sobre && <span className="font-cond text-[12px] text-white/35">{f.sobre}</span>}
       </figcaption>
       <button onClick={outra}
-        className="mt-6 inline-flex items-center gap-2 rounded-full border border-white/[0.12] hover:border-[#C9A84C]/45 px-4 py-1.5 font-cond text-[13px] text-white/50 hover:text-[#C9A84C] transition-all">
+        className={`${compacta ? "mt-3" : "mt-6"} inline-flex items-center gap-2 rounded-full border border-white/[0.12] hover:border-[#C9A84C]/45 px-4 py-1.5 font-cond text-[13px] text-white/50 hover:text-[#C9A84C] transition-all`}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3.5 h-3.5" aria-hidden><path d="M21 12a9 9 0 11-3-6.7L21 8M21 3v5h-5" /></svg>
         Outra frase
       </button>
