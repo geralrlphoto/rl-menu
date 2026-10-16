@@ -11,7 +11,8 @@ export default function AdminContentShift({ children }: { children: ReactNode })
   const isHidden = HIDDEN_EXACT.includes(pathname) || HIDDEN_PATHS.some(p => pathname.startsWith(p))
 
   return (
-    <div className={!isHidden ? 'lg:pl-[var(--rl-sidebar,230px)] transition-[padding] duration-300' : ''}>
+    // O menu passou para uma barra no topo (em fluxo normal): já não há margem à esquerda
+    <div className={!isHidden ? 'lg:pl-[var(--rl-sidebar,0px)] transition-[padding] duration-300' : ''}>
       {children}
     </div>
   )

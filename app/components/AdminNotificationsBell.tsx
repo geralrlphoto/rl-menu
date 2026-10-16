@@ -99,7 +99,7 @@ function categoriaDe(tipo: string): Categoria {
   return 'outros'
 }
 
-export function AdminNotificationsBell({ compact = false }: { compact?: boolean } = {}) {
+export function AdminNotificationsBell({ compact = false, topo = false }: { compact?: boolean; topo?: boolean } = {}) {
   const [notifs, setNotifs] = useState<Notif[]>([])
   const [lastSeen, setLastSeen] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
@@ -260,10 +260,10 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
     if (!open || !buttonRef.current) return
     const rect = buttonRef.current.getBoundingClientRect()
     // Posicionar à direita do sidebar, à mesma altura do botão
-    setPopPos({
-      top: rect.top,
-      left: rect.right + 12, // 12px gap após o botão
-    })
+    // Na barra de topo abre por baixo, alinhado à direita do sino
+    setPopPos(topo
+      ? { top: rect.bottom + 12, left: Math.max(12, rect.right - 380) }
+      : { top: rect.top, left: rect.right + 12 }) // 12px gap após o botão
   }, [open])
 
   // Click fora fecha popover
@@ -333,7 +333,7 @@ export function AdminNotificationsBell({ compact = false }: { compact?: boolean 
         ref={buttonRef}
         onClick={() => setOpen(o => !o)}
         title={compact ? 'Notificações' : undefined}
-        className={`relative w-full flex items-center ${compact ? 'justify-center px-0' : 'gap-3 px-3'} py-2.5 rounded-xl transition-all duration-150 ${
+        className={`relative flex items-center ${topo ? 'w-10 h-10 justify-center rounded-full' : `w-full py-2.5 rounded-xl ${compact ? 'justify-center px-0' : 'gap-3 px-3'}`} transition-all duration-150 ${
           unreadCount > 0 ? 'admin-bell-pulse' : ''
         }`}
         style={{

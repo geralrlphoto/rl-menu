@@ -106,7 +106,7 @@ function GlobalMenuInner() {
 
   // O conteúdo das páginas acompanha a largura da barra
   useEffect(() => {
-    document.documentElement.style.setProperty('--rl-sidebar', compact ? '76px' : '230px')
+    document.documentElement.style.setProperty('--rl-sidebar', '0px') // o menu passou para o topo
   }, [compact])
 
   function toggleCompact() {
@@ -339,6 +339,104 @@ function GlobalMenuInner() {
     )
   }
 
+
+  // ── Barra de topo (desktop): grupos com menus suspensos ────────────────────
+  const GRUPOS: Array<{ nome: string; hrefs: string[] }> = isMedia
+    ? MEDIA_LINKS.map(l => ({ nome: l.label, hrefs: [l.href] }))
+    : [
+        { nome: 'Início', hrefs: ['/photo'] },
+        { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
+        { nome: 'Produção', hrefs: ['/fotos-selecao', '/albuns-casamento', '/freelancers'] },
+        { nome: 'Gestão', hrefs: ['/financas', '/relatorio-diario', '/calendario'] },
+      ]
+  const linkDe = (href: string) => (navLinks as any[]).find(l => l.href === href)
+
+  const BarraTopo = () => (
+    <header data-global-menu className="hidden lg:block relative z-40 print:hidden bg-[#0b0b0b]">
+      <div className="h-16 px-6 xl:px-10 flex items-center gap-6">
+        {/* Marca */}
+        <Link href={isMedia ? '/media' : '/photo'} className="flex items-center gap-3 shrink-0 w-[220px]">
+          <span className="w-9 h-9 rounded-full flex items-center justify-center"
+            style={{ border: `1px solid ${accent(0.4)}`, background: `linear-gradient(140deg, ${accent(0.16)}, transparent)`, color: accent(0.95), boxShadow: `0 0 18px -6px ${accent(0.6)}` }}>
+            <span className="font-cond text-[13px] font-semibold">RL</span>
+          </span>
+          <span className="font-cond text-[11px] tracking-[0.2em] uppercase font-medium" style={{ color: accent(0.9) }}>
+            {isMedia ? 'RL PROD' : 'Photo · Video'}
+          </span>
+        </Link>
+
+        {/* Navegação ao centro */}
+        <nav className="flex-1 flex items-center justify-center gap-1">
+          {GRUPOS.map(g => {
+            const links = g.hrefs.map(linkDe).filter(Boolean)
+            const ativo = links.some((l: any) => isActive(l.href, l.exact))
+            const corTexto = ativo ? accent(0.95) : 'rgba(255,255,255,0.82)'
+            if (links.length === 1) {
+              const l: any = links[0]
+              return (
+                <Link key={g.nome} href={l.href}
+                  className="px-4 py-2 rounded-full font-cond text-[16px] font-medium transition-colors hover:bg-white/[0.05]"
+                  style={{ color: corTexto }}>
+                  {g.nome}
+                </Link>
+              )
+            }
+            return (
+              <div key={g.nome} className="relative group">
+                <button className="flex items-center gap-1.5 px-4 py-2 rounded-full font-cond text-[16px] font-medium transition-colors group-hover:bg-white/[0.05]"
+                  style={{ color: corTexto }}>
+                  {g.nome}
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5 opacity-50 transition-transform duration-200 group-hover:rotate-180" aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+                {/* Painel suspenso: abre ao passar o rato (ou com o teclado) */}
+                <div className="absolute left-1/2 -translate-x-1/2 top-full pt-3 opacity-0 invisible translate-y-1 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 group-focus-within:opacity-100 group-focus-within:visible transition-all duration-200">
+                  <div className="w-[260px] rounded-[20px] border bg-[#141414] p-2 flex flex-col gap-1"
+                    style={{ borderColor: accent(0.22), boxShadow: `0 24px 60px -18px rgba(0,0,0,0.9), 0 0 30px -14px ${accent(0.5)}` }}>
+                    {links.map((l: any) => (
+                      <NavItem key={l.href} href={l.href} label={l.label} sub={l.sub} icon={l.icon} exact={l.exact} />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )
+          })}
+        </nav>
+
+        {/* À direita: notificações, troca de marca e dois atalhos */}
+        <div className="flex items-center gap-3 shrink-0 w-[220px] justify-end">
+          {!isMedia && <div className="w-10"><AdminNotificationsBell compact topo /></div>}
+          <span className="w-px h-6 bg-white/[0.12]" />
+          <Link href={isMedia ? '/photo' : '/media'}
+            className="font-cond text-[15px] text-white/45 hover:text-white transition-colors whitespace-nowrap">
+            {isMedia ? 'RL Photo' : 'RL PROD'}
+          </Link>
+          {!isMedia && (
+            <>
+              <Link href="/tarefas"
+                className="hidden xl:inline-flex rounded-full border border-white/[0.16] hover:border-white/35 bg-[#0e0e0e] px-4 py-2 font-cond text-[15px] font-semibold text-white transition-colors whitespace-nowrap">
+                Tarefas
+              </Link>
+              <Link href="/calendario"
+                className="rounded-full border px-4 py-2 font-cond text-[15px] font-semibold text-white transition-all whitespace-nowrap hover:brightness-125"
+                style={{ borderColor: accent(0.5), background: accent(0.1), boxShadow: `0 0 24px -10px ${accent(0.7)}` }}>
+                Calendário
+              </Link>
+            </>
+          )}
+        </div>
+      </div>
+      {/* Faixa fina riscada por baixo, a dourado */}
+      <div className="h-[5px]" style={{
+        background: `repeating-linear-gradient(90deg, ${accent(0.35)} 0 1px, transparent 1px 4px)`,
+        maskImage: 'linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent)',
+        WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 20%, #000 80%, transparent)',
+      }} />
+      <div className="h-px" style={{ background: `linear-gradient(90deg, transparent, ${accent(0.45)}, transparent)` }} />
+    </header>
+  )
+
   return (
     <>
       {/* Esconde tudo no PDF / print */}
@@ -348,22 +446,8 @@ function GlobalMenuInner() {
         }
       `}</style>
 
-      {/* ── DESKTOP: sidebar permanente (escondida em paths colapsados) ───── */}
-      {!isCollapsed && (
-        <aside
-          data-global-menu
-          className="hidden lg:flex flex-col fixed top-0 left-0 h-full z-40 print:hidden"
-          style={{
-            width: compact ? '76px' : '230px',
-            transition: 'width .28s cubic-bezier(.2,.7,.2,1)',
-            background: '#0b0b0b',
-            borderRight: '1px solid rgba(255,255,255,0.06)',
-            boxShadow: '2px 0 30px rgba(0,0,0,0.45)',
-          }}
-        >
-          <SidebarContent mini={compact} comToggle />
-        </aside>
-      )}
+      {/* ── DESKTOP: barra de topo (nos paths colapsados fica só o botão flutuante) ── */}
+      {!isCollapsed && <BarraTopo />}
 
       {/* ── Botão hambúrguer/seta (mobile sempre; desktop só em paths colapsados) ── */}
       <button
