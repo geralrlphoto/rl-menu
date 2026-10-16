@@ -6,6 +6,9 @@ import BriefingPartilha from './BriefingPartilha'
 
 export const dynamic = 'force-dynamic'
 
+// Página-modelo dos portais de casamento (a mesma que o portal usa como recurso)
+const PORTAL_PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
+
 /** A página partilhada não deve aparecer em motores de busca. */
 export async function generateMetadata({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params
@@ -68,10 +71,14 @@ async function briefingPartilhado(id: string, ref: string) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   )
-  const [{ data: portal }, { data: ev }, { data: eq }] = await Promise.all([
+  const [{ data: portal }, { data: ev }, { data: eq }, { data: modelo }] = await Promise.all([
     db.from('portais').select('settings').ilike('referencia', ref).maybeSingle(),
     db.from('eventos_2026').select('cliente, data_evento, local').ilike('referencia', ref).maybeSingle(),
     db.from('evento_equipa').select('fotografo, videografo').eq('referencia', ref).maybeSingle(),
+    // Só as fotos de cabeçalho do modelo-mestre (o resto das definições não é preciso aqui)
+    db.from('portal_template_settings')
+      .select('pageHeaders:settings->pageHeaders, subpageHeaderUrl:settings->>subpageHeaderUrl, heroImageUrl:settings->>heroImageUrl')
+      .eq('page_id', PORTAL_PAGE_ID).maybeSingle(),
   ])
   const st = (portal?.settings ?? {}) as Record<string, any>
   const { notasPrivadas: _np, historico: _h, ...info } = (st.briefingInfo?.[id] ?? {}) as Record<string, any>
@@ -86,6 +93,12 @@ async function briefingPartilhado(id: string, ref: string) {
   const jaTem = new Set(manual.map(e => e.name.toLowerCase()))
   const equipa = [...manual, ...daFicha.filter(e => !jaTem.has(e.name.toLowerCase()))]
 
+  // Foto da capa: a mesma regra do portal (foto da página › foto das sub-páginas › foto principal),
+  // com o modelo-mestre a servir de recurso quando o portal não tem a sua
+  const m = (modelo ?? {}) as Record<string, any>
+  const daPagina = st.pageHeaders?.[id] ?? m.pageHeaders?.[id]
+  const capa = daPagina === 'none' ? '' : (daPagina || st.subpageHeaderUrl || m.subpageHeaderUrl || st.heroImageUrl || m.heroImageUrl || '')
+
   return (
     <BriefingPartilha
       info={{ ...info, equipa }}
@@ -93,6 +106,7 @@ async function briefingPartilhado(id: string, ref: string) {
       equipa={equipa}
       nomes={{ noiva: nome(st.noiva), noivo: nome(st.noivo) }}
       casal={ev ? { cliente: ev.cliente ?? '', data_evento: ev.data_evento ?? null, local: ev.local ?? '' } : null}
+      capa={typeof capa === 'string' ? capa : ''}
     />
   )
 }

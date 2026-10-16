@@ -9,12 +9,13 @@ import { PrevisaoIPMA } from '../../portal-cliente/atmosphere/PrevisaoIPMA'
 
 type Ficha = { id: string; label: string; value: string }
 
-export default function BriefingPartilha({ info, fichas, equipa, nomes, casal }: {
+export default function BriefingPartilha({ info, fichas, equipa, nomes, casal, capa = '' }: {
   info: BriefingExt
   fichas: Record<string, Ficha[]>
   equipa: Array<{ role: string; name: string }>
   nomes: { noivo?: string; noiva?: string }
   casal: { cliente: string; data_evento: string | null; local: string } | null
+  capa?: string
 }) {
   const tituloFicha = (k: string) => k === 'NOIVO' ? (nomes.noivo || 'Noivo') : k === 'NOIVA' ? (nomes.noiva || 'Noiva') : k
   const fichasVisiveis = Object.entries(fichas).filter(([, campos]) => campos.some(c => (c.value ?? '').trim()))
@@ -54,11 +55,27 @@ export default function BriefingPartilha({ info, fichas, equipa, nomes, casal }:
   return (
     <div className="portal-atmosphere min-h-screen" style={{ background: '#0a0806' }}>
       <main className="max-w-[920px] mx-auto px-4 sm:px-6 py-8 sm:py-12">
-        <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase">RL Photo.Video</p>
-        <h1 className="font-cormorant font-light uppercase text-gold mt-2" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', letterSpacing: '0.16em' }}>
-          Briefing
-        </h1>
-        {casal?.cliente && <p className="text-white/60 mt-1">{casal.cliente}</p>}
+        {capa ? (
+          /* Capa com foto, igual à do briefing no portal */
+          <div className="relative w-full h-48 sm:h-64 rounded-2xl overflow-hidden mb-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={capa} alt="" className="w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+            <div className="absolute bottom-0 left-0 p-5">
+              <p className="text-[10px] tracking-[0.4em] text-white/50 uppercase mb-1">RL PHOTO.VIDEO</p>
+              <h1 className="font-cormorant font-light text-2xl sm:text-3xl tracking-[0.2em] text-white uppercase drop-shadow-lg">Briefing</h1>
+              {casal?.cliente && <p className="text-white/70 text-sm mt-1">{casal.cliente}</p>}
+            </div>
+          </div>
+        ) : (
+          <>
+            <p className="text-[9px] tracking-[0.5em] text-white/30 uppercase">RL Photo.Video</p>
+            <h1 className="font-cormorant font-light uppercase text-gold mt-2" style={{ fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', letterSpacing: '0.16em' }}>
+              Briefing
+            </h1>
+            {casal?.cliente && <p className="text-white/60 mt-1">{casal.cliente}</p>}
+          </>
+        )}
 
         {casal?.local && casal.data_evento && (
           <>
