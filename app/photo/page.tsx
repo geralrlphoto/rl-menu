@@ -867,7 +867,7 @@ export default async function PhotoDashboard() {
             <RelogioHero />
           </div>
 
-          <div className="flex-1 grid lg:grid-cols-[1fr_360px] gap-10 lg:gap-16 items-center">
+          <div className="flex-1 grid lg:grid-cols-[1fr_300px] gap-10 lg:gap-16 items-center">
 
             {/* Saudação */}
             <div>
@@ -890,15 +890,15 @@ export default async function PhotoDashboard() {
                 Entregas, agenda e tarefas num só sítio. Do primeiro contacto à última fotografia.
               </p>
 
-              <div className="flex flex-wrap items-center gap-3 mt-8">
+              <div className="flex flex-wrap items-center gap-2.5 mt-7">
                 <Link href="/calendario"
-                  className="group inline-flex items-center gap-3 rounded-full bg-[#C9A84C] hover:bg-[#d8b95c] text-black font-cond font-medium text-lg px-7 py-3.5 shadow-[0_0_40px_-8px_rgba(201,168,76,0.6)] transition-all">
+                  className="group inline-flex items-center gap-2 rounded-full bg-[#0e0e0e]/90 backdrop-blur-md font-cond font-semibold text-[15px] text-white px-5 py-2.5 transition-all border border-[#C9A84C]/45 hover:border-[#C9A84C]/80 shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)]">
                   Abrir calendário
-                  <span className="transition-transform group-hover:translate-x-1">→</span>
+                  <span className="text-[#C9A84C] transition-transform group-hover:translate-x-1">→</span>
                 </Link>
                 <Link href="/crm"
-                  className="inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-md text-white font-cond text-lg px-6 py-3.5 transition-all">
-                  <svg viewBox="0 0 24 24" className="w-5 h-5 text-[#C9A84C]" fill="currentColor" aria-hidden>
+                  className="inline-flex items-center gap-2 rounded-full bg-[#0e0e0e]/90 backdrop-blur-md font-cond font-semibold text-[15px] text-white px-5 py-2.5 transition-all border border-white/[0.14] hover:border-white/30">
+                  <svg viewBox="0 0 24 24" className="w-4 h-4 text-[#C9A84C]" fill="currentColor" aria-hidden>
                     <path d="M10 2.5l1.6 4.9 4.9 1.6-4.9 1.6L10 15.5l-1.6-4.9L3.5 9l4.9-1.6zM18 13l.9 2.6 2.6.9-2.6.9L18 20l-.9-2.6-2.6-.9 2.6-.9z" />
                   </svg>
                   Abrir o CRM
@@ -908,23 +908,21 @@ export default async function PhotoDashboard() {
 
               {proximo && proximoInfo && (
                 <Link href={`/eventos-2026/${proximo.id}`}
-                  className="group mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 max-w-2xl rounded-[18px] border border-white/[0.08] bg-[#141414]/85 backdrop-blur-md px-5 py-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-white/[0.16]"
-                  style={{ borderLeft: '2px solid #C9A84C' }}>
+                  className="group mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 max-w-xl rounded-[16px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-md px-4 py-3 shadow-[0_0_36px_-18px_rgba(201,168,76,0.5)] transition-all duration-300 hover:border-[#C9A84C]/55">
                   <div className="min-w-0 flex-1">
-                    <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">{proximoInfo.tipo}</p>
-                    <p className="font-cond font-medium text-white text-[19px] leading-tight truncate mt-1">
+                    <p className="font-cond text-[10px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]/85">{proximoInfo.tipo}</p>
+                    <p className="font-cond font-semibold text-white text-[16px] leading-tight truncate mt-0.5">
                       {(proximo.cliente ?? '').trim() || proximo.referencia}
                     </p>
-                    <p className="font-cond text-[13px] text-white/50 truncate mt-0.5 first-letter:uppercase">
+                    <p className="font-cond text-[12px] text-white/45 truncate mt-0.5 first-letter:uppercase">
                       {proximoInfo.data}{proximo.local ? ` · ${proximo.local}` : ''}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="[&_p]:mt-0 [&_p]:text-[12px]">
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="[&_p]:mt-0 [&_p]:text-[11px]">
                       <TempoChip local={proximo.local} data={proximo.data_evento} />
                     </div>
-                    <span className="rounded-full px-3 py-1 font-cond text-[13px] font-medium"
-                      style={{ color: proximoInfo.dias <= 1 ? '#0b0b0b' : '#C9A84C', background: proximoInfo.dias <= 1 ? '#C9A84C' : 'rgba(201,168,76,0.12)' }}>
+                    <span className="rounded-full border border-[#C9A84C]/35 bg-[#C9A84C]/10 px-2.5 py-0.5 font-cond text-[12px] font-semibold text-[#C9A84C]">
                       {proximoInfo.dias === 0 ? 'Hoje' : proximoInfo.dias === 1 ? 'Amanhã' : `Faltam ${proximoInfo.dias} dias`}
                     </span>
                     <span className="text-white/30 group-hover:text-[#C9A84C] group-hover:translate-x-0.5 transition-all">→</span>
@@ -934,12 +932,12 @@ export default async function PhotoDashboard() {
             </div>
 
             {/* Pulso do estúdio */}
-            <aside className="rounded-[28px] border border-[#C9A84C]/35 bg-[#141414]/75 backdrop-blur-xl p-7 shadow-[0_0_60px_-20px_rgba(201,168,76,0.45)]">
-              <p className="flex items-center gap-2.5 font-cond text-[12px] font-semibold tracking-[0.12em] uppercase text-white/90">
-                <span className="w-2 h-2 rounded-full bg-[#C9A84C] shadow-[0_0_10px_#C9A84C]" />
+            <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+              <p className="flex items-center gap-2 font-cond text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
                 Pulso do estúdio · 30 dias
               </p>
-              <div className="grid grid-cols-2 mt-6">
+              <div className="grid grid-cols-2 mt-3">
                 {[
                   { rotulo: 'Esta semana', valor: totalCasamentosSemana, unidade: totalCasamentosSemana === 1 ? 'casamento' : 'casamentos', badge: `${totalCasamentos30} em 30d`, cor: '#C9A84C' },
                   { rotulo: 'Reuniões', valor: totalReunioes30, unidade: 'marcadas', badge: '30d', cor: '#C9A84C' },
@@ -947,16 +945,16 @@ export default async function PhotoDashboard() {
                   { rotulo: 'Prazos', valor: avisos5 + atrasados, unidade: 'a vigiar', badge: atrasados > 0 ? `${atrasados} atraso` : '5d', cor: atrasados > 0 ? '#f87171' : avisos5 > 0 ? '#fb923c' : 'rgba(255,255,255,0.4)' },
                 ].map((s, i) => (
                   <div key={s.rotulo}
-                    className={`py-4 ${i % 2 === 0 ? 'pr-5 border-r border-white/[0.08]' : 'pl-5'} ${i < 2 ? 'border-b border-white/[0.08]' : ''}`}>
-                    <p className="font-cond text-[12px] text-white/55">{s.rotulo}</p>
-                    <div className="flex items-center gap-2 mt-1.5">
-                      <span className="font-cond font-semibold text-white text-[26px] leading-none">{s.valor}</span>
-                      <span className="rounded-md px-1.5 py-0.5 font-cond text-[10px] font-semibold"
+                    className={`py-3 ${i % 2 === 0 ? 'pr-4 border-r border-white/[0.07]' : 'pl-4'} ${i < 2 ? 'border-b border-white/[0.07]' : ''}`}>
+                    <p className="font-cond text-[11px] text-white/50">{s.rotulo}</p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="font-cond font-semibold text-white text-[21px] leading-none">{s.valor}</span>
+                      <span className="rounded-full px-1.5 py-px font-cond text-[9.5px] font-semibold"
                         style={{ color: s.cor, background: s.cor.startsWith('#') ? `${s.cor}22` : 'rgba(255,255,255,0.06)' }}>
                         {s.badge}
                       </span>
                     </div>
-                    <p className="font-cond text-[11px] text-white/35 mt-1">{s.unidade}</p>
+                    <p className="font-cond text-[10.5px] text-white/30 mt-0.5">{s.unidade}</p>
                   </div>
                 ))}
               </div>

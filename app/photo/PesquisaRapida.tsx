@@ -108,12 +108,12 @@ export default function PesquisaRapida() {
   return (
     <>
       <button onClick={() => setAberto(true)}
-        className="inline-flex items-center gap-2.5 rounded-full border border-white/[0.12] bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-md text-white/80 hover:text-white font-cond text-lg px-5 py-3.5 transition-all">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="w-[18px] h-[18px] text-[#C9A84C]" aria-hidden>
+        className="inline-flex items-center gap-2 rounded-full bg-[#0e0e0e]/90 backdrop-blur-md font-cond font-semibold text-[15px] text-white px-5 py-2.5 transition-all border border-white/[0.14] hover:border-white/30">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="w-4 h-4 text-[#C9A84C]" aria-hidden>
           <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
         </svg>
         Procurar
-        <kbd className="hidden sm:inline rounded-md border border-white/15 bg-black/30 px-1.5 py-0.5 font-cond text-[11px] text-white/45">Ctrl K</kbd>
+        <kbd className="hidden sm:inline rounded-md border border-white/10 px-1.5 py-px font-cond text-[10px] font-normal text-white/40">Ctrl K</kbd>
       </button>
 
       {aberto && (
