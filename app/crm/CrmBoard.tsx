@@ -35,6 +35,11 @@ export type Contact = {
   reuniao_hora?: string | null
   page_token?: string | null
   page_tipo?: string | null
+  page_views?: number | null
+  page_last_viewed?: string | null
+  valor_proposto?: number | null
+  valor_fechado?: number | null
+  consentimento_marketing?: boolean | null
 }
 
 export const statusColor: Record<string, string> = {
@@ -46,6 +51,7 @@ export const statusColor: Record<string, string> = {
   'Por Contactar': 'bg-red-500/20 text-red-400 border-red-500/30',
   'Contactado': 'bg-blue-500/20 text-blue-400 border-blue-500/30',
   'Reunião Agendada': 'bg-purple-500/20 text-purple-400 border-purple-500/30',
+  'Proposta Enviada': 'bg-gold/20 text-gold border-gold/40',
   'NÃO FECHOU': 'bg-gray-500/20 text-gray-400 border-gray-500/30',
   'Agendar Reunião': 'bg-orange-500/20 text-orange-400 border-orange-500/30',
   'Sem resposta': 'bg-gray-500/20 text-gray-300 border-gray-500/30',
@@ -191,10 +197,12 @@ function AcaoLinha({ c }: { c: Contact }) {
 }
 
 /* ── CARTÃO DO QUADRO ── */
-export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPortal, onOpen, onStatusChange, dragging, onDragStart, onDragEnd }: {
+export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, onEnviado, onPortal, onOpen, onStatusChange, dragging, onDragStart, onDragEnd }: {
   c: Contact
   coluna: ColunaKey
   diasNoPasso: number
+  /** Eventos já marcados na data do casamento desta lead (null = sem data) */
+  ocupacao?: number | null
   enviados: Record<string, string>  // evento → quando foi enviado
   onEnviado: (evento: string) => void
   onPortal: (token: string) => void
@@ -207,7 +215,12 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
   const dias = daysSince(c.status_updated_at || c.data_entrada)
   const fechou = c.status === 'Fechou'
   const acaoFutura = estadoAcao(c.proxima_acao_data) === 'futura' || estadoAcao(c.proxima_acao_data) === 'hoje'
-  const parado = coluna === 'follow' && diasNoPasso >= FOLLOW_PARADO_DIAS && !acaoFutura
+  // Proposta enviada comporta-se como follow up (dias, parado, botões de WhatsApp)
+  const emFollow = coluna === 'follow' || coluna === 'proposta'
+  const parado = emFollow && diasNoPasso >= FOLLOW_PARADO_DIAS && !acaoFutura
+  const hojeISO = new Date().toISOString().slice(0, 10)
+  const dataFutura = !!c.data_casamento && c.data_casamento >= hojeISO
+  const viuHa = c.page_last_viewed ? Math.floor((Date.now() - new Date(c.page_last_viewed).getTime()) / 3600000) : null
 
   return (
     <div
@@ -219,9 +232,9 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-white text-sm font-medium leading-snug line-clamp-2">{c.nome || 'Sem nome'}</span>
-        {coluna === 'follow' && (
+        {emFollow && (
           <span
-            title="Dias em follow up"
+            title={coluna === 'proposta' ? 'Dias desde que a proposta foi enviada' : 'Dias em follow up'}
             className={`flex-shrink-0 text-xs font-bold px-2 py-0.5 rounded-md ${dias >= 14 ? 'bg-red-500/20 text-red-400' : dias >= 7 ? 'bg-orange-500/20 text-orange-400' : 'bg-yellow-500/15 text-yellow-400'}`}
           >
             {dias}d
@@ -239,9 +252,26 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
         <span className="flex-shrink-0">{c.data_casamento || c.data_entrada || '—'}</span>
       </div>
 
-      {coluna === 'follow' && (
+      {/* Data livre ou já com eventos (cruzado com o calendário) */}
+      {coluna !== 'encerrada' && dataFutura && ocupacao !== null && (
+        <div className={`text-[11px] font-semibold flex items-center gap-1.5 ${ocupacao === 0 ? 'text-gold' : 'text-white/60'}`}
+          title={ocupacao === 0 ? 'Não há nenhum evento marcado nesta data' : `Já há ${ocupacao} ${ocupacao === 1 ? 'evento marcado' : 'eventos marcados'} nesta data`}>
+          <span className={`w-1.5 h-1.5 rounded-full ${ocupacao === 0 ? 'bg-gold' : 'bg-white/40'}`} />
+          {ocupacao === 0 ? 'Data livre' : `Data com ${ocupacao} ${ocupacao === 1 ? 'evento' : 'eventos'}`}
+        </div>
+      )}
+
+      {/* Viu a proposta: é o melhor momento para ligar */}
+      {coluna !== 'encerrada' && viuHa !== null && viuHa < 72 && (
+        <div className="text-[11px] font-semibold text-gold flex items-center gap-1.5" title="Visitas dos noivos ao portal da proposta (as tuas não contam)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-3.5 h-3.5" aria-hidden><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" /><circle cx="12" cy="12" r="3" /></svg>
+          Viu a proposta {viuHa < 1 ? 'agora mesmo' : viuHa < 24 ? `há ${viuHa} h` : `há ${Math.floor(viuHa / 24)} d`} · {c.page_views ?? 0}×
+        </div>
+      )}
+
+      {emFollow && (
         <div className="text-[11px] text-white/30">
-          Em follow up há <span className="text-white/60">{dias} {dias === 1 ? 'dia' : 'dias'}</span>
+          {coluna === 'proposta' ? 'Proposta enviada há' : 'Em follow up há'} <span className="text-white/60">{dias} {dias === 1 ? 'dia' : 'dias'}</span>
         </div>
       )}
 
@@ -288,7 +318,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
         </div>
       )}
 
-      {coluna === 'follow' && whatsappLink(c.contato) && (() => {
+      {emFollow && whatsappLink(c.contato) && (() => {
         const faltam = diasParaFollowUp(c.reuniao_data || c.status_updated_at)
         const enviado1 = enviados['WhatsApp follow-up enviado']
         if (enviado1) {
@@ -318,7 +348,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, enviados, onEnviado, onPort
         return <WhatsAppMsgButton c={c} texto={mensagemFollowUp(c.nome, c.data_casamento)} evento="WhatsApp follow-up enviado" label="Follow up" enviados={enviados} onEnviado={onEnviado} />
       })()}
 
-      {coluna === 'follow' && (
+      {emFollow && (
         <WhatsAppMsgButton c={c} texto={mensagemFecho(c.nome, c.data_casamento, portalUrl(c))} evento="WhatsApp fecho enviado" label="Aceitaram a proposta" enviados={enviados} onEnviado={onEnviado} />
       )}
 
@@ -572,6 +602,28 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
             </section>
           )}
 
+          {/* Valores em número: o proposto e o que ficou fechado */}
+          <section className="grid grid-cols-2 gap-3">
+            {([['valor_proposto', 'Valor proposto'], ['valor_fechado', 'Valor fechado']] as const).map(([campo, label]) => (
+              <label key={campo} className="flex flex-col gap-1">
+                <span className="text-[10px] tracking-widest uppercase text-white/30">{label}</span>
+                <span className="relative">
+                  <input type="number" inputMode="decimal" min={0} step={50} defaultValue={c[campo] ?? ''} key={`${c.id}-${campo}-${c[campo] ?? ''}`}
+                    placeholder="0"
+                    onBlur={e => {
+                      const v = e.target.value.trim()
+                      const n = v === '' ? null : Number(v)
+                      if (n !== null && (isNaN(n) || n < 0)) return
+                      if (n === (c[campo] ?? null)) return
+                      onPatch(c.id, { [campo]: n } as Partial<Contact>).then(() => flash(`${label} guardado`))
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-lg pl-3 pr-8 py-2 text-sm text-white placeholder-white/20 focus:outline-none focus:border-gold/50" />
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 text-sm">€</span>
+                </span>
+              </label>
+            ))}
+          </section>
+
           <section className="grid grid-cols-2 gap-4">
             <Info label="Data do evento" value={c.data_casamento} />
             <Info label="Entrada" value={c.data_entrada} />
@@ -581,6 +633,7 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
             <div className="col-span-2"><Info label="Serviços" value={c.servicos?.replace(/[\[\]"]/g, '')} /></div>
             <Info label="Contacto" value={c.contato} />
             <Info label="Email" value={c.email} />
+            <Info label="Emails de marketing (RGPD)" value={c.consentimento_marketing ? 'Aceitou receber' : 'Sem consentimento'} />
           </section>
 
           {extra?.mensagem && (

@@ -40,6 +40,7 @@ const TIPO_LABELS: Record<string, string> = {
   entrega_projeto:          'Entrega do Projeto · Editor',
   crm_acao_atrasada:        'CRM · Próxima Ação Atrasada',
   crm_follow_parado:        'CRM · Follow Up Parado',
+  crm_proposta_vista:       'CRM · Viram a Proposta',
   pedido_reuniao:           'Pedido de Reunião',
   reuniao_marcada:          'Reunião de Preparação Marcada',
 }
@@ -74,6 +75,7 @@ const TIPO_ICONS: Record<string, string> = {
   entrega_projeto:          '📦',
   crm_acao_atrasada:        '⏰',
   crm_follow_parado:        '⚠',
+  crm_proposta_vista:       '👁',
   pedido_reuniao:           '📅',
   reuniao_marcada:          '📅',
 }
@@ -1005,7 +1007,7 @@ export async function GET(req: Request) {
       const hojeStr = hojeISO()
       const { data: leads } = await supabase
         .from('crm_contacts')
-        .select('id, nome, status, status_updated_at, proxima_acao, proxima_acao_data')
+        .select('id, nome, status, status_updated_at, proxima_acao, proxima_acao_data, page_views, page_last_viewed')
         .or(`status.is.null,status.not.in.(${ENCERRADA_STATUSES.map(s => `"${s}"`).join(',')})`)
         .limit(1000)
       const ativos = (leads ?? []) as any[]
@@ -1032,6 +1034,19 @@ export async function GET(req: Request) {
             tipo_icon: TIPO_ICONS.crm_acao_atrasada,
             sent_at: new Date(acaoData + 'T09:00:00').toISOString(),
             mensagem: `${l.proxima_acao || 'Próxima ação'} estava marcada para ${fmtDataCurta(acaoData)}.`,
+          })
+        }
+        // Os noivos abriram o portal da proposta nas últimas 48 horas: é o melhor momento para ligar
+        if (l.page_last_viewed && Date.now() - new Date(l.page_last_viewed).getTime() < 48 * 3600000) {
+          const quando = new Date(l.page_last_viewed)
+          notifications.push({
+            ...base,
+            id: `crm_proposta_vista::${l.id}::${String(l.page_last_viewed).slice(0, 13)}`,
+            tipo: 'crm_proposta_vista',
+            tipo_label: TIPO_LABELS.crm_proposta_vista,
+            tipo_icon: TIPO_ICONS.crm_proposta_vista,
+            sent_at: quando.toISOString(),
+            mensagem: `Abriram a proposta às ${quando.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Lisbon' })} (${l.page_views ?? 1} ${l.page_views === 1 ? 'visita' : 'visitas'} no total). Bom momento para ligar.`,
           })
         }
         if (FOLLOW_STATUSES.includes(l.status) && !(acaoData && acaoData >= hojeStr)) {

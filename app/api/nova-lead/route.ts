@@ -55,9 +55,19 @@ export async function POST(req: NextRequest) {
       status:          'Por Contactar',
       lead_prioridade: qualificarLead(orcamento, data_casamento), // QUENTE / MORNA / FRIA
       data_entrada:    new Date().toISOString().slice(0, 10),
+      consentimento_marketing: body.consentimento_marketing === true,
+      consentimento_em: body.consentimento_marketing === true ? new Date().toISOString() : null,
     })
 
     if (error) throw new Error(error.message)
+
+    // ── Data livre? Quantos eventos já há nessa data (para responder logo aos noivos) ──
+    let disponibilidade = ''
+    const dataISO = String(data_casamento ?? '').slice(0, 10)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dataISO)) {
+      const { count } = await supabase.from('eventos_2026').select('id', { count: 'exact', head: true }).eq('data_evento', dataISO)
+      disponibilidade = !count ? 'Data livre: nenhum evento marcado nesse dia' : `Já há ${count} ${count === 1 ? 'evento marcado' : 'eventos marcados'} nesse dia`
+    }
 
     // ── Email de notificação ──────────────────────────────────────────────────
     const fields: [string, string][] = [
@@ -66,6 +76,8 @@ export async function POST(req: NextRequest) {
       ['Contacto',          contato],
       ['Zona de Residência', zona_residencia],
       ['Data do Casamento', data_casamento],
+      ['Disponibilidade',   disponibilidade],
+      ['Consentimento',     body.consentimento_marketing === true ? 'Aceita emails e mensagens' : 'Não aceitou emails de marketing'],
       ['Local',             local_casamento],
       ['Tipo de Evento',    tipo_evento],
       ['Tipo de Cerimónia', Array.isArray(tipo_cerimonia) ? tipo_cerimonia.join(', ') : tipo_cerimonia],

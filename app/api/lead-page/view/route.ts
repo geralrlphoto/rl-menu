@@ -28,11 +28,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'not_found' }, { status: 404 })
   }
 
-  // Registar visita
-  await supabase.from('crm_contacts').update({
-    page_views: (contact.page_views || 0) + 1,
-    page_last_viewed: new Date().toISOString(),
-  }).eq('id', contact.id)
+  // Registar visita (só dos noivos: as do admin não contam para o alerta de "viram a proposta")
+  if (!isAdmin) {
+    await supabase.from('crm_contacts').update({
+      page_views: (contact.page_views || 0) + 1,
+      page_last_viewed: new Date().toISOString(),
+    }).eq('id', contact.id)
+  }
 
   // Fallback do link da reunião — se o admin marcou data/hora/tipo mas não
   // preencheu o link, usar o default consoante o tipo (Videochamada → Meet,

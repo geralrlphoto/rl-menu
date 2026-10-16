@@ -66,6 +66,8 @@ export async function POST(req: NextRequest) {
         status:          'Por Contactar',
         lead_prioridade: 'Alta',
         data_entrada:    new Date().toISOString().slice(0, 10),
+        consentimento_marketing: body.consentimento_marketing === true,
+        consentimento_em: body.consentimento_marketing === true ? new Date().toISOString() : null,
       })
     } catch (_e) { console.error('[media-leads] crm_contacts insert error:', _e) }
   }

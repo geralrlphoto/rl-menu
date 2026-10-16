@@ -13,11 +13,12 @@ import { EncerrarModal, KanbanCard, LeadDrawer, StatusSelect, type Contact } fro
 // Colunas que a LISTA do CRM usa — exclui de propósito o `page_content`
 // (propostas, ~3 KB/linha) e as notas, que só são precisas na ficha/painel.
 const LIST_COLUMNS =
-  'id,notion_id,nome,contato,email,status,lead_prioridade,tipo_evento,data_casamento,data_entrada,local_casamento,orcamento,como_chegou,servicos,status_updated_at,data_fecho,proxima_acao,proxima_acao_data,motivo_nao_fechou,reuniao_data,reuniao_hora,page_token,page_tipo:page_content->>tipo'
+  'id,notion_id,nome,contato,email,status,lead_prioridade,tipo_evento,data_casamento,data_entrada,local_casamento,orcamento,como_chegou,servicos,status_updated_at,data_fecho,proxima_acao,proxima_acao_data,motivo_nao_fechou,reuniao_data,reuniao_hora,page_token,page_views,page_last_viewed,valor_proposto,valor_fechado,consentimento_marketing,page_tipo:page_content->>tipo'
 
 const COLUNAS: { key: ColunaKey; label: string; accent: string }[] = [
   { key: 'nova', label: 'Nova Entrada', accent: 'bg-red-400' },
   { key: 'reuniao', label: 'Reunião Agendada', accent: 'bg-purple-400' },
+  { key: 'proposta', label: 'Proposta Enviada', accent: 'bg-gold' },
   { key: 'follow', label: 'Follow Up', accent: 'bg-yellow-400' },
   { key: 'encerrada', label: 'Encerrada', accent: 'bg-green-400' },
 ]
@@ -25,9 +26,15 @@ const ENCERRADA_PAGE = 20
 // Ano (data do casamento) usado na taxa de fecho anual do topo
 const ANO_TAXA_FECHO = '2027'
 
-function sumOrcamento(contacts: Contact[]): number {
-  return contacts.reduce((sum, c) => sum + parseOrcamento(c.orcamento), 0)
+// Valor de uma lead: o valor proposto quando já existe; senão, a faixa de orçamento que indicaram
+function valorLead(c: Contact): number {
+  return Number(c.valor_proposto) > 0 ? Number(c.valor_proposto) : parseOrcamento(c.orcamento)
 }
+function sumOrcamento(contacts: Contact[]): number {
+  return contacts.reduce((sum, c) => sum + valorLead(c), 0)
+}
+// Proposta enviada e follow up contam juntos para os dias e para os lembretes
+const emFollowUp = (status?: string | null) => ['follow', 'proposta'].includes(colunaDe(status))
 
 /* ── MINI TABLE (Requer Atenção) ── */
 function MiniTable({ contacts, onStatusChange, onOpen, borderColor, rowHover }: {
@@ -143,6 +150,20 @@ export default function CRMPage() {
   // Última mudança de status (vinda do histórico) das leads em Follow Up
   const [ultimaMudanca, setUltimaMudanca] = useState<Record<string, string>>({})
   const [waEnviados, setWaEnviados] = useState<Record<string, Record<string, string>>>({})
+  // Quantos eventos já há em cada data (para dizer logo se a data da lead está livre)
+  const [ocupacaoPorData, setOcupacaoPorData] = useState<Record<string, number>>({})
+  useEffect(() => {
+    const hoje = new Date().toISOString().slice(0, 10)
+    supabase.from('eventos_2026').select('data_evento').gte('data_evento', hoje).limit(1000)
+      .then(({ data }) => {
+        const m: Record<string, number> = {}
+        for (const e of (data ?? []) as Array<{ data_evento: string | null }>) {
+          const d = String(e.data_evento ?? '').slice(0, 10)
+          if (d) m[d] = (m[d] ?? 0) + 1
+        }
+        setOcupacaoPorData(m)
+      })
+  }, [])
 
   useEffect(() => {
     try { setAtencaoAberta(localStorage.getItem('crm_atencao_aberta') === '1') } catch {}
@@ -174,7 +195,7 @@ export default function CRMPage() {
     if (!existing || existing.status === newStatus) return
     const updatePayload: Partial<Contact> = { status: newStatus }
     // Dentro da coluna Follow Up (Negociação → Follow Up 1/2/3) os dias continuam a contar
-    if (!(colunaDe(existing.status) === 'follow' && colunaDe(newStatus) === 'follow')) {
+    if (!(emFollowUp(existing.status) && emFollowUp(newStatus))) {
       updatePayload.status_updated_at = now
     }
     // Regista data_fecho apenas quando muda para Fechou e ainda não tem
@@ -182,7 +203,7 @@ export default function CRMPage() {
     if (newStatus === 'NÃO FECHOU') updatePayload.motivo_nao_fechou = motivo ?? null
     // Lead encerrada deixa de ter próxima ação pendente
     if (colunaDe(newStatus) === 'encerrada') { updatePayload.proxima_acao = null; updatePayload.proxima_acao_data = null }
-    if (colunaDe(newStatus) === 'follow') setUltimaMudanca(m => ({ ...m, [id]: now }))
+    if (emFollowUp(newStatus)) setUltimaMudanca(m => ({ ...m, [id]: now }))
     setContacts(prev => prev.map(c => c.id === id ? { ...c, ...updatePayload } : c))
     await supabase.from('crm_contacts').update(updatePayload).eq('id', id)
   }
@@ -225,7 +246,7 @@ export default function CRMPage() {
   }
 
   // Só as leads em Follow Up precisam do histórico (para o aviso "parado")
-  const followIdsKey = contacts.filter(c => colunaDe(c.status) === 'follow').map(c => c.id).sort().join(',')
+  const followIdsKey = contacts.filter(c => emFollowUp(c.status)).map(c => c.id).sort().join(',')
   useEffect(() => {
     if (!followIdsKey) return
     supabase.from('crm_status_history').select('contact_id,created_at')
@@ -238,7 +259,7 @@ export default function CRMPage() {
   }, [followIdsKey])
 
   // Mensagens de WhatsApp já enviadas (para bloquear os botões): Nova Entrada, Reunião e Follow Up
-  const waIdsKey = contacts.filter(c => ['nova', 'reuniao', 'follow'].includes(colunaDe(c.status))).map(c => c.id).sort().join(',')
+  const waIdsKey = contacts.filter(c => ['nova', 'reuniao', 'proposta', 'follow'].includes(colunaDe(c.status))).map(c => c.id).sort().join(',')
   useEffect(() => {
     if (!waIdsKey) return
     supabase.from('crm_status_history').select('contact_id,evento,created_at')
@@ -309,14 +330,14 @@ export default function CRMPage() {
   )
   const fecharamAno = encerradasAno.filter(c => c.status === 'Fechou').length
   const taxaAno = encerradasAno.length > 0 ? Math.round((fecharamAno / encerradasAno.length) * 100) : null
-  const valorFollow = sumOrcamento(contacts.filter(c => colunaDe(c.status) === 'follow'))
+  const valorFollow = sumOrcamento(contacts.filter(c => emFollowUp(c.status)))
   const temposFecho = contacts
     .filter(c => c.status === 'Fechou' && c.data_fecho && c.data_entrada)
     .map(c => Math.round((new Date(c.data_fecho).getTime() - new Date(c.data_entrada).getTime()) / 86400000))
     .filter(d => d >= 0)
   const mediaDiasFecho = temposFecho.length > 0 ? Math.round(temposFecho.reduce((a, b) => a + b, 0) / temposFecho.length) : null
   const contagemReuniao = contacts.filter(c => colunaDe(c.status) === 'reuniao').length
-  const contagemFollow = contacts.filter(c => colunaDe(c.status) === 'follow').length
+  const contagemFollow = contacts.filter(c => emFollowUp(c.status)).length
   const acoesAtrasadas =activeLeads.filter(c => estadoAcao(c.proxima_acao_data) === 'atrasada').length
 
   const filtered = (() => {
@@ -551,7 +572,7 @@ export default function CRMPage() {
           <div className="text-center py-32 text-white/30 text-[15px]">A carregar…</div>
         ) : (
           <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0 pb-4">
-            <div className="grid grid-cols-[repeat(4,minmax(270px,1fr))] gap-4 items-start">
+            <div className="grid grid-cols-[repeat(5,minmax(260px,1fr))] gap-4 items-start">
               {COLUNAS.map(col => {
                 let items = filtered.filter(c => colunaDe(c.status) === col.key)
                 if (col.key === 'follow') {
@@ -565,7 +586,7 @@ export default function CRMPage() {
                 const fecharam = col.key === 'encerrada' ? items.filter(c => c.status === 'Fechou').length : 0
                 const draggedCol = draggingId ? colunaDe(contacts.find(c => c.id === draggingId)?.status) : null
                 const isTarget = !!draggingId && dropCol === col.key && draggedCol !== col.key
-                const intensidade = { nova: 0.95, reuniao: 0.75, follow: 0.55, encerrada: 0.35 }[col.key]
+                const intensidade = { nova: 0.95, reuniao: 0.8, proposta: 0.65, follow: 0.5, encerrada: 0.32 }[col.key]
                 return (
                   <section
                     key={col.key}
@@ -600,6 +621,7 @@ export default function CRMPage() {
                           c={c}
                           coluna={col.key}
                           diasNoPasso={daysSince(ultimaMudanca[c.id] || c.status_updated_at || c.data_entrada)}
+                        ocupacao={c.data_casamento ? (ocupacaoPorData[c.data_casamento] ?? 0) : null}
                           enviados={waEnviados[c.id] ?? {}}
                           onEnviado={ev => setWaEnviados(prev => ({ ...prev, [c.id]: { ...(prev[c.id] ?? {}), [ev]: new Date().toISOString() } }))}
                           onPortal={token => setContacts(prev => prev.map(x => x.id === c.id ? { ...x, page_token: token } : x))}

@@ -1,23 +1,27 @@
 // Regras partilhadas do CRM (quadro /crm, ficha /crm/[id], sino do admin e estatísticas).
 import { linkPublico } from '@/lib/site-url'
 
-export const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Negociação','Follow Up 1','Follow Up 2','Follow Up 3','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
+export const STATUSES = ['Por Contactar','Iniciar','Contactado','Agendar Reunião','Reunião Agendada','Proposta Enviada','Negociação','Follow Up 1','Follow Up 2','Follow Up 3','Fechou','NÃO FECHOU','Sem resposta','Encerrado','Cancelado']
 
-export type ColunaKey = 'nova' | 'reuniao' | 'follow' | 'encerrada'
+export type ColunaKey = 'nova' | 'reuniao' | 'proposta' | 'follow' | 'encerrada'
 export const REUNIAO_STATUSES = ['Reunião Agendada']
-export const FOLLOW_STATUSES = ['Negociação', 'Follow Up 1', 'Follow Up 2', 'Follow Up 3']
+// Proposta enviada: coluna própria no quadro; conta como follow up para os lembretes de WhatsApp
+export const PROPOSTA_STATUSES = ['Proposta Enviada']
+export const FOLLOW_STATUSES = ['Proposta Enviada', 'Negociação', 'Follow Up 1', 'Follow Up 2', 'Follow Up 3']
 export const ENCERRADA_STATUSES = ['Fechou', 'NÃO FECHOU', 'Sem resposta', 'Encerrado', 'Cancelado']
 
 // Status aplicado quando um cartão é largado numa coluna (Encerrada pergunta ao utilizador)
 export const DROP_STATUS: Record<Exclude<ColunaKey, 'encerrada'>, string> = {
   nova: 'Por Contactar',
   reuniao: 'Reunião Agendada',
+  proposta: 'Proposta Enviada',
   follow: 'Negociação',
 }
 
 export function colunaDe(status: string | null | undefined): ColunaKey {
   const s = status ?? ''
   if (REUNIAO_STATUSES.includes(s)) return 'reuniao'
+  if (PROPOSTA_STATUSES.includes(s)) return 'proposta'
   if (FOLLOW_STATUSES.includes(s)) return 'follow'
   if (ENCERRADA_STATUSES.includes(s)) return 'encerrada'
   return 'nova'

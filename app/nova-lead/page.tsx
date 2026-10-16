@@ -179,6 +179,7 @@ const LS_INICIO = 'rl_nova_lead_inicio' // contactos já enviados por email (nã
 export default function NovaLeadPage() {
   const [step, setStep]       = useState(0)
   const [sending, setSending] = useState(false)
+  const [consentimento, setConsentimento] = useState(false)
   const [done, setDone]       = useState(false)
   const [erro, setErro]       = useState('')
   const visible               = useFadeIn(step)
@@ -296,6 +297,7 @@ export default function NovaLeadPage() {
           visao_20anos:      form.visao20anos,
           trabalho_favorito: form.trabalhoFavorito,
           mensagem:          form.preocupacoes,
+          consentimento_marketing: consentimento,
         }),
       })
       if (!res.ok) { const d = await res.json(); setErro(d.error || 'Erro ao enviar'); return }
@@ -635,6 +637,18 @@ export default function NovaLeadPage() {
                 <LeadSelect label="Orçamento previsto (sensivelmente)" value={escaloes.includes(form.orcamento) ? form.orcamento : ''}
                   onChange={v => set('orcamento', v)} options={escaloes} required />
               </div>
+            )}
+
+            {/* RGPD: consentimento opcional para emails e mensagens (desmarcado por defeito) */}
+            {step === TOTAL_PASSOS - 1 && (
+              <label className="mt-8 flex items-start gap-3 cursor-pointer select-none text-left">
+                <input type="checkbox" checked={consentimento} onChange={e => setConsentimento(e.target.checked)}
+                  className="mt-1 w-4 h-4 shrink-0 accent-[#C9A84C]" />
+                <span className="text-[13px] leading-relaxed opacity-70">
+                  Aceito receber emails e mensagens da RL Photo.Video sobre o nosso pedido e novidades.
+                  Podemos deixar de receber a qualquer momento.
+                </span>
+              </label>
             )}
 
             {erro && <p className="err mt-7">{erro}</p>}
