@@ -851,12 +851,16 @@ export default async function PhotoDashboard() {
         </div>
 
         <div className="relative max-w-6xl mx-auto px-5 sm:px-10 pt-20 sm:pt-28 pb-10 sm:pb-14 lg:min-h-[86vh] flex flex-col">
+          {/* Relógio ao centro, por cima de tudo */}
+          <div className="flex justify-center text-center mb-12 lg:mb-14">
+            <RelogioHero />
+          </div>
+
           <div className="flex-1 grid lg:grid-cols-[1fr_360px] gap-10 lg:gap-16 items-center">
 
-            {/* Relógio e saudação */}
+            {/* Saudação */}
             <div>
-              <RelogioHero />
-              <div className="flex flex-wrap items-center gap-3 mt-10">
+              <div className="flex flex-wrap items-center gap-3">
                 <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">
                   RL Photo.Video · Menu interno
                 </p>
