@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -32,7 +32,8 @@ const VERDE    = '#4ade80'
 
 // Botão "+" nos cartões Entregas e Vídeos: abre uma gaveta à direita com duas
 // secções, Em atraso (vermelho) e a terminar (laranja). Cada linha leva à ficha.
-export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Termina em 5 dias' }: { itens: EntregaAtraso[]; titulo?: string; avisoTitulo?: string }) {
+// extra: botões a mais no cabeçalho da gaveta (ex.: Vídeos em edição na gaveta dos Vídeos)
+export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Termina em 5 dias', extra }: { itens: EntregaAtraso[]; titulo?: string; avisoTitulo?: string; extra?: ReactNode }) {
   const [aberto, setAberto] = useState(false)
   const [montado, setMontado] = useState(false)
   const [filtro, setFiltro] = useState<string | null>(null)
@@ -218,6 +219,7 @@ export function EntregasDrawer({ itens, titulo = 'Entregas', avisoTitulo = 'Term
                     <span className="rounded-full px-3 py-1" style={{ color: VERMELHO, background: `${VERMELHO}1a` }}>{porResolver.filter(i => i.estado === 'atraso').length} em atraso</span>
                     <span className="rounded-full px-3 py-1" style={{ color: LARANJA, background: `${LARANJA}1a` }}>{porResolver.filter(i => i.estado === 'aviso').length} {avisoTitulo.toLowerCase().replace('termina', 'a terminar')}</span>
                   </div>
+                  {extra && <div className="mt-4">{extra}</div>}
                 </div>
                 <button onClick={() => setAberto(false)} aria-label="Fechar"
                   className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.04] text-white/50 hover:text-white hover:border-white/30 hover:rotate-90 transition-all duration-300 flex items-center justify-center">

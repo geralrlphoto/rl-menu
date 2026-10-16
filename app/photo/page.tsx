@@ -10,6 +10,7 @@ import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
 import FraseDoDia from './FraseDoDia'
+import { VideosDrawer } from '@/app/eventos-2026/VideosDrawer'
 import { LogoWfolio } from '@/app/components/LogoWfolio'
 import RelogioHero from './RelogioHero'
 import TempoSolLua from './TempoSolLua'
@@ -1013,7 +1014,8 @@ export default async function PhotoDashboard() {
                       <div className="absolute top-4 right-4">
                         <EntregasDrawer itens={itensGaveta}
                           titulo={'titulo' in p ? p.titulo : undefined}
-                          avisoTitulo={'avisoTexto' in p && p.avisoTexto ? `Termina em ${p.avisoTexto.replace('a terminar em ', '')}` : undefined} />
+                          avisoTitulo={'avisoTexto' in p && p.avisoTexto ? `Termina em ${p.avisoTexto.replace('a terminar em ', '')}` : undefined}
+                          extra={'titulo' in p && p.titulo === 'Vídeos' ? <VideosDrawer carregarAoAbrir rotulo="Vídeos em edição" /> : undefined} />
                       </div>
                     )}
                   </div>

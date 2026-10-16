@@ -86,7 +86,8 @@ function porAno(lista: VideoEvento[], crescente: boolean) {
 
 const OCULTOS_KEY = 'videos_drawer_ocultos'
 
-export function VideosDrawer() {
+// carregarAoAbrir: só lê /api/videos-estados quando a gaveta abre (no /photo, para não gastar egress a cada visita)
+export function VideosDrawer({ carregarAoAbrir = false, rotulo = 'Vídeos' }: { carregarAoAbrir?: boolean; rotulo?: string } = {}) {
   const [aberto, setAberto] = useState(false)
   const [montado, setMontado] = useState(false)
   const [videos, setVideos] = useState<VideoEvento[]>([])
@@ -151,13 +152,16 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
     }
   }
 
+  const [carregado, setCarregado] = useState(false)
   useEffect(() => {
+    if (carregado || (carregarAoAbrir && !aberto)) return
+    setCarregado(true)
     fetch('/api/videos-estados')
       .then(r => r.json())
       .then(d => setVideos(d.videos ?? []))
       .catch(() => {/* silencioso */})
       .finally(() => setCarregando(false))
-  }, [])
+  }, [aberto, carregarAoAbrir, carregado])
 
   useEffect(() => {
     if (!aberto) return
@@ -319,7 +323,7 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
         aria-label="Ver vídeos em edição e entregues"
         className="inline-flex items-center gap-2 rounded-full border border-white/[0.14] hover:border-white/30 bg-[#0e0e0e]/90 backdrop-blur-md px-5 py-2.5 font-cond font-semibold text-[15px] text-white transition-all">
         <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden><path d="M15 10l4.55-2.28A1 1 0 0121 8.62v6.76a1 1 0 01-1.45.9L15 14M3 8a2 2 0 012-2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z" /></svg>
-        Vídeos
+        {rotulo}
         {emCurso.length > 0 && (
           <span className="ml-0.5 px-1.5 py-px rounded-full font-cond text-[12px] tabular-nums"
             style={{ background: `${LARANJA}22`, color: LARANJA, border: `1px solid ${LARANJA}55` }}>
@@ -331,11 +335,11 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
       {montado && createPortal(
         <>
           <div onClick={() => setAberto(false)}
-            className="fixed inset-0 z-[90] transition-opacity duration-300"
+            className="fixed inset-0 z-[95] transition-opacity duration-300"
             style={{ background: 'rgba(5,4,3,0.6)', backdropFilter: 'blur(3px)', opacity: aberto ? 1 : 0, pointerEvents: aberto ? 'auto' : 'none' }} />
 
           <aside
-            className="fixed top-0 right-0 z-[91] h-[100dvh] flex flex-col"
+            className="fixed top-0 right-0 z-[96] h-[100dvh] flex flex-col"
             style={{
               width: 'min(460px, 100vw)',
               background: '#0b0b0b',
