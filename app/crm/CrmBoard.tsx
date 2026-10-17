@@ -288,8 +288,9 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
         <div className="text-[11px] text-white/35">Motivo: <span className="text-white/60">{c.motivo_nao_fechou}</span></div>
       )}
 
-      <div className="flex items-center justify-between gap-2">
-        <StatusSelect value={c.status} onChange={s => onStatusChange(c.id, s)} />
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {/* Não encolhe: o nome do estado tem de se ler todo */}
+        <StatusSelect value={c.status} onChange={s => onStatusChange(c.id, s)} className="shrink-0 max-w-full !text-[12px] !px-3 !py-1.5 font-semibold" />
         <span className="flex items-center gap-1.5">
           <SeloQualificacao orcamento={c.orcamento} dataCasamento={c.data_casamento} />
           {c.orcamento && <span className="text-gold text-xs font-semibold whitespace-nowrap">{fmtOrcamento(c.orcamento)}</span>}
