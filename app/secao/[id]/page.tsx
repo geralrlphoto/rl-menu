@@ -6,6 +6,7 @@ import MagazineViewer from './MagazineViewer'
 import EnvioAutoToggle from '@/app/components/EnvioAutoToggle'
 import MenuGrid, { type MenuItem } from './MenuGrid'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
+import { CSS_SECAO_NOVA } from './estiloNovo'
 
 export const revalidate = 60
 
@@ -303,26 +304,45 @@ export default async function SecaoPage({ params }: Props) {
 
   const ehMenuGeral = section.name?.toUpperCase().includes('GERAL')
 
+  const titulo = ehMenuGeral ? 'Menu geral' : (section.name ?? '')
+  const grupos = new Set(itensMenu.map(i => i.group))
+
   return (
-    <main className="nlead" style={{ minHeight: '100vh', background: 'var(--ink)' }}>
+    <main className="nlead secao-nova font-cond" style={{ minHeight: '100vh', background: '#070707', overflowX: 'clip' }}>
       <style>{CSS_BRIEFING}</style>
-      <div className="fx-grain" aria-hidden="true" />
+      <style>{CSS_SECAO_NOVA}</style>
 
-      <div style={{ maxWidth: '1180px', margin: '0 auto', padding: 'clamp(28px,5vh,56px) clamp(20px,4vw,48px) 80px' }}>
+      {/* ── CAPA (foto local da Vercel: não gasta egress do Supabase) ── */}
+      <section className="relative min-h-[460px] lg:min-h-[62vh] flex flex-col overflow-hidden">
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/eventos-hero-2027.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-35 lg:opacity-50" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
+        </div>
+        <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+        <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+          Back-office · {new Date().getFullYear()}
+        </p>
+        <span className="hidden lg:block absolute left-[36%] top-[28%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
+        <span className="hidden lg:block absolute left-[35.2%] top-[33%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
 
-        {/* ── Voltar ──────────────────────────────────────── */}
-        <Link href="/photo" className="btn-ghost" style={{ marginBottom: 'clamp(30px,6vh,58px)' }}>
-          ‹&nbsp; Voltar ao menu
-        </Link>
+        <div className="relative flex-1 flex flex-col pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-8 pb-12 lg:pb-14 min-w-0">
+          <Link href="/photo" className="self-start text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Menu principal</Link>
+          <div className="mt-auto pt-16">
+            <p className="text-[13px] sm:text-[17px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">RL Photo.Video</p>
+            <h1 className="font-bold uppercase text-white leading-[0.88] text-[54px] sm:text-[110px] lg:text-[140px] mt-2 break-words">{titulo}</h1>
+            <div className="flex items-center gap-4 mt-5">
+              <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+              <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
+                {itensMenu.length} {itensMenu.length === 1 ? 'secção' : 'secções'} · <span className="text-[#C9A84C]">{grupos.size} {grupos.size === 1 ? 'área' : 'áreas'}</span>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
 
-        {/* ── Cabeçalho ───────────────────────────────────── */}
-        <header style={{ marginBottom: 'clamp(28px,5vh,50px)' }}>
-          <p className="eyebrow">RL Photo &middot; Video &middot; Back-office</p>
-          <h1 style={{ fontSize: 'clamp(42px,6vw,86px)', marginTop: '20px' }}>
-            {ehMenuGeral ? <>Menu <em>geral</em></> : section.name}
-          </h1>
-          <div className="h-px" style={{ width: '48px', height: '1px', background: 'var(--g)', opacity: .6, marginTop: '26px' }} />
-        </header>
+      <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '8px clamp(16px,4vw,48px) 80px' }}>
 
         {/* ── Interruptor do envio automático (só na secção Cliente, admin) ── */}
         {isAdmin && section.name?.toUpperCase().includes('CLIENTE') && (
