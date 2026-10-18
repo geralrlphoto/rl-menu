@@ -3,7 +3,7 @@
 /* Topo da página inicial do portal (tema RL), como o do /photo:
    relógio grande (horas a branco, minutos a dourado), o dia por baixo
    e uma frase do dia sobre amor, esperança e a vida a dois.
-   A frase muda todos os dias; "Outra frase" passa à seguinte.
+   A frase muda todos os dias.
    Só frases com autoria conhecida e bem documentada. */
 
 import { useEffect, useState } from 'react'
@@ -54,21 +54,17 @@ export default function InicioRelogio({ fotoUrl, noiva, noivo }: { fotoUrl?: str
   const a = primeiro(noiva), b = primeiro(noivo)
   const [t, setT] = useState<ReturnType<typeof agoraLisboa> | null>(null)
   const [i, setI] = useState<number | null>(null)
-  const [visivel, setVisivel] = useState(true)
+  const visivel = true
 
   useEffect(() => {
     const a = agoraLisboa()
     setT(a)
     setI(a.dia % FRASES.length)
-    const id = setInterval(() => setT(agoraLisboa()), 10_000)
+    // a frase acompanha o dia: à meia-noite passa sozinha à seguinte
+    const id = setInterval(() => { const n = agoraLisboa(); setT(n); setI(n.dia % FRASES.length) }, 10_000)
     return () => clearInterval(id)
   }, [])
 
-  function outra() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setI(x => ((x ?? 0) + 1) % FRASES.length); return }
-    setVisivel(false)
-    setTimeout(() => { setI(x => ((x ?? 0) + 1) % FRASES.length); setVisivel(true) }, 280)
-  }
 
   const f = i === null ? null : FRASES[i]
   return (
@@ -129,14 +125,6 @@ export default function InicioRelogio({ fotoUrl, noiva, noivo }: { fotoUrl?: str
               <span style={{ height: 1, width: 48, background: 'rgba(201,168,76,.5)', marginBottom: 8 }} />
               <span style={{ fontFamily: COND, fontSize: 13, fontWeight: 600, letterSpacing: '.2em', textTransform: 'uppercase', color: GOLD }}>{f.autor}</span>
             </figcaption>
-            <button type="button" onClick={outra} style={{
-              marginTop: 14, display: 'inline-flex', alignItems: 'center', gap: 8, cursor: 'pointer',
-              borderRadius: 999, border: '1px solid rgba(255,255,255,.12)', background: 'transparent',
-              padding: '6px 16px', fontFamily: COND, fontSize: 13, color: 'rgba(255,255,255,.5)',
-            }}>
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M21 12a9 9 0 11-3-6.7L21 8M21 3v5h-5" /></svg>
-              Outra frase
-            </button>
           </figure>
         )}
       </div>
