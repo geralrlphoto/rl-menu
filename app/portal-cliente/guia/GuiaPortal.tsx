@@ -786,35 +786,54 @@ export default function GuiaPortal() {
   return (
     <>
       <button type="button" className="guia-rl guia-fab" onClick={() => { setOpen(true); setTopicIdx(null) }}>
-        <span className="ic">?</span> Guia do Portal
+        Guia do Portal <span className="ic">◆</span>
       </button>
 
       {open && mounted && createPortal(
         <div className="guia-rl guia-overlay" onClick={close}>
           <div className="guia-modal" role="dialog" aria-modal="true" aria-label="Guia do Portal" onClick={e => e.stopPropagation()}>
-            <button type="button" className="guia-close" onClick={close} aria-label="Fechar">×</button>
+            <button type="button" className="guia-close" onClick={close} aria-label="Fechar">✕</button>
 
             {!topic ? (
               <div className="guia-home">
-                <div className="guia-eyebrow">Guia do Portal</div>
-                <h2>Como funciona o <em>vosso</em> portal</h2>
-                <p className="lead">Escolham um tema e vejam, passo a passo, como cada coisa acontece: das fotografias e do filme ao contrato e aos pagamentos.</p>
-                <div className="guia-topics">
-                  {TOPICS.map((t, i) => (
-                    <button key={t.id} type="button" className="guia-topic" style={{ animationDelay: `${0.05 + i * 0.07}s` }} onClick={() => goTopic(i)}>
-                      <span className="n">0{i + 1}</span>
-                      <span className="go">{IcArrow()}</span>
-                      <div className="tic">{t.icon()}</div>
-                      <h3>{t.label}</h3>
-                      <p>{t.intro}</p>
-                      <div className="steps">{t.steps.length} passos</div>
+                {/* Capa de cinema, igual às páginas novas do menu */}
+                <section className="guia-capa">
+                  <div className="foto">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/portal-defaults/hero-default.webp" alt="" />
+                  </div>
+                  <span className="vline" />
+                  <p className="kicker"><span className="pulse" />Guia do portal dos noivos</p>
+                  <div className="capa-body">
+                    <p className="brand">RL Photo.Video</p>
+                    <h2 className="capa-titulo">Guia do<br />Portal</h2>
+                    <div className="sub"><span className="ln" /><p>Tudo o que precisam de saber, passo a passo</p></div>
+                    <div className="pills">
+                      <span className="pill gold">{TOPICS.length} temas</span>
+                      <span className="pill">{TOPICS.reduce((n, t) => n + t.steps.length, 0)} passos</span>
+                      <span className="pill">Emails · Prazos · Seleção</span>
+                    </div>
+                    <button type="button" className="guia-cta" onClick={() => { goTopic(0); setPlaying(true) }}>
+                      {IcPlay()} Ver o guia completo
                     </button>
-                  ))}
-                </div>
-                <div style={{ marginTop: 28, display: 'flex', justifyContent: 'center' }}>
-                  <button type="button" className="guia-btn primary" onClick={() => { goTopic(0); setPlaying(true) }}>
-                    {IcPlay()} Ver o guia completo
-                  </button>
+                  </div>
+                </section>
+
+                <div className="guia-temas">
+                  <p className="sec-eyebrow">Escolham um tema</p>
+                  <div className="guia-topics">
+                    {TOPICS.map((t, i) => (
+                      <button key={t.id} type="button" className="guia-topic" style={{ animationDelay: `${0.05 + i * 0.06}s` }} onClick={() => goTopic(i)}>
+                        <div className="top">
+                          <span className="tic">{t.icon()}</span>
+                          <span className="n">{String(i + 1).padStart(2, '0')}</span>
+                        </div>
+                        <h3>{t.label}</h3>
+                        <p>{t.intro}</p>
+                        <div className="foot"><span>{t.steps.length} passos</span><span className="go">{IcArrow()}</span></div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -831,7 +850,7 @@ export default function GuiaPortal() {
                 <div className="guia-stage">
                   <div className="guia-text">
                     <div className="body guia-anim" key={`t-${topicIdx}-${step}`}>
-                      <div className="count">{topic.label} · <b>Passo {step + 1}</b> de {topic.steps.length}</div>
+                      <div className="count"><span className="pulse" />{topic.label} · <b>Passo {step + 1}</b> de {topic.steps.length}</div>
                       <h3>{current?.title}</h3>
                       <p className="desc">{current?.text}</p>
                       {current?.list && (
@@ -870,7 +889,7 @@ export default function GuiaPortal() {
                   </div>
 
                   <div className="guia-visual" key={`v-${topicIdx}-${step}`}>
-                    <Phone bell={(topic.id === 'portal' && step === 2) || (topic.id === 'filme' && step === 0)}>
+                    <Phone bell={(topic.id === 'portal' && step === 3) || (topic.id === 'filme' && step === 0)}>
                       {current?.mock}
                     </Phone>
                   </div>
