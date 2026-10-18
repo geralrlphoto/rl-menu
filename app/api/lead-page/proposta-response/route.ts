@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { criarTarefaObrigado, propostaValida } from '@/lib/escolhaProposta'
+import { criarTarefaObrigado, guardarPropostaAceite, propostaValida } from '@/lib/escolhaProposta'
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const IMG_BASE    = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
@@ -114,6 +114,8 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Pacote aceite fica guardado no CRM (portal e contrato usam-no)
+  if (action === 'confirmar' && proposta) await guardarPropostaAceite(supabase, token, proposta, body.extras).catch(() => {})
   // Tarefa no calendário: agradecer por WhatsApp (não bloqueia se falhar)
   if (action === 'confirmar') await criarTarefaObrigado(supabase, token, false, proposta).catch(() => {})
 

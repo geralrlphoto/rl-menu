@@ -45,10 +45,10 @@ export default function PropostasDropdown({ aberto, propostas, extras, ativa, ti
     try {
       await fetch(tipo === 'batizado' ? '/api/batizado/proposta-response' : '/api/lead-page/proposta-response', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, action: 'confirmar', proposta: nome }),
+        body: JSON.stringify({ token, action: 'confirmar', proposta: nome, extras: extrasOn }),
       })
     } catch { /* segue para o contrato na mesma */ }
-    window.location.href = `/contrato-cps/${tipo}`
+    window.location.href = `/contrato-cps/${tipo}?proposta=${encodeURIComponent(nome)}`
   }
   const somaExtras = extras.filter(e => extrasOn.includes(e.nome)).reduce((a, e) => a + num(e.valor), 0)
 

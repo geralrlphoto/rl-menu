@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
-import { NOMES_PROPOSTAS } from '@/lib/crm'
+import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 
 const WHATSAPP      = 'https://wa.me/351912932768'
 const DEFAULT_HERO  = 'https://portal.rlphotovideo.pt/casamentos-2028.webp'
@@ -971,7 +971,12 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
                   </div>
                 </div>
                 {/* Confirmar */}
-                <button onClick={() => handleProposta('confirmar')} disabled={submittingProposta || isAdmin} className="rlp-btn full">
+                {/* Com propostas no CRM, abre-as para escolherem o pacote (fica gravado o que aceitaram) */}
+                <button onClick={() => {
+                  if (!propostaPdfUrl || !(content.propostas || []).some((p, i) => propostaVisivel(p, i))) return handleProposta('confirmar')
+                  setPropostaAberta(true)
+                  setTimeout(() => document.getElementById('sec-propostas')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
+                }} disabled={submittingProposta || isAdmin} className="rlp-btn full">
                   <span className="fill" /><span className="dot" />{submittingProposta ? 'A processar…' : 'Confirmar Proposta'}
                 </button>
                 {/* Rejeitar — discreto */}

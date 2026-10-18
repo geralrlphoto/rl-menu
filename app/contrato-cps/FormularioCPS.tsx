@@ -255,6 +255,11 @@ export default function FormularioCPS({
     if (ref) {
       setForm(prev => prev.referencia_evento ? prev : { ...prev, referencia_evento: ref })
     }
+    // ?proposta=SIGNATURE vem do "A nossa escolha" do portal da reunião
+    const prop = (searchParams.get('proposta') || '').trim().toUpperCase()
+    if (PROPOSTAS_DEFAULT.includes(prop)) {
+      setForm(prev => prev.proposta ? prev : { ...prev, proposta: prop })
+    }
   }, [searchParams])
 
   // Barra de progresso + estado da nav

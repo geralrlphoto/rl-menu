@@ -14,6 +14,31 @@ export function propostaValida(v: unknown): string | null {
   return (NOMES_PROPOSTAS_TODAS as readonly string[]).includes(n) ? n : null
 }
 
+/* Guarda no CRM uma cópia do pacote que os noivos aceitaram (serviços, valor e extras
+   escolhidos). Portal, contrato e prazos leem esta cópia, por isso editar as propostas
+   no CRM depois do "sim" não muda o que foi aceite. */
+export async function guardarPropostaAceite(sb: SupabaseClient, token: string, nome: string, extras: unknown) {
+  const { data: c } = await sb.from('crm_contacts').select('id, page_content').eq('page_token', token).maybeSingle()
+  if (!c) return
+  const pc = typeof c.page_content === 'string' ? JSON.parse(c.page_content || '{}') : (c.page_content || {})
+  const propostas: any[] = pc.propostas || []
+  const i = propostas.findIndex((p, k) => (p?.nome || NOMES_PROPOSTAS_TODAS[k] || '').trim().toUpperCase() === nome)
+  if (i < 0) return
+  const p = propostas[i]
+  const pedidos = Array.isArray(extras) ? extras.map(String) : []
+  const extrasAceites = ((pc.extras_proposta || []) as { nome: string; valor: string }[]).filter(e => pedidos.includes(e.nome))
+  pc.propostaAceite = {
+    indice: i,
+    nome,
+    servicos_foto: p.servicos_foto || [],
+    servicos_video: p.servicos_video || [],
+    valor: p.valor ?? null,
+    extras: extrasAceites,
+    aceite_em: new Date().toISOString(),
+  }
+  await sb.from('crm_contacts').update({ page_content: pc }).eq('id', c.id)
+}
+
 export async function criarTarefaObrigado(sb: SupabaseClient, token: string, batizado: boolean, proposta: string | null) {
   const { data: c } = await sb.from('crm_contacts').select('nome, contato').eq('page_token', token).maybeSingle()
   if (!c) return
