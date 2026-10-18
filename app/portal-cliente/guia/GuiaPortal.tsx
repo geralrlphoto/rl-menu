@@ -301,24 +301,64 @@ const TOPICS: Topic[] = [
         ),
       },
       {
-        title: <>Prazos dos <em>vídeos</em></>,
-        text: 'O Wedding Film tem o prazo mais longo, porque é montado com tempo e cuidado. A data prevista está sempre em Estado das Entregas.',
+        title: <>Prazos do <em>Wedding Film</em></>,
+        text: 'O prazo do filme depende do pacote que contrataram e está escrito no vosso contrato (cláusula 7.1). Conta em dias úteis, de segunda a sexta, a partir do dia do casamento. A data prevista aparece em Estado das Entregas.',
         list: [
-          ['Same Day Edit', 'no próprio dia (se contratado)'],
-          ['Teaser', 'chega antes do filme (se contratado)'],
-          ['Wedding Film', 'até 180 dias úteis após o casamento'],
-          ['Download dos vídeos', 'disponível durante 30 dias'],
+          ['Signature', 'até 60 dias úteis (cerca de 3 meses)'],
+          ['Essencial', 'até 120 dias úteis (cerca de 6 meses)'],
+          ['Basic', 'até 180 dias úteis (cerca de 8 a 9 meses)'],
         ],
-        tip: '180 dias úteis contam só os dias de segunda a sexta, o que dá cerca de 8 a 9 meses.',
+        tip: 'Não sabem qual é o vosso pacote? Vejam a secção Contrato · CPS, em Serviços contratados, ou a cláusula 7.1 do contrato.',
+        mock: (
+          <>
+            <div className="m-label m-in" style={d(0)}>Prazo do Wedding Film</div>
+            {[['Signature', '60', '35%'], ['Essencial', '120', '67%'], ['Basic', '180', '100%']].map(([p, n, w], i) => (
+              <div key={p} className={`m-card m-in ${i === 1 ? 'gold' : ''}`} style={{ ...d(i + 1), flexDirection: 'column', alignItems: 'stretch', gap: 7 }}>
+                <div className="m-row" style={{ alignItems: 'baseline' }}><span style={{ fontWeight: 700, textTransform: 'uppercase' }}>{p}</span><span style={{ flex: 'none', fontSize: 12 }}>{n} dias úteis</span></div>
+                <div className="m-progress" style={{ '--w': w } as CSSProperties}><i /></div>
+              </div>
+            ))}
+          </>
+        ),
+      },
+      {
+        title: <>Os outros <em>vídeos</em></>,
+        text: 'Os vídeos mais curtos chegam antes do filme, conforme o que contrataram.',
+        list: [
+          ['Same Day Edit', 'no próprio dia, mostrado ainda durante a festa'],
+          ['Teaser', 'um primeiro olhar, antes do filme completo'],
+          ['Vídeo Pré-Wedding', 'depois da sessão pré-wedding'],
+          ['Download dos vídeos', 'disponível durante 30 dias depois da entrega'],
+        ],
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Estado das Entregas</div>
-            <div className="m-card m-in" style={{ ...d(1), flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-              <div className="m-row" style={{ alignItems: 'center' }}><span>Entrega do Vídeo</span><span style={{ flex: 'none' }}><Chip s="info">Em Edição</Chip></span></div>
-              <div className="m-progress" style={{ '--w': '64%' } as CSSProperties}><i /></div>
-              <div className="m-small">Prazo · 180 dias úteis · 28 Maio 2027</div>
-            </div>
+            <div className="m-card m-in" style={d(1)}><span className="m-grow">Same Day Edit</span><Chip s="ok">Entregue</Chip></div>
             <div className="m-card m-in" style={d(2)}><span className="m-grow">Teaser</span><Chip s="ok">Entregue</Chip></div>
+            <div className="m-card m-in" style={{ ...d(3), flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+              <div className="m-row" style={{ alignItems: 'center' }}><span>Wedding Film</span><span style={{ flex: 'none' }}><Chip s="info">Em Edição</Chip></span></div>
+              <div className="m-progress" style={{ '--w': '64%' } as CSSProperties}><i /></div>
+              <div className="m-small">Data prevista · 28 Maio 2027</div>
+            </div>
+          </>
+        ),
+      },
+      {
+        title: <>Alterações ao <em>filme</em></>,
+        text: 'Depois de receberem o filme final têm 5 dias seguidos para nos pedirem alterações pontuais, até um máximo de 3. As alterações são feitas entre janeiro e março. Peçam-nas no Atendimento, com o minuto e o segundo de cada ponto.',
+        list: [
+          ['Prazo para pedir', '5 dias seguidos após a entrega do filme'],
+          ['Número de alterações', 'até 3 alterações pontuais'],
+          ['Quando as fazemos', 'entre janeiro e março'],
+          ['Ficheiros guardados', '180 dias após a entrega final; segunda via depois disso: 300 €'],
+        ],
+        tip: 'Vejam o filme logo que chegar e anotem tudo de uma vez, para usarem bem as 3 alterações.',
+        mock: (
+          <>
+            <div className="m-title m-in" style={d(0)}>Atendimento</div>
+            <div className="m-bubble me m-in" style={d(1)}>Alterações ao filme: 1) 02:14 trocar a música da entrada. 2) 05:40 cortar este plano.</div>
+            <div className="m-bubble them m-in" style={d(3)}>Recebido! Ficam 2 de 3 alterações. Tratamos disso e avisamos.</div>
+            <div className="m-card m-in" style={d(4)}><span className="m-grow">Prazo para pedir</span><Chip s="info">Faltam 3 dias</Chip></div>
           </>
         ),
       },
@@ -526,7 +566,7 @@ const TOPICS: Topic[] = [
           ['Vídeo Pré-Wedding', 'depois da sessão pré-wedding'],
           ['Same Day Edit', 'no próprio dia do casamento'],
           ['Teaser', 'um primeiro olhar, antes do filme'],
-          ['Wedding Film', 'até 180 dias úteis após o casamento'],
+          ['Wedding Film', 'até 60, 120 ou 180 dias úteis, conforme o pacote'],
         ],
         mock: (
           <>
@@ -552,6 +592,18 @@ const TOPICS: Topic[] = [
                 <span className="m-grow">{t}<div className="m-small">{s}</div><div style={{ color: 'var(--g-gold)', fontSize: 10, marginTop: 4 }}>{a} →</div></span>
               </div>
             ))}
+          </>
+        ),
+      },
+      {
+        title: <>Pedir <em>alterações</em></>,
+        text: 'Se quiserem mudar algum detalhe do filme final, têm 5 dias seguidos depois da entrega para o pedir no Atendimento, até 3 alterações pontuais. Indiquem o minuto e o segundo de cada ponto. As alterações são feitas entre janeiro e março.',
+        mock: (
+          <>
+            <div className="m-title m-in" style={d(0)}>Atendimento</div>
+            <div className="m-bubble me m-in" style={d(1)}>Alteração ao filme: 03:22 podem usar outra foto no fim?</div>
+            <div className="m-bubble them m-in" style={d(3)}>Claro! Fica registada (1 de 3).</div>
+            <div className="m-card m-in" style={d(4)}><span className="m-grow">Pedidos de alteração</span><Chip s="info">1 de 3</Chip></div>
           </>
         ),
       },
