@@ -257,19 +257,20 @@ const TOPICS: Topic[] = [
     steps: [
       {
         title: <>Prazos das <em>fotografias</em></>,
-        text: 'Os prazos contam a partir do dia do casamento, exceto as fotos editadas, que contam a partir do dia em que nos enviam a seleção.',
+        text: 'São os prazos do vosso contrato (cláusula 7). Contam a partir do dia do casamento, exceto as fotos editadas, que contam a partir do dia em que nos enviam a seleção. Dias úteis são de segunda a sexta.',
         list: [
           ['Galeria Online', 'até 7 dias após o casamento'],
-          ['Fotos para Seleção', 'até 30 dias após o casamento'],
+          ['Fotos para Seleção', 'até 60 dias úteis após o casamento'],
           ['A vossa seleção', 'enviada por vocês no formulário'],
           ['Fotos editadas', '30 dias úteis após recebermos a seleção'],
           ['Download das fotos editadas', 'disponível durante 30 dias'],
+          ['Fotos compradas pelos convidados', 'digitais em 15 dias úteis, em papel em 40 dias úteis'],
         ],
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Fotografias</div>
             <div className="m-timeline">
-              {[['0', 'Casamento', 'O grande dia', 'ok'], ['7', 'Galeria Online', 'até 7 dias', 'ok'], ['30', 'Fotos p/ Seleção', 'até 30 dias', 'ok'], ['✎', 'Vocês escolhem', 'formulário', ''], ['30', 'Fotos editadas', '30 dias úteis', '']].map(([n, t, s, st], i) => (
+              {[['0', 'Casamento', 'O grande dia', 'ok'], ['7', 'Galeria Online', 'até 7 dias', 'ok'], ['60', 'Fotos p/ Seleção', 'até 60 dias úteis', 'ok'], ['✎', 'Vocês escolhem', 'formulário', ''], ['30', 'Fotos editadas', '30 dias úteis', '']].map(([n, t, s, st], i) => (
                 <div key={t} className="st m-in" style={d(i + 1)}>
                   <span className={`bul ${st}`}>{n}</span>
                   <span><div style={{ fontSize: 12 }}>{t}</div><div className="m-small">{s}</div></span>
@@ -282,16 +283,19 @@ const TOPICS: Topic[] = [
       },
       {
         title: <>Prazos do <em>álbum</em></>,
-        text: 'O álbum nasce da vossa seleção. Depois de aprovarem a maqueta, a data de entrega fica marcada automaticamente e aparece no portal.',
+        text: 'O álbum nasce das fotografias que escolhem para ele. Estes são os prazos do contrato (cláusulas 7.6 a 7.9).',
         list: [
-          ['Maqueta do álbum', 'preparada a partir da vossa seleção'],
+          ['Fotos para o álbum', 'enviadas por vocês até 15 de outubro'],
+          ['Maquete do álbum', '40 dias úteis após recebermos as fotografias'],
           ['Aprovação', 'feita por vocês em Fotografias → Álbum'],
-          ['Entrega do álbum', '30 dias após a aprovação da maqueta'],
+          ['Entrega do álbum', '30 dias úteis após a aprovação da maquete'],
+          ['Impressão', 'só depois do pagamento total do serviço'],
         ],
+        tip: 'Para manterem o valor do álbum apresentado na reunião, enviem as fotografias do álbum até 15 de outubro.',
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Processo do álbum</div>
-            {[['01', 'Entrada das fotografias', '20 Out 2026', true], ['02', 'Aprovação da maqueta', '15 Nov 2026', true], ['03', 'Entrega do álbum', '15 Dez 2026', false]].map(([n, t, s, ok], i) => (
+            {[['01', 'Fotos do álbum enviadas', '10 Out 2026', true], ['02', 'Maquete (40 dias úteis)', '4 Dez 2026', true], ['03', 'Aprovação da maquete', '9 Dez 2026', true], ['04', 'Entrega (30 dias úteis)', '20 Jan 2027', false]].map(([n, t, s, ok], i) => (
               <div key={String(n)} className="m-card m-in" style={d(i + 1)}>
                 <span className="m-ic" style={ok ? { background: 'var(--g-gold)', color: '#0b0a08' } : undefined}>{n}</span>
                 <span className="m-grow">{t}<div className="m-small">{s}</div></span>
@@ -418,7 +422,7 @@ const TOPICS: Topic[] = [
       },
       {
         title: <>Fotos para <em>Seleção</em></>,
-        text: 'Até 30 dias depois do casamento recebem o email "As vossas fotos estão prontas para seleção". A galeria está organizada em pastas (Noivo, Noiva, Cerimónia e as seguintes) e cada fotografia tem um nome com as vossas iniciais e um número, por exemplo AP-0001.',
+        text: 'Até 60 dias úteis depois do casamento recebem o email "As vossas fotos estão prontas para seleção". A galeria está organizada em pastas (Noivo, Noiva, Cerimónia e as seguintes) e cada fotografia tem um nome com as vossas iniciais e um número, por exemplo AP-0001.',
         tip: 'No cartão Galeria para Seleção há o botão "Como fazer a escolha", que mostra sempre estas instruções.',
         mock: (
           <>
@@ -509,7 +513,7 @@ const TOPICS: Topic[] = [
       },
       {
         title: <>Aprovar o <em>álbum</em></>,
-        text: 'Com a seleção feita, o atelier monta a maqueta do álbum. Recebem o email "A vossa maquete do álbum está pronta". Em Fotografias, na secção Álbum, revejam a maqueta e toquem em Aprovar Maqueta, ou digam-nos no Atendimento o que querem mudar. Depois de aprovada vai para produção e é entregue em 30 dias.',
+        text: 'Com a seleção feita, o atelier monta a maqueta do álbum. Recebem o email "A vossa maquete do álbum está pronta". Em Fotografias, na secção Álbum, revejam a maqueta e toquem em Aprovar Maqueta, ou digam-nos no Atendimento o que querem mudar. A maquete fica pronta 40 dias úteis depois de recebermos as fotografias; depois de aprovada, entregamos o álbum em 30 dias úteis. O álbum só é impresso depois do pagamento total.',
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Maquete Álbum</div>
@@ -670,6 +674,7 @@ const TOPICS: Topic[] = [
       {
         title: <>Três <em>fases</em></>,
         text: 'O pagamento é feito em três fases: Adjudicação, que reserva a vossa data, Reforço e Final. Os valores e datas de cada fase estão no contrato e na secção Pagamentos.',
+        tip: 'O álbum só é impresso depois do pagamento total do serviço (cláusula 7.8 do contrato).',
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Pagamentos</div>
