@@ -148,6 +148,8 @@ export function AtmospherePortal({
   children?: ReactNode
 }) {
   const temaRL = useTemaRL()
+  // Tema RL: a mensagem de boas-vindas fica fechada atrás do botão Boas-vindas
+  const [boasVindas, setBoasVindas] = useState(false)
   const tipo: PortalTipo = data.tipo ?? 'casamento'
   const isBatizado = tipo === 'batizado'
   const portalBase = isBatizado ? '/portal-batizado' : '/portal-cliente'
@@ -268,7 +270,16 @@ export function AtmospherePortal({
         coupleLabel={coupleLabel}
       />}
 
-      <Welcome
+      {temaRL && (
+        <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 4px' }}>
+          <button type="button" className={`atm-btn${boasVindas ? '' : ' solid'}`} onClick={() => setBoasVindas(v => !v)} aria-expanded={boasVindas}>
+            {boasVindas ? 'Fechar boas-vindas' : 'Boas-vindas'}
+            <span aria-hidden style={{ display: 'inline-block', transition: 'transform .4s', transform: boasVindas ? 'rotate(180deg)' : 'none' }}>⌄</span>
+          </button>
+        </div>
+      )}
+
+      {(!temaRL || boasVindas) && <Welcome
         photoUrl={data.heroImageUrl}
         heading={data.welcomeHeading ?? 'Bem-vindos ao <em>vosso</em> portal'}
         paragraphs={data.welcomeParagraphs ?? defaultParagraphs}
@@ -287,7 +298,7 @@ export function AtmospherePortal({
             )}
           </>
         }
-      />
+      />}
 
       {children /* sub-página activa renderiza-se aqui */}
 
