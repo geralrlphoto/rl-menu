@@ -243,6 +243,7 @@ export default function FormularioCPS({
   const [form, setForm] = useState<Form>(EMPTY)
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [portalEnviado, setPortalEnviado] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const L = getLabels(tipo)
@@ -289,10 +290,12 @@ export default function FormularioCPS({
       const res = await fetch('/api/contrato-cps', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, tipo_evento: tipo }),
+        // t = token do portal da reunião: liga o portal ao pacote que aceitaram
+        body: JSON.stringify({ ...form, tipo_evento: tipo, crm_token: searchParams.get('t') || undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`)
+      setPortalEnviado(!!data.portalEnviado)
       setSuccess(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (e: any) {
@@ -319,7 +322,9 @@ export default function FormularioCPS({
             Obrigado pela vossa confiança
           </p>
           <p className="rlp-lede" style={{ maxWidth: '44ch', marginBottom: 34 }}>
-            Recebemos os vossos dados para o contrato. Em breve entraremos em contacto para os próximos passos.
+            {portalEnviado
+              ? 'Recebemos os vossos dados. O vosso portal já está pronto: enviámos para o vosso email o acesso e a password.'
+              : 'Recebemos os vossos dados para o contrato. Em breve entraremos em contacto para os próximos passos.'}
           </p>
           <Link href={backHref} className="rlp-link-u"><span className="a">‹</span><span>Voltar</span></Link>
         </div>

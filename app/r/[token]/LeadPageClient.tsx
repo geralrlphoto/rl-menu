@@ -891,7 +891,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                     Estamos muito felizes por fazer parte deste momento tão especial. Para dar seguimento ao contrato, avancem abaixo.
                   </p>
                 </div>
-                <a href="/contrato-cps/casamento" className="rlp-btn full">
+                <a href={`/contrato-cps/casamento?t=${encodeURIComponent(token)}`} className="rlp-btn full">
                   <span className="fill" /><span className="dot" />Próximo Passo
                 </a>
               </div>

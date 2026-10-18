@@ -929,7 +929,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
               const refMatch = /^BAT_\d{3}_\d{2}_RL$/i.test(token) ? token : null
               const contratoUrl = refMatch
                 ? `/contrato-cps/batizado?ref=${encodeURIComponent(refMatch)}`
-                : '/contrato-cps/batizado'
+                : `/contrato-cps/batizado?t=${encodeURIComponent(token)}`
               return (
               <div className="rlp-card w-full text-center flex-1" style={{ padding: '40px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 22 }}>
                 <div style={{ width: 52, height: 52, borderRadius: '50%', border: '1px solid var(--g)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

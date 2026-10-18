@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
+import { entregarPortalAutomatico, portalCompleto, reservarReferencia } from '@/lib/portalCriar'
+
+// Criar o portal e o GIF do email demora alguns segundos
+export const maxDuration = 60
 
 // Form interno — Dados para Contrato CPS
 // Substitui o Tally https://tally.so/r/3XXZlV
@@ -394,6 +398,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `${labelObrigatorio} é obrigatório` }, { status: 400 })
     }
 
+    // Token do portal da reunião (CRM): liga o portal ao pacote que os noivos aceitaram
+    const crmToken = typeof body.crm_token === 'string' && /^[\w-]{6,80}$/.test(body.crm_token) ? body.crm_token : null
+    let refFinal = ''
+
     // ── Guardar em paralelo ──────────────────────────────────────────────────
     const [supabaseResult, notionResult] = await Promise.allSettled([
       saveToSupabase(data),
@@ -433,17 +441,10 @@ export async function POST(req: NextRequest) {
         const autoGerada = !referencia
 
         if (autoGerada) {
-          // Fallback: auto-gera se o cliente não forneceu. Usa o maior número já
-          // usado + 1 e confirma que está livre. (Antes contava as linhas: dois
-          // formulários seguidos sem referência recebiam a MESMA referência e o
-          // segundo casal escrevia por cima da ficha do primeiro.)
-          const { data: refs } = await sb.from(table).select('referencia').ilike('referencia', `${prefix}_%`)
-          const usadas = new Set((refs ?? []).map((r: any) => String(r.referencia ?? '').toUpperCase()))
-          let n = Math.max(0, ...[...usadas].filter(r => r.endsWith(`_${anoSufixo}_RL`))
-            .map(r => parseInt(r.split('_')[1] ?? '', 10)).filter(Number.isFinite)) + 1
-          while (usadas.has(`${prefix}_${String(n).padStart(3, '0')}_${anoSufixo}_RL`)) n++
-          referencia = `${prefix}_${String(n).padStart(3, '0')}_${anoSufixo}_RL`
+          // Referência livre escolhida ao acaso e já bloqueada (linha em `portais`)
+          referencia = await reservarReferencia(sb, prefix, anoSufixo)
         }
+        refFinal = referencia
 
         // Carimba a referência resolvida na linha de dados_contrato_cps que
         // acabou de ser criada. Sem isto, quando o cliente não preenche a
@@ -497,9 +498,22 @@ export async function POST(req: NextRequest) {
       console.error('[contrato-cps] eventos insert/update exception:', e)
     }
 
-    // ── Email confirmação cliente (se tiver email) ───────────────────────────
+    // ── Entrega automática do portal (password ao acaso + email aos noivos) ──
+    // Só quando ainda não há portal com os dados dos noivos para esta referência.
+    let entrega: Awaited<ReturnType<typeof entregarPortalAutomatico>> | null = null
+    if (refFinal) {
+      try {
+        if (!(await portalCompleto(db(), refFinal))) {
+          entrega = await entregarPortalAutomatico(refFinal, { ...data, referencia_evento: refFinal }, crmToken)
+        }
+      } catch (e) {
+        console.error('[contrato-cps] entrega automática do portal:', e)
+      }
+    }
+
+    // ── Email confirmação cliente (se o portal não foi enviado) ──────────────
     const clienteEmail = data.email_noiva || data.email_noivo
-    if (clienteEmail) {
+    if (clienteEmail && !entrega?.enviado) {
       await sendEmail(
         clienteEmail,
         '✓ Dados recebidos — RL Photo Video',
@@ -516,7 +530,7 @@ export async function POST(req: NextRequest) {
     const labelTipoMaiusculo = LABEL_BY_TIPO[tipo_evento] ?? 'CASAMENTO'
     await sendEmail(
       ADMIN_EMAIL,
-      `${emojiTipo} Novo ${labelTipoMaiusculo.toLowerCase()} — ${data.nome_noivos}`,
+      `${emojiTipo} Novo ${labelTipoMaiusculo.toLowerCase()} — ${data.nome_noivos}${entrega?.enviado ? ` · portal enviado (${refFinal})` : refFinal ? ` (${refFinal})` : ''}`,
       buildAdminEmail(data)
     )
 
@@ -524,6 +538,8 @@ export async function POST(req: NextRequest) {
       ok: true,
       supabase: supabaseResult.status === 'fulfilled' ? supabaseResult.value : { ok: false },
       notion:   notionVal ?? { ok: false },
+      referencia: refFinal || null,
+      portalEnviado: !!entrega?.enviado,
     })
   } catch (err: any) {
     console.error('[contrato-cps] Erro:', err)
