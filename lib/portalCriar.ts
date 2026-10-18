@@ -329,7 +329,8 @@ export async function entregarPortalAutomatico(ref: string, contrato: any, crmTo
   const tipo: 'casamento' | 'batizado' = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
   const password = passwordAleatoria()
 
-  const extra: Record<string, any> = { contratoDisponivel: false, entregaAutomatica: new Date().toISOString() }
+  // bloqueioAteAdjudicacao: só Contrato e Pagamentos abrem até à adjudicação paga + contrato assinado
+  const extra: Record<string, any> = { contratoDisponivel: false, bloqueioAteAdjudicacao: true, entregaAutomatica: new Date().toISOString() }
   if (crmToken) {
     extra.propostaToken = crmToken
     const { data: c } = await sb.from('crm_contacts').select('page_content').eq('page_token', crmToken).maybeSingle()

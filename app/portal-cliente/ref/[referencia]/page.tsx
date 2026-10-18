@@ -8,6 +8,7 @@ import { plainText, type Block } from '../../NotionRenderer'
 import BlockEditor from '../../BlockEditor'
 import { NoivosLogoutButton } from '@/app/components/NoivosLogoutButton'
 import { AtmospherePortal, buildDeliveriesFromSettings } from '../../atmosphere/AtmospherePortal'
+import { portalBloqueado } from '@/lib/portalBloqueio'
 import { FORM_SELECAO_FOTOS_URL } from '@/lib/links'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
@@ -1010,6 +1011,14 @@ export default function PortalRefPage() {
 
   const [blocks, setBlocks] = useState<Block[]>([])
   const [settings, setSettings] = useState<PortalSettings>({ hiddenNav: [] })
+  // Portal entregue automaticamente: bloqueado até à adjudicação paga + contrato assinado
+  const [pagamentosBloqueio, setPagamentosBloqueio] = useState<any[]>([])
+  const precisaPagamentos = !!(settings as any).bloqueioAteAdjudicacao
+  useEffect(() => {
+    if (!precisaPagamentos) return
+    fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(referencia)}`)
+      .then(r => r.json()).then(d => setPagamentosBloqueio(d.payments ?? [])).catch(() => {})
+  }, [precisaPagamentos, referencia])
   const [loading, setLoading] = useState(true)
   const [editing, setEditing] = useState(false)
   const [editingContent, setEditingContent] = useState(false)
@@ -1435,6 +1444,7 @@ export default function PortalRefPage() {
           deliveries:  buildDeliveriesFromSettings(settings),
           noivosNotifications: settings.noivos_notifications ?? [],
           casalFotoUrl: settings.casalFotoUrl ?? null,
+          bloqueado:   !isAdmin && portalBloqueado(settings, pagamentosBloqueio),
         }}
         callbacks={{}}
       />

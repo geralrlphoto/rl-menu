@@ -17,6 +17,7 @@ import {
 } from './PortalShell'
 import { ArrowUpRightIcon, MailIcon } from './icons'
 import { NoivosNotificationsBell } from './NoivosNotificationsBell'
+import { paginaSempreAberta } from '@/lib/portalBloqueio'
 
 export type PortalTipo = 'casamento' | 'batizado'
 
@@ -48,6 +49,8 @@ export type AtmosphereData = {
   subPages: Array<{ id: string; title: string }>
   hiddenNav?: string[]
   activeNavId?: string | null
+  /** Portal à espera da adjudicação e do contrato assinado: só Contrato e Pagamentos abrem */
+  bloqueado?: boolean
   /**
    * Overrides de título por página (admin renomeou): `pageTitles[id] = 'novo'`.
    * Se ausente usa o título original.
@@ -195,12 +198,14 @@ export function AtmospherePortal({
         active: data.activeNavId === p.id,
         href: hrefFor(p.id, t),
         onClick: callbacks.onSelectSubpage ? () => callbacks.onSelectSubpage?.(p.id) : undefined,
+        locked: !!data.bloqueado && !paginaSempreAberta(t),
       }
     })]
 
   const exploreItems: ExploreItem[] = data.subPages
     .filter(p => !(data.hiddenNav ?? []).includes(p.id))
     .filter(p => !isHiddenByTitle(p))
+    .filter(p => !data.bloqueado || paginaSempreAberta(titleFor(p)))
     .slice(0, 6)
     .map(p => {
       const t = titleFor(p)

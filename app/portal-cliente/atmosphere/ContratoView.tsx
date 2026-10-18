@@ -5,7 +5,7 @@
    Só apresentação. Toda a lógica/data vem por props.
    ============================================================ */
 
-import { type ReactNode } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import './contrato.css'
 
 const fmtEur = (n: number | null | undefined): string => {
@@ -52,6 +52,58 @@ export type ContratoViewProps = {
    * substitui o grid .planscards default. Usar para passar o
    * <PaymentPhasesSection /> existente sem perder funcionalidade. */
   paymentPhasesNode?: ReactNode
+
+  /** Envio do contrato assinado (vai por email ao admin, não fica guardado) */
+  referencia?: string | null
+  contratoAssinadoEm?: string | null
+  onContratoAssinado?: (iso: string) => void
+}
+
+/* Botão para os noivos enviarem o contrato assinado (PDF ou fotografia) */
+function EnviarContratoAssinado({ referencia, enviadoEm, onEnviado }: {
+  referencia: string; enviadoEm?: string | null; onEnviado?: (iso: string) => void
+}) {
+  const input = useRef<HTMLInputElement>(null)
+  const [estado, setEstado] = useState<'idle' | 'a-enviar' | 'erro'>('idle')
+  const [erro, setErro] = useState('')
+  const [feito, setFeito] = useState<string | null>(enviadoEm ?? null)
+
+  async function enviar(f: File) {
+    setEstado('a-enviar'); setErro('')
+    const fd = new FormData()
+    fd.append('referencia', referencia)
+    fd.append('ficheiro', f)
+    try {
+      const r = await fetch('/api/portais-contrato-assinado', { method: 'POST', body: fd })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Não foi possível enviar.')
+      setFeito(d.contratoAssinadoEm); setEstado('idle'); onEnviado?.(d.contratoAssinadoEm)
+    } catch (e: any) {
+      setErro(e.message || 'Não foi possível enviar.'); setEstado('erro')
+    }
+  }
+
+  return (
+    <div className="downloadblock" style={{ cursor: estado === 'a-enviar' ? 'wait' : 'pointer', borderColor: 'rgba(255,255,255,.55)', boxShadow: '0 0 18px rgba(255,255,255,.12)' }}
+      onClick={() => estado !== 'a-enviar' && input.current?.click()} role="button" tabIndex={0}
+      onKeyDown={e => { if (e.key === 'Enter') input.current?.click() }}>
+      <input ref={input} type="file" accept="application/pdf,image/*" hidden
+        onChange={e => { const f = e.target.files?.[0]; if (f) enviar(f); e.target.value = '' }} />
+      <span className="ic">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 16V4M6 10l6-6 6 6" /><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+        </svg>
+      </span>
+      <div className="meta">
+        <div className="lab">{feito ? `Enviado a ${new Date(feito).toLocaleDateString('pt-PT')}` : 'Contrato assinado'}</div>
+        <div className="t">
+          {estado === 'a-enviar' ? 'A enviar…' : feito ? 'Contrato assinado recebido ✓' : 'Enviar contrato assinado'}
+        </div>
+        {estado === 'erro' && <div className="lab" style={{ color: '#e79b9b', marginTop: 6 }}>{erro}</div>}
+        {!feito && estado !== 'erro' && <div className="lab" style={{ marginTop: 6, opacity: .7 }}>PDF ou fotografia, até 4 MB</div>}
+      </div>
+    </div>
+  )
 }
 
 export function ContratoView(props: ContratoViewProps) {
@@ -146,6 +198,11 @@ export function ContratoView(props: ContratoViewProps) {
         </div>
       )}
 
+      {/* Envio do contrato assinado (só depois de o contrato estar disponível) */}
+      {props.contratoDisponivel && props.referencia && (
+        <EnviarContratoAssinado referencia={props.referencia} enviadoEm={props.contratoAssinadoEm} onEnviado={props.onContratoAssinado} />
+      )}
+
       {/* Nota verde-sálvia */}
       <div className="note">
         <span className="ic">✓</span>
@@ -153,7 +210,8 @@ export function ContratoView(props: ContratoViewProps) {
           {props.contratoDisponivel ? (
             <>
               O contrato está <strong>disponível para descarregar</strong>. Façam o download,
-              revejam e — caso queiram pedir alguma alteração — contactem-nos directamente.
+              revejam, assinem e enviem-no pelo botão acima. Caso queiram pedir alguma
+              alteração, contactem-nos diretamente.
             </>
           ) : (
             <>

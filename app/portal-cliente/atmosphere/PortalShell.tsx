@@ -128,6 +128,8 @@ export type SidebarNavItem = {
   active?: boolean
   onClick?: () => void
   href?: string
+  /** Página bloqueada (portal à espera da adjudicação e do contrato assinado) */
+  locked?: boolean
 }
 
 export function SidebarNav({
@@ -147,6 +149,16 @@ export function SidebarNav({
               {getNavIconFor(it.label)}
               <span>{it.label}</span>
             </>
+          )
+          if (it.locked) return (
+            <div key={it.id} className="nv" aria-disabled="true"
+              title="Disponível depois da adjudicação e do envio do contrato assinado."
+              style={{ opacity: .38, cursor: 'not-allowed' }}>
+              {inner}
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto', flexShrink: 0 }} aria-label="Bloqueado">
+                <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
+            </div>
           )
           return it.href ? (
             <a key={it.id} className={`nv${it.active ? ' on' : ''}`} href={it.href}>
