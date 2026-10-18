@@ -21,6 +21,8 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import './atmosphere.css'
+import './tema-rl.css'
+import { refDoEndereco, temTemaRL } from '@/lib/portalTema'
 
 // As fontes tem de ser injectadas em runtime: o Turbopack remove os
 // `@import url(...)` dos ficheiros .css no build de producao, por isso o
@@ -65,9 +67,14 @@ export function PortalShell({
   headerRight?: ReactNode
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
+  // Novo design (tema RL) só nos portais em teste, lidos pelo endereço
+  const [temaRL, setTemaRL] = useState(false)
+  useEffect(() => {
+    setTemaRL(temTemaRL(refDoEndereco(window.location.pathname, window.location.search)))
+  }, [])
 
   return (
-    <div className="portal-atmosphere">
+    <div className={`portal-atmosphere${temaRL ? ' tema-rl' : ''}`}>
       <style dangerouslySetInnerHTML={{ __html: ATMOSPHERE_FONTS }} />
       <div className="grain" />
       <div className="shell">
