@@ -57,6 +57,15 @@ function diffParts(target: Date | null) {
 /* ============================================================
    PortalShell
    ============================================================ */
+/* Novo design (tema RL) só nos portais em teste, lidos pelo endereço */
+export function useTemaRL(): boolean {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    setOn(temTemaRL(refDoEndereco(window.location.pathname, window.location.search)))
+  }, [])
+  return on
+}
+
 export function PortalShell({
   sidebar,
   children,
@@ -67,11 +76,7 @@ export function PortalShell({
   headerRight?: ReactNode
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  // Novo design (tema RL) só nos portais em teste, lidos pelo endereço
-  const [temaRL, setTemaRL] = useState(false)
-  useEffect(() => {
-    setTemaRL(temTemaRL(refDoEndereco(window.location.pathname, window.location.search)))
-  }, [])
+  const temaRL = useTemaRL()
 
   return (
     <div className={`portal-atmosphere${temaRL ? ' tema-rl' : ''}`}>

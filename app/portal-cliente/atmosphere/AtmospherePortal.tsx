@@ -9,7 +9,7 @@
 
 import { type ReactNode, useState, useEffect } from 'react'
 import {
-  PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown,
+  PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, useTemaRL,
   Countdown, Welcome, Gallery, DeliveriesGrid, DeliveryCard,
   TasksEmpty, FeatureGrid, ExploreCards, Footer, AtmButton,
   DEFAULT_FEATURES,
@@ -18,6 +18,7 @@ import {
 import { ArrowUpRightIcon, MailIcon } from './icons'
 import { NoivosNotificationsBell } from './NoivosNotificationsBell'
 import { paginaSempreAberta, type FaltaBloqueio } from '@/lib/portalBloqueio'
+import InicioRelogio from './InicioRelogio'
 
 export type PortalTipo = 'casamento' | 'batizado'
 
@@ -146,6 +147,7 @@ export function AtmospherePortal({
   adminBar?: ReactNode
   children?: ReactNode
 }) {
+  const temaRL = useTemaRL()
   const tipo: PortalTipo = data.tipo ?? 'casamento'
   const isBatizado = tipo === 'batizado'
   const portalBase = isBatizado ? '/portal-batizado' : '/portal-cliente'
@@ -253,6 +255,9 @@ export function AtmospherePortal({
       }
     >
       {adminBar}
+
+      {/* Novo design (tema RL): relógio, dia e frase do dia no topo */}
+      {temaRL && <InicioRelogio />}
 
       <Countdown
         weddingDate={weddingDate}
