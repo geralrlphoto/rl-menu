@@ -7,6 +7,7 @@ import { plainText, type Block } from './NotionRenderer'
 import BlockEditor from './BlockEditor'
 import { AtmospherePortal, buildDeliveriesFromSettings } from './atmosphere/AtmospherePortal'
 import { FORM_SELECAO_FOTOS_URL } from '@/lib/links'
+import GuiaPortal from './guia/GuiaPortal'
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -1090,6 +1091,9 @@ export default function PortalClientePage() {
         }}
         callbacks={{}}
       />
+
+      {/* Guia interativo: só neste portal, não nos portais dos noivos */}
+      <GuiaPortal />
     </>
   )
 }
