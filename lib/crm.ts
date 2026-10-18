@@ -579,3 +579,121 @@ export function telLink(contato: string | null | undefined): string | null {
   const n = (contato ?? '').replace(/[^\d+]/g, '')
   return n.length >= 9 ? `tel:${n}` : null
 }
+
+/* ── Mensagens novas da jornada do cliente (ainda sem botão no CRM) ── */
+
+function diaCasamento(dataCasamento?: string | null): string {
+  const m = (dataCasamento ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  return m ? ` (${m[3]}/${m[2]}/${m[1]})` : ''
+}
+
+/* Lead sem resposta ao contacto para reunião: 1.º follow-up (+3 dias) */
+export function mensagemFollowUpContacto1(nome: string | null | undefined, id: string): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Passámos só para saber se receberam a nossa mensagem. Sabemos que nesta fase chegam muitos contactos ao mesmo tempo.',
+    '',
+    'Continuamos com muita vontade de conhecer a vossa história. Podem escolher aqui o dia e a hora para a nossa reunião, por videochamada ou no estúdio:',
+    linkPublico(`/reuniao/${id}`),
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* Lead sem resposta ao contacto para reunião: 2.º follow-up, última mensagem (+6 dias) */
+export function mensagemFollowUpContacto2(nome: string | null | undefined, id: string): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Não queremos ser insistentes, por isso esta é a nossa última mensagem.',
+    '',
+    'Se ainda estiverem à procura de quem vos acompanhe no casamento, a vossa data continua livre na nossa agenda e o link para marcarmos a reunião é este:',
+    linkPublico(`/reuniao/${id}`),
+    '',
+    'Se entretanto já tiverem decidido, está tudo bem. Desejamos-vos um dia muito feliz.',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* Follow Up 3: última tentativa depois da proposta */
+export function mensagemFollowUp3(nome: string | null | undefined, dataCasamento?: string | null): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Esta é a nossa última mensagem sobre a proposta, prometemos!',
+    '',
+    'Para nos ajudar a melhorar, podiam dizer-nos o que pesou mais na vossa decisão? Preço, data, estilo ou outro fornecedor. Qualquer resposta nos ajuda muito.',
+    '',
+    `E se ainda estiverem a pensar em nós, basta responderem "sim" e reservamos já a vossa data${diaCasamento(dataCasamento)}.`,
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* Não aceitou: agradecer e perguntar o motivo */
+export function mensagemNaoAceitou(nome: string | null | undefined): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Obrigado por nos terem dado a conhecer a vossa história e pela vossa resposta. Ficámos com pena, mas respeitamos totalmente a vossa decisão.',
+    '',
+    'Se não se importarem, gostávamos de saber o que pesou mais na escolha. Ajuda-nos muito a melhorar.',
+    '',
+    'Desejamos-vos um casamento inesquecível!',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* Lembrete da adjudicação, 24 h antes do fim do prazo */
+export function mensagemLembreteAdjudicacao(nome: string | null | undefined, dataCasamento?: string | null): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Esperamos que estejam a gostar do vosso portal dos noivos!',
+    '',
+    `Só um lembrete: faltam 24 horas para terminar o prazo da adjudicação. É este pagamento que reserva efetivamente o vosso dia${diaCasamento(dataCasamento)} na nossa agenda. Em Pagamentos, no portal, está toda a informação sobre como fazer.`,
+    '',
+    'Se tiverem alguma dúvida, estamos aqui.',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* Pós-venda: avaliação no Google e recomendações */
+export function mensagemAvaliacaoGoogle(nome: string | null | undefined, linkAvaliacao = '[link da avaliação Google]'): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Foi uma honra contar a vossa história. Esperamos que estejam a reviver o vosso dia com as fotografias e o filme!',
+    '',
+    'Pedíamos-vos um pequeno favor: deixarem-nos uma avaliação no Google. Demora 1 minuto e ajuda muito outros casais a encontrarem-nos:',
+    linkAvaliacao,
+    '',
+    'E se tiverem amigos a casar, vamos adorar conhecê-los. Por cada casal que nos recomendarem e que feche connosco, temos uma surpresa para vocês.',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
+
+/* Pós-venda: 1.º aniversário de casamento */
+export function mensagemAniversario(nome: string | null | undefined): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Faz hoje um ano que casaram! Parece que foi ontem que estávamos convosco a guardar cada momento.',
+    '',
+    'Muitos parabéns aos dois. Desejamos-vos muitos anos de felicidade. E se um dia quiserem registar uma nova fase, seja uma sessão de família ou a chegada de um bebé, vamos adorar voltar a estar convosco.',
+    '',
+    ...ASSINATURA_ABRACO,
+  ].join('\n')
+}
