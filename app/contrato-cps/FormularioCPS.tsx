@@ -114,6 +114,16 @@ const EMPTY: Form = {
   nome_crianca: '', idade_crianca: '',
 }
 
+// Campos que os noivos/pais têm de preencher (o servidor valida a mesma lista)
+function camposObrigatorios(tipo: Tipo): (keyof Form)[] {
+  const base: (keyof Form)[] = [
+    'nome_noivos', 'data_casamento', 'local_cerimonia', 'proposta',
+    'nome_noiva', 'morada_noiva', 'tel_noiva', 'cc_noiva', 'nif_noiva', 'email_noiva',
+    'nome_noivo', 'morada_noivo', 'tel_noivo', 'cc_noivo', 'nif_noivo', 'email_noivo',
+  ]
+  return tipo === 'batizado' ? [...base, 'nome_crianca', 'idade_crianca'] : base
+}
+
 // ─── Labels condicionais por tipo ─────────────────────────────────────────────
 function getLabels(tipo: Tipo) {
   if (tipo === 'batizado') {
@@ -253,7 +263,8 @@ export default function FormularioCPS({
   const searchParams = useSearchParams()
   useEffect(() => {
     const ref = searchParams.get('ref')
-    if (ref) {
+    // Vindo do portal da reunião (?t=) a referência é sempre escolhida pela app
+    if (ref && !searchParams.get('t')) {
       setForm(prev => prev.referencia_evento ? prev : { ...prev, referencia_evento: ref })
     }
     // ?proposta=SIGNATURE vem do "A nossa escolha" do portal da reunião
@@ -284,6 +295,13 @@ export default function FormularioCPS({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    // Todos os campos são obrigatórios: só espaços não conta como preenchido
+    const emFalta = camposObrigatorios(tipo).filter(k => !String(form[k] ?? '').trim())
+    if (emFalta.length) {
+      setError('Preencham todos os campos antes de enviar.')
+      document.querySelector<HTMLInputElement>(`[name="${emFalta[0]}"]`)?.focus()
+      return
+    }
     setSubmitting(true)
     setError(null)
     try {

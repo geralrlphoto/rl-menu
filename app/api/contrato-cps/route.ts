@@ -367,7 +367,8 @@ export async function POST(req: NextRequest) {
 
     const data = {
       tipo_evento,
-      referencia_evento: body.referencia_evento ?? null,
+      // Vindo do portal da reunião (crm_token) a referência é sempre escolhida pela app
+      referencia_evento: typeof body.crm_token === 'string' && body.crm_token ? null : (body.referencia_evento ?? null),
       nome_noivos:     body.nome_noivos     ?? null,
       data_casamento:  body.data_casamento  ?? null,
       local_cerimonia: body.local_cerimonia ?? null,
@@ -396,6 +397,16 @@ export async function POST(req: NextRequest) {
     if (!data.nome_noivos) {
       const labelObrigatorio = tipo_evento === 'batizado' ? 'NOME DOS PAIS' : 'NOME DOS NOIVOS'
       return NextResponse.json({ error: `${labelObrigatorio} é obrigatório` }, { status: 400 })
+    }
+    // Todos os campos do formulário são obrigatórios (mesma lista do FormularioCPS)
+    const obrigatorios = [
+      'nome_noivos', 'data_casamento', 'local_cerimonia', 'proposta',
+      'nome_noiva', 'morada_noiva', 'tel_noiva', 'cc_noiva', 'nif_noiva', 'email_noiva',
+      'nome_noivo', 'morada_noivo', 'tel_noivo', 'cc_noivo', 'nif_noivo', 'email_noivo',
+      ...(tipo_evento === 'batizado' ? ['nome_crianca', 'idade_crianca'] : []),
+    ] as const
+    if (obrigatorios.some(k => !String((data as Record<string, unknown>)[k] ?? '').trim())) {
+      return NextResponse.json({ error: 'Preencham todos os campos antes de enviar.' }, { status: 400 })
     }
 
     // Token do portal da reunião (CRM): liga o portal ao pacote que os noivos aceitaram
