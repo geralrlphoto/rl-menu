@@ -413,6 +413,13 @@ export async function POST(req: NextRequest) {
     const crmToken = typeof body.crm_token === 'string' && /^[\w-]{6,80}$/.test(body.crm_token) ? body.crm_token : null
     let refFinal = ''
 
+    // A proposta é sempre a que os noivos aceitaram no portal da reunião
+    if (crmToken) {
+      const { data: c } = await db().from('crm_contacts').select('page_content').eq('page_token', crmToken).maybeSingle()
+      const pc = typeof c?.page_content === 'string' ? JSON.parse(c.page_content || '{}') : (c?.page_content || {})
+      if (pc.propostaAceite?.nome) data.proposta = pc.propostaAceite.nome
+    }
+
     // ── Guardar (só Supabase: já não se cria página no Notion) ───────────────
     const [supabaseResult] = await Promise.allSettled([saveToSupabase(data)])
     const notionVal: { ok: boolean; id?: string } | null = null

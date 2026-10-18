@@ -261,6 +261,9 @@ export default function FormularioCPS({
 
   // Pre-fill da referência via ?ref=XXX (vinda do portal ou link da proposta)
   const searchParams = useSearchParams()
+  // Proposta que os noivos escolheram no portal da reunião (fica fixa no formulário)
+  const propostaQs = (searchParams.get('proposta') || '').trim().toUpperCase()
+  const propostaFixa = searchParams.get('t') && PROPOSTAS_DEFAULT.includes(propostaQs) ? propostaQs : null
   useEffect(() => {
     const ref = searchParams.get('ref')
     // Vindo do portal da reunião (?t=) a referência é sempre escolhida pela app
@@ -270,7 +273,7 @@ export default function FormularioCPS({
     // ?proposta=SIGNATURE vem do "A nossa escolha" do portal da reunião
     const prop = (searchParams.get('proposta') || '').trim().toUpperCase()
     if (PROPOSTAS_DEFAULT.includes(prop)) {
-      setForm(prev => prev.proposta ? prev : { ...prev, proposta: prop })
+      setForm(prev => ({ ...prev, proposta: prop }))
     }
   }, [searchParams])
 
@@ -399,7 +402,17 @@ export default function FormularioCPS({
           <Field label={L.nome_noivos} name="nome_noivos" value={form.nome_noivos} onChange={update} required placeholder={L.nome_noivos_placeholder} />
           <Field label={L.data_evento} name="data_casamento" value={form.data_casamento} onChange={update} type="date" required />
           <Field label={L.local_evento} name="local_cerimonia" value={form.local_cerimonia} onChange={update} required placeholder={L.local_evento_placeholder} />
-          <Select label="Proposta Escolhida" name="proposta" value={form.proposta} onChange={update} options={PROPOSTAS_DEFAULT} required />
+          {propostaFixa ? (
+            // Escolhida no portal da reunião: não se pode mudar aqui
+            <div className="rlp-field">
+              <span className="lab">Proposta Escolhida</span>
+              <div style={{ borderBottom: '1px solid var(--line)', padding: '8px 0 13px', fontFamily: 'var(--fd)', fontWeight: 300, fontSize: 'clamp(16px,1.6vw,20px)', color: 'var(--tx)' }}>
+                {propostaFixa}
+              </div>
+            </div>
+          ) : (
+            <Select label="Proposta Escolhida" name="proposta" value={form.proposta} onChange={update} options={PROPOSTAS_DEFAULT} required />
+          )}
 
           {/* ── Secção 02: Dados da Criança (só batizado) ── */}
           {isBatizado && (
