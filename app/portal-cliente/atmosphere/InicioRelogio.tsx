@@ -93,6 +93,12 @@ export default function InicioRelogio({ fotoUrl, noiva, noivo }: { fotoUrl?: str
       <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #0b0b0b 0%, rgba(11,11,11,0.45) 20%, rgba(11,11,11,0.55) 65%, #0b0b0b 100%)' }} />
 
       <div style={{ position: 'relative' }}>
+      {/* os noivos, no topo, por cima das horas */}
+      {(a || b) && (
+        <h1 className="inicio-nomes" style={{ margin: '0 0 30px', color: '#fff', fontWeight: 200, fontSize: 'clamp(46px, 7vw, 84px)', lineHeight: 1.04 }}>
+          {a}{a && b && <em style={{ fontStyle: 'normal', color: GOLD }}> &amp; </em>}{b}
+        </h1>
+      )}
       {/* relógio */}
       <p style={{ fontFamily: COND, fontWeight: 100, lineHeight: .85, letterSpacing: '.02em', fontSize: 'clamp(84px, 11vw, 124px)', margin: 0 }}>
         <span style={{ color: 'rgba(255,255,255,.9)' }}>{t?.horas ?? '--'}</span>
@@ -135,12 +141,6 @@ export default function InicioRelogio({ fotoUrl, noiva, noivo }: { fotoUrl?: str
         )}
       </div>
 
-      {/* os noivos, logo abaixo da frase */}
-      {(a || b) && (
-        <h1 className="inicio-nomes" style={{ margin: '34px 0 0', color: '#fff', fontWeight: 200, fontSize: 'clamp(46px, 7vw, 84px)', lineHeight: 1.04 }}>
-          {a}{a && b && <em style={{ fontStyle: 'normal', color: GOLD }}> &amp; </em>}{b}
-        </h1>
-      )}
       </div>
     </section>
   )
