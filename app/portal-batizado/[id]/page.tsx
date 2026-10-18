@@ -1211,10 +1211,10 @@ function PortalSubPageContent() {
         setPortalRef(ref)
         setPortalTotal(total)
         const fetches: Promise<any>[] = [
-          fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
-          fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()),
+          fetch(`/api/pagamentos-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => ({})),
+          fetch(`/api/evento-by-ref?ref=${encodeURIComponent(ref)}`).then(r => r.json()).catch(() => ({})),
         ]
-        if (propToken) fetches.push(fetch(`/api/crm-proposta-by-token?token=${encodeURIComponent(propToken)}`).then(r => r.json()))
+        if (propToken) fetches.push(fetch(`/api/crm-proposta-by-token?token=${encodeURIComponent(propToken)}`).then(r => r.json()).catch(() => ({})))
         const results = await Promise.all(fetches)
         const [pd, ed, propd] = results
         setPagamentos(pd.payments ?? [])

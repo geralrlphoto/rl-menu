@@ -180,6 +180,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/previsao-ipma') ||
     pathname.startsWith('/api/equipa-do-dia') ||
     pathname.startsWith('/api/pagamentos-by-ref') ||
+    // Serviços da proposta aceite (só serviços e valor, pelo token do CRM): o portal dos noivos precisa
+    pathname.startsWith('/api/crm-proposta-by-token') ||
     pathname.startsWith('/api/pagamentos-noivos') ||
     pathname.startsWith('/api/fotos-selecao') ||
     pathname.startsWith('/api/webhook-tally-selecao') ||
