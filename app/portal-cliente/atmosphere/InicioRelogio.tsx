@@ -61,10 +61,15 @@ function Contagem({ data }: { data: Date }) {
   const lbl = ['Dias', 'Horas', 'Min', 'Seg']
   return (
     <div style={{
-      display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', maxWidth: 620, margin: '34px auto 0',
+      maxWidth: 620, margin: '34px auto 0',
       borderRadius: 22, border: '1px solid rgba(201,168,76,.3)', background: 'rgba(17,17,17,.7)',
-      backdropFilter: 'blur(14px)', boxShadow: '0 0 48px -22px rgba(201,168,76,.5)', padding: '6px 4px',
+      backdropFilter: 'blur(14px)', boxShadow: '0 0 48px -22px rgba(201,168,76,.5)', padding: '18px 4px 6px',
     }}>
+      <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+        <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, boxShadow: `0 0 8px ${GOLD}` }} />
+        Estamos a contar os dias
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', marginTop: 4 }}>
       {lbl.map((l, k) => (
         <div key={l} style={{ padding: '14px 4px', borderLeft: k ? '1px solid rgba(255,255,255,.07)' : 0 }}>
           <div style={{ fontFamily: 'var(--fd)', fontWeight: 200, fontSize: 'clamp(32px, 4.6vw, 52px)', lineHeight: 1, color: k === 0 ? GOLD : '#fff' }}>
@@ -73,6 +78,7 @@ function Contagem({ data }: { data: Date }) {
           <div style={{ marginTop: 8, fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', fontWeight: 600, color: 'rgba(255,255,255,.45)' }}>{l}</div>
         </div>
       ))}
+      </div>
     </div>
   )
 }
