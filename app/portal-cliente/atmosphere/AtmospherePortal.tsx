@@ -122,7 +122,8 @@ export function buildDeliveriesFromSettings(settings: Record<string, any> | null
   const s = settings ?? {}
   return [
     { roman: 'I',   title: 'Seleção de Fotos',  meta: 'Prazo · 60 dias úteis',    state: mapEstadoToDeliveryState(s.sel_fotos_estado) },
-    { roman: 'II',  title: 'Entrega do Vídeo',  meta: 'Prazo · 180 dias úteis',    state: mapEstadoToDeliveryState(s.video_estado) },
+    // Prazo do vídeo segue o pacote do contrato (cláusula 7.1); os portais /ref/ preenchem prazo_video_dias
+    { roman: 'II',  title: 'Entrega do Vídeo',  meta: `Prazo · ${s.prazo_video_dias ?? 180} dias úteis`, state: mapEstadoToDeliveryState(s.video_estado) },
     { roman: 'III', title: 'Fotos para Edição', meta: 'Em curso no atelier',       state: mapEstadoToDeliveryState(s.fotos_edicao_estado) },
     { roman: 'IV',  title: 'Álbum',             meta: 'Em aprovação',              state: mapEstadoToDeliveryState(s.album_estado) },
     { roman: 'V',   title: 'Seleção · Acordos', meta: 'Galeria privada partilhada', state: mapEstadoToDeliveryState(s.selecao_noivos_estado) },

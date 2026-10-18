@@ -1,5 +1,6 @@
 ﻿'use client'
 
+import { prazoVideoDias } from '@/lib/crm'
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
@@ -1093,6 +1094,7 @@ export default function PortalRefPage() {
       const ev: any = evD?.evento ?? {}
       if (ev.sel_fotos_estado != null)    ps.sel_fotos_estado    = ev.sel_fotos_estado
       if (ev.video_estado != null)        ps.video_estado        = ev.video_estado
+      ps.prazo_video_dias = prazoVideoDias(ev.proposta)
       if (ev.fotos_edicao_estado != null) ps.fotos_edicao_estado = ev.fotos_edicao_estado
       if (ev.album_estado != null)        ps.album_estado        = ev.album_estado
 
