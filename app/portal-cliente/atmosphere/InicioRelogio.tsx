@@ -26,7 +26,7 @@ const FRASES: Array<{ texto: string; autor: string }> = [
 ]
 
 const COND = "'Roboto Condensed', system-ui, sans-serif"
-const GOLD = '#C9A84C'
+const GOLD = '#d8be93'
 
 function agoraLisboa() {
   const p = Object.fromEntries(
@@ -62,8 +62,8 @@ function Contagem({ data }: { data: Date }) {
   return (
     <div style={{
       maxWidth: 620, margin: '34px auto 0',
-      borderRadius: 22, border: '1px solid rgba(201,168,76,.3)', background: 'rgba(17,17,17,.7)',
-      backdropFilter: 'blur(14px)', boxShadow: '0 0 48px -22px rgba(201,168,76,.5)', padding: '18px 4px 6px',
+      borderRadius: 22, border: '1px solid rgba(216,190,147,.3)', background: 'rgba(17,17,17,.7)',
+      backdropFilter: 'blur(14px)', boxShadow: '0 0 48px -22px rgba(216,190,147,.5)', padding: '18px 4px 6px',
     }}>
       <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
         <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, boxShadow: `0 0 8px ${GOLD}` }} />
@@ -104,11 +104,11 @@ export default function InicioRelogio({ fotoUrl, noiva, noivo, dataCasamento }: 
     <section style={{
       position: 'relative', overflow: 'hidden', textAlign: 'center', userSelect: 'none',
       padding: 'clamp(48px, 8vw, 84px) 20px clamp(44px, 7vw, 72px)', marginBottom: 28,
-      borderRadius: 28, border: '1px solid rgba(201,168,76,.2)', background: '#0b0b0b',
+      borderRadius: 28, border: '1px solid rgba(216,190,147,.2)', background: '#0b0b0b',
     }} suppressHydrationWarning>
       {/* fundo: foto esbatida a preto e branco, brilho dourado, pontilhado e anéis finos (como no /photo) */}
       <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: `url('${fotoUrl || '/casamentos-2028.webp'}')`, backgroundSize: 'cover', backgroundPosition: 'center 35%', filter: 'grayscale(1)', opacity: .3 }} />
-      <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 55% 50% at 50% 38%, rgba(201,168,76,0.12), transparent 70%)' }} />
+      <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 55% 50% at 50% 38%, rgba(216,190,147,0.12), transparent 70%)' }} />
       <div aria-hidden style={{
         position: 'absolute', inset: 0, opacity: .4,
         backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '26px 26px',
@@ -141,7 +141,7 @@ export default function InicioRelogio({ fotoUrl, noiva, noivo, dataCasamento }: 
       <div style={{ position: 'relative', marginTop: 38 }}>
         <div aria-hidden style={{
           position: 'absolute', left: 0, right: 0, top: -24, bottom: -24, pointerEvents: 'none',
-          backgroundImage: 'radial-gradient(rgba(201,168,76,0.16) 1px, transparent 1px)', backgroundSize: '18px 18px',
+          backgroundImage: 'radial-gradient(rgba(216,190,147,0.16) 1px, transparent 1px)', backgroundSize: '18px 18px',
           maskImage: 'radial-gradient(ellipse 60% 70% at 50% 50%, #000 25%, transparent 75%)',
           WebkitMaskImage: 'radial-gradient(ellipse 60% 70% at 50% 50%, #000 25%, transparent 75%)',
         }} />
@@ -155,7 +155,7 @@ export default function InicioRelogio({ fotoUrl, noiva, noivo, dataCasamento }: 
               <span style={{ color: GOLD }}>“</span>{f.texto}<span style={{ color: GOLD }}>”</span>
             </blockquote>
             <figcaption style={{ marginTop: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, transition: 'opacity .3s', opacity: visivel ? 1 : 0 }}>
-              <span style={{ height: 1, width: 48, background: 'rgba(201,168,76,.5)', marginBottom: 8 }} />
+              <span style={{ height: 1, width: 48, background: 'rgba(216,190,147,.5)', marginBottom: 8 }} />
               <span style={{ fontFamily: COND, fontSize: 13, fontWeight: 600, letterSpacing: '.2em', textTransform: 'uppercase', color: GOLD }}>{f.autor}</span>
             </figcaption>
           </figure>
