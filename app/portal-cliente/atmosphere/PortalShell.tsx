@@ -33,6 +33,12 @@ import {
 } from './icons'
 
 /* ── Util: lê dias até uma data (ignora horas) ───────────────── */
+/* "susana maria silva" → "Susana" */
+function primeiroNome(s?: string | null): string {
+  const w = String(s ?? '').trim().split(/\s+/)[0] ?? ''
+  return w ? w.charAt(0).toLocaleUpperCase('pt-PT') + w.slice(1).toLocaleLowerCase('pt-PT') : ''
+}
+
 function diffParts(target: Date | null) {
   if (!target) return { d: 0, h: 0, m: 0, s: 0, totalDays: 0, past: false }
   const now = new Date()
@@ -102,7 +108,7 @@ export function SidebarCouple({
   fotoUrl?: string | null
 }) {
   const lbl = coupleLabel ?? 'Os Noivos'
-  const names = [noiva, noivo].filter(Boolean).join(' & ') || lbl
+  const names = [primeiroNome(noiva), primeiroNome(noivo)].filter(Boolean).join(' & ') || lbl
   const inicial = (noiva || noivo || lbl).trim().charAt(0).toUpperCase()
   return (
     <div className="couple">
@@ -214,8 +220,9 @@ export function Countdown({
     return () => clearInterval(id)
   }, [weddingDate])
 
-  const a = noiva ?? ''
-  const b = noivo ?? ''
+  // Na página inicial só o primeiro nome (o formulário do contrato guarda o nome completo)
+  const a = primeiroNome(noiva)
+  const b = primeiroNome(noivo)
   const showAmp = a && b
 
   return (
