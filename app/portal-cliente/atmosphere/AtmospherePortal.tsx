@@ -93,7 +93,7 @@ const ROMANS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X']
 /** Default real: tudo em "Aguarda" — usado quando settings não tem
  *  estado nenhum gravado. Não mostra mocks fakes. */
 const DEFAULT_DELIVERIES: NonNullable<AtmosphereData['deliveries']> = [
-  { roman: 'I',   title: 'Seleção de Fotos', meta: 'Prazo · 30 dias',           state: 'wait' },
+  { roman: 'I',   title: 'Seleção de Fotos', meta: 'Prazo · 60 dias úteis',    state: 'wait' },
   { roman: 'II',  title: 'Entrega do Vídeo', meta: 'Prazo · 180 dias úteis',    state: 'wait' },
   { roman: 'III', title: 'Fotos para Edição', meta: 'Em curso no atelier',       state: 'wait' },
   { roman: 'IV',  title: 'Álbum',            meta: 'Em aprovação',               state: 'wait' },
@@ -121,7 +121,7 @@ function mapEstadoToDeliveryState(s: string | null | undefined): import('./Porta
 export function buildDeliveriesFromSettings(settings: Record<string, any> | null | undefined): NonNullable<AtmosphereData['deliveries']> {
   const s = settings ?? {}
   return [
-    { roman: 'I',   title: 'Seleção de Fotos',  meta: 'Prazo · 30 dias',           state: mapEstadoToDeliveryState(s.sel_fotos_estado) },
+    { roman: 'I',   title: 'Seleção de Fotos',  meta: 'Prazo · 60 dias úteis',    state: mapEstadoToDeliveryState(s.sel_fotos_estado) },
     { roman: 'II',  title: 'Entrega do Vídeo',  meta: 'Prazo · 180 dias úteis',    state: mapEstadoToDeliveryState(s.video_estado) },
     { roman: 'III', title: 'Fotos para Edição', meta: 'Em curso no atelier',       state: mapEstadoToDeliveryState(s.fotos_edicao_estado) },
     { roman: 'IV',  title: 'Álbum',             meta: 'Em aprovação',              state: mapEstadoToDeliveryState(s.album_estado) },
