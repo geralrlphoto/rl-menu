@@ -775,7 +775,6 @@ const TOPICS: Topic[] = [
           ['Reforço', '80% do valor em falta, até 2 dias antes do casamento'],
           ['Final', 'os restantes 20%, no final'],
         ],
-        tip: 'O álbum só é impresso depois do pagamento total do serviço (cláusula 7.8 do contrato).',
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Pagamentos</div>
