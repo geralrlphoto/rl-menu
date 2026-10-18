@@ -447,6 +447,7 @@ const TOPICS: Topic[] = [
           ['Galeria para Seleção', 'De onde escolhem as fotografias'],
           ['Fotos Pré-Wedding', 'A sessão antes do grande dia'],
           ['Fotos Editadas', 'A seleção final, pronta para imprimir'],
+          ['Fotos dos convidados', 'Digital em 15 dias úteis, em papel em 30 dias úteis'],
         ],
         mock: (
           <>
