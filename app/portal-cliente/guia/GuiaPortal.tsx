@@ -22,6 +22,8 @@ const IcFilm     = () => svg(<><rect x="3" y="6" width="13" height="12" rx="2" /
 const IcContract = () => svg(<><path d="M7 3h8l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M15 3v4h4M9 12h6M9 16h4" /></>)
 const IcCard     = () => svg(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 10h18M7 15h3" /></>)
 const IcChat     = () => svg(<><path d="M21 12c0 4.4-4 8-9 8a9.9 9.9 0 0 1-4.3-.9L3 20l1.4-3.7A7.4 7.4 0 0 1 3 12c0-4.4 4-8 9-8s9 3.6 9 8Z" /></>)
+const IcMail     = () => svg(<><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>)
+const IcClock    = () => svg(<><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>)
 const IcBell     = () => svg(<><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0" /></>)
 const IcArrow    = () => svg(<path d="M5 12h14M13 6l6 6-6 6" />)
 const IcBack     = () => svg(<path d="M19 12H5M11 6l-6 6 6 6" />)
@@ -63,18 +65,37 @@ const ChipSwap = ({ from, to }: { from: [string, 'wait' | 'info' | 'ok' | 'red']
 
 // ─── conteúdo do guia ────────────────────────────────────────────────────────
 
-type Step = { title: ReactNode; text: string; tip?: string; mock: ReactNode }
+type Step = { title: ReactNode; text: string; tip?: string; list?: Array<[string, string]>; mock: ReactNode }
 type Topic = { id: string; label: string; intro: string; icon: () => ReactNode; steps: Step[] }
 
 const TOPICS: Topic[] = [
   {
     id: 'portal', label: 'Como funciona', icon: IcPortal,
-    intro: 'O que encontram no portal e como andar por ele.',
+    intro: 'Como entram no portal, o que lá encontram e como andar por ele.',
     steps: [
       {
+        title: <>O email de <em>boas-vindas</em></>,
+        text: 'Quando o vosso portal fica pronto recebem o email "O vosso Portal dos Noivos está pronto". Nele vem a referência do vosso casamento, a password e o botão Aceder ao Portal.',
+        tip: 'Guardem este email. A referência (por exemplo CAS_026_26_RL) é pedida no formulário de seleção e no registo de pagamentos.',
+        mock: (
+          <div className="m-mail m-in" style={d(0)}>
+            <div className="hd">O vosso <em>portal</em></div>
+            <div className="bd">
+              Este é o vosso espaço exclusivo: fotos, vídeos, cronograma e muito mais.
+              <div style={{ marginTop: 10, padding: 8, border: '1px solid #d8c9a8', borderRadius: 6, textAlign: 'center' }}>
+                <div style={{ fontSize: 7, letterSpacing: '.3em', color: '#8a7450' }}>REFERÊNCIA</div>
+                <div style={{ fontFamily: 'var(--g-fm)', fontSize: 11, color: '#8a6a30' }}>CAS_026_26_RL</div>
+                <div style={{ fontSize: 7, letterSpacing: '.3em', color: '#8a7450', marginTop: 6 }}>PASSWORD</div>
+                <div style={{ fontFamily: 'var(--g-fm)', fontSize: 11, color: '#8a6a30' }}>••••••</div>
+              </div>
+              <div className="cta m-tap">ACEDER AO PORTAL</div>
+            </div>
+          </div>
+        ),
+      },
+      {
         title: <>Um só lugar para <em>tudo</em></>,
-        text: 'Este é o vosso portal privado. Aqui ficam o contrato, os pagamentos, as fotografias, o filme e todas as novidades do vosso casamento, sempre atualizados por nós.',
-        tip: 'Guardem o link que receberam por email. Podem abrir o portal no telemóvel ou no computador.',
+        text: 'Este é o vosso portal privado. Aqui ficam o contrato, os pagamentos, as fotografias, os vídeos e todas as novidades do vosso casamento, sempre atualizados por nós. Funciona no telemóvel e no computador.',
         mock: (
           <>
             <div className="m-img m-in" style={{ ...d(0), height: 130 }} />
@@ -89,7 +110,15 @@ const TOPICS: Topic[] = [
       },
       {
         title: <>As <em>secções</em> do portal</>,
-        text: 'No menu encontram cada secção: Atendimento, Contrato, Pagamentos, Fotografias, O Nosso Filme, Cronograma e as restantes. Toquem numa para a abrir. A que está em dourado é o passo em que estamos agora.',
+        text: 'No menu encontram cada secção. Toquem numa para a abrir. A que está em dourado é o passo em que estamos agora.',
+        list: [
+          ['Atendimento', 'Mensagens entre vocês e nós'],
+          ['Contrato · CPS', 'O contrato e os serviços contratados'],
+          ['Pagamentos', 'Fases, valores e registo de pagamentos'],
+          ['Fotografias', 'Galerias, seleção, fotos editadas e álbum'],
+          ['O Nosso Filme', 'Same Day Edit, teaser e Wedding Film'],
+          ['Briefing e Cronograma', 'Os detalhes e as tarefas antes do dia'],
+        ],
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Menu</div>
@@ -103,13 +132,13 @@ const TOPICS: Topic[] = [
       },
       {
         title: <>O <em>sino</em> das novidades</>,
-        text: 'Sempre que temos algo para vos dizer aparece um ponto vermelho no sino dourado, no topo do portal. Toquem no sino para ler a mensagem. Também enviamos um email com o mesmo aviso.',
+        text: 'Sempre que temos algo para vos dizer aparece um ponto vermelho no sino dourado, no topo do portal. Toquem no sino para ler a mensagem. Ao mesmo tempo enviamos um email com o mesmo título.',
         mock: (
           <>
             <div className="m-drop m-in" style={d(3)}>
               <div className="m-label">Nova notificação</div>
-              <div style={{ fontSize: 12, marginBottom: 4 }}>As vossas fotografias estão prontas</div>
-              <div className="m-small">Já podem ver a Galeria Online na secção Fotografias.</div>
+              <div style={{ fontSize: 12, marginBottom: 4 }}>As fotos do dia já estão disponíveis</div>
+              <div className="m-small">Já podem ver a Galeria Online em Fotografias.</div>
             </div>
             <div className="m-drop m-in" style={{ ...d(5), opacity: .6 }}>
               <div className="m-label" style={{ color: 'var(--g-ink-3)' }}>Há 3 dias</div>
@@ -120,12 +149,17 @@ const TOPICS: Topic[] = [
       },
       {
         title: <>Estado das <em>Entregas</em></>,
-        text: 'Na página inicial acompanham cada entrega e a data prevista. Cada linha passa de Aguardar para Em Edição e depois Entregue, à medida que o trabalho avança no nosso atelier.',
-        tip: 'Não precisam de nos perguntar em que ponto está: este quadro atualiza-se sozinho.',
+        text: 'Na página inicial acompanham cada entrega. Cada linha muda de estado à medida que o trabalho avança no nosso atelier, por isso não precisam de nos perguntar em que ponto está.',
+        list: [
+          ['Aguardar', 'Ainda não começou'],
+          ['Em Seleção', 'A galeria está convosco para escolherem (muda sozinho depois do casamento)'],
+          ['Em Edição', 'Estamos a trabalhar nela'],
+          ['Entregue / Concluído', 'Está pronta e disponível no portal'],
+        ],
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Estado das Entregas</div>
-            <div className="m-card m-in" style={d(1)}><span className="m-grow">Seleção de Fotos</span><ChipSwap from={['Aguardar', 'wait']} to={['Entregue', 'ok']} /></div>
+            <div className="m-card m-in" style={d(1)}><span className="m-grow">Seleção de Fotos</span><ChipSwap from={['Aguardar', 'wait']} to={['Em Seleção', 'info']} /></div>
             <div className="m-card m-in" style={d(2)}><span className="m-grow">Fotos para Edição</span><Chip s="info">Em Edição</Chip></div>
             <div className="m-card m-in" style={d(3)}><span className="m-grow">Álbum</span><Chip s="wait">Aguardar</Chip></div>
             <div className="m-card m-in" style={d(4)}><span className="m-grow">Entrega do Vídeo</span><Chip s="wait">Aguardar</Chip></div>
@@ -135,105 +169,324 @@ const TOPICS: Topic[] = [
     ],
   },
   {
-    id: 'fotos', label: 'Fotografias', icon: IcCamera,
-    intro: 'Como recebem, escolhem e aprovam as vossas fotografias.',
+    id: 'emails', label: 'Emails que recebem', icon: IcMail,
+    intro: 'Cada email que vos enviamos, o que significa e onde fica no portal.',
     steps: [
       {
-        title: <>Recebem um <em>aviso</em></>,
-        text: 'Quando carregamos fotografias no portal recebem um email e uma notificação no sino. Basta tocar no botão do email ou abrir a secção Fotografias.',
+        title: <>Para onde vão os <em>emails</em></>,
+        text: 'Todos os avisos são enviados de RL Photo.Video (geral@rlphotovideo.pt) para o email da noiva que nos indicaram. Cada email tem um botão dourado que leva diretamente à entrega e diz onde ela fica guardada no portal.',
+        tip: 'Se não encontrarem um email, vejam a pasta de Spam ou Promoções e marquem-nos como remetente de confiança. Tudo o que enviamos fica também no portal.',
         mock: (
-          <div className="m-mail m-in m-tap" style={{ ...d(0), borderRadius: 10 }}>
-            <div className="hd">As vossas <em>fotografias</em></div>
+          <>
+            <div className="m-label m-in" style={d(0)}>Caixa de entrada</div>
+            {[['As fotos do dia já estão disponíveis', '09:12'], ['O vosso Teaser está pronto', 'Ontem'], ['O vosso Portal dos Noivos está pronto', '12 Jan']].map(([s, h], i) => (
+              <div key={s} className={`m-inbox m-in ${i === 0 ? 'unread m-tap' : ''}`} style={d(i + 1)}>
+                <div className="from"><span>RL Photo.Video</span><span>{h}</span></div>
+                <div className="subj">{s}</div>
+              </div>
+            ))}
+          </>
+        ),
+      },
+      {
+        title: <>Os emails das <em>fotografias</em></>,
+        text: 'Estes são os emails que recebem sobre fotografias, pela ordem em que normalmente chegam. O botão do email abre a galeria; a mesma entrega fica guardada em Fotografias.',
+        list: [
+          ['As fotos do dia já estão disponíveis', 'Galeria Online · botão VER A GALERIA'],
+          ['As vossas fotos estão prontas para seleção', 'Galeria Fotos p/ Seleção · botão ESCOLHER AS FOTOS'],
+          ['As vossas fotos já estão editadas', 'Fotos Finais · botão VER AS FOTOS'],
+          ['A vossa maquete do álbum está pronta', 'Álbum · botão VER A MAQUETE'],
+          ['As vossas fotos pré-wedding estão prontas', 'Pré-Wedding · botão VER AS FOTOS'],
+        ],
+        mock: (
+          <div className="m-mail m-in" style={d(0)}>
+            <div className="hd">AS FOTOS PARA <em>SELEÇÃO</em></div>
             <div className="bd">
-              Olá Ana e Pedro,<br />as primeiras fotografias do vosso dia já estão no portal.
-              <div className="cta">Abrir o portal</div>
+              Chegou a parte mais bonita: escolher. Com calma, escolham as fotos que contam a vossa história.
+              <div className="cta m-tap">ESCOLHER AS FOTOS →</div>
+              <div style={{ marginTop: 8, fontSize: 9, color: '#776b58', textAlign: 'center' }}>Fica também guardado no vosso portal, em Fotografias → Galeria Fotos p/ Seleção.</div>
             </div>
           </div>
         ),
       },
       {
-        title: <>Galeria <em>Online</em></>,
-        text: 'Até 7 dias depois do casamento fica disponível a Galeria Online, para verem, descarregarem e partilharem com a família. Em Fotografias, toquem em VER MAIS. Um cartão com AGUARDAR significa que ainda está a ser preparado.',
+        title: <>Os emails dos <em>vídeos</em></>,
+        text: 'Para os vídeos recebem um email por cada entrega. O botão abre o vídeo e a entrega fica guardada em O Nosso Filme.',
+        list: [
+          ['O vosso Same Day Edit está pronto', 'O Nosso Filme → Same Day Edit'],
+          ['O vosso Teaser está pronto', 'O Nosso Filme → Teaser'],
+          ['O vosso vídeo pré-wedding está pronto', 'O Nosso Filme → Pré-Wedding'],
+          ['O vosso Wedding Film está pronto', 'O Nosso Filme → Wedding Film'],
+        ],
+        mock: (
+          <div className="m-mail m-in" style={d(0)}>
+            <div className="hd">O VOSSO <em>WEDDING FILM</em></div>
+            <div className="bd">
+              O vosso dia, contado como um filme. Chamem quem mais gostam e carreguem no play.
+              <div className="cta m-tap">VER O FILME →</div>
+              <div style={{ marginTop: 8, fontSize: 9, color: '#776b58', textAlign: 'center' }}>Fica também guardado no vosso portal, em O Nosso Filme → Wedding Film.</div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        title: <>Mensagens e <em>marcações</em></>,
+        text: 'Além das entregas, recebem um email sempre que vos deixamos uma notificação ou respondemos no Atendimento (o assunto começa com 🔔), quando é marcada uma reunião e quando abrimos a marcação da sessão pré-wedding.',
+        list: [
+          ['🔔 + título da notificação', 'Sino do portal e Atendimento'],
+          ['Tens uma reunião marcada', 'Data e hora da reunião'],
+          ['O seu Pré-Wedding', 'Escolher o dia da sessão no portal'],
+        ],
         mock: (
           <>
-            <div className="m-card m-in" style={{ ...d(0), flexDirection: 'column', alignItems: 'stretch', padding: 8 }}>
-              <div className="m-img" style={{ height: 86 }} />
-              <div className="m-row" style={{ alignItems: 'center', marginTop: 8 }}>
-                <span style={{ fontSize: 12 }}>Galeria Online</span>
-                <span className="m-btn gold m-tap" style={{ height: 26, flex: 'none', padding: '0 12px' }}>Ver mais →</span>
+            <div className="m-label m-in" style={d(0)}>Caixa de entrada</div>
+            {[['🔔 Resposta à vossa mensagem', 'Agora'], ['Tens uma reunião marcada · 14 Mar às 18:00', 'Seg'], ['O seu Pré-Wedding', '2 Fev']].map(([s, h], i) => (
+              <div key={s} className={`m-inbox m-in ${i === 0 ? 'unread' : ''}`} style={d(i + 1)}>
+                <div className="from"><span>RL Photo.Video</span><span>{h}</span></div>
+                <div className="subj">{s}</div>
               </div>
-            </div>
-            <div className="m-card m-in" style={{ ...d(1), flexDirection: 'column', alignItems: 'stretch', padding: 8, opacity: .55 }}>
-              <div className="m-img" style={{ height: 56 }} />
-              <div className="m-row" style={{ alignItems: 'center', marginTop: 8 }}>
-                <span style={{ fontSize: 12 }}>Fotos para Seleção</span>
-                <span className="m-btn" style={{ height: 26, flex: 'none', padding: '0 12px' }}>Aguardar</span>
-              </div>
+            ))}
+          </>
+        ),
+      },
+    ],
+  },
+  {
+    id: 'prazos', label: 'Prazos de entrega', icon: IcClock,
+    intro: 'Quando chega cada coisa, contado a partir do casamento.',
+    steps: [
+      {
+        title: <>Prazos das <em>fotografias</em></>,
+        text: 'Os prazos contam a partir do dia do casamento, exceto as fotos editadas, que contam a partir do dia em que nos enviam a seleção.',
+        list: [
+          ['Galeria Online', 'até 7 dias após o casamento'],
+          ['Fotos para Seleção', 'até 30 dias após o casamento'],
+          ['A vossa seleção', 'enviada por vocês no formulário'],
+          ['Fotos editadas', '30 dias úteis após recebermos a seleção'],
+          ['Download das fotos editadas', 'disponível durante 30 dias'],
+        ],
+        mock: (
+          <>
+            <div className="m-label m-in" style={d(0)}>Fotografias</div>
+            <div className="m-timeline">
+              {[['0', 'Casamento', 'O grande dia', 'ok'], ['7', 'Galeria Online', 'até 7 dias', 'ok'], ['30', 'Fotos p/ Seleção', 'até 30 dias', 'ok'], ['✎', 'Vocês escolhem', 'formulário', ''], ['30', 'Fotos editadas', '30 dias úteis', '']].map(([n, t, s, st], i) => (
+                <div key={t} className="st m-in" style={d(i + 1)}>
+                  <span className={`bul ${st}`}>{n}</span>
+                  <span><div style={{ fontSize: 12 }}>{t}</div><div className="m-small">{s}</div></span>
+                  <span />
+                </div>
+              ))}
             </div>
           </>
         ),
       },
       {
+        title: <>Prazos do <em>álbum</em></>,
+        text: 'O álbum nasce da vossa seleção. Depois de aprovarem a maqueta, a data de entrega fica marcada automaticamente e aparece no portal.',
+        list: [
+          ['Maqueta do álbum', 'preparada a partir da vossa seleção'],
+          ['Aprovação', 'feita por vocês em Fotografias → Álbum'],
+          ['Entrega do álbum', '30 dias após a aprovação da maqueta'],
+        ],
+        mock: (
+          <>
+            <div className="m-label m-in" style={d(0)}>Processo do álbum</div>
+            {[['01', 'Entrada das fotografias', '20 Out 2026', true], ['02', 'Aprovação da maqueta', '15 Nov 2026', true], ['03', 'Entrega do álbum', '15 Dez 2026', false]].map(([n, t, s, ok], i) => (
+              <div key={String(n)} className="m-card m-in" style={d(i + 1)}>
+                <span className="m-ic" style={ok ? { background: 'var(--g-gold)', color: '#0b0a08' } : undefined}>{n}</span>
+                <span className="m-grow">{t}<div className="m-small">{s}</div></span>
+              </div>
+            ))}
+          </>
+        ),
+      },
+      {
+        title: <>Prazos dos <em>vídeos</em></>,
+        text: 'O Wedding Film tem o prazo mais longo, porque é montado com tempo e cuidado. A data prevista está sempre em Estado das Entregas.',
+        list: [
+          ['Same Day Edit', 'no próprio dia (se contratado)'],
+          ['Teaser', 'chega antes do filme (se contratado)'],
+          ['Wedding Film', 'até 180 dias úteis após o casamento'],
+          ['Download dos vídeos', 'disponível durante 30 dias'],
+        ],
+        tip: '180 dias úteis contam só os dias de segunda a sexta, o que dá cerca de 8 a 9 meses.',
+        mock: (
+          <>
+            <div className="m-label m-in" style={d(0)}>Estado das Entregas</div>
+            <div className="m-card m-in" style={{ ...d(1), flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+              <div className="m-row" style={{ alignItems: 'center' }}><span>Entrega do Vídeo</span><span style={{ flex: 'none' }}><Chip s="info">Em Edição</Chip></span></div>
+              <div className="m-progress" style={{ '--w': '64%' } as CSSProperties}><i /></div>
+              <div className="m-small">Prazo · 180 dias úteis · 28 Maio 2027</div>
+            </div>
+            <div className="m-card m-in" style={d(2)}><span className="m-grow">Teaser</span><Chip s="ok">Entregue</Chip></div>
+          </>
+        ),
+      },
+      {
+        title: <>Não percam os <em>downloads</em></>,
+        text: 'As fotos editadas e os vídeos ficam disponíveis para download durante 30 dias. No cartão das Fotos Editadas aparece a contagem, por exemplo "Faltam 12 dias para download". Descarreguem tudo e guardem cópias em mais do que um sítio.',
+        tip: 'Quando o período termina o cartão mostra "Período de download expirado". Se acontecer, falem connosco no Atendimento.',
+        mock: (
+          <div className="m-card m-in" style={{ ...d(0), flexDirection: 'column', alignItems: 'stretch', padding: 8 }}>
+            <div className="m-row" style={{ alignItems: 'center', marginBottom: 6 }}><span className="lab" style={{ flex: 1 }}>Fotos Editadas</span><span style={{ flex: 'none' }}><Chip s="ok">Disponível</Chip></span></div>
+            <div className="m-img" style={{ height: 110 }} />
+            <span className="m-btn gold m-tap" style={{ marginTop: 8 }}>{IcDownload()} Ver mais</span>
+            <div className="m-small m-in" style={{ ...d(2), textAlign: 'center', marginTop: 6, color: 'var(--g-wait)' }}>Faltam 12 dias para download</div>
+          </div>
+        ),
+      },
+    ],
+  },
+  {
+    id: 'fotos', label: 'Fotografias', icon: IcCamera,
+    intro: 'As galerias, como fazer a seleção passo a passo e o álbum.',
+    steps: [
+      {
+        title: <>Os quatro <em>cartões</em></>,
+        text: 'Em Fotografias há um cartão para cada entrega. Quando está pronto mostra Disponível e o botão VER MAIS; enquanto o preparamos mostra Aguardar.',
+        list: [
+          ['Galeria Online', 'O dia completo para partilhar com família e amigos'],
+          ['Galeria para Seleção', 'De onde escolhem as fotografias'],
+          ['Fotos Pré-Wedding', 'A sessão antes do grande dia'],
+          ['Fotos Editadas', 'A seleção final, pronta para imprimir'],
+        ],
+        mock: (
+          <>
+            {[['Galeria Online', true], ['Galeria para Seleção', true], ['Fotos Pré-Wedding', false], ['Fotos Editadas', false]].map(([t, ok], i) => (
+              <div key={String(t)} className="m-card m-in" style={{ ...d(i), opacity: ok ? 1 : .55 }}>
+                <span className="m-grow">{t}</span>
+                {ok ? <span className={`m-btn gold ${i === 0 ? 'm-tap' : ''}`} style={{ height: 24, padding: '0 10px' }}>Ver mais</span> : <span className="m-btn" style={{ height: 24, padding: '0 10px' }}>Aguardar</span>}
+              </div>
+            ))}
+          </>
+        ),
+      },
+      {
+        title: <>Galeria Online e <em>partilha</em></>,
+        text: 'Até 7 dias depois do casamento recebem o email "As fotos do dia já estão disponíveis". Em Fotografias toquem em VER MAIS na Galeria Online. Com o botão Partilhar Galeria aparece um link que podem copiar e enviar aos convidados.',
+        mock: (
+          <div className="m-card m-in" style={{ ...d(0), flexDirection: 'column', alignItems: 'stretch', padding: 8, gap: 8 }}>
+            <div className="m-img" style={{ height: 96 }} />
+            <div style={{ fontSize: 12 }}>Galeria Online</div>
+            <div className="m-row"><span className="m-btn gold">Ver mais</span><span className="m-btn m-tap">Partilhar</span></div>
+            <div className="m-in" style={d(3)}>
+              <div className="m-label">Link para os convidados</div>
+              <div className="m-row"><div className="m-input" style={{ flex: 3 }}>galeria.rlphoto…/ana-pedro</div><span className="m-btn gold" style={{ height: 30, flex: 1 }}>Copiar</span></div>
+            </div>
+          </div>
+        ),
+      },
+      {
         title: <>Fotos para <em>Seleção</em></>,
-        text: 'Até 30 dias depois do casamento recebem a galeria completa, organizada em pastas (Noivo, Noiva, Cerimónia e as seguintes). É daqui que escolhem as fotografias para o álbum. Cada fotografia tem um nome, por exemplo RR-0001.',
+        text: 'Até 30 dias depois do casamento recebem o email "As vossas fotos estão prontas para seleção". A galeria está organizada em pastas (Noivo, Noiva, Cerimónia e as seguintes) e cada fotografia tem um nome com as vossas iniciais e um número, por exemplo AP-0001.',
+        tip: 'No cartão Galeria para Seleção há o botão "Como fazer a escolha", que mostra sempre estas instruções.',
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Pasta · Cerimónia</div>
             <div className="m-grid m-in" style={d(1)}>
               {['0120', '0121', '0122', '0123', '0124', '0125', '0126', '0127', '0131'].map((c, i) => (
-                <div key={c} className={`m-img ${[0, 4, 8].includes(i) ? 'sel' : ''}`}><span className="code">RR-{c}</span></div>
+                <div key={c} className={`m-img ${[0, 4, 8].includes(i) ? 'sel' : ''}`}><span className="code">AP-{c}</span></div>
               ))}
             </div>
-            <div className="m-small m-in" style={d(3)}>3 fotografias escolhidas nesta pasta</div>
+            <div className="m-row m-in" style={d(3)}><span className="m-btn m-tap">Como fazer a escolha</span><span className="m-btn">Enviar Seleção</span></div>
           </>
         ),
       },
       {
-        title: <>Como fazer a <em>escolha</em></>,
-        text: 'Abram um documento Word e criem uma secção para cada pasta da galeria, pela mesma ordem. Em cada secção escrevam os nomes das fotografias exatamente como aparecem na galeria.',
-        tip: 'Escrevam RR-0001 e não só 1. Assim não há trocas de fotografias.',
+        title: <>Passo 1: um <em>Word</em> por pastas</>,
+        text: 'Abram um documento Word e criem uma secção para cada pasta da galeria, pela mesma ordem: Noivo, Noiva, Cerimónia e assim sucessivamente. Percorram a galeria pasta a pasta e, em cada secção, escrevam as fotografias que escolheram.',
         mock: (
           <div className="m-doc m-in" style={d(0)}>
-            <div className="s">NOIVO</div><div className="c">RR-0001, RR-0002, RR-0003</div>
-            <div className="s">NOIVA</div><div className="c">RR-0045, RR-0046, RR-0052</div>
-            <div className="s">CERIMÓNIA</div><div className="c">RR-0120, RR-0124, RR-0131</div>
-            <div className="s">FESTA</div><div className="c">RR-0310, RR-0322 …</div>
+            <div className="s">NOIVO</div><div className="c">AP-0001, AP-0002, AP-0003</div>
+            <div className="s">NOIVA</div><div className="c">AP-0045, AP-0046, AP-0052</div>
+            <div className="s">CERIMÓNIA</div><div className="c">AP-0120, AP-0124, AP-0131</div>
+            <div className="s">CONVIDADOS</div><div className="c">AP-0210, AP-0233 …</div>
           </div>
         ),
       },
       {
-        title: <>Enviar a <em>seleção</em></>,
-        text: 'Quando terminarem, toquem em Enviar Seleção e copiem a escolha do Word para cada secção do formulário. Em Estado das Entregas a Seleção passa a Concluído e nós começamos a editar.',
+        title: <>Passo 2: os nomes <em>certos</em></>,
+        text: 'Escrevam o nome de cada fotografia exatamente como aparece na galeria: as vossas iniciais, hífen e o número com quatro dígitos. Separem sempre cada fotografia com uma vírgula. Sem vírgulas o formulário não deixa enviar.',
+        list: [
+          ['Certo', 'AP-0001, AP-0002, AP-0003'],
+          ['Errado', '1, 2, 3 (sem iniciais)'],
+          ['Errado', 'AP-0001 AP-0002 (sem vírgula)'],
+        ],
+        tip: 'Um nome mal escrito pode não ser reconhecido e atrasar a edição. Confirmem a numeração antes de enviar.',
         mock: (
           <>
-            <div className="m-in" style={d(0)}><div className="m-label">Noivo</div><div className="m-input"><span className="typed">RR-0001, RR-0002, RR-0003</span></div></div>
-            <div className="m-in" style={d(1)}><div className="m-label">Noiva</div><div className="m-input">RR-0045, RR-0046, RR-0052</div></div>
-            <div className="m-in" style={d(2)}><div className="m-label">Cerimónia</div><div className="m-input">RR-0120, RR-0124, RR-0131</div></div>
-            <span className="m-btn gold m-in m-tap" style={{ ...d(3), marginTop: 6 }}>Enviar Seleção</span>
-            <div className="m-card m-in" style={d(4)}><span className="m-grow">Seleção Fotos Noivos</span><ChipSwap from={['Em Seleção', 'info']} to={['Concluído', 'ok']} /></div>
+            <div className="m-in" style={d(0)}><div className="m-label">Certo</div><div className="m-input" style={{ borderColor: 'rgba(157,181,139,.5)', color: 'var(--g-ok)' }}>AP-0001, AP-0002, AP-0003</div></div>
+            <div className="m-in" style={d(1)}><div className="m-label" style={{ color: 'var(--g-red)' }}>Errado</div><div className="m-input" style={{ borderColor: 'rgba(224,122,110,.5)' }}>1, 2, 3</div></div>
+            <div className="m-in" style={d(2)}><div className="m-label" style={{ color: 'var(--g-red)' }}>Errado</div><div className="m-input" style={{ borderColor: 'rgba(224,122,110,.5)' }}>AP-0001 AP-0002</div>
+              <div className="m-small" style={{ color: 'var(--g-red)', marginTop: 4 }}>Falta a vírgula entre fotografias.</div></div>
           </>
         ),
       },
       {
+        title: <>Passo 3: o <em>formulário</em></>,
+        text: 'Toquem em Enviar Seleção. No formulário escrevam o nome dos noivos, a data do casamento e a referência do evento. Depois abram cada secção e colem a escolha do Word. O contador de cada secção mostra quantas fotografias indicaram.',
+        list: [
+          ['Secções', 'Fotos do Noivo · Fotos da Noiva · Cerimónia · Convidados · Sala e Animação · Bolo e Bouquet · Detalhes · Sessão Noivos · Fotos para Álbum'],
+          ['Fotos para Álbum', 'a última secção: as fotografias que querem ver no álbum'],
+        ],
+        mock: (
+          <>
+            <div className="m-in" style={d(0)}><div className="m-label">Referência do Evento</div><div className="m-input">CAS_026_26_RL</div></div>
+            {[['Fotos do Noivo', '3 fotos'], ['Fotos da Noiva', '3 fotos'], ['Cerimónia', '0 fotos']].map(([t, n], i) => (
+              <div key={t} className={`m-card m-in ${i === 2 ? 'gold' : ''}`} style={{ ...d(i + 1), padding: '8px 12px' }}><span className="m-grow">{t}</span><span className="m-small">{n} ›</span></div>
+            ))}
+            <div className="m-in" style={d(4)}><div className="m-input"><span className="typed">AP-0120, AP-0124, AP-0131</span></div></div>
+            <div className="m-small m-in" style={d(4)}>Separem cada fotografia com vírgula (,)</div>
+          </>
+        ),
+      },
+      {
+        title: <>Passo 4: <em>enviar</em></>,
+        text: 'Toquem em Enviar seleção. Aparece "Seleção recebida" com o total de fotografias. A partir daqui editamos as fotografias escolhidas e entregamo-las em alta qualidade em 30 dias úteis.',
+        mock: (
+          <>
+            <span className="m-btn gold m-in m-tap" style={d(0)}>Enviar seleção</span>
+            <div className="m-in" style={{ ...d(3), textAlign: 'center', padding: '18px 0 6px' }}>
+              <div style={{ width: 40, height: 40, margin: '0 auto 10px', borderRadius: '50%', border: '1px solid var(--g-gold)', display: 'grid', placeItems: 'center', color: 'var(--g-gold)' }}>✓</div>
+              <div className="m-h" style={{ fontSize: 20 }}>Seleção <em>recebida.</em></div>
+              <div className="m-small" style={{ marginTop: 6 }}>Já temos a vossa seleção de 86 fotografias. Entregamos em 30 dias úteis.</div>
+            </div>
+            <div className="m-card m-in" style={d(5)}><span className="m-grow">Seleção Fotos</span><ChipSwap from={['Em Seleção', 'info']} to={['Concluído', 'ok']} /></div>
+          </>
+        ),
+      },
+      {
+        title: <>As fotos <em>editadas</em></>,
+        text: 'Quando a edição termina recebem o email "As vossas fotos já estão editadas" e o cartão Fotos Editadas fica Disponível. Têm 30 dias para fazer o download; a contagem aparece no próprio cartão.',
+        mock: (
+          <div className="m-card m-in" style={{ ...d(0), flexDirection: 'column', alignItems: 'stretch', padding: 8 }}>
+            <div className="m-row" style={{ alignItems: 'center', marginBottom: 6 }}><span className="lab" style={{ flex: 1 }}>Fotos Editadas</span><span style={{ flex: 'none' }}><ChipSwap from={['Aguardar', 'wait']} to={['Disponível', 'ok']} /></span></div>
+            <div className="m-img" style={{ height: 110 }} />
+            <span className="m-btn gold m-tap" style={{ marginTop: 8 }}>Ver mais</span>
+            <div className="m-small" style={{ textAlign: 'center', marginTop: 6 }}>30 dias para download</div>
+          </div>
+        ),
+      },
+      {
         title: <>Aprovar o <em>álbum</em></>,
-        text: 'Com a seleção feita, desenhamos a maqueta do álbum e mostramo-la em Fotografias. Revejam com calma, peçam alterações se quiserem e aprovem quando estiver como sonharam. Só depois vai para impressão.',
+        text: 'Com a seleção feita, o atelier monta a maqueta do álbum. Recebem o email "A vossa maquete do álbum está pronta". Em Fotografias, na secção Álbum, revejam a maqueta e toquem em Aprovar Maqueta, ou digam-nos no Atendimento o que querem mudar. Depois de aprovada vai para produção e é entregue em 30 dias.',
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>Maquete Álbum</div>
             <div className="m-row m-in" style={{ ...d(1), gap: 3 }}>
-              <div className="m-img" style={{ height: 110 }} /><div className="m-img" style={{ height: 110 }} />
+              <div className="m-img" style={{ height: 100 }} /><div className="m-img" style={{ height: 100 }} />
             </div>
-            <div className="m-small m-in" style={{ ...d(2), textAlign: 'center' }}>Páginas 4 · 5</div>
-            <div className="m-row m-in" style={d(3)}>
-              <span className="m-btn">Pedir alteração</span>
-              <span className="m-btn gold m-tap">Aprovar</span>
+            <div className="m-row m-in" style={d(2)}>
+              <div className="m-card" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}><span className="lab">Fotos p/ Álbum</span>60</div>
+              <div className="m-card" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}><span className="lab">Estado</span><ChipSwap from={['Em análise', 'wait']} to={['Aprovado', 'ok']} /></div>
             </div>
+            <span className="m-btn gold m-in m-tap" style={d(3)}>✓ Aprovar Maqueta</span>
           </>
         ),
       },
       {
         title: <>Fotos dos <em>convidados</em></>,
-        text: 'Os vossos convidados também tiraram fotografias? Na secção Enviar Fotos, dentro de Fotografias, podem carregá-las para ficarem juntas das nossas.',
+        text: 'Os vossos convidados também tiraram fotografias? Na secção Enviar Fotos, dentro de Fotografias, abram o formulário e carreguem-nas para ficarem juntas das nossas.',
         mock: (
           <>
             <div className="m-card m-in" style={{ ...d(0), flexDirection: 'column', gap: 10, borderColor: 'rgba(255,255,255,.4)' }}>
@@ -250,60 +503,55 @@ const TOPICS: Topic[] = [
   },
   {
     id: 'filme', label: 'Vídeos e Filme', icon: IcFilm,
-    intro: 'Quando chegam os vídeos e onde os veem.',
+    intro: 'Quando chegam os vídeos, onde os veem e como os guardam.',
     steps: [
       {
-        title: <>O aviso do <em>filme</em></>,
-        text: 'Sempre que carregamos um vídeo no portal (Same Day Edit, teaser ou o filme completo) recebem um email e uma notificação no sino.',
+        title: <>O aviso de cada <em>vídeo</em></>,
+        text: 'Sempre que carregamos um vídeo recebem um email (por exemplo "O vosso Teaser está pronto") e uma notificação no sino. O botão do email abre o vídeo; fica também guardado em O Nosso Filme.',
         mock: (
           <>
             <div className="m-drop m-in" style={d(1)}>
               <div className="m-label">Nova notificação</div>
-              <div style={{ fontSize: 12, marginBottom: 4 }}>O vosso teaser está pronto</div>
-              <div className="m-small">Vejam-no na secção O Nosso Filme.</div>
+              <div style={{ fontSize: 12, marginBottom: 4 }}>O vosso Teaser está pronto</div>
+              <div className="m-small">Vejam-no em O Nosso Filme → Teaser.</div>
             </div>
             <div className="m-card gold m-in m-tap" style={d(3)}><span className="m-ic">{IcFilm()}</span><span className="m-grow">O Nosso Filme</span>›</div>
           </>
         ),
       },
       {
-        title: <>Primeiro o <em>teaser</em></>,
-        text: 'Se o vosso pacote incluir Same Day Edit ou teaser, estes chegam primeiro, para poderem reviver o dia e partilhar logo com quem mais gostam.',
+        title: <>Pela ordem em que <em>chegam</em></>,
+        text: 'Conforme o que contrataram, os vídeos chegam por esta ordem. Em O Nosso Filme cada cartão mostra VER MAIS quando o vídeo já está disponível e AGUARDAR enquanto o preparamos.',
+        list: [
+          ['Vídeo Pré-Wedding', 'depois da sessão pré-wedding'],
+          ['Same Day Edit', 'no próprio dia do casamento'],
+          ['Teaser', 'um primeiro olhar, antes do filme'],
+          ['Wedding Film', 'até 180 dias úteis após o casamento'],
+        ],
         mock: (
           <>
             <div className="m-label m-in" style={d(0)}>O Nosso Filme</div>
-            {[['Same Day Edit', 'ok', 'Entregue'], ['Teaser', 'ok', 'Entregue'], ['Filme completo', 'info', 'Em Edição']].map(([t, s, l], i) => (
-              <div key={t} className="m-card m-in" style={d(i + 1)}>
-                <span className="m-ic">{IcFilm()}</span><span className="m-grow">{t}</span><Chip s={s as 'ok' | 'info'}>{l}</Chip>
+            {[['Pré-Wedding', true], ['Same Day Edit', true], ['Teaser', true], ['Wedding Film', false]].map(([t, ok], i) => (
+              <div key={String(t)} className="m-card m-in" style={{ ...d(i + 1), opacity: ok ? 1 : .55 }}>
+                <span className="m-ic">{IcFilm()}</span><span className="m-grow">{t}</span>
+                {ok ? <span className="m-btn gold" style={{ height: 24, padding: '0 10px' }}>Ver mais</span> : <span className="m-btn" style={{ height: 24, padding: '0 10px' }}>Aguardar</span>}
               </div>
             ))}
           </>
         ),
       },
       {
-        title: <>O filme <em>completo</em></>,
-        text: 'O filme completo é entregue até 180 dias úteis depois do casamento. A data prevista está sempre visível em Estado das Entregas, para saberem quando contar com ele.',
+        title: <>Descarregar, partilhar, <em>testemunho</em></>,
+        text: 'Na página do filme têm três passos. Descarregar: abram a pasta, façam o download de cada vídeo e guardem no computador (disponível 30 dias). Partilhar: copiem o link privado e enviem a quem quiserem. Deixar testemunho: se gostaram, umas palavras vossas ajudam-nos muito.',
+        tip: 'Para a melhor qualidade descarreguem num computador com boa ligação à internet.',
         mock: (
           <>
-            <div className="m-label m-in" style={d(0)}>Estado das Entregas</div>
-            <div className="m-card m-in" style={{ ...d(1), flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-              <div className="m-row" style={{ alignItems: 'center' }}><span>Entrega do Vídeo</span><span style={{ flex: 'none' }}><Chip s="info">Em Edição</Chip></span></div>
-              <div className="m-progress" style={{ '--w': '64%' } as CSSProperties}><i /></div>
-              <div className="m-small">Data prevista · 28 Maio 2027</div>
-            </div>
-          </>
-        ),
-      },
-      {
-        title: <>Ver e <em>descarregar</em></>,
-        text: 'Em O Nosso Filme toquem no vídeo para o ver no portal. Usem o botão Descarregar para guardar a versão em alta qualidade no computador.',
-        tip: 'Para a melhor qualidade, descarreguem num computador com boa ligação à internet.',
-        mock: (
-          <>
-            <div className="m-img m-in" style={{ ...d(0), height: 150 }}><span className="m-play m-tap" style={{ borderRadius: '50%' }}>{IcPlay()}</span></div>
-            <div className="m-title m-in" style={d(1)}>O filme de Ana &amp; Pedro</div>
-            <div className="m-small m-in" style={d(1)}>12 · Setembro · 2026 · 14 min</div>
-            <span className="m-btn gold m-in" style={d(2)}>{IcDownload()} Descarregar</span>
+            {[['01', 'Descarregar', 'Abrir pasta', 'Disponível 30 dias'], ['02', 'Partilhar', 'Copiar link', 'Só acede quem tiver o link'], ['03', 'Deixar testemunho', 'Escrever', 'Umas palavras vossas']].map(([n, t, a, s], i) => (
+              <div key={n} className={`m-card m-in ${i === 0 ? 'm-tap' : ''}`} style={{ ...d(i), alignItems: 'flex-start' }}>
+                <span className="m-ic" style={{ fontFamily: 'var(--g-fm)', fontSize: 9 }}>{n}</span>
+                <span className="m-grow">{t}<div className="m-small">{s}</div><div style={{ color: 'var(--g-gold)', fontSize: 10, marginTop: 4 }}>{a} →</div></span>
+              </div>
+            ))}
           </>
         ),
       },
@@ -586,6 +834,13 @@ export default function GuiaPortal() {
                       <div className="count">{topic.label} · <b>Passo {step + 1}</b> de {topic.steps.length}</div>
                       <h3>{current?.title}</h3>
                       <p className="desc">{current?.text}</p>
+                      {current?.list && (
+                        <dl className="guia-list">
+                          {current.list.map(([k, v], i) => (
+                            <div key={i} style={{ animationDelay: `${0.15 + i * 0.06}s` }}><dt>{k}</dt><dd>{v}</dd></div>
+                          ))}
+                        </dl>
+                      )}
                       {current?.tip && <div className="tip"><span>Dica</span><span>{current.tip}</span></div>}
                     </div>
 

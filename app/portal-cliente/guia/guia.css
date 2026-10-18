@@ -284,3 +284,20 @@
 .guia-controls { flex-wrap: wrap; }
 .guia-dots { flex: 1 1 100%; margin-bottom: 4px; }
 .guia-dots button { max-width: 44px; }
+
+/* lista de detalhe (prazos, emails, secções) */
+.guia-list { margin: 18px 0 0; padding: 0; max-width: 480px; border-top: 1px solid var(--g-line); }
+.guia-list > div { display: grid; grid-template-columns: minmax(120px, 42%) 1fr; gap: 14px; padding: 9px 0; border-bottom: 1px solid var(--g-line); opacity: 0; animation: guia-up .5s var(--g-ease) forwards; }
+.guia-list dt { font-size: 13px; color: var(--g-gold); }
+.guia-list dd { margin: 0; font-size: 13px; color: var(--g-ink-2); line-height: 1.5; }
+@media (max-width: 760px) { .guia-list > div { grid-template-columns: 1fr; gap: 2px; } }
+
+/* caixa de entrada */
+.m-inbox { border-bottom: 1px solid var(--g-line); padding: 9px 4px; border-radius: 8px; }
+.m-inbox .from { display: flex; justify-content: space-between; font-size: 10px; color: var(--g-ink-3); }
+.m-inbox .subj { font-size: 12px; color: var(--g-ink-2); margin-top: 2px; }
+.m-inbox.unread .from span:first-child, .m-inbox.unread .subj { color: var(--g-ink); font-weight: 600; }
+.m-inbox.unread { background: var(--g-gold-faint); padding-left: 8px; }
+
+/* 8 temas: 4 colunas no ecrã grande */
+@media (min-width: 900px) { .guia-topics { grid-template-columns: repeat(4, 1fr); } .guia-topic p { font-size: 12.5px; } }
