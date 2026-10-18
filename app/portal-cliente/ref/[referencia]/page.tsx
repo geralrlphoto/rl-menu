@@ -10,6 +10,10 @@ import { NoivosLogoutButton } from '@/app/components/NoivosLogoutButton'
 import { AtmospherePortal, buildDeliveriesFromSettings } from '../../atmosphere/AtmospherePortal'
 import { portalBloqueado, emFalta } from '@/lib/portalBloqueio'
 import { FORM_SELECAO_FOTOS_URL } from '@/lib/links'
+import GuiaPortal from '../../guia/GuiaPortal'
+
+// Guia interativo em teste: só nestes portais dos noivos
+const PORTAIS_COM_GUIA = ['CAS_064_27_RL']
 
 const PAGE_ID = '311220116d8a80d29468e817ae7bb79f'
 
@@ -1421,6 +1425,7 @@ export default function PortalRefPage() {
 
       {/* Botão Sair (esconde para admin) */}
       <NoivosLogoutButton referencia={referencia} isAdmin={isAdmin} />
+      {PORTAIS_COM_GUIA.includes(referencia.toUpperCase()) && <GuiaPortal />}
 
       <AtmospherePortal
         data={{
