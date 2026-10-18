@@ -341,3 +341,7 @@
 @media (prefers-reduced-motion: reduce) {
   .guia-rl *, .guia-rl *::before, .guia-rl *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; }
 }
+
+/* Botões de navegação sempre à vista, mesmo quando o texto do passo é longo */
+.guia-controls { position: sticky; bottom: -28px; z-index: 3; margin-bottom: -28px; padding-bottom: 28px; background: linear-gradient(0deg, #070707 70%, rgba(7,7,7,0)); }
+@media (max-width: 760px) { .guia-controls { bottom: -16px; margin-bottom: -16px; padding-bottom: 16px; } }

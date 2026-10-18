@@ -253,8 +253,34 @@ const TOPICS: Topic[] = [
   },
   {
     id: 'prazos', label: 'Prazos de entrega', icon: IcClock,
-    intro: 'Quando chega cada coisa, contado a partir do casamento.',
+    intro: 'Fotos, álbum e vídeos: quando chega cada coisa, segundo o contrato.',
     steps: [
+      {
+        title: <>Todos os <em>prazos</em></>,
+        text: 'Resumo de tudo o que vos entregamos e quando, segundo o vosso contrato (cláusula 7). Dias úteis são de segunda a sexta. Nos passos seguintes explicamos cada um em detalhe.',
+        list: [
+          ['Galeria Online', 'até 7 dias após o casamento'],
+          ['Fotos para Seleção', 'até 60 dias úteis após o casamento'],
+          ['Fotos editadas', '30 dias úteis após recebermos a vossa seleção'],
+          ['Maquete do álbum', '40 dias úteis após recebermos as fotos do álbum'],
+          ['Entrega do álbum', '30 dias úteis após aprovarem a maquete'],
+          ['Wedding Film', 'Signature 60 · Essencial 120 · Basic 180 dias úteis'],
+          ['Same Day Edit', 'no próprio dia do casamento'],
+          ['Downloads', 'fotos editadas e vídeos disponíveis 30 dias'],
+        ],
+        mock: (
+          <>
+            <div className="m-label m-in" style={d(0)}>Fotografia</div>
+            {[['Galeria Online', '7 dias'], ['Fotos p/ Seleção', '60 dias úteis'], ['Álbum', '40 + 30 dias úteis']].map(([t, v], i) => (
+              <div key={t} className="m-card m-in" style={{ ...d(i + 1), padding: '8px 12px' }}><span className="m-grow">{t}</span><Chip s="info">{v}</Chip></div>
+            ))}
+            <div className="m-label m-in" style={{ ...d(4), marginTop: 6 }}>Vídeo</div>
+            {[['Same Day Edit', 'no dia'], ['Wedding Film', '60 a 180 dias úteis']].map(([t, v], i) => (
+              <div key={t} className={`m-card m-in ${i === 1 ? 'gold' : ''}`} style={{ ...d(i + 5), padding: '8px 12px' }}><span className="m-grow">{t}</span><Chip s={i === 1 ? 'ok' : 'info'}>{v}</Chip></div>
+            ))}
+          </>
+        ),
+      },
       {
         title: <>Prazos das <em>fotografias</em></>,
         text: 'São os prazos do vosso contrato (cláusula 7). Contam a partir do dia do casamento, exceto as fotos editadas, que contam a partir do dia em que nos enviam a seleção. Dias úteis são de segunda a sexta.',
@@ -927,6 +953,7 @@ export default function GuiaPortal() {
                             key={`${topicIdx}-${i}-${i === step ? step : ''}`}
                             type="button"
                             aria-label={`Passo ${i + 1}`}
+                            title={`Passo ${i + 1}`}
                             className={`${i === step ? 'on' : ''} ${i < step ? 'done' : ''} ${playing ? 'playing' : ''}`}
                             style={{ '--dur': `${STEP_MS}ms` } as CSSProperties}
                             onClick={() => { setPlaying(false); setStep(i) }}
