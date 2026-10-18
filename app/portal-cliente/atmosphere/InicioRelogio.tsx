@@ -50,7 +50,34 @@ const primeiro = (n?: string | null) => {
   return w ? w.charAt(0).toLocaleUpperCase('pt-PT') + w.slice(1).toLocaleLowerCase('pt-PT') : ''
 }
 
-export default function InicioRelogio({ fotoUrl, noiva, noivo }: { fotoUrl?: string | null; noiva?: string | null; noivo?: string | null }) {
+/* Contagem decrescente para o casamento (dias, horas, min, seg), a cada segundo */
+function Contagem({ data }: { data: Date }) {
+  const calc = () => {
+    const ms = Math.max(0, data.getTime() - Date.now())
+    return [Math.floor(ms / 86400000), Math.floor(ms % 86400000 / 3600000), Math.floor(ms % 3600000 / 60000), Math.floor(ms % 60000 / 1000)]
+  }
+  const [p, setP] = useState<number[] | null>(null)
+  useEffect(() => { setP(calc()); const id = setInterval(() => setP(calc()), 1000); return () => clearInterval(id) }, [data.getTime()]) // eslint-disable-line react-hooks/exhaustive-deps
+  const lbl = ['Dias', 'Horas', 'Min', 'Seg']
+  return (
+    <div style={{
+      display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', maxWidth: 620, margin: '34px auto 0',
+      borderRadius: 22, border: '1px solid rgba(201,168,76,.3)', background: 'rgba(17,17,17,.7)',
+      backdropFilter: 'blur(14px)', boxShadow: '0 0 48px -22px rgba(201,168,76,.5)', padding: '6px 4px',
+    }}>
+      {lbl.map((l, k) => (
+        <div key={l} style={{ padding: '14px 4px', borderLeft: k ? '1px solid rgba(255,255,255,.07)' : 0 }}>
+          <div style={{ fontFamily: 'var(--fd)', fontWeight: 200, fontSize: 'clamp(32px, 4.6vw, 52px)', lineHeight: 1, color: k === 0 ? GOLD : '#fff' }}>
+            {p ? String(p[k]).padStart(2, '0') : '--'}
+          </div>
+          <div style={{ marginTop: 8, fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', fontWeight: 600, color: 'rgba(255,255,255,.45)' }}>{l}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export default function InicioRelogio({ fotoUrl, noiva, noivo, dataCasamento }: { fotoUrl?: string | null; noiva?: string | null; noivo?: string | null; dataCasamento?: Date | null }) {
   const a = primeiro(noiva), b = primeiro(noivo)
   const [t, setT] = useState<ReturnType<typeof agoraLisboa> | null>(null)
   const [i, setI] = useState<number | null>(null)
@@ -128,6 +155,9 @@ export default function InicioRelogio({ fotoUrl, noiva, noivo }: { fotoUrl?: str
           </figure>
         )}
       </div>
+
+      {/* contagem decrescente, por baixo da frase */}
+      {dataCasamento && <Contagem data={dataCasamento} />}
 
       </div>
     </section>

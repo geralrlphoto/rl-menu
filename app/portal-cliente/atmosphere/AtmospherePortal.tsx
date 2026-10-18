@@ -257,15 +257,16 @@ export function AtmospherePortal({
       {adminBar}
 
       {/* Novo design (tema RL): relógio, dia e frase do dia no topo */}
-      {temaRL && <InicioRelogio fotoUrl={data.heroImageUrl} noiva={data.noiva} noivo={data.noivo} />}
+      {temaRL && <InicioRelogio fotoUrl={data.heroImageUrl} noiva={data.noiva} noivo={data.noivo} dataCasamento={weddingDate} />}
 
-      <Countdown
+      {/* No tema RL a contagem vai para o topo, por baixo da frase */}
+      {!temaRL && <Countdown
         weddingDate={weddingDate}
         noiva={data.noiva}
         noivo={data.noivo}
         dateLabel={data.dataLabel}
         coupleLabel={coupleLabel}
-      />
+      />}
 
       <Welcome
         photoUrl={data.heroImageUrl}
