@@ -257,7 +257,7 @@ export function AtmospherePortal({
       {adminBar}
 
       {/* Novo design (tema RL): relógio, dia e frase do dia no topo */}
-      {temaRL && <InicioRelogio />}
+      {temaRL && <InicioRelogio fotoUrl={data.heroImageUrl} noiva={data.noiva} noivo={data.noivo} />}
 
       <Countdown
         weddingDate={weddingDate}

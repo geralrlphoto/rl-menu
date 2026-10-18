@@ -44,7 +44,14 @@ function agoraLisboa() {
   }
 }
 
-export default function InicioRelogio() {
+/* "susana maria" → "Susana" */
+const primeiro = (n?: string | null) => {
+  const w = String(n ?? '').trim().split(/\s+/)[0] ?? ''
+  return w ? w.charAt(0).toLocaleUpperCase('pt-PT') + w.slice(1).toLocaleLowerCase('pt-PT') : ''
+}
+
+export default function InicioRelogio({ fotoUrl, noiva, noivo }: { fotoUrl?: string | null; noiva?: string | null; noivo?: string | null }) {
+  const a = primeiro(noiva), b = primeiro(noivo)
   const [t, setT] = useState<ReturnType<typeof agoraLisboa> | null>(null)
   const [i, setI] = useState<number | null>(null)
   const [visivel, setVisivel] = useState(true)
@@ -65,7 +72,27 @@ export default function InicioRelogio() {
 
   const f = i === null ? null : FRASES[i]
   return (
-    <section style={{ position: 'relative', textAlign: 'center', padding: '28px 0 46px', userSelect: 'none' }} suppressHydrationWarning>
+    <section style={{
+      position: 'relative', overflow: 'hidden', textAlign: 'center', userSelect: 'none',
+      padding: 'clamp(48px, 8vw, 84px) 20px clamp(44px, 7vw, 72px)', marginBottom: 28,
+      borderRadius: 28, border: '1px solid rgba(201,168,76,.2)', background: '#0b0b0b',
+    }} suppressHydrationWarning>
+      {/* fundo: foto esbatida a preto e branco, brilho dourado, pontilhado e anéis finos (como no /photo) */}
+      <div aria-hidden style={{ position: 'absolute', inset: 0, backgroundImage: `url('${fotoUrl || '/casamentos-2028.webp'}')`, backgroundSize: 'cover', backgroundPosition: 'center 35%', filter: 'grayscale(1)', opacity: .3 }} />
+      <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse 55% 50% at 50% 38%, rgba(201,168,76,0.12), transparent 70%)' }} />
+      <div aria-hidden style={{
+        position: 'absolute', inset: 0, opacity: .4,
+        backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '26px 26px',
+        maskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
+        WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
+      }} />
+      <svg aria-hidden viewBox="0 0 100 100" fill="none" stroke={GOLD} strokeWidth="0.1"
+        style={{ position: 'absolute', left: '50%', top: '40%', width: 1000, height: 1000, transform: 'translate(-50%, -50%)', opacity: .09, pointerEvents: 'none' }}>
+        <circle cx="50" cy="50" r="18" /><circle cx="50" cy="50" r="30" strokeDasharray="0.5 1.2" /><circle cx="50" cy="50" r="44" />
+      </svg>
+      <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, #0b0b0b 0%, rgba(11,11,11,0.45) 20%, rgba(11,11,11,0.55) 65%, #0b0b0b 100%)' }} />
+
+      <div style={{ position: 'relative' }}>
       {/* relógio */}
       <p style={{ fontFamily: COND, fontWeight: 100, lineHeight: .85, letterSpacing: '.02em', fontSize: 'clamp(84px, 11vw, 124px)', margin: 0 }}>
         <span style={{ color: 'rgba(255,255,255,.9)' }}>{t?.horas ?? '--'}</span>
@@ -106,6 +133,14 @@ export default function InicioRelogio() {
             </button>
           </figure>
         )}
+      </div>
+
+      {/* os noivos, logo abaixo da frase */}
+      {(a || b) && (
+        <h1 className="inicio-nomes" style={{ margin: '34px 0 0', color: '#fff', fontWeight: 200, fontSize: 'clamp(46px, 7vw, 84px)', lineHeight: 1.04 }}>
+          {a}{a && b && <em style={{ fontStyle: 'normal', color: GOLD }}> &amp; </em>}{b}
+        </h1>
+      )}
       </div>
     </section>
   )

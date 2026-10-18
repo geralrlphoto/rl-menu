@@ -142,7 +142,7 @@
   pointer-events: none;
 }
 .portal-atmosphere.tema-rl .cband > * { position: relative; z-index: 1; grid-column: 1; }
-.portal-atmosphere.tema-rl .cband .names { color: #fff; }
+.portal-atmosphere.tema-rl .cband .names { display: none; } /* os nomes passam para o topo, por baixo da frase */
 .portal-atmosphere.tema-rl .cband .names em { color: var(--gold); }
 .portal-atmosphere.tema-rl .cband .date { margin-bottom: 0; color: var(--ink-3); }
 .portal-atmosphere.tema-rl .cband .hcount {
