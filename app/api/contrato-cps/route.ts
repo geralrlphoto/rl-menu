@@ -11,7 +11,7 @@ export const maxDuration = 60
 //
 // Ao receber o submit:
 //   1. Guarda em Supabase → tabela dados_contrato_cps
-//   2. Guarda em Notion   → base de dados EVENTOS (ano correto)
+//   2. (Já não guarda no Notion)
 //   3. Cria registo em eventos_YYYY (referência automática)
 //   4. Envia email de confirmação ao CLIENTE (gold card)
 //   5. Envia notificação ao ADMIN
@@ -413,24 +413,9 @@ export async function POST(req: NextRequest) {
     const crmToken = typeof body.crm_token === 'string' && /^[\w-]{6,80}$/.test(body.crm_token) ? body.crm_token : null
     let refFinal = ''
 
-    // ── Guardar em paralelo ──────────────────────────────────────────────────
-    const [supabaseResult, notionResult] = await Promise.allSettled([
-      saveToSupabase(data),
-      saveToNotion(data),
-    ])
-
-    const notionVal = notionResult.status === 'fulfilled' ? notionResult.value : null
-
-    // ── Cria registo em evento_equipa ────────────────────────────────────────
-    if (notionVal?.ok && notionVal?.id) {
-      await db().from('evento_equipa').upsert({
-        evento_id:      notionVal.id,
-        referencia:     `AGUARDAR — ${data.nome_noivos ?? ''}`,
-        cliente:        data.nome_noivos ?? null,
-        data_casamento: data.data_casamento ?? null,
-        local:          data.local_cerimonia ?? null,
-      }, { onConflict: 'evento_id' })
-    }
+    // ── Guardar (só Supabase: já não se cria página no Notion) ───────────────
+    const [supabaseResult] = await Promise.allSettled([saveToSupabase(data)])
+    const notionVal: { ok: boolean; id?: string } | null = null
 
     // ── Cria/atualiza registo em eventos_YYYY ────────────────────────────────
     // Se o cliente preencheu referencia_evento, usa-a (admin já criou o evento
