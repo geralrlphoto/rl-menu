@@ -11,9 +11,9 @@ import { BlocosComPrevisao } from '@/app/portal-cliente/atmosphere/PrevisaoIPMA'
 import BlockEditor from '../BlockEditor'
 import BriefingExtensions, { type BriefingExt, BotaoPartilhar } from '../../portal-cliente/[id]/BriefingExtensions'
 import '../../portal-cliente/atmosphere/atmosphere.css'
-import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, type SidebarNavItem } from '../../portal-cliente/atmosphere/PortalShell'
+import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, CaixaBloqueio, type SidebarNavItem } from '../../portal-cliente/atmosphere/PortalShell'
 import { ContratoView } from '../../portal-cliente/atmosphere/ContratoView'
-import { portalBloqueado, paginaSempreAberta, TEXTO_BLOQUEIO } from '@/lib/portalBloqueio'
+import { portalBloqueado, paginaSempreAberta, emFalta } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../../portal-cliente/atmosphere/PreWeddingView'
 import { SendMessageButton } from '../../portal-cliente/atmosphere/SendMessageButton'
 import { AtendimentoThread } from '../../portal-cliente/atmosphere/AtendimentoThread'
@@ -1728,7 +1728,7 @@ function PortalSubPageContent() {
         coupleLabel={COUPLE_LABEL}
         fotoUrl={portalSettingsObj?.casalFotoUrl ?? null}
       />
-      <SidebarNav items={_atmNavItems} />
+      <SidebarNav items={_atmNavItems} falta={_bloqueado ? emFalta(portalSettingsObj, pagamentos) : undefined} />
       <SidebarMiniCountdown
         weddingDate={_atmWeddingDate}
         coupleCode={portalSettingsObj?.referencia ?? portalRef ?? null}
@@ -1742,12 +1742,10 @@ function PortalSubPageContent() {
   if (_bloqueado && !paginaSempreAberta(title) && !loading) {
     return (
       <PortalShell sidebar={_atmSidebar}>
-        <div style={{ minHeight: '70vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 18, padding: '40px 20px' }}>
-          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--gold, #d8be93)' }}>
-            <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
-          </svg>
-          <h1 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: 'clamp(30px,4vw,44px)', margin: 0 }}>{title}</h1>
-          <p style={{ maxWidth: '42ch', opacity: .75, lineHeight: 1.7, margin: 0 }}>{TEXTO_BLOQUEIO} Encontram os dois passos nas páginas Contrato e Pagamentos.</p>
+        <div style={{ minHeight: '70vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
+          <CaixaBloqueio falta={emFalta(portalSettingsObj, pagamentos)}
+            hrefContrato={_atmNavItems.find(i => /CONTRATO/i.test(i.label))?.href}
+            hrefPagamentos={_atmNavItems.find(i => /PAGAMENTO/i.test(i.label))?.href} />
         </div>
       </PortalShell>
     )

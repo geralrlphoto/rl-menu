@@ -17,7 +17,7 @@ import {
 } from './PortalShell'
 import { ArrowUpRightIcon, MailIcon } from './icons'
 import { NoivosNotificationsBell } from './NoivosNotificationsBell'
-import { paginaSempreAberta } from '@/lib/portalBloqueio'
+import { paginaSempreAberta, type FaltaBloqueio } from '@/lib/portalBloqueio'
 
 export type PortalTipo = 'casamento' | 'batizado'
 
@@ -51,6 +51,8 @@ export type AtmosphereData = {
   activeNavId?: string | null
   /** Portal à espera da adjudicação e do contrato assinado: só Contrato e Pagamentos abrem */
   bloqueado?: boolean
+  /** O que falta para desbloquear (caixa ao tocar numa página bloqueada) */
+  falta?: FaltaBloqueio
   /**
    * Overrides de título por página (admin renomeou): `pageTitles[id] = 'novo'`.
    * Se ausente usa o título original.
@@ -235,7 +237,7 @@ export function AtmospherePortal({
   const sidebar = (
     <>
       <SidebarCouple noiva={data.noiva} noivo={data.noivo} data={data.dataLabel} coupleLabel={coupleLabel} fotoUrl={data.casalFotoUrl} />
-      <SidebarNav items={navItems} />
+      <SidebarNav items={navItems} falta={data.bloqueado ? data.falta : undefined} />
       <SidebarMiniCountdown weddingDate={weddingDate} coupleCode={data.referencia} coupleLabel={coupleLabel} />
     </>
   )

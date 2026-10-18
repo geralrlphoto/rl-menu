@@ -132,15 +132,57 @@ export type SidebarNavItem = {
   locked?: boolean
 }
 
+/* Caixa "Pedimos desculpa, página bloqueada" com o que falta para desbloquear */
+export type FaltaBloqueio = { adjudicacao: boolean; contrato: boolean }
+export function CaixaBloqueio({ falta, hrefContrato, hrefPagamentos, onClose }: {
+  falta: FaltaBloqueio; hrefContrato?: string; hrefPagamentos?: string; onClose?: () => void
+}) {
+  const linha = (txt: string, sub: string, href?: string) => (
+    <li style={{ display: 'flex', gap: 12, alignItems: 'flex-start', textAlign: 'left', padding: '12px 0', borderTop: '1px solid rgba(255,255,255,.08)' }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#e46b6b', boxShadow: '0 0 8px #e46b6b', marginTop: 7, flexShrink: 0 }} />
+      <span style={{ flex: 1 }}>
+        <strong style={{ fontWeight: 500 }}>{txt}</strong>
+        <span style={{ display: 'block', opacity: .65, fontSize: 13.5, marginTop: 3 }}>{sub}</span>
+      </span>
+      {href && <a href={href} style={{ color: 'var(--gold, #d8be93)', fontSize: 12, letterSpacing: '.12em', textTransform: 'uppercase', whiteSpace: 'nowrap', marginTop: 3 }}>Ir →</a>}
+    </li>
+  )
+  return (
+    <div style={{ width: '100%', maxWidth: 440, padding: '32px 28px 22px', borderRadius: 18, background: '#0f0d0a', border: '1px solid rgba(255,255,255,.55)', boxShadow: '0 0 22px rgba(255,255,255,.12), 0 30px 80px rgba(0,0,0,.6)', textAlign: 'center', position: 'relative' }}
+      role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+      {onClose && <button type="button" onClick={onClose} aria-label="Fechar" style={{ position: 'absolute', top: 12, right: 16, background: 'none', border: 'none', color: 'inherit', opacity: .6, fontSize: 22, cursor: 'pointer' }}>×</button>}
+      <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--gold, #d8be93)' }}>
+        <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      </svg>
+      <h2 style={{ fontFamily: "'Cormorant Garamond',serif", fontWeight: 300, fontSize: 30, margin: '12px 0 6px' }}>Pedimos desculpa</h2>
+      <p style={{ margin: '0 0 18px', opacity: .8, lineHeight: 1.6 }}>Esta página está bloqueada. Para a desbloquear faltam estes documentos:</p>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {falta.adjudicacao && linha('Pagamento da adjudicação', 'Registem o pagamento na página Pagamentos.', hrefPagamentos)}
+        {falta.contrato && linha('Contrato assinado', 'Assinem o contrato e enviem-no na página Contrato.', hrefContrato)}
+      </ul>
+    </div>
+  )
+}
+
 export function SidebarNav({
   label = 'Acesso Rápido',
   items,
+  falta,
 }: {
   label?: string
   items: SidebarNavItem[]
+  /** O que falta para desbloquear (abre a caixa ao tocar numa página bloqueada) */
+  falta?: FaltaBloqueio
 }) {
+  const [caixa, setCaixa] = useState(false)
+  const hrefDe = (re: RegExp) => items.find(i => !i.locked && re.test(i.label.toUpperCase()))?.href
   return (
     <>
+      {caixa && falta && (
+        <div onClick={() => setCaixa(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <CaixaBloqueio falta={falta} hrefContrato={hrefDe(/CONTRATO/)} hrefPagamentos={hrefDe(/PAGAMENTO/)} onClose={() => setCaixa(false)} />
+        </div>
+      )}
       <div className="nav-label">{label}</div>
       <nav>
         {items.map(it => {
@@ -151,14 +193,14 @@ export function SidebarNav({
             </>
           )
           if (it.locked) return (
-            <div key={it.id} className="nv" aria-disabled="true"
-              title="Disponível depois da adjudicação e do envio do contrato assinado."
-              style={{ opacity: .38, cursor: 'not-allowed' }}>
+            <button key={it.id} type="button" className="nv" aria-disabled="true"
+              onClick={() => setCaixa(true)}
+              style={{ opacity: .38 }}>
               {inner}
               <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 'auto', flexShrink: 0 }} aria-label="Bloqueado">
                 <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
               </svg>
-            </div>
+            </button>
           )
           return it.href ? (
             <a key={it.id} className={`nv${it.active ? ' on' : ''}`} href={it.href}>

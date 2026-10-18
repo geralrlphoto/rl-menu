@@ -321,23 +321,72 @@ export async function reservarReferencia(sb: ReturnType<typeof db>, prefix: stri
 
 const numEur = (v: unknown) => { const n = Number(String(v ?? '').replace(/[^\d,]/g, '').replace(',', '.')); return isFinite(n) ? n : 0 }
 
+/* Passa o pacote aceite para a ficha do evento (Supabase + Notion), que é de onde
+   o contrato lê serviços, valores e o pacote (o prazo do vídeo segue o pacote).
+   O valor do pacote vai inteiro para "valor foto": a proposta não separa foto/vídeo. */
+async function aplicarPropostaAoEvento(sb: ReturnType<typeof db>, ref: string, aceite: any) {
+  const { data: ev } = await sb.from('eventos_2026').select('id, notion_id').eq('referencia', ref).maybeSingle()
+  if (!ev) return null
+  if (!aceite?.nome) return ev
+  const valorPacote = numEur(aceite.valor)
+  const extras = (aceite.extras || []) as { nome: string; valor: string }[]
+  const valorExtras = extras.reduce((a, e) => a + numEur(e.valor), 0)
+  await sb.from('eventos_2026').update({
+    servico_foto: aceite.servicos_foto || [],
+    servico_video: aceite.servicos_video || [],
+    ...(valorPacote > 0 ? { valor_foto: valorPacote } : {}),
+  }).eq('id', ev.id)
+
+  if (ev.notion_id && process.env.NOTION_TOKEN) {
+    const ms = (l: string[]) => ({ multi_select: l.filter(Boolean).map(n => ({ name: String(n).replace(/,/g, ' ').slice(0, 100) })) })
+    const props: Record<string, any> = {
+      'REFERÊNCIA DO EVENTO': { title: [{ text: { content: ref } }] },
+      'PROPOSTA ESCOLHIDA': { select: { name: aceite.nome } },
+      'serviço de fotografia': ms(aceite.servicos_foto || []),
+      'serviço de video': ms(aceite.servicos_video || []),
+      ...(valorPacote > 0 ? { 'VALOR SERVIÇO FOTO': { number: valorPacote } } : {}),
+      ...(extras.length ? { 'SERVIÇO EXTRA': ms(extras.map(e => e.nome)), 'VALOR DOS EXTRAS': { number: valorExtras } } : {}),
+    }
+    const patch = (properties: Record<string, any>) => fetch(`https://api.notion.com/v1/pages/${ev.notion_id}`, {
+      method: 'PATCH',
+      headers: { Authorization: `Bearer ${process.env.NOTION_TOKEN}`, 'Content-Type': 'application/json', 'Notion-Version': '2022-06-28' },
+      body: JSON.stringify({ properties }),
+    })
+    // Se alguma propriedade não existir no Notion, fica pelo menos a referência
+    const r = await patch(props).catch(() => null)
+    if (!r?.ok) await patch({ 'REFERÊNCIA DO EVENTO': props['REFERÊNCIA DO EVENTO'] }).catch(() => null)
+  }
+  return ev
+}
+
 /* Cria o portal com password ao acaso e envia o email do portal aos noivos.
-   O contrato fica "Em preparação" até o admin o aprovar na ficha. Os serviços e o
-   valor vêm do pacote que os noivos aceitaram no portal da reunião (crmToken). */
+   O contrato fica logo aprovado e disponível, com os serviços, valores e prazos do
+   pacote que os noivos aceitaram no portal da reunião (crmToken). */
 export async function entregarPortalAutomatico(ref: string, contrato: any, crmToken: string | null) {
   const sb = db()
   const tipo: 'casamento' | 'batizado' = contrato.tipo_evento === 'batizado' ? 'batizado' : 'casamento'
   const password = passwordAleatoria()
 
   // bloqueioAteAdjudicacao: só Contrato e Pagamentos abrem até à adjudicação paga + contrato assinado
-  const extra: Record<string, any> = { contratoDisponivel: false, bloqueioAteAdjudicacao: true, entregaAutomatica: new Date().toISOString() }
+  const extra: Record<string, any> = { bloqueioAteAdjudicacao: true, entregaAutomatica: new Date().toISOString() }
+  let aceite: any = null
   if (crmToken) {
     extra.propostaToken = crmToken
     const { data: c } = await sb.from('crm_contacts').select('page_content').eq('page_token', crmToken).maybeSingle()
     const pc = typeof c?.page_content === 'string' ? JSON.parse(c.page_content || '{}') : (c?.page_content || {})
-    const aceite = pc.propostaAceite
+    aceite = pc.propostaAceite ?? null
     const total = numEur(aceite?.valor) + ((aceite?.extras || []) as { valor: string }[]).reduce((a, e) => a + numEur(e.valor), 0)
     if (total > 0) extra.valorTotal = total
+  }
+
+  // Contrato aprovado automaticamente (é sempre o mesmo modelo)
+  const ev = await aplicarPropostaAoEvento(sb, ref, aceite)
+  if (ev?.id) {
+    extra.contratoDisponivel = true
+    extra.contratoUrl = `/eventos-2026/${ev.id}/contrato`
+    await sb.from('dados_contrato_cps').update({ contrato_aprovado_em: new Date().toISOString() }).eq('referencia_evento', ref)
+  } else {
+    extra.contratoDisponivel = false
   }
 
   const portalUrl = tipo === 'batizado'

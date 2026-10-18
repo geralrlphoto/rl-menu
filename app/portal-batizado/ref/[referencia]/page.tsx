@@ -8,7 +8,7 @@ import { plainText, type Block } from '../../NotionRenderer'
 import BlockEditor from '../../BlockEditor'
 import { NoivosLogoutButton } from '@/app/components/NoivosLogoutButton'
 import { AtmospherePortal, buildDeliveriesFromSettings } from '../../../portal-cliente/atmosphere/AtmospherePortal'
-import { portalBloqueado } from '@/lib/portalBloqueio'
+import { portalBloqueado, emFalta } from '@/lib/portalBloqueio'
 import { FORM_SELECAO_FOTOS_URL } from '@/lib/links'
 
 const PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
@@ -782,6 +782,7 @@ export default function PortalRefPage() {
           noivosNotifications: settings.noivos_notifications ?? [],
           casalFotoUrl: settings.casalFotoUrl ?? null,
           bloqueado:   !isAdmin && portalBloqueado(settings, pagamentosBloqueio),
+          falta:       emFalta(settings, pagamentosBloqueio),
         }}
         callbacks={{}}
       />

@@ -29,3 +29,10 @@ export function paginaSempreAberta(titulo: string): boolean {
 }
 
 export const TEXTO_BLOQUEIO = 'Disponível depois da adjudicação e do envio do contrato assinado.'
+
+export type FaltaBloqueio = { adjudicacao: boolean; contrato: boolean }
+
+/* O que ainda falta para desbloquear o portal */
+export function emFalta(settings: any, pagamentos: Pag[] | null | undefined): FaltaBloqueio {
+  return { adjudicacao: !adjudicacaoPaga(pagamentos), contrato: !settings?.contratoAssinadoEm }
+}
