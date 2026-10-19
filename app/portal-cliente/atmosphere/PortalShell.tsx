@@ -236,7 +236,8 @@ export function SidebarNav({
       if (/IN[ÍI]CIO/.test(u)) return 'inicio'
       if (/CONTRAT|PAGAMENT|BRIEFING|PR[ÉE]-WEDDING|CRONOGRAMA/.test(u)) return 'antes'
       if (/FOTOGRAF|FILME|SAT/.test(u)) return 'depois'
-      return 'ajuda'
+      if (/ATENDIMENTO/.test(u)) return 'ajuda'
+      return 'fora' // Sobre o menu e fichas do briefing (Noivo, Noiva, Cerimónia, Quinta) não vão para o menu
     }
     const avisoDe = (l: string) => {
       const u = l.toUpperCase()
