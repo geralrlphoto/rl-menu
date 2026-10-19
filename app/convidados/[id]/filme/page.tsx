@@ -1,5 +1,5 @@
 // Página dos vídeos do casamento para os convidados (link partilhado pelos noivos).
-// Endereço com o id do portal, que não se adivinha. Só mostra os vídeos já entregues.
+// Endereço com o id do portal, que não se adivinha. Só mostra o filme do casamento, depois de entregue.
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -21,11 +21,9 @@ async function carregar(id: string) {
   if (!data) return null
   const s: any = data.settings ?? {}
   const a = primeiro(data.noiva ?? s.noiva), b = primeiro(data.noivo ?? s.noivo)
+  // Aos convidados só se mostra o filme do casamento (os outros vídeos ficam no portal dos noivos)
   const lista: Array<[string, string, string, unknown]> = [
-    ['filme', 'Wedding Film', 'Filme completo', s.wedding_film_url],
-    ['teaser', 'Teaser', 'Um primeiro olhar', s.teaser_url],
-    ['same-day-edit', 'Same Day Edit', 'Mostrado no próprio dia', s.same_day_edit_url],
-    ['pre-wedding', 'Pré-Wedding', 'A sessão antes do grande dia', s.video_prewedding_url],
+    ['filme', 'Wedding Film', 'O filme do casamento', s.wedding_film_url],
   ]
   const videos: VideoConvidado[] = lista
     .filter(([, , , url]) => typeof url === 'string' && /^https?:\/\//.test(url))
@@ -88,8 +86,8 @@ export default async function FilmeConvidadosPage({ params }: { params: Promise<
           <VideosConvidados videos={c.videos} capaFallback={c.foto} />
         ) : (
           <div className="rounded-[22px] border border-dashed border-[#d8be93]/25 px-6 py-14 text-center">
-            <h2 className="font-cond font-semibold text-[24px] text-white/80">Os vídeos estão quase prontos</h2>
-            <p className="mt-2 font-cond text-[15px] text-white/45">Assim que estiverem disponíveis, aparecem aqui.</p>
+            <h2 className="font-cond font-semibold text-[24px] text-white/80">O filme está quase pronto</h2>
+            <p className="mt-2 font-cond text-[15px] text-white/45">Assim que estiver disponível, aparece aqui.</p>
           </div>
         )}
 

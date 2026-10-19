@@ -28,7 +28,7 @@ function PartilharVideo({ titulo, url, pagina, largo }: { titulo: string; url: s
   async function partilhar() {
     // Com a página dos convidados, partilha-se essa página (todos os vídeos, com leitor)
     const texto = pagina
-      ? `Olá! Já podem ver os vídeos do nosso casamento aqui: ${pagina}`
+      ? `Olá! Já podem ver o filme do nosso casamento aqui: ${pagina}`
       : `Olá! Já podem ver o ${titulo} do nosso casamento: ${url}`
     try {
       if (navigator.share) { await navigator.share({ title: titulo, text: texto }); return }
@@ -208,7 +208,6 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                           {embedDe(v.url)
                             ? <button type="button" onClick={() => ver(v)} className="atm-btn solid" style={{ width: '100%' }}>▶ Ver o vídeo</button>
                             : <a href={v.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid" style={{ width: '100%' }}>Ver mais →</a>}
-                          <PartilharVideo titulo={v.titulo} url={v.url} pagina={paginaConvidados} largo />
                         </div>
                       )
                       : <span className="atm-btn" style={{ width: '100%', opacity: .5, cursor: 'default' }}>Aguardar</span>}
