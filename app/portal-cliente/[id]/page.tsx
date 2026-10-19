@@ -16,6 +16,7 @@ import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, CaixaBloq
 import { PagamentosRL } from '../atmosphere/PagamentosRL'
 import { FilmeRL, type VideoRL } from '../atmosphere/FilmeRL'
 import { BriefingTopoRL } from '../atmosphere/BriefingTopoRL'
+import { SatisfacaoRL } from '../atmosphere/SatisfacaoRL'
 import { ContratoView } from '../atmosphere/ContratoView'
 import { portalBloqueado, paginaSempreAberta, emFalta } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
@@ -2461,6 +2462,38 @@ function PortalSubPageContent() {
   const _atmBackHref = fromId
     ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
     : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'
+
+  // ── Área SAT no novo design (tema RL): só nos portais em teste ──
+  if (temaRL && isSatisfacaoPage && !loading && !error && !editing && !editingPhotos && !isFreelancerView && !isPartilha) {
+    const _primeiraImg = blocks.findIndex(b => b.type === 'image')
+    const _texto = (_primeiraImg !== -1 ? blocks.slice(0, _primeiraImg) : blocks)
+      .filter(b => b.type === 'paragraph' && plainText(b.paragraph?.rich_text ?? []).trim())
+    return (
+      <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+        <SatisfacaoRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          intro={_texto.length > 0 ? (
+            <IntroDropdown titulo="Sobre esta área">
+              <NotionBlocks blocks={_texto} hiddenNav={settings.hiddenNav} />
+            </IntroDropdown>
+          ) : undefined}
+          nota={notaSat}
+          hover={hoverNotaSat}
+          setNota={setNotaSat}
+          setHover={setHoverNotaSat}
+          comentario={comentarioSat}
+          setComentario={setComentarioSat}
+          onSubmeter={submeterSatisfacao}
+          enviando={enviandoSat}
+          erro={erroSat}
+          resposta={satisfacao ?? (enviadoSat ? { nota: notaSat, comentario: comentarioSat.trim() } : null)}
+          testemunhoUrl={portalSettingsObj?.testemunhoUrl || 'https://tally.so/r/pbKJry'}
+        />
+      </PortalShell>
+    )
+  }
 
   // ── O Nosso Filme no novo design (tema RL): só nos portais em teste ──
   if (temaRL && isFilmePage && !loading && !error && !editing && !editingPhotos && !isFreelancerView && !isPartilha) {
