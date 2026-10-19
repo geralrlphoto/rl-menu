@@ -4102,7 +4102,13 @@ function PortalSubPageContent() {
                       const aceHidden = new Set(
                         isFreelancerView ? [] : (aceIdx !== -1 ? allOther.slice(aceIdx, aceEnd).map(b => b.id) : [])
                       )
+                      // Tema RL: sem a imagem solta do logótipo (e o título vazio antes dela); vai uma assinatura no fim
+                      const semLogoRL = (b: Block) => !(temaRL && !isFreelancerView && (
+                        b.type === 'image' ||
+                        (['heading_1','heading_2','heading_3'].includes(b.type) && !plainText(b[b.type]?.rich_text ?? []).trim())
+                      ))
                       const otherBlocks = allOther.filter(b =>
+                        semLogoRL(b) &&
                         !aceHidden.has(b.id) &&
                         !(b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')) &&
                         !(b.type === 'column_list' && (b.children ?? []).some((col: Block) =>
@@ -4461,6 +4467,14 @@ function PortalSubPageContent() {
                                 {notionMid.length > 0 && <NotionBlocks blocks={notionMid} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
                                 {briefingExtBlock}
                                 {notionPost.length > 0 && <BlocosComPrevisao blocks={notionPost} local={eventoData?.local} data={eventoData?.data_evento} render={bs => <NotionBlocks blocks={bs} hiddenNav={settings.hiddenNav} backUrl={backUrl} />} />}
+                                {temaRL && !isFreelancerView && (
+                                  <div className="mt-12 mb-4 flex flex-col items-center text-center">
+                                    <div className="w-16 h-px mb-6" style={{ background: 'linear-gradient(90deg, transparent, rgba(216,190,147,0.6), transparent)' }} />
+                                    <img src="/portal-noivos/logo-gold.png" alt="RL Photo Video" className="h-12 w-auto object-contain opacity-90" />
+                                    <p className="mt-3 text-[9px] tracking-[0.45em] uppercase" style={{ color: 'rgba(216,190,147,0.65)' }}>Photo · Video · Wedding Moments</p>
+                                    <p className="mt-5 text-white/55 italic text-base" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>O vosso dia, em boas mãos.</p>
+                                  </div>
+                                )}
                               </>
                             )
                           })()}
