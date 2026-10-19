@@ -754,7 +754,44 @@ function MoodboardSection({ info, isAdmin, onSave, cliente }: { info: BriefingEx
 
 // ─── Section: Playlist ───────────────────────────────────────────────────────
 
-function PlaylistSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
+/* Caixa para os noivos: explica e deixa adicionar uma música de cada vez, sem "Editar" */
+const MOMENTOS_SUGERIDOS = ['Entrada do noivo', 'Entrada da noiva', 'Saída da cerimónia', 'Entrada dos noivos na sala', 'Primeira dança', 'Corte do bolo', 'Lançamento do bouquet', 'Momento especial']
+function PlaylistNoivos({ list, onGuardar }: { list: NonNullable<BriefingExt['playlist']>; onGuardar: (l: NonNullable<BriefingExt['playlist']>) => Promise<void> | void }) {
+  const vazio = { moment: '', song: '', artist: '', url: '' }
+  const [nova, setNova] = useState(vazio)
+  const [estado, setEstado] = useState<'' | 'a-gravar' | 'gravado'>('')
+  const campo = 'min-w-0 rounded-lg border border-white/10 bg-black/40 px-3 py-2.5 text-[13px] text-white outline-none focus:border-gold/50'
+  async function adicionar() {
+    if (!nova.song.trim()) return
+    setEstado('a-gravar')
+    await onGuardar([...list, { id: uid(), moment: nova.moment.trim(), song: nova.song.trim(), artist: nova.artist.trim(), url: nova.url.trim() }])
+    setNova(vazio); setEstado('gravado')
+    setTimeout(() => setEstado(''), 2500)
+  }
+  return (
+    <div className="mx-auto my-2 mb-4 max-w-2xl rounded-2xl border border-gold/30 bg-gold/[0.04] px-5 py-6 text-center">
+      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 text-gold text-[18px]">♫</div>
+      <p className="text-[15px] font-semibold text-white">Partilhem connosco as músicas do vosso dia</p>
+      <p className="mx-auto mt-2 max-w-[50ch] text-[13px] leading-relaxed text-white/55">
+        Digam-nos que música escolheram para cada momento: a entrada, a saída da cerimónia, a primeira dança… Assim estamos prontos para o captar no tempo certo e usamos as vossas músicas no filme sempre que possível.
+      </p>
+      <datalist id="momentos-sugeridos">{MOMENTOS_SUGERIDOS.map(m => <option key={m} value={m} />)}</datalist>
+      <div className="mt-4 grid gap-2 text-left sm:grid-cols-2">
+        <input list="momentos-sugeridos" value={nova.moment} onChange={e => setNova(n => ({ ...n, moment: e.target.value }))} placeholder="Momento (ex.: Primeira dança)" className={campo} />
+        <input value={nova.song} onChange={e => setNova(n => ({ ...n, song: e.target.value }))} placeholder="Música" className={campo} />
+        <input value={nova.artist} onChange={e => setNova(n => ({ ...n, artist: e.target.value }))} placeholder="Artista" className={campo} />
+        <input value={nova.url} onChange={e => setNova(n => ({ ...n, url: e.target.value }))} placeholder="Link Spotify/YouTube (opcional)" className={campo} />
+      </div>
+      <button type="button" onClick={adicionar} disabled={estado === 'a-gravar' || !nova.song.trim()}
+        className="mt-3 rounded-lg border border-gold/40 bg-gold/[0.1] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-gold transition-all hover:bg-gold/[0.18] disabled:opacity-40">
+        {estado === 'a-gravar' ? 'A gravar…' : '+ Adicionar música'}
+      </button>
+      {estado === 'gravado' && <p className="mt-2 text-[12px] font-semibold text-green-300">Música adicionada ✓</p>}
+    </div>
+  )
+}
+
+function PlaylistSection({ info, isAdmin, onSave, cliente }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar; cliente?: boolean }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.playlist ?? [])
   const list = info.playlist ?? []
@@ -780,9 +817,11 @@ function PlaylistSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin
           ))}
           <AddBtn onClick={() => setDraft(d => [...d, { id: uid(), moment: '', song: '', artist: '', url: '' }])} label="Adicionar Música" />
         </div>
-      ) : list.length === 0 ? (
+      ) : list.length === 0 && !cliente ? (
         <EmptyState icon="♫" msg="Sem playlist definida." />
       ) : (
+        <>
+        {cliente && <PlaylistNoivos list={list} onGuardar={l => onSave({ playlist: l })} />}
         <div className="space-y-1.5">
           {list.map(p => (
             <div key={p.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.025] border border-white/[0.06] hover:border-gold/25 transition-colors group">
@@ -803,6 +842,7 @@ function PlaylistSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin
             </div>
           ))}
         </div>
+        </>
       )}
     </Section>
   )
@@ -1794,7 +1834,8 @@ export default function BriefingExtensions({
 
           {/* Referências visuais: os noivos também podem editar (link do moodboard e imagens) */}
           {ver('moodboard') && <MoodboardSection info={info} isAdmin={showAdminEditing || (!teamView && !partilhada)} cliente={!showAdminEditing && !teamView && !partilhada} onSave={saveWithLog} />}
-          {ver('playlist') && <PlaylistSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
+          {/* Músicas: os noivos também podem adicionar e editar */}
+          {ver('playlist') && <PlaylistSection info={info} isAdmin={showAdminEditing || (!teamView && !partilhada)} cliente={!showAdminEditing && !teamView && !partilhada} onSave={saveWithLog} />}
 
           {/* Logística — grid 2 col */}
           {(ver('restricoes') || ver('contactos')) && (
