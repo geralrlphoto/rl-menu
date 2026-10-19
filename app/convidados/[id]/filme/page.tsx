@@ -91,12 +91,6 @@ export default async function FilmeConvidadosPage({ params }: { params: Promise<
           </div>
         )}
 
-        <div className="mt-10 text-center">
-          <a href={`/convidados/${id}`}
-            className="inline-flex items-center gap-2 rounded-full border border-white/[0.14] bg-[#0e0e0e]/90 px-5 py-2.5 font-cond font-semibold text-[14px] text-white/80 transition-all hover:border-[#d8be93]/60 hover:text-white">
-            Ver e adquirir as fotografias →
-          </a>
-        </div>
       </section>
 
       <footer className="pb-14 text-center">
