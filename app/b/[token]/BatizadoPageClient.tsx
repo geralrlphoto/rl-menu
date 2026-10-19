@@ -2,6 +2,7 @@
 
 import { RLP_CSS } from '@/app/_lead/rlpCss'
 import RodaVideos from '@/app/_lead/RodaVideos'
+import PortfolioFaixa from '@/app/_lead/PortfolioFaixa'
 import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
@@ -889,26 +890,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
 
       <div className="rlp-div" />
 
-      {/* ── PORTFÓLIO ── */}
-      <section id="sec-portfolio" className="rlp-sec">
-        <div className="rlp-wrap">
-          <FadeIn><span className="rlp-eyebrow">{portfolio.label}</span></FadeIn>
-          <FadeIn delay={120}>
-            <h2 className="rlp-h2" style={{ marginTop: 16, marginBottom: 40, maxWidth: '20ch', color: (portfolio.titleColor && portfolio.titleColor !== '#ffffff') ? portfolio.titleColor : undefined }}>
-              {portfolio.title}
-            </h2>
-          </FadeIn>
-          <div className="grid grid-cols-3 gap-3 sm:gap-5">
-            {portfolio.photos.map((url, i) => (
-              <FadeIn key={i} delay={i * 120} className="aspect-square">
-                <div className="rlp-slot w-full h-full" style={{ borderRadius: 10 }}>
-                  {url ? <img src={url} alt="" /> : <div className="lab">Foto {i + 1}</div>}
-                </div>
-              </FadeIn>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* ── PORTFÓLIO: faixa a deslizar com o scroll ── */}
+      <PortfolioFaixa label={portfolio.label} title={portfolio.title} titleColor={portfolio.titleColor} photos={portfolio.photos} isAdmin={isAdmin} />
 
       <div className="rlp-div" />
 
