@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
+import { revalidateTag } from 'next/cache'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 
@@ -50,6 +51,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     if ('confirmado' in updates) updates.confirmado_em = updates.confirmado ? new Date().toISOString() : null
     const { error } = await db().from('pagamentos_noivos').update(updates).eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    revalidateTag('photo-adjudicacao', { expire: 0 }) // o alerta "Adjudicação em falta" do /photo atualiza logo
     return NextResponse.json({ ok: true })
   }
 

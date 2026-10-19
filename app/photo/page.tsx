@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import RelatorioDiarioBanner from './RelatorioDiarioBanner'
 import { unstable_cache } from 'next/cache'
+import { adjudicacaoPaga } from '@/lib/portalBloqueio'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
 import { TarefasCard } from '@/app/components/TarefasCard'
@@ -604,6 +605,39 @@ export default async function PhotoDashboard() {
       }
     })
 
+  // Adjudicação em falta: 2 dias antes do evento, enquanto não houver adjudicação
+  // confirmada em /financas (só contam pagamentos confirmados por nós)
+  const ADJUDICACAO_ALERTA_DIAS = 2
+  const variantesRef = (ref: string) => Array.from(new Set([ref, ref.replace(/_(\d{2})_RL/, '_0$1_RL'), ref.replace(/_0(\d{2})_RL/, '_$1_RL')]))
+  const getPagamentosAgenda = unstable_cache(
+    async () => {
+      const refs = (eventosSemana as any[]).flatMap(e => e.referencia ? variantesRef(e.referencia) : [])
+      if (!refs.length) return []
+      const { data } = await supabase.from('pagamentos_noivos')
+        .select('referencia, fase_pagamento, valor_liquidado')
+        .in('referencia', refs).eq('confirmado', true).limit(500)
+      return data ?? []
+    },
+    [`photo-agenda30-adjudicacao-${semanaDias[0]}`],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
+  )
+  const pagamentosAgenda = await getPagamentosAgenda()
+  const chaveAdjudicacao = (id: string) => `evento:adjudicacao:${id}`
+  const adjudicacaoFalta = (eventosAgenda as any[])
+    .filter(ev => ev.referencia && !ocultos.has(chaveAdjudicacao(ev.id)))
+    .filter(ev => {
+      const refs = variantesRef(ev.referencia)
+      return !adjudicacaoPaga(pagamentosAgenda.filter((p: any) => refs.includes(p.referencia)))
+    })
+    .map(ev => {
+      const devido = somaDias(ev.data_evento, -ADJUDICACAO_ALERTA_DIAS)
+      return {
+        id: ev.id, ref: ev.referencia as string, nome: nomeNoivos(ev.cliente),
+        dia: devido < hojeLx ? hojeLx : devido, futura: devido > hojeLx,
+        faltam: difDias(ev.data_evento, hojeLx),
+      }
+    })
+
   const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
   const semana = semanaDias.map((iso, i) => {
@@ -623,6 +657,7 @@ export default async function PhotoDashboard() {
         .sort((a: any, b: any) => String(a.reuniao_hora ?? '').localeCompare(String(b.reuniao_hora ?? ''))),
       preparacoes: prepAgenda.filter(m => m.data === iso),
       briefingEquipa: briefingEquipa.filter(b => b.dia === iso),
+      adjudicacao: adjudicacaoFalta.filter(a => a.dia === iso),
       whatsapp: waAgenda.filter(t => t.dia === iso).sort((a, b) => b.atrasoDias - a.atrasoDias),
     }
   })
@@ -1098,7 +1133,7 @@ export default async function PhotoDashboard() {
 
           <div className="agenda-scroll flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
             {semana.map((d, i) => {
-              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0 || d.preparacoes.length > 0 || d.briefingEquipa.length > 0
+              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0 || d.preparacoes.length > 0 || d.briefingEquipa.length > 0 || d.adjudicacao.length > 0
               return (
                 <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
                   {/* Mês por cima do primeiro dia e de cada dia 1 */}
@@ -1178,6 +1213,19 @@ export default async function PhotoDashboard() {
                             Briefing à equipa{!b.futura && b.faltam >= 0 ? ` · ${b.faltam === 0 ? 'hoje' : b.faltam === 1 ? 'amanhã' : `faltam ${b.faltam}d`}` : ''}
                           </p>
                           <p className={`text-[11px] leading-tight truncate mt-0.5 ${b.futura ? 'text-white/45' : 'text-white/85 group-hover:text-white'}`}>{b.nome || 'Evento'}</p>
+                        </Link>
+                        </AgendaItem>
+                      ))}
+                      {/* Adjudicação em falta (2 dias antes do evento): vermelho tracejado, abre o /financas filtrado */}
+                      {d.adjudicacao.map(a => (
+                        <AgendaItem key={`adj-${a.id}`} chave={chaveAdjudicacao(a.id)}>
+                        <Link href={`/financas?ref=${encodeURIComponent(a.ref)}`} title="Ainda não há adjudicação confirmada: abrir as finanças deste casamento"
+                          className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-red-400/10"
+                          style={{ borderColor: a.futura ? 'rgba(248,113,113,0.18)' : 'rgba(248,113,113,0.55)', background: a.futura ? 'transparent' : 'rgba(248,113,113,0.07)' }}>
+                          <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: a.futura ? 'rgba(248,113,113,0.5)' : '#f87171' }}>
+                            Adjudicação em falta{!a.futura && a.faltam >= 0 ? ` · ${a.faltam === 0 ? 'hoje' : a.faltam === 1 ? 'amanhã' : `faltam ${a.faltam}d`}` : ''}
+                          </p>
+                          <p className={`text-[11px] leading-tight truncate mt-0.5 ${a.futura ? 'text-white/45' : 'text-white/85 group-hover:text-white'}`}>{a.nome || 'Evento'}</p>
                         </Link>
                         </AgendaItem>
                       ))}

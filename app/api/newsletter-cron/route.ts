@@ -2,7 +2,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { buildNewsletterHtml } from '../_lib/newsletterTemplate'
 import { runPreWeddingProposta } from '../_lib/preWeddingProposta'
-import { runAlertaAdjudicacao } from '../_lib/alertaAdjudicacao'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -232,18 +231,9 @@ export async function GET(req: NextRequest) {
     console.error('[newsletter-cron] prewedding proposta error:', e)
   }
 
-  // ── 4. Alerta no calendário: casamento a 2 dias sem adjudicação confirmada ──
-  let adjudicacao: any = null
-  try {
-    adjudicacao = await runAlertaAdjudicacao()
-  } catch (e) {
-    console.error('[newsletter-cron] alerta adjudicação error:', e)
-  }
-
   return NextResponse.json({
     ok: true,
     reminders: upcoming?.length ?? 0,
-    alertas_adjudicacao: adjudicacao?.criadas ?? 0,
     batch2_processed: batch2Sent,
     prewedding_propostas: prewedding?.enviados ?? 0,
   })
