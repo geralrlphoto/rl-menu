@@ -310,6 +310,40 @@ const SHAREABLE = new Set(['galerias', 'prewedding'])
    nas visitas seguintes. Assim os noivos entram, copiam e passam o
    link aos convidados sem terem de o ir procurar.
    ─────────────────────────────────────────────────────────────── */
+/* Partilhar com os convidados o link de compra de fotografias: no telemóvel abre a
+   partilha do sistema (WhatsApp, SMS, email…); no computador copia a mensagem com o
+   link, pronta a colar. */
+function ShareConvidadosButton({ path }: { path: string }) {
+  const [estado, setEstado] = useState<'idle' | 'copiado'>('idle')
+  async function partilhar() {
+    const url = path.startsWith('http') ? path : `${window.location.origin}${path}`
+    const texto = `Olá! Já podem adquirir as fotografias do nosso casamento, em digital ou em papel, aqui: ${url}`
+    try {
+      if (navigator.share) { await navigator.share({ title: 'Fotografias do casamento', text: texto }); return }
+    } catch { return /* partilha cancelada */ }
+    try {
+      await navigator.clipboard.writeText(texto)
+      setEstado('copiado')
+      setTimeout(() => setEstado('idle'), 3500)
+    } catch {}
+  }
+  return (
+    <>
+      <button type="button" className="fp-btn ghost" onClick={partilhar}>
+        {estado === 'copiado' ? 'Mensagem copiada ✓' : 'Partilhar com convidados'}
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+          <polyline points="16 6 12 2 8 6" />
+          <line x1="12" y1="2" x2="12" y2="15" />
+        </svg>
+      </button>
+      <span className="fp-foot-note">
+        {estado === 'copiado' ? 'Agora é só colar no WhatsApp, SMS ou email dos convidados.' : 'Um toque e enviam o link aos convidados.'}
+      </span>
+    </>
+  )
+}
+
 function ShareGalleryButton({ url, storageKey }: { url: string; storageKey: string }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -592,6 +626,7 @@ export function FotografiasView(props: FotografiasViewProps) {
                   )}
                   {/* Galerias que fazem sentido partilhar com os convidados:
                       botão de partilha assim que houver link. */}
+                  {c.key === 'convidados' && available && <ShareConvidadosButton path={c.url!} />}
                   {SHAREABLE.has(c.key) && available && (
                     <ShareGalleryButton url={c.url!} storageKey={`rl_share_${props.portalRef ?? 'portal'}_${c.key}`} />
                   )}
