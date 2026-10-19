@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import MarcasOpcao2 from './_marcas/Opcao2'
+import MarcasOpcao3 from './_marcas/Opcao3'
 
 /* ═══════════════════════════════════════════════════════
    DADOS — edita aqui: textos, links, logos e tons
@@ -78,7 +79,8 @@ function LogoWithFallback({ src, alt, priority }: { src: string; alt: string; pr
 /* ═══════════════════════════════════════════════════════
    COMPONENTE
 ═══════════════════════════════════════════════════════ */
-// A página principal é a Opção 2 ("Película"). A Opção 1 ("Diafragma") continua em /?opcao=1
+// A página principal é a Opção 3 ("Tema RL"). A Opção 1 ("Diafragma") continua em /?opcao=1
+// e a Opção 2 ("Película") em /?opcao=2
 export default function SplashPage() {
   return (
     <Suspense fallback={null}>
@@ -89,7 +91,9 @@ export default function SplashPage() {
 
 function EscolhaOpcao() {
   const opcao = useSearchParams().get('opcao')
-  return opcao === '1' ? <SplashOpcao1 /> : <MarcasOpcao2 />
+  if (opcao === '1') return <SplashOpcao1 />
+  if (opcao === '2') return <MarcasOpcao2 />
+  return <MarcasOpcao3 />
 }
 
 function SplashOpcao1() {
