@@ -618,7 +618,7 @@ export default async function PhotoDashboard() {
         .in('referencia', ADJUDICACAO_SIMULAR)
       return data ?? []
     },
-    ['photo-agenda-adjudicacao-simulados'],
+    ['photo-agenda-adjudicacao-simulados-v2'],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
   )
   const eventosSimulados = await getEventosSimulados()
@@ -638,7 +638,7 @@ export default async function PhotoDashboard() {
       ])
       return { pagamentos: (pagamentos ?? []) as any[], contactos: (contactos ?? []) as any[] }
     },
-    [`photo-agenda30-adjudicacao-v2-${semanaDias[0]}`],
+    [`photo-agenda30-adjudicacao-v3-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
   )
   const { pagamentos: pagamentosAgenda, contactos: contactosAgenda } = await getPagamentosAgenda()
