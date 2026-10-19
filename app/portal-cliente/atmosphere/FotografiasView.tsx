@@ -317,7 +317,7 @@ function ShareConvidadosButton({ path }: { path: string }) {
   const [estado, setEstado] = useState<'idle' | 'copiado'>('idle')
   async function partilhar() {
     const url = path.startsWith('http') ? path : `${window.location.origin}${path}`
-    const texto = `Olá! Já podem adquirir as fotografias do nosso casamento, em digital ou em papel, aqui: ${url}`
+    const texto = `Olá! Já podem ver as fotografias do nosso casamento e adquirir as vossas preferidas, em digital ou em papel, aqui: ${url}`
     try {
       if (navigator.share) { await navigator.share({ title: 'Fotografias do casamento', text: texto }); return }
     } catch { return /* partilha cancelada */ }
@@ -616,7 +616,7 @@ export function FotografiasView(props: FotografiasViewProps) {
                 <div className="fp-card-foot">
                   {available ? (
                     <a className="fp-btn available" href={c.url!} target="_blank" rel="noopener noreferrer">
-                      {c.key === 'convidados' ? 'Adquirir fotografias' : 'Ver Mais'}
+                      {c.key === 'convidados' ? 'Ver página dos convidados' : 'Ver Mais'}
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
                       </svg>

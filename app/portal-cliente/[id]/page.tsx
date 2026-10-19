@@ -1604,6 +1604,8 @@ function PortalSubPageContent() {
   const [subpageHeaderUrl, setSubpageHeaderUrl] = useState('')
   const [portalHeroImageUrl, setPortalHeroImageUrl] = useState('')
   const [designPremiumPages, setDesignPremiumPages] = useState<string[]>([])
+  // id do portal: endereço da página dos convidados (/convidados/<id>)
+  const [portalRowId, setPortalRowId] = useState<string | null>(null)
   // Novo design (tema RL) só nos portais em teste (lidos pelo endereço)
   const temaRL = useTemaRL()
   const [preWeddingSlots, setPreWeddingSlots] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
@@ -1771,6 +1773,7 @@ function PortalSubPageContent() {
           fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&settingsOnly=1`, { cache: 'no-store' }).then(r => r.json()).catch(() => null),
         ])
         ps = d.portal?.settings ?? {}
+        setPortalRowId(d.portal?.id ?? null)
 
         // ── Apply template fallback APENAS para campos visuais ──
         const tmpl: Record<string, any> = templateD?.settings ?? {}
@@ -3125,7 +3128,7 @@ function PortalSubPageContent() {
               dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
               estadoEdicao={eventoData?.fotos_edicao_estado ?? null}
               capaFallback={_atmEffectiveHeader || portalHeroImageUrl || null}
-              convidadosUrl="/adquirir-fotografias"
+              convidadosUrl={portalRowId ? `/convidados/${portalRowId}` : null}
             />
           </div>
 

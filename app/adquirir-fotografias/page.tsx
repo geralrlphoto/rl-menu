@@ -358,6 +358,17 @@ export default function AdquirirFotografiasPage() {
     if (ran.current) return
     ran.current = true
 
+    // Vindo da página dos convidados: nome dos noivos e data do casamento já preenchidos
+    try {
+      var qs = new URLSearchParams(window.location.search)
+      var pNoivos = qs.get('noivos'), pData = qs.get('data')
+      if (pNoivos) (document.getElementById('f-noivos') as HTMLInputElement).value = pNoivos
+      if (pData && /^\d{4}-\d{2}-\d{2}$/.test(pData)) {
+        var pd = pData.split('-');
+        (document.getElementById('f-data') as HTMLInputElement).value = pd[2] + ' / ' + pd[1] + ' / ' + pd[0]
+      }
+    } catch (e) { /* sem parâmetros */ }
+
     /* ── JS copiado 1:1 do design aprovado ── */
     var reduce = matchMedia('(prefers-reduced-motion: reduce)').matches
     var io = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { (e.target as HTMLElement).classList.add('in'); io.unobserve(e.target) } }) }, { threshold: .12 })
