@@ -7,6 +7,7 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { prazoVideoDias } from '@/lib/crm'
+import { embedDe } from '@/lib/videoEmbed'
 
 export type VideoRL = { titulo: string; url?: string | null; capa?: string | null; principal?: boolean }
 
@@ -20,34 +21,15 @@ function somaUteis(iso: string, n: number): string {
 }
 const dataPt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
 
-/* Endereço do leitor para ver o vídeo dentro do portal (o vídeo continua a vir do
-   Vimeo/YouTube, sem gastar o nosso tráfego). null = não dá para embutir. */
-export function embedDe(url?: string | null): string | null {
-  if (!url) return null
-  try {
-    const u = new URL(url)
-    const h = u.hostname.replace(/^www\./, '')
-    if (h === 'vimeo.com') {
-      const [id, hash] = u.pathname.split('/').filter(Boolean)
-      if (!/^\d+$/.test(id ?? '')) return null
-      return `https://player.vimeo.com/video/${id}?autoplay=1&title=0&byline=0&portrait=0${hash ? `&h=${hash}` : ''}`
-    }
-    if (h === 'player.vimeo.com') return `${url}${url.includes('?') ? '&' : '?'}autoplay=1`
-    if (h === 'youtu.be') return `https://www.youtube-nocookie.com/embed/${u.pathname.slice(1)}?autoplay=1&rel=0`
-    if (h === 'youtube.com' || h === 'm.youtube.com') {
-      const id = u.searchParams.get('v')
-      return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0` : null
-    }
-  } catch { /* link inválido */ }
-  return null
-}
-
 /* Partilhar um vídeo com os convidados: no telemóvel abre a partilha do sistema
    (WhatsApp, SMS, email…); no computador copia a mensagem com o link. */
-function PartilharVideo({ titulo, url, largo }: { titulo: string; url: string; largo?: boolean }) {
+function PartilharVideo({ titulo, url, pagina, largo }: { titulo: string; url: string; pagina?: string | null; largo?: boolean }) {
   const [copiado, setCopiado] = useState(false)
   async function partilhar() {
-    const texto = `Olá! Já podem ver o ${titulo} do nosso casamento: ${url}`
+    // Com a página dos convidados, partilha-se essa página (todos os vídeos, com leitor)
+    const texto = pagina
+      ? `Olá! Já podem ver os vídeos do nosso casamento aqui: ${pagina}`
+      : `Olá! Já podem ver o ${titulo} do nosso casamento: ${url}`
     try {
       if (navigator.share) { await navigator.share({ title: titulo, text: texto }); return }
     } catch { return /* partilha cancelada */ }
@@ -65,7 +47,7 @@ function PartilharVideo({ titulo, url, largo }: { titulo: string; url: string; l
   )
 }
 
-export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, proposta, estadoVideo, intro, acoes }: {
+export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, proposta, estadoVideo, intro, acoes, paginaConvidados }: {
   title: string
   heroUrl?: string | null
   backHref: string
@@ -75,6 +57,8 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
   estadoVideo?: string | null
   intro?: ReactNode
   acoes?: ReactNode
+  /** Página dos vídeos para os convidados (o que o botão Partilhar envia) */
+  paginaConvidados?: string | null
 }) {
   const casamento = /^\d{4}-\d{2}-\d{2}/.test(dataCasamento ?? '') ? dataCasamento!.slice(0, 10) : null
   const dias = prazoVideoDias(proposta)
@@ -191,7 +175,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                     {embedDe(principal.url)
                       ? <button type="button" onClick={() => ver(principal)} className="atm-btn solid">▶ Ver o filme</button>
                       : <a href={principal.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid">▶ Ver o filme</a>}
-                    <PartilharVideo titulo={principal.titulo} url={principal.url} />
+                    <PartilharVideo titulo={principal.titulo} url={principal.url} pagina={paginaConvidados} />
                   </div>
                 )
                 : <span className="atm-btn" style={{ opacity: .55, cursor: 'default' }}>Aguardar</span>}
@@ -224,7 +208,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                           {embedDe(v.url)
                             ? <button type="button" onClick={() => ver(v)} className="atm-btn solid" style={{ width: '100%' }}>▶ Ver o vídeo</button>
                             : <a href={v.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid" style={{ width: '100%' }}>Ver mais →</a>}
-                          <PartilharVideo titulo={v.titulo} url={v.url} largo />
+                          <PartilharVideo titulo={v.titulo} url={v.url} pagina={paginaConvidados} largo />
                         </div>
                       )
                       : <span className="atm-btn" style={{ width: '100%', opacity: .5, cursor: 'default' }}>Aguardar</span>}

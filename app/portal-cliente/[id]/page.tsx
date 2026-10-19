@@ -2508,6 +2508,7 @@ function PortalSubPageContent() {
             </IntroDropdown>
           ) : undefined}
           acoes={<FilmeAcoes settings={portalSettingsObj} />}
+          paginaConvidados={portalRowId ? `https://portal.rlphotovideo.pt/convidados/${portalRowId}/filme` : null}
         />
       </PortalShell>
     )
