@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server'
 
 // Fotos do portfólio dos portais da reunião (/r e /b), lidas da galeria do
 // Wfolio. As imagens são servidas pelo i.wfolio.com (tráfego do Wfolio, 0 no
-// Supabase). A lista fica em cache na Vercel 6 h, por isso o Wfolio só é lido
-// de vez em quando. Para mudar as fotos basta mudá-las na galeria do Wfolio.
+// Supabase). A lista fica em cache na Vercel 1 h (o deploy limpa-a), por isso o
+// Wfolio só é lido de vez em quando. Para mudar as fotos basta mudá-las na galeria do Wfolio.
 
 const GALERIA_PORTFOLIO = 'https://geral-rlphoto.wfolio.pro/disk/portfolio-7cn8hr'
 const FRAME = `${GALERIA_PORTFOLIO}/pieces?design_variant=masonry&folder_path=photos`
-const CACHE_S = 6 * 60 * 60
+const CACHE_S = 60 * 60
 
 type Foto = { src: string; srcSet: string }
 
@@ -15,7 +15,7 @@ export async function GET() {
   try {
     const r = await fetch(FRAME, {
       headers: { 'User-Agent': 'Mozilla/5.0 (RL Photo.Video portal)' },
-      next: { revalidate: CACHE_S },
+      cache: 'no-store',   // a cache é só a da Vercel (CDN), que o deploy limpa
       signal: AbortSignal.timeout(8000),
     })
     if (!r.ok) throw new Error(`wfolio ${r.status}`)
