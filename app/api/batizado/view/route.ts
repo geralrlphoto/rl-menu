@@ -29,10 +29,17 @@ export async function GET(req: NextRequest) {
       .single(),
     supabase
       .from('crm_contacts')
-      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content,proposta_pdf_url')
+      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content,proposta_pdf_url,page_publicada')
       .eq('page_token', token)
       .maybeSingle(),
   ])
+
+  // Link desligado no CRM (lead que não fechou): só o admin continua a ver,
+  // como no portal de casamento (/api/lead-page/view)
+  const isAdmin = req.cookies.get('rl_auth')?.value === process.env.AUTH_SECRET
+  if (crmContact && crmContact.page_publicada === false && !isAdmin && token !== MASTER_TOKEN) {
+    return NextResponse.json({ error: 'not found' }, { status: 404 })
+  }
 
   const crm_proposta_pdf_url = crmContact?.proposta_pdf_url || null
 
