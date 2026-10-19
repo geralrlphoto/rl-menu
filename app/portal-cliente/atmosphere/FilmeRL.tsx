@@ -5,7 +5,7 @@
    quando têm link, AGUARDAR quando não têm) e os passos depois da entrega.
    Só apresentação: os dados vêm da página. */
 
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { prazoVideoDias } from '@/lib/crm'
 
 export type VideoRL = { titulo: string; url?: string | null; capa?: string | null; principal?: boolean }
@@ -57,6 +57,30 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
   const casamento = /^\d{4}-\d{2}-\d{2}/.test(dataCasamento ?? '') ? dataCasamento!.slice(0, 10) : null
   const dias = prazoVideoDias(proposta)
   const previsto = casamento ? somaUteis(casamento, dias) : null
+  // Capa de cada vídeo: a do próprio vídeo (og:image do Vimeo/YouTube, lida pelo
+  // /api/link-preview); sem ela, a foto do casal. As imagens de modelo da página
+  // (claquete) já não se usam.
+  const [capas, setCapas] = useState<Record<string, string>>({})
+  const chave = videos.map(v => v.url ?? '').join('|')
+  useEffect(() => {
+    let vivo = true
+    const comLink = videos.filter(v => v.url)
+    Promise.all(comLink.map(async v => {
+      try {
+        const d = await fetch(`/api/link-preview?url=${encodeURIComponent(v.url!)}`).then(r => r.json())
+        return d?.image ? [v.url!, String(d.image).replace(/&amp;/g, '&')] as const : null
+      } catch { return null }
+    })).then(rows => {
+      if (!vivo) return
+      const next: Record<string, string> = {}
+      for (const r of rows) if (r) next[r[0]] = r[1]
+      setCapas(next)
+    })
+    return () => { vivo = false }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chave])
+  const capaDe = (v: VideoRL) => (v.url && capas[v.url]) || heroUrl || null
+
   const principal = videos.find(v => v.principal) ?? null
   const outros = videos.filter(v => v !== principal)
   const prontos = videos.filter(v => v.url).length
@@ -122,7 +146,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
       {principal && (
         <section style={{ ...card, borderLeft: `2px solid ${principal.url ? G : 'rgba(216,190,147,.45)'}` }} className="rl-filme-card">
           <div style={{ position: 'relative' }}>
-            {capa(principal.capa, 340)}
+            {capa(capaDe(principal), 340)}
             <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(11,11,11,.9), rgba(11,11,11,.1) 60%)' }} />
             <div style={{ position: 'absolute', left: 24, right: 24, bottom: 22, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
               <div>
@@ -151,7 +175,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
           <div className="rl-filme-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(3, outros.length)}, minmax(0,1fr))`, gap: 14 }}>
             {outros.map(v => (
               <div key={v.titulo} style={{ ...card, borderLeft: `2px solid ${v.url ? 'rgba(216,190,147,.7)' : 'rgba(216,190,147,.3)'}` }} className="rl-filme-card">
-                {capa(v.capa, 150)}
+                {capa(capaDe(v), 150)}
                 <div style={{ padding: 16 }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <span style={{ fontSize: 15, fontWeight: 600, color: '#fff' }}>{v.titulo}</span>
