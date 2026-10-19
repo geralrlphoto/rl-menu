@@ -429,6 +429,13 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       return { ...c, video: { ...c.video, urls } }
     })
   }
+  // Lista de vídeos livre: acrescentar no fim, remover tira da lista
+  function addVideo() {
+    setContent(c => ({ ...c, video: { ...c.video, urls: [...c.video.urls, ''] } }))
+  }
+  function removeVideo(i: number) {
+    setContent(c => ({ ...c, video: { ...c.video, urls: c.video.urls.filter((_, k) => k !== i) } }))
+  }
   function setPortfolio(k: keyof PageContent['portfolio'], v: any) {
     setContent(c => ({ ...c, portfolio: { ...c.portfolio, [k]: v } }))
   }
@@ -1016,7 +1023,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 <Field label="Título">
                   <TInput value={video.title} onChange={v => setVideo('title', v)} />
                 </Field>
-                {[0, 1, 2].map(i => (
+                {Array.from({ length: Math.max(3, video.urls.length) }, (_, i) => i).map(i => (
                   <div key={i} className="flex flex-col gap-1 p-3 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                     <p className="text-[10px] tracking-widest text-white/25 uppercase mb-1">Vídeo {i + 1}</p>
                     <input
@@ -1031,7 +1038,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                         <p className={`text-[10px] ${toEmbedUrl(video.urls[i]) ? 'text-green-400/70' : 'text-red-400/70'}`}>
                           {toEmbedUrl(video.urls[i]) ? '✓ Válido' : '✕ Inválido'}
                         </p>
-                        <button onClick={() => setVideoUrl(i, '')}
+                        <button onClick={() => removeVideo(i)}
                           className="text-[9px] text-white/20 hover:text-red-400 transition-colors">
                           ✕ remover
                         </button>
@@ -1039,7 +1046,12 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                     )}
                   </div>
                 ))}
-              </AccordionSection>
+                              <button type="button" onClick={addVideo}
+                  className="w-full py-3 rounded-xl text-[12px] font-semibold tracking-[0.22em] uppercase transition-colors"
+                  style={{ border: '1px dashed rgba(216,190,147,.45)', background: 'rgba(216,190,147,.06)', color: '#d8be93' }}>
+                  + Acrescentar vídeo
+                </button>
+</AccordionSection>
 
               {/* ── PORTFÓLIO ── */}
               <AccordionSection title="Portfólio">
