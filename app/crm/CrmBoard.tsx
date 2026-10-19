@@ -8,7 +8,7 @@ import DisponibilidadePreparacao, { type SlotPreparacao } from '@/app/components
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
+  fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, linkOpiniao, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -354,7 +354,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
       )}
 
       {(emFollow || (coluna === 'encerrada' && c.status === 'NÃO FECHOU')) && (
-        <WhatsAppMsgButton c={c} texto={mensagemOpiniao(c.nome, linkPublico(`/opiniao/${c.id}`))} evento={EVENTO_OPINIAO} label="Pedir opinião" enviados={enviados} onEnviado={onEnviado} />
+        <WhatsAppMsgButton c={c} texto={mensagemOpiniao(c.nome, linkPublico(linkOpiniao(c.id, c.nome)))} evento={EVENTO_OPINIAO} label="Pedir opinião" enviados={enviados} onEnviado={onEnviado} />
       )}
 
       {coluna !== 'encerrada' && (c.contato || c.email) && (

@@ -233,8 +233,14 @@ export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?
   ].join('\n')
 }
 
-/* Pedido de opinião: link para o formulário público /opiniao/<id> (Follow Up e Não fechou) */
+/* Pedido de opinião: link para o formulário público /opiniao (Follow Up e Não fechou) */
 export const EVENTO_OPINIAO = 'WhatsApp pedido de opinião enviado'
+export const linkOpiniao = (id: string, nome?: string | null) => {
+  const q = new URLSearchParams()
+  if ((nome ?? '').trim()) q.set('n', nome!.trim())
+  q.set('id', id)
+  return `/opiniao?${q.toString()}`
+}
 export function mensagemOpiniao(nome: string | null | undefined, link: string): string {
   const quem = (nome ?? '').trim()
   return [

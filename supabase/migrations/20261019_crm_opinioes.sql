@@ -8,3 +8,7 @@ create table if not exists public.crm_opinioes (
 create index if not exists crm_opinioes_contact_idx on public.crm_opinioes(contact_id, created_at desc);
 alter table public.crm_opinioes enable row level security;
 create policy anon_all on public.crm_opinioes for all using (true) with check (true);
+
+-- Formulário passo a passo (/opiniao): respostas estruturadas; o texto livre passa a opcional
+alter table public.crm_opinioes add column if not exists respostas jsonb;
+alter table public.crm_opinioes alter column texto drop not null;

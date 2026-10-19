@@ -5,7 +5,8 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
-import { MOTIVOS_NAO_FECHOU, colunaDe, whatsappLink, mensagemOpiniao, EVENTO_OPINIAO } from '@/lib/crm'
+import { MOTIVOS_NAO_FECHOU, colunaDe, whatsappLink, mensagemOpiniao, EVENTO_OPINIAO, linkOpiniao } from '@/lib/crm'
+import { PERGUNTAS, respostaTexto, tituloSimples, type Respostas } from '@/lib/opiniao'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL, ofertaDaProposta } from '@/lib/crm'
 import RelatorioReuniao, { ANALISE_COLS, type Analise } from '../analises/RelatorioReuniao'
@@ -103,11 +104,11 @@ export default function ClientePage() {
       .then(({ data }) => setAnalises((data ?? []) as Analise[]))
   }, [id])
 
-  // Opiniões deixadas no formulário público /opiniao/<id> (noivos que não fecharam)
-  const [opinioes, setOpinioes] = useState<{ id: string; texto: string; created_at: string }[]>([])
+  // Opiniões deixadas no formulário público /opiniao (noivos que não fecharam)
+  const [opinioes, setOpinioes] = useState<{ id: string; texto: string | null; respostas: Respostas | null; created_at: string }[]>([])
   const [linkOpiniaoCopiado, setLinkOpiniaoCopiado] = useState(false)
   useEffect(() => {
-    supabase.from('crm_opinioes').select('id,texto,created_at')
+    supabase.from('crm_opinioes').select('id,texto,respostas,created_at')
       .eq('contact_id', id).order('created_at', { ascending: false })
       .then(({ data }) => setOpinioes(data ?? []))
   }, [id])
@@ -553,22 +554,22 @@ export default function ClientePage() {
         {/* Formulário de opinião (noivos que não fecharam) */}
         <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
           <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Formulário de Opinião</h2>
-          <p className="text-xs text-white/40">Link público para os noivos que não fecharam escreverem a opinião deles.</p>
+          <p className="text-xs text-white/40">Link público para os noivos que não fecharam deixarem a opinião deles (as respostas chegam também por email).</p>
           <div className="flex flex-wrap gap-2">
             <button type="button"
-              onClick={() => { navigator.clipboard.writeText(linkPublico(`/opiniao/${id}`)); setLinkOpiniaoCopiado(true); setTimeout(() => setLinkOpiniaoCopiado(false), 2000) }}
+              onClick={() => { navigator.clipboard.writeText(linkPublico(linkOpiniao(id, form.nome))); setLinkOpiniaoCopiado(true); setTimeout(() => setLinkOpiniaoCopiado(false), 2000) }}
               className="text-xs px-4 py-2 rounded-lg border border-white/20 text-white/80 hover:border-white/50">
               {linkOpiniaoCopiado ? 'Link copiado' : 'Copiar link'}
             </button>
             {whatsappLink(form.contato) && (
               <a target="_blank" rel="noopener noreferrer"
-                href={whatsappLink(form.contato, mensagemOpiniao(form.nome, linkPublico(`/opiniao/${id}`))) ?? undefined}
+                href={whatsappLink(form.contato, mensagemOpiniao(form.nome, linkPublico(linkOpiniao(id, form.nome)))) ?? undefined}
                 onClick={() => { supabase.from('crm_status_history').insert({ contact_id: id, evento: EVENTO_OPINIAO }).then(() => loadHistorico()) }}
                 className="text-xs px-4 py-2 rounded-lg border border-green-500/40 text-green-400 hover:border-green-400">
                 Enviar por WhatsApp
               </a>
             )}
-            <a href={`/opiniao/${id}`} target="_blank" rel="noopener noreferrer"
+            <a href={linkOpiniao(id, form.nome)} target="_blank" rel="noopener noreferrer"
               className="text-xs px-4 py-2 rounded-lg border border-white/10 text-white/50 hover:border-white/30">
               Ver formulário
             </a>
@@ -579,7 +580,18 @@ export default function ClientePage() {
             <ul className="flex flex-col gap-3">
               {opinioes.map(o => (
                 <li key={o.id} className="rounded-xl border border-white/10 bg-black/30 p-4">
-                  <p className="text-sm text-white/80 whitespace-pre-wrap">{o.texto}</p>
+                  {o.respostas ? (
+                    <dl className="flex flex-col gap-2">
+                      {PERGUNTAS.filter(p => o.respostas![p.id] !== undefined).map(p => (
+                        <div key={p.id}>
+                          <dt className="text-[11px] text-white/40">{tituloSimples(p.titulo)}</dt>
+                          <dd className="text-sm text-white/85 whitespace-pre-wrap">{respostaTexto(p, o.respostas![p.id])}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : (
+                    <p className="text-sm text-white/80 whitespace-pre-wrap">{o.texto}</p>
+                  )}
                   <p className="mt-2 text-[11px] text-white/30">
                     {new Date(o.created_at).toLocaleString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                   </p>
