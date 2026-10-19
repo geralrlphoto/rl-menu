@@ -647,7 +647,15 @@ export default async function PhotoDashboard() {
   const msgAdjudicacao = (c: any, ev: any) => {
     const nomes = [primeiro(c?.nome_noiva), primeiro(c?.nome_noivo)].filter(Boolean).join(' e ') || nomeNoivos(ev.cliente)
     const dia = new Date(ev.data_evento + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })
-    return `Olá ${nomes}, faltam ${ADJUDICACAO_ALERTA_DIAS} dias para o vosso casamento, a ${dia}. Ainda não temos registo do pagamento do reforço (80% do valor em falta), que deve ser feito até 48 horas antes do casamento. Se já o fizeram, registem-no no vosso portal, na página Pagamentos, para o confirmarmos. Qualquer dúvida, estamos por aqui. Rui, RL Photo.Video`
+    return [
+      `Olá ${nomes}, espero que esteja tudo bem com vocês.`,
+      '',
+      `Venho por este meio relembrar-vos que ainda não temos registo do pagamento do reforço (80% do valor em falta), que deve ser feito até 48 horas antes do casamento, a ${dia}. Se já o fizeram, registem-no no vosso portal, na página Pagamentos, para o confirmarmos.`,
+      '',
+      'Cumprimentos,',
+      'RL Photo.Video',
+      'Visite-nos: www.rlphotovideo.pt',
+    ].join('\n')
   }
   const simulados = new Set((eventosSimulados as any[]).map(e => e.id))
   const adjudicacaoFalta = [...(eventosAgenda as any[]), ...(eventosSimulados as any[]).filter(e => !(eventosAgenda as any[]).some(x => x.id === e.id))]
