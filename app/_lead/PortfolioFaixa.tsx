@@ -116,7 +116,6 @@ export default function PortfolioFaixa({ label, title, titleColor, photos, isAdm
         .rlf-n{position:absolute;left:16px;bottom:14px;font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.3em;color:#d8be93;text-shadow:0 1px 8px rgba(0,0,0,.6);}
         .rlf-vazio{position:absolute;inset:0;display:grid;place-items:center;font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(243,237,226,.4);
           background-image:repeating-linear-gradient(122deg,rgba(243,237,226,.022) 0 1px,transparent 1px 11px);}
-        .rlf-mais{padding:0 var(--pad,24px);margin-top:clamp(20px,4vh,40px);}
         @media (max-width:767px){ .rlf-cartao{width:72vw;} }
       `}</style>
 
@@ -134,13 +133,6 @@ export default function PortfolioFaixa({ label, title, titleColor, photos, isAdm
             </div>
           ))}
         </div>
-        {doWfolio && wf!.galeria && (
-          <div className="rlf-mais">
-            <a href={wf!.galeria} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost">
-              <span className="dot" />Ver galeria completa<span className="fill" />
-            </a>
-          </div>
-        )}
       </div>
     </section>
   )
