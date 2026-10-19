@@ -637,7 +637,7 @@ export default async function PhotoDashboard() {
       ])
       return { pagamentos: (pagamentos ?? []) as any[], contactos: (contactos ?? []) as any[] }
     },
-    [`photo-agenda30-adjudicacao-v4-${semanaDias[0]}`],
+    [`photo-agenda30-adjudicacao-v5-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
   )
   const { pagamentos: pagamentosAgenda, contactos: contactosAgenda } = await getPagamentosAgenda()
@@ -668,7 +668,7 @@ export default async function PhotoDashboard() {
         id: ev.id, ref: ev.referencia as string, nome: nomeNoivos(ev.cliente), simulacao: sim,
         dia: devido < hojeLx ? hojeLx : devido, futura: devido > hojeLx,
         faltam: sim ? ADJUDICACAO_ALERTA_DIAS : difDias(ev.data_evento, hojeLx),
-        wa: whatsappLink(c?.tel_noiva || c?.tel_noivo, msgAdjudicacao(c, ev)),
+        wa: whatsappLink(c?.tel_noiva, msgAdjudicacao(c, ev)) ?? whatsappLink(c?.tel_noivo, msgAdjudicacao(c, ev)),
       }
     })
 
@@ -1268,6 +1268,12 @@ export default async function PhotoDashboard() {
                               <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.2-.7-2.7-1.1-4.4-3.8-4.6-4-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.1.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.7 1.2 1.6 2 1.1 1 2 1.3 2.3 1.4.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z" /></svg>
                               WhatsApp aos noivos
                             </a>
+                          )}
+                          {!a.futura && !a.wa && (
+                            <Link href={`/eventos-2026/${a.id}`} title="Corrijam o telemóvel dos noivos na ficha"
+                              className="mt-2 flex w-full items-center justify-center rounded-full border border-white/15 px-2 py-1 font-cond text-[11px] text-white/45 hover:text-white">
+                              Sem telemóvel válido
+                            </Link>
                           )}
                         </div>
                         </AgendaItem>
