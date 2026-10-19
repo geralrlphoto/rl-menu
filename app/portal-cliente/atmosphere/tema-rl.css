@@ -300,3 +300,79 @@
 /* boas-vindas sem fotografia: só o texto, numa coluna */
 .portal-atmosphere.tema-rl .welcome { grid-template-columns: minmax(0, 1fr); max-width: 760px; margin: 0 auto; }
 .portal-atmosphere.tema-rl .welcome .photo { display: none; }
+
+/* ============================================================
+   Fotografias no tema RL (só portais em teste): cartões como os
+   do admin, resumo das galerias, botões em pílula, fotos a cinzento
+   que ganham cor. Tipos de letra sem alterações.
+   ============================================================ */
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo {
+  margin: 6px 0 34px; padding: 18px 20px;
+  border-radius: 22px; border: 1px solid rgba(216,190,147,.3);
+  background: rgba(17,17,17,.8); box-shadow: 0 0 48px -22px rgba(216,190,147,.5);
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-head .eyebrow { display: inline-flex; align-items: center; gap: 8px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-head .pip { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-total {
+  border-radius: 999px; border: 1px solid rgba(216,190,147,.25); background: rgba(216,190,147,.1);
+  padding: 4px 12px; font-size: 12.5px; color: var(--gold);
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 12px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item {
+  display: flex; flex-direction: column; gap: 6px; padding: 12px 14px;
+  border-left: 1px solid rgba(255,255,255,.07); color: inherit;
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item:first-child { border-left: 0; padding-left: 0; }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item .t { font-size: 13px; color: rgba(255,255,255,.7); }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item .s { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.4); }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item.ok .s { color: #86efac; }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item.ok:hover .t { color: var(--gold); }
+
+.portal-atmosphere.tema-rl .fotos-page .fp-grid { gap: 22px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-card {
+  border-radius: 22px; border: 1px solid rgba(255,255,255,.08);
+  border-left: 2px solid rgba(216,190,147,.45); background: #141414;
+  transition: transform .3s, border-color .3s, box-shadow .3s;
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-card:hover {
+  transform: translateY(-4px); border-color: rgba(216,190,147,.45);
+  border-left-color: rgba(216,190,147,.9); box-shadow: 0 0 40px -18px rgba(216,190,147,.6);
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-card .fp-card-cover { border-radius: 14px; overflow: hidden; }
+.portal-atmosphere.tema-rl .fotos-page .fp-card .fp-card-cover img { filter: grayscale(.6); opacity: .8; transition: filter .7s, opacity .7s, transform .7s; }
+.portal-atmosphere.tema-rl .fotos-page .fp-card:hover .fp-card-cover img { filter: none; opacity: 1; transform: scale(1.05); }
+.portal-atmosphere.tema-rl .fotos-page .fp-card .fp-card-logo .mark {
+  border-radius: 50%; background: rgba(216,190,147,.12); color: var(--gold); border-color: transparent;
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-chip { border-radius: 999px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-chip.available { color: #86efac; background: rgba(74,222,128,.1); border-color: rgba(74,222,128,.3); }
+.portal-atmosphere.tema-rl .fotos-page .fp-chip.locked { color: rgba(255,255,255,.5); background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.1); }
+.portal-atmosphere.tema-rl .fotos-page .fp-btn { border-radius: 999px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-btn.available {
+  color: var(--gold); background: rgba(216,190,147,.15); border-color: rgba(216,190,147,.6);
+  box-shadow: 0 0 28px -12px rgba(216,190,147,.6);
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-btn.available:hover { background: rgba(216,190,147,.3); color: #fff; }
+.portal-atmosphere.tema-rl .fotos-page .fp-btn.ghost { background: rgba(14,14,14,.9); border-color: rgba(255,255,255,.14); }
+.portal-atmosphere.tema-rl .fotos-page .fp-btn.ghost:hover { border-color: rgba(216,190,147,.6); }
+.portal-atmosphere.tema-rl .fotos-page .fp-btn.locked { border-style: dashed; }
+.portal-atmosphere.tema-rl .fotos-page .fp-share input { border-radius: 999px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-share .copy { border-radius: 999px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-sep { border-radius: 22px; overflow: hidden; border: 1px solid rgba(216,190,147,.2); }
+.portal-atmosphere.tema-rl .fotos-page .fp-sep img { filter: grayscale(1); opacity: .6; }
+/* "Enviar fotos": mantém a moldura branca (regra dos portais) */
+.portal-atmosphere.tema-rl .fotos-page .fp-callout {
+  border-radius: 22px; border: 1px solid rgba(255,255,255,.55); border-left-width: 1px;
+  background: rgba(17,17,17,.9); box-shadow: 0 0 22px rgba(255,255,255,.1);
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-maquete {
+  border-radius: 22px; border: 1px solid rgba(216,190,147,.2); background: rgba(17,17,17,.9); padding: 24px;
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-stat { border-radius: 18px; border: 1px solid rgba(216,190,147,.25); background: rgba(17,17,17,.8); }
+.portal-atmosphere.tema-rl .fotos-page .fp-step { border-radius: 18px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-step.done .fp-step-pip { box-shadow: 0 0 8px var(--gold); }
+@media (max-width: 760px) {
+  .portal-atmosphere.tema-rl .fotos-page .fp-resumo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .portal-atmosphere.tema-rl .fotos-page .fp-resumo-item:nth-child(3) { border-left: 0; padding-left: 0; }
+}

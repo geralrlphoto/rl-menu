@@ -16,6 +16,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { SectionTitle } from './SectionTitle'
+import { useTemaRL } from './PortalShell'
 import './fotografias.css'
 
 export type FotografiasCard = {
@@ -434,6 +435,8 @@ function ComoEscolherButton({ enviarUrl }: { enviarUrl: string }) {
    FotografiasView (default export)
    ─────────────────────────────────────────────────────────────── */
 export function FotografiasView(props: FotografiasViewProps) {
+  // Novo design (tema RL): resumo do estado das galerias no topo
+  const temaRL = useTemaRL()
 
   // ── Capas das galerias ────────────────────────────────────────
   // O Wfolio publica a capa escolhida em og:image. /api/link-preview lê-a
@@ -465,6 +468,30 @@ export function FotografiasView(props: FotografiasViewProps) {
     <div className="fotos-page">
       {/* ── Título da galeria ────────────────────────────────── */}
       <SectionTitle kicker="Alguns momentos" title={<>As vossas <em>fotografias.</em></>} />
+
+      {/* ── Tema RL: resumo de cada galeria (disponível ou a aguardar) ── */}
+      {temaRL && props.cards.length > 0 && (() => {
+        const prontas = props.cards.filter(c => c.url && c.url.length > 0).length
+        return (
+          <div className="fp-resumo">
+            <div className="fp-resumo-head">
+              <span className="eyebrow"><span className="pip" />Estado das galerias</span>
+              <span className="fp-resumo-total">{prontas} de {props.cards.length} disponíveis</span>
+            </div>
+            <div className="fp-resumo-grid">
+              {props.cards.map(c => {
+                const ok = Boolean(c.url && c.url.length > 0)
+                return (
+                  <a key={c.key} className={`fp-resumo-item${ok ? ' ok' : ''}`} href={ok ? c.url! : undefined} target={ok ? '_blank' : undefined} rel={ok ? 'noopener noreferrer' : undefined}>
+                    <span className="t">{c.title}</span>
+                    <span className="s">{ok ? 'Disponível' : 'A aguardar'}</span>
+                  </a>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Título editorial + card, dois por linha ───────────── */}
       <div className="fp-grid">
