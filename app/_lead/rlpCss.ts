@@ -2,7 +2,7 @@
 // Linguagem RL: Jost fino nos títulos, Roboto Condensed no resto, dourado #d8be93,
 // fundo #0b0b0b com grelha de pontos, cartões de vidro com barra dourada.
 export const RLP_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&family=Roboto+Condensed:wght@100;300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;0,400;1,200;1,300&family=Roboto+Condensed:wght@100;300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
 
 .rl-portal{
   --ink:#0b0b0b; --ink-2:#111111; --ink-3:#141414;
@@ -116,12 +116,12 @@ export const RLP_CSS = `
 /* Editor (admin): janela centrada no estilo RL */
 .rlp-ed-veu{position:fixed;inset:0;z-index:9200;background:rgba(5,5,5,.72);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:0;pointer-events:none;transition:opacity .35s var(--ease);}
 .rlp-ed-veu.on{opacity:1;pointer-events:auto;}
-.rlp-ed{position:fixed;left:50%;top:50%;z-index:9300;width:min(780px,calc(100vw - 32px));height:min(86vh,920px);display:flex;flex-direction:column;border-radius:22px;overflow:hidden;
+.rlp-edw{position:fixed;left:50%;top:50%;z-index:9300;width:min(780px,calc(100vw - 32px));height:min(86vh,920px);display:flex;flex-direction:column;border-radius:22px;overflow:hidden;
   background:rgba(17,17,17,.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border:1px solid rgba(216,190,147,.25);border-left:2px solid var(--g);
   box-shadow:0 0 60px -20px rgba(216,190,147,.55),0 40px 100px -30px rgba(0,0,0,.9);
   transform:translate(-50%,-47%) scale(.97);opacity:0;pointer-events:none;transition:opacity .35s var(--ease),transform .45s var(--ease);font-family:var(--fb);}
-.rlp-ed.on{opacity:1;transform:translate(-50%,-50%);pointer-events:auto;}
+.rlp-edw.on{opacity:1;transform:translate(-50%,-50%);pointer-events:auto;}
 .rlp-ed-cab{flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:22px 26px 18px;border-bottom:1px solid rgba(216,190,147,.14);
   background:radial-gradient(ellipse 70% 120% at 0% 0%,rgba(216,190,147,.10),transparent 70%);}
 .rlp-ed-tit{font-family:var(--fd);font-weight:200;font-size:30px;line-height:1;color:var(--tx);margin-top:10px;letter-spacing:-.01em;}
@@ -143,7 +143,7 @@ export const RLP_CSS = `
 .rlp-ed-lab{font-family:var(--fm);font-weight:600;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:rgba(243,237,226,.45);}
 .rlp-ed-guardar{width:100%;padding:15px;border-radius:999px;font-family:var(--fm);font-weight:600;font-size:13px;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;transition:background .3s,box-shadow .3s;}
 .rlp-ed-guardar:disabled{opacity:.5;cursor:default;}
-@media (max-width:640px){ .rlp-ed{height:calc(100dvh - 24px);} .rlp-ed-cab,.rlp-ed-corpo,.rlp-ed-pe{padding-left:18px;padding-right:18px;} }
+@media (max-width:640px){ .rlp-edw{height:calc(100dvh - 24px);} .rlp-ed-cab,.rlp-ed-corpo,.rlp-ed-pe{padding-left:18px;padding-right:18px;} }
 
 @media (max-width:760px){
   .rlp-foot .end{flex-direction:column;align-items:flex-start;}

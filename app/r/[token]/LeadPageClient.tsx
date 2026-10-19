@@ -971,7 +971,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           <div className={`rlp-ed-veu${editorOpen ? ' on' : ''}`} onClick={() => setEditorOpen(false)} aria-hidden />
 
           {/* Janela do editor, centrada (estilo RL) */}
-          <div className={`rlp-ed${editorOpen ? ' on' : ''}`} role="dialog" aria-modal="true" aria-label="Editar página" aria-hidden={!editorOpen}>
+          <div className={`rlp-edw${editorOpen ? ' on' : ''}`} role="dialog" aria-modal="true" aria-label="Editar página" aria-hidden={!editorOpen}>
             <div className="rlp-ed-cab">
               <div>
                 <span className="rlp-eyebrow">Editor</span>
