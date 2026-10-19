@@ -32,6 +32,8 @@ export type BriefingExt = {
   momentos?: Array<{ id: string; label: string; done?: boolean }>
   vips?: Array<{ id: string; name: string; relation: string }>
   moodboard?: Array<{ id: string; url: string; caption?: string }>
+  /** Link para um moodboard completo (Pinterest, Canva, Drive…) */
+  moodboardLink?: string
   playlist?: Array<{ id: string; moment: string; song: string; artist?: string; url?: string }>
   notasSensiveis?: string
   contactos?: Array<{ id: string; role: string; name: string; phone?: string; email?: string }>
@@ -646,18 +648,28 @@ function VipsSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: bo
 function MoodboardSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.moodboard ?? [])
+  const [linkDraft, setLinkDraft] = useState(info.moodboardLink ?? '')
   const list = info.moodboard ?? []
+  const link = (info.moodboardLink ?? '').trim()
+  // Aceita o link sem https:// (ex.: pinterest.pt/…)
+  const hrefLink = link && !/^https?:\/\//i.test(link) ? `https://${link}` : link
 
-  function startEdit() { setDraft(list.length ? list.map(x => ({ ...x })) : [{ id: uid(), url: '', caption: '' }]); setEditing(true) }
-  const patchAtual = () => ({ moodboard: draft.filter(x => x.url.trim()) })
+  function startEdit() { setDraft(list.length ? list.map(x => ({ ...x })) : [{ id: uid(), url: '', caption: '' }]); setLinkDraft(info.moodboardLink ?? ''); setEditing(true) }
+  const patchAtual = () => ({ moodboard: draft.filter(x => x.url.trim()), moodboardLink: linkDraft.trim() })
   async function save() { await onSave(patchAtual()); setEditing(false) }
-  const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
+  const gravacao = useAutoGravar(editing, { draft, linkDraft }, () => onSave(patchAtual(), { auto: true }))
 
   return (
     <Section id="moodboard" icon="◧" label="Mood Board" title="Referências visuais" subtitle={`${list.length} imagem${list.length === 1 ? '' : 'ns'}`}
       action={isAdmin && <EditChip active={editing} onClick={editing ? save : startEdit} estado={gravacao} />}>
       {editing ? (
         <div className="space-y-2">
+          {/* Link do moodboard completo, por cima das imagens soltas */}
+          <div className="mb-3">
+            <p className="text-[9px] tracking-[0.4em] text-gold/55 uppercase font-bold mb-1.5">Link do moodboard</p>
+            <Inp value={linkDraft} onChange={setLinkDraft} placeholder="Pinterest, Canva, Drive… (https://...)" />
+            <p className="text-[10px] text-white/30 italic mt-1">Partilhem connosco o moodboard com as ideias que têm para o vosso dia.</p>
+          </div>
           {draft.map((row, idx) => (
             <div key={row.id} className="grid grid-cols-[2fr_1fr_36px] gap-2 items-center">
               <Inp value={row.url} onChange={v => setDraft(d => d.map((x, i) => i === idx ? { ...x, url: v } : x))} placeholder="URL da imagem (https://...)" />
@@ -668,9 +680,21 @@ function MoodboardSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmi
           <AddBtn onClick={() => setDraft(d => [...d, { id: uid(), url: '', caption: '' }])} label="Adicionar Imagem" />
           <p className="text-[10px] text-white/30 italic">Cola URLs públicos (Pinterest, Unsplash, Drive partilhado, etc).</p>
         </div>
-      ) : list.length === 0 ? (
-        <EmptyState icon="◧" msg="Sem referências visuais." hint="Inspiração ajuda a equipa a alinhar o estilo." />
+      ) : list.length === 0 && !link ? (
+        <EmptyState icon="◧" msg="Sem referências visuais." hint="Partilhem o link do vosso moodboard ou imagens de inspiração." />
       ) : (
+        <>
+        {link && (
+          <a href={hrefLink} target="_blank" rel="noopener noreferrer"
+            className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-gold/30 bg-gold/[0.05] px-4 py-3 text-gold/85 hover:text-gold hover:bg-gold/[0.1] transition-all">
+            <span className="min-w-0">
+              <span className="block text-[9px] tracking-[0.4em] uppercase font-bold">Moodboard</span>
+              <span className="block text-[12px] text-white/60 truncate">{link}</span>
+            </span>
+            <span className="text-[11px] tracking-[0.25em] uppercase font-bold shrink-0">Abrir ↗</span>
+          </a>
+        )}
+        {list.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
           {list.map(m => (
             <a key={m.id} href={m.url} target="_blank" rel="noopener noreferrer"
@@ -683,6 +707,8 @@ function MoodboardSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmi
             </a>
           ))}
         </div>
+        )}
+        </>
       )}
     </Section>
   )
@@ -1635,7 +1661,7 @@ export default function BriefingExtensions({
     mapas:          !!info.mapas?.some(x => s(x.address) || s(x.label)),
     momentos:       !!info.momentos?.some(x => s(x.label)),
     vips:           !!info.vips?.some(x => s(x.name)),
-    moodboard:      !!info.moodboard?.some(x => s(x.url)),
+    moodboard:      !!info.moodboard?.some(x => s(x.url)) || !!s(info.moodboardLink ?? ''),
     playlist:       !!info.playlist?.some(x => s(x.song)),
     restricoes:     !!info.restricoes?.some(x => s(x.label)),
     contactos:      !!info.contactos?.some(x => s(x.name) || s(x.phone)),
@@ -1728,7 +1754,8 @@ export default function BriefingExtensions({
             </div>
           )}
 
-          {ver('moodboard') && <MoodboardSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
+          {/* Referências visuais: os noivos também podem editar (link do moodboard e imagens) */}
+          {ver('moodboard') && <MoodboardSection info={info} isAdmin={showAdminEditing || (!teamView && !partilhada)} onSave={saveWithLog} />}
           {ver('playlist') && <PlaylistSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
 
           {/* Logística — grid 2 col */}
