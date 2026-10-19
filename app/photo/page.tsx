@@ -608,23 +608,10 @@ export default async function PhotoDashboard() {
   // Reforço em falta: 2 dias antes do evento (o reforço, 80% do valor em falta, é pago
   // até 48h antes), enquanto não houver reforço confirmado em /financas
   const ADJUDICACAO_ALERTA_DIAS = 2
-  // Simulação: estes eventos mostram o alerta hoje, seja qual for a data (evento de teste)
-  const ADJUDICACAO_SIMULAR = ['CAS_064_27_RL']
-  const getEventosSimulados = unstable_cache(
-    async () => {
-      const { data } = await supabase.from('eventos_2026')
-        .select('id, referencia, cliente, data_evento, local, tipo_evento')
-        .in('referencia', ADJUDICACAO_SIMULAR)
-      return data ?? []
-    },
-    ['photo-agenda-adjudicacao-simulados-v2'],
-    { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
-  )
-  const eventosSimulados = await getEventosSimulados()
   const variantesRef = (ref: string) => Array.from(new Set([ref, ref.replace(/_(\d{2})_RL/, '_0$1_RL'), ref.replace(/_0(\d{2})_RL/, '_$1_RL')]))
   const getPagamentosAgenda = unstable_cache(
     async () => {
-      const refs = [...(eventosSemana as any[]), ...(eventosSimulados as any[])].flatMap(e => e.referencia ? variantesRef(e.referencia) : [])
+      const refs = (eventosSemana as any[]).flatMap(e => e.referencia ? variantesRef(e.referencia) : [])
       if (!refs.length) return { pagamentos: [] as any[], contactos: [] as any[] }
       const [{ data: pagamentos }, { data: contactos }] = await Promise.all([
         supabase.from('pagamentos_noivos')
@@ -637,7 +624,7 @@ export default async function PhotoDashboard() {
       ])
       return { pagamentos: (pagamentos ?? []) as any[], contactos: (contactos ?? []) as any[] }
     },
-    [`photo-agenda30-adjudicacao-v5-${semanaDias[0]}`],
+    [`photo-agenda30-adjudicacao-v6-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
   )
   const { pagamentos: pagamentosAgenda, contactos: contactosAgenda } = await getPagamentosAgenda()
@@ -657,8 +644,7 @@ export default async function PhotoDashboard() {
       'Visite-nos: www.rlphotovideo.pt',
     ].join('\n')
   }
-  const simulados = new Set((eventosSimulados as any[]).map(e => e.id))
-  const adjudicacaoFalta = [...(eventosAgenda as any[]), ...(eventosSimulados as any[]).filter(e => !(eventosAgenda as any[]).some(x => x.id === e.id))]
+  const adjudicacaoFalta = (eventosAgenda as any[])
     .filter(ev => ev.referencia && !ocultos.has(chaveAdjudicacao(ev.id)))
     .filter(ev => {
       const refs = variantesRef(ev.referencia)
@@ -668,14 +654,13 @@ export default async function PhotoDashboard() {
       return !reforcoPago
     })
     .map(ev => {
-      const sim = simulados.has(ev.id)
-      const devido = sim ? hojeLx : somaDias(ev.data_evento, -ADJUDICACAO_ALERTA_DIAS)
+      const devido = somaDias(ev.data_evento, -ADJUDICACAO_ALERTA_DIAS)
       const refs = variantesRef(ev.referencia)
       const c: any = contactosAgenda.find((x: any) => refs.includes(x.referencia_evento))
       return {
-        id: ev.id, ref: ev.referencia as string, nome: nomeNoivos(ev.cliente), simulacao: sim,
+        id: ev.id, ref: ev.referencia as string, nome: nomeNoivos(ev.cliente),
         dia: devido < hojeLx ? hojeLx : devido, futura: devido > hojeLx,
-        faltam: sim ? ADJUDICACAO_ALERTA_DIAS : difDias(ev.data_evento, hojeLx),
+        faltam: difDias(ev.data_evento, hojeLx),
         wa: whatsappLink(c?.tel_noiva, msgAdjudicacao(c, ev)) ?? whatsappLink(c?.tel_noivo, msgAdjudicacao(c, ev)),
       }
     })
@@ -1265,7 +1250,7 @@ export default async function PhotoDashboard() {
                           style={{ borderColor: a.futura ? 'rgba(248,113,113,0.18)' : 'rgba(248,113,113,0.55)', background: a.futura ? 'transparent' : 'rgba(248,113,113,0.07)' }}>
                           <Link href={`/financas?ref=${encodeURIComponent(a.ref)}`} title="Ainda não há reforço confirmado: abrir as finanças deste casamento" className="group block">
                             <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: a.futura ? 'rgba(248,113,113,0.5)' : '#f87171' }}>
-                              {a.simulacao ? 'Simulação · ' : ''}Reforço em falta{!a.futura && a.faltam >= 0 ? ` · ${a.faltam === 0 ? 'hoje' : a.faltam === 1 ? 'amanhã' : `faltam ${a.faltam}d`}` : ''}
+                              Reforço em falta{!a.futura && a.faltam >= 0 ? ` · ${a.faltam === 0 ? 'hoje' : a.faltam === 1 ? 'amanhã' : `faltam ${a.faltam}d`}` : ''}
                             </p>
                             <p className={`text-[11px] leading-tight truncate mt-0.5 ${a.futura ? 'text-white/45' : 'text-white/85 group-hover:text-white'}`}>{a.nome || 'Evento'}</p>
                           </Link>
