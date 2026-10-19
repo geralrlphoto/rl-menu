@@ -87,8 +87,8 @@ export const DEFAULT_CONTENT: PageContent = {
   testimonials: {
     label: 'O que dizem',
     items: [
-      { text: 'Captaram cada momento com uma sensibilidade única. As nossas fotos são pura magia.', author: '— Ana & Pedro · Casamento 2024' },
-      { text: 'Desde o primeiro contacto sentimos que estaríamos em boas mãos. Superaram todas as expectativas.', author: '— Sofia & Miguel · Casamento 2024' },
+      { text: 'Captaram cada momento com uma sensibilidade única. As nossas fotos são pura magia.', author: '— Ana & Pedro · Casamento' },
+      { text: 'Desde o primeiro contacto sentimos que estaríamos em boas mãos. Superaram todas as expectativas.', author: '— Sofia & Miguel · Casamento' },
     ],
   },
   about: {
@@ -858,7 +858,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             <FadeIn key={i} delay={i * 150} className="w-full">
               <blockquote className="text-center flex flex-col items-center gap-5">
                 <p className="rlp-ed" style={{ fontSize: 'clamp(20px,2.6vw,32px)', fontStyle: 'italic', lineHeight: 1.5, color: 'var(--tx)' }}>“{item.text}”</p>
-                <cite style={{ fontFamily: "'Roboto Condensed',sans-serif", fontStyle: 'normal', fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--g)' }}>{item.author}</cite>
+                <cite style={{ fontFamily: "'Roboto Condensed',sans-serif", fontStyle: 'normal', fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--g)' }}>{(item.author || '').replace(/\s*(19|20)\d{2}\s*$/, '')}</cite>
               </blockquote>
               {i < testimonials.items.length - 1 && <div style={{ width: 40, height: 1, background: 'rgba(216,190,147,.3)', margin: '48px auto 0' }} />}
             </FadeIn>
