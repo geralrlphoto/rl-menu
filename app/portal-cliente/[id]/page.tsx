@@ -2478,13 +2478,21 @@ function PortalSubPageContent() {
         u.includes('TEASER') || u.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
       ) || ''
     }
+    const _enviadoDe = (t: string): string | null => {
+      const u = t.toUpperCase()
+      const k = u.includes('WEDDING FILM') ? 'wedding_film_enviada'
+        : u.includes('PRÉ-WEDDING') || u.includes('PRE-WEDDING') ? 'video_prewedding_enviada'
+        : u.includes('SAME DAY') ? 'same_day_edit_enviada'
+        : u.includes('TEASER') || u.includes('TRAILER') ? 'teaser_enviada' : ''
+      return k ? (portalSettingsObj?.[k] ? String(portalSettingsObj[k]) : null) : null
+    }
     const _callouts = findCalloutCards(blocks)
     const _base: VideoRL[] = _callouts.length
       ? _callouts.map(b => {
           const t = plainText(b.callout?.rich_text ?? []).trim()
-          return { titulo: t, url: _urlDe(t) || null, capa: _img(b), principal: t.toUpperCase().includes('WEDDING FILM') }
+          return { titulo: t, url: _urlDe(t) || null, capa: _img(b), principal: t.toUpperCase().includes('WEDDING FILM'), enviadoEm: _enviadoDe(t) }
         })
-      : ['Wedding Film', 'Teaser', 'Pré-Wedding', 'Same Day Edit'].map(t => ({ titulo: t, url: _urlDe(t) || null, principal: t === 'Wedding Film' }))
+      : ['Wedding Film', 'Teaser', 'Pré-Wedding', 'Same Day Edit'].map(t => ({ titulo: t, url: _urlDe(t) || null, principal: t === 'Wedding Film', enviadoEm: _enviadoDe(t) }))
     // Ordem: Wedding Film, teaser, pré-wedding, same day edit
     const _ordem = ['WEDDING FILM', 'TEASER', 'PRÉ-WEDDING', 'SAME DAY']
     const _pos = (v: VideoRL) => { const u = v.titulo.toUpperCase(); const k = _ordem.findIndex(o => u.includes(o) || (o === 'TEASER' && u.includes('TRAILER')) || (o === 'PRÉ-WEDDING' && u.includes('PRE-WEDDING'))); return k === -1 ? 99 : k }

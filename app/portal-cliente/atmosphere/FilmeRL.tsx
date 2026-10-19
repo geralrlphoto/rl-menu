@@ -9,7 +9,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { prazoVideoDias } from '@/lib/crm'
 import { embedDe } from '@/lib/videoEmbed'
 
-export type VideoRL = { titulo: string; url?: string | null; capa?: string | null; principal?: boolean }
+export type VideoRL = { titulo: string; url?: string | null; capa?: string | null; principal?: boolean; enviadoEm?: string | null }
 
 const G = '#d8be93'
 
@@ -20,6 +20,25 @@ function somaUteis(iso: string, n: number): string {
   return d.toISOString().slice(0, 10)
 }
 const dataPt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
+
+/* Download: cada vídeo fica disponível 30 dias a contar do dia em que o entregámos */
+const DIAS_DOWNLOAD = 30
+function NotaDownload({ enviadoEm }: { enviadoEm?: string | null }) {
+  const m = String(enviadoEm ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!m) return <div style={{ marginTop: 6, fontSize: 12.5, color: 'rgba(255,255,255,.5)' }}>Disponível para download durante {DIAS_DOWNLOAD} dias depois da entrega</div>
+  const limite = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + DIAS_DOWNLOAD, 12))
+  const hoje = new Date(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date()) + 'T12:00:00Z')
+  const faltam = Math.round((limite.getTime() - hoje.getTime()) / 86400000)
+  const data = limite.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })
+  const cor = faltam < 0 ? '#f87171' : faltam <= 7 ? '#fbbf24' : '#86efac'
+  return (
+    <div style={{ marginTop: 6, fontSize: 12.5, fontWeight: 600, color: cor }}>
+      {faltam < 0
+        ? 'O período de download terminou. Falem connosco no Atendimento.'
+        : `Download até ${data} · ${faltam === 0 ? 'último dia' : `faltam ${faltam} ${faltam === 1 ? 'dia' : 'dias'}`}`}
+    </div>
+  )
+}
 
 /* Partilhar um vídeo com os convidados: no telemóvel abre a partilha do sistema
    (WhatsApp, SMS, email…); no computador copia a mensagem com o link. */
@@ -168,6 +187,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                 <div className="eyebrow">Filme completo</div>
                 <div style={{ marginTop: 6, fontSize: 'clamp(26px, 3.4vw, 36px)', color: '#fff' }}>{principal.titulo}</div>
                 {!principal.url && previsto && <div style={{ marginTop: 4, fontSize: 13, color: G, fontWeight: 600 }}>Previsto até {dataPt(previsto)}</div>}
+                {principal.url && <NotaDownload enviadoEm={principal.enviadoEm} />}
               </div>
               {principal.url
                 ? (
@@ -201,6 +221,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                       ...(v.url ? { color: '#86efac', background: 'rgba(74,222,128,.1)', border: '1px solid rgba(74,222,128,.3)' } : { color: 'rgba(255,255,255,.5)', border: '1px solid rgba(255,255,255,.12)' }),
                     }}>{v.url ? 'Disponível' : 'A aguardar'}</span>
                   </div>
+                  {v.url && <NotaDownload enviadoEm={v.enviadoEm} />}
                   <div style={{ marginTop: 14 }}>
                     {v.url
                       ? (
