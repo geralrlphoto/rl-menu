@@ -203,14 +203,14 @@ function toEmbedUrl(url: string): string | null {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[10px] tracking-[0.25em] text-white/30 uppercase">{label}</label>
+      <label className="rlp-ed-lab">{label}</label>
       {children}
     </div>
   )
 }
 
 function TInput({ value, onChange, multiline }: { value: string; onChange: (v: string) => void; multiline?: boolean }) {
-  const cls = "w-full bg-white/[0.06] border border-white/10 rounded-lg px-3 py-2 text-sm text-white outline-none focus:border-gold/40 placeholder:text-white/20 resize-none"
+  const cls = "w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-[15px] text-white outline-none transition-colors focus:border-[#d8be93]/60 placeholder:text-white/25 resize-none"
   return multiline
     ? <textarea rows={3} className={cls} value={value} onChange={e => onChange(e.target.value)} />
     : <input type="text" className={cls} value={value} onChange={e => onChange(e.target.value)} />
@@ -256,13 +256,12 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (v: string)
 function AccordionSection({ title, children, defaultOpen }: { title: string; children: React.ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen || false)
   return (
-    <div className="border border-white/[0.07] rounded-xl overflow-hidden">
-      <button onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-white/[0.03] transition-all">
-        <span className="text-xs tracking-[0.2em] text-white/50 uppercase">{title}</span>
-        <span className="text-white/20 text-xs">{open ? '▲' : '▼'}</span>
+    <div className={`rlp-ed-sec${open ? ' on' : ''}`}>
+      <button type="button" onClick={() => setOpen(o => !o)}>
+        <span>{title}</span>
+        <i>⌄</i>
       </button>
-      {open && <div className="px-4 pb-4 flex flex-col gap-4 border-t border-white/[0.06]" style={{ paddingTop: '1rem' }}>{children}</div>}
+      {open && <div>{children}</div>}
     </div>
   )
 }
@@ -355,6 +354,13 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
   // Editor
   const [editorOpen,  setEditorOpen]  = useState(false)
+  // Esc fecha a janela do editor
+  useEffect(() => {
+    if (!editorOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setEditorOpen(false) }
+    addEventListener('keydown', onKey)
+    return () => removeEventListener('keydown', onKey)
+  }, [editorOpen])
   const [content,     setContent]     = useState<PageContent>(DEFAULT_CONTENT)
   const [saving,      setSaving]      = useState(false)
   const [saved,       setSaved]       = useState(false)
@@ -955,23 +961,20 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       {isAdmin && (
         <>
           {/* Overlay */}
-          {editorOpen && <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setEditorOpen(false)} />}
+          <div className={`rlp-ed-veu${editorOpen ? ' on' : ''}`} onClick={() => setEditorOpen(false)} aria-hidden />
 
-          {/* Panel */}
-          <div className={`fixed top-0 right-0 h-full z-50 flex flex-col transition-transform duration-300 ease-in-out ${editorOpen ? 'translate-x-0' : 'translate-x-full'}`}
-            style={{ width: '320px', background: '#0d0d0d', borderLeft: '1px solid rgba(255,255,255,0.07)' }}>
-
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          {/* Janela do editor, centrada (estilo RL) */}
+          <div className={`rlp-ed${editorOpen ? ' on' : ''}`} role="dialog" aria-modal="true" aria-label="Editar página" aria-hidden={!editorOpen}>
+            <div className="rlp-ed-cab">
               <div>
-                <p className="text-xs tracking-widest text-white/60 uppercase">Editor</p>
-                <p className="text-[10px] text-white/20 mt-0.5">Alterações em tempo real</p>
+                <span className="rlp-eyebrow">Editor</span>
+                <p className="rlp-ed-tit">Editar página</p>
+                <p className="rlp-ed-sub">Alterações em tempo real · Esc para fechar</p>
               </div>
-              <button onClick={() => setEditorOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/30 hover:text-white hover:bg-white/5 transition-all">✕</button>
+              <button type="button" onClick={() => setEditorOpen(false)} className="rlp-ed-x" aria-label="Fechar">✕</button>
             </div>
 
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3">
+            <div className="rlp-ed-corpo">
 
               {/* ── HERO ── */}
               <AccordionSection title="Hero" defaultOpen>
@@ -1192,7 +1195,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
             </div>
 
             {/* Save button */}
-            <div className="px-4 py-4 border-t flex flex-col gap-2" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+            <div className="rlp-ed-pe">
               {uploadError && (
                 <p className="text-[11px] text-red-400 text-center bg-red-500/10 rounded-lg px-3 py-2 border border-red-500/20">
                   ✕ {uploadError}
@@ -1204,7 +1207,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
                 </p>
               )}
               <button onClick={handleSaveContent} disabled={saving}
-                className="w-full py-3 rounded-xl text-sm font-semibold tracking-[0.1em] uppercase transition-all disabled:opacity-50"
+                className="rlp-ed-guardar"
                 style={{ background: saved ? 'rgba(74,222,128,0.15)' : 'rgba(216,190,147,0.15)', color: saved ? '#4ade80' : '#d8be93', border: `1px solid ${saved ? 'rgba(74,222,128,0.3)' : 'rgba(216,190,147,0.3)'}` }}>
                 {saving ? 'A guardar...' : saved ? '✓ Guardado!' : 'Guardar Alterações'}
               </button>
