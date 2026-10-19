@@ -10,6 +10,7 @@ import { NoivosLogoutButton } from '@/app/components/NoivosLogoutButton'
 import { AtmospherePortal, buildDeliveriesFromSettings } from '../../atmosphere/AtmospherePortal'
 import { portalBloqueado, emFalta } from '@/lib/portalBloqueio'
 import { FORM_SELECAO_FOTOS_URL } from '@/lib/links'
+import { temTemaRL } from '@/lib/portalTema'
 import GuiaPortal from '../../guia/GuiaPortal'
 
 // Guia interativo em teste: só nestes portais dos noivos
@@ -1371,7 +1372,9 @@ export default function PortalRefPage() {
     const notionFallback = images.slice(0, 3)
     return merged.some(Boolean) ? merged.filter(Boolean) : notionFallback
   })()
+  // Novo design (tema RL): a página Sobre o Menu deixou de existir para os noivos
   const navPages = findAllChildPages(blocks).filter(p => !(settings.hiddenNav ?? []).includes(p.id))
+    .filter(p => !(temTemaRL(referencia) && /SOBRE O MENU/i.test(p.title)))
   const { heading: welcomeHeading, paragraphs: welcomeParas, reference: welcomeRef } = findWelcomeText(blocks)
 
   // ── edit modes ──────────────────────────────────────────────────────────────
