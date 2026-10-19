@@ -5,7 +5,7 @@
    quando têm link, AGUARDAR quando não têm) e os passos depois da entrega.
    Só apresentação: os dados vêm da página. */
 
-import { type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { prazoVideoDias } from '@/lib/crm'
 
 export type VideoRL = { titulo: string; url?: string | null; capa?: string | null; principal?: boolean }
@@ -19,6 +19,29 @@ function somaUteis(iso: string, n: number): string {
   return d.toISOString().slice(0, 10)
 }
 const dataPt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
+
+/* Partilhar um vídeo com os convidados: no telemóvel abre a partilha do sistema
+   (WhatsApp, SMS, email…); no computador copia a mensagem com o link. */
+function PartilharVideo({ titulo, url, largo }: { titulo: string; url: string; largo?: boolean }) {
+  const [copiado, setCopiado] = useState(false)
+  async function partilhar() {
+    const texto = `Olá! Já podem ver o ${titulo} do nosso casamento: ${url}`
+    try {
+      if (navigator.share) { await navigator.share({ title: titulo, text: texto }); return }
+    } catch { return /* partilha cancelada */ }
+    try {
+      await navigator.clipboard.writeText(texto)
+      setCopiado(true)
+      setTimeout(() => setCopiado(false), 3500)
+    } catch {}
+  }
+  return (
+    <button type="button" onClick={partilhar} className="atm-btn" style={largo ? { width: '100%' } : undefined}
+      title="Enviar o link deste vídeo aos convidados">
+      {copiado ? 'Mensagem copiada ✓' : 'Partilhar com convidados'}
+    </button>
+  )
+}
 
 export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, proposta, estadoVideo, intro, acoes }: {
   title: string
@@ -108,7 +131,12 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                 {!principal.url && previsto && <div style={{ marginTop: 4, fontSize: 13, color: G, fontWeight: 600 }}>Previsto até {dataPt(previsto)}</div>}
               </div>
               {principal.url
-                ? <a href={principal.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid">▶ Ver o filme</a>
+                ? (
+                  <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                    <a href={principal.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid">▶ Ver o filme</a>
+                    <PartilharVideo titulo={principal.titulo} url={principal.url} />
+                  </div>
+                )
                 : <span className="atm-btn" style={{ opacity: .55, cursor: 'default' }}>Aguardar</span>}
             </div>
           </div>
@@ -134,7 +162,12 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                   </div>
                   <div style={{ marginTop: 14 }}>
                     {v.url
-                      ? <a href={v.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid" style={{ width: '100%' }}>Ver mais →</a>
+                      ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                          <a href={v.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid" style={{ width: '100%' }}>Ver mais →</a>
+                          <PartilharVideo titulo={v.titulo} url={v.url} largo />
+                        </div>
+                      )
                       : <span className="atm-btn" style={{ width: '100%', opacity: .5, cursor: 'default' }}>Aguardar</span>}
                   </div>
                 </div>
