@@ -18,7 +18,7 @@ export const PERGUNTAS: Pergunta[] = [
   { id: 'valor', tipo: 'unica', titulo: 'O nosso *valor*, face ao que esperavam, era…',
     opcoes: ['Muito abaixo', 'Um pouco abaixo', 'Justo', 'Um pouco acima', 'Muito acima'] },
   { id: 'decisao', tipo: 'multipla', titulo: 'O que pesou mais na vossa *decisão*?',
-    opcoes: ['O preço', 'A data já não estava disponível', 'Preferimos outro estilo', 'Escolhemos outro fornecedor', 'Decidimos não ter foto ou vídeo', 'Ainda estamos a decidir', 'Outro motivo'] },
+    opcoes: ['O preço', 'A data já não estava disponível', 'Preferimos outro estilo', 'Decidimos não ter foto ou vídeo', 'Ainda estamos a decidir', 'Outro motivo'] },
   { id: 'outro', tipo: 'unica', titulo: 'Escolheram outro *fotógrafo* ou videógrafo?', opcoes: ['Sim', 'Não', 'Ainda não decidimos'] },
   { id: 'porque_outro', tipo: 'multipla', titulo: 'O que vos fez *escolher* outro?',
     opcoes: ['Preço mais baixo', 'Estilo diferente', 'Recomendação de alguém', 'Incluía mais serviços', 'Já o conhecíamos', 'Outro motivo'],
@@ -75,7 +75,7 @@ export function motivoDasRespostas(r: Respostas): string | null {
   const d = Array.isArray(r.decisao) ? r.decisao : []
   if (d.includes('O preço')) return 'Preço'
   if (d.includes('A data já não estava disponível')) return 'Data ocupada'
-  if (d.includes('Escolhemos outro fornecedor') || d.includes('Preferimos outro estilo') || r.outro === 'Sim') return 'Escolheram outro fornecedor'
+  if (d.includes('Preferimos outro estilo') || r.outro === 'Sim') return 'Escolheram outro fornecedor'
   if (d.includes('Decidimos não ter foto ou vídeo')) return 'Desistiram do serviço'
   if (d.length) return 'Outro'
   return null
