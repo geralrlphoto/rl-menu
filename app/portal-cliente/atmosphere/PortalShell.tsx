@@ -66,6 +66,29 @@ export function useTemaRL(): boolean {
   return on
 }
 
+/* Tema RL: avisos por secção e próximo passo (/api/portal-avisos), partilhados
+   pelo menu e pela barra do telemóvel com um só pedido por página */
+type AvisoRL = { texto: string; tom: 'alerta' | 'novo' | 'info' }
+export type AvisosRL = { avisos: Record<string, AvisoRL>; proximo: { titulo: string; quando?: string; chave: string } | null }
+const cacheAvisos = new Map<string, Promise<AvisosRL | null>>()
+export function useAvisosRL(on: boolean): AvisosRL | null {
+  const [d, setD] = useState<AvisosRL | null>(null)
+  useEffect(() => {
+    if (!on) return
+    const ref = refDoEndereco(window.location.pathname, window.location.search)
+    if (!ref) return
+    let pedido = cacheAvisos.get(ref)
+    if (!pedido) {
+      pedido = fetch(`/api/portal-avisos?ref=${encodeURIComponent(ref)}`).then(r => r.ok ? r.json() : null).catch(() => null)
+      cacheAvisos.set(ref, pedido)
+    }
+    let vivo = true
+    pedido.then(x => { if (vivo) setD(x) })
+    return () => { vivo = false }
+  }, [on])
+  return d
+}
+
 export function PortalShell({
   sidebar,
   children,
@@ -77,6 +100,12 @@ export function PortalShell({
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const temaRL = useTemaRL()
+  // Botão "Mais" da barra de atalhos do telemóvel (tema RL) abre o menu completo
+  useEffect(() => {
+    const abrir = () => { setMenuOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }) }
+    window.addEventListener('rl-abrir-menu', abrir)
+    return () => window.removeEventListener('rl-abrir-menu', abrir)
+  }, [])
 
   return (
     <div className={`portal-atmosphere${temaRL ? ' tema-rl' : ''}`}>
@@ -188,6 +217,114 @@ export function SidebarNav({
 }) {
   const [caixa, setCaixa] = useState(false)
   const hrefDe = (re: RegExp) => items.find(i => !i.locked && re.test(i.label.toUpperCase()))?.href
+  const temaRL = useTemaRL()
+  const avisos = useAvisosRL(temaRL)
+
+  if (temaRL) {
+    const nome = (l: string) => {
+      const u = l.toUpperCase()
+      const mapa: Array<[RegExp, string]> = [
+        [/CONTRAT/, 'Contrato'], [/PAGAMENT/, 'Pagamentos'], [/SAT/, 'A vossa opinião'], [/CRONOGRAMA/, 'Cronograma'],
+        [/PR[ÉE]-WEDDING/, 'Guia pré-wedding'], [/FILME/, 'O nosso filme'], [/FOTOGRAF/, 'Fotografias'],
+        [/ATEND/, 'Atendimento'], [/BRIEFING/, 'Briefing'], [/GUIA DOS NOIVOS/, 'Guia dos noivos'], [/IN[ÍI]CIO/, 'Início'],
+      ]
+      const m = mapa.find(([re]) => re.test(u))
+      return m ? m[1] : l.charAt(0).toUpperCase() + l.slice(1).toLowerCase()
+    }
+    const grupo = (l: string) => {
+      const u = l.toUpperCase()
+      if (/IN[ÍI]CIO/.test(u)) return 'inicio'
+      if (/CONTRAT|PAGAMENT|BRIEFING|PR[ÉE]-WEDDING|CRONOGRAMA/.test(u)) return 'antes'
+      if (/FOTOGRAF|FILME|SAT/.test(u)) return 'depois'
+      return 'ajuda'
+    }
+    const avisoDe = (l: string) => {
+      const u = l.toUpperCase()
+      const k = Object.keys(avisos?.avisos ?? {}).find(k => u.includes(k))
+      return k ? avisos!.avisos[k] : null
+    }
+    const inicio = items.find(i => grupo(i.label) === 'inicio')
+    const casa = inicio?.href ?? ''
+    const guiaHref = `${casa}${casa.includes('?') ? '&' : '?'}guia=1`
+    const cor = (t: string) => t === 'alerta' ? { c: '#fca5a5', b: 'rgba(239,68,68,.45)', bg: 'rgba(239,68,68,.1)' } : { c: '#86efac', b: 'rgba(74,222,128,.4)', bg: 'rgba(74,222,128,.1)' }
+
+    const linha = (it: SidebarNavItem, rotulo?: string) => {
+      const aviso = avisoDe(it.label)
+      const inner = (
+        <>
+          {getNavIconFor(it.label)}
+          <span style={{ flex: 1, minWidth: 0 }}>{rotulo ?? nome(it.label)}</span>
+          {aviso && !it.locked && (
+            <span style={{ flexShrink: 0, borderRadius: 999, padding: '2px 8px', fontSize: 10, fontWeight: 700, letterSpacing: '.04em', color: cor(aviso.tom).c, border: `1px solid ${cor(aviso.tom).b}`, background: cor(aviso.tom).bg }}>{aviso.texto}</span>
+          )}
+        </>
+      )
+      if (it.locked) return (
+        <button key={it.id} type="button" className="nv" aria-disabled="true" onClick={() => setCaixa(true)} style={{ opacity: .38 }}>
+          {inner}
+          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }} aria-label="Bloqueado">
+            <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+          </svg>
+        </button>
+      )
+      return it.href
+        ? <a key={it.id} className={`nv${it.active ? ' on' : ''}`} href={it.href}>{inner}</a>
+        : <button key={it.id} className={`nv${it.active ? ' on' : ''}`} onClick={it.onClick} type="button">{inner}</button>
+    }
+    const bloco = (titulo: string, lista: SidebarNavItem[], extra?: ReactNode) => (lista.length || extra) ? (
+      <>
+        <div className="nav-label">{titulo}</div>
+        <nav>{lista.map(i => linha(i))}{extra}</nav>
+      </>
+    ) : null
+    const prox = avisos?.proximo
+    const proxHref = prox ? (prox.chave === 'INICIO' ? casa : items.find(i => !i.locked && i.label.toUpperCase().includes(prox.chave))?.href) : undefined
+    const atalho = (re: RegExp) => items.find(i => re.test(i.label.toUpperCase()))
+
+    return (
+      <>
+        {caixa && falta && (
+          <div onClick={() => setCaixa(false)} style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,.65)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+            <CaixaBloqueio falta={falta} hrefContrato={hrefDe(/CONTRATO/)} hrefPagamentos={hrefDe(/PAGAMENTO/)} onClose={() => setCaixa(false)} />
+          </div>
+        )}
+        {inicio && <nav style={{ marginTop: 18 }}>{linha(inicio)}</nav>}
+        {bloco('Antes do casamento', items.filter(i => grupo(i.label) === 'antes'))}
+        {bloco('Depois do casamento', items.filter(i => grupo(i.label) === 'depois'))}
+        {bloco('Ajuda', items.filter(i => grupo(i.label) === 'ajuda'),
+          casa ? <a key="__guia__" className="nv" href={guiaHref}>{getNavIconFor('GUIA')}<span>Guia do portal</span></a> : null)}
+
+        {/* Próximo passo (no lugar da contagem, que já está no Início) */}
+        {prox && (
+          <a href={proxHref || casa || undefined} className="rl-proximo" style={{ display: 'block', marginTop: 22, borderRadius: 18, border: '1px solid rgba(216,190,147,.3)', background: 'rgba(17,17,17,.8)', padding: '14px 16px', boxShadow: '0 0 40px -22px rgba(216,190,147,.6)', color: 'inherit' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 9.5, letterSpacing: '.26em', textTransform: 'uppercase', color: '#d8be93', fontWeight: 600 }}>
+              <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#d8be93', boxShadow: '0 0 8px #d8be93' }} />Próximo passo
+            </span>
+            <span style={{ display: 'block', marginTop: 8, fontSize: 15, fontWeight: 600, color: '#fff' }}>{prox.titulo}</span>
+            {prox.quando && <span style={{ display: 'block', marginTop: 2, fontSize: 12, color: 'rgba(255,255,255,.5)' }}>{prox.quando}</span>}
+          </a>
+        )}
+
+        {/* Telemóvel: barra fixa com 4 atalhos e "Mais" para o menu completo */}
+        <div className="rl-barra">
+          {[[/IN[ÍI]CIO/, 'Início'], [/PAGAMENT/, 'Pagamentos'], [/FOTOGRAF/, 'Fotos'], [/FILME/, 'Filme']].map(([re, rot]) => {
+            const it = atalho(re as RegExp)
+            if (!it) return null
+            const a = avisoDe(it.label)
+            const conteudo = <>{getNavIconFor(it.label, 20)}<span>{rot as string}</span>{a && !it.locked && <i className={`ponto ${a.tom}`} />}</>
+            return it.locked || !it.href
+              ? <button key={it.id} type="button" className="b" onClick={() => it.locked ? setCaixa(true) : it.onClick?.()} style={{ opacity: it.locked ? .4 : 1 }}>{conteudo}</button>
+              : <a key={it.id} className={`b${it.active ? ' on' : ''}`} href={it.href}>{conteudo}</a>
+          })}
+          <button type="button" className="b" onClick={() => window.dispatchEvent(new Event('rl-abrir-menu'))}>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+            <span>Mais</span>
+          </button>
+        </div>
+      </>
+    )
+  }
+
   return (
     <>
       {caixa && falta && (
@@ -244,11 +381,13 @@ export function SidebarMiniCountdown({
   coupleLabel?: string
 }) {
   const [parts, setParts] = useState(() => diffParts(weddingDate))
+  const temaRL = useTemaRL()
   useEffect(() => {
     setParts(diffParts(weddingDate))
     const id = setInterval(() => setParts(diffParts(weddingDate)), 60_000)
     return () => clearInterval(id)
   }, [weddingDate])
+  if (temaRL) return null // tema RL: o "Próximo passo" do menu substitui a contagem
   return (
     <div className="mini">
       <div className="c">

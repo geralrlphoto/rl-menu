@@ -900,6 +900,8 @@ const STEP_MS = 7000
 
 export default function GuiaPortal() {
   const [open, setOpen] = useState(false)
+  // Link "Guia do portal" do menu lateral (?guia=1) abre o guia logo
+  useEffect(() => { try { if (new URLSearchParams(window.location.search).get('guia') === '1') setOpen(true) } catch {} }, [])
   const [mounted, setMounted] = useState(false)
   const [topicIdx, setTopicIdx] = useState<number | null>(null)
   const [step, setStep] = useState(0)

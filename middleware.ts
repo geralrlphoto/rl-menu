@@ -181,6 +181,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/equipa-do-dia') ||
     pathname.startsWith('/api/pagamentos-by-ref') ||
     pathname.startsWith('/api/cronograma-auto') || // a rota exige sessão dos noivos ou admin
+    pathname.startsWith('/api/portal-avisos') || // a rota exige sessão dos noivos ou admin
     // Serviços da proposta aceite (só serviços e valor, pelo token do CRM): o portal dos noivos precisa
     pathname.startsWith('/api/crm-proposta-by-token') ||
     pathname.startsWith('/api/pagamentos-noivos') ||
