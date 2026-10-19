@@ -63,7 +63,9 @@ export default async function ConvidadosPage({ params }: { params: Promise<{ id:
         }} />
         <div className="relative mx-auto max-w-3xl px-5 pt-20 pb-16 sm:pt-28 sm:pb-20 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/portal-noivos/mono-gold.png" alt="RL Photo Video" className="mx-auto mb-8 h-12 w-auto opacity-90" />
+          <img src="/portal-noivos/mono-gold.png" alt="RL Photo Video" className="mx-auto h-12 w-auto opacity-90" />
+          <p className="mt-3 font-cond text-[15px] tracking-[0.08em] text-white/85">RL Photo Video</p>
+          <p className="mb-8 mt-0.5 font-cond text-[10px] tracking-[0.35em] uppercase text-white/40">Wedding Moments</p>
           <p className="font-cond text-[11px] font-medium tracking-[0.25em] uppercase" style={{ color: G }}>As fotografias do casamento</p>
           <h1 className="mt-4 font-cond font-light text-[46px] sm:text-[72px] leading-[1.02]">
             {c.nomes.split(' & ').map((n, i) => (

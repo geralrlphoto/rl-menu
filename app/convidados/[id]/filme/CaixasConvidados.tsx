@@ -46,7 +46,7 @@ export default function CaixasConvidados({ id }: { id: string }) {
   function enviarIndicacao(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const f = new FormData(e.currentTarget)
-    ind.enviar({ nome: f.get('nome'), noivos: f.get('noivos'), contacto: f.get('contacto'), data: f.get('data'), notas: f.get('notas'), consentimento: f.get('consentimento') === 'on', site: f.get('site') })
+    ind.enviar({ nome: f.get('nome'), noivos: f.get('noivos'), contacto: f.get('contacto'), data: f.get('data'), notas: f.get('notas'), site: f.get('site') })
   }
 
   const caixa = 'rounded-[22px] border border-[#d8be93]/20 bg-[#111111]/90 p-6'
@@ -88,10 +88,9 @@ export default function CaixasConvidados({ id }: { id: string }) {
             <label><span className={rotulo}>Nome dos noivos</span><input name="noivos" required maxLength={120} className={campo} placeholder="Ex.: Marta e Pedro" /></label>
             <label><span className={rotulo}>Telemóvel ou email dos noivos</span><input name="contacto" required maxLength={120} className={campo} placeholder="912 000 000" /></label>
             <label><span className={rotulo}>Data prevista do casamento (se souberem)</span><input name="data" maxLength={40} className={campo} placeholder="Ex.: setembro de 2027" /></label>
-            <label className="flex items-start gap-2.5 font-cond text-[13px] leading-snug text-white/55">
-              <input type="checkbox" name="consentimento" required className="mt-0.5 h-4 w-4 accent-[#d8be93]" />
-              Os noivos sabem e aceitam que a RL Photo.Video os contacte.
-            </label>
+            <p className="font-cond text-[13px] leading-snug text-white/50">
+              Vamos entrar em contacto com os noivos e dizer-lhes que foram vocês a indicá-los.
+            </p>
             {ind.erro && <p className="font-cond text-[13px] text-red-300">{ind.erro}</p>}
             <button type="submit" disabled={ind.estado === 'a-enviar'} className={botao} style={{ color: G }}>
               {ind.estado === 'a-enviar' ? 'A enviar…' : 'Enviar indicação'}
