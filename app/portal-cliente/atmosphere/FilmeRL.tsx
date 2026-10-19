@@ -20,6 +20,28 @@ function somaUteis(iso: string, n: number): string {
 }
 const dataPt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
 
+/* Endereço do leitor para ver o vídeo dentro do portal (o vídeo continua a vir do
+   Vimeo/YouTube, sem gastar o nosso tráfego). null = não dá para embutir. */
+export function embedDe(url?: string | null): string | null {
+  if (!url) return null
+  try {
+    const u = new URL(url)
+    const h = u.hostname.replace(/^www\./, '')
+    if (h === 'vimeo.com') {
+      const [id, hash] = u.pathname.split('/').filter(Boolean)
+      if (!/^\d+$/.test(id ?? '')) return null
+      return `https://player.vimeo.com/video/${id}?autoplay=1&title=0&byline=0&portrait=0${hash ? `&h=${hash}` : ''}`
+    }
+    if (h === 'player.vimeo.com') return `${url}${url.includes('?') ? '&' : '?'}autoplay=1`
+    if (h === 'youtu.be') return `https://www.youtube-nocookie.com/embed/${u.pathname.slice(1)}?autoplay=1&rel=0`
+    if (h === 'youtube.com' || h === 'm.youtube.com') {
+      const id = u.searchParams.get('v')
+      return id ? `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0` : null
+    }
+  } catch { /* link inválido */ }
+  return null
+}
+
 /* Partilhar um vídeo com os convidados: no telemóvel abre a partilha do sistema
    (WhatsApp, SMS, email…); no computador copia a mensagem com o link. */
 function PartilharVideo({ titulo, url, largo }: { titulo: string; url: string; largo?: boolean }) {
@@ -80,6 +102,15 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chave])
   const capaDe = (v: VideoRL) => (v.url && capas[v.url]) || heroUrl || null
+  // Leitor aberto (por cima da página); fecha com o × ou a tecla Esc
+  const [aVer, setAVer] = useState<{ titulo: string; src: string } | null>(null)
+  useEffect(() => {
+    if (!aVer) return
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') setAVer(null) }
+    window.addEventListener('keydown', k)
+    return () => window.removeEventListener('keydown', k)
+  }, [aVer])
+  const ver = (v: VideoRL) => { const src = embedDe(v.url); if (src) setAVer({ titulo: v.titulo, src }) }
 
   const principal = videos.find(v => v.principal) ?? null
   const outros = videos.filter(v => v !== principal)
@@ -157,7 +188,9 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
               {principal.url
                 ? (
                   <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                    <a href={principal.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid">▶ Ver o filme</a>
+                    {embedDe(principal.url)
+                      ? <button type="button" onClick={() => ver(principal)} className="atm-btn solid">▶ Ver o filme</button>
+                      : <a href={principal.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid">▶ Ver o filme</a>}
                     <PartilharVideo titulo={principal.titulo} url={principal.url} />
                   </div>
                 )
@@ -188,7 +221,9 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                     {v.url
                       ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                          <a href={v.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid" style={{ width: '100%' }}>Ver mais →</a>
+                          {embedDe(v.url)
+                            ? <button type="button" onClick={() => ver(v)} className="atm-btn solid" style={{ width: '100%' }}>▶ Ver o vídeo</button>
+                            : <a href={v.url} target="_blank" rel="noopener noreferrer" className="atm-btn solid" style={{ width: '100%' }}>Ver mais →</a>}
                           <PartilharVideo titulo={v.titulo} url={v.url} largo />
                         </div>
                       )
@@ -211,6 +246,23 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
             Alterações ao filme: até 5 dias úteis depois da entrega, no máximo 3 alterações pontuais, pedidas no Atendimento.
           </p>
         </section>
+      )}
+
+      {aVer && (
+        <div role="dialog" aria-modal="true" aria-label={aVer.titulo} onClick={() => setAVer(null)}
+          style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,.88)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div onClick={e => e.stopPropagation()} style={{ width: 'min(1100px, 100%)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <span className="eyebrow">{aVer.titulo}</span>
+              <button type="button" onClick={() => setAVer(null)} aria-label="Fechar"
+                style={{ width: 38, height: 38, borderRadius: '50%', border: '1px solid rgba(255,255,255,.2)', background: 'rgba(14,14,14,.9)', color: '#fff', fontSize: 20, cursor: 'pointer' }}>×</button>
+            </div>
+            <div style={{ position: 'relative', aspectRatio: '16 / 9', borderRadius: 18, overflow: 'hidden', border: '1px solid rgba(216,190,147,.3)', boxShadow: '0 0 60px -20px rgba(216,190,147,.5)', background: '#000' }}>
+              <iframe src={aVer.src} title={aVer.titulo} allow="autoplay; fullscreen; picture-in-picture" allowFullScreen
+                style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', border: 0 }} />
+            </div>
+          </div>
+        </div>
       )}
 
       <style>{`
