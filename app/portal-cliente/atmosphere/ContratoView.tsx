@@ -7,6 +7,7 @@
 
 import { useRef, useState, type ReactNode } from 'react'
 import './contrato.css'
+import { useTemaRL } from './PortalShell'
 
 const fmtEur = (n: number | null | undefined): string => {
   if (n === null || n === undefined || isNaN(Number(n))) return '—'
@@ -109,6 +110,7 @@ function EnviarContratoAssinado({ referencia, enviadoEm, onEnviado }: {
 export function ContratoView(props: ContratoViewProps) {
   const fotoItems = props.servicosFoto.filter(Boolean)
   const videoItems = props.servicosVideo.filter(Boolean)
+  const temaRL = useTemaRL()
 
   return (
     <>
@@ -281,12 +283,21 @@ export function ContratoView(props: ContratoViewProps) {
         <span className="val"><em>€</em>{fmtEur(props.totalEur)}</span>
       </div>
 
-      {/* Logo card creme (idêntico ao Atendimento) */}
+      {/* Tema RL: assinatura dourada (igual ao fim do Briefing) em vez do cartão creme */}
+      {temaRL ? (
+        <div style={{ marginTop: 48, marginBottom: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+          <div style={{ width: 64, height: 1, marginBottom: 24, background: 'linear-gradient(90deg, transparent, rgba(216,190,147,0.6), transparent)' }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/portal-noivos/logo-gold.png" alt="RL Photo Video" style={{ height: 48, width: 'auto', objectFit: 'contain', opacity: 0.9 }} />
+          <p style={{ marginTop: 12, fontSize: 9, letterSpacing: '0.45em', textTransform: 'uppercase', color: 'rgba(216,190,147,0.65)' }}>Photo · Video · Wedding Moments</p>
+        </div>
+      ) : (
       <div className="logocard">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
         <div className="url">www.rlphotovideo.pt</div>
       </div>
+      )}
     </>
   )
 }
