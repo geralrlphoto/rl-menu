@@ -14,6 +14,7 @@ import BriefingPartilha from '../../p/[token]/BriefingPartilha'
 import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, CaixaBloqueio, useTemaRL, type SidebarNavItem } from '../atmosphere/PortalShell'
 import { PagamentosRL } from '../atmosphere/PagamentosRL'
+import { FilmeRL, type VideoRL } from '../atmosphere/FilmeRL'
 import { ContratoView } from '../atmosphere/ContratoView'
 import { portalBloqueado, paginaSempreAberta, emFalta } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
@@ -2459,6 +2460,58 @@ function PortalSubPageContent() {
   const _atmBackHref = fromId
     ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
     : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'
+
+  // ── O Nosso Filme no novo design (tema RL): só nos portais em teste ──
+  if (temaRL && isFilmePage && !loading && !error && !editing && !editingPhotos && !isFreelancerView && !isPartilha) {
+    const _links = calloutLinks[id as string] ?? {}
+    const _img = (b: Block): string | null => {
+      const c = (b.children ?? []).find((x: Block) => x.type === 'image')
+      if (!c) return null
+      return (c.image?.type === 'external' ? c.image.external?.url : c.image?.file?.url) ?? null
+    }
+    const _urlDe = (t: string): string => {
+      const u = t.toUpperCase()
+      return _links[t] || (
+        u.includes('WEDDING FILM') ? (portalSettingsObj?.wedding_film_url ?? '') :
+        u.includes('PRÉ-WEDDING') || u.includes('PRE-WEDDING') ? (portalSettingsObj?.video_prewedding_url ?? '') :
+        u.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
+        u.includes('TEASER') || u.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
+      ) || ''
+    }
+    const _callouts = findCalloutCards(blocks)
+    const _base: VideoRL[] = _callouts.length
+      ? _callouts.map(b => {
+          const t = plainText(b.callout?.rich_text ?? []).trim()
+          return { titulo: t, url: _urlDe(t) || null, capa: _img(b), principal: t.toUpperCase().includes('WEDDING FILM') }
+        })
+      : ['Wedding Film', 'Teaser', 'Pré-Wedding', 'Same Day Edit'].map(t => ({ titulo: t, url: _urlDe(t) || null, principal: t === 'Wedding Film' }))
+    // Ordem: Wedding Film, teaser, pré-wedding, same day edit
+    const _ordem = ['WEDDING FILM', 'TEASER', 'PRÉ-WEDDING', 'SAME DAY']
+    const _pos = (v: VideoRL) => { const u = v.titulo.toUpperCase(); const k = _ordem.findIndex(o => u.includes(o) || (o === 'TEASER' && u.includes('TRAILER')) || (o === 'PRÉ-WEDDING' && u.includes('PRE-WEDDING'))); return k === -1 ? 99 : k }
+    const _videos = [..._base].sort((a, b) => _pos(a) - _pos(b))
+    // Texto introdutório (parágrafos antes do primeiro cartão de vídeo), dentro do dropdown
+    const _primeiroCard = blocks.findIndex(b => findCalloutCards([b]).length > 0)
+    const _intro = blocks.filter((b, k) => (_primeiroCard === -1 || k < _primeiroCard) && b.type === 'paragraph' && plainText(b.paragraph?.rich_text ?? []).trim())
+    return (
+      <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+        <FilmeRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          videos={_videos}
+          dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
+          proposta={eventoData?.proposta ?? propostaData?.nome ?? null}
+          estadoVideo={eventoData?.video_estado ?? null}
+          intro={_intro.length > 0 ? (
+            <IntroDropdown titulo="Sobre o vosso filme">
+              <NotionBlocks blocks={_intro} hiddenNav={settings.hiddenNav} />
+            </IntroDropdown>
+          ) : undefined}
+          acoes={<FilmeAcoes settings={portalSettingsObj} />}
+        />
+      </PortalShell>
+    )
+  }
 
   // ── Pagamentos no novo design (tema RL): só nos portais em teste ──
   if (temaRL && isPaymentsPage && !loading && !error && !editing && !editingPhotos && !isFreelancerView && !isPartilha) {
