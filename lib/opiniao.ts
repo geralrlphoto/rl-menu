@@ -11,6 +11,12 @@ export type Respostas = Record<string, Resposta | undefined>
 
 export const MAX_SUGESTAO = 2000
 
+// Pergunta 5: o "Sim" divide-se por serviço; qualquer um deles abre a pergunta 6
+const SIM_FOTO = 'Sim, outro fotógrafo'
+const SIM_VIDEO = 'Sim, outro videógrafo'
+const SIM_AMBOS = 'Sim, já temos ambos os serviços escolhidos'
+const escolheuOutro = (r: Respostas) => r.outro === SIM_FOTO || r.outro === SIM_VIDEO || r.outro === SIM_AMBOS
+
 export const PERGUNTAS: Pergunta[] = [
   { id: 'reuniao', tipo: 'escala', titulo: 'Como avaliam a nossa *reunião*?', legendas: ['Fraca', 'Boa', 'Excelente'] },
   { id: 'gostaram', tipo: 'multipla', titulo: 'O que mais *gostaram* em nós?',
@@ -19,10 +25,10 @@ export const PERGUNTAS: Pergunta[] = [
     opcoes: ['Muito abaixo', 'Um pouco abaixo', 'Justo', 'Um pouco acima', 'Muito acima'] },
   { id: 'decisao', tipo: 'multipla', titulo: 'O que pesou mais na vossa *decisão*?',
     opcoes: ['O preço', 'A data já não estava disponível', 'Preferimos outro estilo', 'Decidimos não ter foto ou vídeo', 'Ainda estamos a decidir', 'Outro motivo'] },
-  { id: 'outro', tipo: 'unica', titulo: 'Escolheram outro *fotógrafo* ou videógrafo?', opcoes: ['Sim', 'Não', 'Ainda não decidimos'] },
+  { id: 'outro', tipo: 'unica', titulo: 'Escolheram outro *fotógrafo* ou videógrafo?', opcoes: [SIM_FOTO, SIM_VIDEO, SIM_AMBOS, 'Não', 'Ainda não decidimos'] },
   { id: 'porque_outro', tipo: 'multipla', titulo: 'O que vos fez *escolher* outro?',
     opcoes: ['Preço mais baixo', 'Estilo diferente', 'Recomendação de alguém', 'Incluía mais serviços', 'Já o conhecíamos', 'Outro motivo'],
-    mostrarSe: r => r.outro === 'Sim' },
+    mostrarSe: r => escolheuOutro(r) },
   { id: 'recomendar', tipo: 'escala', titulo: 'Depois de nos conhecerem, ficaram com vontade de nos *recomendar*?', legendas: ['Não', 'Talvez', 'Sem dúvida'] },
   { id: 'sugestao', tipo: 'texto', titulo: 'Querem deixar-nos alguma *sugestão*?', max: MAX_SUGESTAO },
 ]
@@ -75,7 +81,7 @@ export function motivoDasRespostas(r: Respostas): string | null {
   const d = Array.isArray(r.decisao) ? r.decisao : []
   if (d.includes('O preço')) return 'Preço'
   if (d.includes('A data já não estava disponível')) return 'Data ocupada'
-  if (d.includes('Preferimos outro estilo') || r.outro === 'Sim') return 'Escolheram outro fornecedor'
+  if (d.includes('Preferimos outro estilo') || escolheuOutro(r)) return 'Escolheram outro fornecedor'
   if (d.includes('Decidimos não ter foto ou vídeo')) return 'Desistiram do serviço'
   if (d.length) return 'Outro'
   return null
