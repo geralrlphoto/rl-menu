@@ -213,6 +213,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/preparacao-publico') ||
     pathname === '/opiniao' || pathname.startsWith('/opiniao/') ||   // opinião dos casais que não fecharam
     pathname === '/api/opiniao' ||
+    pathname === '/api/portfolio-wfolio' ||   // fotos do portfólio (galeria Wfolio)
     // Marcação da sessão pré-wedding pelos noivos (link do WhatsApp)
     pathname.startsWith('/prewedding/') ||
     pathname.startsWith('/api/prewedding-publico') ||

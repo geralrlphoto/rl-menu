@@ -4,15 +4,32 @@
 // A secção fica presa ao ecrã (sticky) e o scroll da página faz a faixa de
 // fotos deslizar da esquerda para a direita. A foto que passa ao centro fica
 // acesa (a cores e um pouco maior); as outras ficam mais apagadas.
+// As fotos vêm da galeria do Wfolio (/api/portfolio-wfolio): servidas pelo
+// i.wfolio.com, sem gastar Supabase. Se o Wfolio falhar, usa as do editor.
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+type FotoWf = { src: string; srcSet: string }
 
 export default function PortfolioFaixa({ label, title, titleColor, photos, isAdmin }: {
   label: string; title: string; titleColor?: string
   photos: string[]
   isAdmin: boolean   // no admin mostram-se os lugares vazios
 }) {
-  const unicas = photos.map((url, i) => ({ url, i })).filter(f => f.url || isAdmin)
+  // null = a carregar; depois a lista do Wfolio (vazia se falhou)
+  const [wf, setWf] = useState<{ fotos: FotoWf[]; galeria: string } | null>(null)
+  useEffect(() => {
+    fetch('/api/portfolio-wfolio').then(r => r.json())
+      .then(d => setWf({ fotos: Array.isArray(d.fotos) ? d.fotos : [], galeria: d.galeria ?? '' }))
+      .catch(() => setWf({ fotos: [], galeria: '' }))
+  }, [])
+
+  const doWfolio = !!wf && wf.fotos.length > 0
+  const unicas: { url: string; srcSet?: string; i: number }[] = !wf
+    ? []   // à espera do Wfolio: não carrega as do Supabase à toa
+    : doWfolio
+      ? wf.fotos.map((f, i) => ({ url: f.src, srcSet: f.srcSet, i }))
+      : photos.map((url, i) => ({ url, i })).filter(f => f.url || isAdmin)
   // Com poucas fotos a faixa quase não andava: repete-as até ter pelo menos 8
   const fotos = unicas.length
     ? Array.from({ length: Math.max(unicas.length, 8) }, (_, k) => unicas[k % unicas.length])
@@ -99,6 +116,7 @@ export default function PortfolioFaixa({ label, title, titleColor, photos, isAdm
         .rlf-n{position:absolute;left:16px;bottom:14px;font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.3em;color:#d8be93;text-shadow:0 1px 8px rgba(0,0,0,.6);}
         .rlf-vazio{position:absolute;inset:0;display:grid;place-items:center;font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(243,237,226,.4);
           background-image:repeating-linear-gradient(122deg,rgba(243,237,226,.022) 0 1px,transparent 1px 11px);}
+        .rlf-mais{padding:0 var(--pad,24px);margin-top:clamp(20px,4vh,40px);}
         @media (max-width:767px){ .rlf-cartao{width:72vw;} }
       `}</style>
 
@@ -111,11 +129,18 @@ export default function PortfolioFaixa({ label, title, titleColor, photos, isAdm
           {fotos.map((f, k) => (
             <div key={k} ref={el => { cartoes.current[k] = el }} className="rlf-cartao">
               {f.url
-                ? <><img src={f.url} alt="" draggable={false} /><span className="rlf-n">{String(f.i + 1).padStart(2, '0')}</span></>
+                ? <><img src={f.url} srcSet={f.srcSet} sizes="(max-width: 767px) 72vw, 30vw" alt="" draggable={false} loading={k < 4 ? 'eager' : 'lazy'} /><span className="rlf-n">{String(f.i + 1).padStart(2, '0')}</span></>
                 : <div className="rlf-vazio">Foto {f.i + 1}</div>}
             </div>
           ))}
         </div>
+        {doWfolio && wf!.galeria && (
+          <div className="rlf-mais">
+            <a href={wf!.galeria} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost">
+              <span className="dot" />Ver galeria completa<span className="fill" />
+            </a>
+          </div>
+        )}
       </div>
     </section>
   )
