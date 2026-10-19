@@ -316,7 +316,8 @@ const SHAREABLE = new Set(['galerias', 'prewedding'])
 function ShareConvidadosButton({ path }: { path: string }) {
   const [estado, setEstado] = useState<'idle' | 'copiado'>('idle')
   async function partilhar() {
-    const url = path.startsWith('http') ? path : `${window.location.origin}${path}`
+    // Sempre com o domínio oficial, mesmo que o portal esteja aberto noutro endereço
+    const url = path.startsWith('http') ? path : `https://portal.rlphotovideo.pt${path}`
     const texto = `Olá! Já podem ver as fotografias do nosso casamento e adquirir as vossas preferidas, em digital ou em papel, aqui: ${url}`
     try {
       if (navigator.share) { await navigator.share({ title: 'Fotografias do casamento', text: texto }); return }
