@@ -1756,6 +1756,13 @@ function PortalSubPageContent() {
   const isFilmePage       = title.toUpperCase().includes('FILME') || title.toUpperCase().includes('NOSSO FILME')
   const isSatisfacaoPage   = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
   const isCronogramaPage   = title.toUpperCase().includes('CRONOGRAMA')
+  // Tema RL: etapas do cronograma que vêm de outras tabelas (preparação, briefing à equipa)
+  const [cronoAuto, setCronoAuto] = useState<{ reuniaoPreparacao?: boolean; preWeddingMarcado?: boolean; briefingEquipa?: boolean }>({})
+  useEffect(() => {
+    const r = portalRef || refParam
+    if (!temaRL || !isCronogramaPage || !r) return
+    fetch(`/api/cronograma-auto?ref=${encodeURIComponent(r)}`).then(x => x.ok ? x.json() : {}).then(setCronoAuto).catch(() => {})
+  }, [temaRL, isCronogramaPage, portalRef, refParam])
 
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
@@ -2478,7 +2485,9 @@ function PortalSubPageContent() {
       if (u.includes('REUNIÃO INICIAL') || u.includes('REUNIAO INICIAL')) return true
       if (u.startsWith('CONTRATO')) return !!(ps.contratoDisponivel || ps.contratoAssinadoEm)
       if (u.startsWith('ADJUDICA')) return adjudicacaoPaga(pagos)
-      if (u.includes('PRÉ-WEDDING') || u.includes('PRE-WEDDING')) return !!(ps.bookingReservedSlotId || ps.preWeddingReservedSlotId || ps.prewedding_url)
+      if (u.includes('PRÉ-WEDDING') || u.includes('PRE-WEDDING')) return !!(ps.bookingReservedSlotId || ps.preWeddingReservedSlotId || ps.prewedding_url || cronoAuto.preWeddingMarcado)
+      if (u.includes('PRÉ-CASAMENTO') || u.includes('PRE-CASAMENTO')) return !!cronoAuto.reuniaoPreparacao
+      if (u.includes('BRIEFING DE EQUIPA')) return !!cronoAuto.briefingEquipa
       if (u.startsWith('REFOR')) return faseConfirmada(/REFOR|FINAL/i)
       if (u.startsWith('DIA DO CASAMENTO')) return !!dataEv && dataEv <= hojeIso
       if (u.startsWith('BACKUP')) return !!ps.armazenamento_backup
