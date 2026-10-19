@@ -21,6 +21,24 @@ function refVariants(ref: string): string[] {
   return Array.from(v).filter(Boolean)
 }
 
+const palavras = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().split(/[^a-z]+/).filter(w => w.length > 2)
+
+// Sem referência (links de alerta por WhatsApp levam só nome + data): procura o
+// evento nessa data; havendo vários, fica o que partilha mais nomes com os noivos.
+async function referenciaPorNomeData(sb: ReturnType<typeof db>, nome: string, data: string): Promise<string> {
+  const { data: evs } = await sb.from('eventos_2026').select('referencia, cliente').eq('data_evento', data)
+  const lista = (evs ?? []).filter((e: any) => e.referencia)
+  if (lista.length === 1) return lista[0].referencia
+  const alvo = new Set(palavras(nome))
+  let melhor = '', pontos = 0
+  for (const e of lista) {
+    const p = palavras(e.cliente ?? '').filter(w => alvo.has(w)).length
+    if (p > pontos) { melhor = e.referencia; pontos = p }
+  }
+  return melhor
+}
+
 async function sendEmail(payload: Record<string, any>) {
   if (!process.env.RESEND_API_KEY) return false
   const res = await fetch('https://api.resend.com/emails', {
@@ -99,7 +117,7 @@ function cardPagamento(o: any): string {
 export async function POST(req: NextRequest) {
   const b = await req.json().catch(() => ({}))
   const nome_noivos = String(b.nome_noivos ?? '').trim()
-  const referencia = String(b.referencia ?? '').trim()
+  let referencia = String(b.referencia ?? '').trim()
   const metodo = String(b.metodo ?? '').trim()
   const comprovativo_url = String(b.comprovativo_url ?? '').trim() || null
   const valor = Number(b.valor)
@@ -114,6 +132,7 @@ export async function POST(req: NextRequest) {
 
   const sb = db()
   const hoje = new Date().toISOString().slice(0, 10)
+  if (!referencia && dataCasForm) referencia = await referenciaPorNomeData(sb, nome_noivos, dataCasForm)
 
   // Procura o contrato para obter o email da noiva e a data do casamento.
   let emailNoivaAddr: string | null = null

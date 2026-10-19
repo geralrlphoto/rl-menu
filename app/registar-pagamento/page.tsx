@@ -17,6 +17,8 @@ function RegistarPagamentoInner() {
   const refParam = params.get('ref') ?? ''
   const noivosParam = params.get('noivos') ?? ''
   const dataParam = /^\d{4}-\d{2}-\d{2}$/.test(params.get('data') ?? '') ? params.get('data')! : ''
+  // Link com nome + data e sem ref: a referência é encontrada pela API
+  const refPorNomeData = !refParam && !!noivosParam && !!dataParam
 
   const [noivos, setNoivos] = useState(noivosParam)
   const [referencia, setReferencia] = useState(refParam)
@@ -47,7 +49,7 @@ function RegistarPagamentoInner() {
     setErro(null)
     if (!noivos.trim()) return setErro('Falta o nome dos noivos.')
     if (!emailOk) return setErro('Indica um email válido.')
-    if (!referencia.trim()) return setErro('Falta a referência do evento.')
+    if (!referencia.trim() && !refPorNomeData) return setErro('Falta a referência do evento.')
     if (!dataCasamento) return setErro('Falta a data do casamento/batizado.')
     if (!fase) return setErro('Escolhe a fase do pagamento.')
     if (!(Number(valor) > 0)) return setErro('Indica um valor válido.')
@@ -96,8 +98,8 @@ function RegistarPagamentoInner() {
         <h1 className="text-4xl font-light leading-tight" style={{ fontFamily: 'Georgia,serif' }}>Registar <em className="text-[#d8be93]">Pagamento</em></h1>
         <p className="text-white/50 mt-3 leading-relaxed text-[15px]">Qualquer pagamento deve ser acompanhado deste registo, para ficar tudo registado na nossa plataforma. Recebem um recibo por email e a equipa fica logo a saber.</p>
         <div className="mt-5 rounded-xl border border-[#d8be93]/25 bg-[#d8be93]/[0.05] px-4 py-3 text-[14px] text-white/70 leading-relaxed">
-          MB WAY para o contacto <span className="text-[#d8be93]">916 162 728</span> (Liliana Gonçalves).<br />
-          A referência do evento deve ser escrita tal como vos foi dada, por exemplo <span className="text-[#d8be93]">CAS_026_26_RL</span>.
+          MB WAY para o contacto <span className="text-[#d8be93]">916 162 728</span> (Liliana Gonçalves).
+          {!refPorNomeData && <><br />A referência do evento deve ser escrita tal como vos foi dada, por exemplo <span className="text-[#d8be93]">CAS_026_26_RL</span>.</>}
         </div>
 
         <div className="mt-10 grid gap-7">
@@ -110,11 +112,11 @@ function RegistarPagamentoInner() {
             <label className={labelCls}>Email</label>
             <input type="email" className={input} value={email} onChange={e => setEmail(e.target.value)} placeholder="nome@email.com" />
           </div>
-          <div>
+          {!refPorNomeData && <div>
             <label className={labelCls}>Referência do evento</label>
             <input className={refParam ? lockedInput : input} value={referencia} readOnly={!!refParam}
               onChange={e => setReferencia(e.target.value)} placeholder="CAS_000_26_RL" />
-          </div>
+          </div>}
           <div>
             <label className={labelCls}>Data do casamento/batizado</label>
             <DataPT value={dataCasamento} onChange={setDataCasamento} className="w-full border-b border-white/15 text-lg font-light py-2 outline-none justify-between" />
