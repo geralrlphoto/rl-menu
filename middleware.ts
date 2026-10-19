@@ -261,6 +261,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/photo-orders') ||
     pathname.startsWith('/adquirir-fotografias') ||
     pathname.startsWith('/convidados/') || // ver e comprar fotografias (link partilhado pelos noivos)
+    pathname.startsWith('/api/convidados/') || // comentários e indicações dos convidados (rota valida tudo)
     pathname.startsWith('/apoio-fotografias') ||
     pathname.startsWith('/api/apoio-fotografias') ||
     pathname.startsWith('/form-selecao-fotos') ||

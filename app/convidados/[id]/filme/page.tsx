@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import VideosConvidados, { type VideoConvidado } from './VideosConvidados'
+import CaixasConvidados from './CaixasConvidados'
 
 export const dynamic = 'force-dynamic'
 
@@ -90,8 +91,10 @@ export default async function FilmeConvidadosPage({ params }: { params: Promise<
             <p className="mt-2 font-cond text-[15px] text-white/45">Assim que estiver disponível, aparece aqui.</p>
           </div>
         )}
-
       </section>
+
+      {/* Comentário ao filme e indicação de próximos noivos (depois de o filme estar entregue) */}
+      {c.videos.length > 0 && <CaixasConvidados id={id} />}
 
       <footer className="pb-14 text-center">
         <a href="https://www.rlphotovideo.pt" className="font-cond text-[12px] tracking-[0.25em] uppercase text-white/35 hover:text-[#d8be93]">www.rlphotovideo.pt</a>
