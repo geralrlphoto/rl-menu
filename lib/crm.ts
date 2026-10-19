@@ -233,6 +233,22 @@ export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?
   ].join('\n')
 }
 
+/* Pedido de opinião: link para o formulário público /opiniao/<id> (Follow Up e Não fechou) */
+export const EVENTO_OPINIAO = 'WhatsApp pedido de opinião enviado'
+export function mensagemOpiniao(nome: string | null | undefined, link: string): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Muito obrigado por terem conversado connosco. Se puderem, gostávamos muito de saber a vossa opinião sincera: o que pesou na vossa decisão e o que podíamos ter feito melhor. São só uns minutos e ajuda-nos imenso.',
+    '',
+    link,
+    '',
+    'Um abraço grande,',
+    'RL PhotoVideo',
+  ].join('\n')
+}
+
 /* Fecho: o casal aceitou a proposta (só na coluna Follow Up) */
 export function mensagemFecho(nome: string | null | undefined, dataCasamento?: string | null, portalUrl?: string | null): string {
   const quem = (nome ?? '').trim()

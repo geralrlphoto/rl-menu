@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
-import { MOTIVOS_NAO_FECHOU, colunaDe, whatsappLink } from '@/lib/crm'
+import { MOTIVOS_NAO_FECHOU, colunaDe, whatsappLink, mensagemOpiniao, EVENTO_OPINIAO } from '@/lib/crm'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL, ofertaDaProposta } from '@/lib/crm'
 import RelatorioReuniao, { ANALISE_COLS, type Analise } from '../analises/RelatorioReuniao'
@@ -562,7 +562,8 @@ export default function ClientePage() {
             </button>
             {whatsappLink(form.contato) && (
               <a target="_blank" rel="noopener noreferrer"
-                href={whatsappLink(form.contato, `Olá${form.nome ? ` ${form.nome}` : ''}! Obrigado por terem falado connosco. Se puderem, deixem-nos a vossa opinião aqui, ajuda-nos muito a melhorar: ${linkPublico(`/opiniao/${id}`)}`) ?? undefined}
+                href={whatsappLink(form.contato, mensagemOpiniao(form.nome, linkPublico(`/opiniao/${id}`))) ?? undefined}
+                onClick={() => { supabase.from('crm_status_history').insert({ contact_id: id, evento: EVENTO_OPINIAO }).then(() => loadHistorico()) }}
                 className="text-xs px-4 py-2 rounded-lg border border-green-500/40 text-green-400 hover:border-green-400">
                 Enviar por WhatsApp
               </a>
