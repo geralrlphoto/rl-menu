@@ -15,6 +15,7 @@ import '../atmosphere/atmosphere.css'
 import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, CaixaBloqueio, useTemaRL, type SidebarNavItem } from '../atmosphere/PortalShell'
 import { PagamentosRL } from '../atmosphere/PagamentosRL'
 import { FilmeRL, type VideoRL } from '../atmosphere/FilmeRL'
+import { BriefingTopoRL } from '../atmosphere/BriefingTopoRL'
 import { ContratoView } from '../atmosphere/ContratoView'
 import { portalBloqueado, paginaSempreAberta, emFalta } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
@@ -3219,7 +3220,15 @@ function PortalSubPageContent() {
         .portal-atmosphere .cards-grid { display: none !important; }
       ` }} />
     )}
-    <main className={isSobreViewMode ? 'relative sobre-view' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+    <main className={isSobreViewMode ? 'relative sobre-view' : temaRL && isBriefingPage && !isFreelancerView && !isPartilha ? 'relative max-w-[1000px] mx-auto px-3 sm:px-6 py-6 sm:py-10 briefing-rl' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+      {temaRL && isBriefingPage && !isFreelancerView && !isPartilha && !loading && (
+        <BriefingTopoRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
+        />
+      )}
       {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
       {isDesignPremium && (
         <>

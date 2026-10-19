@@ -398,3 +398,38 @@
 .portal-atmosphere.tema-rl .fotos-page .fp-album-prazo ul { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .portal-atmosphere.tema-rl .fotos-page .fp-album-prazo li { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.65); }
 .portal-atmosphere.tema-rl .fotos-page .fp-album-prazo li b { color: #fff; font-weight: 600; }
+
+/* ============================================================
+   Briefing no tema RL (só portais em teste): o formulário mantém-se,
+   com o estilo novo por cima (dourado suave, cartões arredondados,
+   campos e botões em pílula). Tipos de letra sem alterações.
+   ============================================================ */
+.portal-atmosphere.tema-rl .briefing-rl > header { display: none; } /* substituído pelo topo novo */
+.portal-atmosphere.tema-rl .briefing-rl [class*="text-gold"] { color: #d8be93 !important; }
+.portal-atmosphere.tema-rl .briefing-rl [class*="border-gold"] { border-color: rgba(216,190,147,.35) !important; }
+.portal-atmosphere.tema-rl .briefing-rl [class*="bg-gold/"],
+.portal-atmosphere.tema-rl .briefing-rl [class*="bg-gold\/"] { background-color: rgba(216,190,147,.08) !important; }
+.portal-atmosphere.tema-rl .briefing-rl [class~="bg-gold"] { background-color: #d8be93 !important; }
+.portal-atmosphere.tema-rl .briefing-rl [class*="from-gold"] { --tw-gradient-from: rgba(216,190,147,.3) !important; }
+.portal-atmosphere.tema-rl .briefing-rl [class*="rounded-2xl"] { border-radius: 22px !important; }
+.portal-atmosphere.tema-rl .briefing-rl [class*="rounded-xl"] { border-radius: 18px !important; }
+/* caixa principal do conteúdo e cartões */
+.portal-atmosphere.tema-rl .briefing-rl > div[class*="rounded-2xl"] {
+  background: rgba(17,17,17,.9) !important; border: 1px solid rgba(216,190,147,.2) !important;
+  border-left: 2px solid rgba(216,190,147,.6) !important;
+}
+.portal-atmosphere.tema-rl .briefing-rl [class*="bg-white/[0.0"] { background-color: #141414 !important; }
+/* campos */
+.portal-atmosphere.tema-rl .briefing-rl input:not([type="checkbox"]):not([type="radio"]),
+.portal-atmosphere.tema-rl .briefing-rl textarea,
+.portal-atmosphere.tema-rl .briefing-rl select {
+  border-radius: 14px !important; border-color: rgba(255,255,255,.1) !important; background-color: rgba(255,255,255,.03) !important;
+}
+.portal-atmosphere.tema-rl .briefing-rl input:focus, .portal-atmosphere.tema-rl .briefing-rl textarea:focus, .portal-atmosphere.tema-rl .briefing-rl select:focus {
+  border-color: rgba(216,190,147,.5) !important;
+}
+/* botões */
+.portal-atmosphere.tema-rl .briefing-rl button[class*="rounded-md"],
+.portal-atmosphere.tema-rl .briefing-rl button[class*="rounded-lg"],
+.portal-atmosphere.tema-rl .briefing-rl button[class*="rounded-xl"] { border-radius: 999px !important; }
+.portal-atmosphere.tema-rl .briefing-rl button[class*="border-gold"]:hover { box-shadow: 0 0 28px -12px rgba(216,190,147,.6); }
