@@ -1,7 +1,7 @@
 'use client'
 
 import { NOMES_PROPOSTAS_TODAS, PRAZO_VIDEO_DIAS } from '@/lib/crm'
-import { useEffect, useState, useRef } from 'react'
+import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -402,17 +402,6 @@ function PedidoPreview({ pedido: p, onClose }: { pedido: any; onClose: () => voi
       </div>
     </div>,
     document.body,
-  )
-}
-
-// ─── Cabeçalho de bloco (divisória premium entre grupos de secções) ──────────
-function BlocoHeader({ num, children }: { num: string; children: React.ReactNode }) {
-  return (
-    <div className="ficha-bloco ficha-reveal print:hidden">
-      <span className="num">{num}</span>
-      <span className="txt">{children}</span>
-      <span className="line" />
-    </div>
   )
 }
 
@@ -3638,7 +3627,7 @@ function PortalSection({ evento }: { evento: Evento }) {
 }
 
 // ─── Foto dos Noivos (redonda) — upload no topo da ficha → portal sidebar ─────
-function FotoNoivosUpload({ referencia }: { referencia: string }) {
+function FotoNoivosUpload({ referencia, compacto = false }: { referencia: string; compacto?: boolean }) {
   const [url, setUrl] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
 
@@ -3685,148 +3674,37 @@ function FotoNoivosUpload({ referencia }: { referencia: string }) {
         <span className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center text-[8px] text-white/0 group-hover:text-white/90 tracking-widest uppercase">{uploading ? '…' : 'Alterar'}</span>
         <input type="file" accept="image/*" className="hidden" onChange={onFile} disabled={uploading} />
       </label>
-      <div className="flex flex-col gap-0.5">
+      {!compacto && <div className="flex flex-col gap-0.5">
         <span className="text-[9px] tracking-[0.3em] uppercase text-gold/60">Foto dos Noivos</span>
         <span className="text-[10px] text-white/35">{uploading ? 'A carregar…' : url ? 'Aparece na barra lateral do portal' : 'Clica para carregar'}</span>
         {url && <button onClick={remover} className="text-[9px] text-red-400/60 hover:text-red-400 tracking-widest uppercase self-start mt-0.5">Remover</button>}
-      </div>
+      </div>}
     </div>
   )
 }
 
-// ─── Drawer genérico de bloco (botão → painel lateral à direita, fecha) ───────
-function DrawerBloco({ label, sub, children, width = 820, defaultOpen = false }: { label: string; sub?: string; children: React.ReactNode; width?: number; defaultOpen?: boolean }) {
-  const [open, setOpen] = useState(false)
-  // Abre automaticamente uma vez quando defaultOpen passa a true (ex.: vídeo
-  // por rever). Não volta a forçar se o utilizador fechar.
-  const autoOpened = useRef(false)
-  useEffect(() => {
-    if (defaultOpen && !autoOpened.current) { autoOpened.current = true; setOpen(true) }
-  }, [defaultOpen])
-  useEffect(() => {
-    function onKey(ev: KeyboardEvent) { if (ev.key === 'Escape') setOpen(false) }
-    if (open) { document.addEventListener('keydown', onKey); document.body.style.overflow = 'hidden' }
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
-  }, [open])
+// ─── Separadores da ficha ─────────────────────────────────────────────────────
+const FICHA_ABAS: Array<{ id: string; label: string }> = [
+  { id: 'evento',      label: 'Evento' },
+  { id: 'contrato',    label: 'Contrato & Portal' },
+  { id: 'financeiro',  label: 'Financeiro' },
+  { id: 'entregas',    label: 'Entregas' },
+  { id: 'comunicacao', label: 'Noivos' },
+  { id: 'equipa',      label: 'Equipa' },
+  { id: 'agenda',      label: 'Agenda & Notas' },
+  { id: 'dados',       label: 'Dados' },
+]
+const FichaAbaCtx = createContext<string>('evento')
+
+/* Conteúdo de um separador: só é montado (e só carrega dados) quando está aberto */
+function DrawerBloco({ tab, sub, children }: { tab: string; label?: string; sub?: string; children: React.ReactNode }) {
+  const ativa = useContext(FichaAbaCtx)
+  if (ativa !== tab) return null
   return (
-    <>
-      <button onClick={() => setOpen(true)}
-        className="ficha-reveal print:hidden w-full group relative overflow-hidden rounded-2xl border border-white/[0.08] hover:border-gold/30 p-5 flex items-center justify-between gap-4 text-left transition-all"
-        style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.028), rgba(201,164,92,0.02))' }}>
-        <span className="pointer-events-none absolute left-0 top-5 bottom-5 w-[2px] rounded-full" style={{ background: 'linear-gradient(to bottom, rgba(201,164,92,0.7), rgba(201,164,92,0))' }} />
-        <div className="pl-1.5">
-          <p className="flex items-center gap-2.5 text-[10px] tracking-[0.38em] text-gold uppercase font-semibold">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-gold" style={{ boxShadow: '0 0 9px rgba(201,164,92,0.7)' }} />
-            {label}
-          </p>
-          {sub && <p className="text-[11px] text-white/40 mt-1.5">{sub}</p>}
-        </div>
-        <span className="shrink-0 flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-gold/80 border border-gold/30 bg-gold/10 rounded-lg px-3 py-2 group-hover:bg-gold/20 transition-all">
-          Abrir
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </span>
-      </button>
-
-      <div onClick={() => setOpen(false)}
-        style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(6,5,3,0.6)', backdropFilter: 'blur(3px)', opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity .3s ease' }} />
-
-      <aside style={{
-        position: 'fixed', top: 0, right: 0, height: '100dvh', zIndex: 96,
-        width: `min(${width}px, 100vw)`, maxWidth: '100vw',
-        background: 'linear-gradient(180deg, #15110b, #0d0a06)',
-        borderLeft: '1px solid rgba(201,164,92,0.25)',
-        // Só com a gaveta aberta — senão a sombra "sangra" para a borda
-        // direita do ecrã mesmo com o painel fora de vista (mancha preta).
-        boxShadow: open ? '-30px 0 80px -20px rgba(0,0,0,0.7)' : 'none',
-        transform: open ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
-        overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
-      }}>
-        <div style={{ position: 'sticky', top: 0, zIndex: 2, padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: '#15110b', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <span className="text-[10px] tracking-[0.35em] text-gold uppercase font-semibold">{label}</span>
-          <button onClick={() => setOpen(false)} aria-label="Fechar"
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-gold/40 transition-all">✕</button>
-        </div>
-        <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
-          {open && children}
-        </div>
-      </aside>
-    </>
-  )
-}
-
-// ─── Drawer Agendamento & Notas (abre da direita, tabs, fecha) ────────────────
-function AgendamentoNotasDrawer({ referencia, evento }: { referencia?: string; evento?: any }) {
-  const [open, setOpen] = useState(false)
-  const [tab, setTab] = useState<'marcacao' | 'notas'>('marcacao')
-
-  useEffect(() => {
-    function onKey(ev: KeyboardEvent) { if (ev.key === 'Escape') setOpen(false) }
-    if (open) { document.addEventListener('keydown', onKey); document.body.style.overflow = 'hidden' }
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
-  }, [open])
-
-  return (
-    <>
-      {/* Botão (conteúdo do bloco) */}
-      <button onClick={() => setOpen(true)}
-        className="ficha-reveal print:hidden mt-5 w-full group relative overflow-hidden rounded-2xl border border-white/[0.08] hover:border-gold/30 p-5 flex items-center justify-between gap-4 text-left transition-all"
-        style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.028), rgba(201,164,92,0.02))' }}>
-        <span className="pointer-events-none absolute left-0 top-5 bottom-5 w-[2px] rounded-full" style={{ background: 'linear-gradient(to bottom, rgba(201,164,92,0.7), rgba(201,164,92,0))' }} />
-        <div className="pl-1.5">
-          <p className="flex items-center gap-2.5 text-[10px] tracking-[0.38em] text-gold uppercase font-semibold">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-gold" style={{ boxShadow: '0 0 9px rgba(201,164,92,0.7)' }} />
-            Marcação Pré-Wedding & Notas
-          </p>
-          <p className="text-[11px] text-white/40 mt-1.5">Abrir painel para gerir a sessão pré-wedding e as notas privadas.</p>
-        </div>
-        <span className="shrink-0 flex items-center gap-2 text-[11px] tracking-[0.25em] uppercase text-gold/80 border border-gold/30 bg-gold/10 rounded-lg px-3 py-2 group-hover:bg-gold/20 transition-all">
-          Abrir
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-        </span>
-      </button>
-
-      {/* Overlay */}
-      <div onClick={() => setOpen(false)}
-        style={{ position: 'fixed', inset: 0, zIndex: 95, background: 'rgba(6,5,3,0.6)', backdropFilter: 'blur(3px)',
-          opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none', transition: 'opacity .3s ease' }} />
-
-      {/* Drawer */}
-      <aside style={{
-        position: 'fixed', top: 0, right: 0, height: '100dvh', zIndex: 96,
-        width: 'min(820px, 100vw)', maxWidth: '100vw',
-        background: 'linear-gradient(180deg, #15110b, #0d0a06)',
-        borderLeft: '1px solid rgba(201,164,92,0.25)',
-        // Só com a gaveta aberta — senão a sombra "sangra" para a borda
-        // direita do ecrã mesmo com o painel fora de vista (mancha preta).
-        boxShadow: open ? '-30px 0 80px -20px rgba(0,0,0,0.7)' : 'none',
-        transform: open ? 'translateX(0)' : 'translateX(100%)',
-        transition: 'transform .42s cubic-bezier(.2,.7,.2,1)',
-        overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch',
-      }}>
-        {/* Header do drawer */}
-        <div style={{ position: 'sticky', top: 0, zIndex: 2, background: '#15110b', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button onClick={() => setTab('marcacao')}
-              className={`text-[10px] tracking-[0.2em] uppercase font-bold px-3 py-2 rounded-lg border transition-all ${tab === 'marcacao' ? 'border-gold/50 text-gold bg-gold/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
-              Marcação
-            </button>
-            <button onClick={() => setTab('notas')}
-              className={`text-[10px] tracking-[0.2em] uppercase font-bold px-3 py-2 rounded-lg border transition-all ${tab === 'notas' ? 'border-gold/50 text-gold bg-gold/10' : 'border-white/10 text-white/40 hover:text-white/70'}`}>
-              Notas
-            </button>
-          </div>
-          <button onClick={() => setOpen(false)} aria-label="Fechar"
-            className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-gold/40 transition-all">✕</button>
-        </div>
-        {/* Conteúdo */}
-        <div style={{ padding: 20 }}>
-          {open && (tab === 'marcacao'
-            ? <BookingSectionFicha referencia={referencia} evento={evento} />
-            : <NotasSection referencia={referencia} />)}
-        </div>
-      </aside>
-    </>
+    <div className="ficha-reveal flex flex-col gap-5">
+      {sub && <p className="print:hidden text-[11px] text-white/35 -mb-1">{sub}</p>}
+      {children}
+    </div>
   )
 }
 
@@ -3836,6 +3714,14 @@ export default function EventoPage() {
   // ?abrir=comunicacao (ex.: pedido de IBAN no sino) abre logo Comunicação com os Noivos
   const [abrirComunicacao, setAbrirComunicacao] = useState(false)
   useEffect(() => { setAbrirComunicacao(new URLSearchParams(window.location.search).get('abrir') === 'comunicacao') }, [])
+  // Separador aberto (?aba=financeiro abre direto num separador)
+  const [aba, setAba] = useState('evento')
+  const [mudarRef, setMudarRef] = useState(false)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('aba')
+    if (q && FICHA_ABAS.some(t => t.id === q)) setAba(q)
+  }, [])
+  useEffect(() => { if (abrirComunicacao) setAba('comunicacao') }, [abrirComunicacao])
   const router = useRouter()
   const [navRef, setNavRef] = useState('')
   const [navLoading, setNavLoading] = useState(false)
@@ -4430,7 +4316,7 @@ export default function EventoPage() {
   const prazoVideo    = e.data_evento ? addWorkingDays(e.data_evento, 180) : null
 
   return (
-    <main id="evento-page" className="min-h-screen px-4 py-10 max-w-3xl mx-auto print:max-w-full print:py-6 print:px-8">
+    <main id="evento-page" className="min-h-screen px-4 py-8 max-w-4xl mx-auto print:max-w-full print:py-6 print:px-8">
       <style>{`
         @keyframes fichaReveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
         .ficha-reveal { animation: fichaReveal .55s cubic-bezier(.2,.7,.2,1) both; }
@@ -4445,18 +4331,45 @@ export default function EventoPage() {
         ‹ VOLTAR AOS CASAMENTOS
       </Link>
 
-      {/* ── Foto dos Noivos (topo-esquerdo) ── */}
-      {e.referencia && (
-        <div className="print:hidden mt-5">
-          <FotoNoivosUpload referencia={e.referencia} />
+      {/* ── Topo: quem, quando, onde ── */}
+      <header className="mt-6 rounded-3xl border border-white/[0.08] p-5 sm:p-6"
+        style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.03), rgba(216,190,147,0.03))' }}>
+        <div className="flex items-start gap-4 sm:gap-5">
+          {e.referencia && (
+            <div className="print:hidden shrink-0">
+              <FotoNoivosUpload referencia={e.referencia} compacto />
+            </div>
+          )}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap text-[11px]">
+              <EditField label="" value={e.referencia} field="referencia" eventId={e.id} onSaved={handleSaved} mono />
+              <button type="button" onClick={() => setMudarRef(v => !v)}
+                className="print:hidden text-[10px] tracking-widest uppercase text-white/25 hover:text-gold transition-colors">
+                {mudarRef ? 'Fechar' : e.referencia ? 'Mudar' : 'Atribuir referência'}
+              </button>
+            </div>
+            <EditField label="" value={e.cliente} field="cliente" eventId={e.id} large onSaved={handleSaved} />
+            <div className="flex gap-2 items-center flex-wrap mt-1 text-white/40 text-sm">
+              <EditField label="" value={e.data_evento} field="data_evento" eventId={e.id} type="date" onSaved={handleSaved} />
+              <span>·</span>
+              <EditField label="" value={e.local} field="local" eventId={e.id} onSaved={handleSaved} />
+            </div>
+          </div>
+          <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
+            {e.status && (
+              <span className="text-xs px-3 py-1 rounded-full border text-[#d8be93]" style={{ borderColor: 'rgba(216,190,147,0.35)', background: 'rgba(216,190,147,0.08)' }}>{e.status}</span>
+            )}
+            <div className="print:hidden flex items-center gap-3">
+              <button onClick={() => window.print()} className="text-[11px] text-white/30 hover:text-gold transition-colors tracking-widest" title="Imprimir / Guardar como PDF">PDF</button>
+              {e.notion_url && (
+                <a href={e.notion_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-white/30 hover:text-gold transition-colors tracking-widest">Notion ↗</a>
+              )}
+            </div>
+          </div>
         </div>
-      )}
 
-      {/* ── Header editável ── */}
-      <div className="mt-8 mb-2">
-        {/* Dropdown atribuir referência */}
-        <div className="print:hidden mb-4 flex flex-col gap-1.5">
-          <label className="text-[9px] tracking-[0.35em] uppercase text-gold/50">Atribuir Referência</label>
+        {mudarRef && (
+        <div className="print:hidden mt-4 flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <select
               value={navRef}
@@ -4513,39 +4426,7 @@ export default function EventoPage() {
             )}
           </div>
         </div>
-
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="flex-1 min-w-0">
-            <EditField label="" value={e.referencia} field="referencia" eventId={e.id} onSaved={handleSaved} mono />
-            <EditField label="" value={e.cliente} field="cliente" eventId={e.id} large onSaved={handleSaved} />
-            <div className="flex gap-2 items-center mt-1 text-white/30 text-sm">
-              <EditField label="" value={e.data_evento} field="data_evento" eventId={e.id} type="date" onSaved={handleSaved} />
-              <span>·</span>
-              <EditField label="" value={e.local} field="local" eventId={e.id} onSaved={handleSaved} />
-            </div>
-          </div>
-          <div className="flex flex-col items-end gap-2 shrink-0">
-            {e.status && (
-              <span className="text-xs px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/60">{e.status}</span>
-            )}
-            <button
-              onClick={() => window.print()}
-              className="print:hidden flex items-center gap-1.5 text-xs text-white/30 hover:text-gold transition-colors tracking-widest"
-              title="Imprimir / Guardar como PDF"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-              </svg>
-              PDF
-            </button>
-            {e.notion_url && (
-              <a href={e.notion_url} target="_blank" rel="noopener noreferrer"
-                className="print:hidden text-xs text-white/20 hover:text-gold transition-colors tracking-widest">
-                Ver no Notion ↗
-              </a>
-            )}
-          </div>
-        </div>
+        )}
 
         <div className="flex flex-wrap gap-2 mt-4 items-center">
           <TipoEventoEditor
@@ -4558,12 +4439,53 @@ export default function EventoPage() {
             <span key={t} className="text-xs px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/25 text-blue-400/80">{t}</span>
           ))}
         </div>
-        <p className="print:hidden text-[10px] text-white/15 mt-3 tracking-wider">Clica em qualquer campo para editar · guarda automaticamente no Notion</p>
-      </div>
 
-      <BlocoHeader num="I">Evento & Serviços</BlocoHeader>
+        {/* Resumo rápido: cada cartão abre o separador certo */}
+        {(() => {
+          const total = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
+          const pago = pagamentos.reduce((t, p) => t + Number(p.valor_liquidado ?? 0), 0)
+          const eur = (v: number) => `${Math.round(v).toLocaleString('pt-PT')} €`
+          const hoje = new Date(new Date().toISOString().slice(0, 10) + 'T12:00:00Z').getTime()
+          const dias = e.data_evento ? Math.round((new Date(e.data_evento.slice(0, 10) + 'T12:00:00Z').getTime() - hoje) / 86400000) : null
+          const cards: Array<{ l: string; v: string; s?: string; aba: string; ok?: boolean }> = [
+            { l: 'Dia', v: dias === null ? '—' : dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'É hoje' : `Há ${-dias} dias`, s: e.proposta || undefined, aba: 'evento' },
+            { l: 'Pagamentos', v: total > 0 ? `${eur(pago)} de ${eur(total)}` : eur(pago), s: total > 0 ? (pago >= total ? 'Tudo pago' : `Falta ${eur(total - pago)}`) : undefined, aba: 'financeiro', ok: total > 0 && pago >= total },
+            { l: 'Fotografia', v: e.fotos_edicao_estado || 'Aguardar', s: e.sel_fotos_estado ? `Seleção: ${e.sel_fotos_estado}` : undefined, aba: 'entregas' },
+            { l: 'Vídeo', v: videoRevPendente ? 'Revisão por ver' : (e.video_estado || 'Aguardar'), s: prazoVideo ? `Prazo ${formatDate(prazoVideo)}` : undefined, aba: 'entregas', ok: false },
+          ]
+          return (
+            <div className="print:hidden grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-5">
+              {cards.map(c => (
+                <button key={c.l} type="button" onClick={() => setAba(c.aba)}
+                  className="text-left rounded-2xl border border-white/[0.07] hover:border-gold/30 bg-black/20 px-4 py-3 transition-colors">
+                  <span className="block text-[9px] tracking-[0.3em] uppercase text-white/35">{c.l}</span>
+                  <span className={`block mt-1 text-[15px] font-semibold leading-tight ${c.ok ? 'text-green-400' : 'text-white'}`}>{c.v}</span>
+                  {c.s && <span className="block mt-0.5 text-[11px] text-white/35 truncate">{c.s}</span>}
+                </button>
+              ))}
+            </div>
+          )
+        })()}
+      </header>
 
-      <DrawerBloco label="Serviços do Dia" sub="O que vai ser fotografado/filmado neste evento.">
+      {/* ── Separadores ── */}
+      <nav className="print:hidden sticky top-0 z-30 -mx-4 px-4 mt-5 mb-5 py-2 overflow-x-auto"
+        style={{ background: 'rgba(10,8,5,0.85)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex gap-1.5 min-w-max">
+          {FICHA_ABAS.map(t => (
+            <button key={t.id} type="button" onClick={() => setAba(t.id)}
+              className={`px-3.5 py-2 rounded-full text-[11px] tracking-[0.12em] uppercase font-semibold border transition-all whitespace-nowrap ${aba === t.id ? 'text-black border-transparent' : 'text-white/45 border-white/[0.08] hover:text-white/80'}`}
+              style={aba === t.id ? { background: '#d8be93' } : undefined}>
+              {t.label}
+              {t.id === 'entregas' && videoRevPendente && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-red-400 align-middle" />}
+            </button>
+          ))}
+        </div>
+      </nav>
+
+      <FichaAbaCtx.Provider value={aba}>
+
+      <DrawerBloco tab="evento" sub="O que vai ser fotografado e filmado, o briefing e o relatório da equipa.">
 
       {/* ── Serviços do Dia (secção própria) ───────────────────────────── */}
       <div className="ficha-reveal print:hidden bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5">
@@ -4588,9 +4510,8 @@ export default function EventoPage() {
 
       </DrawerBloco>
 
-      <BlocoHeader num="II">Contrato & Portal</BlocoHeader>
 
-      <DrawerBloco label="Contrato & Portal" sub="Aprovação do contrato CPS, criação/acesso ao portal e contratos.">
+      <DrawerBloco tab="contrato" sub="Aprovação do contrato CPS, acesso ao portal e contratos.">
 
       {/* ── Aprovação do Contrato CPS + Criar Portal ── */}
       <div id="criar-portal-section" className="ficha-reveal print:hidden scroll-mt-24">
@@ -4613,16 +4534,17 @@ export default function EventoPage() {
 
       </DrawerBloco>
 
-      <BlocoHeader num="III">Agendamento & Notas</BlocoHeader>
 
-      {/* ── Marcação + Notas em painel lateral (drawer) ── */}
-      <AgendamentoNotasDrawer referencia={e.referencia ?? undefined} evento={e} />
+      {/* ── Marcação pré-wedding + notas privadas ── */}
+      <DrawerBloco tab="agenda" sub="Marcação da sessão pré-wedding e notas privadas.">
+        <BookingSectionFicha referencia={e.referencia ?? undefined} evento={e} />
+        <NotasSection referencia={e.referencia ?? undefined} />
+      </DrawerBloco>
 
-      <BlocoHeader num="IV">Comercial</BlocoHeader>
 
       <div className="flex flex-col gap-5">
 
-        <DrawerBloco label="Comercial" sub="Proposta escolhida e valores financeiros.">
+        <DrawerBloco tab="financeiro" sub="Proposta escolhida, valores e pagamentos.">
 
         {/* ── Proposta ── */}
         <Section title="Proposta">
@@ -5106,9 +5028,8 @@ export default function EventoPage() {
 
         </DrawerBloco>
 
-        <BlocoHeader num="V">Produção & Entregas</BlocoHeader>
 
-        <DrawerBloco label="Produção & Entregas" sub="Estados de entrega (fotos, vídeo, álbum) e regras automáticas." defaultOpen={videoRevPendente}>
+        <DrawerBloco tab="entregas" sub="Estado das entregas (fotos, vídeo, álbum) e ações de envio.">
 
         {/* ── Pasta de fotografias (envio automático das aquisições digitais) ── */}
         <PastaFotosField eventId={e.id} />
@@ -5481,8 +5402,7 @@ export default function EventoPage() {
 
         </DrawerBloco>
 
-        <BlocoHeader num="VI">Comunicação com os Noivos</BlocoHeader>
-        <DrawerBloco label="Comunicação com os Noivos" sub="Notificações enviadas e mensagens dos noivos." defaultOpen={abrirComunicacao}>
+        <DrawerBloco tab="comunicacao" sub="Mensagens, notificações e envios aos noivos.">
           <EnviarIbanNoivos e={e} />
           <WhatsAppPreparacao e={e} />
           <BriefingNoivos e={e} />
@@ -5495,9 +5415,8 @@ export default function EventoPage() {
           )}
         </DrawerBloco>
 
-        <BlocoHeader num="VII">Equipa & Tarefas</BlocoHeader>
 
-        <DrawerBloco label="Equipa & Tarefas" sub="Equipa atribuída, tarefas do evento e relatório de vídeo.">
+        <DrawerBloco tab="equipa" sub="Equipa atribuída, tarefas do evento e relatório de vídeo.">
 
         {/* ── Tarefas deste casamento ── */}
         <EventoTarefas eventoId={e.id} />
@@ -6208,9 +6127,8 @@ export default function EventoPage() {
 
         </DrawerBloco>
 
-        <BlocoHeader num="VIII">Dados do Casal</BlocoHeader>
 
-        <DrawerBloco label="Dados do Casal" sub="Dados dos noivos/pais — nomes, contactos, NIF, morada.">
+        <DrawerBloco tab="dados" sub="Nomes, contactos, NIF e morada.">
 
         {/* ── Dados dos Noivos / Pais ── */}
         <Section title="Dados dos Noivos / Pais">
@@ -6220,6 +6138,7 @@ export default function EventoPage() {
         </DrawerBloco>
 
       </div>
+      </FichaAbaCtx.Provider>
 
       <style>{`
         @media print {
