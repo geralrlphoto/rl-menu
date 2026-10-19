@@ -4472,7 +4472,6 @@ function PortalSubPageContent() {
                                     <div className="w-16 h-px mb-6" style={{ background: 'linear-gradient(90deg, transparent, rgba(216,190,147,0.6), transparent)' }} />
                                     <img src="/portal-noivos/logo-gold.png" alt="RL Photo Video" className="h-12 w-auto object-contain opacity-90" />
                                     <p className="mt-3 text-[9px] tracking-[0.45em] uppercase" style={{ color: 'rgba(216,190,147,0.65)' }}>Photo · Video · Wedding Moments</p>
-                                    <p className="mt-5 text-white/55 italic text-base" style={{ fontFamily: 'Cormorant Garamond, Georgia, serif' }}>O vosso dia, em boas mãos.</p>
                                   </div>
                                 )}
                               </>
