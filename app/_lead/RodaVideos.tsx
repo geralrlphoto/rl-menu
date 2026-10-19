@@ -23,12 +23,16 @@ function capaDe(embed: string | null): string | null {
   return null
 }
 
-/** Endereço público do vídeo do Vimeo (com o código dos não listados), para o oEmbed. */
-function vimeoPagina(embed: string | null): string | null {
-  const vm = embed?.match(/player\.vimeo\.com\/video\/(\d+)(?:\?.*?[?&]h=([0-9a-f]+))?/)
+/** Endereço do oEmbed do vídeo (YouTube ou Vimeo, com o código dos não listados).
+ *  Os dois deixam ler do browser: dão o título e, no Vimeo, a capa escolhida. */
+function oembedDe(embed: string | null): string | null {
+  if (!embed) return null
+  const yt = embed.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/)
+  if (yt) return `https://www.youtube.com/oembed?format=json&url=${encodeURIComponent(`https://www.youtube.com/watch?v=${yt[1]}`)}`
+  const vm = embed.match(/player\.vimeo\.com\/video\/(\d+)/)
   if (!vm) return null
-  const h = embed!.match(/[?&]h=([0-9a-f]+)/)?.[1]
-  return `https://vimeo.com/${vm[1]}${h ? `/${h}` : ''}`
+  const h = embed.match(/[?&]h=([0-9a-f]+)/)?.[1]
+  return `https://vimeo.com/api/oembed.json?width=1280&url=${encodeURIComponent(`https://vimeo.com/${vm[1]}${h ? `/${h}` : ''}`)}`
 }
 
 const comAutoplay = (embed: string) => embed + (embed.includes('?') ? '&' : '?') + 'autoplay=1'
@@ -54,20 +58,22 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
   const ativaRef = useRef(0)
   const [ativa, setAtiva] = useState(0)
   const [aTocar, setATocar] = useState<number | null>(null)
-  // Capas dos vídeos do Vimeo: o oEmbed devolve a capa escolhida no Vimeo,
-  // também nos vídeos não listados (com o código no endereço)
-  const [capasVimeo, setCapasVimeo] = useState<Record<string, string>>({})
-  const chaveVimeo = itens.map(it => vimeoPagina(it.embed) ?? '').join('|')
+  // Título (e, no Vimeo, a capa) de cada vídeo, pelo oEmbed
+  const [info, setInfo] = useState<Record<string, { titulo?: string; capa?: string }>>({})
+  const chaveInfo = itens.map(it => oembedDe(it.embed) ?? '').join('|')
   useEffect(() => {
     let vivo = true
-    for (const pag of chaveVimeo.split('|').filter(Boolean)) {
-      fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(pag)}&width=1280`)
+    for (const url of chaveInfo.split('|').filter(Boolean)) {
+      fetch(url)
         .then(r => (r.ok ? r.json() : null))
-        .then(d => { if (vivo && d?.thumbnail_url) setCapasVimeo(c => ({ ...c, [pag]: d.thumbnail_url })) })
+        .then(d => {
+          if (!vivo || !d) return
+          setInfo(c => ({ ...c, [url]: { titulo: typeof d.title === 'string' ? d.title.trim() : undefined, capa: url.includes('vimeo.com') ? d.thumbnail_url : undefined } }))
+        })
         .catch(() => {})
     }
     return () => { vivo = false }
-  }, [chaveVimeo])
+  }, [chaveInfo])
 
   useEffect(() => {
     if (!n) return
@@ -184,7 +190,8 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
         .rlv-play:hover .rlv-bola{transform:scale(1.08);background:rgba(216,190,147,.3);}
         .rlv-rod{position:absolute;left:18px;right:18px;bottom:14px;display:flex;align-items:center;gap:10px;pointer-events:none;
           font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:${OURO};}
-        .rlv-rod i{width:6px;height:6px;border-radius:50%;background:${OURO};box-shadow:0 0 8px ${OURO};}
+        .rlv-rod i{flex:none;width:6px;height:6px;border-radius:50%;background:${OURO};box-shadow:0 0 8px ${OURO};}
+        .rlv-rod span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
         .rlv-vazio{position:absolute;inset:0;display:grid;place-items:center;font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:rgba(243,237,226,.4);
           background-image:repeating-linear-gradient(122deg,rgba(243,237,226,.022) 0 1px,transparent 1px 11px);}
         .rlv-conta{position:absolute;left:var(--pad,24px);bottom:28px;z-index:3;display:flex;align-items:center;gap:14px;font-family:'Roboto Condensed',sans-serif;}
@@ -217,7 +224,7 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
                   allowFullScreen title={`Vídeo ${it.i + 1}`} />
               ) : it.embed ? (
                 <>
-                  {(it.capa || capasVimeo[vimeoPagina(it.embed) ?? '']) && <img src={it.capa || capasVimeo[vimeoPagina(it.embed) ?? '']} alt="" className="rlv-capa" loading="lazy" draggable={false}
+                  {(it.capa || info[oembedDe(it.embed) ?? '']?.capa) && <img src={it.capa || info[oembedDe(it.embed) ?? '']?.capa} alt="" className="rlv-capa" loading="lazy" draggable={false}
                     onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />}
                   <div className="rlv-veu" />
                   <button type="button" className="rlv-play" aria-label={`Ver o vídeo ${it.i + 1}`}
@@ -226,7 +233,7 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style={{ marginLeft: 3 }}><path d="M8 5v14l11-7z" /></svg>
                     </span>
                   </button>
-                  <div className="rlv-rod"><i />Filme {String(it.i + 1).padStart(2, '0')}</div>
+                  <div className="rlv-rod"><i /><span>{info[oembedDe(it.embed) ?? '']?.titulo || `Filme ${String(it.i + 1).padStart(2, '0')}`}</span></div>
                 </>
               ) : (
                 <div className="rlv-vazio">▶ · Vídeo {it.i + 1}</div>
