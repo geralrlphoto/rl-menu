@@ -8,6 +8,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
+import { whatsappLink } from '@/lib/crm'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
 import FraseDoDia from './FraseDoDia'
@@ -608,33 +609,64 @@ export default async function PhotoDashboard() {
   // Adjudicação em falta: 2 dias antes do evento, enquanto não houver adjudicação
   // confirmada em /financas (só contam pagamentos confirmados por nós)
   const ADJUDICACAO_ALERTA_DIAS = 2
+  // Simulação: estes eventos mostram o alerta hoje, seja qual for a data (evento de teste)
+  const ADJUDICACAO_SIMULAR = ['CAS_064_27_RL']
+  const getEventosSimulados = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('eventos_2026')
+        .select('id, referencia, cliente, data_evento, local, tipo_evento')
+        .in('referencia', ADJUDICACAO_SIMULAR)
+      return data ?? []
+    },
+    ['photo-agenda-adjudicacao-simulados'],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
+  )
+  const eventosSimulados = await getEventosSimulados()
   const variantesRef = (ref: string) => Array.from(new Set([ref, ref.replace(/_(\d{2})_RL/, '_0$1_RL'), ref.replace(/_0(\d{2})_RL/, '_$1_RL')]))
   const getPagamentosAgenda = unstable_cache(
     async () => {
-      const refs = (eventosSemana as any[]).flatMap(e => e.referencia ? variantesRef(e.referencia) : [])
-      if (!refs.length) return []
-      const { data } = await supabase.from('pagamentos_noivos')
-        .select('referencia, fase_pagamento, valor_liquidado')
-        .in('referencia', refs).eq('confirmado', true).limit(500)
-      return data ?? []
+      const refs = [...(eventosSemana as any[]), ...(eventosSimulados as any[])].flatMap(e => e.referencia ? variantesRef(e.referencia) : [])
+      if (!refs.length) return { pagamentos: [] as any[], contactos: [] as any[] }
+      const [{ data: pagamentos }, { data: contactos }] = await Promise.all([
+        supabase.from('pagamentos_noivos')
+          .select('referencia, fase_pagamento, valor_liquidado')
+          .in('referencia', refs).eq('confirmado', true).limit(500),
+        // telemóvel e nomes para a mensagem de WhatsApp aos noivos
+        supabase.from('dados_contrato_cps')
+          .select('referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo')
+          .in('referencia_evento', refs).limit(200),
+      ])
+      return { pagamentos: (pagamentos ?? []) as any[], contactos: (contactos ?? []) as any[] }
     },
-    [`photo-agenda30-adjudicacao-${semanaDias[0]}`],
+    [`photo-agenda30-adjudicacao-v2-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
   )
-  const pagamentosAgenda = await getPagamentosAgenda()
+  const { pagamentos: pagamentosAgenda, contactos: contactosAgenda } = await getPagamentosAgenda()
   const chaveAdjudicacao = (id: string) => `evento:adjudicacao:${id}`
-  const adjudicacaoFalta = (eventosAgenda as any[])
+  const primeiro = (n?: string | null) => { const w = String(n ?? '').trim().split(/\s+/)[0] ?? ''; return w ? w[0].toUpperCase() + w.slice(1).toLowerCase() : '' }
+  // Mensagem aos noivos (sem emojis nem referência, como os outros WhatsApp)
+  const msgAdjudicacao = (c: any, ev: any) => {
+    const nomes = [primeiro(c?.nome_noiva), primeiro(c?.nome_noivo)].filter(Boolean).join(' e ') || nomeNoivos(ev.cliente)
+    const dia = new Date(ev.data_evento + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })
+    return `Olá ${nomes}, faltam ${ADJUDICACAO_ALERTA_DIAS} dias para o vosso casamento, a ${dia}. Ainda não temos registo do pagamento da adjudicação. Se já o fizeram, registem-no no vosso portal, na página Pagamentos, para o confirmarmos. Qualquer dúvida, estamos por aqui. Rui, RL Photo.Video`
+  }
+  const simulados = new Set((eventosSimulados as any[]).map(e => e.id))
+  const adjudicacaoFalta = [...(eventosAgenda as any[]), ...(eventosSimulados as any[]).filter(e => !(eventosAgenda as any[]).some(x => x.id === e.id))]
     .filter(ev => ev.referencia && !ocultos.has(chaveAdjudicacao(ev.id)))
     .filter(ev => {
       const refs = variantesRef(ev.referencia)
       return !adjudicacaoPaga(pagamentosAgenda.filter((p: any) => refs.includes(p.referencia)))
     })
     .map(ev => {
-      const devido = somaDias(ev.data_evento, -ADJUDICACAO_ALERTA_DIAS)
+      const sim = simulados.has(ev.id)
+      const devido = sim ? hojeLx : somaDias(ev.data_evento, -ADJUDICACAO_ALERTA_DIAS)
+      const refs = variantesRef(ev.referencia)
+      const c: any = contactosAgenda.find((x: any) => refs.includes(x.referencia_evento))
       return {
-        id: ev.id, ref: ev.referencia as string, nome: nomeNoivos(ev.cliente),
+        id: ev.id, ref: ev.referencia as string, nome: nomeNoivos(ev.cliente), simulacao: sim,
         dia: devido < hojeLx ? hojeLx : devido, futura: devido > hojeLx,
-        faltam: difDias(ev.data_evento, hojeLx),
+        faltam: sim ? ADJUDICACAO_ALERTA_DIAS : difDias(ev.data_evento, hojeLx),
+        wa: whatsappLink(c?.tel_noiva || c?.tel_noivo, msgAdjudicacao(c, ev)),
       }
     })
 
@@ -1219,14 +1251,22 @@ export default async function PhotoDashboard() {
                       {/* Adjudicação em falta (2 dias antes do evento): vermelho tracejado, abre o /financas filtrado */}
                       {d.adjudicacao.map(a => (
                         <AgendaItem key={`adj-${a.id}`} chave={chaveAdjudicacao(a.id)}>
-                        <Link href={`/financas?ref=${encodeURIComponent(a.ref)}`} title="Ainda não há adjudicação confirmada: abrir as finanças deste casamento"
-                          className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-red-400/10"
+                        <div className="rounded-lg px-2 py-1.5 border border-dashed transition-all"
                           style={{ borderColor: a.futura ? 'rgba(248,113,113,0.18)' : 'rgba(248,113,113,0.55)', background: a.futura ? 'transparent' : 'rgba(248,113,113,0.07)' }}>
-                          <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: a.futura ? 'rgba(248,113,113,0.5)' : '#f87171' }}>
-                            Adjudicação em falta{!a.futura && a.faltam >= 0 ? ` · ${a.faltam === 0 ? 'hoje' : a.faltam === 1 ? 'amanhã' : `faltam ${a.faltam}d`}` : ''}
-                          </p>
-                          <p className={`text-[11px] leading-tight truncate mt-0.5 ${a.futura ? 'text-white/45' : 'text-white/85 group-hover:text-white'}`}>{a.nome || 'Evento'}</p>
-                        </Link>
+                          <Link href={`/financas?ref=${encodeURIComponent(a.ref)}`} title="Ainda não há adjudicação confirmada: abrir as finanças deste casamento" className="group block">
+                            <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: a.futura ? 'rgba(248,113,113,0.5)' : '#f87171' }}>
+                              {a.simulacao ? 'Simulação · ' : ''}Adjudicação em falta{!a.futura && a.faltam >= 0 ? ` · ${a.faltam === 0 ? 'hoje' : a.faltam === 1 ? 'amanhã' : `faltam ${a.faltam}d`}` : ''}
+                            </p>
+                            <p className={`text-[11px] leading-tight truncate mt-0.5 ${a.futura ? 'text-white/45' : 'text-white/85 group-hover:text-white'}`}>{a.nome || 'Evento'}</p>
+                          </Link>
+                          {/* WhatsApp aos noivos com a mensagem já escrita (só no dia do alerta) */}
+                          {!a.futura && a.wa && (
+                            <a href={a.wa} target="_blank" rel="noopener noreferrer" title="Enviar WhatsApp aos noivos"
+                              className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-green-500/35 bg-green-500/10 hover:bg-green-500/20 px-2 py-0.5 text-[10px] text-green-300 transition-colors">
+                              Enviar WhatsApp →
+                            </a>
+                          )}
+                        </div>
                         </AgendaItem>
                       ))}
                       {/* WhatsApp a enviar (lembrete 1h e follow ups): verde tracejado; no próprio dia envia com um clique */}
