@@ -2636,7 +2636,23 @@ function PortalSubPageContent() {
           pagamentos={pagamentos as any}
           registarUrl={`/registar-pagamento?ref=${encodeURIComponent(_ref)}&noivos=${encodeURIComponent(_nomes)}&data=${encodeURIComponent(String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10))}`}
           ibanNode={<SolicitarIbanBtn pronto={Object.keys(portalSettingsObj ?? {}).length > 0} referencia={_ref} nomeNoivos={_nomes} />}
-          comoPagar={<NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />}
+          comoPagar={(() => {
+            // Um dropdown por título da página (ex.: Controlo de Pagamentos, Formas de Pagamento)
+            const seccoes: Array<{ titulo: string; blocks: Block[] }> = []
+            for (const b of blocks.filter(x => x.type !== 'image')) {
+              if (b.type.startsWith('heading_')) { seccoes.push({ titulo: plainText(b[b.type]?.rich_text ?? []).trim(), blocks: [] }); continue }
+              if (!seccoes.length) seccoes.push({ titulo: 'Informação', blocks: [] })
+              seccoes[seccoes.length - 1].blocks.push(b)
+            }
+            const comConteudo = seccoes.filter(sc => sc.titulo && sc.blocks.some(b => b.type !== 'paragraph' || plainText(b.paragraph?.rich_text ?? []).trim()))
+            return comConteudo.length ? (
+              <>{comConteudo.map(sc => (
+                <IntroDropdown key={sc.titulo} titulo={sc.titulo}>
+                  <NotionBlocks blocks={sc.blocks} hiddenNav={settings.hiddenNav} />
+                </IntroDropdown>
+              ))}</>
+            ) : undefined
+          })()}
           isAdmin={isAdmin}
           dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
         />

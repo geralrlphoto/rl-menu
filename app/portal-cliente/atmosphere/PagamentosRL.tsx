@@ -207,9 +207,10 @@ export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, regi
 
       {/* ── como pagar (texto da página) ── */}
       {comoPagar && (
-        <section className="subarticle" style={{ marginTop: 0 }}>
-          <div className="eyebrow" style={{ marginBottom: 6 }}>Como pagar</div>
-          <div className="body">{comoPagar}</div>
+        <section>
+          <div className="eyebrow">Como pagar</div>
+          <h2 style={{ margin: '6px 0 16px', fontSize: 'clamp(26px, 3vw, 34px)', color: '#fff' }}>Informação de pagamento</h2>
+          {comoPagar}
         </section>
       )}
 
