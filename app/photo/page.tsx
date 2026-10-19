@@ -2,7 +2,6 @@ import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import RelatorioDiarioBanner from './RelatorioDiarioBanner'
 import { unstable_cache } from 'next/cache'
-import { adjudicacaoPaga } from '@/lib/portalBloqueio'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
 import { TarefasCard } from '@/app/components/TarefasCard'
@@ -606,8 +605,8 @@ export default async function PhotoDashboard() {
       }
     })
 
-  // Adjudicação em falta: 2 dias antes do evento, enquanto não houver adjudicação
-  // confirmada em /financas (só contam pagamentos confirmados por nós)
+  // Reforço em falta: 2 dias antes do evento (o reforço, 80% do valor em falta, é pago
+  // até 48h antes), enquanto não houver reforço confirmado em /financas
   const ADJUDICACAO_ALERTA_DIAS = 2
   // Simulação: estes eventos mostram o alerta hoje, seja qual for a data (evento de teste)
   const ADJUDICACAO_SIMULAR = ['CAS_064_27_RL']
@@ -638,7 +637,7 @@ export default async function PhotoDashboard() {
       ])
       return { pagamentos: (pagamentos ?? []) as any[], contactos: (contactos ?? []) as any[] }
     },
-    [`photo-agenda30-adjudicacao-v3-${semanaDias[0]}`],
+    [`photo-agenda30-adjudicacao-v4-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
   )
   const { pagamentos: pagamentosAgenda, contactos: contactosAgenda } = await getPagamentosAgenda()
@@ -648,14 +647,17 @@ export default async function PhotoDashboard() {
   const msgAdjudicacao = (c: any, ev: any) => {
     const nomes = [primeiro(c?.nome_noiva), primeiro(c?.nome_noivo)].filter(Boolean).join(' e ') || nomeNoivos(ev.cliente)
     const dia = new Date(ev.data_evento + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })
-    return `Olá ${nomes}, faltam ${ADJUDICACAO_ALERTA_DIAS} dias para o vosso casamento, a ${dia}. Ainda não temos registo do pagamento da adjudicação. Se já o fizeram, registem-no no vosso portal, na página Pagamentos, para o confirmarmos. Qualquer dúvida, estamos por aqui. Rui, RL Photo.Video`
+    return `Olá ${nomes}, faltam ${ADJUDICACAO_ALERTA_DIAS} dias para o vosso casamento, a ${dia}. Ainda não temos registo do pagamento do reforço (80% do valor em falta), que deve ser feito até 48 horas antes do casamento. Se já o fizeram, registem-no no vosso portal, na página Pagamentos, para o confirmarmos. Qualquer dúvida, estamos por aqui. Rui, RL Photo.Video`
   }
   const simulados = new Set((eventosSimulados as any[]).map(e => e.id))
   const adjudicacaoFalta = [...(eventosAgenda as any[]), ...(eventosSimulados as any[]).filter(e => !(eventosAgenda as any[]).some(x => x.id === e.id))]
     .filter(ev => ev.referencia && !ocultos.has(chaveAdjudicacao(ev.id)))
     .filter(ev => {
       const refs = variantesRef(ev.referencia)
-      return !adjudicacaoPaga(pagamentosAgenda.filter((p: any) => refs.includes(p.referencia)))
+      const pags = pagamentosAgenda.filter((p: any) => refs.includes(p.referencia))
+      const reforcoPago = pags.some((p: any) => Number(p.valor_liquidado ?? 0) > 0 &&
+        (Array.isArray(p.fase_pagamento) ? p.fase_pagamento : [p.fase_pagamento]).some((f: any) => /REFOR|FINAL/i.test(String(f ?? ''))))
+      return !reforcoPago
     })
     .map(ev => {
       const sim = simulados.has(ev.id)
@@ -1248,22 +1250,23 @@ export default async function PhotoDashboard() {
                         </Link>
                         </AgendaItem>
                       ))}
-                      {/* Adjudicação em falta (2 dias antes do evento): vermelho tracejado, abre o /financas filtrado */}
+                      {/* Reforço em falta (2 dias antes do evento): vermelho tracejado, abre o /financas filtrado */}
                       {d.adjudicacao.map(a => (
                         <AgendaItem key={`adj-${a.id}`} chave={chaveAdjudicacao(a.id)}>
                         <div className="rounded-lg px-2 py-1.5 border border-dashed transition-all"
                           style={{ borderColor: a.futura ? 'rgba(248,113,113,0.18)' : 'rgba(248,113,113,0.55)', background: a.futura ? 'transparent' : 'rgba(248,113,113,0.07)' }}>
-                          <Link href={`/financas?ref=${encodeURIComponent(a.ref)}`} title="Ainda não há adjudicação confirmada: abrir as finanças deste casamento" className="group block">
+                          <Link href={`/financas?ref=${encodeURIComponent(a.ref)}`} title="Ainda não há reforço confirmado: abrir as finanças deste casamento" className="group block">
                             <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: a.futura ? 'rgba(248,113,113,0.5)' : '#f87171' }}>
-                              {a.simulacao ? 'Simulação · ' : ''}Adjudicação em falta{!a.futura && a.faltam >= 0 ? ` · ${a.faltam === 0 ? 'hoje' : a.faltam === 1 ? 'amanhã' : `faltam ${a.faltam}d`}` : ''}
+                              {a.simulacao ? 'Simulação · ' : ''}Reforço em falta{!a.futura && a.faltam >= 0 ? ` · ${a.faltam === 0 ? 'hoje' : a.faltam === 1 ? 'amanhã' : `faltam ${a.faltam}d`}` : ''}
                             </p>
                             <p className={`text-[11px] leading-tight truncate mt-0.5 ${a.futura ? 'text-white/45' : 'text-white/85 group-hover:text-white'}`}>{a.nome || 'Evento'}</p>
                           </Link>
                           {/* WhatsApp aos noivos com a mensagem já escrita (só no dia do alerta) */}
                           {!a.futura && a.wa && (
-                            <a href={a.wa} target="_blank" rel="noopener noreferrer" title="Enviar WhatsApp aos noivos"
-                              className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-green-500/35 bg-green-500/10 hover:bg-green-500/20 px-2 py-0.5 text-[10px] text-green-300 transition-colors">
-                              Enviar WhatsApp →
+                            <a href={a.wa} target="_blank" rel="noopener noreferrer" title="Abrir o WhatsApp com a mensagem já escrita para os noivos"
+                              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-green-500/50 bg-green-500/15 hover:bg-green-500/25 px-2 py-1 font-cond text-[11.5px] font-semibold text-green-300 transition-colors">
+                              <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .1-3.2-.7-2.7-1.1-4.4-3.8-4.6-4-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 1.9c.1.1.1.3 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.7 1.2 1.6 2 1.1 1 2 1.3 2.3 1.4.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.8.9c.3.1.4.2.5.3.1.2.1.6-.1 1.1Z" /></svg>
+                              WhatsApp aos noivos
                             </a>
                           )}
                         </div>
