@@ -1,6 +1,7 @@
 'use client'
 
 import { RLP_CSS } from '@/app/_lead/rlpCss'
+import RodaVideos from '@/app/_lead/RodaVideos'
 import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
@@ -829,34 +830,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Roboto Condensed',sans-serif", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
       </section>
 
-      {/* ── VÍDEO ── */}
+      {/* ── VÍDEO: roda (como a página de marcas) ── */}
       {(video.urls.some(u => u) || isAdmin) && (
-        <section id="sec-video" className="rlp-sec" style={{ background: 'var(--ink-2)' }}>
-          <div className="rlp-wrap">
-            <FadeIn><span className="rlp-eyebrow">{video.label}</span></FadeIn>
-            <FadeIn delay={120}><h2 className="rlp-h2" style={{ marginTop: 16, marginBottom: 40, maxWidth: '18ch' }}>{video.title}</h2></FadeIn>
-            <FadeIn delay={240}>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-              {video.urls.map((url, i) => {
-                const embed = toEmbedUrl(url)
-                if (embed) return (
-                  <div key={i} className="overflow-hidden" style={{ aspectRatio: '16/9', border: '1px solid var(--line-soft)', borderRadius: 10 }}>
-                    <iframe src={embed} className="w-full h-full"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                      allowFullScreen />
-                  </div>
-                )
-                if (isAdmin) return (
-                  <div key={i} className="rlp-slot" style={{ aspectRatio: '16/9', borderRadius: 10 }}>
-                    <div className="lab">▶ · Vídeo {i + 1}</div>
-                  </div>
-                )
-                return null
-              })}
-            </div>
-            </FadeIn>
-          </div>
-        </section>
+        <RodaVideos label={video.label} title={video.title} embeds={video.urls.map(u => toEmbedUrl(u))} isAdmin={isAdmin} />
       )}
 
       <div className="rlp-div" />
