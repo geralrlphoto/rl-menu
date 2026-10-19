@@ -17,8 +17,9 @@ import { PagamentosRL } from '../atmosphere/PagamentosRL'
 import { FilmeRL, type VideoRL } from '../atmosphere/FilmeRL'
 import { BriefingTopoRL } from '../atmosphere/BriefingTopoRL'
 import { SatisfacaoRL } from '../atmosphere/SatisfacaoRL'
+import { CronogramaRL, type EtapaRL } from '../atmosphere/CronogramaRL'
 import { ContratoView } from '../atmosphere/ContratoView'
-import { portalBloqueado, paginaSempreAberta, emFalta } from '@/lib/portalBloqueio'
+import { portalBloqueado, paginaSempreAberta, emFalta, adjudicacaoPaga } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
 import { SendMessageButton } from '../atmosphere/SendMessageButton'
 import { AtendimentoThread } from '../atmosphere/AtendimentoThread'
@@ -2462,6 +2463,61 @@ function PortalSubPageContent() {
   const _atmBackHref = fromId
     ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
     : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'
+
+  // ── Cronograma no novo design (tema RL): só nos portais em teste ──
+  if (temaRL && isCronogramaPage && !loading && !error && !editing && !editingPhotos && !isFreelancerView && !isPartilha) {
+    const ps: any = portalSettingsObj ?? {}
+    const hojeIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
+    const dataEv = String(eventoData?.data_evento ?? ps.data ?? '').slice(0, 10)
+    const pagos = (pagamentos ?? []).filter((x: any) => x.confirmado !== false)
+    const faseConfirmada = (re: RegExp) => pagos.some((x: any) => Number(x.valor_liquidado ?? 0) > 0 &&
+      (Array.isArray(x.fase_pagamento) ? x.fase_pagamento : [x.fase_pagamento]).some((f: any) => re.test(String(f ?? ''))))
+    // O que a app já sabe, sem ninguém carregar no botão
+    const automatico = (t: string): boolean => {
+      const u = t.toUpperCase()
+      if (u.includes('REUNIÃO INICIAL') || u.includes('REUNIAO INICIAL')) return true
+      if (u.startsWith('CONTRATO')) return !!(ps.contratoDisponivel || ps.contratoAssinadoEm)
+      if (u.startsWith('ADJUDICA')) return adjudicacaoPaga(pagos)
+      if (u.includes('PRÉ-WEDDING') || u.includes('PRE-WEDDING')) return !!(ps.bookingReservedSlotId || ps.preWeddingReservedSlotId || ps.prewedding_url)
+      if (u.startsWith('REFOR')) return faseConfirmada(/REFOR|FINAL/i)
+      if (u.startsWith('DIA DO CASAMENTO')) return !!dataEv && dataEv <= hojeIso
+      if (u.startsWith('BACKUP')) return !!ps.armazenamento_backup
+      if (u.startsWith('FOTOGRAFIAS')) return !!ps.fotos_finais_url
+      if (u.startsWith('VÍDEO') || u.startsWith('VIDEO')) return !!ps.wedding_film_url
+      if (u.startsWith('ENTREGA FINAL')) return !!(ps.fotos_finais_url && ps.wedding_film_url)
+      return false
+    }
+    const frase = (v: string) => { const t = v.trim().replace(/[,.]$/, ''); return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : '' }
+    const _etapas: EtapaRL[] = blocks.filter(b => b.type === 'callout').map(b => {
+      const bruto = plainText(b.callout?.rich_text ?? []).trim()
+      const [cab, ...resto] = bruto.split(/\s+-\s+/)
+      const auto = automatico(bruto)
+      return {
+        id: b.id,
+        titulo: frase(cab),
+        texto: resto.join(' · ').trim().replace(/,$/, '') || undefined,
+        feito: auto || !!cronogramaStatus[b.id],
+        automatico: auto,
+      }
+    })
+    const _intro = blocks.filter(b => b.type === 'paragraph' && plainText(b.paragraph?.rich_text ?? []).trim())
+    return (
+      <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+        <CronogramaRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          etapas={_etapas}
+          onAlternar={id2 => toggleCronogramaSection(id2)}
+          intro={_intro.length > 0 ? (
+            <IntroDropdown titulo="Como funciona o cronograma">
+              <NotionBlocks blocks={_intro} hiddenNav={settings.hiddenNav} />
+            </IntroDropdown>
+          ) : undefined}
+        />
+      </PortalShell>
+    )
+  }
 
   // ── Área SAT no novo design (tema RL): só nos portais em teste ──
   if (temaRL && isSatisfacaoPage && !loading && !error && !editing && !editingPhotos && !isFreelancerView && !isPartilha) {
