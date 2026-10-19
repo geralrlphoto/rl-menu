@@ -757,14 +757,14 @@ function MoodboardSection({ info, isAdmin, onSave, cliente }: { info: BriefingEx
 /* Caixa para os noivos: explica e deixa adicionar uma música de cada vez, sem "Editar" */
 const MOMENTOS_SUGERIDOS = ['Entrada do noivo', 'Entrada da noiva', 'Saída da cerimónia', 'Entrada dos noivos na sala', 'Primeira dança', 'Corte do bolo', 'Lançamento do bouquet', 'Momento especial']
 function PlaylistNoivos({ list, onGuardar }: { list: NonNullable<BriefingExt['playlist']>; onGuardar: (l: NonNullable<BriefingExt['playlist']>) => Promise<void> | void }) {
-  const vazio = { moment: '', song: '', artist: '', url: '' }
+  const vazio = { moment: '', url: '' }
   const [nova, setNova] = useState(vazio)
   const [estado, setEstado] = useState<'' | 'a-gravar' | 'gravado'>('')
   const campo = 'min-w-0 rounded-lg border border-white/10 bg-black/40 px-3 py-2.5 text-[13px] text-white outline-none focus:border-gold/50'
   async function adicionar() {
-    if (!nova.song.trim()) return
+    if (!nova.moment.trim() || !nova.url.trim()) return
     setEstado('a-gravar')
-    await onGuardar([...list, { id: uid(), moment: nova.moment.trim(), song: nova.song.trim(), artist: nova.artist.trim(), url: nova.url.trim() }])
+    await onGuardar([...list, { id: uid(), moment: nova.moment.trim(), song: '', artist: '', url: nova.url.trim() }])
     setNova(vazio); setEstado('gravado')
     setTimeout(() => setEstado(''), 2500)
   }
@@ -778,11 +778,9 @@ function PlaylistNoivos({ list, onGuardar }: { list: NonNullable<BriefingExt['pl
       <datalist id="momentos-sugeridos">{MOMENTOS_SUGERIDOS.map(m => <option key={m} value={m} />)}</datalist>
       <div className="mt-4 grid gap-2 text-left sm:grid-cols-2">
         <input list="momentos-sugeridos" value={nova.moment} onChange={e => setNova(n => ({ ...n, moment: e.target.value }))} placeholder="Momento (ex.: Primeira dança)" className={campo} />
-        <input value={nova.song} onChange={e => setNova(n => ({ ...n, song: e.target.value }))} placeholder="Música" className={campo} />
-        <input value={nova.artist} onChange={e => setNova(n => ({ ...n, artist: e.target.value }))} placeholder="Artista" className={campo} />
-        <input value={nova.url} onChange={e => setNova(n => ({ ...n, url: e.target.value }))} placeholder="Link Spotify/YouTube (opcional)" className={campo} />
+        <input value={nova.url} onChange={e => setNova(n => ({ ...n, url: e.target.value }))} placeholder="Link do YouTube" className={campo} />
       </div>
-      <button type="button" onClick={adicionar} disabled={estado === 'a-gravar' || !nova.song.trim()}
+      <button type="button" onClick={adicionar} disabled={estado === 'a-gravar' || !nova.moment.trim() || !nova.url.trim()}
         className="mt-3 rounded-lg border border-gold/40 bg-gold/[0.1] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-gold transition-all hover:bg-gold/[0.18] disabled:opacity-40">
         {estado === 'a-gravar' ? 'A gravar…' : '+ Adicionar música'}
       </button>
@@ -797,7 +795,7 @@ function PlaylistSection({ info, isAdmin, onSave, cliente }: { info: BriefingExt
   const list = info.playlist ?? []
 
   function startEdit() { setDraft(list.length ? list.map(x => ({ ...x })) : [{ id: uid(), moment: 'Entrada da Noiva', song: '', artist: '', url: '' }]); setEditing(true) }
-  const patchAtual = () => ({ playlist: draft.filter(x => x.song.trim()) })
+  const patchAtual = () => ({ playlist: draft.filter(x => x.song.trim() || (x.url ?? '').trim()) })
   async function save() { await onSave(patchAtual()); setEditing(false) }
   const gravacao = useAutoGravar(editing, draft, () => onSave(patchAtual(), { auto: true }))
 
@@ -829,7 +827,7 @@ function PlaylistSection({ info, isAdmin, onSave, cliente }: { info: BriefingExt
               <div className="flex-1 min-w-0">
                 <p className="text-[10px] tracking-[0.3em] text-gold/65 uppercase mb-0.5 truncate">{p.moment || 'Momento'}</p>
                 <p className="text-[13px] text-white/90 font-medium truncate">
-                  {p.song || <span className="text-white/30 italic">Sem título</span>}
+                  {p.song || (p.url ? <span className="text-white/60">Música no YouTube</span> : <span className="text-white/30 italic">Sem título</span>)}
                   {p.artist && <span className="text-white/45 font-normal"> — {p.artist}</span>}
                 </p>
               </div>
