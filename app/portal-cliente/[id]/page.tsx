@@ -3122,6 +3122,10 @@ function PortalSubPageContent() {
               separatorImageUrl={_atmEffectiveHeader || subpageHeaderUrl || portalHeroImageUrl || null}
               portalRef={fpRef}
               maqueteUrl={String(portalSettingsObj?.maquete_url ?? '') || null}
+              dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
+              estadoEdicao={eventoData?.fotos_edicao_estado ?? null}
+              capaFallback={_atmEffectiveHeader || portalHeroImageUrl || null}
+              convidadosUrl="/adquirir-fotografias"
             />
           </div>
 

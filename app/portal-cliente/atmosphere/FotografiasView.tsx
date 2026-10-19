@@ -55,7 +55,24 @@ export type FotografiasViewProps = {
   maqueteUrl?: string | null
   /** Node opcional para se quiser injectar um substituto da maquete */
   maquetePanelOverride?: ReactNode
+  /** Tema RL: data do casamento (YYYY-MM-DD) para as datas previstas */
+  dataCasamento?: string | null
+  /** Tema RL: estado da edição das fotos no evento ('Enviado', 'Entregue'…) */
+  estadoEdicao?: string | null
+  /** Tema RL: capa para as galerias sem capa própria */
+  capaFallback?: string | null
+  /** Tema RL: página de compra de fotografias para os convidados */
+  convidadosUrl?: string | null
 }
+
+/* Soma dias úteis (segunda a sexta) a uma data YYYY-MM-DD */
+function somaUteis(iso: string, n: number): string {
+  const d = new Date(iso.slice(0, 10) + 'T12:00:00Z')
+  let k = 0
+  while (k < n) { d.setUTCDate(d.getUTCDate() + 1); const w = d.getUTCDay(); if (w !== 0 && w !== 6) k++ }
+  return d.toISOString().slice(0, 10)
+}
+const dataPt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
 
 /* ───────────────────────────────────────────────────────────────
    Maquete + Aprovação — usa os mesmos endpoints da MaqueteAlbumSection
@@ -437,6 +454,43 @@ function ComoEscolherButton({ enviarUrl }: { enviarUrl: string }) {
 export function FotografiasView(props: FotografiasViewProps) {
   // Novo design (tema RL): resumo do estado das galerias no topo
   const temaRL = useTemaRL()
+  const casamento = /^\d{4}-\d{2}-\d{2}/.test(props.dataCasamento ?? '') ? props.dataCasamento!.slice(0, 10) : null
+  // Estado e data prevista de cada galeria (prazos do guia: 7 e 30 dias úteis)
+  const estadoGaleria = (c: FotografiasCard): { estado: string; nota?: string; tom: 'ok' | 'info' | 'wait' | 'alerta' } => {
+    const ok = Boolean(c.url && c.url.length > 0)
+    if (c.key === 'selecao') {
+      const editadas = props.cards.find(x => x.key === 'editadas')
+      if (editadas?.url) return { estado: 'Concluída', tom: 'ok' }
+      if (ok && /envia|edi|entreg/i.test(props.estadoEdicao ?? '')) return { estado: 'Seleção recebida · em edição', tom: 'info' }
+      if (ok) return { estado: 'Por escolher', nota: 'Escolham as fotografias e enviem a seleção', tom: 'wait' }
+      return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 30))}` : 'Até 30 dias úteis depois do casamento', tom: 'wait' }
+    }
+    if (ok) {
+      if (c.key === 'editadas' && c.footnote) {
+        const m = c.footnote.match(/(\d+)/)
+        const dias = m ? Number(m[1]) : null
+        return { estado: 'Disponível', nota: c.footnote, tom: /expirado/i.test(c.footnote) || (dias !== null && dias <= 7) ? 'alerta' : 'ok' }
+      }
+      return { estado: 'Disponível', tom: 'ok' }
+    }
+    if (c.key === 'galerias') return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 7))}` : 'Até 7 dias úteis depois do casamento', tom: 'wait' }
+    if (c.key === 'editadas') return { estado: 'A aguardar', nota: '30 dias úteis depois de nos enviarem a seleção', tom: 'wait' }
+    if (c.key === 'prewedding') return { estado: 'A aguardar', nota: 'Depois da sessão pré-wedding', tom: 'wait' }
+    if (c.key === 'convidados') return { estado: 'Disponível', tom: 'ok' }
+    return { estado: 'A aguardar', tom: 'wait' }
+  }
+  // Tema RL: cartão de compra de fotografias para os convidados
+  const cards: FotografiasCard[] = temaRL && props.convidadosUrl
+    ? [...props.cards, {
+        key: 'convidados',
+        lead: { kicker: 'Convidados', title: <>Fotografias para os <em>convidados</em>.</>, subtitle: 'Vocês e os vossos convidados podem adquirir fotografias do casamento. Digital em 15 dias úteis; papel em 30 dias úteis, por correio em carta registada.' },
+        title: 'FOTOS PARA CONVIDADOS',
+        heading: 'Fotografias para os convidados',
+        caption: 'Digital em 15 dias úteis · papel em 30 dias úteis',
+        mark: 'C',
+        url: props.convidadosUrl,
+      }]
+    : props.cards
 
   // ── Capas das galerias ────────────────────────────────────────
   // O Wfolio publica a capa escolhida em og:image. /api/link-preview lê-a
@@ -480,11 +534,12 @@ export function FotografiasView(props: FotografiasViewProps) {
             </div>
             <div className="fp-resumo-grid">
               {props.cards.map(c => {
-                const ok = Boolean(c.url && c.url.length > 0)
+                const e = estadoGaleria(c)
                 return (
-                  <a key={c.key} className={`fp-resumo-item${ok ? ' ok' : ''}`} href={ok ? c.url! : undefined} target={ok ? '_blank' : undefined} rel={ok ? 'noopener noreferrer' : undefined}>
+                  <a key={c.key} className={`fp-resumo-item ${e.tom}`} href={`#galeria-${c.key}`}>
                     <span className="t">{c.title}</span>
-                    <span className="s">{ok ? 'Disponível' : 'A aguardar'}</span>
+                    <span className="s">{e.estado}</span>
+                    {e.nota && <span className="n">{e.nota}</span>}
                   </a>
                 )
               })}
@@ -495,20 +550,22 @@ export function FotografiasView(props: FotografiasViewProps) {
 
       {/* ── Título editorial + card, dois por linha ───────────── */}
       <div className="fp-grid">
-        {props.cards.map(c => {
+        {cards.map(c => {
           const available = Boolean(c.url && c.url.length > 0)
           const lead = c.lead ?? { kicker: c.title, title: c.heading, subtitle: c.caption }
-          const cover = covers[c.key]
+          const cover = covers[c.key] ?? (temaRL ? (props.capaFallback ?? undefined) : undefined)
+          const est = temaRL ? estadoGaleria(c) : null
           return (
-            <div key={c.key} className="fp-grid-item">
+            <div key={c.key} className="fp-grid-item" id={`galeria-${c.key}`}>
               <SectionTitle size="sm" kicker={lead.kicker} title={lead.title} subtitle={lead.subtitle} />
               <article className={`fp-card${cover ? ' has-cover' : ''}`}>
                 <div className="fp-card-head">
                   <span className="fp-card-title">{c.title}</span>
                   <span className={`fp-chip ${available ? 'available' : 'locked'}`}>
-                    {available ? 'Disponível' : 'Aguardar'}
+                    {est ? est.estado : available ? 'Disponível' : 'Aguardar'}
                   </span>
                 </div>
+                {est?.nota && <div className={`fp-prevista ${est.tom}`}>{est.nota}</div>}
                 {cover && (
                   <div className="fp-card-cover">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -525,7 +582,7 @@ export function FotografiasView(props: FotografiasViewProps) {
                 <div className="fp-card-foot">
                   {available ? (
                     <a className="fp-btn available" href={c.url!} target="_blank" rel="noopener noreferrer">
-                      Ver Mais
+                      {c.key === 'convidados' ? 'Adquirir fotografias' : 'Ver Mais'}
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
                       </svg>
@@ -588,6 +645,16 @@ export function FotografiasView(props: FotografiasViewProps) {
       </section>
 
       {/* ── Maquete + Aprovação ─────────────────────────────── */}
+      {temaRL && casamento && (
+        <div className="fp-album-prazo">
+          <span className="eyebrow">Prazos do álbum</span>
+          <ul>
+            <li><b>Fotos para o álbum:</b> enviem-nas até {dataPt(`${casamento.slice(0, 4)}-10-15`)} para manter o valor apresentado na reunião.</li>
+            <li><b>Maquete:</b> pronta 30 dias úteis depois de recebermos as fotografias.</li>
+            <li><b>Entrega:</b> 30 dias úteis depois de aprovarem a maquete. O álbum é impresso depois do pagamento total.</li>
+          </ul>
+        </div>
+      )}
       {props.maquetePanelOverride
         ? props.maquetePanelOverride
         : props.portalRef && (

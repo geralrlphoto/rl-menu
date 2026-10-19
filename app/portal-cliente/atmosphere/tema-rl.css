@@ -376,3 +376,24 @@
   .portal-atmosphere.tema-rl .fotos-page .fp-resumo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .portal-atmosphere.tema-rl .fotos-page .fp-resumo-item:nth-child(3) { border-left: 0; padding-left: 0; }
 }
+
+/* Fotografias (tema RL): estado e data prevista de cada galeria, prazos do álbum */
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item .n { font-size: 11.5px; color: rgba(255,255,255,.4); line-height: 1.4; }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item.ok .s { color: #86efac; }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item.info .s { color: var(--gold); }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item.alerta .s,
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item.alerta .n { color: #f87171; }
+.portal-atmosphere.tema-rl .fotos-page .fp-resumo-item:hover .t { color: var(--gold); }
+.portal-atmosphere.tema-rl .fotos-page .fp-grid-item { scroll-margin-top: 24px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-prevista {
+  margin: 0 0 10px; font-size: 12.5px; font-weight: 600; color: var(--gold);
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-prevista.alerta { color: #f87171; }
+.portal-atmosphere.tema-rl .fotos-page .fp-prevista.ok { color: #86efac; }
+.portal-atmosphere.tema-rl .fotos-page .fp-album-prazo {
+  margin: 34px 0 18px; padding: 18px 20px; border-radius: 22px;
+  border: 1px solid rgba(216,190,147,.2); border-left: 2px solid rgba(216,190,147,.6); background: rgba(17,17,17,.9);
+}
+.portal-atmosphere.tema-rl .fotos-page .fp-album-prazo ul { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.portal-atmosphere.tema-rl .fotos-page .fp-album-prazo li { font-size: 14px; line-height: 1.6; color: rgba(255,255,255,.65); }
+.portal-atmosphere.tema-rl .fotos-page .fp-album-prazo li b { color: #fff; font-weight: 600; }
