@@ -3311,12 +3311,21 @@ function PortalSubPageContent() {
             />
           </div>
 
-          {/* Logo card final (mesmo template das outras Atmosphère) */}
+          {/* Logo card final (mesmo template das outras Atmosphère); no tema RL, assinatura dourada */}
+          {temaRL ? (
+            <div className="mt-12 mb-4 flex flex-col items-center text-center">
+              <div className="w-16 h-px mb-6" style={{ background: 'linear-gradient(90deg, transparent, rgba(216,190,147,0.6), transparent)' }} />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/portal-noivos/logo-gold.png" alt="RL Photo Video" className="h-12 w-auto object-contain opacity-90" />
+              <p className="mt-3 text-[9px] tracking-[0.45em] uppercase" style={{ color: 'rgba(216,190,147,0.65)' }}>Photo · Video · Wedding Moments</p>
+            </div>
+          ) : (
           <div className="logocard">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
             <div className="url">www.rlphotovideo.pt</div>
           </div>
+          )}
         </article>
       </PortalShell>
     )
