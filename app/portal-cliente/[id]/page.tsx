@@ -12,7 +12,8 @@ import BlockEditor from '../BlockEditor'
 import BriefingExtensions, { type BriefingExt, BotaoPartilhar } from './BriefingExtensions'
 import BriefingPartilha from '../../p/[token]/BriefingPartilha'
 import '../atmosphere/atmosphere.css'
-import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, CaixaBloqueio, type SidebarNavItem } from '../atmosphere/PortalShell'
+import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, CaixaBloqueio, useTemaRL, type SidebarNavItem } from '../atmosphere/PortalShell'
+import { PagamentosRL } from '../atmosphere/PagamentosRL'
 import { ContratoView } from '../atmosphere/ContratoView'
 import { portalBloqueado, paginaSempreAberta, emFalta } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
@@ -1603,6 +1604,8 @@ function PortalSubPageContent() {
   const [subpageHeaderUrl, setSubpageHeaderUrl] = useState('')
   const [portalHeroImageUrl, setPortalHeroImageUrl] = useState('')
   const [designPremiumPages, setDesignPremiumPages] = useState<string[]>([])
+  // Novo design (tema RL) só nos portais em teste (lidos pelo endereço)
+  const temaRL = useTemaRL()
   const [preWeddingSlots, setPreWeddingSlots] = useState<Array<{id:string;date:string;time:string;local:string}>>([])
   const [reservedSlotId, setReservedSlotId] = useState<string | null>(null)
   const [reservingSlotId, setReservingSlotId] = useState<string | null>(null)
@@ -2453,6 +2456,28 @@ function PortalSubPageContent() {
   const _atmBackHref = fromId
     ? `/portal-cliente/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
     : refParam ? `/portal-cliente/ref/${encodeURIComponent(refParam)}` : '/portal-cliente'
+
+  // ── Pagamentos no novo design (tema RL): só nos portais em teste ──
+  if (temaRL && isPaymentsPage && !loading && !error && !editing && !editingPhotos && !isFreelancerView && !isPartilha) {
+    const _ref = portalSettingsObj?.referencia ?? refParam ?? portalRef ?? ''
+    const _nomes = nomeNoivos(eventoData?.cliente, portalSettingsObj?.noiva || eventoData?.nome_noiva, portalSettingsObj?.noivo || eventoData?.nome_noivo)
+    const _total = eventoData ? (eventoData.valor_foto ?? 0) + (eventoData.valor_video ?? 0) : portalTotal
+    return (
+      <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
+        <PagamentosRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          total={_total || 0}
+          pagamentos={pagamentos as any}
+          registarUrl={`/registar-pagamento?ref=${encodeURIComponent(_ref)}&noivos=${encodeURIComponent(_nomes)}&data=${encodeURIComponent(String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10))}`}
+          ibanNode={<SolicitarIbanBtn pronto={Object.keys(portalSettingsObj ?? {}).length > 0} referencia={_ref} nomeNoivos={_nomes} />}
+          comoPagar={<NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />}
+          isAdmin={isAdmin}
+        />
+      </PortalShell>
+    )
+  }
 
   // Equipa (painel do freelancer, ?freelancer=1, o que o Enviar Briefing desbloqueia):
   // o briefing abre no layout novo, igual ao link partilhado mas sem o Guia,
