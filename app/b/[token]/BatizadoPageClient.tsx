@@ -1,5 +1,6 @@
 'use client'
 
+import { RLP_CSS } from '@/app/_lead/rlpCss'
 import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
@@ -8,118 +9,6 @@ import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 const WHATSAPP      = 'https://wa.me/351912932768'
 const DEFAULT_HERO  = 'https://portal.rlphotovideo.pt/casamentos-2028.webp'
 
-// ─── DESIGN SYSTEM — RL PHOTO.VIDEO (rlphotovideo.pt) ─────────────────────────
-const RLP_CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&family=Hanken+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap');
-
-.rl-portal{
-  --ink:#0b0a08; --ink-2:#100e0b; --ink-3:#16130f;
-  --g:#d8be93; --g-deep:#c8a866;
-  --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4);
-  --line:rgba(243,237,226,.14); --line-soft:rgba(243,237,226,.08);
-  --fd:'Jost',sans-serif; --fb:'Hanken Grotesk',sans-serif; --fm:'Space Mono',monospace; --fs:'Cormorant Garamond',serif;
-  --ease:cubic-bezier(.16,1,.3,1); --pad:clamp(20px,5vw,80px);
-  background:var(--ink); color:var(--tx); font-family:var(--fb);
-  -webkit-font-smoothing:antialiased;
-}
-.rl-portal ::selection{background:rgba(216,190,147,.28);color:#0b0a08;}
-
-/* Atmosfera */
-.rlp-grain{position:fixed;inset:0;z-index:9000;pointer-events:none;opacity:.05;mix-blend-mode:overlay;background-size:130px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");}
-.rlp-vig{position:fixed;inset:0;z-index:8990;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.5);}
-.rlp-prog{position:fixed;top:0;left:0;height:2px;width:0;background:var(--g);z-index:9100;transition:width .1s linear;}
-
-/* Barra fixa */
-.rlp-bar{position:fixed;left:0;width:100%;z-index:8000;display:flex;align-items:center;justify-content:space-between;padding:20px var(--pad);border-bottom:1px solid transparent;transition:background .6s var(--ease),padding .6s var(--ease),border-color .6s;}
-.rlp-bar.s{background:rgba(11,10,8,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);padding-top:13px;padding-bottom:13px;border-color:var(--line-soft);}
-.rlp-mono{display:inline-flex;align-items:baseline;gap:.6em;text-decoration:none;}
-.rlp-mono span{font-family:var(--fd);font-weight:300;letter-spacing:.3em;font-size:16px;color:var(--tx);}
-.rlp-mono i{font-family:var(--fm);font-style:normal;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);opacity:.85;}
-
-/* Eyebrow */
-.rlp-eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--g);display:inline-flex;gap:.8em;align-items:center;}
-.rlp-eyebrow::before{content:"";width:34px;height:1px;background:var(--g);opacity:.6;}
-.rlp-eyebrow.c{justify-content:center;}
-
-/* Contentor / secção */
-.rlp-wrap{width:100%;max-width:1280px;margin:0 auto;padding-left:var(--pad);padding-right:var(--pad);}
-.rlp-sec{position:relative;padding-top:clamp(60px,9vh,120px);padding-bottom:clamp(60px,9vh,120px);}
-
-/* Títulos */
-.rlp-h1{font-family:var(--fd);font-weight:200;line-height:.92;letter-spacing:-.02em;color:var(--tx);}
-.rlp-h2{font-family:var(--fd);font-weight:200;line-height:1.04;letter-spacing:-.02em;font-size:clamp(30px,5vw,64px);color:var(--tx);}
-.rlp-h2 em{font-style:italic;color:var(--g);}
-.rlp-lede{font-family:var(--fb);font-weight:300;color:var(--tx-mid);line-height:1.75;font-size:clamp(15px,1.4vw,18px);}
-.rlp-ed{font-family:var(--fs);font-weight:300;color:var(--tx-mid);}
-.rlp-ed em{font-style:italic;color:var(--g);}
-
-/* Botões */
-.rlp-btn{display:inline-flex;align-items:center;justify-content:center;gap:.9em;position:relative;isolation:isolate;font-family:var(--fm);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink);padding:18px 38px;border:1px solid var(--g);border-radius:40px;overflow:hidden;background:var(--g);transition:color .5s var(--ease),opacity .3s;cursor:pointer;text-decoration:none;}
-.rlp-btn .fill{position:absolute;inset:0;z-index:-1;background:var(--ink);transform:translateY(101%);transition:transform .6s var(--ease);}
-.rlp-btn .dot{width:5px;height:5px;border-radius:50%;background:var(--ink);transition:background .5s;flex:none;}
-.rlp-btn:hover{color:var(--g);} .rlp-btn:hover .fill{transform:translateY(0);} .rlp-btn:hover .dot{background:var(--g);}
-.rlp-btn:disabled{opacity:.45;pointer-events:none;}
-.rlp-btn.ghost{background:transparent;color:var(--tx);border-color:var(--line);}
-.rlp-btn.ghost .dot{background:var(--g);}
-.rlp-btn.ghost .fill{background:var(--g);}
-.rlp-btn.ghost:hover{color:var(--ink);}
-.rlp-btn.ghost:hover .dot{background:var(--ink);}
-.rlp-btn.danger{background:transparent;color:#e79b9b;border-color:rgba(231,155,155,.4);}
-.rlp-btn.danger .dot{background:#e79b9b;} .rlp-btn.danger .fill{background:rgba(231,155,155,.9);}
-.rlp-btn.danger:hover{color:#170d0d;} .rlp-btn.danger:hover .dot{background:#170d0d;}
-.rlp-btn.full{width:100%;}
-
-/* Link sublinhado */
-.rlp-link-u{font-family:var(--fm);font-size:12px;letter-spacing:.16em;text-transform:uppercase;display:inline-flex;gap:.7em;align-items:center;position:relative;color:var(--tx-mid);text-decoration:none;}
-.rlp-link-u::after{content:"";position:absolute;left:0;bottom:-5px;width:100%;height:1px;background:var(--g);transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease);}
-.rlp-link-u:hover::after{transform:scaleX(1);transform-origin:left;}
-.rlp-link-u .a{color:var(--g);transition:transform .4s var(--ease);}
-.rlp-link-u:hover .a{transform:translateX(5px);}
-
-/* Placeholder de imagem */
-.rlp-slot{position:relative;overflow:hidden;background:var(--ink-3);background-image:repeating-linear-gradient(122deg,rgba(243,237,226,.022) 0 1px,transparent 1px 11px);}
-.rlp-slot .lab{position:absolute;inset:0;display:grid;place-items:center;text-align:center;font-family:var(--fm);font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--tx-dim);padding:1em;}
-.rlp-slot img{width:100%;height:100%;object-fit:cover;display:block;}
-
-/* Cartão com sheen */
-.rlp-card{border:1px solid var(--line-soft);border-radius:10px;background:var(--ink-2);position:relative;overflow:hidden;transition:border-color .5s var(--ease),transform .5s var(--ease);}
-.rlp-card::before{content:"";position:absolute;top:0;left:-70%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(216,190,147,.08),transparent);transform:skewX(-18deg);animation:rlpSheen 6s ease-in-out infinite;pointer-events:none;}
-@keyframes rlpSheen{0%{left:-70%}55%,100%{left:170%}}
-.rlp-card:hover{border-color:var(--g);}
-
-/* Linha de detalhe */
-.rlp-drow{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--line-soft);}
-.rlp-drow:first-child{border-top:0;}
-.rlp-drow .k{font-family:var(--fm);font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-dim);}
-.rlp-drow .v{font-family:var(--fd);font-weight:300;font-size:clamp(16px,1.6vw,20px);color:var(--tx);}
-
-/* Divisor */
-.rlp-div{width:100%;max-width:1280px;margin:0 auto;height:1px;background:var(--line-soft);}
-
-/* Footer */
-.rlp-foot{background:var(--ink-2);border-top:1px solid var(--line-soft);padding:clamp(50px,7vh,90px) 0 0;}
-.rlp-foot h5{font-family:var(--fm);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);margin-bottom:18px;}
-.rlp-foot a{color:var(--tx-mid);text-decoration:none;transition:color .4s var(--ease);}
-.rlp-foot a:hover{color:var(--tx);}
-.rlp-foot .end{border-top:1px solid var(--line-soft);margin-top:clamp(40px,6vh,70px);padding:22px var(--pad);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-family:var(--fm);font-size:11px;color:var(--tx-dim);}
-
-/* Botões de calendário */
-.rlp-calbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.6em;padding:13px 0;border:1px solid var(--line);border-radius:40px;font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-mid);background:transparent;cursor:pointer;transition:border-color .4s var(--ease),color .4s var(--ease);}
-.rlp-calbtn:hover{border-color:var(--g);color:var(--g);}
-.rlp-calbtn svg{width:13px;height:13px;}
-
-/* Botão flutuante WhatsApp */
-.rlp-wa{position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:8100;background:var(--g);color:var(--ink);box-shadow:0 10px 30px rgba(0,0,0,.4);transition:transform .4s var(--ease);}
-.rlp-wa:hover{transform:translateY(-3px) scale(1.05);}
-
-@media (max-width:760px){
-  .rlp-foot .end{flex-direction:column;align-items:flex-start;}
-  .rlp-mono i{display:none;}
-}
-@media (prefers-reduced-motion:reduce){
-  .rlp-card::before{animation:none;}
-}
-`
 
 export const FONTS: { value: string; label: string; className: string }[] = [
   { value: 'playfair',  label: 'Playfair',  className: 'font-playfair' },
@@ -320,8 +209,8 @@ function Countdown({ targetDate }: { targetDate: string }) {
   }, [targetDate])
   const Unit = ({ v, label }: { v: number; label: string }) => (
     <div className="flex flex-col items-center gap-2">
-      <span className="text-5xl sm:text-7xl tabular-nums" style={{ fontFamily: "'Jost',sans-serif", fontWeight: 200, letterSpacing: '-.02em', color: 'var(--tx)' }}>{String(v).padStart(2,'0')}</span>
-      <span className="text-[10px] tracking-[0.26em] uppercase" style={{ fontFamily: "'Space Mono',monospace", color: 'var(--tx-dim)' }}>{label}</span>
+      <span className="text-6xl sm:text-8xl tabular-nums" style={{ fontFamily: "'Roboto Condensed',sans-serif", fontWeight: 100, letterSpacing: '.01em', lineHeight: .9, color: 'var(--tx)' }}>{String(v).padStart(2,'0')}</span>
+      <span className="text-[10px] tracking-[0.26em] uppercase" style={{ fontFamily: "'Roboto Condensed',sans-serif", color: 'var(--tx-dim)' }}>{label}</span>
     </div>
   )
   const Sep = () => <span className="text-3xl sm:text-4xl self-start mt-2" style={{ color: 'var(--g)', opacity: .35, fontFamily: "'Jost',sans-serif", fontWeight: 200 }}>·</span>
@@ -651,12 +540,12 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
 
   if (loading) return (
     <main className="min-h-screen flex items-center justify-center" style={{ background: '#0b0a08' }}>
-      <p className="tracking-[0.3em] text-xs uppercase animate-pulse" style={{ color: 'rgba(243,237,226,.4)', fontFamily: "'Space Mono', monospace" }}>A carregar…</p>
+      <p className="tracking-[0.3em] text-xs uppercase animate-pulse" style={{ color: 'rgba(243,237,226,.4)', fontFamily: "'Roboto Condensed',sans-serif" }}>A carregar…</p>
     </main>
   )
   if (notFound) return (
     <main className="min-h-screen flex items-center justify-center" style={{ background: '#0b0a08' }}>
-      <p className="tracking-[0.3em] text-xs uppercase" style={{ color: 'rgba(243,237,226,.4)', fontFamily: "'Space Mono', monospace" }}>Página não disponível</p>
+      <p className="tracking-[0.3em] text-xs uppercase" style={{ color: 'rgba(243,237,226,.4)', fontFamily: "'Roboto Condensed',sans-serif" }}>Página não disponível</p>
     </main>
   )
 
@@ -773,7 +662,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           </FadeIn>
           <FadeIn delay={380} className="mt-6 flex flex-col gap-3" style={{ maxWidth: '52ch' }}>
             {(crmNome || evento.nome) && <p className="rlp-ed" style={{ fontSize: 'clamp(20px,2.4vw,30px)', lineHeight: 1.2 }}><em>{crmNome || evento.nome}</em></p>}
-            {dataFmt && <p style={{ fontFamily: "'Space Mono', monospace", fontSize: 12, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--tx-mid)' }}>{dataFmt}{evento.hora ? ` · ${evento.hora}` : ''}{evento.local ? ` · ${evento.local}` : ''}</p>}
+            {dataFmt && <p style={{ fontFamily: "'Roboto Condensed',sans-serif", fontSize: 12, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--tx-mid)' }}>{dataFmt}{evento.hora ? ` · ${evento.hora}` : ''}{evento.local ? ` · ${evento.local}` : ''}</p>}
           </FadeIn>
         </div>
       </section>
@@ -876,7 +765,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
             }
             return (
               <div style={{ padding: '4px 26px 24px' }} className="flex flex-col items-center gap-3">
-                <p style={{ fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Adicionar ao Calendário</p>
+                <p style={{ fontFamily: "'Roboto Condensed',sans-serif", fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Adicionar ao Calendário</p>
                 <div className="flex gap-2 w-full">
                   <a href={gcal} target="_blank" rel="noopener noreferrer" className="rlp-calbtn">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-1V1h-2v2h-9V1h-2v2h-1A2.5 2.5 0 0 0 2 5.5v15A2.5 2.5 0 0 0 4.5 23h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 3zM20 20.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5V10h16v10.5zM20 8H4V5.5a.5.5 0 0 1 .5-.5H6v1h2V5h9v1h2V5h.5a.5.5 0 0 1 .5.5V8z"/></svg>
@@ -895,13 +784,13 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           {/* Status badge */}
           {status === 'confirmada' && (
             <div className="w-full flex items-center justify-center gap-2 rounded-lg"
-              style={{ padding: '14px 20px', background: 'rgba(216,190,147,.08)', color: 'var(--g)', border: '1px solid rgba(216,190,147,.28)', fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase' }}>
+              style={{ padding: '14px 20px', background: 'rgba(216,190,147,.08)', color: 'var(--g)', border: '1px solid rgba(216,190,147,.28)', fontFamily: "'Roboto Condensed',sans-serif", fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase' }}>
               ✦&nbsp; Reunião Confirmada · Até breve
             </div>
           )}
           {status === 'alteracao_pedida' && (
             <div className="w-full flex items-center justify-center gap-2 rounded-lg"
-              style={{ padding: '14px 20px', background: 'rgba(243,237,226,.05)', color: 'var(--tx-mid)', border: '1px solid var(--line)', fontFamily: "'Space Mono',monospace", fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase' }}>
+              style={{ padding: '14px 20px', background: 'rgba(243,237,226,.05)', color: 'var(--tx-mid)', border: '1px solid var(--line)', fontFamily: "'Roboto Condensed',sans-serif", fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase' }}>
               Pedido enviado · Entraremos em contacto
             </div>
           )}
@@ -989,7 +878,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
 
         </FadeIn>
         </div>
-        {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
+        {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Roboto Condensed',sans-serif", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
       </section>
 
       {/* ── VÍDEO ── */}
@@ -1052,7 +941,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         <section className="rlp-sec" style={{ background: 'var(--ink)' }}>
           <div className="rlp-wrap">
           {isAdmin && !revista.visible && (
-            <div className="mb-8" style={{ display: 'inline-block', padding: '8px 16px', borderRadius: 40, border: '1px dashed rgba(216,190,147,.3)', fontFamily: "'Space Mono',monospace", fontSize: 10, letterSpacing: '.3em', textTransform: 'uppercase', color: 'rgba(216,190,147,.4)' }}>
+            <div className="mb-8" style={{ display: 'inline-block', padding: '8px 16px', borderRadius: 40, border: '1px dashed rgba(216,190,147,.3)', fontFamily: "'Roboto Condensed',sans-serif", fontSize: 10, letterSpacing: '.3em', textTransform: 'uppercase', color: 'rgba(216,190,147,.4)' }}>
               Secção Oculta · ativa no editor
             </div>
           )}
@@ -1093,7 +982,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
             <FadeIn key={i} delay={i * 150} className="w-full">
               <blockquote className="text-center flex flex-col items-center gap-5">
                 <p className="rlp-ed" style={{ fontSize: 'clamp(20px,2.6vw,32px)', fontStyle: 'italic', lineHeight: 1.5, color: 'var(--tx)' }}>“{item.text}”</p>
-                <cite style={{ fontFamily: "'Space Mono',monospace", fontStyle: 'normal', fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--g)' }}>{item.author}</cite>
+                <cite style={{ fontFamily: "'Roboto Condensed',sans-serif", fontStyle: 'normal', fontSize: 11, letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--g)' }}>{item.author}</cite>
               </blockquote>
               {i < testimonials.items.length - 1 && <div style={{ width: 40, height: 1, background: 'rgba(216,190,147,.3)', margin: '48px auto 0' }} />}
             </FadeIn>
