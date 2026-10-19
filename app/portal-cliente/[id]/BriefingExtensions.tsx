@@ -645,7 +645,44 @@ function VipsSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: bo
 
 // ─── Section: Mood Board ─────────────────────────────────────────────────────
 
-function MoodboardSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar }) {
+/* Caixa para os noivos: explica o moodboard e grava o link sem precisarem de "Editar" */
+function MoodboardLinkNoivos({ link, onGuardar }: { link: string; onGuardar: (v: string) => Promise<void> | void }) {
+  const [valor, setValor] = useState(link)
+  const [aAlterar, setAAlterar] = useState(!link)
+  const [estado, setEstado] = useState<'' | 'a-gravar' | 'gravado'>('')
+  async function guardar() {
+    setEstado('a-gravar')
+    await onGuardar(valor.trim())
+    setEstado('gravado'); setAAlterar(!valor.trim())
+    setTimeout(() => setEstado(''), 2500)
+  }
+  return (
+    <div className="mx-auto my-2 max-w-xl rounded-2xl border border-gold/30 bg-gold/[0.04] px-5 py-6 text-center">
+      <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full border border-gold/40 text-gold text-[18px]">◧</div>
+      <p className="text-[15px] font-semibold text-white">Partilhem connosco o vosso moodboard</p>
+      <p className="mx-auto mt-2 max-w-[46ch] text-[13px] leading-relaxed text-white/55">
+        Juntem num quadro do Pinterest, num Canva ou numa pasta do Drive as imagens que vos inspiram: cores, luz, poses, detalhes, o ambiente que imaginam. Colem aqui o link. Ajuda a nossa equipa a perceber o estilo que querem para o vosso dia.
+      </p>
+      {aAlterar ? (
+        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+          <input value={valor} onChange={e => setValor(e.target.value)} placeholder="https://pinterest.pt/…"
+            className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/40 px-3 py-2.5 text-[13px] text-white outline-none focus:border-gold/50" />
+          <button type="button" onClick={guardar} disabled={estado === 'a-gravar' || !valor.trim()}
+            className="rounded-lg border border-gold/40 bg-gold/[0.1] px-5 py-2.5 text-[11px] font-bold uppercase tracking-[0.25em] text-gold transition-all hover:bg-gold/[0.18] disabled:opacity-40">
+            {estado === 'a-gravar' ? 'A gravar…' : 'Guardar link'}
+          </button>
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+          <span className="text-[12px] font-semibold text-green-300">{estado === 'gravado' ? 'Link gravado ✓' : 'Moodboard partilhado ✓'}</span>
+          <button type="button" onClick={() => setAAlterar(true)} className="text-[12px] text-white/45 underline underline-offset-4 hover:text-gold">Alterar link</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function MoodboardSection({ info, isAdmin, onSave, cliente }: { info: BriefingExt; isAdmin: boolean; onSave: Gravar; cliente?: boolean }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(info.moodboard ?? [])
   const [linkDraft, setLinkDraft] = useState(info.moodboardLink ?? '')
@@ -680,10 +717,11 @@ function MoodboardSection({ info, isAdmin, onSave }: { info: BriefingExt; isAdmi
           <AddBtn onClick={() => setDraft(d => [...d, { id: uid(), url: '', caption: '' }])} label="Adicionar Imagem" />
           <p className="text-[10px] text-white/30 italic">Cola URLs públicos (Pinterest, Unsplash, Drive partilhado, etc).</p>
         </div>
-      ) : list.length === 0 && !link ? (
+      ) : list.length === 0 && !link && !cliente ? (
         <EmptyState icon="◧" msg="Sem referências visuais." hint="Partilhem o link do vosso moodboard ou imagens de inspiração." />
       ) : (
         <>
+        {cliente && <MoodboardLinkNoivos link={link} onGuardar={v => onSave({ moodboardLink: v })} />}
         {link && (
           <a href={hrefLink} target="_blank" rel="noopener noreferrer"
             className="mb-3 flex items-center justify-between gap-3 rounded-xl border border-gold/30 bg-gold/[0.05] px-4 py-3 text-gold/85 hover:text-gold hover:bg-gold/[0.1] transition-all">
@@ -1755,7 +1793,7 @@ export default function BriefingExtensions({
           )}
 
           {/* Referências visuais: os noivos também podem editar (link do moodboard e imagens) */}
-          {ver('moodboard') && <MoodboardSection info={info} isAdmin={showAdminEditing || (!teamView && !partilhada)} onSave={saveWithLog} />}
+          {ver('moodboard') && <MoodboardSection info={info} isAdmin={showAdminEditing || (!teamView && !partilhada)} cliente={!showAdminEditing && !teamView && !partilhada} onSave={saveWithLog} />}
           {ver('playlist') && <PlaylistSection info={info} isAdmin={showAdminEditing} onSave={saveWithLog} />}
 
           {/* Logística — grid 2 col */}
