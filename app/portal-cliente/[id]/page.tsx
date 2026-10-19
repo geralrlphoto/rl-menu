@@ -2489,7 +2489,6 @@ function PortalSubPageContent() {
           enviando={enviandoSat}
           erro={erroSat}
           resposta={satisfacao ?? (enviadoSat ? { nota: notaSat, comentario: comentarioSat.trim() } : null)}
-          testemunhoUrl={portalSettingsObj?.testemunhoUrl || 'https://tally.so/r/pbKJry'}
         />
       </PortalShell>
     )

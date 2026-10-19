@@ -1,15 +1,14 @@
 'use client'
 
 /* Área SAT no novo design (tema RL): topo com foto esbatida, a avaliação (estrelas
-   e comentário) numa caixa de moldura branca (regra dos portais) e o botão para
-   deixarem um testemunho. Toda a lógica (gravar, avisar o admin) vem da página. */
+   e comentário) numa caixa de moldura branca (regra dos portais). Toda a lógica (gravar, avisar o admin) vem da página. */
 
 import { type ReactNode } from 'react'
 
 const G = '#d8be93'
 const LABELS = ['', 'Fraco', 'Razoável', 'Bom', 'Muito bom', 'Excelente']
 
-export function SatisfacaoRL({ title, heroUrl, backHref, intro, nota, hover, setNota, setHover, comentario, setComentario, onSubmeter, enviando, erro, resposta, testemunhoUrl }: {
+export function SatisfacaoRL({ title, heroUrl, backHref, intro, nota, hover, setNota, setHover, comentario, setComentario, onSubmeter, enviando, erro, resposta }: {
   title: string
   heroUrl?: string | null
   backHref: string
@@ -24,7 +23,6 @@ export function SatisfacaoRL({ title, heroUrl, backHref, intro, nota, hover, set
   enviando: boolean
   erro?: string | null
   resposta?: { nota: number; comentario: string } | null
-  testemunhoUrl: string
 }) {
   const ativa = hover || nota
   const caixaBranca: React.CSSProperties = {
@@ -92,15 +90,6 @@ export function SatisfacaoRL({ title, heroUrl, backHref, intro, nota, hover, set
         )}
       </section>
 
-      {/* ── testemunho ── */}
-      <section style={{ borderRadius: 22, border: '1px solid rgba(216,190,147,.2)', borderLeft: '2px solid rgba(216,190,147,.6)', background: 'rgba(17,17,17,.9)', padding: 22, display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
-        <div style={{ flex: '1 1 260px' }}>
-          <div className="eyebrow">Testemunho</div>
-          <div style={{ marginTop: 6, fontSize: 20, fontWeight: 600, color: '#fff' }}>Querem contar a vossa história?</div>
-          <div style={{ marginTop: 4, fontSize: 14, color: 'rgba(255,255,255,.55)', lineHeight: 1.6 }}>Umas palavras vossas sobre o dia e sobre nós ajudam outros noivos a conhecer-nos.</div>
-        </div>
-        <a href={testemunhoUrl} target="_blank" rel="noopener noreferrer" className="atm-btn solid">Deixar testemunho →</a>
-      </section>
     </div>
   )
 }
