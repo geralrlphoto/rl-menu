@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import './globals.css'
 import GlobalMenu from './components/GlobalMenu'
 import AdminContentShift from './components/AdminContentShift'
+import Obturador from './components/Obturador'
 
 export const metadata: Metadata = {
   title: 'RL PHOTO.VIDEO',
@@ -30,6 +31,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           ? <AdminContentShift>{children}</AdminContentShift>
           : children
         }
+        <Obturador />
       </body>
     </html>
   )
