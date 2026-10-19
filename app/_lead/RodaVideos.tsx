@@ -15,14 +15,20 @@ const r2r = (v: number) => Math.round(v * 100) / 100
 
 type Item = { i: number; embed: string | null; capa: string | null }
 
-/** Capa do vídeo (YouTube ou Vimeo) a partir do endereço de incorporação. */
+/** Capa do YouTube a partir do endereço de incorporação (a do Vimeo vem do oEmbed). */
 function capaDe(embed: string | null): string | null {
   if (!embed) return null
   const yt = embed.match(/youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/)
   if (yt) return `https://i.ytimg.com/vi/${yt[1]}/hqdefault.jpg`
-  const vm = embed.match(/player\.vimeo\.com\/video\/(\d+)/)
-  if (vm) return `https://vumbnail.com/${vm[1]}.jpg`
   return null
+}
+
+/** Endereço público do vídeo do Vimeo (com o código dos não listados), para o oEmbed. */
+function vimeoPagina(embed: string | null): string | null {
+  const vm = embed?.match(/player\.vimeo\.com\/video\/(\d+)(?:\?.*?[?&]h=([0-9a-f]+))?/)
+  if (!vm) return null
+  const h = embed!.match(/[?&]h=([0-9a-f]+)/)?.[1]
+  return `https://vimeo.com/${vm[1]}${h ? `/${h}` : ''}`
 }
 
 const comAutoplay = (embed: string) => embed + (embed.includes('?') ? '&' : '?') + 'autoplay=1'
@@ -48,6 +54,20 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
   const ativaRef = useRef(0)
   const [ativa, setAtiva] = useState(0)
   const [aTocar, setATocar] = useState<number | null>(null)
+  // Capas dos vídeos do Vimeo: o oEmbed devolve a capa escolhida no Vimeo,
+  // também nos vídeos não listados (com o código no endereço)
+  const [capasVimeo, setCapasVimeo] = useState<Record<string, string>>({})
+  const chaveVimeo = itens.map(it => vimeoPagina(it.embed) ?? '').join('|')
+  useEffect(() => {
+    let vivo = true
+    for (const pag of chaveVimeo.split('|').filter(Boolean)) {
+      fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(pag)}&width=1280`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(d => { if (vivo && d?.thumbnail_url) setCapasVimeo(c => ({ ...c, [pag]: d.thumbnail_url })) })
+        .catch(() => {})
+    }
+    return () => { vivo = false }
+  }, [chaveVimeo])
 
   useEffect(() => {
     if (!n) return
@@ -197,7 +217,7 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
                   allowFullScreen title={`Vídeo ${it.i + 1}`} />
               ) : it.embed ? (
                 <>
-                  {it.capa && <img src={it.capa} alt="" className="rlv-capa" loading="lazy" draggable={false}
+                  {(it.capa || capasVimeo[vimeoPagina(it.embed) ?? '']) && <img src={it.capa || capasVimeo[vimeoPagina(it.embed) ?? '']} alt="" className="rlv-capa" loading="lazy" draggable={false}
                     onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />}
                   <div className="rlv-veu" />
                   <button type="button" className="rlv-play" aria-label={`Ver o vídeo ${it.i + 1}`}
