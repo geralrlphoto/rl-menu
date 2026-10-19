@@ -8,6 +8,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { prazoVideoDias } from '@/lib/crm'
 import { embedDe } from '@/lib/videoEmbed'
+import { useBatizado } from './PortalShell'
 
 export type VideoRL = { titulo: string; url?: string | null; capa?: string | null; principal?: boolean; enviadoEm?: string | null }
 
@@ -44,11 +45,12 @@ function NotaDownload({ enviadoEm }: { enviadoEm?: string | null }) {
    (WhatsApp, SMS, email…); no computador copia a mensagem com o link. */
 function PartilharVideo({ titulo, url, pagina, largo }: { titulo: string; url: string; pagina?: string | null; largo?: boolean }) {
   const [copiado, setCopiado] = useState(false)
+  const evento = useBatizado() ? 'batizado' : 'casamento'
   async function partilhar() {
     // Com a página dos convidados, partilha-se essa página (todos os vídeos, com leitor)
     const texto = pagina
-      ? `Olá! Já podem ver o filme do nosso casamento aqui: ${pagina}`
-      : `Olá! Já podem ver o ${titulo} do nosso casamento: ${url}`
+      ? `Olá! Já podem ver o filme do nosso ${evento} aqui: ${pagina}`
+      : `Olá! Já podem ver o ${titulo} do nosso ${evento}: ${url}`
     try {
       if (navigator.share) { await navigator.share({ title: titulo, text: texto }); return }
     } catch { return /* partilha cancelada */ }
@@ -79,6 +81,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
   /** Página dos vídeos para os convidados (o que o botão Partilhar envia) */
   paginaConvidados?: string | null
 }) {
+  const batizado = useBatizado()
   const casamento = /^\d{4}-\d{2}-\d{2}/.test(dataCasamento ?? '') ? dataCasamento!.slice(0, 10) : null
   const dias = prazoVideoDias(proposta)
   const previsto = casamento ? somaUteis(casamento, dias) : null
@@ -151,7 +154,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
             </div>
             <aside style={{ borderRadius: 22, border: '1px solid rgba(216,190,147,.3)', background: 'rgba(17,17,17,.8)', backdropFilter: 'blur(16px)', padding: 20, boxShadow: '0 0 48px -22px rgba(216,190,147,.5)' }}>
               <div className="eyebrow" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: G, boxShadow: `0 0 8px ${G}` }} />Wedding Film
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: G, boxShadow: `0 0 8px ${G}` }} />{batizado ? 'O filme' : 'Wedding Film'}
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', marginTop: 8 }}>
                 {[
@@ -208,7 +211,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
       {outros.length > 0 && (
         <section>
           <div className="eyebrow">Os outros vídeos</div>
-          <h2 style={{ margin: '6px 0 16px', fontSize: 'clamp(26px, 3vw, 34px)', color: '#fff' }}>Teaser, pré-wedding e mais</h2>
+          <h2 style={{ margin: '6px 0 16px', fontSize: 'clamp(26px, 3vw, 34px)', color: '#fff' }}>{batizado ? 'Teaser e mais' : 'Teaser, pré-wedding e mais'}</h2>
           <div className="rl-filme-grid" style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(3, outros.length)}, minmax(0,1fr))`, gap: 14 }}>
             {outros.map(v => (
               <div key={v.titulo} style={{ ...card, borderLeft: `2px solid ${v.url ? 'rgba(216,190,147,.7)' : 'rgba(216,190,147,.3)'}` }} className="rl-filme-card">

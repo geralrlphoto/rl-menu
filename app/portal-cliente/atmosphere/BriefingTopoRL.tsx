@@ -4,6 +4,8 @@
    resumo com o prazo do briefing (cerca de 15 dias antes) e os dias até ao casamento.
    O formulário por baixo mantém-se igual; só ganha o estilo novo (tema-rl.css). */
 
+import { useBatizado } from './PortalShell'
+
 const G = '#d8be93'
 
 export function BriefingTopoRL({ title, heroUrl, backHref, dataCasamento }: {
@@ -12,6 +14,7 @@ export function BriefingTopoRL({ title, heroUrl, backHref, dataCasamento }: {
   backHref: string
   dataCasamento?: string | null
 }) {
+  const evento = useBatizado() ? 'batizado' : 'casamento'
   const hoje = new Date(new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date()) + 'T12:00:00Z')
   const casamento = /^\d{4}-\d{2}-\d{2}/.test(dataCasamento ?? '') ? new Date(dataCasamento!.slice(0, 10) + 'T12:00:00Z') : null
   const limite = casamento ? new Date(casamento.getTime() - 15 * 86400000) : null
@@ -19,7 +22,7 @@ export function BriefingTopoRL({ title, heroUrl, backHref, dataCasamento }: {
   const fmt = (d: Date) => d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })
 
   const tiles: Array<[string, string, string, boolean]> = [
-    ['Preencher até', limite ? fmt(limite) : '15 dias antes', limite ? (dias(limite) >= 0 ? `faltam ${dias(limite)} dias` : 'prazo passou') : 'do casamento', true],
+    ['Preencher até', limite ? fmt(limite) : '15 dias antes', limite ? (dias(limite) >= 0 ? `faltam ${dias(limite)} dias` : 'prazo passou') : `do ${evento}`, true],
     ['Faltam', casamento ? `${Math.max(0, dias(casamento))} dias` : '—', 'para o grande dia', false],
   ]
 
@@ -40,7 +43,7 @@ export function BriefingTopoRL({ title, heroUrl, backHref, dataCasamento }: {
               Os detalhes do vosso <em style={{ fontStyle: 'normal', color: G }}>dia</em>
             </h1>
             <p style={{ margin: '14px 0 0', color: 'rgba(255,255,255,.55)', maxWidth: '50ch', lineHeight: 1.7 }}>
-              Preencham com calma, secção a secção. Fica tudo guardado e podem voltar quando quiserem. Cerca de 15 dias antes do casamento falamos numa reunião de preparação por videochamada.
+              Preencham com calma, secção a secção. Fica tudo guardado e podem voltar quando quiserem. Cerca de 15 dias antes do {evento} falamos numa reunião de preparação por videochamada.
             </p>
           </div>
           <aside style={{ borderRadius: 22, border: '1px solid rgba(216,190,147,.3)', background: 'rgba(17,17,17,.8)', backdropFilter: 'blur(16px)', padding: 20, boxShadow: '0 0 48px -22px rgba(216,190,147,.5)' }}>

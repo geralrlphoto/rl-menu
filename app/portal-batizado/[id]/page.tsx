@@ -11,9 +11,15 @@ import { BlocosComPrevisao } from '@/app/portal-cliente/atmosphere/PrevisaoIPMA'
 import BlockEditor from '../BlockEditor'
 import BriefingExtensions, { type BriefingExt, BotaoPartilhar } from '../../portal-cliente/[id]/BriefingExtensions'
 import '../../portal-cliente/atmosphere/atmosphere.css'
-import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, CaixaBloqueio, type SidebarNavItem } from '../../portal-cliente/atmosphere/PortalShell'
+import { PortalShell, SidebarCouple, SidebarNav, SidebarMiniCountdown, CaixaBloqueio, useTemaRL, type SidebarNavItem } from '../../portal-cliente/atmosphere/PortalShell'
+import { PagamentosRL } from '../../portal-cliente/atmosphere/PagamentosRL'
+import { FilmeRL, type VideoRL } from '../../portal-cliente/atmosphere/FilmeRL'
+import { BriefingTopoRL } from '../../portal-cliente/atmosphere/BriefingTopoRL'
+import { SatisfacaoRL } from '../../portal-cliente/atmosphere/SatisfacaoRL'
+import { CronogramaRL, type EtapaRL } from '../../portal-cliente/atmosphere/CronogramaRL'
+import { IntroDropdown, FilmeAcoes } from '../../portal-cliente/[id]/page'
 import { ContratoView } from '../../portal-cliente/atmosphere/ContratoView'
-import { portalBloqueado, paginaSempreAberta, emFalta } from '@/lib/portalBloqueio'
+import { portalBloqueado, paginaSempreAberta, emFalta, adjudicacaoPaga } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../../portal-cliente/atmosphere/PreWeddingView'
 import { SendMessageButton } from '../../portal-cliente/atmosphere/SendMessageButton'
 import { AtendimentoThread } from '../../portal-cliente/atmosphere/AtendimentoThread'
@@ -22,6 +28,18 @@ import { FotografiasView, type FotografiasCard } from '../../portal-cliente/atmo
 import { FORM_SELECAO_FOTOS_URL, linkSelecaoFotos } from '@/lib/links'
 
 const PORTAL_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
+
+/** Tema RL: assinatura dourada no fim das páginas, em vez do cartão creme do logótipo */
+function AssinaturaRL() {
+  return (
+    <div className="mt-12 mb-4 flex flex-col items-center text-center">
+      <div className="w-16 h-px mb-6" style={{ background: 'linear-gradient(90deg, transparent, rgba(216,190,147,0.6), transparent)' }} />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/portal-noivos/logo-gold.png" alt="RL Photo Video" className="h-12 w-auto object-contain opacity-90" />
+      <p className="mt-3 text-[9px] tracking-[0.45em] uppercase" style={{ color: 'rgba(216,190,147,0.65)' }}>Photo · Video · Wedding Moments</p>
+    </div>
+  )
+}
 const PORTAL_TIPO: 'casamento' | 'batizado' = 'batizado'
 const COUPLE_LABEL = 'Os Pais'
 
@@ -1062,6 +1080,15 @@ function PortalSubPageContent() {
   const isFilmePage       = title.toUpperCase().includes('FILME') || title.toUpperCase().includes('NOSSO FILME')
   const isSatisfacaoPage   = title.toUpperCase().includes('SAT.') || title.toUpperCase().includes('SATISF')
   const isCronogramaPage   = title.toUpperCase().includes('CRONOGRAMA')
+  // Novo design (tema RL), lido pelo endereço (BAT_…)
+  const temaRL = useTemaRL()
+  // Tema RL: etapas do cronograma que vêm de outras tabelas (preparação, briefing à equipa)
+  const [cronoAuto, setCronoAuto] = useState<{ reuniaoPreparacao?: boolean; preWeddingMarcado?: boolean; briefingEquipa?: boolean }>({})
+  useEffect(() => {
+    const r = portalRef || refParam
+    if (!temaRL || !isCronogramaPage || !r) return
+    fetch(`/api/cronograma-auto?ref=${encodeURIComponent(r)}`).then(x => x.ok ? x.json() : {}).then(setCronoAuto).catch(() => {})
+  }, [temaRL, isCronogramaPage, portalRef, refParam])
 
   const loadPagamentos = useCallback(async () => {
     setPagRefreshing(true)
@@ -1769,6 +1796,197 @@ function PortalSubPageContent() {
     ? `/portal-batizado/${fromId}?title=${encodeURIComponent(fromTitle ?? '')}${refParam ? `&portalRef=${encodeURIComponent(refParam)}` : ''}`
     : refParam ? `/portal-batizado/ref/${encodeURIComponent(refParam)}` : '/portal-batizado'
 
+  // ── Tema RL (igual ao portal de casamento): Cronograma, Área SAT, O Nosso Filme e Pagamentos ──
+  const _rlLivre = temaRL && !loading && !error && !editing && !editingPhotos && !isFreelancerView
+  const _rlSino = <NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />
+  const _rlDataEvento = String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null
+
+  if (_rlLivre && isCronogramaPage) {
+    const ps: any = portalSettingsObj ?? {}
+    const hojeIso = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
+    const dataEv = _rlDataEvento ?? ''
+    const pagos = (pagamentos ?? []).filter((x: any) => x.confirmado !== false)
+    const faseConfirmada = (re: RegExp) => pagos.some((x: any) => Number(x.valor_liquidado ?? 0) > 0 &&
+      (Array.isArray(x.fase_pagamento) ? x.fase_pagamento : [x.fase_pagamento]).some((f: any) => re.test(String(f ?? ''))))
+    // O que a app já sabe, sem ninguém carregar no botão
+    const automatico = (t: string): boolean => {
+      const u = t.toUpperCase()
+      if (u.includes('REUNIÃO INICIAL') || u.includes('REUNIAO INICIAL')) return true
+      if (u.startsWith('CONTRATO')) return !!(ps.contratoDisponivel || ps.contratoAssinadoEm)
+      if (u.startsWith('ADJUDICA')) return adjudicacaoPaga(pagos)
+      if (u.includes('SESSÃO') || u.includes('SESSAO')) return !!(ps.bookingReservedSlotId || ps.preWeddingReservedSlotId || ps.prewedding_url || cronoAuto.preWeddingMarcado)
+      if (u.includes('PREPARAÇÃO') || u.includes('PREPARACAO')) return !!cronoAuto.reuniaoPreparacao
+      if (u.includes('BRIEFING DE EQUIPA')) return !!cronoAuto.briefingEquipa
+      if (u.startsWith('REFOR')) return faseConfirmada(/REFOR|FINAL/i)
+      if (u.startsWith('DIA DO BATIZADO') || u.startsWith('BATIZADO')) return !!dataEv && dataEv <= hojeIso
+      if (u.startsWith('BACKUP')) return !!ps.armazenamento_backup
+      if (u.startsWith('FOTOGRAFIAS')) return !!ps.fotos_finais_url
+      if (u.startsWith('VÍDEO') || u.startsWith('VIDEO')) return !!ps.wedding_film_url
+      if (u.startsWith('ENTREGA FINAL')) return !!(ps.fotos_finais_url && ps.wedding_film_url)
+      return false
+    }
+    const frase = (v: string) => { const t = v.trim().replace(/[,.]$/, ''); return t ? t.charAt(0).toUpperCase() + t.slice(1).toLowerCase() : '' }
+    const _etapas: EtapaRL[] = blocks.filter(b => b.type === 'callout').map(b => {
+      const bruto = plainText(b.callout?.rich_text ?? []).trim()
+      const [cab, ...resto] = bruto.split(/\s+-\s+/)
+      const auto = automatico(bruto)
+      return {
+        id: b.id,
+        titulo: frase(cab),
+        texto: resto.join(' · ').trim().replace(/,$/, '') || undefined,
+        feito: auto || !!cronogramaStatus[b.id],
+        automatico: auto,
+      }
+    })
+    const _intro = blocks.filter(b => b.type === 'paragraph' && plainText(b.paragraph?.rich_text ?? []).trim())
+    return (
+      <PortalShell sidebar={_atmSidebar} headerRight={_rlSino}>
+        <CronogramaRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          etapas={_etapas}
+          onAlternar={id2 => toggleCronogramaSection(id2)}
+          intro={_intro.length > 0 ? (
+            <IntroDropdown titulo="Como funciona o cronograma">
+              <NotionBlocks blocks={_intro} hiddenNav={settings.hiddenNav} />
+            </IntroDropdown>
+          ) : undefined}
+        />
+      </PortalShell>
+    )
+  }
+
+  if (_rlLivre && isSatisfacaoPage) {
+    const _primeiraImg = blocks.findIndex(b => b.type === 'image')
+    const _texto = (_primeiraImg !== -1 ? blocks.slice(0, _primeiraImg) : blocks)
+      .filter(b => b.type === 'paragraph' && plainText(b.paragraph?.rich_text ?? []).trim())
+    return (
+      <PortalShell sidebar={_atmSidebar} headerRight={_rlSino}>
+        <SatisfacaoRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          intro={_texto.length > 0 ? (
+            <IntroDropdown titulo="Sobre esta área">
+              <NotionBlocks blocks={_texto} hiddenNav={settings.hiddenNav} />
+            </IntroDropdown>
+          ) : undefined}
+          nota={notaSat}
+          hover={hoverNotaSat}
+          setNota={setNotaSat}
+          setHover={setHoverNotaSat}
+          comentario={comentarioSat}
+          setComentario={setComentarioSat}
+          onSubmeter={submeterSatisfacao}
+          enviando={enviandoSat}
+          erro={erroSat}
+          resposta={satisfacao ?? (enviadoSat ? { nota: notaSat, comentario: comentarioSat.trim() } : null)}
+        />
+      </PortalShell>
+    )
+  }
+
+  if (_rlLivre && isFilmePage) {
+    const _links = calloutLinks[id as string] ?? {}
+    const _img = (b: Block): string | null => {
+      const c = (b.children ?? []).find((x: Block) => x.type === 'image')
+      if (!c) return null
+      return (c.image?.type === 'external' ? c.image.external?.url : c.image?.file?.url) ?? null
+    }
+    // No batizado o filme principal pode chamar-se "Filme" ou "Wedding Film"
+    const _ehFilme = (u: string) => u.includes('WEDDING FILM') || (u.includes('FILME') && !u.includes('TEASER'))
+    const _urlDe = (t: string): string => {
+      const u = t.toUpperCase()
+      return _links[t] || (
+        _ehFilme(u) ? (portalSettingsObj?.wedding_film_url ?? '') :
+        u.includes('SAME DAY') ? (portalSettingsObj?.same_day_edit_url ?? '') :
+        u.includes('TEASER') || u.includes('TRAILER') ? (portalSettingsObj?.teaser_url ?? '') : ''
+      ) || ''
+    }
+    const _enviadoDe = (t: string): string | null => {
+      const u = t.toUpperCase()
+      const k = _ehFilme(u) ? 'wedding_film_enviada'
+        : u.includes('SAME DAY') ? 'same_day_edit_enviada'
+        : u.includes('TEASER') || u.includes('TRAILER') ? 'teaser_enviada' : ''
+      return k ? (portalSettingsObj?.[k] ? String(portalSettingsObj[k]) : null) : null
+    }
+    const _callouts = findCalloutCards(blocks)
+    const _base: VideoRL[] = _callouts.length
+      ? _callouts.map(b => {
+          const t = plainText(b.callout?.rich_text ?? []).trim()
+          return { titulo: t, url: _urlDe(t) || null, capa: _img(b), principal: _ehFilme(t.toUpperCase()), enviadoEm: _enviadoDe(t) }
+        })
+      : ['Filme do batizado', 'Teaser'].map(t => ({ titulo: t, url: _urlDe(t) || null, principal: t !== 'Teaser', enviadoEm: _enviadoDe(t) }))
+    // Ordem: filme, teaser, same day edit
+    const _pos = (v: VideoRL) => { const u = v.titulo.toUpperCase(); return _ehFilme(u) ? 0 : u.includes('TEASER') || u.includes('TRAILER') ? 1 : u.includes('SAME DAY') ? 2 : 99 }
+    const _videos = [..._base].sort((a, b) => _pos(a) - _pos(b))
+    // Texto introdutório (parágrafos antes do primeiro cartão de vídeo), dentro do dropdown
+    const _primeiroCard = blocks.findIndex(b => findCalloutCards([b]).length > 0)
+    const _intro = blocks.filter((b, k) => (_primeiroCard === -1 || k < _primeiroCard) && b.type === 'paragraph' && plainText(b.paragraph?.rich_text ?? []).trim())
+    return (
+      <PortalShell sidebar={_atmSidebar} headerRight={_rlSino}>
+        <FilmeRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          videos={_videos}
+          dataCasamento={_rlDataEvento}
+          proposta={eventoData?.proposta ?? propostaData?.nome ?? null}
+          estadoVideo={eventoData?.video_estado ?? null}
+          intro={_intro.length > 0 ? (
+            <IntroDropdown titulo="Sobre o vosso filme">
+              <NotionBlocks blocks={_intro} hiddenNav={settings.hiddenNav} />
+            </IntroDropdown>
+          ) : undefined}
+          acoes={<FilmeAcoes settings={portalSettingsObj} />}
+        />
+      </PortalShell>
+    )
+  }
+
+  if (_rlLivre && isPaymentsPage) {
+    const _ref = portalSettingsObj?.referencia ?? refParam ?? portalRef ?? ''
+    const _nomes = nomeNoivos(eventoData?.cliente, portalSettingsObj?.noiva ?? portalSettingsObj?.mae ?? eventoData?.nome_noiva, portalSettingsObj?.noivo ?? portalSettingsObj?.pai ?? eventoData?.nome_noivo)
+    // Total: o da proposta aceite (portal, com os extras); se não houver, o da ficha do evento
+    const _total = portalTotal > 0 ? portalTotal : (eventoData ? (eventoData.valor_foto ?? 0) + (eventoData.valor_video ?? 0) : 0)
+    return (
+      <PortalShell sidebar={_atmSidebar} headerRight={_rlSino}>
+        <PagamentosRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          total={_total || 0}
+          pagamentos={pagamentos as any}
+          registarUrl={`/registar-pagamento?ref=${encodeURIComponent(_ref)}&noivos=${encodeURIComponent(_nomes)}&data=${encodeURIComponent(_rlDataEvento ?? '')}`}
+          ibanNode={<SolicitarIbanBtn pronto={Object.keys(portalSettingsObj ?? {}).length > 0} referencia={_ref} nomeNoivos={_nomes} />}
+          comoPagar={(() => {
+            // Um dropdown por título da página (ex.: Controlo de Pagamentos, Formas de Pagamento)
+            const seccoes: Array<{ titulo: string; blocks: Block[] }> = []
+            // Fora: blocos que a app não mostra (vazios) e o "Valor do serviço" do modelo (o total certo está no resumo)
+            const mostravel = (x: Block) => !['image', 'unsupported', 'child_database', 'divider'].includes(x.type)
+              && !/valor (do|de) servi[cç]o/i.test(plainText(x[x.type]?.rich_text ?? []))
+            for (const b of blocks.filter(mostravel)) {
+              if (b.type.startsWith('heading_')) { seccoes.push({ titulo: plainText(b[b.type]?.rich_text ?? []).trim(), blocks: [] }); continue }
+              if (!seccoes.length) seccoes.push({ titulo: 'Informação', blocks: [] })
+              seccoes[seccoes.length - 1].blocks.push(b)
+            }
+            const comConteudo = seccoes.filter(sc => sc.titulo && sc.blocks.some(b => b.type !== 'paragraph' || plainText(b.paragraph?.rich_text ?? []).trim()))
+            return comConteudo.length ? (
+              <>{comConteudo.map(sc => (
+                <IntroDropdown key={sc.titulo} titulo={sc.titulo}>
+                  <NotionBlocks blocks={sc.blocks} hiddenNav={settings.hiddenNav} />
+                </IntroDropdown>
+              ))}</>
+            ) : undefined
+          })()}
+          isAdmin={isAdmin}
+          dataCasamento={_rlDataEvento}
+        />
+      </PortalShell>
+    )
+  }
+
   if (_atmIsSimple && !loading) {
     const handleEditTitle = () => {
       setTitleInput(title)
@@ -1955,12 +2173,14 @@ function PortalSubPageContent() {
             )}
           </div>
 
-          {/* Logo card final (mesmo que o template) */}
-          <div className="logocard">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
-            <div className="url">www.rlphotovideo.pt</div>
-          </div>
+          {/* Logo card final (mesmo que o template); no tema RL, assinatura dourada */}
+          {temaRL ? <AssinaturaRL /> : (
+            <div className="logocard">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
+              <div className="url">www.rlphotovideo.pt</div>
+            </div>
+          )}
         </article>
       </PortalShell>
     )
@@ -2381,15 +2601,20 @@ function PortalSubPageContent() {
               separatorImageUrl={_atmEffectiveHeader || subpageHeaderUrl || portalHeroImageUrl || null}
               portalRef={fpRef}
               maqueteUrl={String(portalSettingsObj?.maquete_url ?? '') || null}
+              dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
+              estadoEdicao={eventoData?.fotos_edicao_estado ?? null}
+              capaFallback={_atmEffectiveHeader || portalHeroImageUrl || null}
             />
           </div>
 
-          {/* Logo card final (mesmo template das outras Atmosphère) */}
-          <div className="logocard">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
-            <div className="url">www.rlphotovideo.pt</div>
-          </div>
+          {/* Logo card final (mesmo template das outras Atmosphère); no tema RL, assinatura dourada */}
+          {temaRL ? <AssinaturaRL /> : (
+            <div className="logocard">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/portal-noivos/logo-ink.png" alt="RL Photo Video" />
+              <div className="url">www.rlphotovideo.pt</div>
+            </div>
+          )}
         </article>
       </PortalShell>
     )
@@ -2409,7 +2634,15 @@ function PortalSubPageContent() {
         .portal-atmosphere .cards-grid { display: none !important; }
       ` }} />
     )}
-    <main className={isSobreViewMode ? 'relative sobre-view' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+    <main className={isSobreViewMode ? 'relative sobre-view' : temaRL && isBriefingPage && !isFreelancerView ? 'relative max-w-[1000px] mx-auto px-3 sm:px-6 py-6 sm:py-10 briefing-rl' : 'relative max-w-[860px] mx-auto px-3 sm:px-6 py-6 sm:py-10'}>
+      {temaRL && isBriefingPage && !isFreelancerView && !loading && (
+        <BriefingTopoRL
+          title={title}
+          heroUrl={dpEffectivePhoto || _atmEffectiveHeader}
+          backHref={_atmBackHref}
+          dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
+        />
+      )}
       {/* ── Design premium: fundo fixo cobre o viewport inteiro ── */}
       {isDesignPremium && (
         <>
@@ -3162,7 +3395,13 @@ function PortalSubPageContent() {
                           })()
                         : -1
                       const aceHidden = new Set(isFreelancerView ? [] : (aceIdx !== -1 ? allOther.slice(aceIdx, aceEnd).map(b => b.id) : []))
+                      // Tema RL: sem a imagem solta do logótipo (e o título vazio antes dela); vai uma assinatura no fim
+                      const semLogoRL = (b: Block) => !(temaRL && !isFreelancerView && (
+                        b.type === 'image' ||
+                        (['heading_1','heading_2','heading_3'].includes(b.type) && !plainText(b[b.type]?.rich_text ?? []).trim())
+                      ))
                       const otherBlocks = allOther.filter(b =>
+                        semLogoRL(b) &&
                         !aceHidden.has(b.id) &&
                         !(b.type === 'callout' && (b.children ?? []).some((c: Block) => c.type === 'image')) &&
                         !(b.type === 'column_list' && (b.children ?? []).some((col: Block) =>
@@ -3518,6 +3757,7 @@ function PortalSubPageContent() {
                                 {notionMid.length > 0 && <NotionBlocks blocks={notionMid} hiddenNav={settings.hiddenNav} backUrl={backUrl} />}
                                 {briefingExtBlock}
                                 {notionPost.length > 0 && <BlocosComPrevisao blocks={notionPost} local={eventoData?.local} data={eventoData?.data_evento} render={bs => <NotionBlocks blocks={bs} hiddenNav={settings.hiddenNav} backUrl={backUrl} />} />}
+                                {temaRL && !isFreelancerView && <AssinaturaRL />}
                               </>
                             )
                           })()}

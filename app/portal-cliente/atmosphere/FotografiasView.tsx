@@ -16,7 +16,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { SectionTitle } from './SectionTitle'
-import { useTemaRL } from './PortalShell'
+import { useTemaRL, useBatizado } from './PortalShell'
 import './fotografias.css'
 
 export type FotografiasCard = {
@@ -315,12 +315,13 @@ const SHAREABLE = new Set(['galerias', 'prewedding'])
    link, pronta a colar. */
 function ShareConvidadosButton({ path }: { path: string }) {
   const [estado, setEstado] = useState<'idle' | 'copiado'>('idle')
+  const evento = useBatizado() ? 'batizado' : 'casamento'
   async function partilhar() {
     // Sempre com o domínio oficial, mesmo que o portal esteja aberto noutro endereço
     const url = path.startsWith('http') ? path : `https://portal.rlphotovideo.pt${path}`
-    const texto = `Olá! Já podem ver as fotografias do nosso casamento e adquirir as vossas preferidas, em digital ou em papel, aqui: ${url}`
+    const texto = `Olá! Já podem ver as fotografias do nosso ${evento} e adquirir as vossas preferidas, em digital ou em papel, aqui: ${url}`
     try {
-      if (navigator.share) { await navigator.share({ title: 'Fotografias do casamento', text: texto }); return }
+      if (navigator.share) { await navigator.share({ title: `Fotografias do ${evento}`, text: texto }); return }
     } catch { return /* partilha cancelada */ }
     try {
       await navigator.clipboard.writeText(texto)
@@ -489,6 +490,7 @@ function ComoEscolherButton({ enviarUrl }: { enviarUrl: string }) {
 export function FotografiasView(props: FotografiasViewProps) {
   // Novo design (tema RL): resumo do estado das galerias no topo
   const temaRL = useTemaRL()
+  const evento = useBatizado() ? 'batizado' : 'casamento'
   const casamento = /^\d{4}-\d{2}-\d{2}/.test(props.dataCasamento ?? '') ? props.dataCasamento!.slice(0, 10) : null
   // Estado e data prevista de cada galeria (prazos do guia: 7 e 30 dias úteis)
   const estadoGaleria = (c: FotografiasCard): { estado: string; nota?: string; tom: 'ok' | 'info' | 'wait' | 'alerta' } => {
@@ -498,7 +500,7 @@ export function FotografiasView(props: FotografiasViewProps) {
       if (editadas?.url) return { estado: 'Concluída', tom: 'ok' }
       if (ok && /envia|edi|entreg/i.test(props.estadoEdicao ?? '')) return { estado: 'Seleção recebida · em edição', tom: 'info' }
       if (ok) return { estado: 'Por escolher', nota: 'Escolham as fotografias e enviem a seleção', tom: 'wait' }
-      return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 30))}` : 'Até 30 dias úteis depois do casamento', tom: 'wait' }
+      return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 30))}` : `Até 30 dias úteis depois do ${evento}`, tom: 'wait' }
     }
     if (ok) {
       if (c.key === 'editadas' && c.footnote) {
@@ -508,7 +510,7 @@ export function FotografiasView(props: FotografiasViewProps) {
       }
       return { estado: 'Disponível', tom: 'ok' }
     }
-    if (c.key === 'galerias') return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 7))}` : 'Até 7 dias úteis depois do casamento', tom: 'wait' }
+    if (c.key === 'galerias') return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 7))}` : `Até 7 dias úteis depois do ${evento}`, tom: 'wait' }
     if (c.key === 'editadas') return { estado: 'A aguardar', nota: '30 dias úteis depois de nos enviarem a seleção', tom: 'wait' }
     if (c.key === 'prewedding') return { estado: 'A aguardar', nota: 'Depois da sessão pré-wedding', tom: 'wait' }
     if (c.key === 'convidados') return { estado: 'Disponível', tom: 'ok' }
@@ -518,7 +520,7 @@ export function FotografiasView(props: FotografiasViewProps) {
   const cards: FotografiasCard[] = temaRL && props.convidadosUrl
     ? [...props.cards, {
         key: 'convidados',
-        lead: { kicker: 'Convidados', title: <>Fotografias para os <em>convidados</em>.</>, subtitle: 'Vocês e os vossos convidados podem adquirir fotografias do casamento. Digital em 15 dias úteis; papel em 30 dias úteis, por correio em carta registada.' },
+        lead: { kicker: 'Convidados', title: <>Fotografias para os <em>convidados</em>.</>, subtitle: `Vocês e os vossos convidados podem adquirir fotografias do ${evento}. Digital em 15 dias úteis; papel em 30 dias úteis, por correio em carta registada.` },
         title: 'FOTOS PARA CONVIDADOS',
         heading: 'Fotografias para os convidados',
         caption: 'Digital em 15 dias úteis · papel em 30 dias úteis',

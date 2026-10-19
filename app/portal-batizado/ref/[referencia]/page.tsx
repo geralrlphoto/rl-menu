@@ -10,6 +10,7 @@ import { NoivosLogoutButton } from '@/app/components/NoivosLogoutButton'
 import { AtmospherePortal, buildDeliveriesFromSettings } from '../../../portal-cliente/atmosphere/AtmospherePortal'
 import { portalBloqueado, emFalta } from '@/lib/portalBloqueio'
 import { FORM_SELECAO_FOTOS_URL } from '@/lib/links'
+import { temTemaRL } from '@/lib/portalTema'
 
 const PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
 const PORTAL_TIPO: 'casamento' | 'batizado' = 'batizado'
@@ -729,7 +730,9 @@ export default function PortalRefPage() {
 
 
   // ── portal view (Atmosphère + Atelier reskin) ─────────────────────────────
+  // Novo design (tema RL): a página Sobre o Menu deixou de existir para os pais
   const subPagesList = findAllChildPages(blocks)
+    .filter(p => !(temTemaRL(referencia) && /SOBRE O MENU/i.test(p.title)))
   const welcomeText = findWelcomeText(blocks)
 
   return (

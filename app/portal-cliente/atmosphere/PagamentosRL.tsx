@@ -6,6 +6,7 @@
    Só apresentação: os dados e os botões vêm da página. */
 
 import { type ReactNode } from 'react'
+import { useBatizado } from './PortalShell'
 
 type Pag = {
   id: string
@@ -45,6 +46,7 @@ export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, regi
   const falta = Math.max(0, total - pago)
   const pct = total > 0 ? Math.min(100, Math.round(pago / total * 100)) : 0
 
+  const evento = useBatizado() ? 'batizado' : 'casamento'
   const resto = Math.max(0, total - ADJ)
   // Reforço: até 2 dias antes do casamento (a mesma regra do alerta do /photo)
   const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
@@ -53,7 +55,7 @@ export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, regi
   const limiteReforco = casamento ? menos(casamento, 2) : null
   const fases = [
     { nome: 'Adjudicação', codigo: 'ADJUDICAÇÃO', quando: 'Na assinatura do contrato, para reservar o dia', valor: total > 0 ? ADJ : 0, limite: null as string | null },
-    { nome: 'Reforço', codigo: 'REFORÇO', quando: '80% do valor em falta, até 2 dias antes do casamento', valor: Math.round(resto * 0.8 * 100) / 100, limite: limiteReforco },
+    { nome: 'Reforço', codigo: 'REFORÇO', quando: `80% do valor em falta, até 2 dias antes do ${evento}`, valor: Math.round(resto * 0.8 * 100) / 100, limite: limiteReforco },
     { nome: 'Final', codigo: 'FINAL', quando: 'Os restantes 20%, no final', valor: Math.round(resto * 0.2 * 100) / 100, limite: null as string | null },
   ]
   const dataLonga = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })

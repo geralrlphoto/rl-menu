@@ -22,7 +22,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import './atmosphere.css'
 import './tema-rl.css'
-import { refDoEndereco, temTemaRL } from '@/lib/portalTema'
+import { refDoEndereco, temTemaRL, ehBatizado } from '@/lib/portalTema'
 
 // As fontes tem de ser injectadas em runtime: o Turbopack remove os
 // `@import url(...)` dos ficheiros .css no build de producao, por isso o
@@ -62,6 +62,15 @@ export function useTemaRL(): boolean {
   const [on, setOn] = useState(false)
   useEffect(() => {
     setOn(temTemaRL(refDoEndereco(window.location.pathname, window.location.search)))
+  }, [])
+  return on
+}
+
+/* Portal de batizado (lido pelo endereço): os textos dizem "batizado" em vez de "casamento" */
+export function useBatizado(): boolean {
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    setOn(ehBatizado(window.location.pathname, refDoEndereco(window.location.pathname, window.location.search)))
   }, [])
   return on
 }
@@ -219,6 +228,7 @@ export function SidebarNav({
   const hrefDe = (re: RegExp) => items.find(i => !i.locked && re.test(i.label.toUpperCase()))?.href
   const temaRL = useTemaRL()
   const avisos = useAvisosRL(temaRL)
+  const batizado = useBatizado()
 
   if (temaRL) {
     const nome = (l: string) => {
@@ -290,10 +300,11 @@ export function SidebarNav({
           </div>
         )}
         {inicio && <nav style={{ marginTop: 18 }}>{linha(inicio)}</nav>}
-        {bloco('Antes do casamento', items.filter(i => grupo(i.label) === 'antes'))}
-        {bloco('Depois do casamento', items.filter(i => grupo(i.label) === 'depois'))}
+        {bloco(batizado ? 'Antes do batizado' : 'Antes do casamento', items.filter(i => grupo(i.label) === 'antes'))}
+        {bloco(batizado ? 'Depois do batizado' : 'Depois do casamento', items.filter(i => grupo(i.label) === 'depois'))}
+        {/* O guia do portal só existe nos portais de casamento */}
         {bloco('Ajuda', items.filter(i => grupo(i.label) === 'ajuda'),
-          casa ? <a key="__guia__" className="nv" href={guiaHref}>{getNavIconFor('GUIA')}<span>Guia do portal</span></a> : null)}
+          casa && !batizado ? <a key="__guia__" className="nv" href={guiaHref}>{getNavIconFor('GUIA')}<span>Guia do portal</span></a> : null)}
 
         {/* Próximo passo (no lugar da contagem, que já está no Início) */}
         {prox && (
