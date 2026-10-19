@@ -4,7 +4,7 @@
 // OPÇÃO 4 da página de marcas — "Roda".
 // Fundo preto e uma roda grande (monograma RL dentro de anéis de mostrador)
 // com o centro na borda direita do ecrã: só se vê a metade esquerda. Os
-// cartões (as três marcas + fotografias) estão presos à roda em dois anéis;
+// três cartões das marcas estão presos à roda;
 // com o scroll do rato (ou a arrastar no telemóvel) roda tudo junto, e os
 // cartões sobem pela esquerda: entram por baixo e saem por cima.
 // Referência: vídeo enviado pelo Rui (19/10/2026). É a página principal (/);
@@ -24,46 +24,23 @@ type Item =
 
 const marca = (href: string, nome: string, area: string, frase: string, foto: string, posicao: string, logo: string, logoEscala: number): Item =>
   ({ tipo: 'marca', href, nome, area, frase, foto, posicao, logo, logoEscala })
-const foto = (src: string, leg: string, deitada = false): Item =>
-  ({ tipo: 'foto', src, leg, w: deitada ? 230 : 180, h: deitada ? 155 : 235 })
 
-// Anel de dentro: 12 lugares a 30°; as três marcas a 120° umas das outras.
+// Só as três marcas, repetidas 4 vezes à volta da roda (12 lugares a 30°),
+// para estarem sempre as três no ecrã enquanto roda.
 // A primeira marca começa à esquerda, a meio do ecrã.
-const ANEL1: Item[] = [
+const TRES: Item[] = [
   marca('/photo', 'RL Photo.Video', 'Casamentos', 'O dia inteiro contado com calma, luz natural e verdade.',
     '/eventos-hero-2026.webp', 'center 40%', '/logo-photovideo-hd.png', 1.9),
-  foto('/prewedding-hero.webp', 'Pré-wedding', true),
-  foto('/casamentos-2028.webp', 'Casamentos 2028'),
-  foto('/boas-vindas-camera.webp', 'Bastidores'),
   marca('/media', 'RL Prod', 'Marcas', 'Conteúdo com intenção, feito para ser visto e lembrado.',
     '/login hero.png', 'center 50%', '/logo-rl-prod-black.png', 1),
-  foto('/MEDIA HERO.png', 'RL Prod'),
-  foto('/eventos-hero-2027.webp', 'Eventos 2027', true),
-  foto('/casamentos-2026.jpg', 'Casamentos 2026'),
   marca('/wedding-mentor', 'RL Wedding Mentor', 'Formação', 'Educar, inspirar e elevar quem fotografa e filma casamentos.',
     '/casamentos-2027.jpg', 'center 45%', '/logo-mentor-hd.png', 1),
-  foto('/batizado-hero.webp', 'Batizados'),
-  foto('/crm-hero.webp', 'Reuniões', true),
-  foto('/portal-noivos-login.webp', 'Portal dos noivos', true),
 ]
-// Anel de fora: só fotografias, desfasadas 15° das de dentro
-const ANEL2: Item[] = [
-  foto('/casamentos-2026.jpg', 'Casamentos 2026'),
-  foto('/eventos-hero-2028.webp', 'Eventos 2028', true),
-  foto('/boas-vindas-camera.webp', 'Bastidores'),
-  foto('/portal-noivos-login.webp', 'Portal dos noivos', true),
-  foto('/casamentos-2028.webp', 'Casamentos'),
-  foto('/prewedding-hero.webp', 'Sessões', true),
-  foto('/batizado-hero.webp', 'Família'),
-  foto('/eventos-hero-2026.webp', 'O grande dia', true),
-  foto('/MEDIA HERO.png', 'Marcas'),
-  foto('/crm-hero.webp', 'Reuniões', true),
-  foto('/casamentos-2027.jpg', 'Wedding Mentor'),
-  foto('/eventos-hero-2027.webp', 'Eventos', true),
-]
+const ANEL1: Item[] = [...TRES, ...TRES, ...TRES, ...TRES]
+const ANEL2: Item[] = []
 const ITENS = [...ANEL1, ...ANEL2]
 const PASSO = 360 / ANEL1.length
-const MARCAS = ANEL1.filter((i): i is Extract<Item, { tipo: 'marca' }> => i.tipo === 'marca')
+const MARCAS = TRES.filter((i): i is Extract<Item, { tipo: 'marca' }> => i.tipo === 'marca')
 
 const r2r = (v: number) => Math.round(v * 100) / 100
 
@@ -170,9 +147,10 @@ export default function MarcasOpcao4() {
         // roda até essa marca ficar à frente, pelo caminho mais curto
         const idx = ITENS.indexOf(MARCAS[Number(e.key) - 1])
         const destino = -idx * PASSO
-        const voltas = Math.round((alvo.current - destino) / 360)
-        alvo.current = destino + voltas * 360
-        setTimeout(() => cartoes.current[idx]?.focus({ preventScroll: true }), 500)
+        const voltas = Math.round((alvo.current - destino) / 90)
+        alvo.current = destino + voltas * 90
+        const naFrente = (((idx - 3 * voltas) % ANEL1.length) + ANEL1.length) % ANEL1.length
+        setTimeout(() => cartoes.current[naFrente]?.focus({ preventScroll: true }), 500)
       }
     }
     const onTouchStart = (e: TouchEvent) => { toque.current = e.touches[0].clientY }
@@ -263,7 +241,7 @@ export default function MarcasOpcao4() {
           <Mostrador gira={gira} giraInv={giraInv} roda={roda} />
 
           {ITENS.map((it, i) => it.tipo === 'marca' ? (
-            <Link key={it.href} href={it.href} ref={el => { cartoes.current[i] = el }}
+            <Link key={`${it.href}-${i}`} href={it.href} ref={el => { cartoes.current[i] = el }}
               className="op4-cartao op4-marca" draggable={false} style={{ opacity: 0 }}
               aria-label={`Entrar em ${it.nome}, ${it.area}`}>
               <div className="op4-marca-foto">
