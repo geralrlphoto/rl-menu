@@ -2639,7 +2639,10 @@ function PortalSubPageContent() {
           comoPagar={(() => {
             // Um dropdown por título da página (ex.: Controlo de Pagamentos, Formas de Pagamento)
             const seccoes: Array<{ titulo: string; blocks: Block[] }> = []
-            for (const b of blocks.filter(x => x.type !== 'image')) {
+            // Fora: blocos que a app não mostra (vazios) e o "Valor do serviço" do modelo (o total certo está no resumo)
+            const mostravel = (x: Block) => !['image', 'unsupported', 'child_database', 'divider'].includes(x.type)
+              && !/valor (do|de) servi[cç]o/i.test(plainText(x[x.type]?.rich_text ?? []))
+            for (const b of blocks.filter(mostravel)) {
               if (b.type.startsWith('heading_')) { seccoes.push({ titulo: plainText(b[b.type]?.rich_text ?? []).trim(), blocks: [] }); continue }
               if (!seccoes.length) seccoes.push({ titulo: 'Informação', blocks: [] })
               seccoes[seccoes.length - 1].blocks.push(b)
