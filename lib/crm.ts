@@ -246,12 +246,14 @@ export function mensagemOpiniao(nome: string | null | undefined, link: string): 
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
-    'Muito obrigado por terem conversado connosco. Se puderem, gostávamos muito de saber a vossa opinião sincera: o que pesou na vossa decisão e o que podíamos ter feito melhor. São só uns minutos e ajuda-nos imenso.',
+    'Obrigado pelo vosso tempo.',
+    'Agradecemos muito o tempo que dedicaram a conhecer-nos. Ficamos genuinamente felizes por terem encontrado alguém que vos tocou e que vai contar a vossa história. Desejamos-vos um casamento cheio de momentos para guardar para sempre.',
     '',
+    'Se puderem, gostávamos muito de saber a vossa opinião. Demora menos de 1 minuto:',
     link,
     '',
-    'Um abraço grande,',
-    'RL PhotoVideo',
+    'Com carinho,',
+    'RL Photo.Video',
   ].join('\n')
 }
 
