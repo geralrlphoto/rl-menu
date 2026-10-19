@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   try {
     const { data, error } = await db()
       .from('pagamentos_noivos')
-      .select('id, nome_noivos, referencia, data_casamento, data_pagamento, fase_pagamento, metodo_pagamento, valor_liquidado, atualizado')
+      .select('id, created_at, nome_noivos, referencia, data_casamento, data_pagamento, fase_pagamento, metodo_pagamento, valor_liquidado, atualizado, confirmado, confirmado_em, comprovativo_url, notas')
       .order('data_casamento', { ascending: true, nullsFirst: false })
 
     if (error) return NextResponse.json({ rows: [] })
@@ -30,6 +30,11 @@ export async function GET(req: Request) {
       metodo_pagamento: Array.isArray(row.metodo_pagamento) ? row.metodo_pagamento : [],
       valor_liquidado:  row.valor_liquidado,
       atualizado:       row.atualizado ?? false,
+      confirmado:       row.confirmado ?? false,
+      confirmado_em:    row.confirmado_em ?? null,
+      criado_em:        row.created_at ?? null,
+      comprovativo_url: row.comprovativo_url ?? null,
+      notas:            row.notas ?? null,
     }))
 
     return NextResponse.json({ rows })

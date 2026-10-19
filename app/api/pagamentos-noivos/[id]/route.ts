@@ -42,10 +42,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
   if (isUUID) {
     const updates: Record<string, any> = {}
-    const allowed = ['nome_noivos','referencia','data_casamento','data_pagamento','fase_pagamento','metodo_pagamento','valor_liquidado','atualizado']
+    const allowed = ['nome_noivos','referencia','data_casamento','data_pagamento','fase_pagamento','metodo_pagamento','valor_liquidado','atualizado','confirmado']
     for (const [k, v] of Object.entries(body)) {
       if (allowed.includes(k)) updates[k] = v
     }
+    // Confirmar / anular a confirmação guarda também quando foi feito
+    if ('confirmado' in updates) updates.confirmado_em = updates.confirmado ? new Date().toISOString() : null
     const { error } = await db().from('pagamentos_noivos').update(updates).eq('id', id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true })

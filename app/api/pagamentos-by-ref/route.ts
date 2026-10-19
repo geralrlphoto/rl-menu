@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { exigeAcessoRef } from '@/lib/api-guard'
+import { exigeAcessoRef, ehAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -27,13 +27,15 @@ export async function GET(req: Request) {
 
   const { data, error } = await db()
     .from('pagamentos_noivos')
-    .select('id, nome_noivos, referencia, data_casamento, data_pagamento, fase_pagamento, metodo_pagamento, valor_liquidado, atualizado')
+    .select('id, nome_noivos, referencia, data_casamento, data_pagamento, fase_pagamento, metodo_pagamento, valor_liquidado, atualizado, confirmado')
     .in('referencia', variants)
     .order('created_at', { ascending: true })
 
   if (error) return NextResponse.json({ payments: [] })
 
-  const payments = (data ?? []).map(row => ({
+  // Os noivos só veem (e o portal só conta) os pagamentos já confirmados por nós
+  const visiveis = ehAdmin(req) ? (data ?? []) : (data ?? []).filter(row => row.confirmado)
+  const payments = visiveis.map(row => ({
     id:               row.id,
     nome_noivos:      row.nome_noivos,
     referencia:       row.referencia,
@@ -43,6 +45,7 @@ export async function GET(req: Request) {
     metodo_pagamento: Array.isArray(row.metodo_pagamento) ? row.metodo_pagamento : (row.metodo_pagamento ? [row.metodo_pagamento] : []),
     valor_liquidado:  row.valor_liquidado,
     atualizado:       row.atualizado,
+    confirmado:       row.confirmado ?? false,
   }))
 
   return NextResponse.json({ payments })
