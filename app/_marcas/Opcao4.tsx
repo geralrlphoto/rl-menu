@@ -2,10 +2,11 @@
 
 // ─────────────────────────────────────────────────────────────────────────
 // OPÇÃO 4 da página de marcas — "Roda".
-// Fundo preto, monograma RL ao centro dentro de anéis de mostrador. A roda
-// só roda com o scroll do rato (ou a arrastar no telemóvel) e os cartões
-// (as três marcas + fotografias) giram à volta dela: os de baixo vêm para
-// a frente, grandes e nítidos; os de cima ficam pequenos e apagados.
+// Fundo preto e uma roda grande (monograma RL dentro de anéis de mostrador)
+// com o centro na borda direita do ecrã: só se vê a metade esquerda. Os
+// cartões (as três marcas + fotografias) estão presos à roda em dois anéis;
+// com o scroll do rato (ou a arrastar no telemóvel) roda tudo junto, e os
+// cartões sobem pela esquerda: entram por baixo e saem por cima.
 // Referência: vídeo enviado pelo Rui (19/10/2026). É a página principal (/);
 // Opção 1/2/3 em /?opcao=N.
 // ─────────────────────────────────────────────────────────────────────────
@@ -21,49 +22,68 @@ type Item =
   | { tipo: 'marca'; href: string; nome: string; area: string; frase: string; foto: string; posicao: string; logo: string; logoEscala: number }
   | { tipo: 'foto'; src: string; leg: string; w: number; h: number }
 
-// À volta da roda, por ordem (cada um a 30°). A primeira marca começa à frente.
-const ITENS: Item[] = [
-  { tipo: 'marca', href: '/photo', nome: 'RL Photo.Video', area: 'Casamentos',
-    frase: 'O dia inteiro contado com calma, luz natural e verdade.',
-    foto: '/eventos-hero-2026.webp', posicao: 'center 40%', logo: '/logo-photovideo-hd.png', logoEscala: 1.9 },
-  { tipo: 'foto', src: '/prewedding-hero.webp', leg: 'Pré-wedding', w: 220, h: 150 },
-  { tipo: 'foto', src: '/casamentos-2028.webp', leg: 'Casamentos 2028', w: 170, h: 220 },
-  { tipo: 'foto', src: '/eventos-hero-2027.webp', leg: 'Eventos 2027', w: 220, h: 150 },
-  { tipo: 'marca', href: '/media', nome: 'RL Prod', area: 'Marcas',
-    frase: 'Conteúdo com intenção, feito para ser visto e lembrado.',
-    foto: '/login hero.png', posicao: 'center 50%', logo: '/logo-rl-prod-black.png', logoEscala: 1 },
-  { tipo: 'foto', src: '/MEDIA HERO.png', leg: 'RL Prod', w: 170, h: 220 },
-  { tipo: 'foto', src: '/batizado-hero.webp', leg: 'Batizados', w: 170, h: 220 },
-  { tipo: 'foto', src: '/crm-hero.webp', leg: 'Reuniões', w: 220, h: 150 },
-  { tipo: 'marca', href: '/wedding-mentor', nome: 'RL Wedding Mentor', area: 'Formação',
-    frase: 'Educar, inspirar e elevar quem fotografa e filma casamentos.',
-    foto: '/casamentos-2027.jpg', posicao: 'center 45%', logo: '/logo-mentor-hd.png', logoEscala: 1 },
-  { tipo: 'foto', src: '/boas-vindas-camera.webp', leg: 'Bastidores', w: 170, h: 220 },
-  { tipo: 'foto', src: '/casamentos-2026.jpg', leg: 'Casamentos 2026', w: 170, h: 220 },
-  { tipo: 'foto', src: '/eventos-hero-2028.webp', leg: 'Eventos 2028', w: 220, h: 150 },
-]
-const MARCAS = ITENS.filter((i): i is Extract<Item, { tipo: 'marca' }> => i.tipo === 'marca')
-const PASSO = 360 / ITENS.length
+const marca = (href: string, nome: string, area: string, frase: string, foto: string, posicao: string, logo: string, logoEscala: number): Item =>
+  ({ tipo: 'marca', href, nome, area, frase, foto, posicao, logo, logoEscala })
+const foto = (src: string, leg: string, deitada = false): Item =>
+  ({ tipo: 'foto', src, leg, w: deitada ? 230 : 180, h: deitada ? 155 : 235 })
 
-const r2 = (v: number) => Math.round(v * 100) / 100
+// Anel de dentro: 12 lugares a 30°; as três marcas a 120° umas das outras.
+// A primeira marca começa à esquerda, a meio do ecrã.
+const ANEL1: Item[] = [
+  marca('/photo', 'RL Photo.Video', 'Casamentos', 'O dia inteiro contado com calma, luz natural e verdade.',
+    '/eventos-hero-2026.webp', 'center 40%', '/logo-photovideo-hd.png', 1.9),
+  foto('/prewedding-hero.webp', 'Pré-wedding', true),
+  foto('/casamentos-2028.webp', 'Casamentos 2028'),
+  foto('/boas-vindas-camera.webp', 'Bastidores'),
+  marca('/media', 'RL Prod', 'Marcas', 'Conteúdo com intenção, feito para ser visto e lembrado.',
+    '/login hero.png', 'center 50%', '/logo-rl-prod-black.png', 1),
+  foto('/MEDIA HERO.png', 'RL Prod'),
+  foto('/eventos-hero-2027.webp', 'Eventos 2027', true),
+  foto('/casamentos-2026.jpg', 'Casamentos 2026'),
+  marca('/wedding-mentor', 'RL Wedding Mentor', 'Formação', 'Educar, inspirar e elevar quem fotografa e filma casamentos.',
+    '/casamentos-2027.jpg', 'center 45%', '/logo-mentor-hd.png', 1),
+  foto('/batizado-hero.webp', 'Batizados'),
+  foto('/crm-hero.webp', 'Reuniões', true),
+  foto('/portal-noivos-login.webp', 'Portal dos noivos', true),
+]
+// Anel de fora: só fotografias, desfasadas 15° das de dentro
+const ANEL2: Item[] = [
+  foto('/casamentos-2026.jpg', 'Casamentos 2026'),
+  foto('/eventos-hero-2028.webp', 'Eventos 2028', true),
+  foto('/boas-vindas-camera.webp', 'Bastidores'),
+  foto('/portal-noivos-login.webp', 'Portal dos noivos', true),
+  foto('/casamentos-2028.webp', 'Casamentos'),
+  foto('/prewedding-hero.webp', 'Sessões', true),
+  foto('/batizado-hero.webp', 'Família'),
+  foto('/eventos-hero-2026.webp', 'O grande dia', true),
+  foto('/MEDIA HERO.png', 'Marcas'),
+  foto('/crm-hero.webp', 'Reuniões', true),
+  foto('/casamentos-2027.jpg', 'Wedding Mentor'),
+  foto('/eventos-hero-2027.webp', 'Eventos', true),
+]
+const ITENS = [...ANEL1, ...ANEL2]
+const PASSO = 360 / ANEL1.length
+const MARCAS = ANEL1.filter((i): i is Extract<Item, { tipo: 'marca' }> => i.tipo === 'marca')
+
+const r2r = (v: number) => Math.round(v * 100) / 100
 
 // Monograma RL dentro de anéis de mostrador; os anéis de dentro rodam com o scroll
-function Mostrador({ gira, giraInv }: { gira: React.Ref<SVGGElement>; giraInv: React.Ref<SVGGElement> }) {
+function Mostrador({ gira, giraInv, roda }: { gira: React.Ref<SVGGElement>; giraInv: React.Ref<SVGGElement>; roda: React.Ref<SVGSVGElement> }) {
   return (
-    <svg viewBox="-340 -340 680 680" className="op4-mostrador" aria-hidden="true">
+    <svg ref={roda} viewBox="-340 -340 680 680" className="op4-mostrador" aria-hidden="true">
       <circle r="330" fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="1" />
       <g ref={gira}>
         {Array.from({ length: 144 }).map((_, i) => {
           const a = (i / 144) * Math.PI * 2
           const ra = 158, rb = i % 12 === 0 ? 144 : 151
-          return <line key={i} x1={r2(Math.cos(a) * ra)} y1={r2(Math.sin(a) * ra)} x2={r2(Math.cos(a) * rb)} y2={r2(Math.sin(a) * rb)}
+          return <line key={i} x1={r2r(Math.cos(a) * ra)} y1={r2r(Math.sin(a) * ra)} x2={r2r(Math.cos(a) * rb)} y2={r2r(Math.sin(a) * rb)}
             stroke={i === 0 ? OURO : 'rgba(255,255,255,.24)'} strokeWidth={i === 0 ? 2 : 1} />
         })}
       </g>
       <g ref={giraInv}>
         {Array.from({ length: 9 }).map((_, i) => {
           const a = (i / 9) * Math.PI * 2 + .3
-          return <circle key={i} cx={r2(Math.cos(a) * 132)} cy={r2(Math.sin(a) * 132)} r="3" fill="rgba(255,255,255,.35)" />
+          return <circle key={i} cx={r2r(Math.cos(a) * 132)} cy={r2r(Math.sin(a) * 132)} r="3" fill="rgba(255,255,255,.35)" />
         })}
       </g>
       <ellipse rx="44" ry="58" fill="none" stroke={OURO} strokeWidth="1.2" />
@@ -77,6 +97,7 @@ export default function MarcasOpcao4() {
   const cartoes = useRef<(HTMLElement | null)[]>([])
   const gira = useRef<SVGGElement>(null)
   const giraInv = useRef<SVGGElement>(null)
+  const roda = useRef<SVGSVGElement>(null)
   const alvo = useRef(0)      // ângulo pedido pelo scroll (graus)
   const atual = useRef(0)     // ângulo mostrado (vai atrás do alvo, suave)
   const toque = useRef<number | null>(null)
@@ -86,29 +107,43 @@ export default function MarcasOpcao4() {
     let w = innerWidth, h = innerHeight
 
     const desenhar = (ang: number) => {
-      const zoom = Math.min(1, Math.max(.55, Math.min(w / 1500, h / 950)))
+      const zoom = Math.min(1, Math.max(.5, Math.min(w / 1500, h / 950)))
+      // centro da roda na borda direita, a meio da altura
+      // no telemóvel o círculo é mais largo e o centro fica mais para fora,
+      // para os cartões não se amontoarem
       const movel = w < 768
-      const rx = movel ? w * .42 : Math.min(w * .36, 640)
-      // o cartão da frente (em baixo) tem de caber inteiro no ecrã
-      const ry = Math.max(h * .18, h / 2 - (380 * zoom) / 2 - (movel ? 80 : 40))
+      const r1 = movel ? h * .55 : Math.max(w * .5, Math.min(w * .55, h * .75))
+      const r2 = r1 + 330 * zoom
+      const cx = movel ? r1 - w * .5 : 0
+      if (roda.current) {
+        const raio = Math.max(160, r1 - 175 * zoom)      // anel de fora do mostrador
+        const lado = `${(raio * 2 * 340) / 330}px`
+        roda.current.style.width = lado
+        roda.current.style.height = lado
+        roda.current.style.left = `${cx}px`
+      }
       ITENS.forEach((_, i) => {
         const el = cartoes.current[i]
         if (!el) return
-        // 90° = em baixo, à frente
-        const t = ((90 + i * PASSO - ang) * Math.PI) / 180
-        const x = Math.cos(t) * rx
-        const y = Math.sin(t) * ry
-        const frente = (Math.sin(t) + 1) / 2            // 0 atrás (em cima) … 1 à frente (em baixo)
-        const escala = zoom * (.55 + .45 * frente)
-        el.style.transform = `translate(-50%,-50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${escala.toFixed(3)})`
-        el.style.opacity = Math.min(1, .08 + frente * frente * 1.15).toFixed(3)
-        el.style.filter = `blur(${((1 - frente) * 3).toFixed(2)}px) brightness(${(.35 + .65 * frente).toFixed(3)})`
-        el.style.zIndex = String(Math.round(frente * 100))
-        el.style.pointerEvents = frente > .55 ? 'auto' : 'none'
-        el.tabIndex = frente > .55 ? 0 : -1
+        const fora = i >= ANEL1.length
+        const k = fora ? i - ANEL1.length : i
+        // 180° = à esquerda do centro; o scroll faz subir (ângulo a crescer)
+        const t = ((180 + k * PASSO + (fora ? PASSO / 2 : 0) + ang) * Math.PI) / 180
+        const r = fora ? r2 : r1
+        const x = Math.cos(t) * r + cx
+        const y = Math.sin(t) * r
+        // aparecem a entrar por baixo e somem a sair por cima
+        const borda = Math.abs(y) / (h / 2 + 140 * zoom)
+        const vis = x - cx > 40 ? 0 : Math.max(0, Math.min(1, (1 - borda) / .35))
+        el.style.transform = `translate(-50%,-50%) translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${zoom.toFixed(3)})`
+        el.style.opacity = (vis * (fora ? .85 : 1)).toFixed(3)
+        el.style.visibility = vis < .01 ? 'hidden' : 'visible'
+        el.style.zIndex = fora ? '1' : '2'
+        el.style.pointerEvents = vis > .6 && !fora ? 'auto' : 'none'
+        el.tabIndex = vis > .6 && !fora ? 0 : -1
       })
-      gira.current?.setAttribute('transform', `rotate(${r2(ang)})`)
-      giraInv.current?.setAttribute('transform', `rotate(${r2(-ang * .6)})`)
+      gira.current?.setAttribute('transform', `rotate(${r2r(ang)})`)
+      giraInv.current?.setAttribute('transform', `rotate(${r2r(ang * .5)})`)
     }
 
     const passo = () => {
@@ -126,15 +161,15 @@ export default function MarcasOpcao4() {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
       const delta = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX
-      alvo.current += delta * (e.deltaMode === 1 ? 4 : .12)
+      alvo.current += delta * (e.deltaMode === 1 ? 2 : .06)
     }
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') alvo.current += PASSO
-      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') alvo.current -= PASSO
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') alvo.current += PASSO / 2
+      else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') alvo.current -= PASSO / 2
       else if (['1', '2', '3'].includes(e.key)) {
         // roda até essa marca ficar à frente, pelo caminho mais curto
         const idx = ITENS.indexOf(MARCAS[Number(e.key) - 1])
-        const destino = idx * PASSO
+        const destino = -idx * PASSO
         const voltas = Math.round((alvo.current - destino) / 360)
         alvo.current = destino + voltas * 360
         setTimeout(() => cartoes.current[idx]?.focus({ preventScroll: true }), 500)
@@ -144,7 +179,7 @@ export default function MarcasOpcao4() {
     const onTouchMove = (e: TouchEvent) => {
       if (toque.current === null) return
       const y = e.touches[0].clientY
-      alvo.current += (toque.current - y) * .35
+      alvo.current += (toque.current - y) * .2
       toque.current = y
       e.preventDefault()
     }
@@ -177,17 +212,17 @@ export default function MarcasOpcao4() {
         .op4-mono { font-family: 'Space Mono', monospace; text-transform: uppercase; }
         .op4-serif { font-family: 'Cormorant Garamond', serif; }
 
-        .op4-centro { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+        .op4-centro { position: absolute; left: 100%; top: 50%; width: 0; height: 0; }
 
         /* Brilhos dourados desfocados */
         @keyframes op4Respira { 0%,100% { transform: translate(-50%,-50%) scale(1); opacity: .8 } 50% { transform: translate(-50%,-50%) scale(1.12); opacity: 1 } }
         .op4-brilho { position: absolute; border-radius: 50%; filter: blur(80px); transform: translate(-50%,-50%); animation: op4Respira 10s ease-in-out infinite; pointer-events: none; }
 
-        .op4-mostrador { position: absolute; left: 0; top: 0; width: min(68vmin, 680px); height: min(68vmin, 680px); transform: translate(-50%,-50%); pointer-events: none; }
+        .op4-mostrador { position: absolute; left: 0; top: 0; width: 900px; height: 900px; transform: translate(-50%,-50%); pointer-events: none; }
         .op4-letra { font-family: 'Cormorant Garamond', serif; font-weight: 300; font-size: 46px; fill: #f3ede2; }
 
         /* Cartões (posição, tamanho e brilho vêm do scroll) */
-        .op4-cartao { position: absolute; left: 0; top: 0; will-change: transform, opacity, filter; text-decoration: none; color: inherit; outline: none; }
+        .op4-cartao { position: absolute; left: 0; top: 0; will-change: transform, opacity; text-decoration: none; color: inherit; outline: none; }
         .op4-foto { position: relative; overflow: hidden; border-radius: 3px; box-shadow: 0 20px 60px -20px rgba(0,0,0,.8); }
         .op4-leg { margin-top: 8px; font-size: .5rem; letter-spacing: .28em; color: rgba(243,237,226,.4); }
 
@@ -221,11 +256,11 @@ export default function MarcasOpcao4() {
 
       <div className="op4">
         <div className="op4-centro">
-          <div className="op4-brilho" style={{ left: '38vw', top: '-34vh', width: 560, height: 360, background: 'radial-gradient(closest-side, rgba(210,150,50,.7), transparent)' }} />
-          <div className="op4-brilho" style={{ left: '-6vw', top: '40vh', width: 720, height: 420, background: 'radial-gradient(closest-side, rgba(220,170,70,.6), transparent)', animationDelay: '-4s' }} />
-          <div className="op4-brilho" style={{ left: '-44vw', top: '-10vh', width: 520, height: 520, background: 'radial-gradient(closest-side, rgba(150,70,25,.45), transparent)', animationDelay: '-2s' }} />
+          <div className="op4-brilho" style={{ left: '-20vw', top: '-38vh', width: 560, height: 360, background: 'radial-gradient(closest-side, rgba(210,150,50,.7), transparent)' }} />
+          <div className="op4-brilho" style={{ left: '-55vw', top: '42vh', width: 720, height: 420, background: 'radial-gradient(closest-side, rgba(220,170,70,.6), transparent)', animationDelay: '-4s' }} />
+          <div className="op4-brilho" style={{ left: '-85vw', top: '-5vh', width: 520, height: 520, background: 'radial-gradient(closest-side, rgba(150,70,25,.45), transparent)', animationDelay: '-2s' }} />
 
-          <Mostrador gira={gira} giraInv={giraInv} />
+          <Mostrador gira={gira} giraInv={giraInv} roda={roda} />
 
           {ITENS.map((it, i) => it.tipo === 'marca' ? (
             <Link key={it.href} href={it.href} ref={el => { cartoes.current[i] = el }}
@@ -252,9 +287,9 @@ export default function MarcasOpcao4() {
               </div>
             </Link>
           ) : (
-            <div key={it.src} ref={el => { cartoes.current[i] = el }} className="op4-cartao" style={{ opacity: 0 }} aria-hidden="true">
+            <div key={`${it.src}-${i}`} ref={el => { cartoes.current[i] = el }} className="op4-cartao" style={{ opacity: 0 }} aria-hidden="true">
               <div className="op4-foto" style={{ width: it.w, height: it.h }}>
-                <Image src={it.src} alt="" fill sizes="240px" draggable={false} style={{ objectFit: 'cover' }} />
+                <Image src={it.src} alt="" fill sizes="240px" loading="eager" draggable={false} style={{ objectFit: 'cover' }} />
               </div>
               <p className="op4-leg op4-mono">{it.leg}</p>
             </div>
