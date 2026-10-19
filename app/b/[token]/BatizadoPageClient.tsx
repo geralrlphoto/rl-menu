@@ -811,9 +811,11 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         </FadeIn>
 
         {/* ── COLUNA DIREITA — Proposta ── */}
+        {/* Confirmar/rejeitar saiu daqui: aceitam na proposta. Fica só a mensagem depois da resposta */}
+        {propostaResposta && (
         <FadeIn delay={150} className="w-full flex flex-col gap-3" style={{ maxWidth: 420 }}>
 
-          {/* ── Proposta: Confirmar / Rejeitar ── */}
+          {/* ── Proposta: resposta dada ── */}
           {(() => {
             if (propostaResposta === 'confirmada') {
               // Se o token é uma referência de batizado (BAT_xxx_yy_RL), passa para o form
@@ -849,36 +851,11 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
               </div>
             )
 
-            return (
-              <div className="flex flex-col gap-3 w-full flex-1">
-                {/* Card de destaque */}
-                <div className="rlp-card w-full text-center flex-1" style={{ padding: '30px 24px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 18 }}>
-                  <div style={{ width: 46, height: 46, borderRadius: '50%', background: 'rgba(216,190,147,.1)', border: '1px solid rgba(216,190,147,.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ color: 'var(--g)', fontSize: 18 }}>✦</span>
-                  </div>
-                  <div>
-                    <p className="rlp-eyebrow c" style={{ marginBottom: 10 }}>A vossa decisão</p>
-                    <p className="rlp-h2" style={{ fontSize: 'clamp(22px,3vw,30px)' }}>Confirmam a nossa <em>proposta?</em></p>
-                  </div>
-                </div>
-                {/* Confirmar */}
-                {/* Com propostas no CRM, abre-as para escolherem o pacote (fica gravado o que aceitaram) */}
-                <button onClick={() => {
-                  if (!propostaPdfUrl || !(content.propostas || []).some((p, i) => propostaVisivel(p, i))) return handleProposta('confirmar')
-                  setPropostaAberta(true)
-                  setTimeout(() => document.getElementById('sec-propostas')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 300)
-                }} disabled={submittingProposta || isAdmin} className="rlp-btn full">
-                  <span className="fill" /><span className="dot" />{submittingProposta ? 'A processar…' : 'Confirmar Proposta'}
-                </button>
-                {/* Rejeitar — discreto */}
-                <button onClick={() => handleProposta('rejeitar')} disabled={submittingProposta || isAdmin} className="rlp-btn danger full">
-                  <span className="fill" /><span className="dot" />{submittingProposta ? '…' : 'Rejeitar Proposta'}
-                </button>
-              </div>
-            )
+            return null
           })()}
 
         </FadeIn>
+        )}
         </div>
         {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Roboto Condensed',sans-serif", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
       </section>
