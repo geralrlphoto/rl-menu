@@ -24,8 +24,11 @@ function RegistarPagamentoInner() {
   const [referencia, setReferencia] = useState(refParam)
   const [email, setEmail] = useState('')
   const [dataCasamento, setDataCasamento] = useState(dataParam)
-  const [fase, setFase] = useState('')
-  const [valor, setValor] = useState('')
+  // ?fase=REFORÇO&valor=1680 vem do botão "Próximo pagamento" do portal
+  const faseParam = (params.get('fase') ?? '').toUpperCase()
+  const valorParam = Number(params.get('valor') ?? '') > 0 ? String(Number(params.get('valor'))) : ''
+  const [fase, setFase] = useState(FASES.includes(faseParam) ? faseParam : '')
+  const [valor, setValor] = useState(valorParam)
   const [metodo, setMetodo] = useState('MBWAY')
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)

@@ -2461,7 +2461,8 @@ function PortalSubPageContent() {
   if (temaRL && isPaymentsPage && !loading && !error && !editing && !editingPhotos && !isFreelancerView && !isPartilha) {
     const _ref = portalSettingsObj?.referencia ?? refParam ?? portalRef ?? ''
     const _nomes = nomeNoivos(eventoData?.cliente, portalSettingsObj?.noiva || eventoData?.nome_noiva, portalSettingsObj?.noivo || eventoData?.nome_noivo)
-    const _total = eventoData ? (eventoData.valor_foto ?? 0) + (eventoData.valor_video ?? 0) : portalTotal
+    // Total: o da proposta aceite (portal, com os extras); se não houver, o da ficha do evento
+    const _total = portalTotal > 0 ? portalTotal : (eventoData ? (eventoData.valor_foto ?? 0) + (eventoData.valor_video ?? 0) : 0)
     return (
       <PortalShell sidebar={_atmSidebar} headerRight={<NoivosNotificationsBell notifs={portalSettingsObj?.noivos_notifications ?? []} refKey={portalRef || refParam || 'portal'} />}>
         <PagamentosRL
@@ -2474,6 +2475,7 @@ function PortalSubPageContent() {
           ibanNode={<SolicitarIbanBtn pronto={Object.keys(portalSettingsObj ?? {}).length > 0} referencia={_ref} nomeNoivos={_nomes} />}
           comoPagar={<NotionBlocks blocks={blocks.filter(b => b.type !== 'image')} hiddenNav={settings.hiddenNav} />}
           isAdmin={isAdmin}
+          dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
         />
       </PortalShell>
     )

@@ -26,7 +26,7 @@ const fmt = (d: string | null) => {
   return isNaN(dt.getTime()) ? '—' : `${String(dt.getDate()).padStart(2, '0')} ${MESES[dt.getMonth()]} ${dt.getFullYear()}`
 }
 
-export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, registarUrl, ibanNode, comoPagar, isAdmin }: {
+export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, registarUrl, ibanNode, comoPagar, isAdmin, dataCasamento }: {
   title: string
   heroUrl?: string | null
   backHref: string
@@ -36,6 +36,8 @@ export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, regi
   ibanNode?: ReactNode
   comoPagar?: ReactNode
   isAdmin?: boolean
+  /** YYYY-MM-DD: dá as datas concretas de cada fase */
+  dataCasamento?: string | null
 }) {
   // Os noivos só recebem os confirmados; o admin vê também os por confirmar
   const confirmados = pagamentos.filter(p => p.confirmado !== false)
@@ -44,11 +46,18 @@ export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, regi
   const pct = total > 0 ? Math.min(100, Math.round(pago / total * 100)) : 0
 
   const resto = Math.max(0, total - ADJ)
+  // Reforço: até 2 dias antes do casamento (a mesma regra do alerta do /photo)
+  const hoje = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Lisbon' }).format(new Date())
+  const casamento = /^\d{4}-\d{2}-\d{2}/.test(dataCasamento ?? '') ? dataCasamento!.slice(0, 10) : null
+  const menos = (iso: string, n: number) => { const d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10) }
+  const limiteReforco = casamento ? menos(casamento, 2) : null
   const fases = [
-    { nome: 'Adjudicação', quando: 'Na assinatura do contrato, para reservar o dia', valor: total > 0 ? ADJ : 0 },
-    { nome: 'Reforço', quando: '80% do valor em falta, até 2 dias antes do casamento', valor: Math.round(resto * 0.8 * 100) / 100 },
-    { nome: 'Final', quando: 'Os restantes 20%, no final', valor: Math.round(resto * 0.2 * 100) / 100 },
+    { nome: 'Adjudicação', codigo: 'ADJUDICAÇÃO', quando: 'Na assinatura do contrato, para reservar o dia', valor: total > 0 ? ADJ : 0, limite: null as string | null },
+    { nome: 'Reforço', codigo: 'REFORÇO', quando: '80% do valor em falta, até 2 dias antes do casamento', valor: Math.round(resto * 0.8 * 100) / 100, limite: limiteReforco },
+    { nome: 'Final', codigo: 'FINAL', quando: 'Os restantes 20%, no final', valor: Math.round(resto * 0.2 * 100) / 100, limite: null as string | null },
   ]
+  const dataLonga = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
+  const faltamDias = (iso: string) => Math.round((Date.parse(iso + 'T12:00:00Z') - Date.parse(hoje + 'T12:00:00Z')) / 86400000)
   // O total pago preenche as fases por ordem (igual à página atual)
   let acumulado = 0
   const fasesEstado = fases.map(f => {
@@ -57,6 +66,10 @@ export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, regi
     const pagoFase = Math.max(0, Math.min(pago, acumulado) - antes)
     return { ...f, pago: pagoFase, completa: f.valor > 0 && pago >= acumulado }
   })
+  // Próximo pagamento: a primeira fase ainda por pagar, com o valor que falta
+  const proxima = fasesEstado.find(f => f.valor > 0 && !f.completa)
+  const valorProxima = proxima ? Math.round(Math.max(0, proxima.valor - proxima.pago) * 100) / 100 : 0
+  const registarProxima = proxima ? `${registarUrl}&fase=${encodeURIComponent(proxima.codigo)}&valor=${valorProxima}` : registarUrl
 
   const card: React.CSSProperties = {
     borderRadius: 22, border: '1px solid rgba(216,190,147,.2)', background: 'rgba(17,17,17,.9)',
@@ -108,6 +121,26 @@ export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, regi
         </div>
       </section>
 
+      {/* ── próximo pagamento, já com a fase e o valor no formulário ── */}
+      {proxima && (
+        <section style={{ ...card, border: '1px solid rgba(216,190,147,.45)', borderLeft: `2px solid ${G}`, padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 18, flexWrap: 'wrap', boxShadow: '0 0 40px -18px rgba(216,190,147,.6)' }}>
+          <div style={{ flex: '1 1 240px' }}>
+            <div className="eyebrow">Próximo pagamento</div>
+            <div style={{ marginTop: 8, fontSize: 22, fontWeight: 600, color: '#fff' }}>
+              {proxima.nome} · <span style={{ color: G }}>{eur(valorProxima)}</span>
+            </div>
+            <div style={{ marginTop: 4, fontSize: 13.5, color: 'rgba(255,255,255,.55)' }}>
+              {proxima.limite
+                ? (faltamDias(proxima.limite) >= 0
+                    ? `Até ${dataLonga(proxima.limite)} · faltam ${faltamDias(proxima.limite)} ${faltamDias(proxima.limite) === 1 ? 'dia' : 'dias'}`
+                    : `O prazo era ${dataLonga(proxima.limite)}`)
+                : proxima.quando}
+            </div>
+          </div>
+          <a href={registarProxima} target="_blank" rel="noopener noreferrer" className="atm-btn solid">Registar este pagamento</a>
+        </section>
+      )}
+
       {/* ── três fases ── */}
       <section>
         <div className="eyebrow">As três fases</div>
@@ -128,6 +161,11 @@ export function PagamentosRL({ title, heroUrl, backHref, total, pagamentos, regi
               </div>
               <div style={{ marginTop: 14, fontSize: 17, fontWeight: 600, color: '#fff' }}>{f.nome}</div>
               <div style={{ marginTop: 4, fontSize: 13, color: 'rgba(255,255,255,.5)', lineHeight: 1.5, minHeight: '3em' }}>{f.quando}</div>
+              {f.limite && !f.completa && (
+                <div style={{ marginTop: 8, fontSize: 12.5, fontWeight: 600, color: faltamDias(f.limite) < 0 ? '#f87171' : G }}>
+                  {faltamDias(f.limite) >= 0 ? `Até ${dataLonga(f.limite)} · faltam ${faltamDias(f.limite)} ${faltamDias(f.limite) === 1 ? 'dia' : 'dias'}` : `Prazo: ${dataLonga(f.limite)}`}
+                </div>
+              )}
               <div style={{ marginTop: 12, fontSize: 24, fontWeight: 600, color: G }}>{eur(f.valor)}</div>
               {!f.completa && f.pago > 0 && <div style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', marginTop: 2 }}>Pago {eur(f.pago)} · faltam {eur(Math.max(0, f.valor - f.pago))}</div>}
             </div>
