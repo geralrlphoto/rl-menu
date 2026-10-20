@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { eventoPreparacao } from '@/lib/preparacao'
+import { faseFoto } from '@/lib/fotografiaFluxo'
 import { ENCERRADA_STATUSES, FOLLOW_PARADO_DIAS, FOLLOW_STATUSES, daysSince, fmtDataCurta, hojeISO } from '@/lib/crm'
 
 function db() {
@@ -30,7 +31,8 @@ const TIPO_LABELS: Record<string, string> = {
   blog_subscriber:          'Nova Subscrição do Blog',
   nova_candidatura:         'Nova Candidatura de Recrutamento',
   video_prazo:              'Prazo de Entrega do Vídeo',
-  fotos_edicao_prazo:       'Prazo das Fotos em Edição',
+  fotos_edicao_prazo:       'Prazo das Fotos Editadas (30 dias)',
+  fotos_selecao_prazo:      'Prazo das Fotos p/ Seleção (30 dias)',
   noivos_selecao_falta:     'Noivos em Falta — Escolher Fotos',
   booking_reservado:        'Marcação Reservada pelos Noivos',
   prewedding_alerta:        'Alerta — Marcar Pré-Wedding',
@@ -66,6 +68,7 @@ const TIPO_ICONS: Record<string, string> = {
   nova_candidatura:         '✦',
   video_prazo:              '🎬',
   fotos_edicao_prazo:       '✎',
+  fotos_selecao_prazo:      '📷',
   noivos_selecao_falta:     '⏰',
   booking_reservado:        '📅',
   prewedding_alerta:        '💍',
@@ -810,61 +813,66 @@ export async function GET(req: Request) {
       console.warn('[admin-notifications] video prazo read failed:', err)
     }
 
-    // ── Notificações de PRAZO DAS FOTOS EM EDIÇÃO (≤ 7 dias) ──
-    //    Prazo = data de entrada (fotos_selecao) + 30 dias úteis. Alerta quando
-    //    faltam 7 dias ou menos (e ainda não está Entregue / S-SERVIÇO).
+    // ── PRAZOS DOS 30 DIAS DA FOTOGRAFIA (≤ 7 dias) ──
+    //    As mesmas regras do Departamento de Fotografia (lib/fotografiaFluxo.ts):
+    //      · Fotos p/ seleção: casamento + 30 dias
+    //      · Fotos editadas: seleção recebida (formulário ou marcada à mão) + 30 dias
+    //    Alerta quando faltam 7 dias ou menos. Não conta: alerta desligado na ficha,
+    //    casamentos retirados do departamento, S/SERVIÇO.
     try {
-      const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
-      // Map referencia → { cliente, fotos_edicao_estado }
-      const eventoByRef = new Map<string, { cliente: string | null; fotos_edicao_estado: string | null }>()
-      for (const tabela of ['eventos_2026', 'eventos_2027']) {
-        const { data: eventos } = await supabase
-          .from(tabela)
-          .select('referencia, cliente, fotos_edicao_estado')
-          .limit(500)
-        for (const ev of (eventos ?? []) as any[]) {
-          if (ev.referencia) eventoByRef.set(ev.referencia, { cliente: ev.cliente ?? null, fotos_edicao_estado: ev.fotos_edicao_estado ?? null })
-        }
-      }
-      const { data: selecoesPrazo } = await supabase
-        .from('fotos_selecao')
-        .select('referencia, data_entrada')
-        .not('data_entrada', 'is', null)
-        .limit(500)
-      for (const s of (selecoesPrazo ?? []) as any[]) {
-        if (!s.referencia) continue
-        const ev = eventoByRef.get(s.referencia)
-        const estado = String(ev?.fotos_edicao_estado ?? '').trim().toLowerCase()
-        if (estado === 'entregue' || estado === 's/serviço' || estado === 's-serviço') continue
-        const dataEntrada = String(s.data_entrada).slice(0, 10)
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(dataEntrada)) continue
-        const prazo = addWorkingDays(dataEntrada, 30); prazo.setHours(0, 0, 0, 0)
-        const diasRestantes = Math.ceil((prazo.getTime() - hoje.getTime()) / 86400000)
-        if (diasRestantes > 7) continue // ainda não entrou na janela de alerta
-        const prazoLabel = prazo.toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
-        const tagDias = diasRestantes < 0
-          ? `${Math.abs(diasRestantes)} dia(s) de atraso`
-          : diasRestantes === 0 ? 'Termina hoje'
-          : `Faltam ${diasRestantes} dia(s)`
+      const hojeIso = new Date().toISOString().slice(0, 10)
+      const { data: evsFoto } = await supabase.from('eventos_2026')
+        .select('referencia, cliente, data_evento, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado, fotos_edicao_estado')
+        .gte('data_evento', '2026-01-01').lte('data_evento', hojeIso)
+      const comFoto = (evsFoto ?? []).filter((e: any) => {
+        const tipos = (Array.isArray(e.tipo_servico) ? e.tipo_servico : [e.tipo_servico]).filter(Boolean).join(' ')
+        return e.referencia && (/foto/i.test(tipos) || Number(e.valor_real_foto ?? e.valor_foto) > 0)
+          && e.sel_fotos_estado !== 'S/SERVIÇO' && e.fotos_edicao_estado !== 'S/SERVIÇO'
+      })
+      const refsFoto = comFoto.map((e: any) => e.referencia as string)
+      const [{ data: portFoto }, { data: selFoto }, { data: exclFoto }] = refsFoto.length
+        ? await Promise.all([
+            supabase.from('portais').select('referencia, settings').in('referencia', refsFoto),
+            supabase.from('fotos_selecao').select('referencia, data_entrada').in('referencia', refsFoto),
+            supabase.from('fotografia_excluidos').select('referencia'),
+          ])
+        : [{ data: [] }, { data: [] }, { data: [] }] as any[]
+      const stPorRef = new Map<string, Record<string, any>>((portFoto ?? []).map((x: any) => [x.referencia, x.settings ?? {}]))
+      const entradaPorRef = new Map<string, string>((selFoto ?? []).filter((x: any) => x.data_entrada).map((x: any) => [x.referencia, String(x.data_entrada).slice(0, 10)]))
+      const retirados = new Set((exclFoto ?? []).map((x: any) => x.referencia))
+      for (const e of comFoto as any[]) {
+        if (retirados.has(e.referencia)) continue
+        const st: Record<string, any> = stPorRef.get(e.referencia) ?? {}
+        if (st.alertas_fotografia_ativos === false) continue
+        const { fase, prazo } = faseFoto(e.data_evento, st, entradaPorRef.get(e.referencia) ?? null, e.sel_fotos_estado)
+        if ((fase !== 'selecao' && fase !== 'edicao') || !prazo) continue
+        if (st[fase === 'selecao' ? 'selecao_alerta_off' : 'fotos_finais_alerta_off']) continue
+        const dias = Math.round((new Date(prazo + 'T12:00:00Z').getTime() - new Date(hojeIso + 'T12:00:00Z').getTime()) / 86400000)
+        if (dias > 7) continue // ainda não entrou na janela de alerta
+        const prazoLabel = new Date(prazo + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'UTC' })
+        const tagDias = dias < 0 ? `${Math.abs(dias)} dia(s) de atraso` : dias === 0 ? 'Termina hoje' : `Faltam ${dias} dia(s)`
+        const tipo = fase === 'selecao' ? 'fotos_selecao_prazo' : 'fotos_edicao_prazo'
         notifications.push({
-          id: `fotos_edicao_prazo::${s.referencia}`,
-          tipo: 'fotos_edicao_prazo',
-          tipo_label: TIPO_LABELS.fotos_edicao_prazo,
-          tipo_icon: TIPO_ICONS.fotos_edicao_prazo,
+          id: `${tipo}::${e.referencia}`,
+          tipo,
+          tipo_label: TIPO_LABELS[tipo],
+          tipo_icon: TIPO_ICONS[tipo],
           casamento_id: '',
           freelancer_id: '',
-          freelancer_nome: ev?.cliente ?? s.referencia ?? '—',
-          local: s.referencia ?? '—',
-          data_casamento: null,
-          referencia: s.referencia ?? null,
-          url: `/eventos-2026?ref=${encodeURIComponent(s.referencia)}`,
-          // sent_at estável = momento em que o alerta abriu (prazo − 7 dias).
-          sent_at: new Date(prazo.getTime() - 7 * 86400000).toISOString(),
-          mensagem: `${tagDias} para a entrega das fotos em edição (prazo: ${prazoLabel}).`,
+          freelancer_nome: e.cliente ?? e.referencia,
+          local: e.referencia,
+          data_casamento: e.data_evento ?? null,
+          referencia: e.referencia,
+          url: '/edicao-fotografia',
+          // sent_at estável = momento em que o alerta abriu (prazo − 7 dias)
+          sent_at: new Date(new Date(prazo + 'T09:00:00Z').getTime() - 7 * 86400000).toISOString(),
+          mensagem: fase === 'selecao'
+            ? `${tagDias} para enviar as fotos para seleção (prazo: ${prazoLabel}).`
+            : `${tagDias} para a entrega das fotos editadas (prazo: ${prazoLabel}).`,
         })
       }
     } catch (err) {
-      console.warn('[admin-notifications] fotos edicao prazo read failed:', err)
+      console.warn('[admin-notifications] prazos fotografia read failed:', err)
     }
 
     // ── Notificação: NOIVOS EM FALTA — ESCOLHER FOTOS (30 dias) ──
