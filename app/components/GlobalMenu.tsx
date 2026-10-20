@@ -74,6 +74,10 @@ const LINKS = [
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14"/><rect x="1" y="6" width="14" height="12" rx="2"/></svg>,
   },
   {
+    href: '/tickets', label: 'Tickets', sub: 'Exemplos',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3a2 2 0 000-4z"/><path strokeLinecap="round" strokeDasharray="2 2" d="M15 5v14"/></svg>,
+  },
+  {
     href: '/albuns-casamento', label: 'Álbuns', sub: 'Galeria',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path strokeLinecap="round" strokeLinejoin="round" d="M21 15l-5-5L5 21"/></svg>,
   },
@@ -353,7 +357,7 @@ function GlobalMenuInner() {
     : [
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
-        { nome: 'Produção', hrefs: ['/edicao-fotografia', '/edicao-video', '/albuns-casamento', '/freelancers'] },
+        { nome: 'Produção', hrefs: ['/edicao-fotografia', '/edicao-video', '/albuns-casamento', '/freelancers', '/tickets'] },
         { nome: 'Gestão', hrefs: ['/financas', '/relatorio-diario', '/calendario'] },
       ]
   const EXTRA_LINKS = [{
