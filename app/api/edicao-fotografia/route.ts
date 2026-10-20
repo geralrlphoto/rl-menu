@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
   const hoje = new Date().toISOString().slice(0, 10)
 
   const [{ data: equipa }, { data: evs }] = await Promise.all([
-    sb.from('freelancers').select('id, nome, foto_url, status').in('status', ['FOTOGRAFO', 'ASSISTENTE']).order('nome'),
+    sb.from('freelancers').select('id, nome, foto_url, status, contato').in('status', ['FOTOGRAFO', 'ASSISTENTE']).order('nome'),
     sb.from('eventos_2026')
       .select('id, notion_id, referencia, cliente, data_evento, local, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado, fotos_edicao_estado')
       .gte('data_evento', DESDE).lte('data_evento', hoje).order('data_evento'),

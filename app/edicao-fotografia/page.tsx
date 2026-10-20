@@ -11,6 +11,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { EtapaFoto } from '@/lib/fotografiaFluxo'
 import { whatsappLink } from '@/lib/crm'
+import { JanelaWhatsApp } from '@/app/components/WhatsAppMembro'
 
 const OURO = '#C9A84C'
 const FASES: { k: EtapaFoto; titulo: string; cor: string }[] = [
@@ -33,7 +34,7 @@ const FASES_INFO: { k: EtapaFoto; quem: string; quando: string; noivos: string }
   { k: 'entregue', quem: 'RL', quando: 'A RL envia as fotos editadas.', noivos: 'recebem o email das Fotos Finais; 30 dias para descarregar.' },
 ]
 
-type Membro = { id: string; nome: string; foto_url: string | null; status: string }
+type Membro = { id: string; nome: string; foto_url: string | null; status: string; contato: string | null }
 type Projeto = {
   id: number; fichaId: string; referencia: string; cliente: string | null; data: string; local: string | null
   fase: EtapaFoto; prazo: string | null; diasPrazo: number | null; alertaOff: boolean
@@ -83,6 +84,17 @@ async function lembrarPorWhatsApp(p: Projeto) {
   }
   if (janela) janela.location.href = link; else window.open(link, '_blank')
   fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: p.referencia, etapa: 'lembrete' }) }).catch(() => {})
+}
+
+// Aviso de atraso ao membro responsável: nomes e dia do casamento, sem referência nem emojis
+const O_QUE: Partial<Record<EtapaFoto, string>> = {
+  sneakpeek: 'o sneak peek', galerias: 'a galeria online', selecao: 'as fotos para seleção', edicao: 'as fotos editadas',
+}
+function mensagemAtraso(p: Projeto, membro: string | null): string {
+  const dia = (iso: string) => new Date(iso.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+  const nome = membro ? primeiro(membro).charAt(0).toLocaleUpperCase('pt-PT') + primeiro(membro).slice(1).toLocaleLowerCase('pt-PT') : ''
+  const atraso = -(p.diasPrazo ?? 0)
+  return `Olá${nome ? ` ${nome}` : ''}! Tudo bem?\n\nO casamento ${(p.cliente ?? '').trim() ? `de ${(p.cliente ?? '').trim()} ` : ''}(${dia(p.data)}) está atrasado ${atraso} ${atraso === 1 ? 'dia' : 'dias'}: ${O_QUE[p.fase] ?? 'a entrega'} ${p.fase === 'selecao' || p.fase === 'edicao' ? 'tinham' : 'tinha'} prazo até ${p.prazo ? dia(p.prazo) : ''}.\n\nConsegues dar-me uma previsão de entrega? Obrigado!\nRui`
 }
 
 function linhaDoTempo(p: Projeto) {
@@ -196,6 +208,7 @@ export default function DepartamentoFotografiaPage() {
   const [links, setLinks] = useState<Record<string, string>>({})
   const [aVer, setAVer] = useState<Membro | null>(null)
   const [selAberta, setSelAberta] = useState<Projeto | null>(null)
+  const [avisoSem, setAvisoSem] = useState<Projeto | null>(null)
 
   const carregar = () => {
     fetch('/api/edicao-fotografia').then(r => r.json())
@@ -278,6 +291,20 @@ export default function DepartamentoFotografiaPage() {
   }).sort((a, b) => a.ativos - b.ativos || a.e.nome.localeCompare(b.e.nome))
   const comTrabalho = cargas.filter(c => c.ativos > 0 || c.nomeados > 0)
   const albumAtual = (p: Projeto) => cargas.find(c => p.editorAlbum && c.e.nome.trim().toLowerCase() === p.editorAlbum.trim().toLowerCase())?.e.nome ?? p.editorAlbum ?? ''
+  // Responsável pelo atraso: o editor de fotos nomeado; senão, o fotógrafo do casamento
+  const responsavel = (p: Projeto): Membro | null => {
+    const porId = (dados?.equipa ?? []).find(m => p.editorIds[0] && m.id === p.editorIds[0])
+    if (porId) return porId
+    const n = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim()
+    return (dados?.equipa ?? []).find(m => p.fotografos.some(f => n(f) === n(m.nome))) ?? null
+  }
+  const avisarMembro = (p: Projeto) => {
+    const m = responsavel(p)
+    const link = m ? whatsappLink(m.contato, mensagemAtraso(p, m.nome)) : null
+    if (!link) { setAvisoSem(p); return }   // sem responsável ou sem telemóvel: escolher na janela
+    window.open(link, '_blank')
+    fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: p.referencia, etapa: 'aviso', url: m!.nome }) }).catch(() => {})
+  }
   // Nome do editor como está na equipa (no evento pode vir em maiúsculas)
   const editorAtual = (p: Projeto) => cargas.find(c => p.editorIds[0] && c.e.id === p.editorIds[0])?.e.nome ?? p.editores[0] ?? ''
 
@@ -404,6 +431,12 @@ export default function DepartamentoFotografiaPage() {
                           </p>
                         )}
 
+                        {atrasado(p) && (
+                          <button type="button" onClick={() => avisarMembro(p)}
+                            className="flex items-center justify-center gap-2 rounded-full border border-[#25D366]/45 bg-[#25D366]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#25D366] hover:bg-[#25D366]/20">
+                            Avisar {responsavel(p) ? primeiro(responsavel(p)!.nome) : 'a equipa'} por WhatsApp
+                          </button>
+                        )}
                         {p.fase !== 'entregue' && (
                           <label className="flex flex-col gap-1">
                             <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Editor de fotos</span>
@@ -531,6 +564,10 @@ export default function DepartamentoFotografiaPage() {
           </details>
         )}
       </div>
+
+      <JanelaWhatsApp aberto={!!avisoSem} onFechar={() => setAvisoSem(null)}
+        titulo={avisoSem ? `Atraso · ${avisoSem.cliente ?? avisoSem.referencia}` : 'Atraso'}
+        mensagem={avisoSem ? mensagemAtraso(avisoSem, responsavel(avisoSem)?.nome ?? null) : ''} />
 
       {selAberta?.selecao && (
         <SelecaoCaixa p={selAberta} onFechar={() => setSelAberta(null)} onGuardado={() => { setSelAberta(null); carregar() }} />

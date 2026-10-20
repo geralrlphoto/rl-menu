@@ -72,6 +72,11 @@ export async function POST(req: NextRequest) {
     await registarFoto(referencia, 'Lembrete WhatsApp', 'RL')
     return NextResponse.json({ ok: true })
   }
+  // Aviso de atraso ao membro responsável (WhatsApp aberto no browser da RL)
+  if (etapa === 'aviso') {
+    await registarFoto(referencia, 'Aviso de atraso por WhatsApp', String(url ?? '').trim() || 'Equipa')
+    return NextResponse.json({ ok: true })
+  }
 
   // Seleção dos noivos recebida (normalmente chega pelo formulário; aqui é à mão)
   if (etapa === 'recebida') {
