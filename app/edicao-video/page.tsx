@@ -168,6 +168,27 @@ export default function EdicaoVideoPage() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12 flex flex-col gap-16">
         {erro && <p className="text-red-400 text-sm">Não foi possível carregar os dados. Atualiza a página.</p>}
 
+        {/* ── Estados do vídeo: quem muda o quê (regras em lib/videoEstado.ts) ── */}
+        <section>
+          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Portal dos noivos</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Estados do vídeo: quem faz o quê</h2>
+          <p className="mt-2 text-sm text-white/45">O estado aparece aos noivos no portal (Estado das Entregas, linha do vídeo). Só este departamento e o Painel do Editor o mudam; a ficha do evento apenas mostra.</p>
+          <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {ESTADOS_INFO.map((e, i) => (
+              <li key={e.estado} className="relative rounded-[22px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md p-5" style={{ borderLeft: `2px solid ${e.cor}` }}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-thin tabular-nums text-white/40">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: e.cor, background: `${e.cor}1f`, border: `1px solid ${e.cor}55` }}>{e.quem}</span>
+                </div>
+                <p className="mt-3 text-[22px] font-semibold leading-tight">{e.estado}</p>
+                <p className="mt-2 text-[13px] text-white/70 leading-snug"><span className="text-white/40">Quando: </span>{e.quando}</p>
+                <p className="mt-1.5 text-[13px] text-white/70 leading-snug"><span className="text-white/40">Onde: </span>{e.onde}</p>
+                <p className="mt-3 pt-3 border-t border-white/[0.06] text-[12.5px] italic leading-snug" style={{ color: '#d8be93' }}>Noivos: {e.noivos}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+
         {/* ── Equipa ── */}
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Equipa de edição</p>
@@ -303,27 +324,6 @@ export default function EdicaoVideoPage() {
             </ul>
           </details>
         )}
-
-        {/* ── Estados do vídeo: quem muda o quê (regras em lib/videoEstado.ts) ── */}
-        <section>
-          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Portal dos noivos</p>
-          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Estados do vídeo: quem faz o quê</h2>
-          <p className="mt-2 text-sm text-white/45">O estado aparece aos noivos no portal (Estado das Entregas, linha do vídeo). Só este departamento e o Painel do Editor o mudam; a ficha do evento apenas mostra.</p>
-          <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {ESTADOS_INFO.map((e, i) => (
-              <li key={e.estado} className="relative rounded-[22px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md p-5" style={{ borderLeft: `2px solid ${e.cor}` }}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[11px] font-thin tabular-nums text-white/40">{String(i + 1).padStart(2, '0')}</span>
-                  <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: e.cor, background: `${e.cor}1f`, border: `1px solid ${e.cor}55` }}>{e.quem}</span>
-                </div>
-                <p className="mt-3 text-[22px] font-semibold leading-tight">{e.estado}</p>
-                <p className="mt-2 text-[13px] text-white/70 leading-snug"><span className="text-white/40">Quando: </span>{e.quando}</p>
-                <p className="mt-1.5 text-[13px] text-white/70 leading-snug"><span className="text-white/40">Onde: </span>{e.onde}</p>
-                <p className="mt-3 pt-3 border-t border-white/[0.06] text-[12.5px] italic leading-snug" style={{ color: '#d8be93' }}>Noivos: {e.noivos}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
       </div>
     </main>
   )
