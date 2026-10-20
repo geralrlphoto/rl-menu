@@ -14,6 +14,8 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
     titulo: 'Noivos · Portal',
     tickets: [
       { k: 'portal', nome: 'O Vosso Portal Está Aberto', assunto: '💍 O portal do casamento está pronto', quando: 'Quando o contrato é aprovado e o portal dos noivos é criado. Leva o email e a palavra-passe de acesso.', para: 'Noiva (ou noivo, se não houver email da noiva)' },
+      { k: 'recuperar', nome: 'Recuperar a Palavra-passe', assunto: '🔑 A vossa palavra-passe do portal', quando: 'Quando os noivos pedem a palavra-passe no login do portal e confirmam a identidade.', para: 'Noiva (ou noivo, se não houver email da noiva)' },
+      { k: 'dados-recebidos', nome: 'Dados Recebidos', assunto: '✓ Dados recebidos — RL Photo Video', quando: 'Quando os noivos enviam os dados para o contrato e o portal ainda não foi enviado.', para: 'Noiva (ou noivo)' },
     ],
   },
   {
@@ -47,6 +49,16 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
     ],
   },
   {
+    titulo: 'Freelancers',
+    tickets: [
+      { k: 'fl-novidades', nome: 'Tens Novidades no Portal', assunto: 'Tens novidades no portal — CAS_000_27_RL', quando: 'Na equipa da ficha do evento, ao carregar no botão de notificar o freelancer.', para: 'Freelancers da equipa' },
+      { k: 'fl-briefing', nome: 'Briefing Disponível', assunto: 'Briefing disponível — Quinta de Exemplo · 12 Jun 2027', quando: 'Quando o briefing do casamento é enviado à equipa.', para: 'Freelancers da equipa' },
+      { k: 'fl-trabalho-edicao', nome: 'Trabalho de Edição', assunto: 'Trabalho de edição — Quinta de Exemplo', quando: 'Quando o trabalho (ficheiros e links) é enviado aos editores de vídeo.', para: 'Editores de vídeo' },
+      { k: 'fl-edicao-fotos', nome: 'Nova Edição de Fotos', assunto: 'Nova edição de fotos · Ana e Tiago', quando: 'Quando a edição de fotos de um casamento é atribuída a um freelancer.', para: 'Editor de fotografia' },
+      { k: 'fl-candidatura', nome: 'Candidatura Recebida', assunto: 'Recebemos a tua candidatura · RL Photo.Video', quando: 'Quando alguém se candidata a freelancer.', para: 'Candidato' },
+    ],
+  },
+  {
     titulo: 'Editores de vídeo',
     tickets: [
       { k: 'ticket-editor', nome: 'Ticket de Edição', assunto: 'Ticket de Edição · Ana e Tiago', quando: 'Quando um editor de vídeo é nomeado na equipa do evento.', para: 'Editor de vídeo' },
@@ -57,6 +69,12 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
     titulo: 'Convidados',
     tickets: [
       { k: 'ticket', nome: 'Ticket Fotos/Dia', assunto: 'Comprovativo de aquisição de fotografias — RP-0000', quando: 'Quando é registado um pedido de fotografias do dia (papel ou digital), ou reenviado na lista de pedidos.', para: 'Convidado que comprou e responsável pela venda' },
+    ],
+  },
+  {
+    titulo: 'Leads',
+    tickets: [
+      { k: 'nova-lead', nome: 'Recebemos o Vosso Contacto', assunto: 'Recebemos o vosso contacto — RL Photo.Video', quando: 'Quando uma lead preenche o formulário de contacto (Nova Lead).', para: 'Lead' },
     ],
   },
 ]

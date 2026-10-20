@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { emailNovoBriefing } from '@/lib/emailsFreelancers'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -182,7 +183,6 @@ export async function POST(req: NextRequest) {
   let emailsSent = 0
   if (process.env.RESEND_API_KEY) {
     const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'
-    const CARD_URL = `${SITE}/card-novo-briefing.png`
     const { data: members } = await supabase.from('freelancers').select('id, nome, email').in('id', newIds)
     const subject = localStr
       ? `Briefing disponível — ${localStr}${dateLabel ? ` · ${dateLabel}` : ''}`
@@ -201,23 +201,7 @@ export async function POST(req: NextRequest) {
             from: 'RL Photo.Video <geral@rlphotovideo.pt>',
             to: [m.email],
             subject,
-            html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0d0901;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
-    <tr>
-      <td align="center">
-        <a href="${SITE}/freelancers/${m.id}?view=freelancer" style="display:block;text-decoration:none;">
-          <img src="${CARD_URL}"
-            width="560" alt="Novo Briefing disponível"
-            style="display:block;width:100%;max-width:560px;border:0;" />
-        </a>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`,
+            html: emailNovoBriefing(SITE, m.id),
           }),
         })
         emailsSent++

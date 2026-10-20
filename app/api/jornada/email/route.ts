@@ -5,10 +5,12 @@ import { buildTicketEditorHtml, buildTicketAprovacaoHtml, prazoVideo } from '@/l
 import { buildTicketFilmeHtml, type PassoFilme } from '@/lib/ticket-filme-html'
 import { cardPagamento } from '@/lib/pagamentoEmail'
 import { ENTREGAS_ATUAIS, type EntregaAtual } from '@/lib/entregaEmailAtual'
+import { emailNovidadesFreelancer, emailNovoBriefing, emailTrabalhoEdicao, emailEdicaoFotos, emailCandidatura } from '@/lib/emailsFreelancers'
+import { buildRecoveryEmail, buildDadosRecebidosEmail, buildNovaLeadEmail } from '@/lib/emailsClientes'
 
 // Pré-visualização real dos emails ao cliente no mapa da jornada (/crm/follow-up).
 // Usa as mesmas funções de HTML que as rotas de envio, com um casal fictício.
-// GET ?k=<chave>  (portal | ticket | ticket-editor | ticket-aprovacao | filme-<passo> | pagamento | entrega-<tipo>)
+// GET ?k=<chave>  (portal | ticket | ticket-editor | ticket-aprovacao | filme-<passo> | pagamento | entrega-<tipo> | fl-<tipo> | recuperar | dados-recebidos | nova-lead)
 // Os emails de entrega (seleção, galerias, filme…) entram aqui quando lib/entregaEmail.ts
 // estiver no repositório: usar buildEntregaEmailHtml com a configuração de cada tipo.
 
@@ -50,6 +52,15 @@ function html(k: string): string | null {
     const t = k.slice(8)
     return Object.hasOwn(ENTREGAS_ATUAIS, t) ? ENTREGAS_ATUAIS[t as EntregaAtual].html('Ana & Tiago') : null
   }
+  // Freelancers (cards em imagem) e emails a noivos e leads
+  if (k === 'fl-novidades') return emailNovidadesFreelancer('exemplo')
+  if (k === 'fl-briefing') return emailNovoBriefing(SITE, 'exemplo')
+  if (k === 'fl-trabalho-edicao') return emailTrabalhoEdicao(SITE, 'exemplo')
+  if (k === 'fl-edicao-fotos') return emailEdicaoFotos(`${SITE}/freelancer-view/exemplo`, 'Ana e Tiago', 'CAS_000_27_RL')
+  if (k === 'fl-candidatura') return emailCandidatura(SITE)
+  if (k === 'recuperar') return buildRecoveryEmail({ nome: 'Ana & Tiago', password: 'exemplo123', loginUrl: login })
+  if (k === 'dados-recebidos') return buildDadosRecebidosEmail({ nome_noivos: 'Ana e Tiago', data_casamento: '2027-06-12' })
+  if (k === 'nova-lead') return buildNovaLeadEmail('Ana e Tiago', 'Fotografia, Vídeo')
   if (k === 'pagamento') {
     // Comprovativo de pagamento: o mesmo card vai à noiva e ao admin (/api/registar-pagamento-noivos)
     return cardPagamento({ nome_noivos: 'Ana e Tiago', referencia: 'CAS_000_27_RL', valor: 750, fase: 'REFORÇO', metodo: 'MBWAY', data: '12/03/2027', comprovativo_url: null })

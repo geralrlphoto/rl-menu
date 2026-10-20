@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { buildDadosRecebidosEmail } from '@/lib/emailsClientes'
 import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 import { entregarPortalAutomatico, portalCompleto, reservarReferencia } from '@/lib/portalCriar'
@@ -146,94 +147,6 @@ async function saveToSupabase(data: Record<string, any>) {
 }
 
 // ─── Email cliente: gold card de confirmação ─────────────────────────────────
-function buildClienteEmail(data: { nome_noivos: string; data_casamento: string | null; tipo_evento?: string }): string {
-  const isBatizado = data.tipo_evento === 'batizado'
-  const dataFormatada = data.data_casamento
-    ? (() => {
-        try {
-          return new Date(data.data_casamento + 'T12:00:00').toLocaleDateString('pt-PT', {
-            day: '2-digit', month: 'long', year: 'numeric'
-          })
-        } catch { return data.data_casamento ?? '' }
-      })()
-    : ''
-
-  const primeiroNome = data.nome_noivos.split(/[\s&]/)[0]
-
-  // Labels condicionais por tipo de evento
-  const labelNomes  = isBatizado ? 'Pais'              : 'Noivos'
-  const labelData   = isBatizado ? 'Data do Batizado'  : 'Data do Casamento'
-
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
-
-        <tr><td style="padding:0;">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
-            <td></td>
-            <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
-          </tr></table>
-        </td></tr>
-
-        <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-
-          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
-            width="80" alt="RL Photo Video"
-            style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
-
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
-            <span style="font-size:22px;color:#c9a96e;">&#10003;</span>
-          </td></tr></table>
-
-          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, ${primeiroNome}!</p>
-          <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Dados</p>
-          <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">recebidos.</p>
-
-          <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
-
-          <p style="margin:0 0 24px;font-size:15px;color:#a09070;line-height:1.8;">
-            Recebemos os vossos dados para o contrato.<br>
-            <strong style="color:#c9b88a;font-weight:500;">Em breve entraremos em contacto.</strong>
-          </p>
-
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
-            <tr><td style="padding:24px 32px;text-align:center;">
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">${labelNomes}</p>
-              <p style="margin:0 0 20px;font-size:22px;font-style:italic;font-weight:400;color:#c9a96e;line-height:1.2;">${data.nome_noivos}</p>
-              ${dataFormatada ? `
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">${labelData}</p>
-              <p style="margin:0;font-size:14px;color:#d4c9b0;">${dataFormatada}</p>
-              ` : ''}
-            </td></tr>
-          </table>
-
-          <p style="margin:0 0 8px;font-size:14px;color:#7a6a50;line-height:1.8;">Para qualquer questão estamos sempre disponíveis.</p>
-          <p style="margin:0;font-size:14px;color:#7a6a50;line-height:1.8;">
-            <a href="mailto:${ADMIN_EMAIL}" style="color:#c9a96e;text-decoration:none;">${ADMIN_EMAIL}</a>
-          </p>
-
-        </td></tr>
-
-        <tr><td style="padding:0;">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
-            <td style="text-align:center;vertical-align:bottom;padding-bottom:20px;">
-              <p style="margin:0;font-size:9px;letter-spacing:0.4em;color:#3a2a12;text-transform:uppercase;">RL PHOTO &middot; VIDEO</p>
-            </td>
-            <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
-          </tr></table>
-        </td></tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
-}
-
 // ─── Email admin: notificação completa com TODOS os campos do formulário ─────
 function buildAdminEmail(data: Record<string, any>): string {
   const isBatizado = data.tipo_evento === 'batizado'
@@ -520,7 +433,7 @@ export async function POST(req: NextRequest) {
       await sendEmail(
         clienteEmail,
         '✓ Dados recebidos — RL Photo Video',
-        buildClienteEmail({
+        buildDadosRecebidosEmail({
           nome_noivos: data.nome_noivos!,
           data_casamento: data.data_casamento,
           tipo_evento: tipo_evento,

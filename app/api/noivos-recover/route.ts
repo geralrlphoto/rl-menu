@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { buildRecoveryEmail } from '@/lib/emailsClientes'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
@@ -72,58 +73,6 @@ function rowMatches(row: CasalRow, email: string, phone: string, nif: string): '
 }
 
 // ── Email de recuperação ────────────────────────────────────────────────────
-function buildRecoveryEmail(opts: {
-  nome: string
-  password: string
-  loginUrl: string
-}): string {
-  const primeiroNome = (opts.nome || 'Olá').split(/[\s&]/)[0] || 'Olá'
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
-        <tr><td style="padding:48px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
-            width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;opacity:0.9;" />
-          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;">Olá, ${primeiroNome}!</p>
-          <p style="margin:0 0 18px;font-size:24px;font-weight:400;color:#f0e8d8;">A vossa palavra-passe</p>
-          <div style="margin:0 0 22px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">— · ◆ · —</div>
-          <p style="margin:0 0 26px;font-size:14px;color:#a09070;line-height:1.8;">
-            Confirmámos a vossa identidade.<br>
-            Aqui está a palavra-passe do vosso portal:
-          </p>
-
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:340px;background:rgba(201,169,110,0.04);">
-            <tr><td style="padding:18px 24px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">🔑 Palavra-passe</p>
-              <p style="margin:0;font-size:22px;font-family:'Courier New',monospace;letter-spacing:0.15em;color:#f0e8d8;font-weight:600;">${opts.password}</p>
-            </td></tr>
-          </table>
-
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 16px;">
-            <tr>
-              <td align="center" style="border-radius:8px;background:#c9a96e;">
-                <a href="${opts.loginUrl}" target="_blank"
-                  style="display:inline-block;padding:18px 48px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:0.4em;font-weight:700;border-radius:8px;border:1px solid #c9a96e;">
-                  ENTRAR &nbsp;→
-                </a>
-              </td>
-            </tr>
-          </table>
-
-          <p style="margin:24px 0 0;font-size:11px;color:#5a4a30;line-height:1.6;">
-            Se não foram vocês que pediram este reset, ignorem este email.<br>
-            Em caso de dúvida, falem connosco directamente.
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
-}
-
 async function sendEmail(to: string, subject: string, html: string): Promise<boolean> {
   if (!RESEND_KEY) return false
   try {

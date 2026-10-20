@@ -1,4 +1,5 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
+import { emailCandidatura } from '@/lib/emailsFreelancers'
 import { ehAdmin, sessaoMembro, sessaoNoivos, naoAutorizado } from '@/lib/api-guard'
 
 const ADMIN_EMAIL  = 'geral.rlphoto@gmail.com'
@@ -198,17 +199,7 @@ export async function POST(req: NextRequest) {
     // ── Card de confirmação ao candidato (mesmo card do fluxo Tally antigo) ──
     let candidatoEmailId: string | null = null
     if (candidato_email && /.+@.+\..+/.test(String(candidato_email))) {
-      const cardHtml = `<!DOCTYPE html>
-<html lang="pt">
-<head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Candidatura Recebida</title></head>
-<body style="margin:0;padding:0;background:#0e0c07;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0c07;">
-  <tr><td align="center" style="padding:32px 20px;">
-    <img src="${ADMIN_URL}/card-freelancer-obrigado.png" width="560" alt="Recebemos a tua candidatura" style="display:block;max-width:100%;border:0;"/>
-  </td></tr>
-</table>
-</body>
-</html>`
+      const cardHtml = emailCandidatura(ADMIN_URL)
       const cres = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },

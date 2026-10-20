@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { emailNovidadesFreelancer } from '@/lib/emailsFreelancers'
 
 function supabase() {
   return createClient(
@@ -43,23 +44,7 @@ export async function POST(req: NextRequest) {
         from: 'RL Photo.Video <geral@rlphotovideo.pt>',
         to: [freelancer.email!],
         subject: `Tens novidades no portal — ${referencia ?? 'Novo Evento'}`,
-        html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0d0901;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
-    <tr>
-      <td align="center">
-        <a href="https://portal.rlphotovideo.pt/freelancers/${freelancer.id}?view=freelancer" style="display:block;text-decoration:none;">
-          <img src="https://portal.rlphotovideo.pt/card_novo_evento.png"
-            width="560" alt="Tens novidades no portal"
-            style="display:block;width:100%;max-width:560px;border:0;" />
-        </a>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`,
+        html: emailNovidadesFreelancer(freelancer.id),
       }),
     })
 
