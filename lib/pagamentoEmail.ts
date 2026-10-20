@@ -1,0 +1,63 @@
+const eur = (n: number) => `${Number(n).toFixed(2)} €`
+
+// Card personalizado do comprovativo de pagamento. O MESMO card é enviado ao
+// admin e à noiva (estilo escuro/dourado da marca, email-safe com tabelas).
+export function cardPagamento(o: any): string {
+  return `<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f2ede4;">
+<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:#f2ede4;padding:36px 14px;font-family:Georgia,'Times New Roman',serif;">
+  <tr><td align="center">
+    <table width="560" cellpadding="0" cellspacing="0" role="presentation" style="max-width:560px;width:100%;background:#0e0b07;border:1px solid #3a2e18;">
+      <tr><td style="height:3px;background:#c9a96e;font-size:0;line-height:0;">&nbsp;</td></tr>
+      <tr><td style="padding:40px 48px 8px;text-align:center;">
+        <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png" width="130" alt="RL Photo Video" style="width:130px;height:auto;display:inline-block;">
+      </td></tr>
+      <tr><td style="padding:14px 48px 0;text-align:center;">
+        <p style="margin:0;font-family:'Courier New',monospace;font-size:11px;letter-spacing:0.42em;color:#c9a96e;text-transform:uppercase;">Comprovativo de Pagamento</p>
+      </td></tr>
+      <tr><td align="center" style="padding:26px 48px 0;">
+        <table cellpadding="0" cellspacing="0" role="presentation"><tr><td align="center" valign="middle"
+          style="width:70px;height:70px;border:1px solid #c9a96e;border-radius:50%;color:#e6c680;font-size:30px;line-height:70px;text-align:center;">&#10003;</td></tr></table>
+      </td></tr>
+      <tr><td style="padding:22px 48px 0;text-align:center;">
+        <p style="margin:0;font-size:30px;font-style:italic;color:#f0e8d8;">${o.nome_noivos}</p>
+      </td></tr>
+      <tr><td style="padding:6px 48px 0;text-align:center;">
+        <p style="margin:0 0 4px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Valor Pago</p>
+        <p style="margin:0;font-size:52px;line-height:1;color:#e6c680;">${eur(o.valor)}</p>
+      </td></tr>
+      <tr><td style="padding:24px 48px 4px;text-align:center;">
+        <span style="color:#6a5430;font-size:12px;letter-spacing:0.35em;">&mdash; &middot; &#9670; &middot; &mdash;</span>
+      </td></tr>
+      <tr><td style="padding:8px 48px 0;">
+        <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
+          ${[
+            ['Referência', o.referencia || '—'],
+            ...(o.fase ? [['Fase', o.fase]] : []),
+            ['Método', o.metodo || '—'],
+            ['Data', o.data],
+          ].map(([k, v]) => `<tr>
+            <td style="padding:11px 0;border-bottom:1px solid #241c11;font-size:12px;color:#8c7a55;">${k}</td>
+            <td style="padding:11px 0;border-bottom:1px solid #241c11;font-size:13px;color:#f0e8d8;text-align:right;">${v}</td>
+          </tr>`).join('')}
+        </table>
+      </td></tr>
+      ${o.comprovativo_url ? `
+      <tr><td style="padding:26px 48px 0;text-align:center;">
+        <p style="margin:0 0 10px;font-family:'Courier New',monospace;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Comprovativo Anexado</p>
+        <a href="${o.comprovativo_url}" target="_blank" style="text-decoration:none;">
+          <img src="${o.comprovativo_url}" alt="Comprovativo" width="464" style="width:100%;max-width:464px;border:1px solid #2a2114;border-radius:4px;display:block;">
+        </a>
+      </td></tr>` : ''}
+      <tr><td style="padding:28px 48px 40px;text-align:center;">
+        <p style="margin:0;font-size:12px;color:#8c8170;line-height:1.7;font-style:italic;">Este documento confirma o pagamento efetuado.<br>Obrigado pela vossa confiança.</p>
+      </td></tr>
+      <tr><td style="background:#0a0805;padding:18px 48px;text-align:center;border-top:1px solid #241c11;">
+        <p style="margin:0;font-family:'Courier New',monospace;font-size:10px;letter-spacing:0.3em;color:#9a855c;text-transform:uppercase;">RL Photo &middot; Video</p>
+        <p style="margin:5px 0 0;font-size:11px;color:#6a5f4c;">geral.rlphoto@gmail.com &middot; 912 932 768</p>
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>`
+}

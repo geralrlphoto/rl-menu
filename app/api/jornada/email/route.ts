@@ -3,10 +3,12 @@ import { buildPortalEmailV2 } from '@/lib/portalEmail'
 import { buildTicketHtml } from '@/lib/ticket-html'
 import { buildTicketEditorHtml, buildTicketAprovacaoHtml, prazoVideo } from '@/lib/ticket-editor-html'
 import { buildTicketFilmeHtml, type PassoFilme } from '@/lib/ticket-filme-html'
+import { cardPagamento } from '@/lib/pagamentoEmail'
+import { ENTREGAS_ATUAIS, type EntregaAtual } from '@/lib/entregaEmailAtual'
 
 // Pré-visualização real dos emails ao cliente no mapa da jornada (/crm/follow-up).
 // Usa as mesmas funções de HTML que as rotas de envio, com um casal fictício.
-// GET ?k=<chave>  (portal | ticket | ticket-editor | ticket-aprovacao | filme-<passo>)
+// GET ?k=<chave>  (portal | ticket | ticket-editor | ticket-aprovacao | filme-<passo> | pagamento | entrega-<tipo>)
 // Os emails de entrega (seleção, galerias, filme…) entram aqui quando lib/entregaEmail.ts
 // estiver no repositório: usar buildEntregaEmailHtml com a configuração de cada tipo.
 
@@ -42,6 +44,15 @@ function html(k: string): string | null {
       numero: 'AP-CAS_000_27_RL', editor: 'Marco Exemplo', noivos: 'Ana e Tiago', local: 'Quinta de Exemplo',
       link: 'https://frame.io/exemplo', feedback: 'Excelente ritmo na cerimónia. Só baixar um pouco a música nos votos.', aprovadoEm: new Date(),
     })
+  }
+  // Emails de entrega aos noivos (fotos e vídeos), como estão hoje nas rotas send-<tipo>-email
+  if (k.startsWith('entrega-')) {
+    const t = k.slice(8)
+    return Object.hasOwn(ENTREGAS_ATUAIS, t) ? ENTREGAS_ATUAIS[t as EntregaAtual].html('Ana & Tiago') : null
+  }
+  if (k === 'pagamento') {
+    // Comprovativo de pagamento: o mesmo card vai à noiva e ao admin (/api/registar-pagamento-noivos)
+    return cardPagamento({ nome_noivos: 'Ana e Tiago', referencia: 'CAS_000_27_RL', valor: 750, fase: 'REFORÇO', metodo: 'MBWAY', data: '12/03/2027', comprovativo_url: null })
   }
   // Ticket do Filme aos noivos: filme-aguardar, filme-edicao, filme-revisao, filme-finalizado, filme-estreia
   const PASSO: Record<string, PassoFilme> = { 'filme-aguardar': 'Aguardar', 'filme-edicao': 'Em Edição', 'filme-revisao': 'Em Revisão', 'filme-finalizado': 'Finalizado', 'filme-estreia': 'Estreia' }
