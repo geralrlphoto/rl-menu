@@ -314,8 +314,8 @@ export function mensagemObrigadoEscolha(nome: string | null | undefined, batizad
   ].join('\n')
 }
 
-/* Reunião de preparação do dia: ~15 dias antes do casamento (ficha do evento e /photo) */
-export const PREPARACAO_DIAS = 15
+/* Link do briefing + reunião de preparação: 30 dias antes do casamento (ficha do evento e calendário do /photo) */
+export const PREPARACAO_DIAS = 30
 /* Sala fixa de videochamada da RL (a mesma das reuniões do CRM) */
 /* Nomes das 3 propostas (casamento e batizado), pela ordem do CRM */
 export const NOMES_PROPOSTAS = ['BASIC', 'ESSENCIAL', 'SIGNATURE'] as const
@@ -450,7 +450,7 @@ export function mensagemReuniaoPreparacao(nome: string | null | undefined, event
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
-    `Está quase! Faltam cerca de duas semanas para ${evento} e nós já estamos a contar os dias.`,
+    `Está quase! Falta cerca de um mês para ${evento} e nós já estamos a contar os dias.`,
     '',
     `Gostávamos de marcar uma pequena reunião convosco para falarmos sobre ${batizado ? 'esse dia' : 'o vosso dia'}: os horários, algumas dicas e sugestões nossas, e ajustar os últimos detalhes para que tudo corra na perfeição e vocês só tenham de aproveitar.`,
     '',

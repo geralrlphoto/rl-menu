@@ -8,7 +8,7 @@ import DisponibilidadePreparacao, { type SlotPreparacao } from '@/app/components
 /* Reunião de preparação do dia (horários, dicas, ajustes):
    - botão de WhatsApp com o link /preparacao/<id> para os noivos escolherem o horário;
    - disponibilidade comum a todos os casais (preparacao_slots);
-   - também aparece no /photo cerca de 15 dias antes do evento. */
+   - também aparece no calendário do /photo 30 dias antes do evento (PREPARACAO_DIAS). */
 
 type Slot = SlotPreparacao
 
