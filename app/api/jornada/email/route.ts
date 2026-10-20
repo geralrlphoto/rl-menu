@@ -1,10 +1,11 @@
 import { exigeAdmin } from '@/lib/api-guard'
 import { buildPortalEmailV2 } from '@/lib/portalEmail'
 import { buildTicketHtml } from '@/lib/ticket-html'
+import { buildTicketEditorHtml, prazoVideo } from '@/lib/ticket-editor-html'
 
 // Pré-visualização real dos emails ao cliente no mapa da jornada (/crm/follow-up).
 // Usa as mesmas funções de HTML que as rotas de envio, com um casal fictício.
-// GET ?k=<chave>  (portal | ticket)
+// GET ?k=<chave>  (portal | ticket | ticket-editor)
 // Os emails de entrega (seleção, galerias, filme…) entram aqui quando lib/entregaEmail.ts
 // estiver no repositório: usar buildEntregaEmailHtml com a configuração de cada tipo.
 
@@ -25,6 +26,13 @@ function html(k: string): string | null {
       email: 'convidado@exemplo.pt', telefone: '900 000 000', morada: 'Rua de Exemplo 1, 2950-000 Palmela',
       noivos: 'Ana e Tiago', data_casamento: '12/06/2027', fotografias: '4218\n4219\n4230', quantidade: 3,
       subtotal: '9,00 €', portes: '2,00 €', total: '11,00 €', metodo_pagamento: 'MB WAY', responsavel: 'Ana',
+    })
+  }
+  if (k === 'ticket-editor') {
+    // Ticket de Edição: o email que o editor recebe quando é nomeado (fluxo da Edição de Vídeo)
+    return buildTicketEditorHtml({
+      numero: 'ED-CAS_000_27_RL', editor: 'Marco Exemplo', noivos: 'Ana e Tiago',
+      dataCasamento: '2027-06-12', local: 'Quinta de Exemplo', prazo: prazoVideo('2027-06-12'), atribuidoEm: new Date(),
     })
   }
   return null

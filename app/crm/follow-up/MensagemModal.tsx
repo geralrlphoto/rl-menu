@@ -39,7 +39,7 @@ export default function MensagemModal({ alvo, onClose }: { alvo: AlvoModal; onCl
       <div className={`mbox${alvo.tipo === 'wa' ? ' wab' : ''}`}>
         <div className="mhead">
           <div>
-            <div className="ey">{alvo.tipo === 'wa' ? ROTULO[alvo.m.tipo] : 'Email ao cliente · exemplo com dados fictícios'}</div>
+            <div className="ey">{alvo.tipo === 'wa' ? ROTULO[alvo.m.tipo] : `Email ao ${alvo.e.para ?? 'cliente'} · exemplo com dados fictícios`}</div>
             <h3 id="jr-mtitle">{titulo}</h3>
           </div>
           <button type="button" className="x" onClick={onClose} aria-label="Fechar">×</button>

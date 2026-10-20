@@ -21,6 +21,8 @@ export const FASES_EDICAO: Fase[] = [
         descricao: 'Na página Edição de Vídeo, a equipa aparece ordenada do mais livre para o mais ocupado. Atribuir no quadro (coluna Por atribuir).',
         quem: ['Rui'], prazo: 'Até 3 dias úteis', onde: 'Produção › Edição de Vídeo',
         tarefas: ['Ver a carga de cada editor', 'Atribuir o editor no quadro', 'Confirmar o prazo de entrega (proposta)'],
+        emails: [{ assunto: 'Ticket de Edição', preview: 'ticket-editor', para: 'editor' }],
+        dica: 'Ao atribuir, o editor recebe logo o Ticket de Edição por email e a notificação no portal.',
       },
       {
         id: '0-1', titulo: 'Entregar o projeto', sub: 'ficheiros e notas',

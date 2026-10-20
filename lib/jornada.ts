@@ -32,7 +32,7 @@ export type Quem = 'Rui' | 'Noivos' | 'Equipa' | 'Automático'
 export type Mensagem = { titulo: string; texto: string; tipo: 'crm' | 'copiar' | 'nova'; quando?: string }
 
 /** preview = chave da pré-visualização real em /api/jornada/email (sem chave: ainda não há) */
-export type Email = { assunto: string; preview?: string }
+export type Email = { assunto: string; preview?: string; para?: string }   // para: a quem vai (por defeito, o cliente)
 
 /** [quando, o quê, onde na app] */
 export type Regra = [string, string, string?]
