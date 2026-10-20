@@ -31,7 +31,7 @@ type Projeto = {
   id: number; fichaId: string; referencia: string | null; cliente: string | null; data: string; local: string | null
   fase: Fase | 'Sem registo'; editores: string[]; editorIds: (string | null)[]
   prazo: string; diasPrazo: number; portalId: string | null; entregueEm: string | null
-  prazoInterno: string; diasInterno: number; diaTeaser: number; teaserDias: number
+  diaTeaser: number; teaserDias: number
   avaliacao: { ritmo: number | null; cor: number | null; audio: number | null; historia: number | null; nota_noivos: number | null } | null
   entregas: { teaser: boolean; sde: boolean; filme: boolean; prewedding: boolean }
   filmeUrl: string | null
@@ -185,7 +185,7 @@ export default function EdicaoVideoPage() {
   const porFase = useMemo(() => {
     const m = new Map<Fase, Projeto[]>(FASES.map(f => [f, []]))
     for (const p of projetos) if (p.fase !== 'Sem registo') m.get(p.fase)?.push(p)
-    for (const [f, l] of m) l.sort((a, b) => f === 'Entregue' ? (b.entregueEm ?? b.data).localeCompare(a.entregueEm ?? a.data) : a.diasInterno - b.diasInterno)
+    for (const [f, l] of m) l.sort((a, b) => f === 'Entregue' ? (b.entregueEm ?? b.data).localeCompare(a.entregueEm ?? a.data) : a.diasPrazo - b.diasPrazo)
     return m
   }, [projetos])
 
@@ -195,14 +195,14 @@ export default function EdicaoVideoPage() {
     { label: 'Por atribuir', valor: porFase.get('Por atribuir')!.length, cor: COR_FASE['Por atribuir'] },
     { label: 'Em edição', valor: porFase.get('Em Edição')!.length + porFase.get('Aguardar')!.length, cor: COR_FASE['Em Edição'] },
     { label: 'Em revisão', valor: porFase.get('Em Revisão')!.length, cor: COR_FASE['Em Revisão'] },
-    { label: 'Prazo RL < 15 dias', valor: abertos.filter(p => p.diasInterno >= 0 && p.diasInterno < 15).length, cor: '#fbbf24' },
-    { label: 'Atrasados (prazo RL)', valor: abertos.filter(p => p.diasInterno < 0).length, cor: '#f87171' },
+    { label: 'Prazo < 30 dias', valor: abertos.filter(p => p.diasPrazo >= 0 && p.diasPrazo < 30).length, cor: '#fbbf24' },
+    { label: 'Atrasados', valor: abertos.filter(p => p.diasPrazo < 0).length, cor: '#f87171' },
   ]
 
   const cargas = (dados?.editores ?? []).map(e => {
     const meus = abertos.filter(p => p.editorIds.includes(e.id) && ATIVAS.includes(p.fase as Fase))
-    const prox = [...meus].sort((a, b) => a.diasInterno - b.diasInterno)[0]
-    return { e, ativos: meus.length, atrasados: meus.filter(p => p.diasInterno < 0).length, prox }
+    const prox = [...meus].sort((a, b) => a.diasPrazo - b.diasPrazo)[0]
+    return { e, ativos: meus.length, atrasados: meus.filter(p => p.diasPrazo < 0).length, prox }
   }).sort((a, b) => a.ativos - b.ativos)
 
   return (
@@ -225,7 +225,7 @@ export default function EdicaoVideoPage() {
 
           <p className="mt-12 text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Ponto de situação</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Vídeos em curso</h2>
-          <p className="mt-2 text-sm text-white/45">Quantos casamentos estão em cada fase e quantos têm o prazo interno da RL (90 dias depois do casamento) perto ou já passado.</p>
+          <p className="mt-2 text-sm text-white/45">Quantos casamentos estão em cada fase e quantos têm o prazo de entrega perto ou já passado.</p>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
             {kpis.map(k => (
               <div key={k.label} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md px-4 py-3.5" style={{ borderLeft: `2px solid ${k.cor}` }}>
@@ -277,7 +277,7 @@ export default function EdicaoVideoPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-lg font-semibold truncate">{e.nome}</p>
                   <p className="text-xs text-white/45 mt-0.5">
-                    {prox ? <>Próximo prazo RL: <span className={prox.diasInterno < 0 ? 'text-red-400' : 'text-white/70'}>{prox.cliente} · {prox.diasInterno < 0 ? `${-prox.diasInterno} dias atrasado` : `${prox.diasInterno} dias`}</span></> : 'Sem projetos ativos'}
+                    {prox ? <>Próximo prazo: <span className={prox.diasPrazo < 0 ? 'text-red-400' : 'text-white/70'}>{prox.cliente} · {prox.diasPrazo < 0 ? `${-prox.diasPrazo} dias atrasado` : `${prox.diasPrazo} dias`}</span></> : 'Sem projetos ativos'}
                   </p>
                 </div>
                 <div className="text-right flex-none">
@@ -327,7 +327,7 @@ export default function EdicaoVideoPage() {
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Quadro de trabalho</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Casamentos em edição</h2>
-          <p className="mt-2 text-sm text-white/45">O editor põe Em Edição (desbloqueia o download) e Em Revisão (envia o link). A RL aprova (Finalizado) e entrega o filme aos noivos (Entregue). Os alertas seguem o prazo interno da RL (90 dias); o prazo do contrato (180 dias úteis) fica por baixo, como limite.</p>
+          <p className="mt-2 text-sm text-white/45">O editor põe Em Edição (desbloqueia o download) e Em Revisão (envia o link). A RL aprova (Finalizado) e entrega o filme aos noivos (Entregue). O prazo conta 180 dias úteis desde o casamento.</p>
           <div className="mt-6 flex gap-4 overflow-x-auto pb-4 snap-x">
             {FASES.map(f => {
               const lista = porFase.get(f) ?? []
@@ -348,14 +348,9 @@ export default function EdicaoVideoPage() {
                         <p className="text-[11px] text-white/40 mt-0.5">{fmt(p.data)}{p.local ? ` · ${p.local}` : ''}</p>
                       </div>
                       {f !== 'Entregue' && (
-                        <div>
-                          <p className={`text-[12px] font-semibold tracking-[0.08em] ${p.diasInterno < 0 ? 'text-red-400' : p.diasInterno < 15 ? 'text-amber-300' : 'text-white/55'}`}>
-                            {p.diasInterno < 0 ? `Prazo RL passou há ${-p.diasInterno} dias` : `Prazo RL em ${p.diasInterno} dias`} · {fmt(p.prazoInterno)}
-                          </p>
-                          <p className={`text-[11px] mt-0.5 ${p.diasPrazo < 0 ? 'text-red-400 font-semibold' : 'text-white/35'}`}>
-                            Contrato: {fmt(p.prazo)} {p.diasPrazo < 0 ? `(ultrapassado há ${-p.diasPrazo} dias)` : `(${p.diasPrazo} dias)`}
-                          </p>
-                        </div>
+                        <p className={`text-[12px] font-semibold tracking-[0.08em] ${p.diasPrazo < 0 ? 'text-red-400' : p.diasPrazo < 30 ? 'text-amber-300' : 'text-white/55'}`}>
+                          {p.diasPrazo < 0 ? `Atrasado ${-p.diasPrazo} dias` : `Prazo em ${p.diasPrazo} dias`} · {fmt(p.prazo)}
+                        </p>
                       )}
                       {f === 'Por atribuir' ? (
                         <select disabled={aGravar === p.id || !p.referencia} defaultValue="" onChange={e => atribuir(p, e.target.value)}

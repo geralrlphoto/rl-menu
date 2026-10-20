@@ -10,8 +10,7 @@ import { exigeAdmin } from '@/lib/api-guard'
 // a mesma tabela do Painel do Editor) e o histórico (video_estado_historico).
 // Só lê colunas necessárias (egress baixo).
 
-const PRAZO_DIAS_UTEIS = 180    // prazo do contrato
-const PRAZO_INTERNO_DIAS = 90   // prazo interno da RL (dias corridos): é por este que o quadro alerta
+const PRAZO_DIAS_UTEIS = 180
 const TEASER_DIAS = 7           // promessa: teaser nos 7 dias a seguir ao casamento
 const JANELA_DIAS = 420          // casamentos por entregar até ~14 meses atrás
 const ENTREGUES_RECENTES = 90    // entregues nos últimos 90 dias ficam visíveis
@@ -138,8 +137,6 @@ export async function GET(req: NextRequest) {
       : editores.length ? 'Aguardar' : 'Por atribuir'
     const diasAte = (iso: string) => Math.round((new Date(iso + 'T12:00:00Z').getTime() - new Date(hoje + 'T12:00:00Z').getTime()) / 86400000)
     const diasPrazo = diasAte(prazo)
-    const prazoInterno = new Date(new Date(e.data_evento.slice(0, 10) + 'T12:00:00Z').getTime() + PRAZO_INTERNO_DIAS * 86400000).toISOString().slice(0, 10)
-    const diasInterno = diasAte(prazoInterno)
     const diaTeaser = -diasAte(e.data_evento.slice(0, 10))   // dias desde o casamento
     // Sem editor nem fase e com o prazo já ultrapassado: quase sempre entregues
     // antes de haver registo no portal. Ficam à parte para não encherem o quadro.
@@ -147,7 +144,7 @@ export async function GET(req: NextRequest) {
     return {
       id: e.id, fichaId: e.notion_id ?? String(e.id), referencia: e.referencia, cliente: e.cliente, data: e.data_evento, local: e.local,
       fase: faseFinal, editores, editorIds: editores.map(n => editoresPorNome.get(norm(n))?.id ?? null),
-      prazo, diasPrazo, prazoInterno, diasInterno, diaTeaser, teaserDias: TEASER_DIAS, entregas, portalId: p?.id ?? null,
+      prazo, diasPrazo, diaTeaser, teaserDias: TEASER_DIAS, entregas, portalId: p?.id ?? null,
       avaliacao: avalPorRef.get(e.referencia ?? '') ?? null,
       entregueEm: typeof p?.w === 'string' ? p.w.slice(0, 10) : null,
       filmeUrl: typeof p?.u === 'string' ? p.u : null,
