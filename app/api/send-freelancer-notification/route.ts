@@ -1,4 +1,5 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { nomesBilhete } from '@/lib/bilheteNoivos'
 import { createClient } from '@supabase/supabase-js'
 import { emailNovidadesFreelancer } from '@/lib/emailsFreelancers'
 
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
   // Fetch all freelancers and match by name case-insensitively
   const { data: allFreelancers, error } = await supabase()
     .from('freelancers')
-    .select('id, nome, email')
+    .select('id, nome, email, status')
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
         from: 'RL Photo.Video <geral@rlphotovideo.pt>',
         to: [freelancer.email!],
         subject: `Tens novidades no portal — ${referencia ?? 'Novo Evento'}`,
-        html: emailNovidadesFreelancer(freelancer.id),
+        html: emailNovidadesFreelancer({ freelancerId: freelancer.id, nome: freelancer.nome, status: (freelancer as any).status, referencia, noivos: nomesBilhete(nome_noiva, nome_noivo), data: data_evento, local }),
       }),
     })
 

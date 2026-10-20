@@ -5,7 +5,10 @@ import { buildTicketEditorHtml, buildTicketAprovacaoHtml, prazoVideo } from '@/l
 import { buildTicketFilmeHtml, type PassoFilme } from '@/lib/ticket-filme-html'
 import { cardPagamento } from '@/lib/pagamentoEmail'
 import { ENTREGAS, buildEntregaEmailHtml, type TipoEntrega } from '@/lib/entregaEmail'
-import { emailNovidadesFreelancer, emailNovoBriefing, emailTrabalhoEdicao, emailEdicaoFotos, emailCandidatura } from '@/lib/emailsFreelancers'
+import {
+  emailNovidadesFreelancer, emailNovoBriefing, emailTrabalhoEdicao, emailEdicaoFotos, emailCandidatura, emailEdicaoAlbum,
+  emailNotificacaoFreelancer, emailMensagemFreelancer, emailNovaTarefa, emailNovoProjeto, emailProjetoAtrasado, emailAvisoAlbum,
+} from '@/lib/emailsFreelancers'
 import { buildRecoveryEmail, buildDadosRecebidosEmail, buildNovaLeadEmail } from '@/lib/emailsClientes'
 import {
   emailNotificacaoNoivos, emailRespostaNoivos, emailTarefaNoivos, emailMarcarPreWedding, emailPreWeddingReservado,
@@ -57,12 +60,24 @@ function html(k: string): string | null {
       ? buildEntregaEmailHtml(t as TipoEntrega, { nomes: NOMES, url: `${SITE}/login-noivos`, data: '2027-06-12', local: 'Quinta de Exemplo', referencia: 'CAS_000_27_RL' })
       : null
   }
-  // Freelancers (cards em imagem) e emails a noivos e leads
-  if (k === 'fl-novidades') return emailNovidadesFreelancer('exemplo')
-  if (k === 'fl-briefing') return emailNovoBriefing(SITE, 'exemplo')
-  if (k === 'fl-trabalho-edicao') return emailTrabalhoEdicao(SITE, 'exemplo')
-  if (k === 'fl-edicao-fotos') return emailEdicaoFotos(`${SITE}/freelancer-view/exemplo`, 'Ana e Tiago', 'CAS_000_27_RL')
-  if (k === 'fl-candidatura') return emailCandidatura(SITE)
+  // Equipa: card da equipa (lib/cardEquipa.ts) com um membro fictício
+  const EV = { referencia: 'CAS_000_27_RL', noivos: 'Ana | Tiago', data: '2027-06-12', local: 'Quinta de Exemplo' }
+  const FL = { nome: 'Marco Exemplo', status: 'FOTOGRAFO' }
+  const ED = { nome: 'Marco Exemplo', status: 'EDITORES' }
+  const pFl = `${SITE}/freelancer-view/exemplo`
+  if (k === 'fl-novidades') return emailNovidadesFreelancer({ freelancerId: 'exemplo', ...FL, ...EV })
+  if (k === 'fl-briefing') return emailNovoBriefing({ freelancerId: 'exemplo', ...FL, ...EV })
+  if (k === 'fl-notificacao') return emailNotificacaoFreelancer({ portalUrl: pFl, ...FL, titulo: 'Horário de chegada atualizado' })
+  if (k === 'fl-mensagem') return emailMensagemFreelancer({ portalUrl: pFl, ...FL, mensagem: 'Olá Marco! Amanhã levas a lente 85 mm, por favor.' })
+  if (k === 'fl-tarefa') return emailNovaTarefa({ url: pFl, ...FL, titulo: 'Enviar os cartões de memória', descricao: 'Deixa os cartões no escritório até sexta.', prazo: '2027-06-18', prioridade: 'Alta' })
+  if (k === 'fl-edicao-fotos') return emailEdicaoFotos({ portalUrl: pFl, ...ED, ...EV })
+  if (k === 'fl-edicao-album') return emailEdicaoAlbum({ portalUrl: pFl, ...ED, ...EV, fotos: ['4218', '4219', '4230', '4301'] })
+  if (k === 'fl-album-aviso') return emailAvisoAlbum({ url: pFl, ...ED, ...EV, titulo: 'Os noivos aprovaram a maquete', texto: 'A maquete foi aprovada. Podes avançar para a versão final.' })
+  if (k === 'fl-trabalho-edicao') return emailTrabalhoEdicao({ editorId: 'exemplo', ...ED, ...EV, downloads: ['https://drive.exemplo.pt/ficheiros'] })
+  if (k === 'ed-tarefa') return emailNovaTarefa({ url: `${SITE}/painel-editor`, ...ED, titulo: 'Rever a cor da cerimónia', projeto: 'Ana | Tiago', prazo: '20/06/2027', hora: '18:00', prioridade: 'Média', editor: true })
+  if (k === 'ed-novo-projeto') return emailNovoProjeto({ url: `${SITE}/painel-editor/novos-projetos`, ...ED, ...EV })
+  if (k === 'ed-atrasado') return emailProjetoAtrasado({ url: `${SITE}/painel-editor/novos-projetos`, ...ED, ...EV, entregaPrevista: '01/03/2028', diasAtraso: 12 })
+  if (k === 'fl-candidatura') return emailCandidatura(SITE, 'Marco Exemplo')
   if (k === 'recuperar') return buildRecoveryEmail({ nome: 'Ana & Tiago', password: 'exemplo123', loginUrl: login })
   if (k === 'dados-recebidos') return buildDadosRecebidosEmail({ nome_noivos: 'Ana e Tiago', data_casamento: '2027-06-12' })
   if (k === 'nova-lead') return buildNovaLeadEmail('Ana e Tiago', 'Fotografia, Vídeo')

@@ -1,4 +1,5 @@
-﻿import { NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import { emailMensagemFreelancer } from '@/lib/emailsFreelancers'
 import { createClient } from '@supabase/supabase-js'
 import { exigeSessao, exigeAdmin, exigeAdminOuProprio, ehAdmin, sessaoMembro, naoAutorizado } from '@/lib/api-guard'
 
@@ -8,7 +9,6 @@ const ADMIN_EMAIL  = 'geral.rlphoto@gmail.com'
 const ADMIN_URL    = 'https://portal.rlphotovideo.pt'
 const IMG_BASE     = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const PORTAL_BASE  = 'https://portal.rlphotovideo.pt/freelancer-view'
-const NOTIF_IMG    = 'https://portal.rlphotovideo.pt/card_nova_mensagem.png'
 
 function supabase() {
   return createClient(
@@ -166,7 +166,7 @@ export async function POST(req: Request) {
 
       const { data: freelancer } = await sb
         .from('freelancers')
-        .select('email')
+        .select('nome, email, status')
         .eq('id', body.freelancer_id)
         .single()
 
@@ -183,23 +183,7 @@ export async function POST(req: Request) {
             from: 'RL Photo.Video <geral@rlphotovideo.pt>',
             to: [freelancer.email],
             subject: 'Tens uma nova mensagem no portal',
-            html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0d0901;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
-    <tr>
-      <td align="center">
-        <a href="${portalUrl}" style="display:block;text-decoration:none;">
-          <img src="${NOTIF_IMG}"
-            width="560" alt="Tens uma nova mensagem"
-            style="display:block;width:100%;max-width:560px;border:0;" />
-        </a>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`,
+            html: emailMensagemFreelancer({ portalUrl, nome: (freelancer as any).nome, status: (freelancer as any).status, mensagem: body.mensagem }),
           }),
         })
       }

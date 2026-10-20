@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
     // ── Card de confirmação ao candidato (mesmo card do fluxo Tally antigo) ──
     let candidatoEmailId: string | null = null
     if (candidato_email && /.+@.+\..+/.test(String(candidato_email))) {
-      const cardHtml = emailCandidatura(ADMIN_URL)
+      const cardHtml = emailCandidatura(ADMIN_URL, freelancer_nome)
       const cres = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },

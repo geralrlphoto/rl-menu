@@ -67,20 +67,28 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
     ],
   },
   {
-    titulo: 'Freelancers',
+    titulo: 'Equipa · Freelancers',
     tickets: [
-      { k: 'fl-novidades', nome: 'Tens Novidades no Portal', assunto: 'Tens novidades no portal — CAS_000_27_RL', quando: 'Na equipa da ficha do evento, ao carregar no botão de notificar o freelancer.', para: 'Freelancers da equipa' },
-      { k: 'fl-briefing', nome: 'Briefing Disponível', assunto: 'Briefing disponível — Quinta de Exemplo · 12 Jun 2027', quando: 'Quando o briefing do casamento é enviado à equipa.', para: 'Freelancers da equipa' },
-      { k: 'fl-trabalho-edicao', nome: 'Trabalho de Edição', assunto: 'Trabalho de edição — Quinta de Exemplo', quando: 'Quando o trabalho (ficheiros e links) é enviado aos editores de vídeo.', para: 'Editores de vídeo' },
-      { k: 'fl-edicao-fotos', nome: 'Nova Edição de Fotos', assunto: 'Nova edição de fotos · Ana e Tiago', quando: 'Quando a edição de fotos de um casamento é atribuída a um freelancer.', para: 'Editor de fotografia' },
-      { k: 'fl-candidatura', nome: 'Candidatura Recebida', assunto: 'Recebemos a tua candidatura · RL Photo.Video', quando: 'Quando alguém se candidata a freelancer.', para: 'Candidato' },
+      { k: 'fl-novidades', nome: 'Novo Evento', assunto: 'Tens novidades no portal — CAS_000_27_RL', quando: 'Na equipa da ficha do evento, ao carregar no botão de notificar o freelancer.', para: 'Freelancers da equipa', info: 'Pílula NOVO EVENTO, nome e função do membro, casamento, data, local, referência e botão ABRIR O MEU PORTAL.' },
+      { k: 'fl-briefing', nome: 'Briefing Disponível', assunto: 'Briefing disponível — Quinta de Exemplo · 12 Jun 2027', quando: 'Quando o briefing do casamento é enviado à equipa.', para: 'Freelancers da equipa', info: 'Pílula BRIEFING DISPONÍVEL, nome e função, casamento, data, local, referência e botão VER O BRIEFING.' },
+      { k: 'fl-notificacao', nome: 'Nova Notificação', assunto: 'Tens uma nova notificação — <título>', quando: 'Quando o admin envia uma notificação ao freelancer (fica também no sino do portal).', para: 'Freelancer', info: 'Pílula NOVA NOTIFICAÇÃO, nome e função, o título e botão VER NO PORTAL.' },
+      { k: 'fl-mensagem', nome: 'Nova Mensagem', assunto: 'Tens uma nova mensagem no portal', quando: 'Quando o admin escreve ao freelancer nas mensagens do portal.', para: 'Freelancer', info: 'Pílula NOVA MENSAGEM, nome e função, a mensagem numa caixa e botão RESPONDER NO PORTAL.' },
+      { k: 'fl-tarefa', nome: 'Nova Tarefa', assunto: 'Nova tarefa atribuída · <tarefa>', quando: 'Quando é atribuída uma tarefa ao freelancer.', para: 'Freelancer', info: 'Pílula NOVA TAREFA, nome e função, prazo, prioridade, descrição e botão ABRIR O MEU PORTAL.' },
+      { k: 'fl-edicao-fotos', nome: 'Nova Edição de Fotos', assunto: 'Nova edição de fotos · Ana e Tiago', quando: 'Quando a edição de fotos de um casamento é atribuída a um freelancer.', para: 'Editor de fotografia', info: 'Pílula NOVA EDIÇÃO DE FOTOS, nome, casamento, data, local, referência e botão ABRIR O MEU PORTAL.' },
+      { k: 'fl-edicao-album', nome: 'Nova Edição de Álbum', assunto: 'Nova edição de álbum · Ana e Tiago', quando: 'Quando a edição do álbum é atribuída, com as fotos escolhidas pelos noivos.', para: 'Editor de álbum', info: 'Pílula NOVA EDIÇÃO DE ÁLBUM, nome, casamento, data, local, referência, nº de fotos, a lista das fotos e botão ABRIR O MEU PORTAL.' },
+      { k: 'fl-album-aviso', nome: 'Aviso do Álbum', assunto: '<título do aviso>', quando: 'Quando o estado do álbum muda (maquete aprovada, alterações pedidas…).', para: 'Editor de álbum', info: 'Pílula ÁLBUM, nome, o aviso, casamento, data, local, referência, a mensagem e botão ABRIR O MEU PORTAL.' },
+      { k: 'fl-candidatura', nome: 'Candidatura Recebida', assunto: 'Recebemos a tua candidatura · RL Photo.Video', quando: 'Quando alguém se candidata a freelancer (formulário ou Tally).', para: 'Candidato', info: 'Pílula CANDIDATURA RECEBIDA, nome do candidato, agradecimento e botão CONHECER O NOSSO TRABALHO.' },
     ],
   },
   {
-    titulo: 'Editores de vídeo',
+    titulo: 'Equipa · Editores de vídeo',
     tickets: [
-      { k: 'ticket-editor', nome: 'Ticket de Edição', assunto: 'Ticket de Edição · Ana e Tiago', quando: 'Quando um editor de vídeo é nomeado na equipa do evento.', para: 'Editor de vídeo' },
-      { k: 'ticket-aprovacao', nome: 'Ticket de Aprovação', assunto: 'Ticket de Aprovação · Ana e Tiago', quando: 'Quando a RL aprova o vídeo em revisão.', para: 'Editor de vídeo' },
+      { k: 'ticket-editor', nome: 'Ticket de Edição', assunto: 'Ticket de Edição · Ana e Tiago', quando: 'Quando um editor de vídeo é nomeado na equipa do evento.', para: 'Editor de vídeo', info: 'Pílula TICKET DE EDIÇÃO, nome, Nº do ticket, data de atribuição, casamento, data, local, prazo do filme, os 4 próximos passos e botão ABRIR O MEU PAINEL.' },
+      { k: 'fl-trabalho-edicao', nome: 'Trabalho de Edição', assunto: 'Trabalho de edição — Quinta de Exemplo', quando: 'Quando o trabalho (ficheiros e links) é enviado aos editores de vídeo.', para: 'Editores de vídeo', info: 'Pílula TRABALHO DE EDIÇÃO, nome, casamento, data, local, referência, os links de download e botão ABRIR O MEU PAINEL.' },
+      { k: 'ed-novo-projeto', nome: 'Novo Projeto', assunto: 'Novo projeto atribuído · RL Photo.Video', quando: 'No Painel do Editor, quando um projeto novo é atribuído.', para: 'Editor de vídeo', info: 'Pílula NOVO PROJETO, nome, casamento e botão ABRIR O MEU PAINEL.' },
+      { k: 'ed-tarefa', nome: 'Nova Tarefa (Painel)', assunto: 'Nova tarefa atribuída · RL Photo.Video', quando: 'No Painel do Editor, quando é criada uma tarefa para o editor.', para: 'Editor de vídeo', info: 'Pílula NOVA TAREFA, nome, projeto, prazo e hora, prioridade, descrição e botão ABRIR O MEU PAINEL.' },
+      { k: 'ed-atrasado', nome: 'Projeto Atrasado', assunto: '⚠ Projeto atrasado: <noivos> (<dias> dias)', quando: 'Quando a entrega prevista de um projeto passa sem estar marcado como entregue.', para: 'Editor de vídeo', info: 'Pílula PROJETO ATRASADO, nome, casamento, entrega prevista, dias de atraso em destaque e botão ABRIR O PROJETO.' },
+      { k: 'ticket-aprovacao', nome: 'Ticket de Aprovação', assunto: 'Ticket de Aprovação · Ana e Tiago', quando: 'Quando a RL aprova o vídeo em revisão.', para: 'Editor de vídeo', info: 'Pílula TICKET DE APROVAÇÃO, nome, Nº do ticket, data, casamento, local, notas da RL, os 4 próximos passos e botão VER A VERSÃO APROVADA.' },
     ],
   },
   {
@@ -108,7 +116,7 @@ export default function TicketsPage() {
         <h1 style={{ margin: '8px 0 6px', fontSize: 34, fontWeight: 400, fontStyle: 'italic' }}>Tickets</h1>
         <p style={{ margin: '0 0 12px', fontSize: 14, color: '#a99d88' }}>
           Exemplos de todos os tickets enviados por email. Dados fictícios, nada é enviado.
-          Tudo o que vai para os noivos usa o mesmo bilhete: foto com os nomes e a data, linha de corte, frase, campos e botão em dourado suave.
+          Tudo o que vai para os noivos usa o mesmo bilhete: foto com os nomes e a data, linha de corte, frase, campos e botão em dourado suave. Tudo o que vai para a equipa usa o card da equipa: câmara a preto e branco, nome do membro e função.
         </p>
         <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 8px' }}>
           {GRUPOS.map((g, i) => (

@@ -1,10 +1,10 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { emailNotificacaoFreelancer } from '@/lib/emailsFreelancers'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
 const PORTAL_BASE = 'https://portal.rlphotovideo.pt/freelancer-view'
-const IMG_URL     = 'https://portal.rlphotovideo.pt/email-notificacao-equipa.png'
 
 function supabase() {
   return createClient(
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
 
   const { data: freelancer, error } = await supabase()
     .from('freelancers')
-    .select('id, nome, email')
+    .select('id, nome, email, status')
     .eq('id', freelancer_id)
     .single()
 
@@ -42,23 +42,7 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [freelancer.email],
       subject: `Tens uma nova notificação — ${titulo}`,
-      html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0d0901;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
-    <tr>
-      <td align="center">
-        <a href="${portalUrl}" style="display:block;text-decoration:none;">
-          <img src="${IMG_URL}"
-            width="560" alt="Tens uma nova notificação"
-            style="display:block;width:100%;max-width:560px;border:0;" />
-        </a>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`,
+      html: emailNotificacaoFreelancer({ portalUrl, nome: freelancer.nome, status: (freelancer as any).status, titulo }),
     }),
   })
 

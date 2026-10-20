@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { nomesBilhete } from '@/lib/bilheteNoivos'
+import { eventoParaEquipa } from '@/lib/cardEquipa'
 import { emailEdicaoFotos } from '@/lib/emailsFreelancers'
 import { createClient } from '@supabase/supabase-js'
 
@@ -31,6 +33,7 @@ export async function POST(req: NextRequest) {
   }
 
   const portalUrl = `${PORTAL_BASE}/${freelancer_id}`
+  const ev = await eventoParaEquipa(referencia)
   const subject = nome_noivos
     ? `Nova edição de fotos · ${nome_noivos}`
     : `Nova edição de fotos atribuída a ti`
@@ -45,7 +48,7 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [freelancer.email],
       subject,
-      html: emailEdicaoFotos(portalUrl, nome_noivos, referencia),
+      html: emailEdicaoFotos({ portalUrl, nome: freelancer.nome, noivos: nomesBilhete(nome_noivos) || nome_noivos, referencia, data: ev.data, local: ev.local }),
     }),
   })
 

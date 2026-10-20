@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { eventoParaEquipa } from '@/lib/cardEquipa'
 import { emailNovoBriefing } from '@/lib/emailsFreelancers'
 import { createClient } from '@supabase/supabase-js'
 
@@ -183,12 +184,13 @@ export async function POST(req: NextRequest) {
   let emailsSent = 0
   if (process.env.RESEND_API_KEY) {
     const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'
-    const { data: members } = await supabase.from('freelancers').select('id, nome, email').in('id', newIds)
+    const { data: members } = await supabase.from('freelancers').select('id, nome, email, status').in('id', newIds)
+    const ev = await eventoParaEquipa(referencia)
     const subject = localStr
       ? `Briefing disponível — ${localStr}${dateLabel ? ` · ${dateLabel}` : ''}`
       : 'Novo Briefing disponível'
 
-    for (const m of (members ?? []) as Array<{ id: string; nome: string | null; email: string | null }>) {
+    for (const m of (members ?? []) as Array<{ id: string; nome: string | null; email: string | null; status: string | null }>) {
       if (!m.email) continue
       try {
         await fetch('https://api.resend.com/emails', {
@@ -201,7 +203,7 @@ export async function POST(req: NextRequest) {
             from: 'RL Photo.Video <geral@rlphotovideo.pt>',
             to: [m.email],
             subject,
-            html: emailNovoBriefing(SITE, m.id),
+            html: emailNovoBriefing({ freelancerId: m.id, nome: m.nome, status: m.status, referencia, noivos: ev.noivos, data: dataCas ?? ev.data, local: localStr || ev.local, briefingUrl }),
           }),
         })
         emailsSent++

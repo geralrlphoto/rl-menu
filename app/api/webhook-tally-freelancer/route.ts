@@ -1,4 +1,5 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { emailCandidatura } from '@/lib/emailsFreelancers'
 import { createClient } from '@supabase/supabase-js'
 
 function db() {
@@ -21,25 +22,6 @@ function getField(fields: any[], label: string): string | null {
   return null
 }
 
-function buildConfirmacaoHtml(nome: string): string {
-  return `<!DOCTYPE html>
-<html lang="pt">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Candidatura Recebida</title>
-</head>
-<body style="margin:0;padding:0;background:#0e0c07;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0c07;">
-  <tr>
-    <td align="center" style="padding:32px 20px;">
-      <img src="https://portal.rlphotovideo.pt/card-freelancer-obrigado.png" width="560" alt="Recebemos a tua candidatura" style="display:block;max-width:100%;border:0;"/>
-    </td>
-  </tr>
-</table>
-</body>
-</html>`
-}
 
 
 export async function POST(req: NextRequest) {
@@ -111,7 +93,7 @@ export async function POST(req: NextRequest) {
             from: 'RL Photo.Video <geral@rlphotovideo.pt>',
             to: [email],
             subject: 'Recebemos a tua candidatura · RL Photo.Video',
-            html: buildConfirmacaoHtml(nome),
+            html: emailCandidatura(undefined, nome),
           }),
         }).then(async r => {
           if (!r.ok) {

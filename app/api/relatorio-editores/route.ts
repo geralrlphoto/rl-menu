@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { eventoParaEquipa } from '@/lib/cardEquipa'
 import { emailTrabalhoEdicao } from '@/lib/emailsFreelancers'
 import { createClient } from '@supabase/supabase-js'
 
@@ -105,6 +106,7 @@ export async function POST(req: NextRequest) {
   if (process.env.RESEND_API_KEY) {
     const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'
     const { data: editores } = await supabase.from('freelancers').select('id, nome, email').in('id', editorIds)
+    const ev = await eventoParaEquipa(referencia)
     const subject = localStr ? `Trabalho de edição — ${localStr}` : 'Novo trabalho de edição'
 
     for (const ed of (editores ?? []) as Array<{ id: string; nome: string | null; email: string | null }>) {
@@ -117,7 +119,7 @@ export async function POST(req: NextRequest) {
             from: 'RL Photo.Video <geral@rlphotovideo.pt>',
             to: [ed.email],
             subject,
-            html: emailTrabalhoEdicao(SITE, ed.id),
+            html: emailTrabalhoEdicao({ editorId: ed.id, nome: ed.nome, referencia, noivos: ev.noivos, data: data_casamento ?? ev.data, local: localStr || ev.local, downloads }),
           }),
         })
         emailsSent++

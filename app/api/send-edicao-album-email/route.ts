@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { nomesBilhete } from '@/lib/bilheteNoivos'
+import { eventoParaEquipa } from '@/lib/cardEquipa'
+import { emailEdicaoAlbum } from '@/lib/emailsFreelancers'
 import { createClient } from '@supabase/supabase-js'
 
 export const dynamic = 'force-dynamic'
 
 const PORTAL_BASE = 'https://portal.rlphotovideo.pt/freelancer-view'
-const IMG_URL     = 'https://portal.rlphotovideo.pt/card-edicao-album.png'
 
 function supabase() {
   return createClient(
@@ -17,7 +19,6 @@ export async function POST(req: NextRequest) {
   const { freelancer_id, nome_noivos, referencia, fotos_album } = await req.json().catch(() => ({}))
   // Fotos escolhidas pelos noivos para o álbum (lista dos códigos)
   const lista = String(fotos_album ?? '').split(/[\s,;]+/).filter(x => /\d/.test(x))
-  const esc = (t: string) => t.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 
   if (!freelancer_id) {
     return NextResponse.json({ error: 'freelancer_id obrigatório' }, { status: 400 })
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
   }
 
   const portalUrl = `${PORTAL_BASE}/${freelancer_id}`
+  const ev = await eventoParaEquipa(referencia)
   const subject = nome_noivos
     ? `Nova edição de álbum · ${nome_noivos}`
     : `Nova edição de álbum atribuída a ti`
@@ -48,34 +50,7 @@ export async function POST(req: NextRequest) {
       from: 'RL Photo.Video <geral@rlphotovideo.pt>',
       to: [freelancer.email],
       subject,
-      html: `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0d0901;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d0901;padding:32px 16px;">
-    <tr>
-      <td align="center">
-        <a href="${portalUrl}" style="display:block;text-decoration:none;">
-          <img src="${IMG_URL}"
-            width="320" alt="Nova edição de álbum"
-            style="display:block;width:100%;max-width:320px;border:0;" />
-        </a>
-        ${nome_noivos || referencia ? `
-        <p style="margin:18px 0 0;font-family:Georgia,'Times New Roman',serif;font-size:13px;color:#a09070;letter-spacing:0.05em;">
-          ${nome_noivos ?? ''}${nome_noivos && referencia ? ' &middot; ' : ''}${referencia ?? ''}
-        </p>` : ''}
-        ${lista.length ? `
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:22px auto 0;border:1px solid #7a6340;">
-          <tr><td style="padding:18px 20px;font-family:Georgia,'Times New Roman',serif;">
-            <p style="margin:0 0 8px;font-size:10px;letter-spacing:0.35em;color:#8a7450;text-transform:uppercase;">Fotos para o álbum · ${lista.length}</p>
-            <p style="margin:0;font-size:13px;color:#d4c9b0;line-height:1.8;font-family:monospace;">${esc(lista.join('; '))}</p>
-          </td></tr>
-        </table>` : ''}
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`,
+      html: emailEdicaoAlbum({ portalUrl, nome: freelancer.nome, noivos: nomesBilhete(nome_noivos) || nome_noivos, referencia, data: ev.data, local: ev.local, fotos: lista }),
     }),
   })
 

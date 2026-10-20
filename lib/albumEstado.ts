@@ -18,6 +18,8 @@
 // maquete_enviada), avisos ao editor e aos noivos, e o histórico (fotografia_historico).
 
 import { createClient } from '@supabase/supabase-js'
+import { eventoParaEquipa } from '@/lib/cardEquipa'
+import { emailAvisoAlbum } from '@/lib/emailsFreelancers'
 import { cabecalhoInterno } from '@/lib/api-guard'
 import { registarFoto } from '@/lib/fotografiaHistorico'
 
@@ -56,6 +58,7 @@ export async function avisarEditorAlbum(referencia: string, titulo: string, text
     if (!nomes.length) return
     const { data: fls } = await sb.from('freelancers').select('id, nome, email')
     const editores = (fls ?? []).filter(f => nomes.some(n => norm(n) === norm(f.nome ?? '')))
+    const ev = await eventoParaEquipa(referencia)
     for (const f of editores) {
       const meta = JSON.stringify({ referencia })
       await sb.from('freelancer_notificacoes').insert({ freelancer_id: f.id, titulo, mensagem: `__META__${meta}__/META__\n${texto}`, tipo: 'album_estado', lida: false })
@@ -67,13 +70,7 @@ export async function avisarEditorAlbum(referencia: string, titulo: string, text
           body: JSON.stringify({
             from: process.env.FROM_EMAIL ?? 'RL Photo.Video <geral@rlphotovideo.pt>', to: [email], reply_to: 'geral.rlphoto@gmail.com',
             subject: titulo,
-            html: `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:40px 32px;background:#0b0a08;color:#f0e8d8;">
-              <p style="font-size:10px;letter-spacing:.45em;color:#d8be93;text-transform:uppercase;margin:0 0 24px;">RL Photo · Video · Álbum</p>
-              <p style="font-size:20px;font-style:italic;margin:0 0 16px;">${esc(titulo)}</p>
-              <p style="font-size:14px;color:#c9b88a;line-height:1.7;white-space:pre-line;margin:0 0 28px;">${esc(texto)}</p>
-              <a href="https://portal.rlphotovideo.pt/freelancer-view/${f.id}" style="display:inline-block;padding:12px 26px;background:#d8be93;color:#0b0a08;border-radius:40px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;">Abrir o meu portal</a>
-              <p style="font-size:11px;color:#8c8170;margin:32px 0 0;">(Mensagem automática)</p>
-            </div>`,
+            html: emailAvisoAlbum({ url: `https://portal.rlphotovideo.pt/freelancer-view/${f.id}`, nome: f.nome, titulo, texto, referencia, noivos: ev.noivos, data: ev.data, local: ev.local }),
           }),
         }).catch(() => {})
       }
