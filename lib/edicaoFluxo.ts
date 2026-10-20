@@ -40,7 +40,7 @@ export const FASES_EDICAO: Fase[] = [
   /* 02 */
   {
     titulo: 'Dia do casamento', sub: 'captação',
-    fluxo: { ...cadeia(3), abaixo: true },
+    fluxo: { ...cadeia(4), abaixo: true },
     passos: [
       {
         id: '1-0', titulo: 'Preparação', sub: 'véspera',
@@ -55,7 +55,13 @@ export const FASES_EDICAO: Fase[] = [
         tarefas: ['Making of dos noivos', 'Cerimónia com áudio dos votos', 'Sessão de casal', 'Discursos e momentos da festa', 'Planos de drone (se contratado)'],
       },
       {
-        id: '1-2', titulo: 'Relatório do dia', sub: 'no fim do casamento',
+        id: '1-2', titulo: 'Same Day Edit', sub: 'só SIGNATURE',
+        descricao: 'Edição no próprio dia, projetada durante a festa. É um dos momentos altos do casamento.',
+        quem: ['Equipa'], prazo: 'No próprio dia', onde: 'Local do casamento',
+        tarefas: ['Editar durante a festa', 'Testar a projeção e o som', 'Projetar no momento combinado'],
+      },
+      {
+        id: '1-3', titulo: 'Relatório do dia', sub: 'no fim do casamento',
         descricao: 'O videógrafo deixa o relatório do dia: horários, momentos-chave e notas para o editor.',
         quem: ['Equipa'], prazo: 'No próprio dia', onde: 'Portal da equipa › Relatório',
         tarefas: ['Preencher o relatório do dia', 'Notas para o editor (momentos, música, pedidos dos noivos)'],
@@ -64,8 +70,8 @@ export const FASES_EDICAO: Fase[] = [
   },
   /* 03 */
   {
-    titulo: 'Backup e Same Day Edit', sub: 'logo a seguir',
-    fluxo: cadeia(3),
+    titulo: 'Backup', sub: 'logo a seguir',
+    fluxo: cadeia(2),
     passos: [
       {
         id: '2-0', titulo: 'Backup', sub: 'duas cópias',
@@ -74,13 +80,7 @@ export const FASES_EDICAO: Fase[] = [
         tarefas: ['Copiar todos os cartões para o NAS', 'Segunda cópia em disco externo', 'Organizar por câmara e momento', 'Verificar as cópias e só depois formatar'],
       },
       {
-        id: '2-1', titulo: 'Same Day Edit', sub: 'só SIGNATURE',
-        descricao: 'Edição no próprio dia, projetada durante a festa. É um dos momentos altos do casamento.',
-        quem: ['Equipa'], prazo: 'No próprio dia', onde: 'Local do casamento',
-        tarefas: ['Editar durante a festa', 'Testar a projeção e o som', 'Projetar no momento combinado'],
-      },
-      {
-        id: '2-2', titulo: 'SDE no portal', sub: 'entrega',
+        id: '2-1', titulo: 'SDE no portal', sub: 'entrega',
         descricao: 'O Same Day Edit fica disponível no portal dos noivos (Ações Vídeo na ficha). O email aos noivos sai automaticamente.',
         quem: ['Rui', 'Automático'], prazo: 'Até 48 h', onde: 'Ficha do evento › Ações Vídeo',
         tarefas: ['Exportar a versão final do SDE', 'Enviar pelo portal (Same Day Edit)'],
@@ -229,5 +229,5 @@ export const FASES_EDICAO: Fase[] = [
 
 /** Separadores do topo: [nome, fase onde abre] */
 export const SEPARADORES_EDICAO: [string, number][] = [
-  ['Captação', 0], ['Backup e SDE', 2], ['Editor', 3], ['Edição', 4], ['Revisão', 5], ['Entrega', 7], ['Feedback', 8],
+  ['Captação', 0], ['Backup', 2], ['Editor', 3], ['Edição', 4], ['Revisão', 5], ['Entrega', 7], ['Feedback', 8],
 ]

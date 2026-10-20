@@ -34,8 +34,8 @@ export function calcularMapa(fases: Fase[]): Mapa {
       nodes.forEach(nd => nos.push(nd))
       porFase[i] = nodes
       nodes.forEach((nd, j) => lig.push({ a: j ? nodes[j - 1] : ph, b: nd, t: j ? 'seq' : 'lead' }))
-      prev = nodes.length ? [nodes[nodes.length - 1]] : [ph]
-      prev.forEach(nd => { nd.saida = true })
+      // o caminho segue do cartão da fase para a fase seguinte; a lista fica pendurada por baixo
+      prev = [ph]
       x = x + PW + GX
       return
     }
