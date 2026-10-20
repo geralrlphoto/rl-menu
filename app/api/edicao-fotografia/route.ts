@@ -50,7 +50,8 @@ export async function GET(req: NextRequest) {
   const [{ data: ports }, { data: eqs }, { data: sels }, { data: hist }, { data: contratos }] = await Promise.all([
     refs.length ? sb.from('portais').select('id, referencia, settings').in('referencia', refs) : vazio,
     refs.length ? sb.from('evento_equipa').select('referencia, editor_fotos, editor_album, fotografo').in('referencia', refs) : vazio,
-    refs.length ? sb.from('fotos_selecao').select('referencia, data_entrada').in('referencia', refs) : vazio,
+    // seleções dos noivos (tabela pequena): ligam-se pela referência ou, se vier mal escrita, pela data e nomes
+    refs.length ? sb.from('fotos_selecao').select('*').order('created_at', { ascending: false }) : vazio,
     refs.length ? sb.from('fotografia_historico').select('referencia, etapa, origem, criado_em').in('referencia', refs).order('criado_em') : vazio,
     // nomes e telemóveis dos noivos (contrato), para o lembrete por WhatsApp
     refs.length ? sb.from('dados_contrato_cps').select('id, referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs).order('id') : vazio,
@@ -58,8 +59,20 @@ export async function GET(req: NextRequest) {
   const contratoPorRef = new Map((contratos ?? []).map(c => [c.referencia_evento, c]))   // fica o mais recente
   const portalPorRef = new Map((ports ?? []).map(p => [p.referencia, p]))
   const eqPorRef = new Map((eqs ?? []).map(q => [q.referencia, q]))
+  // Seleção de cada casamento: pela referência; senão pela data do casamento e um nome em comum
+  const nomesDe = (t: unknown) => new Set(norm(String(t ?? '')).split(/[^a-z]+/).filter(w => w.length > 2 && w !== 'casamento'))
+  const selecaoDe = new Map<string, any>()
+  for (const e of comFoto) {
+    const porRef = (sels ?? []).find((s: any) => norm(s.referencia ?? '') === norm(e.referencia))
+    const mesmoDia = (sels ?? []).filter((s: any) => String(s.date ?? '').slice(0, 10) === e.data_evento)
+    const casamentosNoDia = comFoto.filter(x => x.data_evento === e.data_evento).length
+    const meus = nomesDe(e.cliente)
+    const porData = mesmoDia.find((s: any) => casamentosNoDia === 1 || [...nomesDe(s.nome_noivos)].some(n => meus.has(n)))
+    const s = porRef ?? porData
+    if (s) selecaoDe.set(e.referencia, s)
+  }
   const selPorRef = new Map<string, string>()
-  for (const s of sels ?? []) if (s.referencia && s.data_entrada) selPorRef.set(s.referencia, String(s.data_entrada).slice(0, 10))
+  for (const [ref, s] of selecaoDe) if (s.data_entrada) selPorRef.set(ref, String(s.data_entrada).slice(0, 10))
   const histPorRef = new Map<string, any[]>()
   for (const h of hist ?? []) histPorRef.set(h.referencia, [...(histPorRef.get(h.referencia) ?? []), { etapa: h.etapa, origem: h.origem, em: h.criado_em }])
 
@@ -72,20 +85,29 @@ export async function GET(req: NextRequest) {
   const CATEGORIAS: [string, string][] = [
     ['preparacao', 'Preparação'], ['sessao_noivos', 'Sessão dos noivos'], ['fotos_noiva', 'Fotos da noiva'], ['fotos_noivo', 'Fotos do noivo'],
     ['cerimonia', 'Cerimónia'], ['convidados', 'Convidados'], ['bolo_bouquet', 'Bolo e bouquet'], ['sala_animacao', 'Sala e animação'],
-    ['detalhes', 'Detalhes'], ['fotos_album', 'Álbum'],
+    ['fotos_album', 'Álbum'],
   ]
   const emEdicao = comFoto.filter(e => {
     const s = portalPorRef.get(e.referencia)?.settings ?? {}
     return faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado).fase === 'edicao'
   }).map(e => e.referencia as string)
-  const [{ data: selsDet }, { data: trabalhos }] = await Promise.all([
-    emEdicao.length ? sb.from('fotos_selecao').select(`referencia, ${CATEGORIAS.map(c => c[0]).join(', ')}`).in('referencia', emEdicao) : vazio,
-    emEdicao.length ? sb.from('freelancer_edicao').select('referencia, freelancer_id, status, updated_at').in('referencia', emEdicao) : vazio,
-  ])
+  const { data: trabalhos } = emEdicao.length
+    ? await sb.from('freelancer_edicao').select('referencia, freelancer_id, status, updated_at').in('referencia', emEdicao)
+    : { data: [] as any[] }
   const conta = (t: unknown) => String(t ?? '').split(/[\s,;]+/).filter(x => /\d/.test(x)).length
   const selecaoPorRef = new Map<string, { categoria: string; fotos: number }[]>()
-  for (const r of (selsDet ?? []) as any[]) {
-    selecaoPorRef.set(r.referencia, CATEGORIAS.map(([k, l]) => ({ categoria: l, fotos: conta(r[k]) })).filter(c => c.fotos > 0))
+  for (const [ref, r] of selecaoDe) {
+    selecaoPorRef.set(ref, CATEGORIAS.map(([k, l]) => ({ categoria: l, fotos: conta(r[k]) })).filter(c => c.fotos > 0))
+  }
+  // Seleção completa (listas dos códigos das fotos), para ver, copiar e corrigir no departamento
+  const selecaoCompleta = (ref: string) => {
+    const r = selecaoDe.get(ref)
+    if (!r) return null
+    return {
+      id: r.id, referencia: r.referencia ?? null, nome: r.nome_noivos ?? null, entrada: r.data_entrada ?? null,
+      categorias: CATEGORIAS.map(([k, l]) => ({ campo: k, titulo: l, texto: String(r[k] ?? '') })),
+      detalhes: r.detalhes ?? null,
+    }
   }
 
   const projetos = comFoto.map(e => {
@@ -103,6 +125,7 @@ export async function GET(req: NextRequest) {
       fotografos: arr(eq?.fotografo),
       editorAlbum: arr(eq?.editor_album)[0] ?? null,
       selecaoFotos: selecaoPorRef.get(e.referencia) ?? null,
+      selecao: selecaoCompleta(e.referencia),
       trabalhos: (trabalhos ?? []).filter(t => t.referencia === e.referencia).map(t => ({ freelancerId: t.freelancer_id, estado: t.status, em: t.updated_at })),
       contacto: (() => { const c = contratoPorRef.get(e.referencia); return c ? { noiva: c.nome_noiva ?? null, noivo: c.nome_noivo ?? null, tel: c.tel_noiva || c.tel_noivo || null } : null })(),
       links: { sneakpeek: s.sneakpeek_url ?? null, galerias: s.galerias_url ?? null, selecao: s.selecao_url ?? null, entregue: s.fotos_finais_url ?? null },

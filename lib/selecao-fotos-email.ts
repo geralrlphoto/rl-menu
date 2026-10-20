@@ -5,7 +5,7 @@ import type { SelecaoFotos } from './selecao-fotos-save'
 // notificações admin — ver app/api/send-admin-notification.
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
-const ADMIN_URL   = 'https://portal.rlphotovideo.pt/fotos-selecao'
+const ADMIN_URL   = 'https://portal.rlphotovideo.pt/edicao-fotografia'
 
 const LABELS: Record<string, string> = {
   preparacao:    'Preparação',
@@ -110,7 +110,7 @@ export async function enviarEmailAdminSelecao(data: SelecaoFotos, tipo: 'casamen
 
               <p style="margin:0;font-size:15px;color:#a09070;line-height:1.8;">
                 Vê a seleção completa em<br>
-                <a href="${ADMIN_URL}" style="color:#c9b88a;font-weight:500;text-decoration:none;">Seleção de Fotos</a>.
+                <a href="${ADMIN_URL}" style="color:#c9b88a;font-weight:500;text-decoration:none;">Departamento de Fotografia</a>.
               </p>
 
             </td>

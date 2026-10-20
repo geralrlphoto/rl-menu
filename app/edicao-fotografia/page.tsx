@@ -43,6 +43,7 @@ type Projeto = {
   contacto: { noiva: string | null; noivo: string | null; tel: string | null } | null
   selecaoFotos: { categoria: string; fotos: number }[] | null
   editorAlbum: string | null
+  selecao: { id: string; referencia: string | null; nome: string | null; entrada: string | null; categorias: { campo: string; titulo: string; texto: string }[]; detalhes: string | null } | null
   trabalhos: { freelancerId: string; estado: string | null; em: string | null }[]
   historico: { etapa: string; origem: string | null; em: string }[]
 }
@@ -97,12 +98,104 @@ function linhaDoTempo(p: Projeto) {
   return ev.sort((a, b) => a.em.localeCompare(b.em))
 }
 
+/* Seleção dos noivos completa: listas dos códigos por categoria, copiar e corrigir.
+   (Substitui a antiga página Fotos Seleção.) Grava em /api/fotos-selecao/[id]. */
+function SelecaoCaixa({ p, onFechar, onGuardado }: { p: Projeto; onFechar: () => void; onGuardado: () => void }) {
+  const sel = p.selecao!
+  const [editar, setEditar] = useState(false)
+  const [textos, setTextos] = useState<Record<string, string>>(() => Object.fromEntries([...sel.categorias.map(c => [c.campo, c.texto]), ['detalhes', sel.detalhes ?? '']]))
+  const [copiado, setCopiado] = useState<string | null>(null)
+  const [aGuardar, setAGuardar] = useState(false)
+  const conta = (t: string) => t.split(/[\s,;]+/).filter(x => /\d/.test(x)).length
+  const total = sel.categorias.reduce((s, c) => s + conta(textos[c.campo] ?? ''), 0)
+  const copiar = async (k: string, t: string) => { try { await navigator.clipboard.writeText(t); setCopiado(k); setTimeout(() => setCopiado(null), 2000) } catch {} }
+  const guardar = async (extra: Record<string, string> = {}) => {
+    setAGuardar(true)
+    const r = await fetch(`/api/fotos-selecao/${sel.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...textos, ...extra }),
+    }).catch(() => null)
+    setAGuardar(false)
+    if (!r?.ok) { alert('Não foi possível guardar a seleção.'); return }
+    onGuardado()
+  }
+  const refErrada = (sel.referencia ?? '').trim().toUpperCase() !== p.referencia.toUpperCase()
+  return (
+    <div role="dialog" aria-modal="true" aria-label={`Seleção de ${p.cliente ?? p.referencia}`} onClick={onFechar}
+      className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+      <div onClick={e => e.stopPropagation()}
+        className="w-full max-w-3xl max-h-[88vh] overflow-y-auto rounded-[22px] border border-[#C9A84C]/35 bg-[#0e0e0e] p-6 shadow-[0_0_60px_-20px_rgba(201,168,76,0.6)]"
+        style={{ borderLeft: `2px solid ${OURO}` }}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Seleção dos noivos</p>
+            <h3 className="mt-1 text-2xl font-semibold">{p.cliente || sel.nome || p.referencia}</h3>
+            <p className="text-sm text-white/45">Casamento a {fmt(p.data)}{sel.entrada ? ` · seleção recebida a ${fmt(sel.entrada)}` : ''}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-[40px] font-thin leading-none tabular-nums" style={{ color: OURO }}>{total}</p>
+            <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">fotos para edição</p>
+          </div>
+        </div>
+        {refErrada && (
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300/30 bg-amber-300/[0.06] px-3 py-2 text-[12px] text-amber-200/90">
+            <span>A seleção chegou com a referência “{sel.referencia || 'vazia'}”. Ligámo-la a este casamento pela data e pelos nomes.</span>
+            <button type="button" disabled={aGuardar} onClick={() => guardar({ referencia: p.referencia })}
+              className="rounded-full border border-amber-300/40 px-3 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase hover:bg-amber-300/10">Corrigir para {p.referencia}</button>
+          </div>
+        )}
+        <div className="mt-5 flex flex-col gap-3">
+          {sel.categorias.filter(c => editar || conta(textos[c.campo] ?? '') > 0).map(c => (
+            <div key={c.campo} className="rounded-[14px] border border-white/[0.08] bg-[#141414] p-3">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[12px] font-semibold text-white/85">{c.titulo} <span className="font-normal text-white/40">· {conta(textos[c.campo] ?? '')} fotos</span></p>
+                {!editar && (
+                  <button type="button" onClick={() => copiar(c.campo, textos[c.campo] ?? '')}
+                    className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/45 hover:text-white">{copiado === c.campo ? 'Copiado ✓' : 'Copiar'}</button>
+                )}
+              </div>
+              {editar
+                ? <textarea rows={3} value={textos[c.campo] ?? ''} onChange={e => setTextos(t => ({ ...t, [c.campo]: e.target.value }))}
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/40 px-2.5 py-2 text-[12px] text-white font-mono outline-none focus:border-[#C9A84C]/60" />
+                : <p className="mt-1.5 text-[12px] text-white/55 font-mono leading-relaxed break-words">{textos[c.campo]}</p>}
+            </div>
+          ))}
+          {(editar || textos.detalhes) && (
+            <div className="rounded-[14px] border border-white/[0.08] bg-[#141414] p-3">
+              <p className="text-[12px] font-semibold text-white/85">Detalhes e observações</p>
+              {editar
+                ? <textarea rows={3} value={textos.detalhes ?? ''} onChange={e => setTextos(t => ({ ...t, detalhes: e.target.value }))}
+                    className="mt-2 w-full rounded-lg border border-white/10 bg-black/40 px-2.5 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                : <p className="mt-1.5 text-[12px] text-white/55 whitespace-pre-wrap break-words">{textos.detalhes}</p>}
+            </div>
+          )}
+        </div>
+        <div className="mt-5 flex flex-wrap justify-end gap-2">
+          {editar ? (
+            <>
+              <button type="button" onClick={() => setEditar(false)} className="rounded-full border border-white/15 px-4 py-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/55 hover:text-white">Cancelar</button>
+              <button type="button" disabled={aGuardar} onClick={() => guardar()} className="rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-4 py-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">{aGuardar ? 'A guardar…' : 'Guardar'}</button>
+            </>
+          ) : (
+            <>
+              <button type="button" onClick={() => copiar('tudo', sel.categorias.filter(c => textos[c.campo]).map(c => `${c.titulo}: ${textos[c.campo]}`).join('\n\n'))}
+                className="rounded-full border border-white/15 px-4 py-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/60 hover:text-white">{copiado === 'tudo' ? 'Copiado ✓' : 'Copiar tudo'}</button>
+              <button type="button" onClick={() => setEditar(true)} className="rounded-full border border-[#C9A84C]/50 bg-[#C9A84C]/10 px-4 py-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white hover:bg-[#C9A84C]/25">Editar</button>
+              <button type="button" onClick={onFechar} className="rounded-full border border-white/15 px-4 py-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/55 hover:text-white">Fechar</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function DepartamentoFotografiaPage() {
   const [dados, setDados] = useState<{ equipa: Membro[]; projetos: Projeto[]; retirados: { referencia: string; cliente: string | null; data: string }[] } | null>(null)
   const [erro, setErro] = useState(false)
   const [aGravar, setAGravar] = useState<number | null>(null)
   const [links, setLinks] = useState<Record<string, string>>({})
   const [aVer, setAVer] = useState<Membro | null>(null)
+  const [selAberta, setSelAberta] = useState<Projeto | null>(null)
 
   const carregar = () => {
     fetch('/api/edicao-fotografia').then(r => r.json())
@@ -382,6 +475,12 @@ export default function DepartamentoFotografiaPage() {
                           <p className="text-[12px] text-[#4ade80]">✓ Entregues a {fmt(String(p.enviadas.entregue))}</p>
                         )}
 
+                        {p.selecao && (
+                          <button type="button" onClick={() => setSelAberta(p)}
+                            className="rounded-full border border-white/15 bg-white/[0.03] px-3 py-1.5 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/75 hover:text-white hover:border-[#C9A84C]/50">
+                            Ver seleção · {(p.selecaoFotos ?? []).reduce((s, c) => s + c.fotos, 0)} fotos
+                          </button>
+                        )}
                         <details className="group/h">
                           <summary className="cursor-pointer list-none text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 hover:text-white/70">
                             <span className="group-open/h:hidden">+ Histórico</span><span className="hidden group-open/h:inline">− Histórico</span>
@@ -433,6 +532,10 @@ export default function DepartamentoFotografiaPage() {
         )}
       </div>
 
+      {selAberta?.selecao && (
+        <SelecaoCaixa p={selAberta} onFechar={() => setSelAberta(null)} onGuardado={() => { setSelAberta(null); carregar() }} />
+      )}
+
       {aVer && (() => {
         const meus = projetos.filter(p => p.fase === 'edicao' && p.editorIds.includes(aVer.id))
           .sort((a, b) => (a.diasPrazo ?? 9999) - (b.diasPrazo ?? 9999))
@@ -481,6 +584,10 @@ export default function DepartamentoFotografiaPage() {
                           </div>
                         </>
                       ) : <p className="mt-3 text-[12px] text-white/35">Sem a lista da seleção no sistema.</p>}
+                      {p.selecao && (
+                        <button type="button" onClick={() => { setAVer(null); setSelAberta(p) }}
+                          className="mt-3 text-[11px] font-semibold tracking-[0.15em] uppercase text-white/60 hover:text-white">Ver a seleção completa →</button>
+                      )}
                       <div className="mt-3 flex gap-3 text-[11px] font-semibold tracking-[0.15em] uppercase">
                         <Link href={`/eventos-2026/${p.fichaId}`} className="text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>
                         <Link href={`/freelancers/${aVer.id}`} className="text-white/45 hover:text-white">Ficha do editor →</Link>

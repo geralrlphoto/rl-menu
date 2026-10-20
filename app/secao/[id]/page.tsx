@@ -201,7 +201,7 @@ export default async function SecaoPage({ params }: Props) {
 
   if (section.name?.toUpperCase().includes('CLIENTE')) {
     extraButtons.push(
-      { href: '/fotos-selecao',   label: 'Fotos Seleção Noivos', internal: true },
+      { href: '/edicao-fotografia', label: 'Departamento de Fotografia', internal: true },
       { href: '/albuns-casamento', label: 'Álbuns de Casamento',  internal: true },
       { href: '/portais-clientes', label: 'Portal do Cliente',    internal: true },
       { href: '/contrato-cps',     label: 'Dados para Contrato CPS', internal: true },
@@ -262,7 +262,7 @@ export default async function SecaoPage({ params }: Props) {
       ? page.title === 'CRM'          ? '/crm'
       : page.title === 'EVENTOS 2026' ? '/casamentos'
       : t.includes('FINANÇ')          ? '/financas'
-      : t.includes('SELEÇÃO') || t.includes('SELECAO') ? '/fotos-selecao'
+      : t.includes('SELEÇÃO') || t.includes('SELECAO') ? '/edicao-fotografia'
       : t.includes('FREELANC')        ? '/freelancers'
       : t.includes('CALENDARIO') || t.includes('CALENDÁRIO') ? '/calendario'
       : t.includes('NEWSLETTER')      ? '/newsletter-admin'
