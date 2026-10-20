@@ -9,6 +9,15 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import FluxoEdicao from './fluxo/FluxoEdicao'
 
+// Estados do vídeo e quem os muda (ver lib/videoEstado.ts)
+const ESTADOS_INFO = [
+  { estado: 'Aguardar',   quem: 'Automático', cor: '#a1a1aa', quando: 'Ao nomear o editor.', onde: 'Quadro, coluna Por atribuir.', noivos: 'veem Aguardar; o download do editor fica bloqueado.' },
+  { estado: 'Em Edição',  quem: 'Editor',     cor: '#fb923c', quando: 'O editor começa (ou a RL pede alterações).', onde: 'Painel do Editor.', noivos: 'veem que o filme já está a ser editado.' },
+  { estado: 'Em Revisão', quem: 'Editor',     cor: '#93c5fd', quando: 'O editor envia o link de revisão.', onde: 'Painel do Editor › Para Revisão.', noivos: 'veem Em Revisão (a RL está a ver).' },
+  { estado: 'Finalizado', quem: 'RL',         cor: '#c4b5fd', quando: 'A RL aprova o filme.', onde: 'Este departamento, cartão Aprovar.', noivos: 'veem Finalizado; o editor recebe o Ticket de Aprovação.' },
+  { estado: 'Entregue',   quem: 'RL',         cor: '#4ade80', quando: 'A RL envia o filme aos noivos.', onde: 'Este departamento, cartão Entregar (link).', noivos: 'recebem o email e o filme fica no portal.' },
+]
+
 const OURO = '#C9A84C'
 const FASES = ['Por atribuir', 'Aguardar', 'Em Edição', 'Em Revisão', 'Finalizado', 'Entregue'] as const
 type Fase = typeof FASES[number]
@@ -295,6 +304,27 @@ export default function EdicaoVideoPage() {
             </ul>
           </details>
         )}
+
+        {/* ── Estados do vídeo: quem muda o quê (regras em lib/videoEstado.ts) ── */}
+        <section>
+          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Portal dos noivos</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Estados do vídeo: quem faz o quê</h2>
+          <p className="mt-2 text-sm text-white/45">O estado aparece aos noivos no portal (Estado das Entregas, linha do vídeo). Só este departamento e o Painel do Editor o mudam; a ficha do evento apenas mostra.</p>
+          <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {ESTADOS_INFO.map((e, i) => (
+              <li key={e.estado} className="relative rounded-[22px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md p-5" style={{ borderLeft: `2px solid ${e.cor}` }}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-thin tabular-nums text-white/40">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: e.cor, background: `${e.cor}1f`, border: `1px solid ${e.cor}55` }}>{e.quem}</span>
+                </div>
+                <p className="mt-3 text-[22px] font-semibold leading-tight">{e.estado}</p>
+                <p className="mt-2 text-[13px] text-white/70 leading-snug"><span className="text-white/40">Quando: </span>{e.quando}</p>
+                <p className="mt-1.5 text-[13px] text-white/70 leading-snug"><span className="text-white/40">Onde: </span>{e.onde}</p>
+                <p className="mt-3 pt-3 border-t border-white/[0.06] text-[12.5px] italic leading-snug" style={{ color: '#d8be93' }}>Noivos: {e.noivos}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
 
         {/* ── Fluxo de trabalho (o mesmo mapa de /edicao-video/fluxo, embutido) ── */}
         <section id="fluxo" className="scroll-mt-24">
