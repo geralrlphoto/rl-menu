@@ -89,8 +89,9 @@ export const FASES_EDICAO: Fase[] = [
   },
   /* 04 */
   {
-    titulo: 'Nomear editor', sub: 'quem edita',
-    fluxo: cadeia(3),
+    titulo: 'Edição', sub: 'no Painel do Editor',
+    // Nomear editor fica numa lista por baixo da fase; a edição segue para a direita
+    fluxo: { abaixo: [0, 1, 2], seq: { 3: [4], 4: [5], 5: [6] }, saida: [6] },
     passos: [
       {
         id: '3-0', titulo: 'Escolher editor', sub: 'pela carga',
@@ -110,115 +111,108 @@ export const FASES_EDICAO: Fase[] = [
         quem: ['Equipa'], prazo: 'Até 2 dias', onde: 'Painel do Editor › Workflow',
         tarefas: ['Confirmar a receção dos ficheiros', 'Mudar a fase para Em Edição'],
       },
-    ],
-  },
-  /* 05 */
-  {
-    titulo: 'Edição', sub: 'no Painel do Editor',
-    fluxo: cadeia(4),
-    passos: [
       {
-        id: '4-0', titulo: 'Teaser / Trailer', sub: 'primeira peça',
+        id: '3-3', titulo: 'Teaser / Trailer', sub: 'primeira peça',
         descricao: 'Peça curta para os noivos partilharem. Enviada pelo portal: fica marcada nas entregas do quadro.',
         quem: ['Equipa', 'Rui'], prazo: 'Objetivo: 4 semanas', onde: 'Ficha do evento › Ações Vídeo',
         tarefas: ['Editar o teaser', 'Revisão rápida da RL', 'Enviar pelo portal (Teaser)'],
       },
       {
-        id: '4-1', titulo: 'Montagem', sub: 'o filme',
+        id: '3-4', titulo: 'Montagem', sub: 'o filme',
         descricao: 'Seleção dos melhores momentos e construção da história do dia, com a estrutura e o ritmo da RL.',
         quem: ['Equipa'], prazo: 'Em Edição', onde: 'Painel do Editor',
         tarefas: ['Selecionar os planos', 'Estrutura do filme', 'Música aprovada'],
       },
       {
-        id: '4-2', titulo: 'Cor', sub: 'color grading',
+        id: '3-5', titulo: 'Cor', sub: 'color grading',
         descricao: 'Look RL, uniforme entre câmaras e momentos.',
         quem: ['Equipa'], prazo: 'Em Edição', onde: 'Painel do Editor › Color Grading',
         tarefas: ['Igualar as câmaras', 'Aplicar o look RL', 'Rever peles e tons'],
       },
       {
-        id: '4-3', titulo: 'Áudio', sub: 'votos e discursos',
+        id: '3-6', titulo: 'Áudio', sub: 'votos e discursos',
         descricao: 'Sincronização do áudio dos votos e dos discursos, mistura com a música.',
         quem: ['Equipa'], prazo: 'Em Edição', onde: 'Painel do Editor › Áudio / Sincronização',
         tarefas: ['Sincronizar votos e discursos', 'Limpar o ruído', 'Equilibrar voz e música'],
       },
     ],
   },
-  /* 06 */
+  /* 05 */
   {
     titulo: 'Revisão', sub: 'interna',
     fluxo: cadeia(2),
     passos: [
       {
-        id: '5-0', titulo: 'Para revisão', sub: 'link de revisão',
+        id: '4-0', titulo: 'Para revisão', sub: 'link de revisão',
         descricao: 'O editor envia o link no Painel do Editor e a fase passa a Para Revisão (no portal dos noivos aparece Em Revisão).',
         quem: ['Equipa'], prazo: 'Quando o filme estiver montado', onde: 'Painel do Editor › Para Revisão',
         tarefas: ['Exportar a versão de revisão', 'Enviar o link de revisão'],
       },
       {
-        id: '5-1', titulo: 'Revisão da RL', sub: 'notas ao editor',
+        id: '4-1', titulo: 'Revisão da RL', sub: 'notas ao editor',
         descricao: 'A RL vê o filme inteiro: ritmo, música, cor, momentos-chave e nomes. As notas voltam ao editor (Correções).',
         quem: ['Rui'], prazo: 'Até 3 dias úteis', onde: 'Painel do Editor › Correções',
         tarefas: ['Ver o filme do princípio ao fim', 'Anotar correções com o minuto', 'Enviar as notas ao editor'],
       },
     ],
   },
-  /* 07 */
+  /* 06 */
   {
     titulo: 'Aprovado', sub: 'versão final',
     fluxo: cadeia(2),
     passos: [
       {
-        id: '6-0', titulo: 'Correções', sub: 'pelo editor',
+        id: '5-0', titulo: 'Correções', sub: 'pelo editor',
         descricao: 'O editor aplica as notas e envia a nova versão.',
         quem: ['Equipa'], prazo: 'Até 5 dias úteis', onde: 'Painel do Editor',
         tarefas: ['Aplicar todas as notas', 'Enviar a nova versão'],
       },
       {
-        id: '6-1', titulo: 'Aprovação', sub: 'finalizado',
+        id: '5-1', titulo: 'Aprovação', sub: 'finalizado',
         descricao: 'A RL aprova e a fase passa a Finalizado. Exportação final em alta qualidade.',
         quem: ['Rui', 'Equipa'], prazo: 'Até 2 dias úteis', onde: 'Painel do Editor › Finalizado',
         tarefas: ['Aprovar a versão final', 'Exportar o master', 'Guardar o projeto e o master no NAS'],
       },
     ],
   },
-  /* 08 */
+  /* 07 */
   {
     titulo: 'Entrega', sub: 'no portal',
     fluxo: cadeia(2),
     passos: [
       {
-        id: '7-0', titulo: 'Wedding Film', sub: 'no portal',
+        id: '6-0', titulo: 'Wedding Film', sub: 'no portal',
         descricao: 'O filme fica disponível no portal dos noivos (Ações Vídeo › Wedding Film) e o email sai automaticamente. Prazo por proposta: BASIC 180, ESSENCIAL 120, SIGNATURE 60 dias úteis.',
         quem: ['Rui', 'Automático'], prazo: 'Até 180 dias úteis', onde: 'Ficha do evento › Ações Vídeo',
         tarefas: ['Carregar o filme (Vimeo/YouTube)', 'Enviar pelo portal (Wedding Film)', 'Confirmar que o link abre'],
       },
       {
-        id: '7-1', titulo: 'Entregue', sub: 'fecho',
+        id: '6-1', titulo: 'Entregue', sub: 'fecho',
         descricao: 'A fase passa a Entregue (no Painel do Editor e no portal). O cartão sai do quadro de trabalho.',
         quem: ['Rui', 'Equipa'], prazo: 'No dia da entrega', onde: 'Painel do Editor › Entregue',
         tarefas: ['Marcar como Entregue', 'Pagamento ao editor'],
       },
     ],
   },
-  /* 09 */
+  /* 08 */
   {
     titulo: 'Feedback dos noivos', sub: 'depois da entrega',
     fluxo: cadeia(3),
     passos: [
       {
-        id: '8-0', titulo: 'Ajustes dos noivos', sub: 'uma ronda',
+        id: '7-0', titulo: 'Ajustes dos noivos', sub: 'uma ronda',
         descricao: 'Os noivos veem o filme e podem pedir pequenos ajustes. Uma ronda de correções incluída.',
         quem: ['Noivos', 'Equipa'], prazo: '5 dias úteis', onde: 'Portal dos noivos › Atendimento',
         tarefas: ['Receber os pedidos dos noivos', 'Aplicar os ajustes acordados', 'Reenviar pelo portal'],
       },
       {
-        id: '8-1', titulo: 'Satisfação', sub: 'opinião',
+        id: '7-1', titulo: 'Satisfação', sub: 'opinião',
         descricao: 'Pedir aos noivos a opinião sobre o filme e o serviço (DAR SATISFAÇÃO no portal) e uma avaliação pública.',
         quem: ['Rui', 'Noivos'], prazo: '1 semana após a entrega', onde: 'Portal › Área SAT Noivos',
         tarefas: ['Pedir a satisfação no portal', 'Pedir avaliação no Google / Casamentos.pt', 'Partilhar o melhor comentário com o editor'],
       },
       {
-        id: '8-2', titulo: 'Arquivo', sub: '180 dias',
+        id: '7-2', titulo: 'Arquivo', sub: '180 dias',
         descricao: 'Os ficheiros ficam guardados 180 dias depois da entrega final (cláusula 9). Depois podem ser apagados.',
         quem: ['Rui'], prazo: '180 dias', onde: 'NAS',
         tarefas: ['Registar a data de entrega', 'Ao fim de 180 dias, libertar o espaço'],
@@ -229,5 +223,5 @@ export const FASES_EDICAO: Fase[] = [
 
 /** Separadores do topo: [nome, fase onde abre] */
 export const SEPARADORES_EDICAO: [string, number][] = [
-  ['Captação', 0], ['Backup', 2], ['Editor', 3], ['Edição', 4], ['Revisão', 5], ['Entrega', 7], ['Feedback', 8],
+  ['Captação', 0], ['Backup', 2], ['Edição', 3], ['Revisão', 4], ['Entrega', 6], ['Feedback', 7],
 ]

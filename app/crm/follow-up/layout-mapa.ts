@@ -29,7 +29,7 @@ export function calcularMapa(fases: Fase[]): Mapa {
     prev.forEach(k => lig.push({ a: k, b: ph, t: 'out' }))
 
     // Passos por baixo da fase: coluna vertical com a largura do cartão da fase
-    if (f.fluxo?.abaixo) {
+    if (f.fluxo?.abaixo === true) {
       const nodes: No[] = f.passos.map((p, j) => ({ id: p.id, fase: i, passo: p, x, y: PH / 2 + 40 + j * (KH + 40), w: PW, h: KH }))
       nodes.forEach(nd => nos.push(nd))
       porFase[i] = nodes
@@ -50,7 +50,8 @@ export function calcularMapa(fases: Fase[]): Mapa {
       }
     }
     const pos = F?.pos ?? {}
-    const fora = new Set<number>([...Object.values(F?.baixo ?? {}).flat(), ...Object.keys(pos).map(Number)])
+    const abaixo = Array.isArray(F?.abaixo) ? F!.abaixo : []
+    const fora = new Set<number>([...Object.values(F?.baixo ?? {}).flat(), ...Object.keys(pos).map(Number), ...abaixo])
     const cols = Math.max(0, ...col.filter((_, j) => !fora.has(j)), ...Object.values(pos).map(v => v[0])) + 1
     const nodes: No[] = []
     for (let c = 0; c < cols; c++) {
@@ -66,11 +67,16 @@ export function calcularMapa(fases: Fase[]): Mapa {
       const b = +j
       nodes[b] = { id: f.passos[b].id, fase: i, passo: f.passos[b], x: x + PW + GX + pos[b][0] * (KW + GX), y: (nodes[0]?.y ?? -KH / 2) + pos[b][1], w: KW, h: KH }
     }
+    // lista pendurada por baixo do cartão da fase (os restantes passos seguem para a direita)
+    abaixo.forEach((j, r) => {
+      nodes[j] = { id: f.passos[j].id, fase: i, passo: f.passos[j], x, y: PH / 2 + 40 + r * (KH + 40), w: PW, h: KH }
+    })
     nodes.forEach(nd => nd && nos.push(nd))
     porFase[i] = nodes
 
     if (F) {
       nodes.forEach((nd, j) => { if (col[j] === 0 && !fora.has(j)) lig.push({ a: ph, b: nd, t: 'lead' }) })
+      abaixo.forEach((j, r) => lig.push({ a: r ? nodes[abaixo[r - 1]] : ph, b: nodes[j], t: r ? 'seq' : 'lead' }))
       for (const a in F.seq ?? {}) F.seq![+a].forEach(b => lig.push({ a: nodes[+a], b: nodes[b], t: 'seq' }))
       for (const a in F.baixo ?? {}) F.baixo![+a].forEach(b => lig.push({ a: nodes[+a], b: nodes[b], t: 'baixo' }))
       prev = F.saida.map(j => nodes[j])
