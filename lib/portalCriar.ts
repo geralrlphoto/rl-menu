@@ -2,7 +2,7 @@
 // Usado pelo botão "Criar portal" da ficha (/api/contrato-cps/aprovar) e pela
 // entrega automática quando os noivos submetem o formulário do contrato.
 import { createClient } from '@supabase/supabase-js'
-import { gerarHeroGif, buildPortalEmailV2, primeiroNome } from '@/lib/portalEmail'
+import { buildPortalEmailV2, primeiroNome } from '@/lib/portalEmail'
 export const RESEND_KEY = process.env.RESEND_API_KEY!
 export const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 const BATIZADO_MASTER_TOKEN = 'batizado-maquete'
@@ -222,8 +222,7 @@ async function fetchValoresEvento(sb: any, referencia: string): Promise<Record<s
 }
 
 // ─── Email ao cliente com link do portal ──────────────────────────────────────
-// Design aprovado a 2026-10-07 (lib/portalEmail.ts): hero animado gerado com
-// os nomes e a data de cada casal/criança, guardado em portal-images.
+// Bilhete dos noivos (lib/portalEmail.ts → lib/bilheteNoivos.ts) com os nomes e a data.
 export async function buildPortalEmail(opts: {
   contrato: any
   referencia: string
@@ -242,27 +241,14 @@ export async function buildPortalEmail(opts: {
   }
   if (!nomes) nomes = opts.referencia
 
-  // Hero animado; se falhar, usa a foto de fundo sem nomes
-  let heroUrl = `${SITE_BASE}/email/${opts.tipo}-bg.jpg`
-  try {
-    const gif = await gerarHeroGif({ tipo: opts.tipo, nomes, data: c.data_casamento })
-    const file = `email-portal/${opts.referencia}-${Date.now()}.gif`
-    const { error } = await db().storage.from('portal-images').upload(file, gif, { contentType: 'image/gif', upsert: true })
-    if (error) throw error
-    heroUrl = db().storage.from('portal-images').getPublicUrl(file).data.publicUrl
-  } catch (e) {
-    console.error('[portalCriar] hero gif', e)
-  }
-
   return buildPortalEmailV2({
     tipo: opts.tipo,
-    heroUrl,
     nomesAlt: nomes,
     data: c.data_casamento,
+    referencia: opts.referencia,
     email: opts.emailCliente,
     password: opts.password,
     loginUrl: opts.tipo === 'batizado' ? `${SITE_BASE}/login-batizado` : `${SITE_BASE}/login-noivos`,
-    siteBase: SITE_BASE,
   })
 }
 

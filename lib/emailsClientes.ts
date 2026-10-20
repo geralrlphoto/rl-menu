@@ -1,6 +1,8 @@
 // Emails a noivos e leads, partilhados entre as rotas de envio e a pré-visualização
 // da página Tickets (/api/jornada/email).
 
+import { buildBilheteNoivos, blocoChave, nomesBilhete } from './bilheteNoivos'
+
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 
 /** "🔑 A vossa palavra-passe do portal": recuperação da palavra-passe pelos noivos (noivos-recover). */
@@ -9,140 +11,35 @@ export function buildRecoveryEmail(opts: {
   password: string
   loginUrl: string
 }): string {
-  const primeiroNome = (opts.nome || 'Olá').split(/[\s&]/)[0] || 'Olá'
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
-        <tr><td style="padding:48px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
-            width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;opacity:0.9;" />
-          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;">Olá, ${primeiroNome}!</p>
-          <p style="margin:0 0 18px;font-size:24px;font-weight:400;color:#f0e8d8;">A vossa palavra-passe</p>
-          <div style="margin:0 0 22px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">— · ◆ · —</div>
-          <p style="margin:0 0 26px;font-size:14px;color:#a09070;line-height:1.8;">
-            Confirmámos a vossa identidade.<br>
-            Aqui está a palavra-passe do vosso portal:
-          </p>
-
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:340px;background:rgba(201,169,110,0.04);">
-            <tr><td style="padding:18px 24px;text-align:center;">
-              <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">🔑 Palavra-passe</p>
-              <p style="margin:0;font-size:22px;font-family:'Courier New',monospace;letter-spacing:0.15em;color:#f0e8d8;font-weight:600;">${opts.password}</p>
-            </td></tr>
-          </table>
-
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 16px;">
-            <tr>
-              <td align="center" style="border-radius:8px;background:#c9a96e;">
-                <a href="${opts.loginUrl}" target="_blank"
-                  style="display:inline-block;padding:18px 48px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:0.4em;font-weight:700;border-radius:8px;border:1px solid #c9a96e;">
-                  ENTRAR &nbsp;→
-                </a>
-              </td>
-            </tr>
-          </table>
-
-          <p style="margin:24px 0 0;font-size:11px;color:#5a4a30;line-height:1.6;">
-            Se não foram vocês que pediram este reset, ignorem este email.<br>
-            Em caso de dúvida, falem connosco directamente.
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
+  return buildBilheteNoivos({
+    pill: 'A vossa palavra-passe',
+    nomes: nomesBilhete(opts.nome) || 'Para vocês',
+    tipo: opts.loginUrl.includes('batizado') ? 'batizado' : 'casamento',
+    frase: 'Confirmámos a vossa identidade. Aqui está a chave do vosso portal.',
+    extra: blocoChave(null, opts.password),
+    cta: { label: 'Entrar no portal', url: opts.loginUrl },
+    nota: 'Se não foram vocês que pediram, ignorem este email.<br>Em caso de dúvida, falem connosco diretamente.',
+    preheader: 'A palavra-passe do vosso portal.',
+  })
 }
 
 /** "✓ Dados recebidos": confirmação aos noivos quando enviam os dados do contrato e o portal ainda não foi enviado (contrato-cps). */
 export function buildDadosRecebidosEmail(data: { nome_noivos: string; data_casamento: string | null; tipo_evento?: string }): string {
   const isBatizado = data.tipo_evento === 'batizado'
-  const dataFormatada = data.data_casamento
-    ? (() => {
-        try {
-          return new Date(data.data_casamento + 'T12:00:00').toLocaleDateString('pt-PT', {
-            day: '2-digit', month: 'long', year: 'numeric'
-          })
-        } catch { return data.data_casamento ?? '' }
-      })()
-    : ''
-
-  const primeiroNome = data.nome_noivos.split(/[\s&]/)[0]
-
-  // Labels condicionais por tipo de evento
-  const labelNomes  = isBatizado ? 'Pais'              : 'Noivos'
-  const labelData   = isBatizado ? 'Data do Batizado'  : 'Data do Casamento'
-
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
-
-        <tr><td style="padding:0;">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
-            <td></td>
-            <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
-          </tr></table>
-        </td></tr>
-
-        <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-
-          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
-            width="80" alt="RL Photo Video"
-            style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
-
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
-            <span style="font-size:22px;color:#c9a96e;">&#10003;</span>
-          </td></tr></table>
-
-          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, ${primeiroNome}!</p>
-          <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Dados</p>
-          <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">recebidos.</p>
-
-          <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
-
-          <p style="margin:0 0 24px;font-size:15px;color:#a09070;line-height:1.8;">
-            Recebemos os vossos dados para o contrato.<br>
-            <strong style="color:#c9b88a;font-weight:500;">Em breve entraremos em contacto.</strong>
-          </p>
-
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
-            <tr><td style="padding:24px 32px;text-align:center;">
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">${labelNomes}</p>
-              <p style="margin:0 0 20px;font-size:22px;font-style:italic;font-weight:400;color:#c9a96e;line-height:1.2;">${data.nome_noivos}</p>
-              ${dataFormatada ? `
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">${labelData}</p>
-              <p style="margin:0;font-size:14px;color:#d4c9b0;">${dataFormatada}</p>
-              ` : ''}
-            </td></tr>
-          </table>
-
-          <p style="margin:0 0 8px;font-size:14px;color:#7a6a50;line-height:1.8;">Para qualquer questão estamos sempre disponíveis.</p>
-          <p style="margin:0;font-size:14px;color:#7a6a50;line-height:1.8;">
-            <a href="mailto:${ADMIN_EMAIL}" style="color:#c9a96e;text-decoration:none;">${ADMIN_EMAIL}</a>
-          </p>
-
-        </td></tr>
-
-        <tr><td style="padding:0;">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
-            <td style="text-align:center;vertical-align:bottom;padding-bottom:20px;">
-              <p style="margin:0;font-size:9px;letter-spacing:0.4em;color:#3a2a12;text-transform:uppercase;">RL PHOTO &middot; VIDEO</p>
-            </td>
-            <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
-          </tr></table>
-        </td></tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
+  return buildBilheteNoivos({
+    pill: 'Dados recebidos',
+    nomes: nomesBilhete(data.nome_noivos) || data.nome_noivos,
+    data: data.data_casamento,
+    tipo: isBatizado ? 'batizado' : 'casamento',
+    frase: 'Recebemos os vossos dados para o contrato. Em breve entraremos em contacto.',
+    campos: [
+      { k: isBatizado ? 'Pais' : 'Noivos', v: data.nome_noivos },
+      { k: 'Próximo passo', v: 'Contrato e portal' },
+    ],
+    cta: { label: 'Falar connosco', url: `mailto:${ADMIN_EMAIL}` },
+    nota: `Para qualquer questão estamos sempre disponíveis.<br>${ADMIN_EMAIL}`,
+    preheader: 'Recebemos os vossos dados.',
+  })
 }
 
 /** "Recebemos o vosso contacto": resposta automática à lead do formulário /nova-lead (nova-lead). */

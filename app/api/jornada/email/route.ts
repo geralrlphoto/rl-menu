@@ -4,15 +4,14 @@ import { buildTicketHtml } from '@/lib/ticket-html'
 import { buildTicketEditorHtml, buildTicketAprovacaoHtml, prazoVideo } from '@/lib/ticket-editor-html'
 import { buildTicketFilmeHtml, type PassoFilme } from '@/lib/ticket-filme-html'
 import { cardPagamento } from '@/lib/pagamentoEmail'
-import { ENTREGAS_ATUAIS, type EntregaAtual } from '@/lib/entregaEmailAtual'
+import { ENTREGAS, buildEntregaEmailHtml, type TipoEntrega } from '@/lib/entregaEmail'
 import { emailNovidadesFreelancer, emailNovoBriefing, emailTrabalhoEdicao, emailEdicaoFotos, emailCandidatura } from '@/lib/emailsFreelancers'
 import { buildRecoveryEmail, buildDadosRecebidosEmail, buildNovaLeadEmail } from '@/lib/emailsClientes'
 
 // Pré-visualização real dos emails ao cliente no mapa da jornada (/crm/follow-up).
 // Usa as mesmas funções de HTML que as rotas de envio, com um casal fictício.
 // GET ?k=<chave>  (portal | ticket | ticket-editor | ticket-aprovacao | filme-<passo> | pagamento | entrega-<tipo> | fl-<tipo> | recuperar | dados-recebidos | nova-lead)
-// Os emails de entrega (seleção, galerias, filme…) entram aqui quando lib/entregaEmail.ts
-// estiver no repositório: usar buildEntregaEmailHtml com a configuração de cada tipo.
+// Os emails aos noivos usam todos o bilhete (lib/bilheteNoivos.ts).
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.rlphotovideo.pt'
 const NOMES = 'Ana | Tiago'
@@ -21,8 +20,8 @@ function html(k: string): string | null {
   const login = `${SITE}/login-noivos`
   if (k === 'portal') {
     return buildPortalEmailV2({
-      tipo: 'casamento', heroUrl: `${SITE}/email/exemplo-hero.gif`, nomesAlt: NOMES, data: '2027-06-12',
-      email: 'ana.tiago@exemplo.pt', password: 'exemplo123', loginUrl: login, siteBase: SITE,
+      tipo: 'casamento', nomesAlt: NOMES, data: '2027-06-12', referencia: 'CAS_000_27_RL',
+      email: 'ana.tiago@exemplo.pt', password: 'exemplo123', loginUrl: login,
     })
   }
   if (k === 'ticket') {
@@ -47,10 +46,12 @@ function html(k: string): string | null {
       link: 'https://frame.io/exemplo', feedback: 'Excelente ritmo na cerimónia. Só baixar um pouco a música nos votos.', aprovadoEm: new Date(),
     })
   }
-  // Emails de entrega aos noivos (fotos e vídeos), como estão hoje nas rotas send-<tipo>-email
+  // Emails de entrega aos noivos (fotos e vídeos), os mesmos das rotas send-<tipo>-email
   if (k.startsWith('entrega-')) {
     const t = k.slice(8)
-    return Object.hasOwn(ENTREGAS_ATUAIS, t) ? ENTREGAS_ATUAIS[t as EntregaAtual].html('Ana & Tiago') : null
+    return Object.hasOwn(ENTREGAS, t)
+      ? buildEntregaEmailHtml(t as TipoEntrega, { nomes: NOMES, url: `${SITE}/login-noivos`, data: '2027-06-12', local: 'Quinta de Exemplo', referencia: 'CAS_000_27_RL' })
+      : null
   }
   // Freelancers (cards em imagem) e emails a noivos e leads
   if (k === 'fl-novidades') return emailNovidadesFreelancer('exemplo')
@@ -69,7 +70,7 @@ function html(k: string): string | null {
   const PASSO: Record<string, PassoFilme> = { 'filme-aguardar': 'Aguardar', 'filme-edicao': 'Em Edição', 'filme-revisao': 'Em Revisão', 'filme-finalizado': 'Finalizado', 'filme-estreia': 'Estreia' }
   if (PASSO[k]) {
     const sabado = new Date(); sabado.setDate(sabado.getDate() + ((6 - sabado.getDay() + 7) % 7 || 7)); sabado.setHours(21, 0, 0, 0)
-    return buildTicketFilmeHtml({ passo: PASSO[k], referencia: 'CAS_000_27_RL', noivos: 'Ana & Tiago', estreia: sabado.toISOString() })
+    return buildTicketFilmeHtml({ passo: PASSO[k], referencia: 'CAS_000_27_RL', noivos: 'Ana & Tiago', estreia: sabado.toISOString(), data: '2027-06-12' })
   }
   return null
 }

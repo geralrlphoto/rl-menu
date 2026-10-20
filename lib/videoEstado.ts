@@ -112,11 +112,11 @@ const ORIGEM_DO_ESTADO: Record<EstadoVideo, string> = {
 export async function enviarTicketFilme(referencia: string, passo: PassoFilme, estreia: string | null = null): Promise<boolean> {
   if (!process.env.RESEND_API_KEY) return false
   try {
-    const { data: p } = await db().from('portais').select('noiva, noivo').eq('referencia', referencia).maybeSingle()
+    const { data: p } = await db().from('portais').select('noiva, noivo, data').eq('referencia', referencia).maybeSingle()
     const email = await resolveEmailNoiva(null, referencia)
     if (!email) return false
     const noivos = [p?.noiva, p?.noivo].filter(Boolean).join(' & ') || 'Noivos'
-    const html = buildTicketFilmeHtml({ passo, referencia, noivos, estreia, batizado: referencia.startsWith('BAT_') })
+    const html = buildTicketFilmeHtml({ passo, referencia, noivos, estreia, batizado: referencia.startsWith('BAT_'), data: p?.data ?? null })
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
