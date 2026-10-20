@@ -67,6 +67,27 @@ export async function GET(req: NextRequest) {
   const limiteEntregue = new Date(Date.now() - ENTREGUES_RECENTES * 86400000).toISOString().slice(0, 10)
   const diasAte = (iso: string) => Math.round((new Date(iso + 'T12:00:00Z').getTime() - new Date(hoje + 'T12:00:00Z').getTime()) / 86400000)
 
+  // O que cada editor está a editar: a seleção dos noivos (fotos por categoria) e o
+  // estado do trabalho no portal do editor (freelancer_edicao). Só para quem está em Edição.
+  const CATEGORIAS: [string, string][] = [
+    ['preparacao', 'Preparação'], ['sessao_noivos', 'Sessão dos noivos'], ['fotos_noiva', 'Fotos da noiva'], ['fotos_noivo', 'Fotos do noivo'],
+    ['cerimonia', 'Cerimónia'], ['convidados', 'Convidados'], ['bolo_bouquet', 'Bolo e bouquet'], ['sala_animacao', 'Sala e animação'],
+    ['detalhes', 'Detalhes'], ['fotos_album', 'Álbum'],
+  ]
+  const emEdicao = comFoto.filter(e => {
+    const s = portalPorRef.get(e.referencia)?.settings ?? {}
+    return faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado).fase === 'edicao'
+  }).map(e => e.referencia as string)
+  const [{ data: selsDet }, { data: trabalhos }] = await Promise.all([
+    emEdicao.length ? sb.from('fotos_selecao').select(`referencia, ${CATEGORIAS.map(c => c[0]).join(', ')}`).in('referencia', emEdicao) : vazio,
+    emEdicao.length ? sb.from('freelancer_edicao').select('referencia, freelancer_id, status, updated_at').in('referencia', emEdicao) : vazio,
+  ])
+  const conta = (t: unknown) => String(t ?? '').split(/[\s,;]+/).filter(x => /\d/.test(x)).length
+  const selecaoPorRef = new Map<string, { categoria: string; fotos: number }[]>()
+  for (const r of (selsDet ?? []) as any[]) {
+    selecaoPorRef.set(r.referencia, CATEGORIAS.map(([k, l]) => ({ categoria: l, fotos: conta(r[k]) })).filter(c => c.fotos > 0))
+  }
+
   const projetos = comFoto.map(e => {
     const p = portalPorRef.get(e.referencia)
     const s: Record<string, any> = p?.settings ?? {}
@@ -80,6 +101,8 @@ export async function GET(req: NextRequest) {
       fase, prazo, diasPrazo: prazo ? diasAte(prazo) : null, alertaOff: !!s[`${chaveAlerta}_alerta_off`] || s.alertas_fotografia_ativos === false,
       recebida, editores, editorIds: editores.map(n => porNome.get(norm(n))?.id ?? null),
       fotografos: arr(eq?.fotografo),
+      selecaoFotos: selecaoPorRef.get(e.referencia) ?? null,
+      trabalhos: (trabalhos ?? []).filter(t => t.referencia === e.referencia).map(t => ({ freelancerId: t.freelancer_id, estado: t.status, em: t.updated_at })),
       contacto: (() => { const c = contratoPorRef.get(e.referencia); return c ? { noiva: c.nome_noiva ?? null, noivo: c.nome_noivo ?? null, tel: c.tel_noiva || c.tel_noivo || null } : null })(),
       links: { sneakpeek: s.sneakpeek_url ?? null, galerias: s.galerias_url ?? null, selecao: s.selecao_url ?? null, entregue: s.fotos_finais_url ?? null },
       enviadas: { sneakpeek: s.sneakpeek_enviada ?? null, galerias: s.galerias_enviada ?? null, selecao: s.selecao_enviada ?? null, entregue: s.fotos_finais_enviada ?? null },

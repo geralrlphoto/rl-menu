@@ -41,6 +41,8 @@ type Projeto = {
   links: Partial<Record<EtapaFoto, string | null>>; enviadas: Partial<Record<EtapaFoto, string | null>>
   portalId: string | null
   contacto: { noiva: string | null; noivo: string | null; tel: string | null } | null
+  selecaoFotos: { categoria: string; fotos: number }[] | null
+  trabalhos: { freelancerId: string; estado: string | null; em: string | null }[]
   historico: { etapa: string; origem: string | null; em: string }[]
 }
 
@@ -59,9 +61,26 @@ function mensagemLembrete(p: Projeto): string {
   const galeria = p.links.selecao ? `\n\nA galeria para escolherem está aqui: ${p.links.selecao}` : ''
   return `Olá ${nomes}! Esperamos que estejam bem.\n\nJá tiveram oportunidade de ver as fotografias do vosso casamento de ${dia}? Para avançarmos com a edição, só falta escolherem as vossas preferidas e enviarem-nos a seleção no portal, na página Fotografias.${galeria}\n\nPortal: ${PORTAL_LOGIN}\n\nQualquer dúvida, estamos por aqui. Um abraço,\nRL Photo.Video`
 }
-const linkLembrete = (p: Projeto) => {
-  const texto = mensagemLembrete(p)
-  return whatsappLink(p.contacto?.tel, texto) ?? `https://wa.me/?text=${encodeURIComponent(texto)}`
+/** Abre o WhatsApp já com o número da noiva: o mesmo da ficha do evento (Notion, depois contrato). */
+async function lembrarPorWhatsApp(p: Projeto) {
+  const janela = window.open('', '_blank')   // abre já, para o browser não bloquear
+  let tel = p.contacto?.tel ?? null, noiva = p.contacto?.noiva ?? null, noivo = p.contacto?.noivo ?? null
+  try {
+    const ev = await fetch(`/api/eventos-notion/${p.fichaId}`).then(r => r.ok ? r.json() : null)
+    const e = ev?.event ?? ev?.evento ?? ev
+    tel = e?.tel_noiva || e?.tel_noivo || tel
+    noiva = e?.nome_noiva || noiva
+    noivo = e?.nome_noivo || noivo
+  } catch { /* fica o do contrato */ }
+  const texto = mensagemLembrete({ ...p, contacto: { tel, noiva, noivo } })
+  const link = whatsappLink(tel, texto)
+  if (!link) {
+    janela?.close()
+    alert('A noiva não tem telemóvel na ficha do evento. Preenche-o em Dados do Casal.')
+    return
+  }
+  if (janela) janela.location.href = link; else window.open(link, '_blank')
+  fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: p.referencia, etapa: 'lembrete' }) }).catch(() => {})
 }
 
 function linhaDoTempo(p: Projeto) {
@@ -82,6 +101,7 @@ export default function DepartamentoFotografiaPage() {
   const [erro, setErro] = useState(false)
   const [aGravar, setAGravar] = useState<number | null>(null)
   const [links, setLinks] = useState<Record<string, string>>({})
+  const [aVer, setAVer] = useState<Membro | null>(null)
 
   const carregar = () => {
     fetch('/api/edicao-fotografia').then(r => r.json())
@@ -200,8 +220,8 @@ export default function DepartamentoFotografiaPage() {
           {dados && !comTrabalho.length && <p className="mt-6 text-sm text-white/35">Ninguém tem casamentos em edição neste momento.</p>}
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {comTrabalho.map(({ e, ativos, atrasados }) => (
-              <Link key={e.id} href={`/freelancers/${e.id}`}
-                className="rounded-[22px] border border-white/[0.08] bg-[#111111]/90 p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/45"
+              <div key={e.id}
+                className="rounded-[22px] border border-white/[0.08] bg-[#111111]/90 p-5 flex items-center gap-4 transition-all duration-300 hover:border-[#C9A84C]/45"
                 style={{ borderLeft: `2px solid ${OURO}` }}>
                 <div className="w-14 h-14 rounded-full overflow-hidden flex-none border border-[#C9A84C]/40 bg-[#C9A84C]/10 flex items-center justify-center text-lg" style={{ color: OURO }}>
                   {e.foto_url ? <img src={e.foto_url} alt="" className="w-full h-full object-cover" /> : primeiro(e.nome).charAt(0)}
@@ -209,13 +229,15 @@ export default function DepartamentoFotografiaPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-lg font-semibold truncate">{e.nome}</p>
                   <p className="text-xs text-white/45 mt-0.5">{e.status === 'ASSISTENTE' ? 'Assistente' : 'Fotógrafo'}</p>
+                  <button type="button" onClick={() => setAVer(e)}
+                    className="mt-2 rounded-full border border-[#C9A84C]/50 bg-[#C9A84C]/10 px-3.5 py-1 text-[10px] font-semibold tracking-[0.18em] uppercase text-white hover:bg-[#C9A84C]/25">Ver</button>
                 </div>
                 <div className="text-right flex-none">
                   <p className="text-[34px] font-thin leading-none tabular-nums" style={{ color: OURO }}>{ativos}</p>
                   <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">em edição</p>
                   {atrasados > 0 && <p className="text-[10px] tracking-[0.15em] uppercase text-red-400 mt-1">{atrasados} atrasado{atrasados > 1 ? 's' : ''}</p>}
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         </section>
@@ -273,11 +295,10 @@ export default function DepartamentoFotografiaPage() {
                         {p.fase === 'escolha' && (
                           <div className="flex flex-col gap-2 rounded-xl border border-[#93c5fd]/25 bg-[#93c5fd]/[0.06] p-3">
                             <p className="text-[11px] text-white/55">À espera da seleção dos noivos. Chega sozinha quando enviam o formulário.</p>
-                            <a href={linkLembrete(p)} target="_blank" rel="noopener noreferrer"
-                              onClick={() => { fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: p.referencia, etapa: 'lembrete' }) }).catch(() => {}) }}
+                            <button type="button" onClick={() => lembrarPorWhatsApp(p)}
                               className="text-center rounded-full border border-[#4ade80]/45 bg-[#4ade80]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20">
-                              Lembrar por WhatsApp{p.contacto?.tel ? '' : ' (escolher contacto)'}
-                            </a>
+                              Lembrar por WhatsApp
+                            </button>
                             <button type="button" disabled={aGravar === p.id}
                               onClick={() => acao(p, 'recebida', `Marcar a seleção de ${nomes} como recebida hoje? O casamento passa para Edição.`)}
                               className="rounded-full border border-[#93c5fd]/40 bg-[#93c5fd]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#93c5fd] hover:bg-[#93c5fd]/20 disabled:opacity-40">✓ Seleção recebida</button>
@@ -361,6 +382,66 @@ export default function DepartamentoFotografiaPage() {
           </details>
         )}
       </div>
+
+      {aVer && (() => {
+        const meus = projetos.filter(p => p.fase === 'edicao' && p.editorIds.includes(aVer.id))
+          .sort((a, b) => (a.diasPrazo ?? 9999) - (b.diasPrazo ?? 9999))
+        return (
+          <div role="dialog" aria-modal="true" aria-label={`O que ${aVer.nome} está a editar`} onClick={() => setAVer(null)}
+            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+            <div onClick={e => e.stopPropagation()}
+              className="w-full max-w-2xl max-h-[85vh] overflow-y-auto rounded-[22px] border border-[#C9A84C]/35 bg-[#0e0e0e] p-6 shadow-[0_0_60px_-20px_rgba(201,168,76,0.6)]"
+              style={{ borderLeft: `2px solid ${OURO}` }}>
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Em edição</p>
+                  <h3 className="mt-1 text-2xl font-semibold">{aVer.nome}</h3>
+                  <p className="text-sm text-white/45">{meus.length} casamento{meus.length === 1 ? '' : 's'} a editar</p>
+                </div>
+                <button type="button" onClick={() => setAVer(null)} aria-label="Fechar"
+                  className="w-9 h-9 rounded-full border border-white/15 text-white/60 hover:text-white text-lg">×</button>
+              </div>
+              <div className="mt-5 flex flex-col gap-3">
+                {meus.map(p => {
+                  const t = p.trabalhos.find(x => x.freelancerId === aVer.id)
+                  const total = (p.selecaoFotos ?? []).reduce((s, c) => s + c.fotos, 0)
+                  return (
+                    <div key={p.id} className="rounded-[18px] border border-white/[0.08] bg-[#141414] p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold">{p.cliente || p.referencia}</p>
+                          <p className="text-[11px] text-white/40">{fmt(p.data)}{p.local ? ` · ${p.local}` : ''}</p>
+                        </div>
+                        {t?.estado && <span className="rounded-full border border-[#c4b5fd]/40 bg-[#c4b5fd]/10 px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.15em] uppercase text-[#c4b5fd]">{t.estado}</span>}
+                      </div>
+                      <p className="mt-2 text-[12px] text-white/60">
+                        {p.recebida ? <>Seleção recebida a {fmt(p.recebida)}</> : 'Seleção sem data'}
+                        {p.prazo && p.diasPrazo !== null && <> · <span className={p.diasPrazo < 0 ? 'text-red-400 font-semibold' : 'text-white/70'}>{p.diasPrazo < 0 ? `atrasado ${-p.diasPrazo} dias` : `entrega em ${p.diasPrazo} dias`} ({fmt(p.prazo)})</span></>}
+                      </p>
+                      {p.selecaoFotos?.length ? (
+                        <>
+                          <p className="mt-3 text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Seleção dos noivos · {total} fotos</p>
+                          <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                            {p.selecaoFotos.map(c => (
+                              <div key={c.categoria} className="flex items-center justify-between rounded-lg border border-white/[0.06] bg-black/30 px-2.5 py-1.5 text-[12px]">
+                                <span className="text-white/60">{c.categoria}</span><b className="text-white tabular-nums">{c.fotos}</b>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      ) : <p className="mt-3 text-[12px] text-white/35">Sem a lista da seleção no sistema.</p>}
+                      <div className="mt-3 flex gap-3 text-[11px] font-semibold tracking-[0.15em] uppercase">
+                        <Link href={`/eventos-2026/${p.fichaId}`} className="text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>
+                        <Link href={`/freelancers/${aVer.id}`} className="text-white/45 hover:text-white">Ficha do editor →</Link>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </main>
   )
 }
