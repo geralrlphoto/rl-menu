@@ -107,48 +107,115 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
   },
 ]
 
+const OURO = '#C9A84C'
+const total = GRUPOS.reduce((n, g) => n + g.tickets.length, 0)
+const contar = (prefixo: string) => GRUPOS.filter(g => g.titulo.startsWith(prefixo)).reduce((n, g) => n + g.tickets.length, 0)
+
+// Desenho da página como o /freelancers: capa com câmara a preto e branco,
+// linha dourada vertical, título grande em maiúsculas e cartões de 22px.
 export default function TicketsPage() {
   return (
-    <main style={{ minHeight: '100vh', background: '#0b0a08', color: '#f0e8d8', padding: '40px 16px 80px', fontFamily: 'Georgia, serif' }}>
-      <div style={{ maxWidth: 1240, margin: '0 auto' }}>
-        <a href="/" style={{ color: '#8c8170', fontSize: 13, textDecoration: 'none' }}>‹ Voltar</a>
-        <p style={{ margin: '24px 0 0', fontSize: 11, letterSpacing: '0.45em', color: '#d8be93', textTransform: 'uppercase' }}>RL Photo · Video</p>
-        <h1 style={{ margin: '8px 0 6px', fontSize: 34, fontWeight: 400, fontStyle: 'italic' }}>Tickets</h1>
-        <p style={{ margin: '0 0 12px', fontSize: 14, color: '#a99d88' }}>
-          Exemplos de todos os tickets enviados por email. Dados fictícios, nada é enviado.
-          Tudo o que vai para os noivos usa o mesmo bilhete: foto com os nomes e a data, linha de corte, frase, campos e botão em dourado suave. Tudo o que vai para a equipa usa o card da equipa: câmara a preto e branco, nome do membro e função.
+    <main className="min-h-screen bg-[#070707] overflow-x-clip font-cond">
+      {/* ── CAPA ─────────────────────────────────────────────────────────── */}
+      <section className="relative min-h-[520px] lg:min-h-[64vh] flex flex-col overflow-hidden">
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/email/equipa-camera.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-60 lg:opacity-80" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
+        </div>
+        <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+        <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+          Noivos · Equipa · Convidados
         </p>
-        <nav style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '0 0 8px' }}>
+
+        <div className="relative flex-1 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_330px] gap-10 items-end pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-14 lg:pt-8 pb-12 lg:pb-16">
+          <div className="min-w-0 flex flex-col h-full">
+            <a href="/photo" className="text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Menu principal</a>
+            <div className="mt-auto pt-20">
+              <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">RL Photo.Video</p>
+              <h1 className="font-bold uppercase text-white leading-[0.88] text-[60px] sm:text-[96px] xl:text-[128px] mt-2">Tickets</h1>
+              <div className="flex items-center gap-4 mt-5">
+                <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+                <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
+                  <span className="text-[#C9A84C]">Noivos</span> · Equipa · Convidados · Leads
+                </p>
+              </div>
+              <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-2xl">
+                Todos os emails que a app envia, com dados fictícios. Nada é enviado daqui.
+                Os noivos recebem o bilhete (foto com os nomes e a data); a equipa recebe o card da equipa (câmara, nome e função).
+              </p>
+            </div>
+          </div>
+
+          <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+            <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+              Os tickets em números
+            </p>
+            <div className="grid grid-cols-2 gap-3 mt-4">
+              {[
+                { l: 'Total', v: total, ouro: true },
+                { l: 'Noivos', v: contar('Noivos') },
+                { l: 'Equipa', v: contar('Equipa') },
+                { l: 'Outros', v: total - contar('Noivos') - contar('Equipa') },
+              ].map(x => (
+                <div key={x.l} className="rounded-[14px] border border-white/[0.08] bg-black/30 px-3.5 py-3">
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">{x.l}</p>
+                  <p className={`font-semibold text-[24px] leading-none mt-1.5 ${x.ouro ? 'text-[#C9A84C]' : 'text-white'}`}>{x.v}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <div className="px-5 sm:px-16 lg:px-24 pb-24">
+        {/* ── Grupos ─────────────────────────────────────────────────────── */}
+        <nav className="flex flex-wrap gap-2 mb-4">
           {GRUPOS.map((g, i) => (
-            <a key={g.titulo} href={`#g${i}`} style={{ padding: '6px 14px', border: '1px solid #3a3226', borderRadius: 40, fontSize: 12, color: '#d8be93', textDecoration: 'none' }}>
-              {g.titulo} ({g.tickets.length})
+            <a key={g.titulo} href={`#g${i}`}
+              className="inline-flex items-center gap-2 text-[12px] px-4 py-2 rounded-full border border-white/12 text-white/60 hover:text-white hover:border-[#C9A84C]/60 tracking-[0.12em] uppercase font-semibold transition-all">
+              {g.titulo} <span style={{ color: OURO }}>{g.tickets.length}</span>
             </a>
           ))}
         </nav>
+
         {GRUPOS.map((g, i) => (
-          <div key={g.titulo} id={`g${i}`}>
-            <h2 style={{ margin: '44px 0 18px', fontSize: 13, letterSpacing: '0.3em', textTransform: 'uppercase', fontWeight: 400, color: '#d8be93' }}>{g.titulo}</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 580px), 1fr))', gap: 28 }}>
+          <section key={g.titulo} id={`g${i}`} className="scroll-mt-6">
+            <div className="flex items-center gap-4 mt-14 mb-6">
+              <span className="w-10 h-px bg-[#C9A84C]" />
+              <h2 className="text-[15px] sm:text-[18px] font-bold tracking-[0.3em] uppercase text-white">{g.titulo}</h2>
+              <span className="text-[13px] tracking-[0.2em] text-[#C9A84C]">{g.tickets.length}</span>
+            </div>
+            <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 560px), 1fr))' }}>
               {g.tickets.map(t => (
-                <section key={t.k} style={{ border: '1px solid #2a2620', borderRadius: 6, overflow: 'hidden', background: '#141210' }}>
-                  <div style={{ padding: '18px 20px' }}>
-                    <h3 style={{ margin: '0 0 10px', fontSize: 20, fontWeight: 400, color: '#f0e8d8' }}>{t.nome}</h3>
-                    <p style={{ margin: '0 0 4px', fontSize: 13, color: '#c9bea9' }}><span style={{ color: '#8c8170' }}>Assunto:</span> {t.assunto}</p>
-                    <p style={{ margin: '0 0 4px', fontSize: 13, color: '#c9bea9' }}><span style={{ color: '#8c8170' }}>Quando:</span> {t.quando}</p>
-                    <p style={{ margin: 0, fontSize: 13, color: '#c9bea9' }}><span style={{ color: '#8c8170' }}>Para:</span> {t.para}</p>
-                    {t.info && <p style={{ margin: '4px 0 0', fontSize: 13, color: '#c9bea9' }}><span style={{ color: '#8c8170' }}>Mostra:</span> {t.info}</p>}
+                <article key={t.k}
+                  className="rounded-[22px] overflow-hidden border border-white/[0.08] bg-[#111111] transition-all duration-300 hover:border-[#C9A84C]/45 hover:shadow-[0_0_50px_-20px_rgba(201,168,76,0.6)]"
+                  style={{ borderLeft: `2px solid ${OURO}` }}>
+                  <div className="px-5 pt-5 pb-4">
+                    <p className="font-bold uppercase text-white text-[22px] leading-tight">{t.nome}</p>
+                    <dl className="mt-3 space-y-1.5 text-[13px] leading-relaxed">
+                      {([['Assunto', t.assunto], ['Quando', t.quando], ['Para', t.para], ['Mostra', t.info]] as const).filter(([, v]) => v).map(([k, v]) => (
+                        <div key={k} className="grid grid-cols-[72px_1fr] gap-2">
+                          <dt className="text-[10px] tracking-[0.2em] uppercase text-[#C9A84C] pt-[3px]">{k}</dt>
+                          <dd className="text-white/60">{v}</dd>
+                        </div>
+                      ))}
+                    </dl>
                   </div>
                   <iframe
                     title={t.nome}
                     src={`/api/jornada/email?k=${t.k}&v=${VERSAO}`}
                     sandbox="allow-same-origin"
                     loading="lazy"
-                    style={{ display: 'block', width: '100%', height: t.info ? 1180 : 900, border: 0, background: t.info ? '#0b0b0b' : '#f3ede1' }}
+                    className="block w-full border-0"
+                    style={{ height: t.info ? 1180 : 900, background: t.info ? '#070707' : '#f3ede1' }}
                   />
-                </section>
+                </article>
               ))}
             </div>
-          </div>
+          </section>
         ))}
       </div>
     </main>
