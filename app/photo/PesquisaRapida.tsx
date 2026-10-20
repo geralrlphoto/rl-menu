@@ -18,7 +18,7 @@ const PAGINAS: Array<{ titulo: string; href: string }> = [
   { titulo: 'Freelancers', href: '/freelancers' },
   { titulo: 'Álbuns', href: '/albuns-casamento' },
   { titulo: 'Portais Clientes', href: '/portais-clientes' },
-  { titulo: 'Fotos Seleção', href: '/fotos-selecao' },
+  { titulo: 'Fotografia', href: '/edicao-fotografia' },
   { titulo: 'Tarefas', href: '/tarefas' },
 ]
 

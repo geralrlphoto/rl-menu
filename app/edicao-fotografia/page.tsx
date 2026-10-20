@@ -42,6 +42,7 @@ type Projeto = {
   portalId: string | null
   contacto: { noiva: string | null; noivo: string | null; tel: string | null } | null
   selecaoFotos: { categoria: string; fotos: number }[] | null
+  editorAlbum: string | null
   trabalhos: { freelancerId: string; estado: string | null; em: string | null }[]
   historico: { etapa: string; origem: string | null; em: string }[]
 }
@@ -131,7 +132,33 @@ export default function DepartamentoFotografiaPage() {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ referencia: p.referencia, data_casamento: p.data, local: p.local, editor_fotos: [nome] }),
     }).catch(() => {})
+    // Com a seleção já recebida, o editor recebe também o email "Nova edição de fotos"
+    const fl = dados?.equipa.find(m => m.nome === nome)
+    if (p.fase === 'edicao' && fl) {
+      await fetch('/api/send-edicao-fotos-email', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer_id: fl.id, nome_noivos: p.cliente ?? null, referencia: p.referencia }),
+      }).catch(() => {})
+    }
     setAGravar(null)
+    carregar()
+  }
+
+  // Editor do álbum (o que fazia a página Fotos Seleção): álbum na página Álbuns,
+  // trabalho no portal do editor e email
+  const nomearAlbum = async (p: Projeto, nome: string) => {
+    if (!nome || nome === p.editorAlbum) return
+    if (!window.confirm(p.editorAlbum
+      ? `Trocar o editor do álbum de ${p.cliente || p.referencia} de ${p.editorAlbum} para ${nome}?`
+      : `Nomear ${nome} para o álbum de ${p.cliente || p.referencia}? Recebe o trabalho no portal e o email.`)) return
+    setAGravar(p.id)
+    const r = await fetch('/api/edicao-fotografia/album', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, editor: nome }),
+    }).catch(() => null)
+    const d = r ? await r.json().catch(() => ({})) : {}
+    setAGravar(null)
+    if (!r?.ok) alert((d as any).error || 'Não foi possível guardar.')
     carregar()
   }
 
@@ -157,6 +184,7 @@ export default function DepartamentoFotografiaPage() {
     return { e, ativos: meus.length, nomeados, atrasados: meus.filter(atrasado).length }
   }).sort((a, b) => a.ativos - b.ativos || a.e.nome.localeCompare(b.e.nome))
   const comTrabalho = cargas.filter(c => c.ativos > 0 || c.nomeados > 0)
+  const albumAtual = (p: Projeto) => cargas.find(c => p.editorAlbum && c.e.nome.trim().toLowerCase() === p.editorAlbum.trim().toLowerCase())?.e.nome ?? p.editorAlbum ?? ''
   // Nome do editor como está na equipa (no evento pode vir em maiúsculas)
   const editorAtual = (p: Projeto) => cargas.find(c => p.editorIds[0] && c.e.id === p.editorIds[0])?.e.nome ?? p.editores[0] ?? ''
 
@@ -330,6 +358,15 @@ export default function DepartamentoFotografiaPage() {
                         {p.fase === 'edicao' && (
                           <div className="flex flex-col gap-2 rounded-xl border border-[#c4b5fd]/25 bg-[#c4b5fd]/[0.05] p-3">
                             {p.recebida && <p className="text-[11px] text-white/45">Seleção recebida a {fmt(p.recebida)}</p>}
+                            <label className="flex flex-col gap-1">
+                              <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Editor do álbum</span>
+                              <select disabled={aGravar === p.id} value={albumAtual(p)} onChange={e => nomearAlbum(p, e.target.value)}
+                                className={`w-full rounded-xl border bg-black/40 px-3 py-2 text-sm outline-none focus:border-[#C9A84C] ${p.editorAlbum ? 'border-white/10 text-white' : 'border-[#C9A84C]/40 text-white/60'}`}>
+                                <option value="" disabled>{aGravar === p.id ? 'A guardar…' : 'Nomear editor do álbum…'}</option>
+                                {albumAtual(p) && !cargas.some(c => c.e.nome === albumAtual(p)) && <option value={albumAtual(p)}>{albumAtual(p)}</option>}
+                                {cargas.map(({ e }) => <option key={e.id} value={e.nome}>{e.nome}</option>)}
+                              </select>
+                            </label>
                             <input type="url" placeholder="Link das fotos editadas" value={link}
                               onChange={e => setLinks(l => ({ ...l, [chave]: e.target.value }))}
                               className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />

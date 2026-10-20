@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
   const vazio = Promise.resolve({ data: [] as any[] })
   const [{ data: ports }, { data: eqs }, { data: sels }, { data: hist }, { data: contratos }] = await Promise.all([
     refs.length ? sb.from('portais').select('id, referencia, settings').in('referencia', refs) : vazio,
-    refs.length ? sb.from('evento_equipa').select('referencia, editor_fotos, fotografo').in('referencia', refs) : vazio,
+    refs.length ? sb.from('evento_equipa').select('referencia, editor_fotos, editor_album, fotografo').in('referencia', refs) : vazio,
     refs.length ? sb.from('fotos_selecao').select('referencia, data_entrada').in('referencia', refs) : vazio,
     refs.length ? sb.from('fotografia_historico').select('referencia, etapa, origem, criado_em').in('referencia', refs).order('criado_em') : vazio,
     // nomes e telemóveis dos noivos (contrato), para o lembrete por WhatsApp
@@ -101,6 +101,7 @@ export async function GET(req: NextRequest) {
       fase, prazo, diasPrazo: prazo ? diasAte(prazo) : null, alertaOff: !!s[`${chaveAlerta}_alerta_off`] || s.alertas_fotografia_ativos === false,
       recebida, editores, editorIds: editores.map(n => porNome.get(norm(n))?.id ?? null),
       fotografos: arr(eq?.fotografo),
+      editorAlbum: arr(eq?.editor_album)[0] ?? null,
       selecaoFotos: selecaoPorRef.get(e.referencia) ?? null,
       trabalhos: (trabalhos ?? []).filter(t => t.referencia === e.referencia).map(t => ({ freelancerId: t.freelancer_id, estado: t.status, em: t.updated_at })),
       contacto: (() => { const c = contratoPorRef.get(e.referencia); return c ? { noiva: c.nome_noiva ?? null, noivo: c.nome_noivo ?? null, tel: c.tel_noiva || c.tel_noivo || null } : null })(),

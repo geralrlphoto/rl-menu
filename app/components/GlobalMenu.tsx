@@ -82,10 +82,6 @@ const LINKS = [
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>,
   },
   {
-    href: '/fotos-selecao', label: 'Fotos Seleção', sub: 'Ficheiros',
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>,
-  },
-  {
     href: '/eventos-2026', label: 'Eventos 2026', sub: 'Agenda',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>,
   },
@@ -357,7 +353,7 @@ function GlobalMenuInner() {
     : [
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
-        { nome: 'Produção', hrefs: ['/fotos-selecao', '/albuns-casamento', '/edicao-fotografia', '/edicao-video', '/freelancers'] },
+        { nome: 'Produção', hrefs: ['/edicao-fotografia', '/edicao-video', '/albuns-casamento', '/freelancers'] },
         { nome: 'Gestão', hrefs: ['/financas', '/relatorio-diario', '/calendario'] },
       ]
   const EXTRA_LINKS = [{
@@ -375,7 +371,7 @@ function GlobalMenuInner() {
       mensagem: { href: '/portais-clientes', frase: 'Os noivos acompanham tudo no seu portal.', botao: 'Abrir os portais' },
     },
     Produção: {
-      destaque: '/fotos-selecao', medidor: 'seleções',
+      destaque: '/edicao-fotografia', medidor: 'fases',
       pares: [{ href: '/albuns-casamento', pill: 'Álbuns' }, { href: '/freelancers', pill: 'Equipa' }],
       mensagem: { href: '/tarefas', frase: 'Tudo o que falta fazer, num só sítio.', botao: 'Ver as tarefas' },
     },

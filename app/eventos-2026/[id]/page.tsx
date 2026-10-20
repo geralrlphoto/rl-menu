@@ -1713,8 +1713,8 @@ function FotosSelecaoRef({ referencia }: { referencia: string }) {
   if (!data) return (
     <div className="flex items-center justify-between">
       <p className="text-xs text-white/25 italic">Sem registo de seleção para esta referência.</p>
-      <a href="/fotos-selecao" className="text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider">
-        Ver todos ›
+      <a href="/edicao-fotografia" className="text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider">
+        Departamento de Fotografia ›
       </a>
     </div>
   )
@@ -1746,8 +1746,8 @@ function FotosSelecaoRef({ referencia }: { referencia: string }) {
           <p className="text-xs text-white/60">{data.detalhes}</p>
         </div>
       )}
-      <a href="/fotos-selecao" className="text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider self-end">
-        Editar em Fotos Seleção ›
+      <a href="/edicao-fotografia" className="text-[10px] text-white/20 hover:text-gold transition-colors tracking-wider self-end">
+        Departamento de Fotografia ›
       </a>
     </div>
   )
@@ -5153,7 +5153,7 @@ export default function EventoPage() {
 
           {/* Link rápido → Seleção dos Noivos */}
           {e.referencia && (
-            <Link href={`/fotos-selecao?ref=${encodeURIComponent(e.referencia)}`}
+            <Link href="/edicao-fotografia"
               className="print:hidden flex items-center justify-between px-4 py-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] hover:bg-white/[0.04] hover:border-gold/20 transition-all group">
               <span className="text-[10px] tracking-widest text-white/30 uppercase group-hover:text-white/50 transition-colors">Seleção de Fotos dos Noivos</span>
               <span className="text-xs text-white/20 group-hover:text-gold transition-colors">›</span>
