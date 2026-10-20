@@ -29,7 +29,8 @@ const marca = (href: string, nome: string, area: string, frase: string, foto: st
 
 // As marcas, uma vez cada, a 30° umas das outras. A roda roda entre a
 // primeira ao meio (início) e a última ao meio (fim), sem dar a volta.
-// SEAGUP é um site externo: abre noutro separador (a imagem já traz o logo).
+// SEAGUP é um site externo: abre noutro separador. O logo só aparece dentro da roda
+// (no cartão não, porque a imagem já o traz).
 const TRES: Item[] = [
   marca('/photo', 'RL Photo.Video', 'Casamentos', 'O dia inteiro contado com calma, luz natural e verdade.',
     '/eventos-hero-2026.webp', 'center 40%', '/logo-photovideo-hd.png', 1.9),
@@ -38,7 +39,7 @@ const TRES: Item[] = [
   marca('/wedding-mentor', 'RL Wedding Mentor', 'Formação', 'Educar, inspirar e elevar quem fotografa e filma casamentos.',
     '/casamentos-2027.jpg', 'center 45%', '/logo-mentor-hd.png', 1),
   marca('https://portal.seagup.com/pro', 'SEAGUP', 'Seagup', 'Portal Seagup Pro.',
-    '/seagup-pro.webp', 'center 50%', '', 1),
+    '/seagup-pro.webp', 'center 50%', '/seagup-logo.png', 1),
 ]
 const ANEL1: Item[] = TRES
 const ANEL2: Item[] = []
@@ -294,7 +295,7 @@ export default function MarcasOpcao4() {
               <div className="op4-marca-foto">
                 <Image src={it.foto} alt="" fill priority sizes="300px" draggable={false} style={{ objectFit: 'cover', objectPosition: it.posicao }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0d0d0d, rgba(13,13,13,.15) 60%)' }} />
-                {it.logo && <div style={{ position: 'absolute', left: '50%', top: '46%', transform: 'translate(-50%,-50%)', width: '56%', aspectRatio: '16/10', filter: 'brightness(0) invert(1)', opacity: .92 }}>
+                {it.logo && !it.externo && <div style={{ position: 'absolute', left: '50%', top: '46%', transform: 'translate(-50%,-50%)', width: '56%', aspectRatio: '16/10', filter: 'brightness(0) invert(1)', opacity: .92 }}>
                   <div style={{ position: 'absolute', inset: 0, transform: `scale(${it.logoEscala})` }}>
                     <Image src={it.logo} alt="" fill sizes="200px" draggable={false} style={{ objectFit: 'contain' }} />
                   </div>
