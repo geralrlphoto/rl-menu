@@ -462,8 +462,8 @@ export default function DepartamentoFotografiaPage() {
                         {p.fase !== 'entregue' && p.prazo && p.diasPrazo !== null && (
                           <p className={`text-[12px] font-semibold tracking-[0.08em] ${p.alertaOff ? 'text-white/35' : p.diasPrazo < 0 ? 'text-red-400' : p.diasPrazo <= 2 ? 'text-amber-300' : 'text-white/55'}`}>
                             {p.fase === 'escolha'
-                              ? (p.diasPrazo < 0 ? `Lembrar os noivos (há ${-p.diasPrazo} dias)` : `Lembrar em ${p.diasPrazo} dias`)
-                              : p.diasPrazo < 0 ? `Atrasado ${-p.diasPrazo} dias` : p.diasPrazo === 0 ? 'Termina hoje' : `Prazo em ${p.diasPrazo} dias`} · {fmt(p.prazo)}
+                              ? (p.diasPrazo < 0 ? `Lembrar os noivos (há ${-p.diasPrazo} ${p.diasPrazo === -1 ? 'dia' : 'dias'})` : `Lembrar em ${p.diasPrazo} ${p.diasPrazo === 1 ? 'dia' : 'dias'}`)
+                              : p.diasPrazo < 0 ? `Atrasado ${-p.diasPrazo} ${p.diasPrazo === -1 ? 'dia' : 'dias'}` : p.diasPrazo === 0 ? 'Termina hoje' : `Prazo em ${p.diasPrazo} ${p.diasPrazo === 1 ? 'dia' : 'dias'}`} · {fmt(p.prazo)}
                             {p.alertaOff ? ' · alerta desligado' : ''}
                           </p>
                         )}
