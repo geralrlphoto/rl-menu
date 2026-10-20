@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { exigeAdmin, cabecalhoInterno } from '@/lib/api-guard'
 import { registarFoto } from '@/lib/fotografiaHistorico'
+import { aplicarEstadoAlbum } from '@/lib/albumEstado'
 
 // Departamento de Fotografia › nomear (ou trocar) o editor do álbum.
 // POST { referencia, editor }: faz o que a antiga página /fotos-selecao fazia:
@@ -70,5 +71,11 @@ export async function POST(req: NextRequest) {
   }).catch(() => {})
 
   await registarFoto(referencia, 'Editor de álbum nomeado', fl.nome)
+
+  // Nomeado o editor, o álbum passa logo a "Em edição" (portal do editor, ficha, quadro)
+  const { data: alb } = await sb.from('albuns_casamento').select('status').eq('ref_evento', referencia).maybeSingle()
+  if (!alb?.status || alb.status === 'NOVO ÁLBUM') {
+    await aplicarEstadoAlbum(origin, { referencia, estado: 'EM EDIÇÃO', origem: 'RL' })
+  }
   return NextResponse.json({ ok: true })
 }

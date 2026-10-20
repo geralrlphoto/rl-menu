@@ -25,7 +25,7 @@ const TIPO_LABELS: Record<string, string> = {
   fotos_convidados_ctt:     'Fotos Convidados · CTT Enviado',
   nova_tarefa_atribuida:    'Tarefa enviada entre membros',
   album_aprovado:           'Álbum Aprovado pelos Noivos',
-  album_revisao:            'Maqueta do Álbum para Rever',
+  album_revisao:            'Álbum Entregue pelo Editor',
   album_alteracoes:         'Noivos Pediram Alterações ao Álbum',
   mensagem_noivos:          'Mensagem dos Noivos',
   pagamento:                'Pagamentos',
@@ -633,7 +633,7 @@ export async function GET(req: Request) {
           url: '/edicao-fotografia/albuns',
           sent_at: a.updated_at ?? a.created_at,
           mensagem: a.status === 'REVISÃO RL'
-            ? 'O editor enviou a maqueta do álbum. Revê-a antes de seguir para os noivos.'
+            ? 'O editor entregou o álbum. Revê-o, cria o teu link e envia aos noivos.'
             : 'Os noivos pediram alterações à maqueta. O editor já foi avisado.',
         })
       }

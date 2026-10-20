@@ -1,13 +1,17 @@
 // Estado do álbum de um casamento: um só sítio que o muda e propaga a tudo
 // (Departamento de Fotografia › Álbuns). Como lib/videoEstado.ts para o vídeo.
 //
-//   NOVO ÁLBUM     → criado ao nomear o editor do álbum
-//   EM EDIÇÃO      → o editor a trabalhar (ou a RL pediu alterações à maqueta)
-//   REVISÃO RL     → o editor enviou a maqueta (link); a RL vê antes dos noivos
-//   PARA APROVAÇÃO → a RL enviou a maqueta aos noivos (email + portal)
-//   ALTERAÇÕES     → os noivos pediram alterações; volta ao editor
-//   APROVADO       → os noivos aprovaram; produção em 30 dias
-//   ENTREGUE       → a RL entregou o álbum
+// Fases (pedido da RL, 2026-10-20), com o nome que aparece no quadro:
+//   EM EDIÇÃO      "Em edição"           → logo ao nomear o editor do álbum
+//   REVISÃO RL     "Em revisão"          → o editor entregou o álbum no portal dele (link);
+//                                           a RL recebe email e revê
+//   PARA APROVAÇÃO "Entregue aos noivos" → a RL cria o seu link e envia-o aos noivos
+//   ALTERAÇÕES     "Alterações"          → os noivos pediram alterações; volta ao editor
+//   APROVADO       "Em elaboração"       → os noivos aprovaram; produção em 30 dias
+//   ENTREGUE       "Concluído"           → o álbum seguiu para os noivos
+//   (NOVO ÁLBUM fica só para álbuns antigos, sem editor)
+// Links: o do editor fica em portais.settings.maquete_editor_url (só a RL vê);
+// o que os noivos veem é o da RL, em maquete_url.
 //
 // Escreve: albuns_casamento (status e datas), freelancer_album (portal do editor),
 // eventos (album_estado, via /api/eventos-notion), portais.settings (maquete_url,
@@ -23,8 +27,8 @@ export const PRAZO_PRODUCAO_DIAS = 30
 
 /** Nome de cada estado no histórico e no quadro */
 export const ROTULO_ALBUM: Record<EstadoAlbum, string> = {
-  'NOVO ÁLBUM': 'Por começar', 'EM EDIÇÃO': 'Em edição', 'REVISÃO RL': 'Revisão RL', 'PARA APROVAÇÃO': 'Com os noivos',
-  'ALTERAÇÕES': 'Alterações', 'APROVADO': 'Aprovado', 'ENTREGUE': 'Entregue',
+  'NOVO ÁLBUM': 'Por começar', 'EM EDIÇÃO': 'Em edição', 'REVISÃO RL': 'Em revisão', 'PARA APROVAÇÃO': 'Entregue aos noivos',
+  'ALTERAÇÕES': 'Alterações', 'APROVADO': 'Em elaboração', 'ENTREGUE': 'Concluído',
 }
 // estado → portal do editor (freelancer_album.status)
 const PARA_EDITOR: Record<EstadoAlbum, string> = {
@@ -81,13 +85,14 @@ export async function aplicarEstadoAlbum(origin: string, o: {
   referencia: string
   estado: EstadoAlbum
   origem: string                // RL, Noivos, nome do editor…
-  maqueteUrl?: string | null    // link da maqueta (REVISÃO RL)
+  maqueteUrl?: string | null    // REVISÃO RL: link do editor · PARA APROVAÇÃO: link da RL para os noivos
   nota?: string | null          // alterações pedidas (EM EDIÇÃO pela RL / ALTERAÇÕES pelos noivos)
 }): Promise<{ ok: boolean; erro?: string }> {
   const sb = db()
   const { referencia, estado } = o
   const { data: alb } = await sb.from('albuns_casamento').select('id, nome, status').eq('ref_evento', referencia).maybeSingle()
   if (!alb) return { ok: false, erro: 'Este casamento ainda não tem álbum (nomeia primeiro o editor do álbum).' }
+  if (estado === 'PARA APROVAÇÃO' && !o.maqueteUrl) return { ok: false, erro: 'Cola o link do álbum que vais enviar aos noivos.' }
 
   // 1) álbum (estado e datas)
   const upd: Record<string, any> = { status: estado, updated_at: new Date().toISOString() }
@@ -111,13 +116,32 @@ export async function aplicarEstadoAlbum(origin: string, o: {
   const { data: pt } = await sb.from('portais').select('id, noiva, noivo, settings').eq('referencia', referencia).maybeSingle()
   const settings: Record<string, any> = { ...(pt?.settings ?? {}) }
   if (pt && (o.maqueteUrl || estado === 'PARA APROVAÇÃO')) {
-    if (o.maqueteUrl) settings.maquete_url = o.maqueteUrl
+    if (o.maqueteUrl && estado === 'REVISÃO RL') settings.maquete_editor_url = o.maqueteUrl
+    if (o.maqueteUrl && estado === 'PARA APROVAÇÃO') settings.maquete_url = o.maqueteUrl
     if (estado === 'PARA APROVAÇÃO') settings.maquete_enviada = hoje()
     await sb.from('portais').update({ settings }).eq('id', pt.id)
   }
   const nomes = [pt?.noiva, pt?.noivo].filter(Boolean).join(' & ') || alb.nome || referencia
 
   // 5) avisos
+  if (estado === 'REVISÃO RL' && process.env.RESEND_API_KEY) {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: process.env.FROM_EMAIL ?? 'RL Photo.Video <geral@rlphotovideo.pt>', to: ['geral.rlphoto@gmail.com'],
+        subject: `Álbum entregue pelo editor · ${nomes}`,
+        html: `<div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:40px 32px;background:#0b0a08;color:#f0e8d8;">
+          <p style="font-size:10px;letter-spacing:.45em;color:#d8be93;text-transform:uppercase;margin:0 0 24px;">Departamento de Fotografia · Álbuns</p>
+          <p style="font-size:20px;font-style:italic;margin:0 0 12px;">${esc(o.origem)} entregou o álbum de ${esc(nomes)}</p>
+          <p style="font-size:14px;color:#c9b88a;line-height:1.7;margin:0 0 24px;">Revê o álbum e, quando estiver pronto, cria o teu link e envia-o aos noivos no quadro dos álbuns.</p>
+          ${o.maqueteUrl ? `<p style="margin:0 0 24px;"><a href="${esc(o.maqueteUrl)}" style="color:#d8be93;">Ver o álbum do editor</a></p>` : ''}
+          <a href="https://portal.rlphotovideo.pt/edicao-fotografia/albuns" style="display:inline-block;padding:12px 26px;background:#d8be93;color:#0b0a08;border-radius:40px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;font-weight:700;font-family:Arial,sans-serif;">Abrir os álbuns</a>
+          <p style="font-size:11px;color:#8c8170;margin:32px 0 0;">(Mensagem automática)</p>
+        </div>`,
+      }),
+    }).catch(() => {})
+  }
   if (estado === 'PARA APROVAÇÃO' && settings.maquete_url) {
     await fetch(`${origin}/api/send-maquete-email`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...cabecalhoInterno() },

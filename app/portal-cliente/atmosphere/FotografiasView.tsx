@@ -95,7 +95,7 @@ const STATUS_LABEL: Record<string, string> = {
   'REVISÃO RL':     'Em edição',
   'PARA APROVAÇÃO': 'Para aprovação',
   'ALTERAÇÕES':     'Alterações em curso',
-  'APROVADO':       'Aprovado',
+  'APROVADO':       'Aprovado · em elaboração',
   'ENTREGUE':       'Entregue',
 }
 

@@ -16,12 +16,12 @@ const OURO = '#C9A84C'
 type Coluna = 'nomear' | 'edicao' | 'revisao' | 'noivos' | 'alteracoes' | 'aprovado' | 'entregue'
 const COLUNAS: { k: Coluna; titulo: string; cor: string; quem: string; texto: string }[] = [
   { k: 'nomear', titulo: 'Por nomear', cor: '#f87171', quem: 'RL', texto: 'Seleção recebida. Escolhe o editor do álbum: recebe o trabalho no portal e o email.' },
-  { k: 'edicao', titulo: 'Em edição', cor: '#fb923c', quem: 'Editor', texto: 'O editor monta a maqueta e envia o link à RL pelo portal dele. Prazo: 30 dias depois da seleção.' },
-  { k: 'revisao', titulo: 'Revisão RL', cor: '#fbbf24', quem: 'RL', texto: 'Vês a maqueta antes dos noivos: envias aos noivos ou pedes alterações ao editor.' },
-  { k: 'noivos', titulo: 'Com os noivos', cor: '#93c5fd', quem: 'Noivos', texto: 'Recebem o email e veem a maqueta no portal, com Aprovar ou Pedir alterações.' },
-  { k: 'alteracoes', titulo: 'Alterações', cor: '#f472b6', quem: 'Editor', texto: 'Os noivos pediram alterações: o editor e tu são avisados. Volta à Revisão RL quando o editor reenviar.' },
-  { k: 'aprovado', titulo: 'Aprovado', cor: '#c4b5fd', quem: 'RL', texto: 'Os noivos aprovaram: produção em 30 dias. Marca entregue quando o álbum seguir.' },
-  { k: 'entregue', titulo: 'Entregue', cor: '#4ade80', quem: 'RL', texto: 'Os noivos recebem o aviso no portal e por email.' },
+  { k: 'edicao', titulo: 'Em edição', cor: '#fb923c', quem: 'Editor', texto: 'Logo ao nomear. O editor entrega o álbum no portal dele (link). Prazo: 30 dias depois da seleção.' },
+  { k: 'revisao', titulo: 'Em revisão', cor: '#fbbf24', quem: 'RL', texto: 'Recebes um email. Vês o álbum do editor, crias o teu link e envias aos noivos, ou pedes alterações ao editor.' },
+  { k: 'noivos', titulo: 'Entregue aos noivos', cor: '#93c5fd', quem: 'Noivos', texto: 'Recebem o email com o teu link e veem-no no portal, com Aprovar ou Pedir alterações.' },
+  { k: 'alteracoes', titulo: 'Alterações', cor: '#f472b6', quem: 'Editor', texto: 'Os noivos pediram alterações: o editor e tu são avisados. Volta a Em revisão quando o editor reentregar.' },
+  { k: 'aprovado', titulo: 'Em elaboração', cor: '#c4b5fd', quem: 'RL', texto: 'Os noivos aprovaram: o álbum entra em produção (30 dias). Marca concluído quando seguir.' },
+  { k: 'entregue', titulo: 'Concluído', cor: '#4ade80', quem: 'RL', texto: 'Os noivos recebem o aviso no portal e por email.' },
 ]
 const COR = Object.fromEntries(COLUNAS.map(c => [c.k, c.cor])) as Record<Coluna, string>
 
@@ -30,7 +30,7 @@ type Album = {
   id: string; referencia: string; refAlbum: string; refErrada: string | null; nome: string; cliente: string | null; data: string | null; fichaId: string | null
   estado: string; editores: string[]; editorIds: (string | null)[]; numFotos: string | number | null
   entradaFotos: string | null; prazo: string | null; diasPrazo: number | null; fotosAlbum: string | null
-  maqueteUrl: string | null; maqueteEnviada: string | null
+  maqueteUrl: string | null; maqueteEnviada: string | null; maqueteEditorUrl: string | null
   alteracao: { paginas_alterar?: string | null; tipos_alteracao?: string[] | null; observacoes?: string | null; foto_url?: string | null; created_at?: string } | null
   historico: { etapa: string; origem: string | null; em: string }[]
   entregueEm: string | null; aprovadoEm: string | null
@@ -142,14 +142,15 @@ export default function AlbunsPage() {
     if (!r?.ok) alert((d as any).error || 'Não foi possível guardar.')
     carregar()
   }
-  const mudar = async (a: Album, estado: string, confirmar: string, pedirNota = false) => {
+  const [linksNoivos, setLinksNoivos] = useState<Record<string, string>>({})
+  const mudar = async (a: Album, estado: string, confirmar: string, pedirNota = false, url?: string) => {
     let nota: string | null = null
     if (pedirNota) {
       nota = window.prompt('O que é preciso alterar na maqueta? (vai para o editor)')?.trim() || null
       if (!nota) return
     } else if (!window.confirm(confirmar)) return
     setAGravar(a.referencia)
-    const r = await fetch('/api/edicao-fotografia/albuns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: a.refAlbum, estado, nota }) }).catch(() => null)
+    const r = await fetch('/api/edicao-fotografia/albuns', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: a.refAlbum, estado, nota, url }) }).catch(() => null)
     const d = r ? await r.json().catch(() => ({})) : {}
     setAGravar(null)
     if (!r?.ok) alert((d as any).error || 'Não foi possível guardar.')
@@ -160,7 +161,7 @@ export default function AlbunsPage() {
   const responsavel = (a: Album) => (dados?.equipa ?? []).find(m => a.editorIds[0] && m.id === a.editorIds[0]) ?? null
   const mensagemAtraso = (a: Album, m: Membro | null) => {
     const nome = m ? primeiro(m.nome).charAt(0).toUpperCase() + primeiro(m.nome).slice(1).toLowerCase() : ''
-    const o = a.estado === 'APROVADO' ? 'a produção do álbum' : 'a maqueta do álbum'
+    const o = a.estado === 'APROVADO' ? 'a elaboração do álbum' : 'a entrega do álbum'
     return comNotaAutomatica(`Olá${nome ? ` ${nome}` : ''}! Tudo bem?\n\n${o.charAt(0).toUpperCase() + o.slice(1)} de ${a.cliente || a.nome} está atrasada ${dias(-(a.diasPrazo ?? 0))}: o prazo era ${fmt(a.prazo)}.\n\nConsegues dar-me uma previsão? Obrigado!\nRui`)
   }
   const avisar = (a: Album) => {
@@ -199,7 +200,7 @@ export default function AlbunsPage() {
           <h1 className="mt-3 font-bold uppercase leading-[0.9] text-[52px] sm:text-[88px] lg:text-[110px]">Álbuns</h1>
           <div className="mt-5 flex items-center gap-4">
             <span className="w-12 h-px" style={{ background: OURO }} />
-            <span className="text-sm tracking-[0.22em] uppercase text-white/60">Da seleção à entrega, com a maqueta revista pela RL</span>
+            <span className="text-sm tracking-[0.22em] uppercase text-white/60">Do editor à RL, da RL aos noivos, tudo automático</span>
           </div>
           <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
             {[...COLUNAS.filter(c => c.k !== 'entregue').map(c => ({ label: c.titulo, valor: contar(c.k), cor: c.cor })), { label: 'Atrasados', valor: atrasados, cor: '#ef4444' }].map(k => (
@@ -289,10 +290,10 @@ export default function AlbunsPage() {
                         </div>
                         {a.prazo && a.diasPrazo !== null && (
                           <p className={`text-[12px] font-semibold tracking-[0.08em] ${a.diasPrazo < 0 ? 'text-red-400' : a.diasPrazo <= 5 ? 'text-amber-300' : 'text-white/55'}`}>
-                            {k === 'aprovado' ? 'Entrega' : 'Maqueta'} · {a.diasPrazo < 0 ? `atrasada ${dias(-a.diasPrazo)}` : a.diasPrazo === 0 ? 'termina hoje' : `em ${dias(a.diasPrazo)}`} · {fmt(a.prazo)}
+                            {k === 'aprovado' ? 'Elaboração' : 'Entrega do editor'} · {a.diasPrazo < 0 ? `atrasada ${dias(-a.diasPrazo)}` : a.diasPrazo === 0 ? 'termina hoje' : `em ${dias(a.diasPrazo)}`} · {fmt(a.prazo)}
                           </p>
                         )}
-                        {k === 'noivos' && a.maqueteEnviada && <p className="text-[12px] text-white/55">Com os noivos desde {fmt(a.maqueteEnviada)}</p>}
+                        {k === 'noivos' && a.maqueteEnviada && <p className="text-[12px] text-white/55">Entregue aos noivos a {fmt(a.maqueteEnviada)}</p>}
                         {k !== 'entregue' && <FotosAlbum texto={a.fotosAlbum} />}
                         {atraso && (
                           <button type="button" onClick={() => avisar(a)}
@@ -306,14 +307,24 @@ export default function AlbunsPage() {
                             {select(nomeEquipa(a), v => nomear(a.refAlbum, a.cliente, v, nomeEquipa(a), a.fotosAlbum), aGravar === a.referencia)}
                           </label>
                         )}
-                        {a.maqueteUrl && ['revisao', 'noivos', 'alteracoes'].includes(k) && (
-                          <a href={a.maqueteUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-[#93c5fd] hover:underline">▶ Ver a maqueta</a>
+                        {a.maqueteEditorUrl && ['revisao', 'alteracoes'].includes(k) && (
+                          <a href={a.maqueteEditorUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-[#fbbf24] hover:underline">▶ Ver o álbum do editor</a>
+                        )}
+                        {a.maqueteUrl && ['noivos', 'alteracoes'].includes(k) && (
+                          <a href={a.maqueteUrl} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-[#93c5fd] hover:underline">▶ Ver o link enviado aos noivos</a>
                         )}
                         {k === 'revisao' && (
                           <div className="flex flex-col gap-2 rounded-xl border border-[#fbbf24]/25 bg-[#fbbf24]/[0.05] p-3">
+                            <input type="url" placeholder="O teu link para os noivos" value={linksNoivos[a.id] ?? ''}
+                              onChange={e => setLinksNoivos(l => ({ ...l, [a.id]: e.target.value }))}
+                              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
                             <button type="button" disabled={aGravar === a.referencia}
-                              onClick={() => mudar(a, 'PARA APROVAÇÃO', `Enviar a maqueta a ${a.cliente || a.nome}? Recebem o email e veem-na no portal, com Aprovar ou Pedir alterações.`)}
-                              className="rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">✓ Enviar aos noivos</button>
+                              onClick={() => {
+                                const url = (linksNoivos[a.id] ?? '').trim()
+                                if (!/^https?:\/\//i.test(url)) { alert('Cola o link do álbum que vais enviar aos noivos (https://…).'); return }
+                                mudar(a, 'PARA APROVAÇÃO', `Enviar o álbum a ${a.cliente || a.nome}? Recebem o email com este link e veem-no no portal, com Aprovar ou Pedir alterações.`, false, url)
+                              }}
+                              className="rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">✓ Enviar aos noivos →</button>
                             <button type="button" disabled={aGravar === a.referencia} onClick={() => mudar(a, 'EM EDIÇÃO', '', true)}
                               className="rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-amber-300 hover:bg-amber-300/20 disabled:opacity-40">✎ Pedir alterações ao editor</button>
                           </div>
@@ -329,10 +340,10 @@ export default function AlbunsPage() {
                         )}
                         {k === 'aprovado' && (
                           <button type="button" disabled={aGravar === a.referencia}
-                            onClick={() => mudar(a, 'ENTREGUE', `Marcar o álbum de ${a.cliente || a.nome} como entregue? Os noivos recebem o aviso.`)}
-                            className="rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">Marcar entregue →</button>
+                            onClick={() => mudar(a, 'ENTREGUE', `Marcar o álbum de ${a.cliente || a.nome} como concluído? Os noivos recebem o aviso.`)}
+                            className="rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">Marcar concluído →</button>
                         )}
-                        {k === 'entregue' && <p className="text-[12px] text-[#4ade80]">✓ Entregue{a.entregueEm ? ` a ${fmt(a.entregueEm)}` : ''}</p>}
+                        {k === 'entregue' && <p className="text-[12px] text-[#4ade80]">✓ Concluído{a.entregueEm ? ` a ${fmt(a.entregueEm)}` : ''}</p>}
                         {a.historico.length > 0 && (
                           <details className="group/h">
                             <summary className="cursor-pointer list-none text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 hover:text-white/70">

@@ -55,7 +55,6 @@ const STATUS_ALBUM_STYLE: Record<string, string> = {
 }
 
 // ── Album Status Select ───────────────────────────────────────────────────────
-const ALBUM_STATUS_OPTIONS  = ['AGUARDAR','EM EDIÇÃO'] // a maqueta segue para a RL com o link (EnviarMaqueta); aprovar e entregar não são do editor
 const ALBUM_STATUS_SECTIONS = ['AGUARDAR','EM EDIÇÃO','EM APROVAÇÃO','APROVADO','ENTREGUE']
 const ALBUM_STATUS_SELECT_STYLE: Record<string, string> = {
   'AGUARDAR':      'bg-white/10 text-white/50 border-white/20',
@@ -64,59 +63,6 @@ const ALBUM_STATUS_SELECT_STYLE: Record<string, string> = {
   'APROVADO':      'bg-purple-500/15 text-purple-400 border-purple-500/30',
   'ENTREGUE':      'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
 }
-function AlbumStatusSelect({ albumId, status, onChanged }: { albumId: string; status: string; onChanged: (s: string) => void }) {
-  const [saving, setSaving] = useState(false)
-  const cls = ALBUM_STATUS_SELECT_STYLE[status] ?? 'bg-white/5 text-white/30 border-white/10'
-
-  async function handleChange(v: string) {
-    setSaving(true)
-    await fetch('/api/freelancer-album', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: albumId, status: v }),
-    })
-    onChanged(v)
-    setSaving(false)
-  }
-
-  // APROVADO e ENTREGUE só podem ser definidos pelo cliente/admin — mostra badge fixo
-  if (status === 'APROVADO') {
-    return (
-      <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
-        APROVADO ✓
-      </span>
-    )
-  }
-  if (status === 'ENTREGUE') {
-    return (
-      <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
-        ENTREGUE ✓
-      </span>
-    )
-  }
-  if (status === 'EM APROVAÇÃO') {
-    return (
-      <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${cls}`}>
-        EM APROVAÇÃO
-      </span>
-    )
-  }
-
-  return (
-    <select
-      value={status}
-      onChange={e => handleChange(e.target.value)}
-      disabled={saving}
-      className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium appearance-none cursor-pointer focus:outline-none transition-all disabled:opacity-50 ${cls} [color-scheme:dark]`}
-      style={{ backgroundColor: 'transparent' }}
-    >
-      {ALBUM_STATUS_OPTIONS.map(o => (
-        <option key={o} value={o} style={{ backgroundColor: '#1a1a1a', color: 'white' }}>{o}</option>
-      ))}
-    </select>
-  )
-}
-
 // ── Enviar a maqueta à RL (link) ─────────────────────────────────────────────
 // O álbum passa a "Revisão RL": a RL vê a maqueta no Departamento de Fotografia
 // antes de a enviar aos noivos (POST /api/freelancer-album/maqueta).
@@ -136,17 +82,17 @@ function EnviarMaqueta({ referencia, onEnviada }: { referencia: string; onEnviad
   }
   return (
     <div className="mt-3 flex flex-col gap-2 rounded-xl border border-gold/20 bg-gold/[0.04] p-3">
-      <p className="text-[12px] tracking-[0.2em] uppercase text-gold/70">Maqueta pronta? Envia o link à RL</p>
+      <p className="text-[12px] tracking-[0.2em] uppercase text-gold/70">Entregar o álbum à RL</p>
       <div className="flex gap-2 flex-wrap">
-        <input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://… (link da maqueta)"
+        <input type="url" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://… (link do álbum)"
           className="flex-1 min-w-[200px] rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[14px] text-white outline-none focus:border-gold/50" />
         <button type="button" onClick={enviar} disabled={estado === 'a enviar' || !/^https?:\/\//i.test(url.trim())}
           className="rounded-xl border border-gold/40 bg-gold/10 px-4 py-2 text-[13px] tracking-[0.15em] uppercase text-gold hover:bg-gold/20 disabled:opacity-40">
-          {estado === 'a enviar' ? 'A enviar…' : 'Enviar para revisão'}
+          {estado === 'a enviar' ? 'A entregar…' : 'Entregar o álbum'}
         </button>
       </div>
       {estado === 'erro' && <p className="text-[13px] text-red-400">{msg}</p>}
-      <p className="text-[12px] text-white/35">A RL revê a maqueta e envia-a aos noivos. Se houver alterações, recebes um aviso aqui e por email.</p>
+      <p className="text-[12px] text-white/35">A RL recebe um email, revê o álbum e envia-o aos noivos. Se houver alterações, recebes um aviso aqui e por email.</p>
     </div>
   )
 }
@@ -2954,7 +2900,9 @@ export default function FreelancerViewPage() {
                                       className="text-[14px] tracking-[0.15em] uppercase px-3 py-1.5 rounded-xl border border-gold/30 bg-gold/5 text-gold/70 hover:text-gold hover:border-gold/60 hover:bg-gold/10 transition-all">
                                       Ver Mais
                                     </button>
-                                    <AlbumStatusSelect albumId={a.id} status={a.status} onChanged={s => setAlbum(prev => prev.map(x => x.id === a.id ? { ...x, status: s } : x))} />
+                                    <span className={`text-[14px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-medium ${ALBUM_STATUS_SELECT_STYLE[a.status] ?? 'bg-white/5 text-white/30 border-white/10'}`}>
+                                      {({ 'AGUARDAR': 'Em edição', 'EM EDIÇÃO': 'Em edição', 'EM APROVAÇÃO': 'Em revisão', 'APROVADO': 'Em elaboração', 'ENTREGUE': 'Concluído' } as Record<string, string>)[a.status] ?? a.status}
+                                    </span>
                                   </div>
                                 </div>
                                 {a.referencia_album && (a.status === 'AGUARDAR' || a.status === 'EM EDIÇÃO') && (

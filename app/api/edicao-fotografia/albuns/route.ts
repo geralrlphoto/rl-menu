@@ -8,7 +8,8 @@ import { aplicarEstadoAlbum, ESTADOS_ALBUM, type EstadoAlbum } from '@/lib/album
 //   maqueta (portais.settings.maquete_url), o último pedido de alterações e o
 //   histórico; mais os casamentos com seleção recebida que ainda não têm álbum
 //   ("Por nomear", vindos do quadro do departamento).
-// POST { referencia, estado, nota? }: a RL muda o estado (lib/albumEstado.ts).
+// POST { referencia, estado, nota?, url? }: a RL muda o estado (lib/albumEstado.ts);
+//   url = o link que a RL cria para os noivos (Entregue aos noivos).
 
 const PRAZO_MAQUETA_DIAS = 30
 const ENTREGUES_RECENTES = 90
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
   const vazio = Promise.resolve({ data: [] as any[] })
   const [{ data: eqs }, { data: ports }, { data: alts }, { data: hist }, { data: evs }, { data: equipa }] = await Promise.all([
     refs.length ? sb.from('evento_equipa').select('referencia, editor_album').in('referencia', refs) : vazio,
-    refs.length ? sb.from('portais').select('referencia, settings->maquete_url, settings->maquete_enviada').in('referencia', refs) : vazio,
+    refs.length ? sb.from('portais').select('referencia, settings->maquete_url, settings->maquete_enviada, settings->maquete_editor_url').in('referencia', refs) : vazio,
     refs.length ? sb.from('album_alteracoes').select('*').in('ref_evento', refs).order('created_at', { ascending: false }) : vazio,
     refs.length ? sb.from('fotografia_historico').select('referencia, etapa, origem, criado_em').in('referencia', refs).like('etapa', 'Álbum%').order('criado_em') : vazio,
     refs.length ? sb.from('eventos_2026').select('id, notion_id, referencia, cliente, data_evento').in('referencia', refs) : vazio,
@@ -86,6 +87,7 @@ export async function GET(req: NextRequest) {
         || (/[a-z]/i.test(String(a.num_fotografias ?? '')) ? String(a.num_fotografias) : null),
       numFotos: contaFotos((p?.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto || a.num_fotografias), entradaFotos: base, prazo, diasPrazo: prazo ? diasAte(prazo) : null,
       maqueteUrl: typeof pt?.maquete_url === 'string' ? pt.maquete_url : null,
+      maqueteEditorUrl: typeof pt?.maquete_editor_url === 'string' ? pt.maquete_editor_url : null,
       maqueteEnviada: typeof pt?.maquete_enviada === 'string' ? pt.maquete_enviada : null,
       alteracao: altPorRef.get(a.ref_evento) ?? null, historico: histPorRef.get(a.ref_evento) ?? histPorRef.get(ref) ?? [],
       refAlbum: a.ref_evento as string,
@@ -108,9 +110,11 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const bloqueio = exigeAdmin(req)
   if (bloqueio) return bloqueio
-  const { referencia, estado, nota } = await req.json().catch(() => ({}))
+  const { referencia, estado, nota, url } = await req.json().catch(() => ({}))
   if (!referencia || !(ESTADOS_ALBUM as readonly string[]).includes(estado)) return NextResponse.json({ error: 'Referência ou estado inválidos.' }, { status: 400 })
-  const r = await aplicarEstadoAlbum(req.nextUrl.origin, { referencia, estado, origem: 'RL', nota: nota ?? null })
+  const link = String(url ?? '').trim()
+  if (link && !/^https?:\/\//i.test(link)) return NextResponse.json({ error: 'O link tem de começar por https://' }, { status: 400 })
+  const r = await aplicarEstadoAlbum(req.nextUrl.origin, { referencia, estado, origem: 'RL', nota: nota ?? null, maqueteUrl: link || null })
   if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 400 })
   return NextResponse.json({ ok: true })
 }
