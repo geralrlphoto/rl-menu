@@ -12,6 +12,7 @@ import { portalPathFor } from '@/lib/noivos-session'
 //   etapa sneakpeek | galerias | selecao | entregue → email aos noivos + link no portal
 //     (as mesmas chaves de portais.settings que a ficha do evento usa)
 //   etapa recebida → marca a seleção dos noivos como recebida hoje (selecao_recebida)
+//   etapa lembrete → regista no histórico o lembrete enviado por WhatsApp
 
 export const maxDuration = 60
 
@@ -53,6 +54,12 @@ export async function POST(req: NextRequest) {
   if (!p) return NextResponse.json({ error: 'Este casamento não tem portal.' }, { status: 404 })
   const hoje = new Date().toISOString().slice(0, 10)
   const settings = { ...(p.settings ?? {}) }
+
+  // Lembrete por WhatsApp (aberto no browser da RL): só fica no histórico
+  if (etapa === 'lembrete') {
+    await registarFoto(referencia, 'Lembrete WhatsApp', 'RL')
+    return NextResponse.json({ ok: true })
+  }
 
   // Seleção dos noivos recebida (normalmente chega pelo formulário; aqui é à mão)
   if (etapa === 'recebida') {

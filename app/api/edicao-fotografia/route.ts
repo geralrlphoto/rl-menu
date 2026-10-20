@@ -41,12 +41,15 @@ export async function GET(req: NextRequest) {
   const refs = comFoto.map(e => e.referencia as string)
 
   const vazio = Promise.resolve({ data: [] as any[] })
-  const [{ data: ports }, { data: eqs }, { data: sels }, { data: hist }] = await Promise.all([
+  const [{ data: ports }, { data: eqs }, { data: sels }, { data: hist }, { data: contratos }] = await Promise.all([
     refs.length ? sb.from('portais').select('id, referencia, settings').in('referencia', refs) : vazio,
     refs.length ? sb.from('evento_equipa').select('referencia, editor_fotos, fotografo').in('referencia', refs) : vazio,
     refs.length ? sb.from('fotos_selecao').select('referencia, data_entrada').in('referencia', refs) : vazio,
     refs.length ? sb.from('fotografia_historico').select('referencia, etapa, origem, criado_em').in('referencia', refs).order('criado_em') : vazio,
+    // nomes e telemóveis dos noivos (contrato), para o lembrete por WhatsApp
+    refs.length ? sb.from('dados_contrato_cps').select('id, referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs).order('id') : vazio,
   ])
+  const contratoPorRef = new Map((contratos ?? []).map(c => [c.referencia_evento, c]))   // fica o mais recente
   const portalPorRef = new Map((ports ?? []).map(p => [p.referencia, p]))
   const eqPorRef = new Map((eqs ?? []).map(q => [q.referencia, q]))
   const selPorRef = new Map<string, string>()
@@ -71,6 +74,7 @@ export async function GET(req: NextRequest) {
       fase, prazo, diasPrazo: prazo ? diasAte(prazo) : null, alertaOff: !!s[`${chaveAlerta}_alerta_off`] || s.alertas_fotografia_ativos === false,
       recebida, editores, editorIds: editores.map(n => porNome.get(norm(n))?.id ?? null),
       fotografos: arr(eq?.fotografo),
+      contacto: (() => { const c = contratoPorRef.get(e.referencia); return c ? { noiva: c.nome_noiva ?? null, noivo: c.nome_noivo ?? null, tel: c.tel_noiva || c.tel_noivo || null } : null })(),
       links: { sneakpeek: s.sneakpeek_url ?? null, galerias: s.galerias_url ?? null, selecao: s.selecao_url ?? null, entregue: s.fotos_finais_url ?? null },
       enviadas: { sneakpeek: s.sneakpeek_enviada ?? null, galerias: s.galerias_enviada ?? null, selecao: s.selecao_enviada ?? null, entregue: s.fotos_finais_enviada ?? null },
       portalId: p?.id ?? null,

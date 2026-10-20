@@ -10,6 +10,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { EtapaFoto } from '@/lib/fotografiaFluxo'
+import { whatsappLink } from '@/lib/crm'
 
 const OURO = '#C9A84C'
 const FASES: { k: EtapaFoto; titulo: string; cor: string }[] = [
@@ -39,12 +40,29 @@ type Projeto = {
   recebida: string | null; editores: string[]; editorIds: (string | null)[]; fotografos: string[]
   links: Partial<Record<EtapaFoto, string | null>>; enviadas: Partial<Record<EtapaFoto, string | null>>
   portalId: string | null
+  contacto: { noiva: string | null; noivo: string | null; tel: string | null } | null
   historico: { etapa: string; origem: string | null; em: string }[]
 }
 
 const fmt = (iso: string) => new Date(iso.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
 const diasEntre = (a: string, b: string) => Math.round((new Date(b.slice(0, 10) + 'T12:00:00Z').getTime() - new Date(a.slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)
+
+// Lembrete da seleção por WhatsApp: nomes e dia do casamento, sem referência nem emojis
+const PORTAL_LOGIN = 'https://portal.rlphotovideo.pt/login-noivos'
+function mensagemLembrete(p: Projeto): string {
+  const bonito = (n: string) => { const w = primeiro(n); return w.charAt(0).toLocaleUpperCase('pt-PT') + w.slice(1).toLocaleLowerCase('pt-PT') }
+  const n1 = p.contacto?.noiva ? bonito(p.contacto.noiva) : null
+  const n2 = p.contacto?.noivo ? bonito(p.contacto.noivo) : null
+  const nomes = n1 && n2 ? `${n1} e ${n2}` : n1 || n2 || (p.cliente ?? '').trim() || ''
+  const dia = new Date(p.data.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+  const galeria = p.links.selecao ? `\n\nA galeria para escolherem está aqui: ${p.links.selecao}` : ''
+  return `Olá ${nomes}! Esperamos que estejam bem.\n\nJá tiveram oportunidade de ver as fotografias do vosso casamento de ${dia}? Para avançarmos com a edição, só falta escolherem as vossas preferidas e enviarem-nos a seleção no portal, na página Fotografias.${galeria}\n\nPortal: ${PORTAL_LOGIN}\n\nQualquer dúvida, estamos por aqui. Um abraço,\nRL Photo.Video`
+}
+const linkLembrete = (p: Projeto) => {
+  const texto = mensagemLembrete(p)
+  return whatsappLink(p.contacto?.tel, texto) ?? `https://wa.me/?text=${encodeURIComponent(texto)}`
+}
 
 function linhaDoTempo(p: Projeto) {
   const ev: { em: string; titulo: string; quem?: string | null }[] = [{ em: p.data, titulo: 'Casamento' }]
@@ -255,6 +273,11 @@ export default function DepartamentoFotografiaPage() {
                         {p.fase === 'escolha' && (
                           <div className="flex flex-col gap-2 rounded-xl border border-[#93c5fd]/25 bg-[#93c5fd]/[0.06] p-3">
                             <p className="text-[11px] text-white/55">À espera da seleção dos noivos. Chega sozinha quando enviam o formulário.</p>
+                            <a href={linkLembrete(p)} target="_blank" rel="noopener noreferrer"
+                              onClick={() => { fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: p.referencia, etapa: 'lembrete' }) }).catch(() => {}) }}
+                              className="text-center rounded-full border border-[#4ade80]/45 bg-[#4ade80]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20">
+                              Lembrar por WhatsApp{p.contacto?.tel ? '' : ' (escolher contacto)'}
+                            </a>
                             <button type="button" disabled={aGravar === p.id}
                               onClick={() => acao(p, 'recebida', `Marcar a seleção de ${nomes} como recebida hoje? O casamento passa para Edição.`)}
                               className="rounded-full border border-[#93c5fd]/40 bg-[#93c5fd]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#93c5fd] hover:bg-[#93c5fd]/20 disabled:opacity-40">✓ Seleção recebida</button>
