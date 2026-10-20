@@ -2615,6 +2615,8 @@ function PortalSubPageContent() {
           ) : undefined}
           acoes={<FilmeAcoes settings={portalSettingsObj} />}
           paginaConvidados={portalRowId ? `https://portal.rlphotovideo.pt/convidados/${portalRowId}/filme` : null}
+          estreia={portalSettingsObj?.wedding_film_estreia ?? null}
+          referencia={portalSettingsObj?.referencia ?? refParam ?? portalRef ?? null}
         />
       </PortalShell>
     )

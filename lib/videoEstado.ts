@@ -7,10 +7,13 @@
 //   Entregue    → só a RL, ao enviar o filme aos noivos (departamento)
 // Escreve: Notion + eventos_YYYY + evento_equipa (via /api/eventos-notion), portais.settings.video_estado
 // (portal dos noivos), a fase do projeto no Painel do Editor (freelancers.editor_workflow)
-// e uma linha no histórico do projeto (video_estado_historico).
+// e uma linha no histórico do projeto (video_estado_historico). Da primeira vez que o
+// vídeo chega a cada passo, os noivos recebem o Ticket do Filme por email.
 
 import { createClient } from '@supabase/supabase-js'
 import { cabecalhoInterno } from '@/lib/api-guard'
+import { resolveEmailNoiva } from '@/app/api/_lib/emailNoiva'
+import { buildTicketFilmeHtml, type PassoFilme } from '@/lib/ticket-filme-html'
 
 export const ESTADOS_VIDEO = ['Aguardar', 'Em Edição', 'Em Revisão', 'Finalizado', 'Entregue'] as const
 export type EstadoVideo = typeof ESTADOS_VIDEO[number]
@@ -87,13 +90,44 @@ export async function aplicarEstadoVideo(origin: string, o: {
       await sb.from('freelancers').update({ editor_workflow: { ...wf, [referencia]: FASE_DO_ESTADO[estado] } }).eq('id', id)
     }
   }
-  // 5) histórico do projeto (Departamento de Edição de Vídeo)
-  if (referencia) await registarHistorico(referencia, estado, o.origem ?? ORIGEM_DO_ESTADO[estado])
+  // 5) histórico do projeto (Departamento de Edição de Vídeo) e Ticket do Filme aos noivos
+  if (referencia) {
+    const { count } = await sb.from('video_estado_historico').select('id', { count: 'exact', head: true })
+      .eq('referencia', referencia).eq('estado', estado)
+    await registarHistorico(referencia, estado, o.origem ?? ORIGEM_DO_ESTADO[estado])
+    // Só da primeira vez em cada passo; o Entregue tem o email do Wedding Film, e as
+    // alterações pedidas pela RL não voltam a avisar os noivos.
+    if (!count && estado !== 'Entregue' && o.origem !== 'RL (alterações)') {
+      await enviarTicketFilme(referencia, estado as PassoFilme)
+    }
+  }
   return { ok, eventId }
 }
 
 const ORIGEM_DO_ESTADO: Record<EstadoVideo, string> = {
   'Aguardar': 'Automático', 'Em Edição': 'Editor', 'Em Revisão': 'Editor', 'Finalizado': 'RL', 'Entregue': 'RL',
+}
+
+/** Envia o Ticket do Filme aos noivos (email da noiva). Uma falha nunca estraga a mudança de estado. */
+export async function enviarTicketFilme(referencia: string, passo: PassoFilme, estreia: string | null = null): Promise<boolean> {
+  if (!process.env.RESEND_API_KEY) return false
+  try {
+    const { data: p } = await db().from('portais').select('noiva, noivo').eq('referencia', referencia).maybeSingle()
+    const email = await resolveEmailNoiva(null, referencia)
+    if (!email) return false
+    const noivos = [p?.noiva, p?.noivo].filter(Boolean).join(' & ') || 'Noivos'
+    const html = buildTicketFilmeHtml({ passo, referencia, noivos, estreia, batizado: referencia.startsWith('BAT_') })
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: process.env.FROM_EMAIL ?? 'RL Photo.Video <geral@rlphotovideo.pt>',
+        to: [email], reply_to: 'geral.rlphoto@gmail.com',
+        subject: `Ticket do Filme · ${noivos}`, html,
+      }),
+    })
+    return r.ok
+  } catch (e) { console.error('[videoEstado] ticket do filme:', e); return false }
 }
 
 /** Acrescenta uma linha ao histórico do projeto, sem repetir o último estado registado. */

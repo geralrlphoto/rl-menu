@@ -68,7 +68,71 @@ function PartilharVideo({ titulo, url, pagina, largo }: { titulo: string; url: s
   )
 }
 
-export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, proposta, estadoVideo, intro, acoes, paginaConvidados }: {
+/* Estreia: contagem decrescente até à data e hora marcadas pela RL */
+function Contagem({ ate }: { ate: number }) {
+  const [agora, setAgora] = useState(() => Date.now())
+  useEffect(() => { const t = setInterval(() => setAgora(Date.now()), 1000); return () => clearInterval(t) }, [])
+  const s = Math.max(0, Math.floor((ate - agora) / 1000))
+  const partes: [number, string][] = [[Math.floor(s / 86400), 'dias'], [Math.floor(s % 86400 / 3600), 'horas'], [Math.floor(s % 3600 / 60), 'min'], [s % 60, 'seg']]
+  return (
+    <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+      {partes.map(([n, l]) => (
+        <div key={l} style={{ minWidth: 66, textAlign: 'center', borderRadius: 14, border: '1px solid rgba(216,190,147,.35)', background: 'rgba(11,11,11,.7)', padding: '10px 8px' }}>
+          <div style={{ fontSize: 30, fontWeight: 200, color: G, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{String(n).padStart(2, '0')}</div>
+          <div style={{ marginTop: 4, fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,.5)' }}>{l}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+const quandoEstreia = (iso: string) => {
+  const d = new Date(iso)
+  const dia = d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Europe/Lisbon' })
+  const hora = d.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Lisbon' }).replace(':', 'h')
+  return `${dia.charAt(0).toUpperCase() + dia.slice(1)} às ${hora}`
+}
+
+/* Nota dos noivos ao filme (fica no Departamento de Edição de Vídeo, no ranking dos editores) */
+function NotaFilme({ referencia }: { referencia: string }) {
+  const [nota, setNota] = useState<number | null>(null)
+  const [sobre, setSobre] = useState<number | null>(null)
+  const [comentario, setComentario] = useState('')
+  const [estado, setEstado] = useState<'' | 'a gravar' | 'gravado' | 'erro'>('')
+  useEffect(() => {
+    fetch(`/api/filme-nota?ref=${encodeURIComponent(referencia)}`).then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.nota) { setNota(d.nota); setComentario(d.comentario ?? ''); setEstado('gravado') } }).catch(() => {})
+  }, [referencia])
+  const gravar = async (n: number) => {
+    setNota(n); setEstado('a gravar')
+    const r = await fetch('/api/filme-nota', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia, nota: n, comentario }) }).catch(() => null)
+    setEstado(r?.ok ? 'gravado' : 'erro')
+  }
+  const ativa = sobre ?? nota ?? 0
+  return (
+    <section style={{ borderRadius: 22, border: '1px solid rgba(216,190,147,.25)', background: '#141414', padding: 'clamp(20px, 3vw, 28px)', borderLeft: `2px solid ${G}` }}>
+      <div className="eyebrow">A vossa opinião</div>
+      <h2 style={{ margin: '6px 0 6px', fontSize: 'clamp(24px, 3vw, 30px)', color: '#fff' }}>Que nota dão ao vosso filme?</h2>
+      <p style={{ margin: 0, fontSize: 13.5, color: 'rgba(255,255,255,.55)' }}>Ajuda-nos a fazer cada filme melhor do que o anterior.</p>
+      <div style={{ display: 'flex', gap: 6, marginTop: 14 }} onMouseLeave={() => setSobre(null)}>
+        {[1, 2, 3, 4, 5].map(n => (
+          <button key={n} type="button" aria-label={`${n} estrelas`} onMouseEnter={() => setSobre(n)} onClick={() => gravar(n)}
+            style={{ fontSize: 34, lineHeight: 1, background: 'none', border: 0, cursor: 'pointer', padding: 2, color: n <= ativa ? G : 'rgba(255,255,255,.18)', transition: 'color .15s' }}>★</button>
+        ))}
+      </div>
+      {nota && (
+        <div style={{ marginTop: 12, display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <textarea value={comentario} onChange={e => { setComentario(e.target.value); setEstado('') }} rows={2} placeholder="Querem deixar algumas palavras? (opcional)"
+            style={{ flex: '1 1 260px', borderRadius: 12, border: '1px solid rgba(255,255,255,.12)', background: 'rgba(0,0,0,.35)', color: '#fff', padding: '10px 12px', fontSize: 14, fontFamily: 'inherit', resize: 'vertical' }} />
+          <button type="button" className="atm-btn" onClick={() => gravar(nota)}>{estado === 'a gravar' ? 'A guardar…' : 'Guardar'}</button>
+        </div>
+      )}
+      {estado === 'gravado' && <p style={{ margin: '10px 0 0', fontSize: 13, color: '#86efac' }}>Obrigado! Guardámos a vossa opinião.</p>}
+      {estado === 'erro' && <p style={{ margin: '10px 0 0', fontSize: 13, color: '#f87171' }}>Não foi possível guardar. Tentem outra vez.</p>}
+    </section>
+  )
+}
+
+export function FilmeRL({ title, heroUrl, backHref, videos: videosTodos, dataCasamento, proposta, estadoVideo, intro, acoes, paginaConvidados, estreia, referencia }: {
   title: string
   heroUrl?: string | null
   backHref: string
@@ -80,8 +144,22 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
   acoes?: ReactNode
   /** Página dos vídeos para os convidados (o que o botão Partilhar envia) */
   paginaConvidados?: string | null
+  /** Estreia do filme marcada pela RL (ISO): até lá o filme fica escondido, com contagem decrescente */
+  estreia?: string | null
+  /** Referência do casamento (para a nota dos noivos ao filme) */
+  referencia?: string | null
 }) {
   const batizado = useBatizado()
+  // Estreia no futuro: o filme principal fica escondido até à hora marcada
+  const estreiaMs = estreia && !isNaN(Date.parse(estreia)) ? Date.parse(estreia) : null
+  const [, refrescar] = useState(0)
+  useEffect(() => {
+    if (!estreiaMs || estreiaMs <= Date.now()) return
+    const t = setTimeout(() => refrescar(n => n + 1), Math.min(estreiaMs - Date.now() + 500, 2 ** 31 - 1))
+    return () => clearTimeout(t)
+  }, [estreiaMs])
+  const emEstreia = estreiaMs !== null && estreiaMs > Date.now()
+  const videos = emEstreia ? videosTodos.map(v => v.principal ? { ...v, url: null } : v) : videosTodos
   const casamento = /^\d{4}-\d{2}-\d{2}/.test(dataCasamento ?? '') ? dataCasamento!.slice(0, 10) : null
   const dias = prazoVideoDias(proposta)
   const previsto = casamento ? somaUteis(casamento, dias) : null
@@ -122,7 +200,7 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
   const outros = videos.filter(v => v !== principal)
   const prontos = videos.filter(v => v.url).length
   const filmeEntregue = Boolean(principal?.url)
-  const estadoFilme = filmeEntregue ? 'Entregue' : /edi/i.test(estadoVideo ?? '') ? 'Em edição' : 'A aguardar'
+  const estadoFilme = emEstreia ? 'Estreia marcada' : filmeEntregue ? 'Entregue' : /edi/i.test(estadoVideo ?? '') ? 'Em edição' : 'A aguardar'
 
   const card: React.CSSProperties = { borderRadius: 22, border: '1px solid rgba(255,255,255,.08)', background: '#141414', overflow: 'hidden' }
   const capa = (src?: string | null, h = 180): ReactNode => src
@@ -169,9 +247,11 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                   </div>
                 ))}
               </div>
-              {!filmeEntregue && previsto && (
-                <div style={{ marginTop: 12, fontSize: 12.5, fontWeight: 600, color: G }}>Previsto até {dataPt(previsto)}</div>
-              )}
+              {emEstreia && estreia
+                ? <div style={{ marginTop: 12, fontSize: 12.5, fontWeight: 600, color: G }}>Estreia: {quandoEstreia(estreia)}</div>
+                : !filmeEntregue && previsto && (
+                  <div style={{ marginTop: 12, fontSize: 12.5, fontWeight: 600, color: G }}>Previsto até {dataPt(previsto)}</div>
+                )}
             </aside>
           </div>
         </div>
@@ -189,7 +269,13 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
               <div>
                 <div className="eyebrow">Filme completo</div>
                 <div style={{ marginTop: 6, fontSize: 'clamp(26px, 3.4vw, 36px)', color: '#fff' }}>{principal.titulo}</div>
-                {!principal.url && previsto && <div style={{ marginTop: 4, fontSize: 13, color: G, fontWeight: 600 }}>Previsto até {dataPt(previsto)}</div>}
+                {emEstreia && estreia && (
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 14, color: G, fontWeight: 600, marginBottom: 10 }}>Estreia · {quandoEstreia(estreia)}</div>
+                    <Contagem ate={estreiaMs!} />
+                  </div>
+                )}
+                {!emEstreia && !principal.url && previsto && <div style={{ marginTop: 4, fontSize: 13, color: G, fontWeight: 600 }}>Previsto até {dataPt(previsto)}</div>}
                 {principal.url && <NotaDownload enviadoEm={principal.enviadoEm} />}
               </div>
               {principal.url
@@ -201,11 +287,14 @@ export function FilmeRL({ title, heroUrl, backHref, videos, dataCasamento, propo
                     <PartilharVideo titulo={principal.titulo} url={principal.url} pagina={paginaConvidados} />
                   </div>
                 )
-                : <span className="atm-btn" style={{ opacity: .55, cursor: 'default' }}>Aguardar</span>}
+                : <span className="atm-btn" style={{ opacity: .55, cursor: 'default' }}>{emEstreia ? 'Em breve' : 'Aguardar'}</span>}
             </div>
           </div>
         </section>
       )}
+
+      {/* ── nota dos noivos ao filme (depois de o verem) ── */}
+      {principal?.url && referencia && <NotaFilme referencia={referencia} />}
 
       {/* ── os outros vídeos ── */}
       {outros.length > 0 && (

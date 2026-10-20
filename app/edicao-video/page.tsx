@@ -14,7 +14,7 @@ const ESTADOS_INFO = [
   { estado: 'Em Edição',  quem: 'Editor',     cor: '#fb923c', quando: 'O editor começa (ou a RL pede alterações).', onde: 'Painel do Editor.', noivos: 'veem que o filme já está a ser editado.' },
   { estado: 'Em Revisão', quem: 'Editor',     cor: '#93c5fd', quando: 'O editor envia o link de revisão.', onde: 'Painel do Editor › Para Revisão.', noivos: 'veem Em Revisão (a RL está a ver).' },
   { estado: 'Finalizado', quem: 'RL',         cor: '#c4b5fd', quando: 'A RL aprova o filme.', onde: 'Este departamento, cartão Aprovar.', noivos: 'veem Finalizado; o editor recebe o Ticket de Aprovação.' },
-  { estado: 'Entregue',   quem: 'RL',         cor: '#4ade80', quando: 'A RL envia o filme aos noivos.', onde: 'Este departamento, cartão Entregar (link).', noivos: 'recebem o email e o filme fica no portal.' },
+  { estado: 'Entregue',   quem: 'RL',         cor: '#4ade80', quando: 'A RL envia o filme aos noivos (já ou com estreia marcada).', onde: 'Este departamento, cartão Entregar (link e estreia).', noivos: 'recebem o email; com estreia, o ticket com a data e uma contagem decrescente no portal.' },
 ]
 
 const OURO = '#C9A84C'
@@ -31,12 +31,19 @@ type Projeto = {
   id: number; fichaId: string; referencia: string | null; cliente: string | null; data: string; local: string | null
   fase: Fase | 'Sem registo'; editores: string[]; editorIds: (string | null)[]
   prazo: string; diasPrazo: number; portalId: string | null; entregueEm: string | null
+  prazoInterno: string; diasInterno: number; diaTeaser: number; teaserDias: number
+  avaliacao: { ritmo: number | null; cor: number | null; audio: number | null; historia: number | null; nota_noivos: number | null } | null
   entregas: { teaser: boolean; sde: boolean; filme: boolean; prewedding: boolean }
   filmeUrl: string | null
   revisao: { link: string | null; status: string | null; feedback: string | null } | null
   pagamentos: { id: string; freelancerId: string; valor: number; pago: boolean; dataPago: string | null }[]
   historico: { estado: string; origem: string | null; em: string }[]
 }
+
+type Rank = { id: string; nome: string; foto_url: string | null; filmes: number; rl: number | null; noivos: number | null; nNoivos: number; ritmo: number | null; cor: number | null; audio: number | null; historia: number | null }
+const CRITERIOS = [['ritmo', 'Ritmo'], ['cor', 'Cor'], ['audio', 'Áudio'], ['historia', 'História']] as const
+type Notas = Partial<Record<typeof CRITERIOS[number][0], number>>
+const mediaRL = (a: Projeto['avaliacao']) => a?.ritmo ? Math.round(((a.ritmo ?? 0) + (a.cor ?? 0) + (a.audio ?? 0) + (a.historia ?? 0)) / 4 * 10) / 10 : null
 
 const eur = (v: number) => v.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 const diasEntre = (a: string, b: string) => Math.round((new Date(b.slice(0, 10) + 'T12:00:00Z').getTime() - new Date(a.slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)
@@ -54,13 +61,13 @@ const fmt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
 
 export default function EdicaoVideoPage() {
-  const [dados, setDados] = useState<{ editores: Editor[]; projetos: Projeto[]; porPagar: Record<string, number> } | null>(null)
+  const [dados, setDados] = useState<{ editores: Editor[]; projetos: Projeto[]; porPagar: Record<string, number>; ranking: Rank[] } | null>(null)
   const [erro, setErro] = useState(false)
   const [aGravar, setAGravar] = useState<number | null>(null)
 
   const carregar = () => {
     fetch('/api/edicao-video').then(r => r.json())
-      .then(d => { if (d.ok) setDados({ editores: d.editores, projetos: d.projetos, porPagar: d.porPagar ?? {} }); else setErro(true) })
+      .then(d => { if (d.ok) setDados({ editores: d.editores, projetos: d.projetos, porPagar: d.porPagar ?? {}, ranking: d.ranking ?? [] }); else setErro(true) })
       .catch(() => setErro(true))
   }
   useEffect(carregar, [])
@@ -96,29 +103,49 @@ export default function EdicaoVideoPage() {
     carregar()
   }
 
-  // Sem link de revisão (casos antigos): a RL marca Finalizado diretamente
-  const finalizarSemLink = async (p: Projeto) => {
-    if (!window.confirm(`Marcar o filme de ${p.cliente || p.referencia} como Finalizado (aprovado)?`)) return
+  // Avaliação de qualidade (1 a 5) obrigatória antes de aprovar: fica no ranking dos editores
+  const [avaliar, setAvaliar] = useState<{ id: number; semLink: boolean; notas: Notas; texto: string } | null>(null)
+  const confirmarAprovacao = async (p: Projeto) => {
+    if (!avaliar) return
+    if (CRITERIOS.some(([k]) => !avaliar.notas[k])) { alert('Dá uma nota de 1 a 5 a ritmo, cor, áudio e história.'); return }
     setAGravar(p.id)
-    const r = await fetch('/api/painel-editor/sync-video-estado', {
+    const r = await fetch('/api/edicao-video/avaliar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referencia: p.referencia, stage: 'Finalizado', data_casamento: p.data, local: p.local }),
+      body: JSON.stringify({ referencia: p.referencia, freelancerId: p.editorIds.find(Boolean) ?? null, ...avaliar.notas, notas: avaliar.texto }),
     }).catch(() => null)
+    if (!r?.ok) { setAGravar(null); alert('Não foi possível guardar a avaliação.'); return }
+    const fim = avaliar.semLink
+      ? await fetch('/api/painel-editor/sync-video-estado', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referencia: p.referencia, stage: 'Finalizado', data_casamento: p.data, local: p.local }),
+        }).catch(() => null)
+      : await fetch('/api/painel-editor/video-revisao', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ referencia: p.referencia, status: 'Aprovado', feedback: avaliar.texto.trim() || null }),
+        }).catch(() => null)
     setAGravar(null)
-    if (!r?.ok) alert('Não foi possível guardar. Tenta outra vez.')
+    if (!fim?.ok) alert('A avaliação ficou guardada, mas não foi possível aprovar. Tenta outra vez.')
+    setAvaliar(null)
     carregar()
   }
 
   // Entrega: envia o Wedding Film aos noivos (email + portal) e põe Entregue
   const [links, setLinks] = useState<Record<number, string>>({})
+  const [estreias, setEstreias] = useState<Record<number, string>>({})
   const entregar = async (p: Projeto) => {
     const url = (links[p.id] ?? p.filmeUrl ?? '').trim()
     if (!/^https?:\/\//i.test(url)) { alert('Cola o link do filme (Vimeo ou YouTube).'); return }
-    if (!window.confirm(`Enviar o filme a ${p.cliente || p.referencia}? Os noivos recebem o email e o vídeo fica Entregue.`)) return
+    const local = estreias[p.id]
+    const estreia = local ? new Date(local).toISOString() : null
+    if (estreia && Date.parse(estreia) <= Date.now()) { alert('A estreia tem de ser numa data e hora futuras.'); return }
+    const quando = estreia ? new Date(estreia).toLocaleString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
+    if (!window.confirm(estreia
+      ? `Marcar a estreia do filme de ${p.cliente || p.referencia} para ${quando}? Os noivos recebem o ticket com a data e o filme abre no portal a essa hora.`
+      : `Enviar o filme a ${p.cliente || p.referencia}? Os noivos recebem o email e o vídeo fica Entregue.`)) return
     setAGravar(p.id)
     const r = await fetch('/api/edicao-video/entregar', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referencia: p.referencia, url }),
+      body: JSON.stringify({ referencia: p.referencia, url, estreia }),
     }).catch(() => null)
     const d = r ? await r.json().catch(() => ({})) : {}
     setAGravar(null)
@@ -158,7 +185,7 @@ export default function EdicaoVideoPage() {
   const porFase = useMemo(() => {
     const m = new Map<Fase, Projeto[]>(FASES.map(f => [f, []]))
     for (const p of projetos) if (p.fase !== 'Sem registo') m.get(p.fase)?.push(p)
-    for (const [f, l] of m) l.sort((a, b) => f === 'Entregue' ? (b.entregueEm ?? b.data).localeCompare(a.entregueEm ?? a.data) : a.diasPrazo - b.diasPrazo)
+    for (const [f, l] of m) l.sort((a, b) => f === 'Entregue' ? (b.entregueEm ?? b.data).localeCompare(a.entregueEm ?? a.data) : a.diasInterno - b.diasInterno)
     return m
   }, [projetos])
 
@@ -168,14 +195,14 @@ export default function EdicaoVideoPage() {
     { label: 'Por atribuir', valor: porFase.get('Por atribuir')!.length, cor: COR_FASE['Por atribuir'] },
     { label: 'Em edição', valor: porFase.get('Em Edição')!.length + porFase.get('Aguardar')!.length, cor: COR_FASE['Em Edição'] },
     { label: 'Em revisão', valor: porFase.get('Em Revisão')!.length, cor: COR_FASE['Em Revisão'] },
-    { label: 'Prazo < 30 dias', valor: abertos.filter(p => p.diasPrazo >= 0 && p.diasPrazo < 30).length, cor: '#fbbf24' },
-    { label: 'Atrasados', valor: abertos.filter(p => p.diasPrazo < 0).length, cor: '#f87171' },
+    { label: 'Prazo RL < 15 dias', valor: abertos.filter(p => p.diasInterno >= 0 && p.diasInterno < 15).length, cor: '#fbbf24' },
+    { label: 'Atrasados (prazo RL)', valor: abertos.filter(p => p.diasInterno < 0).length, cor: '#f87171' },
   ]
 
   const cargas = (dados?.editores ?? []).map(e => {
     const meus = abertos.filter(p => p.editorIds.includes(e.id) && ATIVAS.includes(p.fase as Fase))
-    const prox = [...meus].sort((a, b) => a.diasPrazo - b.diasPrazo)[0]
-    return { e, ativos: meus.length, atrasados: meus.filter(p => p.diasPrazo < 0).length, prox }
+    const prox = [...meus].sort((a, b) => a.diasInterno - b.diasInterno)[0]
+    return { e, ativos: meus.length, atrasados: meus.filter(p => p.diasInterno < 0).length, prox }
   }).sort((a, b) => a.ativos - b.ativos)
 
   return (
@@ -198,7 +225,7 @@ export default function EdicaoVideoPage() {
 
           <p className="mt-12 text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Ponto de situação</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Vídeos em curso</h2>
-          <p className="mt-2 text-sm text-white/45">Quantos casamentos estão em cada fase e quantos têm o prazo de entrega perto ou já passado.</p>
+          <p className="mt-2 text-sm text-white/45">Quantos casamentos estão em cada fase e quantos têm o prazo interno da RL (90 dias depois do casamento) perto ou já passado.</p>
           <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
             {kpis.map(k => (
               <div key={k.label} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md px-4 py-3.5" style={{ borderLeft: `2px solid ${k.cor}` }}>
@@ -250,7 +277,7 @@ export default function EdicaoVideoPage() {
                 <div className="min-w-0 flex-1">
                   <p className="text-lg font-semibold truncate">{e.nome}</p>
                   <p className="text-xs text-white/45 mt-0.5">
-                    {prox ? <>Próximo prazo: <span className={prox.diasPrazo < 0 ? 'text-red-400' : 'text-white/70'}>{prox.cliente} · {prox.diasPrazo < 0 ? `${-prox.diasPrazo} dias atrasado` : `${prox.diasPrazo} dias`}</span></> : 'Sem projetos ativos'}
+                    {prox ? <>Próximo prazo RL: <span className={prox.diasInterno < 0 ? 'text-red-400' : 'text-white/70'}>{prox.cliente} · {prox.diasInterno < 0 ? `${-prox.diasInterno} dias atrasado` : `${prox.diasInterno} dias`}</span></> : 'Sem projetos ativos'}
                   </p>
                 </div>
                 <div className="text-right flex-none">
@@ -264,11 +291,43 @@ export default function EdicaoVideoPage() {
           </div>
         </section>
 
+        {/* ── Ranking: qualidade dos filmes por editor ── */}
+        <section>
+          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Qualidade</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Ranking dos editores</h2>
+          <p className="mt-2 text-sm text-white/45">Média das notas da RL na aprovação (ritmo, cor, áudio e história, de 1 a 5) e da nota que os noivos dão ao filme no portal.</p>
+          {dados && !dados.ranking.length && (
+            <p className="mt-6 rounded-[18px] border border-white/[0.08] bg-[#111111]/85 p-5 text-sm text-white/45">Ainda não há filmes avaliados. A partir de agora, cada aprovação pede as quatro notas e o ranking vai-se construindo.</p>
+          )}
+          {!!dados?.ranking.length && (
+            <ol className="mt-6 flex flex-col gap-3">
+              {dados.ranking.map((r, i) => (
+                <li key={r.id} className="rounded-[22px] border border-white/[0.08] bg-[#111111]/90 p-4 sm:p-5 flex flex-wrap items-center gap-4" style={{ borderLeft: `2px solid ${i === 0 ? OURO : 'rgba(255,255,255,.15)'}` }}>
+                  <span className="w-8 text-[28px] font-thin tabular-nums" style={{ color: i === 0 ? OURO : 'rgba(255,255,255,.4)' }}>{i + 1}</span>
+                  <div className="min-w-[160px] flex-1">
+                    <p className="text-lg font-semibold">{r.nome}</p>
+                    <p className="text-xs text-white/45">{r.filmes} filme{r.filmes === 1 ? '' : 's'} avaliado{r.filmes === 1 ? '' : 's'} · {r.nNoivos} nota{r.nNoivos === 1 ? '' : 's'} dos noivos</p>
+                  </div>
+                  <div className="flex gap-3 text-center">
+                    {CRITERIOS.map(([k, l]) => (
+                      <div key={k} className="w-14"><p className="text-[10px] tracking-[0.15em] uppercase text-white/40">{l}</p><p className="text-[15px] font-semibold text-white/80">{r[k] ?? '–'}</p></div>
+                    ))}
+                  </div>
+                  <div className="flex gap-4 text-right">
+                    <div><p className="text-[10px] tracking-[0.2em] uppercase text-white/40">RL</p><p className="text-[26px] font-thin leading-none" style={{ color: OURO }}>{r.rl ?? '–'}</p></div>
+                    <div><p className="text-[10px] tracking-[0.2em] uppercase text-white/40">Noivos</p><p className="text-[26px] font-thin leading-none" style={{ color: OURO }}>{r.noivos ?? '–'}</p></div>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          )}
+        </section>
+
         {/* ── Quadro por fases ── */}
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Quadro de trabalho</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Casamentos em edição</h2>
-          <p className="mt-2 text-sm text-white/45">O editor põe Em Edição (desbloqueia o download) e Em Revisão (envia o link). A RL aprova (Finalizado) e entrega o filme aos noivos (Entregue). O prazo conta 180 dias úteis desde o casamento.</p>
+          <p className="mt-2 text-sm text-white/45">O editor põe Em Edição (desbloqueia o download) e Em Revisão (envia o link). A RL aprova (Finalizado) e entrega o filme aos noivos (Entregue). Os alertas seguem o prazo interno da RL (90 dias); o prazo do contrato (180 dias úteis) fica por baixo, como limite.</p>
           <div className="mt-6 flex gap-4 overflow-x-auto pb-4 snap-x">
             {FASES.map(f => {
               const lista = porFase.get(f) ?? []
@@ -289,9 +348,14 @@ export default function EdicaoVideoPage() {
                         <p className="text-[11px] text-white/40 mt-0.5">{fmt(p.data)}{p.local ? ` · ${p.local}` : ''}</p>
                       </div>
                       {f !== 'Entregue' && (
-                        <p className={`text-[12px] font-semibold tracking-[0.08em] ${p.diasPrazo < 0 ? 'text-red-400' : p.diasPrazo < 30 ? 'text-amber-300' : 'text-white/55'}`}>
-                          {p.diasPrazo < 0 ? `Atrasado ${-p.diasPrazo} dias` : `Prazo em ${p.diasPrazo} dias`} · {fmt(p.prazo)}
-                        </p>
+                        <div>
+                          <p className={`text-[12px] font-semibold tracking-[0.08em] ${p.diasInterno < 0 ? 'text-red-400' : p.diasInterno < 15 ? 'text-amber-300' : 'text-white/55'}`}>
+                            {p.diasInterno < 0 ? `Prazo RL passou há ${-p.diasInterno} dias` : `Prazo RL em ${p.diasInterno} dias`} · {fmt(p.prazoInterno)}
+                          </p>
+                          <p className={`text-[11px] mt-0.5 ${p.diasPrazo < 0 ? 'text-red-400 font-semibold' : 'text-white/35'}`}>
+                            Contrato: {fmt(p.prazo)} {p.diasPrazo < 0 ? `(ultrapassado há ${-p.diasPrazo} dias)` : `(${p.diasPrazo} dias)`}
+                          </p>
+                        </div>
                       )}
                       {f === 'Por atribuir' ? (
                         <select disabled={aGravar === p.id || !p.referencia} defaultValue="" onChange={e => atribuir(p, e.target.value)}
@@ -301,6 +365,11 @@ export default function EdicaoVideoPage() {
                         </select>
                       ) : (
                         <p className="text-[12px] text-white/60">Editor: <span className="text-white">{p.editores.join(', ') || '—'}</span></p>
+                      )}
+                      {!p.entregas.teaser && p.diaTeaser >= 0 && p.diaTeaser <= 60 && f !== 'Entregue' && (
+                        <p className={`text-[11px] font-semibold tracking-[0.1em] uppercase ${p.diaTeaser > p.teaserDias ? 'text-red-400' : p.diaTeaser >= p.teaserDias - 2 ? 'text-amber-300' : 'text-[#4ade80]'}`}>
+                          {p.diaTeaser > p.teaserDias ? `Teaser atrasado ${p.diaTeaser - p.teaserDias} dias` : `Teaser · dia ${p.diaTeaser} de ${p.teaserDias}`}
+                        </p>
                       )}
                       <div className="flex flex-wrap gap-1.5">
                         {([['teaser', 'Teaser'], ['sde', 'SDE'], ['prewedding', 'Pré-wedding'], ['filme', 'Filme']] as const).map(([k, l]) => (
@@ -315,7 +384,7 @@ export default function EdicaoVideoPage() {
                             ? <a href={p.revisao.link} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-[#93c5fd] hover:underline">▶ Ver a versão para revisão</a>
                             : <>
                                 <p className="text-[11px] text-white/45">O editor ainda não enviou o link de revisão.</p>
-                                <button type="button" disabled={aGravar === p.id} onClick={() => finalizarSemLink(p)}
+                                <button type="button" disabled={aGravar === p.id} onClick={() => setAvaliar({ id: p.id, semLink: true, notas: {}, texto: '' })}
                                   className="rounded-full border border-[#4ade80]/40 bg-[#4ade80]/[0.08] px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">✓ Marcar Finalizado</button>
                               </>}
                           {p.revisao?.status === 'Requer Alterações' && p.revisao.feedback && (
@@ -323,7 +392,7 @@ export default function EdicaoVideoPage() {
                           )}
                           {p.revisao?.link && (
                             <div className="flex gap-2">
-                              <button type="button" disabled={aGravar === p.id} onClick={() => decidir(p, 'Aprovado')}
+                              <button type="button" disabled={aGravar === p.id} onClick={() => setAvaliar({ id: p.id, semLink: false, notas: {}, texto: '' })}
                                 className="flex-1 rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">✓ Aprovar</button>
                               <button type="button" disabled={aGravar === p.id} onClick={() => decidir(p, 'Requer Alterações')}
                                 className="flex-1 rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-amber-300 hover:bg-amber-300/20 disabled:opacity-40">✎ Alterações</button>
@@ -331,14 +400,50 @@ export default function EdicaoVideoPage() {
                           )}
                         </div>
                       )}
+                      {avaliar?.id === p.id && (
+                        <div className="flex flex-col gap-2.5 rounded-xl border border-[#4ade80]/30 bg-[#4ade80]/[0.05] p-3">
+                          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#4ade80]">Avaliar antes de aprovar</p>
+                          {CRITERIOS.map(([k, l]) => (
+                            <div key={k} className="flex items-center justify-between gap-2">
+                              <span className="text-[12px] text-white/70">{l}</span>
+                              <span className="flex gap-1">
+                                {[1, 2, 3, 4, 5].map(n => (
+                                  <button key={n} type="button" onClick={() => setAvaliar(a => a && ({ ...a, notas: { ...a.notas, [k]: n } }))}
+                                    className={`w-6 h-6 rounded-full border text-[11px] font-semibold ${(avaliar.notas[k] ?? 0) >= n ? 'border-[#C9A84C] bg-[#C9A84C]/25 text-white' : 'border-white/15 text-white/40 hover:border-white/40'}`}>{n}</button>
+                                ))}
+                              </span>
+                            </div>
+                          ))}
+                          <textarea rows={2} placeholder="Notas para o editor (opcional)" value={avaliar.texto}
+                            onChange={e => setAvaliar(a => a && ({ ...a, texto: e.target.value }))}
+                            className="w-full rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                          <div className="flex gap-2">
+                            <button type="button" disabled={aGravar === p.id} onClick={() => confirmarAprovacao(p)}
+                              className="flex-1 rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">{aGravar === p.id ? 'A aprovar…' : '✓ Aprovar'}</button>
+                            <button type="button" onClick={() => setAvaliar(null)}
+                              className="rounded-full border border-white/15 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-white/50 hover:text-white">Cancelar</button>
+                          </div>
+                        </div>
+                      )}
+                      {(f === 'Finalizado' || f === 'Entregue') && p.avaliacao && (
+                        <p className="text-[11px] text-white/55">
+                          {mediaRL(p.avaliacao) !== null && <>Nota RL <b className="text-[#C9A84C]">★ {mediaRL(p.avaliacao)}</b></>}
+                          {p.avaliacao.nota_noivos ? <> · Noivos <b className="text-[#C9A84C]">★ {p.avaliacao.nota_noivos}</b></> : null}
+                        </p>
+                      )}
                       {f === 'Finalizado' && (
                         <div className="flex flex-col gap-2 rounded-xl border border-[#C9A84C]/30 bg-[#C9A84C]/[0.06] p-3">
                           <input type="url" placeholder="Link do filme (Vimeo / YouTube)" defaultValue={p.filmeUrl ?? ''}
                             onChange={e => setLinks(l => ({ ...l, [p.id]: e.target.value }))}
                             className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                          <label className="flex flex-col gap-1">
+                            <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/45">Estreia (opcional): dia e hora</span>
+                            <input type="datetime-local" value={estreias[p.id] ?? ''} onChange={e => setEstreias(s => ({ ...s, [p.id]: e.target.value }))}
+                              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60 [color-scheme:dark]" />
+                          </label>
                           <button type="button" disabled={aGravar === p.id} onClick={() => entregar(p)}
                             className="rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#C9A84C]/30 disabled:opacity-40">
-                            {aGravar === p.id ? 'A enviar…' : 'Enviar filme aos noivos →'}
+                            {aGravar === p.id ? 'A enviar…' : estreias[p.id] ? 'Marcar estreia →' : 'Enviar filme aos noivos →'}
                           </button>
                         </div>
                       )}

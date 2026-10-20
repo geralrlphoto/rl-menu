@@ -24,7 +24,8 @@ async function carregar(id: string) {
   const a = primeiro(data.noiva ?? s.noiva), b = primeiro(data.noivo ?? s.noivo)
   // Aos convidados só se mostra o filme do casamento (os outros vídeos ficam no portal dos noivos)
   const lista: Array<[string, string, string, unknown]> = [
-    ['filme', 'Wedding Film', 'O filme do casamento', s.wedding_film_url],
+    // Com estreia marcada no futuro, o filme só aparece à hora da estreia
+    ['filme', 'Wedding Film', 'O filme do casamento', s.wedding_film_estreia && Date.parse(s.wedding_film_estreia) > Date.now() ? null : s.wedding_film_url],
   ]
   const videos: VideoConvidado[] = lista
     .filter(([, , , url]) => typeof url === 'string' && /^https?:\/\//.test(url))

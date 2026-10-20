@@ -2,10 +2,11 @@ import { exigeAdmin } from '@/lib/api-guard'
 import { buildPortalEmailV2 } from '@/lib/portalEmail'
 import { buildTicketHtml } from '@/lib/ticket-html'
 import { buildTicketEditorHtml, buildTicketAprovacaoHtml, prazoVideo } from '@/lib/ticket-editor-html'
+import { buildTicketFilmeHtml, type PassoFilme } from '@/lib/ticket-filme-html'
 
 // Pré-visualização real dos emails ao cliente no mapa da jornada (/crm/follow-up).
 // Usa as mesmas funções de HTML que as rotas de envio, com um casal fictício.
-// GET ?k=<chave>  (portal | ticket | ticket-editor | ticket-aprovacao)
+// GET ?k=<chave>  (portal | ticket | ticket-editor | ticket-aprovacao | filme-<passo>)
 // Os emails de entrega (seleção, galerias, filme…) entram aqui quando lib/entregaEmail.ts
 // estiver no repositório: usar buildEntregaEmailHtml com a configuração de cada tipo.
 
@@ -41,6 +42,12 @@ function html(k: string): string | null {
       numero: 'AP-CAS_000_27_RL', editor: 'Marco Exemplo', noivos: 'Ana e Tiago', local: 'Quinta de Exemplo',
       link: 'https://frame.io/exemplo', feedback: 'Excelente ritmo na cerimónia. Só baixar um pouco a música nos votos.', aprovadoEm: new Date(),
     })
+  }
+  // Ticket do Filme aos noivos: filme-aguardar, filme-edicao, filme-revisao, filme-finalizado, filme-estreia
+  const PASSO: Record<string, PassoFilme> = { 'filme-aguardar': 'Aguardar', 'filme-edicao': 'Em Edição', 'filme-revisao': 'Em Revisão', 'filme-finalizado': 'Finalizado', 'filme-estreia': 'Estreia' }
+  if (PASSO[k]) {
+    const sabado = new Date(); sabado.setDate(sabado.getDate() + ((6 - sabado.getDay() + 7) % 7 || 7)); sabado.setHours(21, 0, 0, 0)
+    return buildTicketFilmeHtml({ passo: PASSO[k], referencia: 'CAS_000_27_RL', noivos: 'Ana & Tiago', estreia: sabado.toISOString() })
   }
   return null
 }

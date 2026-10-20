@@ -10,7 +10,9 @@ import { exigeAdmin } from '@/lib/api-guard'
 // a mesma tabela do Painel do Editor) e o histórico (video_estado_historico).
 // Só lê colunas necessárias (egress baixo).
 
-const PRAZO_DIAS_UTEIS = 180
+const PRAZO_DIAS_UTEIS = 180    // prazo do contrato
+const PRAZO_INTERNO_DIAS = 90   // prazo interno da RL (dias corridos): é por este que o quadro alerta
+const TEASER_DIAS = 7           // promessa: teaser nos 7 dias a seguir ao casamento
 const JANELA_DIAS = 420          // casamentos por entregar até ~14 meses atrás
 const ENTREGUES_RECENTES = 90    // entregues nos últimos 90 dias ficam visíveis
 
@@ -82,14 +84,17 @@ export async function GET(req: NextRequest) {
 
   // Pagamentos dos editores (descrição começa pela referência) e histórico dos projetos
   const idsEditores = (eds ?? []).map(e => e.id)
-  const [{ data: pags }, { data: hist }] = await Promise.all([
+  const [{ data: pags }, { data: hist }, { data: avals }] = await Promise.all([
     idsEditores.length
       ? sb.from('freelancer_pagamentos').select('id, freelancer_id, descricao, valor, status, data_pago, data_prevista').in('freelancer_id', idsEditores)
       : Promise.resolve({ data: [] as any[] }),
     refs.length
       ? sb.from('video_estado_historico').select('referencia, estado, origem, criado_em').in('referencia', refs).order('criado_em')
       : Promise.resolve({ data: [] as any[] }),
+    // todas as avaliações (ranking dos editores, de sempre)
+    sb.from('video_avaliacoes').select('referencia, freelancer_id, ritmo, cor, audio, historia, nota_noivos'),
   ])
+  const avalPorRef = new Map((avals ?? []).map(a => [a.referencia, a]))
   const pendente = (p: any) => !['PAGO', 'CANCELADO'].includes(String(p.status ?? '').toUpperCase())
   const porPagar: Record<string, number> = {}
   for (const p of pags ?? []) if (pendente(p)) porPagar[p.freelancer_id] = (porPagar[p.freelancer_id] ?? 0) + (Number(p.valor) || 0)
@@ -131,14 +136,19 @@ export async function GET(req: NextRequest) {
     const fase = entregue ? 'Entregue'
       : e.video_estado && ['Em Edição', 'Em Revisão', 'Finalizado'].includes(e.video_estado) ? e.video_estado
       : editores.length ? 'Aguardar' : 'Por atribuir'
-    const diasPrazo = Math.round((new Date(prazo + 'T12:00:00Z').getTime() - new Date(hoje + 'T12:00:00Z').getTime()) / 86400000)
+    const diasAte = (iso: string) => Math.round((new Date(iso + 'T12:00:00Z').getTime() - new Date(hoje + 'T12:00:00Z').getTime()) / 86400000)
+    const diasPrazo = diasAte(prazo)
+    const prazoInterno = new Date(new Date(e.data_evento.slice(0, 10) + 'T12:00:00Z').getTime() + PRAZO_INTERNO_DIAS * 86400000).toISOString().slice(0, 10)
+    const diasInterno = diasAte(prazoInterno)
+    const diaTeaser = -diasAte(e.data_evento.slice(0, 10))   // dias desde o casamento
     // Sem editor nem fase e com o prazo já ultrapassado: quase sempre entregues
     // antes de haver registo no portal. Ficam à parte para não encherem o quadro.
     const faseFinal = fase === 'Por atribuir' && diasPrazo < 0 ? 'Sem registo' : fase
     return {
       id: e.id, fichaId: e.notion_id ?? String(e.id), referencia: e.referencia, cliente: e.cliente, data: e.data_evento, local: e.local,
       fase: faseFinal, editores, editorIds: editores.map(n => editoresPorNome.get(norm(n))?.id ?? null),
-      prazo, diasPrazo, entregas, portalId: p?.id ?? null,
+      prazo, diasPrazo, prazoInterno, diasInterno, diaTeaser, teaserDias: TEASER_DIAS, entregas, portalId: p?.id ?? null,
+      avaliacao: avalPorRef.get(e.referencia ?? '') ?? null,
       entregueEm: typeof p?.w === 'string' ? p.w.slice(0, 10) : null,
       filmeUrl: typeof p?.u === 'string' ? p.u : null,
       revisao: revPorRef.get(e.referencia ?? '') ?? null,
@@ -152,5 +162,17 @@ export async function GET(req: NextRequest) {
   // Entregues antigos saem do quadro (ficam só os recentes)
     .filter(p => p.fase !== 'Entregue' || (p.entregueEm ? p.entregueEm >= limiteEntregue : p.diasPrazo > -ENTREGUES_RECENTES))
 
-  return NextResponse.json({ ok: true, hoje, editores: eds ?? [], projetos, porPagar })
+  // Ranking dos editores: média das notas da RL (ritmo, cor, áudio, história) e dos noivos
+  const media = (xs: number[]) => xs.length ? Math.round(xs.reduce((s, x) => s + x, 0) / xs.length * 10) / 10 : null
+  const ranking = (eds ?? []).map(ed => {
+    const as = (avals ?? []).filter(a => a.freelancer_id === ed.id)
+    const rl = as.filter(a => a.ritmo).map(a => (a.ritmo + a.cor + a.audio + a.historia) / 4)
+    const nv = as.filter(a => a.nota_noivos).map(a => a.nota_noivos as number)
+    const crit = (k: 'ritmo' | 'cor' | 'audio' | 'historia') => media(as.filter(a => a[k]).map(a => a[k] as number))
+    return { id: ed.id, nome: ed.nome, foto_url: ed.foto_url, filmes: rl.length, rl: media(rl), noivos: media(nv), nNoivos: nv.length,
+      ritmo: crit('ritmo'), cor: crit('cor'), audio: crit('audio'), historia: crit('historia') }
+  }).filter(r => r.filmes || r.nNoivos)
+    .sort((a, b) => ((b.rl ?? 0) + (b.noivos ?? b.rl ?? 0)) - ((a.rl ?? 0) + (a.noivos ?? a.rl ?? 0)))
+
+  return NextResponse.json({ ok: true, hoje, editores: eds ?? [], projetos, porPagar, ranking })
 }

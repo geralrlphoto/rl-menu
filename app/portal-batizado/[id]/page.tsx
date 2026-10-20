@@ -1940,6 +1940,8 @@ function PortalSubPageContent() {
             </IntroDropdown>
           ) : undefined}
           acoes={<FilmeAcoes settings={portalSettingsObj} />}
+          estreia={portalSettingsObj?.wedding_film_estreia ?? null}
+          referencia={portalSettingsObj?.referencia ?? refParam ?? portalRef ?? null}
         />
       </PortalShell>
     )

@@ -52,6 +52,8 @@ export default async function Page({ params }: { params: Promise<{ token: string
         const v = st[k]
         if (typeof v === 'string' && v.trim()) videos[k] = v.trim()
       }
+      // Estreia marcada no futuro: o Wedding Film ainda não se mostra
+      if (typeof st.wedding_film_estreia === 'string' && Date.parse(st.wedding_film_estreia) > Date.now()) delete videos.wedding_film_url
 
       const { data: ev } = await db.from('eventos_2026')
         .select('cliente, data_evento, local')
