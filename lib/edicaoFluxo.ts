@@ -14,7 +14,7 @@ export const FASES_EDICAO: Fase[] = [
   /* 01 */
   {
     titulo: 'Nomear editor', sub: 'quem edita',
-    fluxo: cadeia(3),
+    fluxo: { ...cadeia(3), abaixo: true },
     passos: [
       {
         id: '0-0', titulo: 'Escolher editor', sub: 'pela carga',
