@@ -7,6 +7,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { FASES_EDICAO } from '@/lib/edicaoFluxo'
 
 const OURO = '#C9A84C'
 const FASES = ['Por atribuir', 'Aguardar', 'Em Edição', 'Em Revisão', 'Finalizado', 'Entregue'] as const
@@ -27,26 +28,6 @@ type Projeto = {
 
 const fmt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
-
-// Esquema de trabalho da edição de um casamento (fases do Painel do Editor + jornada dos noivos)
-const ESQUEMA: { n: string; titulo: string; quando: string; quem: string; texto: string }[] = [
-  { n: '01', titulo: 'Receção e backup', quando: 'Até 48 h depois do casamento', quem: 'Videógrafo',
-    texto: 'Descarregar todos os cartões, cópia de segurança no NAS e num disco, e preencher o relatório do dia. Só depois os cartões são formatados.' },
-  { n: '02', titulo: 'Atribuir editor', quando: 'Até 3 dias úteis', quem: 'RL',
-    texto: 'Escolher o editor neste quadro, com base na carga de cada um. O editor recebe o aviso e o projeto aparece no Painel do Editor.' },
-  { n: '03', titulo: 'Same Day Edit', quando: 'No próprio dia', quem: 'Editor no evento',
-    texto: 'Só nas propostas com SDE (SIGNATURE). Projetado durante a festa e enviado pelo portal.' },
-  { n: '04', titulo: 'Teaser / Trailer', quando: 'Objetivo: 4 semanas', quem: 'Editor',
-    texto: 'Primeira peça curta para os noivos partilharem. Enviar pelo portal (Ações Vídeo na ficha): fica marcado nas entregas.' },
-  { n: '05', titulo: 'Montagem do filme', quando: 'Em Edição', quem: 'Editor',
-    texto: 'Seleção, montagem, color grading e áudio/sincronização (votos e discursos). O editor vai mudando a fase no Painel do Editor e o portal dos noivos acompanha.' },
-  { n: '06', titulo: 'Revisão interna', quando: 'Para Revisão', quem: 'RL',
-    texto: 'O editor envia o link de revisão no Painel do Editor. A RL revê ritmo, música, cor e momentos-chave antes de chegar aos noivos.' },
-  { n: '07', titulo: 'Revisão dos noivos', quando: '5 dias úteis', quem: 'Noivos',
-    texto: 'Os noivos veem o filme e pedem ajustes. Uma ronda de correções incluída.' },
-  { n: '08', titulo: 'Entrega', quando: 'Até 180 dias úteis', quem: 'RL',
-    texto: 'Wedding Film enviado pelo portal (Ações Vídeo). A fase passa a Entregue e o cartão sai do quadro. Prazo por proposta: BASIC 180, ESSENCIAL 120, SIGNATURE 60 dias úteis.' },
-]
 
 export default function EdicaoVideoPage() {
   const [dados, setDados] = useState<{ editores: Editor[]; projetos: Projeto[] } | null>(null)
@@ -109,6 +90,9 @@ export default function EdicaoVideoPage() {
             <span className="w-12 h-px" style={{ background: OURO }} />
             <span className="text-sm tracking-[0.22em] uppercase text-white/60">Editores, casamentos em curso e o nosso esquema de trabalho</span>
           </div>
+          <Link href="/edicao-video/fluxo" className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-5 py-2.5 text-[15px] font-semibold text-white shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)] hover:border-[#C9A84C]/80">
+            Fluxo de trabalho <span style={{ color: OURO }}>→</span>
+          </Link>
 
           <div className="mt-10 grid grid-cols-2 sm:grid-cols-5 gap-3">
             {kpis.map(k => (
@@ -227,26 +211,28 @@ export default function EdicaoVideoPage() {
           </details>
         )}
 
-        {/* ── Esquema de trabalho ── */}
+        {/* ── Fluxo de trabalho (mapa interativo em /edicao-video/fluxo) ── */}
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Como trabalhamos</p>
-          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Esquema de edição de um casamento</h2>
-          <p className="mt-2 text-sm text-white/45">Do cartão de memória à entrega no portal dos noivos.</p>
-          <ol className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            {ESQUEMA.map(s => (
-              <li key={s.n} className="rounded-[22px] border border-white/[0.08] bg-[#111111]/90 p-5 flex gap-4" style={{ borderLeft: `2px solid rgba(201,168,76,.45)` }}>
-                <span className="w-10 h-10 flex-none rounded-full bg-[#C9A84C]/[0.14] flex items-center justify-center text-sm font-semibold tabular-nums" style={{ color: OURO }}>{s.n}</span>
-                <div className="min-w-0">
-                  <p className="text-lg font-semibold">{s.titulo}</p>
-                  <p className="mt-1 flex flex-wrap gap-1.5">
-                    <span className="rounded-full border border-[#C9A84C]/35 bg-[#C9A84C]/10 px-2.5 py-0.5 text-[11px] font-semibold" style={{ color: OURO }}>{s.quando}</span>
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[11px] font-semibold text-white/70">{s.quem}</span>
-                  </p>
-                  <p className="mt-2 text-sm leading-relaxed text-white/60">{s.texto}</p>
-                </div>
-              </li>
-            ))}
-          </ol>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Fluxo de trabalho da edição</h2>
+          <p className="mt-2 text-sm text-white/45">Do dia do pré-wedding ao feedback dos noivos, com tarefas, prazos e quem faz cada passo.</p>
+          <Link href="/edicao-video/fluxo"
+            className="group mt-6 block rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/85 backdrop-blur-md p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/60 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]"
+            style={{ borderLeft: `2px solid ${OURO}` }}>
+            <ol className="flex flex-wrap items-center gap-x-2 gap-y-3">
+              {FASES_EDICAO.map((f, i) => (
+                <li key={f.titulo} className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 rounded-full border border-[#C9A84C]/35 bg-[#C9A84C]/10 px-3 py-1 text-[13px] font-semibold" style={{ color: OURO }}>
+                    <b className="font-thin tabular-nums">{String(i + 1).padStart(2, '0')}</b>{f.titulo}
+                  </span>
+                  {i < FASES_EDICAO.length - 1 && <span className="text-white/25">→</span>}
+                </li>
+              ))}
+            </ol>
+            <span className="mt-6 inline-flex items-center gap-3 rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)] group-hover:bg-[#C9A84C]/30">
+              Abrir o mapa do fluxo <span className="transition-transform duration-300 group-hover:translate-x-1" style={{ color: OURO }}>→</span>
+            </span>
+          </Link>
         </section>
       </div>
     </main>

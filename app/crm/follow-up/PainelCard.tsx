@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import {
-  FASES, TELEFONEMA, textoTelefonema, type Email, type Mensagem, type Passo, type Quem, type Stats,
+  TELEFONEMA, textoTelefonema, type Email, type Mensagem, type Passo, type Quem, type Stats,
 } from '@/lib/jornada'
+import { useCfg } from './config'
 import { FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS } from '@/lib/crm'
 import { Copiar } from './MensagemModal'
 
@@ -134,6 +135,7 @@ const QUEM: [Quem, string, string][] = [['Rui', 'RL', 'Rui'], ['Noivos', 'NV', '
 
 /* ── painel de um passo ── */
 export function PainelPasso({ p, ctx }: { p: Passo; ctx: Ctx }) {
+  const FASES = useCfg().fases
   const fi = +p.id.split('-')[0], f = FASES[fi], s = ctx.estado['s:' + p.id] ?? ''
   const dados = dadosDe(p, ctx.stats)
   return (
@@ -193,6 +195,7 @@ export function PainelPasso({ p, ctx }: { p: Passo; ctx: Ctx }) {
 
 /* ── painel de uma fase ── */
 export function PainelFase({ fi, ctx }: { fi: number; ctx: Ctx }) {
+  const FASES = useCfg().fases
   const f = FASES[fi]
   const tot = f.passos.reduce((a, p) => a + p.tarefas.length, 0), dn = f.passos.reduce((a, p) => a + ctx.tdone(p), 0)
   return (
@@ -212,6 +215,7 @@ export function PainelFase({ fi, ctx }: { fi: number; ctx: Ctx }) {
 
 /* ── todos os emails ao cliente ── */
 export function PainelEmails({ ctx }: { ctx: Ctx }) {
+  const FASES = useCfg().fases
   return (
     <>
       <div className="ey">Emails automáticos</div>
@@ -237,6 +241,7 @@ export function PainelEmails({ ctx }: { ctx: Ctx }) {
 
 /* ── todas as regras e prazos (consulta rápida da página antiga) ── */
 export function PainelPrazos({ ctx }: { ctx: Ctx }) {
+  const FASES = useCfg().fases
   return (
     <>
       <div className="ey">Consulta rápida</div>
@@ -263,6 +268,7 @@ export function PainelPrazos({ ctx }: { ctx: Ctx }) {
 
 /* ── conteúdo aberto pelo + debaixo do card ── */
 export function PopPasso({ p, ctx }: { p: Passo; ctx: Ctx }) {
+  const FASES = useCfg().fases
   const dados = dadosDe(p, ctx.stats)
   return (
     <>
@@ -281,6 +287,7 @@ export function PopPasso({ p, ctx }: { p: Passo; ctx: Ctx }) {
   )
 }
 export function PopFase({ fi, ctx }: { fi: number; ctx: Ctx }) {
+  const FASES = useCfg().fases
   const f = FASES[fi]
   return (
     <>

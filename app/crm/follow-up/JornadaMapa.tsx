@@ -2,19 +2,21 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { FASES, SEPARADORES, todosPassos, type Email, type Mensagem, type Passo, type Stats } from '@/lib/jornada'
+import { type Email, type Mensagem, type Passo, type Stats } from '@/lib/jornada'
+import { CfgCtx, CFG_JORNADA, type CfgMapa } from './config'
 import { calcularMapa, caminho, PW, KW, GX, type No } from './layout-mapa'
 import MensagemModal, { type AlvoModal } from './MensagemModal'
 import { PainelPasso, PainelFase, PainelEmails, PainelPrazos, PopPasso, PopFase, type Ctx } from './PainelCard'
 import './jornada.css'
 
 const pad = (n: number) => String(n).padStart(2, '0')
-const PASSOS = todosPassos()
-const passoDe = (id: string) => PASSOS.find(p => p.id === id)
 const faseDe = (id: string) => id[0] === 'p' ? +id.slice(1) : +id.split('-')[0]
 
-export default function JornadaMapa() {
-  const mapa = useMemo(() => calcularMapa(FASES), [])
+export default function JornadaMapa({ cfg = CFG_JORNADA }: { cfg?: CfgMapa }) {
+  const FASES = cfg.fases, SEPARADORES = cfg.separadores
+  const PASSOS = useMemo(() => cfg.fases.flatMap(f => f.passos), [cfg.fases])
+  const passoDe = (id: string) => PASSOS.find(p => p.id === id)
+  const mapa = useMemo(() => calcularMapa(FASES), [FASES])
 
   /* estado guardado no Supabase */
   const [estado, setEstadoMap] = useState<Record<string, string>>({})
@@ -56,7 +58,7 @@ export default function JornadaMapa() {
   /* ── carregar o estado uma vez (sem polling, para poupar egress) ── */
   useEffect(() => {
     try { setRm(window.matchMedia('(prefers-reduced-motion: reduce)').matches) } catch { /* sem matchMedia */ }
-    fetch('/api/jornada', { cache: 'no-store' })
+    fetch(cfg.api, { cache: 'no-store' })
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(d => { setEstadoMap(d.estado ?? {}); setStats(d.stats ?? null); setCarga('ok') })
       .catch(() => setCarga('erro'))
@@ -71,7 +73,7 @@ export default function JornadaMapa() {
       return novo
     })
     for (const [chave, valor] of Object.entries(mudancas)) {
-      fetch('/api/jornada', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave, valor }) })
+      fetch(cfg.api, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chave, valor }) })
         .then(r => { if (!r.ok) throw new Error() })
         .catch(() => { setAviso('Não foi possível guardar. Recarrega a página.'); setTimeout(() => setAviso(null), 5000) })
     }
@@ -308,9 +310,10 @@ export default function JornadaMapa() {
   )
 
   return (
+    <CfgCtx.Provider value={cfg}>
     <div className="jr">
       <header className="top">
-        <Link href="/crm" className="voltar">‹ CRM</Link>
+        <Link href={cfg.voltar.href} className="voltar">{cfg.voltar.label}</Link>
         <div className="logo">RL <span>Photo Video</span></div>
         <nav className="tabs" role="tablist" aria-label="Áreas da app">
           {SEPARADORES.map(([nome, fi]) => (
@@ -320,7 +323,7 @@ export default function JornadaMapa() {
         </nav>
         <div className="prog">
           <span><b>{feitos}</b>/{PASSOS.length} feitos</span>
-          <button type="button" className="prazos" onClick={() => setSel(sel === 'PRAZOS' ? null : 'PRAZOS')}>Prazos</button>
+          {cfg.prazos && <button type="button" className="prazos" onClick={() => setSel(sel === 'PRAZOS' ? null : 'PRAZOS')}>Prazos</button>}
         </div>
       </header>
 
@@ -418,7 +421,7 @@ export default function JornadaMapa() {
           <button type="button" className="zb" aria-label="Afastar" onClick={() => { const r = stageRef.current!.getBoundingClientRect(); zoomEm(r.width / 2, r.height / 2, view.current.sc / 1.25) }}>−</button>
           <button type="button" className="zb" aria-label="Ver tudo" title="Ver tudo" onClick={verTudo}>⤢</button>
           <button type="button" className={`zb${foco ? ' on' : ''}`} aria-label="Modo foco" title="Foco na fase" aria-pressed={foco} onClick={() => setFoco(f => !f)}>◎</button>
-          <button type="button" className={`zb${tour ? ' on' : ''}`} aria-label="Percorrer a jornada" title="Percorrer a jornada" aria-pressed={tour} onClick={alternarTour}>{tour ? '❚❚' : '▶︎'}</button>
+          <button type="button" className={`zb${tour ? ' on' : ''}`} aria-label={cfg.nomeTour} title={cfg.nomeTour} aria-pressed={tour} onClick={alternarTour}>{tour ? '❚❚' : '▶︎'}</button>
         </div>
 
         {painel && (
@@ -446,5 +449,6 @@ export default function JornadaMapa() {
 
       <MensagemModal alvo={modal} onClose={() => setModal(null)} />
     </div>
+    </CfgCtx.Provider>
   )
 }
