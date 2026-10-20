@@ -2576,7 +2576,6 @@ function ContratoStatusSection({ eventoId, referencia, proposta, onSaved }: {
       setPortalSettings(ps)
       setSettingsBlockId(notionData?.settingsBlockId ?? null)
       setDisponivel(ps.contratoDisponivel ?? false)
-      if (Array.isArray(ps.fases_pendentes_override)) setFasesPendentesOverride(ps.fases_pendentes_override)
       setContratoAprovadoEm(cpsData?.contrato?.contrato_aprovado_em ?? null)
     })
   }, [referencia])
@@ -3786,6 +3785,14 @@ export default function EventoPage() {
   const [registarMetodo, setRegistarMetodo] = useState('Transferência')
   const [registarSaving, setRegistarSaving] = useState(false)
   const [fasesPendentesOverride, setFasesPendentesOverride] = useState<string[]>([])
+  // Fases forçadas a pendente (sem registos de pagamento): guardadas nas settings do portal
+  useEffect(() => {
+    const ref = evento?.referencia
+    if (!ref) return
+    fetch(`/api/portais?ref=${encodeURIComponent(ref)}`).then(r => r.json())
+      .then(d => { const l = d?.portal?.settings?.fases_pendentes_override; if (Array.isArray(l)) setFasesPendentesOverride(l) })
+      .catch(() => {})
+  }, [evento?.referencia])
   const [editingPagId, setEditingPagId] = useState<string | null>(null)
   const [editingPagValor, setEditingPagValor] = useState('')
   const [editingPagData, setEditingPagData] = useState('')
@@ -3947,8 +3954,10 @@ export default function EventoPage() {
         ? fasesPendentesOverride.filter(f => f !== label)   // já estava → remover (toggle)
         : [...fasesPendentesOverride, label]
       setFasesPendentesOverride(novaLista)
-      const newSettings = { ...(portalSettings ?? {}), fases_pendentes_override: novaLista }
-      await saveSettings(newSettings)
+      await fetch('/api/portais', {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: refEvento, updates: { settings: { fases_pendentes_override: novaLista } } }),
+      }).catch(() => {})
     }
   }
 
