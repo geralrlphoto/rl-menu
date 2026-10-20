@@ -1,15 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-const NOTION_TOKEN = process.env.NOTION_TOKEN!
-const DB_ID = '2f3220116d8a8027b435c5b4c0f48948'
-
-const notionH = {
-  'Authorization': `Bearer ${NOTION_TOKEN}`,
-  'Notion-Version': '2022-06-28',
-  'Content-Type': 'application/json',
-}
-
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -103,32 +94,10 @@ export async function POST(req: NextRequest) {
         if (error) console.error('[webhook-tally-freelancer] Supabase error:', error)
       })
 
-    // ── Notion ────────────────────────────────────────────────────────────
-    const notionProps: Record<string, any> = {
-      'Nome': { title: [{ text: { content: nome } }] },
-    }
-    if (funcao)        notionProps['FUNÇÃO']               = { select: { name: funcao } }
-    if (zona)          notionProps['ZONA DE RESIDÊNCIA']   = { select: { name: zona } }
-    if (telefone)      notionProps['Telefone']             = { phone_number: telefone }
-    if (valor_servico) notionProps['VALOR POR SERVIÇO']    = { rich_text: [{ text: { content: valor_servico } }] }
-    if (valor_drone)   notionProps['VALOR DO DRONE']       = { rich_text: [{ text: { content: valor_drone } }] }
-    if (valor_edicao)  notionProps['VALOR EDIÇÃO 20 MIN']  = { rich_text: [{ text: { content: valor_edicao } }] }
-    if (drone)         notionProps['DRONE']                = { select: { name: drone } }
-    if (faz_edicao)    notionProps['FAZ EDIÇÃO DE VIDEO']  = { select: { name: faz_edicao } }
-    if (link_trailer)  notionProps['LINK TRAILER']         = { url: link_trailer }
-    if (link_video)    notionProps['LINK VIDEO COMPLETO']  = { url: link_video }
-    if (mensagem)      notionProps['MENSAGEM']             = { rich_text: [{ text: { content: mensagem } }] }
-
-    const notionPromise = fetch('https://api.notion.com/v1/pages', {
-      method: 'POST',
-      headers: notionH,
-      body: JSON.stringify({ parent: { database_id: DB_ID }, properties: notionProps }),
-    }).then(async r => {
-      if (!r.ok) {
-        const e = await r.json()
-        console.error('[webhook-tally-freelancer] Notion error:', e)
-      }
-    })
+    // ── Notion: NÃO escrever aqui ────────────────────────────────────────
+    // A integração do próprio Tally já cria a linha na base "Novos Freelancers".
+    // Escrever também aqui duplicava cada candidatura (e gravava os dropdowns
+    // com o id da opção em vez do texto).
 
     // ── Email confirmação ao freelancer ───────────────────────────────────
     const emailPromise = email
@@ -152,7 +121,7 @@ export async function POST(req: NextRequest) {
         })
       : Promise.resolve()
 
-    await Promise.allSettled([supabasePromise, notionPromise, emailPromise])
+    await Promise.allSettled([supabasePromise, emailPromise])
 
     return NextResponse.json({ ok: true })
   } catch (err: any) {

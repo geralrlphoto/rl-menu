@@ -125,13 +125,15 @@ export async function GET(req: Request) {
   }
 }
 
-// POST — criar novo
+// POST — criar novo. Aberto: é o formulário público de recrutamento (/recrutamento).
+// Sem sessão só cria a candidatura; a avaliação é só da equipa.
 export async function POST(req: NextRequest) {
-  const barrado = await exigeSessao(req)
-  if (barrado) return barrado
+  const interno = !(await exigeSessao(req))
 
   try {
     const body = await req.json()
+    if (!body?.nome || typeof body.nome !== 'string') return NextResponse.json({ error: 'Nome em falta' }, { status: 400 })
+    if (!interno) delete body.avaliacao
     const res = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST', headers: notionH,
       body: JSON.stringify({ parent: { database_id: DB_ID }, properties: buildProps(body) }),

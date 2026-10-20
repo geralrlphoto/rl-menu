@@ -195,6 +195,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/contrato-cps') ||
     pathname.startsWith('/api/contrato-cps-landing') ||
     pathname.startsWith('/api/webhook-tally-freelancer') ||
+    // Formulário público de recrutamento: a rota só deixa criar sem sessão (GET/PATCH/DELETE pedem sessão)
+    pathname.startsWith('/api/freelancers-novos') ||
     pathname.startsWith('/api/tally-webhook') ||
     pathname.startsWith('/api/webhook-tally-evento') ||
     pathname.startsWith('/api/crm-intake') ||
