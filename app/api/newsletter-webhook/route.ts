@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
         await incrementNewsletter(send.newsletter_id, 'ig_clicks')
         await supabase.rpc('increment_sends_field', {
           send_id: send.id, field: 'ig_clicks',
-        }).catch(() => {})
+        }).then(() => {}, () => {})
       } else if (url && url.includes('www.rlprod.pt')) {
         await incrementNewsletter(send.newsletter_id, 'share_clicks')
       }

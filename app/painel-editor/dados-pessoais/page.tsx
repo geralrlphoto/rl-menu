@@ -440,12 +440,12 @@ function AccountInfoCard({ profile, editMode, onChange }: { profile: FreelancerP
             {editMode && editable ? (
               <input
                 type={type ?? 'text'}
-                value={profile[key]}
+                value={String(profile[key] ?? '')}
                 onChange={(e) => onChange({ [key]: e.target.value } as Partial<FreelancerProfile>)}
                 className="flex-1 ml-3 text-right text-[13px] text-white font-medium bg-black/40 border border-gold/30 rounded-md px-2 py-1 focus:outline-none focus:border-gold/60"
               />
             ) : (
-              <span className="text-[13px] text-white font-medium text-right truncate">{profile[key]}</span>
+              <span className="text-[13px] text-white font-medium text-right truncate">{String(profile[key] ?? '')}</span>
             )}
           </div>
         ))}

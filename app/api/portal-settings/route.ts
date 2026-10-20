@@ -19,7 +19,7 @@ const notionHeaders = {
 const SETTINGS_PREFIX = '__PORTAL_SETTINGS__:'
 
 declare global {
-  var notionBlocksCache: Map<string, any> | undefined
+  var notionBlocksCache: Map<string, { blocks: any[]; notionSettings: any; notionSettingsBlockId: string | null; ts: number }> | undefined
 }
 
 // Find all __PORTAL_SETTINGS__ block IDs in a Notion page (top-level only)

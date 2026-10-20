@@ -146,7 +146,7 @@ export default function BlogClient() {
             &mdash; copias, colas, ele responde, tu colas a resposta de volta
             e guarda-se aqui. Tudo de graça.
           </p>
-          {setupHint && <DbSetupHint hint={setupHint} />}
+          {setupHint && <p className="blg-empty-text" style={{ opacity: 0.6 }}>{setupHint}</p>}
         </section>
       )}
 

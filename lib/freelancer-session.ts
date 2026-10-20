@@ -98,7 +98,7 @@ export async function verifyFlSession(cookie: string | null | undefined): Promis
     const ok = await crypto.subtle.verify(
       'HMAC',
       key,
-      b64urlDecode(sigB64),
+      b64urlDecode(sigB64) as BufferSource,
       enc.encode(payloadB64),
     )
     if (!ok) return null

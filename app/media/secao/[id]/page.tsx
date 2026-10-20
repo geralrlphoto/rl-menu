@@ -73,8 +73,8 @@ export default async function MediaSecaoPage({ params }: Props) {
 
   const [{ data: section }, { data: pages }, { data: images }] = await Promise.all([
     supabase.from('media_sections').select('*').eq('id', id).single(),
-    supabase.from('media_pages').select('*').eq('section_id', id).order('order_index').catch(() => ({ data: [] })),
-    supabase.from('media_section_images').select('*').eq('section_id', id).order('order_index').catch(() => ({ data: [] })),
+    supabase.from('media_pages').select('*').eq('section_id', id).order('order_index').then(r => r, () => ({ data: [] })),
+    supabase.from('media_section_images').select('*').eq('section_id', id).order('order_index').then(r => r, () => ({ data: [] })),
   ])
 
   if (!section) notFound()

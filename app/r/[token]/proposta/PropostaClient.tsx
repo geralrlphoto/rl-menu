@@ -68,6 +68,7 @@ function mergeContent(saved: any): PageContent {
     testimonials: { ...DEFAULT_CONTENT.testimonials, ...(saved.testimonials || {}), items: saved.testimonials?.items || DEFAULT_CONTENT.testimonials.items },
     about:        { ...DEFAULT_CONTENT.about,        ...(saved.about        || {}) },
     banner:       { ...DEFAULT_CONTENT.banner,       ...(saved.banner       || {}) },
+    revista:      { ...DEFAULT_CONTENT.revista,      ...(saved.revista      || {}) },
     proposta:     { ...DEFAULT_CONTENT.proposta,     ...(saved.proposta     || {}) },
     propostas:       saved.propostas       || DEFAULT_CONTENT.propostas,
     extras_proposta: saved.extras_proposta || [],

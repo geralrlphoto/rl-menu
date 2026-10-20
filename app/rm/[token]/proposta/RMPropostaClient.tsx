@@ -86,6 +86,7 @@ function merge(saved: any): RMPageContent {
       slideImages: ['','','','','','','','','',''],
     },
     sobre:   { label: 'Quem Somos', titulo: 'RL PROD', texto: '' },
+    propostas: [],
   }
   if (!saved) return d
   return {

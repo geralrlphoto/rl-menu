@@ -34,6 +34,7 @@ export interface Entrega {
   linkUrl?: string
   estado: 'disponivel' | 'pendente'
   feedbacks?: EntregaFeedback[]
+  notificacaoEnviada?: string | null   // ISO da última notificação
 }
 
 export interface BriefingItem {

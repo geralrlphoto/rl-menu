@@ -339,7 +339,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
           const sb = supabase()
           // 1) Match por referência
           if (refToSync) {
-            await sb.from('freelancer_casamentos').update(fcFields).eq('referencia', refToSync).then(() => {}).catch(() => {})
+            await sb.from('freelancer_casamentos').update(fcFields).eq('referencia', refToSync).then(() => {}, () => {})
           }
           // 2) Fallback: match por local + data_evento (case-insensitive)
           //    Útil para casamentos sem referencia ainda associada
@@ -360,7 +360,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
                 .update(fcFields)
                 .ilike('local', `%${eventLocal}%`)
                 .eq('data_casamento', eventData)
-                .then(() => {}).catch(() => {})
+                .then(() => {}, () => {})
             }
           } catch { /* ignora se colunas não existem */ }
         }
@@ -411,10 +411,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         const sb = supabase()
         // a) Match por referencia (mais fiável)
         if (refForFc) {
-          await sb.from('freelancer_casamentos').update(statusUpdates).eq('referencia', refForFc).then(() => {}).catch(() => {})
+          await sb.from('freelancer_casamentos').update(statusUpdates).eq('referencia', refForFc).then(() => {}, () => {})
         }
         // b) Match por evento_id (notion_id)
-        await sb.from('freelancer_casamentos').update(statusUpdates).eq('evento_id', id).then(() => {}).catch(() => {})
+        await sb.from('freelancer_casamentos').update(statusUpdates).eq('evento_id', id).then(() => {}, () => {})
         // c) Fallback: local + data
         try {
           let eventLocal: string | undefined = body.local
@@ -431,7 +431,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
               .update(statusUpdates)
               .ilike('local', `%${eventLocal}%`)
               .eq('data_casamento', eventData)
-              .then(() => {}).catch(() => {})
+              .then(() => {}, () => {})
           }
         } catch { /* ignora */ }
       }

@@ -157,7 +157,7 @@ export async function GET(req: Request) {
     let casamentos: any[] | null = null
     let error: any = null
     const cols = 'id, freelancer_id, referencia, local, data_casamento, url_selecao, url_provas, url_editadas, url_album, url_selecao_enviado_em, url_provas_enviado_em, url_editadas_enviado_em, url_album_enviado_em, status_selecao, status_editadas, status_album, status_provas, status_selecao_alterado_em, status_editadas_alterado_em, status_album_alterado_em, status_provas_alterado_em'
-    let res = await supabase
+    let res: any = await supabase
       .from('freelancer_casamentos')
       .select(cols)
       .order('data_casamento', { ascending: false })

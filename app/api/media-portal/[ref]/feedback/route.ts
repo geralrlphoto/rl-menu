@@ -176,7 +176,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     /* notificar admin */
-    let emailResult = { ok: false, error: 'adminEmail vazio' }
+    let emailResult: { ok: boolean; error?: string } = { ok: false, error: 'adminEmail vazio' }
     if (adminEmail) {
       const html = neonCard(
         'Novo Feedback',
@@ -218,7 +218,7 @@ export async function POST(req: NextRequest, { params }: Params) {
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     /* notificar cliente */
-    let emailResult = { ok: false, error: 'clienteEmail vazio' }
+    let emailResult: { ok: boolean; error?: string } = { ok: false, error: 'clienteEmail vazio' }
     if (clienteEmail) {
       const html = neonCard(
         'Resposta da RL PROD',

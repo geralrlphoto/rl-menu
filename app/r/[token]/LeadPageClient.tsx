@@ -210,11 +210,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   )
 }
 
-function TInput({ value, onChange, multiline }: { value: string; onChange: (v: string) => void; multiline?: boolean }) {
+function TInput({ value, onChange, multiline, placeholder }: { value: string; onChange: (v: string) => void; multiline?: boolean; placeholder?: string }) {
   const cls = "w-full bg-white/5 border border-white/10 rounded-xl px-3.5 py-2.5 text-[15px] text-white outline-none transition-colors focus:border-[#d8be93]/60 placeholder:text-white/25 resize-none"
   return multiline
-    ? <textarea rows={3} className={cls} value={value} onChange={e => onChange(e.target.value)} />
-    : <input type="text" className={cls} value={value} onChange={e => onChange(e.target.value)} />
+    ? <textarea rows={3} className={cls} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} />
+    : <input type="text" className={cls} value={value} placeholder={placeholder} onChange={e => onChange(e.target.value)} />
 }
 
 function FontPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {

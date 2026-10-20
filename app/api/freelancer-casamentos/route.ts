@@ -209,7 +209,7 @@ export async function PATCH(req: NextRequest) {
   if (indisponivel_videografo_em) tsFields.indisponivel_videografo_em = indisponivel_videografo_em
 
   if (Object.keys(tsFields).length > 0) {
-    await supabase.from('freelancer_casamentos').update(tsFields).eq('id', id).then(() => {}).catch(() => {})
+    await supabase.from('freelancer_casamentos').update(tsFields).eq('id', id).then(() => {}, () => {})
   }
 
   // 3 — save optional fields — devolve diagnóstico para o cliente

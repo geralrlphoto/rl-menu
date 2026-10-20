@@ -380,7 +380,7 @@ export async function POST(req: NextRequest) {
     'Olá'
 
   // Login URL apropriado ao tipo de evento (casamento/batizado)
-  const tipoEvento = (matched.row.tipo_evento ?? '').toLowerCase()
+  const tipoEvento = String(matched.row.tipo_evento ?? '').toLowerCase()
   const isBatizado = /batizado/.test(tipoEvento)
   const loginUrl = isBatizado
     ? `${SITE_BASE}/login-batizado`

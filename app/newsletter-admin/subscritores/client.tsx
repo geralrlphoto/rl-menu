@@ -203,7 +203,7 @@ const btnGhost: React.CSSProperties = {
   fontSize: 11, fontWeight: 500, letterSpacing: 2, textTransform: 'uppercase', cursor: 'pointer',
 }
 
-function Th({ children }: { children: React.ReactNode }) {
+function Th({ children }: { children?: React.ReactNode }) {
   return <th style={{ textAlign: 'left', padding: '12px 8px', fontSize: 10, letterSpacing: 2, color: '#8a7450', fontWeight: 600 }}>{children}</th>
 }
 function Td({ children }: { children: React.ReactNode }) {

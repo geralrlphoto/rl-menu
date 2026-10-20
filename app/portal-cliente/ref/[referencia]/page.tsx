@@ -22,6 +22,7 @@ type Task = { id: string; text: string; done: boolean }
 
 type PortalSettings = {
   hiddenNav: string[]
+  noivos_notifications?: any[]
   noiva?: string
   noivo?: string
   emailNoiva?: string

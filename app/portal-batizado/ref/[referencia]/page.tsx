@@ -20,6 +20,8 @@ type Task = { id: string; text: string; done: boolean }
 
 type PortalSettings = {
   hiddenNav: string[]
+  noivos_notifications?: any[]
+  casalFotoUrl?: string | null
   noiva?: string
   noivo?: string
   nomeCrianca?: string
