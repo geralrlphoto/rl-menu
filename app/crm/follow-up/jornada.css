@@ -10,8 +10,6 @@
   background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;color-scheme:dark;
 }
 .jr *{box-sizing:border-box}
-/* embutido numa página (ex.: Departamento de Edição de Vídeo) */
-.jr.jr-emb{position:relative;inset:auto;z-index:auto;height:min(80vh,780px);border:1px solid #4A3C22;border-radius:22px;overflow:hidden;box-shadow:0 0 48px -22px var(--glow)}
 .jr button{font:inherit;color:inherit}
 
 /* topo */

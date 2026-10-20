@@ -7,7 +7,6 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import FluxoEdicao from './fluxo/FluxoEdicao'
 
 // Estados do vídeo e quem os muda (ver lib/videoEstado.ts)
 const ESTADOS_INFO = [
@@ -151,8 +150,8 @@ export default function EdicaoVideoPage() {
             <span className="w-12 h-px" style={{ background: OURO }} />
             <span className="text-sm tracking-[0.22em] uppercase text-white/60">Editores, casamentos em curso e o nosso esquema de trabalho</span>
           </div>
-          <Link href="#fluxo" className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-5 py-2.5 text-[15px] font-semibold text-white shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)] hover:border-[#C9A84C]/80">
-            Fluxo de trabalho <span style={{ color: OURO }}>→</span>
+          <Link href="/edicao-video/fluxo" target="_blank" rel="noopener" className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-5 py-2.5 text-[15px] font-semibold text-white shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)] hover:border-[#C9A84C]/80">
+            Fluxo de trabalho <span style={{ color: OURO }}>↗</span>
           </Link>
 
           <div className="mt-10 grid grid-cols-2 sm:grid-cols-5 gap-3">
@@ -324,24 +323,6 @@ export default function EdicaoVideoPage() {
               </li>
             ))}
           </ol>
-        </section>
-
-        {/* ── Fluxo de trabalho (o mesmo mapa de /edicao-video/fluxo, embutido) ── */}
-        <section id="fluxo" className="scroll-mt-24">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Como trabalhamos</p>
-              <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Fluxo de trabalho da edição</h2>
-              <p className="mt-2 text-sm text-white/45">De nomear o editor ao feedback dos noivos. Arrasta para mover, Ctrl + roda para zoom, clica num passo para ver as tarefas.</p>
-            </div>
-            <Link href="/edicao-video/fluxo"
-              className="inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-5 py-2.5 text-[13px] font-semibold tracking-[0.12em] uppercase text-white hover:border-[#C9A84C]/80">
-              Ecrã inteiro <span style={{ color: OURO }}>↗</span>
-            </Link>
-          </div>
-          <div className="mt-6">
-            <FluxoEdicao embutido />
-          </div>
         </section>
       </div>
     </main>
