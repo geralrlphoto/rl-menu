@@ -190,6 +190,8 @@ export default function JornadaMapa({ cfg = CFG_JORNADA }: { cfg?: CfgMapa }) {
     }
     const wheel = (e: WheelEvent) => {
       if ((e.target as HTMLElement)?.closest?.('.panel,.modal')) return
+      // embutido: a roda vertical continua a fazer scroll à página (zoom com Ctrl, arrastar para mover)
+      if (cfg.embutido && !e.ctrlKey && !e.metaKey && !e.shiftKey && Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return
       e.preventDefault()
       const r = stage.getBoundingClientRect()
       if (e.ctrlKey || e.metaKey) zoomEm(e.clientX - r.left, e.clientY - r.top, view.current.sc * Math.exp(-e.deltaY * 0.01))
@@ -209,7 +211,7 @@ export default function JornadaMapa({ cfg = CFG_JORNADA }: { cfg?: CfgMapa }) {
       stage.removeEventListener('pointerup', up); stage.removeEventListener('pointercancel', up)
       stage.removeEventListener('wheel', wheel)
     }
-  }, [zoomEm, aplicar])
+  }, [zoomEm, aplicar, cfg.embutido])
 
   /* percorrer a jornada */
   useEffect(() => {
@@ -231,13 +233,14 @@ export default function JornadaMapa({ cfg = CFG_JORNADA }: { cfg?: CfgMapa }) {
     const k = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null
       if (modal || (t && ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName))) return
+      if (cfg.embutido && !t?.closest?.('.jr')) return
       if (e.key === 'ArrowRight') { setTour(false); focar(Math.min(FASES.length - 1, curRef.current + 1)) }
       if (e.key === 'ArrowLeft') { setTour(false); focar(Math.max(0, curRef.current - 1)) }
       if (e.key === 'Escape') setSel(null)
     }
     window.addEventListener('keydown', k)
     return () => window.removeEventListener('keydown', k)
-  }, [focar, modal])
+  }, [focar, modal, cfg.embutido])
 
   /* ── ações ── */
   const clicou = () => { if (moved.current > 4) { moved.current = 0; return false } return true }
@@ -311,10 +314,10 @@ export default function JornadaMapa({ cfg = CFG_JORNADA }: { cfg?: CfgMapa }) {
 
   return (
     <CfgCtx.Provider value={cfg}>
-    <div className="jr">
+    <div className={`jr${cfg.embutido ? ' jr-emb' : ''}`}>
       <header className="top">
-        <Link href={cfg.voltar.href} className="voltar">{cfg.voltar.label}</Link>
-        <div className="logo">RL <span>Photo Video</span></div>
+        {!cfg.embutido && <Link href={cfg.voltar.href} className="voltar">{cfg.voltar.label}</Link>}
+        {!cfg.embutido && <div className="logo">RL <span>Photo Video</span></div>}
         <nav className="tabs" role="tablist" aria-label="Áreas da app">
           {SEPARADORES.map(([nome, fi]) => (
             <button key={nome} type="button" role="tab" className="tab" aria-selected={nome === sepAtivo}

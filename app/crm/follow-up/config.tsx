@@ -14,6 +14,7 @@ export type CfgMapa = {
   voltar: { href: string; label: string }
   prazos: boolean                   // botão "Prazos" no topo
   nomeTour: string                  // "Percorrer a …"
+  embutido?: boolean                // dentro de outra página (sem ecrã inteiro nem "voltar")
 }
 
 export const CFG_JORNADA: CfgMapa = {

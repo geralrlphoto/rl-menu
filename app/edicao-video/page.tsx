@@ -7,7 +7,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { FASES_EDICAO } from '@/lib/edicaoFluxo'
+import FluxoEdicao from './fluxo/FluxoEdicao'
 
 const OURO = '#C9A84C'
 const FASES = ['Por atribuir', 'Aguardar', 'Em Edição', 'Em Revisão', 'Finalizado', 'Entregue'] as const
@@ -142,7 +142,7 @@ export default function EdicaoVideoPage() {
             <span className="w-12 h-px" style={{ background: OURO }} />
             <span className="text-sm tracking-[0.22em] uppercase text-white/60">Editores, casamentos em curso e o nosso esquema de trabalho</span>
           </div>
-          <Link href="/edicao-video/fluxo" className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-5 py-2.5 text-[15px] font-semibold text-white shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)] hover:border-[#C9A84C]/80">
+          <Link href="#fluxo" className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-5 py-2.5 text-[15px] font-semibold text-white shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)] hover:border-[#C9A84C]/80">
             Fluxo de trabalho <span style={{ color: OURO }}>→</span>
           </Link>
 
@@ -296,28 +296,22 @@ export default function EdicaoVideoPage() {
           </details>
         )}
 
-        {/* ── Fluxo de trabalho (mapa interativo em /edicao-video/fluxo) ── */}
-        <section>
-          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Como trabalhamos</p>
-          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Fluxo de trabalho da edição</h2>
-          <p className="mt-2 text-sm text-white/45">De nomear o editor ao feedback dos noivos, com tarefas, prazos e quem faz cada passo.</p>
-          <Link href="/edicao-video/fluxo"
-            className="group mt-6 block rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/85 backdrop-blur-md p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/60 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]"
-            style={{ borderLeft: `2px solid ${OURO}` }}>
-            <ol className="flex flex-wrap items-center gap-x-2 gap-y-3">
-              {FASES_EDICAO.map((f, i) => (
-                <li key={f.titulo} className="flex items-center gap-2">
-                  <span className="flex items-center gap-2 rounded-full border border-[#C9A84C]/35 bg-[#C9A84C]/10 px-3 py-1 text-[13px] font-semibold" style={{ color: OURO }}>
-                    <b className="font-thin tabular-nums">{String(i + 1).padStart(2, '0')}</b>{f.titulo}
-                  </span>
-                  {i < FASES_EDICAO.length - 1 && <span className="text-white/25">→</span>}
-                </li>
-              ))}
-            </ol>
-            <span className="mt-6 inline-flex items-center gap-3 rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)] group-hover:bg-[#C9A84C]/30">
-              Abrir o mapa do fluxo <span className="transition-transform duration-300 group-hover:translate-x-1" style={{ color: OURO }}>→</span>
-            </span>
-          </Link>
+        {/* ── Fluxo de trabalho (o mesmo mapa de /edicao-video/fluxo, embutido) ── */}
+        <section id="fluxo" className="scroll-mt-24">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Como trabalhamos</p>
+              <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Fluxo de trabalho da edição</h2>
+              <p className="mt-2 text-sm text-white/45">De nomear o editor ao feedback dos noivos. Arrasta para mover, Ctrl + roda para zoom, clica num passo para ver as tarefas.</p>
+            </div>
+            <Link href="/edicao-video/fluxo"
+              className="inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-5 py-2.5 text-[13px] font-semibold tracking-[0.12em] uppercase text-white hover:border-[#C9A84C]/80">
+              Ecrã inteiro <span style={{ color: OURO }}>↗</span>
+            </Link>
+          </div>
+          <div className="mt-6">
+            <FluxoEdicao embutido />
+          </div>
         </section>
       </div>
     </main>

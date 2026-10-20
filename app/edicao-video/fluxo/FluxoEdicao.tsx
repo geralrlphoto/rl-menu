@@ -13,6 +13,6 @@ const CFG: CfgMapa = {
   nomeTour: 'Percorrer o fluxo',
 }
 
-export default function FluxoEdicao() {
-  return <JornadaMapa cfg={CFG} />
+export default function FluxoEdicao({ embutido = false }: { embutido?: boolean }) {
+  return <JornadaMapa cfg={embutido ? { ...CFG, embutido: true } : CFG} />
 }
