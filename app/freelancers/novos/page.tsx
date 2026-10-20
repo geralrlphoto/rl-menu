@@ -38,10 +38,6 @@ const FUNCAO_LABEL: Record<string, string> = {
   FOTOGRAFO: 'Fotógrafos', VIDEOGRAFO: 'Videógrafos', EDITOR: 'Editores',
   ASSISTENTE: 'Assistentes', DRONE: 'Drone', OUTRO: 'Outros',
 }
-// Foto da faixa de cada cartão (imagens locais da Vercel)
-const FUNCAO_IMG: Record<string, string> = {
-  FOTOGRAFO: '/eventos-hero-2028.webp', VIDEOGRAFO: '/eventos-hero-2027.webp', EDITOR: '/prewedding-hero.webp',
-}
 // O webhook antigo do Tally gravava as opções com o id (ex.: 71107c57-…) em vez do texto
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-/i
 const funcaoValida = (f: string | null) => (f && !UUID_RE.test(f) ? f : null)
@@ -344,8 +340,6 @@ export default function NovosFreelancersPage() {
         @keyframes nvSobe { from { opacity: 0; transform: translateY(14px) scale(.985) } to { opacity: 1; transform: none } }
         @keyframes nvPulso { 0%,100% { opacity:.35 } 50% { opacity:1 } }
         .nv-card { animation: nvSobe .5s cubic-bezier(.2,.7,.2,1) both }
-        .nv-foto { filter: grayscale(1) brightness(.45); transition: filter .6s ease, transform 1.2s cubic-bezier(.19,1,.22,1) }
-        .nv-card:hover .nv-foto { filter: grayscale(.2) brightness(.7); transform: scale(1.05) }
         @media (prefers-reduced-motion: reduce) { .nv-card { animation: none !important } }
       `}</style>
 
@@ -499,24 +493,21 @@ export default function NovosFreelancersPage() {
                 <div key={f.id}
                   className="nv-card group relative rounded-[22px] overflow-hidden border border-white/[0.08] bg-[#111111] transition-all duration-300 hover:border-[#C9A84C]/45 hover:shadow-[0_0_50px_-20px_rgba(201,168,76,0.6)]"
                   style={{ animationDelay: `${Math.min(i, 10) * 45}ms` }}>
-                  {/* Faixa com foto da função */}
-                  <div className="relative h-28 overflow-hidden">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={FUNCAO_IMG[fc ?? ''] ?? '/boas-vindas-camera.webp'} alt="" className="nv-foto absolute inset-0 w-full h-full object-cover object-[center_30%]" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#111111] via-[#111111]/40 to-transparent" />
-                    <span className="absolute top-3.5 left-4 text-[11px] font-semibold tracking-[0.2em] uppercase px-3 py-1 rounded-full border border-[#C9A84C]/45 text-[#C9A84C] bg-black/50 backdrop-blur-sm">
-                      {fc ? nomeFuncao(fc) : 'Sem função'}
-                    </span>
-                    <div className="absolute top-3.5 right-4 rounded-full bg-black/50 backdrop-blur-sm px-2.5 py-1"><AvaliacaoStars avaliacao={f.avaliacao} /></div>
-                  </div>
-
-                  <div className="relative px-5 pb-5 -mt-8">
-                    <div className="flex items-end gap-3.5">
-                      <div className="shrink-0 w-16 h-16 rounded-full flex items-center justify-center font-bold text-[22px] bg-[#111111]"
-                        style={{ color: OURO, border: `1px solid ${OURO}88`, boxShadow: '0 0 26px -8px rgba(201,168,76,0.7)' }}>
+                  <div className="relative p-5">
+                    <div className="flex items-start gap-3.5">
+                      <div className="shrink-0 w-14 h-14 rounded-full flex items-center justify-center font-bold text-[20px]"
+                        style={{ color: OURO, border: `1px solid ${OURO}88`, background: 'rgba(201,168,76,0.08)', boxShadow: '0 0 26px -10px rgba(201,168,76,0.7)' }}>
                         {(f.nome || '?').split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()}
                       </div>
-                      <p className="font-bold uppercase text-white text-[22px] leading-tight truncate pb-1">{f.nome || '—'}</p>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-bold uppercase text-white text-[21px] leading-tight truncate">{f.nome || '—'}</p>
+                          <AvaliacaoStars avaliacao={f.avaliacao} />
+                        </div>
+                        <span className="inline-block mt-1.5 text-[11px] font-semibold tracking-[0.2em] uppercase px-3 py-0.5 rounded-full border border-[#C9A84C]/45 text-[#C9A84C]">
+                          {fc ? nomeFuncao(fc) : 'Sem função'}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-x-4 gap-y-1 mt-3 flex-wrap text-[13px] text-white/50">
