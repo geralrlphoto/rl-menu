@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { buildTicketEditorHtml, prazoVideo } from '@/lib/ticket-editor-html'
 
 function db() {
   return createClient(
@@ -39,6 +40,52 @@ export async function GET(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ equipa: data ?? null })
+}
+
+// Ticket de Edição: email ao editor de vídeo acabado de nomear (além da notificação no portal).
+// Os dados do casamento que não vierem no pedido são lidos de eventos_2026 pela referência.
+async function enviarTicketEditor(
+  supabase: any,
+  nomes: string[],
+  referencia: string | null,
+  data_casamento: string | null,
+  local: string | null,
+) {
+  if (!nomes.length || !process.env.RESEND_API_KEY) return
+  let ev: any = null
+  if (referencia) {
+    const { data } = await supabase.from('eventos_2026').select('cliente, data_evento, local').eq('referencia', referencia).maybeSingle()
+    ev = data
+  }
+  const dataCas = (data_casamento || ev?.data_evento || null) as string | null
+  const sitio = (local || ev?.local || null) as string | null
+  for (const nome of nomes) {
+    if (!nome?.trim()) continue
+    // o nome pode estar gravado com espaços a mais (ex.: "Renato Igor ")
+    const { data: cands } = await supabase.from('freelancers').select('nome, email').ilike('nome', `%${nome.trim()}%`)
+    const fl = (cands ?? []).find((c: any) => String(c.nome ?? '').trim().toLowerCase() === nome.trim().toLowerCase())
+    const email = String(fl?.email ?? '').trim()
+    if (!email.includes('@')) continue
+    const html = buildTicketEditorHtml({
+      numero: `ED-${referencia ?? 'SEM-REF'}`,
+      editor: fl?.nome ?? nome,
+      noivos: ev?.cliente || referencia || 'Casamento',
+      dataCasamento: dataCas,
+      local: sitio,
+      prazo: prazoVideo(dataCas),
+      atribuidoEm: new Date(),
+    })
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: process.env.FROM_EMAIL ?? 'RL Photo.Video <geral@rlphotovideo.pt>',
+        to: [email], reply_to: 'geral.rlphoto@gmail.com',
+        subject: `Ticket de Edição · ${ev?.cliente || referencia || 'novo casamento'}`,
+        html,
+      }),
+    }).catch(err => console.error('[evento-equipa] ticket editor:', err))
+  }
 }
 
 // Helper — cria notificação no portal do freelancer (idempotente por nome+role+evento)
@@ -377,6 +424,7 @@ export async function PATCH(req: NextRequest) {
       const newEditorVideo: string[] = Array.isArray(editor_video) ? editor_video : (editor_video ? [editor_video] : [])
       const added = newEditorVideo.filter(n => !oldEditorVideo.includes(n))
       await notifyAddedMembers(supabase, added, 'Editor de Vídeo', local ?? null, data_casamento ?? null, referencia ?? null)
+      await enviarTicketEditor(supabase, added, referencia ?? existing?.referencia ?? null, data_casamento ?? null, local ?? null)
     }
   } catch (err) {
     // Não falha o upsert se a tabela freelancer_notificacoes não existir
