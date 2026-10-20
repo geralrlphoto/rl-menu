@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
+import { buildTicketAprovacaoHtml } from '@/lib/ticket-editor-html'
 
 function db() {
   return createClient(
@@ -94,6 +95,28 @@ export async function PATCH(req: NextRequest) {
       tipo: aprovado ? 'video_aprovado' : 'video_alteracoes',
       lida: false,
     })
+
+    // Ticket de Aprovação por email ao editor (uma falha no email não estraga a aprovação)
+    if (aprovado && process.env.RESEND_API_KEY) {
+      const { data: fl } = await supabase.from('freelancers').select('nome, email').eq('id', cur.freelancer_id).maybeSingle()
+      const email = String(fl?.email ?? '').trim()
+      if (email.includes('@')) {
+        const html = buildTicketAprovacaoHtml({
+          numero: `AP-${referencia}`, editor: String(fl?.nome ?? 'Editor').trim(),
+          noivos: cur.noivos || referencia, local: cur.local ?? null, link: cur.link ?? null,
+          feedback: feedback ?? null, aprovadoEm: new Date(),
+        })
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: process.env.FROM_EMAIL ?? 'RL Photo.Video <geral@rlphotovideo.pt>',
+            to: [email], reply_to: 'geral.rlphoto@gmail.com',
+            subject: `Ticket de Aprovação · ${cur.noivos || referencia}`, html,
+          }),
+        }).catch(err => console.error('[video-revisao] ticket aprovação:', err))
+      }
+    }
   }
 
   return NextResponse.json({ ok: true, status })

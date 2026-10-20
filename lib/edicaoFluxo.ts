@@ -106,6 +106,8 @@ export const FASES_EDICAO: Fase[] = [
         descricao: 'A RL aprova e a fase passa a Finalizado. Exportação final em alta qualidade.',
         quem: ['Rui', 'Equipa'], prazo: 'Até 2 dias úteis', onde: 'Painel do Editor › Finalizado',
         tarefas: ['Aprovar a versão final', 'Exportar o master', 'Guardar o projeto e o master no NAS'],
+        emails: [{ assunto: 'Ticket de Aprovação', preview: 'ticket-aprovacao', para: 'editor' }],
+        dica: 'Ao aprovar na ficha do evento (bloco da revisão), o editor recebe o Ticket de Aprovação por email com os próximos passos.',
       },
     ],
   },
