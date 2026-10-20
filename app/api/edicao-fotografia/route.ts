@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { exigeAdmin } from '@/lib/api-guard'
-import { faseFoto, temSneakPeek } from '@/lib/fotografiaFluxo'
+import { faseFoto } from '@/lib/fotografiaFluxo'
 
 // Departamento de Fotografia (/edicao-fotografia): numa chamada, os casamentos com
 // fotografia já realizados (desde 1 de janeiro de 2026, como o /photo), a fase de cada um
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   const [{ data: equipa }, { data: evs }] = await Promise.all([
     sb.from('freelancers').select('id, nome, foto_url, status, contato').in('status', ['FOTOGRAFO', 'ASSISTENTE']).order('nome'),
     sb.from('eventos_2026')
-      .select('id, notion_id, referencia, cliente, data_evento, local, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado, fotos_edicao_estado, servico_foto, servicos_dia')
+      .select('id, notion_id, referencia, cliente, data_evento, local, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado, fotos_edicao_estado')
       .gte('data_evento', DESDE).lte('data_evento', hoje).order('data_evento'),
   ])
 
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest) {
   ]
   const emEdicao = comFoto.filter(e => {
     const s = portalPorRef.get(e.referencia)?.settings ?? {}
-    return faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado, temSneakPeek(e.servico_foto, e.servicos_dia)).fase === 'edicao'
+    return faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado).fase === 'edicao'
   }).map(e => e.referencia as string)
   const { data: trabalhos } = emEdicao.length
     ? await sb.from('freelancer_edicao').select('referencia, freelancer_id, status, updated_at').in('referencia', emEdicao)
@@ -113,7 +113,7 @@ export async function GET(req: NextRequest) {
   const projetos = comFoto.map(e => {
     const p = portalPorRef.get(e.referencia)
     const s: Record<string, any> = p?.settings ?? {}
-    const { fase, prazo, recebida } = faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado, temSneakPeek(e.servico_foto, e.servicos_dia))
+    const { fase, prazo, recebida } = faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado)
     const eq = eqPorRef.get(e.referencia)
     const editores = arr(eq?.editor_fotos)
     // Alerta desligado na ficha (sino) para esta fase: não conta como atraso

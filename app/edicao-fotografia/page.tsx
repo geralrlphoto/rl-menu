@@ -26,7 +26,7 @@ const COR = Object.fromEntries(FASES.map(f => [f.k, f.cor])) as Record<EtapaFoto
 
 // Cada fase e quem faz o quê (o que os noivos recebem)
 const FASES_INFO: { k: EtapaFoto; quem: string; quando: string; noivos: string }[] = [
-  { k: 'sneakpeek', quem: 'RL', quando: 'Só nos casamentos com Sneak Peak nos serviços da ficha. Até 48 horas depois do casamento.', noivos: 'recebem o link por WhatsApp ou email e o cartão Sneak Peek abre no portal.' },
+  { k: 'sneakpeek', quem: 'RL', quando: 'Até 48 horas depois do casamento. Quem não tem o serviço passa à galeria com Sem serviço.', noivos: 'recebem o link por WhatsApp ou email e o cartão Sneak Peek abre no portal.' },
   { k: 'galerias', quem: 'RL', quando: 'Até 7 dias depois do casamento.', noivos: 'recebem o email da Galeria Online; o cartão fica Disponível no portal.' },
   { k: 'selecao', quem: 'RL', quando: 'Até 30 dias depois do casamento.', noivos: 'recebem a galeria para escolherem as fotos do álbum.' },
   { k: 'escolha', quem: 'Noivos', quando: 'Enviam a seleção pelo formulário (chega sozinha). Lembrar ao fim de 30 dias.', noivos: 'escolhem as preferidas no portal.' },
@@ -420,7 +420,7 @@ export default function DepartamentoFotografiaPage() {
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Quadro de trabalho</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Casamentos por fase</h2>
-          <p className="mt-2 text-sm text-white/45">Casamentos com fotografia desde 1 de janeiro de 2026. Cola o link da galeria e envia: os noivos recebem o email e o cartão abre no portal. O sneak peek só aparece nos casamentos com Sneak Peak nos serviços da ficha.</p>
+          <p className="mt-2 text-sm text-white/45">Casamentos com fotografia desde 1 de janeiro de 2026. Cola o link da galeria e envia: os noivos recebem o email e o cartão abre no portal. Todos os casamentos começam no sneak peek: quem não o tem passa à galeria com Sem serviço.</p>
           {/* Filtros: uma fase de cada vez, ou todas */}
           <div className="mt-6 flex flex-wrap gap-2">
             {([{ k: 'todos' as const, titulo: 'Todos', cor: OURO }, ...FASES]).map(f => {
@@ -509,8 +509,8 @@ export default function DepartamentoFotografiaPage() {
                                   Enviar por WhatsApp
                                 </button>
                                 <button type="button" disabled={aGravar === p.id}
-                                  onClick={() => acao(p, 'sem-sneakpeek', `${nomes} não tem sneak peek? Passa para a Galeria online.`)}
-                                  className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/35 hover:text-white/70">Sem sneak peek →</button>
+                                  onClick={() => acao(p, 'sem-sneakpeek', `${nomes} não tem sneak peek (sem serviço)? Passa para a Galeria online.`)}
+                                  className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/35 hover:text-white/70">Sem serviço →</button>
                               </>
                             )}
                           </div>
