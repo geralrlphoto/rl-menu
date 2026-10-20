@@ -9,7 +9,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import type { EtapaFoto } from '@/lib/fotografiaFluxo'
+import { mensagemSneakPeek, type EtapaFoto } from '@/lib/fotografiaFluxo'
 import { whatsappLink } from '@/lib/crm'
 import { JanelaWhatsApp, comNotaAutomatica } from '@/app/components/WhatsAppMembro'
 
@@ -26,7 +26,7 @@ const COR = Object.fromEntries(FASES.map(f => [f.k, f.cor])) as Record<EtapaFoto
 
 // Cada fase e quem faz o quê (o que os noivos recebem)
 const FASES_INFO: { k: EtapaFoto; quem: string; quando: string; noivos: string }[] = [
-  { k: 'sneakpeek', quem: 'RL', quando: 'Até 48 horas depois do casamento: 10 a 20 fotos escolhidas.', noivos: 'recebem o email “As primeiras fotografias” e o link fica no portal.' },
+  { k: 'sneakpeek', quem: 'RL', quando: 'Só nos casamentos com Sneak Peak nos serviços da ficha. Até 48 horas depois do casamento.', noivos: 'recebem o link por WhatsApp ou email e o cartão Sneak Peek abre no portal.' },
   { k: 'galerias', quem: 'RL', quando: 'Até 7 dias depois do casamento.', noivos: 'recebem o email da Galeria Online; o cartão fica Disponível no portal.' },
   { k: 'selecao', quem: 'RL', quando: 'Até 30 dias depois do casamento.', noivos: 'recebem a galeria para escolherem as fotos do álbum.' },
   { k: 'escolha', quem: 'Noivos', quando: 'Enviam a seleção pelo formulário (chega sozinha). Lembrar ao fim de 30 dias.', noivos: 'escolhem as preferidas no portal.' },
@@ -64,6 +64,27 @@ function mensagemLembrete(p: Projeto): string {
   const galeria = p.links.selecao ? `\n\nA galeria para escolherem está aqui: ${p.links.selecao}` : ''
   return `Olá ${nomes}! Esperamos que estejam bem.\n\nJá tiveram oportunidade de ver as fotografias do vosso casamento de ${dia}? Para avançarmos com a edição, só falta escolherem as vossas preferidas e enviarem-nos a seleção no portal, na página Fotografias.${galeria}\n\nPortal: ${PORTAL_LOGIN}\n\nQualquer dúvida, estamos por aqui. Um abraço,\nRL Photo.Video`
 }
+/** Sneak peek por WhatsApp: abre a conversa da noiva (número da ficha) com o link e marca como enviado. */
+async function sneakPeekWhatsApp(p: Projeto, url: string, depois: () => void) {
+  if (!/^https?:\/\//i.test(url)) { alert('Cola o link do sneak peek (https://…).'); return }
+  const janela = window.open('', '_blank')
+  let tel = p.contacto?.tel ?? null, noiva = p.contacto?.noiva ?? null, noivo = p.contacto?.noivo ?? null
+  try {
+    const ev = await fetch(`/api/eventos-notion/${p.fichaId}`).then(r => r.ok ? r.json() : null)
+    const e = ev?.event ?? ev?.evento ?? ev
+    tel = e?.tel_noiva || e?.tel_noivo || tel
+    noiva = e?.nome_noiva || noiva
+    noivo = e?.nome_noivo || noivo
+  } catch { /* fica o do contrato */ }
+  const bonito = (n: string) => { const w = primeiro(n); return w.charAt(0).toLocaleUpperCase('pt-PT') + w.slice(1).toLocaleLowerCase('pt-PT') }
+  const nomes = noiva && noivo ? `${bonito(noiva)} e ${bonito(noivo)}` : (p.cliente ?? '').trim()
+  const link = whatsappLink(tel, mensagemSneakPeek(nomes, url))
+  if (!link) { janela?.close(); alert('A noiva não tem telemóvel na ficha do evento. Preenche-o em Dados do Casal.'); return }
+  if (janela) janela.location.href = link; else window.open(link, '_blank')
+  await fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: p.referencia, etapa: 'sneakpeek-whatsapp', url }) }).catch(() => {})
+  depois()
+}
+
 /** Abre o WhatsApp já com o número da noiva: o mesmo da ficha do evento (Notion, depois contrato). */
 async function lembrarPorWhatsApp(p: Projeto) {
   const janela = window.open('', '_blank')   // abre já, para o browser não bloquear
@@ -219,7 +240,7 @@ export default function DepartamentoFotografiaPage() {
   useEffect(carregar, [])
 
   const acao = async (p: Projeto, etapa: string, confirmar: string, url?: string) => {
-    if (!['recebida', 'retirar', 'repor'].includes(etapa) && !/^https?:\/\//i.test(url ?? '')) { alert('Cola o link da galeria (https://…).'); return }
+    if (!['recebida', 'retirar', 'repor', 'sem-sneakpeek'].includes(etapa) && !/^https?:\/\//i.test(url ?? '')) { alert('Cola o link da galeria (https://…).'); return }
     if (!window.confirm(confirmar)) return
     setAGravar(p.id)
     const r = await fetch('/api/edicao-fotografia/enviar', {
@@ -399,7 +420,7 @@ export default function DepartamentoFotografiaPage() {
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Quadro de trabalho</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Casamentos por fase</h2>
-          <p className="mt-2 text-sm text-white/45">Casamentos com fotografia desde 1 de janeiro de 2026. Cola o link da galeria e envia: os noivos recebem o email e o cartão abre no portal. O sneak peek conta a partir de 20 de outubro de 2026.</p>
+          <p className="mt-2 text-sm text-white/45">Casamentos com fotografia desde 1 de janeiro de 2026. Cola o link da galeria e envia: os noivos recebem o email e o cartão abre no portal. O sneak peek só aparece nos casamentos com Sneak Peak nos serviços da ficha.</p>
           {/* Filtros: uma fase de cada vez, ou todas */}
           <div className="mt-6 flex flex-wrap gap-2">
             {([{ k: 'todos' as const, titulo: 'Todos', cor: OURO }, ...FASES]).map(f => {
@@ -479,8 +500,19 @@ export default function DepartamentoFotografiaPage() {
                             <button type="button" disabled={aGravar === p.id}
                               onClick={() => acao(p, p.fase, `Enviar ${FASES.find(x => x.k === p.fase)!.titulo.toLowerCase()} a ${nomes}? Os noivos recebem o email e o cartão abre no portal.`, link.trim())}
                               className="rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#C9A84C]/30 disabled:opacity-40">
-                              {aGravar === p.id ? 'A enviar…' : 'Enviar aos noivos →'}
+                              {aGravar === p.id ? 'A enviar…' : p.fase === 'sneakpeek' ? 'Enviar por email →' : 'Enviar aos noivos →'}
                             </button>
+                            {p.fase === 'sneakpeek' && (
+                              <>
+                                <button type="button" disabled={aGravar === p.id} onClick={() => sneakPeekWhatsApp(p, link.trim(), carregar)}
+                                  className="rounded-full border border-[#25D366]/45 bg-[#25D366]/10 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-[#25D366] hover:bg-[#25D366]/20 disabled:opacity-40">
+                                  Enviar por WhatsApp
+                                </button>
+                                <button type="button" disabled={aGravar === p.id}
+                                  onClick={() => acao(p, 'sem-sneakpeek', `${nomes} não tem sneak peek? Passa para a Galeria online.`)}
+                                  className="text-[10px] font-semibold tracking-[0.15em] uppercase text-white/35 hover:text-white/70">Sem sneak peek →</button>
+                              </>
+                            )}
                           </div>
                         )}
 

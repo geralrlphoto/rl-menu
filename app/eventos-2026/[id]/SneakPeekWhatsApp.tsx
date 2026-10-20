@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { whatsappLink, nomeNoivos } from '@/lib/crm'
+import { mensagemSneakPeek } from '@/lib/fotografiaFluxo'
 
 /* Sneak peek (ficha › Ações Fotografia): link das primeiras fotografias do dia,
    enviado aos noivos por WhatsApp com a mensagem já escrita. Grava o link e o dia
@@ -9,9 +10,6 @@ import { whatsappLink, nomeNoivos } from '@/lib/crm'
    Departamento de Fotografia e o cartão "Sneak Peek" do portal usam.
    Mensagem aos noivos: sem referência, sem emojis, sem "(Mensagem automática)". */
 
-function mensagemSneakPeek(nome: string, url: string) {
-  return `Olá ${nome}!\n\nAinda com o coração cheio do vosso casamento, não conseguimos esperar: aqui ficam as primeiras fotografias do vosso dia.\n\n${url}\n\nA galeria completa chega nos próximos dias. Esperamos que gostem tanto quanto nós gostámos de as fazer!\n\nUm abraço,\nRL Photo.Video`
-}
 
 const fmt = (iso: string) => new Date(iso.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
 

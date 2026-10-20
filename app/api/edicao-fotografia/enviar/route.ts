@@ -14,6 +14,7 @@ import { portalPathFor } from '@/lib/noivos-session'
 //   etapa recebida → marca a seleção dos noivos como recebida hoje (selecao_recebida)
 //   etapa lembrete → regista no histórico o lembrete enviado por WhatsApp
 //   etapa retirar / repor → tira ou volta a pôr o casamento no departamento
+//   etapa sem-sneakpeek → este casamento não tem sneak peek · sneakpeek-whatsapp → enviado por WhatsApp
 
 export const maxDuration = 60
 
@@ -75,6 +76,21 @@ export async function POST(req: NextRequest) {
   // Aviso de atraso ao membro responsável (WhatsApp aberto no browser da RL)
   if (etapa === 'aviso') {
     await registarFoto(referencia, 'Aviso de atraso por WhatsApp', String(url ?? '').trim() || 'Equipa')
+    return NextResponse.json({ ok: true })
+  }
+
+  // Sneak peek: este casamento não tem (passa à galeria) / enviado por WhatsApp
+  if (etapa === 'sem-sneakpeek' || etapa === 'sneakpeek-whatsapp') {
+    const link = String(url ?? '').trim()
+    if (etapa === 'sneakpeek-whatsapp' && !/^https?:\/\//i.test(link)) return NextResponse.json({ error: 'Cola o link do sneak peek (https://…).' }, { status: 400 })
+    const { data: pt } = await sb.from('portais').select('id, settings').eq('referencia', referencia).maybeSingle()
+    if (!pt) return NextResponse.json({ error: 'Este casamento não tem portal.' }, { status: 404 })
+    const hojeSp = new Date().toISOString().slice(0, 10)
+    const novo = etapa === 'sem-sneakpeek'
+      ? { sneakpeek_dispensado: true }
+      : { sneakpeek_url: link, sneakpeek_enviada: hojeSp }
+    await sb.from('portais').update({ settings: { ...(pt.settings ?? {}), ...novo } }).eq('id', pt.id)
+    await registarFoto(referencia, etapa === 'sem-sneakpeek' ? 'Sem sneak peek' : 'Sneak peek enviado (WhatsApp)', 'RL')
     return NextResponse.json({ ok: true })
   }
 
