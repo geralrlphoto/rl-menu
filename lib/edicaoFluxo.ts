@@ -39,8 +39,8 @@ export const FASES_EDICAO: Fase[] = [
   /* 02 */
   {
     titulo: 'Edição', sub: 'no Painel do Editor',
-    // Cor e Áudio ficam por baixo da Montagem; o caminho segue da Montagem para a Revisão
-    fluxo: { seq: { 0: [1] }, baixo: { 1: [2], 2: [3] }, saida: [1] },
+    // Teaser por cima da fase; Cor e Áudio por baixo da Montagem; o caminho segue da Montagem para a Revisão
+    fluxo: { acima: [0], baixo: { 1: [2], 2: [3] }, saida: [1] },
     passos: [
       {
         id: '1-0', titulo: 'Teaser / Trailer', sub: 'primeira peça',

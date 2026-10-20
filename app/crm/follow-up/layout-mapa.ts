@@ -51,7 +51,8 @@ export function calcularMapa(fases: Fase[]): Mapa {
     }
     const pos = F?.pos ?? {}
     const abaixo = Array.isArray(F?.abaixo) ? F!.abaixo : []
-    const fora = new Set<number>([...Object.values(F?.baixo ?? {}).flat(), ...Object.keys(pos).map(Number), ...abaixo])
+    const acima = F?.acima ?? []
+    const fora = new Set<number>([...Object.values(F?.baixo ?? {}).flat(), ...Object.keys(pos).map(Number), ...abaixo, ...acima])
     const cols = Math.max(0, ...col.filter((_, j) => !fora.has(j)), ...Object.values(pos).map(v => v[0])) + 1
     const nodes: No[] = []
     for (let c = 0; c < cols; c++) {
@@ -71,12 +72,17 @@ export function calcularMapa(fases: Fase[]): Mapa {
     abaixo.forEach((j, r) => {
       nodes[j] = { id: f.passos[j].id, fase: i, passo: f.passos[j], x, y: PH / 2 + 40 + r * (KH + 40), w: PW, h: KH }
     })
+    // e por cima do cartão da fase
+    acima.forEach((j, r) => {
+      nodes[j] = { id: f.passos[j].id, fase: i, passo: f.passos[j], x, y: -PH / 2 - 40 - KH - r * (KH + 40), w: PW, h: KH }
+    })
     nodes.forEach(nd => nd && nos.push(nd))
     porFase[i] = nodes
 
     if (F) {
       nodes.forEach((nd, j) => { if (col[j] === 0 && !fora.has(j)) lig.push({ a: ph, b: nd, t: 'lead' }) })
       abaixo.forEach((j, r) => lig.push({ a: r ? nodes[abaixo[r - 1]] : ph, b: nodes[j], t: r ? 'seq' : 'lead' }))
+      acima.forEach((j, r) => lig.push({ a: r ? nodes[acima[r - 1]] : ph, b: nodes[j], t: r ? 'seq' : 'lead' }))
       for (const a in F.seq ?? {}) F.seq![+a].forEach(b => lig.push({ a: nodes[+a], b: nodes[b], t: 'seq' }))
       for (const a in F.baixo ?? {}) F.baixo![+a].forEach(b => lig.push({ a: nodes[+a], b: nodes[b], t: 'baixo' }))
       prev = F.saida.map(j => nodes[j])
