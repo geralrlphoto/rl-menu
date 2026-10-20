@@ -12,9 +12,31 @@ import Mostrador from '@/app/_marcas/Mostrador'
 
 export type ItemRoda = { id: string; label: string; aviso?: boolean }
 
-const PASSO = 23          // graus entre secções
-const LARG = 260          // largura de cada cartão
-const ALT = 76            // altura de cada cartão
+const PASSO = 34          // graus entre secções (vê-se a do meio e duas de cada lado)
+const LARG = 290          // largura de cada cartão
+const ALT = 168           // altura de cada cartão
+
+// Uma fotografia por secção (imagens do próprio site)
+const IMAGENS: Record<string, string> = {
+  evento: '/eventos-hero-2026.webp',
+  contrato: '/portal-noivos-login.webp',
+  financeiro: '/crm-hero.webp',
+  entregas: '/portal-defaults/gallery-1.webp',
+  comunicacao: '/portal-defaults/gallery-3.webp',
+  equipa: '/boas-vindas-camera.webp',
+  agenda: '/prewedding-hero.webp',
+  dados: '/portal-defaults/gallery-2.webp',
+}
+const SUBS: Record<string, string> = {
+  evento: 'Serviços, briefing, relatório',
+  contrato: 'CPS, portal e contratos',
+  financeiro: 'Proposta, valores, pagamentos',
+  entregas: 'Fotos, vídeo e álbum',
+  comunicacao: 'Mensagens e envios',
+  equipa: 'Equipa e tarefas',
+  agenda: 'Pré-wedding e notas',
+  dados: 'Contactos, NIF, morada',
+}
 
 export default function RodaFicha({ itens, ativo, onEscolher, topo }: {
   itens: ItemRoda[]
@@ -55,7 +77,11 @@ export default function RodaFicha({ itens, ativo, onEscolher, topo }: {
         const y = Math.sin(t) * rC
         const longe = Math.abs(graus) / 84
         const vis = Math.max(0, Math.min(1, (1 - longe) / .35))
-        el.style.transform = `translate(${x.toFixed(1)}px, ${(y - ALT / 2).toFixed(1)}px) rotate(${(graus * .35).toFixed(2)}deg)`
+        // o do meio fica maior e aceso; os outros encolhem e inclinam com a roda
+        const foco = Math.max(0, 1 - Math.abs(graus) / PASSO)
+        const esc = .74 + .26 * foco
+        el.style.transform = `translate(${x.toFixed(1)}px, ${(y - ALT / 2).toFixed(1)}px) rotate(${(graus * .3).toFixed(2)}deg) scale(${esc.toFixed(3)})`
+        el.style.zIndex = String(Math.round(foco * 10))
         el.style.opacity = vis.toFixed(3)
         el.style.visibility = vis < .02 ? 'hidden' : 'visible'
         el.style.pointerEvents = vis > .4 ? 'auto' : 'none'
@@ -96,12 +122,26 @@ export default function RodaFicha({ itens, ativo, onEscolher, topo }: {
         style={{ width: 'var(--roda-larg)' }} onWheel={onWheel} aria-label="Secções da ficha">
         <style>{`
           @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300&display=swap');
-          .rf-cartao { transition: border-color .4s ease, box-shadow .4s ease, background-color .4s ease, color .3s ease; }
-          .rf-num { color: transparent; -webkit-text-stroke: 1px rgba(216,190,147,.45); transition: color .4s ease, -webkit-text-stroke-color .4s ease; }
-          .rf-cartao[data-ativo="true"] { border-color: rgba(216,190,147,.6); background-color: rgba(22,19,14,.92);
-            box-shadow: 0 0 46px -16px rgba(216,190,147,.7), inset 0 1px 0 rgba(255,255,255,.06); color: #fff; }
+          .rf-cartao { transition: border-color .4s ease, box-shadow .4s ease; }
+          .rf-foto { filter: grayscale(.9) brightness(.5); transform: scale(1.02); transition: filter .7s ease, transform 1.4s cubic-bezier(.19,1,.22,1); }
+          .rf-tinta { background: linear-gradient(135deg, rgba(216,190,147,.35), transparent 55%); opacity: 0; transition: opacity .6s ease; mix-blend-mode: soft-light; }
+          .rf-num { color: transparent; -webkit-text-stroke: 1px rgba(216,190,147,.5); transition: color .4s ease, -webkit-text-stroke-color .4s ease; }
+          .rf-sub { color: rgba(255,255,255,.4); transition: color .3s ease, letter-spacing .4s ease; }
+          .rf-seta { color: #d8be93; border: 1px solid rgba(216,190,147,.35); background: rgba(0,0,0,.4); transition: all .35s cubic-bezier(.19,1,.22,1); }
+          .rf-linha { width: 0; background: linear-gradient(90deg, #d8be93, transparent); transition: width .6s cubic-bezier(.19,1,.22,1); }
+          .rf-brilho { background: linear-gradient(110deg, transparent 30%, rgba(216,190,147,.18) 50%, transparent 70%); transform: translateX(-120%); transition: transform 1s ease; pointer-events: none; }
+          .rf-cartao[data-ativo="true"], .rf-cartao:hover { border-color: rgba(216,190,147,.6);
+            box-shadow: 0 0 56px -14px rgba(216,190,147,.7), inset 0 1px 0 rgba(255,255,255,.08); }
+          .rf-cartao[data-ativo="true"] .rf-foto, .rf-cartao:hover .rf-foto { filter: grayscale(0) brightness(.78) saturate(1.1); transform: scale(1.09); }
+          .rf-cartao[data-ativo="true"] .rf-tinta { opacity: 1; }
           .rf-cartao[data-ativo="true"] .rf-num, .rf-cartao:hover .rf-num { color: #d8be93; -webkit-text-stroke-color: #d8be93; }
-          .rf-cartao:hover { border-color: rgba(216,190,147,.4); color: #fff; }
+          .rf-cartao[data-ativo="true"] .rf-sub, .rf-cartao:hover .rf-sub { color: #d8be93; letter-spacing: .22em; }
+          .rf-cartao[data-ativo="true"] .rf-linha, .rf-cartao:hover .rf-linha { width: 100%; }
+          .rf-cartao[data-ativo="true"] .rf-seta, .rf-cartao:hover .rf-seta { background: #d8be93; color: #0b0b0b; transform: rotate(-45deg); }
+          .rf-cartao[data-ativo="true"] .rf-brilho { animation: rfBrilho 3.2s ease-in-out infinite; }
+          .rf-cartao:hover .rf-brilho { transform: translateX(120%); }
+          @keyframes rfBrilho { 0%, 55% { transform: translateX(-120%); } 85%, 100% { transform: translateX(120%); } }
+          @media (prefers-reduced-motion: reduce) { .rf-foto, .rf-brilho, .rf-linha { transition: none; animation: none !important; } }
         `}</style>
         <div className="pointer-events-none absolute left-[-160px] top-1/2 -translate-y-1/2 w-[520px] h-[520px] rounded-full blur-[90px]"
           style={{ background: 'radial-gradient(closest-side, rgba(216,190,147,.18), transparent)' }} />
@@ -111,11 +151,20 @@ export default function RodaFicha({ itens, ativo, onEscolher, topo }: {
             className="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ width: 600, height: 600 }} />
           {itens.map((it, i) => (
             <button key={it.id} ref={el => { cartoes.current[i] = el }} type="button" onClick={() => onEscolher(it.id)}
-              className="rf-cartao absolute left-0 top-0 flex items-center rounded-[20px] border border-white/[0.1] bg-[#0e0e0e]/80 backdrop-blur-md px-5 gap-4 text-left text-white/55"
+              className="rf-cartao absolute left-0 top-0 overflow-hidden rounded-[22px] border border-white/[0.1] bg-[#0e0e0e] text-left"
               style={{ width: LARG, height: ALT, transformOrigin: '0 50%', opacity: 0 }}>
-              <span className="rf-num font-bold text-[36px] leading-none tracking-tight">{String(i + 1).padStart(2, '0')}</span>
-              <span className="text-[17px] font-semibold leading-tight flex-1 min-w-0">{it.label}</span>
-              {it.aviso && <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" style={{ boxShadow: '0 0 8px #f87171' }} />}
+              <span className="rf-foto absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${IMAGENS[it.id] ?? '/portal-defaults/hero-default.webp'})` }} />
+              <span className="absolute inset-0 bg-gradient-to-t from-[#0b0b0b] via-[#0b0b0b]/60 to-[#0b0b0b]/5" />
+              <span className="rf-tinta absolute inset-0" />
+              <span className="rf-brilho absolute inset-0" />
+              <span className="rf-num absolute top-3 left-4 font-bold text-[44px] leading-none tracking-tight">{String(i + 1).padStart(2, '0')}</span>
+              <span className="rf-seta absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-[16px]">→</span>
+              {it.aviso && <span className="absolute top-5 right-16 w-2.5 h-2.5 rounded-full bg-red-400" style={{ boxShadow: '0 0 10px #f87171' }} />}
+              <span className="absolute left-4 right-4 bottom-4 block">
+                <span className="block text-[21px] font-semibold leading-tight text-white">{it.label}</span>
+                <span className="rf-sub block text-[11px] tracking-[0.16em] uppercase mt-1">{SUBS[it.id] ?? 'Abrir'}</span>
+              </span>
+              <span className="rf-linha absolute left-0 bottom-0 h-[2px]" />
             </button>
           ))}
         </div>
