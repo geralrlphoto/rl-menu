@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa, cabecalhoInterno } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
+import { aplicarEstadoVideo, estadoDaFase, ESTADOS_DO_EDITOR } from '@/lib/videoEstado'
 
 function db() {
   return createClient(
@@ -9,16 +10,7 @@ function db() {
   )
 }
 
-// Estado de edição do editor → "ESTADO DO VIDEO" do portal dos noivos.
-// Valores: Aguardar | Em Edição | Em Revisão | Finalizado | Entregue | S/SERVIÇO.
-function stageToVideoEstado(stage: string): string {
-  const s = (stage || '').trim()
-  if (s === '' || s === 'Novo' || s === 'Novo Projeto') return 'Aguardar'
-  if (s === 'Entregue') return 'Entregue'
-  if (s === 'Finalizado') return 'Finalizado'
-  if (s === 'Para Revisão' || s === 'Correções') return 'Em Revisão'
-  return 'Em Edição'
-}
+// Fase do editor → estado do vídeo: ver estadoDaFase em lib/videoEstado.ts
 
 // POST: chamado quando o editor muda o estado do vídeo em /novos-projetos.
 //   1) Sincroniza video_estado no portal dos noivos (Notion + Supabase).
@@ -34,38 +26,16 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = db()
-  const videoEstado = stageToVideoEstado(stage)
-
-  // 1) Resolver o id do evento (Notion) por referência OU evento_id.
-  //    Sincroniza SEMPRE — sem exceções — para o estado do vídeo no portal
-  //    dos noivos refletir exatamente o estado de edição do editor.
-  let eventId: string | null = evento_id || null
-  if (!eventId && referencia) {
-    for (const t of ['eventos_2026', 'eventos_2027']) {
-      const { data } = await supabase.from(t).select('notion_id, id').eq('referencia', referencia).maybeSingle()
-      if (data) { eventId = (data as any).notion_id || (data as any).id; break }
-    }
+  const videoEstado = estadoDaFase(stage)
+  // Finalizado e Entregue são da RL (Departamento de Edição de Vídeo); o editor só põe Em Edição / Em Revisão
+  if (!ehAdmin(req) && !ESTADOS_DO_EDITOR.includes(videoEstado)) {
+    return NextResponse.json({ error: 'Finalizado e Entregue são definidos pela RL.' }, { status: 403 })
   }
 
-  // 2) Sincroniza via endpoint canónico (escreve Notion + eventos_YYYY + evento_equipa).
-  //    Usa a origem do pedido para funcionar tanto em dev como em produção.
-  let synced = false
-  if (eventId) {
-    try {
-      const res = await fetch(`${req.nextUrl.origin}/api/eventos-notion/${eventId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', ...cabecalhoInterno() },
-        body: JSON.stringify({ video_estado: videoEstado }),
-      })
-      synced = res.ok
-    } catch { /* tenta fallback abaixo */ }
-  }
-  // Fallback: garante a escrita em Supabase por referência (caso o sync acima falhe).
-  if (!synced && referencia) {
-    for (const t of ['eventos_2026', 'eventos_2027']) {
-      await supabase.from(t).update({ video_estado: videoEstado }).eq('referencia', referencia)
-    }
-  }
+  // 1-2) Evento, Notion, portal dos noivos e fase no Painel do Editor (lib/videoEstado.ts)
+  const { ok: synced, eventId } = await aplicarEstadoVideo(req.nextUrl.origin, {
+    referencia: referencia ?? null, evento_id: evento_id ?? null, estado: videoEstado, freelancerId: freelancer ?? null,
+  })
 
   // 3) Regista a mudança + notifica o admin (sino).
   const changedAt = new Date().toISOString()

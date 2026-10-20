@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { buildTicketEditorHtml, prazoVideo } from '@/lib/ticket-editor-html'
+import { aplicarEstadoVideo } from '@/lib/videoEstado'
 
 function db() {
   return createClient(
@@ -424,7 +425,13 @@ export async function PATCH(req: NextRequest) {
       const newEditorVideo: string[] = Array.isArray(editor_video) ? editor_video : (editor_video ? [editor_video] : [])
       const added = newEditorVideo.filter(n => !oldEditorVideo.includes(n))
       await notifyAddedMembers(supabase, added, 'Editor de Vídeo', local ?? null, data_casamento ?? null, referencia ?? null)
-      await enviarTicketEditor(supabase, added, referencia ?? existing?.referencia ?? null, data_casamento ?? null, local ?? null)
+      const refEd = referencia ?? existing?.referencia ?? null
+      await enviarTicketEditor(supabase, added, refEd, data_casamento ?? null, local ?? null)
+      // Editor nomeado: o vídeo fica em Aguardar (download bloqueado até o editor pôr Em Edição)
+      if (added.length && refEd) {
+        const { data: ev } = await supabase.from('eventos_2026').select('video_estado').eq('referencia', refEd).maybeSingle()
+        if (!ev?.video_estado) await aplicarEstadoVideo(req.nextUrl.origin, { referencia: refEd, estado: 'Aguardar' })
+      }
     }
   } catch (err) {
     // Não falha o upsert se a tabela freelancer_notificacoes não existir

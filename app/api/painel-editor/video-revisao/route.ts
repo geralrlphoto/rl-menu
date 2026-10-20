@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 import { buildTicketAprovacaoHtml } from '@/lib/ticket-editor-html'
+import { aplicarEstadoVideo } from '@/lib/videoEstado'
 
 function db() {
   return createClient(
@@ -57,6 +58,9 @@ export async function POST(req: NextRequest) {
       lida: false,
     })
   }
+
+  // Enviar o link de revisão põe o vídeo Em Revisão (portal, departamento e painel)
+  await aplicarEstadoVideo(req.nextUrl.origin, { referencia, evento_id: evento_id ?? null, estado: 'Em Revisão', freelancerId: freelancer ?? null })
 
   return NextResponse.json({ ok: true, status: 'Em Revisão' })
 }
@@ -118,6 +122,12 @@ export async function PATCH(req: NextRequest) {
       }
     }
   }
+
+  // Aprovar = Finalizado; pedir alterações = volta a Em Edição (o editor reenvia e passa a Em Revisão)
+  await aplicarEstadoVideo(req.nextUrl.origin, {
+    referencia, evento_id: cur.evento_id ?? null,
+    estado: status === 'Aprovado' ? 'Finalizado' : 'Em Edição', freelancerId: cur.freelancer_id ?? null,
+  })
 
   return NextResponse.json({ ok: true, status })
 }

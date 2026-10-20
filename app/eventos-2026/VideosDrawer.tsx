@@ -250,30 +250,9 @@ Actualiza a ficha do evento e o portal dos noivos.`)) return
 
           <div className="flex items-center gap-1.5 shrink-0">
             {estado === 'curso' && (
-              <>
-                <button
-                  onClick={() => alterarEstado(e, emRevisao ? 'Em Edição' : 'Em Revisão')}
-                  disabled={gravando}
-                  title={emRevisao ? 'Já revi — voltar a Em Edição' : 'Marcar Em Revisão (falta eu rever o vídeo)'}
-                  aria-label={emRevisao ? 'Voltar a Em Edição' : 'Marcar Em Revisão'}
-                  className={btn}
-                  style={{
-                    borderColor: emRevisao ? `${VIOLETA}99` : 'rgba(255,255,255,0.10)',
-                    background: emRevisao ? `${VIOLETA}1f` : 'rgba(0,0,0,0.4)',
-                    color: emRevisao ? VIOLETA : 'rgba(255,255,255,0.35)',
-                  }}>
-                  {gravando ? '…' : '👁'}
-                </button>
-                <button
-                  onClick={() => marcarEntregue(e)}
-                  disabled={gravando}
-                  title="Marcar vídeo como Entregue (atualiza a ficha do evento e o portal dos noivos)"
-                  aria-label="Marcar vídeo como Entregue"
-                  className={`${btn} hover:brightness-125`}
-                  style={{ borderColor: `${VERDE}55`, background: `${VERDE}14`, color: VERDE }}>
-                  {gravando ? '…' : '✓'}
-                </button>
-              </>
+              <Link href="/edicao-video" title="O estado do vídeo é gerido no Departamento de Edição de Vídeo"
+                className={`${btn} hover:brightness-125`}
+                style={{ borderColor: 'rgba(201,168,76,0.4)', background: 'rgba(201,168,76,0.08)', color: '#C9A84C' }}>↗</Link>
             )}
             <button
               onClick={() => ocultar(e.id)}

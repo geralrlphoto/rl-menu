@@ -24,6 +24,8 @@ type Projeto = {
   fase: Fase | 'Sem registo'; editores: string[]; editorIds: (string | null)[]
   prazo: string; diasPrazo: number; portalId: string | null; entregueEm: string | null
   entregas: { teaser: boolean; sde: boolean; filme: boolean; prewedding: boolean }
+  filmeUrl: string | null
+  revisao: { link: string | null; status: string | null; feedback: string | null } | null
 }
 
 const fmt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
@@ -49,6 +51,56 @@ export default function EdicaoVideoPage() {
       body: JSON.stringify({ referencia: p.referencia, data_casamento: p.data, local: p.local, editor_video: [nome] }),
     }).catch(() => {})
     setAGravar(null)
+    carregar()
+  }
+
+  // Revisão: aprovar (→ Finalizado, Ticket de Aprovação) ou pedir alterações (→ Em Edição)
+  const decidir = async (p: Projeto, status: 'Aprovado' | 'Requer Alterações') => {
+    let feedback: string | null = null
+    if (status === 'Requer Alterações') {
+      feedback = window.prompt('O que é preciso alterar? (vai para o editor)')?.trim() || null
+      if (!feedback) return
+    } else {
+      if (!window.confirm(`Aprovar o filme de ${p.cliente || p.referencia}? O editor recebe o Ticket de Aprovação.`)) return
+      feedback = window.prompt('Notas para o editor (opcional)')?.trim() || null
+    }
+    setAGravar(p.id)
+    const r = await fetch('/api/painel-editor/video-revisao', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, status, feedback }),
+    }).catch(() => null)
+    setAGravar(null)
+    if (!r?.ok) alert('Não foi possível guardar. Tenta outra vez.')
+    carregar()
+  }
+
+  // Sem link de revisão (casos antigos): a RL marca Finalizado diretamente
+  const finalizarSemLink = async (p: Projeto) => {
+    if (!window.confirm(`Marcar o filme de ${p.cliente || p.referencia} como Finalizado (aprovado)?`)) return
+    setAGravar(p.id)
+    const r = await fetch('/api/painel-editor/sync-video-estado', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, stage: 'Finalizado', data_casamento: p.data, local: p.local }),
+    }).catch(() => null)
+    setAGravar(null)
+    if (!r?.ok) alert('Não foi possível guardar. Tenta outra vez.')
+    carregar()
+  }
+
+  // Entrega: envia o Wedding Film aos noivos (email + portal) e põe Entregue
+  const [links, setLinks] = useState<Record<number, string>>({})
+  const entregar = async (p: Projeto) => {
+    const url = (links[p.id] ?? p.filmeUrl ?? '').trim()
+    if (!/^https?:\/\//i.test(url)) { alert('Cola o link do filme (Vimeo ou YouTube).'); return }
+    if (!window.confirm(`Enviar o filme a ${p.cliente || p.referencia}? Os noivos recebem o email e o vídeo fica Entregue.`)) return
+    setAGravar(p.id)
+    const r = await fetch('/api/edicao-video/entregar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, url }),
+    }).catch(() => null)
+    const d = r ? await r.json().catch(() => ({})) : {}
+    setAGravar(null)
+    if (!r?.ok) { alert((d as any).error || 'Não foi possível enviar.'); return }
     carregar()
   }
 
@@ -141,7 +193,7 @@ export default function EdicaoVideoPage() {
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Quadro de trabalho</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Casamentos em edição</h2>
-          <p className="mt-2 text-sm text-white/45">Casamentos com vídeo já realizados. A fase vem do Painel do Editor; o prazo conta 180 dias úteis desde o casamento.</p>
+          <p className="mt-2 text-sm text-white/45">O editor põe Em Edição (desbloqueia o download) e Em Revisão (envia o link). A RL aprova (Finalizado) e entrega o filme aos noivos (Entregue). O prazo conta 180 dias úteis desde o casamento.</p>
           <div className="mt-6 flex gap-4 overflow-x-auto pb-4 snap-x">
             {FASES.map(f => {
               const lista = porFase.get(f) ?? []
@@ -182,6 +234,39 @@ export default function EdicaoVideoPage() {
                           </span>
                         ))}
                       </div>
+                      {f === 'Em Revisão' && (
+                        <div className="flex flex-col gap-2 rounded-xl border border-[#93c5fd]/25 bg-[#93c5fd]/[0.06] p-3">
+                          {p.revisao?.link
+                            ? <a href={p.revisao.link} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-[#93c5fd] hover:underline">▶ Ver a versão para revisão</a>
+                            : <>
+                                <p className="text-[11px] text-white/45">O editor ainda não enviou o link de revisão.</p>
+                                <button type="button" disabled={aGravar === p.id} onClick={() => finalizarSemLink(p)}
+                                  className="rounded-full border border-[#4ade80]/40 bg-[#4ade80]/[0.08] px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">✓ Marcar Finalizado</button>
+                              </>}
+                          {p.revisao?.status === 'Requer Alterações' && p.revisao.feedback && (
+                            <p className="text-[11px] text-amber-300/80 whitespace-pre-line">Pedido: {p.revisao.feedback}</p>
+                          )}
+                          {p.revisao?.link && (
+                            <div className="flex gap-2">
+                              <button type="button" disabled={aGravar === p.id} onClick={() => decidir(p, 'Aprovado')}
+                                className="flex-1 rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">✓ Aprovar</button>
+                              <button type="button" disabled={aGravar === p.id} onClick={() => decidir(p, 'Requer Alterações')}
+                                className="flex-1 rounded-full border border-amber-300/40 bg-amber-300/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-amber-300 hover:bg-amber-300/20 disabled:opacity-40">✎ Alterações</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {f === 'Finalizado' && (
+                        <div className="flex flex-col gap-2 rounded-xl border border-[#C9A84C]/30 bg-[#C9A84C]/[0.06] p-3">
+                          <input type="url" placeholder="Link do filme (Vimeo / YouTube)" defaultValue={p.filmeUrl ?? ''}
+                            onChange={e => setLinks(l => ({ ...l, [p.id]: e.target.value }))}
+                            className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                          <button type="button" disabled={aGravar === p.id} onClick={() => entregar(p)}
+                            className="rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#C9A84C]/30 disabled:opacity-40">
+                            {aGravar === p.id ? 'A enviar…' : 'Enviar filme aos noivos →'}
+                          </button>
+                        </div>
+                      )}
                       <div className="flex gap-3 text-[11px] font-semibold tracking-[0.15em] uppercase">
                         <Link href={`/eventos-2026/${p.fichaId}`} className="text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>
                         {p.portalId && p.referencia && <Link href={`/portal-cliente/ref/${encodeURIComponent(p.referencia)}`} className="text-white/45 hover:text-white">Portal →</Link>}

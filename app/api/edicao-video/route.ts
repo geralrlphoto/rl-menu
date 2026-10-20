@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
     refs.length ? sb.from('evento_equipa').select('evento_id, referencia, editor_video').in('referencia', refs) : Promise.resolve({ data: [] as any[] }),
     ids.length ? sb.from('evento_equipa').select('evento_id, referencia, editor_video').in('evento_id', ids) : Promise.resolve({ data: [] as any[] }),
     refs.length
-      ? sb.from('portais').select('id, referencia, s:settings->teaser_enviada, w:settings->wedding_film_enviada, d:settings->same_day_edit_enviada, p:settings->video_prewedding_enviada').in('referencia', refs)
+      ? sb.from('portais').select('id, referencia, s:settings->teaser_enviada, w:settings->wedding_film_enviada, d:settings->same_day_edit_enviada, p:settings->video_prewedding_enviada, u:settings->wedding_film_url').in('referencia', refs)
       : Promise.resolve({ data: [] as any[] }),
   ])
 
@@ -72,6 +72,11 @@ export async function GET(req: NextRequest) {
     if (r.referencia) editorPorRef.set(r.referencia, ed)
     if (r.evento_id) editorPorId.set(String(r.evento_id), ed)
   }
+  // revisões enviadas pelos editores (link, estado, notas)
+  const { data: revs } = refs.length
+    ? await sb.from('video_revisoes').select('referencia, link, status, feedback').in('referencia', refs)
+    : { data: [] as any[] }
+  const revPorRef = new Map((revs ?? []).map(r => [r.referencia, r]))
   const portalPorRef = new Map<string, any>()
   for (const p of ports ?? []) portalPorRef.set(p.referencia, p)
 
@@ -117,6 +122,8 @@ export async function GET(req: NextRequest) {
       fase: faseFinal, editores, editorIds: editores.map(n => editoresPorNome.get(norm(n))?.id ?? null),
       prazo, diasPrazo, entregas, portalId: p?.id ?? null,
       entregueEm: typeof p?.w === 'string' ? p.w.slice(0, 10) : null,
+      filmeUrl: typeof p?.u === 'string' ? p.u : null,
+      revisao: revPorRef.get(e.referencia ?? '') ?? null,
     }
   })
   // Entregues antigos saem do quadro (ficam só os recentes)

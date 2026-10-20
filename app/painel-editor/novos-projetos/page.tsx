@@ -408,9 +408,10 @@ const PROJECTS: Project[] = [
 
 // Helpers
 const WORKFLOW_STAGES: WorkflowStage[] = ['Novo Projeto','Em Edição','Color Grading','Trailer em Produção','Áudio / Sincronização','Para Revisão','Correções','Finalizado','Entregue']
-// Estados selecionáveis pelo editor no card (Status do Vídeo). "Entregue" não
-// está aqui — é definido fora do painel do editor.
-const EDITOR_STAGE_OPTIONS: WorkflowStage[] = ['Novo Projeto','Em Edição','Para Revisão','Finalizado']
+// Estados selecionáveis pelo editor no card (Status do Vídeo). Finalizado e
+// Entregue são da RL (Departamento de Edição de Vídeo: aprovar e entregar o filme).
+// Em Edição desbloqueia o download; Para Revisão põe o vídeo Em Revisão.
+const EDITOR_STAGE_OPTIONS: WorkflowStage[] = ['Novo Projeto','Em Edição','Para Revisão']
 // Ordem de progressão: o editor só avança. Estados com rank inferior ao atual
 // ficam bloqueados (não se pode voltar atrás). Mapeia também estados antigos.
 function stageRank(s: string): number {
@@ -2064,6 +2065,9 @@ function ProjectCard({
                     },
                     {
                       label: p.stage === 'Entregue' ? 'Reverter Entrega' : 'Marcar Entrega', icon: '✓',
+                      // a entrega é feita pela RL no Departamento de Edição de Vídeo
+                      disabled: !isAdmin,
+                      disabledReason: 'A entrega é feita pela RL',
                       action: () => {
                         if (p.stage === 'Entregue') {
                           if (window.confirm('Reverter a entrega? O timestamp será limpo.')) {
@@ -2087,14 +2091,17 @@ function ProjectCard({
                     },
                     {
                       label: 'Abrir Material Original', icon: '↗',
-                      disabled: !p.clientLink,
-                      disabledReason: 'Sem link de material',
+                      // o download só abre com o vídeo Em Edição
+                      disabled: !p.clientLink || (p.stage === 'Novo Projeto' && !isAdmin),
+                      disabledReason: !p.clientLink ? 'Sem link de material' : 'Põe o estado em Em Edição',
                       action: () => {
                         if (p.clientLink) window.open(p.clientLink, '_blank', 'noopener')
                       },
                     },
                     {
                       label: 'Download Material', icon: '↓',
+                      disabled: p.stage === 'Novo Projeto' && !isAdmin,
+                      disabledReason: 'Põe o estado em Em Edição',
                       action: () => {
                         onChange({ downloadStatus: 'Em download', ultimoDownload: new Date().toLocaleDateString('pt-PT') })
                         toast('Download iniciado')
@@ -2172,14 +2179,14 @@ function ProjectCard({
             <TrabalhoRLSection
               // O link guardado pelo admin (clientLink) vem primeiro; seguem-se os dos relatórios da equipa
               downloads={Array.from(new Set([p.clientLink, ...(p.rlDownloads ?? [])].map(u => (u ?? '').trim()).filter(Boolean)))}
-              relatorios={p.rlRelatorios ?? []} locked={p.stage === 'Novo Projeto'}
+              relatorios={p.rlRelatorios ?? []} locked={p.stage === 'Novo Projeto' && !isAdmin}
               isAdmin={isAdmin} linkAdmin={p.clientLink}
               onGuardarLink={url => onChange({ clientLink: url } as any)} />
           )}
 
           {/* Workflow */}
           <Section title="Status do Vídeo">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {EDITOR_STAGE_OPTIONS.map(s => {
                 const active = p.stage === s
                 // Não se pode recuar: estados antes do atual ficam bloqueados.
@@ -2202,6 +2209,11 @@ function ProjectCard({
                 )
               })}
             </div>
+            <p className="mt-2 text-[11px] text-white/35">
+              {p.stage === 'Finalizado' || p.stage === 'Entregue'
+                ? `Vídeo ${p.stage === 'Entregue' ? 'entregue' : 'aprovado pela RL'}.`
+                : 'Em Edição desbloqueia o download. Ao enviar o link de revisão, o vídeo passa a Em Revisão. Finalizado e Entregue são definidos pela RL.'}
+            </p>
           </Section>
 
           {/* Revisão do Vídeo (Frame.io) — só para trabalhos reais da RL */}

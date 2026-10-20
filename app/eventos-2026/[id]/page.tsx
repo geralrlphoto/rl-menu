@@ -1262,12 +1262,13 @@ function PortalEstadoRow({ label, dateStr, estado, referencia, stateKey, onSaved
   )
 }
 
-function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, href, referencia }: {
+function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, href, referencia, gerido }: {
   label: string; dateStr?: string | null
   estado: string | null; options: string[]; field: string; eventId: string
   onSaved: (field: string, val: any) => void
   href?: string
   referencia?: string | null
+  gerido?: { href: string; titulo: string }   // estado mudado noutro sítio: aqui só se mostra
 }) {
   const val = estado ?? options[0]
   const cfg = estadoCfg(val)
@@ -1302,6 +1303,12 @@ function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, h
       ) : (
         <span className={`text-[10px] tracking-widest uppercase leading-tight ${cfg.lbl}`}>{label}</span>
       )}
+      {gerido ? (
+        <Link href={gerido.href} title={gerido.titulo}
+          className={`border rounded-lg px-3 py-1.5 text-xs w-full flex items-center justify-between gap-2 hover:brightness-125 ${cfg.sel}`}>
+          <span>{val}</span><span className={`text-[10px] ${cfg.arr}`}>↗</span>
+        </Link>
+      ) : (
       <div className="relative">
         <select value={val} onChange={e => onChange(e.target.value)}
           className={`appearance-none border rounded-lg px-3 py-1.5 text-xs focus:outline-none transition-colors cursor-pointer pr-6 w-full ${cfg.sel}`}>
@@ -1309,6 +1316,7 @@ function EstadoRow({ label, dateStr, estado, options, field, eventId, onSaved, h
         </select>
         <span className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] ${cfg.arr}`}>▾</span>
       </div>
+      )}
       <span className={`text-sm font-medium text-right ${dateStr ? cfg.date : 'text-white/10'}`}>
         {dateStr ? formatDate(dateStr) : '—'}
       </span>
@@ -5113,7 +5121,8 @@ export default function EventoPage() {
             {prazoVideo && (
               <EstadoRow label="Prazo Entrega Vídeo (180 dias úteis)" dateStr={prazoVideo}
                 estado={e.video_estado} options={['Aguardar','Em Edição','Em Revisão','Finalizado','Entregue','S/SERVIÇO']}
-                field="video_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia} />
+                field="video_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia}
+                gerido={{ href: '/edicao-video', titulo: 'O estado do vídeo é gerido no Departamento de Edição de Vídeo' }} />
             )}
             <EstadoRow label="Fotos em Edição"
               dateStr={fotosDataEntrada ? addWorkingDays(fotosDataEntrada, 30) : null}
@@ -5324,10 +5333,14 @@ export default function EventoPage() {
         <div className="print:hidden rounded-2xl p-6 flex flex-col gap-4"
           style={{ background: 'rgba(180,140,40,0.04)', border: '1px solid rgba(180,140,40,0.2)', boxShadow: '0 0 24px rgba(180,140,40,0.07), 0 0 6px rgba(180,140,40,0.05)' }}>
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(200,165,80,0.75)' }}>Ações Vídeo</h2>
+          <p className="text-[11px] text-white/40">
+            O Wedding Film é aprovado e entregue aos noivos no{' '}
+            <Link href="/edicao-video" className="text-[#C9A84C]/80 hover:text-[#C9A84C] underline-offset-2 hover:underline">Departamento de Edição de Vídeo ↗</Link>
+            {weddingFilmEnviada ? ` · entregue a ${weddingFilmEnviada}` : ''}.
+          </p>
           <div className="flex flex-col gap-4">
             {[
               { label: 'Vídeo Pré-Wedding', state: videoPreWeddingEnviada, setState: setVideoPreWeddingEnviada, key: 'video_prewedding_enviada', urlKey: 'video_prewedding', api: '/api/send-video-prewedding-email' },
-              { label: 'Wedding Film', state: weddingFilmEnviada, setState: setWeddingFilmEnviada, key: 'wedding_film_enviada', urlKey: 'wedding_film', api: '/api/send-wedding-film-email', prazoUteis: 180 },
               { label: 'Same Day Edit', state: sameDayEditEnviada, setState: setSameDayEditEnviada, key: 'same_day_edit_enviada', urlKey: 'same_day_edit', api: '/api/send-same-day-edit-email' },
               { label: 'Teaser / Trailer', state: teaserEnviada, setState: setTeaserEnviada, key: 'teaser_enviada', urlKey: 'teaser', api: '/api/send-teaser-email' },
             ].map(({ label, state, setState, key, urlKey, api, prazoUteis }: { label: string; state: string | null; setState: (v: string | null) => void; key: string; urlKey: string; api: string; prazoUteis?: number }) => {
