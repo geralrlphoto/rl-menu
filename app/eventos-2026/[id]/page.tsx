@@ -631,7 +631,7 @@ function EditMultiField({ label, value, field, eventId, referencia, onSaved }: {
 }
 
 // ─── Equipa field — salva no Supabase, NÃO no Notion ──────────────────────────
-function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options, onChanged, unavailableNames, syncValue }: {
+function EditEquipaField({ label, field, multi, eventoId, referencia, local, dataCasamento, initialValue, options, onChanged, unavailableNames, syncValue, fotos }: {
   label: string; field: 'fotografo' | 'videografo' | 'editor_album' | 'editor_video' | 'editor_fotos'; multi: boolean
   eventoId: string; referencia: string; local: string; dataCasamento: string
   initialValue: string[]; options: string[]; onChanged?: (val: string[]) => void
@@ -639,6 +639,8 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
   // Valor escolhido noutro sítio da página (ex.: o seletor junto ao valor do
   // editor de vídeo). Acompanha sem ir outra vez à API.
   syncValue?: string[]
+  /** Fotografias dos membros (nome em maiúsculas → foto) para a janela de escolha */
+  fotos?: Record<string, string | null>
 }) {
   const [value, setValue] = useState<string[]>(initialValue)
   const [open, setOpen]   = useState(false)
@@ -668,14 +670,13 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
     setValue(prev => (prev.join(',') === syncKey ? prev : syncValue))
   }, [syncKey, loaded])
 
+  // Janela de escolha: fecha com Esc
   useEffect(() => {
-    if (!open || !loaded) return
-    function handler(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open, loaded])
+    if (!open) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [open])
 
   // Guarda em cada alteração (UX imediata + protege contra fechos inesperados)
   async function persist(next: string[]) {
@@ -704,6 +705,7 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
     }
     setValue(next)
     onChanged?.(next)
+    if (!multi && next.length) setOpen(false) // só um: escolhe e fecha
     await persist(next)
   }
 
@@ -749,20 +751,57 @@ function EditEquipaField({ label, field, multi, eventoId, referencia, local, dat
             ? <span className="text-[9px] text-white/20 ml-auto">...</span>
             : <span className="text-[9px] text-white/15 ml-auto opacity-0 group-hover/f:opacity-100 transition-opacity">✎</span>}
         </button>
-        {open && (
-          <div className="absolute left-0 top-full mt-1 z-50 bg-[#111] border border-white/10 rounded-xl shadow-2xl py-1 min-w-[200px] max-h-72 overflow-y-auto">
-            {options.map(opt => (
-              <button key={opt} onClick={() => toggle(opt)}
-                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-white/[0.05] transition-colors text-left">
-                <span className={`w-3.5 h-3.5 flex-shrink-0 border flex items-center justify-center transition-colors ${multi ? 'rounded' : 'rounded-full'} ${value.includes(opt) ? (multi ? 'bg-gold border-gold' : 'bg-emerald-500 border-emerald-500') : 'border-white/20'}`}>
-                  {value.includes(opt) && (multi
-                    ? <svg className="w-2 h-2 text-black" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    : <span className="w-1.5 h-1.5 rounded-full bg-white" />)}
-                </span>
-                <span className="text-xs text-white/70">{opt}</span>
-              </button>
-            ))}
-          </div>
+        {/* Janela ao centro com as caras da equipa (como a do envio por WhatsApp) */}
+        {open && typeof document !== 'undefined' && createPortal(
+          <div className="fixed inset-0 z-[120] flex items-center justify-center px-4"
+            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
+            onClick={() => setOpen(false)}>
+            <div onClick={ev => ev.stopPropagation()}
+              className="w-full max-w-xl max-h-[90dvh] flex flex-col overflow-hidden rounded-[24px] border border-white/[0.10] bg-[#141414]"
+              style={{ borderLeft: '2px solid #d8be93', boxShadow: '0 0 80px -20px rgba(216,190,147,0.45)' }}>
+              <div className="flex items-start justify-between gap-4 px-6 pt-6 pb-4 border-b border-white/[0.08]">
+                <div>
+                  <p className="text-[11px] font-medium tracking-[0.2em] uppercase" style={{ color: '#d8be93' }}>{multi ? 'Equipa · podes escolher vários' : 'Equipa'}</p>
+                  <h3 className="font-bold text-[28px] leading-none text-white mt-2">{label}</h3>
+                </div>
+                <button onClick={() => setOpen(false)} aria-label="Fechar"
+                  className="w-10 h-10 rounded-full border border-white/10 bg-white/[0.04] text-white/50 hover:text-white hover:rotate-90 transition-all duration-300 flex items-center justify-center">✕</button>
+              </div>
+              <div className="flex-1 overflow-y-auto px-6 py-5">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {options.map(opt => {
+                    const on = value.includes(opt)
+                    const foto = fotos?.[opt.toUpperCase()] ?? null
+                    const indisponivel = unavailableNames?.includes(opt.toUpperCase())
+                    const nomeBonito = opt.split(' ').map(w => w.charAt(0) + w.slice(1).toLowerCase()).join(' ')
+                    const contorno = on ? '2px solid #d8be93' : '1px solid rgba(255,255,255,.1)'
+                    return (
+                      <button key={opt} type="button" onClick={() => toggle(opt)}
+                        className="relative flex flex-col items-center gap-2.5 rounded-[18px] border px-3 pt-5 pb-4 text-center transition-all hover:-translate-y-0.5"
+                        style={{
+                          borderColor: on ? '#d8be93' : indisponivel ? 'rgba(239,68,68,.35)' : 'rgba(255,255,255,0.08)',
+                          background: on ? 'rgba(216,190,147,0.10)' : 'rgba(255,255,255,0.02)',
+                          boxShadow: on ? '0 0 34px -12px rgba(216,190,147,.7)' : 'none',
+                        }}>
+                        {on && <span className="absolute top-2.5 right-2.5 w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold text-[#0b0b0b]" style={{ background: '#d8be93' }}>✓</span>}
+                        {foto
+                          // eslint-disable-next-line @next/next/no-img-element
+                          ? <img src={foto} alt="" className="w-16 h-16 rounded-full object-cover" style={{ outline: contorno, outlineOffset: 2, filter: on ? 'none' : 'grayscale(.35)' }} />
+                          : <span className="w-16 h-16 rounded-full flex items-center justify-center font-semibold text-[22px]" style={{ color: '#d8be93', background: 'rgba(216,190,147,.1)', outline: contorno, outlineOffset: 2 }}>{opt.charAt(0)}</span>}
+                        <span className="text-[13px] font-semibold leading-tight text-white">{nomeBonito}</span>
+                        {indisponivel && <span className="text-[10px] text-red-300">Indisponível neste dia</span>}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+              <div className="px-6 py-4 border-t border-white/[0.08] flex items-center justify-between gap-3">
+                <span className="text-[13px] text-white/40">{saving ? 'A guardar…' : value.length ? `${value.length} escolhido${value.length > 1 ? 's' : ''} · guardado` : 'Ninguém escolhido'}</span>
+                <button onClick={() => setOpen(false)} className="rounded-full px-6 py-2.5 text-[15px] font-medium text-[#0b0b0b] hover:brightness-110 transition-all" style={{ background: '#d8be93' }}>Feito</button>
+              </div>
+            </div>
+          </div>,
+          document.body
         )}
       </div>
     </div>
@@ -3812,6 +3851,7 @@ export default function EventoPage() {
   const [equipaEditorVideo, setEquipaEditorVideo] = useState<string[]>([])
   const [equipaEditorFotos, setEquipaEditorFotos] = useState<string[]>([])
   const [unavailableNames, setUnavailableNames] = useState<string[]>([])
+  const [fotosEquipa, setFotosEquipa] = useState<Record<string, string | null>>({})
   const [optionsFoto, setOptionsFoto] = useState<string[]>(['ALEXANDRE CAPÃO','PATRICIO FERREIRA','SONIA CARVALHO','RUI GARRIDO','BRUNO DE CARVALHO','PEDRO MARTINS'])
   const [optionsVideo, setOptionsVideo] = useState<string[]>(['RUI GONÇALVES','LUIS SOARES'])
   const [optionsAllTeam, setOptionsAllTeam] = useState<string[]>([])
@@ -3976,6 +4016,7 @@ export default function EventoPage() {
           .map(f => (f.nome as string).trim().toUpperCase())
         const all = (d.freelancers as any[])
           .map(f => (f.nome as string).trim().toUpperCase())
+        setFotosEquipa(Object.fromEntries((d.freelancers as any[]).map(f => [String(f.nome ?? '').trim().toUpperCase(), f.foto_url ?? null])))
         if (foto.length > 0) setOptionsFoto(foto)
         if (video.length > 0) setOptionsVideo(video)
         if (all.length > 0) setOptionsAllTeam(all)
@@ -5448,6 +5489,7 @@ export default function EventoPage() {
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.fotografo ?? []}
               options={optionsFoto}
+              fotos={fotosEquipa}
               syncValue={equipaFoto}
               onChanged={setEquipaFoto}
               unavailableNames={unavailableNames} />
@@ -5455,6 +5497,7 @@ export default function EventoPage() {
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.videografo ?? []}
               options={optionsVideo}
+              fotos={fotosEquipa}
               unavailableNames={unavailableNames}
               syncValue={equipaVideo}
               onChanged={setEquipaVideo} />
@@ -5462,18 +5505,21 @@ export default function EventoPage() {
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.editor_fotos ? [e.editor_fotos] : []}
               options={optionsAllTeam}
+              fotos={fotosEquipa}
               unavailableNames={unavailableNames}
               onChanged={setEquipaEditorFotos} />
             <EditEquipaField label="Editor de Álbum" field="editor_album" multi={false}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.editor_album ?? []}
               options={optionsAllTeam}
+              fotos={fotosEquipa}
               unavailableNames={unavailableNames}
               onChanged={setEquipaEditorAlbum} />
             <EditEquipaField label="Editor de Vídeo" field="editor_video" multi={false}
               eventoId={e.id} referencia={e.referencia ?? ''} local={e.local ?? ''} dataCasamento={e.data_evento ?? ''}
               initialValue={e.editor_video ?? []}
               options={optionsAllTeam}
+              fotos={fotosEquipa}
               unavailableNames={unavailableNames}
               syncValue={equipaEditorVideo}
               onChanged={val => { setEquipaEditorVideo(val); syncPagamentoEditor(val[0], valorEditorVideo) }} />
