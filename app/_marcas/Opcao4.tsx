@@ -21,14 +21,15 @@ import Mostrador from './Mostrador'
 const OURO = '#d8be93'
 
 type Item =
-  | { tipo: 'marca'; href: string; nome: string; area: string; frase: string; foto: string; posicao: string; logo: string; logoEscala: number }
+  | { tipo: 'marca'; href: string; nome: string; area: string; frase: string; foto: string; posicao: string; logo: string; logoEscala: number; externo?: boolean }
   | { tipo: 'foto'; src: string; leg: string; w: number; h: number }
 
 const marca = (href: string, nome: string, area: string, frase: string, foto: string, posicao: string, logo: string, logoEscala: number): Item =>
-  ({ tipo: 'marca', href, nome, area, frase, foto, posicao, logo, logoEscala })
+  ({ tipo: 'marca', href, nome, area, frase, foto, posicao, logo, logoEscala, externo: /^https?:/.test(href) })
 
-// Só as três marcas, uma vez cada, a 30° umas das outras. A roda roda entre
-// Casamentos ao meio (início) e Formação ao meio (fim), sem dar a volta.
+// As marcas, uma vez cada, a 30° umas das outras. A roda roda entre a
+// primeira ao meio (início) e a última ao meio (fim), sem dar a volta.
+// SEAGUP é um site externo: abre noutro separador (a imagem já traz o logo).
 const TRES: Item[] = [
   marca('/photo', 'RL Photo.Video', 'Casamentos', 'O dia inteiro contado com calma, luz natural e verdade.',
     '/eventos-hero-2026.webp', 'center 40%', '/logo-photovideo-hd.png', 1.9),
@@ -36,6 +37,8 @@ const TRES: Item[] = [
     '/login hero.png', 'center 50%', '/logo-rl-prod-black.png', 1),
   marca('/wedding-mentor', 'RL Wedding Mentor', 'Formação', 'Educar, inspirar e elevar quem fotografa e filma casamentos.',
     '/casamentos-2027.jpg', 'center 45%', '/logo-mentor-hd.png', 1),
+  marca('https://portal.seagup.com/pro', 'SEAGUP', 'Seagup', 'Portal Seagup Pro.',
+    '/seagup-pro.webp', 'center 50%', '', 1),
 ]
 const ANEL1: Item[] = TRES
 const ANEL2: Item[] = []
@@ -265,7 +268,7 @@ export default function MarcasOpcao4() {
 
           {/* Logo da marca que está no meio, dentro da roda (entre o traço contínuo e o tracejado) */}
           <div ref={janela} className="op4-janela" aria-hidden="true">
-            {TRES.map((m, k) => m.tipo === 'marca' && (
+            {TRES.map((m, k) => m.tipo === 'marca' && m.logo && (
               <div key={m.href} className={k === ativa ? 'on' : ''}>
                 <div style={{ position: 'absolute', inset: 0, transform: `scale(${m.logoEscala})` }}>
                   <Image src={m.logo} alt="" fill sizes="200px" draggable={false} style={{ objectFit: 'contain' }} />
@@ -276,9 +279,10 @@ export default function MarcasOpcao4() {
 
           {ITENS.map((it, i) => it.tipo === 'marca' ? (
             <Link key={`${it.href}-${i}`} href={it.href} ref={el => { cartoes.current[i] = el }}
+              target={it.externo ? '_blank' : undefined} rel={it.externo ? 'noopener noreferrer' : undefined}
               onClick={e => {
                 // Ctrl/Cmd/clique do meio abrem noutro separador como sempre
-                if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
+                if (it.externo || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
                 if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
                 e.preventDefault()
                 if (giro.current) return
@@ -290,11 +294,11 @@ export default function MarcasOpcao4() {
               <div className="op4-marca-foto">
                 <Image src={it.foto} alt="" fill priority sizes="300px" draggable={false} style={{ objectFit: 'cover', objectPosition: it.posicao }} />
                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, #0d0d0d, rgba(13,13,13,.15) 60%)' }} />
-                <div style={{ position: 'absolute', left: '50%', top: '46%', transform: 'translate(-50%,-50%)', width: '56%', aspectRatio: '16/10', filter: 'brightness(0) invert(1)', opacity: .92 }}>
+                {it.logo && <div style={{ position: 'absolute', left: '50%', top: '46%', transform: 'translate(-50%,-50%)', width: '56%', aspectRatio: '16/10', filter: 'brightness(0) invert(1)', opacity: .92 }}>
                   <div style={{ position: 'absolute', inset: 0, transform: `scale(${it.logoEscala})` }}>
                     <Image src={it.logo} alt="" fill sizes="200px" draggable={false} style={{ objectFit: 'contain' }} />
                   </div>
-                </div>
+                </div>}
               </div>
               <div style={{ padding: '4px 20px 20px' }}>
                 <p className="op4-mono" style={{ fontSize: '.5rem', letterSpacing: '.3em', color: OURO }}>{it.nome}</p>
@@ -329,17 +333,17 @@ export default function MarcasOpcao4() {
           <span style={{ fontSize: '.55rem', letterSpacing: '.32em', color: OURO }}>RL · Universo de Marcas</span>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 22 }}>
             <nav className="op4-links" style={{ display: 'flex', gap: 22 }}>
-              {MARCAS.map(m => <Link key={m.href} href={m.href}>{m.area}</Link>)}
+              {MARCAS.map(m => <Link key={m.href} href={m.href} target={m.externo ? '_blank' : undefined} rel={m.externo ? 'noopener noreferrer' : undefined}>{m.area}</Link>)}
             </nav>
             <LogoutButton />
           </div>
         </header>
 
         <div className="op4-base op4-mono">
-          <span className="op4-dica">Faz scroll para rodar · 1 · 2 · 3 marcas</span>
+          <span className="op4-dica">Faz scroll para rodar · {MARCAS.map((_, k) => k + 1).join(' · ')} marcas</span>
           {/* No telemóvel: atalhos para as três marcas */}
           <nav className="op4-pilulas">
-            {MARCAS.map(m => <Link key={m.href} href={m.href}>{m.area}</Link>)}
+            {MARCAS.map(m => <Link key={m.href} href={m.href} target={m.externo ? '_blank' : undefined} rel={m.externo ? 'noopener noreferrer' : undefined}>{m.area}</Link>)}
           </nav>
         </div>
       </div>
