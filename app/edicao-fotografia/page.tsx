@@ -78,20 +78,20 @@ function linhaDoTempo(p: Projeto) {
 }
 
 export default function DepartamentoFotografiaPage() {
-  const [dados, setDados] = useState<{ equipa: Membro[]; projetos: Projeto[] } | null>(null)
+  const [dados, setDados] = useState<{ equipa: Membro[]; projetos: Projeto[]; retirados: { referencia: string; cliente: string | null; data: string }[] } | null>(null)
   const [erro, setErro] = useState(false)
   const [aGravar, setAGravar] = useState<number | null>(null)
   const [links, setLinks] = useState<Record<string, string>>({})
 
   const carregar = () => {
     fetch('/api/edicao-fotografia').then(r => r.json())
-      .then(d => { if (d.ok) setDados({ equipa: d.equipa, projetos: d.projetos }); else setErro(true) })
+      .then(d => { if (d.ok) setDados({ equipa: d.equipa, projetos: d.projetos, retirados: d.retirados ?? [] }); else setErro(true) })
       .catch(() => setErro(true))
   }
   useEffect(carregar, [])
 
   const acao = async (p: Projeto, etapa: string, confirmar: string, url?: string) => {
-    if (etapa !== 'recebida' && !/^https?:\/\//i.test(url ?? '')) { alert('Cola o link da galeria (https://…).'); return }
+    if (!['recebida', 'retirar', 'repor'].includes(etapa) && !/^https?:\/\//i.test(url ?? '')) { alert('Cola o link da galeria (https://…).'); return }
     if (!window.confirm(confirmar)) return
     setAGravar(p.id)
     const r = await fetch('/api/edicao-fotografia/enviar', {
@@ -328,6 +328,9 @@ export default function DepartamentoFotografiaPage() {
                         <div className="flex gap-3 text-[11px] font-semibold tracking-[0.15em] uppercase">
                           <Link href={`/eventos-2026/${p.fichaId}`} className="text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>
                           {p.portalId && <Link href={`/portal-cliente/ref/${encodeURIComponent(p.referencia)}?admin=1`} className="text-white/45 hover:text-white">Portal →</Link>}
+                          <button type="button" disabled={aGravar === p.id} title="Este casamento não é da nossa responsabilidade"
+                            onClick={() => acao(p, 'retirar', `Retirar ${nomes} do departamento? Não é apagado: fica na lista Retirados, no fim da página, e podes repor.`)}
+                            className="ml-auto text-white/30 hover:text-red-400 uppercase tracking-[0.15em] disabled:opacity-40">✕ Retirar</button>
                         </div>
                       </div>
                     )
@@ -337,6 +340,26 @@ export default function DepartamentoFotografiaPage() {
             })}
           </div>
         </section>
+
+        {!!dados?.retirados.length && (
+          <details className="rounded-[22px] border border-white/[0.08] bg-[#111111]/70 px-5 py-4 -mt-8">
+            <summary className="cursor-pointer text-[12px] font-semibold tracking-[0.2em] uppercase text-white/60">
+              Retirados ({dados.retirados.length})
+            </summary>
+            <p className="mt-3 text-sm text-white/45">Casamentos que não são da nossa responsabilidade. Não contam nos números nem nos atrasos.</p>
+            <ul className="mt-3 flex flex-col gap-2 text-sm">
+              {dados.retirados.map(r => (
+                <li key={r.referencia} className="flex items-center justify-between gap-3 border-b border-white/[0.05] pb-2">
+                  <span><span className="text-white/85">{r.cliente || r.referencia}</span> <span className="text-white/35">· {fmt(r.data)}</span></span>
+                  <button type="button" onClick={async () => {
+                    await fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: r.referencia, etapa: 'repor' }) }).catch(() => {})
+                    carregar()
+                  }} className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#C9A84C]/80 hover:text-[#C9A84C]">Repor</button>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </div>
     </main>
   )

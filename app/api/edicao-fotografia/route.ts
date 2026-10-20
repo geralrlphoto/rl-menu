@@ -36,8 +36,14 @@ export async function GET(req: NextRequest) {
     const tipos = (Array.isArray(e.tipo_servico) ? e.tipo_servico : [e.tipo_servico]).filter(Boolean).join(' ')
     return /foto/i.test(tipos) || Number(e.valor_real_foto ?? e.valor_foto) > 0
   }
-  const comFoto = (evs ?? []).filter(e => e.referencia && temFotografia(e)
+  // Retirados à mão do departamento (não são da responsabilidade da RL)
+  const { data: excl } = await sb.from('fotografia_excluidos').select('referencia')
+  const retiradosRefs = new Set((excl ?? []).map(x => x.referencia))
+  const todos = (evs ?? []).filter(e => e.referencia && temFotografia(e)
     && e.sel_fotos_estado !== 'S/SERVIÇO' && e.fotos_edicao_estado !== 'S/SERVIÇO')
+  const comFoto = todos.filter(e => !retiradosRefs.has(e.referencia))
+  const retirados = todos.filter(e => retiradosRefs.has(e.referencia))
+    .map(e => ({ referencia: e.referencia, cliente: e.cliente, data: e.data_evento }))
   const refs = comFoto.map(e => e.referencia as string)
 
   const vazio = Promise.resolve({ data: [] as any[] })
@@ -82,5 +88,5 @@ export async function GET(req: NextRequest) {
     }
   }).filter(p => p.fase !== 'entregue' || String(p.enviadas.entregue ?? '').slice(0, 10) >= limiteEntregue)
 
-  return NextResponse.json({ ok: true, hoje, equipa: equipa ?? [], projetos })
+  return NextResponse.json({ ok: true, hoje, equipa: equipa ?? [], projetos, retirados })
 }

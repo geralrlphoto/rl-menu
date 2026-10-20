@@ -13,6 +13,7 @@ import { portalPathFor } from '@/lib/noivos-session'
 //     (as mesmas chaves de portais.settings que a ficha do evento usa)
 //   etapa recebida → marca a seleção dos noivos como recebida hoje (selecao_recebida)
 //   etapa lembrete → regista no histórico o lembrete enviado por WhatsApp
+//   etapa retirar / repor → tira ou volta a pôr o casamento no departamento
 
 export const maxDuration = 60
 
@@ -50,6 +51,17 @@ export async function POST(req: NextRequest) {
   const { referencia, etapa, url } = await req.json().catch(() => ({}))
   if (!referencia || !etapa) return NextResponse.json({ error: 'Falta a referência ou a etapa.' }, { status: 400 })
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
+  // Retirar / repor o casamento no departamento (não é da responsabilidade da RL)
+  if (etapa === 'retirar' || etapa === 'repor') {
+    const { error } = etapa === 'retirar'
+      ? await sb.from('fotografia_excluidos').upsert({ referencia }, { onConflict: 'referencia' })
+      : await sb.from('fotografia_excluidos').delete().eq('referencia', referencia)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    await registarFoto(referencia, etapa === 'retirar' ? 'Retirado do departamento' : 'Reposto no departamento', 'RL')
+    return NextResponse.json({ ok: true })
+  }
+
   const { data: p } = await sb.from('portais').select('id, noiva, noivo, settings').eq('referencia', referencia).maybeSingle()
   if (!p) return NextResponse.json({ error: 'Este casamento não tem portal.' }, { status: 404 })
   const hoje = new Date().toISOString().slice(0, 10)
