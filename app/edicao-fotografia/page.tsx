@@ -11,7 +11,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import type { EtapaFoto } from '@/lib/fotografiaFluxo'
 import { whatsappLink } from '@/lib/crm'
-import { JanelaWhatsApp } from '@/app/components/WhatsAppMembro'
+import { JanelaWhatsApp, comNotaAutomatica } from '@/app/components/WhatsAppMembro'
 
 const OURO = '#C9A84C'
 const FASES: { k: EtapaFoto; titulo: string; cor: string }[] = [
@@ -300,7 +300,7 @@ export default function DepartamentoFotografiaPage() {
   }
   const avisarMembro = (p: Projeto) => {
     const m = responsavel(p)
-    const link = m ? whatsappLink(m.contato, mensagemAtraso(p, m.nome)) : null
+    const link = m ? whatsappLink(m.contato, comNotaAutomatica(mensagemAtraso(p, m.nome))) : null
     if (!link) { setAvisoSem(p); return }   // sem responsável ou sem telemóvel: escolher na janela
     window.open(link, '_blank')
     fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: p.referencia, etapa: 'aviso', url: m!.nome }) }).catch(() => {})
