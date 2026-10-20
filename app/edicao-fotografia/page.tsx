@@ -344,6 +344,9 @@ export default function DepartamentoFotografiaPage() {
             <span className="w-12 h-px" style={{ background: OURO }} />
             <span className="text-sm tracking-[0.22em] uppercase text-white/60">Do sneak peek às fotos editadas, tudo enviado daqui</span>
           </div>
+          <Link href="/edicao-fotografia/albuns" className="mt-6 inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-5 py-2.5 text-[15px] font-semibold text-white shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)] hover:border-[#C9A84C]/80">
+            Álbuns <span style={{ color: OURO }}>→</span>
+          </Link>
 
           <p className="mt-12 text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Ponto de situação</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Fotografias em curso</h2>

@@ -88,11 +88,15 @@ type AlbumState = {
   imagem_maquete_url?: string | null
 } | null
 
+// Estados do álbum (lib/albumEstado.ts) como os noivos os leem
 const STATUS_LABEL: Record<string, string> = {
-  AGUARDA:    'Aguardar',
-  EM_ANALISE: 'Em análise',
-  APROVADO:   'Aprovado',
-  ENTREGUE:   'Entregue',
+  'NOVO ÁLBUM':     'A preparar',
+  'EM EDIÇÃO':      'Em edição',
+  'REVISÃO RL':     'Em edição',
+  'PARA APROVAÇÃO': 'Para aprovação',
+  'ALTERAÇÕES':     'Alterações em curso',
+  'APROVADO':       'Aprovado',
+  'ENTREGUE':       'Entregue',
 }
 
 function fmtPt(iso?: string | null): string {
@@ -255,7 +259,7 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
         </div>
 
         {/* Botões */}
-        {album?.id && !isApproved && (
+        {album?.id && !isApproved && album.status === 'PARA APROVAÇÃO' && maqueteUrl && (
           <div className="fp-approve">
             <button
               type="button"
@@ -277,6 +281,11 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
         {!album?.id && (
           <p style={{ textAlign: 'center', color: 'var(--ink-3)', fontStyle: 'italic', margin: '6px 0 0' }}>
             A preparar o vosso álbum…
+          </p>
+        )}
+        {album?.id && !isApproved && album.status !== 'PARA APROVAÇÃO' && (
+          <p style={{ textAlign: 'center', color: 'var(--ink-3)', fontStyle: 'italic', margin: '6px 0 0' }}>
+            {album.status === 'ALTERAÇÕES' ? 'Recebemos o vosso pedido de alterações. Avisamos quando a nova maqueta estiver pronta.' : 'A maqueta está a ser preparada. Avisamos por email quando estiver pronta para a verem.'}
           </p>
         )}
 

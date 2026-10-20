@@ -5142,7 +5142,7 @@ export default function EventoPage() {
               dateStr={albumDataPrevista}
               estado={e.album_estado} options={['Aguardar','Em Edição','Em Aprovação','Aprovado','Entregue','S/SERVIÇO']}
               field="album_estado" eventId={e.id} onSaved={handleSaved} referencia={e.referencia}
-              href={`/albuns-casamento?ref=${encodeURIComponent(e.referencia)}`} />
+              href="/edicao-fotografia/albuns" />
             {e.referencia && <>
               <PortalEstadoRow label="Seleção Fotos Noivos"
                 dateStr={fotosDataEntrada ? addCalendarDays(fotosDataEntrada, 40) : null}

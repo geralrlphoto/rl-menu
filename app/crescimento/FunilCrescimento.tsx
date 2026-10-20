@@ -71,7 +71,7 @@ const FASES: Fase[] = [
     n: 6, nome: 'Entregar', en: 'Adopter', lado: 'dir', estado: 'parte',
     objetivo: 'Recebem tudo a tempo e com a qualidade que esperavam.',
     naRL: ['Galeria online em 7 dias', 'Fotos para seleção em 30 dias', 'Álbum e filme', 'Estado das Entregas sempre visível no portal'],
-    ferramentas: [{ label: 'Fotografia', href: '/edicao-fotografia' }, { label: 'Álbuns', href: '/albuns-casamento' }, { label: 'Casamentos', href: '/casamentos' }],
+    ferramentas: [{ label: 'Fotografia', href: '/edicao-fotografia' }, { label: 'Álbuns', href: '/edicao-fotografia/albuns' }, { label: 'Casamentos', href: '/casamentos' }],
     medir: ['Entregas dentro do prazo (%)', 'Dias até à galeria e ao filme', 'NSC: nota média e % de casais com 4 ou 5 estrelas'],
     falta: ['Pedido automático da NSC depois da última entrega'],
     extras: [{

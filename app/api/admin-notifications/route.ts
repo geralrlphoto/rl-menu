@@ -25,6 +25,8 @@ const TIPO_LABELS: Record<string, string> = {
   fotos_convidados_ctt:     'Fotos Convidados · CTT Enviado',
   nova_tarefa_atribuida:    'Tarefa enviada entre membros',
   album_aprovado:           'Álbum Aprovado pelos Noivos',
+  album_revisao:            'Maqueta do Álbum para Rever',
+  album_alteracoes:         'Noivos Pediram Alterações ao Álbum',
   mensagem_noivos:          'Mensagem dos Noivos',
   pagamento:                'Pagamentos',
   pagamento_registado:      'Pagamento Registado',
@@ -61,6 +63,8 @@ const TIPO_ICONS: Record<string, string> = {
   fotos_convidados_ctt:     '✉',
   nova_tarefa_atribuida:    '✈',
   album_aprovado:           '✓',
+  album_revisao:            '◐',
+  album_alteracoes:         '✎',
   mensagem_noivos:          '💬',
   pagamento:                '💳',
   pagamento_registado:      '💶',
@@ -602,6 +606,39 @@ export async function GET(req: Request) {
       }
     } catch (err) {
       console.warn('[admin-notifications] albuns_casamento aprovado read failed:', err)
+    }
+
+    // ── ÁLBUNS à espera da RL (Departamento de Fotografia › Álbuns) ──
+    //    REVISÃO RL: o editor enviou a maqueta, a RL vê antes dos noivos.
+    //    ALTERAÇÕES: os noivos pediram alterações (o editor também é avisado).
+    try {
+      const { data: albunsPend } = await supabase
+        .from('albuns_casamento')
+        .select('id, nome, ref_evento, status, updated_at, created_at')
+        .in('status', ['REVISÃO RL', 'ALTERAÇÕES'])
+        .limit(50)
+      for (const a of (albunsPend ?? []) as any[]) {
+        const tipo = a.status === 'REVISÃO RL' ? 'album_revisao' : 'album_alteracoes'
+        notifications.push({
+          id: `${tipo}::${a.id}::${String(a.updated_at ?? '').slice(0, 16)}`,
+          tipo,
+          tipo_label: TIPO_LABELS[tipo],
+          tipo_icon: TIPO_ICONS[tipo],
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: a.nome ?? '—',
+          local: a.ref_evento ?? '—',
+          data_casamento: null,
+          referencia: a.ref_evento ?? null,
+          url: '/edicao-fotografia/albuns',
+          sent_at: a.updated_at ?? a.created_at,
+          mensagem: a.status === 'REVISÃO RL'
+            ? 'O editor enviou a maqueta do álbum. Revê-a antes de seguir para os noivos.'
+            : 'Os noivos pediram alterações à maqueta. O editor já foi avisado.',
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] albuns pendentes read failed:', err)
     }
 
     // ── Notificações de FOTOS CONVIDADOS (portais.settings) ──

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAcessoRef } from '@/lib/api-guard'
+import { aplicarEstadoAlbum } from '@/lib/albumEstado'
 
 function db() {
   return createClient(
@@ -34,6 +36,9 @@ export async function POST(req: NextRequest) {
   const { ref_evento, paginas_alterar, tipos_alteracao, observacoes, foto_url } = body
 
   if (!ref_evento) return NextResponse.json({ error: 'ref_evento required' }, { status: 400 })
+  // Só os noivos deste casamento (ou a RL) pedem alterações
+  const bloqueio = await exigeAcessoRef(req, ref_evento)
+  if (bloqueio) return bloqueio
 
   const supabase = db()
 
@@ -44,25 +49,13 @@ export async function POST(req: NextRequest) {
 
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 })
 
-  // Set album status back to EM EDIÇÃO
-  const { data: album } = await supabase
-    .from('albuns_casamento')
-    .select('id')
-    .eq('ref_evento', ref_evento)
-    .maybeSingle()
-
-  if (album) {
-    await supabase
-      .from('albuns_casamento')
-      .update({ status: 'EM EDIÇÃO' })
-      .eq('id', album.id)
-  }
-
-  // Sync freelancer_album
-  await supabase
-    .from('freelancer_album')
-    .update({ status: 'EM EDIÇÃO' })
-    .eq('referencia_album', ref_evento)
+  // Volta ao editor (estado ALTERAÇÕES): avisa-o por email e no portal, e a RL no sino
+  const resumo = [
+    paginas_alterar ? `Páginas: ${paginas_alterar}` : '',
+    Array.isArray(tipos_alteracao) && tipos_alteracao.length ? `O que mudar: ${tipos_alteracao.join(', ')}` : (tipos_alteracao ? `O que mudar: ${tipos_alteracao}` : ''),
+    observacoes ? `Notas: ${observacoes}` : '',
+  ].filter(Boolean).join('\n')
+  await aplicarEstadoAlbum(req.nextUrl.origin, { referencia: ref_evento, estado: 'ALTERAÇÕES', origem: 'Noivos', nota: resumo || null })
 
   return NextResponse.json({ ok: true })
 }

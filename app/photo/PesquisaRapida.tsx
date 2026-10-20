@@ -16,7 +16,7 @@ const PAGINAS: Array<{ titulo: string; href: string }> = [
   { titulo: 'Eventos 2026', href: '/eventos-2026' },
   { titulo: 'Relatório Diário', href: '/relatorio-diario' },
   { titulo: 'Freelancers', href: '/freelancers' },
-  { titulo: 'Álbuns', href: '/albuns-casamento' },
+  { titulo: 'Álbuns', href: '/edicao-fotografia/albuns' },
   { titulo: 'Portais Clientes', href: '/portais-clientes' },
   { titulo: 'Fotografia', href: '/edicao-fotografia' },
   { titulo: 'Tarefas', href: '/tarefas' },

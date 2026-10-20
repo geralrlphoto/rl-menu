@@ -1,5 +1,6 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
-import { ehAdmin, sessaoNoivos, naoAutorizado, cabecalhoInterno } from '@/lib/api-guard'
+import { ehAdmin, sessaoNoivos, sessaoMembro, naoAutorizado } from '@/lib/api-guard'
+import { aplicarEstadoAlbum, ESTADOS_ALBUM, type EstadoAlbum } from '@/lib/albumEstado'
 import { exigeAdmin } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
@@ -13,12 +14,18 @@ function db() {
 }
 
 export async function GET(req: Request) {
-  const bloqueio = exigeAdmin(req) // só admin
-  if (bloqueio) return bloqueio
-  const { data, error } = await db()
-    .from('albuns_casamento')
-    .select('*')
-    .order('created_at', { ascending: false })
+  // Admin vê todos; um membro (editor de álbuns) só os álbuns que tem no seu portal
+  let refs: string[] | null = null
+  if (!ehAdmin(req)) {
+    const membro = await sessaoMembro(req)
+    if (!membro) return naoAutorizado()
+    const { data: meus } = await db().from('freelancer_album').select('referencia_album').eq('freelancer_id', membro.id)
+    refs = (meus ?? []).map(m => m.referencia_album).filter(Boolean) as string[]
+    if (!refs.length) return NextResponse.json({ rows: [] })
+  }
+  let q = db().from('albuns_casamento').select('*').order('created_at', { ascending: false })
+  if (refs) q = q.in('ref_evento', refs)
+  const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ rows: data ?? [] })
 }
@@ -79,147 +86,35 @@ export async function PATCH(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const supabase = db()
-  // Admin altera tudo; os noivos só aprovam o álbum do próprio casamento
-  if (!ehAdmin(req)) {
+  const { data: alb } = await supabase.from('albuns_casamento').select('ref_evento, status').eq('id', id).maybeSingle()
+  if (!alb) return NextResponse.json({ error: 'álbum não encontrado' }, { status: 404 })
+  const admin = ehAdmin(req)
+
+  // Os noivos só aprovam o álbum do próprio casamento, e só depois de a RL lhes enviar a maqueta
+  if (!admin) {
     const nv = await sessaoNoivos(req)
-    const { data: alb } = await supabase.from('albuns_casamento').select('ref_evento').eq('id', id).maybeSingle()
-    const proprio = !!nv && !!alb?.ref_evento && String(alb.ref_evento).toLowerCase() === nv.referencia.toLowerCase()
+    const proprio = !!nv && !!alb.ref_evento && String(alb.ref_evento).toLowerCase() === nv.referencia.toLowerCase()
     if (!proprio || status !== 'APROVADO' || data_aprovacao !== undefined || data_prevista_entrega !== undefined) return naoAutorizado()
-  }
-  const updates: Record<string, any> = {}
-  if (status !== undefined) updates.status = status
-  if (data_aprovacao !== undefined) updates.data_aprovacao = data_aprovacao
-  if (data_prevista_entrega !== undefined) updates.data_prevista_entrega = data_prevista_entrega
-
-  // Auto-set dates when approving (entrega = aprovação + 30 dias)
-  if (status === 'APROVADO' && !data_aprovacao) {
-    const today = new Date().toISOString().split('T')[0]
-    updates.data_aprovacao = today
-    const d = new Date(today)
-    d.setDate(d.getDate() + 30)
-    updates.data_prevista_entrega = d.toISOString().split('T')[0]
+    if (alb.status !== 'PARA APROVAÇÃO') return NextResponse.json({ error: 'A maqueta ainda não está para aprovação.' }, { status: 409 })
   }
 
-  const { data, error } = await supabase
-    .from('albuns_casamento')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single()
+  // Datas à mão (só admin)
+  const datas: Record<string, any> = {}
+  if (data_aprovacao !== undefined) datas.data_aprovacao = data_aprovacao
+  if (data_prevista_entrega !== undefined) datas.data_prevista_entrega = data_prevista_entrega
+  if (Object.keys(datas).length) await supabase.from('albuns_casamento').update(datas).eq('id', id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-
-  // Sync status to freelancer_album when approving
-  if (status === 'APROVADO' && data?.ref_evento) {
-    await supabase
-      .from('freelancer_album')
-      .update({ status: 'APROVADO' })
-      .eq('referencia_album', data.ref_evento)
-
-    const ref = data.ref_evento
-    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`, { headers: cabecalhoInterno() }).then(r => r.json()).catch(() => null)
-    const ev = eventoRes?.evento
-    const nomeNoivos = ev?.cliente ?? (ev?.nome_noiva && ev?.nome_noivo ? `${ev.nome_noiva} & ${ev.nome_noivo}` : ev?.nome_noiva ?? ev?.nome_noivo ?? data.nome ?? ref)
-
-    // Notify admin (email)
-    fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/send-admin-notification`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...cabecalhoInterno() },
-      body: JSON.stringify({ tipo: 'album_aprovado', nome_noivos: nomeNoivos, referencia: ref }),
-    }).catch(() => null)
-
-    // Cria notificação em freelancer_notificacoes para o(s) editor(es) de álbum
-    // → aparece na lista de Notificações do /freelancers/[id]?tab=notificacoes
-    // e também no sino global do admin (via /api/admin-notifications).
-    try {
-      const { data: equipa } = await supabase
-        .from('evento_equipa')
-        .select('editor_album')
-        .eq('referencia', ref)
-        .maybeSingle()
-      const editores: string[] = Array.isArray(equipa?.editor_album)
-        ? equipa!.editor_album
-        : (equipa?.editor_album ? [equipa.editor_album] : [])
-      if (editores.length > 0) {
-        const { data: fls } = await supabase
-          .from('freelancers')
-          .select('id, nome')
-          .in('nome', editores)
-        const dataEntregaIso = updates.data_prevista_entrega ?? data?.data_prevista_entrega ?? null
-        const dataEntregaPt = dataEntregaIso
-          ? new Date(dataEntregaIso + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
-          : null
-        const titulo = `✓ Álbum aprovado · ${nomeNoivos}`
-        const meta = JSON.stringify({
-          referencia: ref,
-          nomeNoivos,
-          data_aprovacao: updates.data_aprovacao ?? new Date().toISOString(),
-          data_prevista_entrega: dataEntregaIso,
-        })
-        const corpo = dataEntregaPt
-          ? `Os noivos ${nomeNoivos} aprovaram a maquete do álbum (${ref}). Entrega prevista: ${dataEntregaPt} (30 dias após aprovação).`
-          : `Os noivos ${nomeNoivos} aprovaram a maquete do álbum (${ref}). Podes avançar com a produção.`
-        const mensagem = `__META__${meta}__/META__\n${corpo}`
-        for (const fl of (fls ?? []) as any[]) {
-          // Idempotência: não duplica se já existir notif não lida com a mesma referência
-          const { data: existing } = await supabase
-            .from('freelancer_notificacoes')
-            .select('id')
-            .eq('freelancer_id', fl.id)
-            .eq('tipo', 'album_aprovado')
-            .ilike('mensagem', `%"referencia":"${ref}"%`)
-            .eq('lida', false)
-            .maybeSingle()
-          if (existing) continue
-          await supabase.from('freelancer_notificacoes').insert({
-            freelancer_id: fl.id,
-            titulo,
-            mensagem,
-            tipo: 'album_aprovado',
-            lida: false,
-          })
-        }
-      }
-    } catch (err) {
-      console.warn('[albuns-casamento APROVADO] notificações falharam:', err)
+  // Estado: um só sítio que o propaga (editor, ficha, portal, avisos, histórico)
+  if (status !== undefined && status !== alb.status) {
+    if (!ESTADOS_ALBUM.includes(status)) return NextResponse.json({ error: 'estado inválido' }, { status: 400 })
+    if (!alb.ref_evento) {
+      await supabase.from('albuns_casamento').update({ status }).eq('id', id)
+    } else {
+      const r = await aplicarEstadoAlbum(req.nextUrl.origin, { referencia: alb.ref_evento, estado: status as EstadoAlbum, origem: admin ? 'RL' : 'Noivos' })
+      if (!r.ok) return NextResponse.json({ error: r.erro }, { status: 400 })
     }
   }
 
-  // When delivered: clean up alteration requests
-  if (status === 'ENTREGUE' && data?.ref_evento) {
-    await supabase.from('album_alteracoes').delete().eq('ref_evento', data.ref_evento)
-  }
-
-  // When PARA APROVAÇÃO (admin): email the bride
-  if (status === 'PARA APROVAÇÃO' && data?.ref_evento) {
-    const ref = data.ref_evento
-    const eventoRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://portal.rlphotovideo.pt'}/api/evento-by-ref?ref=${encodeURIComponent(ref)}`, { headers: cabecalhoInterno() }).then(r => r.json()).catch(() => null)
-    const emailNoiva = eventoRes?.evento?.email_noiva
-    const nomeNoiva  = eventoRes?.evento?.nome_noiva ?? 'Cliente'
-    if (emailNoiva) {
-      await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          from: 'RL Photo.Video <geral@rlphotovideo.pt>',
-          to: [emailNoiva],
-          subject: 'O seu álbum está pronto para aprovação',
-          html: `
-            <div style="font-family: Georgia, serif; max-width: 520px; margin: 0 auto; padding: 48px 32px; background: #000; color: #fff;">
-              <p style="font-size: 10px; letter-spacing: 0.5em; color: #888; text-transform: uppercase; margin: 0 0 32px;">RL PHOTO.VIDEO</p>
-              <h1 style="font-size: 24px; font-weight: 300; letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 24px; color: #fff;">Álbum para Aprovação</h1>
-              <p style="font-size: 15px; color: #bbb; line-height: 1.7; margin: 0 0 16px;">Olá ${nomeNoiva},</p>
-              <p style="font-size: 15px; color: #bbb; line-height: 1.7; margin: 0 0 32px;">O seu álbum de casamento está pronto e aguarda a sua aprovação. Por favor aceda ao seu portal para visualizar e aprovar.</p>
-              <p style="font-size: 10px; color: #555; letter-spacing: 0.3em; text-transform: uppercase; margin: 48px 0 0;">RL Photo.Video · www.rlprod.pt</p>
-            </div>
-          `,
-        }),
-      }).catch(() => null)
-    }
-  }
-
+  const { data } = await supabase.from('albuns_casamento').select('*').eq('id', id).maybeSingle()
   return NextResponse.json({ row: data })
 }
