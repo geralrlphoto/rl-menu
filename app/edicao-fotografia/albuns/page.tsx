@@ -50,7 +50,7 @@ const colunaDe = (a: Album): Coluna =>
 function FotosAlbum({ texto, temAlbum }: { texto: string | null; temAlbum?: boolean | null }) {
   const [copiado, setCopiado] = useState(false)
   const lista = String(texto ?? '').split(/[\s,;]+/).filter(x => /\d/.test(x))
-  if (!lista.length) return <p className="text-[11px] text-amber-300/80">{temAlbum === false ? 'Sem álbum na proposta.' : 'Tem álbum, mas os noivos ainda não escolheram as fotos para o álbum.'}</p>
+  if (!lista.length) return <p className="text-[11px] text-amber-300/80">{temAlbum === false ? 'Sem álbum na proposta.' : temAlbum ? 'Tem álbum, mas os noivos ainda não escolheram as fotos para o álbum.' : 'Sem lista de fotos para o álbum (proposta sem serviços).'}</p>
   return (
     <details className="group/f rounded-xl border border-white/[0.08] bg-black/25 p-2.5">
       <summary className="cursor-pointer list-none flex items-center justify-between gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/70">
