@@ -6,7 +6,9 @@ import { exigeAdmin } from '@/lib/api-guard'
 // os editores (freelancers EDITORES), os casamentos com vídeo já realizados,
 // o editor atribuído (evento_equipa.editor_video), a fase (eventos_2026.video_estado),
 // o prazo (casamento + 180 dias úteis) e as entregas feitas no portal
-// (portais.settings *_enviada). Só lê colunas necessárias (egress baixo).
+// (portais.settings *_enviada), os pagamentos aos editores (freelancer_pagamentos,
+// a mesma tabela do Painel do Editor) e o histórico (video_estado_historico).
+// Só lê colunas necessárias (egress baixo).
 
 const PRAZO_DIAS_UTEIS = 180
 const JANELA_DIAS = 420          // casamentos por entregar até ~14 meses atrás
@@ -77,6 +79,22 @@ export async function GET(req: NextRequest) {
     ? await sb.from('video_revisoes').select('referencia, link, status, feedback').in('referencia', refs)
     : { data: [] as any[] }
   const revPorRef = new Map((revs ?? []).map(r => [r.referencia, r]))
+
+  // Pagamentos dos editores (descrição começa pela referência) e histórico dos projetos
+  const idsEditores = (eds ?? []).map(e => e.id)
+  const [{ data: pags }, { data: hist }] = await Promise.all([
+    idsEditores.length
+      ? sb.from('freelancer_pagamentos').select('id, freelancer_id, descricao, valor, status, data_pago, data_prevista').in('freelancer_id', idsEditores)
+      : Promise.resolve({ data: [] as any[] }),
+    refs.length
+      ? sb.from('video_estado_historico').select('referencia, estado, origem, criado_em').in('referencia', refs).order('criado_em')
+      : Promise.resolve({ data: [] as any[] }),
+  ])
+  const pendente = (p: any) => !['PAGO', 'CANCELADO'].includes(String(p.status ?? '').toUpperCase())
+  const porPagar: Record<string, number> = {}
+  for (const p of pags ?? []) if (pendente(p)) porPagar[p.freelancer_id] = (porPagar[p.freelancer_id] ?? 0) + (Number(p.valor) || 0)
+  const histPorRef = new Map<string, any[]>()
+  for (const h of hist ?? []) histPorRef.set(h.referencia, [...(histPorRef.get(h.referencia) ?? []), { estado: h.estado, origem: h.origem, em: h.criado_em }])
   const portalPorRef = new Map<string, any>()
   for (const p of ports ?? []) portalPorRef.set(p.referencia, p)
 
@@ -124,10 +142,15 @@ export async function GET(req: NextRequest) {
       entregueEm: typeof p?.w === 'string' ? p.w.slice(0, 10) : null,
       filmeUrl: typeof p?.u === 'string' ? p.u : null,
       revisao: revPorRef.get(e.referencia ?? '') ?? null,
+      pagamentos: e.referencia
+        ? (pags ?? []).filter(p => String(p.descricao ?? '').startsWith(e.referencia!))
+            .map(p => ({ id: p.id, freelancerId: p.freelancer_id, valor: Number(p.valor) || 0, pago: String(p.status ?? '').toUpperCase() === 'PAGO', dataPago: p.data_pago }))
+        : [],
+      historico: histPorRef.get(e.referencia ?? '') ?? [],
     }
   })
   // Entregues antigos saem do quadro (ficam só os recentes)
     .filter(p => p.fase !== 'Entregue' || (p.entregueEm ? p.entregueEm >= limiteEntregue : p.diasPrazo > -ENTREGUES_RECENTES))
 
-  return NextResponse.json({ ok: true, hoje, editores: eds ?? [], projetos })
+  return NextResponse.json({ ok: true, hoje, editores: eds ?? [], projetos, porPagar })
 }

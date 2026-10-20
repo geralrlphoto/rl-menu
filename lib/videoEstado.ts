@@ -6,7 +6,8 @@
 //   Finalizado  → só a RL, ao aprovar
 //   Entregue    → só a RL, ao enviar o filme aos noivos (departamento)
 // Escreve: Notion + eventos_YYYY + evento_equipa (via /api/eventos-notion), portais.settings.video_estado
-// (portal dos noivos) e a fase do projeto no Painel do Editor (freelancers.editor_workflow).
+// (portal dos noivos), a fase do projeto no Painel do Editor (freelancers.editor_workflow)
+// e uma linha no histórico do projeto (video_estado_historico).
 
 import { createClient } from '@supabase/supabase-js'
 import { cabecalhoInterno } from '@/lib/api-guard'
@@ -29,6 +30,7 @@ export async function aplicarEstadoVideo(origin: string, o: {
   evento_id?: string | null
   estado: EstadoVideo
   freelancerId?: string | null      // editor do projeto (se não vier, procura-se)
+  origem?: string                   // para o histórico (por defeito: quem costuma pôr este estado)
 }): Promise<{ ok: boolean; eventId: string | null }> {
   const sb = db()
   const { referencia, estado } = o
@@ -85,7 +87,24 @@ export async function aplicarEstadoVideo(origin: string, o: {
       await sb.from('freelancers').update({ editor_workflow: { ...wf, [referencia]: FASE_DO_ESTADO[estado] } }).eq('id', id)
     }
   }
+  // 5) histórico do projeto (Departamento de Edição de Vídeo)
+  if (referencia) await registarHistorico(referencia, estado, o.origem ?? ORIGEM_DO_ESTADO[estado])
   return { ok, eventId }
+}
+
+const ORIGEM_DO_ESTADO: Record<EstadoVideo, string> = {
+  'Aguardar': 'Automático', 'Em Edição': 'Editor', 'Em Revisão': 'Editor', 'Finalizado': 'RL', 'Entregue': 'RL',
+}
+
+/** Acrescenta uma linha ao histórico do projeto, sem repetir o último estado registado. */
+export async function registarHistorico(referencia: string, estado: string, origem: string | null = null) {
+  try {
+    const sb = db()
+    const { data: ult } = await sb.from('video_estado_historico').select('estado')
+      .eq('referencia', referencia).order('criado_em', { ascending: false }).limit(1).maybeSingle()
+    if (ult?.estado === estado) return
+    await sb.from('video_estado_historico').insert({ referencia, estado, origem })
+  } catch (e) { console.error('[videoEstado] histórico:', e) }
 }
 
 /** Fase do Painel do Editor → estado do vídeo (as fases detalhadas contam como Em Edição). */

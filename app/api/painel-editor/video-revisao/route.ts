@@ -127,6 +127,7 @@ export async function PATCH(req: NextRequest) {
   await aplicarEstadoVideo(req.nextUrl.origin, {
     referencia, evento_id: cur.evento_id ?? null,
     estado: status === 'Aprovado' ? 'Finalizado' : 'Em Edição', freelancerId: cur.freelancer_id ?? null,
+    origem: status === 'Aprovado' ? 'RL' : 'RL (alterações)',
   })
 
   return NextResponse.json({ ok: true, status })

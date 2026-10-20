@@ -34,19 +34,33 @@ type Projeto = {
   entregas: { teaser: boolean; sde: boolean; filme: boolean; prewedding: boolean }
   filmeUrl: string | null
   revisao: { link: string | null; status: string | null; feedback: string | null } | null
+  pagamentos: { id: string; freelancerId: string; valor: number; pago: boolean; dataPago: string | null }[]
+  historico: { estado: string; origem: string | null; em: string }[]
+}
+
+const eur = (v: number) => v.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+const diasEntre = (a: string, b: string) => Math.round((new Date(b.slice(0, 10) + 'T12:00:00Z').getTime() - new Date(a.slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)
+
+/** Linha do tempo do projeto: casamento, mudanças de estado registadas e pagamento ao editor. */
+function linhaDoTempo(p: Projeto) {
+  const ev: { em: string; titulo: string; quem?: string | null }[] = [{ em: p.data, titulo: 'Casamento' }]
+  for (const h of p.historico) ev.push({ em: h.em, titulo: h.estado, quem: h.origem })
+  if (p.entregueEm && !p.historico.some(h => h.estado === 'Entregue')) ev.push({ em: p.entregueEm, titulo: 'Entregue', quem: 'RL' })
+  for (const pg of p.pagamentos) if (pg.pago && pg.dataPago) ev.push({ em: pg.dataPago, titulo: `Pago ao editor (${eur(pg.valor)})`, quem: 'RL' })
+  return ev.sort((a, b) => a.em.localeCompare(b.em))
 }
 
 const fmt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
 
 export default function EdicaoVideoPage() {
-  const [dados, setDados] = useState<{ editores: Editor[]; projetos: Projeto[] } | null>(null)
+  const [dados, setDados] = useState<{ editores: Editor[]; projetos: Projeto[]; porPagar: Record<string, number> } | null>(null)
   const [erro, setErro] = useState(false)
   const [aGravar, setAGravar] = useState<number | null>(null)
 
   const carregar = () => {
     fetch('/api/edicao-video').then(r => r.json())
-      .then(d => { if (d.ok) setDados({ editores: d.editores, projetos: d.projetos }); else setErro(true) })
+      .then(d => { if (d.ok) setDados({ editores: d.editores, projetos: d.projetos, porPagar: d.porPagar ?? {} }); else setErro(true) })
       .catch(() => setErro(true))
   }
   useEffect(carregar, [])
@@ -109,6 +123,34 @@ export default function EdicaoVideoPage() {
     const d = r ? await r.json().catch(() => ({})) : {}
     setAGravar(null)
     if (!r?.ok) { alert((d as any).error || 'Não foi possível enviar.'); return }
+    carregar()
+  }
+
+  // Pagamento ao editor: a mesma tabela do Painel do Editor (freelancer_pagamentos),
+  // por isso o que se marca aqui aparece lá e vice-versa.
+  const [valores, setValores] = useState<Record<number, string>>({})
+  const marcarPago = async (p: Projeto, pg: Projeto['pagamentos'][number], pago: boolean) => {
+    setAGravar(p.id)
+    const r = await fetch('/api/freelancer-pagamentos', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: pg.id, status: pago ? 'PAGO' : 'PENDENTE', data_pago: pago ? new Date().toISOString().slice(0, 10) : null }),
+    }).catch(() => null)
+    setAGravar(null)
+    if (!r?.ok) alert('Não foi possível guardar. Tenta outra vez.')
+    carregar()
+  }
+  const registarPagamento = async (p: Projeto) => {
+    const valor = Number((valores[p.id] ?? '').replace(',', '.'))
+    const fid = p.editorIds.find(Boolean)
+    if (!fid) { alert('O editor deste projeto não está na equipa de editores.'); return }
+    if (!(valor > 0)) { alert('Indica o valor a pagar ao editor.'); return }
+    setAGravar(p.id)
+    const r = await fetch('/api/freelancer-pagamentos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ freelancer_id: fid, descricao: [p.referencia, p.cliente || p.local].filter(Boolean).join(' — '), valor, data_prevista: p.prazo, status: 'PENDENTE' }),
+    }).catch(() => null)
+    setAGravar(null)
+    if (!r?.ok) alert('Não foi possível guardar. Tenta outra vez.')
     carregar()
   }
 
@@ -215,6 +257,7 @@ export default function EdicaoVideoPage() {
                   <p className="text-[34px] font-thin leading-none tabular-nums" style={{ color: ativos ? OURO : 'rgba(255,255,255,.35)' }}>{ativos}</p>
                   <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">ativos</p>
                   {atrasados > 0 && <p className="text-[10px] tracking-[0.15em] uppercase text-red-400 mt-1">{atrasados} atrasado{atrasados > 1 ? 's' : ''}</p>}
+                  {(dados?.porPagar[e.id] ?? 0) > 0 && <p className="text-[10px] tracking-[0.15em] uppercase text-amber-300 mt-1">{eur(dados!.porPagar[e.id])} por pagar</p>}
                 </div>
               </Link>
             ))}
@@ -299,6 +342,46 @@ export default function EdicaoVideoPage() {
                           </button>
                         </div>
                       )}
+                      {f !== 'Por atribuir' && (
+                        <div className="rounded-xl border border-white/[0.08] bg-black/25 p-3 flex flex-col gap-2">
+                          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Pagamento ao editor</p>
+                          {p.pagamentos.map(pg => (
+                            <div key={pg.id} className="flex items-center justify-between gap-2">
+                              <span className={`text-[13px] font-semibold ${pg.pago ? 'text-[#4ade80]' : 'text-amber-300'}`}>
+                                {eur(pg.valor)} · {pg.pago ? `Pago${pg.dataPago ? ` a ${fmt(pg.dataPago)}` : ''}` : 'Por pagar'}
+                              </span>
+                              <button type="button" disabled={aGravar === p.id} onClick={() => marcarPago(p, pg, !pg.pago)}
+                                className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase disabled:opacity-40 ${pg.pago ? 'border-white/15 text-white/45 hover:text-white' : 'border-[#4ade80]/45 bg-[#4ade80]/10 text-[#4ade80] hover:bg-[#4ade80]/20'}`}>
+                                {pg.pago ? 'Desfazer' : '✓ Pago'}
+                              </button>
+                            </div>
+                          ))}
+                          {!p.pagamentos.length && (
+                            <div className="flex gap-2">
+                              <input inputMode="decimal" placeholder="Valor €" value={valores[p.id] ?? ''}
+                                onChange={e => setValores(v => ({ ...v, [p.id]: e.target.value }))}
+                                className="w-24 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                              <button type="button" disabled={aGravar === p.id} onClick={() => registarPagamento(p)}
+                                className="flex-1 rounded-full border border-[#C9A84C]/45 bg-[#C9A84C]/10 px-3 py-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase text-white hover:bg-[#C9A84C]/25 disabled:opacity-40">Registar</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <details className="group/h">
+                        <summary className="cursor-pointer list-none text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 hover:text-white/70">
+                          <span className="group-open/h:hidden">+ Histórico</span><span className="hidden group-open/h:inline">− Histórico</span>
+                        </summary>
+                        <ol className="mt-2.5 ml-1 border-l border-white/10 pl-3.5 flex flex-col gap-2">
+                          {linhaDoTempo(p).map((ev, i, l) => (
+                            <li key={i} className="relative">
+                              <i className="absolute -left-[19px] top-1.5 w-2 h-2 rounded-full" style={{ background: COR_FASE[ev.titulo as Fase] ?? OURO }} />
+                              <p className="text-[12px] font-semibold text-white/85 leading-tight">{ev.titulo}{ev.quem ? <span className="font-normal text-white/40"> · {ev.quem}</span> : null}</p>
+                              <p className="text-[11px] text-white/40">{fmt(ev.em.slice(0, 10))}{i > 0 ? ` · +${diasEntre(l[i - 1].em, ev.em)} dias` : ''}</p>
+                            </li>
+                          ))}
+                          {p.historico.length === 0 && <li className="text-[11px] text-white/30">As mudanças de estado ficam registadas a partir de hoje.</li>}
+                        </ol>
+                      </details>
                       <div className="flex gap-3 text-[11px] font-semibold tracking-[0.15em] uppercase">
                         <Link href={`/eventos-2026/${p.fichaId}`} className="text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>
                         {p.portalId && p.referencia && <Link href={`/portal-cliente/ref/${encodeURIComponent(p.referencia)}`} className="text-white/45 hover:text-white">Portal →</Link>}

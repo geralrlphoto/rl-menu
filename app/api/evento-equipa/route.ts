@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { buildTicketEditorHtml, prazoVideo } from '@/lib/ticket-editor-html'
-import { aplicarEstadoVideo } from '@/lib/videoEstado'
+import { aplicarEstadoVideo, registarHistorico } from '@/lib/videoEstado'
 
 function db() {
   return createClient(
@@ -429,6 +429,7 @@ export async function PATCH(req: NextRequest) {
       await enviarTicketEditor(supabase, added, refEd, data_casamento ?? null, local ?? null)
       // Editor nomeado: o vídeo fica em Aguardar (download bloqueado até o editor pôr Em Edição)
       if (added.length && refEd) {
+        await registarHistorico(refEd, 'Editor nomeado', added.join(', '))
         const { data: ev } = await supabase.from('eventos_2026').select('video_estado').eq('referencia', refEd).maybeSingle()
         if (!ev?.video_estado) await aplicarEstadoVideo(req.nextUrl.origin, { referencia: refEd, estado: 'Aguardar' })
       }
