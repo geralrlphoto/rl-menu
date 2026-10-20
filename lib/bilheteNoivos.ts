@@ -4,6 +4,8 @@
 // e assinatura "Photo · Video · Wedding Moments". Email-safe: só tabelas e estilos inline.
 // Cada email muda a pílula, a frase, os campos, o bloco extra e o botão.
 
+import { urlCartaoStaff } from './staff'
+
 const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.rlphotovideo.pt').replace(/\/+$/, '')
 
 const GOLD = '#d8be93'
@@ -97,6 +99,7 @@ export function buildBilheteNoivos(o: {
   cta?: { label: string; url: string } | null
   nota?: string                // texto pequeno por baixo do botão
   preheader?: string
+  chave?: string               // que email é (lib/staff.ts): por cima do bilhete aparece o responsável
 }): string {
   const tipo = o.tipo ?? 'casamento'
   const data = dataBilhete(o.data)
@@ -140,6 +143,7 @@ export function buildBilheteNoivos(o: {
 ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;">${esc(o.preheader)}</div>` : ''}
 <table width="100%" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${BG}" style="background:${BG};padding:28px 10px;">
 <tr><td align="center">
+${o.chave ? `<img src="${urlCartaoStaff(o.chave)}" width="520" alt="" style="display:block;max-width:520px;width:100%;height:auto;border:0;margin:0 auto 14px;">` : ''}
 <table width="520" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${CARD}" style="max-width:520px;width:100%;background:${CARD};border:1px solid rgba(216,190,147,.35);border-radius:24px;overflow:hidden;">
 
   <tr><td background="${SITE}/email/bilhete-${tipo}.jpg" bgcolor="${CARD}" valign="top"

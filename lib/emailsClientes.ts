@@ -12,6 +12,7 @@ export function buildRecoveryEmail(opts: {
   loginUrl: string
 }): string {
   return buildBilheteNoivos({
+    chave: 'recuperar',
     pill: 'A vossa palavra-passe',
     nomes: nomesBilhete(opts.nome) || 'Para vocês',
     tipo: opts.loginUrl.includes('batizado') ? 'batizado' : 'casamento',
@@ -27,6 +28,7 @@ export function buildRecoveryEmail(opts: {
 export function buildDadosRecebidosEmail(data: { nome_noivos: string; data_casamento: string | null; tipo_evento?: string }): string {
   const isBatizado = data.tipo_evento === 'batizado'
   return buildBilheteNoivos({
+    chave: 'dados-recebidos',
     pill: 'Dados recebidos',
     nomes: nomesBilhete(data.nome_noivos) || data.nome_noivos,
     data: data.data_casamento,
@@ -45,6 +47,7 @@ export function buildDadosRecebidosEmail(data: { nome_noivos: string; data_casam
 /** "Recebemos o vosso contacto": resposta automática à lead do formulário /nova-lead (nova-lead). */
 export function buildNovaLeadEmail(nome: string, servicosList: string): string {
   return buildBilheteNoivos({
+    chave: 'nova-lead',
     pill: 'Mensagem recebida',
     nomes: nomesBilhete(nome) || 'Obrigado',
     frase: 'Obrigado pelo vosso contacto. Recebemos a vossa mensagem e entraremos em contacto convosco em breve.',

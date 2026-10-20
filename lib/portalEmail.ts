@@ -30,6 +30,7 @@ export function buildPortalEmailV2(o: {
   const dias = diasAte(o.data)
   const batizado = o.tipo === 'batizado'
   return buildBilheteNoivos({
+    chave: 'portal',
     pill: 'O vosso portal',
     nomes: o.nomesAlt.includes('|') ? o.nomesAlt : nomesBilhete(o.nomesAlt) || o.nomesAlt,
     data: o.data,

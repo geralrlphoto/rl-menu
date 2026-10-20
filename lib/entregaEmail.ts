@@ -102,6 +102,7 @@ export function buildEntregaEmailHtml(tipo: TipoEntrega, o: {
 }): string {
   const cfg = ENTREGAS[tipo]
   return buildBilheteNoivos({
+    chave: `entrega-${tipo}`,
     pill: cfg.titulo,
     nomes: o.nomes,
     data: o.data,

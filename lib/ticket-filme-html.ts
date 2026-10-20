@@ -61,6 +61,7 @@ export function buildTicketFilmeHtml(t: {
   const portal = `${SITE_URL}${portalPathFor(t.referencia, t.batizado ? 'batizado' : 'casamento')}`
   const estreia = t.passo === 'Estreia' && t.estreia ? blocoDestaque('Estreia', dataEstreia(t.estreia)) : ''
   return buildBilheteNoivos({
+    chave: 'filme',
     pill: 'Ticket do Filme',
     nomes: nomesBilhete(t.noivos) || t.noivos,
     data: t.data,

@@ -12,6 +12,7 @@ export function cardPagamento(o: any): string {
   <p style="margin:0 0 10px;text-align:center;font-family:'Space Mono','Courier New',monospace;font-size:10px;letter-spacing:.3em;color:#d8be93;">COMPROVATIVO ANEXADO</p>
   <a href="${esc(o.comprovativo_url)}" target="_blank"><img src="${esc(o.comprovativo_url)}" alt="Comprovativo" width="432" style="display:block;width:100%;max-width:432px;border:1px solid rgba(216,190,147,.3);border-radius:12px;"></a>` : ''
   return buildBilheteNoivos({
+    chave: 'pagamento',
     pill: 'Comprovativo de pagamento',
     nomes: nomesBilhete(o.nome_noivos) || String(o.nome_noivos ?? ''),
     tipo: batizado ? 'batizado' : 'casamento',

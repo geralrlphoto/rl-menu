@@ -61,6 +61,12 @@ export const TICKETS_FOTO: Record<TicketFoto, { assunto: string; pill: string; f
 
 const db = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
+// Chave de cada ticket na página Staff (quem aparece por cima do bilhete)
+const CHAVE_STAFF: Record<TicketFoto, string> = {
+  sneakpeek: 'fotos-sneakpeek', galerias: 'entrega-galerias', selecao: 'entrega-selecao', recebida: 'fotos-recebida',
+  entregue: 'entrega-fotos_finais', lembrete30: 'fotos-lembrete', lembrete60: 'fotos-lembrete', download: 'fotos-download',
+}
+
 export function buildTicketFotosHtml(t: TicketFoto, o: {
   nomes: string; data?: string | null; local?: string | null; referencia?: string | null; url?: string | null; batizado?: boolean; prazo?: string | null
 }): string {
@@ -74,6 +80,7 @@ export function buildTicketFotosHtml(t: TicketFoto, o: {
     { k: 'Referência', v: o.referencia ?? '', mono: true },
   ].filter(x => x.v)
   return buildBilheteNoivos({
+    chave: CHAVE_STAFF[t],
     pill: c.pill,
     nomes: o.nomes,
     data: o.data,

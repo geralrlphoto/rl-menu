@@ -11,6 +11,7 @@ const nomesOu = (n?: string | null, alt = 'Para vocês') => nomesBilhete(n) || a
 /** "🔔 <título>": notificação escrita na ficha do evento (notificacao-noivos). */
 export function emailNotificacaoNoivos(o: { titulo: string; texto: string; nomes?: string | null; data?: string | null; portalUrl: string; batizado?: boolean }): string {
   return buildBilheteNoivos({
+    chave: 'notificacao',
     pill: 'Nova notificação', nomes: nomesOu(o.nomes), data: o.data, tipo: tipoDe(o.batizado),
     frase: o.titulo,
     extra: blocoTexto('Mensagem', o.texto),
@@ -23,6 +24,7 @@ export function emailNotificacaoNoivos(o: { titulo: string; texto: string; nomes
 /** "RE: <assunto>": resposta da RL a uma mensagem dos noivos (tarefas/[id]). */
 export function emailRespostaNoivos(o: { nomes?: string | null; titulo?: string | null; resposta: string; mensagemOriginal?: string | null; data?: string | null; portalUrl?: string; batizado?: boolean }): string {
   return buildBilheteNoivos({
+    chave: 'resposta',
     pill: 'Resposta da nossa equipa', nomes: nomesOu(o.nomes), data: o.data, tipo: tipoDe(o.batizado),
     frase: o.titulo ? `Sobre: ${o.titulo}` : 'Respondemos à vossa mensagem.',
     extra: blocoTexto('A nossa resposta', o.resposta) + (o.mensagemOriginal ? ESPACO + blocoTexto('A vossa mensagem', o.mensagemOriginal) : ''),
@@ -36,6 +38,7 @@ export function emailRespostaNoivos(o: { nomes?: string | null; titulo?: string 
 export function emailTarefaNoivos(o: { nome: string; taskText: string; url: string; tipo: 'casamento' | 'batizado'; kind: 'new' | 'completed'; data?: string | null }): string {
   const feita = o.kind === 'completed'
   return buildBilheteNoivos({
+    chave: 'tarefa',
     pill: feita ? 'Tarefa concluída' : 'Nova tarefa', nomes: nomesOu(o.nome), data: o.data, tipo: o.tipo,
     frase: feita
       ? 'Continuamos atentos a todas as etapas até ao grande dia. Podem acompanhar o ponto de situação no vosso portal.'
@@ -49,6 +52,7 @@ export function emailTarefaNoivos(o: { nome: string; taskText: string; url: stri
 /** "O vosso Pré-Wedding": convite para marcarem a sessão (portal-notif-prewedding). */
 export function emailMarcarPreWedding(o: { nomes?: string | null; data?: string | null; local?: string | null; portalUrl: string }): string {
   return buildBilheteNoivos({
+    chave: 'marcar-prewedding',
     pill: 'O vosso pré-wedding', nomes: nomesOu(o.nomes), data: o.data,
     frase: 'Está na hora de marcarem a vossa sessão pré-wedding. Escolham no portal o dia que vos fica melhor.',
     campos: [
@@ -63,6 +67,7 @@ export function emailMarcarPreWedding(o: { nomes?: string | null; data?: string 
 /** "📅 Pré-wedding reservado": confirmação aos noivos (send-admin-notification). */
 export function emailPreWeddingReservado(o: { nomes?: string | null; referencia?: string | null; dataSessao?: string | null; local?: string | null; portalUrl?: string }): string {
   return buildBilheteNoivos({
+    chave: 'prewedding-reservado',
     pill: 'Pré-wedding reservado', nomes: nomesOu(o.nomes),
     frase: 'A vossa sessão está confirmada. Entraremos em contacto com mais detalhes.',
     campos: [
@@ -78,6 +83,7 @@ export function emailPreWeddingReservado(o: { nomes?: string | null; referencia?
 /** "Faltam 60 dias · preparámos algo para vocês" (proposta de pré-wedding agendada). */
 export function emailPropostaPreWedding(o: { nomes?: string | null; data?: string | null; url: string }): string {
   return buildBilheteNoivos({
+    chave: 'proposta-60',
     pill: 'Faltam 60 dias', nomes: nomesOu(o.nomes, 'Noivos'), data: o.data,
     frase: 'Preparámos algo para vocês.',
     texto: 'Faltam dois meses para o vosso casamento. Antes de entrarmos na reta final, preparámos uma página só para vocês, com uma coisa que faz toda a diferença no resultado do dia.',
@@ -92,6 +98,7 @@ export function emailPagamentoRegistado(o: { nome_noivos: string; referencia?: s
   const batizado = /^BAT/i.test(String(o.referencia ?? ''))
   const valor = o.valor ? (o.valor.includes('€') ? o.valor : `${o.valor} €`) : ''
   return buildBilheteNoivos({
+    chave: 'pagamento-tally',
     pill: 'Pagamento registado', nomes: nomesOu(o.nome_noivos), tipo: tipoDe(batizado),
     frase: 'Recebemos o registo do vosso pagamento. Obrigado pela vossa confiança.',
     campos: [
@@ -109,6 +116,7 @@ export function emailPagamentoRegistado(o: { nome_noivos: string; referencia?: s
 /** "O vosso Portal dos Noivos está pronto": botão da ficha do evento (send-portal-email). */
 export function emailPortalPronto(o: { nomes?: string | null; referencia?: string | null; password?: string | null; portalUrl: string; data?: string | null }): string {
   return buildBilheteNoivos({
+    chave: 'portal-pronto',
     pill: 'O vosso portal', nomes: nomesOu(o.nomes, 'Noivos'), data: o.data,
     frase: 'Este é o vosso espaço exclusivo: fotos, vídeos, cronograma e muito mais.',
     campos: [
@@ -123,6 +131,7 @@ export function emailPortalPronto(o: { nomes?: string | null; referencia?: strin
 /** "Tens uma reunião marcada": enviado ao casal pelo CRM (send-reuniao-email). */
 export function emailReuniaoMarcada(o: { nome?: string | null; dataFmt: string; hora: string; modo: string; link: string; batizado?: boolean }): string {
   return buildBilheteNoivos({
+    chave: 'reuniao',
     pill: 'Reunião marcada', nomes: nomesOu(o.nome, 'Olá!'), tipo: tipoDe(o.batizado),
     frase: 'Temos uma conversa marcada. Estamos ansiosos por vos conhecer e ouvir a vossa história.',
     campos: [
@@ -138,6 +147,7 @@ export function emailReuniaoMarcada(o: { nome?: string | null; dataFmt: string; 
 /** "⏰ A vossa reunião começa em 30 minutos" (lembrete-reuniao, cron). */
 export function emailLembreteReuniao(o: { nome?: string | null; hora?: string | null; link?: string | null }): string {
   return buildBilheteNoivos({
+    chave: 'lembrete-reuniao',
     pill: 'Faltam 30 minutos', nomes: nomesOu(o.nome, 'Noivos'),
     frase: 'Falta pouco para a nossa reunião. Estamos ansiosos por vos conhecer e ouvir a vossa história.',
     campos: [{ k: 'Hora', v: o.hora ? o.hora.slice(0, 5) : '', mono: true }],
