@@ -91,7 +91,8 @@ export const FASES_EDICAO: Fase[] = [
   {
     titulo: 'Edição', sub: 'no Painel do Editor',
     // Nomear editor fica numa lista por baixo da fase; a edição segue para a direita
-    fluxo: { abaixo: [0, 1, 2], seq: { 3: [4], 4: [5], 5: [6] }, saida: [6] },
+    // Cor e Áudio ficam por baixo da Montagem; o caminho segue da Montagem para a Revisão
+    fluxo: { abaixo: [0, 1, 2], seq: { 3: [4] }, baixo: { 4: [5], 5: [6] }, saida: [4] },
     passos: [
       {
         id: '3-0', titulo: 'Escolher editor', sub: 'pela carga',
