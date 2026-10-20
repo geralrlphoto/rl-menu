@@ -215,7 +215,7 @@ export default function EdicaoVideoPage() {
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Como trabalhamos</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Fluxo de trabalho da edição</h2>
-          <p className="mt-2 text-sm text-white/45">Do dia do pré-wedding ao feedback dos noivos, com tarefas, prazos e quem faz cada passo.</p>
+          <p className="mt-2 text-sm text-white/45">De nomear o editor ao feedback dos noivos, com tarefas, prazos e quem faz cada passo.</p>
           <Link href="/edicao-video/fluxo"
             className="group mt-6 block rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/85 backdrop-blur-md p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/60 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]"
             style={{ borderLeft: `2px solid ${OURO}` }}>
