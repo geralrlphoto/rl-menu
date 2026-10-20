@@ -10,6 +10,7 @@ import WhatsAppPreparacao from './WhatsAppPreparacao'
 import EnviarIbanNoivos from './EnviarIbanNoivos'
 import BriefingNoivos from './BriefingNoivos'
 import WhatsAppPreWedding from './WhatsAppPreWedding'
+import RodaFicha from './RodaFicha'
 
 // ─── Serviços extra ────────────────────────────────────────────────────────────
 const SERVICOS_OPCOES = [
@@ -104,16 +105,9 @@ type Evento = {
 // ─── Section wrapper ───────────────────────────────────────────────────────────
 function Section({ title, right, children }: { title: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="ficha-reveal relative overflow-hidden rounded-2xl border border-white/[0.07] p-6 pl-7 flex flex-col gap-4 transition-all duration-300 hover:border-gold/20"
-      style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.028) 0%, rgba(255,255,255,0.006) 60%, rgba(201,164,92,0.015) 100%)' }}>
-      {/* barra dourada lateral */}
-      <span className="pointer-events-none absolute left-0 top-6 bottom-6 w-[2px] rounded-full"
-        style={{ background: 'linear-gradient(to bottom, rgba(201,164,92,0.7), rgba(201,164,92,0))' }} />
+    <section className="ficha-reveal ficha-card relative flex flex-col gap-4 p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2.5 text-[10px] tracking-[0.38em] text-gold uppercase font-semibold">
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-gold" style={{ boxShadow: '0 0 9px rgba(201,164,92,0.7)' }} />
-          {title}
-        </h2>
+        <h2 className="text-[17px] font-semibold text-white leading-tight">{title}</h2>
         {right && <div>{right}</div>}
       </div>
       {children}
@@ -3700,9 +3694,14 @@ const FichaAbaCtx = createContext<string>('evento')
 function DrawerBloco({ tab, sub, children }: { tab: string; label?: string; sub?: string; children: React.ReactNode }) {
   const ativa = useContext(FichaAbaCtx)
   if (ativa !== tab) return null
+  const n = FICHA_ABAS.findIndex(t => t.id === tab)
   return (
-    <div className="ficha-reveal flex flex-col gap-5">
-      {sub && <p className="print:hidden text-[11px] text-white/35 -mb-1">{sub}</p>}
+    <div key={tab} className="ficha-reveal flex flex-col gap-5">
+      <div className="mb-1">
+        <p className="text-[11px] tracking-[0.3em] uppercase" style={{ color: '#d8be93' }}>{String(n + 1).padStart(2, '0')} · Secção</p>
+        <h2 className="mt-2 text-[30px] sm:text-[34px] leading-tight text-white">{FICHA_ABAS[n]?.label}</h2>
+        {sub && <p className="mt-1.5 text-[14px] text-white/45">{sub}</p>}
+      </div>
       {children}
     </div>
   )
@@ -4316,60 +4315,87 @@ export default function EventoPage() {
   const prazoVideo    = e.data_evento ? addWorkingDays(e.data_evento, 180) : null
 
   return (
-    <main id="evento-page" className="min-h-screen px-4 py-8 max-w-4xl mx-auto print:max-w-full print:py-6 print:px-8">
+    <main id="evento-page" className="ficha-rl min-h-screen print:max-w-full print:py-6 print:px-8">
       <style>{`
         @keyframes fichaReveal { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
         .ficha-reveal { animation: fichaReveal .55s cubic-bezier(.2,.7,.2,1) both; }
         @media print { .ficha-reveal { animation: none !important; } }
-        /* Cabeçalho de bloco — divisória premium */
-        .ficha-bloco { display:flex; align-items:center; gap:14px; margin: 30px 0 4px; }
-        .ficha-bloco .num { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 22px; color: #c9a45c; line-height:1; opacity:.85; }
-        .ficha-bloco .txt { font-size: 10px; letter-spacing: .45em; text-transform: uppercase; color: rgba(201,164,92,.75); font-weight: 600; white-space: nowrap; }
-        .ficha-bloco .line { flex:1; height:1px; background: linear-gradient(to right, rgba(201,164,92,.35), rgba(201,164,92,0)); }
+        /* ── Estilo RL (igual às páginas de admin): preto, dourado suave #d8be93,
+              cartões de 22px com a borda esquerda dourada. Tipos de letra iguais. ── */
+        .ficha-rl { --roda-larg: 520px; background: #0b0b0b; }
+        @media (min-width: 1280px) { .ficha-rl .ficha-conteudo { margin-left: calc(var(--roda-larg) + 8px); margin-right: auto; } }
+        .ficha-rl .ficha-nome * { font-size: clamp(34px, 4.6vw, 52px) !important; line-height: 1.05 !important; color: #fff !important; }
+        .ficha-rl .ficha-card {
+          background: #141414; border: 1px solid rgba(255,255,255,.08); border-left: 2px solid rgba(216,190,147,.6);
+          border-radius: 22px; transition: border-color .3s, box-shadow .3s;
+        }
+        .ficha-rl .ficha-card:hover { border-color: rgba(216,190,147,.25); border-left-color: #d8be93; box-shadow: 0 0 40px -22px rgba(216,190,147,.6); }
+        .ficha-rl .ficha-conteudo [class*="text-gold"] { color: #d8be93 !important; }
+        .ficha-rl .ficha-conteudo [class*="border-gold"] { border-color: rgba(216,190,147,.35) !important; }
+        .ficha-rl .ficha-conteudo [class*="bg-gold/"] { background-color: rgba(216,190,147,.1) !important; }
+        .ficha-rl .ficha-conteudo [class~="bg-gold"] { background-color: #d8be93 !important; }
+        .ficha-rl .ficha-conteudo [class*="rounded-2xl"] { border-radius: 22px !important; }
+        .ficha-rl .ficha-conteudo [class*="rounded-xl"] { border-radius: 16px !important; }
+        .ficha-rl .ficha-conteudo .ficha-card [class*="bg-white/[0.0"] { background-color: rgba(255,255,255,.03) !important; }
+        .ficha-rl .ficha-conteudo input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+        .ficha-rl .ficha-conteudo textarea,
+        .ficha-rl .ficha-conteudo select { border-radius: 12px !important; }
+        .ficha-rl .ficha-conteudo input:focus, .ficha-rl .ficha-conteudo textarea:focus, .ficha-rl .ficha-conteudo select:focus { border-color: rgba(216,190,147,.55) !important; outline: none; }
+        .ficha-rl .ficha-conteudo button[class*="rounded-md"],
+        .ficha-rl .ficha-conteudo button[class*="rounded-lg"] { border-radius: 999px !important; }
+        @media print { .ficha-rl { background: white !important; } .ficha-rl .ficha-conteudo { margin: 0 !important; max-width: none !important; } }
       `}</style>
-      <Link href={`/eventos-2026?ano=${anoEvento}`} className="print:hidden text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
-        ‹ VOLTAR AOS CASAMENTOS
+      <RodaFicha
+        itens={FICHA_ABAS.map(t => ({ id: t.id, label: t.label, aviso: t.id === 'entregas' && videoRevPendente }))}
+        ativo={aba}
+        onEscolher={id => { setAba(id); window.scrollTo({ top: 0, behavior: 'smooth' }) }}
+        topo={<Link href={`/eventos-2026?ano=${anoEvento}`} className="text-[13px] text-white/45 hover:text-[#d8be93] transition-colors">‹ Voltar aos casamentos</Link>}
+      />
+
+      <div className="ficha-conteudo max-w-[940px] mx-auto px-4 py-8 xl:py-10">
+      <Link href={`/eventos-2026?ano=${anoEvento}`} className="print:hidden xl:hidden text-[13px] text-white/45 hover:text-[#d8be93] transition-colors">
+        ‹ Voltar aos casamentos
       </Link>
 
-      {/* ── Topo: quem, quando, onde ── */}
-      <header className="mt-6 rounded-3xl border border-white/[0.08] p-5 sm:p-6"
-        style={{ background: 'linear-gradient(158deg, rgba(255,255,255,0.03), rgba(216,190,147,0.03))' }}>
-        <div className="flex items-start gap-4 sm:gap-5">
-          {e.referencia && (
-            <div className="print:hidden shrink-0">
-              <FotoNoivosUpload referencia={e.referencia} compacto />
-            </div>
-          )}
+      {/* ── Topo: quem, quando, onde (no estilo das páginas de admin) ── */}
+      <header className="relative overflow-hidden mt-4 xl:mt-0 mb-6 rounded-[28px] border p-6 sm:p-9"
+        style={{ borderColor: 'rgba(216,190,147,.2)', background: '#0b0b0b' }}>
+        <div aria-hidden className="absolute inset-0 pointer-events-none" style={{
+          backgroundImage: 'radial-gradient(rgba(216,190,147,0.18) 1px, transparent 1px)', backgroundSize: '24px 24px',
+          maskImage: 'radial-gradient(ellipse at 85% 30%, #000 0%, transparent 65%)', WebkitMaskImage: 'radial-gradient(ellipse at 85% 30%, #000 0%, transparent 65%)',
+        }} />
+        <div className="relative flex items-start justify-between gap-5">
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap text-[11px]">
+            <div className="flex items-center gap-2 flex-wrap text-[12px]" style={{ color: '#d8be93' }}>
               <EditField label="" value={e.referencia} field="referencia" eventId={e.id} onSaved={handleSaved} mono />
               <button type="button" onClick={() => setMudarRef(v => !v)}
-                className="print:hidden text-[10px] tracking-widest uppercase text-white/25 hover:text-gold transition-colors">
-                {mudarRef ? 'Fechar' : e.referencia ? 'Mudar' : 'Atribuir referência'}
+                className="print:hidden text-[11px] text-white/30 hover:text-[#d8be93] transition-colors underline-offset-4 hover:underline">
+                {mudarRef ? 'fechar' : e.referencia ? 'mudar' : 'atribuir referência'}
               </button>
             </div>
-            <EditField label="" value={e.cliente} field="cliente" eventId={e.id} large onSaved={handleSaved} />
-            <div className="flex gap-2 items-center flex-wrap mt-1 text-white/40 text-sm">
+            <div className="mt-2 ficha-nome">
+              <EditField label="" value={e.cliente} field="cliente" eventId={e.id} large onSaved={handleSaved} />
+            </div>
+            <div className="flex gap-2 items-center flex-wrap mt-2 text-white/55 text-[15px]">
               <EditField label="" value={e.data_evento} field="data_evento" eventId={e.id} type="date" onSaved={handleSaved} />
-              <span>·</span>
+              <span className="text-white/25">·</span>
               <EditField label="" value={e.local} field="local" eventId={e.id} onSaved={handleSaved} />
             </div>
           </div>
-          <div className="hidden sm:flex flex-col items-end gap-2 shrink-0">
-            {e.status && (
-              <span className="text-xs px-3 py-1 rounded-full border text-[#d8be93]" style={{ borderColor: 'rgba(216,190,147,0.35)', background: 'rgba(216,190,147,0.08)' }}>{e.status}</span>
+          <div className="flex flex-col items-end gap-3 shrink-0">
+            {e.referencia && (
+              <div className="print:hidden">
+                <FotoNoivosUpload referencia={e.referencia} compacto />
+              </div>
             )}
-            <div className="print:hidden flex items-center gap-3">
-              <button onClick={() => window.print()} className="text-[11px] text-white/30 hover:text-gold transition-colors tracking-widest" title="Imprimir / Guardar como PDF">PDF</button>
-              {e.notion_url && (
-                <a href={e.notion_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-white/30 hover:text-gold transition-colors tracking-widest">Notion ↗</a>
-              )}
-            </div>
+            {e.status && (
+              <span className="text-[12px] px-3 py-1 rounded-full border" style={{ color: '#d8be93', borderColor: 'rgba(216,190,147,0.35)', background: 'rgba(216,190,147,0.08)' }}>{e.status}</span>
+            )}
           </div>
         </div>
 
         {mudarRef && (
-        <div className="print:hidden mt-4 flex flex-col gap-1.5">
+        <div className="relative print:hidden mt-4 flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <select
               value={navRef}
@@ -4428,7 +4454,7 @@ export default function EventoPage() {
         </div>
         )}
 
-        <div className="flex flex-wrap gap-2 mt-4 items-center">
+        <div className="relative flex flex-wrap gap-2 mt-5 items-center">
           <TipoEventoEditor
             value={e.tipo_evento ?? []}
             eventId={e.id}
@@ -4440,48 +4466,42 @@ export default function EventoPage() {
           ))}
         </div>
 
-        {/* Resumo rápido: cada cartão abre o separador certo */}
+        {/* Resumo: cada valor abre a secção certa */}
         {(() => {
           const total = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
           const pago = pagamentos.reduce((t, p) => t + Number(p.valor_liquidado ?? 0), 0)
           const eur = (v: number) => `${Math.round(v).toLocaleString('pt-PT')} €`
           const hoje = new Date(new Date().toISOString().slice(0, 10) + 'T12:00:00Z').getTime()
           const dias = e.data_evento ? Math.round((new Date(e.data_evento.slice(0, 10) + 'T12:00:00Z').getTime() - hoje) / 86400000) : null
-          const cards: Array<{ l: string; v: string; s?: string; aba: string; ok?: boolean }> = [
-            { l: 'Dia', v: dias === null ? '—' : dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'É hoje' : `Há ${-dias} dias`, s: e.proposta || undefined, aba: 'evento' },
+          const cards: Array<{ l: string; v: string; s?: string; aba: string; ok?: boolean; alerta?: boolean }> = [
+            { l: 'O dia', v: dias === null ? '—' : dias > 0 ? `Faltam ${dias} dias` : dias === 0 ? 'É hoje' : `Há ${-dias} dias`, s: e.proposta || undefined, aba: 'evento' },
             { l: 'Pagamentos', v: total > 0 ? `${eur(pago)} de ${eur(total)}` : eur(pago), s: total > 0 ? (pago >= total ? 'Tudo pago' : `Falta ${eur(total - pago)}`) : undefined, aba: 'financeiro', ok: total > 0 && pago >= total },
             { l: 'Fotografia', v: e.fotos_edicao_estado || 'Aguardar', s: e.sel_fotos_estado ? `Seleção: ${e.sel_fotos_estado}` : undefined, aba: 'entregas' },
-            { l: 'Vídeo', v: videoRevPendente ? 'Revisão por ver' : (e.video_estado || 'Aguardar'), s: prazoVideo ? `Prazo ${formatDate(prazoVideo)}` : undefined, aba: 'entregas', ok: false },
+            { l: 'Vídeo', v: videoRevPendente ? 'Revisão por ver' : (e.video_estado || 'Aguardar'), s: prazoVideo ? `Prazo ${formatDate(prazoVideo)}` : undefined, aba: 'entregas', alerta: videoRevPendente },
           ]
           return (
-            <div className="print:hidden grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-5">
-              {cards.map(c => (
-                <button key={c.l} type="button" onClick={() => setAba(c.aba)}
-                  className="text-left rounded-2xl border border-white/[0.07] hover:border-gold/30 bg-black/20 px-4 py-3 transition-colors">
-                  <span className="block text-[9px] tracking-[0.3em] uppercase text-white/35">{c.l}</span>
-                  <span className={`block mt-1 text-[15px] font-semibold leading-tight ${c.ok ? 'text-green-400' : 'text-white'}`}>{c.v}</span>
-                  {c.s && <span className="block mt-0.5 text-[11px] text-white/35 truncate">{c.s}</span>}
+            <div className="relative print:hidden grid grid-cols-2 sm:grid-cols-4 mt-7 rounded-[20px] border overflow-hidden"
+              style={{ borderColor: 'rgba(216,190,147,.25)', background: 'rgba(17,17,17,.8)', boxShadow: '0 0 48px -24px rgba(216,190,147,.5)' }}>
+              {cards.map((c, k) => (
+                <button key={c.l} type="button" onClick={() => { setAba(c.aba) }}
+                  className={`text-left px-5 py-4 transition-colors hover:bg-white/[0.03] ${k > 0 ? 'sm:border-l' : ''} ${k % 2 ? 'border-l sm:border-l' : ''} ${k > 1 ? 'border-t sm:border-t-0' : ''}`}
+                  style={{ borderColor: 'rgba(255,255,255,.07)' }}>
+                  <span className="block text-[11px] text-white/45">{c.l}</span>
+                  <span className={`block mt-1.5 text-[17px] font-semibold leading-tight ${c.ok ? 'text-green-400' : c.alerta ? 'text-red-300' : 'text-white'}`}>{c.v}</span>
+                  {c.s && <span className="block mt-1 text-[12px] truncate" style={{ color: 'rgba(216,190,147,.75)' }}>{c.s}</span>}
                 </button>
               ))}
             </div>
           )
         })()}
-      </header>
 
-      {/* ── Separadores ── */}
-      <nav className="print:hidden sticky top-0 z-30 -mx-4 px-4 mt-5 mb-5 py-2 overflow-x-auto"
-        style={{ background: 'rgba(10,8,5,0.85)', backdropFilter: 'blur(10px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div className="flex gap-1.5 min-w-max">
-          {FICHA_ABAS.map(t => (
-            <button key={t.id} type="button" onClick={() => setAba(t.id)}
-              className={`px-3.5 py-2 rounded-full text-[11px] tracking-[0.12em] uppercase font-semibold border transition-all whitespace-nowrap ${aba === t.id ? 'text-black border-transparent' : 'text-white/45 border-white/[0.08] hover:text-white/80'}`}
-              style={aba === t.id ? { background: '#d8be93' } : undefined}>
-              {t.label}
-              {t.id === 'entregas' && videoRevPendente && <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-red-400 align-middle" />}
-            </button>
-          ))}
+        <div className="relative print:hidden flex items-center gap-4 mt-5 text-[12px] text-white/35">
+          <button onClick={() => window.print()} className="hover:text-[#d8be93] transition-colors" title="Imprimir / Guardar como PDF">Imprimir PDF</button>
+          {e.notion_url && (
+            <a href={e.notion_url} target="_blank" rel="noopener noreferrer" className="hover:text-[#d8be93] transition-colors">Abrir no Notion ↗</a>
+          )}
         </div>
-      </nav>
+      </header>
 
       <FichaAbaCtx.Provider value={aba}>
 
@@ -6139,6 +6159,7 @@ export default function EventoPage() {
 
       </div>
       </FichaAbaCtx.Provider>
+      </div>
 
       <style>{`
         @media print {
