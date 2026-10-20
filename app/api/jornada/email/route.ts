@@ -99,5 +99,5 @@ export async function GET(req: Request) {
   const k = new URL(req.url).searchParams.get('k') ?? ''
   const h = html(k)
   if (!h) return new Response('sem_previsualizacao', { status: 404 })
-  return new Response(h, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'private, max-age=3600' } })
+  return new Response(h, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' } })
 }

@@ -5,6 +5,9 @@
 
 export const metadata = { title: 'Tickets · RL' }
 
+// Muda a cada deploy: o browser nunca mostra uma pré-visualização antiga
+const VERSAO = (process.env.VERCEL_GIT_COMMIT_SHA ?? 'dev').slice(0, 8)
+
 type Ticket = { k: string; nome: string; assunto: string; quando: string; para: string; info?: string }
 
 const FICHA = 'Na ficha do evento, ao enviar o link'
@@ -129,7 +132,7 @@ export default function TicketsPage() {
                   </div>
                   <iframe
                     title={t.nome}
-                    src={`/api/jornada/email?k=${t.k}`}
+                    src={`/api/jornada/email?k=${t.k}&v=${VERSAO}`}
                     sandbox="allow-same-origin"
                     loading="lazy"
                     style={{ display: 'block', width: '100%', height: t.info ? 1180 : 900, border: 0, background: t.info ? '#0b0b0b' : '#f3ede1' }}
