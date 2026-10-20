@@ -154,7 +154,10 @@ export default function EdicaoVideoPage() {
             Fluxo de trabalho <span style={{ color: OURO }}>↗</span>
           </Link>
 
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-5 gap-3">
+          <p className="mt-12 text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Ponto de situação</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Vídeos em curso</h2>
+          <p className="mt-2 text-sm text-white/45">Quantos casamentos estão em cada fase e quantos têm o prazo de entrega perto ou já passado.</p>
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-5 gap-3">
             {kpis.map(k => (
               <div key={k.label} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md px-4 py-3.5" style={{ borderLeft: `2px solid ${k.cor}` }}>
                 <p className="text-[10px] tracking-[0.25em] uppercase text-white/45">{k.label}</p>
