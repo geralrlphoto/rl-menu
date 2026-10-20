@@ -2453,6 +2453,20 @@ function PortalSubPageContent() {
     }
 
     const fpCards: FotografiasCard[] = [
+      // Sneak peek (Departamento de Fotografia): só aparece depois de enviado
+      ...(portalSettingsObj?.sneakpeek_url ? [{
+        key: 'sneakpeek',
+        lead: {
+          kicker: 'Sneak peek',
+          title: <>As <em>primeiras</em> fotografias.</>,
+          subtitle: 'Uma pequena amostra do vosso dia, enquanto preparamos a galeria completa.',
+        },
+        title: 'SNEAK PEEK',
+        heading: 'Sneak Peek',
+        caption: 'As primeiras fotografias do vosso dia',
+        mark: 'S',
+        url: String(portalSettingsObj.sneakpeek_url),
+      }] : []),
       {
         key: 'galerias',
         lead: {

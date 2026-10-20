@@ -66,6 +66,10 @@ const LINKS = [
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="6" width="13" height="12" rx="2"/><path strokeLinejoin="round" d="M16 10.5l5-3v9l-5-3"/></svg>,
   },
   {
+    href: '/edicao-fotografia', label: 'Fotografia', sub: 'Departamento',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>,
+  },
+  {
     href: '/freelancers', label: 'Freelancers', sub: 'Equipa',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14"/><rect x="1" y="6" width="14" height="12" rx="2"/></svg>,
   },
@@ -353,7 +357,7 @@ function GlobalMenuInner() {
     : [
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
-        { nome: 'Produção', hrefs: ['/fotos-selecao', '/albuns-casamento', '/edicao-video', '/freelancers'] },
+        { nome: 'Produção', hrefs: ['/fotos-selecao', '/albuns-casamento', '/edicao-fotografia', '/edicao-video', '/freelancers'] },
         { nome: 'Gestão', hrefs: ['/financas', '/relatorio-diario', '/calendario'] },
       ]
   const EXTRA_LINKS = [{

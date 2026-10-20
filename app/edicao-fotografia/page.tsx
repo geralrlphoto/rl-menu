@@ -1,0 +1,320 @@
+'use client'
+
+// Produção → Departamento de Fotografia.
+// Quadro dos casamentos por fase (sneak peek, galeria online, fotos p/ seleção,
+// seleção dos noivos, edição, entregue), com os envios aos noivos feitos daqui.
+// Fases e prazos: lib/fotografiaFluxo.ts. Dados: /api/edicao-fotografia.
+// Envios: /api/edicao-fotografia/enviar (email + portal, as mesmas chaves da ficha).
+// Editor de fotos: PATCH /api/evento-equipa (cria o trabalho e avisa o editor).
+
+import { useEffect, useMemo, useState } from 'react'
+import Link from 'next/link'
+import type { EtapaFoto } from '@/lib/fotografiaFluxo'
+
+const OURO = '#C9A84C'
+const FASES: { k: EtapaFoto; titulo: string; cor: string }[] = [
+  { k: 'sneakpeek', titulo: 'Sneak peek', cor: '#f9a8d4' },
+  { k: 'galerias', titulo: 'Galeria online', cor: '#fb923c' },
+  { k: 'selecao', titulo: 'Fotos p/ seleção', cor: '#fbbf24' },
+  { k: 'escolha', titulo: 'Seleção dos noivos', cor: '#93c5fd' },
+  { k: 'edicao', titulo: 'Edição', cor: '#c4b5fd' },
+  { k: 'entregue', titulo: 'Entregue', cor: '#4ade80' },
+]
+const COR = Object.fromEntries(FASES.map(f => [f.k, f.cor])) as Record<EtapaFoto, string>
+
+// Cada fase e quem faz o quê (o que os noivos recebem)
+const FASES_INFO: { k: EtapaFoto; quem: string; quando: string; noivos: string }[] = [
+  { k: 'sneakpeek', quem: 'RL', quando: 'Até 48 horas depois do casamento: 10 a 20 fotos escolhidas.', noivos: 'recebem o email “As primeiras fotografias” e o link fica no portal.' },
+  { k: 'galerias', quem: 'RL', quando: 'Até 7 dias depois do casamento.', noivos: 'recebem o email da Galeria Online; o cartão fica Disponível no portal.' },
+  { k: 'selecao', quem: 'RL', quando: 'Até 30 dias depois do casamento.', noivos: 'recebem a galeria para escolherem as fotos do álbum.' },
+  { k: 'escolha', quem: 'Noivos', quando: 'Enviam a seleção pelo formulário (chega sozinha). Lembrar ao fim de 30 dias.', noivos: 'escolhem as preferidas no portal.' },
+  { k: 'edicao', quem: 'Editor', quando: 'A RL nomeia o editor; 30 dias depois de chegar a seleção.', noivos: 'veem a seleção recebida e em edição.' },
+  { k: 'entregue', quem: 'RL', quando: 'A RL envia as fotos editadas.', noivos: 'recebem o email das Fotos Finais; 30 dias para descarregar.' },
+]
+
+type Membro = { id: string; nome: string; foto_url: string | null; status: string }
+type Projeto = {
+  id: number; fichaId: string; referencia: string; cliente: string | null; data: string; local: string | null
+  fase: EtapaFoto; prazo: string | null; diasPrazo: number | null; alertaOff: boolean
+  recebida: string | null; editores: string[]; editorIds: (string | null)[]; fotografos: string[]
+  links: Partial<Record<EtapaFoto, string | null>>; enviadas: Partial<Record<EtapaFoto, string | null>>
+  portalId: string | null
+  historico: { etapa: string; origem: string | null; em: string }[]
+}
+
+const fmt = (iso: string) => new Date(iso.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
+const primeiro = (n: string) => n.trim().split(/\s+/)[0]
+const diasEntre = (a: string, b: string) => Math.round((new Date(b.slice(0, 10) + 'T12:00:00Z').getTime() - new Date(a.slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)
+
+function linhaDoTempo(p: Projeto) {
+  const ev: { em: string; titulo: string; quem?: string | null }[] = [{ em: p.data, titulo: 'Casamento' }]
+  for (const h of p.historico) ev.push({ em: h.em, titulo: h.etapa, quem: h.origem })
+  // envios feitos antes de haver histórico (ficha do evento)
+  const nomes: [EtapaFoto, string][] = [['sneakpeek', 'Sneak peek enviado'], ['galerias', 'Galeria online enviada'], ['selecao', 'Fotos p/ seleção enviadas'], ['entregue', 'Fotos editadas entregues']]
+  for (const [k, t] of nomes) {
+    const d = p.enviadas[k]
+    if (d && !p.historico.some(h => h.etapa === t)) ev.push({ em: String(d), titulo: t })
+  }
+  if (p.recebida && !p.historico.some(h => h.etapa === 'Seleção recebida')) ev.push({ em: p.recebida, titulo: 'Seleção recebida' })
+  return ev.sort((a, b) => a.em.localeCompare(b.em))
+}
+
+export default function DepartamentoFotografiaPage() {
+  const [dados, setDados] = useState<{ equipa: Membro[]; projetos: Projeto[] } | null>(null)
+  const [erro, setErro] = useState(false)
+  const [aGravar, setAGravar] = useState<number | null>(null)
+  const [links, setLinks] = useState<Record<string, string>>({})
+
+  const carregar = () => {
+    fetch('/api/edicao-fotografia').then(r => r.json())
+      .then(d => { if (d.ok) setDados({ equipa: d.equipa, projetos: d.projetos }); else setErro(true) })
+      .catch(() => setErro(true))
+  }
+  useEffect(carregar, [])
+
+  const acao = async (p: Projeto, etapa: string, confirmar: string, url?: string) => {
+    if (etapa !== 'recebida' && !/^https?:\/\//i.test(url ?? '')) { alert('Cola o link da galeria (https://…).'); return }
+    if (!window.confirm(confirmar)) return
+    setAGravar(p.id)
+    const r = await fetch('/api/edicao-fotografia/enviar', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, etapa, url }),
+    }).catch(() => null)
+    const d = r ? await r.json().catch(() => ({})) : {}
+    setAGravar(null)
+    if (!r?.ok) { alert((d as any).error || 'Não foi possível guardar.'); return }
+    carregar()
+  }
+
+  const atribuir = async (p: Projeto, nome: string) => {
+    if (!nome) return
+    setAGravar(p.id)
+    await fetch('/api/evento-equipa', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, data_casamento: p.data, local: p.local, editor_fotos: [nome] }),
+    }).catch(() => {})
+    setAGravar(null)
+    carregar()
+  }
+
+  const projetos = dados?.projetos ?? []
+  const porFase = useMemo(() => {
+    const m = new Map<EtapaFoto, Projeto[]>(FASES.map(f => [f.k, []]))
+    for (const p of projetos) m.get(p.fase)?.push(p)
+    for (const [f, l] of m) l.sort((a, b) => f === 'entregue'
+      ? String(b.enviadas.entregue ?? '').localeCompare(String(a.enviadas.entregue ?? ''))
+      : (a.diasPrazo ?? 9999) - (b.diasPrazo ?? 9999))
+    return m
+  }, [projetos])
+  // Atraso da RL (a espera pela seleção dos noivos não conta)
+  const atrasado = (p: Projeto) => p.fase !== 'entregue' && p.fase !== 'escolha' && !p.alertaOff && p.diasPrazo !== null && p.diasPrazo < 0
+  const kpis = [
+    ...FASES.filter(f => f.k !== 'entregue').map(f => ({ label: f.titulo, valor: porFase.get(f.k)!.length, cor: f.cor })),
+    { label: 'Atrasados', valor: projetos.filter(atrasado).length, cor: '#f87171' },
+  ]
+
+  const cargas = (dados?.equipa ?? []).map(e => {
+    const meus = projetos.filter(p => p.fase === 'edicao' && p.editorIds.includes(e.id))
+    return { e, ativos: meus.length, atrasados: meus.filter(atrasado).length }
+  }).sort((a, b) => a.ativos - b.ativos || a.e.nome.localeCompare(b.e.nome))
+  const comTrabalho = cargas.filter(c => c.ativos > 0)
+
+  return (
+    <main className="min-h-screen bg-[#070707] text-white font-cond overflow-x-clip">
+      {/* ── Topo ── */}
+      <section className="relative overflow-hidden border-b border-white/[0.06]">
+        <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 70% at 85% 10%, rgba(201,168,76,0.12), transparent 70%)' }} />
+        <div className="absolute inset-0 pointer-events-none opacity-60"
+          style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px)', backgroundSize: '26px 26px', maskImage: 'radial-gradient(ellipse 70% 80% at 70% 20%, #000 20%, transparent 75%)', WebkitMaskImage: 'radial-gradient(ellipse 70% 80% at 70% 20%, #000 20%, transparent 75%)' }} />
+        <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-24 pb-12">
+          <p className="text-[13px] font-bold tracking-[0.5em] uppercase" style={{ color: OURO }}>Produção · Departamento</p>
+          <h1 className="mt-3 font-bold uppercase leading-[0.9] text-[52px] sm:text-[88px] lg:text-[110px]">Fotografia</h1>
+          <div className="mt-5 flex items-center gap-4">
+            <span className="w-12 h-px" style={{ background: OURO }} />
+            <span className="text-sm tracking-[0.22em] uppercase text-white/60">Do sneak peek às fotos editadas, tudo enviado daqui</span>
+          </div>
+
+          <p className="mt-12 text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Ponto de situação</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Fotografias em curso</h2>
+          <p className="mt-2 text-sm text-white/45">Quantos casamentos estão em cada fase e quantos já passaram o prazo da fase em que estão.</p>
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {kpis.map(k => (
+              <div key={k.label} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md px-4 py-3.5" style={{ borderLeft: `2px solid ${k.cor}` }}>
+                <p className="text-[10px] tracking-[0.25em] uppercase text-white/45">{k.label}</p>
+                <p className="mt-1 text-[34px] font-thin leading-none tabular-nums" style={{ color: k.valor ? k.cor : 'rgba(255,255,255,.35)' }}>{dados ? k.valor : '–'}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12 flex flex-col gap-16">
+        {erro && <p className="text-red-400 text-sm">Não foi possível carregar os dados. Atualiza a página.</p>}
+
+        {/* ── Fases: quem faz o quê ── */}
+        <section>
+          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Portal dos noivos</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">As fases: quem faz o quê</h2>
+          <p className="mt-2 text-sm text-white/45">Cada envio sai deste quadro: email aos noivos e o cartão fica Disponível no portal. A ficha do evento usa os mesmos dados, por isso fica sempre igual.</p>
+          <ol className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {FASES_INFO.map((e, i) => {
+              const f = FASES.find(x => x.k === e.k)!
+              return (
+                <li key={e.k} className="rounded-[22px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md p-5" style={{ borderLeft: `2px solid ${f.cor}` }}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-thin tabular-nums text-white/40">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: f.cor, background: `${f.cor}1f`, border: `1px solid ${f.cor}55` }}>{e.quem}</span>
+                  </div>
+                  <p className="mt-3 text-[22px] font-semibold leading-tight">{f.titulo}</p>
+                  <p className="mt-2 text-[13px] text-white/70 leading-snug"><span className="text-white/40">Quando: </span>{e.quando}</p>
+                  <p className="mt-3 pt-3 border-t border-white/[0.06] text-[12.5px] italic leading-snug" style={{ color: '#d8be93' }}>Noivos: {e.noivos}</p>
+                </li>
+              )
+            })}
+          </ol>
+        </section>
+
+        {/* ── Equipa de edição de fotos ── */}
+        <section>
+          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Equipa</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Quem está a editar</h2>
+          <p className="mt-2 text-sm text-white/45">Editores de fotos com casamentos em edição. Ao nomear, o editor recebe o trabalho e o aviso no portal dele.</p>
+          {dados && !comTrabalho.length && <p className="mt-6 text-sm text-white/35">Ninguém tem casamentos em edição neste momento.</p>}
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {comTrabalho.map(({ e, ativos, atrasados }) => (
+              <Link key={e.id} href={`/freelancers/${e.id}`}
+                className="rounded-[22px] border border-white/[0.08] bg-[#111111]/90 p-5 flex items-center gap-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/45"
+                style={{ borderLeft: `2px solid ${OURO}` }}>
+                <div className="w-14 h-14 rounded-full overflow-hidden flex-none border border-[#C9A84C]/40 bg-[#C9A84C]/10 flex items-center justify-center text-lg" style={{ color: OURO }}>
+                  {e.foto_url ? <img src={e.foto_url} alt="" className="w-full h-full object-cover" /> : primeiro(e.nome).charAt(0)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-lg font-semibold truncate">{e.nome}</p>
+                  <p className="text-xs text-white/45 mt-0.5">{e.status === 'ASSISTENTE' ? 'Assistente' : 'Fotógrafo'}</p>
+                </div>
+                <div className="text-right flex-none">
+                  <p className="text-[34px] font-thin leading-none tabular-nums" style={{ color: OURO }}>{ativos}</p>
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">em edição</p>
+                  {atrasados > 0 && <p className="text-[10px] tracking-[0.15em] uppercase text-red-400 mt-1">{atrasados} atrasado{atrasados > 1 ? 's' : ''}</p>}
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* ── Quadro por fases ── */}
+        <section>
+          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Quadro de trabalho</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Casamentos por fase</h2>
+          <p className="mt-2 text-sm text-white/45">Casamentos com fotografia desde 1 de janeiro de 2026. Cola o link da galeria e envia: os noivos recebem o email e o cartão abre no portal. O sneak peek conta a partir de 20 de outubro de 2026.</p>
+          <div className="mt-6 flex gap-4 overflow-x-auto pb-4 snap-x">
+            {FASES.map(f => {
+              const lista = porFase.get(f.k) ?? []
+              return (
+                <div key={f.k} className="snap-start flex-none w-[290px] flex flex-col gap-3">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.2em] uppercase text-white/75">
+                      <i className="w-2 h-2 rounded-full" style={{ background: f.cor, boxShadow: `0 0 8px ${f.cor}` }} />{f.titulo}
+                    </span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-0.5 text-[12px] font-semibold text-white/70">{lista.length}</span>
+                  </div>
+                  {!dados && <div className="h-28 rounded-[18px] bg-white/[0.03] animate-pulse" />}
+                  {dados && !lista.length && <p className="text-xs text-white/25 px-1">Nada aqui.</p>}
+                  {lista.map(p => {
+                    const chave = `${p.id}:${p.fase}`
+                    const link = links[chave] ?? p.links[p.fase] ?? ''
+                    const nomes = p.cliente || p.referencia
+                    return (
+                      <div key={p.id} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/90 p-4 flex flex-col gap-3" style={{ borderLeft: `2px solid ${COR[p.fase]}` }}>
+                        <div>
+                          <p className="font-semibold leading-snug">{nomes}</p>
+                          <p className="text-[11px] text-white/40 mt-0.5">{fmt(p.data)}{p.local ? ` · ${p.local}` : ''}</p>
+                        </div>
+                        {p.fase !== 'entregue' && p.prazo && p.diasPrazo !== null && (
+                          <p className={`text-[12px] font-semibold tracking-[0.08em] ${p.alertaOff ? 'text-white/35' : p.diasPrazo < 0 ? 'text-red-400' : p.diasPrazo <= 2 ? 'text-amber-300' : 'text-white/55'}`}>
+                            {p.fase === 'escolha'
+                              ? (p.diasPrazo < 0 ? `Lembrar os noivos (há ${-p.diasPrazo} dias)` : `Lembrar em ${p.diasPrazo} dias`)
+                              : p.diasPrazo < 0 ? `Atrasado ${-p.diasPrazo} dias` : p.diasPrazo === 0 ? 'Termina hoje' : `Prazo em ${p.diasPrazo} dias`} · {fmt(p.prazo)}
+                            {p.alertaOff ? ' · alerta desligado' : ''}
+                          </p>
+                        )}
+
+                        {(p.fase === 'sneakpeek' || p.fase === 'galerias' || p.fase === 'selecao') && (
+                          <div className="flex flex-col gap-2 rounded-xl border border-[#C9A84C]/30 bg-[#C9A84C]/[0.06] p-3">
+                            <input type="url" placeholder="Link da galeria" value={link}
+                              onChange={e => setLinks(l => ({ ...l, [chave]: e.target.value }))}
+                              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                            <button type="button" disabled={aGravar === p.id}
+                              onClick={() => acao(p, p.fase, `Enviar ${FASES.find(x => x.k === p.fase)!.titulo.toLowerCase()} a ${nomes}? Os noivos recebem o email e o cartão abre no portal.`, link.trim())}
+                              className="rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#C9A84C]/30 disabled:opacity-40">
+                              {aGravar === p.id ? 'A enviar…' : 'Enviar aos noivos →'}
+                            </button>
+                          </div>
+                        )}
+
+                        {p.fase === 'escolha' && (
+                          <div className="flex flex-col gap-2 rounded-xl border border-[#93c5fd]/25 bg-[#93c5fd]/[0.06] p-3">
+                            <p className="text-[11px] text-white/55">À espera da seleção dos noivos. Chega sozinha quando enviam o formulário.</p>
+                            <button type="button" disabled={aGravar === p.id}
+                              onClick={() => acao(p, 'recebida', `Marcar a seleção de ${nomes} como recebida hoje? O casamento passa para Edição.`)}
+                              className="rounded-full border border-[#93c5fd]/40 bg-[#93c5fd]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#93c5fd] hover:bg-[#93c5fd]/20 disabled:opacity-40">✓ Seleção recebida</button>
+                          </div>
+                        )}
+
+                        {p.fase === 'edicao' && (
+                          <div className="flex flex-col gap-2 rounded-xl border border-[#c4b5fd]/25 bg-[#c4b5fd]/[0.05] p-3">
+                            {p.recebida && <p className="text-[11px] text-white/45">Seleção recebida a {fmt(p.recebida)}</p>}
+                            {p.editores.length
+                              ? <p className="text-[12px] text-white/60">Editor: <span className="text-white">{p.editores.join(', ')}</span></p>
+                              : (
+                                <select disabled={aGravar === p.id} defaultValue="" onChange={e => atribuir(p, e.target.value)}
+                                  className="w-full rounded-xl border border-[#C9A84C]/40 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[#C9A84C]">
+                                  <option value="" disabled>{aGravar === p.id ? 'A atribuir…' : 'Nomear editor de fotos…'}</option>
+                                  {cargas.map(({ e, ativos }) => <option key={e.id} value={e.nome}>{e.nome} ({ativos} em edição)</option>)}
+                                </select>
+                              )}
+                            <input type="url" placeholder="Link das fotos editadas" value={link}
+                              onChange={e => setLinks(l => ({ ...l, [chave]: e.target.value }))}
+                              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                            <button type="button" disabled={aGravar === p.id}
+                              onClick={() => acao(p, 'entregue', `Enviar as fotos editadas a ${nomes}? Os noivos recebem o email e têm 30 dias para descarregar.`, link.trim())}
+                              className="rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">
+                              {aGravar === p.id ? 'A enviar…' : 'Entregar fotos editadas →'}
+                            </button>
+                          </div>
+                        )}
+
+                        {p.fase === 'entregue' && p.enviadas.entregue && (
+                          <p className="text-[12px] text-[#4ade80]">✓ Entregues a {fmt(String(p.enviadas.entregue))}</p>
+                        )}
+
+                        <details className="group/h">
+                          <summary className="cursor-pointer list-none text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40 hover:text-white/70">
+                            <span className="group-open/h:hidden">+ Histórico</span><span className="hidden group-open/h:inline">− Histórico</span>
+                          </summary>
+                          <ol className="mt-2.5 ml-1 border-l border-white/10 pl-3.5 flex flex-col gap-2">
+                            {linhaDoTempo(p).map((ev, i, l) => (
+                              <li key={i} className="relative">
+                                <i className="absolute -left-[19px] top-1.5 w-2 h-2 rounded-full" style={{ background: OURO }} />
+                                <p className="text-[12px] font-semibold text-white/85 leading-tight">{ev.titulo}{ev.quem ? <span className="font-normal text-white/40"> · {ev.quem}</span> : null}</p>
+                                <p className="text-[11px] text-white/40">{fmt(ev.em)}{i > 0 ? ` · +${diasEntre(l[i - 1].em, ev.em)} dias` : ''}</p>
+                              </li>
+                            ))}
+                          </ol>
+                        </details>
+                        <div className="flex gap-3 text-[11px] font-semibold tracking-[0.15em] uppercase">
+                          <Link href={`/eventos-2026/${p.fichaId}`} className="text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>
+                          {p.portalId && <Link href={`/portal-cliente/ref/${encodeURIComponent(p.referencia)}?admin=1`} className="text-white/45 hover:text-white">Portal →</Link>}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      </div>
+    </main>
+  )
+}

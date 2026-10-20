@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { buildTicketEditorHtml, prazoVideo } from '@/lib/ticket-editor-html'
 import { aplicarEstadoVideo, registarHistorico } from '@/lib/videoEstado'
+import { registarFoto } from '@/lib/fotografiaHistorico'
 
 function db() {
   return createClient(
@@ -415,6 +416,8 @@ export async function PATCH(req: NextRequest) {
       const newEditorFotos: string[] = Array.isArray(editor_fotos) ? editor_fotos : (editor_fotos ? [editor_fotos] : [])
       const added = newEditorFotos.filter(n => !oldEditorFotos.includes(n))
       await notifyAddedMembers(supabase, added, 'Editor de Fotos', local ?? null, data_casamento ?? null, referencia ?? null)
+      const refFt = referencia ?? existing?.referencia ?? null
+      if (added.length && refFt) await registarFoto(refFt, 'Editor nomeado', added.join(', '))
     }
     if (editor_album !== undefined) {
       const newEditorAlbum: string[] = Array.isArray(editor_album) ? editor_album : (editor_album ? [editor_album] : [])
