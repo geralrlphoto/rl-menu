@@ -10,6 +10,7 @@ import WhatsAppPreparacao from './WhatsAppPreparacao'
 import EnviarIbanNoivos from './EnviarIbanNoivos'
 import BriefingNoivos from './BriefingNoivos'
 import WhatsAppPreWedding from './WhatsAppPreWedding'
+import SneakPeekWhatsApp from './SneakPeekWhatsApp'
 import RodaFicha from './RodaFicha'
 
 // ─── Serviços extra ────────────────────────────────────────────────────────────
@@ -5178,6 +5179,7 @@ export default function EventoPage() {
           style={{ background: 'rgba(56,130,246,0.04)', border: '1px solid rgba(56,130,246,0.18)', boxShadow: '0 0 24px rgba(56,130,246,0.08), 0 0 6px rgba(56,130,246,0.06)' }}>
           <h2 className="text-[10px] tracking-[0.35em] uppercase" style={{ color: 'rgba(99,165,255,0.8)' }}>Ações Fotografia</h2>
           <div className="flex flex-col gap-4">
+            {evento && <SneakPeekWhatsApp e={evento} />}
             {[
               { label: 'Fotos p/ Seleção',  state: selecaoEnviada,      setState: setSelecaoEnviada,      key: 'selecao_enviada',      urlKey: 'selecao',      api: '/api/send-selecao-email', prazoDias: 30 },
               { label: 'Fotos Pré-Wedding', state: preWeddingEnviada,   setState: setPreWeddingEnviada,   key: 'prewedding_enviada',   urlKey: 'prewedding',   api: '/api/send-prewedding-email' },
