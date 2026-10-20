@@ -62,6 +62,10 @@ const LINKS = [
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M18 20V10M12 20V4M6 20v-6"/></svg>,
   },
   {
+    href: '/edicao-video', label: 'Edição de Vídeo', sub: 'Departamento',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="6" width="13" height="12" rx="2"/><path strokeLinejoin="round" d="M16 10.5l5-3v9l-5-3"/></svg>,
+  },
+  {
     href: '/freelancers', label: 'Freelancers', sub: 'Equipa',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.723v6.554a1 1 0 01-1.447.894L15 14"/><rect x="1" y="6" width="14" height="12" rx="2"/></svg>,
   },
@@ -355,9 +359,6 @@ function GlobalMenuInner() {
   const EXTRA_LINKS = [{
     href: '/tarefas', label: 'Tarefas', sub: 'Por fazer',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg>,
-  }, {
-    href: '/edicao-video', label: 'Edição de Vídeo', sub: 'Departamento',
-    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="6" width="13" height="12" rx="2"/><path strokeLinejoin="round" d="M16 10.5l5-3v9l-5-3"/></svg>,
   }]
   const linkDe = (href: string) => ([...navLinks, ...EXTRA_LINKS] as any[]).find(l => l.href === href)
 
