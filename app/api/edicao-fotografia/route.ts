@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   const [{ data: equipa }, { data: evs }] = await Promise.all([
     sb.from('freelancers').select('id, nome, foto_url, status, contato').in('status', ['FOTOGRAFO', 'ASSISTENTE']).order('nome'),
     sb.from('eventos_2026')
-      .select('id, notion_id, referencia, cliente, data_evento, local, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado, fotos_edicao_estado')
+      .select('id, notion_id, referencia, cliente, data_evento, local, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado, fotos_edicao_estado, servico_foto')
       .gte('data_evento', DESDE).lte('data_evento', hoje).order('data_evento'),
   ])
 
@@ -58,6 +58,27 @@ export async function GET(req: NextRequest) {
   ])
   const contratoPorRef = new Map((contratos ?? []).map(c => [c.referencia_evento, c]))   // fica o mais recente
   const portalPorRef = new Map((ports ?? []).map(p => [p.referencia, p]))
+
+  // Tem álbum? Como o portal dos noivos: os serviços da proposta aceite no CRM
+  // (portais.settings.propostaToken), senão os serviços de fotografia da ficha.
+  const tokens = (ports ?? []).map(p => p.settings?.propostaToken).filter(Boolean) as string[]
+  const { data: crms } = tokens.length
+    ? await sb.from('crm_contacts').select('page_token, page_content').in('page_token', tokens)
+    : { data: [] as any[] }
+  const servicosPorToken = new Map<string, string[]>()
+  for (const c of crms ?? []) {
+    const pc = typeof c.page_content === 'string' ? JSON.parse(c.page_content || '{}') : (c.page_content || {})
+    const aceite = pc.propostaAceite
+    const prop = aceite?.nome ? aceite : (pc.propostas ?? [])[pc.propostaPage?.propostaAtiva ?? 0]
+    if (!prop) continue
+    const extras = (aceite?.extras ?? pc.extras_proposta ?? []).map((e: any) => String(e?.nome ?? ''))
+    servicosPorToken.set(c.page_token, [...(prop.servicos_foto ?? []), ...extras].map(String))
+  }
+  const temAlbumDe = (e: any): boolean | null => {
+    const tk = portalPorRef.get(e.referencia)?.settings?.propostaToken
+    const lista = (tk && servicosPorToken.get(tk)) || (Array.isArray(e.servico_foto) && e.servico_foto.length ? e.servico_foto.map(String) : null)
+    return lista ? lista.some((x: string) => /[áa]lbum/i.test(x)) : null
+  }
   const eqPorRef = new Map((eqs ?? []).map(q => [q.referencia, q]))
   // Seleção de cada casamento: pela referência; senão pela data do casamento e um nome em comum
   const nomesDe = (t: unknown) => new Set(norm(String(t ?? '')).split(/[^a-z]+/).filter(w => w.length > 2 && w !== 'casamento'))
@@ -123,6 +144,7 @@ export async function GET(req: NextRequest) {
       fase, prazo, diasPrazo: prazo ? diasAte(prazo) : null, alertaOff: !!s[`${chaveAlerta}_alerta_off`] || s.alertas_fotografia_ativos === false,
       recebida, editores, editorIds: editores.map(n => porNome.get(norm(n))?.id ?? null),
       fotografos: arr(eq?.fotografo),
+      temAlbum: temAlbumDe(e),
       editorAlbum: arr(eq?.editor_album)[0] ?? null,
       selecaoFotos: selecaoPorRef.get(e.referencia) ?? null,
       selecao: selecaoCompleta(e.referencia),

@@ -29,14 +29,14 @@ type Membro = { id: string; nome: string; foto_url: string | null; status: strin
 type Album = {
   id: string; referencia: string; refAlbum: string; refErrada: string | null; nome: string; cliente: string | null; data: string | null; fichaId: string | null
   estado: string; editores: string[]; editorIds: (string | null)[]; numFotos: string | number | null
-  entradaFotos: string | null; prazo: string | null; diasPrazo: number | null; fotosAlbum: string | null
+  entradaFotos: string | null; prazo: string | null; diasPrazo: number | null; fotosAlbum: string | null; temAlbum: boolean | null
   maqueteUrl: string | null; maqueteEnviada: string | null; maqueteEditorUrl: string | null
   alteracao: { paginas_alterar?: string | null; tipos_alteracao?: string[] | null; observacoes?: string | null; foto_url?: string | null; created_at?: string } | null
   historico: { etapa: string; origem: string | null; em: string }[]
   entregueEm: string | null; aprovadoEm: string | null
   ficha: Record<string, string | number>
 }
-type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null }
+type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null; temAlbum: boolean | null }
 
 const fmt = (iso: string | null) => iso ? new Date(String(iso).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—'
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
@@ -47,10 +47,10 @@ const colunaDe = (a: Album): Coluna =>
       : a.estado === 'APROVADO' ? 'aprovado' : a.estado === 'ENTREGUE' ? 'entregue' : 'edicao'
 
 /* As fotos que os noivos escolheram para o álbum: ver e copiar (é isto que vai para o editor) */
-function FotosAlbum({ texto }: { texto: string | null }) {
+function FotosAlbum({ texto, temAlbum }: { texto: string | null; temAlbum?: boolean | null }) {
   const [copiado, setCopiado] = useState(false)
   const lista = String(texto ?? '').split(/[\s,;]+/).filter(x => /\d/.test(x))
-  if (!lista.length) return <p className="text-[11px] text-amber-300/80">Sem lista de fotos para o álbum na seleção.</p>
+  if (!lista.length) return <p className="text-[11px] text-amber-300/80">{temAlbum === false ? 'Sem álbum na proposta.' : 'Tem álbum, mas os noivos ainda não escolheram as fotos para o álbum.'}</p>
   return (
     <details className="group/f rounded-xl border border-white/[0.08] bg-black/25 p-2.5">
       <summary className="cursor-pointer list-none flex items-center justify-between gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/70">
@@ -273,7 +273,7 @@ export default function AlbunsPage() {
                         <p className="font-semibold leading-snug">{p.cliente || p.referencia}</p>
                         <p className="text-[11px] text-white/40 mt-0.5">{fmt(p.data)}{p.recebida ? ` · seleção a ${fmt(p.recebida)}` : ''}</p>
                       </div>
-                      <FotosAlbum texto={p.fotosAlbum} />
+                      <FotosAlbum texto={p.fotosAlbum} temAlbum={p.temAlbum} />
                       {select('', v => nomear(p.referencia, p.cliente, v, undefined, p.fotosAlbum), aGravar === p.referencia)}
                       {p.fichaId && <Link href={`/eventos-2026/${p.fichaId}`} className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>}
                     </div>
@@ -294,7 +294,7 @@ export default function AlbunsPage() {
                           </p>
                         )}
                         {k === 'noivos' && a.maqueteEnviada && <p className="text-[12px] text-white/55">Entregue aos noivos a {fmt(a.maqueteEnviada)}</p>}
-                        {k !== 'entregue' && <FotosAlbum texto={a.fotosAlbum} />}
+                        {k !== 'entregue' && <FotosAlbum texto={a.fotosAlbum} temAlbum={a.temAlbum} />}
                         {atraso && (
                           <button type="button" onClick={() => avisar(a)}
                             className="rounded-full border border-[#25D366]/45 bg-[#25D366]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#25D366] hover:bg-[#25D366]/20">

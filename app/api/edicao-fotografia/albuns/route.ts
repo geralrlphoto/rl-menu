@@ -82,6 +82,7 @@ export async function GET(req: NextRequest) {
       fichaId: p?.fichaId ?? ev?.notion_id ?? (ev?.id ? String(ev.id) : null),
       estado, editores, editorIds: editores.map(n => porNome.get(norm(n))?.id ?? null),
       refErrada: !!p && p.referencia !== a.ref_evento ? a.ref_evento : null,
+      temAlbum: p?.temAlbum ?? null,
       // Só interessa a escolha das fotos para o álbum: da seleção dos noivos, ou a lista guardada no álbum
       fotosAlbum: (p?.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto
         || (/[a-z]/i.test(String(a.num_fotografias ?? '')) ? String(a.num_fotografias) : null),
@@ -100,9 +101,11 @@ export async function GET(req: NextRequest) {
   const comAlbum = new Set([...refs, ...albuns.map(a => a.referencia)])
   const porNomear = projetos
     .filter(p => (p.fase === 'edicao' || p.fase === 'entregue') && (p.selecao || p.recebida) && !comAlbum.has(p.referencia) && !p.editorAlbum)
+    // Só quem tem álbum na proposta (ou já escolheu fotos para o álbum)
+    .filter(p => p.temAlbum === true || (p.selecao?.categorias ?? []).some((c: any) => c.campo === 'fotos_album' && /\d/.test(c.texto ?? '')))
     .map(p => ({ referencia: p.referencia, cliente: p.cliente, data: p.data, fichaId: p.fichaId, recebida: p.recebida,
       numFotos: (p.selecaoFotos ?? []).find((c: any) => c.categoria === 'Álbum')?.fotos ?? null,
-      fotosAlbum: (p.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto || null }))
+      fotosAlbum: (p.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto || null, temAlbum: p.temAlbum ?? null }))
 
   return NextResponse.json({ ok: true, hoje, albuns, porNomear, equipa: equipa ?? [] })
 }
