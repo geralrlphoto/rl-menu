@@ -349,12 +349,15 @@ function GlobalMenuInner() {
     : [
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
-        { nome: 'Produção', hrefs: ['/fotos-selecao', '/albuns-casamento', '/freelancers'] },
+        { nome: 'Produção', hrefs: ['/fotos-selecao', '/albuns-casamento', '/edicao-video', '/freelancers'] },
         { nome: 'Gestão', hrefs: ['/financas', '/relatorio-diario', '/calendario'] },
       ]
   const EXTRA_LINKS = [{
     href: '/tarefas', label: 'Tarefas', sub: 'Por fazer',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg>,
+  }, {
+    href: '/edicao-video', label: 'Edição de Vídeo', sub: 'Departamento',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="6" width="13" height="12" rx="2"/><path strokeLinejoin="round" d="M16 10.5l5-3v9l-5-3"/></svg>,
   }]
   const linkDe = (href: string) => ([...navLinks, ...EXTRA_LINKS] as any[]).find(l => l.href === href)
 
