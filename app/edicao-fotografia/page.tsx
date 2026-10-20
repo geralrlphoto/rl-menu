@@ -209,6 +209,7 @@ export default function DepartamentoFotografiaPage() {
   const [aVer, setAVer] = useState<Membro | null>(null)
   const [selAberta, setSelAberta] = useState<Projeto | null>(null)
   const [avisoSem, setAvisoSem] = useState<Projeto | null>(null)
+  const [filtro, setFiltro] = useState<EtapaFoto | 'todos'>('todos')
 
   const carregar = () => {
     fetch('/api/edicao-fotografia').then(r => r.json())
@@ -399,12 +400,27 @@ export default function DepartamentoFotografiaPage() {
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Quadro de trabalho</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Casamentos por fase</h2>
           <p className="mt-2 text-sm text-white/45">Casamentos com fotografia desde 1 de janeiro de 2026. Cola o link da galeria e envia: os noivos recebem o email e o cartão abre no portal. O sneak peek conta a partir de 20 de outubro de 2026.</p>
-          <div className="mt-6 flex gap-4 overflow-x-auto pb-4 snap-x">
-            {FASES.map(f => {
+          {/* Filtros: uma fase de cada vez, ou todas */}
+          <div className="mt-6 flex flex-wrap gap-2">
+            {([{ k: 'todos' as const, titulo: 'Todos', cor: OURO }, ...FASES]).map(f => {
+              const n = f.k === 'todos' ? projetos.length : (porFase.get(f.k)?.length ?? 0)
+              const ativo = filtro === f.k
+              return (
+                <button key={f.k} type="button" onClick={() => setFiltro(f.k)}
+                  className={`flex items-center gap-2 rounded-full border px-4 py-2 text-[12px] font-semibold tracking-[0.15em] uppercase transition-all ${ativo ? 'text-white' : 'text-white/55 hover:text-white border-white/10 bg-white/[0.02]'}`}
+                  style={ativo ? { borderColor: f.cor, background: `${f.cor}22`, boxShadow: `0 0 18px -8px ${f.cor}` } : undefined}>
+                  <i className="w-2 h-2 rounded-full" style={{ background: f.cor }} />{f.titulo}
+                  <span className="rounded-full bg-white/[0.06] px-2 py-px text-[11px] tabular-nums">{dados ? n : '–'}</span>
+                </button>
+              )
+            })}
+          </div>
+          <div className={filtro === 'todos' ? 'mt-6 flex gap-4 overflow-x-auto pb-4 snap-x' : 'mt-6'}>
+            {FASES.filter(f => filtro === 'todos' || f.k === filtro).map(f => {
               const lista = porFase.get(f.k) ?? []
               return (
-                <div key={f.k} className="snap-start flex-none w-[290px] flex flex-col gap-3">
-                  <div className="flex items-center justify-between px-1">
+                <div key={f.k} className={filtro === 'todos' ? 'snap-start flex-none w-[290px] flex flex-col gap-3' : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-start'}>
+                  <div className="flex items-center justify-between px-1 col-span-full">
                     <span className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.2em] uppercase text-white/75">
                       <i className="w-2 h-2 rounded-full" style={{ background: f.cor, boxShadow: `0 0 8px ${f.cor}` }} />{f.titulo}
                     </span>
