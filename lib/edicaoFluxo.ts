@@ -71,7 +71,8 @@ export const FASES_EDICAO: Fase[] = [
   /* 03 */
   {
     titulo: 'Revisão', sub: 'interna',
-    fluxo: cadeia(2),
+    // Correções por baixo da Revisão da RL; o caminho segue da Revisão da RL para Aprovado
+    fluxo: { seq: { 0: [1] }, baixo: { 1: [2] }, saida: [1] },
     passos: [
       {
         id: '2-0', titulo: 'Para revisão', sub: 'link de revisão',
@@ -85,21 +86,21 @@ export const FASES_EDICAO: Fase[] = [
         quem: ['Rui'], prazo: 'Até 3 dias úteis', onde: 'Painel do Editor › Correções',
         tarefas: ['Ver o filme do princípio ao fim', 'Anotar correções com o minuto', 'Enviar as notas ao editor'],
       },
+      {
+        id: '2-2', titulo: 'Correções', sub: 'pelo editor',
+        descricao: 'O editor aplica as notas e envia a nova versão.',
+        quem: ['Equipa'], prazo: 'Até 5 dias úteis', onde: 'Painel do Editor',
+        tarefas: ['Aplicar todas as notas', 'Enviar a nova versão'],
+      },
     ],
   },
   /* 04 */
   {
     titulo: 'Aprovado', sub: 'versão final',
-    fluxo: cadeia(2),
+    fluxo: cadeia(1),
     passos: [
       {
-        id: '3-0', titulo: 'Correções', sub: 'pelo editor',
-        descricao: 'O editor aplica as notas e envia a nova versão.',
-        quem: ['Equipa'], prazo: 'Até 5 dias úteis', onde: 'Painel do Editor',
-        tarefas: ['Aplicar todas as notas', 'Enviar a nova versão'],
-      },
-      {
-        id: '3-1', titulo: 'Aprovação', sub: 'finalizado',
+        id: '3-0', titulo: 'Aprovação', sub: 'finalizado',
         descricao: 'A RL aprova e a fase passa a Finalizado. Exportação final em alta qualidade.',
         quem: ['Rui', 'Equipa'], prazo: 'Até 2 dias úteis', onde: 'Painel do Editor › Finalizado',
         tarefas: ['Aprovar a versão final', 'Exportar o master', 'Guardar o projeto e o master no NAS'],
