@@ -16,7 +16,7 @@ const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCa
 export async function POST(req: NextRequest) {
   const bloqueio = exigeAdmin(req)
   if (bloqueio) return bloqueio
-  const { referencia, editor } = await req.json().catch(() => ({}))
+  const { referencia, editor, fotos } = await req.json().catch(() => ({}))
   const novo = String(editor ?? '').trim()
   if (!referencia || !novo) return NextResponse.json({ error: 'Falta a referência ou o editor.' }, { status: 400 })
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
     sb.from('freelancers').select('id, nome'),
   ])
   const nome = String(sel?.nome_noivos || ev?.cliente || referencia).trim()
+  // Fotos escolhidas pelos noivos para o álbum (vêm do quadro; senão da seleção com esta referência)
+  const fotosAlbum = String(fotos ?? '').trim() || String(sel?.fotos_album ?? '').trim() || null
   const anterior: string[] = Array.isArray(eq?.editor_album) ? eq!.editor_album : eq?.editor_album ? [String(eq.editor_album)] : []
   const acha = (n: string) => (fls ?? []).find(f => norm(f.nome ?? '') === norm(n))
   const fl = acha(novo)
@@ -52,7 +54,7 @@ export async function POST(req: NextRequest) {
   // 3) álbum na página Álbuns
   await fetch(`${origin}/api/albuns-casamento`, {
     method: 'POST', headers: json,
-    body: JSON.stringify({ nome, ref_evento: referencia, num_fotografias: sel?.fotos_album || null, data_entrega_fotos: sel?.data_entrada || null, check_existing: true }),
+    body: JSON.stringify({ nome, ref_evento: referencia, num_fotografias: fotosAlbum, data_entrega_fotos: sel?.data_entrada || null, check_existing: true }),
   }).catch(() => {})
 
   // 4) trabalho no portal do novo editor + email
@@ -64,7 +66,7 @@ export async function POST(req: NextRequest) {
     })
   }
   await fetch(`${origin}/api/send-edicao-album-email`, {
-    method: 'POST', headers: json, body: JSON.stringify({ freelancer_id: fl.id, nome_noivos: nome, referencia }),
+    method: 'POST', headers: json, body: JSON.stringify({ freelancer_id: fl.id, nome_noivos: nome, referencia, fotos_album: fotosAlbum }),
   }).catch(() => {})
 
   await registarFoto(referencia, 'Editor de álbum nomeado', fl.nome)

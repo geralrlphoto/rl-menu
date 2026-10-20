@@ -81,7 +81,10 @@ export async function GET(req: NextRequest) {
       fichaId: p?.fichaId ?? ev?.notion_id ?? (ev?.id ? String(ev.id) : null),
       estado, editores, editorIds: editores.map(n => porNome.get(norm(n))?.id ?? null),
       refErrada: !!p && p.referencia !== a.ref_evento ? a.ref_evento : null,
-      numFotos: contaFotos(a.num_fotografias), entradaFotos: base, prazo, diasPrazo: prazo ? diasAte(prazo) : null,
+      // Só interessa a escolha das fotos para o álbum: da seleção dos noivos, ou a lista guardada no álbum
+      fotosAlbum: (p?.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto
+        || (/[a-z]/i.test(String(a.num_fotografias ?? '')) ? String(a.num_fotografias) : null),
+      numFotos: contaFotos((p?.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto || a.num_fotografias), entradaFotos: base, prazo, diasPrazo: prazo ? diasAte(prazo) : null,
       maqueteUrl: typeof pt?.maquete_url === 'string' ? pt.maquete_url : null,
       maqueteEnviada: typeof pt?.maquete_enviada === 'string' ? pt.maquete_enviada : null,
       alteracao: altPorRef.get(a.ref_evento) ?? null, historico: histPorRef.get(a.ref_evento) ?? histPorRef.get(ref) ?? [],
@@ -96,7 +99,8 @@ export async function GET(req: NextRequest) {
   const porNomear = projetos
     .filter(p => (p.fase === 'edicao' || p.fase === 'entregue') && (p.selecao || p.recebida) && !comAlbum.has(p.referencia) && !p.editorAlbum)
     .map(p => ({ referencia: p.referencia, cliente: p.cliente, data: p.data, fichaId: p.fichaId, recebida: p.recebida,
-      numFotos: (p.selecaoFotos ?? []).find((c: any) => c.categoria === 'Álbum')?.fotos ?? null }))
+      numFotos: (p.selecaoFotos ?? []).find((c: any) => c.categoria === 'Álbum')?.fotos ?? null,
+      fotosAlbum: (p.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto || null }))
 
   return NextResponse.json({ ok: true, hoje, albuns, porNomear, equipa: equipa ?? [] })
 }

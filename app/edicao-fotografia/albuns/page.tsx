@@ -29,14 +29,14 @@ type Membro = { id: string; nome: string; foto_url: string | null; status: strin
 type Album = {
   id: string; referencia: string; refAlbum: string; refErrada: string | null; nome: string; cliente: string | null; data: string | null; fichaId: string | null
   estado: string; editores: string[]; editorIds: (string | null)[]; numFotos: string | number | null
-  entradaFotos: string | null; prazo: string | null; diasPrazo: number | null
+  entradaFotos: string | null; prazo: string | null; diasPrazo: number | null; fotosAlbum: string | null
   maqueteUrl: string | null; maqueteEnviada: string | null
   alteracao: { paginas_alterar?: string | null; tipos_alteracao?: string[] | null; observacoes?: string | null; foto_url?: string | null; created_at?: string } | null
   historico: { etapa: string; origem: string | null; em: string }[]
   entregueEm: string | null; aprovadoEm: string | null
   ficha: Record<string, string | number>
 }
-type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null }
+type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null }
 
 const fmt = (iso: string | null) => iso ? new Date(String(iso).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—'
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
@@ -45,6 +45,24 @@ const colunaDe = (a: Album): Coluna =>
   !a.editores.length && (a.estado === 'NOVO ÁLBUM' || a.estado === 'EM EDIÇÃO') ? 'nomear'
     : a.estado === 'REVISÃO RL' ? 'revisao' : a.estado === 'PARA APROVAÇÃO' ? 'noivos' : a.estado === 'ALTERAÇÕES' ? 'alteracoes'
       : a.estado === 'APROVADO' ? 'aprovado' : a.estado === 'ENTREGUE' ? 'entregue' : 'edicao'
+
+/* As fotos que os noivos escolheram para o álbum: ver e copiar (é isto que vai para o editor) */
+function FotosAlbum({ texto }: { texto: string | null }) {
+  const [copiado, setCopiado] = useState(false)
+  const lista = String(texto ?? '').split(/[\s,;]+/).filter(x => /\d/.test(x))
+  if (!lista.length) return <p className="text-[11px] text-amber-300/80">Sem lista de fotos para o álbum na seleção.</p>
+  return (
+    <details className="group/f rounded-xl border border-white/[0.08] bg-black/25 p-2.5">
+      <summary className="cursor-pointer list-none flex items-center justify-between gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/70">
+        <span>Fotos para o álbum · <b style={{ color: OURO }}>{lista.length}</b></span>
+        <span className="text-white/40 group-open/f:hidden">Ver</span><span className="text-white/40 hidden group-open/f:inline">Fechar</span>
+      </summary>
+      <p className="mt-2 text-[11px] text-white/60 font-mono leading-relaxed break-words">{lista.join('; ')}</p>
+      <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(lista.join('; ')); setCopiado(true); setTimeout(() => setCopiado(false), 2000) } catch {} }}
+        className="mt-2 text-[10px] font-semibold tracking-[0.15em] uppercase text-white/50 hover:text-white">{copiado ? 'Copiado ✓' : 'Copiar a lista'}</button>
+    </details>
+  )
+}
 
 function FichaAlbum({ a, onFechar, onGuardado }: { a: Album; onFechar: () => void; onGuardado: () => void }) {
   const [f, setF] = useState<Record<string, string | number>>(a.ficha)
@@ -114,11 +132,11 @@ export default function AlbunsPage() {
   }
   useEffect(carregar, [])
 
-  const nomear = async (ref: string, cliente: string | null, nome: string, atual?: string) => {
+  const nomear = async (ref: string, cliente: string | null, nome: string, atual?: string, fotos?: string | null) => {
     if (!nome || nome === atual) return
     if (!window.confirm(atual ? `Trocar o editor do álbum de ${cliente || ref} de ${atual} para ${nome}?` : `Nomear ${nome} para o álbum de ${cliente || ref}? Recebe o trabalho no portal e o email.`)) return
     setAGravar(ref)
-    const r = await fetch('/api/edicao-fotografia/album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: ref, editor: nome }) }).catch(() => null)
+    const r = await fetch('/api/edicao-fotografia/album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: ref, editor: nome, fotos: fotos ?? null }) }).catch(() => null)
     const d = r ? await r.json().catch(() => ({})) : {}
     setAGravar(null)
     if (!r?.ok) alert((d as any).error || 'Não foi possível guardar.')
@@ -252,9 +270,10 @@ export default function AlbunsPage() {
                     <div key={p.referencia} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/90 p-4 flex flex-col gap-3" style={{ borderLeft: `2px solid ${c.cor}` }}>
                       <div>
                         <p className="font-semibold leading-snug">{p.cliente || p.referencia}</p>
-                        <p className="text-[11px] text-white/40 mt-0.5">{fmt(p.data)}{p.recebida ? ` · seleção a ${fmt(p.recebida)}` : ''}{p.numFotos ? ` · ${p.numFotos} fotos p/ álbum` : ''}</p>
+                        <p className="text-[11px] text-white/40 mt-0.5">{fmt(p.data)}{p.recebida ? ` · seleção a ${fmt(p.recebida)}` : ''}</p>
                       </div>
-                      {select('', v => nomear(p.referencia, p.cliente, v), aGravar === p.referencia)}
+                      <FotosAlbum texto={p.fotosAlbum} />
+                      {select('', v => nomear(p.referencia, p.cliente, v, undefined, p.fotosAlbum), aGravar === p.referencia)}
                       {p.fichaId && <Link href={`/eventos-2026/${p.fichaId}`} className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>}
                     </div>
                   ))}
@@ -266,7 +285,7 @@ export default function AlbunsPage() {
                       <div key={a.id} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/90 p-4 flex flex-col gap-3" style={{ borderLeft: `2px solid ${COR[k]}` }}>
                         <div>
                           <p className="font-semibold leading-snug">{a.cliente || a.nome}</p>
-                          <p className="text-[11px] text-white/40 mt-0.5">{fmt(a.data)}{a.numFotos ? ` · ${a.numFotos} fotos p/ álbum` : ''}</p>
+                          <p className="text-[11px] text-white/40 mt-0.5">{fmt(a.data)}</p>
                         </div>
                         {a.prazo && a.diasPrazo !== null && (
                           <p className={`text-[12px] font-semibold tracking-[0.08em] ${a.diasPrazo < 0 ? 'text-red-400' : a.diasPrazo <= 5 ? 'text-amber-300' : 'text-white/55'}`}>
@@ -274,6 +293,7 @@ export default function AlbunsPage() {
                           </p>
                         )}
                         {k === 'noivos' && a.maqueteEnviada && <p className="text-[12px] text-white/55">Com os noivos desde {fmt(a.maqueteEnviada)}</p>}
+                        {k !== 'entregue' && <FotosAlbum texto={a.fotosAlbum} />}
                         {atraso && (
                           <button type="button" onClick={() => avisar(a)}
                             className="rounded-full border border-[#25D366]/45 bg-[#25D366]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#25D366] hover:bg-[#25D366]/20">
@@ -283,7 +303,7 @@ export default function AlbunsPage() {
                         {k !== 'entregue' && (
                           <label className="flex flex-col gap-1">
                             <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Editor do álbum</span>
-                            {select(nomeEquipa(a), v => nomear(a.referencia, a.cliente, v, nomeEquipa(a)), aGravar === a.referencia)}
+                            {select(nomeEquipa(a), v => nomear(a.refAlbum, a.cliente, v, nomeEquipa(a), a.fotosAlbum), aGravar === a.referencia)}
                           </label>
                         )}
                         {a.maqueteUrl && ['revisao', 'noivos', 'alteracoes'].includes(k) && (

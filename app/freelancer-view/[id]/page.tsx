@@ -253,7 +253,7 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
           <div className="grid grid-cols-3 gap-3">
             <DateBox label="Data do Evento"         value={dataCasamento} />
             <DateBox label="Data de Entrada"        value={data?.data_entrega_fotos ?? null} />
-            <DateBox label="Data Limite p/ Entrega" value={data?.data_entrega_fotos ? addDaysStr(data.data_entrega_fotos, 35) : null} />
+            <DateBox label="Data Limite p/ Entrega" value={data?.data_entrega_fotos ? addDaysStr(data.data_entrega_fotos, 30) : null} />
           </div>
 
           {loading ? (
@@ -263,12 +263,25 @@ function AlbumInfoModal({ refEvento, nome, dataCasamento, onClose }: { refEvento
           ) : (<>
 
             {/* Fotos p/Álbum */}
-            {data.num_fotografias && (
-              <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex items-center justify-between">
-                <span className="text-[14px] tracking-[0.35em] text-white/25 uppercase">Fotos p/ Álbum</span>
-                <span className="text-2xl font-light text-white/80">{data.num_fotografias}</span>
-              </div>
-            )}
+            {data.num_fotografias && (() => {
+              const lista = String(data.num_fotografias).split(/[\s,;]+/).filter((x: string) => /\d/.test(x))
+              const soNumero = /^\d+$/.test(String(data.num_fotografias).trim())
+              return (
+                <div className="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-4 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[14px] tracking-[0.35em] text-white/25 uppercase">Fotos p/ Álbum</span>
+                    <span className="text-2xl font-light text-white/80">{soNumero ? data.num_fotografias : lista.length}</span>
+                  </div>
+                  {!soNumero && lista.length > 0 && (
+                    <>
+                      <p className="text-[13px] text-white/60 font-mono leading-relaxed break-words">{lista.join('; ')}</p>
+                      <button type="button" onClick={() => { navigator.clipboard?.writeText(lista.join('; ')).catch(() => {}) }}
+                        className="self-start text-[12px] tracking-[0.2em] uppercase text-gold/70 hover:text-gold">Copiar a lista</button>
+                    </>
+                  )}
+                </div>
+              )
+            })()}
 
             {/* Datas álbum */}
             <div>
