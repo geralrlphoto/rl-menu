@@ -59,12 +59,14 @@ export default function FormSelecao({
   // Vindo do portal (?ref=CAS_...): nomes, data e referência do casamento, trancados
   const [trancado, setTrancado] = useState(false)
   const [refInvalida, setRefInvalida] = useState(false)
+  const [limite, setLimite] = useState<number | null>(null)   // fotografias do pacote
   useEffect(() => {
     const ref = new URLSearchParams(window.location.search).get('ref')
     if (!ref) return
     fetch(`/api/selecao-fotos-evento?ref=${encodeURIComponent(ref)}`).then(r => r.ok ? r.json() : null).then(d => {
       if (!d?.ok) { setRefInvalida(true); return }
       setDados({ nome_noivos: d.nome_noivos ?? '', date: String(d.date ?? '').slice(0, 10), referencia: d.referencia })
+      if (typeof d.limite === 'number') setLimite(d.limite)
       setTrancado(true)
     }).catch(() => setRefInvalida(true))
   }, [])
@@ -90,6 +92,9 @@ export default function FormSelecao({
 
   const preenchidas = (name: string) => separar(fotos[name] ?? '').length
   const total = seccoes.reduce((acc, s) => acc + preenchidas(s.name), 0)
+  // Fotografias diferentes (as do álbum costumam repetir as das outras secções)
+  const unicas = new Set(seccoes.flatMap(s => separar(fotos[s.name] ?? '').map(x => x.toUpperCase()))).size
+  const passa = limite !== null && unicas > limite
 
   function toggle(name: string) {
     const abrir = !abertas.includes(name)
@@ -109,6 +114,8 @@ export default function FormSelecao({
       setErro('Indiquem pelo menos uma fotografia antes de enviar.')
       return
     }
+
+    if (passa && !window.confirm(`Escolheram ${unicas} fotografias e o vosso pacote inclui até ${limite}. Querem enviar mesmo assim? As fotografias a mais podem ter um custo adicional; falamos convosco antes de avançar.`)) return
 
     const erradas = seccoes.filter(s => malSeparada(fotos[s.name]))
     if (erradas.length) {
@@ -275,8 +282,15 @@ export default function FormSelecao({
 
                 <div className="totalgeral">
                   <span className="k">Total escolhido</span>
-                  <span className="v">{total}</span>
+                  <span className="v">{limite !== null ? `${unicas} de ${limite}` : total}</span>
                 </div>
+                {limite !== null && (
+                  <p style={{ margin: '-6px 0 18px', fontSize: 13, textAlign: 'right', color: passa ? '#f87171' : 'rgba(255,255,255,.5)' }}>
+                    {passa
+                      ? `Passaram ${unicas - limite} fotografias do vosso pacote (até ${limite}). Podem retirar algumas ou enviar assim; as a mais podem ter custo adicional.`
+                      : `O vosso pacote inclui até ${limite} fotografias editadas.`}
+                  </p>
+                )}
 
                 {sending ? (
                   <div className="enviando">

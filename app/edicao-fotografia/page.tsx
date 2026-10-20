@@ -34,6 +34,9 @@ const FASES_INFO: { k: EtapaFoto; quem: string; quando: string; noivos: string }
   { k: 'entregue', quem: 'RL', quando: 'A RL envia as fotos editadas.', noivos: 'recebem o email das Fotos Finais; 30 dias para descarregar.' },
 ]
 
+type Tempo = { media: number | null; n: number; objetivo: number | null }
+type Tempos = { galeria: Tempo; selecao: Tempo; escolha: Tempo; edicao: Tempo; total: Tempo; porEditor: { nome: string; media: number | null; n: number }[] }
+
 type Membro = { id: string; nome: string; foto_url: string | null; status: string; contato: string | null }
 type Projeto = {
   id: number; fichaId: string; referencia: string; cliente: string | null; data: string; local: string | null
@@ -223,7 +226,7 @@ function SelecaoCaixa({ p, onFechar, onGuardado }: { p: Projeto; onFechar: () =>
 }
 
 export default function DepartamentoFotografiaPage() {
-  const [dados, setDados] = useState<{ equipa: Membro[]; projetos: Projeto[]; retirados: { referencia: string; cliente: string | null; data: string }[] } | null>(null)
+  const [dados, setDados] = useState<{ equipa: Membro[]; projetos: Projeto[]; retirados: { referencia: string; cliente: string | null; data: string }[]; tempos: Tempos | null } | null>(null)
   const [erro, setErro] = useState(false)
   const [aGravar, setAGravar] = useState<number | null>(null)
   const [links, setLinks] = useState<Record<string, string>>({})
@@ -234,7 +237,7 @@ export default function DepartamentoFotografiaPage() {
 
   const carregar = () => {
     fetch('/api/edicao-fotografia').then(r => r.json())
-      .then(d => { if (d.ok) setDados({ equipa: d.equipa, projetos: d.projetos, retirados: d.retirados ?? [] }); else setErro(true) })
+      .then(d => { if (d.ok) setDados({ equipa: d.equipa, projetos: d.projetos, retirados: d.retirados ?? [], tempos: d.tempos ?? null }); else setErro(true) })
       .catch(() => setErro(true))
   }
   useEffect(carregar, [])
@@ -418,6 +421,45 @@ export default function DepartamentoFotografiaPage() {
             ))}
           </div>
         </section>
+
+        {/* ── Tempos reais por fase ── */}
+        {dados?.tempos && (
+          <section>
+            <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Tempos reais</p>
+            <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Quanto demora cada fase</h2>
+            <p className="mt-2 text-sm text-white/45">Média dos casamentos desde janeiro com as datas registadas. Serve para prometer prazos que se cumprem sempre.</p>
+            <div className="mt-6 grid grid-cols-2 lg:grid-cols-5 gap-3">
+              {([
+                ['Até à galeria online', dados.tempos.galeria, 'depois do casamento'],
+                ['Até às fotos p/ seleção', dados.tempos.selecao, 'depois do casamento'],
+                ['Os noivos a escolher', dados.tempos.escolha, 'depois de receberem'],
+                ['Edição das fotos', dados.tempos.edicao, 'depois da seleção'],
+                ['Do casamento à entrega', dados.tempos.total, 'no total'],
+              ] as [string, Tempo, string][]).map(([l, t, sub]) => {
+                const cor = t.media === null ? 'rgba(255,255,255,.35)' : t.objetivo === null ? OURO : t.media <= t.objetivo ? '#4ade80' : '#f87171'
+                return (
+                  <div key={l} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/85 px-4 py-3.5" style={{ borderLeft: `2px solid ${cor}` }}>
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-white/45">{l}</p>
+                    <p className="mt-1 text-[32px] font-thin leading-none tabular-nums" style={{ color: cor }}>{t.media === null ? '–' : `${t.media} d`}</p>
+                    <p className="mt-1 text-[11px] text-white/40">{sub}{t.objetivo !== null ? ` · objetivo ${t.objetivo} d` : ''} · {t.n} casamento{t.n === 1 ? '' : 's'}</p>
+                  </div>
+                )
+              })}
+            </div>
+            {dados.tempos.porEditor.length > 0 && (
+              <div className="mt-4 rounded-[18px] border border-white/[0.08] bg-[#111111]/70 p-4">
+                <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/45">Edição das fotos por editor (média)</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {dados.tempos.porEditor.map(e => (
+                    <span key={e.nome} className="rounded-full border border-white/10 bg-black/30 px-3 py-1 text-[12px] text-white/75">
+                      {e.nome} · <b style={{ color: (e.media ?? 0) <= 30 ? '#4ade80' : '#f87171' }}>{e.media} d</b> <span className="text-white/35">({e.n})</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* ── Quadro por fases ── */}
         <section>

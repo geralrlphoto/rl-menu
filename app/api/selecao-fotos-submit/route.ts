@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { saveSelecao, type SelecaoFotos } from '@/lib/selecao-fotos-save'
 import { enviarEmailAdminSelecao } from '@/lib/selecao-fotos-email'
 import { encontrarEventoSelecao, nomesBatem } from '@/lib/selecao-fotos-ref'
+import { enviarTicketFotos } from '@/lib/ticketFotos'
+import { registarFoto } from '@/lib/fotografiaHistorico'
 
 // Formulário próprio de seleção de fotos (/form-selecao-fotos/casamento).
 // Segue o mesmo fluxo do webhook do Tally: linha em fotos_selecao (Supabase)
@@ -55,6 +57,10 @@ export async function POST(req: NextRequest) {
     await enviarEmailAdminSelecao(mapped, tipo).catch(e =>
       console.error('[selecao-fotos-submit] email falhou:', e)
     )
+
+    // Ticket das Fotografias aos noivos: "Recebemos a vossa seleção" + histórico do departamento
+    await enviarTicketFotos('recebida', ev.referencia).catch(() => null)
+    await registarFoto(ev.referencia, 'Seleção recebida', 'Noivos')
 
     return NextResponse.json({ ok: true, id })
   } catch (err: any) {

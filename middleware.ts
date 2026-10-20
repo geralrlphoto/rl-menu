@@ -250,6 +250,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/newsletter-confirm') ||
     pathname.startsWith('/api/newsletter-unsubscribe') ||
     pathname.startsWith('/api/newsletter-cron') ||
+    pathname.startsWith('/api/cron/fotografia-avisos') || // Vercel Cron (CRON_SECRET) ou admin
     pathname.startsWith('/api/newsletter-preview') ||
     pathname.startsWith('/api/newsletter-webhook') ||
     pathname.startsWith('/api/newsletter-debug') ||

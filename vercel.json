@@ -7,6 +7,10 @@
     {
       "path": "/api/relatorio-semanal",
       "schedule": "0 19 * * 5"
+    },
+    {
+      "path": "/api/cron/fotografia-avisos",
+      "schedule": "0 9 * * *"
     }
   ]
 }

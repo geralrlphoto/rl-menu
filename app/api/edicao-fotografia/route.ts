@@ -131,7 +131,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const projetos = comFoto.map(e => {
+  const todosProj = comFoto.map(e => {
     const p = portalPorRef.get(e.referencia)
     const s: Record<string, any> = p?.settings ?? {}
     const { fase, prazo, recebida } = faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado)
@@ -155,7 +155,24 @@ export async function GET(req: NextRequest) {
       portalId: p?.id ?? null,
       historico: histPorRef.get(e.referencia) ?? [],
     }
-  }).filter(p => p.fase !== 'entregue' || String(p.enviadas.entregue ?? '').slice(0, 10) >= limiteEntregue)
+  })
+  const projetos = todosProj.filter(p => p.fase !== 'entregue' || String(p.enviadas.entregue ?? '').slice(0, 10) >= limiteEntregue)
 
-  return NextResponse.json({ ok: true, hoje, equipa: equipa ?? [], projetos, retirados })
+  // Tempos reais por fase (todos os casamentos desde janeiro, com as datas registadas)
+  const entre = (a?: string | null, b?: string | null) => a && b ? Math.round((new Date(String(b).slice(0, 10) + 'T12:00:00Z').getTime() - new Date(String(a).slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000) : null
+  const media = (xs: (number | null)[]) => { const v = xs.filter((x): x is number => x !== null && x >= 0 && x < 400); return v.length ? { media: Math.round(v.reduce((s, x) => s + x, 0) / v.length), n: v.length } : { media: null, n: 0 } }
+  const tempos = {
+    galeria: { ...media(todosProj.map(p => entre(p.data, p.enviadas.galerias))), objetivo: 7 },
+    selecao: { ...media(todosProj.map(p => entre(p.data, p.enviadas.selecao))), objetivo: 30 },
+    escolha: { ...media(todosProj.map(p => entre(p.enviadas.selecao, p.recebida))), objetivo: null },
+    edicao: { ...media(todosProj.map(p => entre(p.recebida, p.enviadas.entregue))), objetivo: 30 },
+    total: { ...media(todosProj.map(p => entre(p.data, p.enviadas.entregue))), objetivo: null },
+    // por editor (o nome no evento pode vir em maiúsculas: agrupa e mostra o nome da equipa)
+    porEditor: [...new Set(todosProj.flatMap(p => p.editores.map(norm)))].map(k => ({
+      nome: porNome.get(k)?.nome ?? todosProj.flatMap(p => p.editores).find(n => norm(n) === k) ?? k,
+      ...media(todosProj.filter(p => p.editores.some(n => norm(n) === k)).map(p => entre(p.recebida, p.enviadas.entregue))),
+    })).filter(x => x.n > 0).sort((a, b) => (a.media ?? 0) - (b.media ?? 0)),
+  }
+
+  return NextResponse.json({ ok: true, hoje, equipa: equipa ?? [], projetos, retirados, tempos })
 }
