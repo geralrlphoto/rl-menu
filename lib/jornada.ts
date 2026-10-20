@@ -79,6 +79,7 @@ export type Fluxo = {
   pos?: Record<number, [number, number]>
   saida: number[]
   atalho?: Record<number, [number, string]>
+  abaixo?: boolean   // passos empilhados por baixo do cartão da fase (em vez de seguirem para a direita)
 }
 
 export type Fase = { titulo: string; sub: string; passos: Passo[]; fluxo?: Fluxo }

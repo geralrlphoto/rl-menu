@@ -40,7 +40,7 @@ export const FASES_EDICAO: Fase[] = [
   /* 02 */
   {
     titulo: 'Dia do casamento', sub: 'captação',
-    fluxo: cadeia(3),
+    fluxo: { ...cadeia(3), abaixo: true },
     passos: [
       {
         id: '1-0', titulo: 'Preparação', sub: 'véspera',

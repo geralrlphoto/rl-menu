@@ -28,6 +28,18 @@ export function calcularMapa(fases: Fase[]): Mapa {
     nos.push(ph); nosFase[i] = ph
     prev.forEach(k => lig.push({ a: k, b: ph, t: 'out' }))
 
+    // Passos por baixo da fase: coluna vertical com a largura do cartão da fase
+    if (f.fluxo?.abaixo) {
+      const nodes: No[] = f.passos.map((p, j) => ({ id: p.id, fase: i, passo: p, x, y: PH / 2 + 40 + j * (KH + 40), w: PW, h: KH }))
+      nodes.forEach(nd => nos.push(nd))
+      porFase[i] = nodes
+      nodes.forEach((nd, j) => lig.push({ a: j ? nodes[j - 1] : ph, b: nd, t: j ? 'seq' : 'lead' }))
+      prev = nodes.length ? [nodes[nodes.length - 1]] : [ph]
+      prev.forEach(nd => { nd.saida = true })
+      x = x + PW + GX
+      return
+    }
+
     const F = f.fluxo, nk = f.passos.length, col = new Array(nk).fill(0)
     // coluna = caminho mais longo desde o início da fase
     if (F?.seq) {
