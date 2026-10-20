@@ -19,7 +19,7 @@ function html(k: string): string | null {
   const login = `${SITE}/login-noivos`
   if (k === 'portal') {
     return buildPortalEmailV2({
-      tipo: 'casamento', heroUrl: `${SITE}/email/casamento-bg.jpg`, nomesAlt: NOMES, data: '2027-06-12',
+      tipo: 'casamento', heroUrl: `${SITE}/email/exemplo-hero.gif`, nomesAlt: NOMES, data: '2027-06-12',
       email: 'ana.tiago@exemplo.pt', password: 'exemplo123', loginUrl: login, siteBase: SITE,
     })
   }

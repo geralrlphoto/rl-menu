@@ -11,6 +11,12 @@ const FILME = (passo: string) => ({ assunto: 'Ticket do Filme · Ana & Tiago', q
 
 const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
   {
+    titulo: 'Noivos · Portal',
+    tickets: [
+      { k: 'portal', nome: 'O Vosso Portal Está Aberto', assunto: '💍 O portal do casamento está pronto', quando: 'Quando o contrato é aprovado e o portal dos noivos é criado. Leva o email e a palavra-passe de acesso.', para: 'Noiva (ou noivo, se não houver email da noiva)' },
+    ],
+  },
+  {
     titulo: 'Noivos · Fotografias',
     tickets: [
       { k: 'entrega-galerias', nome: 'Fotos do Dia', assunto: 'As fotos do dia já estão disponíveis', quando: `${FICHA} da Galeria Online, ou no Departamento de Fotografia.`, para: 'Noiva' },
