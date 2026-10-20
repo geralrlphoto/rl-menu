@@ -12,8 +12,9 @@ import Mostrador from '@/app/_marcas/Mostrador'
 
 export type ItemRoda = { id: string; label: string; aviso?: boolean }
 
-const PASSO = 21          // graus entre secções
-const LARG = 190          // largura de cada cartão
+const PASSO = 23          // graus entre secções
+const LARG = 260          // largura de cada cartão
+const ALT = 76            // altura de cada cartão
 
 export default function RodaFicha({ itens, ativo, onEscolher, topo }: {
   itens: ItemRoda[]
@@ -54,7 +55,7 @@ export default function RodaFicha({ itens, ativo, onEscolher, topo }: {
         const y = Math.sin(t) * rC
         const longe = Math.abs(graus) / 84
         const vis = Math.max(0, Math.min(1, (1 - longe) / .35))
-        el.style.transform = `translate(${x.toFixed(1)}px, ${(y - 26).toFixed(1)}px) rotate(${(graus * .35).toFixed(2)}deg)`
+        el.style.transform = `translate(${x.toFixed(1)}px, ${(y - ALT / 2).toFixed(1)}px) rotate(${(graus * .35).toFixed(2)}deg)`
         el.style.opacity = vis.toFixed(3)
         el.style.visibility = vis < .02 ? 'hidden' : 'visible'
         el.style.pointerEvents = vis > .4 ? 'auto' : 'none'
@@ -110,10 +111,10 @@ export default function RodaFicha({ itens, ativo, onEscolher, topo }: {
             className="absolute left-0 top-0 -translate-x-1/2 -translate-y-1/2 pointer-events-none" style={{ width: 600, height: 600 }} />
           {itens.map((it, i) => (
             <button key={it.id} ref={el => { cartoes.current[i] = el }} type="button" onClick={() => onEscolher(it.id)}
-              className="rf-cartao absolute left-0 top-0 flex items-center gap-3 rounded-[16px] border border-white/[0.1] bg-[#0e0e0e]/80 backdrop-blur-md px-4 text-left text-white/55"
-              style={{ width: LARG, height: 52, transformOrigin: '0 50%', opacity: 0 }}>
-              <span className="rf-num font-bold text-[24px] leading-none tracking-tight">{String(i + 1).padStart(2, '0')}</span>
-              <span className="text-[13px] font-semibold leading-tight flex-1 min-w-0">{it.label}</span>
+              className="rf-cartao absolute left-0 top-0 flex items-center rounded-[20px] border border-white/[0.1] bg-[#0e0e0e]/80 backdrop-blur-md px-5 gap-4 text-left text-white/55"
+              style={{ width: LARG, height: ALT, transformOrigin: '0 50%', opacity: 0 }}>
+              <span className="rf-num font-bold text-[36px] leading-none tracking-tight">{String(i + 1).padStart(2, '0')}</span>
+              <span className="text-[17px] font-semibold leading-tight flex-1 min-w-0">{it.label}</span>
               {it.aviso && <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" style={{ boxShadow: '0 0 8px #f87171' }} />}
             </button>
           ))}

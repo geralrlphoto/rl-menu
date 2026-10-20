@@ -4322,7 +4322,7 @@ export default function EventoPage() {
         @media print { .ficha-reveal { animation: none !important; } }
         /* ── Estilo RL (igual às páginas de admin): preto, dourado suave #d8be93,
               cartões de 22px com a borda esquerda dourada. Tipos de letra iguais. ── */
-        .ficha-rl { --roda-larg: 520px; background: #0b0b0b; }
+        .ficha-rl { --roda-larg: 600px; background: #0b0b0b; }
         @media (min-width: 1280px) { .ficha-rl .ficha-conteudo { margin-left: calc(var(--roda-larg) + 8px); margin-right: auto; } }
         .ficha-rl .ficha-nome * { font-size: clamp(34px, 4.6vw, 52px) !important; line-height: 1.05 !important; color: #fff !important; }
         .ficha-rl .ficha-card {
