@@ -153,9 +153,12 @@ export default function DepartamentoFotografiaPage() {
 
   const cargas = (dados?.equipa ?? []).map(e => {
     const meus = projetos.filter(p => p.fase === 'edicao' && p.editorIds.includes(e.id))
-    return { e, ativos: meus.length, atrasados: meus.filter(atrasado).length }
+    const nomeados = projetos.filter(p => p.fase !== 'edicao' && p.fase !== 'entregue' && p.editorIds.includes(e.id)).length
+    return { e, ativos: meus.length, nomeados, atrasados: meus.filter(atrasado).length }
   }).sort((a, b) => a.ativos - b.ativos || a.e.nome.localeCompare(b.e.nome))
-  const comTrabalho = cargas.filter(c => c.ativos > 0)
+  const comTrabalho = cargas.filter(c => c.ativos > 0 || c.nomeados > 0)
+  // Nome do editor como está na equipa (no evento pode vir em maiúsculas)
+  const editorAtual = (p: Projeto) => cargas.find(c => p.editorIds[0] && c.e.id === p.editorIds[0])?.e.nome ?? p.editores[0] ?? ''
 
   return (
     <main className="min-h-screen bg-[#070707] text-white font-cond overflow-x-clip">
@@ -219,7 +222,7 @@ export default function DepartamentoFotografiaPage() {
           <p className="mt-2 text-sm text-white/45">Editores de fotos com casamentos em edição. Ao nomear, o editor recebe o trabalho e o aviso no portal dele.</p>
           {dados && !comTrabalho.length && <p className="mt-6 text-sm text-white/35">Ninguém tem casamentos em edição neste momento.</p>}
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {comTrabalho.map(({ e, ativos, atrasados }) => (
+            {comTrabalho.map(({ e, ativos, nomeados, atrasados }) => (
               <div key={e.id}
                 className="rounded-[22px] border border-white/[0.08] bg-[#111111]/90 p-5 flex items-center gap-4 transition-all duration-300 hover:border-[#C9A84C]/45"
                 style={{ borderLeft: `2px solid ${OURO}` }}>
@@ -236,6 +239,7 @@ export default function DepartamentoFotografiaPage() {
                   <p className="text-[34px] font-thin leading-none tabular-nums" style={{ color: OURO }}>{ativos}</p>
                   <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">em edição</p>
                   {atrasados > 0 && <p className="text-[10px] tracking-[0.15em] uppercase text-red-400 mt-1">{atrasados} atrasado{atrasados > 1 ? 's' : ''}</p>}
+                  {nomeados > 0 && <p className="text-[10px] tracking-[0.15em] uppercase text-white/40 mt-1">+{nomeados} a seguir</p>}
                 </div>
               </div>
             ))}
@@ -279,6 +283,24 @@ export default function DepartamentoFotografiaPage() {
                           </p>
                         )}
 
+                        {p.fase !== 'entregue' && (
+                          <label className="flex flex-col gap-1">
+                            <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Editor de fotos</span>
+                            <select disabled={aGravar === p.id} value={editorAtual(p)}
+                              onChange={e => {
+                                const novo = e.target.value
+                                if (!novo || novo === editorAtual(p)) return
+                                if (p.editores.length && !window.confirm(`Trocar o editor de ${nomes} de ${p.editores.join(', ')} para ${novo}? O trabalho passa para o portal de ${primeiro(novo)}.`)) return
+                                atribuir(p, novo)
+                              }}
+                              className={`w-full rounded-xl border bg-black/40 px-3 py-2 text-sm outline-none focus:border-[#C9A84C] ${p.editores.length ? 'border-white/10 text-white' : 'border-[#C9A84C]/40 text-white/60'}`}>
+                              <option value="" disabled>{aGravar === p.id ? 'A guardar…' : 'Nomear editor…'}</option>
+                              {editorAtual(p) && !cargas.some(c => c.e.nome === editorAtual(p)) && <option value={editorAtual(p)}>{editorAtual(p)}</option>}
+                              {cargas.map(({ e, ativos }) => <option key={e.id} value={e.nome}>{e.nome} ({ativos} em edição)</option>)}
+                            </select>
+                          </label>
+                        )}
+
                         {(p.fase === 'sneakpeek' || p.fase === 'galerias' || p.fase === 'selecao') && (
                           <div className="flex flex-col gap-2 rounded-xl border border-[#C9A84C]/30 bg-[#C9A84C]/[0.06] p-3">
                             <input type="url" placeholder="Link da galeria" value={link}
@@ -308,15 +330,6 @@ export default function DepartamentoFotografiaPage() {
                         {p.fase === 'edicao' && (
                           <div className="flex flex-col gap-2 rounded-xl border border-[#c4b5fd]/25 bg-[#c4b5fd]/[0.05] p-3">
                             {p.recebida && <p className="text-[11px] text-white/45">Seleção recebida a {fmt(p.recebida)}</p>}
-                            {p.editores.length
-                              ? <p className="text-[12px] text-white/60">Editor: <span className="text-white">{p.editores.join(', ')}</span></p>
-                              : (
-                                <select disabled={aGravar === p.id} defaultValue="" onChange={e => atribuir(p, e.target.value)}
-                                  className="w-full rounded-xl border border-[#C9A84C]/40 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[#C9A84C]">
-                                  <option value="" disabled>{aGravar === p.id ? 'A atribuir…' : 'Nomear editor de fotos…'}</option>
-                                  {cargas.map(({ e, ativos }) => <option key={e.id} value={e.nome}>{e.nome} ({ativos} em edição)</option>)}
-                                </select>
-                              )}
                             <input type="url" placeholder="Link das fotos editadas" value={link}
                               onChange={e => setLinks(l => ({ ...l, [chave]: e.target.value }))}
                               className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
@@ -386,6 +399,7 @@ export default function DepartamentoFotografiaPage() {
       {aVer && (() => {
         const meus = projetos.filter(p => p.fase === 'edicao' && p.editorIds.includes(aVer.id))
           .sort((a, b) => (a.diasPrazo ?? 9999) - (b.diasPrazo ?? 9999))
+        const aSeguir = projetos.filter(p => p.fase !== 'edicao' && p.fase !== 'entregue' && p.editorIds.includes(aVer.id))
         return (
           <div role="dialog" aria-modal="true" aria-label={`O que ${aVer.nome} está a editar`} onClick={() => setAVer(null)}
             className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
@@ -396,7 +410,7 @@ export default function DepartamentoFotografiaPage() {
                 <div>
                   <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Em edição</p>
                   <h3 className="mt-1 text-2xl font-semibold">{aVer.nome}</h3>
-                  <p className="text-sm text-white/45">{meus.length} casamento{meus.length === 1 ? '' : 's'} a editar</p>
+                  <p className="text-sm text-white/45">{meus.length} casamento{meus.length === 1 ? '' : 's'} a editar{aSeguir.length ? ` · ${aSeguir.length} a seguir` : ''}</p>
                 </div>
                 <button type="button" onClick={() => setAVer(null)} aria-label="Fechar"
                   className="w-9 h-9 rounded-full border border-white/15 text-white/60 hover:text-white text-lg">×</button>
@@ -438,6 +452,19 @@ export default function DepartamentoFotografiaPage() {
                   )
                 })}
               </div>
+              {aSeguir.length > 0 && (
+                <div className="mt-5">
+                  <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">A seguir · já nomeado, à espera da seleção</p>
+                  <ul className="mt-2 flex flex-col gap-1.5">
+                    {aSeguir.map(p => (
+                      <li key={p.id} className="flex items-center justify-between gap-3 rounded-lg border border-white/[0.06] bg-black/30 px-3 py-2 text-[12px]">
+                        <span><span className="text-white/85">{p.cliente || p.referencia}</span> <span className="text-white/35">· {fmt(p.data)}</span></span>
+                        <span className="text-white/45">{FASES.find(f => f.k === p.fase)?.titulo}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         )
