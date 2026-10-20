@@ -60,6 +60,17 @@ export function blocoDestaque(rotulo: string, valor: string, grande = false): st
   </table>`
 }
 
+/** Caixa com texto livre (mensagens, respostas), mantém as quebras de linha. */
+export function blocoTexto(rotulo: string, texto: string): string {
+  return `
+  <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="border:1px solid rgba(216,190,147,.3);border-radius:16px;background:rgba(216,190,147,.05);">
+    <tr><td style="padding:18px 22px;">
+      <p style="margin:0;font-family:${MONO};font-size:10px;letter-spacing:.3em;color:${GOLD};">${esc(rotulo.toUpperCase())}</p>
+      <p style="margin:8px 0 0;font-family:${SERIF};font-size:18px;line-height:1.55;color:rgba(255,255,255,.85);">${esc(texto).replace(/\n/g, '<br>')}</p>
+    </td></tr>
+  </table>`
+}
+
 /** Passos numerados (ex.: Ticket do Filme): feitos a dourado, o atual em contorno. */
 export function blocoPassos(rotulos: string[], atual: number): string {
   const cel = rotulos.map((r, i) => {

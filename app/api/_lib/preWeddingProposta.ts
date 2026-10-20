@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { resolveEmailNoiva } from './emailNoiva'
+import { emailPropostaPreWedding } from '@/lib/emailsNoivos'
 
 // Proposta de Pré-Wedding: o admin agenda o envio na ficha do evento
 // (settings.preWeddingPropostaAgendada) e o email sai sozinho quando faltarem
@@ -109,7 +110,7 @@ export async function runPreWeddingProposta(opts: { referencia?: string } = {}) 
           from: 'RL Photo.Video <geral@rlphotovideo.pt>',
           to: [email],
           subject: 'Faltam 60 dias · preparámos algo para vocês',
-          html: buildPropostaHtml(nomes),
+          html: emailPropostaPreWedding({ nomes, data: r.data ?? r.dataSettings ?? null, url: PAGINA_PROPOSTA }),
           text: buildPropostaTexto(nomes),
         }),
       })
@@ -152,81 +153,4 @@ Vejam aqui: ${PAGINA_PROPOSTA}
 
 Falamos em breve,
 Rui · RL Photo.Video`
-}
-
-function buildPropostaHtml(nomes: string): string {
-  const nome = escapeHtml(nomes)
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0e0b06;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b06;padding:40px 16px;">
-    <tr>
-      <td align="center">
-        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;border:1px solid #7a6340;background:#110e08;">
-          <tr>
-            <td style="padding:52px 48px 44px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-
-              <p style="margin:0 0 26px;font-size:9px;letter-spacing:0.4em;color:#8a7450;text-transform:uppercase;">
-                Faltam 60 dias
-              </p>
-
-              <h1 style="margin:0 0 6px;font-size:36px;font-weight:400;color:#ffffff;line-height:1.15;">
-                Preparámos algo
-              </h1>
-              <h1 style="margin:0 0 30px;font-size:36px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.15;">
-                para vocês.
-              </h1>
-
-              <div style="margin:0 0 30px;color:#7a6340;font-size:14px;letter-spacing:0.3em;">
-                &#8212;&nbsp;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&nbsp;&#8212;
-              </div>
-
-              <p style="margin:0 0 18px;font-size:16px;font-style:italic;color:#c9a96e;">
-                Olá ${nome},
-              </p>
-
-              <p style="margin:0 0 32px;font-size:15px;color:#d4c9b0;line-height:1.75;">
-                Faltam dois meses para o vosso casamento. Antes de entrarmos na reta final,
-                preparámos uma página só para vocês, com uma coisa que faz toda a diferença
-                no resultado do dia.
-              </p>
-
-              <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;">
-                <tr>
-                  <td style="border:1px solid #7a6340;background:rgba(201,169,110,0.08);">
-                    <a href="${PAGINA_PROPOSTA}" style="display:block;padding:18px 40px;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:11px;letter-spacing:0.35em;color:#c9a96e;text-transform:uppercase;">
-                      Vejam aqui
-                    </a>
-                  </td>
-                </tr>
-              </table>
-
-              <p style="margin:0 0 34px;font-size:13px;color:#8a7450;line-height:1.6;">
-                <a href="${PAGINA_PROPOSTA}" style="color:#8a7450;text-decoration:underline;">rlphotovideo.pt/pre-wedding-entrada</a>
-              </p>
-
-              <p style="margin:0 0 4px;font-size:15px;color:#d4c9b0;line-height:1.7;">
-                Falamos em breve,
-              </p>
-              <p style="margin:0 0 36px;font-size:15px;font-style:italic;color:#c9a96e;">
-                Rui &middot; RL Photo.Video
-              </p>
-
-              <p style="margin:0;font-size:9px;letter-spacing:0.35em;color:#5a4f3a;text-transform:uppercase;">
-                RL PHOTO &middot; VIDEO
-              </p>
-
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`
-}
-
-function escapeHtml(s: string): string {
-  return (s || '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!))
 }

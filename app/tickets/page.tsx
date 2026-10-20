@@ -16,7 +16,20 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
     tickets: [
       { k: 'portal', nome: 'O Vosso Portal Está Aberto', assunto: '💍 O portal do casamento está pronto', quando: 'Quando o contrato é aprovado e o portal dos noivos é criado. Leva o email e a palavra-passe de acesso.', para: 'Noiva (ou noivo, se não houver email da noiva)', info: 'Pílula O VOSSO PORTAL, nomes e data do casamento, dias que faltam, o que há lá dentro, referência, chave de acesso (email + palavra-passe) e botão ABRIR O NOSSO PORTAL.' },
       { k: 'recuperar', nome: 'Recuperar a Palavra-passe', assunto: '🔑 A vossa palavra-passe do portal', quando: 'Quando os noivos pedem a palavra-passe no login do portal e confirmam a identidade.', para: 'Noiva (ou noivo, se não houver email da noiva)', info: 'Pílula A VOSSA PALAVRA-PASSE, nomes, a chave de acesso e botão ENTRAR NO PORTAL, com aviso para ignorarem se não foram eles a pedir.' },
+      { k: 'portal-pronto', nome: 'Portal dos Noivos Pronto', assunto: 'O vosso Portal dos Noivos está pronto', quando: 'Na ficha do evento, no botão de enviar o portal ao cliente.', para: 'Noiva', info: 'Pílula O VOSSO PORTAL, nomes, referência, palavra-passe e botão ABRIR O NOSSO PORTAL.' },
+      { k: 'notificacao', nome: 'Nova Notificação', assunto: '🔔 <título da notificação>', quando: 'Na ficha do evento, ao enviar uma notificação aos noivos (fica também no sino do portal).', para: 'Noiva', info: 'Pílula NOVA NOTIFICAÇÃO, nomes e data, o título, a mensagem numa caixa e botão VER NO PORTAL.' },
+      { k: 'resposta', nome: 'Resposta à Mensagem', assunto: 'RE: <assunto da mensagem>', quando: 'Quando a RL responde a uma mensagem que os noivos enviaram no Atendimento do portal.', para: 'Noiva', info: 'Pílula RESPOSTA DA NOSSA EQUIPA, nomes e data, a resposta, a mensagem original e botão ABRIR O NOSSO PORTAL.' },
+      { k: 'tarefa-nova', nome: 'Nova Tarefa', assunto: '📋 Nova tarefa no vosso portal — <tarefa>', quando: 'Quando é criada uma tarefa para os noivos no portal.', para: 'Noiva (ou noivo)', info: 'Pílula NOVA TAREFA, nomes e data, a tarefa numa caixa e botão ABRIR O NOSSO PORTAL.' },
+      { k: 'tarefa-concluida', nome: 'Tarefa Concluída', assunto: '✓ Tarefa concluída — <tarefa>', quando: 'Quando uma tarefa dos noivos é marcada como concluída.', para: 'Noiva (ou noivo)', info: 'Pílula TAREFA CONCLUÍDA, nomes e data, a tarefa numa caixa e botão ABRIR O NOSSO PORTAL.' },
       { k: 'dados-recebidos', nome: 'Dados Recebidos', assunto: '✓ Dados recebidos — RL Photo Video', quando: 'Quando os noivos enviam os dados para o contrato e o portal ainda não foi enviado.', para: 'Noiva (ou noivo)', info: 'Pílula DADOS RECEBIDOS, nomes e data, noivos, próximo passo (contrato e portal) e botão FALAR CONNOSCO (email da RL).' },
+    ],
+  },
+  {
+    titulo: 'Noivos · Pré-Wedding',
+    tickets: [
+      { k: 'proposta-60', nome: 'Faltam 60 Dias', assunto: 'Faltam 60 dias · preparámos algo para vocês', quando: 'Sozinho, quando faltam 60 dias para o casamento e o envio está agendado na ficha.', para: 'Noiva', info: 'Pílula FALTAM 60 DIAS, nomes e data, o texto da proposta e botão VER A PÁGINA (pre-wedding-entrada).' },
+      { k: 'marcar-prewedding', nome: 'Marcar o Pré-Wedding', assunto: 'O vosso Pré-Wedding — RL Photo.Video', quando: 'Quando o admin aprova a marcação do pré-wedding na ficha do evento.', para: 'Noiva', info: 'Pílula O VOSSO PRÉ-WEDDING, nomes e data, local do casamento, onde marcar e botão MARCAR A SESSÃO.' },
+      { k: 'prewedding-reservado', nome: 'Pré-Wedding Reservado', assunto: '📅 Pré-wedding reservado — <noivos>', quando: 'Quando os noivos escolhem o dia da sessão no portal.', para: 'Noiva (o admin recebe o seu aviso à parte)', info: 'Pílula PRÉ-WEDDING RESERVADO, nomes, data da sessão, hora e local, referência e botão ABRIR O NOSSO PORTAL.' },
     ],
   },
   {
@@ -46,6 +59,7 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
   {
     titulo: 'Noivos · Pagamentos',
     tickets: [
+      { k: 'pagamento-tally', nome: 'Pagamento Registado (Tally)', assunto: '✓ Pagamento registado — RL Photo Video', quando: 'Quando os noivos preenchem o formulário de pagamento no Tally.', para: 'Email indicado no formulário', info: 'Pílula PAGAMENTO REGISTADO, nomes, valor em destaque, referência, forma de pagamento, data e botão ABRIR O NOSSO PORTAL.' },
       { k: 'pagamento', nome: 'Comprovativo de Pagamento', assunto: 'Comprovativo de pagamento — 750.00 €', quando: 'Quando os noivos registam um pagamento em Registar Pagamento. O mesmo card vai também para o admin (assunto "Novo pagamento").', para: 'Noiva e admin', info: 'Pílula COMPROVATIVO DE PAGAMENTO, nomes, valor pago em destaque, referência, fase, método, data, a imagem do comprovativo (se houver) e botão ABRIR O NOSSO PORTAL.' },
     ],
   },
@@ -73,9 +87,11 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
     ],
   },
   {
-    titulo: 'Leads',
+    titulo: 'Casais · Leads',
     tickets: [
-      { k: 'nova-lead', nome: 'Recebemos o Vosso Contacto', assunto: 'Recebemos o vosso contacto — RL Photo.Video', quando: 'Quando uma lead preenche o formulário de contacto (Nova Lead).', para: 'Lead' },
+      { k: 'reuniao', nome: 'Reunião Marcada', assunto: 'Tens uma reunião marcada · <data> às <hora>', quando: 'No CRM, ao marcar a reunião com o casal.', para: 'Casal (email da lead)', info: 'Pílula REUNIÃO MARCADA, nomes, data, hora, modo e botão VER A REUNIÃO.' },
+      { k: 'lembrete-reuniao', nome: 'Lembrete da Reunião', assunto: '⏰ A vossa reunião começa em 30 minutos', quando: 'Sozinho, 30 minutos antes da reunião marcada no CRM.', para: 'Casal (email da lead)', info: 'Pílula FALTAM 30 MINUTOS, nomes, hora, destaque "30 minutos" e botão JUNTAR À VIDEOCHAMADA.' },
+      { k: 'nova-lead', nome: 'Recebemos o Vosso Contacto', assunto: 'Recebemos o vosso contacto — RL Photo.Video', quando: 'Quando uma lead preenche o formulário de contacto (Nova Lead).', para: 'Lead', info: 'Pílula MENSAGEM RECEBIDA, nomes, serviços pedidos e botão VER O BLOG.' },
     ],
   },
 ]

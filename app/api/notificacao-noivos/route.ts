@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { emailNotificacaoNoivos } from '@/lib/emailsNoivos'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       try {
         const isBatizado = referencia.toUpperCase().startsWith('BAT')
         const portalUrl = `${SITE_URL}/${isBatizado ? 'portal-batizado' : 'portal-cliente'}/ref/${encodeURIComponent(referencia)}`
-        const html = buildEmail({ titulo, texto, nomeNoivos, portalUrl })
+        const html = emailNotificacaoNoivos({ titulo, texto, nomes: nomeNoivos, data: settings.data ?? null, portalUrl, batizado: isBatizado })
         const res = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${RESEND_KEY}`, 'Content-Type': 'application/json' },
@@ -89,20 +90,4 @@ export async function POST(req: NextRequest) {
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err?.message ?? 'erro' }, { status: 500 })
   }
-}
-
-function buildEmail(opts: { titulo: string; texto: string; nomeNoivos: string | null; portalUrl: string }): string {
-  // Email = apenas o card "Notificação Noivos", clicável para o portal.
-  const cardUrl = `${SITE_URL}/notificacao-noivos.png`
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:24px 16px;">
-    <tr><td align="center">
-      <a href="${opts.portalUrl}" style="text-decoration:none;">
-        <img src="${cardUrl}" alt="Nova Notificação — Consultar Portal" width="360" style="display:block;width:100%;max-width:360px;height:auto;border:0;" />
-      </a>
-    </td></tr>
-  </table>
-</body></html>`
 }

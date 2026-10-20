@@ -1,4 +1,7 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { emailPreWeddingReservado } from '@/lib/emailsNoivos'
+import { SITE_URL } from '@/lib/site-url'
+import { portalPathFor } from '@/lib/noivos-session'
 import { emailCandidatura } from '@/lib/emailsFreelancers'
 import { ehAdmin, sessaoMembro, sessaoNoivos, naoAutorizado } from '@/lib/api-guard'
 
@@ -280,7 +283,10 @@ export async function POST(req: NextRequest) {
 </html>`
 
     const htmlAdmin  = buildPreWeddingHtml('Olá, Rui!', 'Consulta o <strong style="color:#c9b88a;font-weight:500;">painel de administração</strong><br>para veres todos os detalhes.')
-    const htmlNoivos = buildPreWeddingHtml('Olá, Noivos!', 'A vossa sessão está <strong style="color:#c9b88a;font-weight:500;">confirmada.</strong><br>Entraremos em contacto com mais detalhes.')
+    const htmlNoivos = emailPreWeddingReservado({
+      nomes: nome_noivos, referencia, dataSessao: dataFormatada, local,
+      portalUrl: referencia ? `${SITE_URL}${portalPathFor(referencia, 'casamento')}` : undefined,
+    })
 
     // Email para o admin
     await fetch('https://api.resend.com/emails', {

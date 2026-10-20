@@ -1,7 +1,10 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { exigeAcessoRef, ehAdmin } from '@/lib/api-guard'
+import { emailMarcarPreWedding } from '@/lib/emailsNoivos'
+import { SITE_URL } from '@/lib/site-url'
+import { portalPathFor } from '@/lib/noivos-session'
 
-const CARD_URL      = 'https://portal.rlphotovideo.pt/card_prewedding_marcar_mobile.png'
 const NOTION_TOKEN  = process.env.NOTION_TOKEN!
 const EVENTOS_DB    = '1ad220116d8a804b839ddc36f1e7ecf1'
 
@@ -43,12 +46,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Email da noiva não encontrado' }, { status: 400 })
     }
 
-    // Fetch card from public URL and encode as base64
-    const imgRes = await fetch(CARD_URL, { cache: 'no-store' })
-    if (!imgRes.ok) {
-      return NextResponse.json({ error: `Falha ao carregar card: ${imgRes.status}` }, { status: 500 })
-    }
-    const cardBase64 = Buffer.from(await imgRes.arrayBuffer()).toString('base64')
+    // Nomes, data e local para o bilhete
+    const { data: p } = await createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+      .from('portais').select('noiva, noivo, data, local').ilike('referencia', String(referencia ?? '')).maybeSingle()
+    const html = emailMarcarPreWedding({
+      nomes: [p?.noiva, p?.noivo].filter(Boolean).join(' & '),
+      data: p?.data ?? null,
+      local: p?.local ?? null,
+      portalUrl: `${SITE_URL}${portalPathFor(String(referencia ?? ''), 'casamento')}`,
+    })
 
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -59,14 +65,8 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>',
         to: [email],
-        subject: 'O seu Pré-Wedding — RL Photo.Video',
-        html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;padding:0;background:#000000;"><img src="cid:card_prewedding" alt="Pré-Wedding" style="display:block;width:100%;max-width:100%;height:auto;" /></body></html>`,
-        attachments: [{
-          content: cardBase64,
-          filename: 'card_prewedding_marcar_mobile.png',
-          content_type: 'image/png',
-          content_id: 'card_prewedding',
-        }],
+        subject: 'O vosso Pré-Wedding — RL Photo.Video',
+        html,
       }),
     })
 

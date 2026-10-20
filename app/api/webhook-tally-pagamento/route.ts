@@ -1,4 +1,5 @@
-﻿import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { emailPagamentoRegistado } from '@/lib/emailsNoivos'
 import { createClient } from '@supabase/supabase-js'
 
 // Tally webhook — Registo de Pagamento (https://tally.so/r/A72PQB)
@@ -64,119 +65,14 @@ function buildComprovatvoClienteEmail(data: {
   data_pagamento: string | null
   notas: string | null
 }): string {
-  const valorFormatado = data.valor
-    ? data.valor.includes('€') ? data.valor : `${data.valor} €`
-    : null
-
   const dataFormatada = data.data_pagamento
     ? (() => {
         try {
-          return new Date(data.data_pagamento + 'T12:00:00').toLocaleDateString('pt-PT', {
-            day: '2-digit', month: 'long', year: 'numeric'
-          })
+          return new Date(data.data_pagamento + 'T12:00:00').toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })
         } catch { return data.data_pagamento }
       })()
-    : new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
-
-  return `<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
-
-        <!-- Cantos superiores -->
-        <tr><td style="padding:0;">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
-            <td></td>
-            <td style="width:50px;height:50px;border-top:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
-          </tr></table>
-        </td></tr>
-
-        <tr><td style="padding:8px 56px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-
-          <!-- Logo -->
-          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
-            width="80" alt="RL Photo Video"
-            style="display:block;margin:0 auto 24px;width:80px;height:auto;opacity:0.9;" />
-
-          <!-- Check circle -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;width:52px;height:52px;border-radius:50%;border:1.5px solid #c9a96e;"><tr><td align="center" valign="middle">
-            <span style="font-size:22px;color:#c9a96e;">&#10003;</span>
-          </td></tr></table>
-
-          <!-- Olá! -->
-          <p style="margin:0 0 4px;font-size:28px;font-style:italic;font-weight:300;color:#c9a96e;line-height:1.2;">Olá, ${data.nome_noivos.split(' ')[0]}!</p>
-
-          <!-- Título -->
-          <p style="margin:0;font-size:38px;font-weight:400;color:#f0e8d8;line-height:1.1;">Pagamento</p>
-          <p style="margin:0 0 24px;font-size:38px;font-weight:400;font-style:italic;color:#c9a96e;line-height:1.2;">registado.</p>
-
-          <!-- Divider -->
-          <div style="margin:0 0 24px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">&#8212;&nbsp;·&nbsp;&#9670;&nbsp;·&nbsp;&#8212;</div>
-
-          <!-- Texto -->
-          <p style="margin:0 0 24px;font-size:15px;color:#a09070;line-height:1.8;">
-            Recebemos o registo do vosso pagamento.<br>
-            <strong style="color:#c9b88a;font-weight:500;">Obrigado pela vossa confiança.</strong>
-          </p>
-
-          <!-- Caixa detalhes -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:400px;background:rgba(201,169,110,0.04);">
-            <tr><td style="padding:24px 32px;text-align:center;">
-
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">Noivos</p>
-              <p style="margin:0 0 20px;font-size:22px;font-style:italic;font-weight:400;color:#c9a96e;line-height:1.2;">${data.nome_noivos}</p>
-
-              ${data.referencia ? `
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Referência</p>
-              <p style="margin:0 0 16px;font-size:13px;letter-spacing:0.1em;color:#b8a070;">${data.referencia}</p>
-              ` : ''}
-
-              ${valorFormatado ? `
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Valor</p>
-              <p style="margin:0 0 16px;font-size:20px;font-weight:600;color:#f0e8d8;">${valorFormatado}</p>
-              ` : ''}
-
-              ${data.forma_pagamento ? `
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Forma de Pagamento</p>
-              <p style="margin:0 0 16px;font-size:13px;color:#d4c9b0;">${data.forma_pagamento}</p>
-              ` : ''}
-
-              <p style="margin:0 0 4px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Data</p>
-              <p style="margin:0;font-size:13px;color:#d4c9b0;">${dataFormatada}</p>
-
-            </td></tr>
-          </table>
-
-          <!-- Texto final -->
-          <p style="margin:0 0 8px;font-size:14px;color:#7a6a50;line-height:1.8;">
-            Para qualquer questão estamos sempre disponíveis.
-          </p>
-          <p style="margin:0;font-size:14px;color:#7a6a50;line-height:1.8;">
-            <a href="mailto:${ADMIN_EMAIL}" style="color:#c9a96e;text-decoration:none;">${ADMIN_EMAIL}</a>
-          </p>
-
-        </td></tr>
-
-        <!-- Cantos inferiores -->
-        <tr><td style="padding:0;">
-          <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-left:0.5px solid #3a2a12;"></td>
-            <td style="text-align:center;vertical-align:bottom;padding-bottom:20px;">
-              <p style="margin:0;font-size:9px;letter-spacing:0.4em;color:#3a2a12;text-transform:uppercase;">RL PHOTO &middot; VIDEO</p>
-            </td>
-            <td style="width:50px;height:50px;border-bottom:0.5px solid #3a2a12;border-right:0.5px solid #3a2a12;"></td>
-          </tr></table>
-        </td></tr>
-
-      </table>
-    </td></tr>
-  </table>
-</body>
-</html>`
+    : new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  return emailPagamentoRegistado({ nome_noivos: data.nome_noivos, referencia: data.referencia, valor: data.valor, forma_pagamento: data.forma_pagamento, data: dataFormatada })
 }
 
 // ─── Email notificação → ADMIN ────────────────────────────────────────────────

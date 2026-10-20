@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { emailTarefaNoivos } from '@/lib/emailsNoivos'
 import { exigeAcessoRef } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
 
@@ -57,19 +58,19 @@ async function resolveDadosCliente(referencia: string) {
   // o email da noiva mesmo quando dados_contrato_cps não tem)
   const [contratoRes, portalRes, eventosRes] = await Promise.all([
     sb.from('dados_contrato_cps')
-      .select('nome_noivos, nome_noiva, nome_noivo, nome_crianca, email_noiva, email_noivo, tipo_evento')
+      .select('nome_noivos, nome_noiva, nome_noivo, nome_crianca, email_noiva, email_noivo, tipo_evento, data_casamento')
       .eq('referencia_evento', referencia)
       .order('id', { ascending: false })
       .limit(1)
       .maybeSingle(),
     sb.from('portais')
-      .select('noiva, noivo, settings')
+      .select('noiva, noivo, data, settings')
       .eq('referencia', referencia)
       .maybeSingle(),
     (async () => {
       for (const t of ['eventos_2026', 'eventos_2027']) {
         const { data } = await sb.from(t)
-          .select('email_noiva, email_noivo, nome_noiva, nome_noivo, cliente, tipo_evento, nome_crianca')
+          .select('email_noiva, email_noivo, nome_noiva, nome_noivo, cliente, tipo_evento, nome_crianca, data_evento')
           .eq('referencia', referencia)
           .maybeSingle()
         if (data) return data
@@ -116,86 +117,7 @@ async function resolveDadosCliente(referencia: string) {
   const tipo: 'casamento' | 'batizado' = tipoFromAny === 'batizado' ? 'batizado' : 'casamento'
 
   if (!email) return null
-  return { email, nome, tipo }
-}
-
-function buildEmailHtml(opts: {
-  nome: string
-  taskText: string
-  url: string
-  tipo: 'casamento' | 'batizado'
-  kind: 'new' | 'completed'
-}): string {
-  const primeiroNome = (opts.nome || '').split(/[\s&]/)[0] || 'Olá'
-  const evento = opts.tipo === 'batizado' ? 'batizado' : 'casamento'
-
-  const isCompleted = opts.kind === 'completed'
-  const lead     = isCompleted ? `Uma etapa do ${evento}` : 'Nova tarefa no'
-  const leadCont = isCompleted ? 'foi concluída.' : `vosso portal do ${evento}.`
-  const eyebrow  = isCompleted ? 'Tarefa concluída' : 'Nova tarefa atribuída'
-  const icon     = isCompleted
-    ? '<span style="color:#7dd3a4;font-weight:700;margin-right:8px;">&#10003;</span>'
-    : '<span style="color:#c9a96e;font-weight:700;margin-right:8px;">&#9679;</span>'
-  const body = isCompleted
-    ? 'Continuamos atentos a todas as etapas até ao grande dia.<br>Podem acompanhar o ponto de situação no vosso portal.'
-    : 'Acabámos de adicionar uma nova tarefa no vosso portal.<br>Quando estiver concluída, vão receber a confirmação.'
-
-  return `<!DOCTYPE html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;padding:0;background:#0e0b07;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0e0b07;padding:40px 16px;">
-    <tr><td align="center">
-      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;background:#120e09;border:0.5px solid #4a3a1e;">
-        <tr><td style="padding:48px 56px;font-family:Georgia,'Times New Roman',serif;text-align:center;">
-          <img src="https://portal.rlphotovideo.pt/logo_rl_gold.png"
-            width="80" alt="RL" style="display:block;margin:0 auto 24px;width:80px;opacity:0.9;" />
-
-          <p style="margin:0 0 4px;font-size:24px;font-style:italic;font-weight:300;color:#c9a96e;">Olá, ${primeiroNome}!</p>
-          <p style="margin:0;font-size:30px;font-weight:400;color:#f0e8d8;">${lead}</p>
-          <p style="margin:0 0 28px;font-size:30px;font-weight:400;font-style:italic;color:#c9a96e;">${leadCont}</p>
-
-          <div style="margin:0 0 28px;color:#6a5430;font-size:12px;letter-spacing:0.35em;">— · ◆ · —</div>
-
-          <p style="margin:0 0 10px;font-size:9px;letter-spacing:0.5em;color:#7a6340;text-transform:uppercase;">${eyebrow}</p>
-
-          <!-- Caixa com o nome da tarefa -->
-          <table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:420px;background:rgba(201,169,110,0.04);">
-            <tr><td style="padding:22px 28px;text-align:center;">
-              <p style="margin:0;font-size:18px;color:#f0e8d8;line-height:1.5;letter-spacing:0.02em;">
-                ${icon}${opts.taskText}
-              </p>
-            </td></tr>
-          </table>
-
-          <p style="margin:0 0 28px;font-size:14px;color:#a09070;line-height:1.8;">
-            ${body}
-          </p>
-
-          <!-- BOTÃO BULLETPROOF -->
-          <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 16px;">
-            <tr>
-              <td align="center" style="border-radius:8px;background:#c9a96e;">
-                <a href="${opts.url}" target="_blank"
-                  style="display:inline-block;padding:16px 40px;background:#c9a96e;color:#0e0b07;text-decoration:none;font-family:Georgia,'Times New Roman',serif;font-size:13px;letter-spacing:0.4em;font-weight:700;border-radius:8px;mso-padding-alt:0;border:1px solid #c9a96e;">
-                  ABRIR PORTAL &nbsp;→
-                </a>
-              </td>
-            </tr>
-          </table>
-
-          <p style="margin:24px 0 0;font-size:11px;color:#5a4a30;line-height:1.6;">
-            Caso o botão não funcione, copia este link:<br>
-            <a href="${opts.url}" style="color:#c9a96e;text-decoration:underline;word-break:break-all;">${opts.url}</a>
-          </p>
-
-          <p style="margin:32px 0 0;font-size:9px;letter-spacing:0.35em;color:#5a4f3a;text-transform:uppercase;">
-            RL PHOTO &middot; VIDEO
-          </p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`
+  return { email, nome, tipo, data: (contrato?.data_casamento ?? portal?.data ?? evento?.data_evento ?? null) as string | null }
 }
 
 async function sendEmail(to: string, subject: string, html: string) {
@@ -242,7 +164,7 @@ export async function POST(req: NextRequest) {
     const ok = await sendEmail(
       dados.email,
       subject,
-      buildEmailHtml({ nome: dados.nome, taskText, url: portalUrl, tipo, kind }),
+      emailTarefaNoivos({ nome: dados.nome, taskText, url: portalUrl, tipo, kind, data: dados.data }),
     )
 
     if (!ok) return NextResponse.json({ error: 'Falha ao enviar email' }, { status: 500 })

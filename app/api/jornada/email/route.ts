@@ -7,6 +7,10 @@ import { cardPagamento } from '@/lib/pagamentoEmail'
 import { ENTREGAS, buildEntregaEmailHtml, type TipoEntrega } from '@/lib/entregaEmail'
 import { emailNovidadesFreelancer, emailNovoBriefing, emailTrabalhoEdicao, emailEdicaoFotos, emailCandidatura } from '@/lib/emailsFreelancers'
 import { buildRecoveryEmail, buildDadosRecebidosEmail, buildNovaLeadEmail } from '@/lib/emailsClientes'
+import {
+  emailNotificacaoNoivos, emailRespostaNoivos, emailTarefaNoivos, emailMarcarPreWedding, emailPreWeddingReservado,
+  emailPropostaPreWedding, emailPagamentoRegistado, emailPortalPronto, emailReuniaoMarcada, emailLembreteReuniao,
+} from '@/lib/emailsNoivos'
 
 // Pré-visualização real dos emails ao cliente no mapa da jornada (/crm/follow-up).
 // Usa as mesmas funções de HTML que as rotas de envio, com um casal fictício.
@@ -62,6 +66,20 @@ function html(k: string): string | null {
   if (k === 'recuperar') return buildRecoveryEmail({ nome: 'Ana & Tiago', password: 'exemplo123', loginUrl: login })
   if (k === 'dados-recebidos') return buildDadosRecebidosEmail({ nome_noivos: 'Ana e Tiago', data_casamento: '2027-06-12' })
   if (k === 'nova-lead') return buildNovaLeadEmail('Ana e Tiago', 'Fotografia, Vídeo')
+  // Restantes emails aos noivos e aos casais em lead (lib/emailsNoivos.ts)
+  const portal = `${SITE}/portal-cliente/ref/CAS_000_27_RL`
+  const DATA = '2027-06-12'
+  if (k === 'notificacao') return emailNotificacaoNoivos({ titulo: 'Novidades no vosso portal', texto: 'Já podem ver o cronograma do dia no portal.\nQualquer dúvida, digam-nos.', nomes: 'Ana & Tiago', data: DATA, portalUrl: portal })
+  if (k === 'resposta') return emailRespostaNoivos({ nomes: 'Ana & Tiago', titulo: 'Horário da cerimónia', resposta: 'Olá! Sim, chegamos uma hora antes da cerimónia para as preparações.', mensagemOriginal: 'A que horas chegam no dia?', data: DATA, portalUrl: portal })
+  if (k === 'tarefa-nova') return emailTarefaNoivos({ nome: 'Ana & Tiago', taskText: 'Preencher o briefing do dia', url: portal, tipo: 'casamento', kind: 'new', data: DATA })
+  if (k === 'tarefa-concluida') return emailTarefaNoivos({ nome: 'Ana & Tiago', taskText: 'Preencher o briefing do dia', url: portal, tipo: 'casamento', kind: 'completed', data: DATA })
+  if (k === 'marcar-prewedding') return emailMarcarPreWedding({ nomes: 'Ana & Tiago', data: DATA, local: 'Quinta de Exemplo', portalUrl: portal })
+  if (k === 'prewedding-reservado') return emailPreWeddingReservado({ nomes: 'Ana & Tiago', referencia: 'CAS_000_27_RL', dataSessao: 'sábado, 15 de maio de 2027', local: '17h00 · Praia da Arrábida', portalUrl: portal })
+  if (k === 'proposta-60') return emailPropostaPreWedding({ nomes: 'Ana e Tiago', data: DATA, url: 'https://rlphotovideo.pt/pre-wedding-entrada' })
+  if (k === 'pagamento-tally') return emailPagamentoRegistado({ nome_noivos: 'Ana e Tiago', referencia: 'CAS_000_27_RL', valor: '750', forma_pagamento: 'MB WAY', data: '12/03/2027' })
+  if (k === 'portal-pronto') return emailPortalPronto({ nomes: 'Ana & Tiago', referencia: 'CAS_000_27_RL', password: 'exemplo123', portalUrl: login, data: DATA })
+  if (k === 'reuniao') return emailReuniaoMarcada({ nome: 'Ana e Tiago', dataFmt: '12 de Março de 2027', hora: '18:30', modo: 'Videochamada', link: 'https://meet.google.com/exemplo' })
+  if (k === 'lembrete-reuniao') return emailLembreteReuniao({ nome: 'Ana e Tiago', hora: '18:30', link: 'https://meet.google.com/exemplo' })
   if (k === 'pagamento') {
     // Comprovativo de pagamento: o mesmo card vai à noiva e ao admin (/api/registar-pagamento-noivos)
     return cardPagamento({ nome_noivos: 'Ana e Tiago', referencia: 'CAS_000_27_RL', valor: 750, fase: 'REFORÇO', metodo: 'MBWAY', data: '12/03/2027', comprovativo_url: null })
