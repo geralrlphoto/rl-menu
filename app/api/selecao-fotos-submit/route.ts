@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { saveSelecao, type SelecaoFotos } from '@/lib/selecao-fotos-save'
 import { enviarEmailAdminSelecao } from '@/lib/selecao-fotos-email'
+import { encontrarEventoSelecao, nomesBatem } from '@/lib/selecao-fotos-ref'
 
 // Formulário próprio de seleção de fotos (/form-selecao-fotos/casamento).
 // Segue o mesmo fluxo do webhook do Tally: linha em fotos_selecao (Supabase)
@@ -16,6 +17,18 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const today = new Date().toISOString().split('T')[0]
+
+    // A referência tem de existir e de ser destes noivos: assim a seleção chega
+    // sempre ligada ao casamento certo (antes vinham "00", "LA", "Casamento"...).
+    const ev = await encontrarEventoSelecao(clean(body.referencia))
+    if (!ev) {
+      return NextResponse.json({ error: 'Esta referência não existe. Copiem-na do vosso portal (ex.: CAS_011_26_RL) ou abram o formulário a partir do portal.' }, { status: 400 })
+    }
+    if (!nomesBatem(clean(body.nome_noivos), ev.nome)) {
+      return NextResponse.json({ error: 'A referência não corresponde aos nomes dos noivos. Confirmem a referência no vosso portal.' }, { status: 400 })
+    }
+    body.referencia = ev.referencia
+    if (!clean(body.date) && ev.data) body.date = ev.data
 
     const mapped: SelecaoFotos = {
       nome_noivos:   clean(body.nome_noivos)   ?? 'Novo Registo',

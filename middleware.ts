@@ -271,6 +271,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/apoio-fotografias') ||
     pathname.startsWith('/form-selecao-fotos') ||
     pathname.startsWith('/api/selecao-fotos-submit') ||
+    pathname.startsWith('/api/selecao-fotos-evento') ||
     pathname.startsWith('/ticket-fotos-dia') ||
     pathname.startsWith('/api/ticket-') ||
     pathname.startsWith('/registar-pagamento') ||

@@ -25,7 +25,7 @@ import { SendMessageButton } from '../../portal-cliente/atmosphere/SendMessageBu
 import { AtendimentoThread } from '../../portal-cliente/atmosphere/AtendimentoThread'
 import { NoivosNotificationsBell } from '../../portal-cliente/atmosphere/NoivosNotificationsBell'
 import { FotografiasView, type FotografiasCard } from '../../portal-cliente/atmosphere/FotografiasView'
-import { FORM_SELECAO_FOTOS_URL, linkSelecaoFotos } from '@/lib/links'
+import { FORM_SELECAO_FOTOS_URL, linkSelecaoFotos, linkSelecaoFotosDoPortal } from '@/lib/links'
 
 const PORTAL_PAGE_ID = '35b220116d8a811b99b7f6f26648c017'
 
@@ -2426,7 +2426,7 @@ function PortalSubPageContent() {
     && !editingPreWedding && !editingPropostaToken && !error
   if (_atmIsFotografias && !loading) {
     const handleEditTitleFP = () => { setTitleInput(title); setEditingTitle(true) }
-    const fpEnviarUrl = linkSelecaoFotos(guiaLinks.fotosSelecaoUrl)
+    const fpEnviarUrl = linkSelecaoFotosDoPortal(guiaLinks.fotosSelecaoUrl, portalSettingsObj?.referencia ?? portalRef ?? refParam ?? null, 'batizado')
     const fpRef = portalRef || refParam || ''
 
     // Estado das URLs de cada card — vazio = bloqueado, presente = disponível

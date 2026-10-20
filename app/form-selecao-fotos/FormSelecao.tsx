@@ -56,6 +56,18 @@ export default function FormSelecao({
   const [aCarregar, setACarregar] = useState<string[]>([])
   const [progresso, setProgresso] = useState(0)
   const ran = useRef(false)
+  // Vindo do portal (?ref=CAS_...): nomes, data e referência do casamento, trancados
+  const [trancado, setTrancado] = useState(false)
+  const [refInvalida, setRefInvalida] = useState(false)
+  useEffect(() => {
+    const ref = new URLSearchParams(window.location.search).get('ref')
+    if (!ref) return
+    fetch(`/api/selecao-fotos-evento?ref=${encodeURIComponent(ref)}`).then(r => r.ok ? r.json() : null).then(d => {
+      if (!d?.ok) { setRefInvalida(true); return }
+      setDados({ nome_noivos: d.nome_noivos ?? '', date: String(d.date ?? '').slice(0, 10), referencia: d.referencia })
+      setTrancado(true)
+    }).catch(() => setRefInvalida(true))
+  }, [])
 
   useEffect(() => {
     if (ran.current) return
@@ -130,7 +142,7 @@ export default function FormSelecao({
       ])
       setProgresso(100)
       const d = await res.json()
-      if (!res.ok || d.error) { setErro('Não foi possível enviar. Tentem novamente dentro de momentos.'); return }
+      if (!res.ok || d.error) { setErro(res.status === 400 && d.error ? d.error : 'Não foi possível enviar. Tentem novamente dentro de momentos.'); return }
       setSent(true)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
@@ -202,12 +214,12 @@ export default function FormSelecao({
                   <div className="field">
                     <label htmlFor="nome_noivos">{nomeLabel}</label>
                     <input id="nome_noivos" type="text" required placeholder={nomePlaceholder}
-                      value={dados.nome_noivos}
+                      value={dados.nome_noivos} readOnly={trancado}
                       onChange={e => setDados(d => ({ ...d, nome_noivos: e.target.value }))} />
                   </div>
                   <div className="field">
                     <label htmlFor="date">{dataLabel}</label>
-                    <input id="date" type="date" required
+                    <input id="date" type="date" required readOnly={trancado}
                       value={dados.date}
                       onChange={e => setDados(d => ({ ...d, date: e.target.value }))} />
                   </div>
@@ -216,8 +228,10 @@ export default function FormSelecao({
                 <div className="field">
                   <label htmlFor="referencia">Referência do Evento</label>
                   <input id="referencia" type="text" required placeholder={refPlaceholder}
-                    value={dados.referencia}
-                    onChange={e => setDados(d => ({ ...d, referencia: e.target.value }))} />
+                    value={dados.referencia} readOnly={trancado}
+                    onChange={e => setDados(d => ({ ...d, referencia: e.target.value.toUpperCase() }))} />
+                  {trancado && <p style={{ margin: '8px 0 0', fontSize: 12, opacity: .6 }}>🔒 Preenchido a partir do vosso portal.</p>}
+                  {refInvalida && <p style={{ margin: '8px 0 0', fontSize: 12, color: '#f87171' }}>Não encontrámos o vosso casamento por este link. Escrevam a referência que está no vosso portal.</p>}
                 </div>
 
                 <div className="cards">

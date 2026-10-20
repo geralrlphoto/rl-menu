@@ -25,7 +25,7 @@ import { SendMessageButton } from '../atmosphere/SendMessageButton'
 import { AtendimentoThread } from '../atmosphere/AtendimentoThread'
 import { NoivosNotificationsBell } from '../atmosphere/NoivosNotificationsBell'
 import { FotografiasView, type FotografiasCard } from '../atmosphere/FotografiasView'
-import { FORM_SELECAO_FOTOS_URL, linkSelecaoFotos } from '@/lib/links'
+import { FORM_SELECAO_FOTOS_URL, linkSelecaoFotos, linkSelecaoFotosDoPortal } from '@/lib/links'
 
 // ── Hero "O vosso filme está pronto" ─────────────────────────────────────────
 const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -3138,7 +3138,7 @@ function PortalSubPageContent() {
     && !editingPreWedding && !editingPropostaToken && !error
   if (_atmIsFotografias && !loading) {
     const handleEditTitleFP = () => { setTitleInput(title); setEditingTitle(true) }
-    const fpEnviarUrl = linkSelecaoFotos(guiaLinks.fotosSelecaoUrl)
+    const fpEnviarUrl = linkSelecaoFotosDoPortal(guiaLinks.fotosSelecaoUrl, portalSettingsObj?.referencia ?? portalRef ?? refParam ?? null, 'casamento')
     const fpRef = portalRef || refParam || ''
 
     // Estado das URLs de cada card — vazio = bloqueado, presente = disponível
