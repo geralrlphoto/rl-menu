@@ -16,6 +16,7 @@ import { LogoWfolio } from '@/app/components/LogoWfolio'
 import RelogioHero from './RelogioHero'
 import TempoSolLua from './TempoSolLua'
 import PesquisaRapida from './PesquisaRapida'
+import PedidoReuniaoCard, { type PedidoReuniao } from './PedidoReuniaoCard'
 
 // Server-render por request — não tenta gerar estaticamente no build.
 // /photo faz 8 fetches paralelos (Supabase CRM + 7 DBs Notion) e estoura
@@ -283,6 +284,28 @@ export default async function PhotoDashboard() {
   )
   const reunioesSemana = await getReunioes()
 
+  // Pedidos de reunião feitos em /reuniao, à espera de serem aceites (cartão "Por confirmar")
+  const getPedidosReuniao = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('crm_contacts')
+        .select('id, nome, contato, data_casamento, reuniao_pedido')
+        .not('reuniao_pedido', 'is', null)
+        .limit(80)
+      return data ?? []
+    },
+    ['photo-agenda30-pedidos-reuniao'],
+    { revalidate: 1800, tags: ['photo-dashboard'] }
+  )
+  const pedidosReuniao = (await getPedidosReuniao()).flatMap((c: any) => {
+    const ped = c.reuniao_pedido ?? {}
+    const p: PedidoReuniao = {
+      contactId: c.id, nome: (c.nome ?? '').trim(), contato: c.contato ?? '', dataCasamento: c.data_casamento ?? null,
+      opcoes: ped.opcoes ?? [], formato: ped.formato ?? 'Videochamada', mensagem: ped.mensagem ?? null, origem: ped.origem ?? 'link',
+    }
+    // Um cartão por opção pedida, no dia dessa opção
+    return p.opcoes.map((o, k) => ({ id: `pedido-${c.id}-${k}`, nome: p.nome, reuniao_data: o.data, reuniao_hora: o.hora, pedido: p, opcao: o }))
+  })
+
   // Reuniões criadas como tarefa no calendário ("Reunião: Nome"). Tag própria: o /api/tarefas só refaz esta leitura
   const getReunioesTarefa = unstable_cache(
     async () => {
@@ -320,6 +343,7 @@ export default async function PhotoDashboard() {
       id: `tarefa-${t.id}`, nome: String(t.titulo ?? '').replace(/^Reuni[aã]o:\s*/i, ''),
       reuniao_data: t.data_prazo, reuniao_hora: t.hora ?? null, href: '/calendario',
     })),
+    ...pedidosReuniao,
   ].filter((r: any) => !ocultos.has(chaveReuniao(r)))
 
   // Tarefas de WhatsApp do CRM (lembrete 1h e follow ups), com as mesmas regras dos botões do /crm.
@@ -1200,7 +1224,9 @@ export default async function PhotoDashboard() {
                         </AgendaItem>
                       ))}
                       {/* Reuniões marcadas no CRM: tracejado, para nao se confundirem com casamentos */}
-                      {d.reunioes.map((r: any) => (
+                      {d.reunioes.map((r: any) => r.pedido ? (
+                        <PedidoReuniaoCard key={`r-${r.id}`} p={r.pedido} opcao={r.opcao} />
+                      ) : (
                         <AgendaItem key={`r-${r.id}`} chave={chaveReuniao(r)}>
                         <Link href={r.href ?? `/crm/${r.id}`}
                           className="group block rounded-lg px-2 py-1.5 border border-dashed transition-all hover:bg-[#C9A84C]/10"

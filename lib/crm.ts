@@ -153,6 +153,30 @@ export function mensagemLembreteReuniao(nome: string | null | undefined, hora?: 
   ].join('\n')
 }
 
+/* Pedido de reunião aceite (calendário do /photo): data, formato, portal e password das propostas */
+export function mensagemReuniaoConfirmada(nome: string | null | undefined, quando: string, tipo: string, portalUrl: string, password: string): string {
+  const quem = (nome ?? '').trim()
+  const presencial = tipo === 'Presencial'
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    `A vossa reunião está confirmada para ${quando}, ${presencial ? 'no nosso estúdio' : 'por videochamada'}.`,
+    '',
+    'Preparámos o vosso portal da reunião:',
+    portalUrl,
+    '',
+    presencial
+      ? 'No portal encontram a localização do estúdio e, na altura certa, as nossas propostas.'
+      : 'No portal encontram o link de acesso à reunião e, na altura certa, as nossas propostas.',
+    `A password das propostas é: ${password}`,
+    ...(presencial ? [] : ['', 'Recomendamos que assistam através de um computador, para uma melhor experiência.']),
+    '',
+    'Até breve!',
+    '',
+    ...ASSINATURA,
+  ].join('\n')
+}
+
 /* Envio do portal da reunião (o link da reunião está dentro do portal) */
 export function mensagemPortalReuniao(nome: string | null | undefined, portalUrl: string, data?: string | null, hora?: string | null): string {
   const quem = (nome ?? '').trim()

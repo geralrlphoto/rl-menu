@@ -106,7 +106,7 @@ export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoIni
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(outro
           ? { pedido: opcoes, mensagem, nome, contato: tel, formato, dataCasamento, site, leadId, origem }
-          : { slotId, nome, contato: tel, formato, dataCasamento, site, leadId, origem }),
+          : { slotId, nome, contato: tel, formato, dataCasamento, site, leadId, origem, pendente: !!sujeitaConfirmacao }),
       })
       const j = await r.json().catch(() => ({}))
       if (!r.ok) {
