@@ -37,8 +37,20 @@ const MEDIA_LINKS = [
 
 // Menu Produção: uma coluna por departamento, com as páginas de cada um
 const PRODUCAO_COLUNAS: Array<{ titulo: string; links: Array<{ href: string; pill: string }> }> = [
-  { titulo: 'Dep. de Vídeo', links: [{ href: '/edicao-video', pill: 'Vídeo' }] },
-  { titulo: 'Dep. de Fotografia', links: [{ href: '/edicao-fotografia', pill: 'Fotografia' }] },
+  { titulo: 'Dep. de Vídeo', links: [
+    { href: '/edicao-video', pill: 'Quadro' },
+    { href: '/edicao-video/fluxo', pill: 'Fases' },
+    { href: '/videos', pill: 'Entregas' },
+    { href: '/painel-editor', pill: 'Editor' },
+  ] },
+  { titulo: 'Dep. de Fotografia', links: [
+    { href: '/edicao-fotografia', pill: 'Quadro' },
+    { href: '/edicao-fotografia/albuns', pill: 'Álbuns' },
+    { href: '/galerias', pill: 'Entregas' },
+    { href: '/ticket-fotos-dia', pill: 'Papel' },
+    { href: '/fotos-convidados', pill: 'Convidados' },
+    { href: '/painel-fotografo', pill: 'Fotógrafo' },
+  ] },
 ]
 
 // Secção Finanças do menu (lá dentro está tudo: receitas, orçamentos, etc.)
@@ -370,12 +382,41 @@ function GlobalMenuInner() {
     : [
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
-        { nome: 'Produção', hrefs: ['/edicao-video', '/edicao-fotografia'] },
+        { nome: 'Produção', hrefs: PRODUCAO_COLUNAS.flatMap(c => c.links.map(l => l.href)) },
         { nome: 'Gestão', hrefs: [FINANCAS_SECAO, '/relatorio-diario', '/staff', '/freelancers', '/calendario'] },
       ]
   const EXTRA_LINKS = [{
     href: '/tarefas', label: 'Tarefas', sub: 'Por fazer',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M9 11l3 3 8-8M20 12v7a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2h9"/></svg>,
+  },
+  // Páginas que só aparecem nos separadores do menu Produção
+  {
+    href: '/edicao-video/fluxo', label: 'Fluxo de Edição', sub: 'Fases do vídeo',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="19" cy="18" r="2"/><path strokeLinecap="round" d="M7 12h4m0 0l6-5m-6 5l6 5"/></svg>,
+  },
+  {
+    href: '/videos', label: 'Vídeos', sub: 'Entregas Vimeo',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="12" cy="12" r="9"/><path strokeLinejoin="round" d="M10 8.5l5 3.5-5 3.5z"/></svg>,
+  },
+  {
+    href: '/painel-editor', label: 'Painel do Editor', sub: 'Vista do editor',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="4" width="18" height="13" rx="2"/><path strokeLinecap="round" d="M8 21h8M12 17v4"/></svg>,
+  },
+  {
+    href: '/galerias', label: 'Galerias', sub: 'Entregas Wfolio',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/></svg>,
+  },
+  {
+    href: '/ticket-fotos-dia', label: 'Tickets do Dia', sub: 'Fotos em papel',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v3a2 2 0 000 4v3a2 2 0 01-2 2H5a2 2 0 01-2-2v-3a2 2 0 000-4z"/></svg>,
+  },
+  {
+    href: '/fotos-convidados', label: 'Fotos dos Convidados', sub: 'Convidados',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="9" cy="8" r="3.2"/><path strokeLinecap="round" d="M3.5 19c.8-3.2 3-4.8 5.5-4.8s4.7 1.6 5.5 4.8"/><circle cx="17" cy="9" r="2.4"/></svg>,
+  },
+  {
+    href: '/painel-fotografo', label: 'Painel do Fotógrafo', sub: 'Vista do fotógrafo',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="4" width="18" height="13" rx="2"/><path strokeLinecap="round" d="M8 21h8M12 17v4"/></svg>,
   }]
   const linkDe = (href: string) => ([...navLinks, ...EXTRA_LINKS] as any[]).find(l => l.href === href)
 
