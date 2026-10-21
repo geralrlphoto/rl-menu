@@ -279,7 +279,7 @@ export default async function PhotoDashboard() {
         .limit(80)
       return data ?? []
     },
-    [`photo-agenda30-reunioes-${semanaDias[0]}`],
+    [`photo-agenda30-reunioes-v2-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
   const reunioesSemana = await getReunioes()
@@ -293,7 +293,7 @@ export default async function PhotoDashboard() {
         .limit(80)
       return data ?? []
     },
-    ['photo-agenda30-pedidos-reuniao'],
+    ['photo-agenda30-pedidos-reuniao-v2'],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
   const pedidosReuniao = (await getPedidosReuniao()).flatMap((c: any) => {
