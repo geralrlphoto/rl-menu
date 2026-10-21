@@ -19,7 +19,7 @@ export default function MarcarLead({ leadId, nome, dataCasamento, reuniaoData, r
       {jaMarcada && x && passo < 3 && (
         <p className="rp-ja">Já têm reunião marcada para {x.getDate()} de {MESES[x.getMonth()]} às {reuniaoHora}. Só precisam de escolher outro horário se quiserem alterar.</p>
       )}
-      <MarcarReuniao dataCasamento={dataCasamento} leadId={leadId} onPasso={setPasso} />
+      <MarcarReuniao dataCasamento={dataCasamento} leadId={leadId} sujeitaConfirmacao onPasso={setPasso} />
     </CenaReuniao>
   )
 }

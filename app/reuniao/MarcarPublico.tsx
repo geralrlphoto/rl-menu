@@ -16,7 +16,7 @@ export default function MarcarPublico() {
           <input type="date" value={dataCasamento} onChange={e => setDataCasamento(e.target.value)} className="finput" />
         </label>
       )}
-      <MarcarReuniao dataCasamento={dataCasamento} origem="link" abertoInicial onPasso={setPasso} />
+      <MarcarReuniao dataCasamento={dataCasamento} origem="link" abertoInicial sujeitaConfirmacao onPasso={setPasso} />
     </CenaReuniao>
   )
 }

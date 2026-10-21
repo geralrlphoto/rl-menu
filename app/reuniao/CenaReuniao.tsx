@@ -12,7 +12,6 @@ import { CSS_MARCAR } from '@/app/rollup/MarcarReuniao'
 const PASSOS = ['Horário', 'Os vossos dados', 'Confirmar']
 
 const PILARES = [
-  ['Uma conversa', 'Não é uma proposta. Queremos conhecer-vos e ouvir a vossa história.'],
   ['Onde preferirem', 'Por videochamada ou no nosso estúdio, como vos der mais jeito.'],
   ['Sem compromisso', 'Saem com tudo o que precisam para decidir com calma.'],
 ]
@@ -35,6 +34,10 @@ export default function CenaReuniao({ titulo, passo, children }: {
             <p className="lead sobe" style={{ animationDelay: '.24s' }}>
               Escolham o dia e a hora que vos dão mais jeito. Conversamos sobre o vosso dia, sem compromisso.
             </p>
+            <div className="rp-valores sobe" style={{ animationDelay: '.3s' }}>
+              <p>Não enviamos valores por mensagem nem em PDF. Gostamos sempre de falar com os nossos noivos, criar empatia e ganhar confiança mútua.</p>
+              <b>Faz-vos sentido marcarmos uma reunião e conversarmos?</b>
+            </div>
             <ol className="rp-pilares">
               {PILARES.map(([t, txt], i) => (
                 <li key={t} className="sobe" style={{ animationDelay: `${.36 + i * .1}s` }}>
@@ -84,13 +87,17 @@ const CSS = `
 /* ── Foto em cena ── */
 .rp-foto{position:relative;min-height:max(440px,58svh);display:flex;overflow:hidden;}
 .rp-img{position:absolute;inset:96px 0 0;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 35%);mask-image:linear-gradient(to bottom,transparent,#000 35%);background:url('/prewedding-hero.webp') center 35%/cover;filter:grayscale(1);opacity:.42;}
-.rp-veu{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(7,7,7,.2) 0%,rgba(7,7,7,.2) 45%,rgba(7,7,7,.78) 74%,#070707 100%);}
+.rp-veu{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(7,7,7,.2) 0%,rgba(7,7,7,.35) 28%,rgba(7,7,7,.6) 45%,rgba(7,7,7,.82) 70%,#070707 100%);}
 .rp-intro{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:space-between;width:100%;padding:28px 20px 30px;box-sizing:border-box;}
 .rp-logo{width:96px;opacity:.8;align-self:center;}
 .rp-texto{text-align:center;display:flex;flex-direction:column;align-items:center;margin-top:36px;}
 .rp h1{font-family:var(--fs);font-weight:200;font-size:clamp(46px,6vw,84px);line-height:1.02;letter-spacing:0;color:#fff;margin:14px 0 0;}
 .rp h1 em{font-style:normal;color:var(--g);}
 .rp-pilares{display:none;list-style:none;margin:0;padding:0;}
+.rp-valores{max-width:460px;margin:22px 0 0;padding:16px 18px;border-radius:18px;border:1px solid rgba(216,190,147,.3);background:rgba(17,17,17,.6);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-sizing:border-box;}
+.rp-valores p{margin:0;font-size:15px;line-height:1.6;color:rgba(255,255,255,.75);}
+.rp-valores b{display:block;margin-top:10px;font-family:var(--fs);font-weight:300;font-size:20px;line-height:1.3;color:var(--g);}
 
 /* ── Cartão com o calendário ── */
 .rp-cena{position:relative;padding:0 16px 40px;}

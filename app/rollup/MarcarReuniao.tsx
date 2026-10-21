@@ -34,10 +34,11 @@ function diasUteis(): string[] {
   return out
 }
 
-export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoInicial, onPasso }: {
+export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoInicial, onPasso, sujeitaConfirmacao }: {
   dataCasamento: string; leadId?: string
   origem?: 'link'          // página pública /reuniao (a lead fica com "Link de marcação")
   abertoInicial?: boolean  // calendário já aberto, sem ter de tocar no botão
+  sujeitaConfirmacao?: boolean // /reuniao: avisa que a reunião ainda tem de ser confirmada pela RL
   onPasso?: (passo: number) => void // 0 horário, 1 dados, 2 confirmar, 3 feito (fotogramas da /reuniao)
 }) {
   const [aberto, setAberto] = useState(!!leadId || !!abertoInicial)
@@ -125,13 +126,15 @@ export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoIni
 
   if (reserva) return (
     <div className="mr-ok">
-      <p className="eyebrow">Reunião marcada</p>
+      <p className="eyebrow">{sujeitaConfirmacao ? 'Pedido de reunião enviado' : 'Reunião marcada'}</p>
       <p className="mr-ok-t">Até <em>breve!</em></p>
       <p className="mr-ok-q">{longa(reserva.data)}<br />às {reserva.hora} · {reserva.formato}</p>
       <a href={reserva.link} target="_blank" rel="noopener noreferrer" className="mr-ok-l">
         {reserva.formato === 'Videochamada' ? 'Link da videochamada ↗' : 'Ver o estúdio no mapa ↗'}
       </a>
-      <p className="hint" style={{ marginTop: 14 }}>Guardem este ecrã. Qualquer imprevisto, falem connosco pelo WhatsApp.</p>
+      {sujeitaConfirmacao
+        ? <p className="mr-nota" style={{ marginTop: 14 }}>A reunião está sujeita a confirmação. Vamos confirmar convosco muito em breve pelo WhatsApp.</p>
+        : <p className="hint" style={{ marginTop: 14 }}>Guardem este ecrã. Qualquer imprevisto, falem connosco pelo WhatsApp.</p>}
     </div>
   )
 
@@ -227,7 +230,9 @@ export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoIni
               <button className="mr-conf" onClick={confirmar} disabled={enviando || !dadosOk || (outro ? opcoes.length === 0 : !slotId)}>
                 {enviando ? (outro ? 'A enviar…' : 'A marcar…') : outro ? 'Solicitar reunião' : 'Confirmar reunião'}
               </button>
-              {outro && <p className="mr-nota" style={{ textAlign: 'center' }}>O pedido carece de confirmação da nossa parte.</p>}
+              {outro
+                ? <p className="mr-nota" style={{ textAlign: 'center' }}>O pedido carece de confirmação da nossa parte.</p>
+                : sujeitaConfirmacao && <p className="mr-nota" style={{ textAlign: 'center' }}>A reunião fica sujeita a confirmação da nossa parte.</p>}
             </>
           )}
         </div>
