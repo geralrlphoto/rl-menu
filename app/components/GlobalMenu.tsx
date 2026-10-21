@@ -388,8 +388,8 @@ function GlobalMenuInner() {
     },
     Gestão: {
       destaque: FINANCAS_SECAO, medidor: 'receitas',
-      pares: [{ href: '/calendario', pill: 'Agenda' }, { href: '/tarefas', pill: 'Por fazer' }],
-      mensagem: { href: '/relatorio-diario', frase: 'Como está o estúdio hoje, num relance.', botao: 'Abrir o relatório' },
+      pares: [{ href: '/calendario', pill: 'Agenda' }, { href: '/relatorio-diario', pill: 'Análise' }],
+      mensagem: { href: '/tarefas', frase: 'Tudo o que falta fazer, num só sítio.', botao: 'Ver as tarefas' },
     },
   }
 
