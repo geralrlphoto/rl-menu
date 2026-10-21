@@ -148,12 +148,12 @@ const CSS = `
 /* ── Desktop: foto à esquerda fixa, cartão à direita ── */
 @media (min-width:980px){
   .rl-app.rp{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);}
-  .rp-foto{position:sticky;top:0;height:100vh;min-height:0;}
+  .rp-foto{min-height:100vh;}
   .rp-img{inset:0;-webkit-mask-image:none;mask-image:none;}
   .rp-veu{background:linear-gradient(90deg,rgba(7,7,7,.35) 0%,rgba(7,7,7,.55) 55%,#070707 100%),linear-gradient(to bottom,rgba(7,7,7,.5),transparent 30%,transparent 70%,rgba(7,7,7,.8));}
   .rp-intro{padding:44px 5vw 52px;}
-  .rp-logo{align-self:flex-start;width:150px;}
-  .rp-texto{text-align:left;align-items:flex-start;margin-top:0;}
+  .rp-logo{align-self:flex-start;width:120px;}
+  .rp-texto{text-align:left;align-items:flex-start;margin-top:36px;}
   .rp-pilares{display:flex;flex-direction:column;gap:18px;margin-top:40px;max-width:440px;}
   .rp-pilares li{display:flex;gap:18px;align-items:flex-start;border-top:1px solid rgba(255,255,255,.1);padding-top:16px;}
   .rp-n{font-family:var(--fn);font-weight:100;font-size:38px;line-height:.8;color:var(--g);min-width:46px;}
