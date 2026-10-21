@@ -640,7 +640,10 @@ export function FotografiasView(props: FotografiasViewProps) {
                       botão de partilha assim que houver link. */}
                   {c.key === 'convidados' && available && <ShareConvidadosButton path={c.url!} />}
                   {SHAREABLE.has(c.key) && available && (
-                    <ShareGalleryButton url={c.url!} storageKey={`rl_share_${props.portalRef ?? 'portal'}_${c.key}`} />
+                    <ShareGalleryButton
+                      // Galeria Online: os convidados vão para a página dedicada (ver + adquirir), não para o Wfolio
+                      url={c.key === 'galerias' && props.convidadosUrl ? `https://portal.rlphotovideo.pt${props.convidadosUrl}` : c.url!}
+                      storageKey={`rl_share_${props.portalRef ?? 'portal'}_${c.key}`} />
                   )}
                   {/* O card da selecção leva também o formulário: é por ali
                       que a escolha nos chega. */}
