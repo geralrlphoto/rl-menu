@@ -1,12 +1,17 @@
 ﻿'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { DEFAULT_CONTENT, PageContent, Proposta, ExtraServico, FONTS, TITLE_SIZES } from '../LeadPageClient'
 import { CSS_BRIEFING } from '../../../_briefing/estilo'
 import { DETALHES_PROPOSTAS, nomePropostaPadrao, propostaVisivel, ofertaDaProposta } from '@/lib/crm'
+import RodaPropostas from './RodaPropostas'
 
 const IMG_BASE = 'https://awwbkmprgtwmnejeuiak.supabase.co/storage/v1/object/public/portal-images'
 const MASTER_TOKEN = '85343645-b0d3-4412-ae78-795fd7f8ddf1'
+// Cena "O grande dia": a criança de chapéu a olhar para o vestido pendurado, da galeria do portfólio no Wfolio (foto 22)
+const FOTO_GRANDE_DIA = 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuooJlP4Ylybgoiaei5NtTuMC/3rRTRJPC7dHxh6_-1NZsjoNewE3laLJg/RiVsXPTlaFe0HNbflD3YxsuH0AHwiPk5/aR5WGzXHVzINEmBk_Z51cH313wUdVAlP/d15WV0HWbcbYwtcCKDUtRGD_-xwp9-rS/_rYFt4M4ItnLgVOKLNZQBmg3AgmLiCDP/nflnesvI_Rr-hsQ001PAl-pD5RDtDI1C/38iNulTlpdjbET6d3mf2S7Lx2r_KK2KA/hyLR8NYHDlmd-5keY5XhJO-wHYKPIwgE/F0xLlQ6ovv7APDQyqXY69O8CkSX31VF_/cAZXyAQKfYA.jpg'
+// Cena da confiança: as mãos dos noivos, da galeria do portfólio no Wfolio (servida pelo i.wfolio.com)
+const FOTO_CONFIANCA = 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuoqhmbQy9CfDa0daUXrv1zuz/YpfUV1ZRNWYCFIw_Tkd-ilkIPYKrEMRY/ES_rPO1P_nabPEQiVu9kM-u8wAW9xf74/_KpBIdRV95rGcuYqIbuxdhQk155K8CAr/Ho1EU1bzx29rTD5vFdpGrNGZgDk8k6cb/A45grNZxoXG2tk_ZVWgwxZY_y3OgdAAk/tEBKhq2GD4eSAL0pcHapVlJraJFPO_KG/t_O-50yUIB3P3_mZXu1pxjkQ6XI0CkvX/X-u99pvGJKkozQVHsHNyOFZFcYcqRCLg/k8O6e0xDTgxSqO5cl4gzpPP7zwtvBx2K/Cd5qVpOVgdI.jpg'
 
 // Cada slide é uma cena, como no briefing /nova-lead: etiqueta em mono e
 // um título em romano com a ênfase em itálico dourado.
@@ -17,13 +22,16 @@ const CENAS: Record<string, { cena: string; titulo: string; em: string }> = {
   about:   { cena: 'Cena 03',        titulo: 'Quem está',           em: 'atrás da câmara' },
   relive:  { cena: 'Cena 04',        titulo: 'O vosso',             em: 'portal'       },
   blank2:  { cena: 'Cena 05',        titulo: 'O grande',            em: 'dia'          },
-  motivo:  { cena: 'Cena 06',        titulo: 'O que ainda',         em: 'vos faz pensar' },
-  invest:  { cena: 'Cena 07',        titulo: 'O',                   em: 'investimento' },
+  duvidas: { cena: 'Cena 06',        titulo: 'O que os noivos',     em: 'nos perguntam' },
+  motivo:  { cena: 'Cena 07',        titulo: 'O que ainda',         em: 'vos faz pensar' },
+  confianca: { cena: 'Cena 08',      titulo: 'Confiavam-nos',       em: 'o vosso dia' },
+  invest:  { cena: 'Cena 09',        titulo: 'O',                   em: 'investimento' },
   'pkg-0': { cena: 'Proposta 01',    titulo: 'A',                   em: 'primeira'     },
   'pkg-1': { cena: 'Proposta 02',    titulo: 'A',                   em: 'segunda'      },
   'pkg-2': { cena: 'Proposta 03',    titulo: 'A',                   em: 'terceira'     },
   'pkg-3': { cena: 'Proposta 04',    titulo: 'A',                   em: 'quarta'       },
-  final:   { cena: 'Cena 08',        titulo: 'Fica para',           em: 'sempre'       },
+  propostas: { cena: 'As propostas', titulo: 'As',                  em: 'propostas'    },
+  final:   { cena: 'Cena 10',      titulo: 'Fica para',           em: 'sempre'       },
   cta:     { cena: 'Ficha técnica',  titulo: 'Informações',         em: 'gerais'       },
   contact: { cena: 'Fim',            titulo: 'Vamos contar esta',   em: 'história'     },
 }
@@ -190,6 +198,19 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [escolhida,      setEscolhida]      = useState<number | null>(null)
   const [planoN,         setPlanoN]         = useState<Record<number, number>>({})
   const [videoOn,        setVideoOn]        = useState(false)
+  // Capa: "Sabem quantos dias faltam?" e, no primeiro Começar, a contagem até aos dias reais
+  const [diasRevelados,  setDiasRevelados]  = useState(false)
+  const [diasConta,      setDiasConta]      = useState(0)
+  const reveladoEm = useRef(0)
+  const [viradas,        setViradas]        = useState<Record<number, boolean>>({})
+  const [rodaSel,        setRodaSel]        = useState<number | null>(null)
+  // Fotos dos cartões da roda: vêm da galeria do portfólio no Wfolio (i.wfolio.com, 0 no Supabase)
+  const [wfolio,         setWfolio]         = useState<string[]>([])
+  useEffect(() => {
+    fetch('/api/portfolio-wfolio').then(r => r.json())
+      .then(d => setWfolio(Array.isArray(d.fotos) ? d.fotos.map((f: { src: string }) => f.src) : []))
+      .catch(() => {})
+  }, [])
 
   // Editor
   const [editorOpen,    setEditorOpen]    = useState(false)
@@ -222,7 +243,10 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   // Só entram propostas com serviços (e a DOCUMENTAL só quando ativada); na maquete mostra as três
   const idxPropostas = [0, 1, 2, 3].filter(i => token === MASTER_TOKEN ? i < 3 : propostaVisivel(content.propostas?.[i], i))
   // Primeiro o casal (quem são, como imaginam o dia), só depois nós; as dúvidas ficam mesmo antes dos preços
-  const slides = ['cover', 'intro', 'blank', 'about', 'relive', 'blank2', 'motivo', 'invest', ...idxPropostas.map(i => `pkg-${i}`), 'final', 'cta', 'contact']
+  // As propostas ficam todas numa só cena, em roda (RodaPropostas)
+  const slides = ['cover', 'intro', 'blank', 'about', 'relive', 'blank2', 'duvidas', 'motivo', 'confianca', 'invest', ...(idxPropostas.length ? ['propostas'] : []), 'final', 'cta', 'contact']
+  // A roda abre sempre na primeira proposta (BASIC)
+  const propostaRoda = rodaSel !== null && idxPropostas.includes(rodaSel) ? rodaSel : idxPropostas[0]
   const total  = slides.length
 
   const goTo = useCallback((idx: number) => {
@@ -231,8 +255,31 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     setCurrent(idx)
   }, [current, total])
 
+  const diasAte = contact?.data_casamento
+    ? Math.max(0, Math.round((new Date(`${contact.data_casamento}T12:00:00`).getTime() - Date.now()) / 86400000))
+    : null
+
+  // Primeiro avanço na capa: conta de 0 até aos dias que faltam; só o segundo passa de cena
+  const revelarDias = useCallback(() => {
+    if (diasAte === null) return
+    reveladoEm.current = Date.now()
+    setDiasRevelados(true)
+    const t0 = performance.now(), dur = 1800
+    const passo = (t: number) => {
+      const p = Math.min(1, (t - t0) / dur)
+      setDiasConta(Math.round(diasAte * (1 - Math.pow(1 - p, 3))))
+      if (p < 1) requestAnimationFrame(passo)
+    }
+    requestAnimationFrame(passo)
+  }, [diasAte])
+
   const prev = useCallback(() => goTo(current - 1), [goTo, current])
-  const next = useCallback(() => goTo(current + 1), [goTo, current])
+  const next = useCallback(() => {
+    if (current === 0 && diasAte !== null && !diasRevelados) { revelarDias(); return }
+    // Um duplo clique não salta a contagem
+    if (current === 0 && Date.now() - reveladoEm.current < 900) return
+    goTo(current + 1)
+  }, [goTo, current, diasAte, diasRevelados, revelarDias])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -401,28 +448,81 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const renderSlide = (id: string) => {
     switch (id) {
 
-      case 'cover': return (
-        <div className="rl-in h-full w-full flex flex-col items-center justify-center text-center px-8">
-          <img src={`/logo_rl_gold.png`} alt="RL Photo · Video" className="opacity-85 mb-6" style={{ width: 'clamp(112px, 19vh, 176px)' }} />
-          <p className="eyebrow mb-6">{nome || 'Para vocês'}</p>
-          <h1 style={{ fontSize: 'clamp(40px,5.6vw,84px)' }}>
-            Proposta<br /><em>criativa</em>
-          </h1>
-          <div className="h-px w-12 mt-7 mb-7" style={{ background: 'var(--g)', opacity: .6 }} />
-          <p className="lead" style={{ maxWidth: '440px' }}>{pp.subtitle}</p>
-          <p className="hint mt-7">{total} cenas &middot; setas para avançar</p>
-        </div>
-      )
+      // Capa no estilo do topo do /photo: foto esbatida, anéis e tudo ao centro
+      case 'cover': {
+        const dataEv = contact?.data_casamento ? new Date(`${contact.data_casamento}T12:00:00`) : null
+        const dias = dataEv ? Math.max(0, Math.round((dataEv.getTime() - Date.now()) / 86400000)) : null
+        return (
+          <div className="relative h-full w-full overflow-hidden">
+            {/* A mesma foto do topo do menu (/photo): a preto e branco, esbatida, com pontilhado */}
+            <div className="rl-ken absolute inset-0 bg-cover bg-[center_35%] grayscale opacity-[0.3]"
+              style={{ backgroundImage: "url('/casamentos-2028.webp')" }} />
+            <div className="absolute inset-0"
+              style={{ background: 'radial-gradient(ellipse 55% 50% at 55% 38%, rgba(216,190,147,0.10), transparent 70%)' }} />
+            <div className="absolute inset-0 opacity-40"
+              style={{
+                backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)',
+                backgroundSize: '26px 26px',
+                maskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
+                WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
+              }} />
+            {/* Anéis finos ao centro, como no /photo */}
+            <svg className="pointer-events-none absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] opacity-[0.09]"
+              viewBox="0 0 100 100" fill="none" stroke="#d8be93" strokeWidth="0.1" aria-hidden>
+              <circle cx="50" cy="50" r="18" />
+              <circle cx="50" cy="50" r="30" strokeDasharray="0.5 1.2" />
+              <circle cx="50" cy="50" r="44" />
+            </svg>
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #070707 0%, rgba(7,7,7,0.45) 20%, rgba(7,7,7,0.55) 65%, #070707 100%)' }} />
+
+            {/* Tudo ao centro: nomes, dias que faltam (como o relógio) e a data */}
+            <div className="rl-in relative h-full flex flex-col items-center justify-center text-center px-6 pb-16">
+              <p className="text-[11px] sm:text-[13px] font-semibold tracking-[0.4em] uppercase" style={{ color: 'var(--g)' }}>RL Photo.Video · Proposta criativa</p>
+              <h1 style={{ fontSize: 'clamp(46px,7vw,84px)', lineHeight: 1.04, marginTop: 18 }}>
+                {(nome || 'Para vocês').split(/\s+(?:&|e)\s+/i).map((n: string, i: number) => (
+                  <React.Fragment key={i}>{i > 0 && <em> &amp; </em>}{n}</React.Fragment>
+                ))}
+              </h1>
+              {dias !== null && (diasRevelados ? (
+                <p key="conta" className="rl-relogio rl-aparece mt-6">
+                  <span>{diasConta}</span><span style={{ color: 'var(--g)' }}>{dias === 1 ? 'dia' : 'dias'}</span>
+                </p>
+              ) : (
+                <p key="pergunta" className="rl-pergunta mt-7">
+                  Sabem quantos <span style={{ color: 'var(--g)' }}>dias</span> faltam?
+                </p>
+              ))}
+              {dataEv && diasRevelados && (
+                <p className="rl-data rl-aparece mt-3">
+                  {(() => {
+                    const s = dataEv.toLocaleDateString('pt-PT', { weekday: 'long' }).split('-')[0]
+                    const m = dataEv.toLocaleDateString('pt-PT', { month: 'long' })
+                    const up = (x: string) => x.charAt(0).toUpperCase() + x.slice(1)
+                    return `${up(s)} | ${up(m)} ${dataEv.getDate()} ${dataEv.getFullYear()}`
+                  })()}
+                </p>
+              )}
+              <p className="lead mt-6" style={{ maxWidth: '34rem' }}>{pp.subtitle}</p>
+              <div className="flex flex-col items-center gap-3 mt-8">
+                <button type="button" onClick={next} className="btn">
+                  {dias !== null && diasRevelados ? 'Avançar' : 'Começar'} <span style={{ color: 'var(--g)' }}>→</span>
+                </button>
+                <span className="hint">{total} cenas · setas para avançar</span>
+              </div>
+            </div>
+          </div>
+        )
+      }
 
       case 'about': return (
         <div className="relative h-full w-full flex flex-col items-center justify-center px-6 sm:px-16" style={{ paddingTop: 150, paddingBottom: 56 }}>
 
           {/* Título: quem sou, antes do que fazemos ("Sobre nós" fica como etiqueta, editável) */}
           <div className="text-center mb-8">
-            <p className="meta" style={{ color: typo.accentColor }}>{pp.about?.title || 'Sobre Nós'}</p>
-            <h2 style={{ fontFamily: 'var(--fs)', fontWeight: 300, fontSize: 'clamp(1.7rem,3.3vw,2.9rem)', color: typo.titleColor, lineHeight: 1.15, marginTop: 14 }}>
+            <p className="meta" style={{ color: 'var(--g)' }}>{pp.about?.title || 'Sobre Nós'}</p>
+            <h2 style={{ fontSize: 'clamp(1.9rem,3.8vw,3.2rem)', lineHeight: 1.12, marginTop: 14 }}>
               <span style={{ display: 'block' }}>Antes de vos contar o que fazemos,</span>
-              <em style={{ display: 'block', color: typo.accentColor, fontStyle: 'italic' }}>quero que saibam quem sou.</em>
+              <em style={{ display: 'block' }}>quero que saibam quem sou.</em>
             </h2>
           </div>
 
@@ -547,60 +647,53 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         </div>
       )
 
-      case 'blank2': return (
-        <div className="flex items-center justify-center h-full w-full px-8 sm:px-16">
-          <div className="flex flex-row items-center gap-2 sm:gap-3 w-full max-w-5xl">
-
-            {/* Esquerda — texto */}
-            <div className="rl-in flex flex-col gap-5 flex-1">
-              <h2 
-                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.1 }}>
-                {pp.grandeDia?.title || 'o grande dia'}
-              </h2>
-              <div className="flex flex-col gap-4" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.75, lineHeight: 1.75 }}>
-                <p>{pp.grandeDia?.p1 || ''}</p>
-                <p>{pp.grandeDia?.p2 || ''}</p>
-                <p>{pp.grandeDia?.p3 || ''}</p>
-                <p style={{ fontSize: '14px', opacity: 0.45, fontStyle: 'italic', marginTop: '4px' }}>{pp.grandeDia?.note || ''}</p>
+      // Mesmo layout da cena da confiança: foto do Wfolio à esquerda, o dia em três momentos à direita
+      case 'blank2': {
+        const momentos = [
+          { t: 'Preparações', d: pp.grandeDia?.p1 },
+          { t: 'Cerimónia', d: pp.grandeDia?.p2 },
+          { t: 'Golden hour', d: pp.grandeDia?.p3 },
+        ].filter(m => m.d)
+        return (
+          <div className="relative h-full w-full overflow-hidden flex flex-col md:flex-row">
+            <div className="relative h-[34%] md:h-full md:w-[46%] shrink-0 overflow-hidden">
+              <img src={FOTO_GRANDE_DIA} alt=""
+                onError={e => { const alt = pp.grandeDia?.imageUrl || '/eventos-hero-2026.webp'; if (!e.currentTarget.src.endsWith(alt)) e.currentTarget.src = alt }}
+                className="rl-ken absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 hidden md:block" style={{ background: 'linear-gradient(90deg, rgba(7,7,7,0) 55%, #070707 100%)' }} />
+              <div className="absolute inset-0 md:hidden" style={{ background: 'linear-gradient(180deg, rgba(7,7,7,0) 55%, #070707 100%)' }} />
+            </div>
+            <div className="relative flex-1 flex items-center px-8 sm:px-14 lg:px-20 pb-20 md:pb-0 md:pt-16">
+              <div className="rl-in max-w-xl">
+                <p className="eyebrow">Como trabalhamos no dia</p>
+                <h2 className="mt-5" style={{ fontSize: 'clamp(2.1rem,4.4vw,3.8rem)', lineHeight: 1.1 }}>O grande <em>dia</em></h2>
+                <ol className="rl-dia mt-7">
+                  {momentos.map((m, i) => (
+                    <li key={i}>
+                      <span className="meta" style={{ color: 'var(--g)' }}>{String(i + 1).padStart(2, '0')} · {m.t}</span>
+                      <p>{m.d}</p>
+                    </li>
+                  ))}
+                </ol>
+                {pp.grandeDia?.note && <p className="hint mt-5" style={{ textTransform: 'none', letterSpacing: '.02em', lineHeight: 1.55, maxWidth: '34rem' }}>{pp.grandeDia.note}</p>}
               </div>
             </div>
-
-            {/* Direita — imagem grande */}
-            <div className="flex-shrink-0 self-stretch" style={{ width: 'clamp(200px,30vw,360px)' }}>
-              {pp.grandeDia?.imageUrl
-                ? <img src={pp.grandeDia.imageUrl} alt="O Grande Dia"
-                    className="w-full h-full object-cover"
-                    style={{ borderRadius: '8px' }} />
-                : <div className="w-full h-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.03)', border: '0.5px solid rgba(255,255,255,0.08)', borderRadius: '8px' }}>
-                    <p className="text-[10px] tracking-widest text-white/15 uppercase">Imagem</p>
-                  </div>
-              }
-            </div>
-
           </div>
-        </div>
-      )
+        )
+      }
 
       case 'blank': {
-        const blankPhoto = pp.slidePhotos?.['blank'] || pp.reflexao?.imageUrl || ''
+        // Só a pergunta, ao centro, sobre a foto esbatida
+        const blankPhoto = pp.slidePhotos?.['blank'] || pp.reflexao?.imageUrl || '/eventos-hero-2027.webp'
         return (
-          <div className="relative h-full w-full overflow-hidden flex items-center">
-            {blankPhoto && (
-              <img src={blankPhoto} alt=""
-                className="rl-ken-left absolute inset-0 w-full h-full object-cover object-right"
-                style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
-              />
-            )}
-            <div className={`relative z-10 flex flex-col gap-8 ${blankPhoto ? 'text-left' : 'items-center text-center px-8 sm:px-20 mx-auto'}`}
-              style={{ maxWidth: blankPhoto ? '52%' : '680px', paddingLeft: blankPhoto ? 'clamp(5rem, 14vw, 12rem)' : undefined }}>
-              <h2 
-                style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', color: typo.titleColor, lineHeight: 1.15 }}>
+          <div className="relative h-full w-full overflow-hidden">
+            <div className="rl-ken absolute inset-0 bg-cover bg-center grayscale opacity-[0.28]"
+              style={{ backgroundImage: `url('${blankPhoto}')` }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #070707 0%, rgba(7,7,7,0.5) 22%, rgba(7,7,7,0.6) 65%, #070707 100%)' }} />
+            <div className="relative z-10 h-full flex flex-col items-center justify-center text-center px-8 max-w-3xl mx-auto">
+              <h2 className="rl-guiao" style={{ animationDelay: '0.3s', fontSize: 'clamp(2.4rem,6vw,4.4rem)', lineHeight: 1.1 }}>
                 Como imaginam <em>o vosso dia?</em>
               </h2>
-              <p className="font-light leading-relaxed" style={{ fontSize: '20px', color: typo.bodyColor, opacity: 0.7 }}>
-                O que é que torna este dia verdadeiramente único para vocês?<br />
-                Qual é o momento, o detalhe, a emoção que não pode ficar por registar?
-              </p>
             </div>
             {/* Botão upload inline — só admin */}
             {isAdmin && (
@@ -615,6 +708,72 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         )
       }
 
+
+      // As dúvidas que se repetem nas reuniões, respondidas antes de serem ditas: cada cartão vira ao tocar
+      case 'duvidas': {
+        const duvidas = [
+          { q: '“Não fico bem nas fotos.”', a: 'Quase tudo é apanhado sem darem por nós. Não precisam de ter jeito: o ritmo é vosso, não é nosso.' },
+          { q: '“Não queremos horas de fotos de grupo.”', a: 'Meia hora, no máximo, e à sombra. As fotos com os mais próximos fazem-se logo a seguir à cerimónia, e voltam para a festa.' },
+          { q: '“E se demoram meses a entregar?”', a: 'Os prazos ficam escritos no contrato e no portal veem cada entrega a avançar, sem terem de perguntar.' },
+          { q: '“E se o fotógrafo falhar no dia?”', a: 'Não trabalhamos a solo. Há sempre uma equipa por trás, e o vosso dia nunca depende de uma só pessoa.' },
+        ]
+        return (
+          <div className="h-full w-full flex items-center justify-center px-6 sm:px-16" style={{ paddingTop: 120, paddingBottom: 72 }}>
+            <div className="rl-in w-full max-w-5xl flex flex-col items-center text-center">
+              <h2 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', lineHeight: 1.1 }}>O que os noivos <em>nos perguntam</em></h2>
+              <p className="hint mt-4 mb-8">Toquem em cada cartão</p>
+              <div className="rl-cartas">
+                {duvidas.map((d, i) => (
+                  <button key={i} type="button" className={`rl-carta${viradas[i] ? ' on' : ''}`} aria-pressed={!!viradas[i]}
+                    onClick={() => setViradas(v => ({ ...v, [i]: !v[i] }))}>
+                    <span className="rl-face">
+                      <span className="meta">{String(i + 1).padStart(2, '0')}</span>
+                      <b>{d.q}</b>
+                      <span className="hint">Ver resposta ↻</span>
+                    </span>
+                    <span className="rl-face rl-verso">
+                      <span className="meta" style={{ color: 'var(--g)' }}>A nossa resposta</span>
+                      <b>{d.a}</b>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      // Pergunta de fecho antes dos valores: foto à esquerda, pergunta e resposta à direita
+      case 'confianca': return (
+        <div className="relative h-full w-full overflow-hidden flex flex-col md:flex-row">
+          <div className="relative h-[38%] md:h-full md:w-[46%] shrink-0 overflow-hidden">
+            <img src={pp.slidePhotos?.['confianca'] || FOTO_CONFIANCA} alt=""
+              onError={e => { if (!e.currentTarget.src.endsWith('/eventos-hero-2026.webp')) e.currentTarget.src = '/eventos-hero-2026.webp' }}
+              className="rl-ken absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 hidden md:block" style={{ background: 'linear-gradient(90deg, rgba(7,7,7,0) 55%, #070707 100%)' }} />
+            <div className="absolute inset-0 md:hidden" style={{ background: 'linear-gradient(180deg, rgba(7,7,7,0) 55%, #070707 100%)' }} />
+          </div>
+          <div className="relative flex-1 flex items-center px-8 sm:px-14 lg:px-20 pb-20 md:pb-0">
+            <div className="rl-in max-w-xl">
+              <p className="eyebrow">Uma pergunta antes dos valores</p>
+              <h2 className="mt-6" style={{ fontSize: 'clamp(2.1rem,4.4vw,3.8rem)', lineHeight: 1.1 }}>
+                Do que viram até agora, <span className="whitespace-nowrap">confiavam&#8209;nos</span> <em className="whitespace-nowrap">o vosso dia?</em>
+              </h2>
+              <p className="lead mt-6" style={{ maxWidth: '30rem' }}>
+                Respondam com o coração. Se ainda houver alguma dúvida, é agora que a resolvemos.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 mt-9">
+                <button type="button" className="btn" onClick={() => goTo(slides.indexOf('invest'))}>
+                  Sim, confiamos <span style={{ color: 'var(--g)' }}>→</span>
+                </button>
+                <button type="button" className="pill" onClick={() => goTo(slides.indexOf('duvidas'))}>
+                  Ainda temos dúvidas
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
 
       // Cena de conversa (sem formulário): os noivos dizem porque ainda não fecharam,
       // para a proposta ir ao encontro do que procuram. As etiquetas só servem de ponto de partida.
@@ -659,35 +818,21 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       }
 
       case 'intro': {
-        const introPhoto = pp.slidePhotos?.['intro'] || pp.couple?.imageUrl || ''
+        // Fundo como a capa: foto a preto e branco esbatida, texto ao centro
+        const introPhoto = pp.slidePhotos?.['intro'] || pp.couple?.imageUrl || '/prewedding-hero.webp'
         return (
           <div className="relative h-full w-full overflow-hidden">
-            {introPhoto && (
-              <img src={introPhoto} alt=""
-                className="rl-ken-left absolute inset-0 w-full h-full object-cover object-right"
-                style={{ maskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)', WebkitMaskImage: 'linear-gradient(to left, black 0%, black 40%, transparent 75%)' }}
-              />
-            )}
-            {introPhoto ? (
-              <div className="relative z-10 h-full flex flex-col justify-center" style={{ maxWidth: '54%', paddingLeft: 'clamp(5rem, 14vw, 12rem)' }}>
-                <h2 className="mb-6"
-                  style={{ fontSize: 'clamp(1.6rem,3.6vw,2.8rem)', color: 'rgba(255,255,255,0.95)', lineHeight: 1.1 }}>
-                  Quem são os <em>meus noivos?</em>
-                </h2>
-                <p className={`${fontClass(typo.bodyFont)} text-xl italic font-light leading-relaxed`} style={{ color: 'rgba(255,255,255,0.85)' }}>
-                  &ldquo;{pp.intro}&rdquo;
-                </p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
-                <h2 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', lineHeight: 1.1 }}>
-                  Quem são os <em>meus noivos?</em>
-                </h2>
-                <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
-                  &ldquo;{pp.intro}&rdquo;
-                </p>
-              </div>
-            )}
+            <div className="rl-ken absolute inset-0 bg-cover bg-center grayscale opacity-[0.3]"
+              style={{ backgroundImage: `url('${introPhoto}')` }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #070707 0%, rgba(7,7,7,0.45) 22%, rgba(7,7,7,0.55) 65%, #070707 100%)' }} />
+            <div className="relative flex flex-col items-center justify-center h-full text-center px-8 sm:px-20 gap-8 max-w-3xl mx-auto">
+              <h2 style={{ fontSize: 'clamp(2rem,5vw,3.5rem)', lineHeight: 1.1 }}>
+                Quem são os <em>meus noivos?</em>
+              </h2>
+              <p className={`${fontClass(typo.bodyFont)} text-2xl sm:text-3xl italic font-light leading-relaxed`} style={{ color: typo.bodyColor }}>
+                &ldquo;{pp.intro}&rdquo;
+              </p>
+            </div>
             {isAdmin && (
               <label className="absolute bottom-6 right-6 z-20 flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-[10px] tracking-[0.2em] uppercase transition-all"
                 style={{ background: 'rgba(201,168,76,0.12)', border: '0.5px solid rgba(201,168,76,0.4)', color: 'rgba(201,168,76,0.8)' }}>
@@ -711,6 +856,32 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
           {idxPropostas.length > 0 && <p className="hint mt-9">{idxPropostas.length === 1 ? 'Uma proposta a seguir' : `${['Nenhuma', 'Uma', 'Duas', 'Três', 'Quatro'][idxPropostas.length]} propostas a seguir`}</p>}
         </div>
       )
+
+      // Todas as propostas numa cena: a roda à direita escolhe, o cartão completo fica à esquerda
+      case 'propostas': {
+        // Foto de cada cartão: a carregada no editor para essa proposta, senão uma do Wfolio
+        // (fotos 9, 16, 15 e 8 da galeria), senão uma das fotos da app
+        const WF = [8, 15, 14, 7]
+        const LOCAIS = ['/prewedding-hero.webp', '/eventos-hero-2027.webp', '/eventos-hero-2026.webp', '/casamentos-2028.webp']
+        const itens = idxPropostas.map((i, k) => ({
+          idx: i,
+          nome: content.propostas?.[i]?.nome || nomePropostaPadrao(i),
+          img: pp.slidePhotos?.[`pkg-${i}`] || wfolio[WF[k]] || LOCAIS[k] || '',
+          recomendada: (pp.propostaAtiva ?? 1) === i,
+        }))
+        return (
+          <div className="rl-roda relative h-full w-full">
+            <div className="hidden min-[901px]:block"><RodaPropostas itens={itens} sel={propostaRoda} onSel={setRodaSel} /></div>
+            {/* Telemóvel: em vez da roda, um botão por proposta */}
+            <div className="min-[901px]:hidden absolute left-0 right-0 flex justify-center gap-2 px-4 z-10" style={{ top: 138 }}>
+              {itens.map(it => (
+                <button key={it.idx} type="button" className={`pill${it.idx === propostaRoda ? ' on' : ''}`} onClick={() => setRodaSel(it.idx)}>{it.nome}</button>
+              ))}
+            </div>
+            <div key={propostaRoda} className="rl-roda-cartao">{renderSlide(`pkg-${propostaRoda}`)}</div>
+          </div>
+        )
+      }
 
       case 'pkg-0':
       case 'pkg-1':
@@ -868,8 +1039,18 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 </div>
               )}
 
+              {/* Alguns serviços logo à vista; o resto abre em "Ver tudo o que inclui" */}
+              {hasAny && !inclui && (() => {
+                const todos = [...(proposta.servicos_foto || []), ...(proposta.servicos_video || [])].filter(Boolean)
+                return (
+                  <ul className="rl-presumo">
+                    {todos.slice(0, 5).map((sv, i) => <li key={i}>{sv}</li>)}
+                    {todos.length > 5 && <li className="mais">e mais {todos.length - 5}</li>}
+                  </ul>
+                )
+              })()}
               <button type="button" className={`rl-pver${inclui ? ' on' : ''}`} onClick={() => setIncluiOpen(prev => ({ ...prev, [idx]: !prev[idx] }))} aria-expanded={inclui}>
-                {inclui ? 'Esconder' : 'Ver o que inclui'} <span>⌄</span>
+                {inclui ? 'Esconder' : 'Ver tudo o que inclui'} <span>⌄</span>
               </button>
               <div className={`rl-pinclui${inclui ? ' on' : ''}`}>
                 <div>
@@ -887,7 +1068,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
               </div>
 
               {/* Extras e plano de pagamento */}
-              <div className="flex flex-wrap gap-2 mt-5">
+              <div className="rl-pbotoes flex flex-wrap gap-2 mt-5">
                 <button type="button" className={`pill${extrasOpen[idx] ? ' on' : ''}`}
                   onClick={() => setExtrasOpen(prev => ({ ...prev, [idx]: !prev[idx] }))}>
                   Serviços extras{selectedExtras.length > 0 ? ` (${selectedExtras.length})` : ''}
@@ -1086,7 +1267,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
   // ── Main presentation ─────────────────────────────────────────────────────
   return (
-    <div className="nlead relative w-full overflow-hidden" style={{ height: '100dvh', background: '#0b0a08' }}>
+    <div className="nlead rl-app font-cond relative w-full overflow-hidden" style={{ height: '100dvh', background: '#070707' }}>
 
       {/* Sistema de estilo partilhado com os briefings (/nova-lead) */}
       <style>{CSS_BRIEFING}</style>
@@ -1167,9 +1348,134 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         .rl-cta { transition: transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s ease, background 0.25s ease }
         .rl-cta:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(201,168,76,0.22) }
         @media (prefers-reduced-motion: reduce) {
-          .rl-in > *, .rl-glow, .rl-rule, .rl-ken, .rl-ken-left { animation: none !important }
+          .rl-in > *, .rl-glow, .rl-rule, .rl-ken, .rl-ken-left, .rl-guiao { animation: none !important }
         }
+
+        /* ── Layout da app (CRM, /photo, ficha do evento): Roboto Condensed, títulos
+           em negrito com o destaque em dourado, cartões de vidro e botões redondos ── */
+        .rl-app {
+          --ink: #070707; --g: #d8be93; --g-deep: #9c7c47;
+          --tx: #ffffff; --tx-mid: rgba(255,255,255,.6); --tx-dim: rgba(255,255,255,.4);
+          --line: rgba(216,190,147,.3); --line-soft: rgba(255,255,255,.08);
+          /* Letras do relógio do portal dos noivos: nomes em Jost 200, números em Roboto Condensed 100 */
+          --fs: 'Jost', sans-serif; --fd: 'Roboto Condensed', sans-serif;
+          --fb: 'Roboto Condensed', sans-serif; --fm: 'Roboto Condensed', sans-serif;
+          --fn: 'Roboto Condensed', sans-serif;
+          font-weight: 300;
+        }
+        .rl-app .fx-grain { display: none }
+        .rl-app h1, .rl-app h2 { font-family: var(--fs); font-weight: 200; letter-spacing: 0; line-height: 1.04; color: #fff }
+        .rl-app h1 em, .rl-app h2 em { font-style: normal; color: var(--g) }
+        .rl-app .rl-relogio { font-family: var(--fn); font-weight: 100; line-height: .85; letter-spacing: .02em; font-size: clamp(84px,11vw,124px); color: rgba(255,255,255,.9) }
+        .rl-app .rl-pergunta { font-family: var(--fs); font-weight: 200; font-size: clamp(30px,4.2vw,52px); line-height: 1.1; color: rgba(255,255,255,.9) }
+        /* Propostas em roda: o cartão completo fica à esquerda, a roda à direita */
+        .rl-app .rl-presumo { list-style: none; margin: 16px 0 0; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px }
+        .rl-app .rl-presumo li { position: relative; padding-left: 18px; font-weight: 300; font-size: 14px; line-height: 1.4; color: rgba(255,255,255,.8) }
+        .rl-app .rl-presumo li::before { content: ""; position: absolute; left: 0; top: .65em; width: 9px; height: 1px; background: var(--g) }
+        .rl-app .rl-presumo li.mais { color: var(--g); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; padding-top: 1px }
+        .rl-app .rl-presumo li.mais::before { display: none }
+        /* Na roda: nome, preço e serviços primeiro; o resto por baixo */
+        .rl-app .rl-roda .rl-pcard { display: flex; flex-direction: column }
+        .rl-app .rl-roda .rl-pcard > .meta { order: 1 } .rl-app .rl-roda .rl-pnome { order: 2 }
+        .rl-app .rl-roda .rl-pvalor { order: 3; margin-top: 14px; padding-top: 14px }
+        .rl-app .rl-roda .rl-presumo { order: 4 } .rl-app .rl-roda .rl-pver { order: 5 } .rl-app .rl-roda .rl-pinclui { order: 6 }
+        .rl-app .rl-roda .rl-pmomentos { order: 7 } .rl-app .rl-roda .rl-poferta { order: 8 } .rl-app .rl-roda .rl-pexp { order: 9; display: none }
+        .rl-app .rl-roda .rl-pbotoes { order: 10 } .rl-app .rl-roda .rl-pbaixo { order: 11 } .rl-app .rl-roda .rl-pescolher { order: 12 }
+        /* Cartão compacto e sem botão colado por cima: "Escolher esta" fica a seguir aos botões */
+        .rl-app .rl-roda .rl-pcard { padding: 28px 26px 24px }
+        .rl-app .rl-roda .rl-pescolher { position: static; margin: 16px 0 0; padding: 0; background: none }
+        .rl-app .rl-roda .rl-pvalor b { font-size: clamp(44px,6.4vh,60px) }
+        .rl-app .rl-roda .rl-pmomentos { margin-top: 8px }
+        .rl-app .rl-roda .rl-pmomentos > div { padding: 6px 0 }
+        .rl-app .rl-roda .rl-poferta { margin-top: 12px; padding: 10px 12px; font-size: 13px }
+        .rl-app .rl-roda .rl-pbotoes { margin-top: 14px }
+        /* Os dois cartões com o mesmo tamanho: mesma largura e a altura toda da área */
+        @media (min-width: 901px) {
+          .rl-app .rl-roda .rl-pwrap { align-items: stretch }
+          .rl-app .rl-roda .rl-pcard, .rl-app .rl-roda .rl-pside { flex: 1 1 0; width: 100%; max-width: 390px !important; align-self: stretch }
+          .rl-app .rl-roda .rl-pescolher { margin-top: auto; padding-top: 16px }
+        }
+        /* "O que inclui" compacto, para as propostas com muitos serviços caberem sem scroll */
+        .rl-app .rl-roda .rl-pside { padding: 24px 24px 20px }
+        .rl-app .rl-roda .rl-pside .meta { margin: 14px 0 6px !important }
+        .rl-app .rl-roda .rl-pside > .meta:first-child { margin-top: 0 !important }
+        .rl-app .rl-roda .rl-pside ul { gap: 3px }
+        .rl-app .rl-roda .rl-pside li { font-size: 18px; line-height: 1.25 }
+        .rl-app .rl-roda-cartao { position: absolute; inset: 0; pointer-events: none; animation: rlPEntra .45s cubic-bezier(.2,.7,.2,1) both }
+        .rl-app .rl-roda-cartao .rl-pwrap { pointer-events: none }
+        .rl-app .rl-roda-cartao .rl-pwrap > * { pointer-events: auto }
+        /* Computador: cartão + "O que inclui" lado a lado, a roda encostada à direita */
+        @media (min-width: 901px) {
+          .rl-app .rl-roda .rl-pwrap { right: 27%; justify-content: center; padding: 0 1.5vw 0 4vw }
+          .rl-app .rl-roda .rl-pleft, .rl-app .rl-roda .rl-presumo { display: none }
+          .rl-app .rl-roda .rl-pside { display: block; max-width: 340px }
+          .rl-app .rl-roda .rl-pcard { max-width: 420px }
+          .rl-app .rl-roda .rl-pcard .rl-pbaixo { display: block }
+        }
+        @media (max-width: 900px) { .rl-app .rl-roda .rl-pwrap { top: 196px !important } }
+
+        /* O grande dia: três momentos numa linha dourada */
+        .rl-app .rl-dia { list-style: none; margin: 0; padding: 0 0 0 22px; border-left: 1px solid rgba(216,190,147,.3); display: flex; flex-direction: column; gap: 18px }
+        .rl-app .rl-dia li { position: relative }
+        .rl-app .rl-dia li::before { content: ""; position: absolute; left: -27px; top: 3px; width: 9px; height: 9px; border-radius: 50%; background: #070707; border: 1px solid var(--g) }
+        .rl-app .rl-dia p { margin-top: 6px; font-weight: 300; font-size: clamp(15px,1.15vw,17px); line-height: 1.6; color: rgba(255,255,255,.7) }
+
+        /* Cartões das dúvidas: vidro escuro com contorno dourado, viram ao tocar */
+        .rl-app .rl-cartas { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; width: 100% }
+        .rl-app .rl-carta { position: relative; height: clamp(220px,36vh,300px); perspective: 1200px; background: none; border: none; padding: 0; cursor: pointer; text-align: left }
+        .rl-app .rl-face { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 16px; padding: 24px 22px;
+          border-radius: 22px; border: 1px solid rgba(255,255,255,.1); background: rgba(17,17,17,.8); backdrop-filter: blur(24px);
+          backface-visibility: hidden; -webkit-backface-visibility: hidden; transition: transform .8s cubic-bezier(.16,1,.3,1), border-color .3s }
+        .rl-app .rl-face b { font-family: var(--fs); font-weight: 200; font-size: clamp(21px,1.9vw,27px); line-height: 1.2; color: #fff }
+        .rl-app .rl-verso { transform: rotateY(180deg); border-color: rgba(216,190,147,.45); box-shadow: 0 0 48px -22px rgba(216,190,147,.55);
+          background: radial-gradient(120% 90% at 50% 0%, rgba(216,190,147,.12), transparent 65%), rgba(17,17,17,.9) }
+        .rl-app .rl-verso b { font-family: var(--fd); font-weight: 300; font-size: clamp(15px,1.15vw,17px); line-height: 1.55; color: rgba(255,255,255,.75) }
+        .rl-app .rl-carta:hover .rl-face:not(.rl-verso) { border-color: rgba(216,190,147,.4) }
+        .rl-app .rl-carta.on .rl-face:not(.rl-verso) { transform: rotateY(-180deg) }
+        .rl-app .rl-carta.on .rl-verso { transform: rotateY(0) }
+        @media (max-width: 900px) { .rl-app .rl-cartas { grid-template-columns: 1fr 1fr } .rl-app .rl-carta { height: 210px } }
+        @media (max-width: 480px) { .rl-app .rl-carta { height: 190px } .rl-app .rl-face { padding: 18px 16px } .rl-app .rl-face b { font-size: 19px } .rl-app .rl-verso b { font-size: 13.5px } }
+        .rl-app .rl-guiao { animation: rlGuiao 1.1s cubic-bezier(0.22,1,0.36,1) both }
+        @keyframes rlGuiao { from { opacity: 0; filter: blur(8px); transform: translateY(10px) } to { opacity: 1; filter: none; transform: none } }
+        .rl-app .rl-aparece { animation: rlRise .7s cubic-bezier(0.22,1,0.36,1) both }
+        .rl-app .rl-data { font-family: var(--fn); font-weight: 300; font-size: clamp(17px,1.6vw,20px); letter-spacing: .04em; color: rgba(255,255,255,.75) }
+        .rl-app .font-cormorant, .rl-app .font-playfair { font-family: var(--fd) !important; font-weight: 300 !important }
+        .rl-app .eyebrow { font-size: 11px; font-weight: 500; letter-spacing: .2em; color: var(--g) }
+        .rl-app .eyebrow::before { width: 12px; background: var(--g); opacity: 1 }
+        .rl-app .lead { font-weight: 300; font-size: clamp(16px,1.3vw,19px); color: rgba(255,255,255,.6) }
+        .rl-app .meta { font-size: 11px; font-weight: 500; letter-spacing: .2em; color: rgba(255,255,255,.45) }
+        .rl-app .hint { font-size: 11px; letter-spacing: .14em; color: rgba(255,255,255,.35) }
+        .rl-app .btn { gap: .6em; padding: 11px 22px; border-radius: 999px; background: rgba(14,14,14,.9); border: 1px solid rgba(201,168,76,.45);
+          color: #fff; font-size: 15px; font-weight: 600; letter-spacing: 0; text-transform: none; box-shadow: 0 0 28px -12px rgba(201,168,76,.6);
+          backdrop-filter: blur(12px); transition: border-color .3s, transform .3s }
+        .rl-app .btn:hover { color: #fff; border-color: rgba(201,168,76,.8); transform: translateY(-1px) }
+        .rl-app .btn .fill { display: none }
+        .rl-app .pill { font-size: 13px; font-weight: 600; letter-spacing: .02em; text-transform: none; color: rgba(255,255,255,.75);
+          border: 1px solid rgba(255,255,255,.14); background: rgba(14,14,14,.9); padding: 8px 16px }
+        .rl-app .pill:hover { border-color: rgba(255,255,255,.3); color: #fff }
+        .rl-app .pill.on { border-color: rgba(201,168,76,.7); background: rgba(201,168,76,.15); color: #fff }
+        .rl-app .fotograma.feito { background: rgba(201,168,76,.4) }
+
+        /* Cartão de vidro, como o "Pulso do estúdio" e o resumo do CRM */
+        .rl-app .rl-card { border-radius: 22px; border: 1px solid rgba(201,168,76,.3); background: rgba(17,17,17,.8); backdrop-filter: blur(24px);
+          padding: 20px; box-shadow: 0 0 48px -22px rgba(201,168,76,.5) }
+        .rl-app .rl-card-t { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.85) }
+        .rl-app .rl-card-t span { width: 6px; height: 6px; border-radius: 50%; background: var(--g); box-shadow: 0 0 8px var(--g) }
+
+        /* Cartões das propostas com o mesmo vidro */
+        .rl-app .rl-pcard, .rl-app .rl-pside, .rl-app .rl-pleft { border-radius: 22px; border-color: rgba(255,255,255,.1); background: rgba(17,17,17,.8); backdrop-filter: blur(24px) }
+        .rl-app .rl-pcard.top, .rl-app .rl-pside.top { border-color: rgba(201,168,76,.45); background: rgba(17,17,17,.85); box-shadow: 0 0 48px -22px rgba(201,168,76,.55) }
+        .rl-app .rl-pescolher { background: linear-gradient(to top, #111 70%, rgba(17,17,17,0)) }
+        .rl-app .rl-pnome { font-weight: 200; letter-spacing: .01em; font-size: clamp(36px,5.6vh,48px) }
+        .rl-app .rl-pside-t { font-weight: 200 }
+        .rl-app .rl-pvalor b { font-family: var(--fn); font-weight: 100; font-size: clamp(52px,8vh,76px); line-height: .9 }
+        .rl-app .rl-pmomentos .v { font-family: var(--fn); font-weight: 300 }
+        .rl-app .rl-card .font-semibold { font-family: var(--fn); font-weight: 300 }
+        .rl-app .rl-pver { font-weight: 600; letter-spacing: .12em }
+        .rl-app .rl-poferta { border-style: solid; border-color: rgba(201,168,76,.35); background: rgba(201,168,76,.1) }
+        .rl-app .rl-poferta b { font-weight: 600 }
       `}</style>
+
 
       {/* Fundo degradé */}
       <div className="absolute inset-0" style={{ background: 'var(--ink)' }} />
@@ -1198,7 +1504,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         <SlideIn key={current} dir={direction}>
           <div className="relative w-full h-full flex items-center justify-center">
             {/* Foto com desvanecer — universal para todos os slides */}
-            {pp.slidePhotos?.[slides[current]] && (
+            {pp.slidePhotos?.[slides[current]] && !['cover', 'intro', 'blank', 'blank2', 'confianca'].includes(slides[current]) && (
               <img
                 src={pp.slidePhotos[slides[current]]}
                 alt=""
@@ -1248,7 +1554,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       </div>
 
       {/* Fotogramas — um por slide, como no briefing */}
-      <div className={`absolute left-6 sm:left-10 right-6 sm:right-10 flex items-center gap-1.5 z-30 ${isAdmin ? 'bottom-6' : 'bottom-7'}`}>
+      <div className={`absolute left-10 sm:left-16 lg:left-20 right-6 sm:right-10 flex items-center gap-1.5 z-30 ${isAdmin ? 'bottom-6' : 'bottom-7'}`}>
         {slides.map((_, i) => (
           <button key={i} onClick={() => goTo(i)}
             aria-label={`Ir para a cena ${i + 1} de ${total}`}
@@ -1260,7 +1566,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
 
       {/* Etiqueta da cena e contador */}
       {current > 0 && (
-        <p className={`eyebrow absolute left-6 sm:left-10 z-30 ${isAdmin ? 'top-16' : 'top-8'}`}>
+        <p className={`eyebrow absolute left-10 sm:left-16 lg:left-20 z-30 ${isAdmin ? 'top-16' : 'top-8'}`}>
           {CENAS[slides[current]]?.cena || ''}
         </p>
       )}
