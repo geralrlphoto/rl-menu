@@ -130,6 +130,7 @@ const NAV_ITEMS = [
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-editor/workflow' },
   { key: 'biblioteca',  label: 'Biblioteca',          icon: '♪', href: '/painel-editor/musicas', active: true },
   { key: 'dados',       label: 'Dados Pessoais',      icon: '☻', href: '/painel-editor/dados-pessoais' },
+  { key: 'guia',        label: 'Guia do Portal',      icon: '?', href: '/painel-editor/guia' },
 ]
 
 // ── Tipos ─────────────────────────────────────────────────────────────────
