@@ -592,10 +592,14 @@ export function mensagemBoasVindas(nome: string | null | undefined, id: string):
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
-    'Obrigado pelo vosso contacto. Já recebemos e lemos com atenção as respostas ao vosso formulário.',
+    'Que bom receber o vosso contacto. Muito obrigado por pensarem em nós para fazer parte de um dia tão especial.',
     '',
-    'Gostávamos muito de vos conhecer. Escolham aqui o dia e a hora que vos dá mais jeito para a nossa reunião (videochamada ou no estúdio):',
+    'Já lemos com calma as respostas ao vosso formulário e ficámos com vontade de conhecer melhor a vossa história.',
+    '',
+    'Preparámos um espaço só para vocês, onde podem escolher com toda a tranquilidade o momento ideal para conversarmos, por videochamada ou aqui no estúdio:',
     linkPublico(`/reuniao/${id}`),
+    '',
+    'Sem pressas e sem compromisso. Estamos por aqui para o que precisarem.',
     '',
     ...ASSINATURA,
   ].join('\n')
