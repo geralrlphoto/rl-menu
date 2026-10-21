@@ -1,0 +1,61 @@
+/* Novo layout do painel do membro (só ativo com a classe .painel-novo).
+   Uma só cor: dourado suave #C9A84C. Letra: Roboto Condensed. */
+
+.painel-novo, .painel-novo * { font-family: "Roboto Condensed", system-ui, sans-serif !important; }
+.painel-novo .italic, .painel-novo [style*="italic"] { font-style: normal !important; }
+.painel-novo .font-light { font-weight: 300 !important; }
+
+/* Dourado suave em vez do dourado forte e das outras cores */
+.painel-novo .text-gold, .painel-novo [class*="text-gold/"] { color: #C9A84C !important; }
+.painel-novo [class*="text-red"], .painel-novo [class*="text-orange"], .painel-novo [class*="text-amber"],
+.painel-novo [class*="text-yellow"], .painel-novo [class*="text-purple"], .painel-novo [class*="text-violet"],
+.painel-novo [class*="text-blue"], .painel-novo [class*="text-sky"], .painel-novo [class*="text-pink"],
+.painel-novo [class*="text-rose"], .painel-novo [class*="text-emerald"], .painel-novo [class*="text-green"],
+.painel-novo [class*="text-teal"], .painel-novo [class*="text-cyan"], .painel-novo [class*="text-indigo"] { color: #C9A84C !important; }
+.painel-novo [class*="border-red"], .painel-novo [class*="border-orange"], .painel-novo [class*="border-amber"],
+.painel-novo [class*="border-yellow"], .painel-novo [class*="border-purple"], .painel-novo [class*="border-violet"],
+.painel-novo [class*="border-blue"], .painel-novo [class*="border-sky"], .painel-novo [class*="border-pink"],
+.painel-novo [class*="border-rose"], .painel-novo [class*="border-emerald"], .painel-novo [class*="border-green"],
+.painel-novo [class*="border-teal"], .painel-novo [class*="border-cyan"], .painel-novo [class*="border-indigo"] { border-color: rgba(201,168,76,0.35) !important; }
+.painel-novo [class*="bg-red"], .painel-novo [class*="bg-orange"], .painel-novo [class*="bg-amber"],
+.painel-novo [class*="bg-yellow"], .painel-novo [class*="bg-purple"], .painel-novo [class*="bg-violet"],
+.painel-novo [class*="bg-blue"], .painel-novo [class*="bg-sky"], .painel-novo [class*="bg-pink"],
+.painel-novo [class*="bg-rose"], .painel-novo [class*="bg-emerald"], .painel-novo [class*="bg-green"],
+.painel-novo [class*="bg-teal"], .painel-novo [class*="bg-cyan"], .painel-novo [class*="bg-indigo"] { background-color: rgba(201,168,76,0.12) !important; }
+.painel-novo [class*="from-rose"], .painel-novo [class*="from-red"], .painel-novo [class*="from-blue"],
+.painel-novo [class*="from-purple"], .painel-novo [class*="from-emerald"] { background-image: none !important; }
+
+/* Botões cheios a dourado passam a pill suave */
+.painel-novo button.bg-gold, .painel-novo a.bg-gold { background: rgba(201,168,76,0.18) !important; color: #fff !important; box-shadow: none !important; }
+.painel-novo main button.bg-gold, .painel-novo main a.bg-gold { border: 1px solid rgba(201,168,76,0.6) !important; border-radius: 999px !important; }
+.painel-novo main button.rounded-xl, .painel-novo main a.rounded-xl { border-radius: 999px !important; }
+
+/* Brilhos vermelhos a pulsar ficam um brilho dourado quieto */
+.painel-novo .bell-red-glow, .painel-novo .prazo-critico-glow, .painel-novo .prox-casamento-glow {
+  animation: none !important;
+  box-shadow: 0 0 26px -12px rgba(201,168,76,0.6), inset 0 0 0 1px rgba(201,168,76,0.3) !important;
+}
+.painel-novo [style*="244, 63, 94"], .painel-novo [style*="239, 68, 68"], .painel-novo [style*="40, 8, 12"] { background: #111 !important; box-shadow: none !important; }
+
+/* Caixas: cantos de 18px, fundo escuro limpo e risco dourado à esquerda */
+.painel-novo main .rounded-2xl, .painel-novo main .rounded-3xl { border-radius: 18px !important; }
+.painel-novo main .rounded-2xl[class*="border"]:not(button) { border-left: 2px solid rgba(201,168,76,0.4) !important; }
+
+
+/* Lista "Crítico · Entrega" com altura fixa e scroll (não empurra o resto da página) */
+.painel-novo [style*="40, 8, 12"] .space-y-1\.5 { max-height: 300px; overflow-y: auto; padding-right: 4px; }
+.painel-novo .fl-critico .space-y-1\.5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 6px; max-height: 220px; }
+.painel-novo .fl-critico .space-y-1\.5 > * { margin: 0 !important; }
+
+/* Fundo e menu lateral como no portal do freelancer: preto limpo, sem ornamentos */
+.painel-novo { background: #070707; min-height: 100vh; }
+.painel-novo aside.painel-sidebar {
+  background: #0b0b0b !important;
+  border-right: 1px solid rgba(255,255,255,0.06) !important;
+  box-shadow: none !important;
+}
+.painel-novo aside.painel-sidebar > div.absolute { display: none !important; }
+.painel-novo aside.painel-sidebar nav a, .painel-novo aside.painel-sidebar nav button {
+  border-radius: 999px; margin: 1px 0;
+}
+.painel-novo aside.painel-sidebar nav span { letter-spacing: 0.18em !important; text-transform: uppercase; font-size: 12px !important; }

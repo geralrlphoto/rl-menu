@@ -773,7 +773,7 @@ export default function PainelEditor() {
   // Notificações: ver componente partilhado NotificationBell (sino + popover)
 
   return (
-    <div className="min-h-screen text-white relative" style={{ background: '#0B0B0B' }}>
+    <div className="min-h-screen text-white relative" style={{ background: '#070707' }}>
       {/* Animação gold pulse para projetos novos não-abertos + alert red pulse para projetos atrasados */}
       <style jsx global>{`
         @keyframes unseenGlow {
@@ -882,53 +882,59 @@ export default function PainelEditor() {
       <main className="painel-main relative z-10 pl-[240px]">
         <div className="px-6 sm:px-8 py-6">
 
-          {/* ── HERO ──────────────────────────────────────────────────── */}
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6"
-            style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
-            <div className="absolute inset-0 z-0">
-              <img
-                src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&h=400&fit=crop"
-                alt=""
-                className="w-full h-full object-cover"
-              />
+          {/* ── CAPA (cartaz, como o portal do freelancer) ─────────────── */}
+          <section className="relative -mx-6 sm:-mx-8 -mt-6 mb-8 min-h-[480px] lg:min-h-[64vh] flex flex-col overflow-hidden border-b border-[#C9A84C]/15">
+            <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/boas-vindas-camera.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-35 lg:opacity-55" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
             </div>
-            <div className="absolute inset-0 z-[1]"
-              style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.96) 0%, rgba(11,11,11,0.85) 35%, rgba(11,11,11,0.45) 65%, rgba(11,11,11,0.1) 100%)' }} />
-            <div className="painel-hero-linha relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-12 sm:py-16">
-              <div className="max-w-xl flex items-center gap-5">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
-                  style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
-                  <img src={displayPhoto}
-                    alt={displayFull} className="w-full h-full object-cover" />
-                </div>
-                <div>
-                  <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight">
-                    Olá, <span className="font-semibold">{displayName}</span>!
-                  </h1>
-                  <p className="text-[16px] text-white/65 mt-3 leading-relaxed font-light">
-                    Que hoje seja mais um dia de transformar momentos<br />em memórias inesquecíveis.
-                  </p>
-                  <div className="mt-5 h-px w-20 bg-gradient-to-r from-gold/70 via-gold/30 to-transparent" />
-                  <p className="text-[12px] tracking-[0.4em] text-gold/70 uppercase mt-4">Painel criativo RL Photo.Video</p>
-                </div>
-              </div>
+            <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+            <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+              Equipa RL · {new Date().getFullYear()}
+            </p>
 
-              {/* Top-right: notif + profile */}
+            <div className="painel-hero-linha relative z-20 flex justify-end px-5 sm:px-8 pt-5 min-h-[56px]">
               <div className="painel-acoes painel-acoes-topo painel-acoes-perfil flex items-center gap-3 shrink-0">
                 <NotificationBell />
                 <MessagesBell />
-                <div className="flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
-                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
+                <div className="flex items-center gap-3 px-3 py-2 rounded-full border border-white/15 bg-black/40 backdrop-blur-md">
+                  <div className="w-9 h-9 rounded-full overflow-hidden border border-[#C9A84C]/40 shrink-0">
                     <img src={displayPhoto} alt={displayFull} className="w-full h-full object-cover" />
                   </div>
-                  <div className="hidden sm:block min-w-0">
+                  <div className="hidden sm:block min-w-0 pr-1">
                     <p className="text-[13px] font-semibold text-white truncate max-w-[140px]">{displayName}</p>
                     <p className="text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{displayRole}</p>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
+
+            <div className="relative flex-1 flex flex-col justify-end pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pb-10 lg:pb-14 min-w-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border border-[#C9A84C]/50 mb-6 grayscale-[30%]">
+                <img src={displayPhoto} alt={displayFull} className="w-full h-full object-cover" />
+              </div>
+              <p className="text-[13px] sm:text-[17px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">RL Photo.Video</p>
+              <h1 className="font-bold uppercase text-white leading-[0.88] text-[54px] sm:text-[100px] lg:text-[124px] mt-2 break-words">Olá, {displayName}</h1>
+              <div className="flex items-center gap-4 mt-5">
+                <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+                <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
+                  {displayRole} · <span className="text-[#C9A84C]">Painel criativo</span>
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-3 mt-7">
+                <Link href={`/painel-fotografo/novos-projetos${freelancerId ? `?freelancer=${freelancerId}` : ''}`}
+                  className="inline-flex items-center gap-2.5 rounded-full border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]">
+                  Os meus casamentos <span className="text-[#C9A84C]">→</span>
+                </Link>
+                <Link href={`/painel-fotografo/calendario${freelancerId ? `?freelancer=${freelancerId}` : ''}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/15 hover:border-white/35 bg-black/30 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white/85 transition-all">
+                  / Calendário
+                </Link>
+              </div>
+            </div>
+          </section>
 
           {/* ── KPI CARDS (clicáveis e dinâmicos) ───────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
