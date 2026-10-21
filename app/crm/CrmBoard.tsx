@@ -8,7 +8,7 @@ import DisponibilidadePreparacao, { type SlotPreparacao } from '@/app/components
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, linkOpiniao, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
+  fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, EVENTO_ABRIU_LINK, linkOpiniao, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
 export type Contact = {
@@ -298,7 +298,15 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
       </div>
 
       {coluna === 'nova' && (
-        <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome)} evento="WhatsApp de boas-vindas enviado" label="Boas-vindas" enviados={enviados} onEnviado={onEnviado} />
+        <>
+          <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome, c.id)} evento="WhatsApp de boas-vindas enviado" label="Boas-vindas" enviados={enviados} onEnviado={onEnviado} />
+          {/* Depois das boas-vindas: a lead já abriu o link de marcação? */}
+          {'WhatsApp de boas-vindas enviado' in enviados && (
+            enviados[EVENTO_ABRIU_LINK]
+              ? <p className="text-[11px] text-center text-green-300/85">● Abriu o link · {new Date(enviados[EVENTO_ABRIU_LINK]).toLocaleString('pt-PT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+              : <p className="text-[11px] text-center text-white/35">○ Ainda não abriu o link</p>
+          )}
+        </>
       )}
 
       {coluna === 'reuniao' && whatsappLink(c.contato) && !(c.reuniao_data && c.reuniao_hora) && (

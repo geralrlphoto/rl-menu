@@ -328,7 +328,7 @@ export const FASES: Fase[] = [
         descricao: 'Primeira mensagem logo após a entrada da lead, enviada a partir do card. Os noivos dizem o dia e a hora e fazes a chamada de 2 minutos com o guião.',
         quem: ['Rui'], prazo: 'Mesmo dia', onde: '/crm · card › ENVIAR BOAS-VINDAS',
         tarefas: ['No card, clicar em ENVIAR BOAS-VINDAS', 'Os noivos dizem o dia e a hora', 'Ligar e seguir o guião da chamada', 'Confirmar registo no histórico'],
-        mensagens: [{ titulo: 'Boas-vindas', quando: 'Assim que entra', texto: mensagemBoasVindas(EX.nome), tipo: 'crm' }],
+        mensagens: [{ titulo: 'Boas-vindas', quando: 'Assim que entra', texto: mensagemBoasVindas(EX.nome, EX.leadId), tipo: 'crm' }],
         regras: [
           ['Assim que entra', 'Boas-vindas pelo WhatsApp (pede dia e hora)', '/crm · card Nova Entrada'],
           ['Depois de enviado', 'Fica "✓ Enviado" e registado no histórico', '/crm'],

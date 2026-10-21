@@ -583,17 +583,19 @@ export function mensagemMarcarReuniao(nome: string | null | undefined, id: strin
   ].join('\n')
 }
 
-/* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA */
-export function mensagemBoasVindas(nome: string | null | undefined): string {
+/* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA: leva o link pessoal
+   de marcação (/reuniao/<id>); ao marcar, a reunião fica logo na ficha da lead.
+   (A chamada rápida de 2 minutos deixou de ser feita.) */
+export const EVENTO_ABRIU_LINK = 'Abriu o link de marcação'
+export function mensagemBoasVindas(nome: string | null | undefined, id: string): string {
   const quem = (nome ?? '').trim()
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
     'Obrigado pelo vosso contacto. Já recebemos e lemos com atenção as respostas ao vosso formulário.',
     '',
-    'Gostávamos de vos ligar para uma conversa rápida de apenas 2 minutos, sem vos tomar muito tempo.',
-    '',
-    'Que dia e hora durante a semana vos dá mais jeito?',
+    'Gostávamos muito de vos conhecer. Escolham aqui o dia e a hora que vos dá mais jeito para a nossa reunião (videochamada ou no estúdio):',
+    linkPublico(`/reuniao/${id}`),
     '',
     ...ASSINATURA,
   ].join('\n')

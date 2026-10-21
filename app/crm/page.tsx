@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase'
 import './crm-tiles.css'
 import PropostaPicker from './PropostaPicker'
 import {
-  DROP_STATUS, colunaDe, daysSince, estadoAcao, parseOrcamento, fmtOrcamento, type ColunaKey,
+  DROP_STATUS, colunaDe, daysSince, estadoAcao, parseOrcamento, fmtOrcamento, EVENTO_ABRIU_LINK, type ColunaKey,
 } from '@/lib/crm'
 import { EncerrarModal, KanbanCard, LeadDrawer, StatusSelect, type Contact } from './CrmBoard'
 
@@ -271,7 +271,7 @@ export default function CRMPage() {
   useEffect(() => {
     if (!waIdsKey) return
     supabase.from('crm_status_history').select('contact_id,evento,created_at')
-      .in('contact_id', waIdsKey.split(',')).like('evento', 'WhatsApp%')
+      .in('contact_id', waIdsKey.split(',')).or(`evento.like.WhatsApp%,evento.eq."${EVENTO_ABRIU_LINK}"`)
       .then(({ data }) => {
         const m: Record<string, Record<string, string>> = {}
         for (const h of data ?? []) (m[h.contact_id] ||= {})[h.evento] = h.created_at
