@@ -364,8 +364,8 @@ function GlobalMenuInner() {
     : [
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
-        { nome: 'Produção', hrefs: ['/edicao-fotografia', '/edicao-fotografia/albuns', '/edicao-video', '/freelancers', '/tickets'] },
-        { nome: 'Gestão', hrefs: [FINANCAS_SECAO, '/relatorio-diario', '/staff', '/calendario'] },
+        { nome: 'Produção', hrefs: ['/edicao-fotografia', '/edicao-fotografia/albuns', '/edicao-video', '/tickets'] },
+        { nome: 'Gestão', hrefs: [FINANCAS_SECAO, '/relatorio-diario', '/staff', '/freelancers', '/calendario'] },
       ]
   const EXTRA_LINKS = [{
     href: '/tarefas', label: 'Tarefas', sub: 'Por fazer',
@@ -383,7 +383,7 @@ function GlobalMenuInner() {
     },
     Produção: {
       destaque: '/edicao-fotografia', medidor: 'fases',
-      pares: [{ href: '/edicao-fotografia/albuns', pill: 'Álbuns' }, { href: '/freelancers', pill: 'Equipa' }],
+      pares: [{ href: '/edicao-fotografia/albuns', pill: 'Álbuns' }],
       mensagem: { href: '/tarefas', frase: 'Tudo o que falta fazer, num só sítio.', botao: 'Ver as tarefas' },
     },
     Gestão: {
@@ -493,6 +493,7 @@ function GlobalMenuInner() {
           <p className="absolute z-10 top-3.5 left-5 font-cond text-[11px] tracking-[0.25em] uppercase font-medium" style={{ color: accent(0.8) }}>{t}</p>
         ) : null
         const staff = linkDe('/staff')
+        const freelancers = linkDe('/freelancers')
         const cartao = 'rounded-[16px] border border-white/[0.08] bg-[#1a1f20] transition-all duration-200 hover:border-white/[0.18] hover:bg-[#202627]'
         const pill = (aqui: boolean, texto: string) => (
           <span className="shrink-0 rounded-full border px-2.5 py-0.5 font-cond text-[12.5px] font-semibold"
@@ -588,19 +589,21 @@ function GlobalMenuInner() {
                 </div>
 
                 {/* 3b · Gestão: coluna Staff (no lugar da lista, que repetia os mesmos links) */}
-                {gestao && staff && (
-                  <div className={`${coluna} justify-center`} style={{ order: 3 }}>
+                {gestao && (
+                  <div className={`${coluna} justify-center gap-3`} style={{ order: 3 }}>
                     {titulo('Staff')}
-                    <Link href={staff.href} onClick={() => setMega(null)} className={`${cartao} px-4 py-3.5`}>
-                      <div className="flex items-center gap-3">
-                        <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{staff.icon}</span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block font-cond font-semibold text-[17px] text-white truncate">{staff.label}</span>
-                          <span className="block font-cond text-[14px] text-white/50 truncate">{staff.sub}</span>
-                        </span>
-                        {pill(isActive(staff.href, staff.exact), 'Equipa')}
-                      </div>
-                    </Link>
+                    {[staff, freelancers].map(l => l && (
+                      <Link key={l.href} href={l.href} onClick={() => setMega(null)} className={`${cartao} px-4 py-3.5`}>
+                        <div className="flex items-center gap-3">
+                          <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{l.icon}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block font-cond font-semibold text-[17px] text-white truncate">{l.label}</span>
+                            <span className="block font-cond text-[14px] text-white/50 truncate">{l.sub}</span>
+                          </span>
+                          {pill(isActive(l.href, l.exact), 'Equipa')}
+                        </div>
+                      </Link>
+                    ))}
                   </div>
                 )}
 
