@@ -494,6 +494,7 @@ function GlobalMenuInner() {
         ) : null
         const staff = linkDe('/staff')
         const freelancers = linkDe('/freelancers')
+        const crm = linkDe('/crm')
         const cartao = 'rounded-[16px] border border-white/[0.08] bg-[#1a1f20] transition-all duration-200 hover:border-white/[0.18] hover:bg-[#202627]'
         const pill = (aqui: boolean, texto: string) => (
           <span className="shrink-0 rounded-full border px-2.5 py-0.5 font-cond text-[12.5px] font-semibold"
@@ -569,8 +570,20 @@ function GlobalMenuInner() {
                 {/* 3 · Cartão "mensagem" com botão */}
                 <div className={`${coluna} justify-center`}>
                   {titulo('Gestão')}
-                  {/* Gestão: coluna vazia por agora */}
-                  {!gestao && <div className={`${cartao} hover:bg-[#1a1f20] px-4 py-4`}>
+                  {/* Gestão: cartão do CRM dos casamentos */}
+                  {gestao && crm && (
+                    <Link href={crm.href} onClick={() => setMega(null)} className={`${cartao} px-4 py-3.5`}>
+                      <div className="flex items-center gap-3">
+                        <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{crm.icon}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-cond font-semibold text-[17px] text-white truncate">CRM Casamentos</span>
+                          <span className="block font-cond text-[14px] text-white/50 truncate">{crm.sub}</span>
+                        </span>
+                        {pill(isActive(crm.href, crm.exact), 'Leads')}
+                      </div>
+                    </Link>
+                  )}
+                  {!gestao &&<div className={`${cartao} hover:bg-[#1a1f20] px-4 py-4`}>
                     <div className="flex items-center gap-3">
                       <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14), border: `1px solid ${accent(0.3)}` }}>{msg.icon}</span>
                       <span className="min-w-0 flex-1">
