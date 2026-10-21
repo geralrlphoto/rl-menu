@@ -61,7 +61,6 @@ export default function CenaReuniao({ titulo, passo, children }: {
           {children}
         </div>
         <div className="rp-assina">
-          <img src="/portal-noivos/logo-gold.png" alt="" />
           <p>Photo · Video · Wedding Moments</p>
         </div>
       </section>
@@ -102,8 +101,7 @@ const CSS = `
 .rp-fotogramas{display:flex;gap:6px;margin:14px 0 6px;}
 .rp .fotograma.feito{background:rgba(216,190,147,.4);}
 .rp-assina{text-align:center;margin-top:44px;}
-.rp-assina img{height:40px;width:auto;opacity:.85;}
-.rp-assina p{margin:10px 0 0;font-size:9px;letter-spacing:.45em;text-transform:uppercase;color:rgba(216,190,147,.65);}
+.rp-assina p{margin:0;font-size:9px;letter-spacing:.45em;text-transform:uppercase;color:rgba(216,190,147,.65);}
 
 /* Campo da data do casamento e aviso de reunião já marcada */
 .rp-data{display:block;margin:18px 0 0;}
