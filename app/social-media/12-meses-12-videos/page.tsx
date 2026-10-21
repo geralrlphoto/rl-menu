@@ -10,31 +10,45 @@ import GuioesClient from './GuioesClient'
 
 export default function DozeMesesDozeVideosPage() {
   return (
-    <main className="mv-page">
-      {/* Voltar */}
-      <div className="mv-back-row">
-        <Link href="/social-media" className="mv-back">
-          <span className="chev">‹</span> Voltar a Social Media
-        </Link>
-      </div>
+    <main className="min-h-screen overflow-x-clip font-cond bg-[#070707]">
 
-      {/* Hero */}
-      <header className="mv-head">
-        <p className="mv-eyebrow">RL Photo · Video — Social Media</p>
-        <h1 className="mv-title">12 MESES <em>12 vídeos</em></h1>
-        <hr className="mv-rule" />
-        <p className="mv-lede">
-          Um vídeo por mês, de setembro de 2026 a agosto de 2027.
-          Escolhe um mês na película, avança o estado e grava com o modo teleponto.
+      {/* ── Topo, como o do CRM e do /social-media ───────────────────────── */}
+      <section className="relative min-h-[480px] lg:min-h-[62vh] flex flex-col overflow-hidden">
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
+          <img src="/eventos-hero-2027.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_30%] grayscale opacity-40 lg:opacity-55" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
+        </div>
+        <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+        <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+          Setembro 2026 · Agosto 2027
         </p>
-      </header>
+        <div className="relative flex-1 flex flex-col pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-16 lg:pt-8 pb-10 lg:pb-14">
+          <Link href="/social-media" className="self-start text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Voltar a Social Media</Link>
+          <div className="mt-auto pt-14">
+            <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">Social Media</p>
+            <h1 className="font-bold uppercase text-white leading-[0.88] text-[52px] sm:text-[96px] lg:text-[120px] mt-2">12 Meses<br />12 Vídeos</h1>
+            <div className="flex items-center gap-4 mt-5">
+              <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+              <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
+                Guião · Gravação · <span className="text-[#C9A84C]">Publicação</span>
+              </p>
+            </div>
+            <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
+              Um vídeo por mês, de setembro de 2026 a agosto de 2027.
+              Escolhe um mês na película, avança o estado e grava com o modo teleponto.
+            </p>
+          </div>
+        </div>
+      </section>
 
+      <div className="mv-page">
       {/* Grelha + painel (cliente) */}
       <GuioesClient />
 
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap');
 
         .mv-page {
           --bg: #120d08;
@@ -641,7 +655,45 @@ export default function DozeMesesDozeVideosPage() {
           text-align: center; font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase; color: #5f574b;
         }
         @media (hover: none) { .mv-pr-dica { display: none; } }
+
+        /* ── Layout da app: Roboto Condensed, títulos em Jost fino, números finos,
+           sem itálico, cartões de vidro com contorno dourado ── */
+        .mv-page {
+          --bg: #070707; --surface: #141414; --surface-2: #0f0f0f;
+          --gold: #C9A84C; --gold-soft: #d8be93; --gold-deep: #9c7c47;
+          --gold-faint: rgba(201,168,76,0.16); --gold-line: rgba(201,168,76,0.3);
+          --ink: #ffffff; --ink-2: rgba(255,255,255,0.75); --ink-3: rgba(255,255,255,0.5); --ink-4: rgba(255,255,255,0.32);
+          --line: rgba(255,255,255,0.09);
+          font-family: 'Roboto Condensed', system-ui, sans-serif;
+          max-width: 1280px; padding-top: 8px;
+        }
+        .mv-pr, .mv-next small, .mv-pr-box .mv-pr-fim { font-family: 'Roboto Condensed', system-ui, sans-serif; }
+        .mv-agora-titulo, .mv-stage-titulo, .mv-plano-title, .mv-next, .mv-pr-box p {
+          font-family: 'Jost', sans-serif; font-weight: 200; font-style: normal;
+        }
+        .mv-plano-title { font-size: 34px; color: #fff; }
+        .mv-pr-box strong { font-weight: 400; }
+        .mv-prog-pct, .mv-frame-num, .mv-stage-bignum, .mv-agora-dias strong, .mv-plano-n, .mv-film-nav, .mv-back .chev {
+          font-family: 'Roboto Condensed', sans-serif; font-weight: 100; font-style: normal;
+        }
+        .mv-prog-pct { font-size: 56px; }
+        .mv-frame-num { font-size: 34px; font-weight: 300; }
+        .mv-plano-n { font-weight: 300; }
+        .mv-film-nav { font-weight: 300; }
+        .mv-stage-bignum { color: rgba(216,190,147,0.08); }
+        .mv-prog, .mv-agora, .mv-stage, .mv-plano-list li {
+          border-radius: 22px; backdrop-filter: blur(24px);
+        }
+        .mv-agora, .mv-stage { border-color: rgba(201,168,76,0.3); box-shadow: 0 0 48px -22px rgba(201,168,76,0.5); }
+        .mv-frame { border-radius: 12px; }
+        .mv-strip { background:
+            radial-gradient(circle, var(--bg) 3px, transparent 3.5px) 0 7px / 18px 14px repeat-x,
+            radial-gradient(circle, var(--bg) 3px, transparent 3.5px) 0 calc(100% - 7px) / 18px 14px repeat-x,
+            #111111; }
+        .mv-chip, .mv-tab, .mv-plano-tab, .mv-pipe-label, .mv-frame-mes, .mv-stage-meta { letter-spacing: 0.16em; }
+        .mv-tele p { font-weight: 300; font-size: 16px; }
       `}</style>
+      </div>
     </main>
   )
 }
