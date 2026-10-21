@@ -35,6 +35,9 @@ const MEDIA_LINKS = [
   },
 ]
 
+// Secção Finanças do menu (lá dentro está tudo: receitas, orçamentos, etc.)
+const FINANCAS_SECAO = '/secao/657aa823-19f0-4bc8-a1a1-a0a712f6d6e0'
+
 const LINKS = [
   {
     href: '/photo', label: 'Menu Principal', sub: 'Dashboard',
@@ -50,7 +53,7 @@ const LINKS = [
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="4" width="18" height="18" rx="2"/><path strokeLinecap="round" d="M16 2v4M8 2v4M3 10h18"/></svg>,
   },
   {
-    href: '/financas', label: 'Finanças', sub: 'Receitas',
+    href: FINANCAS_SECAO, label: 'Finanças', sub: 'Receitas',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>,
   },
   {
@@ -362,7 +365,7 @@ function GlobalMenuInner() {
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
         { nome: 'Produção', hrefs: ['/edicao-fotografia', '/edicao-fotografia/albuns', '/edicao-video', '/freelancers', '/tickets'] },
-        { nome: 'Gestão', hrefs: ['/financas', '/relatorio-diario', '/calendario', '/staff'] },
+        { nome: 'Gestão', hrefs: [FINANCAS_SECAO, '/relatorio-diario', '/staff', '/calendario'] },
       ]
   const EXTRA_LINKS = [{
     href: '/tarefas', label: 'Tarefas', sub: 'Por fazer',
@@ -384,7 +387,7 @@ function GlobalMenuInner() {
       mensagem: { href: '/tarefas', frase: 'Tudo o que falta fazer, num só sítio.', botao: 'Ver as tarefas' },
     },
     Gestão: {
-      destaque: '/financas', medidor: 'receitas',
+      destaque: FINANCAS_SECAO, medidor: 'receitas',
       pares: [{ href: '/calendario', pill: 'Agenda' }, { href: '/tarefas', pill: 'Por fazer' }],
       mensagem: { href: '/relatorio-diario', frase: 'Como está o estúdio hoje, num relance.', botao: 'Abrir o relatório' },
     },
@@ -483,7 +486,13 @@ function GlobalMenuInner() {
         const links = g ? (g.hrefs.map(linkDe).filter(Boolean) as any[]) : []
         const dest = pn ? linkDe(pn.destaque) : null
         const msg = pn ? linkDe(pn.mensagem.href) : null
-        const coluna = 'rounded-[20px] bg-[#0e1213] border border-white/[0.04] p-4 min-h-[250px] flex flex-col'
+        const coluna = 'relative rounded-[20px] bg-[#0e1213] border border-white/[0.04] p-4 min-h-[250px] flex flex-col'
+        // Gestão: colunas por tema (Finanças · Gestão · Staff · Organização), cada uma com o seu título
+        const gestao = g?.nome === 'Gestão'
+        const titulo = (t: string) => gestao ? (
+          <p className="absolute z-10 top-3.5 left-5 font-cond text-[11px] tracking-[0.25em] uppercase font-medium" style={{ color: accent(0.8) }}>{t}</p>
+        ) : null
+        const staff = linkDe('/staff')
         const cartao = 'rounded-[16px] border border-white/[0.08] bg-[#1a1f20] transition-all duration-200 hover:border-white/[0.18] hover:bg-[#202627]'
         const pill = (aqui: boolean, texto: string) => (
           <span className="shrink-0 rounded-full border px-2.5 py-0.5 font-cond text-[12.5px] font-semibold"
@@ -505,7 +514,8 @@ function GlobalMenuInner() {
               <div key={g.nome} className="max-w-7xl mx-auto grid grid-cols-4 gap-5 [animation:megaIn_.25s_ease-out]">
 
                 {/* 1 · Destaque com globo pontilhado */}
-                <div className={`${coluna} relative overflow-hidden justify-end`}>
+                <div className={`${coluna} overflow-hidden justify-end`}>
+                  {titulo('Finanças')}
                   <svg viewBox="0 0 200 200" className="absolute -top-6 left-1/2 -translate-x-1/2 w-[230px] h-[230px]" aria-hidden>
                     <defs>
                       <pattern id="mega-pontos" width="5" height="5" patternUnits="userSpaceOnUse">
@@ -538,7 +548,8 @@ function GlobalMenuInner() {
                 </div>
 
                 {/* 2 · Dois cartões com pílula */}
-                <div className={`${coluna} justify-center gap-3`}>
+                <div className={`${coluna} justify-center gap-3`} style={{ order: gestao ? 4 : undefined }}>
+                  {titulo('Organização')}
                   {pn.pares.map(par => {
                     const l = linkDe(par.href)
                     if (!l) return null
@@ -556,6 +567,7 @@ function GlobalMenuInner() {
 
                 {/* 3 · Cartão "mensagem" com botão */}
                 <div className={`${coluna} justify-center`}>
+                  {titulo('Gestão')}
                   <div className={`${cartao} hover:bg-[#1a1f20] px-4 py-4`}>
                     <div className="flex items-center gap-3">
                       <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14), border: `1px solid ${accent(0.3)}` }}>{msg.icon}</span>
@@ -574,8 +586,25 @@ function GlobalMenuInner() {
                   </div>
                 </div>
 
+                {/* 3b · Gestão: coluna Staff (no lugar da lista, que repetia os mesmos links) */}
+                {gestao && staff && (
+                  <div className={`${coluna} justify-center`} style={{ order: 3 }}>
+                    {titulo('Staff')}
+                    <Link href={staff.href} onClick={() => setMega(null)} className={`${cartao} px-4 py-3.5`}>
+                      <div className="flex items-center gap-3">
+                        <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{staff.icon}</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-cond font-semibold text-[17px] text-white truncate">{staff.label}</span>
+                          <span className="block font-cond text-[14px] text-white/50 truncate">{staff.sub}</span>
+                        </span>
+                        {pill(isActive(staff.href, staff.exact), 'Equipa')}
+                      </div>
+                    </Link>
+                  </div>
+                )}
+
                 {/* 4 · Lista de atalhos do grupo */}
-                <div className={`${coluna} justify-center`}>
+                {!gestao && <div className={`${coluna} justify-center`}>
                   <div className="rounded-[16px] border border-white/[0.08] bg-[#1a1f20]">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
                       <p className="font-cond font-semibold text-[17px] text-white">{g.nome}</p>
@@ -593,7 +622,7 @@ function GlobalMenuInner() {
                       ))}
                     </div>
                   </div>
-                </div>
+                </div>}
               </div>
             )}
           </div>
