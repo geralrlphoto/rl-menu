@@ -69,11 +69,11 @@ const LINKS = [
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M18 20V10M12 20V4M6 20v-6"/></svg>,
   },
   {
-    href: '/edicao-video', label: 'Edição de Vídeo', sub: 'Departamento',
+    href: '/edicao-video', label: 'Dep. de Vídeo', sub: 'Departamento',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="6" width="13" height="12" rx="2"/><path strokeLinejoin="round" d="M16 10.5l5-3v9l-5-3"/></svg>,
   },
   {
-    href: '/edicao-fotografia', label: 'Fotografia', sub: 'Departamento',
+    href: '/edicao-fotografia', label: 'Dep. de Fotografia', sub: 'Departamento',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>,
   },
   {
@@ -364,7 +364,7 @@ function GlobalMenuInner() {
     : [
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
-        { nome: 'Produção', hrefs: ['/edicao-fotografia', '/edicao-fotografia/albuns', '/edicao-video', '/tickets'] },
+        { nome: 'Produção', hrefs: ['/edicao-video', '/edicao-fotografia'] },
         { nome: 'Gestão', hrefs: [FINANCAS_SECAO, '/relatorio-diario', '/staff', '/freelancers', '/calendario'] },
       ]
   const EXTRA_LINKS = [{
@@ -383,7 +383,7 @@ function GlobalMenuInner() {
     },
     Produção: {
       destaque: '/edicao-fotografia', medidor: 'fases',
-      pares: [{ href: '/edicao-fotografia/albuns', pill: 'Álbuns' }],
+      pares: [{ href: '/edicao-video', pill: 'Vídeo' }],
       mensagem: { href: '/tarefas', frase: 'Tudo o que falta fazer, num só sítio.', botao: 'Ver as tarefas' },
     },
     Gestão: {
@@ -489,6 +489,7 @@ function GlobalMenuInner() {
         const coluna = 'relative rounded-[20px] bg-[#0e1213] border border-white/[0.04] p-4 min-h-[250px] flex flex-col'
         // Gestão: colunas por tema (Finanças · Gestão · Staff · Organização), cada uma com o seu título
         const gestao = g?.nome === 'Gestão'
+        const producao = g?.nome === 'Produção'
         const titulo = (t: string) => gestao ? (
           <p className="absolute z-10 top-3.5 left-5 font-cond text-[11px] tracking-[0.25em] uppercase font-medium" style={{ color: accent(0.8) }}>{t}</p>
         ) : null
@@ -567,8 +568,8 @@ function GlobalMenuInner() {
                   })}
                 </div>
 
-                {/* 3 · Cartão "mensagem" com botão */}
-                <div className={`${coluna} justify-center`}>
+                {/* 3 · Cartão "mensagem" com botão (Produção: sem esta coluna por agora) */}
+                {!producao && <div className={`${coluna} justify-center`}>
                   {titulo('Gestão')}
                   {/* Gestão: cartão do CRM dos casamentos */}
                   {gestao && crm && (
@@ -599,7 +600,7 @@ function GlobalMenuInner() {
                       {pn.mensagem.botao}
                     </Link>
                   </div>}
-                </div>
+                </div>}
 
                 {/* 3b · Gestão: coluna Staff (no lugar da lista, que repetia os mesmos links) */}
                 {gestao && (
