@@ -21,7 +21,9 @@ import { getEditorId } from '../_data/freelancer-profile'
 import { PainelUserCard } from '@/app/components/PainelUserCard'
 
 // ── Estado de edição (workflow) dos trabalhos reais da RL ────────────────────
-const WF_STAGES = ['Novo', 'Em Edição', 'Color Grading', 'Áudio', 'Para Revisão', 'Correções', 'Finalizado', 'Entregue']
+// O editor só põe Novo / Em Edição / Para Revisão; Finalizado e Entregue são da RL (lib/videoEstado.ts)
+const WF_STAGES = ['Novo', 'Em Edição', 'Para Revisão']
+const WF_DA_RL = ['Finalizado', 'Entregue']
 function MeusTrabalhosWorkflow() {
   const [jobs, setJobs] = useState<any[]>([])
   const [wf, setWf] = useState<Record<string, string>>({})
@@ -53,6 +55,12 @@ function MeusTrabalhosWorkflow() {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ freelancer: id, referencia: key, stage }),
       }).catch(() => {})
+      // Mesmo caminho do /novos-projetos: estado do vídeo, portal dos noivos e Ticket do Filme
+      const job = jobs.find(j => (j.referencia || j.notifId) === key)
+      if (job?.referencia) fetch('/api/painel-editor/sync-video-estado', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ freelancer: id, referencia: job.referencia, evento_id: job.eventoId ?? job.evento_id ?? null, stage, local: job.local || job.noivos || null, data_casamento: job.dataCasamento ?? job.data_casamento ?? null }),
+      }).catch(() => {})
     }
   }
 
@@ -76,10 +84,14 @@ function MeusTrabalhosWorkflow() {
                 <p className="text-[13px] text-white/90 truncate">{j.noivos || j.local || 'Evento'}</p>
                 {j.local && <p className="text-[10px] text-white/40 truncate">{j.local}</p>}
               </div>
-              <select value={stage} onChange={e => setStage(key, e.target.value)}
+              {WF_DA_RL.includes(stage) ? (
+                <span className="text-gold text-[11px] tracking-wider uppercase px-3 py-1.5" title="Definido pela RL">{stage}</span>
+              ) : (
+              <select value={WF_STAGES.includes(stage) ? stage : stage === 'Correções' ? 'Para Revisão' : 'Em Edição'} onChange={e => setStage(key, e.target.value)}
                 className="bg-[#0e0c08] border border-gold/30 text-gold text-[11px] rounded-lg px-3 py-1.5 outline-none focus:border-gold/60 tracking-wider uppercase">
                 {WF_STAGES.map(s => <option key={s} value={s} className="bg-[#0e0c08] text-white">{s}</option>)}
               </select>
+              )}
             </div>
           )
         })}

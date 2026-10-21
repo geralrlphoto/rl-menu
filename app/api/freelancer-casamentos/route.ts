@@ -275,9 +275,14 @@ export async function PATCH(req: NextRequest) {
   // Recolhe todas as alterações de estado nesta request
   const eventStatusSb: Record<string, string> = {}
   const eventStatusNotion: Record<string, any> = {}
+  const admin = ehAdmin(req)
   for (const [fcCol, mapping] of Object.entries(FC_TO_PORTAL_STATUS)) {
     if (optFields[fcCol] === undefined) continue
     const fcVal = String(optFields[fcCol] ?? '')
+    // Regras dos departamentos: o álbum muda só por lib/albumEstado.ts (Álbuns e
+    // "Entregar o álbum" no portal) e a entrega aos noivos é da RL (Departamento de
+    // Fotografia). O que o freelancer marca fica no cartão dele, sem mexer no evento.
+    if (!admin && (fcCol === 'status_album' || fcVal === 'ENTREGUE')) continue
     const portalVal = mapping[fcVal]
     if (!portalVal) continue
     const cols = FC_TO_PORTAL_COL[fcCol]

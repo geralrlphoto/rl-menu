@@ -1895,6 +1895,12 @@ function ProjectCard({
   const [messagesOpen, setMessagesOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
 
+  // Abre o projeto e leva o editor à secção Revisão do Vídeo, onde cola o link
+  function irParaRevisao() {
+    if (!expanded) onToggle()
+    setTimeout(() => document.getElementById(`revisao-${p.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 150)
+  }
+
   // Auto-abrir chat quando ?chat=1 está na URL (vindo da sineta)
   const searchParamsCard = useSearchParams()
   useEffect(() => {
@@ -2058,10 +2064,10 @@ function ProjectCard({
                     },
                     {
                       label: 'Enviar Revisão', icon: '↗',
-                      action: () => {
-                        onChange({ stage: 'Para Revisão', approval: 'Aguardando Revisão' })
-                        toast(`"${p.noivos}" enviado para revisão`)
-                      },
+                      // Em Revisão só com o link de revisão (lib/videoEstado.ts): abre a secção Revisão do Vídeo
+                      disabled: !p.referencia,
+                      disabledReason: 'Projeto sem referência da RL',
+                      action: () => irParaRevisao(),
                     },
                     {
                       label: p.stage === 'Entregue' ? 'Reverter Entrega' : 'Marcar Entrega', icon: '✓',
@@ -2217,7 +2223,7 @@ function ProjectCard({
           </Section>
 
           {/* Revisão do Vídeo (Frame.io) — só para trabalhos reais da RL */}
-          {p.referencia && <RevisaoVideoSection p={p} />}
+          {p.referencia && <div id={`revisao-${p.id}`}><RevisaoVideoSection p={p} /></div>}
 
           {/* Entrega do Projeto (link final) — só para trabalhos reais da RL */}
           {p.referencia && <EntregaProjetoSection p={p} />}
@@ -2339,14 +2345,11 @@ function ProjectCard({
           {/* Review timeline */}
           <Section title="Workflow de Revisão">
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <button
+              {p.referencia && <button onClick={() => irParaRevisao()}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/15 border border-gold/40 text-gold text-[12px] tracking-wider uppercase font-semibold hover:bg-gold/25 transition-all"
                 style={{ boxShadow: '0 0 16px -4px rgba(201,164,92,0.4)' }}>
                 ↗ Enviar Para Revisão
-              </button>
-              <PillBtn label="Criar V1" />
-              <PillBtn label="Criar V2" />
-              <PillBtn label="Versão Final" />
+              </button>}
             </div>
 
             {p.versions.length > 0 ? (

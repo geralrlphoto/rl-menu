@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { exigeAdmin, exigeSessao, exigeAdminOuProprio, sessaoMembro, ehAdmin, naoAutorizado, destinoDaEquipa } from '@/lib/api-guard'
 import { createClient } from '@supabase/supabase-js'
+import { estadoDaFase, ESTADOS_DO_EDITOR } from '@/lib/videoEstado'
 
 function db() {
   return createClient(
@@ -33,6 +34,10 @@ export async function PATCH(req: NextRequest) {
   if (!freelancer) return NextResponse.json({ error: 'freelancer required' }, { status: 400 })
   const bloqueio = await exigeAdminOuProprio(req, freelancer)
   if (bloqueio) return bloqueio
+  // Finalizado e Entregue são da RL (Departamento de Edição de Vídeo, lib/videoEstado.ts)
+  if (typeof stage === 'string' && !ehAdmin(req) && !ESTADOS_DO_EDITOR.includes(estadoDaFase(stage))) {
+    return NextResponse.json({ error: 'Finalizado e Entregue são definidos pela RL.' }, { status: 403 })
+  }
   const supabase = db()
 
   const { data: cur } = await supabase

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget, MiniCalendar } from '@/app/components/FreelancerWidgets'
+import { EnviarMaqueta } from '@/app/components/EnviarMaqueta'
 import './fl-novo.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -1879,7 +1880,7 @@ function FreelancerDetailInner() {
       {/* Tab content */}
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} onRefresh={load} />}
-      {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} />}
+      {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
       {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} disponibilidade={disponibilidade} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
@@ -3461,7 +3462,15 @@ const ALBUM_STYLE: Record<StatusAlbum, {
   'ENTREGUE':      { colBorder: 'rgba(168,85,247,0.35)',      colAccent: 'rgba(192,132,252,0.90)', badge: 'bg-purple-500/15 text-purple-300 border-purple-500/30',    dot: '#a855f7', glow: 'rgba(168,85,247,0.14)' },
 }
 
-function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; album: Album[]; onRefresh: () => void }) {
+// Nome de cada estado, como no Departamento de Fotografia › Álbuns (lib/albumEstado.ts).
+// EM APROVAÇÃO junta "Em revisão" (com a RL) e "Entregue aos noivos".
+const ROTULO_STATUS_ALBUM: Record<StatusAlbum, string> = {
+  'AGUARDAR': 'Por começar', 'EM EDIÇÃO': 'Em edição', 'EM APROVAÇÃO': 'Em revisão', 'APROVADO': 'Em elaboração', 'ENTREGUE': 'Concluído',
+}
+// O editor só mexe nestes dois; o resto é da RL e dos noivos
+const STATUS_DO_EDITOR: StatusAlbum[] = ['AGUARDAR', 'EM EDIÇÃO']
+
+function AlbumTab({ freelancerId, album, onRefresh, viewAsFreelancer }: { freelancerId: string; album: Album[]; onRefresh: () => void; viewAsFreelancer?: boolean }) {
   const [editing, setEditing] = useState<Album | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Album>>({})
@@ -3480,7 +3489,9 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
     setSaving(true)
     try {
       if (editing) {
-        await fetch('/api/freelancer-album', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editing.id, ...form }) })
+        // o estado não vai no formulário: muda-se só pelo seletor (lib/albumEstado.ts)
+        const { status: _status, ...dados } = form
+        await fetch('/api/freelancer-album', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: editing.id, ...dados }) })
         setEditing(null)
       } else {
         await fetch('/api/freelancer-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ freelancer_id: freelancerId, status: 'AGUARDAR', ...form }) })
@@ -3499,7 +3510,8 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
 
   async function changeStatus(item: Album, newStatus: string) {
     setChangingId(item.id)
-    await fetch('/api/freelancer-album', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: item.id, status: newStatus }) })
+    const r = await fetch('/api/freelancer-album', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: item.id, status: newStatus }) }).catch(() => null)
+    if (!r?.ok) { const d = r ? await r.json().catch(() => ({})) : {}; alert((d as any).error || 'Não foi possível mudar o estado.') }
     setChangingId(null)
     onRefresh()
   }
@@ -3546,11 +3558,11 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
               )}
             </div>
           </div>
-          <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'AGUARDAR' }) }}
+          {!viewAsFreelancer && <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'AGUARDAR' }) }}
             className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all shrink-0"
             style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
             <span className="text-lg leading-none">+</span> Adicionar Álbum
-          </button>
+          </button>}
         </div>
       </div>
 
@@ -3559,8 +3571,8 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
         {([
           { label: 'Total Álbuns',  value: totalAlbuns,              icon: '◫', sub: 'em todos os estados' },
           { label: 'Em Edição',     value: countByStatus['EM EDIÇÃO'], icon: '✎', sub: 'maquetes em curso' },
-          { label: 'Em Aprovação',  value: countByStatus['EM APROVAÇÃO'], icon: '◷', sub: 'aguarda noivos' },
-          { label: 'Entregues',     value: countByStatus['ENTREGUE'], icon: '✓', sub: 'finalizados', purple: true },
+          { label: 'Em Revisão',    value: countByStatus['EM APROVAÇÃO'], icon: '◷', sub: 'com a RL ou com os noivos' },
+          { label: 'Concluídos',    value: countByStatus['ENTREGUE'], icon: '✓', sub: 'enviados aos noivos', purple: true },
         ] as const).map(k => (
           <div key={k.label} className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-5 hover:border-gold/30 transition-all"
             style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.6), rgba(11,11,11,0.85))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
@@ -3612,7 +3624,7 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full" style={{ background: style.dot, boxShadow: `0 0 8px ${style.dot}` }} />
-                      <h3 className="text-[11px] tracking-[0.3em] uppercase font-semibold" style={{ color: style.colAccent }}>{status}</h3>
+                      <h3 className="text-[11px] tracking-[0.3em] uppercase font-semibold" style={{ color: style.colAccent }}>{ROTULO_STATUS_ALBUM[status]}</h3>
                     </div>
                     <span className="text-[10px] tracking-widest font-mono px-2 py-0.5 rounded-md border" style={{ color: style.colAccent, borderColor: style.colBorder, background: 'rgba(0,0,0,0.3)' }}>
                       {items.length}
@@ -3647,11 +3659,11 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
 
                         <div className="flex items-start justify-between gap-2">
                           <p className="text-[13px] font-semibold text-white/90 leading-tight pr-1">{item.nome}</p>
-                          <button onClick={() => { setEditing(item); setForm({ ...item }); setShowAdd(false) }}
+                          {!viewAsFreelancer && <button onClick={() => { setEditing(item); setForm({ ...item }); setShowAdd(false) }}
                             className="opacity-0 group-hover:opacity-100 p-1 rounded text-white/30 hover:text-gold flex-shrink-0 transition-all"
                             title="Editar">
                             <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                          </button>
+                          </button>}
                         </div>
 
                         {item.data_casamento && (
@@ -3689,6 +3701,7 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
 
                         {/* Status dropdown */}
                         <div className="pt-2 border-t border-white/[0.04]">
+                          {STATUS_DO_EDITOR.includes(item.status as StatusAlbum) ? (<>
                           <select
                             value={item.status}
                             disabled={changingId === item.id}
@@ -3700,10 +3713,18 @@ function AlbumTab({ freelancerId, album, onRefresh }: { freelancerId: string; al
                               backgroundPosition: 'right 10px center',
                               backgroundSize: '10px',
                             }}>
-                            {STATUS_ALBUM.map(s => (
-                              <option key={s} value={s} style={{ background: '#1a1206', color: '#fff' }}>{s}</option>
+                            {STATUS_DO_EDITOR.map(s => (
+                              <option key={s} value={s} style={{ background: '#1a1206', color: '#fff' }}>{ROTULO_STATUS_ALBUM[s]}</option>
                             ))}
                           </select>
+                          {item.referencia_album && (
+                            <EnviarMaqueta referencia={item.referencia_album} onEnviada={onRefresh} />
+                          )}
+                          </>) : (
+                            <p className={`text-center text-[10px] font-bold tracking-[0.25em] uppercase px-3 py-2 rounded-lg border ${style.badge}`} title="Gerido pela RL no Departamento de Fotografia">
+                              {ROTULO_STATUS_ALBUM[item.status as StatusAlbum] ?? item.status} · RL
+                            </p>
+                          )}
                         </div>
                       </div>
                     )
