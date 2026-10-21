@@ -388,7 +388,7 @@ function GlobalMenuInner() {
     },
     Gestão: {
       destaque: FINANCAS_SECAO, medidor: 'receitas',
-      pares: [{ href: '/calendario', pill: 'Agenda' }, { href: '/relatorio-diario', pill: 'Análise' }],
+      pares: [{ href: '/calendario', pill: 'Agenda' }, { href: '/relatorio-diario', pill: 'Análise' }, { href: '/tarefas', pill: 'Por fazer' }],
       mensagem: { href: '/tarefas', frase: 'Tudo o que falta fazer, num só sítio.', botao: 'Ver as tarefas' },
     },
   }
@@ -568,7 +568,8 @@ function GlobalMenuInner() {
                 {/* 3 · Cartão "mensagem" com botão */}
                 <div className={`${coluna} justify-center`}>
                   {titulo('Gestão')}
-                  <div className={`${cartao} hover:bg-[#1a1f20] px-4 py-4`}>
+                  {/* Gestão: coluna vazia por agora */}
+                  {!gestao && <div className={`${cartao} hover:bg-[#1a1f20] px-4 py-4`}>
                     <div className="flex items-center gap-3">
                       <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14), border: `1px solid ${accent(0.3)}` }}>{msg.icon}</span>
                       <span className="min-w-0 flex-1">
@@ -583,7 +584,7 @@ function GlobalMenuInner() {
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill={accent(0.95)} aria-hidden><path d="M10 2.5l1.6 4.9 4.9 1.6-4.9 1.6L10 15.5l-1.6-4.9L3.5 9l4.9-1.6z" /></svg>
                       {pn.mensagem.botao}
                     </Link>
-                  </div>
+                  </div>}
                 </div>
 
                 {/* 3b · Gestão: coluna Staff (no lugar da lista, que repetia os mesmos links) */}
