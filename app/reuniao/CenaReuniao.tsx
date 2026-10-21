@@ -17,6 +17,7 @@ const FOTO = 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjuj
 const PILARES = [
   ['Onde preferirem', 'Por videochamada ou no nosso estúdio, como vos der mais jeito.'],
   ['Sem compromisso', 'Saem com tudo o que precisam para decidir com calma.'],
+  ['Tudo esclarecido', 'Mostramos o nosso trabalho, as propostas e os valores, e respondemos a todas as vossas dúvidas.'],
 ]
 
 export default function CenaReuniao({ titulo, passo, children }: {
