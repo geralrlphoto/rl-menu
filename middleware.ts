@@ -110,7 +110,8 @@ export async function middleware(request: NextRequest) {
   // ── 2b) Painel do Editor (/painel-editor) — portal próprio dos editores ──
   //   Admin (rl_auth) entra livremente. Editor (fl_session) entra no seu painel
   //   (força ?freelancer=<sessionId>). Sem credenciais → /login?next=…
-  if (pathname.startsWith('/painel-editor')) {
+  //   O Painel do Fotógrafo (/painel-fotografo) segue a mesma regra.
+  if (pathname.startsWith('/painel-editor') || pathname.startsWith('/painel-fotografo')) {
     const adminAuth = request.cookies.get('rl_auth')?.value
     if (adminAuth && adminAuth === process.env.AUTH_SECRET) {
       return NextResponse.next()
@@ -169,6 +170,7 @@ export async function middleware(request: NextRequest) {
     // (só tem fl_session, não rl_auth). Sem isto o middleware reenviava-as para
     // /login e a dashboard do editor aparecia vazia (admin via dados, editor não).
     pathname.startsWith('/api/painel-editor') ||
+    pathname.startsWith('/api/painel-fotografo') || // a rota exige admin ou o próprio fotógrafo
     pathname.startsWith('/api/noivos-auth') ||
     pathname.startsWith('/api/noivos-recover') ||
     pathname.startsWith('/api/noivos-presence') ||

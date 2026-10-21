@@ -86,7 +86,7 @@ const EDITING_STAGES = ['Em Edição','Color Grading','Trailer em Produção','�
 type NavItem = { key: string; label: string; icon: string; href?: string }
 const NAV_ITEMS: NavItem[] = [
   { key: 'dashboard',   label: 'Dashboard',           icon: '⌂' },
-  { key: 'novos',       label: 'Novos Eventos',       icon: '+', href: '/painel-fotografo/novos-projetos' },
+  { key: 'novos',       label: 'Os Meus Casamentos',       icon: '+', href: '/painel-fotografo/novos-projetos' },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-fotografo/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-fotografo/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-fotografo/calendario' },
@@ -933,7 +933,7 @@ export default function PainelEditor() {
           {/* ── KPI CARDS (clicáveis e dinâmicos) ───────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             {([
-              { label: 'Novos Eventos',  value: kpiCounts.novos.toString(),       sub: 'Aguardando início', icon: '◫', href: '/painel-fotografo/novos-projetos' },
+              { label: 'Os Meus Casamentos',  value: kpiCounts.novos.toString(),       sub: 'Aguardando início', icon: '◫', href: '/painel-fotografo/novos-projetos' },
               { label: 'Em Andamento',   value: kpiCounts.andamento.toString(),   sub: 'Em edição ativa',   icon: '✎', href: '/painel-fotografo/novos-projetos' },
               { label: 'Finalizados',    value: kpiCounts.finalizados.toString(), sub: 'Este mês',          icon: '✓', href: '/painel-fotografo/novos-projetos' },
               { label: 'Recebimentos',   value: totalAnualLabel,                  sub: `Total ${TODAY_YEAR_NUM}`, icon: '€', href: '/painel-fotografo/pagamentos' },
