@@ -1305,17 +1305,14 @@ function FreelancerDetailInner() {
         )
       })()}
 
-      {/* Sub-separadores: Edição de fotos vive dentro de Casamentos; Tarefas, Notificações e Mensagens juntos */}
-      {(tab === 'casamentos' || tab === 'edicao') && !isVideografo && (
-        <SubSeparadores atual={tab} onChange={setTab} opcoes={[{ key: 'casamentos', label: 'Casamentos' }, { key: 'edicao', label: 'Edição de fotos', count: edicao.filter(e => e.status !== 'CONCLUÍDO').length }]} />
-      )}
+      {/* Sub-separadores: Tarefas, Notificações e Mensagens juntos */}
       {(tab === 'tarefas' || tab === 'notificacoes' || tab === 'mensagens') && (
         <SubSeparadores atual={tab} onChange={setTab} opcoes={[{ key: 'tarefas', label: 'Tarefas' }, { key: 'notificacoes', label: 'Notificações', count: contaNaoLidas.notificacoes }, { key: 'mensagens', label: 'Mensagens', count: contaNaoLidas.mensagens }]} />
       )}
 
       {/* Tab content */}
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} etapaDe={etapaDe} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
-      {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} onRefresh={load} />}
+      {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} fotosSelecaoMap={fotosSelecaoMap} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
       {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} disponibilidade={disponibilidade} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
@@ -1336,11 +1333,12 @@ type ItemMenu = { key: AdminTabKey; label: string; icon: string; href?: string; 
 
 /* O menu do portal do membro: o mesmo na barra lateral (computador) e no telemóvel.
    Sem números à frente (regra do utilizador). `grupo` = separadores que vivem dentro
-   do item (Edição de fotos em Casamentos; Tarefas, Notificações e Mensagens juntos). */
+   do item (Tarefas, Notificações e Mensagens juntos). */
 function itensMenuMembro({ isVideografo, isFotografo, freelancerId }: { isVideografo: boolean; isFotografo: boolean; freelancerId?: string }): ItemMenu[] {
   return [
     { key: null,          label: 'Início',              icon: '⌂' },
-    { key: 'casamentos',  label: 'Casamentos',          icon: '◆', grupo: isVideografo ? ['casamentos'] : ['casamentos', 'edicao'] },
+    { key: 'casamentos',  label: 'Casamentos',          icon: '◆' },
+    ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição de fotos', icon: '✎' }] : []),
     ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫' }] : []),
     { key: 'tarefas',     label: 'Mensagens e tarefas', icon: '◷', grupo: ['tarefas', 'notificacoes', 'mensagens'] },
     { key: 'calendario',  label: 'Calendário',          icon: '◉' },
@@ -3448,7 +3446,7 @@ function EncInfo({ k, v }: { k: string; v: any }) {
   return <p className="text-white/70"><span className="text-white/40">{k}: </span>{v}</p>
 }
 
-function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancerId: string; edicao: Edicao[]; casamentos: Casamento[]; onRefresh: () => void }) {
+function EdicaoTab({ freelancerId, edicao, casamentos, fotosSelecaoMap, onRefresh }: { freelancerId: string; edicao: Edicao[]; casamentos: Casamento[]; fotosSelecaoMap: Record<string, string>; onRefresh: () => void }) {
   const [editing, setEditing] = useState<Edicao | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Edicao>>({})
@@ -3548,18 +3546,37 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
     setEncEstadoSaving(null)
   }
 
+  // Coluna e prazo de cada trabalho (regras do Departamento de Fotografia, lib/etapasFotografo.ts):
+  //   Entregues → o membro marcou Concluído, ou as editadas já seguiram (portal do membro ou RL)
+  //   Prazo     → 30 dias depois de chegar a seleção dos noivos; sem seleção ainda não conta
+  const casPorRef = new Map(casamentos.filter(c => c.referencia).map(c => [c.referencia as string, c]))
+  const colunaDe = (job: Edicao): string => {
+    const c = job.referencia ? casPorRef.get(job.referencia) : undefined
+    const entregue = job.status === 'CONCLUÍDO' || !!c?.url_editadas_enviado_em || !!(c as any)?.rl_fotos_finais_enviada || /entreg/i.test(c?.status_editadas ?? '')
+    return entregue ? 'CONCLUÍDO' : job.status === 'EM EDIÇÃO' ? 'EM EDIÇÃO' : 'NOVO TRABALHO'
+  }
+  const prazoDe = (job: Edicao): { recebida: string; prazo: string; dias: number } | null => {
+    const c = job.referencia ? casPorRef.get(job.referencia) : undefined
+    const recebida = (job.referencia ? fotosSelecaoMap[job.referencia] : null) ?? (c as any)?.rl_selecao_recebida ?? null
+    if (!recebida) return null
+    const r = String(recebida).slice(0, 10)
+    const prazo = new Date(new Date(r + 'T12:00:00Z').getTime() + PRAZO_EDICAO_DIAS * 86400000).toISOString().slice(0, 10)
+    const dias = Math.round((new Date(prazo + 'T12:00:00Z').getTime() - new Date(new Date().toISOString().slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)
+    return { recebida: r, prazo, dias }
+  }
+
   // KPIs
   const total       = edicao.length
-  const novos       = edicao.filter(e => e.status === 'NOVO TRABALHO').length
-  const emEdicao    = edicao.filter(e => e.status === 'EM EDIÇÃO').length
-  const concluidos  = edicao.filter(e => e.status === 'CONCLUÍDO').length
+  const novos       = edicao.filter(e => colunaDe(e) === 'NOVO TRABALHO').length
+  const emEdicao    = edicao.filter(e => colunaDe(e) === 'EM EDIÇÃO').length
+  const concluidos  = edicao.filter(e => colunaDe(e) === 'CONCLUÍDO').length
   const pct         = total > 0 ? Math.round((concluidos / total) * 100) : 0
 
   // Mapa de estilo premium por estado
   const colMeta: Record<string, { label: string; accent: string; border: string; bg: string; dot: string; iconBg: string; icon: string; chip: string }> = {
-    'NOVO TRABALHO': { label: 'Novo Trabalho', accent: 'text-blue-300',    border: 'border-blue-500/30',    bg: 'bg-gradient-to-br from-blue-500/[0.04] to-transparent',    dot: 'bg-blue-400',    iconBg: 'bg-blue-500/15 border-blue-500/35 text-blue-300',    icon: '◷', chip: 'bg-blue-500/20 text-blue-200 border-blue-500/40' },
-    'EM EDIÇÃO':     { label: 'Em Edição',     accent: 'text-amber-300',   border: 'border-amber-500/30',   bg: 'bg-gradient-to-br from-amber-500/[0.04] to-transparent',   dot: 'bg-amber-400',   iconBg: 'bg-amber-500/15 border-amber-500/35 text-amber-300', icon: '✎', chip: 'bg-amber-500/20 text-amber-200 border-amber-500/40' },
-    'CONCLUÍDO':     { label: 'Concluído',     accent: 'text-emerald-300', border: 'border-emerald-500/30', bg: 'bg-gradient-to-br from-emerald-500/[0.04] to-transparent', dot: 'bg-emerald-400', iconBg: 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300', icon: '✓', chip: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' },
+    'NOVO TRABALHO': { label: 'Novos', accent: 'text-blue-300',    border: 'border-blue-500/30',    bg: 'bg-gradient-to-br from-blue-500/[0.04] to-transparent',    dot: 'bg-blue-400',    iconBg: 'bg-blue-500/15 border-blue-500/35 text-blue-300',    icon: '◷', chip: 'bg-blue-500/20 text-blue-200 border-blue-500/40' },
+    'EM EDIÇÃO':     { label: 'Em edição',     accent: 'text-amber-300',   border: 'border-amber-500/30',   bg: 'bg-gradient-to-br from-amber-500/[0.04] to-transparent',   dot: 'bg-amber-400',   iconBg: 'bg-amber-500/15 border-amber-500/35 text-amber-300', icon: '✎', chip: 'bg-amber-500/20 text-amber-200 border-amber-500/40' },
+    'CONCLUÍDO':     { label: 'Entregues',     accent: 'text-emerald-300', border: 'border-emerald-500/30', bg: 'bg-gradient-to-br from-emerald-500/[0.04] to-transparent', dot: 'bg-emerald-400', iconBg: 'bg-emerald-500/15 border-emerald-500/35 text-emerald-300', icon: '✓', chip: 'bg-emerald-500/20 text-emerald-200 border-emerald-500/40' },
   }
 
   return (
@@ -3596,9 +3613,9 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total Jobs',    value: total.toString(),       sub: 'Atribuídos a ti',   color: 'border-white/[0.08] bg-white/[0.02]', text: 'text-white', accent: 'text-white/35' },
-          { label: 'Novo Trabalho', value: novos.toString(),       sub: 'Por iniciar',       color: 'border-blue-500/25 bg-blue-500/[0.04]', text: 'text-blue-300', accent: 'text-blue-300/70' },
+          { label: 'Novos',         value: novos.toString(),       sub: 'Por começar',       color: 'border-blue-500/25 bg-blue-500/[0.04]', text: 'text-blue-300', accent: 'text-blue-300/70' },
           { label: 'Em Edição',     value: emEdicao.toString(),    sub: 'Em curso',          color: 'border-amber-500/25 bg-amber-500/[0.04]', text: 'text-amber-300', accent: 'text-amber-300/70' },
-          { label: 'Concluídos',    value: concluidos.toString(),  sub: `${pct}% do total`,  color: 'border-emerald-500/25 bg-emerald-500/[0.04]', text: 'text-emerald-300', accent: 'text-emerald-300/70' },
+          { label: 'Entregues',     value: concluidos.toString(),  sub: `${pct}% do total`,  color: 'border-emerald-500/25 bg-emerald-500/[0.04]', text: 'text-emerald-300', accent: 'text-emerald-300/70' },
         ].map((k, i) => (
           <div key={i} className={`rounded-2xl border p-4 ${k.color}`}>
             <p className={`text-[10px] tracking-[0.3em] uppercase mb-1 ${k.accent}`}>{k.label}</p>
@@ -3622,7 +3639,9 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
       {/* Kanban premium */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {STATUS_EDICAO.map(status => {
-          const jobs = edicao.filter(e => e.status === status)
+          // Por prazo: os mais apertados primeiro; sem seleção dos noivos no fim
+          const jobs = edicao.filter(e => colunaDe(e) === status)
+            .sort((a, b) => (prazoDe(a)?.prazo ?? '9999') < (prazoDe(b)?.prazo ?? '9999') ? -1 : 1)
           const cfg = colMeta[status] ?? colMeta['NOVO TRABALHO']
           return (
             <div key={status} className={`rounded-2xl border p-3 ${cfg.border} ${cfg.bg}`}>
@@ -3662,6 +3681,16 @@ function EdicaoTab({ freelancerId, edicao, casamentos, onRefresh }: { freelancer
                                 {fmtDate(job.data_casamento).split(' · ')[0]}
                               </p>
                             )}
+                            {status !== 'CONCLUÍDO' && (() => {
+                              const pz = prazoDe(job)
+                              if (!pz) return <p className="text-[11px] text-white/45 mt-1">À espera da seleção dos noivos</p>
+                              const cor = pz.dias < 0 ? 'text-rose-300' : pz.dias <= AVISO_DIAS ? 'text-orange-300' : 'text-gold/80'
+                              return (
+                                <p className={`text-[11px] font-semibold mt-1 ${cor}`}>
+                                  Entregar até {fmtDate(pz.prazo).split(' · ')[0]} · {pz.dias < 0 ? `${-pz.dias} ${pz.dias === -1 ? 'dia' : 'dias'} de atraso` : pz.dias === 0 ? 'hoje' : `faltam ${pz.dias} ${pz.dias === 1 ? 'dia' : 'dias'}`}
+                                </p>
+                              )
+                            })()}
                           </div>
                           <button onClick={() => { setEditing(job); setForm({ ...job }); setShowAdd(false) }}
                             title="Editar"
