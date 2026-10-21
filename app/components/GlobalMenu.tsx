@@ -490,7 +490,7 @@ function GlobalMenuInner() {
         // Gestão: colunas por tema (Finanças · Gestão · Staff · Organização), cada uma com o seu título
         const gestao = g?.nome === 'Gestão'
         const producao = g?.nome === 'Produção'
-        const titulo = (t: string) => gestao ? (
+        const titulo = (t: string) => gestao || producao ? (
           <p className="absolute z-10 top-3.5 left-5 font-cond text-[11px] tracking-[0.25em] uppercase font-medium" style={{ color: accent(0.8) }}>{t}</p>
         ) : null
         const staff = linkDe('/staff')
@@ -518,7 +518,7 @@ function GlobalMenuInner() {
 
                 {/* 1 · Destaque com globo pontilhado */}
                 <div className={`${coluna} overflow-hidden justify-end`}>
-                  {titulo('Finanças')}
+                  {titulo(producao ? 'Dep. de Fotografia' : 'Finanças')}
                   <svg viewBox="0 0 200 200" className="absolute -top-6 left-1/2 -translate-x-1/2 w-[230px] h-[230px]" aria-hidden>
                     <defs>
                       <pattern id="mega-pontos" width="5" height="5" patternUnits="userSpaceOnUse">
@@ -552,7 +552,7 @@ function GlobalMenuInner() {
 
                 {/* 2 · Dois cartões com pílula */}
                 <div className={`${coluna} justify-center gap-3`} style={{ order: gestao ? 4 : undefined }}>
-                  {titulo('Organização')}
+                  {titulo(producao ? 'Dep. de Vídeo' : 'Organização')}
                   {pn.pares.map(par => {
                     const l = linkDe(par.href)
                     if (!l) return null
