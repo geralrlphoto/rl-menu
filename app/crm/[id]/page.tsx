@@ -480,49 +480,86 @@ export default function ClientePage() {
     </main>
   )
 
+  // Resumo do topo (cartão de vidro, como o do CRM)
+  const dataCas = form.data_casamento ? new Date(`${form.data_casamento.slice(0, 10)}T12:00:00`) : null
+  const resumo = [
+    { l: 'Data', v: dataCas ? dataCas.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short', year: 'numeric' }) : 'A definir' },
+    { l: 'Local', v: (form.local_casamento || '').trim() || 'A definir' },
+    { l: 'Convidados', v: String(form.num_convidados || '').trim() || '—' },
+    { l: 'Orçamento', v: (form.orcamento || '').trim() || '—' },
+  ]
+
   return (
-    <main className="min-h-screen px-4 py-10 max-w-3xl mx-auto">
-      <Link href="/crm" className="text-xs tracking-widest text-white/30 hover:text-gold transition-colors">
-        ‹ VOLTAR AO CRM
-      </Link>
+    <main className="min-h-screen overflow-x-clip font-cond bg-[#070707]">
 
-      {/* Header */}
-      <div className="mt-8 mb-8 flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-light text-white tracking-wide">{form.nome || 'Sem nome'}</h1>
-          <div className="flex items-center gap-3 mt-3 flex-wrap">
-            {form.status && (
-              <span className={`text-xs px-3 py-1 rounded-full border ${statusColor[form.status] ?? 'bg-white/10 text-white/50 border-white/20'}`}>
-                {form.status}
-              </span>
-            )}
-            {form.lead_prioridade && (
-              <span className={`text-xs px-3 py-1 rounded-full border ${leadColor[form.lead_prioridade] ?? 'bg-white/10 text-white/50 border-white/20'}`}>
-                Lead {form.lead_prioridade}
-              </span>
-            )}
-          </div>
+      {/* ── Topo, como o do CRM ─────────────────────────────────────────── */}
+      <section className="relative min-h-[460px] lg:min-h-[58vh] flex flex-col">
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%] overflow-hidden">
+          <img src={form.page_foto_url || '/crm-hero.webp'} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%] grayscale opacity-40 lg:opacity-50" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving || !isDirty}
-          className={`px-5 py-2.5 rounded-xl text-xs font-semibold tracking-wider transition-all ${
-            saved ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-            isDirty ? 'bg-gold/90 hover:bg-gold text-black' :
-            'bg-white/5 text-white/20 border border-white/10 cursor-not-allowed'
-          }`}
-        >
-          {saving ? 'A guardar...' : saved ? '✓ Guardado' : 'Guardar'}
-        </button>
-      </div>
+        <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
 
-      <div className="h-px bg-gold/20 mb-8" />
+        <div className="relative flex-1 grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_320px] gap-8 items-end pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-14 lg:pt-8 pb-10 lg:pb-14">
+          <div className="min-w-0 flex flex-col h-full">
+            <Link href="/crm" className="self-start text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Voltar ao CRM</Link>
+            <div className="mt-auto pt-14">
+              <p className="text-[13px] sm:text-[16px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">Ficha do cliente</p>
+              <h1 className="font-bold uppercase text-white leading-[0.92] text-[42px] sm:text-[72px] lg:text-[88px] mt-2 break-words">{form.nome || 'Sem nome'}</h1>
+              <div className="flex items-center gap-3 mt-5 flex-wrap">
+                <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+                {form.status && (
+                  <span className={`text-[12px] px-3 py-1 rounded-full border ${statusColor[form.status] ?? 'bg-white/10 text-white/50 border-white/20'}`}>
+                    {form.status}
+                  </span>
+                )}
+                {form.lead_prioridade && (
+                  <span className={`text-[12px] px-3 py-1 rounded-full border ${leadColor[form.lead_prioridade] ?? 'bg-white/10 text-white/50 border-white/20'}`}>
+                    Lead {form.lead_prioridade}
+                  </span>
+                )}
+              </div>
+              <div className="flex flex-wrap items-center gap-3 mt-7">
+                <button
+                  onClick={handleSave}
+                  disabled={saving || !isDirty}
+                  className={`inline-flex items-center gap-2 px-7 py-3 text-[14px] font-semibold tracking-[0.16em] uppercase transition-all border ${
+                    saved ? 'border-green-500/40 bg-green-500/15 text-green-300' :
+                    isDirty ? 'border-[#C9A84C]/70 bg-[#C9A84C]/20 hover:bg-[#C9A84C]/35 text-white' :
+                    'border-white/10 bg-black/30 text-white/30 cursor-not-allowed'
+                  }`}
+                >
+                  {saving ? 'A guardar...' : saved ? '✓ Guardado' : 'Guardar'}
+                </button>
+                {isDirty && <span className="text-[12px] text-[#C9A84C]/80">Alterações por guardar</span>}
+              </div>
+            </div>
+          </div>
 
+          <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+            <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+              O dia do casal
+            </p>
+            <div className="grid grid-cols-2 mt-3">
+              {resumo.map((x, i) => (
+                <div key={x.l} className={`py-3 min-w-0 ${i % 2 === 0 ? 'pr-4 border-r border-white/[0.07]' : 'pl-4'} ${i < 2 ? 'border-b border-white/[0.07]' : ''}`}>
+                  <p className="text-[11px] text-white/50">{x.l}</p>
+                  <p className="font-semibold text-white text-[16px] leading-tight mt-1 truncate" title={x.v}>{x.v}</p>
+                </div>
+              ))}
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <div className="crm-ficha max-w-4xl mx-auto px-4 sm:px-8 pt-4 pb-20">
       <div className="flex flex-col gap-6">
 
         {/* Dados Pessoais */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Dados Pessoais</h2>
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">Dados Pessoais</h2>
           <F label="Nome" name="nome" value={form.nome} onChange={set} placeholder="Ex: Ana e João" />
           <div className="grid grid-cols-2 gap-4">
             <F label="Contacto" name="contato" value={form.contato} onChange={set} placeholder="+351 9xx xxx xxx" />
@@ -532,8 +569,8 @@ export default function ClientePage() {
         </div>
 
         {/* Estado da Lead */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Estado da Lead</h2>
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">Estado da Lead</h2>
           <div className="grid grid-cols-2 gap-4">
             <S label="Status" name="status" value={form.status} onChange={set} options={STATUSES} />
             <S label="Lead Prioridade" name="lead_prioridade" value={form.lead_prioridade} onChange={set} options={PRIORIDADES} />
@@ -552,8 +589,8 @@ export default function ClientePage() {
         </div>
 
         {/* Formulário de opinião (noivos que não fecharam) */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Formulário de Opinião</h2>
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">Formulário de Opinião</h2>
           <p className="text-xs text-white/40">Link público para os noivos que não fecharam deixarem a opinião deles (as respostas chegam também por email).</p>
           <div className="flex flex-wrap gap-2">
             <button type="button"
@@ -602,8 +639,8 @@ export default function ClientePage() {
         </div>
 
         {/* Histórico de status */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Histórico de Status</h2>
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">Histórico de Status</h2>
           {historico.length === 0 ? (
             <p className="text-xs text-white/30">Sem mudanças registadas. O histórico começou a ser guardado a 17 set 2026.</p>
           ) : (
@@ -626,8 +663,8 @@ export default function ClientePage() {
         </div>
 
         {/* Evento */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Evento</h2>
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">Evento</h2>
           <div className="grid grid-cols-2 gap-4">
             <F label="Tipo de Evento" name="tipo_evento" value={form.tipo_evento} onChange={set} placeholder="Ex: Casamento" />
             <F label="Tipo de Cerimónia" name="tipo_cerimonia" value={form.tipo_cerimonia} onChange={set} placeholder="Ex: Religiosa" />
@@ -649,8 +686,8 @@ export default function ClientePage() {
         </div>
 
         {/* Preocupações */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Preocupações / Mensagem Inicial</h2>
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">Preocupações / Mensagem Inicial</h2>
           <textarea
             value={form.mensagem ?? ''}
             onChange={e => set('mensagem', e.target.value)}
@@ -661,8 +698,8 @@ export default function ClientePage() {
         </div>
 
         {/* Notas */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase mb-1">Notas Internas</h2>
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">Notas Internas</h2>
           <textarea
             value={form.notas ?? ''}
             onChange={e => set('notas', e.target.value)}
@@ -673,10 +710,10 @@ export default function ClientePage() {
         </div>
 
         {/* Gerar Proposta: mostra as propostas no portal do cliente */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-5 flex flex-col gap-4">
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-5 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Proposta no portal</h2>
+              <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase">Proposta no portal</h2>
               <p className="text-[11px] text-white/30 mt-1">Guarda as propostas e mostra-as no portal do cliente (com opção de PDF)</p>
             </div>
             <button
@@ -717,9 +754,9 @@ export default function ClientePage() {
         </div>
 
         {/* Propostas Fotografia / Vídeo */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-5">
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Propostas Fotografia / Vídeo</h2>
+            <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase">Propostas Fotografia / Vídeo</h2>
             <button
               onClick={() => handleSavePropostas()}
               disabled={savingPropostas}
@@ -926,9 +963,9 @@ export default function ClientePage() {
         </div>
 
         {/* Página do Cliente */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Página do Cliente</h2>
+            <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase">Página do Cliente</h2>
             <span className={`text-xs px-2.5 py-1 rounded-full border ${
               form.page_publicada
                 ? 'bg-green-500/15 text-green-400 border-green-500/30'
@@ -1040,10 +1077,10 @@ export default function ClientePage() {
 
         {/* Relatório final da reunião (análise crítica da gravação) */}
         {analises.length > 0 && (
-          <div className="bg-white/3 border border-gold/25 rounded-2xl p-6 flex flex-col gap-5">
+          <div className="bg-[#111111]/80 border border-[#C9A84C]/30 rounded-[22px] backdrop-blur-xl shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)] p-6 flex flex-col gap-5">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Relatório da Reunião</h2>
+                <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase">Relatório da Reunião</h2>
                 <p className="text-[11px] text-white/25 mt-1">Análise crítica da gravação{analises.length > 1 ? ` · ${analises.length} reuniões` : ''}</p>
               </div>
               <Link href={`/crm/analises?id=${analises[0].id}`}
@@ -1056,10 +1093,10 @@ export default function ClientePage() {
         )}
 
         {/* Notas da Reunião */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Notas da Reunião</h2>
+              <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase">Notas da Reunião</h2>
               <p className="text-[11px] text-white/25 mt-1">O que foi falado, decidido ou acordado</p>
             </div>
             <button
@@ -1087,8 +1124,8 @@ export default function ClientePage() {
         </div>
 
         {/* Marcação de Reunião */}
-        <div className="bg-white/3 border border-white/8 rounded-2xl p-6 flex flex-col gap-4">
-          <h2 className="text-xs tracking-[0.3em] text-gold uppercase">Marcação de Reunião</h2>
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase">Marcação de Reunião</h2>
 
           {/* Resumo se já agendada */}
           {form.reuniao_data && form.reuniao_hora && (
@@ -1189,7 +1226,7 @@ export default function ClientePage() {
       )}
 
       {/* Zona de Perigo — Apagar Lead */}
-      <div className="mt-16 border border-red-900/30 rounded-2xl p-6">
+      <div className="mt-16 border border-red-900/30 rounded-[22px] p-6">
         <h2 className="text-xs tracking-[0.3em] text-red-500/70 uppercase mb-1">Apagar Lead</h2>
         <p className="text-white/30 text-sm mb-5">Esta ação é permanente e não pode ser revertida.</p>
         <button
@@ -1209,6 +1246,7 @@ export default function ClientePage() {
         )}
       </div>
 
+      </div>
     </main>
   )
 }
