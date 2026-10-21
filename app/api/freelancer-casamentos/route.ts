@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
       // 1) Buscar eventos por data
       const { data: events } = await supabase
         .from('eventos_2026')
-        .select('referencia, local, data_evento, servicos_dia, local_cerimonia, hora_inicio, cliente')
+        .select('referencia, local, data_evento, servicos_dia, local_cerimonia, hora_inicio, cliente, sel_fotos_estado')
         .in('data_evento', datas)
       // 1b) Fallback noivos via dados_contrato_cps (nome_noiva + nome_noivo)
       const refs0 = Array.from(new Set(casamentos.filter((c: any) => c.referencia).map((c: any) => c.referencia)))
@@ -43,13 +43,15 @@ export async function GET(req: NextRequest) {
 
       // 1c) Toggle de alertas (armazenado em portais.settings.alertas_fotografia_ativos)
       let portaisRows: any[] = []
-      if (refs0.length > 0) {
+      // Também as referências dos eventos encontrados pela data (casamentos antigos sem referência)
+      const refsPortais = Array.from(new Set([...refs0, ...(events ?? []).map((e: any) => e.referencia).filter(Boolean)]))
+      if (refsPortais.length > 0) {
         const { data: pr } = await supabase
           .from('portais')
           // JSON-path select — só os 5 campos usados abaixo, em vez do `settings`
           // inteiro (poupa egress; esta rota é do painel freelancer, tráfego alto).
-          .select('referencia, alertas_fotografia_ativos:settings->alertas_fotografia_ativos, status_selecao:settings->>status_selecao, status_provas:settings->>status_provas, status_editadas:settings->>status_editadas, status_album:settings->>status_album')
-          .in('referencia', refs0)
+          .select('referencia, alertas_fotografia_ativos:settings->alertas_fotografia_ativos, status_selecao:settings->>status_selecao, status_provas:settings->>status_provas, status_editadas:settings->>status_editadas, status_album:settings->>status_album, galerias_enviada:settings->>galerias_enviada, selecao_enviada:settings->>selecao_enviada, selecao_recebida:settings->>selecao_recebida, fotos_finais_enviada:settings->>fotos_finais_enviada')
+          .in('referencia', refsPortais)
         portaisRows = pr ?? []
       }
       const portaisByRef = new Map<string, any>(portaisRows.filter((r: any) => r.referencia).map((r: any) => [r.referencia, r]))
@@ -123,6 +125,15 @@ export async function GET(req: NextRequest) {
         for (const col of ['status_selecao', 'status_provas', 'status_editadas', 'status_album'] as const) {
           if (c[col] == null && portalSettings[col]) c[col] = portalSettings[col]
         }
+
+        // ── ENTREGAS MARCADAS PELA RL (Departamento de Fotografia / ficha) ──
+        //    As etapas do portal do membro (lib/etapasFotografo.ts) contam estas
+        //    como feitas, tal como o departamento.
+        c.rl_galerias_enviada     = portalSettings.galerias_enviada ?? null
+        c.rl_selecao_enviada      = portalSettings.selecao_enviada ?? null
+        c.rl_selecao_recebida     = portalSettings.selecao_recebida ?? null
+        c.rl_fotos_finais_enviada = portalSettings.fotos_finais_enviada ?? null
+        c.rl_sel_fotos_estado     = ev?.sel_fotos_estado ?? null
 
         // ── EQUIPA (editor_fotos, editor_album, editor_video) ──
         let eq: any = c.referencia ? equipaByRef.get(c.referencia) : null

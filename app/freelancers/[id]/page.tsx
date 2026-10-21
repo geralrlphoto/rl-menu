@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget } from '@/app/components/FreelancerWidgets'
+import { etapaFotografo, entregasFotografo, nomeado, PASSOS_FOTOGRAFO, BRIEFING_DIAS, textoPrazo, PRAZO_SELECAO_DIAS, PRAZO_EDICAO_DIAS, AVISO_DIAS, type EtapaInfo } from '@/lib/etapasFotografo'
 import { EnviarMaqueta } from '@/app/components/EnviarMaqueta'
 import './fl-novo.css'
 
@@ -19,6 +20,7 @@ type Casamento = {
   id: string; freelancer_id: string; local: string; data_casamento: string | null
   equipa_foto: string[] | null; videografo: string | null; briefing_url: string | null
   data_confirmada: boolean | null; order_index: number
+  created_at?: string | null
   data_confirmada_videografo: boolean | null
   indisponivel: boolean | null
   indisponivel_videografo: boolean | null
@@ -382,13 +384,12 @@ function FreelancerDetailInner() {
 
   // ── Prazos de entrega ────────────────────────────────────────────────
   //   Calculado SEMPRE (antes de early returns) para respeitar Rules of Hooks
+  //   Prazos do Departamento de Fotografia (lib/etapasFotografo.ts):
   //   Seleção de Fotos:   30 dias após o evento
-  //   Fotos Editadas:     30 dias após os noivos enviarem fotos (fotos_selecao.data_entrada)
-  //   Maquete Álbum:      30 dias após os noivos enviarem fotos (fotos_selecao.data_entrada)
-  const PRAZO_SELECAO_DIAS = 30
-  const PRAZO_EDICAO_DIAS  = 30
+  //   Fotos Editadas:     30 dias após os noivos enviarem fotos (fotos_selecao.data_entrada), só para o editor nomeado
+  //   Maquete Álbum:      30 dias após os noivos enviarem fotos, só para o editor do álbum nomeado
   const PRAZO_ALBUM_DIAS   = 30
-  const PRAZO_AVISO_DIAS = 5
+  const PRAZO_AVISO_DIAS = AVISO_DIAS
   type PrazoEntry = { c: Casamento; deadline: Date; daysLeft: number; tipo: 'selecao' | 'edicao' | 'album' }
   function parseDateLocal(s: string | null | undefined): Date | null {
     if (!s) return null
@@ -408,7 +409,8 @@ function FreelancerDetailInner() {
         // (eventos onde a RL não é responsável pela parte fotográfica).
         if (c.alertas_fotografia_ativos === false) continue
         // 1) Seleção de Fotos — prazo conta a partir do evento
-        if (c.data_casamento && !c.url_selecao_enviado_em && c.status_selecao !== 'ENTREGUE') {
+        // (o que a RL já marcou no departamento também conta como entregue)
+        if (c.data_casamento && !c.url_selecao_enviado_em && c.status_selecao !== 'ENTREGUE' && !(c as any).rl_selecao_enviada && !/entreg/i.test((c as any).rl_sel_fotos_estado ?? '')) {
           const dEvento = parseDateLocal(c.data_casamento)
           if (dEvento && dEvento.getTime() <= today.getTime()) {
             const deadline = new Date(dEvento.getTime() + PRAZO_SELECAO_DIAS * 86400000)
@@ -418,7 +420,7 @@ function FreelancerDetailInner() {
         }
         // 2) Fotos Editadas — prazo conta a partir do dia em que os noivos
         //    enviaram as fotos selecionadas (fotos_selecao.data_entrada)
-        if (c.referencia && !c.url_editadas_enviado_em && c.status_editadas !== 'ENTREGUE') {
+        if (c.referencia && nomeado(c.editor_fotos, freelancer?.nome ?? '') && !c.url_editadas_enviado_em && c.status_editadas !== 'ENTREGUE' && !(c as any).rl_fotos_finais_enviada) {
           const dataEntrada = fotosSelecaoMap[c.referencia]
           const dEntrada = parseDateLocal(dataEntrada)
           if (dEntrada && dEntrada.getTime() <= today.getTime()) {
@@ -428,7 +430,7 @@ function FreelancerDetailInner() {
           }
         }
         // 3) Maquete Álbum — mesma data de partida que Fotos Editadas (fotos_selecao.data_entrada)
-        if (c.referencia && !c.url_album_enviado_em && c.status_album !== 'ENTREGUE') {
+        if (c.referencia && nomeado(c.editor_album, freelancer?.nome ?? '') && !c.url_album_enviado_em && c.status_album !== 'ENTREGUE') {
           const dataEntrada = fotosSelecaoMap[c.referencia]
           const dEntrada = parseDateLocal(dataEntrada)
           if (dEntrada && dEntrada.getTime() <= today.getTime()) {
@@ -519,6 +521,8 @@ function FreelancerDetailInner() {
 
   const isVideografo = freelancer?.status === 'VIDEOGRAFO'
   const isFotografo  = freelancer?.status === 'FOTOGRAFO'
+  // Etapa de cada casamento pelo Fluxo de Trabalho (01 a 06) e o que o membro tem de fazer
+  const etapaDe = (c: Casamento) => etapaFotografo(c, { nomeMembro: freelancer?.nome ?? '', selecaoRecebida: c.referencia ? fotosSelecaoMap[c.referencia] ?? null : null, fotografo: isFotografo })
   // Novo layout (cartaz de cinema, dourado suave, Roboto Condensed) para todos os membros
   const novoLayout = true
 
@@ -988,165 +992,53 @@ function FreelancerDetailInner() {
           </>
           )}
 
-          {/* ── CRÍTICO · ENTREGA — sobrepõe canto inferior direito do hero ── */}
+          {/* ── O QUE TENHO DE FAZER — uma só lista pelas etapas do Fluxo de Trabalho,
+                ordenada pelo prazo (regras em lib/etapasFotografo.ts) ── */}
           {(() => {
-            const atrasados = prazosSelecao.filter(p => p.daysLeft < 0)
-            if (atrasados.length === 0) return null
-
-            const MESES_PT_SHORT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
-            const fmtShortDate = (d: Date) => {
-              try { return `até ${String(d.getDate()).padStart(2,'0')} ${MESES_PT_SHORT[d.getMonth()]}` } catch { return '' }
-            }
-            const KIND_META = {
-              edicao:  { label: 'EDIÇÃO',  chipBg: 'bg-blue-500/15',   chipBorder: 'border-blue-500/45',   chipText: 'text-blue-200',   targetTab: 'edicao' as const },
-              album:   { label: 'ÁLBUM',   chipBg: 'bg-purple-500/15', chipBorder: 'border-purple-500/45', chipText: 'text-purple-200', targetTab: 'album' as const },
-              selecao: { label: 'SELEÇÃO',chipBg: 'bg-gold/15',       chipBorder: 'border-gold/50',       chipText: 'text-gold',       targetTab: 'casamentos' as const },
+            const afazer = casamentos
+              .map(c => ({ c, e: etapaDe(c) }))
+              .filter((x): x is { c: Casamento; e: EtapaInfo } => !!x.e?.acao)
+              .sort((a, b) => (a.e.prazo ?? '9999') < (b.e.prazo ?? '9999') ? -1 : 1)
+            const COR = {
+              atraso: { borda: 'rgba(244,63,94,0.45)',  texto: 'text-rose-300' },
+              aviso:  { borda: 'rgba(251,146,60,0.45)', texto: 'text-orange-300' },
+              normal: { borda: 'rgba(255,255,255,0.08)', texto: 'text-gold' },
             } as const
-
             return (
-              <div className={`relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6 ${novoLayout ? '' : criticoOpen ? '-mt-24' : '-mt-16'}`}>
-                <div className={`${novoLayout ? 'fl-critico lg:col-span-3' : 'lg:col-start-3'} rounded-2xl border border-rose-500/35 backdrop-blur-sm transition-all duration-300 ${criticoOpen ? 'p-3.5' : 'p-2.5'}`}
-                  style={{
-                    background: 'linear-gradient(135deg, rgba(40,8,12,0.85), rgba(20,5,8,0.92))',
-                    boxShadow: '0 0 28px -10px rgba(244,63,94,0.55), inset 0 0 0 1px rgba(244,63,94,0.06)',
-                  }}>
-                  {/* Header — clicável + chevron */}
-                  <button onClick={toggleCritico}
-                    className={`w-full flex items-center justify-between gap-2 ${criticoOpen ? 'mb-2' : 'mb-0'} group cursor-pointer text-left`}
-                    title={criticoOpen ? 'Fechar' : 'Abrir alertas'}>
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-rose-300 text-sm">⚠</span>
-                      <p className="text-[10px] tracking-[0.3em] uppercase font-bold text-rose-300 truncate">Crítico · Entrega</p>
-                      <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-200 border border-rose-500/40 font-bold tabular-nums shrink-0">
-                        {atrasados.length}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {criticoOpen && <p className="text-[10px] italic text-rose-200/55">30 dias</p>}
-                      <span className={`w-6 h-6 rounded-full border border-rose-500/40 bg-rose-500/15 text-rose-300 flex items-center justify-center text-[10px] transition-transform duration-300 group-hover:bg-rose-500/25 group-hover:border-rose-400/60 ${criticoOpen ? 'rotate-180' : 'rotate-0'}`}>
-                        ▾
-                      </span>
-                    </div>
-                  </button>
-
-                  {/* Lista — só quando aberto */}
-                  {criticoOpen && (
-                    <div className="space-y-1.5">
-                      {atrasados.map(p => {
-                        const m = KIND_META[p.tipo as keyof typeof KIND_META] ?? KIND_META.selecao
-                        const diasAtraso = Math.abs(p.daysLeft)
-                        return (
-                          <button key={`${p.tipo}-${p.c.id}`} onClick={() => setTab(m.targetTab)}
-                            className="w-full group flex items-center gap-2 px-2.5 py-1.5 rounded-lg border border-rose-500/25 bg-rose-500/[0.08] hover:border-rose-500/45 hover:bg-rose-500/[0.12] transition-all text-left">
-                            <span className={`px-1.5 py-0.5 rounded text-[8px] tracking-[0.18em] uppercase font-bold border ${m.chipBg} ${m.chipBorder} ${m.chipText} shrink-0 min-w-[56px] text-center`}>
-                              {m.label}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[12px] text-white font-semibold tracking-wide truncate leading-tight">{(p.c.local ?? '—').toUpperCase()}</p>
-                              <p className="text-[9px] text-rose-200/55 italic leading-tight">{fmtShortDate(p.deadline)}</p>
-                            </div>
-                            <div className="text-right shrink-0">
-                              <p className="text-rose-300 font-bold tabular-nums leading-none" style={{ fontFamily: 'Georgia, serif', fontSize: '16px' }}>
-                                +{diasAtraso}
-                                <span className="text-[8px] text-rose-300/75 tracking-[0.2em] uppercase ml-1 font-bold">atr.</span>
-                              </p>
-                            </div>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
+              <div className="rounded-2xl border border-white/[0.08] p-5 mb-6 fade-in-1"
+                style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-[18px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>O que tenho <span className="italic text-gold">de fazer</span></h3>
+                  <span className="text-[11px] tracking-widest uppercase text-white/40">{afazer.length} {afazer.length === 1 ? 'tarefa' : 'tarefas'}</span>
                 </div>
+                {afazer.length === 0 ? (
+                  <p className="text-[13px] text-white/45 italic">Está tudo em dia. Não há nada por fazer agora.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {afazer.map(({ c, e }) => (
+                      <button key={c.id} onClick={() => { setPendingExpandCasamentoId(c.id); setTab('casamentos') }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left"
+                        style={{ borderColor: COR[e.tom].borda }}>
+                        <span className="w-8 shrink-0 text-[11px] tracking-[0.2em] text-gold/70 font-bold">{PASSOS_FOTOGRAFO[e.passo - 1]?.n}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[14px] text-white font-medium truncate">{e.acao}</p>
+                          <p className="text-[11px] text-white/45 truncate">{c.nome_noivos || c.local}{c.data_casamento ? ` · ${fmtDate(c.data_casamento).split(' · ')[0]}` : ''}</p>
+                        </div>
+                        {e.dias !== null && <span className={`text-[12px] font-semibold shrink-0 ${COR[e.tom].texto}`}>{textoPrazo(e)}</span>}
+                        <span className="text-white/25 shrink-0">›</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             )
           })()}
-
-          {/* ── Próximo Casamento (destaque com glow gold pulsante) ─
-              Largura alinhada com "Novos Eventos" (col 1 de 3) — em mobile
-              ocupa toda a largura, em desktop fica 1/3. */}
-          {proximoCasamento && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-              <div onClick={() => { setPendingExpandCasamentoId(proximoCasamento.id); setTab('casamentos') }}
-                className="cursor-pointer prox-casamento-glow fade-in-1 bg-gradient-to-br from-gold/[0.10] to-gold/[0.02] border border-gold/40 rounded-2xl p-6 sm:p-7 hover:border-gold/60 transition-all">
-                <p className="text-[11px] tracking-[0.5em] text-gold/80 uppercase font-light mb-3">Próximo Casamento</p>
-                <div className="flex items-end justify-between gap-4 flex-wrap">
-                  <div className="min-w-0">
-                    <h2 className="text-2xl sm:text-3xl font-light text-white mb-2 tracking-tight truncate" style={{ fontFamily: 'Georgia, serif' }}>{proximoCasamento.local}</h2>
-                    <p className="text-[13px] text-white/55 italic" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(proximoCasamento.data_casamento)}</p>
-                  </div>
-                  <div className={`text-right shrink-0 ${dtuProximo !== null && dtuProximo <= 15 ? 'text-red-400' : 'text-gold'}`}>
-                    <p className="text-5xl font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>{dtuProximo === 0 ? 'HOJE' : dtuProximo}</p>
-                    <p className="text-[11px] tracking-[0.4em] uppercase mt-1.5 font-light">{dtuProximo === 0 ? '' : dtuProximo === 1 ? 'dia' : 'dias'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* ── CTAs ─────────────────────────────────────────────── */}
-          <div className="flex flex-wrap items-center gap-3 mb-6 fade-in-2">
-            <button onClick={() => setTab('casamentos')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[14px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-              style={{ boxShadow: '0 0 20px -4px rgba(201,168,76,0.5)' }}>
-              <span className="text-lg leading-none">+</span> Ver Casamentos
-            </button>
-            <button onClick={() => setTab('casamentos')}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/15 text-white/85 text-[14px] font-medium tracking-wider hover:bg-white/[0.05] hover:border-white/30 transition-all">
-              <span className="text-base leading-none">◷</span> Confirmar Disponibilidade
-            </button>
-          </div>
-
-          {/* ── KPIs: só o que está por fazer ───── */}
-          <div className="grid grid-cols-3 gap-3 mb-6 fade-in-3">
-            {([
-              { label: 'Casamentos',  value: totalCasamentos.toString(),  sub: 'Total atribuídos',  icon: '◫', tab: 'casamentos' as const, accent: 'gold' },
-              { label: 'Em Edição',   value: totalEmEdicao.toString(),    sub: 'Em edição ativa',   icon: '✎', tab: 'edicao' as const,     accent: 'amber' },
-              { label: 'Aguardando',  value: totalAguardando.toString(),  sub: 'Por iniciar',       icon: '◷', tab: 'edicao' as const,     accent: 'blue' },
-            ] as const).map((k, i) => {
-              const accents = {
-                gold:    { iconBg: 'bg-gold/10',         iconBorder: 'border-gold/35',         iconText: 'text-gold',         arrowText: 'text-gold/60 group-hover:text-gold' },
-                amber:   { iconBg: 'bg-amber-500/12',    iconBorder: 'border-amber-500/35',    iconText: 'text-amber-300',    arrowText: 'text-amber-300/55 group-hover:text-amber-300' },
-                emerald: { iconBg: 'bg-emerald-500/12',  iconBorder: 'border-emerald-500/35',  iconText: 'text-emerald-300',  arrowText: 'text-emerald-300/55 group-hover:text-emerald-300' },
-                blue:    { iconBg: 'bg-blue-500/12',     iconBorder: 'border-blue-500/35',     iconText: 'text-blue-300',     arrowText: 'text-blue-300/55 group-hover:text-blue-300' },
-              }[k.accent]
-              return (
-                <button key={i} onClick={() => setTab(k.tab)}
-                  className="group relative overflow-hidden rounded-2xl border border-white/[0.08] p-4 hover:border-gold/30 transition-all cursor-pointer text-left w-full h-full flex flex-col"
-                  style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.55), rgba(11,11,11,0.7))', boxShadow: '0 14px 30px -16px rgba(0,0,0,0.5)' }}
-                >
-                  {/* Glow ao hover */}
-                  <span className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ background: 'radial-gradient(circle, rgba(201,164,92,0.16), transparent 70%)' }} />
-
-                  {/* Top: ícone + setinha — sempre nas mesmas posições */}
-                  <div className="relative flex items-start justify-between mb-3">
-                    <span className={`w-10 h-10 rounded-xl border ${accents.iconBorder} ${accents.iconBg} ${accents.iconText} flex items-center justify-center text-[16px] shrink-0`}>
-                      {k.icon}
-                    </span>
-                    <span className={`w-7 h-7 rounded-full border border-white/10 flex items-center justify-center text-[12px] transition-colors ${accents.arrowText}`}>›</span>
-                  </div>
-
-                  {/* Label */}
-                  <p className="relative text-[9px] tracking-[0.4em] uppercase text-white/45 font-bold mb-2">{k.label}</p>
-
-                  {/* Valor — Cormorant para coerência com Visão Geral */}
-                  <p className="relative leading-none tabular-nums text-white"
-                    style={{ fontFamily: 'Cormorant Garamond, Georgia, serif', fontSize: 'clamp(1.75rem, 2.4vw, 2.25rem)', fontWeight: 300 }}>
-                    {k.value}
-                  </p>
-
-                  {/* Sub */}
-                  <p className="relative text-[10px] text-white/40 mt-auto pt-3 tracking-wide truncate">{k.sub}</p>
-                </button>
-              )
-            })}
-          </div>
 
           {/* ── Próximos Casamentos (confirmar presença) | Tarefas ───── */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-in-4">
             <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Próximos Casamentos — design premium compacto */}
-            {upcomingList.length > 1 && (
+            {upcomingList.length > 0 && (
               <div className="rounded-2xl border border-white/[0.08] p-4"
                 style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
                 <div className="flex items-center justify-between mb-3 px-1">
@@ -1452,7 +1344,7 @@ function FreelancerDetailInner() {
       })()}
 
       {/* Tab content */}
-      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
+      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} etapaDe={etapaDe} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
@@ -1738,71 +1630,32 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
 
 const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
 
-/* Performance das entregas (Seleção / Provas / Editadas / Álbum).
-   Saiu do Início e vive no topo do separador Casamentos. */
-function PerformanceCard({ casamentos }: { casamentos: Casamento[] }) {
-  // ── Performance Stats — agora baseado nas 4 entregas por casamento ──
-  // Regra do utilizador:
-  //   • Conta TUDO o que está nos cards (Seleção / Provas / Editadas / Álbum)
-  //   • Quando o membro envia uma entrega (url_*_enviado_em), conta como
-  //     entregue ('no prazo' se dentro de 30 dias, 'fora prazo' se depois)
-  //   • Não enviado e prazo passou → 'fora prazo'
-  //   • Não enviado e prazo dentro do limite → 'em curso'
-  //   • Só entra o que está atribuído ao membro (todos os casamentos da
-  //     lista já estão atribuídos a este freelancer, mas filtramos
-  //     entregas que ainda nem têm URL associado — só conta se o membro
-  //     tem 'acesso' à entrega através do casamento).
+/* Performance das entregas do fotógrafo (provas 7 dias, seleção 30 dias, edição 30 dias
+   depois da seleção dos noivos, só quando é o editor), com os prazos de lib/etapasFotografo.ts.
+   Vive no topo do separador Casamentos. */
+function PerformanceCard({ casamentos, nomeMembro, fotosSelecaoMap }: { casamentos: Casamento[]; nomeMembro: string; fotosSelecaoMap: Record<string, string> }) {
   const performanceStats = (() => {
-    let onTime = 0
-    let late = 0
-    let emCurso = 0
-    let total = 0
-    let somaDias = 0
-    let contDias = 0
-    const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0)
-    const PRAZO_DIAS = 30
-
-    // Para os 4 tipos de entrega
-    const tipos: Array<'selecao' | 'provas' | 'editadas' | 'album'> = ['selecao', 'provas', 'editadas', 'album']
-
-    casamentos.forEach((c: any) => {
-      tipos.forEach(tipo => {
-        const sentAt = c[`url_${tipo}_enviado_em`]
-        const url    = c[`url_${tipo}`]
-        // Só conta entregas que estão visíveis ao membro:
-        // - Ou já têm timestamp de envio
-        // - Ou têm URL preenchido (ainda por enviar mas atribuído)
-        // - Ou o casamento já passou (prazo a correr)
-        const passou = c.data_casamento ? new Date(c.data_casamento).getTime() < todayMid.getTime() : false
-        const conta = !!sentAt || !!url || passou
-        if (!conta) return
+    let onTime = 0, late = 0, emCurso = 0, total = 0, somaDias = 0, contDias = 0
+    const hoje = new Date().toISOString().slice(0, 10)
+    casamentos.forEach(c => {
+      if (c.indisponivel) return
+      const recebida = c.referencia ? fotosSelecaoMap[c.referencia] ?? null : null
+      entregasFotografo(c, { nomeMembro, selecaoRecebida: recebida }).forEach(en => {
+        // Só conta o que já tem prazo a correr: o casamento já passou
+        if (!c.data_casamento || c.data_casamento.slice(0, 10) >= hoje) return
         total += 1
-
-        // Deadline: 30 dias após a data do casamento
-        let deadline: Date | null = null
-        if (c.data_casamento) {
-          const cas = new Date(c.data_casamento); cas.setHours(0,0,0,0)
-          deadline = new Date(cas.getTime() + PRAZO_DIAS * 86400000); deadline.setHours(0,0,0,0)
-        }
-
-        if (sentAt) {
-          const sentDate = new Date(sentAt)
-          if (deadline && sentDate.getTime() <= deadline.getTime() + 86400000) onTime += 1
-          else if (deadline) late += 1
-          else onTime += 1
-          if (c.data_casamento) {
-            const cas = new Date(c.data_casamento)
-            const dias = Math.max(0, Math.round((sentDate.getTime() - cas.getTime()) / 86400000))
-            somaDias += dias
+        if (en.feita) {
+          const enviado = en.enviadoEm?.slice(0, 10) ?? null
+          if (!enviado || enviado <= en.prazo) onTime += 1
+          else late += 1
+          if (enviado) {
+            somaDias += Math.max(0, Math.round((new Date(enviado).getTime() - new Date(c.data_casamento.slice(0, 10)).getTime()) / 86400000))
             contDias += 1
           }
-        } else {
-          if (deadline && deadline.getTime() < todayMid.getTime()) late += 1
-          else emCurso += 1
-        }
+        } else if (en.prazo < hoje) late += 1
+        else emCurso += 1
       })
     })
-
     const mediaDias = contDias > 0 ? Math.round(somaDias / contDias) : 0
     return { total, onTime, late, emCurso, mediaDias }
   })()
@@ -1906,7 +1759,7 @@ function PerformanceCard({ casamentos }: { casamentos: Casamento[] }) {
   )
 }
 
-function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap, initialExpandedId, onExpandedHandled }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => void; initialExpandedId?: string | null; onExpandedHandled?: () => void }) {
+function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap, initialExpandedId, onExpandedHandled }: { freelancerId: string; casamentos: Casamento[]; etapaDe: (c: Casamento) => EtapaInfo | null; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => void; initialExpandedId?: string | null; onExpandedHandled?: () => void }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
@@ -2040,7 +1893,10 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
   }
 
   // Filtros e pesquisa (estilo /novos-projetos)
-  const FILTER_TABS = ['Todos', 'Próximos', 'Confirmados', 'Pendentes', 'Passados'] as const
+  // Filtros pelas etapas do Fluxo de Trabalho (lib/etapasFotografo.ts)
+  const FILTER_TABS = ['Todos', 'Por confirmar', 'Próximos', 'Por entregar', 'Concluídos'] as const
+  const POR_ENTREGAR = ['provas', 'selecao', 'edicao']
+  const fotografo = freelancer?.status === 'FOTOGRAFO'
   type FilterTab = typeof FILTER_TABS[number]
   const [activeFilter, setActiveFilter] = useState<FilterTab>('Todos')
   const [search, setSearch] = useState('')
@@ -2070,18 +1926,19 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
     if (anoDe(c) && anoDe(c) !== anoSel) return false
     const dtu = daysUntil(c.data_casamento)
     const isPast = dtu !== null && dtu < 0
-    if (activeFilter === 'Próximos' && isPast) return false
-    if (activeFilter === 'Passados' && !isPast) return false
-    if (activeFilter === 'Confirmados' && !c.data_confirmada) return false
-    if (activeFilter === 'Pendentes' && (c.data_confirmada || isPast || c.indisponivel)) return false
+    const etapa = etapaDe(c)?.etapa
+    if (activeFilter === 'Por confirmar' && etapa !== 'confirmar') return false
+    if (activeFilter === 'Próximos' && (isPast || c.indisponivel)) return false
+    if (activeFilter === 'Por entregar' && !POR_ENTREGAR.includes(etapa ?? '')) return false
+    if (activeFilter === 'Concluídos' && !(isPast && (etapa === 'concluido' || etapa === 'noivos'))) return false
     if (search.trim() && !c.local.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
   const sorted = sortOption === 'Mais distantes' ? [...filtered].reverse() : filtered
 
   // Contadores
-  const totalConfirmados = casamentos.filter(c => c.data_confirmada).length
-  const totalPendentes = casamentos.filter(c => !c.data_confirmada && !c.indisponivel && (daysUntil(c.data_casamento) ?? -1) >= 0).length
+  const totalPorConfirmar = casamentos.filter(c => etapaDe(c)?.etapa === 'confirmar').length
+  const totalPorEntregar = casamentos.filter(c => POR_ENTREGAR.includes(etapaDe(c)?.etapa ?? '')).length
 
   return (
     <div className="space-y-5 fade-in-up">
@@ -2118,7 +1975,7 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
         </div>
       </div>
 
-      <PerformanceCard casamentos={casamentos} />
+      {fotografo && <PerformanceCard casamentos={casamentos} nomeMembro={freelancer?.nome ?? ''} fotosSelecaoMap={fotosSelecaoMap} />}
 
       {/* ── FILTERS BAR ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-white/[0.06] p-4 backdrop-blur-md"
@@ -2148,8 +2005,8 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                     : 'border border-white/[0.06] text-white/45 hover:text-white/80 hover:bg-white/[0.03]'
                 }`}>
                 {t}
-                {t === 'Confirmados' && totalConfirmados > 0 && <span className="ml-1.5 text-[10px] opacity-70">{totalConfirmados}</span>}
-                {t === 'Pendentes' && totalPendentes > 0 && <span className="ml-1.5 text-[10px] opacity-70">{totalPendentes}</span>}
+                {t === 'Por confirmar' && totalPorConfirmar > 0 && <span className="ml-1.5 text-[10px] opacity-70">{totalPorConfirmar}</span>}
+                {t === 'Por entregar' && totalPorEntregar > 0 && <span className="ml-1.5 text-[10px] opacity-70">{totalPorEntregar}</span>}
               </button>
             ))}
           </div>
@@ -2298,6 +2155,41 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
                   {c.data_casamento && (
                     <p className="text-[13px] text-white/55 italic mt-1" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(c.data_casamento)}</p>
                   )}
+
+                  {/* ── Etapa do Fluxo de Trabalho: 01 a 06 (03 nos videógrafos) e o próximo passo ── */}
+                  {(() => {
+                    const e = etapaDe(c)
+                    if (!e) return null
+                    const passos = fotografo ? PASSOS_FOTOGRAFO : PASSOS_FOTOGRAFO.slice(0, 3)
+                    const corAtual = e.tom === 'atraso' ? 'bg-rose-400' : e.tom === 'aviso' ? 'bg-orange-400' : 'bg-gold'
+                    const corTexto = e.tom === 'atraso' ? 'text-rose-300' : e.tom === 'aviso' ? 'text-orange-300' : 'text-gold'
+                    const estado = e.acao ? null
+                      : e.etapa === 'noivos' ? 'À espera da seleção dos noivos'
+                      : e.etapa === 'briefing' ? `Confirmado. O briefing fica disponível ${BRIEFING_DIAS} dias antes`
+                      : 'Concluído'
+                    return (
+                      <div className="mt-3 max-w-xl">
+                        <div className="flex gap-1">
+                          {passos.map((p, i) => {
+                            const n = i + 1
+                            const feito = n < e.passo
+                            const atual = n === e.passo
+                            return (
+                              <div key={p.n} className="flex-1 min-w-0" title={`${p.n} ${p.titulo}`}>
+                                <div className={`h-1 rounded-full ${feito ? 'bg-gold/60' : atual ? corAtual : 'bg-white/10'}`} />
+                                <p className={`hidden sm:block text-[9px] tracking-[0.12em] uppercase mt-1 truncate ${atual ? 'text-gold' : feito ? 'text-white/45' : 'text-white/25'}`}>{p.n} {p.titulo}</p>
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <p className="text-[12px] text-white/60 mt-2">
+                          {e.acao ? (
+                            <>Próximo passo: <span className="text-white font-semibold">{e.acao}</span>{e.dias !== null && <span className={`ml-2 font-semibold ${corTexto}`}>{textoPrazo(e)}</span>}</>
+                          ) : estado}
+                        </p>
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 {/* Meta grid */}

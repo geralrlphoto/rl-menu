@@ -288,15 +288,15 @@ html.js .is-in .r{opacity:1;transform:none;}
         ['Provas em falta: enviar até 7 dias após o evento','Só se não foram enviadas no próprio dia'],
         ['Aplicar marca de água nas provas','Sem marca de água não seguem'],
         ['Enviar as provas para fotos.rlphoto@gmail.com','E colar o link no campo Fotos prova da ficha'],
-        ['Registar no calendário o prazo dos 20 dias da seleção']
+        ['Registar no calendário o prazo dos 30 dias da seleção']
       ]
     },
     {
-      n:'05', t:'Seleção de fotos', when:'Até 20 dias após o casamento', mark:'S',
-      d:'Entre 1500 e 3000 fotos, organizadas por pastas, entregues até 20 dias após o casamento.',
-      intro:'A seleção deve ter <strong>entre 1500 e 3000 fotografias</strong> — se forem mais, não há problema. Envia sempre <strong>organizada por pastas</strong>, como temos feito. Prazo: <strong>até 20 dias após o casamento</strong>. Depois envia para <strong>fotos.rlphoto@gmail.com</strong> e coloca o link da transferência na ficha do casamento, em <strong>Seleção de fotos</strong>.',
+      n:'05', t:'Seleção de fotos', when:'Até 30 dias após o casamento', mark:'S',
+      d:'Entre 1500 e 3000 fotos, organizadas por pastas, entregues até 30 dias após o casamento.',
+      intro:'A seleção deve ter <strong>entre 1500 e 3000 fotografias</strong> — se forem mais, não há problema. Envia sempre <strong>organizada por pastas</strong>, como temos feito. Prazo: <strong>até 30 dias após o casamento</strong>. Depois envia para <strong>fotos.rlphoto@gmail.com</strong> e coloca o link da transferência na ficha do casamento, em <strong>Seleção de fotos</strong>.',
       tools:['Lightroom ou Photo Mechanic','Estrutura de pastas por momentos','Ficha do casamento no portal'],
-      warn:'Passar dos 20 dias ou enviar tudo numa pasta única sem organização. Atrasa toda a produção a jusante.',
+      warn:'Passar dos 30 dias ou enviar tudo numa pasta única sem organização. Atrasa toda a produção a jusante.',
       tasks:[
         ['Importar e organizar por momentos do dia'],
         ['Primeira passagem: eliminar erros técnicos','Desfocadas, olhos fechados, exposições perdidas'],
@@ -305,15 +305,15 @@ html.js .is-in .r{opacity:1;transform:none;}
         ['Garantir cobertura de todos os momentos do cronograma'],
         ['Confirmar fotos de família: pais, avós e padrinhos'],
         ['Organizar a seleção por pastas','Mesma estrutura que usamos sempre'],
-        ['Cumprir o prazo de 20 dias após o casamento'],
+        ['Cumprir o prazo de 30 dias após o casamento'],
         ['Enviar a seleção para fotos.rlphoto@gmail.com'],
         ['Colar o link da transferência na ficha do casamento','No campo Seleção de fotos']
       ]
     },
     {
-      n:'06', t:'Edição de fotos', when:'Notificação de novo trabalho · 30 dias úteis', mark:'E',
-      d:'Recebes notificação de nomeação para o trabalho. Edição em 30 dias úteis, entregue por pastas.',
-      intro:'Recebes uma <strong>notificação de novo trabalho</strong> a informar que foste nomeado para a edição. A partir daí tens <strong>30 dias úteis</strong> para a concluir. Depois envia por email para <strong>fotos.rlphoto@gmail.com</strong>, com a edição <strong>dividida por pastas</strong>, e coloca o link na ficha do casamento, no campo <strong>Fotos editadas</strong>.',
+      n:'06', t:'Edição de fotos', when:'Notificação de novo trabalho · 30 dias', mark:'E',
+      d:'Recebes notificação de nomeação para o trabalho. Edição em 30 dias depois de chegar a seleção dos noivos, entregue por pastas.',
+      intro:'Recebes uma <strong>notificação de novo trabalho</strong> a informar que foste nomeado para a edição. Tens <strong>30 dias</strong> para a concluir, contados a partir do dia em que chega a seleção dos noivos. Depois envia por email para <strong>fotos.rlphoto@gmail.com</strong>, com a edição <strong>dividida por pastas</strong>, e coloca o link na ficha do casamento, no campo <strong>Fotos editadas</strong>.',
       tools:['Notificação de nomeação','Presets ou perfis próprios','Ficha do casamento no portal'],
       dress:{
         t:'Preto e branco e edições ousadas',
@@ -322,7 +322,7 @@ html.js .is-in .r{opacity:1;transform:none;}
       warn:'Editar cada fotografia isoladamente. A galeria fica com saltos de cor e perde a leitura de um dia único.',
       tasks:[
         ['Abrir a notificação de nomeação para o trabalho'],
-        ['Confirmar o prazo: 30 dias úteis a partir da nomeação'],
+        ['Confirmar o prazo: 30 dias a partir da seleção dos noivos','Dias seguidos, contam também fins de semana e feriados'],
         ['Definir o tom base numa fotografia de referência'],
         ['Editar por blocos de luz e local','Não fotografia a fotografia: a coerência é o que se nota'],
         ['Uniformizar exposição e temperatura dentro de cada bloco'],
@@ -331,7 +331,7 @@ html.js .is-in .r{opacity:1;transform:none;}
         ['Rever tudo a 100% em monitor calibrado'],
         ['Exportar e organizar a edição por pastas','Mesma estrutura de pastas da seleção'],
         ['Revisão final como se fosses o cliente','Vê do início ao fim, de uma vez, sem interrupções'],
-        ['Enviar a edição por email para fotos.rlphoto@gmail.com','Dentro dos 30 dias úteis'],
+        ['Enviar a edição por email para fotos.rlphoto@gmail.com','Dentro dos 30 dias'],
         ['Colar o link na ficha do casamento','No campo Fotos editadas']
       ]
     }
