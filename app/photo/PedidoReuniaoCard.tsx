@@ -155,7 +155,7 @@ export default function PedidoReuniaoCard({ p, opcao }: { p: PedidoReuniao; opca
                   <p><span className="text-white">{longa(aceite.data)} às {aceite.hora}</span> · {aceite.tipo === 'Presencial' ? 'No estúdio' : 'Videochamada'}</p>
                   <p>Ficha: marcação preenchida</p>
                   <p>Portal publicado: <a href={aceite.portalUrl} target="_blank" rel="noopener noreferrer" className="text-[#d8be93] underline underline-offset-2">abrir</a></p>
-                  <p>Password das propostas: <span className="text-white font-semibold tracking-wider">{aceite.password}</span></p>
+                  <p>Password das propostas (só para ti, não vai na mensagem): <span className="text-white font-semibold tracking-wider">{aceite.password}</span></p>
                 </div>
 
                 <p className="mt-5 text-[11px] font-medium tracking-[0.2em] uppercase text-white/40">Mensagem para os noivos</p>

@@ -9,7 +9,8 @@ import { linkPublico } from '@/lib/site-url'
 /* Pedido de reunião (feito em /reuniao) aceite no calendário do /photo.
    POST { id, data, hora, tipo }: a opção pedida ("Aceitar") ou outro horário ("Agendar").
    Preenche a Marcação de Reunião da ficha, publica o portal da reunião com password nas
-   propostas e devolve a mensagem de WhatsApp pronta para os noivos. */
+   propostas e devolve a mensagem de WhatsApp pronta para os noivos (sem a password, que é só
+   para a RL e aparece apenas na janela do admin). */
 
 type Opcao = { data: string; hora: string }
 
@@ -61,6 +62,6 @@ export async function POST(req: NextRequest) {
   const quando = `${fmtDataLonga(data)}, às ${hora}`
   return NextResponse.json({
     ok: true, nome: c.nome ?? '', contato: c.contato ?? '', data, hora, tipo, portalUrl, password,
-    mensagem: mensagemReuniaoConfirmada(c.nome, quando, tipo, portalUrl, password),
+    mensagem: mensagemReuniaoConfirmada(c.nome, quando, tipo, portalUrl),
   })
 }

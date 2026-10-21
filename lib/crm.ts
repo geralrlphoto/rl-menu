@@ -153,8 +153,9 @@ export function mensagemLembreteReuniao(nome: string | null | undefined, hora?: 
   ].join('\n')
 }
 
-/* Pedido de reunião aceite (calendário do /photo): data, formato, portal e password das propostas */
-export function mensagemReuniaoConfirmada(nome: string | null | undefined, quando: string, tipo: string, portalUrl: string, password: string): string {
+/* Pedido de reunião aceite (calendário do /photo): data, formato e portal.
+   A password das propostas é só para a RL: nunca vai na mensagem. */
+export function mensagemReuniaoConfirmada(nome: string | null | undefined, quando: string, tipo: string, portalUrl: string): string {
   const quem = (nome ?? '').trim()
   const presencial = tipo === 'Presencial'
   return [
@@ -168,7 +169,6 @@ export function mensagemReuniaoConfirmada(nome: string | null | undefined, quand
     presencial
       ? 'No portal encontram a localização do estúdio e, na altura certa, as nossas propostas.'
       : 'No portal encontram o link de acesso à reunião e, na altura certa, as nossas propostas.',
-    `A password das propostas é: ${password}`,
     ...(presencial ? [] : ['', 'Recomendamos que assistam através de um computador, para uma melhor experiência.']),
     '',
     'Até breve!',
