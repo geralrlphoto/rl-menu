@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { exigeAdmin, cabecalhoInterno } from '@/lib/api-guard'
 import { aplicarEstadoAlbum, ESTADOS_ALBUM, type EstadoAlbum } from '@/lib/albumEstado'
+import { PRAZO_ALBUM_EDITOR_DIAS } from '@/lib/etapasFotografo'
 
 // Departamento de Fotografia › Álbuns (/edicao-fotografia/albuns).
 // GET: os álbuns (albuns_casamento) com o editor (evento_equipa.editor_album), a
@@ -11,7 +12,6 @@ import { aplicarEstadoAlbum, ESTADOS_ALBUM, type EstadoAlbum } from '@/lib/album
 // POST { referencia, estado, nota?, url? }: a RL muda o estado (lib/albumEstado.ts);
 //   url = o link que a RL cria para os noivos (Entregue aos noivos).
 
-const PRAZO_MAQUETA_DIAS = 30
 const ENTREGUES_RECENTES = 90
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 const arr = (v: unknown): string[] => Array.isArray(v) ? v.filter(Boolean).map(String) : (typeof v === 'string' && v.trim() ? [v.trim()] : [])
@@ -72,10 +72,11 @@ export async function GET(req: NextRequest) {
     const editores = eqPorRef.get(a.ref_evento) ?? eqPorRef.get(ref) ?? []
     const pt = ptPorRef.get(a.ref_evento) ?? ptPorRef.get(ref)
     const estado = (ESTADOS_ALBUM as readonly string[]).includes(a.status) ? a.status as EstadoAlbum : 'NOVO ÁLBUM'
-    // prazo: maqueta (seleção + 30 dias) enquanto se edita; produção depois de aprovado
+    // prazo: maqueta (seleção + 30 dias) até o editor a entregar; produção depois de aprovado
+    const maquetaEntregue = typeof pt?.maquete_editor_url === 'string' && !!pt.maquete_editor_url
     const base = a.data_entrega_fotos ? String(a.data_entrega_fotos).slice(0, 10) : (p?.recebida ?? null)
     const prazo = estado === 'APROVADO' ? (a.data_prevista_entrega ? String(a.data_prevista_entrega).slice(0, 10) : null)
-      : ['NOVO ÁLBUM', 'EM EDIÇÃO', 'ALTERAÇÕES'].includes(estado) ? (a.prazo_maquete ? String(a.prazo_maquete).slice(0, 10) : base ? mais(base, PRAZO_MAQUETA_DIAS) : null)
+      : ['NOVO ÁLBUM', 'EM EDIÇÃO', 'ALTERAÇÕES'].includes(estado) && !maquetaEntregue ? (a.prazo_maquete ? String(a.prazo_maquete).slice(0, 10) : base ? mais(base, PRAZO_ALBUM_EDITOR_DIAS) : null)
       : null
     return {
       id: a.id, referencia: ref, nome: a.nome, cliente: p?.cliente ?? ev?.cliente ?? a.nome, data: p?.data ?? ev?.data_evento ?? null,

@@ -50,7 +50,7 @@ export async function GET(req: NextRequest) {
           .from('portais')
           // JSON-path select — só os 5 campos usados abaixo, em vez do `settings`
           // inteiro (poupa egress; esta rota é do painel freelancer, tráfego alto).
-          .select('referencia, alertas_fotografia_ativos:settings->alertas_fotografia_ativos, status_selecao:settings->>status_selecao, status_provas:settings->>status_provas, status_editadas:settings->>status_editadas, status_album:settings->>status_album, galerias_enviada:settings->>galerias_enviada, selecao_enviada:settings->>selecao_enviada, selecao_recebida:settings->>selecao_recebida, fotos_finais_enviada:settings->>fotos_finais_enviada')
+          .select('referencia, alertas_fotografia_ativos:settings->alertas_fotografia_ativos, status_selecao:settings->>status_selecao, status_provas:settings->>status_provas, status_editadas:settings->>status_editadas, status_album:settings->>status_album, galerias_enviada:settings->>galerias_enviada, selecao_enviada:settings->>selecao_enviada, selecao_recebida:settings->>selecao_recebida, fotos_finais_enviada:settings->>fotos_finais_enviada, maquete_editor_url:settings->>maquete_editor_url')
           .in('referencia', refsPortais)
         portaisRows = pr ?? []
       }
@@ -134,6 +134,8 @@ export async function GET(req: NextRequest) {
         c.rl_selecao_recebida     = portalSettings.selecao_recebida ?? null
         c.rl_fotos_finais_enviada = portalSettings.fotos_finais_enviada ?? null
         c.rl_sel_fotos_estado     = ev?.sel_fotos_estado ?? null
+        // Só se a maqueta do álbum já foi entregue pelo editor (o link fica só com a RL)
+        c.rl_maquete_entregue     = !!portalSettings.maquete_editor_url
 
         // ── EQUIPA (editor_fotos, editor_album, editor_video) ──
         let eq: any = c.referencia ? equipaByRef.get(c.referencia) : null

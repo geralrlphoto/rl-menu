@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget } from '@/app/components/FreelancerWidgets'
-import { etapaFotografo, entregasFotografo, nomeado, PASSOS_FOTOGRAFO, BRIEFING_DIAS, textoPrazo, PRAZO_SELECAO_DIAS, PRAZO_EDICAO_DIAS, AVISO_DIAS, type EtapaInfo } from '@/lib/etapasFotografo'
+import { etapaFotografo, entregasFotografo, nomeado, PASSOS_FOTOGRAFO, BRIEFING_DIAS, textoPrazo, PRAZO_SELECAO_DIAS, PRAZO_EDICAO_DIAS, PRAZO_ALBUM_EDITOR_DIAS, AVISO_DIAS, type EtapaInfo } from '@/lib/etapasFotografo'
 import { EnviarMaqueta } from '@/app/components/EnviarMaqueta'
 import './fl-novo.css'
 
@@ -387,8 +387,8 @@ function FreelancerDetailInner() {
   //   Prazos do Departamento de Fotografia (lib/etapasFotografo.ts):
   //   Seleção de Fotos:   30 dias após o evento
   //   Fotos Editadas:     30 dias após os noivos enviarem fotos (fotos_selecao.data_entrada), só para o editor nomeado
-  //   Maquete Álbum:      30 dias após os noivos enviarem fotos, só para o editor do álbum nomeado
-  const PRAZO_ALBUM_DIAS   = 30
+  //   Maquete Álbum:      30 dias após os noivos enviarem fotos, só para o editor do álbum nomeado;
+  //                       acaba quando ele entrega a maqueta (mesmo que haja alterações depois)
   const PRAZO_AVISO_DIAS = AVISO_DIAS
   type PrazoEntry = { c: Casamento; deadline: Date; daysLeft: number; tipo: 'selecao' | 'edicao' | 'album' }
   function parseDateLocal(s: string | null | undefined): Date | null {
@@ -430,11 +430,13 @@ function FreelancerDetailInner() {
           }
         }
         // 3) Maquete Álbum — mesma data de partida que Fotos Editadas (fotos_selecao.data_entrada)
-        if (c.referencia && nomeado(c.editor_album, freelancer?.nome ?? '') && !c.url_album_enviado_em && c.status_album !== 'ENTREGUE') {
+        const albumEntregue = !!c.url_album_enviado_em || !!(c as any).rl_maquete_entregue
+          || album.some(a => a.referencia_album === c.referencia && ['EM APROVAÇÃO', 'APROVADO', 'ENTREGUE'].includes(a.status))
+        if (c.referencia && nomeado(c.editor_album, freelancer?.nome ?? '') && !albumEntregue && c.status_album !== 'ENTREGUE') {
           const dataEntrada = fotosSelecaoMap[c.referencia]
           const dEntrada = parseDateLocal(dataEntrada)
           if (dEntrada && dEntrada.getTime() <= today.getTime()) {
-            const deadline = new Date(dEntrada.getTime() + PRAZO_ALBUM_DIAS * 86400000)
+            const deadline = new Date(dEntrada.getTime() + PRAZO_ALBUM_EDITOR_DIAS * 86400000)
             const daysLeft = Math.ceil((deadline.getTime() - today.getTime()) / 86400000)
             out.push({ c, deadline, daysLeft, tipo: 'album' })
           }
@@ -2412,6 +2414,7 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                           null
                         }
                         lockedReason={lockedReason}
+                        maquetaEntregue={field.tipo === 'album' && !!(c as any).rl_maquete_entregue}
                         isAdmin={!viewAsFreelancer}
                         onRefresh={onRefresh}
                       />
@@ -9793,6 +9796,7 @@ function UrlEntryCard({
   initialSentAt,
   initialStatus,
   lockedReason,
+  maquetaEntregue,
   isAdmin,
   onRefresh,
 }: {
@@ -9807,6 +9811,7 @@ function UrlEntryCard({
   initialSentAt: string | null
   initialStatus?: string | null
   lockedReason?: string | null
+  maquetaEntregue?: boolean
   isAdmin?: boolean
   onRefresh: () => void
 }) {
@@ -9994,9 +9999,9 @@ function UrlEntryCard({
   // ── Aviso de prazo ────────────────────────────────────────────
   //   - Seleção de Fotos: 30 dias após o evento (casamentoData)
   //   - Fotos Editadas:   30 dias após os noivos enviarem (fotosDataEntrada)
-  //   - Maquete Álbum:    30 dias após os noivos enviarem (fotosDataEntrada)
+  //   - Maquete Álbum:    30 dias após os noivos enviarem (fotosDataEntrada); acaba quando a maqueta é entregue
   const deadlineNotice = (() => {
-    if (sentAt) return null
+    if (sentAt || maquetaEntregue) return null
     let baseDateStr: string | null = null
     if (field.tipo === 'selecao') baseDateStr = casamentoData
     else if (field.tipo === 'editadas' || field.tipo === 'album') baseDateStr = fotosDataEntrada ?? null

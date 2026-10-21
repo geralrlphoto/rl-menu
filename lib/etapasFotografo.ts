@@ -9,6 +9,10 @@ export const PRAZO_CONFIRMAR_HORAS = 48
 export const PRAZO_PROVAS_DIAS = 7
 export const PRAZO_SELECAO_DIAS = 30
 export const PRAZO_EDICAO_DIAS = 30
+// Maqueta do álbum: 30 dias depois de chegar a seleção dos noivos, só para o editor do álbum.
+// O prazo acaba quando o editor entrega a maqueta (portais.settings.maquete_editor_url),
+// mesmo que depois os noivos peçam alterações. Usado no portal do membro e no quadro de álbuns.
+export const PRAZO_ALBUM_EDITOR_DIAS = 30
 export const AVISO_DIAS = 5        // laranja nos últimos 5 dias; as provas só ficam vermelhas quando passam
 export const BRIEFING_DIAS = 3     // o briefing fica disponível 3 dias antes
 const INICIO_PRAZOS = '2026-01-01' // só entram casamentos desde 2026
