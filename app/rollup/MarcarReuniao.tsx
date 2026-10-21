@@ -34,10 +34,11 @@ function diasUteis(): string[] {
   return out
 }
 
-export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoInicial }: {
+export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoInicial, onPasso }: {
   dataCasamento: string; leadId?: string
   origem?: 'link'          // página pública /reuniao (a lead fica com "Link de marcação")
   abertoInicial?: boolean  // calendário já aberto, sem ter de tocar no botão
+  onPasso?: (passo: number) => void // 0 horário, 1 dados, 2 confirmar, 3 feito (fotogramas da /reuniao)
 }) {
   const [aberto, setAberto] = useState(!!leadId || !!abertoInicial)
   const [slots, setSlots] = useState<Slot[] | null>(null)
@@ -78,6 +79,9 @@ export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoIni
   const escolhido = (slots ?? []).find(s => s.id === slotId)
   const opcaoDoDia = opcoes.find(o => o.data === dia)?.hora
   const dadosOk = !!leadId || nome.trim().length >= 2 && tel.replace(/\D/g, '').length >= 9
+  const temHorario = outro ? opcoes.length > 0 : !!slotId
+  const passo = reserva || pedidoOk ? 3 : !temHorario ? 0 : dadosOk ? 2 : 1
+  useEffect(() => { onPasso?.(passo) }, [passo]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function mudarModo(novo: boolean) {
     setOutro(novo); setSlotId(''); setOpcoes([]); setErro('')
