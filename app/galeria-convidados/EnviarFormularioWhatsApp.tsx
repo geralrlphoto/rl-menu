@@ -27,15 +27,15 @@ export default function EnviarFormularioWhatsApp() {
   return (
     <div className="relative">
       <button type="button" onClick={() => setAberto(a => !a)}
-        className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-[12px] font-bold tracking-wider uppercase transition-all"
-        style={{ background: '#c8a866', color: '#0b0a08', boxShadow: '0 0 24px -6px rgba(200,168,102,0.6)' }}>
-        ＋ Formulário de Fotos
+        className="inline-flex items-center gap-2.5 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-3 text-[14px] font-semibold tracking-[0.16em] uppercase text-white transition-all">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="2.4" strokeLinecap="round" className="w-4 h-4" aria-hidden><path d="M12 5v14M5 12h14" /></svg>
+        Formulário de Fotos
         <span className={`text-[10px] transition-transform ${aberto ? 'rotate-180' : ''}`}>▾</span>
       </button>
 
       {aberto && (
-        <div className="absolute right-0 mt-2 w-72 z-20 rounded-xl p-4 space-y-3"
-          style={{ background: '#1a130c', border: '1px solid rgba(200,168,102,0.3)', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' }}>
+        <div className="absolute left-0 mt-2 w-72 z-20 rounded-[22px] p-4 space-y-3 backdrop-blur-xl"
+          style={{ background: 'rgba(17,17,17,0.92)', border: '1px solid rgba(201,168,76,0.3)', boxShadow: '0 0 48px -22px rgba(201,168,76,0.5), 0 10px 30px rgba(0,0,0,0.5)' }}>
           <a href="/adquirir-fotografias" target="_blank" rel="noopener noreferrer"
             className="block text-center px-4 py-2.5 rounded-lg text-[12px] font-bold tracking-wider uppercase border border-white/15 text-white/70 hover:border-[#c8a866] hover:text-[#c8a866] transition-all">
             Abrir formulário
