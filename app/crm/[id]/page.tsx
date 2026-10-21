@@ -260,6 +260,20 @@ export default function ClientePage() {
     setComentarioAuto({ linhas: r.comentario, em: new Date().toISOString(), recomendada: r.recomendada })
   }
 
+  // Disponibilidade: eventos já marcados no mesmo dia (eventos_2026, a mesma fonte do Novo Lead)
+  const [noMesmoDia, setNoMesmoDia] = useState<{ cliente: string; local: string }[] | null>(null)
+  useEffect(() => {
+    const dia = (form.data_casamento || '').slice(0, 10)
+    if (!dia) { setNoMesmoDia(null); return }
+    // O casamento deste casal (quando já fechou) não conta: compara os nomes sem maiúsculas, acentos nem "&"
+    const norm = (s: string) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&/g, ' e ').replace(/\s+/g, ' ').trim()
+    const proprio = norm(form.nome || '')
+    supabase.from('eventos_2026').select('cliente, referencia, local').eq('data_evento', dia)
+      .then(({ data }) => setNoMesmoDia((data || [])
+        .filter(e => !proprio || norm(e.cliente || '') !== proprio)
+        .map(e => ({ cliente: (e.cliente || e.referencia || 'Evento').trim(), local: (e.local || '').trim() }))))
+  }, [form.data_casamento, form.nome])
+
   const originalPc = typeof original.page_content === 'string'
     ? JSON.parse(original.page_content || '{}')
     : (original.page_content || {})
@@ -572,6 +586,31 @@ export default function ClientePage() {
                 </div>
               ))}
             </div>
+            {/* Disponibilidade da data: há mais algum casamento marcado nesse dia? */}
+            {dataCas && noMesmoDia && (
+              <div className="mt-2 pt-3 border-t border-white/[0.07]">
+                {noMesmoDia.length === 0 ? (
+                  <p className="flex items-center gap-2 text-[13px] font-semibold text-green-300/90">
+                    <span className="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_#4ade80]" />
+                    Data livre: nenhum outro casamento neste dia
+                  </p>
+                ) : (
+                  <>
+                    <p className="flex items-center gap-2 text-[13px] font-semibold text-amber-300">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_8px_#fbbf24]" />
+                      Já tens {noMesmoDia.length} {noMesmoDia.length === 1 ? 'casamento' : 'casamentos'} neste dia
+                    </p>
+                    <ul className="mt-1.5 flex flex-col gap-0.5">
+                      {noMesmoDia.map((e, i) => (
+                        <li key={i} className="text-[12px] text-white/60 truncate" title={`${e.cliente}${e.local ? ` · ${e.local}` : ''}`}>
+                          {e.cliente}{e.local ? <span className="text-white/35"> · {e.local}</span> : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
+            )}
           </aside>
         </div>
       </section>
