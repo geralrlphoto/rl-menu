@@ -2,28 +2,28 @@
    /social-media/blog — estilo Atmosphère, tokens do Menu Geral
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400&display=swap');
 
 .blg-page {
-  --bg: #120d08;
-  --surface: #1e1812;
-  --surface-2: #181410;
-  --gold: #c8a866;
-  --gold-soft: #d7bd87;
+  --bg: #070707;
+  --surface: #141414;
+  --surface-2: #0f0f0f;
+  --gold: #C9A84C;
+  --gold-soft: #d8be93;
   --gold-deep: #9c7c47;
   --gold-faint: rgba(200, 168, 102, 0.16);
   --gold-line: rgba(200, 168, 102, 0.22);
-  --ink: #efe7d6;
-  --ink-2: #c3b8a3;
-  --ink-3: #8c8170;
-  --ink-4: #5f574b;
-  --line: rgba(239, 231, 214, 0.10);
-  --line-2: rgba(239, 231, 214, 0.06);
+  --ink: #ffffff;
+  --ink-2: rgba(255,255,255,0.75);
+  --ink-3: rgba(255,255,255,0.5);
+  --ink-4: rgba(255,255,255,0.32);
+  --line: rgba(255,255,255,0.09);
+  --line-2: rgba(255,255,255,0.05);
 
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
-  font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  font-family: 'Roboto Condensed', system-ui, -apple-system, sans-serif;
   padding: 28px clamp(20px, 4vw, 48px) 96px;
   max-width: 980px;
   margin: 0 auto;
@@ -50,7 +50,7 @@
   background: rgba(200, 168, 102, 0.08);
 }
 .blg-back .chev {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 16px; color: var(--gold); line-height: 1;
 }
 
@@ -62,7 +62,7 @@
   color: var(--gold); margin: 0 0 14px;
 }
 .blg-h1 {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-weight: 400;
   font-size: clamp(36px, 6vw, 56px);
   line-height: 1.0;
@@ -72,7 +72,7 @@
   margin: 0 0 18px;
 }
 .blg-h1 em {
-  font-style: italic;
+  font-style: normal;
   color: var(--gold-soft);
   font-weight: 400;
 }
@@ -88,7 +88,7 @@
   color: var(--ink-3);
 }
 .blg-lede em {
-  font-style: italic; color: var(--gold-soft);
+  font-style: normal; color: var(--gold-soft);
 }
 .blg-stats {
   display: inline-flex; gap: 48px;
@@ -99,8 +99,8 @@
 }
 .blg-stat { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .blg-stat-n {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400; font-style: italic;
+  font-family: 'Jost', sans-serif; font-weight: 300;
+  font-weight: 400; font-style: normal;
   font-size: 28px; color: var(--gold-soft); line-height: 1;
 }
 .blg-stat-l {
@@ -147,7 +147,7 @@
   color: var(--ink-3);
 }
 .blg-empty-text em {
-  font-style: italic;
+  font-style: normal;
   color: var(--gold-soft);
   margin: 0 4px;
 }
@@ -200,7 +200,7 @@
   margin: 0 0 8px;
 }
 .blg-social-text {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 13.5px; line-height: 1.65;
   color: var(--ink-2);
   background: rgba(255, 255, 255, 0.02);
@@ -215,7 +215,7 @@
   font-size: 12px;
   color: var(--gold-deep);
   font-weight: 500;
-  font-style: italic;
+  font-style: normal;
 }
 
 /* ============================================================
@@ -303,7 +303,7 @@
   color: var(--gold); margin: 0 0 6px;
 }
 .ai-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-weight: 400; font-size: 26px;
   color: var(--ink); margin: 0;
 }
@@ -375,7 +375,7 @@
 
 .ai-btn-primary {
   width: 100%;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 13px; font-weight: 700;
   letter-spacing: 0.22em; text-transform: uppercase;
   padding: 14px 22px;
@@ -396,7 +396,7 @@
 .ai-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .ai-btn-ghost {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 11px; font-weight: 600;
   letter-spacing: 0.18em; text-transform: uppercase;
   padding: 8px 14px;
@@ -444,8 +444,8 @@
 }
 .ai-topic:disabled { cursor: not-allowed; opacity: 0.7; }
 .ai-topic-num {
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic; font-size: 24px;
+  font-family: 'Jost', sans-serif; font-weight: 300;
+  font-style: normal; font-size: 24px;
   color: var(--gold-deep);
   flex: none; min-width: 26px;
 }
@@ -456,7 +456,7 @@
   color: var(--gold);
 }
 .ai-topic-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 17px; font-weight: 500;
   color: var(--ink);
   line-height: 1.25;
@@ -467,7 +467,7 @@
   line-height: 1.55;
 }
 .ai-topic-arrow {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 24px;
   color: var(--gold);
 }
@@ -511,13 +511,13 @@
   color: var(--gold); margin: 0 0 10px;
 }
 .ai-article-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-weight: 400; font-size: 22px;
   color: var(--ink); margin: 0 0 8px;
   line-height: 1.25;
 }
 .ai-article-subtitle {
-  font-style: italic; font-size: 13.5px;
+  font-style: normal; font-size: 13.5px;
   color: var(--ink-3); margin: 0 0 18px;
 }
 .ai-article-body p {
@@ -528,7 +528,7 @@
 .ai-article-body strong { color: var(--ink); }
 .ai-article-seo {
   margin: 12px 0; font-size: 11px;
-  color: var(--ink-4); font-style: italic;
+  color: var(--ink-4); font-style: normal;
 }
 .ai-article-seo strong {
   font-style: normal;
@@ -545,7 +545,7 @@
 }
 .ai-social-label:first-child { margin-top: 0; }
 .ai-social-text {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 13px; line-height: 1.65;
   color: var(--ink-2);
   background: rgba(10, 6, 0, 0.6);
@@ -604,8 +604,8 @@
 }
 .blg-head:hover { background: rgba(200, 168, 102, 0.04); }
 .blg-num {
-  font-family: 'Cormorant Garamond', serif;
-  font-weight: 400; font-style: italic;
+  font-family: 'Jost', sans-serif; font-weight: 300;
+  font-weight: 400; font-style: normal;
   font-size: 26px;
   color: var(--gold-deep);
   flex: none; min-width: 32px; line-height: 1.1;
@@ -621,7 +621,7 @@
 .blg-dot { color: var(--ink-4); }
 .blg-read { color: var(--ink-4); letter-spacing: 0.12em; }
 .blg-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-weight: 400;
   font-size: clamp(18px, 2.6vw, 24px);
   line-height: 1.25;
@@ -630,12 +630,12 @@
 }
 .blg-subtitle {
   margin: 6px 0 0;
-  font-style: italic;
+  font-style: normal;
   font-size: 13.5px;
   color: var(--ink-3);
 }
 .blg-chev {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 28px;
   line-height: 1;
   color: var(--gold-deep);
@@ -669,7 +669,7 @@
 }
 .blg-btn {
   display: inline-flex; align-items: center;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 11px; font-weight: 600;
   letter-spacing: 0.18em; text-transform: uppercase;
   padding: 9px 16px;
@@ -724,10 +724,10 @@
   margin: 0;
   font-size: 11px;
   color: var(--ink-4);
-  font-style: italic;
+  font-style: normal;
 }
 .blg-keywords span {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-style: normal;
   font-weight: 600;
   letter-spacing: 0.22em;
@@ -751,7 +751,7 @@
   color: var(--gold); margin: 0 0 10px;
 }
 .blg-foot-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-weight: 400;
   font-size: clamp(22px, 3vw, 30px);
   color: var(--ink);
@@ -765,7 +765,7 @@
   color: var(--ink-3);
 }
 .blg-foot-desc em {
-  font-style: italic;
+  font-style: normal;
   color: var(--gold-soft);
   margin: 0 4px;
 }
@@ -821,8 +821,8 @@
   white-space: nowrap;
 }
 .blg-photo-desc {
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
+  font-family: 'Jost', sans-serif; font-weight: 300;
+  font-style: normal;
   font-size: 15.5px;
   line-height: 1.55;
   color: var(--ink, #efe7d6);
@@ -861,12 +861,12 @@
   align-items: center;
   gap: 12px;
   margin: 0 0 4px;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 18px;
   color: var(--ink, #efe7d6);
 }
 .ai-photos-tag {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 9.5px;
   letter-spacing: 0.32em;
   text-transform: uppercase;
@@ -935,7 +935,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 10px;
   letter-spacing: 0.24em;
   font-weight: 600;
@@ -975,7 +975,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.28em;
@@ -1014,7 +1014,7 @@
   gap: 10px;
 }
 .ai-theme-pill {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.32em;
