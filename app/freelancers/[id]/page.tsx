@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef, Suspense } from 'rea
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
-import { TasksWidget, MiniCalendar } from '@/app/components/FreelancerWidgets'
+import { TasksWidget } from '@/app/components/FreelancerWidgets'
 import { EnviarMaqueta } from '@/app/components/EnviarMaqueta'
 import './fl-novo.css'
 
@@ -315,40 +315,8 @@ function FreelancerDetailInner() {
   const [fotosSelecaoMap, setFotosSelecaoMap] = useState<Record<string, string>>({})
   // Mapa referencia → { email, ctt, listas, workflows } para "Fotos Convidados"
   const [fotosConvidadosMap, setFotosConvidadosMap] = useState<Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>>({})
-  // Datas das tarefas (do localStorage) — para marcar no MiniCalendar
-  const [taskDates, setTaskDates] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Lê datas das tarefas do localStorage e refresca em focus
-  useEffect(() => {
-    if (!id) return
-    function loadTaskDates() {
-      try {
-        const raw = localStorage.getItem(`freelancer_${id}_tasks`)
-        const tasks: any[] = raw ? JSON.parse(raw) : []
-        const dates = tasks
-          .map(t => t?.dueDate)
-          .filter((d): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}/.test(d))
-          .map(d => d.slice(0, 10))
-        setTaskDates(Array.from(new Set(dates)))
-      } catch { setTaskDates([]) }
-    }
-    loadTaskDates()
-    const onFocus = () => loadTaskDates()
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === `freelancer_${id}_tasks`) loadTaskDates()
-    }
-    window.addEventListener('focus', onFocus)
-    window.addEventListener('storage', onStorage)
-    // Polling leve para refletir alterações na mesma aba (TarefasTab muda localStorage
-    // mas storage event não dispara no mesmo window que escreveu)
-    const iv = setInterval(loadTaskDates, 3000)
-    return () => {
-      window.removeEventListener('focus', onFocus)
-      window.removeEventListener('storage', onStorage)
-      clearInterval(iv)
-    }
-  }, [id])
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -782,117 +750,7 @@ function FreelancerDetailInner() {
         const primeiroNome = (freelancer?.nome ?? '').split(' ')[0] || ''
         const totalCasamentos = casamentos.length
         const totalEmEdicao = edicao.filter(e => e.status === 'EM EDIÇÃO').length
-        const totalConcluidos = edicao.filter(e => e.status === 'CONCLUÍDO').length
         const totalAguardando = edicao.filter(e => e.status === 'NOVO TRABALHO').length
-        // Regra: só contam pagamentos ligados a casamentos atribuídos.
-        // 'Se não tem eventos, não houve pagamento.'
-        const casamentoIdsSet = new Set(casamentos.map(c => c.id))
-        const totalRecebido = pagamentos
-          .filter(p => p.status === 'PAGO' && p.casamento_id && casamentoIdsSet.has(p.casamento_id))
-          .reduce((s, p) => s + (Number(p.valor) || 0), 0)
-        const totalRecebidoLabel = totalRecebido.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €'
-        const anoAtual = new Date().getFullYear()
-
-        // ── Performance Stats — agora baseado nas 4 entregas por casamento ──
-        // Regra do utilizador:
-        //   • Conta TUDO o que está nos cards (Seleção / Provas / Editadas / Álbum)
-        //   • Quando o membro envia uma entrega (url_*_enviado_em), conta como
-        //     entregue ('no prazo' se dentro de 30 dias, 'fora prazo' se depois)
-        //   • Não enviado e prazo passou → 'fora prazo'
-        //   • Não enviado e prazo dentro do limite → 'em curso'
-        //   • Só entra o que está atribuído ao membro (todos os casamentos da
-        //     lista já estão atribuídos a este freelancer, mas filtramos
-        //     entregas que ainda nem têm URL associado — só conta se o membro
-        //     tem 'acesso' à entrega através do casamento).
-        const performanceStats = (() => {
-          let onTime = 0
-          let late = 0
-          let emCurso = 0
-          let total = 0
-          let somaDias = 0
-          let contDias = 0
-          const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0)
-          const PRAZO_DIAS = 30
-
-          // Para os 4 tipos de entrega
-          const tipos: Array<'selecao' | 'provas' | 'editadas' | 'album'> = ['selecao', 'provas', 'editadas', 'album']
-
-          casamentos.forEach((c: any) => {
-            tipos.forEach(tipo => {
-              const sentAt = c[`url_${tipo}_enviado_em`]
-              const url    = c[`url_${tipo}`]
-              // Só conta entregas que estão visíveis ao membro:
-              // - Ou já têm timestamp de envio
-              // - Ou têm URL preenchido (ainda por enviar mas atribuído)
-              // - Ou o casamento já passou (prazo a correr)
-              const passou = c.data_casamento ? new Date(c.data_casamento).getTime() < todayMid.getTime() : false
-              const conta = !!sentAt || !!url || passou
-              if (!conta) return
-              total += 1
-
-              // Deadline: 30 dias após a data do casamento
-              let deadline: Date | null = null
-              if (c.data_casamento) {
-                const cas = new Date(c.data_casamento); cas.setHours(0,0,0,0)
-                deadline = new Date(cas.getTime() + PRAZO_DIAS * 86400000); deadline.setHours(0,0,0,0)
-              }
-
-              if (sentAt) {
-                const sentDate = new Date(sentAt)
-                if (deadline && sentDate.getTime() <= deadline.getTime() + 86400000) onTime += 1
-                else if (deadline) late += 1
-                else onTime += 1
-                if (c.data_casamento) {
-                  const cas = new Date(c.data_casamento)
-                  const dias = Math.max(0, Math.round((sentDate.getTime() - cas.getTime()) / 86400000))
-                  somaDias += dias
-                  contDias += 1
-                }
-              } else {
-                if (deadline && deadline.getTime() < todayMid.getTime()) late += 1
-                else emCurso += 1
-              }
-            })
-          })
-
-          const mediaDias = contDias > 0 ? Math.round(somaDias / contDias) : 0
-          return { total, onTime, late, emCurso, mediaDias }
-        })()
-
-        // ── Chart data: receitas cumulativas por dia do mês atual ───────
-        const chartPath = (() => {
-          const w = 520, h = 120, pad = 8
-          const hoje = new Date()
-          const ano = hoje.getFullYear()
-          const mes = hoje.getMonth()
-          const diasNoMes = new Date(ano, mes + 1, 0).getDate()
-          // Cumulativo dia-a-dia dentro do mês
-          const cumulative: number[] = []
-          let running = 0
-          for (let d = 1; d <= diasNoMes; d++) {
-            pagamentos.forEach(p => {
-              if (p.status === 'PAGO' && p.data_pago) {
-                const dp = new Date(p.data_pago)
-                if (dp.getFullYear() === ano && dp.getMonth() === mes && dp.getDate() === d) {
-                  running += Number(p.valor) || 0
-                }
-              }
-            })
-            cumulative.push(running)
-          }
-          const max = Math.max(...cumulative, 1)
-          const step = (w - pad*2) / (cumulative.length - 1 || 1)
-          const pts = cumulative.map((v, i) => ({ x: pad + i * step, y: h - pad - (v / max) * (h - pad*2) }))
-          let d = `M ${pts[0].x} ${pts[0].y}`
-          for (let i = 1; i < pts.length; i++) {
-            const p0 = pts[i-1], p1 = pts[i]
-            const cx = (p0.x + p1.x) / 2
-            d += ` Q ${cx} ${p0.y}, ${cx} ${(p0.y + p1.y) / 2}`
-            d += ` T ${p1.x} ${p1.y}`
-          }
-          const last = pts[pts.length - 1]
-          return { path: d, last, w, h, totalMes: cumulative[cumulative.length - 1], diasNoMes }
-        })()
 
         const atividades: Array<{ tipo: string; texto: string; data: string }> = []
         mensagens.slice(0, 10).forEach(m => {
@@ -1238,14 +1096,12 @@ function FreelancerDetailInner() {
             </button>
           </div>
 
-          {/* ── KPI CARDS premium — layout simétrico vertical ───── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6 fade-in-3">
+          {/* ── KPIs: só o que está por fazer ───── */}
+          <div className="grid grid-cols-3 gap-3 mb-6 fade-in-3">
             {([
               { label: 'Casamentos',  value: totalCasamentos.toString(),  sub: 'Total atribuídos',  icon: '◫', tab: 'casamentos' as const, accent: 'gold' },
               { label: 'Em Edição',   value: totalEmEdicao.toString(),    sub: 'Em edição ativa',   icon: '✎', tab: 'edicao' as const,     accent: 'amber' },
-              { label: 'Concluídos',  value: totalConcluidos.toString(),  sub: 'Entregues',         icon: '✓', tab: 'edicao' as const,     accent: 'emerald' },
               { label: 'Aguardando',  value: totalAguardando.toString(),  sub: 'Por iniciar',       icon: '◷', tab: 'edicao' as const,     accent: 'blue' },
-              { label: 'Recebimentos', value: totalRecebidoLabel,         sub: `Total ${anoAtual}`, icon: '€', tab: 'pagamentos' as const, accent: 'gold' },
             ] as const).map((k, i) => {
               const accents = {
                 gold:    { iconBg: 'bg-gold/10',         iconBorder: 'border-gold/35',         iconText: 'text-gold',         arrowText: 'text-gold/60 group-hover:text-gold' },
@@ -1286,299 +1142,8 @@ function FreelancerDetailInner() {
             })}
           </div>
 
-          {/* ── 3-COL: Novos Eventos | Calendário | Tarefas ───────── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5 fade-in-4">
-            {/* Col 1: Novos Eventos */}
-            {casamentos.length > 0 ? (
-              <div className="rounded-2xl border border-white/[0.08] p-5"
-                style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Novos <span className="italic text-gold">Eventos</span></h3>
-                    <span className="inline-flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full bg-gold text-black uppercase tracking-widest font-bold"
-                      style={{ boxShadow: '0 0 10px rgba(201,164,92,0.7)' }}>
-                      <span className="w-1 h-1 rounded-full bg-black animate-pulse" />
-                      {Math.min(casamentos.length, 4)} novo{Math.min(casamentos.length, 4) === 1 ? '' : 's'}
-                    </span>
-                  </div>
-                  <button onClick={() => setTab('casamentos')}
-                    className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
-                    Ver todos →
-                  </button>
-                </div>
-                <div className="space-y-3">
-                  {(() => {
-                    const placeholderImgs = [
-                      'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
-                      'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=400&h=300&fit=crop',
-                      'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=400&h=300&fit=crop',
-                      'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=400&h=300&fit=crop',
-                    ]
-                    const ultimos = [...casamentos].slice(-4).reverse()
-                    return ultimos.map((c, idx) => (
-                      <button key={c.id} onClick={() => setTab('casamentos')}
-                        className="w-full text-left relative group flex items-center gap-3 p-2 rounded-xl border border-white/[0.04] hover:border-gold/25 hover:bg-white/[0.02] transition-all cursor-pointer">
-                        <div className="w-14 h-11 rounded-lg overflow-hidden shrink-0 border border-white/10">
-                          <img src={placeholderImgs[idx % placeholderImgs.length]} alt={c.local}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-0.5">
-                            <p className="text-[12px] font-medium text-white truncate">{c.local}</p>
-                            <span className="inline-flex items-center text-[8px] px-1 py-0.5 rounded bg-gold text-black uppercase tracking-wider shrink-0 font-bold"
-                              style={{ boxShadow: '0 0 6px rgba(201,164,92,0.6)' }}>
-                              Novo
-                            </span>
-                          </div>
-                          <p className="text-[10px] text-white/45 font-semibold text-gold">
-                            {c.data_casamento ? fmtDate(c.data_casamento).split(' · ')[0] : '—'}
-                          </p>
-                        </div>
-                      </button>
-                    ))
-                  })()}
-                </div>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-white/10 p-5 flex flex-col items-center justify-center text-center min-h-[180px]">
-                <span className="text-3xl mb-2 opacity-30">💍</span>
-                <p className="text-[12px] text-white/40">Sem casamentos atribuídos</p>
-              </div>
-            )}
-
-            {/* Col 2: Calendário */}
-            <MiniCalendar
-              casamentos={casamentos}
-              taskDates={taskDates}
-              editionDates={edicao.filter(e => e.data_entrega).map(e => (e.data_entrega ?? '').slice(0, 10)).filter(Boolean)}
-              albumDates={album.filter(a => a.data_entrega).map(a => (a.data_entrega ?? '').slice(0, 10)).filter(Boolean)}
-              notifDates={notificacoes.map(n => (n.created_at ?? '').slice(0, 10)).filter(Boolean)}
-              onClickDate={(iso) => {
-                // Decide para onde ir com base no que existe nesse dia
-                if (casamentos.some(c => c.data_casamento === iso)) { setTab('casamentos'); return }
-                if (taskDates.includes(iso)) { setTab('tarefas'); return }
-                if (edicao.some(e => (e.data_entrega ?? '').slice(0,10) === iso)) { setTab('edicao'); return }
-                if (album.some(a => (a.data_entrega ?? '').slice(0,10) === iso)) { setTab('album'); return }
-                if (notificacoes.some(n => (n.created_at ?? '').slice(0,10) === iso)) { setTab('notificacoes'); return }
-                setTab('calendario')
-              }}
-            />
-
-            {/* Col 3: Tarefas */}
-            <TasksWidget freelancerId={id} />
-          </div>
-
-          {/* ── 3-COL: Casamentos Editados | Performance | Resumo Financeiro ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5 fade-in-5">
-
-            {/* COL 1: Casamentos Editados */}
-            {(() => {
-              // Regra: 'se o membro enviar a notificação de FOTOS EDITADAS, o
-              //         casamento já está editado e aparece aqui'.
-              //         Lemos casamentos com url_editadas_enviado_em preenchido,
-              //         ordenados pelo timestamp de envio DESC.
-              const editados = casamentos
-                .filter(c => !!c.url_editadas_enviado_em)
-                .sort((a, b) => (b.url_editadas_enviado_em ?? '').localeCompare(a.url_editadas_enviado_em ?? ''))
-                .slice(0, 4)
-              const placeholderImgs = [
-                'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&h=400&fit=crop',
-                'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=400&fit=crop',
-                'https://images.unsplash.com/photo-1606800052052-a08af7148866?w=600&h=400&fit=crop',
-                'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&h=400&fit=crop',
-              ]
-              return (
-                <div className="rounded-2xl border border-white/[0.08] p-5"
-                  style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Casamentos <span className="italic text-gold">Editados</span></h3>
-                    <button onClick={() => setTab('casamentos')}
-                      className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
-                      Ver todos →
-                    </button>
-                  </div>
-                  {editados.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center text-center py-8">
-                      <span className="text-3xl mb-2 opacity-30">✓</span>
-                      <p className="text-[12px] text-white/40">Sem casamentos editados</p>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-2 gap-3">
-                      {editados.map((c, idx) => {
-                        const enviadoEm = c.url_editadas_enviado_em
-                        return (
-                          <button key={c.id} onClick={() => setTab('casamentos')}
-                            className="group cursor-pointer text-left">
-                            <div className="relative aspect-[4/3] rounded-xl overflow-hidden border border-white/[0.08] mb-2 group-hover:border-gold/30 transition-all">
-                              <img src={placeholderImgs[idx % placeholderImgs.length]}
-                                alt={c.local ?? '—'}
-                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                              <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-emerald-500/90 border border-emerald-300 flex items-center justify-center text-[10px] font-bold text-black">
-                                ✓
-                              </div>
-                            </div>
-                            <p className="text-[12px] font-medium text-white truncate group-hover:text-gold transition-colors">{c.local || '—'}</p>
-                            <p className="text-[10px] text-white/35">
-                              {enviadoEm ? `Enviado: ${new Date(enviadoEm).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })}` : 'Sem data'}
-                            </p>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
-
-            {/* COL 2: Performance (donut + média + barras) */}
-            {(() => {
-              const { total, onTime, late, emCurso, mediaDias } = performanceStats
-              const totalEntregues = onTime + late
-              const pctOn = totalEntregues > 0 ? Math.round((onTime / totalEntregues) * 100) : 0
-              const segs = [
-                { value: onTime,  color: novoLayout ? '#C9A84C' : '#34d399', label: 'No prazo' },
-                { value: late,    color: novoLayout ? '#6b5a2c' : '#ef4444', label: 'Fora prazo' },
-                { value: emCurso, color: novoLayout ? '#e3cf96' : '#C9A45C', label: 'Em curso' },
-              ]
-              const sumAll = segs.reduce((s, x) => s + x.value, 0) || 1
-              let cumPct = 0
-              const radius = 36, cx = 50, cy = 50
-              const polar = (deg: number) => {
-                const r = (deg - 90) * Math.PI / 180
-                return [cx + radius * Math.cos(r), cy + radius * Math.sin(r)] as const
-              }
-              const arcs = segs.map(s => {
-                const pct = s.value / sumAll
-                if (pct === 0) return null
-                const startDeg = cumPct * 360
-                const endDeg = (cumPct + pct) * 360
-                cumPct += pct
-                const [x1, y1] = polar(startDeg)
-                const [x2, y2] = polar(endDeg)
-                const largeArc = endDeg - startDeg > 180 ? 1 : 0
-                return { path: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`, color: s.color }
-              }).filter(Boolean) as { path: string; color: string }[]
-
-              return (
-                <div className="rounded-2xl border border-white/[0.08] p-5"
-                  style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}><span className="italic text-gold">Performance</span></h3>
-                    <button onClick={() => setTab('edicao')}
-                      className="text-[11px] tracking-widest uppercase text-gold/70 hover:text-gold transition-colors">
-                      Ver →
-                    </button>
-                  </div>
-
-                  {/* Top: donut + média lado a lado */}
-                  <div className="flex items-center gap-4 mb-5">
-                    <div className="relative w-[100px] h-[100px] shrink-0">
-                      <svg viewBox="0 0 100 100" className="w-full h-full">
-                        <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="11" />
-                        {arcs.map((a, i) => (
-                          <path key={i} d={a.path} fill="none" stroke={a.color} strokeWidth="11" strokeLinecap="butt"
-                            style={{ filter: `drop-shadow(0 0 4px ${a.color}80)` }} />
-                        ))}
-                      </svg>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <p className="text-[8px] tracking-widest uppercase text-white/35 leading-none">Total</p>
-                        <p className="text-[22px] font-bold text-white leading-none mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>{total}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0 border-l border-white/[0.06] pl-4">
-                      <p className="text-[9px] tracking-[0.3em] uppercase text-gold/70 font-bold mb-1.5 leading-tight">Tempo médio</p>
-                      <div className="flex items-baseline gap-1.5">
-                        <p className="text-[36px] font-bold text-gold leading-none" style={{ fontFamily: 'Georgia, serif' }}>
-                          {mediaDias}
-                        </p>
-                        <p className="text-[11px] text-white/55 font-light">{mediaDias === 1 ? 'dia' : 'dias'}</p>
-                      </div>
-                      <p className="text-[10px] text-white/40 mt-1 leading-snug">
-                        Casamento → Entrega
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Stats verticais com barras */}
-                  <div className="space-y-2.5">
-                    {segs.map((s, i) => {
-                      const pct = sumAll > 0 ? Math.round((s.value / sumAll) * 100) : 0
-                      return (
-                        <div key={i}>
-                          <div className="flex items-center justify-between text-[11px] mb-1">
-                            <span className="flex items-center gap-1.5 text-white/65">
-                              <span className="w-2 h-2 rounded-full" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}99` }} />
-                              {s.label}
-                            </span>
-                            <span className="font-bold tabular-nums" style={{ color: s.color }}>
-                              {s.value} <span className="text-white/30 font-normal text-[10px]">· {pct}%</span>
-                            </span>
-                          </div>
-                          <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
-                            <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, background: s.color, boxShadow: `0 0 6px ${s.color}80` }} />
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  {totalEntregues > 0 && (
-                    <p className="text-[10px] text-white/40 pt-3 mt-3 border-t border-white/[0.04]">
-                      <span className="text-emerald-300 font-bold">{pctOn}%</span> dos entregues no prazo
-                    </p>
-                  )}
-                  {totalEntregues === 0 && (
-                    <p className="text-[10px] text-white/25 italic mt-3 text-center">Sem casamentos entregues ainda</p>
-                  )}
-                </div>
-              )
-            })()}
-
-            {/* COL 3: Resumo Financeiro (gráfico SVG) */}
-            <div className="rounded-2xl border border-white/[0.08] p-5"
-              style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-[15px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>Resumo <span className="italic text-gold">Financeiro</span></h3>
-                <button onClick={() => setTab('pagamentos')}
-                  className="text-[11px] tracking-wider text-white/40 hover:text-gold transition-colors px-2 py-1 rounded-md border border-white/10 hover:border-gold/30">
-                  Este mês ▾
-                </button>
-              </div>
-              <div className="relative">
-                <svg viewBox={`0 0 ${chartPath.w} ${chartPath.h}`} className="w-full h-32">
-                  <defs>
-                    <linearGradient id="goldGradFL" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#C9A45C" stopOpacity="0.45" />
-                      <stop offset="100%" stopColor="#C9A45C" stopOpacity="0" />
-                    </linearGradient>
-                    <linearGradient id="goldLineFL" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor="#C9A45C" />
-                      <stop offset="50%" stopColor="#E8C76D" />
-                      <stop offset="100%" stopColor="#C9A45C" />
-                    </linearGradient>
-                  </defs>
-                  <path d={`${chartPath.path} L ${chartPath.last.x} ${chartPath.h} L 8 ${chartPath.h} Z`} fill="url(#goldGradFL)" />
-                  <path d={chartPath.path} fill="none" stroke="url(#goldLineFL)" strokeWidth="2.2" strokeLinecap="round" />
-                  <circle cx={chartPath.last.x} cy={chartPath.last.y} r="4" fill="#C9A45C" />
-                  <circle cx={chartPath.last.x} cy={chartPath.last.y} r="9" fill="#C9A45C" opacity="0.18" />
-                </svg>
-                <div className="absolute top-1 right-1 px-2.5 py-1.5 rounded-lg bg-black/80 border border-gold/30">
-                  <p className="text-[11px] text-gold font-bold leading-none">{totalRecebidoLabel}</p>
-                  <p className="text-[9px] text-white/40 mt-0.5">Total {anoAtual}</p>
-                </div>
-              </div>
-              <div className="flex justify-between mt-2 text-[10px] text-white/30 px-1">
-                <span>1</span><span>5</span><span>10</span><span>15</span><span>20</span><span>25</span><span>{chartPath.diasNoMes}</span>
-              </div>
-            </div>
-
-          </div>
-
-          {/* ── (Bloco antigo 'Prazos de Entrega' removido — agora o Crítico · Entrega
-                  vive logo a seguir ao Hero, não duplicar aqui) ────────── */}
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* ── Próximos Casamentos (confirmar presença) | Tarefas ───── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-in-4">
             <div className="lg:col-span-2 flex flex-col gap-5">
             {/* Próximos Casamentos — design premium compacto */}
             {upcomingList.length > 1 && (
@@ -1634,10 +1199,9 @@ function FreelancerDetailInner() {
                 </div>
               </div>
             )}
-
             </div>
 
-            {/* (Cartão lateral 'Mensagens' removido a pedido do utilizador.) */}
+            <TasksWidget freelancerId={id} />
           </div>
           </>
         )
@@ -2174,6 +1738,174 @@ function RelatorioDiarioSecoes({ casamento }: { casamento: Casamento }) {
 
 const DEFAULT_INTRO = `Aqui encontras todos os eventos que te foram atribuídos ao longo do ano. Sempre que um novo evento for adicionado, deverás confirmar a tua disponibilidade.\n\nA 3 dias do evento tens acesso ao briefing com toda a informação necessária para o dia — percurso, contactos, detalhes da cerimónia e muito mais.`
 
+/* Performance das entregas (Seleção / Provas / Editadas / Álbum).
+   Saiu do Início e vive no topo do separador Casamentos. */
+function PerformanceCard({ casamentos }: { casamentos: Casamento[] }) {
+  // ── Performance Stats — agora baseado nas 4 entregas por casamento ──
+  // Regra do utilizador:
+  //   • Conta TUDO o que está nos cards (Seleção / Provas / Editadas / Álbum)
+  //   • Quando o membro envia uma entrega (url_*_enviado_em), conta como
+  //     entregue ('no prazo' se dentro de 30 dias, 'fora prazo' se depois)
+  //   • Não enviado e prazo passou → 'fora prazo'
+  //   • Não enviado e prazo dentro do limite → 'em curso'
+  //   • Só entra o que está atribuído ao membro (todos os casamentos da
+  //     lista já estão atribuídos a este freelancer, mas filtramos
+  //     entregas que ainda nem têm URL associado — só conta se o membro
+  //     tem 'acesso' à entrega através do casamento).
+  const performanceStats = (() => {
+    let onTime = 0
+    let late = 0
+    let emCurso = 0
+    let total = 0
+    let somaDias = 0
+    let contDias = 0
+    const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0)
+    const PRAZO_DIAS = 30
+
+    // Para os 4 tipos de entrega
+    const tipos: Array<'selecao' | 'provas' | 'editadas' | 'album'> = ['selecao', 'provas', 'editadas', 'album']
+
+    casamentos.forEach((c: any) => {
+      tipos.forEach(tipo => {
+        const sentAt = c[`url_${tipo}_enviado_em`]
+        const url    = c[`url_${tipo}`]
+        // Só conta entregas que estão visíveis ao membro:
+        // - Ou já têm timestamp de envio
+        // - Ou têm URL preenchido (ainda por enviar mas atribuído)
+        // - Ou o casamento já passou (prazo a correr)
+        const passou = c.data_casamento ? new Date(c.data_casamento).getTime() < todayMid.getTime() : false
+        const conta = !!sentAt || !!url || passou
+        if (!conta) return
+        total += 1
+
+        // Deadline: 30 dias após a data do casamento
+        let deadline: Date | null = null
+        if (c.data_casamento) {
+          const cas = new Date(c.data_casamento); cas.setHours(0,0,0,0)
+          deadline = new Date(cas.getTime() + PRAZO_DIAS * 86400000); deadline.setHours(0,0,0,0)
+        }
+
+        if (sentAt) {
+          const sentDate = new Date(sentAt)
+          if (deadline && sentDate.getTime() <= deadline.getTime() + 86400000) onTime += 1
+          else if (deadline) late += 1
+          else onTime += 1
+          if (c.data_casamento) {
+            const cas = new Date(c.data_casamento)
+            const dias = Math.max(0, Math.round((sentDate.getTime() - cas.getTime()) / 86400000))
+            somaDias += dias
+            contDias += 1
+          }
+        } else {
+          if (deadline && deadline.getTime() < todayMid.getTime()) late += 1
+          else emCurso += 1
+        }
+      })
+    })
+
+    const mediaDias = contDias > 0 ? Math.round(somaDias / contDias) : 0
+    return { total, onTime, late, emCurso, mediaDias }
+  })()
+
+  const { total, onTime, late, emCurso, mediaDias } = performanceStats
+  const totalEntregues = onTime + late
+  const pctOn = totalEntregues > 0 ? Math.round((onTime / totalEntregues) * 100) : 0
+  const segs = [
+    { value: onTime,  color: '#C9A84C', label: 'No prazo' },
+    { value: late,    color: '#6b5a2c', label: 'Fora prazo' },
+    { value: emCurso, color: '#e3cf96', label: 'Em curso' },
+  ]
+  const sumAll = segs.reduce((s, x) => s + x.value, 0) || 1
+  let cumPct = 0
+  const radius = 36, cx = 50, cy = 50
+  const polar = (deg: number) => {
+    const r = (deg - 90) * Math.PI / 180
+    return [cx + radius * Math.cos(r), cy + radius * Math.sin(r)] as const
+  }
+  const arcs = segs.map(s => {
+    const pct = s.value / sumAll
+    if (pct === 0) return null
+    const startDeg = cumPct * 360
+    const endDeg = (cumPct + pct) * 360
+    cumPct += pct
+    const [x1, y1] = polar(startDeg)
+    const [x2, y2] = polar(endDeg)
+    const largeArc = endDeg - startDeg > 180 ? 1 : 0
+    return { path: `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}`, color: s.color }
+  }).filter(Boolean) as { path: string; color: string }[]
+
+  return (
+    <div className="rounded-2xl border border-white/[0.08] p-5"
+      style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
+      <h3 className="text-[15px] font-light text-white mb-4" style={{ fontFamily: 'Georgia, serif' }}><span className="italic text-gold">Performance</span> das entregas</h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 items-center">
+      {/* Top: donut + média lado a lado */}
+      <div className="flex items-center gap-4 mb-5">
+        <div className="relative w-[100px] h-[100px] shrink-0">
+          <svg viewBox="0 0 100 100" className="w-full h-full">
+            <circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,0.04)" strokeWidth="11" />
+            {arcs.map((a, i) => (
+              <path key={i} d={a.path} fill="none" stroke={a.color} strokeWidth="11" strokeLinecap="butt"
+                style={{ filter: `drop-shadow(0 0 4px ${a.color}80)` }} />
+            ))}
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <p className="text-[8px] tracking-widest uppercase text-white/35 leading-none">Total</p>
+            <p className="text-[22px] font-bold text-white leading-none mt-0.5" style={{ fontFamily: 'Georgia, serif' }}>{total}</p>
+          </div>
+        </div>
+        <div className="flex-1 min-w-0 border-l border-white/[0.06] pl-4">
+          <p className="text-[9px] tracking-[0.3em] uppercase text-gold/70 font-bold mb-1.5 leading-tight">Tempo médio</p>
+          <div className="flex items-baseline gap-1.5">
+            <p className="text-[36px] font-bold text-gold leading-none" style={{ fontFamily: 'Georgia, serif' }}>
+              {mediaDias}
+            </p>
+            <p className="text-[11px] text-white/55 font-light">{mediaDias === 1 ? 'dia' : 'dias'}</p>
+          </div>
+          <p className="text-[10px] text-white/40 mt-1 leading-snug">
+            Casamento → Entrega
+          </p>
+        </div>
+      </div>
+
+      {/* Stats verticais com barras */}
+      <div className="space-y-2.5">
+        {segs.map((s, i) => {
+          const pct = sumAll > 0 ? Math.round((s.value / sumAll) * 100) : 0
+          return (
+            <div key={i}>
+              <div className="flex items-center justify-between text-[11px] mb-1">
+                <span className="flex items-center gap-1.5 text-white/65">
+                  <span className="w-2 h-2 rounded-full" style={{ background: s.color, boxShadow: `0 0 5px ${s.color}99` }} />
+                  {s.label}
+                </span>
+                <span className="font-bold tabular-nums" style={{ color: s.color }}>
+                  {s.value} <span className="text-white/30 font-normal text-[10px]">· {pct}%</span>
+                </span>
+              </div>
+              <div className="h-1 rounded-full bg-white/[0.05] overflow-hidden">
+                <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, background: s.color, boxShadow: `0 0 6px ${s.color}80` }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      </div>
+
+    {totalEntregues > 0 && (
+        <p className="text-[10px] text-white/40 pt-3 mt-3 border-t border-white/[0.04]">
+          <span className="text-emerald-300 font-bold">{pctOn}%</span> dos entregues no prazo
+        </p>
+      )}
+      {totalEntregues === 0 && (
+        <p className="text-[10px] text-white/25 italic mt-3 text-center">Sem casamentos entregues ainda</p>
+      )}
+    </div>
+  )
+}
+
 function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap, initialExpandedId, onExpandedHandled }: { freelancerId: string; casamentos: Casamento[]; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => void; initialExpandedId?: string | null; onExpandedHandled?: () => void }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
@@ -2385,6 +2117,8 @@ function CasamentosTab({ freelancerId, casamentos, onRefresh, freelancerStatus, 
           </div>
         </div>
       </div>
+
+      <PerformanceCard casamentos={casamentos} />
 
       {/* ── FILTERS BAR ─────────────────────────────────────────────── */}
       <div className="rounded-2xl border border-white/[0.06] p-4 backdrop-blur-md"
