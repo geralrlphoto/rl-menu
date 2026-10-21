@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 import { CSS_MARCAR } from '@/app/rollup/MarcarReuniao'
 
@@ -11,8 +11,11 @@ import { CSS_MARCAR } from '@/app/rollup/MarcarReuniao'
 
 const PASSOS = ['Horário', 'Os vossos dados', 'Confirmar']
 
-// Foto da cena: n.º 4 da galeria do portfólio no Wfolio, escolhida pelo Rui (servida pelo i.wfolio.com)
+// Fotos da cena: a galeria do portfólio no Wfolio (/api/portfolio-wfolio, servidas pelo i.wfolio.com,
+// 0 no Supabase), a passar uma a uma. Começa na n.º 4, escolhida pelo Rui.
 const FOTO = 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuoqB1cKJOmpAzCW6YcyMPuYy/DRCk1fOU91Eo70wFmTZO34xlasI7WQJy/PMoWDtYqiH8acbnAVuFOKKFbFpXo0xEX/mtmX_9QPYNm8RVw63Eo9lesBqG2jfq77/DVLI3xZWuCexkq4Ii4luRoepD5LBMmbd/uIB_JsKpgRqUVwogE1ZG7llQAKLVNh3n/EP6Dt_pxQtofKP6Asfj3TZgq9XGOAkyS/PPAZ7250Gn0uhfMj_adc_We4gEqX2uwc/gSKQM3BoyIRUzA857qlpEurDi0Y5yE0e/3HJO5dJmj4HjGEsr52evdFpu14beJWBh/SsdWu56OaIg.jpg'
+
+const TROCA_MS = 6000
 
 const PILARES = [
   ['Onde preferirem', 'Por videochamada ou no nosso estúdio, como vos der mais jeito.'],
@@ -23,12 +26,41 @@ const PILARES = [
 export default function CenaReuniao({ titulo, passo, children }: {
   titulo: ReactNode; passo: number; children: ReactNode
 }) {
+  const [fotos, setFotos] = useState([FOTO])
+  const [troca, setTroca] = useState({ atual: 0, anterior: -1 })
+  const { atual, anterior } = troca
+
+  useEffect(() => {
+    // No telemóvel chega o tamanho pequeno (600w) de cada foto
+    const pequena = window.matchMedia('(max-width: 979px)').matches
+    fetch('/api/portfolio-wfolio').then(r => r.json()).then(j => {
+      const lista: string[] = (j.fotos ?? []).map((f: { src: string; srcSet: string }) =>
+        pequena ? f.srcSet.split(',')[0].trim().split(/\s+/)[0] || f.src : f.src)
+      const resto = lista.filter((u, i) => (j.fotos[i].src !== FOTO))
+      if (resto.length) setFotos([FOTO, ...resto])
+    }).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (fotos.length < 2 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const t = setInterval(() => setTroca(x => ({ atual: (x.atual + 1) % fotos.length, anterior: x.atual })), TROCA_MS)
+    return () => clearInterval(t)
+  }, [fotos.length])
+
+  // Carrega a seguinte antes de aparecer, para a troca ser suave
+  useEffect(() => { if (fotos.length > 1) new Image().src = fotos[(atual + 1) % fotos.length] }, [atual, fotos])
+
   return (
     <main className="nlead rl-app ru rp">
       <style>{CSS_BRIEFING + CSS_MARCAR + CSS}</style>
 
       <section className="rp-foto">
-        <div className="rp-img hero-img" aria-hidden="true" style={{ backgroundImage: `url('${FOTO}')` }} />
+        <div className="rp-img" aria-hidden="true">
+          {/* A nova fica por baixo; a anterior por cima, a desvanecer */}
+          {[atual, anterior].filter(i => i >= 0).map(i => (
+            <div key={i} className={`rp-slide hero-img${i === anterior ? ' sai' : ''}`} style={{ backgroundImage: `url('${fotos[i]}')` }} />
+          ))}
+        </div>
         <div className="rp-veu" aria-hidden="true" />
         <div className="rp-intro">
           <img src="/portal-noivos/logo-gold.png" alt="RL Photo.Video" className="rp-logo" />
@@ -90,7 +122,10 @@ const CSS = `
 
 /* ── Foto em cena ── */
 .rp-foto{position:relative;min-height:max(440px,58svh);display:flex;overflow:hidden;}
-.rp-img{position:absolute;inset:96px 0 0;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 35%);mask-image:linear-gradient(to bottom,transparent,#000 35%);background:center 28%/cover no-repeat;filter:grayscale(1);opacity:.42;}
+.rp-img{position:absolute;inset:96px 0 0;-webkit-mask-image:linear-gradient(to bottom,transparent,#000 35%);mask-image:linear-gradient(to bottom,transparent,#000 35%);filter:grayscale(1);opacity:.42;}
+.rp-slide{position:absolute;inset:0;background:center 28%/cover no-repeat;}
+.rp .rp-slide.sai{animation:rpSai 1.8s ease forwards;transform:scale(1);}
+@keyframes rpSai{to{opacity:0}}
 .rp-veu{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(7,7,7,.2) 0%,rgba(7,7,7,.35) 28%,rgba(7,7,7,.6) 45%,rgba(7,7,7,.82) 70%,#070707 100%);}
 .rp-intro{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:space-between;width:100%;padding:28px 20px 30px;box-sizing:border-box;}
 .rp-logo{width:96px;opacity:.8;align-self:center;}
@@ -153,7 +188,8 @@ const CSS = `
 @media (min-width:980px){
   .rl-app.rp{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);}
   .rp-foto{min-height:100vh;}
-  .rp-img{inset:0;-webkit-mask-image:none;mask-image:none;background-position:center 30%;}
+  .rp-img{inset:0;-webkit-mask-image:none;mask-image:none;}
+  .rp-slide{background-position:center 30%;}
   .rp-veu{background:linear-gradient(90deg,rgba(7,7,7,.35) 0%,rgba(7,7,7,.55) 55%,#070707 100%),linear-gradient(to bottom,rgba(7,7,7,.5),transparent 30%,transparent 70%,rgba(7,7,7,.8));}
   .rp-intro{padding:44px 5vw 52px;}
   .rp-logo{align-self:flex-start;width:120px;}
