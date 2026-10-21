@@ -9,6 +9,7 @@ import { MOTIVOS_NAO_FECHOU, colunaDe, whatsappLink, mensagemOpiniao, EVENTO_OPI
 import { PERGUNTAS, respostaTexto, tituloSimples, type Respostas } from '@/lib/opiniao'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL, ofertaDaProposta } from '@/lib/crm'
+import { gerarPropostasAuto } from '@/lib/propostasAuto'
 import RelatorioReuniao, { ANALISE_COLS, type Analise } from '../analises/RelatorioReuniao'
 
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
@@ -245,6 +246,19 @@ export default function ClientePage() {
   const [savingPropostas, setSavingPropostas] = useState(false)
   const [savedPropostas, setSavedPropostas] = useState(false)
   const [propostaPassword, setPropostaPassword] = useState('')
+  // Comentário das propostas automáticas ("Porque fiz assim"), gravado com as propostas
+  type ComentarioAuto = { linhas: string[]; em: string; recomendada: number }
+  const [comentarioAuto, setComentarioAuto] = useState<ComentarioAuto | null>(null)
+
+  const gerarAuto = () => {
+    const temServicos = propostas.slice(0, 3).some(p => p.servicos_foto.length + p.servicos_video.length > 0)
+    if (temServicos && !confirm('Isto substitui a BASIC, a ESSENCIAL e a SIGNATURE atuais. Continuar? (Só fica gravado quando carregares em Guardar propostas.)')) return
+    const r = gerarPropostasAuto(form, catalogo)
+    // A DOCUMENTAL (4.ª) fica como está; as notas que já existiam mantêm-se
+    setPropostas(prev => [...r.propostas.map((p, i) => ({ ...p, notas: prev[i]?.notas })), ...prev.slice(3)])
+    setPropostaOpen({ 0: true, 1: true, 2: true })
+    setComentarioAuto({ linhas: r.comentario, em: new Date().toISOString(), recomendada: r.recomendada })
+  }
 
   const originalPc = typeof original.page_content === 'string'
     ? JSON.parse(original.page_content || '{}')
@@ -266,6 +280,7 @@ export default function ClientePage() {
       if (primeiraComExtras?.extras) setExtrasGlobais(primeiraComExtras.extras)
     }
     if (pc?.proposta?.password !== undefined) setPropostaPassword(pc.proposta.password)
+    if (pc?.propostas_auto?.linhas) setComentarioAuto(pc.propostas_auto)
     // Nota: pageTipo NÃO é inicializado aqui para evitar reset ao chamar setForm
     // É inicializado no useEffect de carregamento e controlado por handleSetTipo
   }, [form.page_content])
@@ -276,6 +291,13 @@ export default function ClientePage() {
       ? JSON.parse(form.page_content || '{}')
       : (form.page_content || {})
     const newPc = { ...pc, propostas: lista, extras_proposta: extrasGlobais, proposta: { ...(pc.proposta || {}), password: propostaPassword }, tipo: pageTipo }
+    // Propostas automáticas: guarda o comentário e marca a recomendada (a que cabe no teto)
+    if (comentarioAuto) {
+      newPc.propostas_auto = comentarioAuto
+      if (!pc.propostas_auto || pc.propostas_auto.em !== comentarioAuto.em) {
+        newPc.propostaPage = { ...(pc.propostaPage || {}), propostaAtiva: comentarioAuto.recomendada }
+      }
+    }
     const { error } = await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
     if (!error) {
       setForm((f: Contact) => ({ ...f, page_content: newPc }))
@@ -767,6 +789,33 @@ export default function ClientePage() {
             >
               {savingPropostas ? 'A guardar...' : savedPropostas ? '✓ Guardado' : 'Guardar Propostas'}
             </button>
+          </div>
+
+          {/* Propostas automáticas: regras fixas (lib/propostasAuto.ts) + comentário com o porquê */}
+          <div className="flex flex-col gap-3">
+            <button type="button" onClick={gerarAuto}
+              className="self-start inline-flex items-center gap-2.5 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-5 py-2.5 text-[13px] font-semibold tracking-[0.14em] uppercase text-white transition-all">
+              <span className="text-[#C9A84C]">✦</span> Gerar propostas automáticas
+            </button>
+            {comentarioAuto && (
+              <div className="relative rounded-[18px] border border-[#C9A84C]/35 bg-[#C9A84C]/[0.06] p-5 shadow-[0_0_40px_-22px_rgba(201,168,76,0.6)]">
+                <button type="button" onClick={() => setComentarioAuto(null)} aria-label="Fechar comentário"
+                  className="absolute top-3 right-4 text-white/30 hover:text-white/70 text-sm">✕</button>
+                <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.14em] uppercase text-white/85">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+                  Porque fiz assim
+                  <span className="font-normal normal-case tracking-normal text-white/35">
+                    · {new Date(comentarioAuto.em).toLocaleString('pt-PT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </p>
+                <ul className="mt-3 flex flex-col gap-2">
+                  {comentarioAuto.linhas.map((l, i) => (
+                    <li key={i} className="relative pl-5 text-[14px] leading-relaxed text-white/75 before:content-[''] before:absolute before:left-0 before:top-[0.7em] before:w-2.5 before:h-px before:bg-[#C9A84C]">{l}</li>
+                  ))}
+                </ul>
+                {propostasDirty && <p className="mt-3 text-[12px] text-[#C9A84C]/85">Ainda não está gravado: revê as propostas e carrega em Guardar Propostas.</p>}
+              </div>
+            )}
           </div>
 
           {/* Password da Proposta Criativa */}
