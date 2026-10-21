@@ -600,17 +600,12 @@ function FreelancerDetailInner() {
     setEditSaving(false)
   }
 
-  const tabs: { key: 'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'; label: string; count?: number }[] = [
-    { key: 'casamentos',   label: 'Casamentos',  count: casamentos.length },
-    ...(!isVideografo ? [{ key: 'edicao' as const, label: 'Edição Fotos', count: edicao.length }] : []),
-    ...(isFotografo ? [{ key: 'album' as const, label: 'Edição Álbum', count: album.length }] : []),
-    { key: 'tarefas',      label: 'Tarefas' },
-    { key: 'calendario',   label: 'Calendário' },
-    { key: 'pagamentos',   label: 'Pagamentos', count: pagamentos.length },
-    { key: 'mensagens',    label: 'Msgs',   count: mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length },
-    { key: 'notificacoes', label: 'Notif.', count: notificacoes.filter(n => !n.lida).length },
-    { key: 'definicoes' as const, label: 'Dados Pessoais' },
-  ]
+  // Um só menu para o computador (barra lateral) e para o telemóvel
+  const itensMenu = itensMenuMembro({ isVideografo, isFotografo, freelancerId: id })
+  const contaNaoLidas = {
+    mensagens: mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length,
+    notificacoes: notificacoes.filter(n => !n.lida).length,
+  }
 
   return (
     <div className={`min-h-screen text-white relative overflow-x-clip${novoLayout ? ' fl-novo font-cond' : ''}`} style={{ background: novoLayout ? '#070707' : '#0B0B0B' }}>
@@ -651,22 +646,13 @@ function FreelancerDetailInner() {
         freelancer={freelancer}
         tab={tab}
         setTab={setTab}
-        counts={{
-          casamentos: casamentos.length,
-          edicao: edicao.length,
-          album: album.length,
-          pagamentos: pagamentos.length,
-          mensagens: mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length,
-          notificacoes: notificacoes.filter(n => !n.lida).length,
-        }}
-        isVideografo={isVideografo}
-        isFotografo={isFotografo}
+        itens={itensMenu}
         viewAsFreelancer={viewAsFreelancer}
       />
 
     <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[232px] lg:pr-4 ${
       tab === null ? 'max-w-none'
-        : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
+        : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes', 'mensagens'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
         : 'max-w-3xl'
     }`}>
       {/* Hamburguer menu — apenas mobile (desktop usa sidebar) */}
@@ -674,7 +660,7 @@ function FreelancerDetailInner() {
         {/* Barra fixa com botão hamburguer + tab activa */}
         <div className="flex items-center justify-between px-1">
           <span className="text-[13px] tracking-[0.3em] uppercase text-white/40 font-light">
-            {tab === null ? 'Início' : (tabs.find(t => t.key === tab)?.label ?? tab)}
+            {itensMenu.find(it => itemMenuAtivo(it, tab))?.label ?? 'Início'}
           </span>
           <button
             onClick={() => setMobileMenuOpen(v => !v)}
@@ -690,43 +676,17 @@ function FreelancerDetailInner() {
         {mobileMenuOpen && (
           <div className="mt-2 rounded-2xl border border-white/15 bg-black/90 backdrop-blur-xl overflow-hidden"
             style={{ boxShadow: '0 20px 40px -10px rgba(0,0,0,0.7)' }}>
-            {/* Início */}
-            <button
-              onClick={() => { setTab(null); setEditForm(null); setMobileMenuOpen(false) }}
-              className={`w-full flex items-center gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] ${tab === null ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
-              <span className="text-lg">⌂</span>
-              <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">Início</span>
-            </button>
-            {tabs.map((t, i) => (
-              <button key={t.key}
-                onClick={() => { setTab(t.key); setMobileMenuOpen(false) }}
-                className={`w-full flex items-center justify-between gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] ${tab === t.key ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
-                <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">{t.label}</span>
-                {t.count != null && t.count > 0 && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/10 text-white/60 font-bold">{t.count}</span>
-                )}
-              </button>
-            ))}
-            {/* Fluxo de Trabalho — página própria (fotógrafos) */}
-            {isFotografo && (
-              <a
-                href="/fluxo-trabalho"
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] text-white/50 hover:text-white hover:bg-white/5">
-                <span className="text-lg">❖</span>
-                <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">Fluxo de Trabalho</span>
-              </a>
-            )}
-            {/* Guia do Portal (fotógrafos) */}
-            {isFotografo && (
-              <a
-                href={`/painel-fotografo/guia?freelancer=${id}`}
-                onClick={() => setMobileMenuOpen(false)}
-                className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] text-white/50 hover:text-white hover:bg-white/5">
-                <span className="text-lg">?</span>
-                <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">Guia do Portal</span>
-              </a>
-            )}
+            {itensMenu.map((it, i) => {
+              const cls = `w-full flex items-center gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] ${itemMenuAtivo(it, tab) ? 'text-white bg-white/10' : 'text-white/50 hover:text-white hover:bg-white/5'}`
+              const inner = (
+                <>
+                  <span className="w-5 text-center text-lg">{it.icon}</span>
+                  <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">{it.label}</span>
+                </>
+              )
+              if (it.href) return <a key={i} href={it.href} onClick={() => setMobileMenuOpen(false)} className={cls}>{inner}</a>
+              return <button key={i} onClick={() => { setTab(it.key); if (it.key === null) setEditForm(null); setMobileMenuOpen(false) }} className={cls}>{inner}</button>
+            })}
             {/* Sair */}
             <button
               onClick={async () => {
@@ -1343,6 +1303,14 @@ function FreelancerDetailInner() {
         )
       })()}
 
+      {/* Sub-separadores: Edição de fotos vive dentro de Casamentos; Tarefas, Notificações e Mensagens juntos */}
+      {(tab === 'casamentos' || tab === 'edicao') && !isVideografo && (
+        <SubSeparadores atual={tab} onChange={setTab} opcoes={[{ key: 'casamentos', label: 'Casamentos' }, { key: 'edicao', label: 'Edição de fotos', count: edicao.filter(e => e.status !== 'CONCLUÍDO').length }]} />
+      )}
+      {(tab === 'tarefas' || tab === 'notificacoes' || tab === 'mensagens') && (
+        <SubSeparadores atual={tab} onChange={setTab} opcoes={[{ key: 'tarefas', label: 'Tarefas' }, { key: 'notificacoes', label: 'Notificações', count: contaNaoLidas.notificacoes }, { key: 'mensagens', label: 'Mensagens', count: contaNaoLidas.mensagens }]} />
+      )}
+
       {/* Tab content */}
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} etapaDe={etapaDe} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} onRefresh={load} />}
@@ -1362,38 +1330,62 @@ function FreelancerDetailInner() {
 // ─── SidebarNavAdmin ───────────────────────────────────────────────────────
 type AdminTabKey = 'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
 
+type ItemMenu = { key: AdminTabKey; label: string; icon: string; href?: string; grupo?: AdminTabKey[] }
+
+/* O menu do portal do membro: o mesmo na barra lateral (computador) e no telemóvel.
+   Sem números à frente (regra do utilizador). `grupo` = separadores que vivem dentro
+   do item (Edição de fotos em Casamentos; Tarefas, Notificações e Mensagens juntos). */
+function itensMenuMembro({ isVideografo, isFotografo, freelancerId }: { isVideografo: boolean; isFotografo: boolean; freelancerId?: string }): ItemMenu[] {
+  return [
+    { key: null,          label: 'Início',              icon: '⌂' },
+    { key: 'casamentos',  label: 'Casamentos',          icon: '◆', grupo: isVideografo ? ['casamentos'] : ['casamentos', 'edicao'] },
+    ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫' }] : []),
+    { key: 'tarefas',     label: 'Mensagens e tarefas', icon: '◷', grupo: ['tarefas', 'notificacoes', 'mensagens'] },
+    { key: 'calendario',  label: 'Calendário',          icon: '◉' },
+    { key: 'pagamentos',  label: 'Pagamentos',          icon: '$' },
+    { key: 'definicoes',  label: 'Dados Pessoais',      icon: '☻' },
+    ...(isFotografo ? [
+      { key: null as AdminTabKey, label: 'Fluxo de Trabalho', icon: '❖', href: '/fluxo-trabalho' },
+      { key: null as AdminTabKey, label: 'Guia do Portal',    icon: '?', href: `/painel-fotografo/guia${freelancerId ? `?freelancer=${freelancerId}` : ''}` },
+    ] : []),
+  ]
+}
+
+function itemMenuAtivo(it: ItemMenu, tab: AdminTabKey): boolean {
+  if (it.href) return false
+  return it.grupo ? it.grupo.includes(tab) : tab === it.key
+}
+
+/* Sub-separadores dentro de um item do menu (pílulas no topo do conteúdo) */
+function SubSeparadores({ atual, opcoes, onChange }: { atual: AdminTabKey; opcoes: Array<{ key: AdminTabKey; label: string; count?: number }>; onChange: (t: AdminTabKey) => void }) {
+  return (
+    <div className="flex flex-wrap gap-1.5 mb-5">
+      {opcoes.map(o => (
+        <button key={o.key ?? 'inicio'} onClick={() => onChange(o.key)}
+          className={`px-4 py-2 rounded-full text-[12px] tracking-[0.15em] uppercase transition-all ${
+            atual === o.key ? 'bg-gold/15 text-gold border border-gold/35 font-semibold' : 'border border-white/[0.08] text-white/50 hover:text-white hover:bg-white/[0.03]'
+          }`}>
+          {o.label}
+          {!!o.count && <span className="ml-2 text-[10px] opacity-70">{o.count}</span>}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function SidebarNavAdmin({
   freelancer,
   tab,
   setTab,
-  counts,
-  isVideografo,
-  isFotografo,
+  itens,
   viewAsFreelancer,
 }: {
   freelancer: Freelancer | null
   tab: AdminTabKey
   setTab: (t: AdminTabKey) => void
-  counts: { casamentos: number; edicao: number; album: number; pagamentos: number; mensagens: number; notificacoes: number }
-  isVideografo: boolean
-  isFotografo: boolean
+  itens: ItemMenu[]
   viewAsFreelancer?: boolean
 }) {
-  // Sidebar items — sem números/badges à frente (regra do utilizador)
-  //   `href` → item de navegação para outra rota (não é um separador interno).
-  const items: Array<{ key: AdminTabKey; label: string; icon: string; href?: string }> = [
-    { key: null,             label: 'Início',         icon: '⌂' },
-    { key: 'casamentos',     label: 'Casamentos',     icon: '◆' },
-    ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição Fotos', icon: '✎' }] : []),
-    ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫' }] : []),
-    { key: 'tarefas',        label: 'Tarefas',        icon: '◷' },
-    { key: 'calendario',     label: 'Calendário',     icon: '◉' },
-    { key: 'pagamentos',     label: 'Pagamentos',     icon: '$' },
-    { key: 'notificacoes',   label: 'Notificações',   icon: '◉' },
-    ...(isFotografo ? [{ key: null as AdminTabKey, label: 'Fluxo de Trabalho', icon: '❖', href: '/fluxo-trabalho' }] : []),
-    ...(isFotografo ? [{ key: null as AdminTabKey, label: 'Guia do Portal', icon: '?', href: `/painel-fotografo/guia${freelancer?.id ? `?freelancer=${freelancer.id}` : ''}` }] : []),
-    { key: 'definicoes' as AdminTabKey, label: 'Dados Pessoais', icon: '☻' },
-  ]
 
   // Menu lateral compacto (novo layout): 200px, letra condensada, item ativo em pill dourada suave
   return (
@@ -1428,8 +1420,8 @@ function SidebarNavAdmin({
 
       {/* Navegação */}
       <nav className="min-h-0 overflow-y-auto px-3 pb-3 flex flex-col gap-0.5">
-        {items.map((it, i) => {
-          const active = !it.href && tab === it.key
+        {itens.map((it, i) => {
+          const active = itemMenuAtivo(it, tab)
           const cls = `group w-full flex items-center gap-2.5 rounded-full pl-3 pr-3 py-2 text-left text-[13px] tracking-[0.12em] uppercase transition-all ${
             active ? 'bg-[#C9A84C]/12 text-white font-semibold shadow-[inset_2px_0_0_#C9A84C]' : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
           }`
