@@ -2,8 +2,8 @@
 
 /* ============================================================
    GuiaPortal — guia prático e interativo do portal para os
-   noivos. Só é usado em /portal-cliente (não nos portais
-   reais /ref/<REF>). Cada tema tem passos com uma maquete de
+   noivos. Montado no PortalShell, por isso está em todas as
+   páginas dos portais de casamento. Cada tema tem passos com uma maquete de
    telemóvel animada que mostra o procedimento.
    ============================================================ */
 

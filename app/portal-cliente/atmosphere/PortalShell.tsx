@@ -23,6 +23,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import './atmosphere.css'
 import './tema-rl.css'
 import { refDoEndereco, temTemaRLnoEndereco, ehBatizado } from '@/lib/portalTema'
+import GuiaPortal from '../guia/GuiaPortal'
 
 // As fontes tem de ser injectadas em runtime: o Turbopack remove os
 // `@import url(...)` dos ficheiros .css no build de producao, por isso o
@@ -109,6 +110,7 @@ export function PortalShell({
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const temaRL = useTemaRL()
+  const batizado = useBatizado()
   // Botão "Mais" da barra de atalhos do telemóvel (tema RL) abre o menu completo
   useEffect(() => {
     const abrir = () => { setMenuOpen(true); window.scrollTo({ top: 0, behavior: 'smooth' }) }
@@ -141,6 +143,8 @@ export function PortalShell({
         </aside>
         <main className="main">{children}</main>
       </div>
+      {/* Guia do Portal: sempre disponível em todas as páginas dos portais de casamento */}
+      {!batizado && <GuiaPortal />}
     </div>
   )
 }
