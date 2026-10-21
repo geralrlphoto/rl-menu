@@ -311,8 +311,9 @@ function MaquetePanel({ portalRef, maqueteUrl }: { portalRef: string; maqueteUrl
   )
 }
 
-/** Cards cujo link se partilha com convidados. */
-const SHAREABLE = new Set(['galerias', 'prewedding'])
+/** Cards cujo link se partilha com convidados. A Galeria Online não entra: os
+    convidados têm o cartão próprio (ver + adquirir). */
+const SHAREABLE = new Set(['prewedding'])
 
 /* ───────────────────────────────────────────────────────────────
    Partilhar galeria — abre um painel com o link à mão, que fica aberto
@@ -640,10 +641,7 @@ export function FotografiasView(props: FotografiasViewProps) {
                       botão de partilha assim que houver link. */}
                   {c.key === 'convidados' && available && <ShareConvidadosButton path={c.url!} />}
                   {SHAREABLE.has(c.key) && available && (
-                    <ShareGalleryButton
-                      // Galeria Online: os convidados vão para a página dedicada (ver + adquirir), não para o Wfolio
-                      url={c.key === 'galerias' && props.convidadosUrl ? `https://portal.rlphotovideo.pt${props.convidadosUrl}` : c.url!}
-                      storageKey={`rl_share_${props.portalRef ?? 'portal'}_${c.key}`} />
+                    <ShareGalleryButton url={c.url!} storageKey={`rl_share_${props.portalRef ?? 'portal'}_${c.key}`} />
                   )}
                   {/* O card da selecção leva também o formulário: é por ali
                       que a escolha nos chega. */}
