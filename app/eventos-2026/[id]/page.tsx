@@ -3191,6 +3191,11 @@ function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referen
   const [hist, setHist] = useState<HistLinha[]>([])
   const [lead, setLead] = useState<{ id: string; nome: string } | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [recarregar, setRecarregar] = useState(0)
+  // Ligar o evento ao lead do CRM à mão
+  const [aLigar, setALigar] = useState(false)
+  const [procura, setProcura] = useState('')
+  const [encontrados, setEncontrados] = useState<{ id: string; nome: string; data_casamento: string | null; status: string | null }[]>([])
 
   useEffect(() => {
     const qs = new URLSearchParams()
@@ -3202,7 +3207,25 @@ function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referen
       .then(d => { setHist(Array.isArray(d.historico) ? d.historico : []); setLead(d.lead ?? null) })
       .catch(() => {})
       .finally(() => setLoaded(true))
-  }, [eventoId, referencia])
+  }, [eventoId, referencia, recarregar])
+
+  useEffect(() => {
+    if (!aLigar || procura.trim().length < 2) { setEncontrados([]); return }
+    const t = setTimeout(() => {
+      fetch(`/api/evento-historico?procurar=${encodeURIComponent(procura.trim())}`)
+        .then(r => r.json()).then(d => setEncontrados(d.leads ?? [])).catch(() => {})
+    }, 300)
+    return () => clearTimeout(t)
+  }, [procura, aLigar])
+
+  const ligar = async (crmId: string | null) => {
+    if (!eventoId) return
+    await fetch('/api/evento-historico', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ evento_id: eventoId, crm_contact_id: crmId }),
+    })
+    setALigar(false); setProcura(''); setRecarregar(n => n + 1)
+  }
 
   const quando = (iso: string) => new Date(iso).toLocaleString('pt-PT', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
@@ -3212,6 +3235,40 @@ function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referen
     <Section title="Histórico" right={
       hist.length > 0 ? <span className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{hist.length} {hist.length === 1 ? 'ação' : 'ações'}</span> : undefined
     }>
+      {loaded && eventoId && (
+        <div className="-mt-1 flex flex-col gap-2">
+          <div className="flex items-center gap-2 flex-wrap text-[10px] text-white/30">
+            {lead ? (
+              <>
+                <span>Inclui a fase de lead de{' '}
+                  <Link href={`/crm/${lead.id}`} className="text-white/50 hover:text-[#c9a45c]">{lead.nome.trim()}</Link>, vinda do CRM.
+                </span>
+                <button onClick={() => setALigar(v => !v)} className="uppercase tracking-[0.2em] text-[#c9a45c]/60 hover:text-[#c9a45c]">Trocar</button>
+                <button onClick={() => ligar(null)} className="uppercase tracking-[0.2em] text-white/25 hover:text-white/60">Desligar</button>
+              </>
+            ) : (
+              <>
+                <span>Sem lead do CRM ligado.</span>
+                <button onClick={() => setALigar(v => !v)} className="uppercase tracking-[0.2em] text-[#c9a45c]/70 hover:text-[#c9a45c]">Ligar ao lead</button>
+              </>
+            )}
+          </div>
+          {aLigar && (
+            <div className="flex flex-col gap-1">
+              <input autoFocus value={procura} onChange={ev => setProcura(ev.target.value)}
+                placeholder="Nome no CRM…"
+                className="bg-white/[0.03] border border-white/10 rounded px-2 py-1.5 text-xs text-white/80 outline-none focus:border-[#c9a45c]/50" />
+              {encontrados.map(c => (
+                <button key={c.id} onClick={() => ligar(c.id)}
+                  className="text-left text-xs text-white/70 hover:text-white px-2 py-1 rounded hover:bg-white/[0.04]">
+                  {c.nome.trim()}
+                  <span className="text-white/30"> · {c.data_casamento ?? 'sem data'}{c.status ? ` · ${c.status}` : ''}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
       {!loaded ? (
         <p className="text-xs text-white/30">A carregar…</p>
       ) : hist.length === 0 ? (
@@ -3220,11 +3277,6 @@ function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referen
         </p>
       ) : (
         <>
-          {lead && (
-            <p className="text-[10px] text-white/30 -mt-1">
-              Inclui a fase de lead de <span className="text-white/50">{lead.nome.trim()}</span>, vinda do CRM.
-            </p>
-          )}
           <ol className="flex flex-col gap-4 pl-4 border-l border-white/[0.08]">
             {hist.map(h => {
               const ehLead = h.origem === 'lead'
