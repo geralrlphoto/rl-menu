@@ -35,8 +35,13 @@ const MEDIA_LINKS = [
   },
 ]
 
-// Menu Produção: uma coluna por departamento, com as páginas de cada um
-const PRODUCAO_COLUNAS: Array<{ titulo: string; links: Array<{ href: string; pill: string }> }> = [
+// Secção Finanças do menu (lá dentro está tudo: receitas, orçamentos, etc.)
+const FINANCAS_SECAO = '/secao/657aa823-19f0-4bc8-a1a1-a0a712f6d6e0'
+
+// Menus Produção e Gestão: colunas com título dourado e cartões de acesso (estilo da coluna Staff)
+type ColunaMenu = { titulo: string; links: Array<{ href: string; pill: string; label?: string; sub?: string }> }
+const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
+  Produção: [
   { titulo: 'Dep. de Vídeo', links: [
     { href: '/edicao-video', pill: 'Quadro' },
     { href: '/edicao-video/fluxo', pill: 'Fases' },
@@ -51,10 +56,37 @@ const PRODUCAO_COLUNAS: Array<{ titulo: string; links: Array<{ href: string; pil
     { href: '/fotos-convidados', pill: 'Convidados' },
     { href: '/painel-fotografo', pill: 'Fotógrafo' },
   ] },
-]
-
-// Secção Finanças do menu (lá dentro está tudo: receitas, orçamentos, etc.)
-const FINANCAS_SECAO = '/secao/657aa823-19f0-4bc8-a1a1-a0a712f6d6e0'
+  ],
+  Gestão: [
+  { titulo: 'Finanças', links: [
+    { href: FINANCAS_SECAO, pill: 'Receitas' },
+    { href: '/registar-pagamento', pill: 'Pagamentos' },
+    { href: '/orcamento-servico', pill: 'Serviço' },
+    { href: '/orcamento-deslocacao', pill: 'Deslocação' },
+  ] },
+  { titulo: 'Organização', links: [
+    { href: '/calendario', pill: 'Agenda' },
+    { href: '/relatorio-diario', pill: 'Análise' },
+    { href: '/tarefas', pill: 'Por fazer' },
+    { href: '/formularios', pill: 'Entradas' },
+    { href: '/tickets', pill: 'Tickets', label: 'Emails Enviados', sub: 'Exemplos' },
+  ] },
+  { titulo: 'Gestão', links: [
+    { href: '/crm', pill: 'Leads', label: 'CRM Casamentos' },
+    { href: '/crm/follow-up', pill: 'Contactos' },
+    { href: '/crm/analises', pill: 'Reuniões' },
+    { href: '/crm/stats', pill: 'Números' },
+    { href: '/crescimento', pill: 'Marketing' },
+    { href: '/social-media', pill: 'Redes' },
+    { href: '/newsletter-admin', pill: 'Emails' },
+  ] },
+  { titulo: 'Staff', links: [
+    { href: '/staff', pill: 'Equipa' },
+    { href: '/freelancers', pill: 'Equipa' },
+    { href: '/recrutamento', pill: 'Candidatos' },
+  ] },
+  ],
+}
 
 const LINKS = [
   {
@@ -382,8 +414,8 @@ function GlobalMenuInner() {
     : [
         { nome: 'Início', hrefs: ['/photo'] },
         { nome: 'Clientes', hrefs: ['/crm', '/casamentos', '/eventos-2026', '/portais-clientes'] },
-        { nome: 'Produção', hrefs: PRODUCAO_COLUNAS.flatMap(c => c.links.map(l => l.href)) },
-        { nome: 'Gestão', hrefs: [FINANCAS_SECAO, '/relatorio-diario', '/staff', '/freelancers', '/calendario'] },
+        { nome: 'Produção', hrefs: COLUNAS_MENU['Produção'].flatMap(c => c.links.map(l => l.href)) },
+        { nome: 'Gestão', hrefs: COLUNAS_MENU['Gestão'].flatMap(c => c.links.map(l => l.href)) },
       ]
   const EXTRA_LINKS = [{
     href: '/tarefas', label: 'Tarefas', sub: 'Por fazer',
@@ -417,6 +449,51 @@ function GlobalMenuInner() {
   {
     href: '/painel-fotografo', label: 'Painel do Fotógrafo', sub: 'Vista do fotógrafo',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="4" width="18" height="13" rx="2"/><path strokeLinecap="round" d="M8 21h8M12 17v4"/></svg>,
+  },
+  // Páginas que só aparecem nas colunas do menu Gestão
+  {
+    href: '/registar-pagamento', label: 'Registar Pagamento', sub: 'Pagamentos dos noivos',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="2" y="5" width="20" height="14" rx="2"/><path strokeLinecap="round" d="M2 10h20M6 15h4"/></svg>,
+  },
+  {
+    href: '/orcamento-servico', label: 'Orçamento de Serviço', sub: 'Orçamentos',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M6 2h9l5 5v15H6z"/><path strokeLinecap="round" d="M9 12h8M9 16h8M9 8h3"/></svg>,
+  },
+  {
+    href: '/orcamento-deslocacao', label: 'Orçamento de Deslocação', sub: 'Quilómetros e custos',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M12 21s-7-6.2-7-11.5a7 7 0 0114 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>,
+  },
+  {
+    href: '/formularios', label: 'Formulários', sub: 'Entradas e rollup',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="4" y="3" width="16" height="18" rx="2"/><path strokeLinecap="round" d="M8 8h8M8 12h8M8 16h5"/></svg>,
+  },
+  {
+    href: '/crm/follow-up', label: 'Follow-up', sub: 'Leads por contactar',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M4 12a8 8 0 0113.7-5.7L20 8.5M20 4v4.5h-4.5M20 12a8 8 0 01-13.7 5.7L4 15.5M4 20v-4.5h4.5"/></svg>,
+  },
+  {
+    href: '/crm/analises', label: 'Análises de Reuniões', sub: 'Reuniões gravadas',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="9" y="3" width="6" height="11" rx="3"/><path strokeLinecap="round" d="M5 11a7 7 0 0014 0M12 18v3"/></svg>,
+  },
+  {
+    href: '/crm/stats', label: 'Estatísticas do CRM', sub: 'Conversão',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg>,
+  },
+  {
+    href: '/crescimento', label: 'Crescimento', sub: 'Marketing',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>,
+  },
+  {
+    href: '/social-media', label: 'Social Media', sub: 'Publicações',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>,
+  },
+  {
+    href: '/newsletter-admin', label: 'Newsletter', sub: 'Envios',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="5" width="18" height="14" rx="2"/><path strokeLinecap="round" strokeLinejoin="round" d="M3 7l9 6 9-6"/></svg>,
+  },
+  {
+    href: '/recrutamento', label: 'Recrutamento', sub: 'Novos freelancers',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><circle cx="10" cy="8" r="3.5"/><path strokeLinecap="round" d="M3.5 20c.8-3.6 3.4-5.5 6.5-5.5 1.4 0 2.7.4 3.8 1.1M18 14v6M15 17h6"/></svg>,
   }]
   const linkDe = (href: string) => ([...navLinks, ...EXTRA_LINKS] as any[]).find(l => l.href === href)
 
@@ -534,15 +611,11 @@ function GlobalMenuInner() {
         const dest = pn ? linkDe(pn.destaque) : null
         const msg = pn ? linkDe(pn.mensagem.href) : null
         const coluna = 'relative rounded-[20px] bg-[#0e1213] border border-white/[0.04] p-4 min-h-[250px] flex flex-col'
-        // Gestão: colunas por tema (Finanças · Gestão · Staff · Organização), cada uma com o seu título
-        const gestao = g?.nome === 'Gestão'
-        const producao = g?.nome === 'Produção'
-        const titulo = (t: string) => gestao || producao ? (
+        // Produção e Gestão: colunas com título e cartões (COLUNAS_MENU); os outros grupos usam o painel antigo
+        const colunas = g ? COLUNAS_MENU[g.nome] : undefined
+        const titulo = (t: string) => colunas ? (
           <p className="absolute z-10 top-3.5 left-5 font-cond text-[11px] tracking-[0.25em] uppercase font-medium" style={{ color: accent(0.8) }}>{t}</p>
         ) : null
-        const staff = linkDe('/staff')
-        const freelancers = linkDe('/freelancers')
-        const crm = linkDe('/crm')
         const cartao = 'rounded-[16px] border border-white/[0.08] bg-[#1a1f20] transition-all duration-200 hover:border-white/[0.18] hover:bg-[#202627]'
         const pill = (aqui: boolean, texto: string) => (
           <span className="shrink-0 rounded-full border px-2.5 py-0.5 font-cond text-[12.5px] font-semibold"
@@ -563,11 +636,11 @@ function GlobalMenuInner() {
             {pn && g && dest && msg && (
               <div key={g.nome} className="max-w-7xl mx-auto grid grid-cols-4 gap-5 [animation:megaIn_.25s_ease-out]">
 
-                {/* Produção: uma coluna por departamento (título + cartões de acesso, como a coluna Staff) */}
-                {producao && PRODUCAO_COLUNAS.map(c => (
-                  <div key={c.titulo} className={`${coluna} justify-center gap-3`}>
+                {/* Produção e Gestão: uma coluna por tema (título + cartões de acesso, como a coluna Staff) */}
+                {colunas && colunas.map(c => (
+                  <div key={c.titulo} className={`${coluna} pt-11 gap-3`}>
                     {titulo(c.titulo)}
-                    {c.links.map(({ href, pill: textoPill }) => {
+                    {c.links.map(({ href, pill: textoPill, label, sub }) => {
                       const l = linkDe(href)
                       if (!l) return null
                       return (
@@ -575,8 +648,8 @@ function GlobalMenuInner() {
                           <div className="flex items-center gap-3">
                             <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{l.icon}</span>
                             <span className="min-w-0 flex-1">
-                              <span className="block font-cond font-semibold text-[17px] text-white truncate">{l.label}</span>
-                              <span className="block font-cond text-[14px] text-white/50 truncate">{l.sub}</span>
+                              <span className="block font-cond font-semibold text-[17px] text-white truncate">{label ?? l.label}</span>
+                              <span className="block font-cond text-[14px] text-white/50 truncate">{sub ?? l.sub}</span>
                             </span>
                             {pill(isActive(l.href, l.exact), textoPill)}
                           </div>
@@ -587,7 +660,7 @@ function GlobalMenuInner() {
                 ))}
 
                 {/* 1 · Destaque com globo pontilhado */}
-                {!producao && <div className={`${coluna} overflow-hidden justify-end`}>
+                {!colunas && <div className={`${coluna} overflow-hidden justify-end`}>
                   {titulo('Finanças')}
                   <svg viewBox="0 0 200 200" className="absolute -top-6 left-1/2 -translate-x-1/2 w-[230px] h-[230px]" aria-hidden>
                     <defs>
@@ -621,7 +694,7 @@ function GlobalMenuInner() {
                 </div>}
 
                 {/* 2 · Dois cartões com pílula */}
-                {!producao && <div className={`${coluna} justify-center gap-3`} style={{ order: gestao ? 4 : undefined }}>
+                {!colunas && <div className={`${coluna} justify-center gap-3`}>
                   {titulo('Organização')}
                   {pn.pares.map(par => {
                     const l = linkDe(par.href)
@@ -638,23 +711,10 @@ function GlobalMenuInner() {
                   })}
                 </div>}
 
-                {/* 3 · Cartão "mensagem" com botão (Produção: sem esta coluna por agora) */}
-                {!producao && <div className={`${coluna} justify-center`}>
+                {/* 3 · Cartão "mensagem" com botão */}
+                {!colunas && <div className={`${coluna} justify-center`}>
                   {titulo('Gestão')}
-                  {/* Gestão: cartão do CRM dos casamentos */}
-                  {gestao && crm && (
-                    <Link href={crm.href} onClick={() => setMega(null)} className={`${cartao} px-4 py-3.5`}>
-                      <div className="flex items-center gap-3">
-                        <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{crm.icon}</span>
-                        <span className="min-w-0 flex-1">
-                          <span className="block font-cond font-semibold text-[17px] text-white truncate">CRM Casamentos</span>
-                          <span className="block font-cond text-[14px] text-white/50 truncate">{crm.sub}</span>
-                        </span>
-                        {pill(isActive(crm.href, crm.exact), 'Leads')}
-                      </div>
-                    </Link>
-                  )}
-                  {!gestao &&<div className={`${cartao} hover:bg-[#1a1f20] px-4 py-4`}>
+                  <div className={`${cartao} hover:bg-[#1a1f20] px-4 py-4`}>
                     <div className="flex items-center gap-3">
                       <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14), border: `1px solid ${accent(0.3)}` }}>{msg.icon}</span>
                       <span className="min-w-0 flex-1">
@@ -669,30 +729,11 @@ function GlobalMenuInner() {
                       <svg viewBox="0 0 24 24" className="w-4 h-4" fill={accent(0.95)} aria-hidden><path d="M10 2.5l1.6 4.9 4.9 1.6-4.9 1.6L10 15.5l-1.6-4.9L3.5 9l4.9-1.6z" /></svg>
                       {pn.mensagem.botao}
                     </Link>
-                  </div>}
+                  </div>
                 </div>}
 
-                {/* 3b · Gestão: coluna Staff (no lugar da lista, que repetia os mesmos links) */}
-                {gestao && (
-                  <div className={`${coluna} justify-center gap-3`} style={{ order: 3 }}>
-                    {titulo('Staff')}
-                    {[staff, freelancers].map(l => l && (
-                      <Link key={l.href} href={l.href} onClick={() => setMega(null)} className={`${cartao} px-4 py-3.5`}>
-                        <div className="flex items-center gap-3">
-                          <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{l.icon}</span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block font-cond font-semibold text-[17px] text-white truncate">{l.label}</span>
-                            <span className="block font-cond text-[14px] text-white/50 truncate">{l.sub}</span>
-                          </span>
-                          {pill(isActive(l.href, l.exact), 'Equipa')}
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-
                 {/* 4 · Lista de atalhos do grupo */}
-                {!gestao && !producao && <div className={`${coluna} justify-center`}>
+                {!colunas && <div className={`${coluna} justify-center`}>
                   <div className="rounded-[16px] border border-white/[0.08] bg-[#1a1f20]">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
                       <p className="font-cond font-semibold text-[17px] text-white">{g.nome}</p>
