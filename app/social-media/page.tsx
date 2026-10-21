@@ -1,321 +1,105 @@
 import Link from 'next/link'
 
 /* ============================================================
-   /social-media — dashboard com cartões internos.
-   Por agora 1 cartão: Blog (artigos prontos a copiar).
+   /social-media — no layout da app: topo como o do CRM (linha
+   dourada, título grande, foto a preto e branco à direita) e
+   cartões com foto como os do Menu do /photo.
    ============================================================ */
+
+type Cartao = { href?: string; titulo: string; desc: string; img: string; embreve?: boolean }
+
+const CARTOES: Cartao[] = [
+  { href: '/social-media/blog', titulo: 'Blog', desc: 'Artigos prontos a copiar para o blog', img: '/eventos-hero-2026.webp' },
+  { href: '/social-media/12-meses-12-videos', titulo: '12 Meses 12 Vídeos', desc: 'Guiões prontos, de setembro 2026 a agosto 2027', img: '/eventos-hero-2027.webp' },
+  { href: '/social-media/podcast', titulo: 'Antes do Sim', desc: 'Episódios, candidaturas e leads do podcast', img: '/prewedding-hero.webp' },
+  { titulo: 'Instagram', desc: 'Calendário editorial e publicações', img: '/casamentos-2028.webp', embreve: true },
+]
 
 export default function SocialMediaPage() {
   return (
-    <main className="sm-page">
-      {/* Voltar */}
-      <div className="sm-back-row">
-        <Link href="/secao/490653af-115b-4a9b-9d88-902c1a60f9c1" className="sm-back">
-          <span className="chev">‹</span> Voltar ao Menu
-        </Link>
-      </div>
+    <main className="min-h-screen overflow-x-clip font-cond bg-[#070707]">
 
-      {/* Hero */}
-      <header className="sm-head">
-        <p className="sm-eyebrow">RL Photo · Video — Back-office</p>
-        <h1 className="sm-title">SOCIAL <em>Media</em></h1>
-        <hr className="sm-rule" />
-        <p className="sm-lede">
-          Gestão de Instagram, planeamento editorial, blog e podcast.
+      {/* ── Topo, como o do CRM ─────────────────────────────────────────── */}
+      <section className="relative min-h-[560px] lg:min-h-[72vh] flex flex-col overflow-hidden">
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
+          <img src="/boas-vindas-camera.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-40 lg:opacity-55" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
+        </div>
+        <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+        <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+          Blog · Vídeos · Podcast · Instagram
         </p>
-      </header>
 
-      {/* Cartões */}
-      <section className="sm-grid">
-
-        {/* Blog */}
-        <Link href="/social-media/blog" className="sm-tile">
-          <span className="sm-sweep" />
-          <div className="sm-tile-row">
-            <span className="sm-num">01</span>
-            <span className="sm-tile-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-                <line x1="9" y1="9" x2="16" y2="9" />
-                <line x1="9" y1="13" x2="16" y2="13" />
-              </svg>
-            </span>
-            <div className="sm-tile-body">
-              <p className="sm-tile-name">Blog</p>
-              <p className="sm-tile-desc">Artigos prontos a copiar para o teu blog</p>
+        <div className="relative flex-1 flex flex-col pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-16 lg:pt-8 pb-12 lg:pb-16">
+          <Link href="/secao/490653af-115b-4a9b-9d88-902c1a60f9c1" className="self-start text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Voltar ao Menu</Link>
+          <div className="mt-auto pt-16">
+            <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">RL Photo.Video</p>
+            <h1 className="font-bold uppercase text-white leading-[0.88] text-[60px] sm:text-[110px] lg:text-[140px] mt-2">Social<br />Media</h1>
+            <div className="flex items-center gap-4 mt-5">
+              <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+              <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
+                Blog · Vídeos · <span className="text-[#C9A84C]">Podcast</span>
+              </p>
             </div>
-            <span className="sm-tile-arrow">→</span>
-          </div>
-        </Link>
-
-        {/* 12 Meses 12 Vídeos */}
-        <Link href="/social-media/12-meses-12-videos" className="sm-tile">
-          <span className="sm-sweep" />
-          <div className="sm-tile-row">
-            <span className="sm-num">02</span>
-            <span className="sm-tile-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="17" rx="2" />
-                <line x1="3" y1="9" x2="21" y2="9" />
-                <line x1="8" y1="2" x2="8" y2="6" />
-                <line x1="16" y1="2" x2="16" y2="6" />
-                <polygon points="11,13 15,15.5 11,18" fill="currentColor" stroke="none" />
-              </svg>
-            </span>
-            <div className="sm-tile-body">
-              <p className="sm-tile-name">12 Meses 12 Vídeos</p>
-              <p className="sm-tile-desc">Guiões prontos, de setembro 2026 a agosto 2027</p>
-            </div>
-            <span className="sm-tile-arrow">→</span>
-          </div>
-        </Link>
-
-        {/* Podcast */}
-        <Link href="/social-media/podcast" className="sm-tile">
-          <span className="sm-sweep" />
-          <div className="sm-tile-row">
-            <span className="sm-num">03</span>
-            <span className="sm-tile-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="2" width="6" height="12" rx="3" />
-                <path d="M5 10v1a7 7 0 0 0 14 0v-1" />
-                <line x1="12" y1="19" x2="12" y2="22" />
-              </svg>
-            </span>
-            <div className="sm-tile-body">
-              <p className="sm-tile-name">Antes do Sim</p>
-              <p className="sm-tile-desc">Episódios, candidaturas e leads do Antes do Sim</p>
-            </div>
-            <span className="sm-tile-arrow">→</span>
-          </div>
-        </Link>
-
-        {/* Placeholder para Instagram (futuro) */}
-        <div className="sm-tile is-soon">
-          <span className="sm-soon-badge">Em breve</span>
-          <div className="sm-tile-row">
-            <span className="sm-num">04</span>
-            <span className="sm-tile-icon">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="3" width="18" height="18" rx="5" />
-                <circle cx="12" cy="12" r="4" />
-                <circle cx="17.5" cy="6.5" r="0.6" fill="currentColor" />
-              </svg>
-            </span>
-            <div className="sm-tile-body">
-              <p className="sm-tile-name">Instagram</p>
-              <p className="sm-tile-desc">Calendário editorial e publicações</p>
-            </div>
-            <span className="sm-tile-arrow">·</span>
+            <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
+              Gestão de Instagram, planeamento editorial, blog e podcast, num só sítio.
+            </p>
           </div>
         </div>
+      </section>
 
+      {/* ── Cartões com foto, como os do Menu do /photo ─────────────────── */}
+      <section className="max-w-[1400px] mx-auto px-5 sm:px-10 lg:px-14 pt-6 pb-20">
+        <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Atalhos</p>
+        <h2 className="font-semibold text-white text-[28px] leading-tight mt-1 mb-6">Ferramentas de Social Media</h2>
+
+        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-4 gap-4">
+          {CARTOES.map((c, i) => {
+            const conteudo = (
+              <>
+                <div className="sm-foto absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${c.img})` }} />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0b] via-[#0b0b0b]/55 to-[#0b0b0b]/10" />
+                <div className="sm-brilho absolute inset-0" />
+                <span className="sm-num absolute top-3 left-4 font-bold text-[46px] leading-none tracking-tight">{String(i + 1).padStart(2, '0')}</span>
+                {c.embreve
+                  ? <span className="absolute top-4 right-4 rounded-full border border-white/15 bg-black/40 px-2.5 py-1 text-[9.5px] font-semibold tracking-[0.2em] uppercase text-white/55">Em breve</span>
+                  : <span className="sm-seta absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center text-[16px]">→</span>}
+                <div className="absolute left-4 right-4 bottom-4">
+                  <p className="font-semibold text-[22px] leading-tight text-white">{c.titulo}</p>
+                  <p className="text-[12.5px] text-white/50 leading-snug mt-1">{c.desc}</p>
+                  {!c.embreve && <p className="sm-abrir text-[10.5px] font-medium tracking-[0.22em] uppercase mt-2">Abrir</p>}
+                </div>
+                <span className="sm-linha absolute left-0 bottom-0 h-[2px]" />
+              </>
+            )
+            const cls = `sm-cartao group relative block overflow-hidden rounded-[20px] border border-white/[0.1] bg-[#0e0e0e]/70 aspect-[4/5]${c.embreve ? ' is-embreve' : ''}`
+            return c.href
+              ? <Link key={c.titulo} href={c.href} className={cls}>{conteudo}</Link>
+              : <div key={c.titulo} className={cls} aria-disabled="true">{conteudo}</div>
+          })}
+        </div>
       </section>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600&family=Hanken+Grotesk:wght@300;400;500;600;700&display=swap');
-
-        .sm-page {
-          --bg: #120d08;
-          --surface: #1e1812;
-          --surface-2: #181410;
-          --gold: #c8a866;
-          --gold-soft: #d7bd87;
-          --gold-deep: #9c7c47;
-          --gold-faint: rgba(200, 168, 102, 0.16);
-          --gold-line: rgba(200, 168, 102, 0.22);
-          --ink: #efe7d6;
-          --ink-2: #c3b8a3;
-          --ink-3: #8c8170;
-          --ink-4: #5f574b;
-          --line: rgba(239, 231, 214, 0.10);
-
-          min-height: 100vh;
-          background: var(--bg);
-          color: var(--ink);
-          font-family: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
-          padding: 28px clamp(20px, 4vw, 48px) 80px;
-          max-width: 1080px;
-          margin: 0 auto;
-        }
-        .sm-page * { box-sizing: border-box; }
-
-        .sm-back-row { margin-bottom: 32px; }
-        .sm-back {
-          display: inline-flex; align-items: center; gap: 6px;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: 0.32em; text-transform: uppercase;
-          color: var(--ink-4);
-          text-decoration: none;
-          padding: 8px 14px;
-          border-radius: 999px;
-          border: 1px solid var(--gold-faint);
-          background: rgba(200, 168, 102, 0.04);
-          transition: 0.25s;
-        }
-        .sm-back:hover {
-          color: var(--ink);
-          border-color: var(--gold-line);
-          background: rgba(200, 168, 102, 0.08);
-        }
-        .sm-back .chev {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 16px; color: var(--gold); line-height: 1;
-        }
-
-        .sm-head { text-align: center; margin-bottom: 48px; }
-        .sm-eyebrow {
-          font-size: 10.5px; font-weight: 600;
-          letter-spacing: 0.36em; text-transform: uppercase;
-          color: var(--gold); margin: 0 0 14px;
-        }
-        .sm-title {
-          font-family: 'Cormorant Garamond', serif;
-          font-weight: 400;
-          font-size: clamp(40px, 7vw, 64px);
-          line-height: 1.0;
-          letter-spacing: 0.02em;
-          text-transform: uppercase;
-          color: var(--ink);
-          margin: 0 0 18px;
-        }
-        .sm-title em {
-          font-style: italic; color: var(--gold-soft); font-weight: 400;
-        }
-        .sm-rule {
-          margin: 22px auto 0;
-          width: 96px; height: 1px; border: 0;
-          background: linear-gradient(90deg, transparent, var(--gold), transparent);
-        }
-        .sm-lede {
-          margin-top: 20px;
-          max-width: 460px;
-          margin-left: auto; margin-right: auto;
-          font-size: 13.5px; color: var(--ink-3);
-          line-height: 1.7;
-        }
-
-        /* Grid de cartões */
-        .sm-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 14px;
-        }
-        @media (max-width: 760px) { .sm-grid { grid-template-columns: 1fr; } }
-
-        .sm-tile {
-          position: relative; overflow: hidden;
-          display: block; text-decoration: none; color: inherit;
-          padding: 22px 24px;
-          border-radius: 12px;
-          border: 1px solid var(--line);
-          background: linear-gradient(180deg, var(--surface), var(--surface-2));
-          transition: transform 0.35s cubic-bezier(0.2,0.85,0.25,1),
-                      border-color 0.3s, background 0.3s, box-shadow 0.4s;
-          isolation: isolate;
-        }
-        .sm-tile::before {
-          content: '';
-          position: absolute; left: 0; top: 0; bottom: 0;
-          width: 2px; background: var(--gold);
-          transform: scaleY(0); transform-origin: center;
-          transition: transform 0.35s cubic-bezier(0.2,0.85,0.25,1);
-        }
-        .sm-tile:not(.is-soon):hover {
-          transform: translateY(-3px);
-          border-color: var(--gold-line);
-          background: linear-gradient(180deg, rgba(30,24,18,1), rgba(36,29,21,1));
-          box-shadow: 0 22px 44px -28px rgba(200,168,102,0.45), 0 4px 8px rgba(0,0,0,0.35);
-        }
-        .sm-tile:not(.is-soon):hover::before { transform: scaleY(1); }
-
-        .sm-sweep {
-          position: absolute; inset: 0; pointer-events: none;
-          background: linear-gradient(
-            100deg, transparent 0%,
-            rgba(200,168,102,0.10) 30%,
-            rgba(255,246,224,0.18) 50%,
-            rgba(200,168,102,0.10) 70%,
-            transparent 100%
-          );
-          transform: translateX(-130%);
-          transition: transform 0.7s cubic-bezier(0.3,0.6,0.3,1);
-          opacity: 0;
-        }
-        .sm-tile:not(.is-soon):hover .sm-sweep {
-          transform: translateX(130%); opacity: 1;
-        }
-
-        .sm-tile-row {
-          position: relative; z-index: 1;
-          display: flex; align-items: center; gap: 18px;
-        }
-        .sm-num {
-          font-family: 'Cormorant Garamond', serif;
-          font-weight: 400; font-style: italic;
-          font-size: 26px; line-height: 1;
-          color: var(--gold-deep);
-          flex: none; min-width: 28px;
-        }
-        .sm-tile:not(.is-soon):hover .sm-num { color: var(--gold-soft); }
-
-        .sm-tile-icon {
-          width: 36px; height: 36px;
-          border-radius: 6px;
-          border: 1px solid var(--gold-faint);
-          background: rgba(200,168,102,0.06);
-          color: var(--gold);
-          display: flex; align-items: center; justify-content: center;
-          flex: none;
-          transition: 0.3s;
-        }
-        .sm-tile-icon svg { width: 18px; height: 18px; }
-        .sm-tile:not(.is-soon):hover .sm-tile-icon {
-          border-color: var(--gold);
-          color: var(--gold-soft);
-          background: rgba(200,168,102,0.12);
-        }
-
-        .sm-tile-body { flex: 1; min-width: 0; }
-        .sm-tile-name {
-          font-size: 12.5px; font-weight: 700;
-          letter-spacing: 0.22em; text-transform: uppercase;
-          color: var(--ink);
-          margin: 0 0 4px;
-        }
-        .sm-tile-desc {
-          font-size: 12px; color: var(--ink-3);
-          margin: 0;
-        }
-        .sm-tile-arrow {
-          font-family: 'Cormorant Garamond', serif;
-          font-size: 22px; line-height: 1;
-          color: var(--ink-4);
-          flex: none;
-          margin-left: 6px;
-          transition: 0.3s cubic-bezier(0.2,0.85,0.25,1);
-        }
-        .sm-tile:not(.is-soon):hover .sm-tile-arrow {
-          color: var(--gold);
-          transform: translateX(4px);
-        }
-
-        /* Tile placeholder "em breve" */
-        .sm-tile.is-soon {
-          cursor: default;
-          opacity: 0.55;
-        }
-        .sm-soon-badge {
-          position: absolute; top: 14px; right: 14px;
-          font-size: 8.5px; font-weight: 700;
-          letter-spacing: 0.28em; text-transform: uppercase;
-          color: var(--ink-4);
-          padding: 3px 8px;
-          border-radius: 999px;
-          border: 1px solid var(--line);
-          background: rgba(255,255,255,0.02);
-        }
+        .sm-cartao { transition: border-color .4s ease, box-shadow .4s ease, transform .4s cubic-bezier(.19,1,.22,1); }
+        .sm-foto { filter: grayscale(.85) brightness(.55); transform: scale(1.02); transition: filter .7s ease, transform 1.2s cubic-bezier(.19,1,.22,1); }
+        .sm-num { color: transparent; -webkit-text-stroke: 1px rgba(216,190,147,.45); transition: color .4s ease, -webkit-text-stroke-color .4s ease; }
+        .sm-abrir { color: rgba(255,255,255,.35); transition: color .3s ease, letter-spacing .4s ease; }
+        .sm-seta { color: #d8be93; border: 1px solid rgba(216,190,147,.35); background: rgba(0,0,0,.35); transition: all .35s cubic-bezier(.19,1,.22,1); }
+        .sm-linha { width: 0; background: linear-gradient(90deg, #d8be93, transparent); transition: width .6s cubic-bezier(.19,1,.22,1); }
+        .sm-brilho { background: linear-gradient(110deg, transparent 30%, rgba(216,190,147,.14) 50%, transparent 70%); transform: translateX(-120%); transition: transform 1s ease; pointer-events: none; }
+        .sm-cartao:not(.is-embreve):hover, .sm-cartao:not(.is-embreve):focus-visible {
+          transform: translateY(-4px); border-color: rgba(216,190,147,.55);
+          box-shadow: 0 0 50px -18px rgba(216,190,147,.65), inset 0 1px 0 rgba(255,255,255,.06); }
+        .sm-cartao:not(.is-embreve):hover .sm-foto { filter: grayscale(0) brightness(.75); transform: scale(1.08); }
+        .sm-cartao:not(.is-embreve):hover .sm-num { color: #d8be93; -webkit-text-stroke-color: #d8be93; }
+        .sm-cartao:not(.is-embreve):hover .sm-abrir { color: #d8be93; letter-spacing: .32em; }
+        .sm-cartao:not(.is-embreve):hover .sm-linha { width: 100%; }
+        .sm-cartao:not(.is-embreve):hover .sm-seta { background: #d8be93; color: #0b0b0b; transform: translateX(3px) rotate(-45deg); }
+        .sm-cartao:not(.is-embreve):hover .sm-brilho { transform: translateX(120%); }
+        .sm-cartao.is-embreve { cursor: default; opacity: .6; }
+        @media (prefers-reduced-motion: reduce) { .sm-foto, .sm-brilho, .sm-linha, .sm-cartao { transition: none; } }
       `}</style>
     </main>
   )
