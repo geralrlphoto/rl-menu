@@ -35,6 +35,12 @@ const MEDIA_LINKS = [
   },
 ]
 
+// Menu Produção: uma coluna por departamento, com as páginas de cada um
+const PRODUCAO_COLUNAS: Array<{ titulo: string; links: Array<{ href: string; pill: string }> }> = [
+  { titulo: 'Dep. de Vídeo', links: [{ href: '/edicao-video', pill: 'Vídeo' }] },
+  { titulo: 'Dep. de Fotografia', links: [{ href: '/edicao-fotografia', pill: 'Fotografia' }] },
+]
+
 // Secção Finanças do menu (lá dentro está tudo: receitas, orçamentos, etc.)
 const FINANCAS_SECAO = '/secao/657aa823-19f0-4bc8-a1a1-a0a712f6d6e0'
 
@@ -516,9 +522,32 @@ function GlobalMenuInner() {
             {pn && g && dest && msg && (
               <div key={g.nome} className="max-w-7xl mx-auto grid grid-cols-4 gap-5 [animation:megaIn_.25s_ease-out]">
 
+                {/* Produção: uma coluna por departamento (título + cartões de acesso, como a coluna Staff) */}
+                {producao && PRODUCAO_COLUNAS.map(c => (
+                  <div key={c.titulo} className={`${coluna} justify-center gap-3`}>
+                    {titulo(c.titulo)}
+                    {c.links.map(({ href, pill: textoPill }) => {
+                      const l = linkDe(href)
+                      if (!l) return null
+                      return (
+                        <Link key={href} href={l.href} onClick={() => setMega(null)} className={`${cartao} px-4 py-3.5`}>
+                          <div className="flex items-center gap-3">
+                            <span className="w-9 h-9 shrink-0 rounded-full flex items-center justify-center" style={{ color: accent(0.95), background: accent(0.14) }}>{l.icon}</span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-cond font-semibold text-[17px] text-white truncate">{l.label}</span>
+                              <span className="block font-cond text-[14px] text-white/50 truncate">{l.sub}</span>
+                            </span>
+                            {pill(isActive(l.href, l.exact), textoPill)}
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                ))}
+
                 {/* 1 · Destaque com globo pontilhado */}
-                <div className={`${coluna} overflow-hidden justify-end`}>
-                  {titulo(producao ? 'Dep. de Fotografia' : 'Finanças')}
+                {!producao && <div className={`${coluna} overflow-hidden justify-end`}>
+                  {titulo('Finanças')}
                   <svg viewBox="0 0 200 200" className="absolute -top-6 left-1/2 -translate-x-1/2 w-[230px] h-[230px]" aria-hidden>
                     <defs>
                       <pattern id="mega-pontos" width="5" height="5" patternUnits="userSpaceOnUse">
@@ -548,11 +577,11 @@ function GlobalMenuInner() {
                     </div>
                     <p className="font-cond text-[14px] text-white/50 mt-1.5 pl-12">{dest.sub}</p>
                   </Link>
-                </div>
+                </div>}
 
                 {/* 2 · Dois cartões com pílula */}
-                <div className={`${coluna} justify-center gap-3`} style={{ order: gestao ? 4 : undefined }}>
-                  {titulo(producao ? 'Dep. de Vídeo' : 'Organização')}
+                {!producao && <div className={`${coluna} justify-center gap-3`} style={{ order: gestao ? 4 : undefined }}>
+                  {titulo('Organização')}
                   {pn.pares.map(par => {
                     const l = linkDe(par.href)
                     if (!l) return null
@@ -566,7 +595,7 @@ function GlobalMenuInner() {
                       </Link>
                     )
                   })}
-                </div>
+                </div>}
 
                 {/* 3 · Cartão "mensagem" com botão (Produção: sem esta coluna por agora) */}
                 {!producao && <div className={`${coluna} justify-center`}>
@@ -622,7 +651,7 @@ function GlobalMenuInner() {
                 )}
 
                 {/* 4 · Lista de atalhos do grupo */}
-                {!gestao && <div className={`${coluna} justify-center`}>
+                {!gestao && !producao && <div className={`${coluna} justify-center`}>
                   <div className="rounded-[16px] border border-white/[0.08] bg-[#1a1f20]">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-white/[0.08]">
                       <p className="font-cond font-semibold text-[17px] text-white">{g.nome}</p>
