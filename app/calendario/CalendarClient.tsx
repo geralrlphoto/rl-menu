@@ -1012,9 +1012,8 @@ export default function CalendarClient({
         {dispOpen && (
           <div className="max-w-[1500px] mx-auto px-4 sm:px-6 pb-3">
             <div className="text-[10px] tracking-[0.3em] uppercase text-[#C9A84C]/80 mb-2">Disponibilidade · reunião de preparação</div>
-            <div className="max-h-[50vh] overflow-y-auto">
-              <DisponibilidadePreparacao slots={dispSlots} recarregar={carregarDisp} />
-            </div>
+            {/* Sem caixa com scroll: a lista dos horários abre num dropdown dentro do componente */}
+            <DisponibilidadePreparacao slots={dispSlots} recarregar={carregarDisp} />
           </div>
         )}
 
