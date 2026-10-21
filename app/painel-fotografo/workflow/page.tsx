@@ -70,6 +70,7 @@ const NAV_ITEMS = [
   { key: 'workflow',    label: 'Workflow',            icon: '☰', href: '/painel-fotografo/workflow', active: true },
   { key: 'edicao',      label: 'Edição Fotos',        icon: '◐', href: '/painel-fotografo/edicao-fotos' },
   { key: 'dados',       label: 'Dados Pessoais',      icon: '☻', href: '/painel-fotografo/dados-pessoais' },
+  { key: 'guia',        label: 'Guia do Portal',      icon: '?', href: '/painel-fotografo/guia' },
 ]
 
 // Ícone por etapa (visual mockup-style)

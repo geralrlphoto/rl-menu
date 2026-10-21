@@ -745,6 +745,16 @@ function FreelancerDetailInner() {
                 <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">Fluxo de Trabalho</span>
               </a>
             )}
+            {/* Guia do Portal (fotógrafos) */}
+            {isFotografo && (
+              <a
+                href={`/painel-fotografo/guia?freelancer=${id}`}
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center gap-3 px-5 py-4 text-left transition-colors border-b border-white/[0.06] text-white/50 hover:text-white hover:bg-white/5">
+                <span className="text-lg">?</span>
+                <span className="text-[13px] tracking-[0.3em] uppercase font-semibold">Guia do Portal</span>
+              </a>
+            )}
             {/* Sair */}
             <button
               onClick={async () => {
@@ -1925,6 +1935,7 @@ function SidebarNavAdmin({
     { key: 'pagamentos',     label: 'Pagamentos',     icon: '$' },
     { key: 'notificacoes',   label: 'Notificações',   icon: '◉' },
     ...(isFotografo ? [{ key: null as AdminTabKey, label: 'Fluxo de Trabalho', icon: '❖', href: '/fluxo-trabalho' }] : []),
+    ...(isFotografo ? [{ key: null as AdminTabKey, label: 'Guia do Portal', icon: '?', href: `/painel-fotografo/guia${freelancer?.id ? `?freelancer=${freelancer.id}` : ''}` }] : []),
     { key: 'definicoes' as AdminTabKey, label: 'Dados Pessoais', icon: '☻' },
   ]
 
