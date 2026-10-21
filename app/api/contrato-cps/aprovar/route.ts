@@ -158,6 +158,19 @@ export async function POST(req: NextRequest) {
     // vazio (row criada por um PATCH de settings, ou apagada à mão na BD). Nesse
     // caso este pedido tem de recriar o portal, não devolver o link nem enviar
     // email de um portal que os noivos abririam sem nomes nem data.
+    // Email do cliente em falta no CPS/ficha → usa o do contacto do CRM
+    if (!contrato.email_noiva && !contrato.email_noivo && eventoRow?.crm_contact_id) {
+      const { data: crm } = await sb.from('crm_contacts').select('email').eq('id', eventoRow.crm_contact_id).maybeSingle()
+      if (crm?.email) contrato.email_noiva = crm.email
+    }
+
+    // Portal com nomes mas sem data (criado antes de a ficha ter data) → completa
+    // com a data do contrato em vez de o tratar como inexistente.
+    if (contrato.data_casamento) {
+      await sb.from('portais').update({ data: contrato.data_casamento })
+        .ilike('referencia', referencia).is('data', null)
+    }
+
     const temPortalCompleto = await portalCompleto(sb, referencia)
 
     // Idempotente: se já foi aprovado e o portal está completo, devolve o link
