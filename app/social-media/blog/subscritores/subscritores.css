@@ -20,7 +20,7 @@
 .sub-stat.is-active { border-color: rgba(120, 200, 140, 0.32); }
 .sub-stat.is-off { border-color: rgba(200, 120, 120, 0.28); }
 .sub-stat-label {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.32em;
@@ -28,7 +28,7 @@
   color: rgba(239, 231, 214, 0.55);
 }
 .sub-stat-value {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 36px;
   font-weight: 300;
   color: var(--ink, #efe7d6);
@@ -45,7 +45,7 @@
 }
 .sub-add-label {
   display: block;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.32em;
@@ -61,13 +61,13 @@
   border-radius: 4px;
   padding: 11px 14px;
   color: var(--ink, #efe7d6);
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 14px;
   outline: none;
 }
 .sub-add-input:focus { border-color: rgba(200, 168, 102, 0.55); }
 .sub-add-btn {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.28em;
@@ -96,7 +96,7 @@
 }
 .sub-filters { display: flex; gap: 8px; }
 .sub-filter {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 10.5px;
   font-weight: 600;
   letter-spacing: 0.24em;
@@ -123,13 +123,13 @@
   border-radius: 4px;
   padding: 9px 12px;
   color: var(--ink, #efe7d6);
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 13px;
   outline: none;
 }
 .sub-search:focus { border-color: rgba(200, 168, 102, 0.55); }
 .sub-export {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.24em;
@@ -161,7 +161,7 @@
   margin: 8px 0 0;
   font-size: 13px;
   color: var(--gold-soft, #d7bd87);
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
 }
 
 /* Tabela */
@@ -170,8 +170,8 @@
   padding: 40px 24px;
   text-align: center;
   color: rgba(239, 231, 214, 0.48);
-  font-style: italic;
-  font-family: 'Cormorant Garamond', serif;
+  font-style: normal;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 16px;
   border: 1px dashed rgba(200, 168, 102, 0.18);
   border-radius: 6px;
@@ -189,7 +189,7 @@
 .sub-table {
   width: 100%;
   border-collapse: collapse;
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 13.5px;
 }
 .sub-table th {
@@ -212,7 +212,7 @@
 .sub-table tr.is-off td { opacity: 0.55; }
 
 .sub-num {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 13px;
   color: var(--gold-soft, #d7bd87);
   width: 60px;
@@ -246,7 +246,7 @@
 
 .sub-actions { display: flex; gap: 6px; }
 .sub-act {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 10px;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -279,14 +279,14 @@
   background: rgba(200, 168, 102, 0.02);
 }
 .sub-help-title {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Jost', sans-serif; font-weight: 300;
   font-size: 22px;
   font-weight: 400;
   color: var(--gold-soft, #d7bd87);
   margin: 0 0 10px;
 }
 .sub-help-text {
-  font-family: 'Hanken Grotesk', sans-serif;
+  font-family: 'Roboto Condensed', sans-serif;
   font-size: 13.5px;
   color: rgba(239, 231, 214, 0.78);
   line-height: 1.7;
