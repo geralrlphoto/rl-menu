@@ -34,8 +34,12 @@ function diasUteis(): string[] {
   return out
 }
 
-export default function MarcarReuniao({ dataCasamento, leadId }: { dataCasamento: string; leadId?: string }) {
-  const [aberto, setAberto] = useState(!!leadId)
+export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoInicial }: {
+  dataCasamento: string; leadId?: string
+  origem?: 'link'          // página pública /reuniao (a lead fica com "Link de marcação")
+  abertoInicial?: boolean  // calendário já aberto, sem ter de tocar no botão
+}) {
+  const [aberto, setAberto] = useState(!!leadId || !!abertoInicial)
   const [slots, setSlots] = useState<Slot[] | null>(null)
   const [horasOutro, setHorasOutro] = useState<string[]>([])
   const [erroCarregar, setErroCarregar] = useState(false)
@@ -96,8 +100,8 @@ export default function MarcarReuniao({ dataCasamento, leadId }: { dataCasamento
       const r = await fetch('/api/rollup-reuniao', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(outro
-          ? { pedido: opcoes, mensagem, nome, contato: tel, formato, dataCasamento, site, leadId }
-          : { slotId, nome, contato: tel, formato, dataCasamento, site, leadId }),
+          ? { pedido: opcoes, mensagem, nome, contato: tel, formato, dataCasamento, site, leadId, origem }
+          : { slotId, nome, contato: tel, formato, dataCasamento, site, leadId, origem }),
       })
       const j = await r.json().catch(() => ({}))
       if (!r.ok) {

@@ -39,6 +39,8 @@ export async function POST(req: NextRequest) {
   const formato = b.formato === 'Presencial' ? 'Presencial' : 'Videochamada'
   let dataCasamento = /^\d{4}-\d{2}-\d{2}$/.test(b.dataCasamento ?? '') ? b.dataCasamento : ''
   const leadId: string | null = typeof b.leadId === 'string' && UUID_RE.test(b.leadId) ? b.leadId : null
+  // Página pública /reuniao (link de marcação para qualquer pessoa) ou QR do rollup
+  const viaLink = b.origem === 'link'
   if (b.leadId && !leadId) return NextResponse.json({ error: 'Link inválido.' }, { status: 400 })
   if (leadId) {
     const { data: l } = await sb.from('crm_contacts').select('nome, contato, data_casamento').eq('id', leadId).maybeSingle()
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest) {
   if (!b.pedido && !UUID_RE.test(b.slotId ?? '')) return NextResponse.json({ error: 'Escolham um horário, por favor.' }, { status: 400 })
   if (!leadId && nome.length < 2) return NextResponse.json({ error: 'Digam-nos os vossos nomes, por favor.' }, { status: 400 })
   if (!leadId && contato.replace(/\D/g, '').length < 9) return NextResponse.json({ error: 'Deixem um telefone válido, por favor.' }, { status: 400 })
-  if (b.pedido) return pedirOutroHorario(b.pedido, { nome, contato, formato, dataCasamento, mensagem: b.mensagem, leadId })
+  if (b.pedido) return pedirOutroHorario(b.pedido, { nome, contato, formato, dataCasamento, mensagem: b.mensagem, leadId, viaLink })
 
   // Apanha o horário só se ainda estiver livre: sai da disponibilidade para mais ninguém o marcar
   const { data: slot } = await sb.from('preparacao_slots').delete()
@@ -66,8 +68,8 @@ export async function POST(req: NextRequest) {
       contato,
       data_casamento:  dataCasamento,
       tipo_evento:     'Casamento',
-      como_chegou:     'Rollup',
-      mensagem:        'Marcou a reunião pelo QR do rollup.',
+      como_chegou:     viaLink ? 'Link de marcação' : 'Rollup',
+      mensagem:        viaLink ? 'Marcou a reunião pelo link público de marcação.' : 'Marcou a reunião pelo QR do rollup.',
       ...reuniao,
       lead_prioridade: qualificarLead('', dataCasamento),
       data_entrada:    hojeLisboa(),
@@ -84,7 +86,7 @@ export async function POST(req: NextRequest) {
   const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Georgia,serif">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 12px"><tr><td align="center">
 <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#111;border:1px solid rgba(201,168,76,.35);border-radius:14px">
-<tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Reunião marcada pelo ${leadId ? 'link do WhatsApp' : 'rollup'}</td></tr>
+<tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Reunião marcada pelo ${leadId ? 'link do WhatsApp' : viaLink ? 'link de marcação' : 'rollup'}</td></tr>
 <tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(nome)}</td></tr>
 <tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.8;font-family:Arial,sans-serif">
 <b style="color:#fff">${esc(quando)}</b><br/>${formato}<br/>Telefone: ${esc(contato)}<br/>
@@ -98,7 +100,7 @@ Casamento: ${dataCasamento ? esc(fmtDataLonga(dataCasamento)) : 'data por defini
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>', to: [ADMIN_EMAIL],
-        subject: `Reunião marcada (${leadId ? 'WhatsApp' : 'rollup'}): ${nome} (${quando})`, html,
+        subject: `Reunião marcada (${leadId ? 'WhatsApp' : viaLink ? 'link de marcação' : 'rollup'}): ${nome} (${quando})`, html,
       }),
     })
   } catch { /* a marcação fica feita na mesma */ }
@@ -107,7 +109,7 @@ Casamento: ${dataCasamento ? esc(fmtDataLonga(dataCasamento)) : 'data por defini
 }
 
 /* "Outro horário": guarda a lead com as opções pedidas; só fica marcado quando a RL confirmar. */
-async function pedirOutroHorario(pedido: unknown, l: { nome: string; contato: string; formato: string; dataCasamento: string; mensagem: unknown; leadId: string | null }) {
+async function pedirOutroHorario(pedido: unknown, l: { nome: string; contato: string; formato: string; dataCasamento: string; mensagem: unknown; leadId: string | null; viaLink: boolean }) {
   const r = validarPedido(pedido, null)
   if ('erro' in r) return NextResponse.json({ error: r.erro }, { status: 400 })
   const opcoes = r.opcoes
@@ -125,8 +127,8 @@ async function pedirOutroHorario(pedido: unknown, l: { nome: string; contato: st
     contato:         l.contato,
     data_casamento:  l.dataCasamento,
     tipo_evento:     'Casamento',
-    como_chegou:     'Rollup',
-    mensagem:        [`Pediu reunião pelo QR do rollup (${l.formato}), a confirmar:`, ...linhas, msg ? `\nMensagem: ${msg}` : ''].filter(Boolean).join('\n'),
+    como_chegou:     l.viaLink ? 'Link de marcação' : 'Rollup',
+    mensagem:        [`Pediu reunião pelo ${l.viaLink ? 'link público de marcação' : 'QR do rollup'} (${l.formato}), a confirmar:`, ...linhas, msg ? `\nMensagem: ${msg}` : ''].filter(Boolean).join('\n'),
     status:          'Por Contactar',
     lead_prioridade: qualificarLead('', l.dataCasamento),
     data_entrada:    hojeLisboa(),
@@ -136,7 +138,7 @@ async function pedirOutroHorario(pedido: unknown, l: { nome: string; contato: st
   const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Georgia,serif">
 <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:32px 12px"><tr><td align="center">
 <table width="520" cellpadding="0" cellspacing="0" style="max-width:520px;background:#111;border:1px solid rgba(201,168,76,.35);border-radius:14px">
-<tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Pedido de reunião (${l.leadId ? 'WhatsApp' : 'rollup'}) · aguarda confirmação</td></tr>
+<tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Pedido de reunião (${l.leadId ? 'WhatsApp' : l.viaLink ? 'link de marcação' : 'rollup'}) · aguarda confirmação</td></tr>
 <tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(l.nome)}</td></tr>
 <tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.8;font-family:Arial,sans-serif">
 ${opcoes.map((o, i) => `<b style="color:#fff">Opção ${i + 1}:</b> ${esc(fmtDataLonga(o.data))} às ${esc(o.hora)}`).join('<br/>')}<br/>
@@ -152,7 +154,7 @@ ${msg ? `<div style="margin:14px 0 4px;padding:12px 14px;border-left:2px solid #
       headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>', to: [ADMIN_EMAIL],
-        subject: `Pedido de reunião (${l.leadId ? 'WhatsApp' : 'rollup'}, confirmar): ${l.nome}`, html,
+        subject: `Pedido de reunião (${l.leadId ? 'WhatsApp' : l.viaLink ? 'link de marcação' : 'rollup'}, confirmar): ${l.nome}`, html,
       }),
     })
   } catch { /* o pedido fica guardado na mesma */ }

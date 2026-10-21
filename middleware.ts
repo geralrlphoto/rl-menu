@@ -283,6 +283,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/rollup') ||
     // Marcação da 1.ª reunião pela lead do CRM (link do WhatsApp da ficha rápida)
     pathname.startsWith('/reuniao/') ||
+    // Marcação pública para qualquer pessoa (link de marcação)
+    pathname === '/reuniao' ||
     pathname.startsWith('/api/rollup-reuniao') ||
     pathname.startsWith('/api/registar-pagamento-noivos') ||
     pathname.startsWith('/api/fotos-auto') ||
