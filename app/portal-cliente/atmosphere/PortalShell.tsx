@@ -22,7 +22,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import './atmosphere.css'
 import './tema-rl.css'
-import { refDoEndereco, temTemaRL, ehBatizado } from '@/lib/portalTema'
+import { refDoEndereco, temTemaRLnoEndereco, ehBatizado } from '@/lib/portalTema'
 
 // As fontes tem de ser injectadas em runtime: o Turbopack remove os
 // `@import url(...)` dos ficheiros .css no build de producao, por isso o
@@ -61,7 +61,7 @@ function diffParts(target: Date | null) {
 export function useTemaRL(): boolean {
   const [on, setOn] = useState(false)
   useEffect(() => {
-    setOn(temTemaRL(refDoEndereco(window.location.pathname, window.location.search)))
+    setOn(temTemaRLnoEndereco(window.location.pathname, window.location.search))
   }, [])
   return on
 }

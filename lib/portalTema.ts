@@ -18,3 +18,10 @@ export function temTemaRL(ref: string): boolean {
   const r = ref.toUpperCase()
   return PREFIXOS_TEMA_RL.some(p => r.startsWith(p))
 }
+
+/* Tema RL pelo endereço. Sem referência, o /portal-cliente é o portal modelo (de exemplo),
+   que também usa o novo design */
+export function temTemaRLnoEndereco(pathname: string, search: string): boolean {
+  const ref = refDoEndereco(pathname, search)
+  return ref ? temTemaRL(ref) : pathname.startsWith('/portal-cliente')
+}
