@@ -12,7 +12,7 @@ function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 }
 
-const COLUNAS = 'id,autor,staff_nome,staff_funcao,texto,criado_em'
+const COLUNAS = 'id,autor,staff_id,staff_nome,staff_funcao,texto,criado_em'
 
 /** GET ?ref=CAS_xxx&depois=<id>: mensagens desta referência (as novas, se vier `depois`) */
 export async function GET(req: NextRequest) {

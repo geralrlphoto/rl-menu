@@ -2793,7 +2793,7 @@ function PortalSubPageContent() {
             {portalRef && title.toUpperCase().includes('ATEND') && (
               <div className="msg-info-wrap">
                 {/* Chat com a equipa (staff RL ↔ noivos) */}
-                <ChatAtendimento referencia={portalRef} />
+                <ChatAtendimento referencia={portalRef} noivos={[portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & ') || null} />
 
                 {/* Histórico de mensagens + respostas da RL */}
                 <AtendimentoThread referencia={portalRef} />

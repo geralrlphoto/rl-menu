@@ -5546,7 +5546,7 @@ export default function EventoPage() {
           <BriefingNoivos e={e} />
           {e.referencia && (
             <>
-              <ChatAtendimento referencia={e.referencia} />
+              <ChatAtendimento referencia={e.referencia} noivos={e.cliente ?? null} />
               <RespostaRapidaNoivos referencia={e.referencia} />
               <NotificacaoNoivosSection referencia={e.referencia} />
               <MensagensNoivosSection referencia={e.referencia} />
