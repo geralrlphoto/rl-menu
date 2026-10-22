@@ -7,6 +7,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget } from '@/app/components/FreelancerWidgets'
 import { etapaFotografo, entregasFotografo, nomeado, PASSOS_FOTOGRAFO, BRIEFING_DIAS, textoPrazo, PRAZO_SELECAO_DIAS, PRAZO_EDICAO_DIAS, PRAZO_ALBUM_EDITOR_DIAS, AVISO_DIAS, type EtapaInfo } from '@/lib/etapasFotografo'
 import { EnviarMaqueta } from '@/app/components/EnviarMaqueta'
+import AgendaMembro from './AgendaMembro'
 import './fl-rl.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -793,6 +794,8 @@ function FreelancerDetailInner() {
           verCasamentos={(filtro) => { setFiltroCasamentos(filtro); setTab('casamentos') }}
           alertasAlbum={prazosSelecao.filter(p => p.tipo === 'album').map(p => ({ id: p.c.id, nome: p.c.nome_noivos || p.c.local || 'Casamento', dias: p.daysLeft, prazo: p.deadline.toISOString().slice(0, 10) }))}
           abrirCasamento={(cid) => { setPendingExpandCasamentoId(cid); setTab('casamentos') }}
+          notificacoes={notificacoes}
+          disponibilidade={disponibilidade}
         />
       )}
 
@@ -1184,7 +1187,7 @@ const BOTAO_ETAPA: Record<string, string> = {
   confirmar: 'Confirmar', briefing: 'Ler briefing', dia: 'Abrir', provas: 'Colar link', selecao: 'Colar link', edicao: 'Ver seleção',
 }
 
-function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, edicao, isFotografo, isVideografo, notifNaoLidas, msgsNaoLidas, irPara, verCasamentos, alertasAlbum, abrirCasamento }: {
+function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, edicao, isFotografo, isVideografo, notifNaoLidas, msgsNaoLidas, irPara, verCasamentos, alertasAlbum, abrirCasamento, notificacoes, disponibilidade }: {
   freelancer: Freelancer | null
   freelancerId: string
   casamentos: Casamento[]
@@ -1199,6 +1202,8 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
   verCasamentos: (filtro: string) => void
   alertasAlbum: Array<{ id: string; nome: string; dias: number; prazo: string }>
   abrirCasamento: (id: string) => void
+  notificacoes: Notificacao[]
+  disponibilidade: Array<{ data_inicio: string; data_fim: string | null }>
 }) {
   const primeiroNome = (freelancer?.nome ?? '').split(' ')[0] || ''
   const hoje = new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -1234,6 +1239,36 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
   }
   const tomCls = (t: EtapaInfo['tom']) => t === 'atraso' ? 'fl-atraso' : t === 'aviso' ? 'fl-aviso' : 'text-white/55'
 
+  // Agenda dos próximos 30 dias: casamentos, pré-weddings, prazos e dias indisponíveis
+  const agendaCasamentos = casamentos
+    .filter(c => c.data_casamento && !(isVideografo ? c.indisponivel_videografo : c.indisponivel))
+    .map(c => ({ id: c.id, iso: (c.data_casamento as string).slice(0, 10), nome: nome(c), local: c.local || null,
+      confirmado: !!(isVideografo ? c.data_confirmada_videografo : c.data_confirmada) }))
+  const agendaPreWeddings = notificacoes.flatMap(n => {
+    if (n.tipo !== 'pre_wedding_atribuido' || !n.mensagem) return []
+    try {
+      const m = n.mensagem.match(/^__META__(.+?)__\/META__/)
+      const meta = m ? JSON.parse(m[1]) : null
+      const iso = String(meta?.data ?? '').slice(0, 10)
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return []
+      return [{ id: n.id, iso, nome: String(meta?.nomeNoivos || meta?.referencia || 'Noivos'), hora: meta?.hora ?? null, local: meta?.local ?? null }]
+    } catch { return [] }
+  })
+  const agendaPrazos = [
+    ...afazer.filter(x => x.e.prazo).map(x => ({ key: `e-${x.c.id}`, iso: x.e.prazo as string, acao: x.e.acao ?? '', nome: nome(x.c), dias: x.e.dias ?? 0,
+      abrir: () => x.e.etapa === 'edicao' ? irPara('edicao') : abrirCasamento(x.c.id) })),
+    ...alertasAlbum.map(a => ({ key: `a-${a.id}`, iso: a.prazo, acao: 'Entregar a maqueta do álbum', nome: a.nome, dias: a.dias, abrir: () => irPara('album') })),
+  ]
+  const agendaIndisponiveis = new Set<string>()
+  for (const p of disponibilidade) {
+    const d = new Date(p.data_inicio.slice(0, 10) + 'T12:00:00Z')
+    const fimP = (p.data_fim || p.data_inicio).slice(0, 10)
+    for (let k = 0; k < 400 && d.toISOString().slice(0, 10) <= fimP; k++) {
+      agendaIndisponiveis.add(d.toISOString().slice(0, 10))
+      d.setUTCDate(d.getUTCDate() + 1)
+    }
+  }
+
   // Atalhos: os mesmos sítios do menu, como os cartões numerados do CRM
   const atalhos = itensMenuMembro({ isVideografo, isFotografo, freelancerId }).filter(it => it.key !== null || it.href)
   const contadorDe = (it: ItemMenu) => it.grupo ? notifNaoLidas + msgsNaoLidas : 0
@@ -1267,6 +1302,10 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
         )}
       </section>
 
+      <AgendaMembro casamentos={agendaCasamentos} preWeddings={agendaPreWeddings} prazos={agendaPrazos}
+        indisponiveis={agendaIndisponiveis} abrirCasamento={abrirCasamento} abrirCalendario={() => irPara('calendario')}
+        verAtrasos={() => document.getElementById('membro-por-fazer')?.scrollIntoView({ behavior: 'smooth', block: 'start' })} />
+
       {/* Atalhos */}
       <section className="mb-12">
         <TituloSecao etiqueta="Atalhos" titulo="O teu portal" />
@@ -1279,7 +1318,7 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
       </section>
 
       {/* Hoje: o que há para fazer */}
-      <section>
+      <section id="membro-por-fazer" className="scroll-mt-6">
         <TituloSecao etiqueta={hoje} titulo="Por fazer"
           extra={<button onClick={() => irPara('casamentos')} className="mb-1 text-[12px] tracking-[0.16em] uppercase text-white/40 hover:text-[#C9A84C]">Todos os casamentos →</button>} />
         {afazer.length === 0 ? (
