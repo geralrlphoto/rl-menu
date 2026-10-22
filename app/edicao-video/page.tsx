@@ -142,14 +142,23 @@ export default function EdicaoVideoPage() {
     if (!window.confirm(estreia
       ? `Marcar a estreia do filme de ${p.cliente || p.referencia} para ${quando}? Os noivos recebem o ticket com a data e o filme abre no portal a essa hora.`
       : `Enviar o filme a ${p.cliente || p.referencia}? Os noivos recebem o email e o vídeo fica Entregue.`)) return
-    setAGravar(p.id)
-    const r = await fetch('/api/edicao-video/entregar', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ referencia: p.referencia, url, estreia }),
-    }).catch(() => null)
-    const d = r ? await r.json().catch(() => ({})) : {}
-    setAGravar(null)
-    if (!r?.ok) { alert((d as any).error || 'Não foi possível enviar.'); return }
+    const enviar = async (semEmail: boolean) => {
+      setAGravar(p.id)
+      const r = await fetch('/api/edicao-video/entregar', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ referencia: p.referencia, url, estreia, semEmail }),
+      }).catch(() => null)
+      const d = r ? await r.json().catch(() => ({})) : {}
+      setAGravar(null)
+      return { ok: !!r?.ok, d: d as any }
+    }
+    let res = await enviar(false)
+    // o email falhou: avisa e deixa a RL dar a ordem de passar a Entregue na mesma
+    if (!res.ok && res.d.podeForcar) {
+      if (!window.confirm(`${res.d.error}\n\nPassar para Entregue na mesma, sem email aos noivos?`)) return
+      res = await enviar(true)
+    }
+    if (!res.ok) { alert(res.d.error || 'Não foi possível enviar.'); return }
     carregar()
   }
 
