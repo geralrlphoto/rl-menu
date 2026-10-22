@@ -455,10 +455,9 @@ export default function ChatAtendimento({ referencia, noivos }: { referencia: st
           background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.06);
         }
         .chat-rl .msg.staff .bolha { background: linear-gradient(180deg, rgba(216,190,147,.10), rgba(216,190,147,.05)); border-color: rgba(216,190,147,.22); }
-        .chat-rl .msg.minha .bolha { border-radius: 16px 4px 16px 16px; background: linear-gradient(135deg, #d8be93, #b8965a); color: #15120c; border-color: transparent; }
+        .chat-rl .msg.minha .bolha { border-radius: 16px 4px 16px 16px; background: linear-gradient(180deg, rgba(216,190,147,.09), rgba(216,190,147,.04)); color: #f3ede2; border-color: rgba(216,190,147,.32); }
         .chat-rl .msg.agrupa .bolha { border-radius: 16px; }
         .chat-rl mark { background: rgba(216,190,147,.35); color: inherit; border-radius: 3px; padding: 0 2px; box-shadow: 0 0 0 1px rgba(216,190,147,.5); }
-        .chat-rl .msg.minha mark { background: rgba(21,18,12,.25); box-shadow: 0 0 0 1px rgba(21,18,12,.4); }
 
         .chat-rl .av {
           position: relative; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; overflow: hidden;
