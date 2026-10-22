@@ -3727,14 +3727,25 @@ function EdicaoTab({ freelancerId, edicao, casamentos, fotosSelecaoMap, onRefres
                             </select>
                             <span className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] ${cfg.accent}`}>▾</span>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => abrirSelecaoModal(job.referencia || '', job.nome)}
-                            disabled={openingSelecao === (job.referencia || job.nome)}
-                            className="text-[10px] px-2.5 py-1.5 rounded-md border border-gold/30 bg-gold/5 text-gold/80 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all tracking-widest uppercase text-center font-bold flex items-center justify-center gap-1 disabled:opacity-50"
-                          >
-                            {openingSelecao === (job.referencia || job.nome) ? '⏳ A abrir…' : '👁 Ver Seleção'}
-                          </button>
+                          {/* A seleção dos noivos só abre depois de passar a EM EDIÇÃO (a mudança
+                              segue para a ficha, o portal dos noivos e o departamento) */}
+                          {job.status === 'NOVO TRABALHO' ? (
+                            <>
+                              <div className="text-[10px] px-2.5 py-1.5 rounded-md border border-white/10 bg-white/[0.03] text-white/35 tracking-widest uppercase text-center font-bold flex items-center justify-center gap-1 cursor-not-allowed">
+                                🔒 Ver Seleção
+                              </div>
+                              <p className="text-[11px] text-white/45 leading-snug">Muda o estado para <span className="text-gold font-semibold">Em edição</span> para veres a seleção dos noivos.</p>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => abrirSelecaoModal(job.referencia || '', job.nome)}
+                              disabled={openingSelecao === (job.referencia || job.nome)}
+                              className="text-[10px] px-2.5 py-1.5 rounded-md border border-gold/30 bg-gold/5 text-gold/80 hover:text-gold hover:border-gold/50 hover:bg-gold/10 transition-all tracking-widest uppercase text-center font-bold flex items-center justify-center gap-1 disabled:opacity-50"
+                            >
+                              {openingSelecao === (job.referencia || job.nome) ? '⏳ A abrir…' : '👁 Ver Seleção'}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

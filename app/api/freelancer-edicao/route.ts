@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { exigeSessao, exigeAdmin, exigeAdminOuProprio, ehAdmin, sessaoMembro, naoAutorizado } from '@/lib/api-guard'
+import { registarFoto } from '@/lib/fotografiaHistorico'
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
@@ -85,27 +86,56 @@ export async function PATCH(req: NextRequest) {
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const supabase = db()
+  // Estado anterior: o formulário de edição manda sempre o status, mesmo sem mudar
+  const { data: antes } = await supabase.from('freelancer_edicao').select('status').eq('id', id).maybeSingle()
   const { error } = await supabase.from('freelancer_edicao').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Sync status to portal when freelancer changes their editing state
-  if (fields.status) {
-    const statusMap: Record<string, string> = {
-      'NOVO TRABALHO': 'Aguardar',
-      'EM EDIÇÃO':     'Em Edição',
-      'CONCLUÍDO':     'Concluído',
-    }
-    const portalEstado = statusMap[fields.status]
-    if (portalEstado) {
-      const { data: rec } = await supabase.from('freelancer_edicao').select('referencia').eq('id', id).single()
-      if (rec?.referencia) {
-        const { data: portal } = await supabase.from('portais').select('settings').ilike('referencia', rec.referencia).maybeSingle()
-        if (portal) {
-          await supabase.from('portais')
-            .update({ settings: { ...(portal.settings ?? {}), selecao_fotos_noivos_estado: portalEstado } })
-            .ilike('referencia', rec.referencia)
+  // Estado da edição → evento. O editor só vê a seleção dos noivos depois de passar a EM EDIÇÃO,
+  // e essa mudança chega à ficha, ao portal dos noivos ("Fotos para Edição"), ao Notion e ao
+  // histórico do Departamento de Fotografia. Voltar a NOVO TRABALHO repõe "Enviado".
+  // CONCLUÍDO não mexe no evento: a entrega aos noivos é da RL (Departamento de Fotografia).
+  if ((fields.status === 'EM EDIÇÃO' || fields.status === 'NOVO TRABALHO') && fields.status !== antes?.status) {
+    try {
+      const emEdicao = fields.status === 'EM EDIÇÃO'
+      const { data: rec } = await supabase.from('freelancer_edicao').select('referencia, freelancer_id').eq('id', id).single()
+      const ref = rec?.referencia
+      if (ref) {
+        const estadoEvento = emEdicao ? 'Em Edição' : 'Enviado'
+        for (const t of ['eventos_2026', 'eventos_2027']) {
+          const { data: ev } = await supabase.from(t).select('id, notion_id, fotos_edicao_estado').eq('referencia', ref).maybeSingle()
+          if (!ev) continue
+          const atual = String(ev.fotos_edicao_estado ?? '')
+          // Não desfaz uma entrega nem um "sem serviço"; só volta a Enviado se estava Em Edição
+          const muda = !/entreg|s\/servi/i.test(atual) && (emEdicao || atual === 'Em Edição')
+          if (muda && atual !== estadoEvento) {
+            await supabase.from(t).update({ fotos_edicao_estado: estadoEvento }).eq('id', ev.id)
+            if (ev.notion_id && process.env.NOTION_TOKEN) {
+              await fetch(`https://api.notion.com/v1/pages/${ev.notion_id}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${process.env.NOTION_TOKEN}`, 'Notion-Version': '2022-06-28', 'Content-Type': 'application/json' },
+                body: JSON.stringify({ properties: { 'FOTOS P/ EDIÇÃO': { select: { name: estadoEvento } } } }),
+              }).catch(e => console.warn('[freelancer-edicao] Notion:', e))
+            }
+          }
+          break
+        }
+        if (emEdicao) {
+          // Os noivos já escolheram: a "Seleção Fotos Noivos" do portal fica concluída
+          const { data: portal } = await supabase.from('portais').select('settings').ilike('referencia', ref).maybeSingle()
+          if (portal && !/conclu|entreg/i.test(String(portal.settings?.selecao_fotos_noivos_estado ?? ''))) {
+            await supabase.from('portais')
+              .update({ settings: { ...(portal.settings ?? {}), selecao_fotos_noivos_estado: 'Concluído' } })
+              .ilike('referencia', ref)
+          }
+          const { data: fl } = rec?.freelancer_id
+            ? await supabase.from('freelancers').select('nome').eq('id', rec.freelancer_id).maybeSingle()
+            : { data: null }
+          await registarFoto(ref, 'Edição começada', fl?.nome ?? 'Editor')
         }
       }
+    } catch (e) {
+      console.error('[freelancer-edicao] sync estado:', e)
     }
   }
 
