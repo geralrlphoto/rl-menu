@@ -30,10 +30,12 @@ function Avatar({ m, noivos }: { m: Msg; noivos: string }) {
   if (m.autor === 'noivos') return <span className="av av-noivos">{iniciais(noivos)}</span>
   return (
     <span className="av av-staff">
-      {m.staff_id && !falhou
+      {/* iniciais por baixo enquanto a foto carrega (ou se não houver foto) */}
+      {iniciais(m.staff_nome || 'RL')}
+      {m.staff_id && !falhou && (
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={`/api/staff/foto/${m.staff_id}`} alt="" loading="lazy" onError={() => setFalhou(true)} />
-        : iniciais(m.staff_nome || 'RL')}
+        <img src={`/api/staff/foto/${m.staff_id}`} alt="" loading="lazy" onError={() => setFalhou(true)} />
+      )}
     </span>
   )
 }
@@ -263,7 +265,8 @@ export default function ChatAtendimento({ referencia, noivos }: { referencia: st
           width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; overflow: hidden;
           font-size: 11px; font-weight: 700; letter-spacing: .05em; flex: none;
         }
-        .chat-rl :global(.av img) { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .chat-rl :global(.av) { position: relative; }
+        .chat-rl :global(.av img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
         .chat-rl :global(.av-staff) { border: 1px solid rgba(216,190,147,.55); color: var(--g); background: #15130f; }
         .chat-rl :global(.av-noivos) { border: 1px solid rgba(243,237,226,.25); color: var(--cr); background: #1a1a1a; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 14px; font-weight: 500; }
 
