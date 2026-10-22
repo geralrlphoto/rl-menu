@@ -1,13 +1,13 @@
 /* Portal do membro com o layout do admin (/photo, /crm, ficha do evento), desde 2026-10-22.
-   Fundo #070707, dourado #C9A84C, letra Roboto Condensed (font-cond), títulos fortes,
+   Fundo #070707, dourado #d8be93, letra Roboto Condensed (font-cond), títulos fortes,
    capa com foto em cada página (CapaPortal) e cartões escuros com contorno dourado suave.
    As cores de estado ficam: vermelho = atraso, laranja = falta pouco, verde = feito.
    Tudo fica dentro de .fl-rl (a raiz da página). */
 
 .fl-rl {
-  --g: #C9A84C;
+  --g: #d8be93;
   --atraso: #f0a196; --aviso: #e8b679; --feito: #9fd0a0;
-  --line: rgba(201,168,76,.14); --line-soft: rgba(255,255,255,.07);
+  --line: rgba(216,190,147,.14); --line-soft: rgba(255,255,255,.07);
   background: #070707 !important;
 }
 
@@ -32,10 +32,23 @@
 
 .fl-rl [class*="border-purple"], .fl-rl [class*="border-violet"], .fl-rl [class*="border-blue"], .fl-rl [class*="border-sky"],
 .fl-rl [class*="border-pink"], .fl-rl [class*="border-teal"], .fl-rl [class*="border-cyan"], .fl-rl [class*="border-indigo"],
-.fl-rl [class*="border-yellow"] { border-color: rgba(201,168,76,.3) !important; }
+.fl-rl [class*="border-yellow"] { border-color: rgba(216,190,147,.3) !important; }
 .fl-rl [class*="bg-purple"], .fl-rl [class*="bg-violet"], .fl-rl [class*="bg-blue"], .fl-rl [class*="bg-sky"],
 .fl-rl [class*="bg-pink"], .fl-rl [class*="bg-teal"], .fl-rl [class*="bg-cyan"], .fl-rl [class*="bg-indigo"],
-.fl-rl [class*="bg-yellow"] { background-color: rgba(201,168,76,.08) !important; }
+.fl-rl [class*="bg-yellow"] { background-color: rgba(216,190,147,.08) !important; }
+
+/* ── Dourado suave (#d8be93, o dos portais dos noivos) em vez do dourado amarelo do Tailwind ── */
+.fl-rl [class*="border-gold"] { border-color: rgba(216,190,147,.3) !important; }
+.fl-rl [class*="bg-gold/"] { background-color: rgba(216,190,147,.08) !important; }
+.fl-rl [class*="from-gold"], .fl-rl [class*="to-gold"] { --tw-gradient-from: rgba(216,190,147,.12) !important; }
+/* Relógio e tempo vêm do /photo (dourado #C9A84C): aqui passam ao dourado suave */
+.fl-rl [class*="text-[#C9A84C]"] { color: var(--g) !important; }
+.fl-rl [stroke="#C9A84C"] { stroke: var(--g) !important; }
+.fl-rl [fill="#C9A84C"] { fill: var(--g) !important; }
+.fl-rl stop[stop-color="#C9A84C"] { stop-color: var(--g) !important; }
+
+/* Títulos finos como os nomes dos noivos no portal deles (Jost 200) */
+.fl-rl .fl-jost { font-family: 'Jost', sans-serif !important; font-weight: 200 !important; letter-spacing: -.01em; }
 
 /* ── Fundos: sem fotos de banco; cartões escuros como no CRM ── */
 .fl-rl img[src*="unsplash.com"] { display: none !important; }
@@ -46,11 +59,11 @@
 
 /* ── Botões principais: contorno dourado, letras espaçadas (como "Nova lead") ── */
 .fl-rl button.bg-gold, .fl-rl a.bg-gold {
-  background: rgba(201,168,76,.15) !important; color: #fff !important; border: 1px solid rgba(201,168,76,.7) !important;
+  background: rgba(216,190,147,.15) !important; color: #fff !important; border: 1px solid rgba(216,190,147,.7) !important;
   letter-spacing: .14em; text-transform: uppercase; font-weight: 600 !important;
-  box-shadow: 0 0 34px -12px rgba(201,168,76,.7) !important;
+  box-shadow: 0 0 34px -12px rgba(216,190,147,.7) !important;
 }
-.fl-rl button.bg-gold:hover, .fl-rl a.bg-gold:hover { background: rgba(201,168,76,.3) !important; }
+.fl-rl button.bg-gold:hover, .fl-rl a.bg-gold:hover { background: rgba(216,190,147,.3) !important; }
 .fl-rl button.bg-gold:disabled { background: rgba(255,255,255,.04) !important; color: rgba(255,255,255,.3) !important; border-color: rgba(255,255,255,.08) !important; box-shadow: none !important; }
 .fl-rl input, .fl-rl select, .fl-rl textarea { background-color: rgba(0,0,0,.45) !important; color: #fff; }
 
@@ -67,18 +80,18 @@
 .fl-rl .fl-eyebrow { font-size: 11px; font-weight: 500; letter-spacing: .2em; text-transform: uppercase; color: var(--g); }
 .fl-rl .fl-linha { border-top: 1px solid var(--line-soft); }
 /* Listas do Início dentro de um cartão escuro com contorno dourado (como os do CRM) */
-.fl-rl .fl-cartao { border: 1px solid var(--line); border-left: 2px solid rgba(201,168,76,.35); border-radius: 18px; background: rgba(17,17,17,.9); padding: 0 18px; }
+.fl-rl .fl-cartao { border: 1px solid var(--line); border-left: 2px solid rgba(216,190,147,.35); border-radius: 18px; background: rgba(17,17,17,.9); padding: 0 18px; }
 .fl-rl .fl-cartao > li:first-child > .fl-linha, .fl-rl .fl-cartao > li.fl-linha:first-child { border-top: 0; }
 .fl-rl .fl-btn { display: inline-flex; align-items: center; gap: .4em; font-size: 12px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: #fff;
-  border: 1px solid rgba(201,168,76,.55); background: rgba(201,168,76,.1); padding: 9px 16px; white-space: nowrap; transition: background .3s; }
-.fl-rl .fl-btn:hover { background: rgba(201,168,76,.25); }
+  border: 1px solid rgba(216,190,147,.55); background: rgba(216,190,147,.1); padding: 9px 16px; white-space: nowrap; transition: background .3s; }
+.fl-rl .fl-btn:hover { background: rgba(216,190,147,.25); }
 .fl-rl .fl-btn-sec { color: rgba(255,255,255,.75); border-color: rgba(255,255,255,.15); background: rgba(0,0,0,.3); }
 .fl-rl .fl-atraso { color: var(--atraso) !important; }
 .fl-rl .fl-aviso { color: var(--aviso) !important; }
 .fl-rl .fl-feito { color: var(--feito) !important; }
 .fl-rl .fl-passos { display: flex; gap: 3px; }
 .fl-rl .fl-passos i { flex: 1; height: 2px; border-radius: 2px; background: rgba(255,255,255,.1); }
-.fl-rl .fl-passos i.f { background: rgba(201,168,76,.55); }
+.fl-rl .fl-passos i.f { background: rgba(216,190,147,.55); }
 .fl-rl .fl-passos i.a { background: var(--g); }
 .fl-rl .fl-passos i.a.atraso { background: var(--atraso); }
 .fl-rl .fl-passos i.a.aviso { background: var(--aviso); }

@@ -624,12 +624,12 @@ function FreelancerDetailInner() {
     switch (tab) {
       case null: return (
         <CapaPortal relogio foto="/boas-vindas-camera.webp" eyebrow="RL Photo.Video · Equipa"
-          titulo={<>Olá, <span className="text-[#C9A84C]">{primeiroNome}</span></>}
-          linha={<>Por fazer · Casamentos · <span className="text-[#C9A84C]">Entregas</span></>}
+          titulo={<>Olá, <span className="text-[#d8be93]">{primeiroNome}</span></>}
+          linha={<>Por fazer · Casamentos · <span className="text-[#d8be93]">Entregas</span></>}
           texto={afazer.length === 0 ? 'Está tudo em dia.' : `${afazer.length} ${afazer.length === 1 ? 'coisa' : 'coisas'} por fazer${emAtraso > 0 ? ` · ${emAtraso} em atraso` : ''}`}
           lateral={`Equipa RL · ${anoAtual}`}
           botoes={<>
-            <button onClick={() => setTab('casamentos')} className={capaBtn}>Casamentos <span className="text-[#C9A84C]">→</span></button>
+            <button onClick={() => setTab('casamentos')} className={capaBtn}>Casamentos <span className="text-[#d8be93]">→</span></button>
             <button onClick={() => setTab('mensagens')} className={capaBtnSec}>/ Mensagens</button>
           </>}
           numeros={{ titulo: 'Resumo', itens: [
@@ -641,43 +641,43 @@ function FreelancerDetailInner() {
       )
       case 'casamentos': return (
         <CapaPortal foto="/casamentos-2026.jpg" eyebrow="RL Photo.Video" titulo="CASAMENTOS"
-          linha={<>Confirmar · Briefing · <span className="text-[#C9A84C]">Entregas</span></>}
+          linha={<>Confirmar · Briefing · <span className="text-[#d8be93]">Entregas</span></>}
           texto={`${casamentos.length} casamentos · ${upcomingList.length} por acontecer · ${afazer.length} com algo por fazer`}
           lateral={`Casamentos · ${anoAtual}`} />
       )
       case 'edicao': return (
         <CapaPortal foto="/eventos-hero-2026.webp" eyebrow="RL Photo.Video" titulo="EDIÇÃO"
-          linha={<>Seleção · Edição · <span className="text-[#C9A84C]">Entregue</span></>}
+          linha={<>Seleção · Edição · <span className="text-[#d8be93]">Entregue</span></>}
           texto={`${edicao.length} trabalhos de edição · ${edicao.filter(e => e.status === 'EM EDIÇÃO').length} em edição`}
           lateral="Edição de fotos" />
       )
       case 'album': return (
         <CapaPortal foto="/eventos-hero-2027.webp" eyebrow="RL Photo.Video" titulo="ÁLBUNS"
-          linha={<>Maqueta · Aprovação · <span className="text-[#C9A84C]">Entregue</span></>}
+          linha={<>Maqueta · Aprovação · <span className="text-[#d8be93]">Entregue</span></>}
           texto={`${album.length} ${album.length === 1 ? 'álbum' : 'álbuns'}`}
           lateral="Edição de álbuns" />
       )
       case 'tarefas': case 'notificacoes': case 'mensagens': return (
         <CapaPortal foto="/crm-hero.webp" eyebrow="RL Photo.Video" titulo="MENSAGENS"
-          linha={<>Tarefas · Notificações · <span className="text-[#C9A84C]">Mensagens</span></>}
+          linha={<>Tarefas · Notificações · <span className="text-[#d8be93]">Mensagens</span></>}
           texto={`${contaNaoLidas.notificacoes} notificações e ${contaNaoLidas.mensagens} mensagens por ler`}
           lateral="Falar com a produção" />
       )
       case 'calendario': return (
         <CapaPortal foto="/eventos-hero-2028.webp" eyebrow="RL Photo.Video" titulo="CALENDÁRIO"
-          linha={<>Casamentos · Prazos · <span className="text-[#C9A84C]">Disponibilidade</span></>}
+          linha={<>Casamentos · Prazos · <span className="text-[#d8be93]">Disponibilidade</span></>}
           texto="O mês com os casamentos, as entregas, os prazos e as tarefas."
           lateral={`Agenda · ${anoAtual}`} />
       )
       case 'pagamentos': return (
         <CapaPortal foto="/casamentos-2027.jpg" eyebrow="RL Photo.Video" titulo="PAGAMENTOS"
-          linha={<>Por pagar · <span className="text-[#C9A84C]">Pago</span></>}
+          linha={<>Por pagar · <span className="text-[#d8be93]">Pago</span></>}
           texto={pagPorPagar.length === 0 ? 'Não há pagamentos por fazer.' : `${pagPorPagar.length} por pagar · ${valorPorPagar.toLocaleString('pt-PT')} €`}
           lateral="Pagamentos" />
       )
       case 'definicoes': return (
         <CapaPortal foto="/prewedding-hero.webp" eyebrow="RL Photo.Video" titulo="PERFIL"
-          linha={<>Dados · Fotografia · <span className="text-[#C9A84C]">Pagamentos</span></>}
+          linha={<>Dados · Fotografia · <span className="text-[#d8be93]">Pagamentos</span></>}
           texto="Os teus dados, a tua fotografia e a forma como recebes os pagamentos."
           lateral="Dados pessoais" />
       )
@@ -689,6 +689,8 @@ function FreelancerDetailInner() {
 
   return (
     <div className="min-h-screen text-white relative overflow-x-clip fl-rl font-cond">
+      {/* Jost fina para o "Olá" (como os nomes no portal dos noivos). Num <link>, porque o build tira os @import dos .css */}
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@200;300&display=swap" />
       {/* ── Animações premium ─────────────────────────────────────────── */}
       <style jsx global>{`
         @keyframes proxCasamentoGlow {
@@ -1091,14 +1093,14 @@ function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, bot
           {/* Fundo do /photo: foto a toda a largura, preto e branco e esbatida, brilho dourado,
               pontilhado e anéis finos, a fundir com o cinzento em cima e em baixo */}
           <div className="absolute inset-0 bg-cover bg-[center_35%] grayscale opacity-[0.22]" style={{ backgroundImage: `url('${foto}')` }} />
-          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 50% at 55% 38%, rgba(201,168,76,0.10), transparent 70%)' }} />
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 50% at 55% 38%, rgba(216,190,147,0.10), transparent 70%)' }} />
           <div className="absolute inset-0 opacity-40" style={{
             backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '26px 26px',
             maskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
             WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
           }} />
           <svg className="pointer-events-none absolute left-[55%] top-[40%] -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] opacity-[0.09]"
-            viewBox="0 0 100 100" fill="none" stroke="#C9A84C" strokeWidth="0.1" aria-hidden>
+            viewBox="0 0 100 100" fill="none" stroke="#d8be93" strokeWidth="0.1" aria-hidden>
             <circle cx="50" cy="50" r="18" />
             <circle cx="50" cy="50" r="30" strokeDasharray="0.5 1.2" />
             <circle cx="50" cy="50" r="44" />
@@ -1115,22 +1117,24 @@ function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, bot
           <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
         </div>
       )}
-      <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-12 w-px bg-[#C9A84C]/45" />
+      <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-12 w-px bg-[#d8be93]/45" />
       {lateral && (
         <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">{lateral}</p>
       )}
       {!relogio && <>
-        <span className="hidden lg:block absolute left-[34%] top-[22%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
-        <span className="hidden lg:block absolute left-[33.2%] top-[27%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
+        <span className="hidden lg:block absolute left-[34%] top-[22%] w-2.5 h-2.5 rounded-full bg-[#d8be93]" />
+        <span className="hidden lg:block absolute left-[33.2%] top-[27%] w-11 h-11 rounded-full border border-[#d8be93]/45" />
       </>}
 
       <div className={`relative flex-1 grid grid-cols-[minmax(0,1fr)] ${numeros ? 'xl:grid-cols-[minmax(0,1fr)_330px]' : ''} gap-8 items-end pl-11 sm:pl-16 lg:pl-20 pr-5 sm:pr-14 ${relogio ? 'pt-20 lg:pt-28' : 'pt-20'} pb-10 lg:pb-14`}>
         <div className="min-w-0">
-          <p className="text-[12px] sm:text-[15px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">{eyebrow}</p>
-          <h1 className="font-bold text-white leading-[0.9] text-[44px] min-[400px]:text-[52px] sm:text-[88px] lg:text-[104px] mt-2 break-words">{titulo}</h1>
+          <p className="text-[12px] sm:text-[15px] font-bold tracking-[0.5em] uppercase text-[#d8be93]">{eyebrow}</p>
+          <h1 className={`text-white mt-2 break-words ${relogio
+            ? 'fl-jost leading-[1.04] text-[46px] sm:text-[72px] lg:text-[84px]'
+            : 'font-bold leading-[0.9] text-[44px] min-[400px]:text-[52px] sm:text-[88px] lg:text-[104px]'}`}>{titulo}</h1>
           {linha && (
             <div className="flex items-center gap-4 mt-5">
-              <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+              <span className="hidden sm:block w-12 h-px bg-[#d8be93]" />
               <p className="text-[12px] sm:text-[16px] tracking-[0.22em] uppercase text-white/70">{linha}</p>
             </div>
           )}
@@ -1139,9 +1143,9 @@ function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, bot
         </div>
 
         {numeros && (
-          <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+          <aside className="rounded-[22px] border border-[#d8be93]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(216,190,147,0.5)]">
             <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#d8be93] shadow-[0_0_8px_#d8be93]" />
               {numeros.titulo}
             </p>
             <div className="grid grid-cols-2 mt-3">
@@ -1151,7 +1155,7 @@ function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, bot
                   <Tag key={x.l} onClick={x.onClick}
                     className={`py-3 min-w-0 text-left ${i % 2 === 0 ? 'pr-3 border-r border-white/[0.07]' : 'pl-3'} ${i < numeros.itens.length - 2 ? 'border-b border-white/[0.07]' : ''} ${x.onClick ? 'hover:bg-white/[0.02] transition-colors' : ''}`}>
                     <p className="text-[11px] text-white/50 truncate">{x.l}</p>
-                    <p className={`font-semibold text-[22px] leading-none mt-1.5 truncate ${x.ouro ? 'text-[#C9A84C]' : 'text-white'}`}>{x.v}</p>
+                    <p className={`font-semibold text-[22px] leading-none mt-1.5 truncate ${x.ouro ? 'text-[#d8be93]' : 'text-white'}`}>{x.v}</p>
                     {x.s && <p className="text-[10.5px] text-white/30 mt-1 truncate">{x.s}</p>}
                   </Tag>
                 )
@@ -1165,7 +1169,7 @@ function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, bot
 }
 
 /* Botões da capa: principal (dourado) e secundário, como "Nova lead" e "/ Follow up" no CRM */
-const capaBtn = 'inline-flex items-center gap-2.5 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-3.5 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]'
+const capaBtn = 'inline-flex items-center gap-2.5 border border-[#d8be93]/70 bg-[#d8be93]/15 hover:bg-[#d8be93]/30 px-6 py-3.5 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(216,190,147,0.7)]'
 const capaBtnSec = 'inline-flex items-center gap-2 border border-white/15 hover:border-white/35 bg-black/30 px-6 py-3.5 text-[14px] font-semibold tracking-[0.18em] uppercase text-white/85 transition-all'
 
 /* Título de secção: etiqueta dourada + título forte (como "Atalhos · Ferramentas do CRM") */
@@ -1173,7 +1177,7 @@ function TituloSecao({ etiqueta, titulo, extra }: { etiqueta: string; titulo: st
   return (
     <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
       <div>
-        <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">{etiqueta}</p>
+        <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#d8be93]">{etiqueta}</p>
         <h2 className="font-semibold text-white text-[26px] sm:text-[28px] leading-tight mt-1">{titulo}</h2>
       </div>
       {extra}
@@ -1185,21 +1189,21 @@ function TituloSecao({ etiqueta, titulo, extra }: { etiqueta: string; titulo: st
 function AtalhoPortal({ num, label, icon, onClick, href, contador, primary }: {
   num: number; label: string; icon: string; onClick?: () => void; href?: string; contador?: number; primary?: boolean
 }) {
-  const cls = 'group relative w-full flex items-center gap-3.5 rounded-[18px] border bg-[#111111]/90 px-4 py-3.5 text-left font-cond transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/45 hover:shadow-[0_0_30px_-16px_rgba(201,168,76,0.6)]'
+  const cls = 'group relative w-full flex items-center gap-3.5 rounded-[18px] border bg-[#111111]/90 px-4 py-3.5 text-left font-cond transition-all duration-300 hover:-translate-y-0.5 hover:border-[#d8be93]/45 hover:shadow-[0_0_30px_-16px_rgba(216,190,147,0.6)]'
   const estilo = {
-    borderColor: primary ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.14)',
-    borderLeft: `2px solid rgba(201,168,76,${primary ? 0.9 : 0.35})`,
+    borderColor: primary ? 'rgba(216,190,147,0.4)' : 'rgba(216,190,147,0.14)',
+    borderLeft: `2px solid rgba(216,190,147,${primary ? 0.9 : 0.35})`,
   }
   const inner = (
     <>
-      <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-[#C9A84C] text-[15px] transition-transform duration-300 group-hover:scale-110"
-        style={{ background: `rgba(201,168,76,${primary ? 0.2 : 0.1})` }}>{icon}</span>
+      <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-[#d8be93] text-[15px] transition-transform duration-300 group-hover:scale-110"
+        style={{ background: `rgba(216,190,147,${primary ? 0.2 : 0.1})` }}>{icon}</span>
       <span className="min-w-0 flex-1">
-        <span className="block text-[11px] tracking-[0.15em] text-[#C9A84C]/60">{String(num).padStart(2, '0')}</span>
+        <span className="block text-[11px] tracking-[0.15em] text-[#d8be93]/60">{String(num).padStart(2, '0')}</span>
         <span className="block text-[16px] font-semibold leading-tight text-white truncate">{label}</span>
       </span>
-      {!!contador && <span className="shrink-0 min-w-[24px] h-6 px-1.5 rounded-full bg-[#C9A84C]/15 text-[#C9A84C] text-[12px] font-semibold flex items-center justify-center">{contador}</span>}
-      <span className="shrink-0 text-white/25 transition-all group-hover:text-[#C9A84C] group-hover:translate-x-0.5">{href ? '↗' : '→'}</span>
+      {!!contador && <span className="shrink-0 min-w-[24px] h-6 px-1.5 rounded-full bg-[#d8be93]/15 text-[#d8be93] text-[12px] font-semibold flex items-center justify-center">{contador}</span>}
+      <span className="shrink-0 text-white/25 transition-all group-hover:text-[#d8be93] group-hover:translate-x-0.5">{href ? '↗' : '→'}</span>
     </>
   )
   if (href) return <a href={href} className={cls} style={estilo}>{inner}</a>
@@ -1349,7 +1353,7 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
       {/* Hoje: o que há para fazer */}
       <section id="membro-por-fazer" className="scroll-mt-6">
         <TituloSecao etiqueta={hoje} titulo="Por fazer"
-          extra={<button onClick={() => irPara('casamentos')} className="mb-1 text-[12px] tracking-[0.16em] uppercase text-white/40 hover:text-[#C9A84C]">Todos os casamentos →</button>} />
+          extra={<button onClick={() => irPara('casamentos')} className="mb-1 text-[12px] tracking-[0.16em] uppercase text-white/40 hover:text-[#d8be93]">Todos os casamentos →</button>} />
         {afazer.length === 0 ? (
           <p className="text-[14px] text-white/45 py-6">Não há nada por fazer agora. Quando entrar um casamento novo ou chegar um prazo, aparece aqui.</p>
         ) : (
@@ -1506,31 +1510,31 @@ function SidebarNavAdmin({
 
   // Menu lateral compacto (novo layout): 200px, letra condensada, item ativo em pill dourada suave
   return (
-    <aside className="hidden lg:flex fixed top-4 left-4 w-[200px] max-h-[calc(100vh-32px)] rounded-[20px] overflow-hidden z-20 flex-col font-cond bg-[#0b0b0b]" style={{ border: '1px solid rgba(201,168,76,0.14)', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.8)' }}>
+    <aside className="hidden lg:flex fixed top-4 left-4 w-[200px] max-h-[calc(100vh-32px)] rounded-[20px] overflow-hidden z-20 flex-col font-cond bg-[#0b0b0b]" style={{ border: '1px solid rgba(216,190,147,0.14)', boxShadow: '0 20px 50px -10px rgba(0,0,0,0.8)' }}>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 pt-6 pb-5">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/logo_rl_gold.png" alt="RL Photo·Video" className="w-7 h-7 object-contain" />
         <div className="min-w-0">
-          <p className="text-[12px] font-bold tracking-[0.14em] uppercase text-[#C9A84C] leading-none whitespace-nowrap">RL Photo.Video</p>
+          <p className="text-[12px] font-bold tracking-[0.14em] uppercase text-[#d8be93] leading-none whitespace-nowrap">RL Photo.Video</p>
           {!viewAsFreelancer && <p className="text-[10px] tracking-[0.25em] uppercase text-white/30 mt-1">Admin · Equipa</p>}
         </div>
       </div>
 
       {/* Membro */}
       {freelancer && (
-        <div className="mx-3 mb-4 flex items-center gap-2.5 rounded-[14px] bg-white/[0.03] px-3 py-2.5" style={{ border: '1px solid rgba(201,168,76,0.14)' }}>
+        <div className="mx-3 mb-4 flex items-center gap-2.5 rounded-[14px] bg-white/[0.03] px-3 py-2.5" style={{ border: '1px solid rgba(216,190,147,0.14)' }}>
           {freelancer.foto_url ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={freelancer.foto_url} alt={freelancer.nome} className="w-8 h-8 rounded-full object-cover border border-[#C9A84C]/40 shrink-0" />
+            <img src={freelancer.foto_url} alt={freelancer.nome} className="w-8 h-8 rounded-full object-cover border border-[#d8be93]/40 shrink-0" />
           ) : (
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold text-[#C9A84C] bg-[#C9A84C]/10 border border-[#C9A84C]/40 shrink-0">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold text-[#d8be93] bg-[#d8be93]/10 border border-[#d8be93]/40 shrink-0">
               {(freelancer.nome ?? '?').charAt(0)}
             </div>
           )}
           <div className="min-w-0">
             <p className="text-[14px] font-semibold text-white truncate leading-tight">{freelancer.nome}</p>
-            {freelancer.status && <p className="text-[10px] tracking-[0.2em] uppercase text-[#C9A84C]/70 truncate">{freelancer.status}</p>}
+            {freelancer.status && <p className="text-[10px] tracking-[0.2em] uppercase text-[#d8be93]/70 truncate">{freelancer.status}</p>}
           </div>
         </div>
       )}
@@ -1540,11 +1544,11 @@ function SidebarNavAdmin({
         {itens.map((it, i) => {
           const active = itemMenuAtivo(it, tab)
           const cls = `group w-full flex items-center gap-2.5 rounded-full pl-3 pr-3 py-2 text-left text-[13px] tracking-[0.12em] uppercase transition-all ${
-            active ? 'bg-[#C9A84C]/12 text-white font-semibold shadow-[inset_2px_0_0_#C9A84C]' : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
+            active ? 'bg-[#d8be93]/12 text-white font-semibold shadow-[inset_2px_0_0_#d8be93]' : 'text-white/50 hover:text-white hover:bg-white/[0.04]'
           }`
           const inner = (
             <>
-              <span className={`w-4 text-center text-[12px] ${active ? 'text-[#C9A84C]' : 'text-white/25 group-hover:text-[#C9A84C]/70'}`}>{it.icon}</span>
+              <span className={`w-4 text-center text-[12px] ${active ? 'text-[#d8be93]' : 'text-white/25 group-hover:text-[#d8be93]/70'}`}>{it.icon}</span>
               <span className="truncate">{it.label}</span>
             </>
           )
@@ -1554,10 +1558,10 @@ function SidebarNavAdmin({
       </nav>
 
       {/* Rodapé */}
-      <div className="px-5 py-4 border-t border-[#C9A84C]/10">
+      <div className="px-5 py-4 border-t border-[#d8be93]/10">
         {!viewAsFreelancer && (
           <a href={`/login?next=${encodeURIComponent(`/freelancers/${freelancer?.id ?? ''}?view=freelancer`)}`} target="_blank" rel="noopener noreferrer"
-            className="block text-[11px] tracking-[0.2em] uppercase text-white/35 hover:text-[#C9A84C] transition-colors"
+            className="block text-[11px] tracking-[0.2em] uppercase text-white/35 hover:text-[#d8be93] transition-colors"
             title="Login como o membro (precisa do email + password dele)">
             ↗ Ver como membro
           </a>
@@ -1773,7 +1777,7 @@ function PerformanceCard({ casamentos, nomeMembro, fotosSelecaoMap }: { casament
   const totalEntregues = onTime + late
   const pctOn = totalEntregues > 0 ? Math.round((onTime / totalEntregues) * 100) : 0
   const segs = [
-    { value: onTime,  color: '#C9A84C', label: 'No prazo' },
+    { value: onTime,  color: '#d8be93', label: 'No prazo' },
     { value: late,    color: '#6b5a2c', label: 'Fora prazo' },
     { value: emCurso, color: '#e3cf96', label: 'Em curso' },
   ]
