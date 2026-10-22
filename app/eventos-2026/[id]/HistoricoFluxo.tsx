@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { createPortal } from 'react-dom'
 
 /* Histórico do evento em fluxo: janela central com cada fase num cartão,
    ligados por uma linha, do primeiro contacto (lead no CRM) até às entregas.
@@ -83,9 +84,10 @@ export default function HistoricoFluxo({ hist, cliente, dataEvento, onFechar }: 
 
   const nome = (cliente ?? '').trim()
 
-  return (
+  // Vai para o body: dentro da ficha, as secções seguintes ficavam por cima da janela
+  return createPortal(
     <div role="dialog" aria-modal="true" aria-label="Histórico do evento" onClick={onFechar}
-      className="fixed inset-0 z-[120] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
+      className="fixed inset-0 z-[1000] bg-black/75 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6">
       <div onClick={ev => ev.stopPropagation()}
         className="relative w-full max-w-[760px] max-h-[92vh] flex flex-col rounded-[22px] border border-[#d8be93]/20 bg-[#0b0b0b] shadow-[0_40px_80px_-30px_rgba(0,0,0,0.9),0_0_60px_-30px_rgba(201,168,76,0.45)] overflow-hidden">
         {/* Cabeçalho */}
@@ -177,6 +179,7 @@ export default function HistoricoFluxo({ hist, cliente, dataEvento, onFechar }: 
         </div>
       </div>
       <style>{`@keyframes hfEntra { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }`}</style>
-    </div>
+    </div>,
+    document.body,
   )
 }
