@@ -80,7 +80,8 @@ export async function GET(req: NextRequest) {
         tipo: 'pagamento',
         titulo: `Pagamento: ${fase.charAt(0) + fase.slice(1).toLowerCase()}`,
         detalhe: [valor, p.confirmado ? null : 'por confirmar'].filter(Boolean).join(' · ') || null,
-        created_at: p.data_pagamento ? `${p.data_pagamento}T12:00:00+00:00` : p.created_at,
+        // Registado no próprio dia: a hora do registo é mais certa que só a data
+        created_at: p.data_pagamento && String(p.created_at).slice(0, 10) !== p.data_pagamento ? `${p.data_pagamento}T12:00:00+00:00` : p.created_at,
         origem: 'evento',
       })
     }

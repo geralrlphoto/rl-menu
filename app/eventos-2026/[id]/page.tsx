@@ -1,6 +1,7 @@
 'use client'
 
 import ChatAtendimento from '@/app/components/ChatAtendimento'
+import HistoricoFluxo from './HistoricoFluxo'
 import { NOMES_PROPOSTAS_TODAS, PRAZO_VIDEO_DIAS } from '@/lib/crm'
 import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
@@ -3188,7 +3189,8 @@ type HistLinha = {
   created_at: string; origem?: 'evento' | 'lead'
 }
 
-function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referencia?: string }) {
+function HistoricoSection({ eventoId, referencia, cliente, dataEvento }: { eventoId?: string; referencia?: string; cliente?: string | null; dataEvento?: string | null }) {
+  const [fluxo, setFluxo] = useState(false)
   const [hist, setHist] = useState<HistLinha[]>([])
   const [lead, setLead] = useState<{ id: string; nome: string } | null>(null)
   const [loaded, setLoaded] = useState(false)
@@ -3278,29 +3280,36 @@ function HistoricoSection({ eventoId, referencia }: { eventoId?: string; referen
         </p>
       ) : (
         <>
-          <ol className="flex flex-col gap-4 pl-4 border-l border-white/[0.08]">
-            {hist.map(h => {
-              const ehLead = h.origem === 'lead'
-              return (
-                <li key={h.id} className="relative">
-                  <span className="absolute -left-[22px] top-1.5 w-[7px] h-[7px] rounded-full"
-                    style={ehLead
-                      ? { background: 'rgba(255,255,255,0.22)' }
-                      : { background: '#c9a45c', boxShadow: '0 0 8px rgba(201,164,92,0.6)' }} />
-                  <div className="flex items-baseline gap-2 flex-wrap">
-                    <p className={`text-sm leading-snug ${ehLead ? 'text-white/55' : 'text-white/80'}`}>{h.titulo}</p>
-                    {ehLead && (
-                      <span className="text-[8px] tracking-[0.25em] uppercase text-white/25 border border-white/10 rounded px-1.5 py-0.5">
-                        Lead
-                      </span>
-                    )}
-                  </div>
-                  {h.detalhe && <p className="text-[11px] text-white/35 mt-0.5">{h.detalhe}</p>}
-                  <p className="text-[11px] text-white/30 mt-1">{quando(h.created_at)}</p>
-                </li>
-              )
-            })}
-          </ol>
+          {/* Só as últimas ações; o histórico completo abre em fluxo numa janela central */}
+          <button type="button" onClick={() => setFluxo(true)} className="w-full text-left group">
+            <ol className="flex flex-col gap-4 pl-4 border-l border-white/[0.08]">
+              {hist.slice(0, 3).map(h => {
+                const ehLead = h.origem === 'lead'
+                return (
+                  <li key={h.id} className="relative">
+                    <span className="absolute -left-[22px] top-1.5 w-[7px] h-[7px] rounded-full"
+                      style={ehLead
+                        ? { background: 'rgba(255,255,255,0.22)' }
+                        : { background: '#c9a45c', boxShadow: '0 0 8px rgba(201,164,92,0.6)' }} />
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <p className={`text-sm leading-snug ${ehLead ? 'text-white/55' : 'text-white/80'}`}>{h.titulo}</p>
+                      {ehLead && (
+                        <span className="text-[8px] tracking-[0.25em] uppercase text-white/25 border border-white/10 rounded px-1.5 py-0.5">
+                          Lead
+                        </span>
+                      )}
+                    </div>
+                    {h.detalhe && <p className="text-[11px] text-white/35 mt-0.5">{h.detalhe}</p>}
+                    <p className="text-[11px] text-white/30 mt-1">{quando(h.created_at)}</p>
+                  </li>
+                )
+              })}
+            </ol>
+            <span className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#c9a45c]/40 px-4 py-1.5 text-[10px] tracking-[0.22em] uppercase text-[#c9a45c] group-hover:border-[#c9a45c] group-hover:bg-[#c9a45c]/10 transition-colors">
+              Ver histórico completo{hist.length > 3 ? ` · ${hist.length}` : ''} →
+            </span>
+          </button>
+          {fluxo && <HistoricoFluxo hist={hist} cliente={cliente} dataEvento={dataEvento} onFechar={() => setFluxo(false)} />}
         </>
       )}
     </Section>
@@ -5530,7 +5539,7 @@ export default function EventoPage() {
         </div>
 
         {/* ── Histórico de tudo o que aconteceu neste evento ── */}
-        <HistoricoSection eventoId={e.id} referencia={e.referencia ?? undefined} />
+        <HistoricoSection eventoId={e.id} referencia={e.referencia ?? undefined} cliente={e.cliente ?? null} dataEvento={e.data_evento ?? null} />
 
         {/* ── Revisão do Vídeo (enviada pelo editor via Frame.io) ── */}
         {e.referencia && <RevisaoVideoAdmin referencia={e.referencia} />}
