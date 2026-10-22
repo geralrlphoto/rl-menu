@@ -1104,7 +1104,7 @@ function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, bot
             <circle cx="50" cy="50" r="44" />
           </svg>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b0b0b 0%, rgba(11,11,11,0.45) 20%, rgba(11,11,11,0.55) 65%, #070707 100%)' }} />
-          <div className="hidden md:block absolute top-4 right-20 z-10 mt-2"><TempoSolLua /></div>
+          <div className="hidden xl:block absolute top-4 right-20 z-10 mt-2"><TempoSolLua /></div>
           <div className="relative flex justify-center text-center pt-16 sm:pt-20 px-5"><RelogioHero /></div>
         </>
       ) : (
@@ -1124,7 +1124,7 @@ function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, bot
         <span className="hidden lg:block absolute left-[33.2%] top-[27%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
       </>}
 
-      <div className={`relative flex-1 grid grid-cols-[minmax(0,1fr)] ${numeros ? 'xl:grid-cols-[minmax(0,1fr)_330px]' : ''} gap-8 items-end pl-11 sm:pl-16 lg:pl-20 pr-5 sm:pr-14 ${relogio ? 'pt-10' : 'pt-20'} pb-10 lg:pb-14`}>
+      <div className={`relative flex-1 grid grid-cols-[minmax(0,1fr)] ${numeros ? 'xl:grid-cols-[minmax(0,1fr)_330px]' : ''} gap-8 items-end pl-11 sm:pl-16 lg:pl-20 pr-5 sm:pr-14 ${relogio ? 'pt-20 lg:pt-28' : 'pt-20'} pb-10 lg:pb-14`}>
         <div className="min-w-0">
           <p className="text-[12px] sm:text-[15px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">{eyebrow}</p>
           <h1 className="font-bold text-white leading-[0.9] text-[44px] min-[400px]:text-[52px] sm:text-[88px] lg:text-[104px] mt-2 break-words">{titulo}</h1>
