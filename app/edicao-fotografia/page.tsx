@@ -583,6 +583,7 @@ export default function DepartamentoFotografiaPage() {
                         {p.fase === 'edicao' && (
                           <div className="flex flex-col gap-2 rounded-xl border border-[#c4b5fd]/25 bg-[#c4b5fd]/[0.05] p-3">
                             {p.recebida && <p className="text-[11px] text-white/45">Seleção recebida a {fmt(p.recebida)}</p>}
+                            {p.editores.length > 0 && <p className="text-[11px] text-white/45">A seleção já está no portal de {p.editores.map(primeiro).join(', ')}: não é preciso enviar link.</p>}
                             <label className="flex flex-col gap-1">
                               <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Editor do álbum</span>
                               <select disabled={aGravar === p.id} value={albumAtual(p)} onChange={e => nomearAlbum(p, e.target.value)}
@@ -592,10 +593,11 @@ export default function DepartamentoFotografiaPage() {
                                 {cargas.map(({ e }) => <option key={e.id} value={e.nome}>{e.nome}</option>)}
                               </select>
                             </label>
+                            <span className="mt-1 text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Entrega aos noivos (quando o editor acabar)</span>
                             <input type="url" placeholder="Link das fotos editadas" value={link}
                               onChange={e => setLinks(l => ({ ...l, [chave]: e.target.value }))}
                               className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
-                            <button type="button" disabled={aGravar === p.id}
+                            <button type="button" disabled={aGravar === p.id || !/^https?:\/\//i.test(link.trim())}
                               onClick={() => acao(p, 'entregue', `Enviar as fotos editadas a ${nomes}? Os noivos recebem o email e têm 30 dias para descarregar.`, link.trim())}
                               className="rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">
                               {aGravar === p.id ? 'A enviar…' : 'Entregar fotos editadas →'}

@@ -33,6 +33,7 @@ type Edicao     = {
   convidados: number | null; cerimonia: number | null; detalhes: number | null
   sala_animacao: number | null; fotos_album: number | null; bolo_bouquet: number | null
   sessao_noivos: number | null; fotos_noiva: number | null; fotos_noivo: number | null
+  referencia?: string | null
 }
 type Alteracao  = { id: string; ref_evento: string; paginas_alterar: string | null; tipos_alteracao: string[] | null; observacoes: string | null; foto_url: string | null; created_at: string }
 type Album      = { id: string; nome: string; status: string; data_casamento: string | null; referencia_album: string | null; data_entrega_fotos?: string | null; alteracao?: Alteracao | null }
@@ -389,7 +390,7 @@ const SELECAO_SECTIONS = [
 ]
 
 // ── Seleção Modal (read-only) ─────────────────────────────────────────────────
-function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) {
+function SelecaoModal({ nome, referencia, onClose }: { nome: string; referencia?: string | null; onClose: () => void }) {
   const [record, setRecord] = useState<FotoSelecao | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -399,15 +400,15 @@ function SelecaoModal({ nome, onClose }: { nome: string; onClose: () => void }) 
       .then(r => r.json())
       .then(d => {
         const rows: FotoSelecao[] = d.rows ?? []
-        const match = rows.find(r =>
-          r.nome_noivos?.toLowerCase().trim() === nome.toLowerCase().trim()
-        )
+        // pela referência do trabalho; o nome dos noivos só serve de recurso
+        const match = (referencia && rows.find(r => r.referencia === referencia))
+          || rows.find(r => r.nome_noivos?.toLowerCase().trim() === nome.toLowerCase().trim())
         if (match) setRecord(match)
         else setNotFound(true)
         setLoading(false)
       })
       .catch(() => { setNotFound(true); setLoading(false) })
-  }, [nome])
+  }, [nome, referencia])
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
@@ -1355,7 +1356,7 @@ function EdicaoCard({ e, onStatusChange }: { e: Edicao; onStatusChange: (id: str
           </button>
         </div>
       </div>
-      {openSelecao && <SelecaoModal nome={e.nome} onClose={() => setOpenSelecao(false)} />}
+      {openSelecao && <SelecaoModal nome={e.nome} referencia={e.referencia} onClose={() => setOpenSelecao(false)} />}
     </>
   )
 }
