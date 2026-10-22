@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   if (negado) return negado
   const depois = Number(req.nextUrl.searchParams.get('depois') ?? 0) || 0
   const { data, error } = await db().from('noivos_chat').select(COLUNAS)
-    .ilike('referencia', ref).gt('id', depois).order('id', { ascending: true }).limit(300)
+    .ilike('referencia', ref).gt('id', depois).order('id', { ascending: true }).limit(1000)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ mensagens: data ?? [] })
 }
