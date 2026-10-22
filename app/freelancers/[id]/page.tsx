@@ -791,6 +791,7 @@ function FreelancerDetailInner() {
           msgsNaoLidas={contaNaoLidas.mensagens}
           irPara={setTab}
           verCasamentos={(filtro) => { setFiltroCasamentos(filtro); setTab('casamentos') }}
+          alertasAlbum={prazosSelecao.filter(p => p.tipo === 'album').map(p => ({ id: p.c.id, nome: p.c.nome_noivos || p.c.local || 'Casamento', dias: p.daysLeft, prazo: p.deadline.toISOString().slice(0, 10) }))}
           abrirCasamento={(cid) => { setPendingExpandCasamentoId(cid); setTab('casamentos') }}
         />
       )}
@@ -1183,7 +1184,7 @@ const BOTAO_ETAPA: Record<string, string> = {
   confirmar: 'Confirmar', briefing: 'Ler briefing', dia: 'Abrir', provas: 'Colar link', selecao: 'Colar link', edicao: 'Ver seleção',
 }
 
-function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, edicao, isFotografo, isVideografo, notifNaoLidas, msgsNaoLidas, irPara, verCasamentos, abrirCasamento }: {
+function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, edicao, isFotografo, isVideografo, notifNaoLidas, msgsNaoLidas, irPara, verCasamentos, alertasAlbum, abrirCasamento }: {
   freelancer: Freelancer | null
   freelancerId: string
   casamentos: Casamento[]
@@ -1196,15 +1197,28 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
   msgsNaoLidas: number
   irPara: (t: AdminTabKey) => void
   verCasamentos: (filtro: string) => void
+  alertasAlbum: Array<{ id: string; nome: string; dias: number; prazo: string }>
   abrirCasamento: (id: string) => void
 }) {
   const primeiroNome = (freelancer?.nome ?? '').split(' ')[0] || ''
   const hoje = new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })
+  const nome = (c: Casamento) => c.nome_noivos || c.local || 'Casamento'
   const afazer = casamentos
     .map(c => ({ c, e: etapaDe(c) }))
     .filter((x): x is { c: Casamento; e: EtapaInfo } => !!x.e?.acao)
     .sort((a, b) => (a.e.prazo ?? '9999') < (b.e.prazo ?? '9999') ? -1 : 1)
   const emAtraso = afazer.filter(x => x.e.tom === 'atraso').length
+  // Alertas: prazos que terminam nos próximos 7 dias (etapas do Fluxo + maqueta do álbum)
+  const DIAS_ALERTA = 7
+  const alertas = [
+    ...afazer
+      .filter(x => x.e.dias !== null && x.e.dias >= 0 && x.e.dias <= DIAS_ALERTA)
+      .map(x => ({ key: `e-${x.c.id}`, acao: x.e.acao ?? '', nome: nome(x.c), dias: x.e.dias as number, prazo: x.e.prazo,
+        abrir: () => x.e.etapa === 'edicao' ? irPara('edicao') : abrirCasamento(x.c.id) })),
+    ...alertasAlbum
+      .filter(a => a.dias >= 0 && a.dias <= DIAS_ALERTA)
+      .map(a => ({ key: `a-${a.id}`, acao: 'Entregar a maqueta do álbum', nome: a.nome, dias: a.dias, prazo: a.prazo as string | null, abrir: () => irPara('album') })),
+  ].sort((a, b) => a.dias - b.dias)
   // Muitas datas por confirmar (ex.: os casamentos do ano seguinte) ficam numa só linha
   const porConfirmar = afazer.filter(x => x.e.etapa === 'confirmar')
   const juntarConfirmar = porConfirmar.length > 2
@@ -1213,7 +1227,6 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
   const prox = proximos[0] ?? null
   const diasProx = prox ? daysUntil(prox.data_casamento) : null
   const passos = isFotografo ? 6 : 3
-  const nome = (c: Casamento) => c.nome_noivos || c.local || 'Casamento'
   const dataCurta = (iso: string | null) => {
     if (!iso) return '—'
     const [, m, d] = iso.slice(0, 10).split('-')
@@ -1227,6 +1240,33 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
 
   return (
     <div className="fade-in-up">
+      {/* Alertas: prazos a terminar nos próximos 7 dias (logo no topo, para o membro ver primeiro) */}
+      <section className="mb-12">
+        <TituloSecao etiqueta="Alertas" titulo="Prazos a terminar"
+          extra={<span className={`mb-1 text-[12px] tracking-[0.12em] uppercase ${alertas.length ? 'fl-aviso' : 'text-white/40'}`}>
+            {alertas.length ? `${alertas.length} nos próximos ${DIAS_ALERTA} dias` : `Nada nos próximos ${DIAS_ALERTA} dias`}
+          </span>} />
+        {alertas.length === 0 ? (
+          <p className="text-[14px] text-white/45">Sem prazos a terminar nos próximos {DIAS_ALERTA} dias. Quando faltar uma semana para um prazo, aparece aqui.</p>
+        ) : (
+          <ul className="fl-cartao" style={{ borderLeftColor: 'var(--aviso)' }}>
+            {alertas.map(a => (
+              <li key={a.key} className="fl-linha grid grid-cols-[72px_1fr_auto] items-center gap-4 py-3.5">
+                <span className="fl-aviso leading-none">
+                  <span className="text-[28px] font-bold tabular-nums">{a.dias === 0 ? 'Hoje' : a.dias}</span>
+                  {a.dias > 0 && <span className="text-[11px] uppercase tracking-[0.12em] ml-1">{a.dias === 1 ? 'dia' : 'dias'}</span>}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-[16px] font-semibold text-white leading-tight">{a.acao}</p>
+                  <p className="text-[13px] text-white/50 truncate mt-0.5">{a.nome}{a.prazo ? ` · até ${dataCurta(a.prazo)}` : ''}</p>
+                </div>
+                <button onClick={a.abrir} className="fl-btn">Abrir →</button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {/* Atalhos */}
       <section className="mb-12">
         <TituloSecao etiqueta="Atalhos" titulo="O teu portal" />
