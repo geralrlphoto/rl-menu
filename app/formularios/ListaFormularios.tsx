@@ -1,3 +1,5 @@
+import CopiarLink from './CopiarLink'
+
 type Link_ = { rotulo: string; href: string }
 type Item = {
   nome: string
@@ -6,11 +8,18 @@ type Item = {
   nota?: string // ex.: abre uma simulação ou um portal de teste
   qr?: string // imagem do QR code que abre este item (ver e descarregar)
   entradas?: boolean // mostra o contador de entradas (só o rollup)
+  copiar?: string // link completo para copiar e mandar aos noivos
 }
 
 const NOTA_DEMO = 'Abre uma simulação com um casal fictício: nada é gravado nem enviado.'
 
 const FORMULARIOS: Item[] = [
+  {
+    nome: 'Nova Lead',
+    quando: 'Primeiro contacto: os noivos deixam os dados e pedem proposta',
+    abrir: [{ rotulo: 'Abrir', href: '/nova-lead' }],
+    copiar: 'https://portal.rlphotovideo.pt/nova-lead',
+  },
   {
     nome: 'Rollup (casamentos)',
     quando: 'QR do rollup: para quem ainda não nos conhece',
@@ -107,6 +116,7 @@ function Lista({ titulo, itens, entradas }: { titulo: string; itens: Item[]; ent
                   {l.rotulo} ↗
                 </a>
               ))}
+              {f.copiar && <CopiarLink url={f.copiar} />}
               {f.qr && (
                 <>
                   <a href={f.qr} target="_blank" rel="noopener noreferrer" className="pill">QR code ↗</a>
