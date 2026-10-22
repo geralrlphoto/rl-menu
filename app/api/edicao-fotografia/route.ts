@@ -25,12 +25,19 @@ export async function GET(req: NextRequest) {
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   const hoje = new Date().toISOString().slice(0, 10)
 
-  const [{ data: equipa }, { data: evs }] = await Promise.all([
+  const COLS_EV = 'id, notion_id, referencia, cliente, data_evento, local, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado, fotos_edicao_estado, servico_foto'
+  const [{ data: equipa }, { data: evsAno }, { data: selsRecentes }] = await Promise.all([
     sb.from('freelancers').select('id, nome, foto_url, status, contato').in('status', ['FOTOGRAFO', 'ASSISTENTE']).order('nome'),
-    sb.from('eventos_2026')
-      .select('id, notion_id, referencia, cliente, data_evento, local, tipo_servico, valor_foto, valor_real_foto, sel_fotos_estado, fotos_edicao_estado, servico_foto')
-      .gte('data_evento', DESDE).lte('data_evento', hoje).order('data_evento'),
+    sb.from('eventos_2026').select(COLS_EV).gte('data_evento', DESDE).lte('data_evento', hoje).order('data_evento'),
+    sb.from('fotos_selecao').select('referencia').gte('created_at', DESDE),
   ])
+  // Casamentos anteriores a DESDE entram também se a seleção dos noivos chegou depois
+  // (ex.: casamento de 2025 com seleção enviada em 2026): ainda há fotos para editar.
+  const refsSel = [...new Set((selsRecentes ?? []).map(s => s.referencia).filter(r => /^[A-Z]{3}_/.test(r ?? '')))] as string[]
+  const { data: evsAntigos } = refsSel.length
+    ? await sb.from('eventos_2026').select(COLS_EV).lt('data_evento', DESDE).in('referencia', refsSel).order('data_evento')
+    : { data: [] as any[] }
+  const evs = [...(evsAntigos ?? []), ...(evsAno ?? [])]
 
   const temFotografia = (e: any) => {
     const tipos = (Array.isArray(e.tipo_servico) ? e.tipo_servico : [e.tipo_servico]).filter(Boolean).join(' ')
