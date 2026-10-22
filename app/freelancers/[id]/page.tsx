@@ -7,7 +7,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget } from '@/app/components/FreelancerWidgets'
 import { etapaFotografo, entregasFotografo, nomeado, PASSOS_FOTOGRAFO, BRIEFING_DIAS, textoPrazo, PRAZO_SELECAO_DIAS, PRAZO_EDICAO_DIAS, PRAZO_ALBUM_EDITOR_DIAS, AVISO_DIAS, type EtapaInfo } from '@/lib/etapasFotografo'
 import { EnviarMaqueta } from '@/app/components/EnviarMaqueta'
-import './fl-novo.css'
+import './fl-mesa.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -276,6 +276,7 @@ function FreelancerDetailInner() {
   // ID de casamento a abrir expandido quando o utilizador entra na tab Casamentos
   // — usado pelas notificações para abrir directamente o casamento associado.
   const [pendingExpandCasamentoId, setPendingExpandCasamentoId] = useState<string | null>(null)
+  const [filtroCasamentos, setFiltroCasamentos] = useState<string | null>(null)
   // Toggle do card Crítico · Entrega — persistente em localStorage
   const [criticoOpen, setCriticoOpen] = useState(true)
   useEffect(() => {
@@ -610,7 +611,10 @@ function FreelancerDetailInner() {
   }
 
   return (
-    <div className={`min-h-screen text-white relative overflow-x-clip${novoLayout ? ' fl-novo font-cond' : ''}`} style={{ background: novoLayout ? '#070707' : '#0B0B0B' }}>
+    <div className="min-h-screen text-white relative overflow-x-clip fl-mesa">
+      {/* Letras do design "Mesa de trabalho" (as mesmas da página Fluxo de Trabalho).
+          Injetadas em runtime: o build de produção tira os @import dos .css */}
+      <style dangerouslySetInnerHTML={{ __html: "@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&family=Hanken+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');" }} />
       {/* ── Animações premium ─────────────────────────────────────────── */}
       <style jsx global>{`
         @keyframes proxCasamentoGlow {
@@ -639,9 +643,6 @@ function FreelancerDetailInner() {
         .fade-in-4 { animation: fadeInUp 0.5s ease-out 0.20s both; }
         .fade-in-5 { animation: fadeInUp 0.5s ease-out 0.25s both; }
       `}</style>
-      {/* ── Background atmosférico (igual ao /painel-fotografo) ───────── */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 20%, rgba(201,164,92,0.06), transparent 65%)' }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 20% 80%, rgba(201,164,92,0.04), transparent 70%)' }} />
 
       {/* ── Sidebar lateral (desktop) ──────────────────────────────────── */}
       <SidebarNavAdmin
@@ -703,363 +704,24 @@ function FreelancerDetailInner() {
         )}
       </div>
 
-      {/* Home — Dashboard (cópia do portal do freelancer) */}
-      {tab === null && (() => {
-        const proximoCasamento = upcomingList[0] ?? null
-        const dtuProximo = proximoCasamento ? daysUntil(proximoCasamento.data_casamento) : null
-        const edicoesEmCurso = edicao.filter(e => e.status === 'EM EDIÇÃO').length
-        const edicoesPendentes = edicao.filter(e => e.status === 'NOVO TRABALHO').length
-        const albumsEmCurso = album.filter(a => ['EM EDIÇÃO','EM APROVAÇÃO'].includes(a.status)).length
-        const pagPendentes = pagamentos.filter(p => p.status !== 'PAGO').length
-        const valorPendente = pagamentos.filter(p => p.status !== 'PAGO').reduce((s, p) => s + (Number(p.valor) || 0), 0)
-        const mensagensNaoLidas = mensagens.filter(m => m.remetente === 'freelancer' && !m.lida_admin).length
-        const primeiroNome = (freelancer?.nome ?? '').split(' ')[0] || ''
-        const totalCasamentos = casamentos.length
-        const totalEmEdicao = edicao.filter(e => e.status === 'EM EDIÇÃO').length
-        const totalAguardando = edicao.filter(e => e.status === 'NOVO TRABALHO').length
-
-        const atividades: Array<{ tipo: string; texto: string; data: string }> = []
-        mensagens.slice(0, 10).forEach(m => {
-          if (m.remetente === 'freelancer') atividades.push({ tipo: 'msg', texto: `Mensagem: ${(m.mensagem ?? '').slice(0, 60)}${(m.mensagem ?? '').length > 60 ? '…' : ''}`, data: m.created_at })
-        })
-        notificacoes.slice(0, 10).forEach(n => atividades.push({ tipo: 'notif', texto: n.titulo, data: n.created_at }))
-        pagamentos.filter(p => p.data_pago).slice(0, 5).forEach(p => atividades.push({ tipo: 'pag', texto: `Pagamento recebido: ${p.descricao}`, data: p.data_pago! }))
-        atividades.sort((a, b) => (b.data || '') > (a.data || '') ? 1 : -1)
-        const atividadesRecentes = atividades.slice(0, 6)
-        const tempoRelativo = (d: string) => {
-          const diff = Date.now() - new Date(d).getTime()
-          const h = Math.floor(diff / 36e5)
-          if (h < 1) return 'agora'; if (h < 24) return `há ${h}h`
-          const dias = Math.floor(h / 24); if (dias < 7) return `há ${dias}d`
-          return new Date(d).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })
-        }
-
-        return (
-          <>
-          {novoLayout ? (
-          /* ── CAPA nova (foto local da Vercel, sem egress do Supabase) ── */
-          <section className="relative -mx-4 sm:-mx-6 lg:mx-0 -mt-2 lg:mt-0 mb-8 min-h-[540px] lg:min-h-[72vh] flex flex-col overflow-hidden lg:rounded-[22px] border-y lg:border border-[#C9A84C]/15 fade-in-up">
-            <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/boas-vindas-camera.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-35 lg:opacity-55" />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
-              <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
-            </div>
-            <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
-            <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
-              Equipa RL · {new Date().getFullYear()}
-            </p>
-            <span className="hidden lg:block absolute left-[36%] top-[30%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]/90" />
-            <span className="hidden lg:block absolute left-[35.2%] top-[35%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
-
-            <div className="relative z-20 flex justify-end px-5 sm:px-8 pt-5 min-h-[56px]">
-              {/* Top-right: alerta prazos + notif + messages + profile chip */}
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0 absolute top-3 right-3 sm:static"  style={{zIndex:20}}>
-                {/* Alerta de prazos críticos (Seleção de Fotos a expirar) */}
-                {prazosCriticos.length > 0 && (
-                  <button title={`${prazosCriticos.length} prazo${prazosCriticos.length === 1 ? '' : 's'} a terminar — Seleção de Fotos`}
-                    onClick={() => setTab('casamentos')}
-                    className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center bell-red-glow border-red-500/60 text-red-300 hover:text-red-200 hover:border-red-400/80">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                      <line x1="12" y1="9" x2="12" y2="13"/>
-                      <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 border border-red-300"
-                      style={{ boxShadow: '0 0 8px rgba(239,68,68,0.8)' }}>
-                      {prazosCriticos.length > 9 ? '9+' : prazosCriticos.length}
-                    </span>
-                  </button>
-                )}
-                {(() => {
-                  const notifNaoLidas = notificacoes.filter(n => !n.lida).length
-                  const hasUnread = notifNaoLidas > 0
-                  return (
-                    <button title={hasUnread ? `${notifNaoLidas} notificação${notifNaoLidas === 1 ? '' : 'ões'} por ler` : 'Notificações'}
-                      onClick={() => setTab('notificacoes')}
-                      className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center ${
-                        hasUnread
-                          ? 'bell-red-glow border-red-500/55 text-red-300 hover:text-red-200 hover:border-red-400/70'
-                          : 'border-white/15 text-white/70 hover:text-gold hover:border-gold/40'
-                      }`}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-                      {hasUnread && (
-                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 border border-red-300"
-                          style={{ boxShadow: '0 0 8px rgba(239,68,68,0.7)' }}>
-                          {notifNaoLidas > 9 ? '9+' : notifNaoLidas}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })()}
-                <button title="Mensagens"
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center relative">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                  {mensagensNaoLidas > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-gold text-black text-[10px] font-bold flex items-center justify-center px-1">
-                      {mensagensNaoLidas}
-                    </span>
-                  )}
-                </button>
-                <div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
-                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
-                    {freelancer?.foto_url
-                      ? <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-sm font-bold">{primeiroNome.charAt(0).toUpperCase()}</div>
-                    }
-                  </div>
-                  <div className="block min-w-0">
-                    <p className="text-[11px] sm:text-[13px] font-semibold text-white truncate max-w-[80px] sm:max-w-[140px]">{primeiroNome}</p>
-                    <p className="hidden sm:block text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{isFotografo ? 'Fotógrafo' : 'Editor de Vídeo'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="relative flex-1 flex flex-col justify-end pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pb-10 lg:pb-14 min-w-0">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border border-[#C9A84C]/50 mb-6 grayscale-[30%]">
-                {freelancer?.foto_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-[#C9A84C]/10 flex items-center justify-center text-[#C9A84C] text-2xl font-bold">
-                    {primeiroNome.charAt(0).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <p className="text-[13px] sm:text-[17px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">RL Photo.Video</p>
-              <h1 className="font-bold uppercase text-white leading-[0.88] text-[54px] sm:text-[100px] lg:text-[130px] mt-2 break-words">Olá, {primeiroNome}</h1>
-              <div className="flex items-center gap-4 mt-5">
-                <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
-                <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
-                  {isFotografo ? 'Fotógrafo' : isVideografo ? 'Videógrafo' : (freelancer?.status ?? 'Equipa')} · <span className="text-[#C9A84C]">Painel criativo</span>
-                </p>
-              </div>
-              <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
-                {totalCasamentos} {totalCasamentos === 1 ? 'casamento' : 'casamentos'} · {totalEmEdicao} em edição · {totalAguardando} por começar
-              </p>
-              <div className="flex flex-wrap items-center gap-3 mt-7">
-                <button onClick={() => setTab('casamentos')}
-                  className="fl-btn-principal inline-flex items-center gap-2.5 rounded-full border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]">
-                  Casamentos <span className="text-[#C9A84C]">→</span>
-                </button>
-                <button onClick={() => setTab('calendario')}
-                  className="inline-flex items-center gap-2 rounded-full border border-white/15 hover:border-white/35 bg-black/30 px-6 py-3 text-[14px] font-semibold tracking-[0.18em] uppercase text-white/85 transition-all">
-                  / Calendário
-                </button>
-              </div>
-            </div>
-          </section>
-          ) : (
-          <>
-          {/* ── HERO Card (estilo Painel Criativo) ─────────────────── */}
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-6 fade-in-up"
-            style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.5)' }}>
-            <div className="absolute inset-0 z-0">
-              <img
-                src="https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=1600&h=400&fit=crop"
-                alt=""
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="absolute inset-0 z-[1]"
-              style={{ background: 'linear-gradient(90deg, rgba(11,11,11,0.97) 0%, rgba(11,11,11,0.88) 35%, rgba(11,11,11,0.5) 65%, rgba(11,11,11,0.12) 100%)' }} />
-            <div className="relative z-10 flex items-start justify-between gap-6 px-4 sm:px-12 py-8 sm:py-16">
-              <div className="max-w-xl flex items-center gap-5 pr-[120px] sm:pr-0">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gold/50 shrink-0"
-                  style={{ boxShadow: '0 0 28px -4px rgba(201,164,92,0.4)' }}>
-                  {freelancer?.foto_url ? (
-                    <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-xl font-bold">
-                      {primeiroNome.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-                    Olá, <span className="font-semibold italic text-gold">{primeiroNome}</span>
-                  </h1>
-                  <p className="text-[16px] text-white/65 mt-4 leading-relaxed font-light italic" style={{ fontFamily: 'Georgia, serif' }}>
-                    Que hoje seja mais um dia de transformar momentos<br />em memórias inesquecíveis.
-                  </p>
-                  <div className="mt-5 h-px w-24 bg-gradient-to-r from-gold/80 via-gold/40 to-transparent" />
-                  <p className="text-[11px] tracking-[0.5em] text-gold/70 uppercase mt-4 font-light">Painel Criativo · RL Photo.Video</p>
-                </div>
-              </div>
-
-              {/* Top-right: alerta prazos + notif + messages + profile chip */}
-              <div className="flex items-center gap-2 sm:gap-3 shrink-0 absolute top-3 right-3 sm:static"  style={{zIndex:20}}>
-                {/* Alerta de prazos críticos (Seleção de Fotos a expirar) */}
-                {prazosCriticos.length > 0 && (
-                  <button title={`${prazosCriticos.length} prazo${prazosCriticos.length === 1 ? '' : 's'} a terminar — Seleção de Fotos`}
-                    onClick={() => setTab('casamentos')}
-                    className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center bell-red-glow border-red-500/60 text-red-300 hover:text-red-200 hover:border-red-400/80">
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                      <line x1="12" y1="9" x2="12" y2="13"/>
-                      <line x1="12" y1="17" x2="12.01" y2="17"/>
-                    </svg>
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 border border-red-300"
-                      style={{ boxShadow: '0 0 8px rgba(239,68,68,0.8)' }}>
-                      {prazosCriticos.length > 9 ? '9+' : prazosCriticos.length}
-                    </span>
-                  </button>
-                )}
-                {(() => {
-                  const notifNaoLidas = notificacoes.filter(n => !n.lida).length
-                  const hasUnread = notifNaoLidas > 0
-                  return (
-                    <button title={hasUnread ? `${notifNaoLidas} notificação${notifNaoLidas === 1 ? '' : 'ões'} por ler` : 'Notificações'}
-                      onClick={() => setTab('notificacoes')}
-                      className={`relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border bg-black/40 backdrop-blur-md transition-all flex items-center justify-center ${
-                        hasUnread
-                          ? 'bell-red-glow border-red-500/55 text-red-300 hover:text-red-200 hover:border-red-400/70'
-                          : 'border-white/15 text-white/70 hover:text-gold hover:border-gold/40'
-                      }`}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-                      {hasUnread && (
-                        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1 border border-red-300"
-                          style={{ boxShadow: '0 0 8px rgba(239,68,68,0.7)' }}>
-                          {notifNaoLidas > 9 ? '9+' : notifNaoLidas}
-                        </span>
-                      )}
-                    </button>
-                  )
-                })()}
-                <button title="Mensagens"
-                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-white/15 bg-black/40 backdrop-blur-md text-white/70 hover:text-gold hover:border-gold/40 transition-all flex items-center justify-center relative">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
-                  {mensagensNaoLidas > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[16px] h-4 rounded-full bg-gold text-black text-[10px] font-bold flex items-center justify-center px-1">
-                      {mensagensNaoLidas}
-                    </span>
-                  )}
-                </button>
-                <div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-2xl border border-white/15 bg-black/40 backdrop-blur-md">
-                  <div className="w-9 h-9 rounded-full overflow-hidden border border-gold/40 shrink-0">
-                    {freelancer?.foto_url
-                      ? <img src={freelancer.foto_url} alt={freelancer.nome} className="w-full h-full object-cover" />
-                      : <div className="w-full h-full bg-gradient-to-br from-gold/30 to-gold/10 flex items-center justify-center text-gold text-sm font-bold">{primeiroNome.charAt(0).toUpperCase()}</div>
-                    }
-                  </div>
-                  <div className="block min-w-0">
-                    <p className="text-[11px] sm:text-[13px] font-semibold text-white truncate max-w-[80px] sm:max-w-[140px]">{primeiroNome}</p>
-                    <p className="hidden sm:block text-[10px] text-white/40 tracking-wide truncate max-w-[140px]">{isFotografo ? 'Fotógrafo' : 'Editor de Vídeo'}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          </>
-          )}
-
-          {/* ── O QUE TENHO DE FAZER — uma só lista pelas etapas do Fluxo de Trabalho,
-                ordenada pelo prazo (regras em lib/etapasFotografo.ts) ── */}
-          {(() => {
-            const afazer = casamentos
-              .map(c => ({ c, e: etapaDe(c) }))
-              .filter((x): x is { c: Casamento; e: EtapaInfo } => !!x.e?.acao)
-              .sort((a, b) => (a.e.prazo ?? '9999') < (b.e.prazo ?? '9999') ? -1 : 1)
-            const COR = {
-              atraso: { borda: 'rgba(244,63,94,0.45)',  texto: 'text-rose-300' },
-              aviso:  { borda: 'rgba(251,146,60,0.45)', texto: 'text-orange-300' },
-              normal: { borda: 'rgba(255,255,255,0.08)', texto: 'text-gold' },
-            } as const
-            return (
-              <div className="rounded-2xl border border-white/[0.08] p-5 mb-6 fade-in-1"
-                style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-[18px] font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>O que tenho <span className="italic text-gold">de fazer</span></h3>
-                  <span className="text-[11px] tracking-widest uppercase text-white/40">{afazer.length} {afazer.length === 1 ? 'tarefa' : 'tarefas'}</span>
-                </div>
-                {afazer.length === 0 ? (
-                  <p className="text-[13px] text-white/45 italic">Está tudo em dia. Não há nada por fazer agora.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {afazer.map(({ c, e }) => (
-                      <button key={c.id} onClick={() => { setPendingExpandCasamentoId(c.id); setTab('casamentos') }}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl border bg-white/[0.02] hover:bg-white/[0.04] transition-all text-left"
-                        style={{ borderColor: COR[e.tom].borda }}>
-                        <span className="w-8 shrink-0 text-[11px] tracking-[0.2em] text-gold/70 font-bold">{PASSOS_FOTOGRAFO[e.passo - 1]?.n}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[14px] text-white font-medium truncate">{e.acao}</p>
-                          <p className="text-[11px] text-white/45 truncate">{c.nome_noivos || c.local}{c.data_casamento ? ` · ${fmtDate(c.data_casamento).split(' · ')[0]}` : ''}</p>
-                        </div>
-                        {e.dias !== null && <span className={`text-[12px] font-semibold shrink-0 ${COR[e.tom].texto}`}>{textoPrazo(e)}</span>}
-                        <span className="text-white/25 shrink-0">›</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })()}
-
-          {/* ── Próximos Casamentos (confirmar presença) | Tarefas ───── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 fade-in-4">
-            <div className="lg:col-span-2 flex flex-col gap-5">
-            {/* Próximos Casamentos — design premium compacto */}
-            {upcomingList.length > 0 && (
-              <div className="rounded-2xl border border-white/[0.08] p-4"
-                style={{ background: 'linear-gradient(180deg, rgba(20,15,8,0.4), rgba(11,11,11,0.7))', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)' }}>
-                <div className="flex items-center justify-between mb-3 px-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-[12px] tracking-[0.35em] text-gold/85 uppercase font-bold">Próximos Casamentos</h3>
-                    <span className="text-[10px] text-white/30">·</span>
-                    <span className="text-[10px] tracking-widest uppercase text-white/35">{Math.min(upcomingList.length, 4)} de {upcomingList.length}</span>
-                  </div>
-                  <button onClick={() => setTab('casamentos')}
-                    className="text-[10px] tracking-widest uppercase text-gold/60 hover:text-gold transition-colors">
-                    Ver todos →
-                  </button>
-                </div>
-                <div className="divide-y divide-white/[0.04]">
-                  {upcomingList.slice(0, 4).map(c => {
-                    const dtu2 = daysUntil(c.data_casamento)
-                    const urgent = dtu2 !== null && dtu2 <= 15
-                    return (
-                      <div key={c.id} onClick={() => setTab('casamentos')}
-                        className="cursor-pointer flex items-center gap-3 px-2 py-2.5 hover:bg-white/[0.02] transition-all group rounded-lg">
-                        {/* Counter compacto + linha vertical */}
-                        <div className="flex items-center gap-3 shrink-0">
-                          <div className={`flex flex-col items-center justify-center min-w-[42px] py-1 rounded-md ${urgent ? 'text-red-400' : 'text-gold'}`}>
-                            <span className="text-[18px] font-light leading-none tabular-nums" style={{ fontFamily: 'Georgia, serif' }}>
-                              {dtu2 === 0 ? '!' : dtu2}
-                            </span>
-                            <span className="text-[8px] tracking-[0.25em] uppercase opacity-50 mt-0.5">{dtu2 === 0 ? 'hoje' : 'dias'}</span>
-                          </div>
-                          <div className={`w-px h-8 ${urgent ? 'bg-red-400/30' : 'bg-gold/20'}`} />
-                        </div>
-                        {/* Info casamento */}
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-white/90 truncate group-hover:text-gold transition-colors">{c.local}</p>
-                          <p className="text-[10px] text-white/35 mt-0.5 tracking-wide">{fmtDate(c.data_casamento).split(' · ')[0]}</p>
-                        </div>
-                        {/* Badge confirmação */}
-                        {c.data_confirmada ? (
-                          <span className="text-[8px] tracking-[0.25em] uppercase font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
-                            ✓ Conf.
-                          </span>
-                        ) : (
-                          <span className="text-[8px] tracking-[0.25em] uppercase font-bold px-1.5 py-0.5 rounded bg-white/[0.04] text-white/40 border border-white/10">
-                            Pend.
-                          </span>
-                        )}
-                        <span className="text-white/20 group-hover:text-gold transition-colors text-sm">›</span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-            </div>
-
-            <TasksWidget freelancerId={id} />
-          </div>
-          </>
-        )
-      })()}
+      {/* Início — "Mesa de trabalho": o que há para fazer hoje, os próximos casamentos e as tarefas */}
+      {tab === null && (
+        <InicioMesa
+          freelancer={freelancer}
+          freelancerId={id}
+          casamentos={casamentos}
+          proximos={upcomingList}
+          etapaDe={etapaDe}
+          edicao={edicao}
+          isFotografo={isFotografo}
+          isVideografo={isVideografo}
+          notifNaoLidas={contaNaoLidas.notificacoes}
+          msgsNaoLidas={contaNaoLidas.mensagens}
+          irPara={setTab}
+          verCasamentos={(filtro) => { setFiltroCasamentos(filtro); setTab('casamentos') }}
+          abrirCasamento={(cid) => { setPendingExpandCasamentoId(cid); setTab('casamentos') }}
+        />
+      )}
 
       {/* Dados Pessoais — premium design completo */}
       {tab === 'definicoes' && (
@@ -1311,7 +973,7 @@ function FreelancerDetailInner() {
       )}
 
       {/* Tab content */}
-      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} etapaDe={etapaDe} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
+      {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} etapaDe={etapaDe} filtroInicial={filtroCasamentos} onFiltroUsado={() => setFiltroCasamentos(null)} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} fotosSelecaoMap={fotosSelecaoMap} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
@@ -1328,6 +990,176 @@ function FreelancerDetailInner() {
 
 // ─── SidebarNavAdmin ───────────────────────────────────────────────────────
 type AdminTabKey = 'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
+
+// ─── Início "Mesa de trabalho" ─────────────────────────────────────────────
+/* Uma página para saber o que fazer hoje. Cada linha é um casamento com a etapa do
+   Fluxo de Trabalho (01-06), o prazo e um só botão para a ação dessa etapa. */
+const BOTAO_ETAPA: Record<string, string> = {
+  confirmar: 'Confirmar', briefing: 'Ler briefing', dia: 'Abrir', provas: 'Colar link', selecao: 'Colar link', edicao: 'Ver seleção',
+}
+
+function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, edicao, isFotografo, isVideografo, notifNaoLidas, msgsNaoLidas, irPara, verCasamentos, abrirCasamento }: {
+  freelancer: Freelancer | null
+  freelancerId: string
+  casamentos: Casamento[]
+  proximos: Casamento[]
+  etapaDe: (c: Casamento) => EtapaInfo | null
+  edicao: Edicao[]
+  isFotografo: boolean
+  isVideografo: boolean
+  notifNaoLidas: number
+  msgsNaoLidas: number
+  irPara: (t: AdminTabKey) => void
+  verCasamentos: (filtro: string) => void
+  abrirCasamento: (id: string) => void
+}) {
+  const primeiroNome = (freelancer?.nome ?? '').split(' ')[0] || ''
+  const hoje = new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })
+  const afazer = casamentos
+    .map(c => ({ c, e: etapaDe(c) }))
+    .filter((x): x is { c: Casamento; e: EtapaInfo } => !!x.e?.acao)
+    .sort((a, b) => (a.e.prazo ?? '9999') < (b.e.prazo ?? '9999') ? -1 : 1)
+  const emAtraso = afazer.filter(x => x.e.tom === 'atraso').length
+  // Muitas datas por confirmar (ex.: os casamentos do ano seguinte) ficam numa só linha
+  const porConfirmar = afazer.filter(x => x.e.etapa === 'confirmar')
+  const juntarConfirmar = porConfirmar.length > 2
+  const linhas = juntarConfirmar ? afazer.filter(x => x.e.etapa !== 'confirmar') : afazer
+  const confirmarAtraso = porConfirmar.some(x => x.e.tom === 'atraso')
+  const prox = proximos[0] ?? null
+  const diasProx = prox ? daysUntil(prox.data_casamento) : null
+  const passos = isFotografo ? 6 : 3
+  const nome = (c: Casamento) => c.nome_noivos || c.local || 'Casamento'
+  const dataCurta = (iso: string | null) => {
+    if (!iso) return '—'
+    const [, m, d] = iso.slice(0, 10).split('-')
+    return `${d} ${MESES[parseInt(m) - 1]}`
+  }
+  const tomCls = (t: EtapaInfo['tom']) => t === 'atraso' ? 'fl-atraso' : t === 'aviso' ? 'fl-aviso' : 'text-white/55'
+
+  return (
+    <div className="max-w-[1100px] fade-in-up">
+      {/* Cabeçalho */}
+      <header className="flex items-start justify-between gap-4 pb-8">
+        <div className="min-w-0">
+          <p className="fl-eyebrow">{hoje}</p>
+          <h1 className="text-[44px] sm:text-[64px] leading-[1.02] text-white mt-4">Olá, {primeiroNome}</h1>
+          <p className="text-[15px] text-white/60 mt-3 max-w-xl leading-relaxed">
+            {afazer.length === 0 ? 'Está tudo em dia.' : `${afazer.length} ${afazer.length === 1 ? 'coisa' : 'coisas'} por fazer`}
+            {emAtraso > 0 && <span className="fl-atraso"> · {emAtraso} em atraso</span>}
+            {prox && diasProx !== null && <> · próximo casamento {diasProx === 0 ? 'hoje' : diasProx === 1 ? 'amanhã' : `daqui a ${diasProx} dias`}</>}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 pt-1">
+          <button onClick={() => irPara('notificacoes')} className="fl-btn fl-btn-sec" title="Notificações">
+            Avisos{notifNaoLidas > 0 && <span className="text-gold ml-2">{notifNaoLidas}</span>}
+          </button>
+          <button onClick={() => irPara('mensagens')} className="fl-btn fl-btn-sec hidden sm:inline-block" title="Mensagens">
+            Mensagens{msgsNaoLidas > 0 && <span className="text-gold ml-2">{msgsNaoLidas}</span>}
+          </button>
+        </div>
+      </header>
+
+      {/* Hoje: o que há para fazer */}
+      <section className="fl-linha pt-6">
+        <div className="flex items-center justify-between mb-2">
+          <p className="fl-eyebrow">Por fazer</p>
+          <button onClick={() => irPara('casamentos')} className="text-[11px] tracking-[0.16em] uppercase text-white/40 hover:text-gold">Todos os casamentos →</button>
+        </div>
+        {afazer.length === 0 ? (
+          <p className="text-[14px] text-white/45 py-6">Não há nada por fazer agora. Quando entrar um casamento novo ou chegar um prazo, aparece aqui.</p>
+        ) : (
+          <ul>
+            {juntarConfirmar && (
+              <li className="fl-linha grid grid-cols-[34px_1fr_auto] sm:grid-cols-[44px_1fr_190px_150px] items-center gap-x-4 gap-y-2 py-4">
+                <span className="fl-m text-[12px] text-gold">01</span>
+                <div className="min-w-0">
+                  <p className="fl-d text-[19px] sm:text-[21px] font-light text-white leading-tight">Confirmar disponibilidade em {porConfirmar.length} casamentos</p>
+                  <p className="text-[13px] text-white/50 truncate mt-0.5">{porConfirmar.slice(0, 3).map(x => nome(x.c)).join(', ')}{porConfirmar.length > 3 ? ' e mais' : ''}</p>
+                </div>
+                <p className={`hidden sm:block fl-m text-[11px] ${confirmarAtraso ? 'fl-atraso' : 'text-white/55'}`}>{confirmarAtraso ? 'resposta em atraso' : 'responder em 48 h'}</p>
+                <button onClick={() => verCasamentos('Por confirmar')} className="fl-btn justify-self-end">Ver todos →</button>
+              </li>
+            )}
+            {linhas.map(({ c, e }) => (
+              <li key={c.id} className="fl-linha grid grid-cols-[34px_1fr_auto] sm:grid-cols-[44px_1fr_190px_150px] items-center gap-x-4 gap-y-2 py-4">
+                <span className="fl-m text-[12px] text-gold">{PASSOS_FOTOGRAFO[e.passo - 1]?.n}</span>
+                <div className="min-w-0">
+                  <p className="fl-d text-[19px] sm:text-[21px] font-light text-white leading-tight">{e.acao}</p>
+                  <p className="text-[13px] text-white/50 truncate mt-0.5">{nome(c)} · <span className="fl-m text-[11px]">{dataCurta(c.data_casamento)}</span></p>
+                </div>
+                <div className="hidden sm:block">
+                  <div className="fl-passos">
+                    {Array.from({ length: passos }, (_, k) => <i key={k} className={k + 1 < e.passo ? 'f' : k + 1 === e.passo ? `a ${e.tom}` : ''} />)}
+                  </div>
+                  <p className={`fl-m text-[11px] mt-2 ${tomCls(e.tom)}`}>{textoPrazo(e) || 'sem prazo'}</p>
+                </div>
+                <button onClick={() => e.etapa === 'edicao' ? irPara('edicao') : abrirCasamento(c.id)} className="fl-btn justify-self-end">
+                  {BOTAO_ETAPA[e.etapa] ?? 'Abrir'} →
+                </button>
+                <p className={`sm:hidden col-start-2 col-span-2 fl-m text-[11px] -mt-1 ${tomCls(e.tom)}`}>{textoPrazo(e)}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 mt-12">
+        {/* Próximos casamentos */}
+        <section className="fl-linha pt-6">
+          <p className="fl-eyebrow mb-2">Próximos casamentos</p>
+          {proximos.length === 0 ? (
+            <p className="text-[14px] text-white/45 py-6">Sem casamentos marcados.</p>
+          ) : (
+            <ul>
+              {proximos.slice(0, 6).map(c => {
+                const d = daysUntil(c.data_casamento)
+                return (
+                  <li key={c.id}>
+                    <button onClick={() => abrirCasamento(c.id)} className="fl-linha w-full grid grid-cols-[64px_1fr_auto] items-center gap-4 py-3.5 text-left group">
+                      <span className="fl-m text-[12px] text-gold">{dataCurta(c.data_casamento)}</span>
+                      <span className="min-w-0">
+                        <span className="block text-[15px] text-white group-hover:text-gold truncate">{nome(c)}</span>
+                        <span className="block text-[12px] text-white/40 truncate">{c.local}</span>
+                      </span>
+                      <span className={`fl-m text-[11px] text-right ${c.data_confirmada ? 'text-white/45' : 'fl-aviso'}`}>
+                        {c.data_confirmada ? (d === 0 ? 'hoje' : `${d} dias`) : 'por confirmar'}
+                      </span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* Ao lado: edição e tarefas */}
+        <aside className="space-y-10">
+          {!isVideografo && (
+            <section className="fl-linha pt-6">
+              <p className="fl-eyebrow mb-4">Edição de fotos</p>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ['Novos', edicao.filter(e => e.status === 'NOVO TRABALHO').length],
+                  ['Em edição', edicao.filter(e => e.status === 'EM EDIÇÃO').length],
+                  ['Entregues', edicao.filter(e => e.status === 'CONCLUÍDO').length],
+                ] as const).map(([l, v]) => (
+                  <button key={l} onClick={() => irPara('edicao')} className="text-left py-2 group">
+                    <span className="block fl-d text-[34px] font-extralight text-white group-hover:text-gold leading-none">{v}</span>
+                    <span className="block fl-m text-[10px] tracking-[0.14em] uppercase text-white/45 mt-2">{l}</span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
+          <section className="fl-linha pt-6">
+            <p className="fl-eyebrow mb-4">Tarefas</p>
+            <TasksWidget freelancerId={freelancerId} />
+          </section>
+        </aside>
+      </div>
+    </div>
+  )
+}
 
 type ItemMenu = { key: AdminTabKey; label: string; icon: string; href?: string; grupo?: AdminTabKey[] }
 
@@ -1751,7 +1583,7 @@ function PerformanceCard({ casamentos, nomeMembro, fotosSelecaoMap }: { casament
   )
 }
 
-function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap, initialExpandedId, onExpandedHandled }: { freelancerId: string; casamentos: Casamento[]; etapaDe: (c: Casamento) => EtapaInfo | null; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => void; initialExpandedId?: string | null; onExpandedHandled?: () => void }) {
+function CasamentosTab({ freelancerId, casamentos, etapaDe, filtroInicial, onFiltroUsado, onRefresh, freelancerStatus, freelancer, viewAsFreelancer, fotosSelecaoMap, fotosConvidadosMap, setFotosConvidadosMap, initialExpandedId, onExpandedHandled }: { freelancerId: string; casamentos: Casamento[]; etapaDe: (c: Casamento) => EtapaInfo | null; filtroInicial?: string | null; onFiltroUsado?: () => void; onRefresh: () => void; freelancerStatus: string | null; freelancer: Freelancer | null; viewAsFreelancer?: boolean; fotosSelecaoMap: Record<string, string>; fotosConvidadosMap: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>; setFotosConvidadosMap: (updater: (prev: Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => Record<string, { email: string | null; ctt: string | null; emailLista: string[]; cttLista: string[]; emailWorkflow: string; cttWorkflow: string }>) => void; initialExpandedId?: string | null; onExpandedHandled?: () => void }) {
   const [editing, setEditing] = useState<Casamento | null>(null)
   const [showAdd, setShowAdd] = useState(false)
   const [form, setForm] = useState<Partial<Casamento>>({})
@@ -1890,7 +1722,8 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
   const POR_ENTREGAR = ['provas', 'selecao', 'edicao']
   const fotografo = freelancer?.status === 'FOTOGRAFO'
   type FilterTab = typeof FILTER_TABS[number]
-  const [activeFilter, setActiveFilter] = useState<FilterTab>('Todos')
+  const [activeFilter, setActiveFilter] = useState<FilterTab>((FILTER_TABS as readonly string[]).includes(filtroInicial ?? '') ? filtroInicial as FilterTab : 'Todos')
+  useEffect(() => { if (filtroInicial) onFiltroUsado?.() }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const [search, setSearch] = useState('')
   const [sortOption, setSortOption] = useState('Mais próximos')
   // Divisão por ano (2026 / 2027…) — começa no ano atual
@@ -1935,37 +1768,17 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
   return (
     <div className="space-y-5 fade-in-up">
 
-      {/* ── HERO PREMIUM (estilo /novos-projetos) ───────────────────── */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/[0.08]"
-        style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
-        <div className="absolute inset-0 z-0">
-          <img src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1600&h=400&fit=crop"
-            alt="" className="w-full h-full object-cover scale-105" style={{ filter: 'blur(2px)' }} />
+      {/* ── Cabeçalho (Mesa de trabalho) ─────────────────────────────── */}
+      <header className="flex items-end justify-between gap-6 flex-wrap pb-2">
+        <div className="max-w-2xl">
+          <p className="fl-eyebrow">Casamentos</p>
+          <h1 className="text-[40px] sm:text-[56px] leading-[1.02] text-white mt-4">Os teus casamentos</h1>
+          <p className="text-[15px] text-white/55 mt-3 leading-relaxed">Cada casamento mostra em que etapa está (01 a {fotografo ? '06' : '03'}) e o que falta fazer. Abre um casamento para ver o briefing, colar os links e falar com a produção.</p>
         </div>
-        <div className="absolute inset-0 z-[1]"
-          style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.85) 40%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.15) 100%)' }} />
-        <div className="relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-10 sm:py-12">
-          <div className="max-w-xl">
-            <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2 font-light">Atelier Fotográfico</p>
-            <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-              CASAMENTOS <span className="italic text-gold">Atribuídos</span>
-            </h1>
-            <div className="mt-4 h-px w-20 bg-gradient-to-r from-gold/70 to-transparent" />
-            <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md italic" style={{ fontFamily: 'Georgia, serif' }}>
-              Cada evento, uma história única para capturar. Acompanha aqui todos os casamentos atribuídos ao longo do ano.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {!viewAsFreelancer && (
-              <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }}
-                className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-                style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
-                <span className="text-lg leading-none">+</span> Novo Evento
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
+        {!viewAsFreelancer && (
+          <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }} className="fl-btn">+ Novo evento</button>
+        )}
+      </header>
 
       {fotografo && <PerformanceCard casamentos={casamentos} nomeMembro={freelancer?.nome ?? ''} fotosSelecaoMap={fotosSelecaoMap} />}
 
@@ -2086,37 +1899,25 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
               expandedId === c.id ? 'scroll-mt-24' : ''
             }`}
             style={{
-              background: isUrgent
-                ? 'linear-gradient(135deg, rgba(239,68,68,0.08), rgba(11,11,11,0.85))'
-                : 'linear-gradient(135deg, rgba(20,15,8,0.5), rgba(11,11,11,0.85))',
-              borderColor: isUrgent ? 'rgba(239,68,68,0.35)' : 'rgba(255,255,255,0.06)',
+              background: '#100e0b',
+              borderColor: 'rgba(243,237,226,0.08)',
               boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)',
             }}>
             {/* Hover glow sweep */}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.04] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
 
-            <div className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr_auto] gap-5 p-5">
-              {/* THUMB */}
-              <button onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
-                className="relative aspect-[16/10] rounded-xl overflow-hidden border border-white/10 group/img cursor-pointer">
-                <img src={img} alt={c.local} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                {/* Date label top-left */}
-                {c.data_casamento && (
-                  <div className="absolute top-3 left-3 px-3 py-1.5 rounded-lg backdrop-blur-md border border-white/15 bg-black/50">
-                    <p className={`text-[18px] font-light leading-none tabular-nums ${isUrgent ? 'text-red-300' : 'text-gold'}`} style={{ fontFamily: 'Georgia, serif' }}>
-                      {c.data_casamento.split('-')[2]} <span className="text-[11px] uppercase tracking-[0.2em] opacity-70">{MESES[parseInt(c.data_casamento.split('-')[1])-1]}</span>
-                    </p>
-                  </div>
-                )}
-                {/* Counter dias bottom-right */}
-                {dtu !== null && !isPast && (
-                  <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/15 bg-black/50">
-                    <p className={`text-[12px] font-bold tracking-widest uppercase ${isUrgent ? 'text-red-300' : 'text-white/75'}`}>
-                      {dtu === 0 ? 'HOJE' : `${dtu} dias`}
-                    </p>
-                  </div>
-                )}
+            <div className="relative grid grid-cols-1 lg:grid-cols-[132px_1fr_auto] gap-5 p-5">
+              {/* DATA (no lugar da foto) */}
+              <button onClick={() => setExpandedId(expandedId === c.id ? null : c.id)} className="text-left flex lg:flex-col items-baseline lg:items-start gap-3 lg:gap-1.5 cursor-pointer">
+                {c.data_casamento ? (
+                  <>
+                    <span className="fl-d text-[48px] font-extralight leading-none text-white">{c.data_casamento.split('-')[2]}</span>
+                    <span className="fl-m text-[11px] tracking-[0.2em] uppercase text-gold">{MESES[parseInt(c.data_casamento.split('-')[1]) - 1]} {c.data_casamento.slice(0, 4)}</span>
+                    {dtu !== null && !isPast && (
+                      <span className={`fl-m text-[11px] ${isUrgent ? 'fl-aviso' : 'text-white/45'}`}>{dtu === 0 ? 'hoje' : dtu === 1 ? 'amanhã' : `daqui a ${dtu} dias`}</span>
+                    )}
+                  </>
+                ) : <span className="fl-m text-[11px] text-white/40">sem data</span>}
               </button>
 
               {/* INFO */}
@@ -2128,11 +1929,6 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                         {statusBadge.label}
                       </span>
                     )}
-                    {isUrgent && (
-                      <span className="text-[11px] px-2 py-1 rounded-md bg-red-500/15 border border-red-500/40 text-red-300 uppercase tracking-widest font-bold animate-pulse">
-                        URGENTE
-                      </span>
-                    )}
                   </div>
                   {c.nome_noivos && (
                     <h2 className="text-2xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
@@ -2142,12 +1938,8 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                   <p className={c.nome_noivos
                     ? 'text-[13px] text-white/55 italic mt-0.5'
                     : 'text-2xl font-light text-white tracking-tight'} style={{ fontFamily: 'Georgia, serif' }}>
-                    {c.nome_noivos ? <>📍 {c.local}</> : c.local}
+                    {c.local}
                   </p>
-                  {c.data_casamento && (
-                    <p className="text-[13px] text-white/55 italic mt-1" style={{ fontFamily: 'Georgia, serif' }}>{fmtDate(c.data_casamento)}</p>
-                  )}
-
                   {/* ── Etapa do Fluxo de Trabalho: 01 a 06 (03 nos videógrafos) e o próximo passo ── */}
                   {(() => {
                     const e = etapaDe(c)
@@ -2168,7 +1960,7 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                             const atual = n === e.passo
                             return (
                               <div key={p.n} className="flex-1 min-w-0" title={`${p.n} ${p.titulo}`}>
-                                <div className={`h-1 rounded-full ${feito ? 'bg-gold/60' : atual ? corAtual : 'bg-white/10'}`} />
+                                <div className={`h-[2px] rounded-full ${feito ? 'bg-gold/60' : atual ? corAtual : 'bg-white/10'}`} />
                                 <p className={`hidden sm:block text-[9px] tracking-[0.12em] uppercase mt-1 truncate ${atual ? 'text-gold' : feito ? 'text-white/45' : 'text-white/25'}`}>{p.n} {p.titulo}</p>
                               </div>
                             )
@@ -2182,6 +1974,10 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                       </div>
                     )
                   })()}
+                  {/* ── Seleção de Fotos: link + Enviar, depois do casamento (só fotógrafos) ── */}
+                  {fotografo && isPast && !c.indisponivel && (
+                    <SelecaoFotosLinha c={c} recebida={c.referencia ? fotosSelecaoMap[c.referencia] ?? null : null} onRefresh={onRefresh} />
+                  )}
                 </div>
 
                 {/* Meta grid */}
@@ -2189,29 +1985,29 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                   {c.hora_inicio && (
                     <div>
                       <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Hora Início</p>
-                      <p className="text-[13px] text-white/85 truncate">⏱ {c.hora_inicio}</p>
+                      <p className="text-[13px] text-white/85 truncate">{c.hora_inicio}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Quinta</p>
-                    <p className="text-[13px] text-white/85 truncate">🏛 {c.local || '—'}</p>
+                    <p className="text-[13px] text-white/85 truncate">{c.local || '—'}</p>
                   </div>
                   {c.local_cerimonia && (
                     <div>
                       <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Cerimónia</p>
-                      <p className="text-[13px] text-white/85 truncate">⛪ {c.local_cerimonia}</p>
+                      <p className="text-[13px] text-white/85 truncate">{c.local_cerimonia}</p>
                     </div>
                   )}
                   {c.equipa_foto && c.equipa_foto.length > 0 && (
                     <div>
                       <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Equipa Foto</p>
-                      <p className="text-[13px] text-white/85 truncate">📷 {c.equipa_foto.join(', ')}</p>
+                      <p className="text-[13px] text-white/85 truncate">{c.equipa_foto.join(', ')}</p>
                     </div>
                   )}
                   {c.videografo && (
                     <div>
                       <p className="text-[11px] tracking-[0.3em] uppercase text-white/45 mb-0.5">Videógrafo</p>
-                      <p className="text-[13px] text-white/85 truncate">🎥 {c.videografo}</p>
+                      <p className="text-[13px] text-white/85 truncate">{c.videografo}</p>
                     </div>
                   )}
                   {/* (Removido: bloco 'Briefing · Ver briefing' duplicado — o
@@ -2375,9 +2171,9 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                 </p>
 
                 {/* Grid de URLs do casamento */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {/* A Seleção de Fotos saiu daqui: está na lista (SelecaoFotosLinha) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {([
-                    { key: 'url_selecao',  ts: 'url_selecao_enviado_em',  tipo: 'selecao',  label: 'Seleção de Fotos', icon: '◫' },
                     { key: 'url_provas',   ts: 'url_provas_enviado_em',   tipo: 'provas',   label: 'Fotos Prova',      icon: '◧' },
                     { key: 'url_editadas', ts: 'url_editadas_enviado_em', tipo: 'editadas', label: 'Fotos Editadas',   icon: '✓' },
                     { key: 'url_album',    ts: 'url_album_enviado_em',    tipo: 'album',    label: 'Maquete Álbum',    icon: '◐' },
@@ -2389,7 +2185,7 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                     const lockedReason =
                       field.tipo === 'album' && editorAlbum.length === 0
                         ? 'Aguarda atribuição do "Editor de Álbum" na ficha do evento (/eventos-2026)'
-                      : (field.tipo === 'selecao' || field.tipo === 'provas' || field.tipo === 'editadas') && editorFotos.length === 0
+                      : (field.tipo === 'provas' || field.tipo === 'editadas') && editorFotos.length === 0
                         ? 'Aguarda atribuição do "Editor de Fotos" na ficha do evento (/eventos-2026)'
                         : null
                     return (
@@ -2406,8 +2202,7 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, onRefresh, freelance
                         initialSentAt={(c as any)[field.ts] ?? null}
                         initialStatus={
                           field.tipo === 'editadas' ? (c.status_editadas ?? 'AGUARDAR') :
-                          field.tipo === 'selecao'  ? (c.status_selecao  ?? 'AGUARDAR') :
-                          field.tipo === 'provas'   ? (c.status_provas   ?? 'AGUARDAR') :
+                          field.tipo === 'provas'   ? (c.status_provas  ?? 'AGUARDAR') :
                           field.tipo === 'album'    ? (c.status_album    ?? 'AGUARDAR') :
                           null
                         }
@@ -9810,6 +9605,101 @@ function WorkflowTimeline({ text }: { text: string }) {
         )
       })}
     </ol>
+  )
+}
+
+// ─── SelecaoFotosLinha — Seleção de Fotos na lista de casamentos ─────────────
+// O fotógrafo cola o link e carrega em Enviar (o admin vê no sino). O estado não
+// se escolhe: segue a ordem do Departamento de Fotografia, com o que a RL marca lá.
+const ESTADOS_SELECAO = ['Aguardar', 'Enviado', 'Com os noivos', 'Em edição', 'Entregue'] as const
+
+function passoSelecao(c: Casamento, recebida: string | null): number {
+  const a = c as any
+  if (a.rl_fotos_finais_enviada) return 4
+  if (recebida || a.rl_selecao_recebida) return 3
+  if (a.rl_selecao_enviada || /entreg/i.test(a.rl_sel_fotos_estado ?? '')) return 2
+  if (c.url_selecao_enviado_em) return 1
+  return 0
+}
+
+function SelecaoFotosLinha({ c, recebida, onRefresh }: { c: Casamento; recebida: string | null; onRefresh: () => void }) {
+  const [url, setUrl] = useState(c.url_selecao ?? '')
+  const [sending, setSending] = useState(false)
+  useEffect(() => { setUrl(c.url_selecao ?? '') }, [c.url_selecao])
+
+  const passo = passoSelecao(c, recebida)
+  const fmt = (iso: string) => new Date(iso).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  // Prazo: 30 dias depois do casamento (só conta enquanto não foi enviado)
+  const prazo = passo === 0 && c.data_casamento
+    ? new Date(new Date(c.data_casamento.slice(0, 10) + 'T12:00:00Z').getTime() + PRAZO_SELECAO_DIAS * 86400000)
+    : null
+  const dias = prazo ? Math.ceil((prazo.getTime() - Date.now()) / 86400000) : null
+  const podeEnviar = passo <= 1
+
+  async function enviar() {
+    const link = url.trim()
+    if (!link) return
+    setSending(true)
+    try {
+      const res = await fetch('/api/freelancer-casamentos', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: c.id, url_selecao: link, url_selecao_enviado_em: new Date().toISOString() }),
+      })
+      if (!res.ok) throw new Error(`HTTP ${res.status}`)
+      onRefresh()
+    } catch (err) {
+      alert('Erro ao enviar: ' + (err as Error).message)
+    } finally { setSending(false) }
+  }
+
+  return (
+    <div className="mt-3 max-w-xl rounded-xl border border-white/[0.08] bg-black/30 p-3.5">
+      <div className="flex items-center justify-between gap-2 mb-2.5">
+        <p className="text-[11px] tracking-[0.3em] uppercase text-white/55">Seleção de Fotos</p>
+        {dias !== null && (
+          <span className={`text-[11px] font-semibold tabular-nums ${dias < 0 ? 'text-rose-300' : dias <= AVISO_DIAS ? 'text-orange-300' : 'text-gold/85'}`}>
+            Prazo {prazo!.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short' })} · {dias < 0 ? `${-dias}d atraso` : dias === 0 ? 'hoje' : `${dias}d`}
+          </span>
+        )}
+      </div>
+
+      {/* Estado: muda sozinho, pela ordem do departamento */}
+      <div className="flex gap-1 mb-3">
+        {ESTADOS_SELECAO.map((e, i) => (
+          <div key={e} className="flex-1 min-w-0">
+            <div className={`h-[2px] rounded-full ${i < passo ? 'bg-gold/60' : i === passo ? 'bg-gold' : 'bg-white/10'}`} />
+            <p className={`text-[9px] sm:text-[10px] tracking-[0.06em] uppercase mt-1 leading-tight ${i === passo ? 'text-gold font-semibold' : i < passo ? 'text-white/45' : 'text-white/25'}`}>{e}</p>
+          </div>
+        ))}
+      </div>
+
+      {podeEnviar ? (
+        <div className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="url"
+            value={url}
+            placeholder="Cola aqui o link das fotos para seleção"
+            onChange={e => setUrl(e.target.value)}
+            className="flex-1 min-w-0 bg-black/40 border border-white/[0.08] rounded-lg px-3 py-2 text-[13px] text-white/90 placeholder:text-white/30 outline-none focus:border-gold/40"
+          />
+          <button
+            onClick={enviar}
+            disabled={!url.trim() || sending}
+            className="px-4 py-2 rounded-lg text-[12px] tracking-wider uppercase font-semibold transition-all bg-gold text-black hover:bg-gold/90 disabled:bg-white/[0.04] disabled:text-white/30 disabled:cursor-not-allowed whitespace-nowrap">
+            {sending ? 'A enviar…' : passo === 1 ? 'Reenviar' : 'Enviar'}
+          </button>
+        </div>
+      ) : c.url_selecao ? (
+        <a href={c.url_selecao} target="_blank" rel="noopener noreferrer" className="text-[12px] text-gold/80 hover:text-gold break-all">
+          {c.url_selecao} ↗
+        </a>
+      ) : null}
+
+      {c.url_selecao_enviado_em && (
+        <p className="text-[11px] text-emerald-400/90 tracking-wider uppercase font-semibold mt-2">✓ Enviado · {fmt(c.url_selecao_enviado_em)}</p>
+      )}
+    </div>
   )
 }
 

@@ -1,0 +1,108 @@
+/* Portal do membro — design "Mesa de trabalho" (2026-10-22).
+   O mesmo da página Fluxo de Trabalho: fundo quase preto, dourado suave #d8be93,
+   títulos em Jost, texto em Hanken Grotesk, etiquetas em Space Mono.
+   Sem fotos de banco, sem brilhos. As cores só dizem o estado:
+   vermelho suave = atraso, laranja = falta pouco, verde = feito.
+   Tudo fica dentro de .fl-mesa (a raiz da página). */
+
+.fl-mesa {
+  --ink: #0b0a08; --ink-2: #100e0b; --ink-3: #16130f;
+  --g: #d8be93; --g-deep: #c8a866;
+  --tx: rgba(243,237,226,.92); --tx-mid: rgba(243,237,226,.6); --tx-dim: rgba(243,237,226,.4);
+  --line: rgba(243,237,226,.14); --line-soft: rgba(243,237,226,.08);
+  --atraso: #e59a8f; --aviso: #e2b07a; --feito: #a9c9a4;
+  --fd: 'Jost', sans-serif; --fb: 'Hanken Grotesk', system-ui, sans-serif; --fm: 'Space Mono', ui-monospace, monospace;
+  background: var(--ink) !important;
+  color: var(--tx);
+}
+
+/* ── Letra ─────────────────────────────────────────────────── */
+.fl-mesa, .fl-mesa * { font-family: var(--fb) !important; }
+.fl-mesa h1, .fl-mesa h2, .fl-mesa h3, .fl-mesa [style*="Georgia"], .fl-mesa [style*="Cormorant"], .fl-mesa .fl-d {
+  font-family: var(--fd) !important; font-style: normal !important; letter-spacing: -.01em;
+}
+.fl-mesa h1 { font-weight: 200 !important; }
+.fl-mesa h2, .fl-mesa h3 { font-weight: 300 !important; }
+.fl-mesa .italic, .fl-mesa [style*="italic"] { font-style: normal !important; }
+/* Etiquetas (maiúsculas espaçadas), números e datas: Space Mono */
+.fl-mesa .uppercase, .fl-mesa .tabular-nums, .fl-mesa .font-mono, .fl-mesa .fl-m { font-family: var(--fm) !important; }
+.fl-mesa .uppercase { font-weight: 400 !important; }
+
+/* ── Cores ─────────────────────────────────────────────────── */
+.fl-mesa .text-gold, .fl-mesa [class*="text-gold/"], .fl-mesa [class*="text-[#C9A84C]"] { color: var(--g) !important; }
+.fl-mesa [class*="text-purple"], .fl-mesa [class*="text-violet"], .fl-mesa [class*="text-blue"], .fl-mesa [class*="text-sky"],
+.fl-mesa [class*="text-pink"], .fl-mesa [class*="text-teal"], .fl-mesa [class*="text-cyan"], .fl-mesa [class*="text-indigo"],
+.fl-mesa [class*="text-yellow"] { color: var(--g) !important; }
+.fl-mesa [class*="text-red"], .fl-mesa [class*="text-rose"] { color: var(--atraso) !important; }
+.fl-mesa [class*="text-orange"], .fl-mesa [class*="text-amber"] { color: var(--aviso) !important; }
+.fl-mesa [class*="text-emerald"], .fl-mesa [class*="text-green"] { color: var(--feito) !important; }
+
+.fl-mesa [class*="border-red"], .fl-mesa [class*="border-rose"] { border-color: rgba(229,154,143,.35) !important; }
+.fl-mesa [class*="border-orange"], .fl-mesa [class*="border-amber"] { border-color: rgba(226,176,122,.35) !important; }
+.fl-mesa [class*="border-emerald"], .fl-mesa [class*="border-green"] { border-color: rgba(169,201,164,.3) !important; }
+.fl-mesa [class*="border-purple"], .fl-mesa [class*="border-violet"], .fl-mesa [class*="border-blue"], .fl-mesa [class*="border-sky"],
+.fl-mesa [class*="border-pink"], .fl-mesa [class*="border-teal"], .fl-mesa [class*="border-cyan"], .fl-mesa [class*="border-indigo"],
+.fl-mesa [class*="border-yellow"], .fl-mesa [class*="border-gold"], .fl-mesa [class*="border-[#C9A84C]"] { border-color: rgba(216,190,147,.3) !important; }
+.fl-mesa [class*="border-white"] { border-color: var(--line-soft) !important; }
+
+.fl-mesa [class*="bg-red"], .fl-mesa [class*="bg-rose"] { background-color: rgba(229,154,143,.08) !important; }
+.fl-mesa [class*="bg-orange"], .fl-mesa [class*="bg-amber"] { background-color: rgba(226,176,122,.08) !important; }
+.fl-mesa [class*="bg-emerald"], .fl-mesa [class*="bg-green"] { background-color: rgba(169,201,164,.08) !important; }
+.fl-mesa [class*="bg-purple"], .fl-mesa [class*="bg-violet"], .fl-mesa [class*="bg-blue"], .fl-mesa [class*="bg-sky"],
+.fl-mesa [class*="bg-pink"], .fl-mesa [class*="bg-teal"], .fl-mesa [class*="bg-cyan"], .fl-mesa [class*="bg-indigo"],
+.fl-mesa [class*="bg-yellow"] { background-color: rgba(216,190,147,.07) !important; }
+/* pontos de estado (w-2 h-2 rounded-full) mantêm cor cheia */
+.fl-mesa span.rounded-full[class*="bg-red"], .fl-mesa span.rounded-full[class*="bg-rose"] { background-color: var(--atraso) !important; }
+.fl-mesa span.rounded-full[class*="bg-emerald"], .fl-mesa span.rounded-full[class*="bg-green"] { background-color: var(--feito) !important; }
+.fl-mesa span.rounded-full[class*="bg-amber"], .fl-mesa span.rounded-full[class*="bg-orange"] { background-color: var(--aviso) !important; }
+
+/* ── Fundos: sem fotos de banco, sem gradientes nem brilhos ── */
+.fl-mesa img[src*="unsplash.com"] { display: none !important; }
+.fl-mesa main [style*="linear-gradient"]:not(.fl-keep) { background: var(--ink-2) !important; }
+.fl-mesa main [style*="radial-gradient"]:not(.fl-keep) { background: transparent !important; }
+.fl-mesa main [class*="bg-gradient-to"]:not(.fl-keep) { background-image: none !important; }
+.fl-mesa main .h-full[class*="bg-gradient-to-r"] { background: var(--g) !important; }
+.fl-mesa main [class*="shadow"], .fl-mesa main [style*="box-shadow"] { box-shadow: none !important; }
+.fl-mesa .bell-red-glow, .fl-mesa .prazo-critico-glow, .fl-mesa .prox-casamento-glow, .fl-mesa .animate-pulse { animation: none !important; }
+.fl-mesa main [class*="backdrop-blur"] { backdrop-filter: none !important; }
+/* faixa dourada que varre os cartões ao passar o rato */
+.fl-mesa main [class*="via-gold"] { display: none !important; }
+
+/* ── Caixas ────────────────────────────────────────────────── */
+.fl-mesa main .rounded-2xl, .fl-mesa main .rounded-3xl { border-radius: 14px !important; }
+.fl-mesa main .rounded-3xl { border: 1px solid var(--line-soft); }
+.fl-mesa main .rounded-xl { border-radius: 10px !important; }
+
+/* ── Botões: contorno dourado em pílula ───────────────────── */
+.fl-mesa button.bg-gold, .fl-mesa a.bg-gold {
+  background: transparent !important; color: var(--g) !important; border: 1px solid rgba(216,190,147,.6) !important;
+  border-radius: 999px !important; box-shadow: none !important;
+}
+.fl-mesa button.bg-gold:hover, .fl-mesa a.bg-gold:hover { background: rgba(216,190,147,.1) !important; }
+.fl-mesa main button.rounded-xl, .fl-mesa main a.rounded-xl, .fl-mesa main button.rounded-lg { border-radius: 999px !important; }
+.fl-mesa input, .fl-mesa select, .fl-mesa textarea { background-color: var(--ink-3) !important; border-color: var(--line) !important; color: var(--tx) !important; }
+
+/* ── Componentes próprios do design ───────────────────────── */
+.fl-mesa .fl-eyebrow { font-family: var(--fm) !important; font-size: 11px; letter-spacing: .32em; text-transform: uppercase; color: var(--g); display: inline-flex; gap: .85em; align-items: center; }
+.fl-mesa .fl-eyebrow::before { content: ""; width: 34px; height: 1px; background: var(--g); opacity: .7; }
+.fl-mesa .fl-linha { border-top: 1px solid var(--line-soft); }
+.fl-mesa .fl-btn { font-family: var(--fm) !important; font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--g);
+  border: 1px solid rgba(216,190,147,.55); border-radius: 999px; padding: 9px 16px; white-space: nowrap; transition: background .3s; }
+.fl-mesa .fl-btn:hover { background: rgba(216,190,147,.1); }
+.fl-mesa .fl-btn-sec { color: var(--tx-mid); border-color: var(--line); }
+.fl-mesa .fl-atraso { color: var(--atraso) !important; }
+.fl-mesa .fl-aviso { color: var(--aviso) !important; }
+.fl-mesa .fl-feito { color: var(--feito) !important; }
+.fl-mesa .fl-passos { display: flex; gap: 3px; }
+.fl-mesa .fl-passos i { flex: 1; height: 2px; border-radius: 2px; background: var(--line); }
+.fl-mesa .fl-passos i.f { background: rgba(216,190,147,.55); }
+.fl-mesa .fl-passos i.a { background: var(--g); }
+.fl-mesa .fl-passos i.a.atraso { background: var(--atraso); }
+.fl-mesa .fl-passos i.a.aviso { background: var(--aviso); }
+
+/* ── Menu lateral ──────────────────────────────────────────── */
+.fl-mesa > aside { background: var(--ink-2) !important; border-color: var(--line-soft) !important; box-shadow: none !important; }
+.fl-mesa > aside nav button, .fl-mesa > aside nav a { font-family: var(--fm) !important; font-size: 11px !important; letter-spacing: .14em !important; }
+.fl-mesa > aside nav button[class*="shadow-[inset"] { background: rgba(216,190,147,.1) !important; box-shadow: inset 2px 0 0 var(--g) !important; }
+
+@media (prefers-reduced-motion: reduce) { .fl-mesa * { animation: none !important; transition: none !important; } }
