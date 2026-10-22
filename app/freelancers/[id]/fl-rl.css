@@ -84,3 +84,6 @@
 .fl-rl .fl-passos i.a.aviso { background: var(--aviso); }
 
 @media (prefers-reduced-motion: reduce) { .fl-rl * { animation: none !important; transition: none !important; } }
+
+/* ── Agenda dos 30 dias: igual à do /photo (cartões em Inter, cabeçalhos em font-cond) ── */
+.fl-rl .fl-agenda :not(.font-cond, .fl-agenda .font-cond *) { font-family: Inter, sans-serif !important; }

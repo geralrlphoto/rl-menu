@@ -51,13 +51,13 @@ export default function AgendaMembro({ casamentos, preWeddings, prazos, indispon
   const nPrazos = prazos.filter(p => p.iso >= hojeLx && p.iso <= fim).length
 
   return (
-    <section className="mb-12">
+    <section className="fl-agenda mb-12">
       <div className="flex flex-wrap items-end gap-x-5 gap-y-2 mb-5">
         <div>
-          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Agenda</p>
-          <h2 className="font-semibold text-white text-3xl sm:text-[34px] leading-tight mt-1">Próximos 30 dias</h2>
+          <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Agenda</p>
+          <h2 className="font-cond font-semibold text-white text-3xl sm:text-[34px] leading-tight mt-1">Próximos 30 dias</h2>
         </div>
-        <div className="flex flex-wrap items-center gap-2 pb-1.5 text-[13px]">
+        <div className="flex flex-wrap items-center gap-2 pb-1.5 font-cond text-[13px]">
           <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-white/70">
             {nCasamentos} casamento{nCasamentos !== 1 ? 's' : ''}
           </span>
@@ -74,8 +74,8 @@ export default function AgendaMembro({ casamentos, preWeddings, prazos, indispon
         </div>
         <div className="flex-1" />
         <div className="flex items-center gap-4 pb-1.5">
-          <span className="hidden sm:inline text-[12px] text-white/30">desliza →</span>
-          <button onClick={abrirCalendario} className="text-[13px] text-white/60 hover:text-[#C9A84C] transition-colors">
+          <span className="hidden sm:inline font-cond text-[12px] text-white/30">desliza →</span>
+          <button onClick={abrirCalendario} className="font-cond text-[13px] text-white/60 hover:text-[#C9A84C] transition-colors">
             Calendário →
           </button>
         </div>
@@ -83,29 +83,29 @@ export default function AgendaMembro({ casamentos, preWeddings, prazos, indispon
 
       <div className="relative">
         {/* Esbatido na ponta direita: indica que há mais para a frente */}
-        <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-16 z-10 bg-gradient-to-l from-[#0b0b0b] to-transparent" />
+        <div className="pointer-events-none absolute right-0 top-0 bottom-3 w-16 z-10 bg-gradient-to-l from-[#070707] to-transparent" />
 
         <div className="agenda-scroll flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
           {dias.map((d, i) => {
             const cheio = d.casamentos.length > 0 || d.preWeddings.length > 0 || d.prazos.length > 0 || d.atrasos.length > 0
             return (
               <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
-                <p className="h-5 text-[11px] font-medium tracking-[0.18em] uppercase text-[#C9A84C]/75 pl-1">
+                <p className="h-5 font-cond text-[11px] font-medium tracking-[0.18em] uppercase text-[#C9A84C]/75 pl-1">
                   {d.novoMes ? d.mesLongo : ''}
                 </p>
                 <div
-                  className="flex-1 rounded-[18px] border px-3 py-3 min-h-[124px] flex flex-col bg-[#141414]/90"
+                  className="flex-1 rounded-[18px] border px-3 py-3 min-h-[262px] flex flex-col bg-[#141414]/90"
                   style={{
                     borderColor: i === 0 ? 'rgba(201,168,76,0.55)' : cheio ? 'rgba(255,255,255,0.10)' : 'rgba(255,255,255,0.05)',
                     borderLeft: `2px solid ${i === 0 ? '#C9A84C' : cheio ? 'rgba(201,168,76,0.45)' : 'rgba(255,255,255,0.05)'}`,
                     boxShadow: i === 0 ? '0 0 40px -18px rgba(201,168,76,0.6)' : undefined,
                   }}>
                   <div className="flex items-baseline justify-between">
-                    <span className="text-[12px] font-medium"
+                    <span className="font-cond text-[12px] font-medium"
                       style={{ color: i === 0 ? '#C9A84C' : d.fimDeSemana ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.4)' }}>
                       {d.rotulo}
                     </span>
-                    <span className="font-semibold text-[22px] leading-none" style={{ color: cheio ? '#fff' : 'rgba(255,255,255,0.3)' }}>
+                    <span className="font-cond font-semibold text-[22px] leading-none" style={{ color: cheio ? '#fff' : 'rgba(255,255,255,0.3)' }}>
                       {d.dia} <span className="text-[11px] font-normal text-white/35">{d.mes}</span>
                     </span>
                   </div>
