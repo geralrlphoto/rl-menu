@@ -21,7 +21,6 @@ import { CronogramaRL, type EtapaRL } from '../atmosphere/CronogramaRL'
 import { ContratoView } from '../atmosphere/ContratoView'
 import { portalBloqueado, paginaSempreAberta, emFalta, adjudicacaoPaga } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
-import { SendMessageButton } from '../atmosphere/SendMessageButton'
 import ChatAtendimento from '@/app/components/ChatAtendimento'
 import { AtendimentoThread } from '../atmosphere/AtendimentoThread'
 import { NoivosNotificationsBell } from '../atmosphere/NoivosNotificationsBell'
@@ -2790,32 +2789,9 @@ function PortalSubPageContent() {
               backUrl={_atmBackHref}
             />
 
-            {/* Info + Botão Enviar Mensagem (só páginas Atendimento) */}
+            {/* Chat e histórico de mensagens (só páginas Atendimento) */}
             {portalRef && title.toUpperCase().includes('ATEND') && (
               <div className="msg-info-wrap">
-                <div className="msg-info">
-                  <div className="msg-info-eyebrow">Canal Oficial dos Noivos</div>
-                  <h3 className="msg-info-title">
-                    Esta é a forma <em>mais organizada</em> de nos chegarem
-                  </h3>
-                  <p>
-                    Em vez de mensagens que se perdem no WhatsApp,
-                    podem (e devem) enviar todos os vossos pedidos por este canal.
-                    Cada mensagem fica registada no vosso portal e <strong>tem sempre resposta da nossa parte</strong>.
-                  </p>
-                  <p className="msg-info-note">
-                    O tempo de resposta poderá ir <strong>até 8 dias úteis</strong>.
-                    Obrigado pela vossa compreensão e confiança.
-                  </p>
-                </div>
-                <div style={{ textAlign: 'center', marginTop: 4 }}>
-                  <SendMessageButton
-                    referencia={portalRef}
-                    nomeNoivos={[portalSettingsObj?.noiva, portalSettingsObj?.noivo].filter(Boolean).join(' & ') || null}
-                    emailNoiva={portalSettingsObj?.emailNoiva ?? null}
-                  />
-                </div>
-
                 {/* Chat com a equipa (staff RL ↔ noivos) */}
                 <ChatAtendimento referencia={portalRef} />
 
