@@ -140,7 +140,8 @@ export async function GET(req: NextRequest) {
     const diaTeaser = -diasAte(e.data_evento.slice(0, 10))   // dias desde o casamento
     // Sem editor nem fase e com o prazo já ultrapassado: quase sempre entregues
     // antes de haver registo no portal. Ficam à parte para não encherem o quadro.
-    const faseFinal = fase === 'Por atribuir' && diasPrazo < 0 ? 'Sem registo' : fase
+    // Com estado (ex.: editor retirado e vídeo de volta a Aguardar) fica em Por atribuir.
+    const faseFinal = fase === 'Por atribuir' && diasPrazo < 0 && !e.video_estado ? 'Sem registo' : fase
     return {
       id: e.id, fichaId: e.notion_id ?? String(e.id), referencia: e.referencia, cliente: e.cliente, data: e.data_evento, local: e.local,
       fase: faseFinal, editores, editorIds: editores.map(n => editoresPorNome.get(norm(n))?.id ?? null),
