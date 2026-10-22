@@ -22,6 +22,7 @@ import { ContratoView } from '../atmosphere/ContratoView'
 import { portalBloqueado, paginaSempreAberta, emFalta, adjudicacaoPaga } from '@/lib/portalBloqueio'
 import { PreWeddingView, DEFAULT_CENARIOS, DEFAULT_INTRO, type PwSection, type PwIntro, type PwCenario } from '../atmosphere/PreWeddingView'
 import { SendMessageButton } from '../atmosphere/SendMessageButton'
+import ChatAtendimento from '@/app/components/ChatAtendimento'
 import { AtendimentoThread } from '../atmosphere/AtendimentoThread'
 import { NoivosNotificationsBell } from '../atmosphere/NoivosNotificationsBell'
 import { FotografiasView, type FotografiasCard } from '../atmosphere/FotografiasView'
@@ -2814,6 +2815,9 @@ function PortalSubPageContent() {
                     emailNoiva={portalSettingsObj?.emailNoiva ?? null}
                   />
                 </div>
+
+                {/* Chat com a equipa (staff RL ↔ noivos) */}
+                <ChatAtendimento referencia={portalRef} />
 
                 {/* Histórico de mensagens + respostas da RL */}
                 <AtendimentoThread referencia={portalRef} />

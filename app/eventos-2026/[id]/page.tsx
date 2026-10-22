@@ -1,5 +1,6 @@
 'use client'
 
+import ChatAtendimento from '@/app/components/ChatAtendimento'
 import { NOMES_PROPOSTAS_TODAS, PRAZO_VIDEO_DIAS } from '@/lib/crm'
 import { createContext, useContext, useEffect, useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
@@ -5545,6 +5546,7 @@ export default function EventoPage() {
           <BriefingNoivos e={e} />
           {e.referencia && (
             <>
+              <ChatAtendimento referencia={e.referencia} />
               <RespostaRapidaNoivos referencia={e.referencia} />
               <NotificacaoNoivosSection referencia={e.referencia} />
               <MensagensNoivosSection referencia={e.referencia} />
