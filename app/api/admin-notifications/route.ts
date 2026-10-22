@@ -713,6 +713,41 @@ export async function GET(req: Request) {
       console.warn('[admin-notifications] noivos_messages read failed:', err)
     }
 
+    // ── Chat do Atendimento: mensagens dos NOIVOS (tabela noivos_chat, últimos 30 dias) ──
+    try {
+      const { data: chat } = await supabase
+        .from('noivos_chat')
+        .select('id, referencia, texto, criado_em')
+        .eq('autor', 'noivos')
+        .gte('criado_em', new Date(Date.now() - 30 * 864e5).toISOString())
+        .order('id', { ascending: false })
+        .limit(50)
+      const refsChat = [...new Set((chat ?? []).map((m: any) => m.referencia as string))]
+      const { data: evsChat } = refsChat.length
+        ? await supabase.from('eventos_2026').select('id, referencia, cliente').in('referencia', refsChat)
+        : { data: [] as any[] }
+      for (const m of (chat ?? []) as any[]) {
+        const ev = (evsChat ?? []).find((e: any) => e.referencia === m.referencia)
+        notifications.push({
+          id: `chat_noivos::${m.referencia}::${m.id}`,
+          tipo: 'mensagem_noivos',
+          tipo_label: 'Chat · Mensagem dos Noivos',
+          tipo_icon: TIPO_ICONS.mensagem_noivos,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: ev?.cliente ?? m.referencia,
+          local: m.referencia,
+          data_casamento: null,
+          referencia: m.referencia,
+          url: ev ? `/eventos-2026/${ev.id}?abrir=comunicacao` : `/eventos-2026?ref=${encodeURIComponent(m.referencia)}`,
+          sent_at: m.criado_em,
+          mensagem: String(m.texto ?? '').slice(0, 800),
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] noivos_chat read failed:', err)
+    }
+
     // ── Notificações de SUBSCRIÇÃO AO BLOG ──
     //   Cada vez que alguém subscreve (form do site OU import OU manual no admin)
     //   aparece no sino. Os recém-importados em batch são todos do mesmo dia,
