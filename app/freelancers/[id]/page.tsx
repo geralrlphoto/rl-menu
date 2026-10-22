@@ -7,6 +7,8 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget } from '@/app/components/FreelancerWidgets'
 import { etapaFotografo, entregasFotografo, nomeado, PASSOS_FOTOGRAFO, BRIEFING_DIAS, textoPrazo, PRAZO_SELECAO_DIAS, PRAZO_EDICAO_DIAS, PRAZO_ALBUM_EDITOR_DIAS, AVISO_DIAS, type EtapaInfo } from '@/lib/etapasFotografo'
 import { EnviarMaqueta } from '@/app/components/EnviarMaqueta'
+import RelogioHero from '@/app/photo/RelogioHero'
+import TempoSolLua from '@/app/photo/TempoSolLua'
 import AgendaMembro from './AgendaMembro'
 import './fl-rl.css'
 
@@ -621,7 +623,7 @@ function FreelancerDetailInner() {
   const capa = (() => {
     switch (tab) {
       case null: return (
-        <CapaPortal foto="/boas-vindas-camera.webp" eyebrow={new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
+        <CapaPortal relogio foto="/boas-vindas-camera.webp" eyebrow="RL Photo.Video · Equipa"
           titulo={<>Olá, <span className="text-[#C9A84C]">{primeiroNome}</span></>}
           linha={<>Por fazer · Casamentos · <span className="text-[#C9A84C]">Entregas</span></>}
           texto={afazer.length === 0 ? 'Está tudo em dia.' : `${afazer.length} ${afazer.length === 1 ? 'coisa' : 'coisas'} por fazer${emAtraso > 0 ? ` · ${emAtraso} em atraso` : ''}`}
@@ -1070,7 +1072,7 @@ function FreelancerDetailInner() {
    linha dourada vertical, título grande e, quando há, um cartão de números ao lado. */
 type CapaNumero = { l: string; v: string | number; s?: string; ouro?: boolean; onClick?: () => void }
 
-function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, botoes }: {
+function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, botoes, relogio }: {
   foto: string
   eyebrow: string
   titulo: ReactNode
@@ -1079,23 +1081,50 @@ function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, bot
   lateral?: string
   numeros?: { titulo: string; itens: CapaNumero[] }
   botoes?: ReactNode
+  /** Início: relógio ao centro e tempo no canto, com a foto esbatida a cinzento (como o /photo) */
+  relogio?: boolean
 }) {
   return (
     <section className="relative -mx-4 sm:-mx-6 lg:mx-0 lg:-mr-4 -mt-6 mb-10 min-h-[460px] lg:min-h-[62vh] flex flex-col overflow-hidden font-cond">
-      <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={foto} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%] grayscale opacity-40 lg:opacity-55" />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
-      </div>
+      {relogio ? (
+        <>
+          {/* Fundo do /photo: foto a toda a largura, preto e branco e esbatida, brilho dourado,
+              pontilhado e anéis finos, a fundir com o cinzento em cima e em baixo */}
+          <div className="absolute inset-0 bg-cover bg-[center_35%] grayscale opacity-[0.22]" style={{ backgroundImage: `url('${foto}')` }} />
+          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 55% 50% at 55% 38%, rgba(201,168,76,0.10), transparent 70%)' }} />
+          <div className="absolute inset-0 opacity-40" style={{
+            backgroundImage: 'radial-gradient(rgba(255,255,255,0.12) 1px, transparent 1px)', backgroundSize: '26px 26px',
+            maskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 70% 60% at 50% 42%, #000 25%, transparent 75%)',
+          }} />
+          <svg className="pointer-events-none absolute left-[55%] top-[40%] -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] opacity-[0.09]"
+            viewBox="0 0 100 100" fill="none" stroke="#C9A84C" strokeWidth="0.1" aria-hidden>
+            <circle cx="50" cy="50" r="18" />
+            <circle cx="50" cy="50" r="30" strokeDasharray="0.5 1.2" />
+            <circle cx="50" cy="50" r="44" />
+          </svg>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, #0b0b0b 0%, rgba(11,11,11,0.45) 20%, rgba(11,11,11,0.55) 65%, #070707 100%)' }} />
+          <div className="hidden md:block absolute top-4 right-20 z-10 mt-2"><TempoSolLua /></div>
+          <div className="relative flex justify-center text-center pt-16 sm:pt-20 px-5"><RelogioHero /></div>
+        </>
+      ) : (
+        <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={foto} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%] grayscale opacity-40 lg:opacity-55" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
+        </div>
+      )}
       <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-12 w-px bg-[#C9A84C]/45" />
       {lateral && (
         <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">{lateral}</p>
       )}
-      <span className="hidden lg:block absolute left-[34%] top-[22%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
-      <span className="hidden lg:block absolute left-[33.2%] top-[27%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
+      {!relogio && <>
+        <span className="hidden lg:block absolute left-[34%] top-[22%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
+        <span className="hidden lg:block absolute left-[33.2%] top-[27%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
+      </>}
 
-      <div className={`relative flex-1 grid grid-cols-[minmax(0,1fr)] ${numeros ? 'xl:grid-cols-[minmax(0,1fr)_330px]' : ''} gap-8 items-end pl-11 sm:pl-16 lg:pl-20 pr-5 sm:pr-14 pt-20 pb-10 lg:pb-14`}>
+      <div className={`relative flex-1 grid grid-cols-[minmax(0,1fr)] ${numeros ? 'xl:grid-cols-[minmax(0,1fr)_330px]' : ''} gap-8 items-end pl-11 sm:pl-16 lg:pl-20 pr-5 sm:pr-14 ${relogio ? 'pt-10' : 'pt-20'} pb-10 lg:pb-14`}>
         <div className="min-w-0">
           <p className="text-[12px] sm:text-[15px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">{eyebrow}</p>
           <h1 className="font-bold text-white leading-[0.9] text-[44px] min-[400px]:text-[52px] sm:text-[88px] lg:text-[104px] mt-2 break-words">{titulo}</h1>
