@@ -122,6 +122,27 @@ export async function GET(req: NextRequest) {
       if (ref && nome && !editorPorRef.has(ref)) editorPorRef.set(ref, [nome])
     }
   }
+  // Link do material (download do editor): o mesmo do Painel do Editor, no envio
+  // 'relatorio_editor' mais recente (META.overrides.clientLink, senão o 1.º download).
+  // Só para os que ainda vão ser editados (Aguardar / Em Edição).
+  const comEditor = comVideo.filter(e => e.referencia && editorPorRef.has(e.referencia) && (!e.video_estado || ['Aguardar', 'Em Edição'].includes(e.video_estado)))
+    .map(e => e.referencia as string)
+  const materialPorRef = new Map<string, { notifId: string; freelancerId: string; link: string }>()
+  if (comEditor.length) {
+    const { data: envios } = await sb.from('freelancer_notificacoes')
+      .select('id, freelancer_id, mensagem')
+      .eq('tipo', 'relatorio_editor')
+      .or(comEditor.map(r => `mensagem.ilike.%"referencia":"${r}"%`).join(','))
+      .order('created_at', { ascending: false })
+    for (const n of envios ?? []) {
+      const m = String(n.mensagem ?? '').match(/^__META__(.*?)__\/META__/)
+      let meta: any = {}
+      try { meta = m ? JSON.parse(m[1]) ?? {} : {} } catch { meta = {} }
+      if (!meta.referencia || materialPorRef.has(meta.referencia) || !n.freelancer_id) continue
+      const link = meta.overrides?.clientLink || (Array.isArray(meta.downloads) ? meta.downloads[0] : '') || ''
+      materialPorRef.set(meta.referencia, { notifId: n.id, freelancerId: n.freelancer_id, link })
+    }
+  }
   const limiteEntregue = new Date(Date.now() - ENTREGUES_RECENTES * 86400000).toISOString().slice(0, 10)
 
   const projetos = comVideo.map(e => {
@@ -150,6 +171,7 @@ export async function GET(req: NextRequest) {
       entregueEm: typeof p?.w === 'string' ? p.w.slice(0, 10) : null,
       filmeUrl: typeof p?.u === 'string' ? p.u : null,
       revisao: revPorRef.get(e.referencia ?? '') ?? null,
+      material: materialPorRef.get(e.referencia ?? '') ?? null,
       pagamentos: e.referencia
         ? (pags ?? []).filter(p => String(p.descricao ?? '').startsWith(e.referencia!))
             .map(p => ({ id: p.id, freelancerId: p.freelancer_id, valor: Number(p.valor) || 0, pago: String(p.status ?? '').toUpperCase() === 'PAGO', dataPago: p.data_pago }))

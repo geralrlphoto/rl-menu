@@ -36,6 +36,7 @@ type Projeto = {
   entregas: { teaser: boolean; sde: boolean; filme: boolean; prewedding: boolean }
   filmeUrl: string | null
   revisao: { link: string | null; status: string | null; feedback: string | null } | null
+  material: { notifId: string; freelancerId: string; link: string } | null
   pagamentos: { id: string; freelancerId: string; valor: number; pago: boolean; dataPago: string | null }[]
   historico: { estado: string; origem: string | null; em: string }[]
 }
@@ -80,6 +81,33 @@ export default function EdicaoVideoPage() {
       body: JSON.stringify({ referencia: p.referencia, data_casamento: p.data, local: p.local, editor_video: [nome] }),
     }).catch(() => {})
     setAGravar(null)
+    carregar()
+  }
+
+  // Link do material para o editor: o mesmo campo do Painel do Editor (clientLink).
+  // Se o projeto ainda não existe no painel dele, cria-o já com o link.
+  const [materiais, setMateriais] = useState<Record<number, string>>({})
+  const guardarMaterial = async (p: Projeto) => {
+    const link = (materiais[p.id] ?? '').trim()
+    if (!/^https?:\/\//i.test(link)) { alert('Cola o link de download (WeTransfer, Drive, Dropbox…).'); return }
+    const freelancer = p.material?.freelancerId ?? p.editorIds.find(Boolean)
+    if (!freelancer) { alert('Não encontrei o editor na lista de editores.'); return }
+    setAGravar(p.id)
+    const r = p.material
+      ? await fetch('/api/painel-editor/projetos', {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ freelancer, notifId: p.material.notifId, patch: { clientLink: link } }),
+        }).catch(() => null)
+      : await fetch('/api/painel-editor/projetos', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ freelancer, projeto: {
+            referencia: p.referencia, eventoId: p.fichaId, noivos: p.cliente, local: p.local,
+            dataCasamento: p.data.slice(0, 10).split('-').reverse().join('/'), clientLink: link,
+          } }),
+        }).catch(() => null)
+    setAGravar(null)
+    if (!r?.ok) { alert('Não foi possível guardar o link.'); return }
+    setMateriais(m => { const { [p.id]: _, ...resto } = m; return resto })
     carregar()
   }
 
@@ -382,6 +410,29 @@ export default function EdicaoVideoPage() {
                           </span>
                         ))}
                       </div>
+                      {(f === 'Aguardar' || f === 'Em Edição') && (
+                        <div className="flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-black/25 p-3">
+                          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Material para o editor</p>
+                          {p.material?.link && materiais[p.id] === undefined ? (
+                            <div className="flex items-center justify-between gap-2">
+                              <a href={p.material.link} target="_blank" rel="noopener noreferrer" className="truncate text-[12px] font-semibold text-[#4ade80] hover:underline">✓ Link de download enviado</a>
+                              <button type="button" onClick={() => setMateriais(m => ({ ...m, [p.id]: p.material?.link ?? '' }))}
+                                className="shrink-0 rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase text-white/45 hover:text-white">Alterar</button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-2">
+                              <input type="url" placeholder="Link de download (WeTransfer, Drive…)" value={materiais[p.id] ?? ''}
+                                onChange={e => setMateriais(m => ({ ...m, [p.id]: e.target.value }))}
+                                className="min-w-0 flex-1 rounded-lg border border-white/10 bg-black/40 px-2.5 py-1.5 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                              <button type="button" disabled={aGravar === p.id || !(materiais[p.id] ?? '').trim()} onClick={() => guardarMaterial(p)}
+                                className="shrink-0 rounded-full border border-[#C9A84C]/50 bg-[#C9A84C]/10 px-3 py-1.5 text-[10px] font-semibold tracking-[0.1em] uppercase text-white hover:bg-[#C9A84C]/25 disabled:opacity-40">{aGravar === p.id ? '…' : 'Guardar'}</button>
+                            </div>
+                          )}
+                          {f === 'Aguardar' && (
+                            <p className="text-[11px] text-white/45">Para fazer o download, o editor tem de pôr o vídeo <span className="text-[#fb923c] font-semibold">Em Edição</span>.</p>
+                          )}
+                        </div>
+                      )}
                       {f === 'Em Revisão' && (
                         <div className="flex flex-col gap-2 rounded-xl border border-[#93c5fd]/25 bg-[#93c5fd]/[0.06] p-3">
                           {p.revisao?.link
