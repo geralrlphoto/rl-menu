@@ -114,11 +114,17 @@ async function lembrarPorWhatsApp(p: Projeto) {
 const O_QUE: Partial<Record<EtapaFoto, string>> = {
   sneakpeek: 'o sneak peek', galerias: 'a galeria online', selecao: 'as fotos para seleção', edicao: 'as fotos editadas',
 }
-function mensagemAtraso(p: Projeto, membro: string | null): string {
+function mensagemPrazo(p: Projeto, membro: string | null): string {
   const dia = (iso: string) => new Date(iso.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', timeZone: 'UTC' })
   const nome = membro ? primeiro(membro).charAt(0).toLocaleUpperCase('pt-PT') + primeiro(membro).slice(1).toLocaleLowerCase('pt-PT') : ''
-  const atraso = -(p.diasPrazo ?? 0)
-  return `Olá${nome ? ` ${nome}` : ''}! Tudo bem?\n\nO casamento ${(p.cliente ?? '').trim() ? `de ${(p.cliente ?? '').trim()} ` : ''}(${dia(p.data)}) está atrasado ${atraso} ${atraso === 1 ? 'dia' : 'dias'}: ${O_QUE[p.fase] ?? 'a entrega'} ${p.fase === 'selecao' || p.fase === 'edicao' ? 'tinham' : 'tinha'} prazo até ${p.prazo ? dia(p.prazo) : ''}.\n\nConsegues dar-me uma previsão de entrega? Obrigado!\nRui`
+  const casamento = `O casamento ${(p.cliente ?? '').trim() ? `de ${(p.cliente ?? '').trim()} ` : ''}(${dia(p.data)})`
+  const oQue = O_QUE[p.fase] ?? 'a entrega'
+  const ola = `Olá${nome ? ` ${nome}` : ''}! Tudo bem?\n\n`
+  const d = p.diasPrazo ?? 0
+  // Ainda dentro do prazo: lembrete com os dias que faltam
+  if (d >= 0) return `${ola}${casamento}: ${d === 0 ? `o prazo para ${oQue} termina hoje` : `faltam ${d} ${d === 1 ? 'dia' : 'dias'} para o prazo de ${oQue}`} (${p.prazo ? dia(p.prazo) : ''}).\n\nComo está a correr? Obrigado!\nRui`
+  const atraso = -d
+  return `${ola}${casamento} está atrasado ${atraso} ${atraso === 1 ? 'dia' : 'dias'}: ${oQue} ${p.fase === 'selecao' || p.fase === 'edicao' ? 'tinham' : 'tinha'} prazo até ${p.prazo ? dia(p.prazo) : ''}.\n\nConsegues dar-me uma previsão de entrega? Obrigado!\nRui`
 }
 
 function linhaDoTempo(p: Projeto) {
@@ -325,7 +331,7 @@ export default function DepartamentoFotografiaPage() {
   }
   const avisarMembro = (p: Projeto) => {
     const m = responsavel(p)
-    const link = m ? whatsappLink(m.contato, comNotaAutomatica(mensagemAtraso(p, m.nome))) : null
+    const link = m ? whatsappLink(m.contato, comNotaAutomatica(mensagemPrazo(p, m.nome))) : null
     if (!link) { setAvisoSem(p); return }   // sem responsável ou sem telemóvel: escolher na janela
     window.open(link, '_blank')
     fetch('/api/edicao-fotografia/enviar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: p.referencia, etapa: 'aviso', url: m!.nome }) }).catch(() => {})
@@ -513,7 +519,7 @@ export default function DepartamentoFotografiaPage() {
                           </p>
                         )}
 
-                        {atrasado(p) && (
+                        {p.fase !== 'entregue' && p.fase !== 'escolha' && p.prazo && p.diasPrazo !== null && (
                           <button type="button" onClick={() => avisarMembro(p)}
                             className="flex items-center justify-center gap-2 rounded-full border border-[#25D366]/45 bg-[#25D366]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#25D366] hover:bg-[#25D366]/20">
                             Avisar {responsavel(p) ? primeiro(responsavel(p)!.nome) : 'a equipa'} por WhatsApp
@@ -660,7 +666,7 @@ export default function DepartamentoFotografiaPage() {
 
       <JanelaWhatsApp aberto={!!avisoSem} onFechar={() => setAvisoSem(null)}
         titulo={avisoSem ? `Atraso · ${avisoSem.cliente ?? avisoSem.referencia}` : 'Atraso'}
-        mensagem={avisoSem ? mensagemAtraso(avisoSem, responsavel(avisoSem)?.nome ?? null) : ''} />
+        mensagem={avisoSem ? mensagemPrazo(avisoSem, responsavel(avisoSem)?.nome ?? null) : ''} />
 
       {selAberta?.selecao && (
         <SelecaoCaixa p={selAberta} onFechar={() => setSelAberta(null)} onGuardado={() => { setSelAberta(null); carregar() }} />
