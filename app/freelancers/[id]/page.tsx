@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState, useCallback, useMemo, useRef, Suspense } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef, Suspense, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { TasksWidget } from '@/app/components/FreelancerWidgets'
 import { etapaFotografo, entregasFotografo, nomeado, PASSOS_FOTOGRAFO, BRIEFING_DIAS, textoPrazo, PRAZO_SELECAO_DIAS, PRAZO_EDICAO_DIAS, PRAZO_ALBUM_EDITOR_DIAS, AVISO_DIAS, type EtapaInfo } from '@/lib/etapasFotografo'
 import { EnviarMaqueta } from '@/app/components/EnviarMaqueta'
-import './fl-mesa.css'
+import './fl-rl.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -610,11 +610,82 @@ function FreelancerDetailInner() {
     notificacoes: notificacoes.filter(n => !n.lida).length,
   }
 
+  // ── Capa de cada separador (layout do /crm e do /photo) ──
+  const primeiroNome = (freelancer?.nome ?? '').split(' ')[0] || ''
+  const afazer = casamentos.map(c => etapaDe(c)).filter(e => !!e?.acao) as EtapaInfo[]
+  const emAtraso = afazer.filter(e => e.tom === 'atraso').length
+  const anoAtual = new Date().getFullYear()
+  const pagPorPagar = pagamentos.filter(p => p.status !== 'PAGO')
+  const valorPorPagar = pagPorPagar.reduce((s, p) => s + (Number(p.valor) || 0), 0)
+  const capa = (() => {
+    switch (tab) {
+      case null: return (
+        <CapaPortal foto="/boas-vindas-camera.webp" eyebrow={new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
+          titulo={<>Olá, <span className="text-[#C9A84C]">{primeiroNome}</span></>}
+          linha={<>Por fazer · Casamentos · <span className="text-[#C9A84C]">Entregas</span></>}
+          texto={afazer.length === 0 ? 'Está tudo em dia.' : `${afazer.length} ${afazer.length === 1 ? 'coisa' : 'coisas'} por fazer${emAtraso > 0 ? ` · ${emAtraso} em atraso` : ''}`}
+          lateral={`Equipa RL · ${anoAtual}`}
+          botoes={<>
+            <button onClick={() => setTab('casamentos')} className={capaBtn}>Casamentos <span className="text-[#C9A84C]">→</span></button>
+            <button onClick={() => setTab('mensagens')} className={capaBtnSec}>/ Mensagens</button>
+          </>}
+          numeros={{ titulo: 'Resumo', itens: [
+            { l: 'Por fazer', v: afazer.length, s: 'casamentos com ação', onClick: () => setTab('casamentos') },
+            { l: 'Em atraso', v: emAtraso, s: emAtraso > 0 ? 'passaram o prazo' : 'tudo no prazo', ouro: emAtraso > 0 },
+            { l: 'Próximo casamento', v: dtu === null ? '—' : dtu === 0 ? 'Hoje' : `${dtu} dias`, s: upcoming ? (upcoming.nome_noivos || upcoming.local) : 'sem marcações' },
+            { l: 'Avisos', v: contaNaoLidas.notificacoes + contaNaoLidas.mensagens, s: 'por ler', ouro: contaNaoLidas.notificacoes + contaNaoLidas.mensagens > 0, onClick: () => setTab('notificacoes') },
+          ] }} />
+      )
+      case 'casamentos': return (
+        <CapaPortal foto="/casamentos-2026.jpg" eyebrow="RL Photo.Video" titulo="CASAMENTOS"
+          linha={<>Confirmar · Briefing · <span className="text-[#C9A84C]">Entregas</span></>}
+          texto={`${casamentos.length} casamentos · ${upcomingList.length} por acontecer · ${afazer.length} com algo por fazer`}
+          lateral={`Casamentos · ${anoAtual}`} />
+      )
+      case 'edicao': return (
+        <CapaPortal foto="/eventos-hero-2026.webp" eyebrow="RL Photo.Video" titulo="EDIÇÃO"
+          linha={<>Seleção · Edição · <span className="text-[#C9A84C]">Entregue</span></>}
+          texto={`${edicao.length} trabalhos de edição · ${edicao.filter(e => e.status === 'EM EDIÇÃO').length} em edição`}
+          lateral="Edição de fotos" />
+      )
+      case 'album': return (
+        <CapaPortal foto="/eventos-hero-2027.webp" eyebrow="RL Photo.Video" titulo="ÁLBUNS"
+          linha={<>Maqueta · Aprovação · <span className="text-[#C9A84C]">Entregue</span></>}
+          texto={`${album.length} ${album.length === 1 ? 'álbum' : 'álbuns'}`}
+          lateral="Edição de álbuns" />
+      )
+      case 'tarefas': case 'notificacoes': case 'mensagens': return (
+        <CapaPortal foto="/crm-hero.webp" eyebrow="RL Photo.Video" titulo="MENSAGENS"
+          linha={<>Tarefas · Notificações · <span className="text-[#C9A84C]">Mensagens</span></>}
+          texto={`${contaNaoLidas.notificacoes} notificações e ${contaNaoLidas.mensagens} mensagens por ler`}
+          lateral="Falar com a produção" />
+      )
+      case 'calendario': return (
+        <CapaPortal foto="/eventos-hero-2028.webp" eyebrow="RL Photo.Video" titulo="CALENDÁRIO"
+          linha={<>Casamentos · Prazos · <span className="text-[#C9A84C]">Disponibilidade</span></>}
+          texto="O mês com os casamentos, as entregas, os prazos e as tarefas."
+          lateral={`Agenda · ${anoAtual}`} />
+      )
+      case 'pagamentos': return (
+        <CapaPortal foto="/casamentos-2027.jpg" eyebrow="RL Photo.Video" titulo="PAGAMENTOS"
+          linha={<>Por pagar · <span className="text-[#C9A84C]">Pago</span></>}
+          texto={pagPorPagar.length === 0 ? 'Não há pagamentos por fazer.' : `${pagPorPagar.length} por pagar · ${valorPorPagar.toLocaleString('pt-PT')} €`}
+          lateral="Pagamentos" />
+      )
+      case 'definicoes': return (
+        <CapaPortal foto="/prewedding-hero.webp" eyebrow="RL Photo.Video" titulo="PERFIL"
+          linha={<>Dados · Fotografia · <span className="text-[#C9A84C]">Pagamentos</span></>}
+          texto="Os teus dados, a tua fotografia e a forma como recebes os pagamentos."
+          lateral="Dados pessoais" />
+      )
+      default: return (
+        <CapaPortal foto="/boas-vindas-camera-m.webp" eyebrow="RL Photo.Video" titulo="NOTAS" lateral="Equipa RL" />
+      )
+    }
+  })()
+
   return (
-    <div className="min-h-screen text-white relative overflow-x-clip fl-mesa">
-      {/* Letras do design "Mesa de trabalho" (as mesmas da página Fluxo de Trabalho).
-          Injetadas em runtime: o build de produção tira os @import dos .css */}
-      <style dangerouslySetInnerHTML={{ __html: "@import url('https://fonts.googleapis.com/css2?family=Jost:wght@200;300;400;500&family=Hanken+Grotesk:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap');" }} />
+    <div className="min-h-screen text-white relative overflow-x-clip fl-rl font-cond">
       {/* ── Animações premium ─────────────────────────────────────────── */}
       <style jsx global>{`
         @keyframes proxCasamentoGlow {
@@ -653,11 +724,7 @@ function FreelancerDetailInner() {
         viewAsFreelancer={viewAsFreelancer}
       />
 
-    <main className={`relative z-10 min-h-screen px-4 sm:px-6 py-6 mx-auto lg:pl-[232px] lg:pr-4 ${
-      tab === null ? 'max-w-none'
-        : (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes', 'mensagens'] as Array<string | null>).includes(tab) ? 'max-w-[1500px]'
-        : 'max-w-3xl'
-    }`}>
+    <main className="relative z-10 min-h-screen px-4 sm:px-6 py-6 lg:pl-[232px] lg:pr-4">
       {/* Hamburguer menu — apenas mobile (desktop usa sidebar) */}
       <div className="mb-6 lg:hidden">
         {/* Barra fixa com botão hamburguer + tab activa */}
@@ -704,7 +771,12 @@ function FreelancerDetailInner() {
         )}
       </div>
 
-      {/* Início — "Mesa de trabalho": o que há para fazer hoje, os próximos casamentos e as tarefas */}
+      {capa}
+
+      <div className={`mx-auto ${
+        (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes', 'mensagens', null] as Array<string | null>).includes(tab) ? 'max-w-[1500px]' : 'max-w-3xl'
+      }`}>
+      {/* Início: atalhos, o que há para fazer, os próximos casamentos e as tarefas */}
       {tab === null && (
         <InicioMesa
           freelancer={freelancer}
@@ -983,13 +1055,126 @@ function FreelancerDetailInner() {
       {tab === 'pagamentos'   && <PagamentosAdminTab freelancerId={id} pagamentos={pagamentos} casamentos={casamentos} onRefresh={load} />}
       {tab === 'mensagens'    && <MensagensAdminTab freelancerId={id} freelancerNome={freelancer?.nome ?? ''} casamentos={casamentos} mensagens={mensagens} onRefresh={load} />}
       {tab === 'notificacoes' && <NotificacoesAdminTab freelancerId={id} notificacoes={notificacoes} casamentos={casamentos} onRefresh={load} viewAsFreelancer={viewAsFreelancer} onOpenCasamento={(cid) => { setPendingExpandCasamentoId(cid); setTab('casamentos') }} />}
+      </div>
     </main>
     </div>
   )
 }
 
+// ─── Capa de cada página (o layout do /crm e do /photo) ──────────────────────
+/* Foto local da Vercel (não gasta egress do Supabase), a preto e branco à direita,
+   linha dourada vertical, título grande e, quando há, um cartão de números ao lado. */
+type CapaNumero = { l: string; v: string | number; s?: string; ouro?: boolean; onClick?: () => void }
+
+function CapaPortal({ foto, eyebrow, titulo, linha, texto, lateral, numeros, botoes }: {
+  foto: string
+  eyebrow: string
+  titulo: ReactNode
+  linha?: ReactNode
+  texto?: ReactNode
+  lateral?: string
+  numeros?: { titulo: string; itens: CapaNumero[] }
+  botoes?: ReactNode
+}) {
+  return (
+    <section className="relative -mx-4 sm:-mx-6 lg:mx-0 lg:-mr-4 -mt-6 mb-10 min-h-[460px] lg:min-h-[62vh] flex flex-col overflow-hidden font-cond">
+      <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={foto} alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%] grayscale opacity-40 lg:opacity-55" />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
+      </div>
+      <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-12 w-px bg-[#C9A84C]/45" />
+      {lateral && (
+        <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">{lateral}</p>
+      )}
+      <span className="hidden lg:block absolute left-[34%] top-[22%] w-2.5 h-2.5 rounded-full bg-[#C9A84C]" />
+      <span className="hidden lg:block absolute left-[33.2%] top-[27%] w-11 h-11 rounded-full border border-[#C9A84C]/45" />
+
+      <div className={`relative flex-1 grid grid-cols-[minmax(0,1fr)] ${numeros ? 'xl:grid-cols-[minmax(0,1fr)_330px]' : ''} gap-8 items-end pl-11 sm:pl-16 lg:pl-20 pr-5 sm:pr-14 pt-20 pb-10 lg:pb-14`}>
+        <div className="min-w-0">
+          <p className="text-[12px] sm:text-[15px] font-bold tracking-[0.5em] uppercase text-[#C9A84C]">{eyebrow}</p>
+          <h1 className="font-bold text-white leading-[0.9] text-[44px] min-[400px]:text-[52px] sm:text-[88px] lg:text-[104px] mt-2 break-words">{titulo}</h1>
+          {linha && (
+            <div className="flex items-center gap-4 mt-5">
+              <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+              <p className="text-[12px] sm:text-[16px] tracking-[0.22em] uppercase text-white/70">{linha}</p>
+            </div>
+          )}
+          {texto && <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-4 max-w-xl">{texto}</p>}
+          {botoes && <div className="flex flex-wrap items-center gap-3 mt-7">{botoes}</div>}
+        </div>
+
+        {numeros && (
+          <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+            <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+              {numeros.titulo}
+            </p>
+            <div className="grid grid-cols-2 mt-3">
+              {numeros.itens.map((x, i) => {
+                const Tag = x.onClick ? 'button' : 'div'
+                return (
+                  <Tag key={x.l} onClick={x.onClick}
+                    className={`py-3 min-w-0 text-left ${i % 2 === 0 ? 'pr-3 border-r border-white/[0.07]' : 'pl-3'} ${i < numeros.itens.length - 2 ? 'border-b border-white/[0.07]' : ''} ${x.onClick ? 'hover:bg-white/[0.02] transition-colors' : ''}`}>
+                    <p className="text-[11px] text-white/50 truncate">{x.l}</p>
+                    <p className={`font-semibold text-[22px] leading-none mt-1.5 truncate ${x.ouro ? 'text-[#C9A84C]' : 'text-white'}`}>{x.v}</p>
+                    {x.s && <p className="text-[10.5px] text-white/30 mt-1 truncate">{x.s}</p>}
+                  </Tag>
+                )
+              })}
+            </div>
+          </aside>
+        )}
+      </div>
+    </section>
+  )
+}
+
+/* Botões da capa: principal (dourado) e secundário, como "Nova lead" e "/ Follow up" no CRM */
+const capaBtn = 'inline-flex items-center gap-2.5 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-6 py-3.5 text-[14px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]'
+const capaBtnSec = 'inline-flex items-center gap-2 border border-white/15 hover:border-white/35 bg-black/30 px-6 py-3.5 text-[14px] font-semibold tracking-[0.18em] uppercase text-white/85 transition-all'
+
+/* Título de secção: etiqueta dourada + título forte (como "Atalhos · Ferramentas do CRM") */
+function TituloSecao({ etiqueta, titulo, extra }: { etiqueta: string; titulo: string; extra?: ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+      <div>
+        <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">{etiqueta}</p>
+        <h2 className="font-semibold text-white text-[26px] sm:text-[28px] leading-tight mt-1">{titulo}</h2>
+      </div>
+      {extra}
+    </div>
+  )
+}
+
+/* Atalho numerado (o cartão do CRM): círculo dourado com o ícone, número, nome e seta */
+function AtalhoPortal({ num, label, icon, onClick, href, contador, primary }: {
+  num: number; label: string; icon: string; onClick?: () => void; href?: string; contador?: number; primary?: boolean
+}) {
+  const cls = 'group relative w-full flex items-center gap-3.5 rounded-[18px] border bg-[#111111]/90 px-4 py-3.5 text-left font-cond transition-all duration-300 hover:-translate-y-0.5 hover:border-[#C9A84C]/45 hover:shadow-[0_0_30px_-16px_rgba(201,168,76,0.6)]'
+  const estilo = {
+    borderColor: primary ? 'rgba(201,168,76,0.4)' : 'rgba(201,168,76,0.14)',
+    borderLeft: `2px solid rgba(201,168,76,${primary ? 0.9 : 0.35})`,
+  }
+  const inner = (
+    <>
+      <span className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center text-[#C9A84C] text-[15px] transition-transform duration-300 group-hover:scale-110"
+        style={{ background: `rgba(201,168,76,${primary ? 0.2 : 0.1})` }}>{icon}</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[11px] tracking-[0.15em] text-[#C9A84C]/60">{String(num).padStart(2, '0')}</span>
+        <span className="block text-[16px] font-semibold leading-tight text-white truncate">{label}</span>
+      </span>
+      {!!contador && <span className="shrink-0 min-w-[24px] h-6 px-1.5 rounded-full bg-[#C9A84C]/15 text-[#C9A84C] text-[12px] font-semibold flex items-center justify-center">{contador}</span>}
+      <span className="shrink-0 text-white/25 transition-all group-hover:text-[#C9A84C] group-hover:translate-x-0.5">{href ? '↗' : '→'}</span>
+    </>
+  )
+  if (href) return <a href={href} className={cls} style={estilo}>{inner}</a>
+  return <button onClick={onClick} className={cls} style={estilo}>{inner}</button>
+}
+
 // ─── SidebarNavAdmin ───────────────────────────────────────────────────────
-type AdminTabKey = 'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
+type AdminTabKey ='casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
 
 // ─── Início "Mesa de trabalho" ─────────────────────────────────────────────
 /* Uma página para saber o que fazer hoje. Cada linha é um casamento com a etapa do
@@ -1036,39 +1221,31 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
   }
   const tomCls = (t: EtapaInfo['tom']) => t === 'atraso' ? 'fl-atraso' : t === 'aviso' ? 'fl-aviso' : 'text-white/55'
 
+  // Atalhos: os mesmos sítios do menu, como os cartões numerados do CRM
+  const atalhos = itensMenuMembro({ isVideografo, isFotografo, freelancerId }).filter(it => it.key !== null || it.href)
+  const contadorDe = (it: ItemMenu) => it.grupo ? notifNaoLidas + msgsNaoLidas : 0
+
   return (
-    <div className="max-w-[1100px] fade-in-up">
-      {/* Cabeçalho */}
-      <header className="flex items-start justify-between gap-4 pb-8">
-        <div className="min-w-0">
-          <p className="fl-eyebrow">{hoje}</p>
-          <h1 className="text-[44px] sm:text-[64px] leading-[1.02] text-white mt-4">Olá, {primeiroNome}</h1>
-          <p className="text-[15px] text-white/60 mt-3 max-w-xl leading-relaxed">
-            {afazer.length === 0 ? 'Está tudo em dia.' : `${afazer.length} ${afazer.length === 1 ? 'coisa' : 'coisas'} por fazer`}
-            {emAtraso > 0 && <span className="fl-atraso"> · {emAtraso} em atraso</span>}
-            {prox && diasProx !== null && <> · próximo casamento {diasProx === 0 ? 'hoje' : diasProx === 1 ? 'amanhã' : `daqui a ${diasProx} dias`}</>}
-          </p>
+    <div className="fade-in-up">
+      {/* Atalhos */}
+      <section className="mb-12">
+        <TituloSecao etiqueta="Atalhos" titulo="O teu portal" />
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+          {atalhos.map((it, i) => (
+            <AtalhoPortal key={it.label} num={i + 1} label={it.label} icon={it.icon} href={it.href}
+              onClick={it.href ? undefined : () => irPara(it.key)} contador={contadorDe(it)} primary={i === 0} />
+          ))}
         </div>
-        <div className="flex items-center gap-2 shrink-0 pt-1">
-          <button onClick={() => irPara('notificacoes')} className="fl-btn fl-btn-sec" title="Notificações">
-            Avisos{notifNaoLidas > 0 && <span className="text-gold ml-2">{notifNaoLidas}</span>}
-          </button>
-          <button onClick={() => irPara('mensagens')} className="fl-btn fl-btn-sec hidden sm:inline-block" title="Mensagens">
-            Mensagens{msgsNaoLidas > 0 && <span className="text-gold ml-2">{msgsNaoLidas}</span>}
-          </button>
-        </div>
-      </header>
+      </section>
 
       {/* Hoje: o que há para fazer */}
-      <section className="fl-linha pt-6">
-        <div className="flex items-center justify-between mb-2">
-          <p className="fl-eyebrow">Por fazer</p>
-          <button onClick={() => irPara('casamentos')} className="text-[11px] tracking-[0.16em] uppercase text-white/40 hover:text-gold">Todos os casamentos →</button>
-        </div>
+      <section>
+        <TituloSecao etiqueta={hoje} titulo="Por fazer"
+          extra={<button onClick={() => irPara('casamentos')} className="mb-1 text-[12px] tracking-[0.16em] uppercase text-white/40 hover:text-[#C9A84C]">Todos os casamentos →</button>} />
         {afazer.length === 0 ? (
           <p className="text-[14px] text-white/45 py-6">Não há nada por fazer agora. Quando entrar um casamento novo ou chegar um prazo, aparece aqui.</p>
         ) : (
-          <ul>
+          <ul className="fl-cartao">
             {juntarConfirmar && (
               <li className="fl-linha grid grid-cols-[34px_1fr_auto] sm:grid-cols-[44px_1fr_190px_150px] items-center gap-x-4 gap-y-2 py-4">
                 <span className="fl-m text-[12px] text-gold">01</span>
@@ -1105,12 +1282,12 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-10 mt-12">
         {/* Próximos casamentos */}
-        <section className="fl-linha pt-6">
-          <p className="fl-eyebrow mb-2">Próximos casamentos</p>
+        <section>
+          <TituloSecao etiqueta="Agenda" titulo="Próximos casamentos" />
           {proximos.length === 0 ? (
             <p className="text-[14px] text-white/45 py-6">Sem casamentos marcados.</p>
           ) : (
-            <ul>
+            <ul className="fl-cartao">
               {proximos.slice(0, 6).map(c => {
                 const d = daysUntil(c.data_casamento)
                 return (
@@ -1135,8 +1312,8 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
         {/* Ao lado: edição e tarefas */}
         <aside className="space-y-10">
           {!isVideografo && (
-            <section className="fl-linha pt-6">
-              <p className="fl-eyebrow mb-4">Edição de fotos</p>
+            <section>
+              <TituloSecao etiqueta="Edição" titulo="Edição de fotos" />
               <div className="grid grid-cols-3 gap-2">
                 {([
                   ['Novos', edicao.filter(e => e.status === 'NOVO TRABALHO').length],
@@ -1151,8 +1328,8 @@ function InicioMesa({ freelancer, freelancerId, casamentos, proximos, etapaDe, e
               </div>
             </section>
           )}
-          <section className="fl-linha pt-6">
-            <p className="fl-eyebrow mb-4">Tarefas</p>
+          <section>
+            <TituloSecao etiqueta="Equipa" titulo="Tarefas" />
             <TasksWidget freelancerId={freelancerId} />
           </section>
         </aside>
@@ -1775,17 +1952,11 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, filtroInicial, onFil
   return (
     <div className="space-y-5 fade-in-up">
 
-      {/* ── Cabeçalho (Mesa de trabalho) ─────────────────────────────── */}
-      <header className="flex items-end justify-between gap-6 flex-wrap pb-2">
-        <div className="max-w-2xl">
-          <p className="fl-eyebrow">Casamentos</p>
-          <h1 className="text-[40px] sm:text-[56px] leading-[1.02] text-white mt-4">Os teus casamentos</h1>
-          <p className="text-[15px] text-white/55 mt-3 leading-relaxed">Cada casamento mostra em que etapa está (01 a {fotografo ? '06' : '03'}) e o que falta fazer. Abre um casamento para ver o briefing, colar os links e falar com a produção.</p>
-        </div>
-        {!viewAsFreelancer && (
-          <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }} className="fl-btn">+ Novo evento</button>
-        )}
-      </header>
+      {/* ── Cabeçalho: o título está na capa (CapaPortal) ── */}
+      <TituloSecao etiqueta={`Etapas 01 a ${fotografo ? '06' : '03'}`} titulo="Os teus casamentos"
+        extra={!viewAsFreelancer ? (
+          <button onClick={() => { setShowAdd(true); setEditing(null); setForm({}) }} className="fl-btn mb-1">+ Novo evento</button>
+        ) : undefined} />
 
       {fotografo && <PerformanceCard casamentos={casamentos} nomeMembro={freelancer?.nome ?? ''} fotosSelecaoMap={fotosSelecaoMap} />}
 
@@ -4425,7 +4596,7 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
   }
 
   // ── Componente: Section ─────────────────────────────────────
-  function Section({ title, count, accent, children }: { title: string; count: number; accent?: 'red' | 'emerald'; children: React.ReactNode }) {
+  function Section({ title, count, accent, children }: { title: string; count: number; accent?: 'red' | 'emerald'; children: ReactNode }) {
     const accentBadgeCls = accent === 'red'
       ? 'bg-red-500/15 text-red-300 border-red-500/30'
       : accent === 'emerald'
@@ -6760,7 +6931,7 @@ function DadosPessoaisTab(props: {
 }
 
 // Helpers — visual primitives for DadosPessoaisTab
-function Card({ title, rightAction, children, className }: { title?: string; rightAction?: React.ReactNode; children: React.ReactNode; className?: string }) {
+function Card({ title, rightAction, children, className }: { title?: string; rightAction?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <div className={`rounded-2xl border border-white/[0.08] p-5 ${className ?? ''}`}
       style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
@@ -6774,7 +6945,7 @@ function Card({ title, rightAction, children, className }: { title?: string; rig
     </div>
   )
 }
-function Row({ label, value, last, mono }: { label: string; value: React.ReactNode; last?: boolean; mono?: boolean }) {
+function Row({ label, value, last, mono }: { label: string; value: ReactNode; last?: boolean; mono?: boolean }) {
   return (
     <div className={`flex items-center justify-between gap-3 ${last ? '' : 'pb-3 border-b border-white/[0.04]'}`}>
       <span className="text-[11px] text-white/40 shrink-0">{label}</span>
@@ -6830,7 +7001,7 @@ function ExpStatCol({ label, value, editing, onChange }: { label: string; value:
     </div>
   )
 }
-function SecRow({ icon, label, value, action, last }: { icon: string; label: string; value: React.ReactNode; action?: React.ReactNode; last?: boolean }) {
+function SecRow({ icon, label, value, action, last }: { icon: string; label: string; value: ReactNode; action?: ReactNode; last?: boolean }) {
   return (
     <div className={`flex items-center justify-between gap-3 ${last ? '' : 'pb-3 border-b border-white/[0.04]'}`}>
       <div className="flex items-center gap-3 min-w-0">

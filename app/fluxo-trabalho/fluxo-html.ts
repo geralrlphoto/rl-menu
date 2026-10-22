@@ -14,14 +14,14 @@ export const FLUXO_TRABALHO_HTML = `<!DOCTYPE html>
 <title>Fluxo de Trabalho — RL Photo.Video</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;1,300&family=Jost:wght@200;300;400&family=Hanken+Grotesk:wght@300;400;500&family=Space+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#0b0a08; --ink-2:#100e0b; --ink-3:#16130f;
-  --g:#d8be93; --g-deep:#c8a866;
+  --ink:#070707; --ink-2:#111111; --ink-3:#161616;
+  --g:#C9A84C; --g-deep:#c8a866;
   --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4);
   --line:rgba(243,237,226,.14); --line-soft:rgba(243,237,226,.08);
-  --fd:'Jost',sans-serif; --fb:'Hanken Grotesk',sans-serif; --fm:'Space Mono',monospace; --fs:'Cormorant Garamond',serif;
+  --fd:'Roboto Condensed',sans-serif; --fb:'Roboto Condensed',sans-serif; --fm:'Roboto Condensed',sans-serif; --fs:'Roboto Condensed',sans-serif;
   --ease:cubic-bezier(.16,1,.3,1); --pad:clamp(20px,5vw,80px);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -35,8 +35,8 @@ a{color:inherit;text-decoration:none;}
 .fx-vig{position:fixed;inset:0;z-index:8990;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.5);}
 
 .wrap{width:100%;max-width:1400px;margin:0 auto;padding-inline:var(--pad);}
-h1,h2,h3{font-family:var(--fd);font-weight:200;line-height:1.05;letter-spacing:-.02em;}
-h1 em,h2 em{font-style:italic;color:var(--g);}
+h1,h2,h3{font-family:var(--fd);font-weight:700;line-height:1.05;letter-spacing:-.02em;}
+h1 em,h2 em{font-style:normal;color:var(--g);}
 .eyebrow{font-family:var(--fm);font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--g);display:inline-flex;gap:.85em;align-items:center;}
 .eyebrow::before{content:"";width:40px;height:1px;background:var(--g);opacity:.7;}
 .eyebrow.c{justify-content:center;}
@@ -83,7 +83,7 @@ html.js .is-in .r{opacity:1;transform:none;}
 .card:nth-child(4)::before{animation-delay:3.3s}.card:nth-child(5)::before{animation-delay:4.4s}.card:nth-child(6)::before{animation-delay:5.5s}
 @keyframes sheen{0%{left:-70%}55%,100%{left:170%}}
 .card:hover{border-color:var(--g);transform:translateY(-6px);}
-.card__bg{position:absolute;right:6px;bottom:-26px;z-index:-1;font-family:var(--fs);font-weight:300;font-style:italic;
+.card__bg{position:absolute;right:6px;bottom:-26px;z-index:-1;font-family:var(--fs);font-weight:700;font-style:normal;
   font-size:clamp(120px,13vw,180px);line-height:.7;color:rgba(243,237,226,.035);}
 .card__top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
 .card__n{font-family:var(--fm);font-size:11px;letter-spacing:.22em;color:var(--g);}
@@ -94,7 +94,7 @@ html.js .is-in .r{opacity:1;transform:none;}
 .card__ring .fgc{stroke:var(--g);stroke-linecap:round;transition:stroke-dashoffset .6s var(--ease);}
 .card__ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--fm);font-size:9px;color:var(--tx-mid);font-weight:400;}
 .card__ring.full b{color:var(--g);}
-.card__t{display:block;font-family:var(--fd);font-weight:200;font-size:clamp(23px,2.3vw,32px);line-height:1.08;transition:color .5s;}
+.card__t{display:block;font-family:var(--fd);font-weight:600;font-size:clamp(23px,2.3vw,32px);line-height:1.08;transition:color .5s;}
 .card:hover .card__t{color:var(--g);}
 .card__d{display:block;color:var(--tx-mid);font-size:13.5px;line-height:1.65;margin-top:10px;}
 .card__foot{display:flex;align-items:center;justify-content:space-between;gap:14px;
@@ -119,7 +119,7 @@ html.js .is-in .r{opacity:1;transform:none;}
 .dw__x{font-family:var(--fm);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-mid);
   background:none;border:1px solid var(--line-soft);border-radius:30px;padding:9px 16px;cursor:pointer;transition:.4s;flex:none;}
 .dw__x:hover{border-color:var(--g);color:var(--g);}
-.dw__t{font-family:var(--fd);font-weight:200;font-size:clamp(26px,4vw,38px);line-height:1.05;margin-top:12px;}
+.dw__t{font-family:var(--fd);font-weight:600;font-size:clamp(26px,4vw,38px);line-height:1.05;margin-top:12px;}
 .dw__when{font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tx-dim);margin-top:10px;}
 .dw__body{padding:24px clamp(22px,4vw,36px) 40px;overflow-y:auto;flex:1;}
 .dw__intro{color:var(--tx-mid);line-height:1.8;font-size:15px;margin-bottom:22px;}
