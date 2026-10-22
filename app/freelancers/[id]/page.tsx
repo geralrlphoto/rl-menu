@@ -3729,14 +3729,18 @@ function EdicaoTab({ freelancerId, edicao, casamentos, fotosSelecaoMap, onRefres
                           </div>
                           {/* A seleção dos noivos só abre depois de passar a EM EDIÇÃO (a mudança
                               segue para a ficha, o portal dos noivos e o departamento) */}
-                          {job.status === 'NOVO TRABALHO' ? (
+                          {job.status === 'NOVO TRABALHO' ? (prazoDe(job) ? (
                             <>
-                              <div className="text-[10px] px-2.5 py-1.5 rounded-md border border-white/10 bg-white/[0.03] text-white/35 tracking-widest uppercase text-center font-bold flex items-center justify-center gap-1 cursor-not-allowed">
-                                🔒 Ver Seleção
+                              <div className="text-[10px] px-2.5 py-1.5 rounded-md border border-gold/30 bg-gold/5 text-gold/80 tracking-widest uppercase text-center font-bold flex items-center justify-center gap-1 cursor-not-allowed">
+                                🔒 Seleção recebida
                               </div>
-                              <p className="text-[11px] text-white/45 leading-snug">Muda o estado para <span className="text-gold font-semibold">Em edição</span> para veres a seleção dos noivos.</p>
+                              <p className="text-[11px] text-white/45 leading-snug">Muda o estado para <span className="text-gold font-semibold">Em edição</span> para teres acesso.</p>
                             </>
                           ) : (
+                            <div className="text-[10px] px-2.5 py-1.5 rounded-md border border-white/10 bg-white/[0.03] text-white/35 tracking-widest uppercase text-center font-bold flex items-center justify-center gap-1 cursor-not-allowed">
+                              🔒 À espera da seleção
+                            </div>
+                          )) : (
                             <button
                               type="button"
                               onClick={() => abrirSelecaoModal(job.referencia || '', job.nome)}
