@@ -776,7 +776,7 @@ function FreelancerDetailInner() {
                   style={{ background: 'radial-gradient(circle at 30% 30%, rgba(201,164,92,0.18), rgba(201,164,92,0.04))', boxShadow: '0 0 22px -4px rgba(201,164,92,0.3)' }}>☻</div>
                 <div>
                   <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Dados Pessoais</h1>
-                  <p className="text-[13px] text-white/55 mt-1 leading-relaxed max-w-md">Gere as tuas informações pessoais, fotografia e configurações da conta.</p>
+                  <p className="text-[13px] text-white/55 mt-1 leading-relaxed max-w-md">Os teus dados, a tua fotografia e a forma como recebes os pagamentos.</p>
                 </div>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -1741,7 +1741,14 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, filtroInicial, onFil
     'https://images.unsplash.com/photo-1519225421980-715cb0215aed?w=600&h=400&fit=crop',
   ]
 
-  const sortedAll = [...casamentos].sort((a,b) => (a.data_casamento??'') < (b.data_casamento??'') ? -1 : 1)
+  // Próximos primeiro (do mais perto para o mais longe), depois os que já passaram (do mais recente)
+  const hojeIso = new Date().toISOString().slice(0, 10)
+  const sortedAll = [...casamentos].sort((a, b) => {
+    const da = a.data_casamento ?? '', db = b.data_casamento ?? ''
+    const pa = da < hojeIso, pb = db < hojeIso
+    if (pa !== pb) return pa ? 1 : -1
+    return pa ? (da < db ? 1 : -1) : (da < db ? -1 : 1)
+  })
 
   const anoDe = (c: Casamento) => (c.data_casamento ?? '').slice(0, 4)
   const anos = Array.from(new Set([String(new Date().getFullYear()), ...casamentos.map(anoDe).filter(Boolean)])).sort()
@@ -1832,8 +1839,8 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, filtroInicial, onFil
         <p className="text-[12px] text-white/45 mt-3">{filtered.length} {filtered.length === 1 ? 'evento' : 'eventos'} · {casamentos.length} no total</p>
       </div>
 
-      {/* ── TEXTO INTRO (editável, recolhido) ───────────────────────── */}
-      <div className="rounded-2xl border border-white/[0.06] px-5 py-4 space-y-2"
+      {/* ── TEXTO INTRO (editável) — só o admin vê; o membro já tem o cabeçalho ── */}
+      {!viewAsFreelancer && <div className="rounded-2xl border border-white/[0.06] px-5 py-4 space-y-2"
         style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.3), rgba(11,11,11,0.5))' }}>
         <div className="flex items-center justify-between">
           <p className="text-[12px] tracking-[0.4em] text-gold/60 uppercase font-light">Texto Intro · Secção Casamentos</p>
@@ -1861,7 +1868,7 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, filtroInicial, onFil
         ) : (
           <p className="text-[14px] text-white/60 leading-relaxed whitespace-pre-wrap">{introValue}</p>
         )}
-      </div>
+      </div>}
 
       {showAdd && (
         <CasamentoForm form={form} setForm={setForm} saving={saving} onSave={save} onCancel={() => setShowAdd(false)} />
@@ -1961,7 +1968,7 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, filtroInicial, onFil
                             return (
                               <div key={p.n} className="flex-1 min-w-0" title={`${p.n} ${p.titulo}`}>
                                 <div className={`h-[2px] rounded-full ${feito ? 'bg-gold/60' : atual ? corAtual : 'bg-white/10'}`} />
-                                <p className={`hidden sm:block text-[9px] tracking-[0.12em] uppercase mt-1 truncate ${atual ? 'text-gold' : feito ? 'text-white/45' : 'text-white/25'}`}>{p.n} {p.titulo}</p>
+                                <p className={`hidden sm:block text-[9px] tracking-[0.12em] uppercase mt-1 truncate ${atual ? 'text-gold' : feito ? 'text-white/45' : 'text-white/25'}`}>{p.n} {p.curto}</p>
                               </div>
                             )
                           })}
@@ -2959,11 +2966,11 @@ function AlbumTab({ freelancerId, album, onRefresh, viewAsFreelancer }: { freela
           <div className="max-w-xl">
             <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">Edição & Aprovação</p>
             <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-              ÁL<span className="italic text-gold">buns</span>
+              Álbuns
             </h1>
             <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
             <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
-              Acompanha o estado dos álbuns deste freelancer — desde a maquete em edição até à entrega final.
+              Os álbuns que te foram dados para paginar. Entrega a maqueta aqui; a RL revê e envia aos noivos.
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-4">
               {countByStatus['EM EDIÇÃO'] > 0 && (
@@ -3393,7 +3400,7 @@ function EdicaoTab({ freelancerId, edicao, casamentos, fotosSelecaoMap, onRefres
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Edição de <span className="italic text-gold">Fotos</span></h1>
-              <p className="text-[13px] text-white/55 mt-1 max-w-md">Gerencia os teus trabalhos de edição. Sincronizado com as seleções de fotos dos noivos.</p>
+              <p className="text-[13px] text-white/55 mt-1 max-w-md">Os casamentos que te foram dados para editar. Cada cartão diz até quando tens de entregar.</p>
             </div>
           </div>
           <button onClick={() => { setShowAdd(true); setEditing(null); setForm({ status: 'NOVO TRABALHO' }) }}
@@ -4485,7 +4492,7 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
             </div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Tarefas</h1>
-              <p className="text-[13px] text-white/55 mt-1 max-w-md">Gerencia todas as tuas tarefas. Sincronizadas com os teus projetos e prazos.</p>
+              <p className="text-[13px] text-white/55 mt-1 max-w-md">As tarefas que a produção te pede e as que pedes a outros membros.</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0 flex-wrap">
@@ -6514,7 +6521,7 @@ function DadosPessoaisTab(props: {
               style={{ background: 'radial-gradient(circle at 30% 30%, rgba(168,85,247,0.18), rgba(168,85,247,0.04))', boxShadow: '0 0 22px -4px rgba(168,85,247,0.35)' }}>👤</div>
             <div>
               <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>Dados Pessoais</h1>
-              <p className="text-[12px] text-white/50 mt-0.5 leading-relaxed max-w-md">Gerencie suas informações pessoais, preferências e configurações da conta.</p>
+              <p className="text-[12px] text-white/50 mt-0.5 leading-relaxed max-w-md">Os teus dados, a tua fotografia e a forma como recebes os pagamentos.</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -7369,11 +7376,11 @@ function PagamentosAdminTab({ freelancerId, pagamentos: pagamentosRaw, casamento
           <div className="max-w-xl">
             <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">Sincronizado com Casamentos</p>
             <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-              PAGA<span className="italic text-gold">mentos</span>
+              Pagamentos
             </h1>
             <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
             <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
-              Acompanha os pagamentos sincronizados com os casamentos atribuídos a este freelancer.
+              O que já recebeste e o que falta receber, casamento a casamento.
             </p>
             <div className="flex flex-wrap items-center gap-3 mt-4">
               <span className="text-[11px] tracking-widest uppercase px-2.5 py-1 rounded-full bg-white/[0.05] border border-white/10 text-white/55">

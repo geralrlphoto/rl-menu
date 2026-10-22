@@ -52,9 +52,9 @@
 .fl-mesa [class*="bg-pink"], .fl-mesa [class*="bg-teal"], .fl-mesa [class*="bg-cyan"], .fl-mesa [class*="bg-indigo"],
 .fl-mesa [class*="bg-yellow"] { background-color: rgba(216,190,147,.07) !important; }
 /* pontos de estado (w-2 h-2 rounded-full) mantêm cor cheia */
-.fl-mesa span.rounded-full[class*="bg-red"], .fl-mesa span.rounded-full[class*="bg-rose"] { background-color: var(--atraso) !important; }
-.fl-mesa span.rounded-full[class*="bg-emerald"], .fl-mesa span.rounded-full[class*="bg-green"] { background-color: var(--feito) !important; }
-.fl-mesa span.rounded-full[class*="bg-amber"], .fl-mesa span.rounded-full[class*="bg-orange"] { background-color: var(--aviso) !important; }
+.fl-mesa span.rounded-full:empty[class*="bg-red"], .fl-mesa span.rounded-full:empty[class*="bg-rose"] { background-color: var(--atraso) !important; }
+.fl-mesa span.rounded-full:empty[class*="bg-emerald"], .fl-mesa span.rounded-full:empty[class*="bg-green"] { background-color: var(--feito) !important; }
+.fl-mesa span.rounded-full:empty[class*="bg-amber"], .fl-mesa span.rounded-full:empty[class*="bg-orange"] { background-color: var(--aviso) !important; }
 
 /* ── Fundos: sem fotos de banco, sem gradientes nem brilhos ── */
 .fl-mesa img[src*="unsplash.com"] { display: none !important; }
@@ -79,7 +79,8 @@
   border-radius: 999px !important; box-shadow: none !important;
 }
 .fl-mesa button.bg-gold:hover, .fl-mesa a.bg-gold:hover { background: rgba(216,190,147,.1) !important; }
-.fl-mesa main button.rounded-xl, .fl-mesa main a.rounded-xl, .fl-mesa main button.rounded-lg { border-radius: 999px !important; }
+/* só os botões pequenos (com py-1/py-2/h-9/h-10) passam a pílula; células do calendário e cartões não */
+.fl-mesa main :is(button, a):is(.rounded-xl, .rounded-lg):is([class*="py-1"], [class*="py-2"], [class*="h-9"], [class*="h-10"]) { border-radius: 999px !important; }
 .fl-mesa input, .fl-mesa select, .fl-mesa textarea { background-color: var(--ink-3) !important; border-color: var(--line) !important; color: var(--tx) !important; }
 
 /* ── Componentes próprios do design ───────────────────────── */
@@ -106,3 +107,16 @@
 .fl-mesa > aside nav button[class*="shadow-[inset"] { background: rgba(216,190,147,.1) !important; box-shadow: inset 2px 0 0 var(--g) !important; }
 
 @media (prefers-reduced-motion: reduce) { .fl-mesa * { animation: none !important; transition: none !important; } }
+
+/* ── Cabeçalhos das páginas (antigos "hero" com foto): título solto sobre uma linha ── */
+.fl-mesa main .relative.overflow-hidden.rounded-3xl { background: transparent !important; border: 0 !important; border-bottom: 1px solid var(--line-soft) !important; border-radius: 0 !important; overflow: visible !important; }
+.fl-mesa main .relative.overflow-hidden.rounded-3xl > .relative { padding-left: 0 !important; padding-right: 0 !important; padding-top: 8px !important; padding-bottom: 28px !important; }
+.fl-mesa main .relative.overflow-hidden.rounded-3xl > .absolute { display: none !important; }
+.fl-mesa main .relative.overflow-hidden.rounded-3xl h1 { font-size: clamp(36px, 4.6vw, 56px) !important; font-weight: 200 !important; line-height: 1.04 !important; }
+.fl-mesa main .relative.overflow-hidden.rounded-3xl .w-14.h-14, .fl-mesa main .relative.overflow-hidden.rounded-3xl .w-16.h-16 { display: none !important; }
+.fl-mesa main .relative.overflow-hidden.rounded-3xl p { color: var(--tx-mid) !important; font-size: 15px !important; }
+.fl-mesa main .relative.overflow-hidden.rounded-3xl p.uppercase { font-size: 11px !important; letter-spacing: .32em !important; color: var(--g) !important; }
+
+/* ── Números de resumo (KPIs): caixa neutra, número grande e fino ── */
+.fl-mesa main .grid > .rounded-2xl.border.p-4 { background: transparent !important; border-color: var(--line-soft) !important; }
+.fl-mesa main .grid > .rounded-2xl.border.p-4 .text-3xl { font-family: var(--fd) !important; font-weight: 200 !important; font-size: 40px !important; }

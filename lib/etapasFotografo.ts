@@ -21,12 +21,12 @@ export type EtapaFotografo = 'confirmar' | 'briefing' | 'dia' | 'provas' | 'sele
 
 /** Os 6 passos da barra, iguais aos cartões da página Fluxo de Trabalho */
 export const PASSOS_FOTOGRAFO = [
-  { n: '01', titulo: 'Novo casamento' },
-  { n: '02', titulo: 'Briefing' },
-  { n: '03', titulo: 'Dia do casamento' },
-  { n: '04', titulo: 'Pós-casamento' },
-  { n: '05', titulo: 'Seleção de fotos' },
-  { n: '06', titulo: 'Edição de fotos' },
+  { n: '01', titulo: 'Novo casamento', curto: 'Confirmar' },
+  { n: '02', titulo: 'Briefing', curto: 'Briefing' },
+  { n: '03', titulo: 'Dia do casamento', curto: 'Dia' },
+  { n: '04', titulo: 'Pós-casamento', curto: 'Provas' },
+  { n: '05', titulo: 'Seleção de fotos', curto: 'Seleção' },
+  { n: '06', titulo: 'Edição de fotos', curto: 'Edição' },
 ] as const
 
 const PASSO: Record<EtapaFotografo, number> = { confirmar: 1, briefing: 2, dia: 3, provas: 4, selecao: 5, noivos: 6, edicao: 6, concluido: 7 }
