@@ -181,8 +181,8 @@ export default async function MediaDashboard() {
           <div className="relative rounded-2xl overflow-hidden bg-black aspect-[16/9]" aria-label="RL PROD · Photography & Video">
             <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url("/MEDIA%20HERO.png")' }} />
             {/* Tom verde-água por cima (tira o dourado da imagem) */}
-            <div className="absolute inset-0" style={{ background: ACCENT, mixBlendMode: 'color', opacity: 0.85 }} />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(11,13,18,0.15) 0%, rgba(11,13,18,0.45) 100%)' }} />
+            <div className="absolute inset-0" style={{ background: ACCENT, mixBlendMode: 'color', opacity: 0.55 }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,20,31,0.35) 0%, rgba(0,20,31,0.6) 100%)' }} />
           </div>
         </div>
       </section>
