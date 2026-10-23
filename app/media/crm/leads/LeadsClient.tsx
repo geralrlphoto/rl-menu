@@ -1,8 +1,34 @@
 ﻿'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
 const ESTADOS = ['Novo', 'Em Contacto', 'Qualificado', 'Proposta Env.', 'Perdido', 'Convertido']
+
+// Cores do rlprod.pt por estado (as mesmas do funil em /media/crm)
+const COR_ESTADO: Record<string, string> = {
+  'Novo':          '#5a8bff',
+  'Em Contacto':   '#7fa6ff',
+  'Qualificado':   '#2e6cf6',
+  'Proposta Env.': '#a9c1ff',
+  'Convertido':    '#ffffff',
+  'Perdido':       '#ff4747',
+}
+const estiloEstado = (e: string) => {
+  const c = COR_ESTADO[e] ?? '#7c8893'
+  return { color: c, borderColor: `${c}66`, background: `${c}14` }
+}
+
+// Pipeline = leads em curso (já contactadas e ainda sem decisão)
+const PIPELINE = ['Em Contacto', 'Qualificado', 'Proposta Env.']
+// Já passaram a fase de qualificação
+const QUALIFICADAS = ['Qualificado', 'Proposta Env.', 'Convertido']
+const PERIODOS = [
+  { id: 7,   nome: '7 dias' },
+  { id: 30,  nome: '30 dias' },
+  { id: 90,  nome: '90 dias' },
+  { id: 365, nome: '12 meses' },
+]
+const DIA = 86400000
 
 // Site e Instagram podem vir escritos à mão ("marca.pt", "@marca", link completo)
 const linkSite = (v: string) => /^https?:\/\//i.test(v) ? v : `https://${v}`
@@ -41,7 +67,7 @@ interface PropostaItem {
 
 interface Props {
   leads: Lead[]
-  estadoColors: Record<string, string>
+  estadoColors?: Record<string, string>
 }
 
 const SERVICOS_LISTA = [
@@ -83,12 +109,16 @@ const BASE_URL  = process.env.NEXT_PUBLIC_BASE_URL || 'https://portal.rlphotovid
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
 
-export default function LeadsClient({ leads: initial, estadoColors }: Props) {
+export default function LeadsClient({ leads: initial }: Props) {
   const [leads,        setLeads]        = useState(initial)
   const [expanded,     setExpanded]     = useState<string | null>(null)
   const [updatingId,   setUpdatingId]   = useState<string | null>(null)
   const [deletingId,   setDeletingId]   = useState<string | null>(null)
   const [filtroEstado, setFiltroEstado] = useState('Todos')
+  const [vista,        setVista]        = useState<'pipeline' | 'lista'>('pipeline')
+  const [periodo,      setPeriodo]      = useState(30)
+  const [arrastar,     setArrastar]     = useState<string | null>(null)
+  const [sobre,        setSobre]        = useState<string | null>(null)
 
   // Portal form
   const [portalFormId,    setPortalFormId]    = useState<string | null>(null)
@@ -323,6 +353,50 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
     setCreatingPortal(false)
   }
 
+  function abrirNaLista(lead: Lead) {
+    setVista('lista'); setFiltroEstado('Todos'); setExpanded(lead.id); loadContent(lead)
+    setTimeout(() => document.getElementById(`lead-${lead.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
+  }
+
+  // ── Estatísticas (recalculadas sempre que um estado muda) ─────────────────
+  const stats = useMemo(() => {
+    const agora = Date.now()
+    const t = (l: Lead) => new Date(l.created_at).getTime()
+    const noPeriodo = leads.filter(l => agora - t(l) < periodo * DIA)
+    const anterior  = leads.filter(l => agora - t(l) >= periodo * DIA && agora - t(l) < 2 * periodo * DIA)
+    const variacao  = anterior.length ? Math.round(((noPeriodo.length - anterior.length) / anterior.length) * 100) : null
+    const contar = (lista: Lead[], est: string[]) => lista.filter(l => est.includes(l.estado)).length
+    const decididas = contar(leads, ['Convertido', 'Perdido'])
+
+    // Entradas por semana, últimas 12 semanas (segunda a domingo)
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
+    const segunda = new Date(hoje); segunda.setDate(hoje.getDate() - ((hoje.getDay() + 6) % 7))
+    const semanas = Array.from({ length: 12 }, (_, i) => {
+      const ini = new Date(segunda); ini.setDate(segunda.getDate() - (11 - i) * 7)
+      const fim = ini.getTime() + 7 * DIA
+      const daSemana = leads.filter(l => t(l) >= ini.getTime() && t(l) < fim)
+      return { ini, n: daSemana.length, qual: contar(daSemana, QUALIFICADAS) }
+    })
+
+    const agrupar = (campo: 'fonte' | 'tipo' | 'ramo') => {
+      const m = new Map<string, number>()
+      for (const l of noPeriodo) { const k = (l[campo] || 'Sem indicação').trim(); m.set(k, (m.get(k) ?? 0) + 1) }
+      return [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5)
+    }
+
+    return {
+      entradas: noPeriodo.length, variacao,
+      qualificadas: contar(noPeriodo, QUALIFICADAS),
+      taxaQual: noPeriodo.length ? Math.round((contar(noPeriodo, QUALIFICADAS) / noPeriodo.length) * 100) : 0,
+      pipeline: contar(leads, PIPELINE),
+      porTratar: contar(leads, ['Novo']),
+      convertidas: contar(leads, ['Convertido']),
+      taxaConv: decididas ? Math.round((contar(leads, ['Convertido']) / decididas) * 100) : 0,
+      semanas, maxSemana: Math.max(1, ...semanas.map(s => s.n)),
+      origens: agrupar('fonte'), servicos: agrupar('tipo'),
+    }
+  }, [leads, periodo])
+
   function copyLink(token: string) {
     navigator.clipboard.writeText(`${BASE_URL}/rm/${token}`)
     setCopiedId(token)
@@ -336,14 +410,164 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
   const labelCls = "text-[11px] tracking-[0.3em] text-white/40 uppercase"
   const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[14px] text-white/70 placeholder:text-white/25 transition-colors [color-scheme:dark]"
 
+  const kpi = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/60 backdrop-blur px-5 py-4'
+  const Barras = ({ titulo, dados }: { titulo: string; dados: [string, number][] }) => {
+    const max = Math.max(1, ...dados.map(d => d[1]))
+    return (
+      <div className={kpi}>
+        <p className="rlp-m text-[10px] text-[#5a8bff] mb-4">{titulo}</p>
+        {dados.length === 0 && <p className="text-[13px] text-white/40">Sem entradas no período.</p>}
+        <div className="space-y-2.5">
+          {dados.map(([k, n]) => (
+            <div key={k}>
+              <div className="flex justify-between text-[12.5px]"><span className="text-white/75 truncate pr-2">{k}</span><span className="text-white/90 font-medium">{n}</span></div>
+              <div className="mt-1 h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+                <div className="h-full rounded-full bg-[#2e6cf6] transition-all duration-700" style={{ width: `${(n / max) * 100}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div>
+      {/* ── Estatísticas ─────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+        <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Estatísticas</p>
+        <div className="flex gap-1 rounded-full border border-white/[0.12] bg-[#00141f]/60 p-1">
+          {PERIODOS.map(p => (
+            <button key={p.id} onClick={() => setPeriodo(p.id)}
+              className={`rounded-full px-3.5 py-1.5 text-[12px] transition-colors ${periodo === p.id ? 'bg-[#2e6cf6] text-white' : 'text-white/55 hover:text-white'}`}>
+              {p.nome}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className={kpi}>
+          <p className="rlp-m text-[9.5px] text-white/45">Novas entradas</p>
+          <p className="rlp-t mt-2 text-[40px] leading-none text-white">{stats.entradas}</p>
+          <p className={`mt-2 text-[12px] ${stats.variacao === null ? 'text-white/35' : stats.variacao >= 0 ? 'text-[#5a8bff]' : 'text-[#ff4747]'}`}>
+            {stats.variacao === null ? 'sem período anterior para comparar' : `${stats.variacao >= 0 ? '▲' : '▼'} ${Math.abs(stats.variacao)}% vs período anterior`}
+          </p>
+        </div>
+        <div className={kpi}>
+          <p className="rlp-m text-[9.5px] text-white/45">Qualificadas</p>
+          <p className="rlp-t mt-2 text-[40px] leading-none text-[#5a8bff]">{stats.qualificadas}</p>
+          <p className="mt-2 text-[12px] text-white/45">{stats.taxaQual}% das entradas do período</p>
+        </div>
+        <button onClick={() => setVista('pipeline')} className={`${kpi} text-left hover:border-[#2e6cf6]/70 transition-colors`}>
+          <p className="rlp-m text-[9.5px] text-white/45">Em pipeline</p>
+          <p className="rlp-t mt-2 text-[40px] leading-none text-white">{stats.pipeline}</p>
+          <p className="mt-2 text-[12px] text-white/45">{stats.porTratar} ainda por contactar</p>
+        </button>
+        <div className={kpi}>
+          <p className="rlp-m text-[9.5px] text-white/45">Convertidas</p>
+          <p className="rlp-t mt-2 text-[40px] leading-none text-white">{stats.convertidas}</p>
+          <p className="mt-2 text-[12px] text-white/45">{stats.taxaConv}% das leads já decididas</p>
+        </div>
+      </div>
+
+      <div className="mt-3 grid grid-cols-1 lg:grid-cols-[1.6fr_1fr_1fr] gap-3">
+        {/* Entradas por semana */}
+        <div className={kpi}>
+          <div className="flex items-center justify-between mb-4">
+            <p className="rlp-m text-[10px] text-[#5a8bff]">Entradas por semana</p>
+            <span className="flex items-center gap-3 text-[11px] text-white/45">
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#2e6cf6]/45" />Entradas</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#5a8bff]" />Qualificadas</span>
+            </span>
+          </div>
+          <div className="flex items-end gap-1.5 h-[130px]">
+            {stats.semanas.map((w, i) => (
+              <div key={i} className="group relative flex-1 h-full flex flex-col justify-end">
+                <span className="pointer-events-none absolute -top-1 left-1/2 -translate-x-1/2 -translate-y-full whitespace-nowrap rounded-md bg-[#00141f] border border-white/15 px-2 py-1 text-[11px] opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  {w.ini.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })}: {w.n} · {w.qual} qual.
+                </span>
+                <div className="relative w-full rounded-t-md bg-[#2e6cf6]/45 transition-all duration-700" style={{ height: `${Math.max(w.n ? 6 : 2, (w.n / stats.maxSemana) * 100)}%` }}>
+                  <div className="absolute bottom-0 inset-x-0 rounded-t-md bg-[#5a8bff]" style={{ height: w.n ? `${(w.qual / w.n) * 100}%` : 0 }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex justify-between text-[10.5px] text-white/35">
+            <span>{stats.semanas[0].ini.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })}</span>
+            <span>esta semana</span>
+          </div>
+        </div>
+        <Barras titulo="De onde vêm" dados={stats.origens} />
+        <Barras titulo="Serviços pedidos" dados={stats.servicos} />
+      </div>
+
+      {/* ── Pipeline / Lista ─────────────────────────────────────────────── */}
+      <div className="mt-10 flex flex-wrap items-center justify-between gap-3 mb-5">
+        <div className="flex gap-1 rounded-full border border-white/[0.12] bg-[#00141f]/60 p-1">
+          {(['pipeline', 'lista'] as const).map(v => (
+            <button key={v} onClick={() => setVista(v)}
+              className={`rounded-full px-5 py-2 text-[13px] capitalize transition-colors ${vista === v ? 'bg-[#2e6cf6] text-white' : 'text-white/55 hover:text-white'}`}>
+              {v}
+            </button>
+          ))}
+        </div>
+        {vista === 'pipeline' && <p className="text-[12px] text-white/40">Arrasta um cartão para outra coluna para mudar o estado.</p>}
+      </div>
+
+      {vista === 'pipeline' && (
+        <div className="-mx-6 sm:-mx-10 px-6 sm:px-10 flex gap-3 overflow-x-auto pb-4 snap-x">
+          {ESTADOS.map(est => {
+            const col = leads.filter(l => l.estado === est)
+            const cor = COR_ESTADO[est]
+            return (
+              <div key={est}
+                onDragOver={e => { e.preventDefault(); setSobre(est) }}
+                onDragLeave={() => setSobre(s => s === est ? null : s)}
+                onDrop={e => {
+                  e.preventDefault(); setSobre(null)
+                  const id = arrastar; setArrastar(null)
+                  const lead = leads.find(l => l.id === id)
+                  if (lead && lead.estado !== est) updateEstado(lead.id, est)
+                }}
+                className="snap-start shrink-0 w-[250px] rounded-2xl border bg-[#00141f]/55 backdrop-blur p-3 transition-colors"
+                style={{ borderColor: sobre === est ? cor : 'rgba(255,255,255,0.09)', background: sobre === est ? `${cor}12` : undefined }}>
+                <div className="flex items-center justify-between px-1.5 pb-3 mb-2 border-b border-white/[0.07]">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full" style={{ background: cor }} />
+                    <span className="rlp-t text-[16px] tracking-[0.03em]">{est}</span>
+                  </span>
+                  <span className="text-[12px] text-white/50">{col.length}</span>
+                </div>
+                <div className="flex flex-col gap-2 min-h-[80px]">
+                  {col.map(l => (
+                    <div key={l.id} draggable
+                      onDragStart={() => setArrastar(l.id)} onDragEnd={() => { setArrastar(null); setSobre(null) }}
+                      onClick={() => abrirNaLista(l)}
+                      className={`cursor-grab active:cursor-grabbing rounded-xl border border-white/[0.08] bg-[#0c2236]/80 hover:border-white/25 px-3 py-2.5 transition-all ${arrastar === l.id ? 'opacity-40' : ''} ${updatingId === l.id ? 'animate-pulse' : ''}`}>
+                      <p className="text-[13.5px] text-white/90 truncate">{l.empresa || l.nome}</p>
+                      {l.empresa && <p className="text-[11.5px] text-white/45 truncate">{l.nome}</p>}
+                      <div className="mt-1.5 flex items-center justify-between gap-2 text-[10.5px] text-white/40">
+                        <span className="truncate">{l.tipo || l.ramo || '—'}</span>
+                        <span className="shrink-0">{new Date(l.created_at).toLocaleDateString('pt-PT', { day: '2-digit', month: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  ))}
+                  {col.length === 0 && <p className="px-1.5 py-4 text-center text-[11.5px] text-white/25">Larga aqui</p>}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {vista === 'lista' && (<>
       {/* Filtro */}
-      <div className="flex items-center gap-2 mb-8 flex-wrap">
+      <div className="flex items-center gap-2 mb-6 flex-wrap">
         {['Todos', ...ESTADOS].map(e => (
           <button key={e} onClick={() => setFiltroEstado(e)}
-            className={`text-[11px] tracking-[0.2em] uppercase px-4 py-2 border transition-all duration-200 ${
-              filtroEstado === e ? 'border-white/35 text-white/70 bg-white/[0.07]' : 'border-white/[0.10] text-white/35 hover:border-white/25 hover:text-white/55'
+            className={`rounded-full text-[12px] px-4 py-2 border transition-all duration-200 ${
+              filtroEstado === e ? 'border-[#2e6cf6] bg-[#2e6cf6] text-white' : 'border-white/[0.12] text-white/55 hover:border-white/30 hover:text-white'
             }`}>
             {e}
           </button>
@@ -353,7 +577,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
       {/* Cards */}
       <div className="flex flex-col gap-3">
         {filtered.map(lead => (
-          <div key={lead.id} className="border border-white/[0.09] hover:border-white/20 bg-white/[0.02] transition-all duration-300">
+          <div key={lead.id} id={`lead-${lead.id}`} className="scroll-mt-24 rounded-xl overflow-hidden border border-white/[0.1] hover:border-white/25 bg-[#00141f]/60 backdrop-blur transition-all duration-300">
 
             {/* Row */}
             <div className="flex items-center gap-5 px-6 py-5 cursor-pointer"
@@ -362,7 +586,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                 setExpanded(next)
                 if (next) loadContent(lead)
               }}>
-              <span className={`shrink-0 text-[10px] tracking-[0.25em] uppercase px-3 py-1.5 border ${estadoColors[lead.estado] ?? 'border-white/10 text-white/30'}`}>
+              <span className="rlp-m shrink-0 text-[9.5px] px-3 py-1.5 border rounded-full" style={estiloEstado(lead.estado)}>
                 {lead.estado}
               </span>
               <div className="flex-1 min-w-0">
@@ -373,7 +597,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                 <div className="flex items-center gap-3 mt-1.5 flex-wrap">
                   {lead.tipo && <span className="text-[11px] tracking-[0.15em] text-white/30 uppercase">{lead.tipo}</span>}
                   {lead.fonte && (<><span className="text-white/15">·</span><span className="text-[11px] tracking-[0.15em] text-white/30 uppercase">{lead.fonte}</span></>)}
-                  {lead.page_token && (<><span className="text-white/15">·</span><span className="text-[11px] tracking-[0.15em] text-emerald-400/50 uppercase">Portal Ativo</span></>)}
+                  {lead.page_token && (<><span className="text-white/15">·</span><span className="text-[11px] tracking-[0.15em] text-[#5a8bff]/50 uppercase">Portal Ativo</span></>)}
                 </div>
               </div>
               <div className="shrink-0 text-right">
@@ -411,7 +635,8 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                   <div className="flex items-center gap-2 flex-wrap">
                     {ESTADOS.map(e => (
                       <button key={e} disabled={lead.estado === e || updatingId === lead.id} onClick={() => updateEstado(lead.id, e)}
-                        className={`text-[11px] tracking-[0.2em] uppercase px-4 py-2 border transition-all duration-200 ${lead.estado === e ? `${estadoColors[e]} cursor-default` : 'border-white/[0.09] text-white/30 hover:border-white/25 hover:text-white/55 disabled:opacity-30'}`}>
+                        style={lead.estado === e ? estiloEstado(e) : undefined}
+                        className={`text-[11px] tracking-[0.2em] uppercase px-4 py-2 border rounded-full transition-all duration-200 ${lead.estado === e ? 'cursor-default' : 'border-white/[0.09] text-white/30 hover:border-white/25 hover:text-white/55 disabled:opacity-30'}`}>
                         {e}
                       </button>
                     ))}
@@ -428,13 +653,13 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                     <div className="border-t border-white/[0.05] pt-5">
                       <div className="flex items-center gap-3 mb-4">
                         <p className={labelCls}>Confirmação de Proposta</p>
-                        <span className={`text-[11px] tracking-[0.2em] uppercase px-3 py-1 border ${isAceite ? 'border-emerald-400/40 text-emerald-400/70' : 'border-red-400/30 text-red-400/50'}`}>
+                        <span className={`text-[11px] tracking-[0.2em] uppercase px-3 py-1 border ${isAceite ? 'border-[#5a8bff]/40 text-[#5a8bff]/70' : 'border-red-400/30 text-red-400/50'}`}>
                           {isAceite ? '✓ Aceite' : '✕ Rejeitada'}
                         </span>
                       </div>
                       {isAceite && (
                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4 bg-white/[0.02] border border-white/[0.06] px-5 py-4">
-                          {d.proposta_escolhida && <div><p className={labelCls}>Proposta Escolhida</p><p className="text-[14px] text-emerald-400/80 font-medium mt-1">{d.proposta_escolhida}</p></div>}
+                          {d.proposta_escolhida && <div><p className={labelCls}>Proposta Escolhida</p><p className="text-[14px] text-[#5a8bff]/80 font-medium mt-1">{d.proposta_escolhida}</p></div>}
                           {d.nome              && <div><p className={labelCls}>Nome</p><p className="text-[13px] text-white/65 mt-1">{d.nome}</p></div>}
                           {d.email             && <div><p className={labelCls}>Email</p><p className="text-[13px] text-white/65 mt-1">{d.email}</p></div>}
                           {d.telefone          && <div><p className={labelCls}>Telefone</p><p className="text-[13px] text-white/65 mt-1">{d.telefone}</p></div>}
@@ -492,7 +717,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           </div>
                         ))}
                         <div className="flex items-center justify-between pt-3 border-t border-white/[0.06]">
-                          <span className={`text-[11px] tracking-[0.2em] uppercase ${total === 100 ? 'text-emerald-400/60' : 'text-amber-400/60'}`}>
+                          <span className={`text-[11px] tracking-[0.2em] uppercase ${total === 100 ? 'text-[#5a8bff]/60' : 'text-[#a9c1ff]/60'}`}>
                             Total: {total}% {total === 100 ? '✓' : `· faltam ${100 - total}%`}
                           </span>
                           {valorNum > 0 && (
@@ -505,7 +730,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                             disabled={savingPagamento[lead.id]}
                             className={`flex-1 py-3 text-[12px] tracking-[0.35em] uppercase border transition-all disabled:opacity-40 ${
                               savedPagamento[lead.id]
-                                ? 'border-emerald-400/50 text-emerald-400/70 bg-emerald-400/[0.05]'
+                                ? 'border-[#5a8bff]/50 text-[#5a8bff]/70 bg-[#5a8bff]/[0.05]'
                                 : 'border-white/20 text-white/50 hover:border-white/35 hover:text-white/75 bg-white/[0.02] hover:bg-white/[0.06]'
                             }`}
                           >
@@ -553,7 +778,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                                     <span className="text-[11px] text-white/35 tracking-wide">{prop.servicos.length} serviço{prop.servicos.length !== 1 ? 's' : ''}</span>
                                   )}
                                   {prop.valor && (
-                                    <span className="text-[13px] text-emerald-400/60 font-mono">{prop.valor}</span>
+                                    <span className="text-[13px] text-[#5a8bff]/60 font-mono">{prop.valor}</span>
                                   )}
                                 </div>
                                 <span className="text-[12px] text-white/30">{isOpen ? '▲' : '▼'}</span>
@@ -586,7 +811,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                                                 : 'border-white/[0.10] text-white/35 hover:border-white/25 hover:text-white/55'
                                             }`}
                                           >
-                                            {active && <span className="mr-1.5 text-emerald-400/80">✓</span>}
+                                            {active && <span className="mr-1.5 text-[#5a8bff]/80">✓</span>}
                                             {s}
                                           </button>
                                         )
@@ -611,7 +836,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                                     disabled={isSaving}
                                     className={`w-full py-3.5 text-[12px] tracking-[0.4em] uppercase font-medium transition-all border disabled:opacity-40 ${
                                       isSaved
-                                        ? 'border-emerald-400/50 text-emerald-400/80 bg-emerald-400/[0.07]'
+                                        ? 'border-[#5a8bff]/50 text-[#5a8bff]/80 bg-[#5a8bff]/[0.07]'
                                         : 'border-white/30 text-white/70 bg-white/[0.05] hover:bg-white/[0.10] hover:border-white/50 hover:text-white/90'
                                     }`}>
                                     {isSaved
@@ -640,8 +865,8 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           {lead.reuniao_data && <span>{lead.reuniao_data}</span>}
                           {lead.reuniao_hora && <span>{lead.reuniao_hora.slice(0,5)}</span>}
                           {lead.reuniao_tipo && <span>{lead.reuniao_tipo}</span>}
-                          {lead.page_confirmacao === 'confirmada' && <span className="text-emerald-400/60">✓ Confirmada</span>}
-                          {lead.page_confirmacao === 'alteracao_pedida' && <span className="text-amber-400/60">⏳ Alteração pedida</span>}
+                          {lead.page_confirmacao === 'confirmada' && <span className="text-[#5a8bff]/60">✓ Confirmada</span>}
+                          {lead.page_confirmacao === 'alteracao_pedida' && <span className="text-[#a9c1ff]/60">⏳ Alteração pedida</span>}
                           {lead.page_views ? <span className="text-white/25">{lead.page_views} visualizações</span> : null}
                         </div>
                       )}
@@ -651,19 +876,19 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                           Ver Portal →
                         </a>
                         <a href={`/rm/${lead.page_token}/proposta`} target="_blank" rel="noopener noreferrer"
-                          className="text-[12px] tracking-[0.25em] text-amber-400/60 hover:text-amber-400/90 border border-amber-400/25 hover:border-amber-400/55 px-4 py-2.5 uppercase transition-all">
+                          className="text-[12px] tracking-[0.25em] text-[#a9c1ff]/60 hover:text-[#a9c1ff]/90 border border-[#a9c1ff]/25 hover:border-[#a9c1ff]/55 px-4 py-2.5 uppercase transition-all">
                           Editar Proposta ✎
                         </a>
                         {contentCache[lead.id]?.portal_cliente?.ativo || createdPortalCliente[lead.id] ? (
                           <a href={`/portal-media/${lead.page_token}`} target="_blank" rel="noopener noreferrer"
-                            className="text-[12px] tracking-[0.25em] text-sky-400/65 hover:text-sky-400/95 border border-sky-400/30 hover:border-sky-400/60 px-4 py-2.5 uppercase transition-all">
+                            className="text-[12px] tracking-[0.25em] text-[#a9c1ff]/65 hover:text-[#a9c1ff]/95 border border-[#a9c1ff]/30 hover:border-[#a9c1ff]/60 px-4 py-2.5 uppercase transition-all">
                             Ver Portal Cliente →
                           </a>
                         ) : (
                           <button
                             onClick={() => criarPortalCliente(lead)}
                             disabled={creatingPortalCliente[lead.id]}
-                            className="text-[12px] tracking-[0.25em] text-sky-400/50 hover:text-sky-400/80 border border-sky-400/20 hover:border-sky-400/45 px-4 py-2.5 uppercase transition-all disabled:opacity-40">
+                            className="text-[12px] tracking-[0.25em] text-[#a9c1ff]/50 hover:text-[#a9c1ff]/80 border border-[#a9c1ff]/20 hover:border-[#a9c1ff]/45 px-4 py-2.5 uppercase transition-all disabled:opacity-40">
                             {creatingPortalCliente[lead.id] ? 'A criar...' : '+ Criar Portal Cliente'}
                           </button>
                         )}
@@ -730,6 +955,7 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
           </div>
         ))}
       </div>
+      </>)}
     </div>
   )
 }
