@@ -157,6 +157,9 @@ Passa isto para o formato pedido. Ordena as empresas da procura mais forte para 
     if (err instanceof Anthropic.AuthenticationError) {
       return NextResponse.json({ error: 'A chave ANTHROPIC_API_KEY do Vercel não é válida.' }, { status: 500 })
     }
+    if (err instanceof Anthropic.APIError && /credit balance/i.test(err.message)) {
+      return NextResponse.json({ error: 'A conta da API do Claude está sem crédito. Carrega crédito em console.anthropic.com → Plans & Billing e tenta outra vez.' }, { status: 402 })
+    }
     if (err instanceof Anthropic.APIError) {
       return NextResponse.json({ error: `Erro do Claude (${err.status}): ${err.message}` }, { status: 502 })
     }
