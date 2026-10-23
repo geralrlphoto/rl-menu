@@ -143,12 +143,12 @@ export default async function CrmPage() {
               {/* Barras por estado */}
               <div className="p-5 sm:p-7">
                 <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">Por estado</p>
-                <div className="mt-5 grid grid-cols-6 gap-2 sm:gap-3 items-end h-[170px]">
+                <div className="mt-5 grid grid-cols-6 gap-2 sm:gap-3 items-end h-[270px]">
                   {contagem.map(c => (
                     <Link key={c.estado} href="/media/crm/leads" className="group flex flex-col items-center justify-end h-full gap-2">
                       <span className="text-[15px] font-semibold" style={{ color: c.cor }}>{c.n}</span>
                       <span className="w-full rounded-t-lg transition-opacity group-hover:opacity-100 opacity-80"
-                        style={{ height: `${Math.max(6, (c.n / maximo) * 110)}px`, background: `linear-gradient(180deg, ${c.cor}, ${c.cor}22)` }} />
+                        style={{ height: `${Math.max(6, (c.n / maximo) * 210)}px`, background: `linear-gradient(180deg, ${c.cor}, ${c.cor}22)` }} />
                     </Link>
                   ))}
                 </div>
