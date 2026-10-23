@@ -65,7 +65,6 @@ export default async function MediaDashboard() {
   const porDia = new Map<string, typeof eventos>()
   for (const e of eventos) porDia.set(e.dia, [...(porDia.get(e.dia) ?? []), e])
   const dias30 = Array.from({ length: 30 }, (_, i) => { const d = new Date(hoje); d.setDate(d.getDate() + i); return d })
-  const vazios = (hoje.getDay() + 6) % 7
   const eventos30 = dias30.reduce((n, d) => n + (porDia.get(chaveDia(d))?.length ?? 0), 0)
 
   const items = [
@@ -159,23 +158,26 @@ export default async function MediaDashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-1.5 text-[10px] text-white/35 mb-1.5">
-            {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => <span key={d} className="px-1">{d}</span>)}
-          </div>
-          <div className="grid grid-cols-7 gap-1.5">
-            {Array.from({ length: vazios }, (_, i) => <div key={`v${i}`} />)}
+          {/* Uma fila de 30 dias com deslize lateral */}
+          <div className="-mx-4 sm:-mx-6 px-4 sm:px-6 flex gap-2 overflow-x-auto snap-x pb-2
+                          [scrollbar-width:thin] [scrollbar-color:rgba(31,216,200,0.35)_transparent]">
             {dias30.map((d, i) => {
               const evs = porDia.get(chaveDia(d)) ?? []
-              const primeiroDoMes = d.getDate() === 1 || i === 0
+              const fimDeSemana = d.getDay() === 0 || d.getDay() === 6
               return (
                 <div key={i}
-                  className={`rounded-lg border min-h-[64px] sm:min-h-[78px] p-1.5 flex flex-col gap-1 ${i === 0 ? 'border-[#1fd8c8]/70 bg-[#1fd8c8]/[0.06]' : 'border-white/[0.06] bg-white/[0.015]'}`}>
-                  <span className={`text-[11px] ${i === 0 ? 'text-[#1fd8c8] font-semibold' : 'text-white/60'}`}>
-                    {d.getDate()}{primeiroDoMes && <span className="text-white/35"> {d.toLocaleDateString('pt-PT', { month: 'short' }).replace('.', '')}</span>}
-                  </span>
+                  className={`snap-start shrink-0 w-[118px] rounded-xl border min-h-[112px] p-2.5 flex flex-col gap-1.5
+                    ${i === 0 ? 'border-[#1fd8c8]/70 bg-[#1fd8c8]/[0.06]' : evs.length ? 'border-white/[0.14] bg-white/[0.03]' : 'border-white/[0.06] bg-white/[0.015]'}`}>
+                  <div className="flex items-baseline justify-between">
+                    <span className={`text-[10px] uppercase tracking-[0.12em] ${i === 0 ? 'text-[#1fd8c8]' : fimDeSemana ? 'text-white/30' : 'text-white/45'}`}>
+                      {i === 0 ? 'Hoje' : d.toLocaleDateString('pt-PT', { weekday: 'short' }).replace('.', '')}
+                    </span>
+                    <span className="text-[10px] text-white/35">{d.toLocaleDateString('pt-PT', { month: 'short' }).replace('.', '')}</span>
+                  </div>
+                  <span className={`text-[22px] leading-none font-semibold ${i === 0 ? 'text-[#1fd8c8]' : 'text-white/85'}`}>{d.getDate()}</span>
                   {evs.slice(0, 2).map((e, j) => (
                     <Link key={j} href={e.href} title={`${TIPOS[e.tipo].nome}: ${e.titulo}`}
-                      className="truncate rounded px-1 py-0.5 text-[9.5px] sm:text-[10.5px] leading-tight"
+                      className="truncate rounded px-1.5 py-0.5 text-[10.5px] leading-tight"
                       style={{ background: `${TIPOS[e.tipo].cor}22`, color: TIPOS[e.tipo].cor }}>
                       {e.titulo}
                     </Link>
