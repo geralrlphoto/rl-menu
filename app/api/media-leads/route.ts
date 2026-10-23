@@ -32,6 +32,9 @@ export async function POST(req: NextRequest) {
       telefone:   body.telefone || null,
       tipo:       body.tipo || null,
       fonte:      body.fonte || null,
+      ramo:       body.ramo || null,
+      website:    body.website || null,
+      instagram:  body.instagram || null,
       mensagem:   body.mensagem || null,
       estado:     body.estado || 'Novo',
       created_at: new Date().toISOString(),
@@ -84,6 +87,9 @@ export async function POST(req: NextRequest) {
       body.telefone ? `<b>Telefone:</b> ${body.telefone}` : null,
       body.tipo     ? `<b>Tipo de Serviço:</b> ${body.tipo}` : null,
       body.fonte    ? `<b>Como nos encontrou:</b> ${body.fonte}` : null,
+      body.ramo     ? `<b>Ramo:</b> ${body.ramo}` : null,
+      body.website  ? `<b>Site:</b> ${body.website}` : null,
+      body.instagram ? `<b>Instagram:</b> ${body.instagram}` : null,
       body.mensagem ? `<b>Mensagem:</b><br>${String(body.mensagem).replace(/\n/g, '<br>')}` : null,
     ].filter(Boolean).join('<br><br>')
 

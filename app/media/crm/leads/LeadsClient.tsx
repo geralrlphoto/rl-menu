@@ -4,6 +4,11 @@ import { useState } from 'react'
 
 const ESTADOS = ['Novo', 'Em Contacto', 'Qualificado', 'Proposta Env.', 'Perdido', 'Convertido']
 
+// Site e Instagram podem vir escritos à mão ("marca.pt", "@marca", link completo)
+const linkSite = (v: string) => /^https?:\/\//i.test(v) ? v : `https://${v}`
+const linkInstagram = (v: string) => /^https?:\/\//i.test(v) ? v
+  : `https://instagram.com/${v.replace(/^@/, '').replace(/^(www\.)?instagram\.com\//i, '').replace(/\/$/, '')}`
+
 interface Lead {
   id: string
   nome: string
@@ -12,6 +17,9 @@ interface Lead {
   telefone?: string
   tipo?: string
   fonte?: string
+  ramo?: string
+  website?: string
+  instagram?: string
   mensagem?: string
   estado: string
   created_at: string
@@ -384,6 +392,9 @@ export default function LeadsClient({ leads: initial, estadoColors }: Props) {
                   {lead.telefone && (<div><p className={labelCls}>Telefone</p><a href={`tel:${lead.telefone}`} className="text-[13px] text-white/60 hover:text-white/85 transition-colors mt-2 block">{lead.telefone}</a></div>)}
                   {lead.tipo && (<div><p className={labelCls}>Serviço</p><p className="text-[13px] text-white/60 mt-2">{lead.tipo}</p></div>)}
                   {lead.fonte && (<div><p className={labelCls}>Origem</p><p className="text-[13px] text-white/60 mt-2">{lead.fonte}</p></div>)}
+                  {lead.ramo && (<div><p className={labelCls}>Ramo</p><p className="text-[13px] text-white/60 mt-2">{lead.ramo}</p></div>)}
+                  {lead.website && (<div><p className={labelCls}>Site</p><a href={linkSite(lead.website)} target="_blank" rel="noopener noreferrer" className="text-[13px] text-white/60 hover:text-white/85 transition-colors mt-2 block truncate">{lead.website} ↗</a></div>)}
+                  {lead.instagram && (<div><p className={labelCls}>Instagram</p><a href={linkInstagram(lead.instagram)} target="_blank" rel="noopener noreferrer" className="text-[13px] text-white/60 hover:text-white/85 transition-colors mt-2 block truncate">{lead.instagram} ↗</a></div>)}
                 </div>
 
                 {/* Mensagem */}

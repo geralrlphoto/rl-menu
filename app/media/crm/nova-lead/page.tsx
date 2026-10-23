@@ -34,6 +34,9 @@ const EMPTY = {
   empresa: '',
   email: '',
   telefone: '',
+  ramo: '',
+  website: '',
+  instagram: '',
   tipo: '',
   fonte: '',
   mensagem: '',
@@ -245,6 +248,18 @@ export default function NovaLeadPage() {
                 <div>
                   <label className={labelCls}>Telefone{interno ? '' : ' *'}</label>
                   <input value={form.telefone} onChange={set('telefone')} placeholder="+351 9xx xxx xxx" className={inputCls} />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className={labelCls}>Ramo de atividade</label>
+                  <input value={form.ramo} onChange={set('ramo')} placeholder="Ex.: restauração, imobiliário, moda, saúde…" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Site</label>
+                  <input value={form.website} onChange={set('website')} placeholder="www.marca.pt" className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Instagram</label>
+                  <input value={form.instagram} onChange={set('instagram')} placeholder="@marca" className={inputCls} />
                 </div>
               </div>
             </section>
