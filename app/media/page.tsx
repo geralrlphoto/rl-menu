@@ -1,6 +1,7 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { Poppins } from 'next/font/google'
+import { lerFontesMedia, montarEventos, chaveDia, lerData, hojeLisboa, TIPOS } from '@/app/media/_lib/eventos'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,37 +28,25 @@ const STATIC_CARDS = [
   { id: 'ficha-cliente',     name: 'Ficha de Cliente',  href: '/media/ficha-cliente',     icon: '◑' },
 ]
 
-const MESES: Record<string, number> = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 }
-
-// As datas dos portais vêm como "2026-05-09" ou "15 Jul 2025"
-function lerData(v?: string | null): Date | null {
-  if (!v) return null
-  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3])
-  const pt = v.trim().match(/^(\d{1,2})\s+([A-Za-zçÇ]{3})[a-zç]*\.?\s+(\d{4})$/)
-  if (pt && MESES[pt[2].toLowerCase()] !== undefined) return new Date(+pt[3], MESES[pt[2].toLowerCase()], +pt[1])
-  return null
-}
-
 const euros = (n: number) => n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
 const diaCurto = (d: Date) => d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })
 
 export default async function MediaDashboard() {
-  const [{ data: sections }, { count: leadsNovas }, { count: propostasEnv }, { data: portais }] = await Promise.all([
+  const [{ data: sections }, { count: leadsNovas }, { count: propostasEnv }, { portais, leads }] = await Promise.all([
     supabase.from('media_sections').select('*').order('order_index'),
     supabase.from('media_leads').select('id', { count: 'exact', head: true }).eq('estado', 'Novo'),
     supabase.from('media_leads').select('id', { count: 'exact', head: true }).eq('estado', 'Proposta Env.'),
-    // Só os campos precisos do JSON (poupar egress)
-    supabase.from('media_portais').select('pagamentos:dados->pagamentos, filmagem:dados->>dataFilmagem, entrega:dados->>dataEntrega'),
+    lerFontesMedia(supabase),
   ])
+  const eventos = montarEventos(portais, leads)
 
   // Pagamentos em falta: pendentes + em atraso de todos os portais
   let emFalta = 0
   let nEmFalta = 0
   // Próximos trabalhos: filmagens e entregas de hoje para a frente
-  const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
+  const hoje = hojeLisboa()
   const proximas: Date[] = []
-  for (const p of (portais ?? []) as any[]) {
+  for (const p of portais) {
     for (const pg of Array.isArray(p.pagamentos) ? p.pagamentos : []) {
       if (pg?.estado === 'pendente' || pg?.estado === 'em_atraso') { emFalta += Number(pg.valor) || 0; nEmFalta++ }
     }
@@ -71,6 +60,13 @@ export default async function MediaDashboard() {
     { valor: euros(emFalta), titulo: 'Pagamentos em falta', sub: nEmFalta === 1 ? '1 prestação' : `${nEmFalta} prestações`, href: '/media/financas' },
     { valor: String(proximas.length), titulo: 'Próximos trabalhos', sub: proximas[0] ? `o próximo a ${diaCurto(proximas[0])}` : 'nada marcado', href: '/media/portal-cliente' },
   ]
+
+  // Calendário dos próximos 30 dias, alinhado à semana (segunda a domingo)
+  const porDia = new Map<string, typeof eventos>()
+  for (const e of eventos) porDia.set(e.dia, [...(porDia.get(e.dia) ?? []), e])
+  const dias30 = Array.from({ length: 30 }, (_, i) => { const d = new Date(hoje); d.setDate(d.getDate() + i); return d })
+  const vazios = (hoje.getDay() + 6) % 7
+  const eventos30 = dias30.reduce((n, d) => n + (porDia.get(chaveDia(d))?.length ?? 0), 0)
 
   const items = [
     ...(sections ?? []).map(s => ({
@@ -137,6 +133,58 @@ export default async function MediaDashboard() {
               <p className="text-[11.5px] text-white/40">{n.sub}</p>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* ── Calendário: próximos 30 dias ───────────────────────────────── */}
+      <section className="relative z-10 px-4 mt-10">
+        <div className="max-w-5xl mx-auto rounded-2xl border border-white/[0.08] bg-[#10151b]/80 p-4 sm:p-6">
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+            <div>
+              <p className="text-[10px] tracking-[0.25em] uppercase text-white/40">Calendário</p>
+              <h2 className="mt-1 text-[20px] font-semibold tracking-[-0.01em]">Próximos 30 dias</h2>
+              <p className="text-[12px] text-white/40">{eventos30 === 0 ? 'Nada marcado' : eventos30 === 1 ? '1 evento' : `${eventos30} eventos`}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {Object.values(TIPOS).map(t => (
+                <span key={t.nome} className="flex items-center gap-1.5 text-[11px] text-white/55">
+                  <span className="w-2 h-2 rounded-full" style={{ background: t.cor }} />{t.nome}
+                </span>
+              ))}
+              <Link href="/media/calendario"
+                className="ml-1 inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[12px] font-medium transition-colors hover:bg-[#1fd8c8]/10"
+                style={{ borderColor: `${ACCENT}80`, color: ACCENT }}>
+                Ver mais <span aria-hidden>→</span>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1.5 text-[10px] text-white/35 mb-1.5">
+            {['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].map(d => <span key={d} className="px-1">{d}</span>)}
+          </div>
+          <div className="grid grid-cols-7 gap-1.5">
+            {Array.from({ length: vazios }, (_, i) => <div key={`v${i}`} />)}
+            {dias30.map((d, i) => {
+              const evs = porDia.get(chaveDia(d)) ?? []
+              const primeiroDoMes = d.getDate() === 1 || i === 0
+              return (
+                <div key={i}
+                  className={`rounded-lg border min-h-[64px] sm:min-h-[78px] p-1.5 flex flex-col gap-1 ${i === 0 ? 'border-[#1fd8c8]/70 bg-[#1fd8c8]/[0.06]' : 'border-white/[0.06] bg-white/[0.015]'}`}>
+                  <span className={`text-[11px] ${i === 0 ? 'text-[#1fd8c8] font-semibold' : 'text-white/60'}`}>
+                    {d.getDate()}{primeiroDoMes && <span className="text-white/35"> {d.toLocaleDateString('pt-PT', { month: 'short' }).replace('.', '')}</span>}
+                  </span>
+                  {evs.slice(0, 2).map((e, j) => (
+                    <Link key={j} href={e.href} title={`${TIPOS[e.tipo].nome}: ${e.titulo}`}
+                      className="truncate rounded px-1 py-0.5 text-[9.5px] sm:text-[10.5px] leading-tight"
+                      style={{ background: `${TIPOS[e.tipo].cor}22`, color: TIPOS[e.tipo].cor }}>
+                      {e.titulo}
+                    </Link>
+                  ))}
+                  {evs.length > 2 && <span className="text-[10px] text-white/40 px-1">+{evs.length - 2}</span>}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </section>
 
