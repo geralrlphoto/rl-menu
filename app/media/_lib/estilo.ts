@@ -22,11 +22,10 @@ export const FONTE = {
   mono: "'JetBrains Mono', monospace",
 }
 
-// Fundo comum: degradé azul-marinho, brilho azul e grelha fina (como o vídeo do rodapé do site)
+// Fundo comum: o das secções escuras do site ("Do conceito ao resultado", "Os nossos valores"),
+// azul-marinho liso com uma luz suave em cima, sem grelha
 export const FUNDO = `
-  linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
-  linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px),
-  radial-gradient(ellipse 60% 50% at 85% 0%, rgba(46,108,246,0.22) 0%, transparent 70%),
-  radial-gradient(ellipse 50% 40% at 10% 100%, rgba(46,108,246,0.10) 0%, transparent 70%),
-  linear-gradient(180deg, #0b2033 0%, #00141f 55%, #000d17 100%)`
-export const FUNDO_TAMANHO = '56px 56px, 56px 56px, auto, auto, auto'
+  radial-gradient(ellipse 70% 55% at 65% 0%, rgba(30,70,120,0.55) 0%, transparent 70%),
+  radial-gradient(ellipse 60% 45% at 0% 100%, rgba(11,32,51,0.8) 0%, transparent 70%),
+  linear-gradient(180deg, #0f2740 0%, #0a1d30 35%, #00141f 75%, #000d17 100%)`
+export const FUNDO_TAMANHO = 'auto'
