@@ -31,7 +31,8 @@ const corEstado = (e: string) => FUNIL.find(f => f.estado === e)?.cor ?? '#9aa4a
 const GRUPOS: { titulo: string; itens: { label: string; href?: string; novoPortal?: boolean; icon: string }[] }[] = [
   { titulo: 'Captação', itens: [
     { label: 'Formulário do cliente', href: '/media/crm/nova-lead',  icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z' },
-    { label: 'Agente Prospeção IA',  href: '/media/crm/prospeccao', icon: 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16zM11 8v6M8 11h6' },
+    { label: 'Agente de Prospeção',  href: '/media/crm/agente',     icon: 'M12 3l1.8 4.6L18.5 9l-4.7 1.4L12 15l-1.8-4.6L5.5 9l4.7-1.4z' },
+    { label: 'Pesquisa por setor',   href: '/media/crm/prospeccao', icon: 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16zM11 8v6M8 11h6' },
   ] },
   { titulo: 'Reunião', itens: [
     { label: 'Maquete Reunião',      href: '/rm/rm-master-rlprod',  icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.6a1 1 0 01.7.3l5.4 5.4a1 1 0 01.3.7V19a2 2 0 01-2 2z' },
