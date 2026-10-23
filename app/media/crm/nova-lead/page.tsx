@@ -1,7 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import CustomSelect from '@/app/components/CustomSelect'
+import EstiloRLProd from '@/app/media/_components/EstiloRLProd'
+import { FUNDO } from '@/app/media/_lib/estilo'
+
+// Formulário público de pedido de orçamento da RL PROD (cores e letras do rlprod.pt)
 
 const TIPOS = [
   'Vídeo Institucional',
@@ -37,10 +40,21 @@ const EMPTY = {
   estado: 'Novo',
 }
 
+// Contactos reais da RL Prod (os mesmos de /boas-vindas)
+const WHATSAPP = 'https://wa.me/351912932768'
+const EMAIL = 'geral.rlprod@gmail.com'
+
+const PASSOS = [
+  { t: 'Recebemos o pedido', s: 'Analisamos os detalhes do teu projeto.' },
+  { t: 'Preparamos a proposta', s: 'Uma proposta pensada para a tua marca.' },
+  { t: 'Enviamos em até 24h', s: 'Por email ou WhatsApp, como preferires.' },
+  { t: 'Começamos a criar', s: 'Depois da aprovação, pomos tudo em marcha.' },
+]
+
 export default function NovaLeadPage() {
-  const [form, setForm]     = useState(EMPTY)
-  const [saving, setSaving] = useState(false)
-  const [error, setError]   = useState('')
+  const [form, setForm]       = useState(EMPTY)
+  const [saving, setSaving]   = useState(false)
+  const [error, setError]     = useState('')
   const [enviado, setEnviado] = useState(false)
 
   const set = (k: keyof typeof EMPTY) =>
@@ -54,9 +68,9 @@ export default function NovaLeadPage() {
     if (!form.email.trim())    { setError('O email é obrigatório.'); return }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) { setError('Email inválido.'); return }
     if (!form.telefone.trim()) { setError('O telefone é obrigatório.'); return }
-    if (!form.tipo)            { setError('O tipo de serviço é obrigatório.'); return }
-    if (!form.fonte)           { setError('Indica como nos encontrou.'); return }
-    if (!form.mensagem.trim()) { setError('A mensagem é obrigatória.'); return }
+    if (!form.tipo)            { setError('Escolhe o tipo de serviço.'); return }
+    if (!form.fonte)           { setError('Indica como nos encontraste.'); return }
+    if (!form.mensagem.trim()) { setError('Conta-nos um pouco sobre o projeto.'); return }
 
     setSaving(true); setError('')
     try {
@@ -74,289 +88,194 @@ export default function NovaLeadPage() {
     }
   }
 
-  const labelCls = "block text-[13px] tracking-[0.4em] text-white/70 uppercase mb-2.5 font-medium"
-  const inputCls = "w-full bg-white/[0.06] border border-white/[0.15] focus:border-blue-400/50 focus:outline-none px-4 py-4 text-[17px] text-white placeholder:text-white/30 transition-colors duration-200 rounded-md"
+  const labelCls = 'rlp-m block text-[10.5px] text-white/55 mb-2.5'
+  const inputCls = 'w-full rounded-md border border-white/[0.12] bg-[#00141f]/70 px-4 py-3.5 text-[16px] text-white placeholder:text-white/30 focus:outline-none focus:border-[#2e6cf6] focus:bg-[#00141f] transition-colors'
+  const chip = (ativo: boolean) =>
+    `rounded-full border px-4 py-2 text-[13.5px] transition-colors ${ativo
+      ? 'border-[#2e6cf6] bg-[#2e6cf6] text-white'
+      : 'border-white/[0.14] bg-white/[0.03] text-white/75 hover:border-[#5a8bff]/70 hover:text-white'}`
 
-  // ── Background — mesh gradient liso (sem pattern), 5 camadas de gradients ──
-  const BgLayers = () => (
-    <>
-      {/* Base linear: azul-escuro muito subtil de cima para baixo */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'linear-gradient(180deg, #06122a 0%, #030814 55%, #02060f 100%)',
-      }} />
-      {/* Mancha grande azul ao centro-topo */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 95% 65% at 50% 0%, rgba(37,99,235,0.32) 0%, rgba(37,99,235,0.08) 35%, transparent 60%)',
-      }} />
-      {/* Mancha lateral esquerda (cyan-azul) */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 55% 70% at 0% 40%, rgba(56,189,248,0.14) 0%, transparent 55%)',
-      }} />
-      {/* Mancha canto inferior direito (azul profundo) */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59,130,246,0.16) 0%, transparent 60%)',
-      }} />
-      {/* Vinheta para escurecer ligeiramente as bordas */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.45) 100%)',
-      }} />
-    </>
+  const Fundo = () => (
+    <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
   )
 
   // ── Ecrã de sucesso ────────────────────────────────────────────────────────
   if (enviado) {
     return (
-      <main className="min-h-screen relative flex items-center justify-center" style={{ background: '#02060f' }}>
-        <BgLayers />
-        <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-md">
-          <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-20 h-20 object-contain mb-8"
-            style={{ filter: 'drop-shadow(0 0 24px rgba(59,130,246,0.2))' }} />
-          <div className="w-14 h-14 rounded-full border border-blue-400/40 bg-blue-500/10 flex items-center justify-center mb-6"
-            style={{ boxShadow: '0 0 24px rgba(59,130,246,0.15)' }}>
-            <svg className="w-6 h-6 text-blue-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
-          </div>
-          <p className="text-[10px] tracking-[0.6em] text-white/35 uppercase mb-3">RL PROD · Photography &amp; Video</p>
-          <h2 className="text-3xl font-extralight tracking-[0.3em] text-white uppercase mb-5">Mensagem Enviada</h2>
-          <p className="text-[16px] text-white/55 tracking-wider leading-relaxed mb-8">
-            Recebemos o teu contacto. Respondemos em até 24h com uma proposta personalizada para ti.
+      <main className="rlp min-h-screen relative flex items-center justify-center text-white" style={{ background: '#00141f' }}>
+        <EstiloRLProd />
+        <Fundo />
+        <div className="relative z-10 flex flex-col items-center text-center px-6 max-w-lg">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-20 h-20 object-contain mb-8" />
+          <span className="w-14 h-14 rounded-full flex items-center justify-center mb-6 bg-[#2e6cf6]">
+            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>
+          </span>
+          <p className="rlp-m traco text-[11px] text-[#5a8bff] mb-3">Pedido recebido</p>
+          <h1 className="rlp-t text-[44px] sm:text-[56px] leading-[1]">
+            Obrigado.<br /><span className="text-[#5a8bff]">Falamos em breve.</span>
+          </h1>
+          <p className="mt-5 text-[16px] text-white/65 leading-relaxed">
+            Recebemos o teu contacto. Respondemos em até 24h com uma proposta à medida do teu projeto.
           </p>
-          <div className="flex items-center gap-3 w-full">
-            <div className="h-px flex-1 bg-white/[0.08]" />
-            <div className="w-1 h-1 rounded-full bg-blue-400/40" />
-            <div className="h-px flex-1 bg-white/[0.08]" />
-          </div>
+          <a href="https://rlprod.pt" className="rlp-m mt-8 text-[11px] text-white/60 hover:text-white border-b border-white/30 pb-1">
+            Voltar ao site →
+          </a>
         </div>
       </main>
     )
   }
 
   return (
-    <main className="min-h-screen relative" style={{ background: '#02060f' }}>
-      <BgLayers />
+    <main className="rlp min-h-screen relative text-white" style={{ background: '#00141f' }}>
+      <EstiloRLProd />
+      <Fundo />
 
-      <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 py-12 sm:py-16">
+      <div className="relative z-10 max-w-6xl mx-auto px-5 sm:px-10 pt-8 pb-14">
 
-        {/* ── HERO ───────────────────────────────────────────────────────── */}
-        <div className="mb-12 sm:mb-16">
-
-          {/* Hero banner full-width com imagem que desvanece de cima para baixo */}
-          <div className="relative w-full mb-10">
-
-            {/* Imagem com mask que faz fade-out vertical (visível no topo → transparente no fundo) */}
-            <img
-              src="https://images.pexels.com/photos/31158869/pexels-photo-31158869.jpeg?auto=compress&cs=tinysrgb&w=2000"
-              alt="Câmara de vídeo profissional com iluminação neon"
-              className="w-full h-[420px] sm:h-[520px] object-cover"
-              style={{
-                WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0) 100%)',
-                maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.95) 25%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0) 100%)',
-              }}
-            />
-
-            {/* Tint azul subtil sobre a imagem (em vez do overlay escuro) — também faz fade */}
-            <div className="absolute inset-0 pointer-events-none" style={{
-              background: 'linear-gradient(to bottom, rgba(2,6,15,0.35) 0%, rgba(2,6,15,0.25) 40%, rgba(2,6,15,0) 100%)',
-            }} />
-
-            {/* Conteúdo sobreposto — logo central + texto centrado por baixo */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6 sm:px-12 py-10">
-              {/* Logo central grande */}
-              <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-44 sm:w-56 md:w-64 object-contain mb-6"
-                style={{ filter: 'drop-shadow(0 4px 30px rgba(59,130,246,0.45)) drop-shadow(0 2px 8px rgba(0,0,0,0.6))' }} />
-
-              <p className="text-[12px] tracking-[0.5em] text-blue-400/80 uppercase mb-4 drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">Pedido de Orçamento</p>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extralight tracking-tight text-white leading-[1.1] drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
-                Vamos criar algo
-                <br />
-                <span className="text-blue-400">incrível juntos.</span>
-              </h1>
-              <p className="text-[15px] sm:text-[18px] text-white/80 leading-relaxed mt-5 max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-                Preenche o formulário e conta-nos sobre o teu projeto.<br className="hidden sm:inline" />
-                Respondemos em até 24h com uma proposta personalizada.
-              </p>
-            </div>
-          </div>
-
-          {/* Trust indicators */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[
-              { icon: '⏱', titulo: 'Resposta rápida', sub: 'Até 24h' },
-              { icon: '◆', titulo: 'Propostas personalizadas', sub: 'Para o teu projeto' },
-              { icon: '⚿', titulo: 'Privacidade garantida', sub: 'Os teus dados estão seguros' },
-            ].map(t => (
-              <div key={t.titulo} className="flex items-center gap-3 px-5 py-4 border border-white/[0.08] bg-white/[0.02] rounded-lg">
-                <span className="text-blue-400/70 text-2xl shrink-0">{t.icon}</span>
-                <div className="min-w-0">
-                  <p className="text-[15px] text-white/90 font-medium leading-tight">{t.titulo}</p>
-                  <p className="text-[12px] text-white/40 tracking-wide mt-0.5">{t.sub}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* ── Topo: logo + WhatsApp ─────────────────────────────────────── */}
+        <div className="flex items-center justify-between">
+          <a href="https://rlprod.pt" className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-11 h-11 object-contain" />
+            <span className="rlp-t text-[20px] tracking-[0.04em]">RL Prod</span>
+          </a>
+          <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
+            className="rlp-m text-[10.5px] text-white/70 hover:text-white border border-white/20 hover:border-white/45 rounded-md px-4 py-2.5 transition-colors">
+            WhatsApp ↗
+          </a>
         </div>
 
-        {/* ── MAIN LAYOUT: form (esq) + side panels (dir) ───────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* ── Hero ───────────────────────────────────────────────────────── */}
+        <section className="mt-14 sm:mt-20 max-w-3xl">
+          <p className="rlp-m traco text-[11px] text-[#5a8bff]">Pedido de orçamento</p>
+          <h1 className="rlp-t mt-4 text-[52px] sm:text-[80px] lg:text-[92px] leading-[0.95]">
+            Vamos criar algo<br />
+            <span className="text-[#5a8bff]">incrível juntos.</span>
+          </h1>
+          <p className="mt-6 text-[16px] sm:text-[18px] text-white/70 leading-relaxed max-w-xl">
+            Conta-nos sobre o teu projeto. Respondemos em até 24h com uma proposta à medida.
+          </p>
+          <div className="rlp-m mt-8 flex flex-wrap gap-x-6 gap-y-2 text-[10.5px] text-white/50">
+            <span><span className="text-[#5a8bff]">●</span> Resposta até 24h</span>
+            <span><span className="text-[#5a8bff]">●</span> Proposta à medida</span>
+            <span><span className="text-[#5a8bff]">●</span> Dados protegidos</span>
+          </div>
+        </section>
 
-          {/* ── FORM (col 1+2) — single page com 2 secções ─────────────── */}
-          <form onSubmit={handleSubmit} className="lg:col-span-2 flex flex-col gap-6">
+        <div className="mt-14 h-px bg-white/[0.1]" />
 
-            {/* Secção 01 — Contacto */}
-            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-6 sm:p-8">
-              <p className="text-[13px] tracking-[0.45em] text-blue-300/70 uppercase mb-6 flex items-center gap-3">
-                <span>01 — Contacto</span>
-                <span className="flex-1 h-px bg-white/[0.06]" />
-              </p>
+        {/* ── Formulário + lateral ───────────────────────────────────────── */}
+        <div className="mt-12 grid grid-cols-1 lg:grid-cols-[1.7fr_1fr] gap-10">
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-10">
+
+            {/* 01 — Contacto */}
+            <section>
+              <div className="flex items-baseline gap-4 mb-6">
+                <span className="rlp-t text-[44px] leading-none text-[#2e6cf6]">01</span>
+                <h2 className="rlp-t text-[24px]">Contacto</h2>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className={labelCls}>Nome <span className="text-blue-400/60">*</span></label>
+                  <label className={labelCls}>Nome *</label>
                   <input value={form.nome} onChange={set('nome')} placeholder="Nome completo" className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Empresa <span className="text-blue-400/60">*</span></label>
-                  <input value={form.empresa} onChange={set('empresa')} placeholder="Nome da empresa" className={inputCls} />
+                  <label className={labelCls}>Empresa *</label>
+                  <input value={form.empresa} onChange={set('empresa')} placeholder="Nome da empresa ou marca" className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Email <span className="text-blue-400/60">*</span></label>
+                  <label className={labelCls}>Email *</label>
                   <input type="email" value={form.email} onChange={set('email')} placeholder="email@exemplo.com" className={inputCls} />
                 </div>
                 <div>
-                  <label className={labelCls}>Telefone <span className="text-blue-400/60">*</span></label>
+                  <label className={labelCls}>Telefone *</label>
                   <input value={form.telefone} onChange={set('telefone')} placeholder="+351 9xx xxx xxx" className={inputCls} />
                 </div>
               </div>
-            </div>
+            </section>
 
-            {/* Secção 02 — Projeto */}
-            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-6 sm:p-8">
-              <p className="text-[13px] tracking-[0.45em] text-blue-300/70 uppercase mb-6 flex items-center gap-3">
-                <span>02 — Projeto</span>
-                <span className="flex-1 h-px bg-white/[0.06]" />
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div>
-                  <label className={labelCls}>Tipo de Serviço <span className="text-blue-400/60">*</span></label>
-                  <CustomSelect
-                    value={form.tipo}
-                    onChange={v => setForm(f => ({ ...f, tipo: v }))}
-                    options={TIPOS}
-                    placeholder="Selecionar..."
-                  />
-                </div>
-                <div>
-                  <label className={labelCls}>Como nos encontrou <span className="text-blue-400/60">*</span></label>
-                  <CustomSelect
-                    value={form.fonte}
-                    onChange={v => setForm(f => ({ ...f, fonte: v }))}
-                    options={FONTES}
-                    placeholder="Selecionar..."
-                  />
-                </div>
+            {/* 02 — Projeto */}
+            <section>
+              <div className="flex items-baseline gap-4 mb-6">
+                <span className="rlp-t text-[44px] leading-none text-[#2e6cf6]">02</span>
+                <h2 className="rlp-t text-[24px]">Projeto</h2>
               </div>
-              <div className="mt-5">
-                <label className={labelCls}>Mensagem / Descrição do Pedido <span className="text-blue-400/60">*</span></label>
-                <textarea value={form.mensagem} onChange={set('mensagem')}
-                  placeholder="Descreve o que o cliente pretende..." rows={6}
-                  className={inputCls + ' resize-none leading-relaxed'} />
-              </div>
-            </div>
 
-            {/* Erro */}
+              <label className={labelCls}>Tipo de serviço *</label>
+              <div className="flex flex-wrap gap-2">
+                {TIPOS.map(t => (
+                  <button key={t} type="button" onClick={() => setForm(f => ({ ...f, tipo: t }))} className={chip(form.tipo === t)}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <label className={`${labelCls} mt-7`}>Como nos encontraste *</label>
+              <div className="flex flex-wrap gap-2">
+                {FONTES.map(t => (
+                  <button key={t} type="button" onClick={() => setForm(f => ({ ...f, fonte: t }))} className={chip(form.fonte === t)}>
+                    {t}
+                  </button>
+                ))}
+              </div>
+
+              <label className={`${labelCls} mt-7`}>Sobre o projeto *</label>
+              <textarea value={form.mensagem} onChange={set('mensagem')} rows={6}
+                placeholder="O que tens em mente? Objetivo, datas, local, onde vai ser publicado…"
+                className={inputCls + ' resize-none leading-relaxed'} />
+            </section>
+
             {error && (
-              <div className="px-4 py-3.5 rounded-lg border border-red-400/30 bg-red-500/[0.06] text-[15px] text-red-300/85">
-                ⚠ {error}
-              </div>
+              <p className="rounded-md border border-[#ff4747]/40 bg-[#ff4747]/[0.08] px-4 py-3 text-[14.5px] text-[#ff8a8a]">{error}</p>
             )}
 
-            {/* Actions */}
-            <div className="flex items-center justify-between pt-4 border-t border-white/[0.08]">
-              <button type="button" onClick={() => setForm(EMPTY)}
-                className="text-[13px] tracking-[0.35em] text-white/35 hover:text-white/65 uppercase transition-colors">
+            <div className="flex items-center justify-between gap-4 pt-6 border-t border-white/[0.1]">
+              <button type="button" onClick={() => { setForm(EMPTY); setError('') }}
+                className="rlp-m text-[10.5px] text-white/40 hover:text-white/75 transition-colors">
                 Limpar
               </button>
               <button type="submit" disabled={saving}
-                className="flex items-center gap-3 px-9 py-4 rounded-md bg-blue-500 hover:bg-blue-400 text-white font-semibold text-[14px] tracking-[0.3em] uppercase transition-all disabled:opacity-50 shadow-[0_0_20px_rgba(59,130,246,0.25)]">
-                {saving ? 'A enviar...' : 'Enviar →'}
+                className="rlp-t inline-flex items-center gap-3 rounded-md bg-[#2e6cf6] hover:bg-[#3d79ff] px-8 py-3.5 text-[19px] tracking-[0.06em] text-white transition-colors disabled:opacity-50"
+                style={{ boxShadow: '0 10px 30px -10px rgba(46,108,246,0.7)' }}>
+                {saving ? 'A enviar…' : 'Enviar pedido →'}
               </button>
             </div>
           </form>
 
-          {/* ── SIDE PANELS (col 3) ────────────────────────────────────── */}
-          <div className="lg:col-span-1 flex flex-col gap-4">
-
-            {/* O que acontece depois? */}
-            <div className="bg-white/[0.02] border border-white/[0.08] rounded-2xl p-6 sm:p-7">
-              <h3 className="text-[13px] tracking-[0.35em] text-blue-300/80 uppercase font-medium mb-6">O que acontece depois?</h3>
-              {[
-                { icon: '💬', t: 'Recebemos o teu pedido', s: 'Analisamos os detalhes do teu projeto.' },
-                { icon: '📝', t: 'Criamos a melhor proposta', s: 'Preparamos uma proposta personalizada para ti.' },
-                { icon: '✈', t: 'Enviamos em até 24h', s: 'Recebes a proposta por email ou WhatsApp.' },
-                { icon: '✓', t: 'Começamos a criar', s: 'Depois da aprovação, colocamos tudo em ação!' },
-              ].map((s, i) => (
-                <div key={i} className="flex items-start gap-3.5 mb-5 last:mb-0">
-                  <div className="w-9 h-9 rounded-full bg-blue-500/15 border border-blue-400/30 flex items-center justify-center shrink-0 text-[15px]">
-                    {s.icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[14px] text-white/90 font-medium leading-tight">{s.t}</p>
-                    <p className="text-[13px] text-white/45 leading-relaxed mt-1">{s.s}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Precisas de ajuda? */}
-            <div className="bg-blue-500/[0.05] border border-blue-400/25 rounded-2xl p-6 sm:p-7">
-              <h3 className="text-[13px] tracking-[0.35em] text-blue-300/85 uppercase font-medium mb-2.5">Precisas de ajuda?</h3>
-              <p className="text-[14px] text-white/60 leading-relaxed mb-5">
-                Fala diretamente connosco por WhatsApp se preferires.
-              </p>
-              <a href="https://wa.me/351912345678" target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2.5 w-full px-4 py-3.5 rounded-md bg-white/[0.04] border border-white/15 hover:bg-white/[0.08] hover:border-white/25 text-white text-[13px] tracking-[0.3em] uppercase font-medium transition-all">
-                <svg className="w-5 h-5 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M20.52 3.48A11.83 11.83 0 0012 0C5.37 0 0 5.37 0 12c0 2.12.55 4.18 1.6 6L0 24l6.18-1.61A11.83 11.83 0 0012 24c6.63 0 12-5.37 12-12 0-3.2-1.25-6.21-3.48-8.52z"/>
-                </svg>
-                Falar no WhatsApp
-              </a>
-            </div>
-
-            {/* Porquê escolher? */}
-            <div className="bg-[#050b1c] border border-white/[0.1] rounded-2xl p-6 sm:p-7 relative overflow-hidden">
-              <div className="absolute -right-4 -bottom-4 w-32 h-32 rounded-full bg-blue-500/[0.04] blur-2xl pointer-events-none" />
-              <h3 className="text-[13px] tracking-[0.35em] text-white/85 uppercase font-medium mb-6 relative">Porquê escolher a RL PROD?</h3>
-              <div className="space-y-3.5 relative">
-                {[
-                  'Experiência e criatividade',
-                  'Foco em resultados',
-                  'Equipamento profissional',
-                  'Entrega no prazo',
-                  'Acompanhamento dedicado',
-                ].map(b => (
-                  <div key={b} className="flex items-center gap-3">
-                    <svg className="w-5 h-5 text-blue-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path strokeLinecap="round" strokeLinejoin="round" d="M8 12l3 3 5-6"/></svg>
-                    <span className="text-[14px] text-white/80">{b}</span>
+          {/* ── Lateral ──────────────────────────────────────────────────── */}
+          <aside className="flex flex-col gap-5">
+            <div className="rounded-xl border border-white/[0.1] bg-[#00141f]/60 backdrop-blur p-6">
+              <p className="rlp-m traco text-[10.5px] text-[#5a8bff] mb-6">Como funciona</p>
+              <div className="space-y-5">
+                {PASSOS.map((p, i) => (
+                  <div key={p.t} className="border-l-2 border-[#2e6cf6] pl-4">
+                    <p className="rlp-t text-[22px] leading-none text-[#5a8bff]">{String(i + 1).padStart(2, '0')}</p>
+                    <p className="rlp-t mt-1.5 text-[16px] tracking-[0.02em]">{p.t}</p>
+                    <p className="text-[13.5px] text-white/55 leading-relaxed">{p.s}</p>
                   </div>
                 ))}
               </div>
             </div>
 
-          </div>
+            <div className="rounded-xl border border-[#2e6cf6]/40 bg-[#2e6cf6]/[0.08] p-6">
+              <p className="rlp-t text-[20px]">Preferes falar já?</p>
+              <p className="mt-1 text-[14px] text-white/65">Fala connosco por WhatsApp ou telefone.</p>
+              <a href={WHATSAPP} target="_blank" rel="noopener noreferrer"
+                className="rlp-m mt-5 flex items-center justify-center gap-2 rounded-md border border-white/25 hover:border-white/50 px-4 py-3 text-[10.5px] text-white transition-colors">
+                WhatsApp · 912 932 768 ↗
+              </a>
+            </div>
+          </aside>
         </div>
 
-        {/* ── FOOTER ─────────────────────────────────────────────────────── */}
-        <footer className="mt-16 pt-8 border-t border-white/[0.08]">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-12 h-12 object-contain opacity-70" />
-              <div>
-                <p className="text-[12px] tracking-[0.4em] text-white/60 uppercase">RL Prod · Photography &amp; Video</p>
-                <p className="text-[11px] text-white/30 mt-1">Lisboa, Portugal · info@rlprod.pt</p>
-              </div>
-            </div>
-            <p className="text-[12px] tracking-[0.3em] text-white/30 uppercase">© 2026 RL Prod · Todos os direitos reservados</p>
-          </div>
+        {/* ── Rodapé ─────────────────────────────────────────────────────── */}
+        <footer className="rlp-m mt-16 pt-6 border-t border-white/[0.1] flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] text-white/40">
+          <span>Conceito · Direção · Produção</span>
+          <span><span className="text-white/75">Setúbal</span> — Worldwide</span>
+          <a href={`mailto:${EMAIL}`} className="hover:text-white normal-case tracking-[0.1em]">{EMAIL}</a>
         </footer>
-
       </div>
     </main>
   )

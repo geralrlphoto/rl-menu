@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FONTES_CSS, FONTE } from '@/app/media/_lib/estilo'
+import EstiloRLProd from '@/app/media/_components/EstiloRLProd'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import MediaNotificationsBell from '@/app/media/_components/MediaNotificationsBell'
 
@@ -20,14 +20,7 @@ export default function MediaPillNav() {
 
   return (
     <>
-    {/* Letras do rlprod.pt + classes usadas em todas as páginas /media */}
-    <link rel="stylesheet" href={FONTES_CSS} precedence="default" />
-    <style>{`
-      .rlp { font-family: ${FONTE.texto}; }
-      .rlp-t { font-family: ${FONTE.titulo}; font-weight: 700; text-transform: uppercase; letter-spacing: 0; }
-      .rlp-m { font-family: ${FONTE.mono}; text-transform: uppercase; letter-spacing: 0.3em; }
-      .rlp-m.traco::before { content: ''; display: inline-block; width: 26px; height: 1px; background: currentColor; opacity: .6; vertical-align: middle; margin-right: 12px; }
-    `}</style>
+    <EstiloRLProd />
     <header data-global-menu className={`rlp relative z-40 px-4 pt-3 print:hidden text-white`}>
       <nav className="max-w-5xl mx-auto flex items-center justify-between gap-4 rounded-full
                       border border-white/[0.08] bg-[#00141f]/80 backdrop-blur-md pl-5 pr-2 py-2">
