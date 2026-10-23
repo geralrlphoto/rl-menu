@@ -22,23 +22,13 @@ export const FONTE = {
   mono: "'JetBrains Mono', monospace",
 }
 
-// Anéis de lente (como os círculos das secções "Cinematográfica" e "Pronto para levar" do site)
-const ANEIS = `<svg xmlns='http://www.w3.org/2000/svg' width='1400' height='1400' viewBox='0 0 1400 1400' fill='none'>
-  <g stroke='%235a8bff'>
-    <circle cx='700' cy='700' r='690' stroke-opacity='.16'/>
-    <circle cx='700' cy='700' r='560' stroke-opacity='.2'/>
-    <circle cx='700' cy='700' r='430' stroke-opacity='.26'/>
-    <circle cx='700' cy='700' r='300' stroke-opacity='.3' stroke-dasharray='2 10'/>
-    <path d='M700 0v120M700 1280v120M0 700h120M1280 700h120' stroke-opacity='.35'/>
-  </g>
-  <path d='M700 270 A430 430 0 0 1 1080 470' stroke='%232e6cf6' stroke-opacity='.9' stroke-width='2.5'/>
-</svg>`.replace(/\n\s*/g, ' ')
-
-// Fundo comum: azul-noite do site, luz azul atrás da lente e linhas diagonais finas
-// (as do "Cinematográfica com originalidade"), sem grelha
+// Fundo comum: metal escovado em azul-aço (tons do rlprod.pt).
+// Camadas, de cima para baixo: escurecer as margens, reflexo diagonal, riscas finas do
+// "escovado" e faixas de luz e sombra que dão o brilho de chapa metálica.
 export const FUNDO = `
-  url("data:image/svg+xml,${ANEIS.replace(/"/g, "'").replace(/#/g, '%23')}") no-repeat right -360px top -420px / 1400px 1400px,
-  radial-gradient(circle at 78% 12%, rgba(46,108,246,0.28) 0%, rgba(46,108,246,0.08) 28%, transparent 50%),
-  repeating-linear-gradient(135deg, rgba(255,255,255,0.018) 0px, rgba(255,255,255,0.018) 1px, transparent 1px, transparent 46px),
-  linear-gradient(180deg, #071a2b 0%, #00141f 50%, #000d17 100%)`
+  radial-gradient(ellipse 85% 75% at 50% 40%, transparent 45%, rgba(0,8,14,0.75) 100%),
+  linear-gradient(115deg, transparent 28%, rgba(190,215,255,0.10) 42%, rgba(255,255,255,0.04) 47%, transparent 58%),
+  repeating-linear-gradient(0deg, rgba(255,255,255,0.028) 0px, rgba(255,255,255,0.028) 1px, transparent 1px, transparent 3px),
+  repeating-linear-gradient(0deg, rgba(0,0,0,0.10) 0px, rgba(0,0,0,0.10) 1px, transparent 1px, transparent 7px),
+  linear-gradient(135deg, #0a1a28 0%, #1d3650 18%, #0c1d2d 34%, #26476a 50%, #0d2031 66%, #1a3149 82%, #08141f 100%)`
 export const FUNDO_TAMANHO = ''
