@@ -27,11 +27,50 @@ const STATIC_CARDS = [
   { id: 'ficha-cliente',     name: 'Ficha de Cliente',  href: '/media/ficha-cliente',     icon: '◑' },
 ]
 
+const MESES: Record<string, number> = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 }
+
+// As datas dos portais vêm como "2026-05-09" ou "15 Jul 2025"
+function lerData(v?: string | null): Date | null {
+  if (!v) return null
+  const iso = v.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (iso) return new Date(+iso[1], +iso[2] - 1, +iso[3])
+  const pt = v.trim().match(/^(\d{1,2})\s+([A-Za-zçÇ]{3})[a-zç]*\.?\s+(\d{4})$/)
+  if (pt && MESES[pt[2].toLowerCase()] !== undefined) return new Date(+pt[3], MESES[pt[2].toLowerCase()], +pt[1])
+  return null
+}
+
+const euros = (n: number) => n.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 })
+const diaCurto = (d: Date) => d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })
+
 export default async function MediaDashboard() {
-  const { data: sections } = await supabase
-    .from('media_sections')
-    .select('*')
-    .order('order_index')
+  const [{ data: sections }, { count: leadsNovas }, { count: propostasEnv }, { data: portais }] = await Promise.all([
+    supabase.from('media_sections').select('*').order('order_index'),
+    supabase.from('media_leads').select('id', { count: 'exact', head: true }).eq('estado', 'Novo'),
+    supabase.from('media_leads').select('id', { count: 'exact', head: true }).eq('estado', 'Proposta Env.'),
+    // Só os campos precisos do JSON (poupar egress)
+    supabase.from('media_portais').select('pagamentos:dados->pagamentos, filmagem:dados->>dataFilmagem, entrega:dados->>dataEntrega'),
+  ])
+
+  // Pagamentos em falta: pendentes + em atraso de todos os portais
+  let emFalta = 0
+  let nEmFalta = 0
+  // Próximos trabalhos: filmagens e entregas de hoje para a frente
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
+  const proximas: Date[] = []
+  for (const p of (portais ?? []) as any[]) {
+    for (const pg of Array.isArray(p.pagamentos) ? p.pagamentos : []) {
+      if (pg?.estado === 'pendente' || pg?.estado === 'em_atraso') { emFalta += Number(pg.valor) || 0; nEmFalta++ }
+    }
+    for (const d of [lerData(p.filmagem), lerData(p.entrega)]) if (d && d >= hoje) proximas.push(d)
+  }
+  proximas.sort((a, b) => a.getTime() - b.getTime())
+
+  const NUMEROS = [
+    { valor: String(leadsNovas ?? 0), titulo: 'Leads novas', sub: 'por contactar', href: '/media/crm/leads' },
+    { valor: String(propostasEnv ?? 0), titulo: 'Propostas', sub: 'à espera de resposta', href: '/media/crm/leads' },
+    { valor: euros(emFalta), titulo: 'Pagamentos em falta', sub: nEmFalta === 1 ? '1 prestação' : `${nEmFalta} prestações`, href: '/media/financas' },
+    { valor: String(proximas.length), titulo: 'Próximos trabalhos', sub: proximas[0] ? `o próximo a ${diaCurto(proximas[0])}` : 'nada marcado', href: '/media/portal-cliente' },
+  ]
 
   const items = [
     ...(sections ?? []).map(s => ({
@@ -86,26 +125,44 @@ export default async function MediaDashboard() {
         </Link>
       </section>
 
+      {/* ── Números do dia a dia ───────────────────────────────────────── */}
+      <section className="relative z-10 px-4 mt-12">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {NUMEROS.map(n => (
+            <Link key={n.titulo} href={n.href}
+              className="group rounded-2xl border border-white/[0.08] bg-[#10151b]/80 px-5 py-4 text-left
+                         hover:border-[#1fd8c8]/60 transition-colors">
+              <p className="text-[26px] sm:text-[30px] font-semibold tracking-[-0.02em] leading-none" style={{ color: ACCENT }}>{n.valor}</p>
+              <p className="mt-2 text-[13px] font-medium text-white/85">{n.titulo}</p>
+              <p className="text-[11.5px] text-white/40">{n.sub}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       {/* ── Moldura com a imagem RL PROD ───────────────────────────────── */}
-      <section className="relative z-10 px-4 mt-6">
-        <div className="max-w-4xl mx-auto rounded-2xl p-[1px]"
+      <section className="relative z-10 px-4 mt-10">
+        <div className="max-w-5xl mx-auto rounded-2xl p-[1px]"
           style={{ background: `linear-gradient(180deg, ${ACCENT} 0%, ${ACCENT}55 60%, ${ACCENT}22 100%)`, boxShadow: `0 0 50px ${ACCENT}1f` }}>
-          <div className="rounded-2xl overflow-hidden bg-black aspect-[16/9] bg-cover bg-center"
-            style={{ backgroundImage: 'url("/MEDIA%20HERO.png")' }}
-            aria-label="RL PROD · Photography & Video" />
+          <div className="relative rounded-2xl overflow-hidden bg-black aspect-[16/9]" aria-label="RL PROD · Photography & Video">
+            <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: 'url("/MEDIA%20HERO.png")' }} />
+            {/* Tom verde-água por cima (tira o dourado da imagem) */}
+            <div className="absolute inset-0" style={{ background: ACCENT, mixBlendMode: 'color', opacity: 0.85 }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(11,13,18,0.15) 0%, rgba(11,13,18,0.45) 100%)' }} />
+          </div>
         </div>
       </section>
 
       {/* ── Atalhos ────────────────────────────────────────────────────── */}
       <section className="relative z-10 px-4 pt-16 pb-16">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-5xl mx-auto">
           <p className="text-center text-[10px] tracking-[0.25em] uppercase text-white/40 mb-6">Áreas</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {items.map((item, i) => (
               <Link key={item.id} href={item.href}
-                className="group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#10151b]/80
+                className={`${i === items.length - 1 && items.length % 2 === 1 ? 'sm:col-span-2' : ''} group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#10151b]/80
                            hover:border-[#1fd8c8]/60 transition-all duration-300 hover:-translate-y-0.5
-                           hover:shadow-[0_0_30px_rgba(31,216,200,0.12)] p-5 min-h-[140px] flex flex-col justify-between"
+                           hover:shadow-[0_0_30px_rgba(31,216,200,0.12)] p-5 min-h-[140px] flex flex-col justify-between`}
               >
                 {item.image_url && (
                   <>
