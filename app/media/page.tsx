@@ -29,6 +29,14 @@ const STATIC_CARDS = [
   { id: 'ficha-cliente',     name: 'Ficha de Cliente',  href: '/media/ficha-cliente',     icon: '◑' },
 ]
 
+// As mesmas páginas do menu global da RL PROD (MEDIA_LINKS em GlobalMenu.tsx)
+const NAV = [
+  { label: 'CRM',              href: '/media/crm' },
+  { label: 'Recursos Humanos', href: '/media/recursos-humanos' },
+  { label: 'Finanças',         href: '/media/financas' },
+  { label: 'Portal Cliente',   href: '/media/portal-cliente' },
+]
+
 export default async function MediaDashboard() {
   const { data: sections } = await supabase
     .from('media_sections')
@@ -63,19 +71,40 @@ export default async function MediaDashboard() {
         style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 110%, rgba(31,216,200,0.07) 0%, transparent 70%)' }}
       />
 
-      {/* ── Sino + Sair (a navegação fica no menu global do topo) ──────── */}
-      <div className="relative z-20 px-4 pt-4">
-        <div className="max-w-5xl mx-auto flex justify-end">
-          <div className="flex items-center gap-3 rounded-full border border-white/[0.12] bg-white/[0.02] px-4 py-2">
-            <MediaNotificationsBell />
-            <span className="h-3 w-px bg-white/15" />
-            <LogoutButton />
+      {/* ── Barra de navegação em pílula (substitui o menu global nesta página) ── */}
+      <header className="relative z-20 px-4 pt-3">
+        <nav className="max-w-5xl mx-auto flex items-center justify-between gap-4 rounded-full
+                        border border-white/[0.08] bg-[#0f1318]/80 backdrop-blur-md pl-5 pr-2 py-2">
+          <Link href="/media" className="flex items-center gap-2 shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-rl-prod-branco.png" alt="" className="w-6 h-6 object-contain" />
+            <span className="text-[15px] font-medium tracking-tight">RL Prod</span>
+          </Link>
+
+          <div className="hidden md:flex items-center gap-6">
+            {NAV.map(n => (
+              <Link key={n.href} href={n.href}
+                className="text-[12.5px] text-white/60 hover:text-white transition-colors">
+                {n.label}
+              </Link>
+            ))}
           </div>
-        </div>
-      </div>
+
+          <div className="flex items-center gap-3">
+            <Link href="/photo" className="hidden sm:inline text-[12.5px] text-white/35 hover:text-white transition-colors">
+              RL Photo
+            </Link>
+            <div className="flex items-center gap-3 rounded-full border border-white/[0.12] bg-white/[0.02] px-4 py-2">
+              <MediaNotificationsBell />
+              <span className="h-3 w-px bg-white/15" />
+              <LogoutButton />
+            </div>
+          </div>
+        </nav>
+      </header>
 
       {/* ── Hero ───────────────────────────────────────────────────────── */}
-      <section className="relative z-10 px-4 pt-8 sm:pt-10 text-center">
+      <section className="relative z-10 px-4 pt-14 sm:pt-16 text-center">
         <span className="inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-[10px] tracking-[0.18em] uppercase text-white/80"
           style={{ border: `1px solid ${ACCENT}99`, boxShadow: `0 0 14px ${ACCENT}22` }}>
           <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} />
