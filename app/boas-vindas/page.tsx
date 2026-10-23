@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
-import { Saira_Extra_Condensed, JetBrains_Mono } from 'next/font/google'
+import { Saira_Extra_Condensed } from 'next/font/google'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
 // Letras da RL Prod (como no rlprod.pt): condensada grossa/fina + mono técnica
 const saira = Saira_Extra_Condensed({ subsets: ['latin'], weight: ['200', '300', '500', '800'], variable: '--f-saira' })
-const jetbrains = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--f-jb' })
+// JetBrains Mono vem por <link> (o next/font falhava a descarregá-la no build do Vercel)
+const JETBRAINS_CSS = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap'
 
 /* Boas-vindas: página aberta pelo QR code impresso. Só RL Prod
    (os casamentos da RL Photo.Video têm a página /rollup).
@@ -118,7 +119,7 @@ const CSS = `
 @keyframes bvBrilho{0%{left:-60%}35%,100%{left:130%}}
 @keyframes bvBorda{from{background-position:250% 0}to{background-position:-250% 0}}
 /* ── Letras RL Prod (sobrepõem as do briefing) ── */
-.nlead.bv{--fs:var(--f-saira),sans-serif;--fd:var(--f-saira),sans-serif;--fm:var(--f-jb),monospace;}
+.nlead.bv{--fs:var(--f-saira),sans-serif;--fd:var(--f-saira),sans-serif;--fm:'JetBrains Mono',monospace;}
 .bv em,.bv .titulo em,.bv h2 em,.bv .fim p em{font-style:normal;}
 .bv .titulo{font-weight:800;text-transform:uppercase;letter-spacing:-.005em;line-height:.88;font-size:clamp(64px,20vw,150px);white-space:nowrap;}
 .bv .titulo em{font-weight:200;}
@@ -152,7 +153,8 @@ function Titulo() {
 
 export default function BoasVindasPage() {
   return (
-    <main className={`nlead bv ${saira.variable} ${jetbrains.variable}`}style={{ minHeight: '100vh', background: 'var(--ink)' }}>
+    <main className={`nlead bv ${saira.variable}`}style={{ minHeight: '100vh', background: 'var(--ink)' }}>
+      <link rel="stylesheet" href={JETBRAINS_CSS} precedence="default" />
       <style>{CSS_BRIEFING + CSS}</style>
       <div className="fx-grain" aria-hidden="true" />
 
