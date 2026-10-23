@@ -1,18 +1,17 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { Poppins } from 'next/font/google'
+import { FUNDO, FUNDO_TAMANHO, COR } from '@/app/media/_lib/estilo'
 import { lerFontesMedia, montarEventos, chaveDia, hojeLisboa, TIPOS, type EventoMedia } from '@/app/media/_lib/eventos'
 
 export const dynamic = 'force-dynamic'
-
-const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ACCENT = '#1fd8c8'
+const ACCENT = '#5a8bff'
+const AZUL = '#2e6cf6'
 const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
 // Calendário do ano da RL PROD: os 12 meses, com os eventos de cada dia e a lista do mês
@@ -28,11 +27,9 @@ export default async function CalendarioMedia({ searchParams }: { searchParams: 
   const chaveHoje = chaveDia(hoje)
 
   return (
-    <main className={`${poppins.className} min-h-screen text-white relative overflow-hidden`}>
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse 55% 45% at 92% 8%, rgba(31,216,200,0.14) 0%, transparent 70%)' }} />
+    <main className={`rlp min-h-screen text-white relative overflow-hidden`}>
+      {/* ── Fundo do rlprod.pt: azul-marinho, brilho azul e grelha fina ── */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO, backgroundSize: FUNDO_TAMANHO }} />
 
       <section className="relative z-10 px-4 pt-10 pb-16">
         <div className="max-w-6xl mx-auto">
@@ -40,8 +37,8 @@ export default async function CalendarioMedia({ searchParams }: { searchParams: 
 
           <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-[10px] tracking-[0.25em] uppercase text-white/40">Calendário RL Prod</p>
-              <h1 className="mt-1 text-[40px] sm:text-[52px] font-semibold tracking-[-0.03em] leading-none">
+              <p className="rlp-m traco text-[10px] text-[#5a8bff]">Calendário RL Prod</p>
+              <h1 className="mt-1 text-[40px] sm:text-[52px] rlp-t  leading-none">
                 <span style={{ color: ACCENT }}>{ano}</span>
               </h1>
               <p className="mt-2 text-[13px] text-white/45">
@@ -77,7 +74,7 @@ export default async function CalendarioMedia({ searchParams }: { searchParams: 
               const mesAtual = ano === hoje.getFullYear() && m === hoje.getMonth()
               return (
                 <div key={m}
-                  className={`rounded-2xl border bg-[#10151b]/80 p-4 ${mesAtual ? 'border-[#1fd8c8]/60' : 'border-white/[0.08]'}`}>
+                  className={`rounded-2xl border bg-[#0c2236]/80 p-4 ${mesAtual ? 'border-[#2e6cf6]/60' : 'border-white/[0.08]'}`}>
                   <div className="flex items-baseline justify-between mb-3">
                     <h2 className="text-[15px] font-medium">{nomeMes}</h2>
                     <span className="text-[11px] text-white/35">{doMes.length || ''}</span>
@@ -95,8 +92,8 @@ export default async function CalendarioMedia({ searchParams }: { searchParams: 
                       return (
                         <div key={i} title={evs.map(e => `${TIPOS[e.tipo].nome}: ${e.titulo}`).join('\n') || undefined}
                           className={`aspect-square rounded-md flex flex-col items-center justify-center gap-0.5 text-[11px]
-                            ${eHoje ? 'text-[#062b28] font-semibold' : evs.length ? 'text-white bg-white/[0.06]' : 'text-white/45'}`}
-                          style={eHoje ? { background: ACCENT } : undefined}>
+                            ${eHoje ? 'text-white font-semibold' : evs.length ? 'text-white bg-white/[0.06]' : 'text-white/45'}`}
+                          style={eHoje ? { background: AZUL } : undefined}>
                           {i + 1}
                           {evs.length > 0 && (
                             <span className="flex gap-[2px]">

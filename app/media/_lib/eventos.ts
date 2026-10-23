@@ -13,10 +13,10 @@ export type EventoMedia = {
 }
 
 export const TIPOS: Record<TipoEvento, { nome: string; cor: string }> = {
-  filmagem:  { nome: 'Filmagem',  cor: '#1fd8c8' },
-  entrega:   { nome: 'Entrega',   cor: '#7aa7ff' },
-  reuniao:   { nome: 'Reunião',   cor: '#e6c06b' },
-  pagamento: { nome: 'Pagamento', cor: '#ff7a8a' },
+  filmagem:  { nome: 'Filmagem',  cor: '#2e6cf6' },
+  entrega:   { nome: 'Entrega',   cor: '#a9c1ff' },
+  reuniao:   { nome: 'Reunião',   cor: '#ffffff' },
+  pagamento: { nome: 'Pagamento', cor: '#ff4747' },
 }
 
 const MESES: Record<string, number> = { jan: 0, fev: 1, feb: 1, mar: 2, abr: 3, apr: 3, mai: 4, may: 4, jun: 5, jul: 6, ago: 7, aug: 7, set: 8, sep: 8, out: 9, oct: 9, nov: 10, dez: 11, dec: 11 }

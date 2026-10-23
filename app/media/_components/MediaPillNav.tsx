@@ -2,11 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Poppins } from 'next/font/google'
+import { FONTES_CSS, FONTE } from '@/app/media/_lib/estilo'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import MediaNotificationsBell from '@/app/media/_components/MediaNotificationsBell'
-
-const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500'] })
 
 // Páginas da RL PROD (as mesmas de MEDIA_LINKS em GlobalMenu.tsx)
 const NAV = [
@@ -21,13 +19,22 @@ export default function MediaPillNav() {
   const pathname = usePathname()
 
   return (
-    <header data-global-menu className={`${poppins.className} relative z-40 px-4 pt-3 print:hidden text-white`}>
+    <>
+    {/* Letras do rlprod.pt + classes usadas em todas as páginas /media */}
+    <link rel="stylesheet" href={FONTES_CSS} precedence="default" />
+    <style>{`
+      .rlp { font-family: ${FONTE.texto}; }
+      .rlp-t { font-family: ${FONTE.titulo}; font-weight: 700; text-transform: uppercase; letter-spacing: 0; }
+      .rlp-m { font-family: ${FONTE.mono}; text-transform: uppercase; letter-spacing: 0.3em; }
+      .rlp-m.traco::before { content: ''; display: inline-block; width: 26px; height: 1px; background: currentColor; opacity: .6; vertical-align: middle; margin-right: 12px; }
+    `}</style>
+    <header data-global-menu className={`rlp relative z-40 px-4 pt-3 print:hidden text-white`}>
       <nav className="max-w-5xl mx-auto flex items-center justify-between gap-4 rounded-full
-                      border border-white/[0.08] bg-[#0f1318]/80 backdrop-blur-md pl-5 pr-2 py-2">
+                      border border-white/[0.08] bg-[#00141f]/80 backdrop-blur-md pl-5 pr-2 py-2">
         <Link href="/media" className="flex items-center gap-2 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo-rl-prod-branco.png" alt="" className="w-6 h-6 object-contain" />
-          <span className="text-[15px] font-medium tracking-tight">RL Prod</span>
+          <span className="rlp-t text-[17px] tracking-[0.04em]">RL Prod</span>
         </Link>
 
         <div className="hidden md:flex items-center gap-6">
@@ -35,7 +42,7 @@ export default function MediaPillNav() {
             const ativo = pathname === n.href || pathname.startsWith(n.href + '/')
             return (
               <Link key={n.href} href={n.href}
-                className={`text-[12.5px] transition-colors ${ativo ? 'text-[#1fd8c8]' : 'text-white/60 hover:text-white'}`}>
+                className={`text-[12.5px] transition-colors ${ativo ? 'text-[#5a8bff]' : 'text-white/60 hover:text-white'}`}>
                 {n.label}
               </Link>
             )
@@ -60,12 +67,13 @@ export default function MediaPillNav() {
           const ativo = pathname === n.href || pathname.startsWith(n.href + '/')
           return (
             <Link key={n.href} href={n.href}
-              className={`shrink-0 rounded-full border px-3 py-1.5 text-[12px] ${ativo ? 'border-[#1fd8c8]/60 text-[#1fd8c8]' : 'border-white/[0.1] text-white/60'}`}>
+              className={`shrink-0 rounded-full border px-3 py-1.5 text-[12px] ${ativo ? 'border-[#2e6cf6]/60 text-[#5a8bff]' : 'border-white/[0.1] text-white/60'}`}>
               {n.label}
             </Link>
           )
         })}
       </div>
     </header>
+    </>
   )
 }

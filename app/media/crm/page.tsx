@@ -1,29 +1,28 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { Poppins } from 'next/font/google'
+import { FUNDO, FUNDO_TAMANHO, COR } from '@/app/media/_lib/estilo'
 import NovoPortalRMButton from './NovoPortalRMButton'
 import { lerData, hojeLisboa } from '@/app/media/_lib/eventos'
 
 export const dynamic = 'force-dynamic'
-
-const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ACCENT = '#1fd8c8'
-const AMARELO = '#f3e9a6'
+const ACCENT = '#5a8bff'
+const AZUL = '#2e6cf6'
+const AMARELO = '#cfdcff'
 
 // Funil pela ordem do CRM (ESTADOS em leads/LeadsClient.tsx)
 const FUNIL = [
-  { estado: 'Novo',          cor: '#1fd8c8' },
-  { estado: 'Em Contacto',   cor: '#5fd3e8' },
-  { estado: 'Qualificado',   cor: '#7aa7ff' },
-  { estado: 'Proposta Env.', cor: '#e6c06b' },
-  { estado: 'Convertido',    cor: '#8be38f' },
-  { estado: 'Perdido',       cor: '#ff7a8a' },
+  { estado: 'Novo',          cor: '#5a8bff' },
+  { estado: 'Em Contacto',   cor: '#7fa6ff' },
+  { estado: 'Qualificado',   cor: '#2e6cf6' },
+  { estado: 'Proposta Env.', cor: '#a9c1ff' },
+  { estado: 'Convertido',    cor: '#ffffff' },
+  { estado: 'Perdido',       cor: '#ff4747' },
 ]
 
 const corEstado = (e: string) => FUNIL.find(f => f.estado === e)?.cor ?? '#9aa4ad'
@@ -43,11 +42,11 @@ const GRUPOS: { titulo: string; itens: { label: string; href?: string; novoPorta
   ] },
 ]
 
-const CHIP = 'group inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] backdrop-blur px-4 py-2 text-[13px] text-white/80 hover:text-white hover:border-[#1fd8c8]/70 hover:bg-[#1fd8c8]/[0.08] transition-colors'
+const CHIP = 'group inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] backdrop-blur px-4 py-2 text-[13px] text-white/80 hover:text-white hover:border-[#2e6cf6]/70 hover:bg-[#2e6cf6]/[0.08] transition-colors'
 
 const Icone = ({ d }: { d: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-    className="w-4 h-4 text-[#1fd8c8]/80 group-hover:text-[#1fd8c8]"><path d={d} /></svg>
+    className="w-4 h-4 text-[#5a8bff]/80 group-hover:text-[#5a8bff]"><path d={d} /></svg>
 )
 
 const quando = (iso: string) => {
@@ -82,33 +81,20 @@ export default async function CrmPage() {
     .sort((a, b) => a.d!.getTime() - b.d!.getTime())[0]
 
   return (
-    <main className={`${poppins.className} min-h-screen text-white relative overflow-hidden bg-[#061010]`}>
+    <main className={`rlp min-h-screen text-white relative overflow-hidden`}>
 
-      {/* ── Fundo: cortinas verticais verde-escuras (à plumeform) ──────── */}
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          background: `
-            repeating-linear-gradient(90deg,
-              rgba(255,255,255,0.00) 0px, rgba(255,255,255,0.035) 18px, rgba(0,0,0,0.25) 40px,
-              rgba(255,255,255,0.02) 62px, rgba(255,255,255,0.00) 86px),
-            radial-gradient(ellipse 60% 70% at 15% 30%, rgba(31,216,200,0.20) 0%, transparent 70%),
-            radial-gradient(ellipse 50% 60% at 85% 10%, rgba(31,216,200,0.12) 0%, transparent 70%),
-            linear-gradient(180deg, #071716 0%, #061010 60%, #050909 100%)`,
-        }} />
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'linear-gradient(180deg, transparent 55%, rgba(5,9,9,0.92) 100%)' }} />
+      {/* ── Fundo do rlprod.pt: azul-marinho, brilho azul e grelha fina ── */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO, backgroundSize: FUNDO_TAMANHO }} />
 
       {/* ── Hero ───────────────────────────────────────────────────────── */}
       <section className="relative z-10 px-4 pt-10 sm:pt-14 text-center">
         <Link href="/media" className="text-[12px] text-white/45 hover:text-white transition-colors">‹ Menu RL Prod</Link>
 
         <div className="mt-6">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.04] px-3.5 py-1 text-[10px] tracking-[0.18em] uppercase text-white/75">
-            <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} /> CRM
-          </span>
+          <span className="rlp-m traco text-[11px] text-[#5a8bff]">CRM</span>
         </div>
 
-        <h1 className="mt-5 text-[40px] sm:text-[60px] lg:text-[68px] font-semibold leading-[1.03] tracking-[-0.035em]">
+        <h1 className="mt-5 text-[40px] sm:text-[60px] lg:text-[68px] rlp-t leading-[1.03] ">
           Cada lead,
           <br />
           <span style={{ color: ACCENT }}>até ao contrato.</span>
@@ -119,7 +105,7 @@ export default async function CrmPage() {
 
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link href="/media/crm/leads"
-            className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[13.5px] font-medium text-[#061010] hover:bg-white/90 transition-colors">
+            className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[13.5px] font-medium text-[#00141f] hover:bg-white/90 transition-colors">
             Ver as leads <span aria-hidden>→</span>
           </Link>
           <Link href="/media/crm/nova-lead"
@@ -133,7 +119,7 @@ export default async function CrmPage() {
       <section className="relative z-10 px-4 mt-12">
         <div className="max-w-5xl mx-auto rounded-[22px] p-[1.5px]"
           style={{ background: `linear-gradient(120deg, ${ACCENT} 0%, ${ACCENT}66 35%, ${AMARELO}55 70%, ${AMARELO} 100%)`, boxShadow: `0 30px 80px -30px ${ACCENT}55` }}>
-          <div className="rounded-[21px] bg-[#0b1615]/95 backdrop-blur-xl overflow-hidden">
+          <div className="rounded-[21px] bg-[#0a1d2e]/95 backdrop-blur-xl overflow-hidden">
             <div className="flex items-center justify-between px-5 sm:px-7 py-3 border-b border-white/[0.06] text-[11px] text-white/45">
               <span>O teu funil</span>
               <span>{todas.length} leads · {taxa}% convertidas</span>
@@ -142,7 +128,7 @@ export default async function CrmPage() {
             <div className="grid lg:grid-cols-[1.35fr_1fr]">
               {/* Barras por estado */}
               <div className="p-5 sm:p-7">
-                <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">Por estado</p>
+                <p className="rlp-m text-[10px] text-[#5a8bff]">Por estado</p>
                 <div className="mt-5 grid grid-cols-6 gap-2 sm:gap-3 items-end h-[270px]">
                   {contagem.map(c => (
                     <Link key={c.estado} href="/media/crm/leads" className="group flex flex-col items-center justify-end h-full gap-2">
@@ -162,8 +148,8 @@ export default async function CrmPage() {
               {/* Últimas leads */}
               <div className="p-5 sm:p-7 border-t lg:border-t-0 lg:border-l border-white/[0.06]">
                 <div className="flex items-center justify-between">
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">Últimas a chegar</p>
-                  <Link href="/media/crm/leads" className="text-[11px] text-[#1fd8c8] hover:underline">Ver todas</Link>
+                  <p className="rlp-m text-[10px] text-[#5a8bff]">Últimas a chegar</p>
+                  <Link href="/media/crm/leads" className="text-[11px] text-[#5a8bff] hover:underline">Ver todas</Link>
                 </div>
                 <ul className="mt-4 space-y-2">
                   {recentes.length === 0 && <li className="text-[13px] text-white/40">Ainda não há leads.</li>}
@@ -197,13 +183,13 @@ export default async function CrmPage() {
       <section className="relative z-10 px-4 mt-16">
         <div className="max-w-5xl mx-auto grid lg:grid-cols-[1.2fr_1fr] gap-10 items-start">
           <div>
-            <h2 className="text-[26px] sm:text-[30px] font-semibold tracking-[-0.02em] leading-tight">Ferramentas</h2>
+            <h2 className="text-[26px] sm:text-[30px] rlp-t leading-tight">Ferramentas</h2>
             <p className="mt-2 text-[14px] text-white/55 max-w-md">Do primeiro contacto à reunião e ao portal do cliente.</p>
 
             <div className="mt-7 space-y-6">
               {GRUPOS.map(g => (
                 <div key={g.titulo}>
-                  <p className="text-[10px] tracking-[0.2em] uppercase text-white/40 mb-2.5">{g.titulo}</p>
+                  <p className="rlp-m text-[10px] text-[#5a8bff] mb-2.5">{g.titulo}</p>
                   <div className="flex flex-wrap gap-2">
                     {g.itens.map(it => it.novoPortal ? (
                       <NovoPortalRMButton key={it.label} className={CHIP}>
@@ -224,7 +210,7 @@ export default async function CrmPage() {
           <div className="relative mt-2 lg:mt-10">
             <div className="absolute inset-0 translate-x-3 translate-y-3 rounded-[20px] border border-white/[0.06] bg-white/[0.02]" />
             <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 rounded-[20px] border border-white/[0.08] bg-white/[0.03]" />
-            <div className="relative rounded-[20px] border border-white/[0.12] bg-[#0e1c1b]/90 backdrop-blur-xl p-6">
+            <div className="relative rounded-[20px] border border-white/[0.12] bg-[#0c2236]/90 backdrop-blur-xl p-6">
               <div className="flex items-center justify-between text-[10px] tracking-[0.2em] uppercase">
                 <span style={{ color: ACCENT }}>Próxima reunião</span>
                 <span className="text-white/35">Agenda</span>
@@ -264,13 +250,13 @@ export default async function CrmPage() {
       {pages && pages.length > 0 && (
         <section className="relative z-10 px-4 mt-16">
           <div className="max-w-5xl mx-auto">
-            <p className="text-[10px] tracking-[0.2em] uppercase text-white/40 mb-3">Páginas</p>
+            <p className="rlp-m text-[10px] text-[#5a8bff] mb-3">Páginas</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(pages as any[]).map(p => (
                 <a key={p.id} href={p.notion_url ?? '#'} target="_blank" rel="noopener noreferrer"
-                  className="group flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-[#1fd8c8]/60 px-5 py-4 transition-colors">
+                  className="group flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-[#2e6cf6]/60 px-5 py-4 transition-colors">
                   <span className="text-[14px] text-white/85">{p.title}</span>
-                  <span className="text-white/35 group-hover:text-[#1fd8c8]">↗</span>
+                  <span className="text-white/35 group-hover:text-[#5a8bff]">↗</span>
                 </a>
               ))}
             </div>

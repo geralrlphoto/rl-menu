@@ -1,18 +1,17 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { Poppins } from 'next/font/google'
+import { FUNDO, FUNDO_TAMANHO, COR } from '@/app/media/_lib/estilo'
 import { lerFontesMedia, montarEventos, chaveDia, lerData, hojeLisboa, TIPOS } from '@/app/media/_lib/eventos'
 
 export const dynamic = 'force-dynamic'
-
-const poppins = Poppins({ subsets: ['latin'], weight: ['300', '400', '500', '600', '700'] })
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const ACCENT = '#1fd8c8'
+const ACCENT = '#5a8bff'
+const AZUL = '#2e6cf6'
 
 const SECTION_META: Record<string, { href: string; icon: string }> = {
   'CRM':              { href: '/media/crm',              icon: '◈' },
@@ -79,31 +78,16 @@ export default async function MediaDashboard() {
   ]
 
   return (
-    <main className={`${poppins.className} min-h-screen text-white relative overflow-hidden`}>
+    <main className={`rlp min-h-screen text-white relative overflow-hidden`}>
 
-      {/* ── Fundo: grelha de pontos + brilho verde-água no canto ───────── */}
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{
-          backgroundImage: 'radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px)',
-          backgroundSize: '22px 22px',
-        }}
-      />
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse 55% 45% at 92% 8%, rgba(31,216,200,0.16) 0%, transparent 70%)' }}
-      />
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse 60% 40% at 50% 110%, rgba(31,216,200,0.07) 0%, transparent 70%)' }}
-      />
+      {/* ── Fundo do rlprod.pt: azul-marinho, brilho azul e grelha fina ── */}
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO, backgroundSize: FUNDO_TAMANHO }} />
 
       {/* ── Hero ───────────────────────────────────────────────────────── */}
       <section className="relative z-10 px-4 pt-10 sm:pt-12 text-center">
-        <span className="inline-flex items-center gap-2 rounded-full px-3.5 py-1 text-[10px] tracking-[0.18em] uppercase text-white/80"
-          style={{ border: `1px solid ${ACCENT}99`, boxShadow: `0 0 14px ${ACCENT}22` }}>
-          <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} />
-          Menu Interno
-        </span>
+        <span className="rlp-m traco text-[11px] text-[#5a8bff]">Menu Interno</span>
 
-        <h1 className="mt-6 text-[44px] sm:text-[64px] lg:text-[76px] font-semibold leading-[1.02] tracking-[-0.035em]">
+        <h1 className="mt-6 text-[44px] sm:text-[64px] lg:text-[76px] rlp-t leading-[1.02] ">
           Photography &amp; Video
           <br />
           <span style={{ color: ACCENT }}>for brands</span>
@@ -114,8 +98,8 @@ export default async function MediaDashboard() {
         </p>
 
         <Link href="/media/crm"
-          className="mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13.5px] font-medium text-[#062b28] transition-transform hover:scale-[1.03]"
-          style={{ background: ACCENT, boxShadow: `0 8px 30px ${ACCENT}40` }}>
+          className="mt-8 inline-flex items-center gap-2 rounded-full px-6 py-3 text-[13.5px] font-medium text-white transition-transform hover:scale-[1.03]"
+          style={{ background: AZUL, boxShadow: `0 8px 30px ${AZUL}55` }}>
           Abrir o CRM <span aria-hidden>→</span>
         </Link>
       </section>
@@ -125,8 +109,8 @@ export default async function MediaDashboard() {
         <div className="max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-3">
           {NUMEROS.map(n => (
             <Link key={n.titulo} href={n.href}
-              className="group rounded-2xl border border-white/[0.08] bg-[#10151b]/80 px-5 py-4 text-left
-                         hover:border-[#1fd8c8]/60 transition-colors">
+              className="group rounded-2xl border border-white/[0.08] bg-[#0c2236]/80 px-5 py-4 text-left
+                         hover:border-[#2e6cf6]/60 transition-colors">
               <p className="text-[26px] sm:text-[30px] font-semibold tracking-[-0.02em] leading-none" style={{ color: ACCENT }}>{n.valor}</p>
               <p className="mt-2 text-[13px] font-medium text-white/85">{n.titulo}</p>
               <p className="text-[11.5px] text-white/40">{n.sub}</p>
@@ -137,11 +121,11 @@ export default async function MediaDashboard() {
 
       {/* ── Calendário: próximos 30 dias ───────────────────────────────── */}
       <section className="relative z-10 px-4 mt-10">
-        <div className="max-w-5xl mx-auto rounded-2xl border border-white/[0.08] bg-[#10151b]/80 p-4 sm:p-6">
+        <div className="max-w-5xl mx-auto rounded-2xl border border-white/[0.08] bg-[#0c2236]/80 p-4 sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
             <div>
-              <p className="text-[10px] tracking-[0.25em] uppercase text-white/40">Calendário</p>
-              <h2 className="mt-1 text-[20px] font-semibold tracking-[-0.01em]">Próximos 30 dias</h2>
+              <p className="rlp-m traco text-[10px] text-[#5a8bff]">Calendário</p>
+              <h2 className="mt-1 text-[20px] rlp-t">Próximos 30 dias</h2>
               <p className="text-[12px] text-white/40">{eventos30 === 0 ? 'Nada marcado' : eventos30 === 1 ? '1 evento' : `${eventos30} eventos`}</p>
             </div>
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -151,7 +135,7 @@ export default async function MediaDashboard() {
                 </span>
               ))}
               <Link href="/media/calendario"
-                className="ml-1 inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[12px] font-medium transition-colors hover:bg-[#1fd8c8]/10"
+                className="ml-1 inline-flex items-center gap-1.5 rounded-full border px-4 py-1.5 text-[12px] font-medium transition-colors hover:bg-[#2e6cf6]/10"
                 style={{ borderColor: `${ACCENT}80`, color: ACCENT }}>
                 Ver mais <span aria-hidden>→</span>
               </Link>
@@ -160,21 +144,21 @@ export default async function MediaDashboard() {
 
           {/* Uma fila de 30 dias com deslize lateral */}
           <div className="-mx-4 sm:-mx-6 px-4 sm:px-6 flex gap-2 overflow-x-auto snap-x pb-2
-                          [scrollbar-width:thin] [scrollbar-color:rgba(31,216,200,0.35)_transparent]">
+                          [scrollbar-width:thin] [scrollbar-color:rgba(46,108,246,0.35)_transparent]">
             {dias30.map((d, i) => {
               const evs = porDia.get(chaveDia(d)) ?? []
               const fimDeSemana = d.getDay() === 0 || d.getDay() === 6
               return (
                 <div key={i}
                   className={`snap-start shrink-0 w-[118px] rounded-xl border min-h-[112px] p-2.5 flex flex-col gap-1.5
-                    ${i === 0 ? 'border-[#1fd8c8]/70 bg-[#1fd8c8]/[0.06]' : evs.length ? 'border-white/[0.14] bg-white/[0.03]' : 'border-white/[0.06] bg-white/[0.015]'}`}>
+                    ${i === 0 ? 'border-[#2e6cf6]/70 bg-[#2e6cf6]/[0.06]' : evs.length ? 'border-white/[0.14] bg-white/[0.03]' : 'border-white/[0.06] bg-white/[0.015]'}`}>
                   <div className="flex items-baseline justify-between">
-                    <span className={`text-[10px] uppercase tracking-[0.12em] ${i === 0 ? 'text-[#1fd8c8]' : fimDeSemana ? 'text-white/30' : 'text-white/45'}`}>
+                    <span className={`text-[10px] uppercase tracking-[0.12em] ${i === 0 ? 'text-[#5a8bff]' : fimDeSemana ? 'text-white/30' : 'text-white/45'}`}>
                       {i === 0 ? 'Hoje' : d.toLocaleDateString('pt-PT', { weekday: 'short' }).replace('.', '')}
                     </span>
                     <span className="text-[10px] text-white/35">{d.toLocaleDateString('pt-PT', { month: 'short' }).replace('.', '')}</span>
                   </div>
-                  <span className={`text-[22px] leading-none font-semibold ${i === 0 ? 'text-[#1fd8c8]' : 'text-white/85'}`}>{d.getDate()}</span>
+                  <span className={`text-[22px] leading-none font-semibold ${i === 0 ? 'text-[#5a8bff]' : 'text-white/85'}`}>{d.getDate()}</span>
                   {evs.slice(0, 2).map((e, j) => (
                     <Link key={j} href={e.href} title={`${TIPOS[e.tipo].nome}: ${e.titulo}`}
                       className="truncate rounded px-1.5 py-0.5 text-[10.5px] leading-tight"
@@ -206,19 +190,19 @@ export default async function MediaDashboard() {
       {/* ── Atalhos ────────────────────────────────────────────────────── */}
       <section className="relative z-10 px-4 pt-16 pb-16">
         <div className="max-w-5xl mx-auto">
-          <p className="text-center text-[10px] tracking-[0.25em] uppercase text-white/40 mb-6">Áreas</p>
+          <p className="text-center rlp-m text-[10px] text-[#5a8bff] mb-6">Áreas</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {items.map((item, i) => (
               <Link key={item.id} href={item.href}
-                className={`${i === items.length - 1 && items.length % 2 === 1 ? 'sm:col-span-2' : ''} group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#10151b]/80
-                           hover:border-[#1fd8c8]/60 transition-all duration-300 hover:-translate-y-0.5
-                           hover:shadow-[0_0_30px_rgba(31,216,200,0.12)] p-5 min-h-[140px] flex flex-col justify-between`}
+                className={`${i === items.length - 1 && items.length % 2 === 1 ? 'sm:col-span-2' : ''} group relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c2236]/80
+                           hover:border-[#2e6cf6]/60 transition-all duration-300 hover:-translate-y-0.5
+                           hover:shadow-[0_0_30px_rgba(46,108,246,0.12)] p-5 min-h-[140px] flex flex-col justify-between`}
               >
                 {item.image_url && (
                   <>
                     <div className="absolute inset-0 bg-cover bg-center opacity-10 group-hover:opacity-20 transition-opacity duration-500"
                       style={{ backgroundImage: `url(${item.image_url})` }} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#10151b] to-[#10151b]/40" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c2236] to-[#0c2236]/40" />
                   </>
                 )}
                 <div className="relative flex items-start justify-between">
@@ -230,7 +214,7 @@ export default async function MediaDashboard() {
                 </div>
                 <div className="relative flex items-center justify-between">
                   <h2 className="text-[15px] font-medium text-white/85 group-hover:text-white">{item.name}</h2>
-                  <span className="text-white/30 group-hover:text-[#1fd8c8] group-hover:translate-x-1 transition-all">→</span>
+                  <span className="text-white/30 group-hover:text-[#5a8bff] group-hover:translate-x-1 transition-all">→</span>
                 </div>
               </Link>
             ))}
