@@ -41,6 +41,9 @@ export async function POST(req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Lead registada pela equipa no CRM: não avisa o admin nem manda email ao cliente
+  if (body.interno === true) return NextResponse.json({ ok: true, lead: data })
+
   const RESEND_HEADERS = {
     'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
     'Content-Type': 'application/json',

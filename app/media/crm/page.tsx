@@ -30,7 +30,7 @@ const corEstado = (e: string) => FUNIL.find(f => f.estado === e)?.cor ?? '#9aa4a
 // Ferramentas agrupadas como chips (inspirado nos grupos do plumeform)
 const GRUPOS: { titulo: string; itens: { label: string; href?: string; novoPortal?: boolean; icon: string }[] }[] = [
   { titulo: 'Captação', itens: [
-    { label: 'Formulário Lead',      href: '/media/crm/nova-lead',  icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z' },
+    { label: 'Formulário do cliente', href: '/media/crm/nova-lead',  icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z' },
     { label: 'Agente Prospeção IA',  href: '/media/crm/prospeccao', icon: 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16zM11 8v6M8 11h6' },
   ] },
   { titulo: 'Reunião', itens: [
@@ -108,9 +108,11 @@ export default async function CrmPage() {
             className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[13.5px] font-medium text-[#00141f] hover:bg-white/90 transition-colors">
             Ver as leads <span aria-hidden>→</span>
           </Link>
-          <Link href="/media/crm/nova-lead"
-            className="inline-flex items-center gap-2 rounded-full border border-white/25 px-6 py-3 text-[13.5px] font-medium text-white/85 hover:border-white/50 hover:text-white transition-colors">
-            Nova lead
+          {/* Registo feito pela equipa: sem emails ao cliente (o formulário público está nas Ferramentas) */}
+          <Link href="/media/crm/nova-lead?interno=1"
+            className="inline-flex items-center gap-2 rounded-full bg-[#2e6cf6] hover:bg-[#3d79ff] px-6 py-3 text-[13.5px] font-medium text-white transition-colors"
+            style={{ boxShadow: '0 10px 30px -10px rgba(46,108,246,0.7)' }}>
+            <span aria-hidden>+</span> Registar lead
           </Link>
         </div>
       </section>
