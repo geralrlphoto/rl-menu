@@ -113,7 +113,7 @@ export async function GET(req: NextRequest) {
   const CATEGORIAS: [string, string][] = [
     ['preparacao', 'Preparação'], ['sessao_noivos', 'Sessão dos noivos'], ['fotos_noiva', 'Fotos da noiva'], ['fotos_noivo', 'Fotos do noivo'],
     ['cerimonia', 'Cerimónia'], ['convidados', 'Convidados'], ['bolo_bouquet', 'Bolo e bouquet'], ['sala_animacao', 'Sala e animação'],
-    ['fotos_album', 'Álbum'],
+    ['fotos_album', 'Álbum'], ['detalhes', 'Detalhes'],
   ]
   const emEdicao = comFoto.filter(e => {
     const s = portalPorRef.get(e.referencia)?.settings ?? {}
