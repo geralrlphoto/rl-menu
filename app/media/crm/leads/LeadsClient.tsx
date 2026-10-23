@@ -410,7 +410,7 @@ export default function LeadsClient({ leads: initial }: Props) {
   const labelCls = "text-[11px] tracking-[0.3em] text-white/40 uppercase"
   const inputCls = "w-full bg-white/[0.03] border border-white/[0.08] focus:border-white/25 focus:outline-none px-4 py-3 text-[14px] text-white/70 placeholder:text-white/25 transition-colors [color-scheme:dark]"
 
-  const kpi = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/60 backdrop-blur px-5 py-4'
+  const kpi = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/70 px-5 py-4'
   const Barras = ({ titulo, dados }: { titulo: string; dados: [string, number][] }) => {
     const max = Math.max(1, ...dados.map(d => d[1]))
     return (
@@ -530,7 +530,7 @@ export default function LeadsClient({ leads: initial }: Props) {
                   const lead = leads.find(l => l.id === id)
                   if (lead && lead.estado !== est) updateEstado(lead.id, est)
                 }}
-                className="snap-start shrink-0 w-[250px] rounded-2xl border bg-[#00141f]/55 backdrop-blur p-3 transition-colors"
+                className="snap-start shrink-0 w-[250px] rounded-2xl border bg-[#00141f]/70 p-3 transition-colors"
                 style={{ borderColor: sobre === est ? cor : 'rgba(255,255,255,0.09)', background: sobre === est ? `${cor}12` : undefined }}>
                 <div className="flex items-center justify-between px-1.5 pb-3 mb-2 border-b border-white/[0.07]">
                   <span className="flex items-center gap-2">
@@ -577,7 +577,7 @@ export default function LeadsClient({ leads: initial }: Props) {
       {/* Cards */}
       <div className="flex flex-col gap-3">
         {filtered.map(lead => (
-          <div key={lead.id} id={`lead-${lead.id}`} className="scroll-mt-24 rounded-xl overflow-hidden border border-white/[0.1] hover:border-white/25 bg-[#00141f]/60 backdrop-blur transition-all duration-300">
+          <div key={lead.id} id={`lead-${lead.id}`} className="scroll-mt-24 rounded-xl overflow-hidden border border-white/[0.1] hover:border-white/25 bg-[#00141f]/75 transition-all duration-300">
 
             {/* Row */}
             <div className="flex items-center gap-5 px-6 py-5 cursor-pointer"
