@@ -1,8 +1,9 @@
 'use client'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 
-export default function NovoPortalRMButton() {
+export default function NovoPortalRMButton({ className, children }: { className?: string; children?: ReactNode } = {}) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -14,6 +15,15 @@ export default function NovoPortalRMButton() {
       return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16)
     })
     router.push(`/rm/${token}`)
+  }
+
+  // Com className/children o aspeto vem de quem o usa (página CRM)
+  if (className) {
+    return (
+      <button onClick={handleClick} disabled={loading} className={className}>
+        {loading ? 'A criar…' : children}
+      </button>
+    )
   }
 
   return (

@@ -1,178 +1,284 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
+import { Poppins } from 'next/font/google'
 import NovoPortalRMButton from './NovoPortalRMButton'
+import { lerData, hojeLisboa } from '@/app/media/_lib/eventos'
 
 export const dynamic = 'force-dynamic'
+
+const poppins = Poppins({ subsets: ['latin'], weight: ['400', '500', '600'] })
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-export default async function CrmPage() {
-  const { data: section } = await supabase
-    .from('media_sections').select('*').eq('name', 'CRM').single()
+const ACCENT = '#1fd8c8'
+const AMARELO = '#f3e9a6'
 
+// Funil pela ordem do CRM (ESTADOS em leads/LeadsClient.tsx)
+const FUNIL = [
+  { estado: 'Novo',          cor: '#1fd8c8' },
+  { estado: 'Em Contacto',   cor: '#5fd3e8' },
+  { estado: 'Qualificado',   cor: '#7aa7ff' },
+  { estado: 'Proposta Env.', cor: '#e6c06b' },
+  { estado: 'Convertido',    cor: '#8be38f' },
+  { estado: 'Perdido',       cor: '#ff7a8a' },
+]
+
+const corEstado = (e: string) => FUNIL.find(f => f.estado === e)?.cor ?? '#9aa4ad'
+
+// Ferramentas agrupadas como chips (inspirado nos grupos do plumeform)
+const GRUPOS: { titulo: string; itens: { label: string; href?: string; novoPortal?: boolean; icon: string }[] }[] = [
+  { titulo: 'Captação', itens: [
+    { label: 'Formulário Lead',      href: '/media/crm/nova-lead',  icon: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.4-9.4a2 2 0 112.8 2.8L11.8 15H9v-2.8l8.6-8.6z' },
+    { label: 'Agente Prospeção IA',  href: '/media/crm/prospeccao', icon: 'M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16zM11 8v6M8 11h6' },
+  ] },
+  { titulo: 'Reunião', itens: [
+    { label: 'Maquete Reunião',      href: '/rm/rm-master-rlprod',  icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.6a1 1 0 01.7.3l5.4 5.4a1 1 0 01.3.7V19a2 2 0 01-2 2z' },
+    { label: 'Novo Portal Reunião',  novoPortal: true,              icon: 'M12 4v16m8-8H4' },
+  ] },
+  { titulo: 'Portais', itens: [
+    { label: 'Maquete Portais',      href: '/portal-media/MAQUETE', icon: 'M3 5a2 2 0 012-2h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2zM3 9h18M9 21V9' },
+  ] },
+]
+
+const CHIP = 'group inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] backdrop-blur px-4 py-2 text-[13px] text-white/80 hover:text-white hover:border-[#1fd8c8]/70 hover:bg-[#1fd8c8]/[0.08] transition-colors'
+
+const Icone = ({ d }: { d: string }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+    className="w-4 h-4 text-[#1fd8c8]/80 group-hover:text-[#1fd8c8]"><path d={d} /></svg>
+)
+
+const quando = (iso: string) => {
+  const dias = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000)
+  if (dias <= 0) return 'hoje'
+  if (dias === 1) return 'ontem'
+  if (dias < 30) return `há ${dias} dias`
+  return new Date(iso).toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })
+}
+
+export default async function CrmPage() {
+  const [{ data: section }, { data: leads }] = await Promise.all([
+    supabase.from('media_sections').select('id').eq('name', 'CRM').single(),
+    supabase.from('media_leads').select('id, nome, empresa, estado, created_at, reuniao_data').order('created_at', { ascending: false }),
+  ])
   const { data: pages } = section
-    ? await supabase.from('media_pages').select('*').eq('section_id', section.id).order('order_index')
+    ? await supabase.from('media_pages').select('id, title, notion_url').eq('section_id', section.id).order('order_index')
     : { data: [] }
 
-  // Contar leads novas
-  const { count: leadsNovas } = await supabase
-    .from('media_leads')
-    .select('*', { count: 'exact', head: true })
-    .eq('estado', 'Novo')
+  const todas = (leads ?? []) as { id: string; nome: string | null; empresa: string | null; estado: string; created_at: string; reuniao_data: string | null }[]
+  const contagem = FUNIL.map(f => ({ ...f, n: todas.filter(l => l.estado === f.estado).length }))
+  const maximo = Math.max(1, ...contagem.map(c => c.n))
+  const recentes = todas.slice(0, 5)
+  const convertidas = contagem.find(c => c.estado === 'Convertido')?.n ?? 0
+  const taxa = todas.length ? Math.round((convertidas / todas.length) * 100) : 0
 
-  const { count: leadsTotal } = await supabase
-    .from('media_leads')
-    .select('*', { count: 'exact', head: true })
+  // Próxima reunião marcada (de hoje para a frente)
+  const hoje = hojeLisboa()
+  const proxima = todas
+    .map(l => ({ l, d: lerData(l.reuniao_data) }))
+    .filter(x => x.d && x.d >= hoje)
+    .sort((a, b) => a.d!.getTime() - b.d!.getTime())[0]
 
   return (
-    <main className="min-h-screen bg-[#050507] relative overflow-hidden">
+    <main className={`${poppins.className} min-h-screen text-white relative overflow-hidden bg-[#061010]`}>
 
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)`,
-        backgroundSize: '60px 60px',
-      }} />
+      {/* ── Fundo: cortinas verticais verde-escuras (à plumeform) ──────── */}
       <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse 70% 50% at 50% -10%, rgba(180,200,255,0.05) 0%, transparent 70%)' }}
-      />
+        style={{
+          background: `
+            repeating-linear-gradient(90deg,
+              rgba(255,255,255,0.00) 0px, rgba(255,255,255,0.035) 18px, rgba(0,0,0,0.25) 40px,
+              rgba(255,255,255,0.02) 62px, rgba(255,255,255,0.00) 86px),
+            radial-gradient(ellipse 60% 70% at 15% 30%, rgba(31,216,200,0.20) 0%, transparent 70%),
+            radial-gradient(ellipse 50% 60% at 85% 10%, rgba(31,216,200,0.12) 0%, transparent 70%),
+            linear-gradient(180deg, #071716 0%, #061010 60%, #050909 100%)`,
+        }} />
+      <div className="pointer-events-none fixed inset-0 z-0"
+        style={{ background: 'linear-gradient(180deg, transparent 55%, rgba(5,9,9,0.92) 100%)' }} />
 
-      {/* Back */}
-      <div className="relative z-10 px-8 pt-8">
-        <Link href="/media"
-          className="inline-flex items-center gap-3 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/60 transition-colors uppercase group">
-          <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-          Menu RL PROD
-        </Link>
-      </div>
+      {/* ── Hero ───────────────────────────────────────────────────────── */}
+      <section className="relative z-10 px-4 pt-10 sm:pt-14 text-center">
+        <Link href="/media" className="text-[12px] text-white/45 hover:text-white transition-colors">‹ Menu RL Prod</Link>
 
-      {/* Header */}
-      <header className="relative z-10 px-8 pt-10 pb-8 max-w-5xl mx-auto">
-        <div className="flex items-start gap-6">
-          <div className="mt-1 w-10 h-10 border border-white/10 flex items-center justify-center shrink-0"
-            style={{ boxShadow: '0 0 20px rgba(200,220,255,0.06)' }}>
-            <span className="text-lg text-white/30 select-none">◈</span>
-          </div>
-          <div className="flex-1">
-            <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
-            <h1 className="text-[clamp(1.8rem,4vw,3rem)] font-extralight tracking-[0.3em] text-white/80 uppercase leading-none">CRM</h1>
-            <div className="mt-5 flex items-center gap-3">
-              <div className="h-px w-16 bg-gradient-to-r from-white/40 to-white/10" />
-              <div className="h-px flex-1 bg-white/[0.04]" />
-            </div>
-          </div>
+        <div className="mt-6">
+          <span className="inline-flex items-center gap-2 rounded-full border border-white/[0.14] bg-white/[0.04] px-3.5 py-1 text-[10px] tracking-[0.18em] uppercase text-white/75">
+            <span className="w-1.5 h-1.5 rounded-full" style={{ background: ACCENT }} /> CRM
+          </span>
         </div>
-      </header>
 
-      {/* ── Leads bar ── */}
-      <div className="relative z-10 px-8 pb-8 max-w-5xl mx-auto">
-        <div className="flex items-center gap-3 flex-wrap">
+        <h1 className="mt-5 text-[40px] sm:text-[60px] lg:text-[68px] font-semibold leading-[1.03] tracking-[-0.035em]">
+          Cada lead,
+          <br />
+          <span style={{ color: ACCENT }}>até ao contrato.</span>
+        </h1>
+        <p className="mt-5 max-w-xl mx-auto text-[14px] sm:text-[15px] leading-relaxed text-white/60">
+          Os contactos que chegam, as reuniões marcadas e as propostas enviadas, num só funil.
+        </p>
 
-          {/* Card leads */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Link href="/media/crm/leads"
-            className="group flex items-center gap-4 border border-white/[0.08] hover:border-white/20 bg-white/[0.02] hover:bg-white/[0.05]
-                       px-5 py-4 transition-all duration-300 flex-1 min-w-[180px]">
-            <div className="flex flex-col flex-1">
-              <p className="text-[8px] tracking-[0.45em] text-white/20 uppercase mb-1">Leads</p>
-              <div className="flex items-baseline gap-3">
-                <span className="text-2xl font-extralight text-white/60">{leadsTotal ?? 0}</span>
-                {(leadsNovas ?? 0) > 0 && (
-                  <span className="text-[8px] tracking-[0.3em] uppercase text-blue-400/70 border border-blue-400/25 px-2 py-0.5">
-                    {leadsNovas} novas
-                  </span>
-                )}
+            className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-[13.5px] font-medium text-[#061010] hover:bg-white/90 transition-colors">
+            Ver as leads <span aria-hidden>→</span>
+          </Link>
+          <Link href="/media/crm/nova-lead"
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 px-6 py-3 text-[13.5px] font-medium text-white/85 hover:border-white/50 hover:text-white transition-colors">
+            Nova lead
+          </Link>
+        </div>
+      </section>
+
+      {/* ── Painel do funil, com contorno em degradé verde-água → amarelo ── */}
+      <section className="relative z-10 px-4 mt-12">
+        <div className="max-w-5xl mx-auto rounded-[22px] p-[1.5px]"
+          style={{ background: `linear-gradient(120deg, ${ACCENT} 0%, ${ACCENT}66 35%, ${AMARELO}55 70%, ${AMARELO} 100%)`, boxShadow: `0 30px 80px -30px ${ACCENT}55` }}>
+          <div className="rounded-[21px] bg-[#0b1615]/95 backdrop-blur-xl overflow-hidden">
+            <div className="flex items-center justify-between px-5 sm:px-7 py-3 border-b border-white/[0.06] text-[11px] text-white/45">
+              <span>O teu funil</span>
+              <span>{todas.length} leads · {taxa}% convertidas</span>
+            </div>
+
+            <div className="grid lg:grid-cols-[1.35fr_1fr]">
+              {/* Barras por estado */}
+              <div className="p-5 sm:p-7">
+                <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">Por estado</p>
+                <div className="mt-5 grid grid-cols-6 gap-2 sm:gap-3 items-end h-[170px]">
+                  {contagem.map(c => (
+                    <Link key={c.estado} href="/media/crm/leads" className="group flex flex-col items-center justify-end h-full gap-2">
+                      <span className="text-[15px] font-semibold" style={{ color: c.cor }}>{c.n}</span>
+                      <span className="w-full rounded-t-lg transition-opacity group-hover:opacity-100 opacity-80"
+                        style={{ height: `${Math.max(6, (c.n / maximo) * 110)}px`, background: `linear-gradient(180deg, ${c.cor}, ${c.cor}22)` }} />
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-2 grid grid-cols-6 gap-2 sm:gap-3">
+                  {contagem.map(c => (
+                    <span key={c.estado} className="text-center text-[10px] sm:text-[11px] leading-tight text-white/55">{c.estado}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Últimas leads */}
+              <div className="p-5 sm:p-7 border-t lg:border-t-0 lg:border-l border-white/[0.06]">
+                <div className="flex items-center justify-between">
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">Últimas a chegar</p>
+                  <Link href="/media/crm/leads" className="text-[11px] text-[#1fd8c8] hover:underline">Ver todas</Link>
+                </div>
+                <ul className="mt-4 space-y-2">
+                  {recentes.length === 0 && <li className="text-[13px] text-white/40">Ainda não há leads.</li>}
+                  {recentes.map(l => (
+                    <li key={l.id}>
+                      <Link href="/media/crm/leads"
+                        className="flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.025] hover:bg-white/[0.05] px-3 py-2.5 transition-colors">
+                        <span className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-[12px] font-semibold"
+                          style={{ background: `${corEstado(l.estado)}22`, color: corEstado(l.estado) }}>
+                          {(l.empresa || l.nome || '?').trim().charAt(0).toUpperCase()}
+                        </span>
+                        <span className="flex-1 min-w-0">
+                          <span className="block truncate text-[13px] text-white/90">{l.empresa || l.nome || 'Sem nome'}</span>
+                          <span className="block text-[11px] text-white/40">{quando(l.created_at)}</span>
+                        </span>
+                        <span className="shrink-0 rounded-full px-2.5 py-0.5 text-[10.5px]"
+                          style={{ background: `${corEstado(l.estado)}1f`, color: corEstado(l.estado) }}>
+                          {l.estado}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </div>
-            <span className="text-white/15 group-hover:text-white/40 transition-colors">→</span>
-          </Link>
-
-          {/* Botão formulário */}
-          <Link href="/media/crm/nova-lead"
-            className="group flex items-center gap-3 border border-white/15 bg-white/[0.03] hover:bg-white/[0.08]
-                       hover:border-white/30 px-6 py-4 transition-all duration-300">
-            <svg className="w-3.5 h-3.5 text-white/30 group-hover:text-white/55 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            <span className="text-[9px] tracking-[0.45em] text-white/40 group-hover:text-white/65 uppercase transition-colors whitespace-nowrap">
-              Formulário Lead
-            </span>
-          </Link>
-
-          {/* Botão Agente Prospeção */}
-          <Link href="/media/crm/prospeccao"
-            className="group flex items-center gap-3 border border-violet-500/30 bg-violet-500/[0.05] hover:bg-violet-500/[0.12]
-                       hover:border-violet-400/50 px-6 py-4 transition-all duration-300">
-            <svg className="w-3.5 h-3.5 text-violet-400/50 group-hover:text-violet-300/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35M11 8v6M8 11h6"/>
-            </svg>
-            <span className="text-[9px] tracking-[0.45em] text-violet-400/50 group-hover:text-violet-300/80 uppercase transition-colors whitespace-nowrap">
-              Agente Prospeção IA
-            </span>
-          </Link>
-
-          {/* Botão Maquete Portal Reunião */}
-          <Link href="/rm/rm-master-rlprod"
-            className="group flex items-center gap-3 border border-blue-400/25 bg-blue-400/[0.04] hover:bg-blue-400/[0.10]
-                       hover:border-blue-400/45 px-6 py-4 transition-all duration-300">
-            <svg className="w-3.5 h-3.5 text-blue-400/40 group-hover:text-blue-300/70 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <span className="text-[9px] tracking-[0.45em] text-blue-400/40 group-hover:text-blue-300/70 uppercase transition-colors whitespace-nowrap">
-              Maquete Reunião
-            </span>
-          </Link>
-
-          {/* Botão Novo Portal Reunião */}
-          <NovoPortalRMButton />
-
-          {/* Botão Maquete Mestre */}
-          <Link href="/portal-media/MAQUETE"
-            className="group flex items-center gap-3 border border-blue-400/25 bg-blue-400/[0.04] hover:bg-blue-400/[0.10]
-                       hover:border-blue-400/45 px-6 py-4 transition-all duration-300">
-            <svg className="w-3.5 h-3.5 text-blue-400/40 group-hover:text-blue-300/70 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
-            </svg>
-            <span className="text-[9px] tracking-[0.45em] text-blue-400/40 group-hover:text-blue-300/70 uppercase transition-colors whitespace-nowrap">
-              Maquete Portais
-            </span>
-          </Link>
-
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* ── Páginas do CRM (Notion) ── */}
-      <section className="relative z-10 px-8 pb-20 max-w-5xl mx-auto">
-        {pages && pages.length > 0 && (
-          <>
-            <p className="text-[8px] tracking-[0.5em] text-white/15 uppercase mb-4 flex items-center gap-3">
-              <span>Páginas</span>
-              <span className="flex-1 h-px bg-white/[0.04]" />
-              <span className="font-mono">{String(pages.length).padStart(2, '0')}</span>
-            </p>
+      {/* ── Ferramentas em chips agrupados + cartão empilhado ──────────── */}
+      <section className="relative z-10 px-4 mt-16">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-[1.2fr_1fr] gap-10 items-start">
+          <div>
+            <h2 className="text-[26px] sm:text-[30px] font-semibold tracking-[-0.02em] leading-tight">Ferramentas</h2>
+            <p className="mt-2 text-[14px] text-white/55 max-w-md">Do primeiro contacto à reunião e ao portal do cliente.</p>
+
+            <div className="mt-7 space-y-6">
+              {GRUPOS.map(g => (
+                <div key={g.titulo}>
+                  <p className="text-[10px] tracking-[0.2em] uppercase text-white/40 mb-2.5">{g.titulo}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {g.itens.map(it => it.novoPortal ? (
+                      <NovoPortalRMButton key={it.label} className={CHIP}>
+                        <Icone d={it.icon} /> {it.label}
+                      </NovoPortalRMButton>
+                    ) : (
+                      <Link key={it.label} href={it.href!} className={CHIP}>
+                        <Icone d={it.icon} /> {it.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Cartão empilhado: próxima reunião */}
+          <div className="relative mt-2 lg:mt-10">
+            <div className="absolute inset-0 translate-x-3 translate-y-3 rounded-[20px] border border-white/[0.06] bg-white/[0.02]" />
+            <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 rounded-[20px] border border-white/[0.08] bg-white/[0.03]" />
+            <div className="relative rounded-[20px] border border-white/[0.12] bg-[#0e1c1b]/90 backdrop-blur-xl p-6">
+              <div className="flex items-center justify-between text-[10px] tracking-[0.2em] uppercase">
+                <span style={{ color: ACCENT }}>Próxima reunião</span>
+                <span className="text-white/35">Agenda</span>
+              </div>
+              {proxima ? (
+                <>
+                  <p className="mt-4 text-[22px] font-semibold leading-snug">{proxima.l.empresa || proxima.l.nome}</p>
+                  <p className="mt-1 text-[13px] text-white/55">
+                    {proxima.d!.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="mt-4 text-[22px] font-semibold leading-snug">Nada marcado</p>
+                  <p className="mt-1 text-[13px] text-white/55">Quando uma lead marcar reunião, aparece aqui.</p>
+                </>
+              )}
+              <div className="mt-5 space-y-2">
+                {[
+                  { k: 'Leads novas', v: contagem[0].n },
+                  { k: 'Propostas enviadas', v: contagem[3].n },
+                  { k: 'Convertidas', v: convertidas },
+                ].map(r => (
+                  <div key={r.k} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5">
+                    <span className="text-[13px] text-white/75">{r.k}</span>
+                    <span className="text-[13px] font-semibold" style={{ color: ACCENT }}>{r.v}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/media/calendario" className="mt-4 inline-block text-[11.5px] text-white/45 hover:text-white">Ver o calendário →</Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Páginas do CRM (Notion) ────────────────────────────────────── */}
+      {pages && pages.length > 0 && (
+        <section className="relative z-10 px-4 mt-16">
+          <div className="max-w-5xl mx-auto">
+            <p className="text-[10px] tracking-[0.2em] uppercase text-white/40 mb-3">Páginas</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(pages as any[]).map((p: any, i: number) => (
+              {(pages as any[]).map(p => (
                 <a key={p.id} href={p.notion_url ?? '#'} target="_blank" rel="noopener noreferrer"
-                  className="group relative flex items-center gap-4 px-6 py-5 overflow-hidden
-                             border border-white/[0.07] hover:border-white/20
-                             bg-white/[0.015] hover:bg-white/[0.04]
-                             transition-all duration-400 rounded-sm">
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-white/[0.04] via-white/[0.01] to-transparent
-                                  -translate-x-full group-hover:translate-x-0 transition-transform duration-600 ease-out" />
-                  <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-white/30 to-transparent
-                                  opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  <span className="relative z-10 text-[10px] font-mono text-white/15 w-5 shrink-0">{String(i + 1).padStart(2, '0')}</span>
-                  <span className="relative z-10 flex-1 text-[11px] tracking-[0.3em] font-medium text-white/50 group-hover:text-white/85 uppercase transition-colors duration-300">{p.title}</span>
-                  <span className="relative z-10 text-white/20 group-hover:text-white/60 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all duration-300 text-xs">↗</span>
+                  className="group flex items-center justify-between rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:border-[#1fd8c8]/60 px-5 py-4 transition-colors">
+                  <span className="text-[14px] text-white/85">{p.title}</span>
+                  <span className="text-white/35 group-hover:text-[#1fd8c8]">↗</span>
                 </a>
               ))}
             </div>
-          </>
-        )}
-      </section>
+          </div>
+        </section>
+      )}
 
-      <div className="fixed bottom-0 left-0 right-0 z-10 h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent" />
+      <div className="h-20" />
     </main>
   )
 }
-
