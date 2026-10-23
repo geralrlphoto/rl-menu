@@ -5,11 +5,12 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { AdminNotificationsBell } from './AdminNotificationsBell'
+import MediaPillNav from '@/app/media/_components/MediaPillNav'
 
 const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media', '/painel-editor', '/convidados/', '/opiniao']
 // Paths em que o menu lateral permanente é colapsado (só botão flutuante visível)
 const COLLAPSED_PATHS = ['/freelancers/', '/painel-fotografo']
-const HIDDEN_EXACT = ['/', '/media'] // brand selector — sem menu lateral; /media tem a sua barra em pílula
+const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
 
 const MEDIA_LINKS = [
   {
@@ -193,6 +194,8 @@ function GlobalMenuInner() {
   const isCollapsed = COLLAPSED_PATHS.some(p => pathname.startsWith(p))
 
   const isMedia = pathname.startsWith('/media')
+  // RL PROD: barra em pílula em todos os tamanhos (sem barra de topo nem gaveta)
+  if (isMedia) return <MediaPillNav />
   const gold = 'rgba(201,168,76,'
   const accent = (op: number) => isMedia ? `rgba(255,255,255,${op})` : `${gold}${op})`
 
