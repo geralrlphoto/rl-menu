@@ -6,14 +6,14 @@ import Link from 'next/link'
 // Grava em media_equipa_projeto via /api/media-equipa.
 
 type Membro = { id: string; nome: string; funcao: string; contacto?: string | null; notas?: string | null }
-type Pessoa = { nome: string; funcao: string; contacto?: string | null }
+type Pessoa = { id: string; nome: string; funcao: string; contacto?: string | null }
 
-const FUNCOES = ['Realizador', 'Operador de câmara', 'Fotógrafo', 'Drone', 'Som', 'Editor', 'Assistente', 'Produção']
+const FUNCOES = ['Videógrafo', 'Diretor Criativo', 'Fotógrafo', 'Editor', 'Assistente', 'Drone', 'Som']
 
 export default function EquipaClient({ portalRef, nome }: { portalRef: string; nome: string }) {
   const [equipa, setEquipa] = useState<Membro[] | null>(null)
   const [pessoas, setPessoas] = useState<Pessoa[]>([])
-  const [form, setForm] = useState({ nome: '', funcao: FUNCOES[0], contacto: '', notas: '' })
+  const [form, setForm] = useState({ nome: '', funcao: FUNCOES[0], contacto: '', notas: '', membro_id: '' })
   const [aGravar, setAGravar] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -24,10 +24,10 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
       .catch(() => setEquipa([]))
   }, [portalRef])
 
-  // Ao escolher alguém que já trabalhou connosco, preenche a função e o contacto
+  // Ao escolher alguém da equipa (/media/equipa), preenche a função e o contacto
   function mudarNome(v: string) {
     const p = pessoas.find(x => x.nome.toLowerCase() === v.trim().toLowerCase())
-    setForm(f => p ? { ...f, nome: v, funcao: p.funcao || f.funcao, contacto: p.contacto ?? '' } : { ...f, nome: v })
+    setForm(f => p ? { ...f, nome: v, funcao: p.funcao || f.funcao, contacto: p.contacto ?? '', membro_id: p.id } : { ...f, nome: v, membro_id: '' })
   }
 
   async function nomear() {
@@ -42,7 +42,7 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
       const d = await r.json()
       if (!r.ok) throw new Error(d.error)
       setEquipa(e => [...(e ?? []), d.membro])
-      setForm({ nome: '', funcao: FUNCOES[0], contacto: '', notas: '' })
+      setForm({ nome: '', funcao: FUNCOES[0], contacto: '', notas: '', membro_id: '' })
     } catch (e) { setErro(e instanceof Error && e.message ? e.message : 'Não foi possível gravar.') }
     setAGravar(false)
   }
@@ -114,7 +114,10 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
 
       {/* Nomear */}
       <section className="rounded-2xl border border-dashed border-[#a9c1ff]/40 bg-[#00141f]/70 p-4 sm:p-6 grid gap-3">
-        <h2 className="rlp-t text-[22px]">Nomear pessoa</h2>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="rlp-t text-[22px]">Nomear pessoa</h2>
+          <Link href="/media/equipa" className="text-[12.5px] text-[#a9c1ff] hover:text-white">Gerir equipa RL PROD ›</Link>
+        </div>
         <input className={INPUT} placeholder="Nome" list="equipa-pessoas" value={form.nome} onChange={e => mudarNome(e.target.value)} />
         <datalist id="equipa-pessoas">
           {pessoas.map(p => <option key={p.nome} value={p.nome}>{p.funcao}</option>)}

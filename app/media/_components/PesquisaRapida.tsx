@@ -22,6 +22,7 @@ const FIXOS: Item[] = [
   { tipo: 'Página', titulo: 'Orçamentos',              href: '/media/orcamentos' },
   { tipo: 'Página', titulo: 'Proposta Criativa',       href: '/media/proposta-criativa' },
   { tipo: 'Página', titulo: 'Ficha de Cliente',        href: '/media/ficha-cliente' },
+  { tipo: 'Página', titulo: 'Equipa',                  href: '/media/equipa' },
   { tipo: 'Página', titulo: 'Recursos Humanos',        href: '/media/recursos-humanos' },
   { tipo: 'Página', titulo: 'Formulário do cliente',   sub: 'Público, envia email',        href: '/media/crm/nova-lead' },
 ]

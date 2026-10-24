@@ -22,6 +22,7 @@ const SECTION_META: Record<string, { href: string; icon: string }> = {
 
 // Cards fixos que não vêm da tabela media_sections
 const STATIC_CARDS = [
+  { id: 'equipa',            name: 'Equipa',            href: '/media/equipa',            icon: '◍' },
   { id: 'proposta-criativa', name: 'Proposta Criativa', href: '/media/proposta-criativa', icon: '✦' },
   { id: 'orcamentos',        name: 'Orçamentos',        href: '/media/orcamentos',        icon: '◊' },
   { id: 'ficha-cliente',     name: 'Ficha de Cliente',  href: '/media/ficha-cliente',     icon: '◑' },

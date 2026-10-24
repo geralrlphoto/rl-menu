@@ -10,6 +10,7 @@ import MediaNotificationsBell from '@/app/media/_components/MediaNotificationsBe
 // Páginas da RL PROD (as mesmas de MEDIA_LINKS em GlobalMenu.tsx)
 const NAV = [
   { label: 'CRM',              href: '/media/crm' },
+  { label: 'Equipa',           href: '/media/equipa' },
   { label: 'Recursos Humanos', href: '/media/recursos-humanos' },
   { label: 'Finanças',         href: '/media/financas' },
   { label: 'Portal Cliente',   href: '/media/portal-cliente' },

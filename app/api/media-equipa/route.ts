@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { exigeAdmin } from '@/lib/api-guard'
+import { singular } from '@/app/media/equipa/categorias'
 
 // Equipa nomeada em cada projeto da RL PROD (só admin; o cliente nunca vê).
 // Tabela media_equipa_projeto: projeto_ref, nome, funcao, contacto, notas.
@@ -16,27 +17,23 @@ export async function GET(req: NextRequest) {
   if (bloqueio) return bloqueio
   const projeto = (req.nextUrl.searchParams.get('projeto') ?? '').toUpperCase()
 
-  const [{ data: equipa, error }, { data: todos }] = await Promise.all([
+  const [{ data: equipa, error }, { data: membros }] = await Promise.all([
     supabase.from('media_equipa_projeto').select('id, nome, funcao, contacto, notas').eq('projeto_ref', projeto).order('criado_em'),
-    supabase.from('media_equipa_projeto').select('nome, funcao, contacto').order('criado_em', { ascending: false }).limit(300),
+    supabase.from('media_equipa').select('id, nome, categoria, telefone, email').eq('ativo', true).order('nome'),
   ])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Uma sugestão por nome (a mais recente)
-  const vistos = new Set<string>()
-  const pessoas = (todos ?? []).filter(p => {
-    const k = p.nome.trim().toLowerCase()
-    if (vistos.has(k)) return false
-    vistos.add(k)
-    return true
-  })
+  // Sugestões: a equipa da RL PROD (/media/equipa)
+  const pessoas = (membros ?? []).map(m => ({
+    id: m.id, nome: m.nome, funcao: singular(m.categoria), contacto: m.telefone || m.email || null,
+  }))
   return NextResponse.json({ equipa: equipa ?? [], pessoas })
 }
 
 export async function POST(req: NextRequest) {
   const bloqueio = exigeAdmin(req)
   if (bloqueio) return bloqueio
-  const { projeto_ref, nome, funcao, contacto, notas } = await req.json()
+  const { projeto_ref, nome, funcao, contacto, notas, membro_id } = await req.json()
   if (!projeto_ref || !String(nome ?? '').trim()) {
     return NextResponse.json({ error: 'Indica o nome da pessoa.' }, { status: 400 })
   }
@@ -48,6 +45,7 @@ export async function POST(req: NextRequest) {
       funcao: String(funcao ?? '').trim(),
       contacto: String(contacto ?? '').trim() || null,
       notas: String(notas ?? '').trim() || null,
+      membro_id: membro_id || null,
     })
     .select('id, nome, funcao, contacto, notas')
     .single()
