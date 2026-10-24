@@ -11,7 +11,7 @@ import { CATEGORIAS, singular, type CategoriaId, type FichaDados, type MembroEqu
 // (contactos, perfil, especialidades, preferências, pagamento) e vê os projetos.
 
 type Projeto = { ref: string; funcao: string; nome: string; filmagem: string | null; status: string | null; valor: number; pago: boolean }
-type Membro = MembroEquipa & { foto_url?: string | null; dados: FichaDados; criado_em: string; projetos: Projeto[]; acesso_token?: string }
+type Membro = MembroEquipa & { foto_url?: string | null; dados: FichaDados; criado_em: string; projetos: Projeto[]; acesso_token?: string; senha?: string }
 
 const eur = (n: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(n)
 
@@ -341,7 +341,8 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
         </section>
 
         {/* portal do membro: link secreto para enviar à pessoa */}
-        {v.acesso_token && !editar && <PortalMembro token={v.acesso_token} nome={v.nome} telefone={v.telefone} />}
+        {v.acesso_token && !editar && <PortalMembro id={id} token={v.acesso_token} senha={v.senha ?? ''} nome={v.nome} telefone={v.telefone}
+          onSenha={s => setM(x => x && ({ ...x, senha: s }))} />}
 
         {/* contacto de urgência */}
         <section className={CARD + ' border-[#ff4747]/30'}>
@@ -397,24 +398,42 @@ function Contacto({ icone, valor, href }: { icone: string; valor?: string | null
 }
 
 // Caixa com o link do portal do membro (abrir, copiar, enviar por WhatsApp)
-function PortalMembro({ token, nome, telefone }: { token: string; nome: string; telefone?: string | null }) {
-  const [copiado, setCopiado] = useState(false)
+function PortalMembro({ id, token, senha, nome, telefone, onSenha }: { id: string; token: string; senha: string; nome: string; telefone?: string | null; onSenha: (s: string) => void }) {
+  const [copiado, setCopiado] = useState('')
+  const [aGerar, setAGerar] = useState(false)
+  const copiar = (txt: string, qual: string) => { navigator.clipboard?.writeText(txt); setCopiado(qual); setTimeout(() => setCopiado(''), 1800) }
+  async function gerar() {
+    if (!confirm('Gerar uma senha nova? A senha atual deixa de funcionar e a pessoa tem de voltar a entrar.')) return
+    setAGerar(true)
+    const r = await fetch('/api/media-equipa/membros', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, novaSenha: true }) })
+    const d = await r.json().catch(() => ({}))
+    if (r.ok && d.membro?.senha) onSenha(d.membro.senha)
+    else alert('Não foi possível gerar a senha.')
+    setAGerar(false)
+  }
   const url = `https://portal.rlphotovideo.pt/equipa-rlprod/${token}`
   const primeiro = nome.trim().split(/\s+/)[0]
   const tel = (telefone ?? '').replace(/\D/g, '')
-  const texto = `Olá ${primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase()}! Este é o teu portal da equipa RL PROD, com os teus trabalhos, a agenda e os pagamentos: ${url}`
+  const texto = `Olá ${primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase()}! Este é o teu portal da equipa RL PROD, com os teus trabalhos, a agenda e os pagamentos: ${url}
+Senha: ${senha}`
   return (
     <section className={CARD + ' lg:col-span-3 border-[#2e6cf6]/40'}>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <h2 className="rlp-t text-[22px] leading-none">Portal do membro</h2>
-          <p className="mt-2 text-[13px] text-white/55">Link pessoal: a pessoa vê os seus trabalhos, a agenda, os pagamentos e os seus dados. Não precisa de senha, por isso só o envies a ela.</p>
+          <p className="mt-2 text-[13px] text-white/55">Link pessoal: a pessoa vê os seus trabalhos, a agenda, os pagamentos e os seus dados. Para entrar precisa da senha.</p>
           <p className="mt-2 truncate text-[12.5px] text-[#a9c1ff]">{url}</p>
+          <p className="mt-2 flex flex-wrap items-center gap-2 text-[13px] text-white/60">
+            Senha <span className="rlp-m rounded-md border border-white/[0.16] bg-[#00141f] px-2.5 py-1 text-[12px] tracking-[0.12em] text-white">{senha}</span>
+            <button type="button" onClick={() => copiar(senha, 'senha')} className="text-[12px] text-[#a9c1ff] hover:text-white">{copiado === 'senha' ? '✓ Copiada' : 'Copiar senha'}</button>
+            <button type="button" onClick={gerar} disabled={aGerar} className="text-[12px] text-white/45 hover:text-white disabled:opacity-50">{aGerar ? 'A gerar…' : 'Gerar nova'}</button>
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <a href={url} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/[0.16] px-4 py-2 text-[13px] text-white/80 hover:text-white">Abrir portal ↗</a>
-          <button type="button" onClick={() => { navigator.clipboard?.writeText(url); setCopiado(true); setTimeout(() => setCopiado(false), 1800) }}
-            className="rounded-full border border-white/[0.16] px-4 py-2 text-[13px] text-white/80 hover:text-white">{copiado ? '✓ Copiado' : 'Copiar link'}</button>
+          <button type="button" onClick={() => copiar(`${url}
+Senha: ${senha}`, 'link')}
+            className="rounded-full border border-white/[0.16] px-4 py-2 text-[13px] text-white/80 hover:text-white">{copiado === 'link' ? '✓ Copiado' : 'Copiar link e senha'}</button>
           {tel && (
             <a href={`https://wa.me/${(tel.length === 9 ? '351' : '') + tel}?text=${encodeURIComponent(texto)}`} target="_blank" rel="noopener noreferrer"
               className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-4 py-2 text-[13px] font-medium">Enviar por WhatsApp</a>

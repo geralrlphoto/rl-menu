@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { exigeAdmin } from '@/lib/api-guard'
 import { CATEGORIAS } from '@/app/media/equipa/categorias'
+import { novaSenhaStaff } from '@/lib/staffRlprod'
 
 // Equipa fixa da RL PROD (tabela media_equipa), só admin.
 // GET devolve os membros e quantos projetos cada um tem (media_equipa_projeto).
@@ -23,7 +24,7 @@ export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id')
   if (id) {
     const [{ data: membro, error }, { data: ligacoes }] = await Promise.all([
-      supabase.from('media_equipa').select(`${CAMPOS}, foto_url, dados, criado_em, acesso_token`).eq('id', id).single(),
+      supabase.from('media_equipa').select(`${CAMPOS}, foto_url, dados, criado_em, acesso_token, senha`).eq('id', id).single(),
       supabase.from('media_equipa_projeto').select('projeto_ref, funcao, criado_em, valor, pago').eq('membro_id', id).order('criado_em', { ascending: false }),
     ])
     if (error || !membro) return NextResponse.json({ error: 'Membro não encontrado.' }, { status: 404 })
@@ -59,7 +60,7 @@ export async function POST(req: NextRequest) {
   if (!limpo(b.nome)) return NextResponse.json({ error: 'Indica o nome.' }, { status: 400 })
   if (!ok(b.categoria)) return NextResponse.json({ error: 'Escolhe a categoria.' }, { status: 400 })
   const { data, error } = await supabase.from('media_equipa')
-    .insert({ nome: limpo(b.nome), categoria: b.categoria, telefone: limpo(b.telefone), email: limpo(b.email), instagram: limpo(b.instagram), notas: limpo(b.notas) })
+    .insert({ senha: novaSenhaStaff(), nome: limpo(b.nome), categoria: b.categoria, telefone: limpo(b.telefone), email: limpo(b.email), instagram: limpo(b.instagram), notas: limpo(b.notas) })
     .select(CAMPOS).single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true, membro: { ...data, projetos: [] } })
@@ -75,9 +76,11 @@ export async function PATCH(req: NextRequest) {
   if ('categoria' in b) { if (!ok(b.categoria)) return NextResponse.json({ error: 'Categoria inválida.' }, { status: 400 }); alt.categoria = b.categoria }
   for (const k of ['telefone', 'email', 'instagram', 'notas']) if (k in b) alt[k] = limpo(b[k])
   if ('ativo' in b) alt.ativo = !!b.ativo
+  // Senha nova do portal da equipa (a antiga e as sessões abertas deixam de valer)
+  if (b.novaSenha) alt.senha = novaSenhaStaff()
   if ('foto_url' in b) alt.foto_url = limpo(b.foto_url)
   if ('dados' in b && b.dados && typeof b.dados === 'object') alt.dados = b.dados
-  const { data, error } = await supabase.from('media_equipa').update(alt).eq('id', b.id).select(`${CAMPOS}, foto_url, dados, criado_em`).single()
+  const { data, error } = await supabase.from('media_equipa').update(alt).eq('id', b.id).select(`${CAMPOS}, foto_url, dados, criado_em, senha`).single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true, membro: data })
 }

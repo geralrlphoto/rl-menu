@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { assinaturaStaff, cookieStaff } from '@/lib/staffRlprod'
 
 // Envio de material pelo staff RL PROD (portal /equipa-rlprod/<token>).
 // O membro cola o link da transferência (WeTransfer, Drive, Dropbox...) na ficha
@@ -15,8 +16,11 @@ export async function POST(req: NextRequest) {
   const b = await req.json().catch(() => ({})) as { token?: string; trabalho?: string; link?: string; nota?: string; apagar?: string }
   if (!b.token || !/^[0-9a-f]{32}$/.test(b.token) || !b.trabalho) return NextResponse.json({ error: 'Pedido inválido.' }, { status: 400 })
 
-  const { data: m } = await supabase.from('media_equipa').select('id, nome, ativo').eq('acesso_token', b.token).maybeSingle()
+  const { data: m } = await supabase.from('media_equipa').select('id, nome, ativo, senha').eq('acesso_token', b.token).maybeSingle()
   if (!m || !m.ativo) return NextResponse.json({ error: 'Sem acesso.' }, { status: 401 })
+  // Tem de ter entrado com a senha (ou ser a RL PROD)
+  const admin = req.cookies.get('rl_auth')?.value === process.env.AUTH_SECRET
+  if (!admin && req.cookies.get(cookieStaff(m.id))?.value !== assinaturaStaff(b.token, m.senha)) return NextResponse.json({ error: 'Sessão terminada. Volta a entrar com a senha.' }, { status: 401 })
   const { data: t } = await supabase.from('media_equipa_projeto').select('id, projeto_ref, funcao, envios').eq('id', b.trabalho).eq('membro_id', m.id).maybeSingle()
   if (!t) return NextResponse.json({ error: 'Trabalho não encontrado.' }, { status: 404 })
   const envios: { id: string; link: string; nota: string | null; enviadoEm: string }[] = Array.isArray(t.envios) ? t.envios : []

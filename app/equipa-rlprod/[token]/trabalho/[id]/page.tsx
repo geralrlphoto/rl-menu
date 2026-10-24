@@ -8,6 +8,8 @@ import { lerData, hojeLisboa } from '@/app/media/_lib/eventos'
 import { singular } from '@/app/media/equipa/categorias'
 import type { BriefingSessao, BriefingItem, StoryboardCena, StorytellingSena } from '@/app/portal-media/_data/mockProject'
 import EnvioMaterial from './EnvioMaterial'
+import { temAcessoStaff } from '../../../_acesso'
+import EntradaStaff from '../../../EntradaStaff'
 
 // Ficha de um trabalho no portal do staff: dados do dia, briefing que vem do
 // portal do cliente (sessões de briefing + guião da Reprodução) e envio do material.
@@ -28,10 +30,11 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
   const { token, id } = await params
   if (!/^[0-9a-f]{32}$/.test(token)) notFound()
 
-  const { data: m } = await supabase.from('media_equipa').select('id, nome, categoria, ativo').eq('acesso_token', token).maybeSingle()
+  const { data: m } = await supabase.from('media_equipa').select('id, nome, categoria, ativo, senha').eq('acesso_token', token).maybeSingle()
   if (!m || !m.ativo) notFound()
+  if (!(await temAcessoStaff(m, token))) return <EntradaStaff token={token} nome={m.nome.trim().split(/\s+/)[0].charAt(0).toUpperCase() + m.nome.trim().split(/\s+/)[0].slice(1).toLowerCase()} />
   const { data: t } = await supabase.from('media_equipa_projeto')
-    .select('id, projeto_ref, funcao, valor, pago, notas, envios, ver_guiao').eq('id', id).eq('membro_id', m.id).maybeSingle()
+    .select('id, projeto_ref, funcao, valor, pago, notas, envios, ver_guiao, ver_briefing').eq('id', id).eq('membro_id', m.id).maybeSingle()
   if (!t) notFound()
 
   // Só o que a equipa precisa do portal do cliente (nada de pagamentos nem contactos do cliente)
@@ -53,6 +56,8 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
   const hoje = hojeLisboa()
   const dias = filmagem ? Math.round((filmagem.getTime() - hoje.getTime()) / 86400000) : null
   const quando = dias === null ? 'Data por marcar' : dias === 0 ? 'Hoje' : dias === 1 ? 'Amanhã' : dias > 1 ? `Daqui a ${dias} dias` : 'Já realizado'
+  // O briefing e o guião só aparecem a quem a RL PROD deu acesso na Equipa do projeto
+  const verBriefing = !!t.ver_briefing
   const sessoes = (Array.isArray(pj.briefingSessoes) ? pj.briefingSessoes : []).filter(s => s.estado !== 'pendente' && (s.resumo || s.objetivos?.length || s.notas))
   const itens = Array.isArray(pj.briefingItems) ? pj.briefingItems.filter(i => i.label || i.desc) : []
   const senas = Array.isArray(pj.senas) ? pj.senas : []
@@ -102,7 +107,7 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
         <EnvioMaterial token={token} trabalho={t.id} inicial={envios} />
 
         {/* briefing do cliente */}
-        <section className="mt-12">
+        {verBriefing && <section className="mt-12">
           <h2 className="rlp-t text-[30px] leading-none border-b border-white/[0.08] pb-3">Briefing do projeto</h2>
           {sessoes.length === 0 && itens.length === 0 && (
             <p className={`${CARD} mt-4 px-6 py-8 text-center text-[14px] text-white/50`}>O briefing ainda não foi preenchido. Assim que a RL PROD reunir com o cliente, aparece aqui.</p>
@@ -137,7 +142,7 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
               {s.notas && <p className="mt-3 text-[13px] text-white/55 whitespace-pre-line">{s.notas}</p>}
             </article>
           ))}
-        </section>
+        </section>}
 
         {/* guião criativo (Reprodução) */}
         {temGuiao && (

@@ -16,7 +16,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const CAMPOS = 'id, nome, funcao, contacto, notas, membro_id, valor, pago, pago_em, despesa_id, envios, ver_guiao'
+const CAMPOS = 'id, nome, funcao, contacto, notas, membro_id, valor, pago, pago_em, despesa_id, envios, ver_guiao, ver_briefing'
 const num = (v: unknown) => { const n = Number(String(v ?? '').replace(',', '.')); return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0 }
 
 // Data da despesa: dia da filmagem do projeto (ou hoje, se não houver)
@@ -120,6 +120,7 @@ export async function PATCH(req: NextRequest) {
   if ('pago' in b) { alt.pago = !!b.pago; alt.pago_em = b.pago ? chaveDia(hojeLisboa()) : null }
   if ('funcao' in b) alt.funcao = String(b.funcao ?? '').trim()
   if ('notas' in b) alt.notas = String(b.notas ?? '').trim() || null
+  if ('ver_briefing' in b) alt.ver_briefing = !!b.ver_briefing
   if ('ver_guiao' in b) alt.ver_guiao = !!b.ver_guiao // só quem a RL PROD escolhe vê o guião criativo
   const { data, error } = await supabase.from('media_equipa_projeto').update(alt).eq('id', b.id).select(`${CAMPOS}, projeto_ref`).single()
   if (error || !data) return NextResponse.json({ error: error?.message ?? 'Não encontrado.' }, { status: 500 })

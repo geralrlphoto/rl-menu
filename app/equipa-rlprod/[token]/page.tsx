@@ -6,6 +6,8 @@ import EstiloRLProd from '@/app/media/_components/EstiloRLProd'
 import { FUNDO } from '@/app/media/_lib/estilo'
 import { lerData, hojeLisboa } from '@/app/media/_lib/eventos'
 import { singular, type FichaDados } from '@/app/media/equipa/categorias'
+import { temAcessoStaff } from '../_acesso'
+import EntradaStaff from '../EntradaStaff'
 
 // Portal do staff RL PROD: cada membro abre o seu link secreto (/equipa-rlprod/<token>)
 // e vê os trabalhos onde foi nomeado, a agenda, quanto vai receber e os seus dados.
@@ -31,9 +33,11 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
   if (!/^[0-9a-f]{32}$/.test(token)) notFound()
 
   const { data: m } = await supabase.from('media_equipa')
-    .select('id, nome, categoria, telefone, email, instagram, foto_url, ativo, dados, criado_em')
+    .select('id, nome, categoria, telefone, email, instagram, foto_url, ativo, dados, criado_em, senha')
     .eq('acesso_token', token).maybeSingle()
   if (!m || !m.ativo) notFound()
+  // Sem senha certa: ecrã de entrada (a RL PROD, com sessão de admin, entra direto)
+  if (!(await temAcessoStaff(m, token))) return <EntradaStaff token={token} nome={m.nome.trim().split(/\s+/)[0].charAt(0).toUpperCase() + m.nome.trim().split(/\s+/)[0].slice(1).toLowerCase()} />
   const d = (m.dados ?? {}) as FichaDados
 
   const { data: ligacoes } = await supabase.from('media_equipa_projeto')
