@@ -23,8 +23,8 @@ export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get('id')
   if (id) {
     const [{ data: membro, error }, { data: ligacoes }] = await Promise.all([
-      supabase.from('media_equipa').select(`${CAMPOS}, foto_url, dados, criado_em`).eq('id', id).single(),
-      supabase.from('media_equipa_projeto').select('projeto_ref, funcao, criado_em').eq('membro_id', id).order('criado_em', { ascending: false }),
+      supabase.from('media_equipa').select(`${CAMPOS}, foto_url, dados, criado_em, acesso_token`).eq('id', id).single(),
+      supabase.from('media_equipa_projeto').select('projeto_ref, funcao, criado_em, valor, pago').eq('membro_id', id).order('criado_em', { ascending: false }),
     ])
     if (error || !membro) return NextResponse.json({ error: 'Membro não encontrado.' }, { status: 404 })
     const refs = [...new Set((ligacoes ?? []).map(l => l.projeto_ref))]
@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
       : { data: [] as { ref: string; nome: string | null; filmagem: string | null; status: string | null }[] }
     const projetos = (ligacoes ?? []).map(l => {
       const p = (portais ?? []).find(x => x.ref === l.projeto_ref)
-      return { ref: l.projeto_ref, funcao: l.funcao, nome: p?.nome ?? l.projeto_ref, filmagem: p?.filmagem ?? null, status: p?.status ?? null }
+      return { ref: l.projeto_ref, funcao: l.funcao, nome: p?.nome ?? l.projeto_ref, filmagem: p?.filmagem ?? null, status: p?.status ?? null, valor: Number(l.valor) || 0, pago: !!l.pago }
     })
     return NextResponse.json({ membro: { ...membro, projetos } })
   }

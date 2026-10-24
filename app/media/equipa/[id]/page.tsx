@@ -10,8 +10,10 @@ import { CATEGORIAS, singular, type CategoriaId, type FichaDados, type MembroEqu
 // Ficha de um membro da equipa RL PROD: a RL PROD preenche os dados
 // (contactos, perfil, especialidades, preferências, pagamento) e vê os projetos.
 
-type Projeto = { ref: string; funcao: string; nome: string; filmagem: string | null; status: string | null }
-type Membro = MembroEquipa & { foto_url?: string | null; dados: FichaDados; criado_em: string; projetos: Projeto[] }
+type Projeto = { ref: string; funcao: string; nome: string; filmagem: string | null; status: string | null; valor: number; pago: boolean }
+type Membro = MembroEquipa & { foto_url?: string | null; dados: FichaDados; criado_em: string; projetos: Projeto[]; acesso_token?: string }
+
+const eur = (n: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 2 }).format(n)
 
 const CARD = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/75 backdrop-blur-sm p-5 sm:p-6'
 const INPUT = 'w-full rounded-md border border-white/[0.12] bg-[#00141f]/70 px-3 py-2 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-[#2e6cf6]'
@@ -224,6 +226,8 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
               { k: 'Próximos', v: proximos.length },
               { k: `Em ${hoje.getFullYear()}`, v: anoAtual.length },
               { k: 'Valor / dia', v: d.valorDia ? `${d.valorDia} €` : '·' },
+              { k: 'Por pagar', v: eur(v.projetos.filter(p => !p.pago).reduce((s, p) => s + p.valor, 0)) },
+              { k: 'Já pago', v: eur(v.projetos.filter(p => p.pago).reduce((s, p) => s + p.valor, 0)) },
             ].map(x => (
               <div key={x.k} className="rounded-xl bg-[#0c2236]/70 px-3.5 py-3">
                 <p className="rlp-m text-[8.5px] text-white/45">{x.k}</p>
@@ -321,6 +325,12 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
                         <span className="block truncate text-[14px] text-white/90 group-hover:text-white">{p.nome}</span>
                         <span className="block text-[12px] text-white/45">{p.funcao || singular(v.categoria)}{p.status ? ` · ${p.status}` : ''}</span>
                       </span>
+                      {p.valor > 0 && (
+                        <span className="text-right">
+                          <span className="rlp-t block text-[16px] leading-none">{eur(p.valor)}</span>
+                          <span className={`rlp-m block mt-1 text-[8px] ${p.pago ? 'text-[#a9c1ff]' : 'text-[#ff8a8a]'}`}>{p.pago ? 'Pago' : 'Por pagar'}</span>
+                        </span>
+                      )}
                       <span className="text-white/30 group-hover:text-[#5a8bff]">›</span>
                     </Link>
                   </li>
@@ -329,6 +339,9 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
             </ul>
           )}
         </section>
+
+        {/* portal do membro: link secreto para enviar à pessoa */}
+        {v.acesso_token && !editar && <PortalMembro token={v.acesso_token} nome={v.nome} telefone={v.telefone} />}
 
         {/* contacto de urgência */}
         <section className={CARD + ' border-[#ff4747]/30'}>
@@ -381,4 +394,33 @@ function Contacto({ icone, valor, href }: { icone: string; valor?: string | null
   return href
     ? <a href={href} target={href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="flex items-center gap-2.5 text-white/75 hover:text-white">{conteudo}</a>
     : <p className="flex items-center gap-2.5 text-white/75">{conteudo}</p>
+}
+
+// Caixa com o link do portal do membro (abrir, copiar, enviar por WhatsApp)
+function PortalMembro({ token, nome, telefone }: { token: string; nome: string; telefone?: string | null }) {
+  const [copiado, setCopiado] = useState(false)
+  const url = `https://portal.rlphotovideo.pt/equipa-rlprod/${token}`
+  const primeiro = nome.trim().split(/\s+/)[0]
+  const tel = (telefone ?? '').replace(/\D/g, '')
+  const texto = `Olá ${primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase()}! Este é o teu portal da equipa RL PROD, com os teus trabalhos, a agenda e os pagamentos: ${url}`
+  return (
+    <section className={CARD + ' lg:col-span-3 border-[#2e6cf6]/40'}>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="rlp-t text-[22px] leading-none">Portal do membro</h2>
+          <p className="mt-2 text-[13px] text-white/55">Link pessoal: a pessoa vê os seus trabalhos, a agenda, os pagamentos e os seus dados. Não precisa de senha, por isso só o envies a ela.</p>
+          <p className="mt-2 truncate text-[12.5px] text-[#a9c1ff]">{url}</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <a href={url} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/[0.16] px-4 py-2 text-[13px] text-white/80 hover:text-white">Abrir portal ↗</a>
+          <button type="button" onClick={() => { navigator.clipboard?.writeText(url); setCopiado(true); setTimeout(() => setCopiado(false), 1800) }}
+            className="rounded-full border border-white/[0.16] px-4 py-2 text-[13px] text-white/80 hover:text-white">{copiado ? '✓ Copiado' : 'Copiar link'}</button>
+          {tel && (
+            <a href={`https://wa.me/${(tel.length === 9 ? '351' : '') + tel}?text=${encodeURIComponent(texto)}`} target="_blank" rel="noopener noreferrer"
+              className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-4 py-2 text-[13px] font-medium">Enviar por WhatsApp</a>
+          )}
+        </div>
+      </div>
+    </section>
+  )
 }

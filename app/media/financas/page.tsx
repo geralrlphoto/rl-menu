@@ -256,12 +256,14 @@ function FinancasMediaContent() {
       const ref = p.ref.toUpperCase()
       const meus = movs.filter(m => (m.projeto_ref ?? '').toUpperCase() === ref)
       const despesas = soma(meus.filter(m => m.tipo === 'despesa'), m => m.valor)
+      const equipa = soma(meus.filter(m => m.tipo === 'despesa' && normCategoria(m.categoria) === 'equipa'), m => m.valor)
       const extra = soma(meus.filter(m => m.tipo === 'receita'), m => m.valor)
       const recebido = num(p.totalPago)
       const contratado = num(p.totalValor)
       const balanco = recebido + extra - despesas
       return {
-        p, contratado, recebido, despesas, extra, balanco,
+        p, contratado, recebido, despesas, equipa, extra, balanco,
+        lucroPrevisto: contratado + extra - despesas,
         margem: pct(balanco, recebido + extra),
         porReceber: num(p.totalPendente) + num(p.totalAtraso),
         atraso: num(p.totalAtraso),
@@ -473,7 +475,7 @@ function FinancasMediaContent() {
                           <Mini rotulo="Contratado" valor={fmt(r.contratado)} />
                           <Mini rotulo="Recebido" valor={fmt(r.recebido)} cor="text-[#5a8bff]" />
                           <Mini rotulo="Receitas extra" valor={fmt(r.extra)} cor={r.extra > 0 ? 'text-[#5a8bff]' : 'text-white/40'} />
-                          <Mini rotulo="Despesas" valor={fmt(r.despesas)} cor={r.despesas > 0 ? 'text-white' : 'text-white/40'} />
+                          <Mini rotulo="Custo total" valor={fmt(r.despesas)} cor={r.despesas > 0 ? 'text-white' : 'text-white/40'} />
                           <Mini rotulo={r.atraso > 0 ? 'Por receber · atraso' : 'Por receber'} valor={fmt(r.porReceber)}
                             cor={r.atraso > 0 ? 'text-[#ff4747]' : 'text-[#a9c1ff]'} />
                         </div>
@@ -486,6 +488,8 @@ function FinancasMediaContent() {
                             <p className="mt-1.5 text-[11px] text-white/40">
                               {Math.round(r.progresso)} % recebido
                               {r.atraso > 0 && <span className="text-[#ff4747]"> · {fmt(r.atraso)} em atraso</span>}
+                              {r.equipa > 0 && <> · equipa {fmt(r.equipa)}</>}
+                              {r.contratado > 0 && <> · lucro previsto <span className={r.lucroPrevisto < 0 ? 'text-[#ff4747]' : 'text-white/70'}>{sinal(r.lucroPrevisto)}</span></>}
                             </p>
                           </div>
                           <a href={`/portal-media/${r.p.ref}/pagamentos`} target="_blank" rel="noopener noreferrer"

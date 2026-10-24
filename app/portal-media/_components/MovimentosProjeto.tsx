@@ -72,7 +72,7 @@ export default function MovimentosProjeto({ portalRef, recebido }: { portalRef: 
         <div>
           <p className="rlp-m traco text-[10px] text-[#a9c1ff]">Só visível para a RL PROD</p>
           <h2 className="rlp-t mt-1 text-[22px]">Receitas e despesas do projeto</h2>
-          <p className="text-[12.5px] text-white/50">Também aparecem em Finanças. Os pagamentos do cliente entram sozinhos como receita.</p>
+          <p className="text-[12.5px] text-white/50">Também aparecem em Finanças. Os pagamentos do cliente entram sozinhos como receita e o valor de cada pessoa da <a href={`/portal-media/${portalRef}/equipa`} className="text-[#a9c1ff] hover:text-white">Equipa</a> entra sozinho como despesa.</p>
         </div>
         <button type="button" onClick={() => setAberto(a => !a)}
           className="rounded-md bg-[#2e6cf6] hover:bg-[#3d79ff] px-4 py-2 text-[13.5px] font-medium transition-colors">
@@ -84,7 +84,7 @@ export default function MovimentosProjeto({ portalRef, recebido }: { portalRef: 
         {[
           { k: 'Recebido do cliente', v: eur(recebido), cor: 'text-white' },
           { k: 'Receitas extra', v: eur(extras), cor: 'text-white' },
-          { k: 'Despesas', v: eur(despesas), cor: 'text-white' },
+          { k: 'Custo total do projeto', v: eur(despesas), cor: 'text-white' },
           { k: 'Balanço', v: `${eur(balanco)}${margem !== null ? ` · ${margem}%` : ''}`, cor: balanco < 0 ? 'text-[#ff4747]' : 'text-[#5a8bff]' },
         ].map(x => (
           <div key={x.k} className="rounded-xl bg-[#0c2236]/70 px-3.5 py-3">
@@ -133,7 +133,9 @@ export default function MovimentosProjeto({ portalRef, recebido }: { portalRef: 
               <span className="block text-[11.5px] text-white/45">{fmtData(m.data)} · {nomeCategoria(normCategoria(m.categoria), m.tipo === 'receita' ? 'receita' : 'despesa')}{m.notas ? ` · ${m.notas}` : ''}</span>
             </span>
             <span className={`shrink-0 text-[14px] ${m.tipo === 'receita' ? 'text-[#5a8bff]' : 'text-white'}`}>{m.tipo === 'receita' ? '+' : '−'}{eur(Number(m.valor))}</span>
-            <button type="button" onClick={() => apagar(m)} aria-label="Apagar" className="shrink-0 text-white/30 hover:text-[#ff4747] text-[13px]">✕</button>
+            {(m.notas ?? '').startsWith('Equipa do projeto')
+              ? <a href={`/portal-media/${portalRef}/equipa`} title="Muda o valor na página Equipa" className="rlp-m shrink-0 rounded-full border border-white/[0.14] px-2 py-0.5 text-[8px] text-white/50 hover:text-white">Equipa</a>
+              : <button type="button" onClick={() => apagar(m)} aria-label="Apagar" className="shrink-0 text-white/30 hover:text-[#ff4747] text-[13px]">✕</button>}
           </li>
         ))}
       </ul>
