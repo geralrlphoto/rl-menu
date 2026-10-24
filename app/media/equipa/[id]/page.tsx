@@ -70,8 +70,11 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
     const fd = new FormData(); fd.append('file', f)
     try {
       const d = await fetch('/api/upload-image', { method: 'POST', body: fd }).then(r => r.json())
-      if (d.url) setRasc(r => r && ({ ...r, foto_url: d.url }))
-      else alert(d.error || 'Não foi possível carregar a foto.')
+      if (!d.url) { alert(d.error || 'Não foi possível carregar a foto.'); setACarregarFoto(false); return }
+      // Grava já, mesmo fora do modo de edição
+      const r = await fetch('/api/media-equipa/membros', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, foto_url: d.url }) })
+      if (!r.ok) alert('A foto foi carregada mas não ficou gravada. Tenta outra vez.')
+      else { setM(x => x && ({ ...x, foto_url: d.url })); setRasc(x => x && ({ ...x, foto_url: d.url })) }
     } catch { alert('Erro de ligação.') }
     setACarregarFoto(false)
   }
@@ -148,19 +151,20 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
         {/* cartão de perfil */}
         <section className={CARD}>
           <div className="flex items-start gap-4">
-            <div className="relative shrink-0">
+            {/* foto: clicar no círculo carrega e grava logo */}
+            <button type="button" onClick={() => fotoRef.current?.click()} disabled={aCarregarFoto}
+              className="group relative shrink-0 w-24 h-24 rounded-full" aria-label="Carregar foto" title="Carregar foto">
               {v.foto_url
                 // eslint-disable-next-line @next/next/no-img-element
                 ? <img src={v.foto_url} alt="" className="w-24 h-24 rounded-full object-cover border-2 border-[#2e6cf6]" />
                 : <span className="rlp-t w-24 h-24 rounded-full flex items-center justify-center bg-[#2e6cf6] text-[32px]">{iniciais(v.nome)}</span>}
-              {editar && (
-                <>
-                  <button onClick={() => fotoRef.current?.click()} className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-[#00141f] border border-white/20 text-[14px] hover:border-[#2e6cf6]" aria-label="Mudar foto">
-                    {aCarregarFoto ? '…' : '📷'}
-                  </button>
-                  <input ref={fotoRef} type="file" accept="image/*" className="hidden" onChange={e => e.target.files?.[0] && carregarFoto(e.target.files[0])} />
-                </>
-              )}
+              <span className={`absolute inset-0 rounded-full flex flex-col items-center justify-center bg-black/55 text-[11px] text-white transition-opacity ${aCarregarFoto ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                {aCarregarFoto ? 'A carregar…' : <><span className="text-[18px]">📷</span>{v.foto_url ? 'Mudar' : 'Foto'}</>}
+              </span>
+              <span className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-[#00141f] border border-white/25 flex items-center justify-center text-[13px]">📷</span>
+            </button>
+            <input ref={fotoRef} type="file" accept="image/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) carregarFoto(f) }} />
             </div>
             <div className="min-w-0 flex-1">
               {editar
