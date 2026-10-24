@@ -430,7 +430,8 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
           <div className="col-span-2 rounded-2xl border border-white/[0.1] bg-[#00141f]/70 p-4 sm:p-5">
             <div className="flex items-baseline justify-between gap-3">
               <p className="rlp-m text-[10px] text-white/45">Progresso</p>
-              {emAtraso > 0 && (
+              {/* Atrasos: só o admin vê (ao cliente não se mostra) */}
+              {isAdmin && emAtraso > 0 && (
                 <span className="text-[12px] text-[#ff4747]">{emAtraso} {emAtraso === 1 ? 'tarefa' : 'tarefas'} com data ultrapassada</span>
               )}
             </div>
@@ -637,12 +638,12 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                     </span>
                                   )}
                                   {tarefa.data ? (
-                                    <span className={`inline-flex items-center gap-1.5 text-[11.5px] whitespace-nowrap ${atrasada ? 'text-[#ff4747]' : 'text-white/50'}`}>
+                                    <span className={`inline-flex items-center gap-1.5 text-[11.5px] whitespace-nowrap ${atrasada && isAdmin ? 'text-[#ff4747]' : 'text-white/50'}`}>
                                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                                         <rect x="4" y="5" width="16" height="16" rx="2.5"/>
                                         <path d="M4 9h16M8 3v4M16 3v4"/>
                                       </svg>
-                                      {fmtDate(tarefa.data)}{atrasada && ' · em atraso'}
+                                      {fmtDate(tarefa.data)}{atrasada && isAdmin && ' · em atraso'}
                                     </span>
                                   ) : (
                                     <span className="text-[11.5px] text-white/30">Sem data</span>
