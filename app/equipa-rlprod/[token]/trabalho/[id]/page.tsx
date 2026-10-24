@@ -21,6 +21,9 @@ const CARD = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/75 backdrop-blu
 
 type Envio = { id: string; link: string; nota: string | null; enviadoEm: string }
 
+// O texto do briefing/guião vem por vezes com marcas de Markdown (**negrito**, - [ ] caixas)
+const limpa = (t?: string | null) => (t ?? '').replace(/\*\*/g, '').replace(/^\s*-\s*\[[ xX]\]\s*/gm, '').replace(/^#+\s*/gm, '').trim()
+
 export default async function FichaTrabalho({ params }: { params: Promise<{ token: string; id: string }> }) {
   const { token, id } = await params
   if (!/^[0-9a-f]{32}$/.test(token)) notFound()
@@ -108,7 +111,7 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
               {itens.map((i, n) => (
                 <div key={n}>
                   <p className="rlp-m text-[9px] text-[#a9c1ff]">{i.label}</p>
-                  <p className="mt-1 text-[14px] leading-relaxed text-white/75 whitespace-pre-line">{i.desc}</p>
+                  <p className="mt-1 text-[14px] leading-relaxed text-white/75 whitespace-pre-line">{limpa(i.desc)}</p>
                 </div>
               ))}
             </div>
@@ -119,7 +122,7 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
                 <h3 className="rlp-t text-[21px] leading-tight">{s.titulo || 'Sessão de briefing'}</h3>
                 <span className="rlp-m text-[9px] text-white/45">{s.data ? lerData(s.data)?.toLocaleDateString('pt-PT') ?? s.data : ''}</span>
               </div>
-              {s.resumo && <p className="mt-3 text-[14px] leading-relaxed text-white/75 whitespace-pre-line">{s.resumo}</p>}
+              {s.resumo && <p className="mt-3 text-[14px] leading-relaxed text-white/75 whitespace-pre-line">{limpa(s.resumo)}</p>}
               {!!s.objetivos?.length && (
                 <ul className="mt-3 grid gap-1.5">
                   {s.objetivos.map((o, n) => <li key={n} className="flex gap-2 text-[13.5px] text-white/75"><span className="text-[#5a8bff]">›</span>{o}</li>)}
@@ -141,7 +144,7 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
             <h2 className="rlp-t text-[30px] leading-none border-b border-white/[0.08] pb-3">Guião criativo</h2>
             {(pj.storytelling || pj.palavras || pj.tom) && (
               <div className={`${CARD} mt-4 p-5 grid gap-3`}>
-                {pj.storytelling && <p className="text-[14px] leading-relaxed text-white/75 whitespace-pre-line">{pj.storytelling}</p>}
+                {pj.storytelling && <p className="text-[14px] leading-relaxed text-white/75 whitespace-pre-line">{limpa(pj.storytelling)}</p>}
                 {pj.palavras && <p className="text-[13px] text-white/60"><span className="rlp-m text-[9px] text-[#a9c1ff] mr-2">Palavras-chave</span>{pj.palavras}</p>}
                 {pj.tom && <p className="text-[13px] text-white/60"><span className="rlp-m text-[9px] text-[#a9c1ff] mr-2">Tom</span>{pj.tom}</p>}
               </div>
@@ -151,7 +154,7 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
                 {senas.map((s, n) => (
                   <li key={n} className="flex gap-3 px-5 py-3 text-[13.5px] text-white/75">
                     <span className="rlp-m w-6 shrink-0 text-[9px] text-white/40 pt-1">{String(n + 1).padStart(2, '0')}</span>
-                    <span>{s.titulo}{s.texto && <span className="block text-white/55">{s.texto}</span>}</span>
+                    <span>{limpa(s.titulo)}{s.texto && <span className="block text-white/55 whitespace-pre-line">{limpa(s.texto)}</span>}</span>
                   </li>
                 ))}
               </ol>
@@ -161,8 +164,8 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
                 {storyboard.map((c, n) => (
                   <article key={c.id ?? n} className={`${CARD} p-4`}>
                     <p className="rlp-m text-[8.5px] text-white/40">Cena {n + 1}{c.duracao ? ` · ${c.duracao}` : ''}</p>
-                    <p className="rlp-t mt-1 text-[17px] leading-tight">{c.momento || 'Cena'}</p>
-                    {c.descricao && <p className="mt-1.5 text-[13px] text-white/60 whitespace-pre-line">{c.descricao}</p>}
+                    <p className="rlp-t mt-1 text-[17px] leading-tight">{limpa(c.momento) || 'Cena'}</p>
+                    {c.descricao && <p className="mt-1.5 text-[13px] text-white/60 whitespace-pre-line">{limpa(c.descricao)}</p>}
                   </article>
                 ))}
               </div>
