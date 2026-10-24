@@ -149,6 +149,29 @@ export default function PagamentosClient({ projeto: initial, isAdmin, contratoAs
 
   const cancel = () => { setProjeto(initial); setIsEditing(false) }
 
+  /* ── Validar um pagamento registado: marca a prestação do plano como paga ── */
+  const [escolha, setEscolha]     = useState<Record<number, number>>({})
+  const [validando, setValidando] = useState<number | null>(null)
+  const pendentes = projeto.pagamentos.map((pg, i) => ({ pg, i })).filter(x => x.pg.estado !== 'pago')
+
+  const validar = async (regIdx: number) => {
+    const pagIdx = escolha[regIdx] ?? pendentes[0]?.i
+    if (pagIdx === undefined) return
+    const reg = registos[regIdx]
+    const pagamentos = projeto.pagamentos.map((pg, i) => i === pagIdx ? { ...pg, estado: 'pago' as const, data: pg.data || reg.data } : pg)
+    const registosPagamento = registos.map((r, i) => i === regIdx ? { ...r, validado: true, prestacao: projeto.pagamentos[pagIdx].descricao } : r)
+    setValidando(regIdx)
+    try {
+      const res = await fetch(`/api/media-portal/${projeto.ref}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pagamentos, registosPagamento }),
+      })
+      if (res.ok) { setProjeto(p => ({ ...p, pagamentos })); setRegistos(registosPagamento) }
+      else alert('Não foi possível validar. Tenta outra vez.')
+    } catch { alert('Erro de ligação.') }
+    setValidando(null)
+  }
+
   const updatePag = (idx: number, field: string, value: string | number) =>
     setProjeto(p => ({
       ...p,
@@ -371,8 +394,9 @@ export default function PagamentosClient({ projeto: initial, isAdmin, contratoAs
             <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Recebido</p>
             <h2 className="rlp-t mt-1 mb-4 text-[24px]">Histórico de pagamentos</h2>
             <div className={`${CARTAO} divide-y divide-white/[0.07] overflow-hidden`}>
-              {[...registos].reverse().map((r, i) => (
-                <div key={i} className="px-4 py-3.5 sm:px-5 flex items-center justify-between gap-3">
+              {[...registos].map((r, regIdx) => ({ r, regIdx })).reverse().map(({ r, regIdx }, i) => (
+                <div key={i} className="px-4 py-3.5 sm:px-5">
+                <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <span className="w-2 h-2 rounded-full bg-[#2e6cf6] shrink-0" />
                     <div className="min-w-0">
@@ -393,6 +417,33 @@ export default function PagamentosClient({ projeto: initial, isAdmin, contratoAs
                       </a>
                     )}
                   </div>
+                </div>
+                {/* Estado da confirmação (o cliente vê; o admin valida aqui) */}
+                <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-5">
+                  {r.validado ? (
+                    <span className="rlp-m rounded-full border border-[#2e6cf6] bg-[#2e6cf6]/20 px-2.5 py-1 text-[8.5px] text-[#a9c1ff]">
+                      ✓ Confirmado pela RL PROD{r.prestacao ? ` · ${r.prestacao}` : ''}
+                    </span>
+                  ) : (
+                    <span className="rlp-m rounded-full border border-white/20 px-2.5 py-1 text-[8.5px] text-white/55">A confirmar</span>
+                  )}
+                  {isAdmin && !r.validado && pendentes.length > 0 && (
+                    <span className="flex flex-wrap items-center gap-2">
+                      <select value={escolha[regIdx] ?? pendentes[0].i}
+                        onChange={e => setEscolha(s => ({ ...s, [regIdx]: Number(e.target.value) }))}
+                        className="rounded-md border border-white/[0.14] bg-[#00141f] px-2 py-1 text-[12.5px] text-white focus:outline-none focus:border-[#2e6cf6]">
+                        {pendentes.map(({ pg, i }) => <option key={i} value={i}>{pg.descricao} · {eur(pg.valor)}</option>)}
+                      </select>
+                      <button type="button" onClick={() => validar(regIdx)} disabled={validando === regIdx}
+                        className="rounded-md bg-[#2e6cf6] hover:bg-[#3d79ff] px-3 py-1 text-[12.5px] text-white disabled:opacity-50">
+                        {validando === regIdx ? 'A validar…' : 'Validar'}
+                      </button>
+                    </span>
+                  )}
+                  {isAdmin && !r.validado && pendentes.length === 0 && (
+                    <span className="text-[12px] text-white/45">Todas as prestações já estão pagas.</span>
+                  )}
+                </div>
                 </div>
               ))}
             </div>

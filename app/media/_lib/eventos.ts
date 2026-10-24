@@ -51,7 +51,9 @@ export type LeadMedia = { id: string; nome: string | null; empresa: string | nul
 export async function lerFontesMedia(supabase: SupabaseClient) {
   const [{ data: portais }, { data: leads }] = await Promise.all([
     // Só os campos precisos do JSON (poupar egress)
-    supabase.from('media_portais').select('ref, nome:dados->>nome, filmagem:dados->>dataFilmagem, entrega:dados->>dataEntrega, pagamentos:dados->pagamentos'),
+    // Portais marcados como teste (dados.teste = true) não contam
+    supabase.from('media_portais').select('ref, nome:dados->>nome, filmagem:dados->>dataFilmagem, entrega:dados->>dataEntrega, pagamentos:dados->pagamentos')
+      .or('dados->>teste.is.null,dados->>teste.neq.true'),
     supabase.from('media_leads').select('id, nome, empresa, reuniao_data').neq('reuniao_data', ''),
   ])
   return { portais: (portais ?? []) as unknown as PortalMedia[], leads: (leads ?? []) as LeadMedia[] }

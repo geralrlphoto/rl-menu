@@ -1,15 +1,21 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { exigeAdmin } from '@/lib/api-guard'
 
+// Contratos dos eventos: bucket PRIVADO "contratos" (têm NIF e moradas).
+// O link que se guarda é /api/contrato-ficheiro?p=…, que só abre com sessão de admin.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://portal.rlphotovideo.pt'
 
 const NOTION_TOKEN = process.env.NOTION_TOKEN!
 const BUCKET = 'contratos'
 
 export async function POST(req: Request) {
+  const barrado = exigeAdmin(req)
+  if (barrado) return barrado
   try {
     const form = await req.formData()
     const file = form.get('file') as File | null
@@ -17,8 +23,8 @@ export async function POST(req: Request) {
 
     if (!file) return NextResponse.json({ error: 'Ficheiro em falta' }, { status: 400 })
 
-    const ext = file.name.split('.').pop() ?? 'pdf'
-    const fileName = `${eventId ?? 'contrato'}-${Date.now()}.${ext}`
+    const ext = (file.name.split('.').pop() ?? 'pdf').toLowerCase().replace(/[^a-z0-9]/g, '') || 'pdf'
+    const fileName = `${(eventId ?? 'contrato').replace(/[^A-Za-z0-9_-]/g, '')}-${Date.now()}.${ext}`
     const buffer = Buffer.from(await file.arrayBuffer())
 
     // Upload para Supabase Storage
@@ -33,9 +39,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: uploadError.message }, { status: 500 })
     }
 
-    // URL pública
-    const { data: urlData } = supabase.storage.from(BUCKET).getPublicUrl(fileName)
-    const publicUrl = urlData.publicUrl
+    // Link fixo da app (abre só com sessão de admin)
+    const publicUrl = `${BASE_URL}/api/contrato-ficheiro?p=${encodeURIComponent(fileName)}`
 
     // Guardar no Notion se tiver eventId
     if (eventId) {

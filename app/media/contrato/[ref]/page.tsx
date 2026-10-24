@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 import ContratoEditBar from './ContratoEditBar'
 import AutoImprimir from './AutoImprimir'
 import { getClausula, type ClausulasMap } from './clausulas-defaults'
+import { COR, FONTE, FONTES_CSS } from '../../_lib/estilo'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,8 +24,12 @@ const PRESTADORA = {
   iban: 'PT50 0018 0003 6110 2844 0284 0204 5',
 }
 
-// Cor de destaque roxa
-const PURPLE = '#9B59D0'
+// Paleta do documento (papel claro, identidade rlprod.pt)
+const TINTA = '#10202d'
+const MUTED = COR.cinza
+const AZUL = COR.azul
+const NOITE = COR.noite
+const LINHA = '#dde3e9'
 
 export default async function ContratoPage({ params }: Props) {
   const { ref } = await params
@@ -47,24 +52,27 @@ export default async function ContratoPage({ params }: Props) {
   const clausulasRemovidas: string[] = data.dados.clausulasRemovidas ?? []
   const clausulasCustom: { id: string; titulo: string; texto: string }[] = data.dados.clausulasCustom ?? []
 
-  // Renderiza linhas de uma cláusula — "1." → bold, resto → ClauseText
+  // Renderiza linhas de uma cláusula: "1." a negrito, resto como ClauseText
   const renderLines = (text: string) =>
     text.split('\n').filter(Boolean).map((line, i) =>
       /^\d+\./.test(line.trim())
-        ? <BodyText key={i} style={{ fontWeight: 600, marginTop: 12 }}>{line}</BodyText>
+        ? <BodyText key={i} style={{ fontWeight: 600, marginTop: 14, color: TINTA }}>{line}</BodyText>
         : <ClauseText key={i}>{line}</ClauseText>
     )
 
   // Renderiza cláusula com override do Supabase ou texto padrão
   const rc = (key: string) => renderLines(getClausula(clausulas, key))
 
-  // Renderiza cláusula com título — devolve null se removida
-  const rct = (key: string, titulo: string) =>
+  // Renderiza cláusula com título (devolve null se removida)
+  const rct = (key: string, titulo: string, num?: string) =>
     clausulasRemovidas.includes(key) ? null : (
-      <>{<ClauseTitle>{titulo}</ClauseTitle>}{rc(key)}</>
+      <section className="clausula">
+        <ClauseTitle num={num}>{titulo}</ClauseTitle>
+        {rc(key)}
+      </section>
     )
 
-  // Renderiza cláusula sem título — devolve null se removida
+  // Renderiza cláusula sem título (devolve null se removida)
   const rcm = (key: string) => clausulasRemovidas.includes(key) ? null : rc(key)
 
   const valorNum = parseFloat(String(ficha.orcamento || '').replace(/[^\d.,]/g, '').replace(',', '.')) || 0
@@ -87,8 +95,11 @@ export default async function ContratoPage({ params }: Props) {
   const clienteNome = ficha.nome || ficha.empresa || refUp
   const clienteEmpresa = ficha.empresa || ficha.nome || ''
 
+  const dataDoc = contrato.geradoEm || new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
+
   return (
     <>
+      <link rel="stylesheet" href={FONTES_CSS} precedence="default" />
       <AutoImprimir />
       <ContratoEditBar
         refUp={refUp}
@@ -101,314 +112,291 @@ export default async function ContratoPage({ params }: Props) {
       />
 
       <style>{`
-        @media print {
-          @page { margin: 0; size: A4; }
-          body { margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-          .no-print { display: none !important; }
-          .page-break { page-break-before: always; break-before: page; }
+        .contrato-mesa { background: #e7ebef; padding: 40px 16px 64px; min-height: 100vh; }
+        .contrato-papel {
+          max-width: 820px; margin: 0 auto; background: #ffffff; color: ${TINTA};
+          box-shadow: 0 1px 2px rgba(16,32,45,0.08), 0 12px 40px rgba(16,32,45,0.14);
+          font-family: ${FONTE.texto};
         }
-        .page-break { page-break-before: always; break-before: page; }
-        * { box-sizing: border-box; }
+        .contrato-papel *, .contrato-papel *::before, .contrato-papel *::after { box-sizing: border-box; }
+        .contrato-corpo { padding: 48px 64px 32px; }
+        .contrato-banda { padding: 36px 64px 32px; }
+        .contrato-partes { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+        .contrato-assin { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; }
+        .clausula { margin-top: 30px; }
+        .clausula-titulo { break-after: avoid; page-break-after: avoid; break-inside: avoid; page-break-inside: avoid; }
+        .contrato-papel p, .contrato-papel li { orphans: 3; widows: 3; }
+        .bloco-inteiro { break-inside: avoid; page-break-inside: avoid; }
+        .quebra { break-before: page; page-break-before: always; }
+        @media (max-width: 640px) {
+          .contrato-mesa { padding: 0; }
+          .contrato-corpo { padding: 32px 20px 24px; }
+          .contrato-banda { padding: 28px 20px 24px; }
+          .contrato-partes, .contrato-assin { grid-template-columns: 1fr; gap: 24px; }
+        }
+        @media print {
+          @page {
+            size: A4; margin: 18mm 18mm 20mm;
+            @bottom-left { content: "RL PROD · Contrato de Prestação de Serviços"; font: 7.5pt 'JetBrains Mono', monospace; color: #7c8893; }
+            @bottom-right { content: "Página " counter(page) " de " counter(pages); font: 7.5pt 'JetBrains Mono', monospace; color: #7c8893; }
+          }
+          html, body { background: #ffffff !important; margin: 0; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .no-print { display: none !important; }
+          .contrato-mesa { background: none; padding: 0; min-height: 0; }
+          .contrato-papel { max-width: none; box-shadow: none; color: #000; }
+          .contrato-corpo { padding: 10mm 0 0; }
+          .contrato-banda { padding: 9mm 10mm 8mm; }
+          .contrato-banda, .contrato-banda * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+          .contrato-corpo h2, .contrato-corpo h3, .contrato-corpo p, .contrato-corpo li { color: #000 !important; }
+          .contrato-rodape { margin-top: 12mm; }
+        }
       `}</style>
 
-      {/* ══════════════════════════════════════════
-          CAPA — fundo preto total
-      ══════════════════════════════════════════ */}
-      <div style={{
-        background: '#000000',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        fontFamily: "'Arial Black', Arial, sans-serif",
-        padding: '60px 64px',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Logo branco topo centro */}
-        <div style={{ textAlign: 'center' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-rl-prod-branco.png"
-            alt="RL PROD"
-            style={{ width: 220, height: 'auto', objectFit: 'contain' }}
-          />
-        </div>
+      <div className="contrato-mesa">
+        <article className="contrato-papel">
 
-        {/* Slogan centro */}
-        <div style={{ textAlign: 'left', alignSelf: 'flex-start' }}>
-          <div style={{
-            fontSize: 28,
-            fontWeight: 400,
-            color: PURPLE,
-            fontStyle: 'italic',
-            fontFamily: 'Arial, sans-serif',
-            lineHeight: 1.3,
-          }}>
-            MORE THAN A PRODUCT,
-          </div>
-          <div style={{
-            fontSize: 28,
-            fontWeight: 900,
-            color: '#ffffff',
-            fontFamily: "'Arial Black', Arial, sans-serif",
-            lineHeight: 1.3,
-          }}>
-            AN EXPERIENCE.
-          </div>
-        </div>
-
-        {/* Título do contrato — fundo */}
-        <div style={{ textAlign: 'center' }}>
-          <div style={{
-            fontSize: 13,
-            fontWeight: 700,
-            color: '#ffffff',
-            letterSpacing: 3,
-            textTransform: 'uppercase',
-            fontFamily: "'Arial Black', Arial, sans-serif",
-            marginBottom: 10,
-          }}>
-            CONTRATO DE PRESTAÇÃO DE SERVIÇOS
-          </div>
-          <div style={{
-            fontSize: 18,
-            fontWeight: 900,
-            color: '#ffffff',
-            letterSpacing: 2,
-            textTransform: 'uppercase',
-            fontFamily: "'Arial Black', Arial, sans-serif",
-          }}>
-            ({clienteNome.toUpperCase()})
-          </div>
-          <div style={{
-            marginTop: 16,
-            fontSize: 10,
-            color: 'rgba(255,255,255,0.4)',
-            letterSpacing: 3,
-            fontFamily: 'Arial, sans-serif',
-          }}>
-            {contrato.ref} · {contrato.geradoEm}
-          </div>
-        </div>
-      </div>
-
-      {/* ══════════════════════════════════════════
-          PÁG 2 — Partes Contratantes
-      ══════════════════════════════════════════ */}
-      <ContentPage purple={PURPLE}>
-        <SectionTitle>CONTRATANTE SEGUNDA OUTORGANTE:</SectionTitle>
-        <InfoBlock>
-          {clienteEmpresa && <InfoLine label="EMPRESA" value={clienteEmpresa.toUpperCase()} />}
-          {ficha.representanteLegal && <InfoLine label="LEGAL REPRESENTANTE" value="" />}
-          {ficha.representanteLegal && <InfoLine label="NOME" value={ficha.representanteLegal.toUpperCase()} />}
-          {ficha.nif && <InfoLine label="NIF" value={ficha.nif} />}
-          {ficha.morada && <InfoLine label="MORADA" value={ficha.morada.toUpperCase()} />}
-          {ficha.telefone && <InfoLine label="CONTATO" value={ficha.telefone} />}
-          {ficha.email && <InfoLine label="EMAIL" value={ficha.email} />}
-        </InfoBlock>
-
-        <SectionTitle>CONTRATADA - PRIMEIRA OUTORGANTE:</SectionTitle>
-        <InfoBlock>
-          <InfoLine label="NOME" value={PRESTADORA.nome} />
-          <InfoLine label="NIF" value={PRESTADORA.nif} />
-          <InfoLine label="CAE" value={PRESTADORA.cae} />
-          <InfoLine label="ENDEREÇO" value={PRESTADORA.morada} />
-          <InfoLine label="E-MAIL" value={PRESTADORA.email} />
-          <InfoLine label="TELEFONE" value={PRESTADORA.telefone} />
-        </InfoBlock>
-
-        <BodyText>
-          Por este acordo, as partes têm entre si, contratante e contratado o que segue. A CONTRATADA é ajustada, para realizar os serviços a seguir discriminados com seus respectivos valores, o serviço de videografia e fotografia será realizado pela RL PROD - Photography & Video.
-        </BodyText>
-      </ContentPage>
-
-      {/* ══════════════════════════════════════════
-          PÁG 3 — Considerandos + Cláusulas 1ª e 2ª início
-      ══════════════════════════════════════════ */}
-      <ContentPage purple={PURPLE}>
-        {rcm('considerandos')}
-        {rct('c1', 'PRIMEIRA CLÁUSULA')}
-        {rct('c2_servicos', 'SEGUNDA CLÁUSULA')}
-      </ContentPage>
-
-      {/* ══════════════════════════════════════════
-          PÁG 4 — Segunda Cláusula cont. + Terceira
-      ══════════════════════════════════════════ */}
-      <ContentPage purple={PURPLE}>
-        {rcm('c2_cancelamento')}
-        {rct('c3', 'TERCEIRA CLÁUSULA')}
-      </ContentPage>
-
-      {/* ══════════════════════════════════════════
-          PÁG 5 — Quarta a Nona Cláusula
-      ══════════════════════════════════════════ */}
-      <ContentPage purple={PURPLE}>
-        {rct('c4', 'QUARTA CLÁUSULA')}
-        {rct('c5', 'QUINTA CLÁUSULA')}
-        {rct('c6', 'SEXTA CLÁUSULA')}
-        {rct('c7', 'SÉTIMA CLÁUSULA')}
-        {rct('c8', 'OITAVA CLÁUSULA')}
-        {rct('c9', 'NONA CLÁUSULA')}
-      </ContentPage>
-
-      {/* ══════════════════════════════════════════
-          PÁG 6 — Décima a Décima Segunda + Serviços
-      ══════════════════════════════════════════ */}
-      <ContentPage purple={PURPLE}>
-        {rct('c10', 'DÉCIMA CLÁUSULA')}
-        {rct('c11', 'DÉCIMA PRIMEIRA CLÁUSULA')}
-        {rct('c12', 'DÉCIMA SEGUNDA CLÁUSULA')}
-        {rct('dos_servicos', 'DOS SERVIÇOS CONTRATADOS')}
-        <BodyText style={{ fontWeight: 600, marginTop: 20 }}>Preços e métodos de pagamento:</BodyText>
-        {valorNum > 0 ? (
-          <>
-            <ClauseText>a) Pelo serviço contratado, o cliente pagará à prestadora o montante de {valorTotal} Euros, ao qual acresce IVA à taxa legal em vigor.</ClauseText>
-            <ClauseText>b) O montante indicado no número anterior, será pago através de transferência bancária, para o IBAN {PRESTADORA.iban}, da seguinte forma:</ClauseText>
-            <div style={{ paddingLeft: 20, marginBottom: 10 }}>
-              <ClauseText>— Em duas prestações, de acordo com as seguintes fases de execução do serviço:</ClauseText>
-              <ClauseText>— 80% (oitenta por cento) — {val80} € — com a adjudicação do serviço, na data de celebração do presente contrato;</ClauseText>
-              <ClauseText>— 20% (vinte por cento) — {val20} € — passados sessenta dias após o primeiro dia do contrato.</ClauseText>
+          {/* ── Capa: banda azul-noite ── */}
+          <header className="contrato-banda" style={{ background: NOITE, color: '#ffffff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24, flexWrap: 'wrap' }}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-rl-prod-branco.png" alt="RL PROD" style={{ height: 40, width: 'auto', objectFit: 'contain' }} />
+              <div style={{ textAlign: 'right' }}>
+                <Etiqueta cor="rgba(255,255,255,0.55)">Referência</Etiqueta>
+                <div style={{ fontFamily: FONTE.mono, fontSize: 13, letterSpacing: 1, marginTop: 4 }}>{contrato.ref || refUp}</div>
+              </div>
             </div>
-          </>
-        ) : (
-          <ClauseText>a) O valor dos serviços será acordado e formalizado em proposta anexa a este contrato.</ClauseText>
-        )}
-        <ClauseText>c) Qualquer serviço adicional, não compreendido neste contrato, poderá ser executado mediante apresentação de orçamento prévio ao cliente e aprovação.</ClauseText>
-        <ClauseText>d) O não pagamento ou atraso de qualquer uma das prestações, implica a suspensão da execução do serviço, podendo a prestadora proceder à cobrança do remanescente do valor em dívida, conforme fase de desenvolvimento.</ClauseText>
-      </ContentPage>
 
-      {/* ══════════════════════════════════════════
-          PÁG 7 — Confidencialidade + Lei + Cláusulas Custom
-      ══════════════════════════════════════════ */}
-      <ContentPage purple={PURPLE}>
-        {rct('confidencialidade', 'CONFIDENCIALIDADE')}
-        {rct('dados_pessoais', 'DADOS PESSOAIS')}
-        {rct('lei_foro', 'LEI E FORO')}
-        {rct('disposicoes_finais', 'DISPOSIÇÕES FINAIS')}
+            <div style={{ marginTop: 40 }}>
+              <Etiqueta cor={COR.azulClaro}>Documento contratual</Etiqueta>
+              <h1 style={{
+                fontFamily: FONTE.titulo, fontWeight: 700, textTransform: 'uppercase',
+                fontSize: 34, lineHeight: 1.05, letterSpacing: 0.5, margin: '10px 0 0',
+              }}>
+                Contrato de Prestação de Serviços
+              </h1>
+              <div style={{ width: 56, height: 3, background: AZUL, margin: '16px 0 14px' }} />
+              <div style={{ fontFamily: FONTE.titulo, fontWeight: 600, textTransform: 'uppercase', fontSize: 18, letterSpacing: 1, color: COR.azulPalido }}>
+                {clienteNome}
+              </div>
+            </div>
 
-        {/* Cláusulas adicionadas pelo admin */}
-        {clausulasCustom.map(c => (
-          <div key={c.id}>
-            <ClauseTitle>{c.titulo.toUpperCase()}</ClauseTitle>
-            {renderLines(c.texto)}
-          </div>
-        ))}
-      </ContentPage>
+            <div style={{ display: 'flex', gap: 40, marginTop: 28, flexWrap: 'wrap' }}>
+              <div>
+                <Etiqueta cor="rgba(255,255,255,0.55)">Data</Etiqueta>
+                <div style={{ fontSize: 13, marginTop: 4 }}>{dataDoc}</div>
+              </div>
+              <div>
+                <Etiqueta cor="rgba(255,255,255,0.55)">Prestadora</Etiqueta>
+                <div style={{ fontSize: 13, marginTop: 4 }}>RL PROD · Photography &amp; Video</div>
+              </div>
+            </div>
+          </header>
 
-      {/* ══════════════════════════════════════════
-          PÁG 8 — ANEXO I
-      ══════════════════════════════════════════ */}
-      <ContentPage purple={PURPLE}>
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ fontWeight: 900, fontSize: 16, letterSpacing: 4, color: '#000', fontFamily: "'Arial Black', Arial, sans-serif", textTransform: 'uppercase' }}>ANEXO I</div>
-          <div style={{ fontWeight: 700, fontSize: 13, letterSpacing: 2, color: '#333', marginTop: 4, textTransform: 'uppercase' }}>Contrato de Prestação de Serviços</div>
-        </div>
+          <div className="contrato-corpo tinta">
 
-        {rc('anexo_intro')}
+            {/* ── Partes contratantes ── */}
+            <SecaoTitulo>Partes contratantes</SecaoTitulo>
+            <div className="contrato-partes bloco-inteiro">
+              <ParteBloco papel="Contratada · Primeira Outorgante" titulo="Prestadora">
+                <InfoLine label="Nome" value={PRESTADORA.nome} />
+                <InfoLine label="NIF" value={PRESTADORA.nif} />
+                <InfoLine label="CAE" value={PRESTADORA.cae} />
+                <InfoLine label="Endereço" value={PRESTADORA.morada} />
+                <InfoLine label="E-mail" value={PRESTADORA.email} />
+                <InfoLine label="Telefone" value={PRESTADORA.telefone} />
+              </ParteBloco>
+              <ParteBloco papel="Contratante · Segunda Outorgante" titulo="Cliente">
+                {clienteEmpresa && <InfoLine label="Empresa" value={clienteEmpresa.toUpperCase()} />}
+                {ficha.representanteLegal && <InfoLine label="Representante legal" value={ficha.representanteLegal.toUpperCase()} />}
+                {ficha.nif && <InfoLine label="NIF" value={ficha.nif} />}
+                {ficha.morada && <InfoLine label="Morada" value={ficha.morada.toUpperCase()} />}
+                {ficha.telefone && <InfoLine label="Contacto" value={ficha.telefone} />}
+                {ficha.email && <InfoLine label="E-mail" value={ficha.email} />}
+              </ParteBloco>
+            </div>
 
-        <BodyText style={{ fontWeight: 700, marginTop: 20 }}>Que contempla:</BodyText>
-        {servicosList.length > 0 ? (
-          <ul style={{ fontSize: 13, color: '#333', lineHeight: 2, paddingLeft: 24, marginBottom: 16 }}>
-            {servicosList.map((s, i) => <li key={i}>{s}</li>)}
-          </ul>
-        ) : (
-          <ClauseText>A definir em proposta.</ClauseText>
-        )}
+            <div style={{ marginTop: 28 }}>
+              <BodyText>
+                Por este acordo, as partes têm entre si, contratante e contratado o que segue. A CONTRATADA é ajustada, para realizar os serviços a seguir discriminados com seus respectivos valores, o serviço de videografia e fotografia será realizado pela RL PROD - Photography & Video.
+              </BodyText>
+            </div>
 
-        {profissionaisList.length > 0 && (
-          <>
-            <BodyText style={{ fontWeight: 700, marginTop: 16 }}>Profissionais envolvidos:</BodyText>
-            <ul style={{ fontSize: 13, color: '#333', lineHeight: 2, paddingLeft: 24, marginBottom: 16 }}>
-              {profissionaisList.map((p, i) => <li key={i}>{p}</li>)}
-            </ul>
-          </>
-        )}
+            {/* ── Considerandos e cláusulas ── */}
+            <div style={{ marginTop: 36 }}>
+              <SecaoTitulo>Cláusulas</SecaoTitulo>
+              {rcm('considerandos')}
+            </div>
+            {rct('c1', 'Primeira Cláusula', '1.ª')}
+            {rct('c2_servicos', 'Segunda Cláusula', '2.ª')}
+            {rcm('c2_cancelamento')}
+            {rct('c3', 'Terceira Cláusula', '3.ª')}
+            {rct('c4', 'Quarta Cláusula', '4.ª')}
+            {rct('c5', 'Quinta Cláusula', '5.ª')}
+            {rct('c6', 'Sexta Cláusula', '6.ª')}
+            {rct('c7', 'Sétima Cláusula', '7.ª')}
+            {rct('c8', 'Oitava Cláusula', '8.ª')}
+            {rct('c9', 'Nona Cláusula', '9.ª')}
+            {rct('c10', 'Décima Cláusula', '10.ª')}
+            {rct('c11', 'Décima Primeira Cláusula', '11.ª')}
+            {rct('c12', 'Décima Segunda Cláusula', '12.ª')}
+            {rct('dos_servicos', 'Dos Serviços Contratados')}
 
-        {valorNum > 0 && (
-          <div style={{
-            marginTop: 20,
-            padding: '12px 20px',
-            background: '#000',
-            display: 'inline-block',
-          }}>
-            <span style={{ fontSize: 14, color: '#fff', fontWeight: 900, letterSpacing: 2, fontFamily: "'Arial Black', Arial, sans-serif" }}>
-              INVESTIMENTO = {valorTotal} EUROS + IVA
-            </span>
-          </div>
-        )}
+            <section className="clausula">
+              <div className="clausula-titulo">
+                <BodyText style={{ fontWeight: 600, color: TINTA }}>Preços e métodos de pagamento:</BodyText>
+              </div>
+              {valorNum > 0 ? (
+                <>
+                  <ClauseText>a) Pelo serviço contratado, o cliente pagará à prestadora o montante de {valorTotal} Euros, ao qual acresce IVA à taxa legal em vigor.</ClauseText>
+                  <ClauseText>b) O montante indicado no número anterior, será pago através de transferência bancária, para o IBAN {PRESTADORA.iban}, da seguinte forma:</ClauseText>
+                  <div style={{ paddingLeft: 18, margin: '4px 0 12px', borderLeft: `2px solid ${LINHA}` }}>
+                    <ClauseText>— Em duas prestações, de acordo com as seguintes fases de execução do serviço:</ClauseText>
+                    <ClauseText>— 80% (oitenta por cento) — {val80} € — com a adjudicação do serviço, na data de celebração do presente contrato;</ClauseText>
+                    <ClauseText>— 20% (vinte por cento) — {val20} € — passados sessenta dias após o primeiro dia do contrato.</ClauseText>
+                  </div>
+                </>
+              ) : (
+                <ClauseText>a) O valor dos serviços será acordado e formalizado em proposta anexa a este contrato.</ClauseText>
+              )}
+              <ClauseText>c) Qualquer serviço adicional, não compreendido neste contrato, poderá ser executado mediante apresentação de orçamento prévio ao cliente e aprovação.</ClauseText>
+              <ClauseText>d) O não pagamento ou atraso de qualquer uma das prestações, implica a suspensão da execução do serviço, podendo a prestadora proceder à cobrança do remanescente do valor em dívida, conforme fase de desenvolvimento.</ClauseText>
+            </section>
 
-        {metodoPagamentoList.length > 0 && (
-          <div style={{ marginTop: 20 }}>
-            <BodyText style={{ fontWeight: 700 }}>Plano de Pagamentos:</BodyText>
-            <div style={{ borderLeft: '4px solid #000', paddingLeft: 16, marginTop: 8 }}>
-              {metodoPagamentoList.map((linha, i) => (
-                <p key={i} style={{ fontSize: 13, color: '#333', lineHeight: 2, fontFamily: 'Arial, sans-serif' }}>
-                  — {linha}
-                </p>
-              ))}
-              <p style={{ fontSize: 12, color: '#555', marginTop: 8, fontFamily: 'Arial, sans-serif' }}>
-                IBAN: {PRESTADORA.iban}
+            {rct('confidencialidade', 'Confidencialidade')}
+            {rct('dados_pessoais', 'Dados Pessoais')}
+            {rct('lei_foro', 'Lei e Foro')}
+            {rct('disposicoes_finais', 'Disposições Finais')}
+
+            {/* Cláusulas adicionadas pelo admin */}
+            {clausulasCustom.map(c => (
+              <section key={c.id} className="clausula">
+                <ClauseTitle>{c.titulo}</ClauseTitle>
+                {renderLines(c.texto)}
+              </section>
+            ))}
+
+            {/* ── Anexo I ── */}
+            <div className="quebra" style={{ paddingTop: 48 }}>
+              <div className="clausula-titulo" style={{ textAlign: 'center', marginBottom: 28 }}>
+                <Etiqueta cor={AZUL}>Anexo</Etiqueta>
+                <div style={{ fontFamily: FONTE.titulo, fontWeight: 700, fontSize: 28, letterSpacing: 2, textTransform: 'uppercase', color: TINTA, marginTop: 4 }}>
+                  Anexo I
+                </div>
+                <div style={{ fontFamily: FONTE.titulo, fontWeight: 600, fontSize: 14, letterSpacing: 2, textTransform: 'uppercase', color: MUTED, marginTop: 2 }}>
+                  Contrato de Prestação de Serviços
+                </div>
+                <div style={{ width: 40, height: 2, background: AZUL, margin: '14px auto 0' }} />
+              </div>
+
+              {rc('anexo_intro')}
+
+              <div className="clausula-titulo" style={{ marginTop: 22 }}>
+                <BodyText style={{ fontWeight: 600, color: TINTA }}>Que contempla:</BodyText>
+              </div>
+              {servicosList.length > 0 ? (
+                <ListaDoc itens={servicosList} />
+              ) : (
+                <ClauseText>A definir em proposta.</ClauseText>
+              )}
+
+              {profissionaisList.length > 0 && (
+                <>
+                  <div className="clausula-titulo" style={{ marginTop: 18 }}>
+                    <BodyText style={{ fontWeight: 600, color: TINTA }}>Profissionais envolvidos:</BodyText>
+                  </div>
+                  <ListaDoc itens={profissionaisList} />
+                </>
+              )}
+
+              {valorNum > 0 && (
+                <div className="bloco-inteiro" style={{
+                  marginTop: 24, padding: '16px 22px', background: '#f3f6fa',
+                  borderLeft: `4px solid ${AZUL}`, display: 'flex', justifyContent: 'space-between',
+                  alignItems: 'baseline', gap: 16, flexWrap: 'wrap',
+                }}>
+                  <Etiqueta cor={MUTED}>Investimento</Etiqueta>
+                  <span style={{ fontFamily: FONTE.titulo, fontWeight: 700, fontSize: 24, letterSpacing: 0.5, color: TINTA }}>
+                    {valorTotal} € <span style={{ fontSize: 15, fontWeight: 600, color: MUTED }}>+ IVA</span>
+                  </span>
+                </div>
+              )}
+
+              {metodoPagamentoList.length > 0 && (
+                <div className="bloco-inteiro" style={{ marginTop: 24 }}>
+                  <BodyText style={{ fontWeight: 600, color: TINTA }}>Plano de Pagamentos:</BodyText>
+                  <div style={{ borderLeft: `2px solid ${LINHA}`, paddingLeft: 16, marginTop: 6 }}>
+                    {metodoPagamentoList.map((linha, i) => (
+                      <ClauseText key={i}>— {linha}</ClauseText>
+                    ))}
+                    <p style={{ fontFamily: FONTE.mono, fontSize: 11, color: MUTED, marginTop: 8, letterSpacing: 0.5 }}>
+                      IBAN: {PRESTADORA.iban}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <p style={{ fontSize: 12.5, color: MUTED, marginTop: 24, fontStyle: 'italic', lineHeight: 1.6 }}>
+                {getClausula(clausulas, 'anexo_nota')}
               </p>
             </div>
-          </div>
-        )}
 
-        <p style={{ fontSize: 11, color: '#888', marginTop: 24, fontStyle: 'italic', lineHeight: 1.6 }}>
-          {getClausula(clausulas, 'anexo_nota')}
-        </p>
-      </ContentPage>
+            {/* ── Assinaturas ── */}
+            <section className="bloco-inteiro" style={{ marginTop: 44, paddingTop: 28, borderTop: `1px solid ${LINHA}` }}>
+              <SecaoTitulo>Assinaturas</SecaoTitulo>
+              <ClauseText>E por assim estarem ambas as partes de acordo, firmam o presente ANEXO I que integra o contrato principal, em duas vias de igual teor.</ClauseText>
 
-      {/* ══════════════════════════════════════════
-          PÁG 9 — Assinaturas
-      ══════════════════════════════════════════ */}
-      <ContentPage purple={PURPLE}>
-        <ClauseText>E por assim estarem ambas as partes de acordo, firmam o presente ANEXO I que integra o contrato principal, em duas vias de igual teor.</ClauseText>
+              <div style={{ margin: '18px 0 44px' }}>
+                <Etiqueta cor={MUTED}>Local e data</Etiqueta>
+                <p style={{ fontSize: 15, color: TINTA, marginTop: 6 }}>
+                  {ficha.localAssinatura || 'Lisboa'}, {dataDoc}.
+                </p>
+              </div>
 
-        <p style={{ fontSize: 13, color: '#333', margin: '24px 0 48px', lineHeight: 1.8 }}>
-          {ficha.localAssinatura || 'Lisboa'}, {contrato.geradoEm || new Date().toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })}.
-        </p>
+              <div className="contrato-assin">
+                {/* Cliente */}
+                <div>
+                  <Etiqueta cor={AZUL}>Cliente · Segunda Outorgante</Etiqueta>
+                  <div style={{ height: 64, borderBottom: `1.5px solid ${TINTA}` }} />
+                  <p style={{ fontFamily: FONTE.titulo, fontWeight: 700, fontSize: 16, textTransform: 'uppercase', letterSpacing: 0.5, color: TINTA, margin: '10px 0 2px' }}>
+                    {clienteNome}
+                  </p>
+                  {ficha.representanteLegal && (
+                    <p style={{ fontSize: 13, color: TINTA, marginBottom: 2 }}>{ficha.representanteLegal}</p>
+                  )}
+                  <Etiqueta cor={MUTED}>Representante Legal</Etiqueta>
+                  <div style={{
+                    marginTop: 22, border: `1px dashed ${LINHA}`, height: 90,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    <Etiqueta cor="#b9c2ca">Carimbo</Etiqueta>
+                  </div>
+                </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 60, marginTop: 40 }}>
-          {/* Cliente */}
-          <div>
-            <div style={{ marginBottom: 60, borderBottom: '2px solid #000', paddingBottom: 4 }}>
-              <span style={{ fontSize: 9, letterSpacing: 3, color: '#999', textTransform: 'uppercase' }}>Assinatura</span>
-            </div>
-            <p style={{ fontSize: 14, color: '#000', fontWeight: 900, fontFamily: "'Arial Black', Arial, sans-serif", textTransform: 'uppercase', marginBottom: 4 }}>
-              {(clienteNome).toUpperCase()}
-            </p>
-            {ficha.representanteLegal && (
-              <p style={{ fontSize: 12, color: '#555', marginBottom: 2 }}>{ficha.representanteLegal}</p>
-            )}
-            <p style={{ fontSize: 10, color: '#999', letterSpacing: 1, textTransform: 'uppercase' }}>Representante Legal</p>
-            {/* Caixa carimbo */}
-            <div style={{
-              marginTop: 28,
-              border: '1.5px solid #ccc',
-              height: 90,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+                {/* RL PROD */}
+                <div>
+                  <Etiqueta cor={AZUL}>Prestadora · Primeira Outorgante</Etiqueta>
+                  <div style={{ height: 64, borderBottom: `1.5px solid ${TINTA}` }} />
+                  <p style={{ fontFamily: FONTE.titulo, fontWeight: 700, fontSize: 16, textTransform: 'uppercase', letterSpacing: 0.5, color: TINTA, margin: '10px 0 2px' }}>
+                    RL PROD — Photography & Video
+                  </p>
+                  <p style={{ fontSize: 13, color: TINTA, marginBottom: 2 }}>Liliana Sofia Fernandes Barreto Gonçalves</p>
+                  <Etiqueta cor={MUTED}>Representante Legal</Etiqueta>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Rodapé ── */}
+            <footer className="contrato-rodape" style={{
+              marginTop: 48, paddingTop: 14, borderTop: `1px solid ${LINHA}`,
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap',
             }}>
-              <span style={{ fontSize: 9, color: '#ddd', letterSpacing: 4, textTransform: 'uppercase' }}>Carimbo</span>
-            </div>
+              <Etiqueta cor={MUTED}>www.rlprod.pt · {contrato.ref || refUp}</Etiqueta>
+              <Etiqueta cor={MUTED}>More than a product, an experience.</Etiqueta>
+            </footer>
           </div>
-
-          {/* RL PROD */}
-          <div>
-            <div style={{ marginBottom: 60, borderBottom: '2px solid #000', paddingBottom: 4 }}>
-              <span style={{ fontSize: 9, letterSpacing: 3, color: '#999', textTransform: 'uppercase' }}>Assinatura</span>
-            </div>
-            <p style={{ fontSize: 14, color: '#000', fontWeight: 900, fontFamily: "'Arial Black', Arial, sans-serif", textTransform: 'uppercase', marginBottom: 4 }}>
-              RL PROD — Photography & Video
-            </p>
-            <p style={{ fontSize: 12, color: '#555', marginBottom: 2 }}>Liliana Sofia Fernandes Barreto Gonçalves</p>
-            <p style={{ fontSize: 10, color: '#999', letterSpacing: 1, textTransform: 'uppercase' }}>Representante Legal</p>
-          </div>
-        </div>
-      </ContentPage>
+        </article>
+      </div>
     </>
   )
 }
@@ -417,101 +405,71 @@ export default async function ContratoPage({ params }: Props) {
 // Componentes auxiliares
 // ══════════════════════════════════════════════════════
 
-function ContentPage({ children, purple }: { children: React.ReactNode; purple: string }) {
+function Etiqueta({ children, cor }: { children: React.ReactNode; cor: string }) {
   return (
-    <div className="page-break" style={{
-      background: '#ffffff',
-      minHeight: '100vh',
-      fontFamily: 'Arial, sans-serif',
-      display: 'flex',
-      flexDirection: 'column',
+    <div style={{
+      fontFamily: FONTE.mono, fontSize: 10, letterSpacing: 2.2,
+      textTransform: 'uppercase', color: cor, lineHeight: 1.5,
     }}>
-      {/* Header diagonal preto — compacto */}
-      <div style={{
-        background: '#000000',
-        padding: '14px 56px 22px',
-        position: 'relative',
-        clipPath: 'polygon(0 0, 100% 0, 82% 100%, 0 100%)',
-        marginBottom: -2,
-      }}>
-        <div style={{ textAlign: 'center', paddingRight: '16%' }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-rl-prod-branco.png"
-            alt="RL PROD"
-            style={{ height: 32, width: 'auto', objectFit: 'contain' }}
-          />
-        </div>
-      </div>
-
-      {/* Corpo */}
-      <div style={{ flex: 1, padding: '32px 64px 20px' }}>
-        {children}
-      </div>
-
-      {/* Rodapé */}
-      <div style={{
-        padding: '16px 64px',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        borderTop: '1px solid #e8e8e8',
-      }}>
-        <div style={{ fontSize: 8, letterSpacing: 3, color: '#bbb', textTransform: 'uppercase' }}>
-          WWW.www.rlprod.pt
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: purple, fontStyle: 'italic', lineHeight: 1.3 }}>MORE THAN A PRODUCT,</div>
-          <div style={{ fontSize: 10, fontWeight: 900, color: '#000', fontFamily: "'Arial Black', Arial, sans-serif", lineHeight: 1.3 }}>AN EXPERIENCE.</div>
-        </div>
-      </div>
+      {children}
     </div>
   )
 }
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
+function SecaoTitulo({ children }: { children: React.ReactNode }) {
   return (
-    <p style={{
-      fontSize: 12,
-      fontWeight: 900,
-      color: '#000',
-      letterSpacing: 2,
-      textTransform: 'uppercase',
-      marginBottom: 12,
-      marginTop: 24,
-      fontFamily: "'Arial Black', Arial, sans-serif",
-    }}>
-      {children}
-    </p>
+    <div className="clausula-titulo" style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+      <h2 style={{
+        fontFamily: FONTE.titulo, fontWeight: 700, fontSize: 20, letterSpacing: 1.5,
+        textTransform: 'uppercase', color: TINTA, margin: 0, whiteSpace: 'nowrap',
+      }}>
+        {children}
+      </h2>
+      <div style={{ flex: 1, height: 1, background: LINHA }} />
+    </div>
   )
 }
 
-function ClauseTitle({ children }: { children: React.ReactNode }) {
+function ParteBloco({ papel, titulo, children }: { papel: string; titulo: string; children: React.ReactNode }) {
   return (
-    <p style={{
-      fontSize: 11,
-      fontWeight: 700,
-      color: '#000',
-      letterSpacing: 2,
-      textTransform: 'uppercase',
-      marginTop: 20,
-      marginBottom: 6,
-      fontFamily: 'Arial, sans-serif',
-    }}>
+    <div style={{ borderTop: `3px solid ${AZUL}`, background: '#f6f8fa', padding: '16px 18px 14px' }}>
+      <Etiqueta cor={AZUL}>{papel}</Etiqueta>
+      <div style={{ fontFamily: FONTE.titulo, fontWeight: 700, fontSize: 18, textTransform: 'uppercase', letterSpacing: 1, color: TINTA, margin: '4px 0 10px' }}>
+        {titulo}
+      </div>
       {children}
-    </p>
+    </div>
+  )
+}
+
+function ClauseTitle({ children, num }: { children: React.ReactNode; num?: string }) {
+  return (
+    <div className="clausula-titulo" style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 10, paddingBottom: 8, borderBottom: `1px solid ${LINHA}` }}>
+      {num && (
+        <span style={{ fontFamily: FONTE.mono, fontSize: 12, fontWeight: 500, color: AZUL, letterSpacing: 1 }}>
+          {num}
+        </span>
+      )}
+      <h3 style={{
+        fontFamily: FONTE.titulo, fontWeight: 700, fontSize: 17, letterSpacing: 1.2,
+        textTransform: 'uppercase', color: TINTA, margin: 0,
+      }}>
+        {children}
+      </h3>
+    </div>
   )
 }
 
 function ClauseText({ children }: { children: React.ReactNode }) {
   return (
     <p style={{
-      fontSize: 12,
-      color: '#333',
-      lineHeight: 1.85,
+      fontSize: 15,
+      color: TINTA,
+      lineHeight: 1.65,
       textAlign: 'justify',
-      marginBottom: 8,
-      fontFamily: 'Arial, sans-serif',
+      hyphens: 'auto',
+      margin: '0 0 9px',
+      fontFamily: FONTE.texto,
     }}>
       {children}
     </p>
@@ -521,11 +479,11 @@ function ClauseText({ children }: { children: React.ReactNode }) {
 function BodyText({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <p style={{
-      fontSize: 12,
-      color: '#333',
-      lineHeight: 1.85,
-      marginBottom: 10,
-      fontFamily: 'Arial, sans-serif',
+      fontSize: 15,
+      color: TINTA,
+      lineHeight: 1.65,
+      margin: '0 0 10px',
+      fontFamily: FONTE.texto,
       ...style,
     }}>
       {children}
@@ -533,26 +491,26 @@ function BodyText({ children, style }: { children: React.ReactNode; style?: Reac
   )
 }
 
-function InfoBlock({ children }: { children: React.ReactNode }) {
+function ListaDoc({ itens }: { itens: string[] }) {
   return (
-    <div style={{
-      marginBottom: 20,
-      padding: '16px 20px',
-      borderLeft: '4px solid #000',
-      background: '#f5f5f5',
-    }}>
-      {children}
-    </div>
+    <ul style={{ listStyle: 'none', padding: 0, margin: '4px 0 14px' }}>
+      {itens.map((s, i) => (
+        <li key={i} style={{ display: 'flex', gap: 12, fontSize: 15, lineHeight: 1.65, color: TINTA, padding: '3px 0' }}>
+          <span style={{ flex: '0 0 6px', height: 6, marginTop: '0.62em', background: AZUL }} />
+          <span>{s}</span>
+        </li>
+      ))}
+    </ul>
   )
 }
 
 function InfoLine({ label, value }: { label: string; value: string }) {
   return (
-    <p style={{ fontSize: 12, color: '#222', lineHeight: 1.8, fontFamily: 'Arial, sans-serif' }}>
-      {value
-        ? <><strong style={{ fontWeight: 700 }}>{label}:</strong> {value}</>
-        : <strong style={{ fontWeight: 700 }}>{label}</strong>
-      }
-    </p>
+    <div style={{ padding: '5px 0', borderTop: `1px solid ${LINHA}` }}>
+      <div style={{ fontFamily: FONTE.mono, fontSize: 9, letterSpacing: 1.8, textTransform: 'uppercase', color: MUTED }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 13.5, lineHeight: 1.45, color: TINTA, wordBreak: 'break-word' }}>{value}</div>
+    </div>
   )
 }

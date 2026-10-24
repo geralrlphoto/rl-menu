@@ -104,6 +104,8 @@ export interface RegistoPagamento {
   metodo?: string
   empresa?: string
   comprativoUrl?: string
+  validado?: boolean      // a RL PROD confirmou e marcou a prestação como paga
+  prestacao?: string      // descrição da prestação do plano a que corresponde
 }
 
 export interface ChatMensagem {

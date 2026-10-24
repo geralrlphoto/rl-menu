@@ -15,7 +15,8 @@ export async function GET() {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    const projetos = (data ?? []).map((row: any) => {
+    // Portais marcados como teste (dados.teste = true) não entram nas contas
+    const projetos = (data ?? []).filter((row: any) => row.dados?.teste !== true).map((row: any) => {
       const d = row.dados ?? {}
       const pagamentos: Array<{ descricao: string; valor: number; estado: string; data: string }> =
         Array.isArray(d.pagamentos) ? d.pagamentos : []

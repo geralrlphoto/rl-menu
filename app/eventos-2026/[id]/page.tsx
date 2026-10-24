@@ -2324,7 +2324,8 @@ function ContratoUpload({ eventId, contratoUrl, onSaved }: {
     form.append('file', file)
     form.append('eventId', eventId)
     const res = await fetch('/api/upload-contrato', { method: 'POST', body: form })
-    const data = await res.json()
+    // O Vercel recusa pedidos acima de ~4,5 MB com uma página de erro (não JSON)
+    const data = await res.json().catch(() => ({ error: res.status === 413 ? 'O PDF é demasiado grande (máx. ~4 MB). Comprime-o e tenta outra vez.' : 'Erro ao carregar o contrato.' }))
     if (data.error) { setError(data.error); setUploading(false); return }
     setUrl(data.url)
     onSaved('contratos', data.url)
