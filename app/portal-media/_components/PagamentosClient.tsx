@@ -8,7 +8,6 @@ import EditableField from './EditableField'
 import EditableSelect from './EditableSelect'
 import EditableDateField from './EditableDateField'
 import HeroUploadBlock from './HeroUploadBlock'
-import ContratoFinanceiro from './ContratoFinanceiro'
 
 /* ── Identidade rlprod.pt ── */
 const CARTAO    = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/70'
@@ -54,9 +53,9 @@ interface FormState {
   file:       File | null
 }
 
-interface Props { projeto: Projeto; isAdmin: boolean; contratoAssinadoUrl?: string | null }
+interface Props { projeto: Projeto; isAdmin: boolean }
 
-export default function PagamentosClient({ projeto: initial, isAdmin, contratoAssinadoUrl = null }: Props) {
+export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
   const [projeto, setProjeto] = useState(initial)
   const [registos, setRegistos] = useState<RegistoPagamento[]>(initial.registosPagamento ?? [])
   const [isEditing, setIsEditing] = useState(false)
@@ -283,16 +282,6 @@ export default function PagamentosClient({ projeto: initial, isAdmin, contratoAs
             <span className="text-[#a9c1ff] group-hover:translate-x-0.5 transition-transform">→</span>
           </div>
         </button>
-
-        {/* ── Contrato: consultar, descarregar e devolver assinado ── */}
-        <ContratoFinanceiro
-          portalRef={projeto.ref}
-          contrato={(projeto as any).contrato}
-          contratoFinalUrl={projeto.contratoUrl}
-          assinado={(projeto as any).contratoAssinado}
-          assinadoUrl={contratoAssinadoUrl}
-          isAdmin={isAdmin}
-        />
 
         {/* ── Plano de Pagamento (admin edita) ── */}
         <section className="mb-10">

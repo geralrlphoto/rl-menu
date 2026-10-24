@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 
-// Secção "Contrato" da página Financeiro do portal: consultar o contrato sem
+// Secção "Contrato" da página Contrato & Dados do portal: consultar o contrato sem
 // descarregar, descarregar em PDF e devolver o contrato assinado.
 
 type Contrato = { gerado?: boolean; estado?: string; url?: string; ref?: string } | null | undefined

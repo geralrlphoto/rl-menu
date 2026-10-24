@@ -1,7 +1,7 @@
 /* ============================================================
    /api/media-portal/[ref]/contrato-assinado (POST)
 
-   O cliente devolve o contrato assinado a partir da página Financeiro
+   O cliente devolve o contrato assinado a partir da página Contrato & Dados
    do portal. O ficheiro vai direto para o Storage (bucket privado
    "contratos-assinados", só abre com links temporários)
    por um link de envio temporário, para não esbarrar no limite de
@@ -86,7 +86,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ ref
             <h1 style="margin:10px 0 16px;font-size:22px">Contrato assinado recebido</h1>
             <p style="font-size:14px;color:rgba(255,255,255,.75)">${dados.nome ?? ref} devolveu o contrato assinado pelo portal.</p>
             <p style="margin:22px 0"><a href="${url}" style="background:#2e6cf6;color:#fff;padding:12px 22px;border-radius:6px;text-decoration:none">Ver contrato assinado</a></p>
-            <p style="font-size:12px;color:rgba(255,255,255,.45)">Portal: https://portal.rlphotovideo.pt/portal-media/${ref}/pagamentos</p>
+            <p style="font-size:12px;color:rgba(255,255,255,.45)">Portal: https://portal.rlphotovideo.pt/portal-media/${ref}/contrato</p>
           </div>`,
         }),
       }).catch(() => {})

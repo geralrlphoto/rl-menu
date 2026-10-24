@@ -30,9 +30,17 @@ export default async function ContratoPage({ params }: Props) {
 
   const contratoGerado = row?.dados?.contrato ?? null
 
+  // Contrato devolvido pelo cliente: bucket privado, link temporário de 1 h
+  const assinado = (projeto as any).contratoAssinado as { path?: string } | undefined
+  let contratoAssinadoUrl: string | null = null
+  if (assinado?.path) {
+    const { data } = await supabase.storage.from('contratos-assinados').createSignedUrl(assinado.path, 3600)
+    contratoAssinadoUrl = data?.signedUrl ?? null
+  }
+
   return (
     <main className="min-h-screen relative">
-      <ContratoClient projeto={projeto} isAdmin={isAdmin} contratoGerado={contratoGerado} />
+      <ContratoClient projeto={projeto} isAdmin={isAdmin} contratoGerado={contratoGerado} contratoAssinadoUrl={contratoAssinadoUrl} />
     </main>
   )
 }

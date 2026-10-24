@@ -6,6 +6,7 @@ import AdminBar from './AdminBar'
 import EditableField from './EditableField'
 import EditableDateField from './EditableDateField'
 import HeroUploadBlock from './HeroUploadBlock'
+import ContratoFinanceiro from './ContratoFinanceiro'
 
 /* ── Identidade rlprod.pt ── */
 const CARTAO    = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/70'
@@ -38,9 +39,10 @@ interface Props {
   projeto: Projeto
   isAdmin: boolean
   contratoGerado?: ContratoGerado | null
+  contratoAssinadoUrl?: string | null
 }
 
-export default function ContratoClient({ projeto: initial, isAdmin, contratoGerado }: Props) {
+export default function ContratoClient({ projeto: initial, isAdmin, contratoGerado, contratoAssinadoUrl = null }: Props) {
   const [projeto, setProjeto] = useState(initial)
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -222,9 +224,9 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           </p>
           <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
             {[
-              { icon: '↓', text: 'Descarregar o contrato completo em formato digital, sempre que necessitar.' },
-              { icon: '€', text: 'Consultar de forma prática e transparente os valores já liquidados.' },
-              { icon: '◎', text: 'Acompanhar o histórico de pagamentos associados ao seu processo.' },
+              { icon: '◎', text: 'Consultar o contrato aqui mesmo, sem precisar de o descarregar.' },
+              { icon: '↓', text: 'Descarregar o contrato em PDF para assinar.' },
+              { icon: '↑', text: 'Devolver o contrato assinado e consultar os seus dados.' },
             ].map(({ icon, text }) => (
               <div key={icon} className={`${TILE} px-4 py-3.5 flex sm:flex-col items-start gap-3 sm:gap-2`}>
                 <span className="w-8 h-8 rounded-full border border-[#2e6cf6]/60 text-[#a9c1ff] flex items-center justify-center shrink-0 text-[14px]">{icon}</span>
@@ -238,11 +240,23 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
           <p className="rlp-m mt-3 text-[9.5px] text-white/40">Obrigado pela confiança · RL PROD</p>
         </section>
 
-        {/* ── Documentos: contrato + recibo ── */}
+        {/* ── Contrato: consultar, descarregar e devolver assinado ── */}
+        <ContratoFinanceiro
+          portalRef={projeto.ref}
+          contrato={contratoLocal}
+          contratoFinalUrl={projeto.contratoUrl}
+          assinado={(projeto as any).contratoAssinado}
+          assinadoUrl={contratoAssinadoUrl}
+          isAdmin={isAdmin}
+        />
+
+        {/* ── Documentos: gestão do contrato (só admin) + recibo ── */}
         <div className="flex flex-col gap-4 mb-4">
 
-          {/* Contrato gerado */}
-          {mostrarBlocoContrato ? (
+          {isAdmin && <p className="rlp-m traco text-[10px] text-[#a9c1ff] -mb-1">Gestão do contrato · só visível para a RL PROD</p>}
+
+          {/* Contrato gerado (gestão: só admin; o cliente usa a secção acima) */}
+          {!isAdmin ? null : mostrarBlocoContrato ? (
             <section className={`${CARTAO} p-4 sm:p-6`}>
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div className="min-w-0">
