@@ -1,7 +1,7 @@
 ﻿'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FUNDO } from '@/app/media/_lib/estilo'
 import { Secao, Campo, ComCopiar, Copiar, inputCls, chip, nLinhas } from './_ui'
 
@@ -107,6 +107,9 @@ const cheio = (v: string) => v.trim() !== ''
 
 const hora = () => new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })
 
+// Ficha guardada na base de dados (/api/media-fichas), para a lista lateral
+type FichaResumo = { id: string; ref: string | null; nome: string | null; empresa: string | null; estado: string | null; atualizado_em: string }
+
 export default function FichaClientePage() {
   const [form, setForm] = useState<FormData>(EMPTY)
   const [saving, setSaving] = useState(false)
@@ -116,6 +119,39 @@ export default function FichaClientePage() {
   const [contratoGerado, setContratoGerado] = useState<string | null>(null)
   const [error, setError] = useState('')
   const [tentou, setTentou] = useState(false)
+  const [fichaId, setFichaId] = useState<string | null>(null)
+  const [fichas, setFichas] = useState<FichaResumo[]>([])
+  const [procura, setProcura] = useState('')
+
+  async function carregarLista() {
+    try { const r = await fetch('/api/media-fichas'); if (r.ok) setFichas(await r.json()) } catch { /* sem rede */ }
+  }
+
+  // Lista das fichas guardadas; ?id= abre uma ficha diretamente
+  useEffect(() => {
+    carregarLista()
+    const id = new URLSearchParams(window.location.search).get('id')
+    if (id) abrirFicha(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  async function abrirFicha(id: string) {
+    setError('')
+    try {
+      const r = await fetch(`/api/media-fichas?id=${id}`)
+      const d = await r.json()
+      if (!r.ok || !d) throw new Error(d?.error || 'Ficha não encontrada.')
+      setForm({ ...EMPTY, ...(d.dados ?? {}) })
+      setFichaId(d.id)
+      setGuardadoAs(new Date(d.atualizado_em).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }))
+      setContratoGerado(null)
+      setTentou(false)
+      window.history.replaceState(null, '', `?id=${d.id}`)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível abrir a ficha.')
+    }
+  }
 
   const set = (k: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }))
@@ -127,11 +163,23 @@ export default function FichaClientePage() {
     if (!form.nome.trim()) { setError('Nome do cliente é obrigatório.'); return }
     setSaving(true)
     setError('')
-    await new Promise(r => setTimeout(r, 900))
-    setSaving(false)
-    setSaved(true)
-    setGuardadoAs(hora())
-    setTimeout(() => setSaved(false), 3000)
+    try {
+      const r = await fetch('/api/media-fichas', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: fichaId, dados: form }),
+      })
+      const d = await r.json()
+      if (!r.ok) throw new Error(d.error || 'Erro ao guardar.')
+      if (!fichaId) { setFichaId(d.id); window.history.replaceState(null, '', `?id=${d.id}`) }
+      setSaved(true)
+      setGuardadoAs(hora())
+      setTimeout(() => setSaved(false), 3000)
+      carregarLista()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao guardar a ficha.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleGerarContrato() {
@@ -159,6 +207,8 @@ export default function FichaClientePage() {
   function limpar() {
     if (SECOES.some(s => s.campos.some(c => form[c] !== EMPTY[c])) && !window.confirm('Limpar todos os campos da ficha?')) return
     setForm(EMPTY)
+    setFichaId(null)
+    window.history.replaceState(null, '', window.location.pathname)
     setContratoGerado(null)
     setError('')
     setTentou(false)
@@ -380,7 +430,7 @@ export default function FichaClientePage() {
             <div className="flex flex-col-reverse sm:flex-row sm:items-center justify-between gap-4 pt-6 border-t border-white/[0.1]">
               <button type="button" onClick={limpar}
                 className="rlp-m self-start text-[10.5px] text-white/40 hover:text-white/75 transition-colors">
-                Limpar
+                {fichaId ? 'Nova ficha' : 'Limpar'}
               </button>
               <div className="flex flex-col sm:flex-row gap-3">
                 <BotaoGerar gerando={gerando} onClick={handleGerarContrato} />
@@ -391,6 +441,36 @@ export default function FichaClientePage() {
 
           {/* Lateral */}
           <aside className="lg:sticky lg:top-6 flex flex-col gap-5">
+            <div className="rounded-xl border border-white/[0.1] bg-[#00141f]/70 p-5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Fichas guardadas</p>
+                <span className="rlp-m text-[10px] text-white/40">{fichas.length}</span>
+              </div>
+              {fichas.length > 4 && (
+                <input value={procura} onChange={e => setProcura(e.target.value)} placeholder="Procurar…"
+                  className={inputCls + ' mt-3 !py-2 !text-[13.5px]'} />
+              )}
+              <ul className="mt-3 space-y-1.5 max-h-[260px] overflow-y-auto">
+                {fichas.length === 0 && <li className="text-[13px] text-white/45">Ainda não há fichas guardadas.</li>}
+                {fichas
+                  .filter(f => !procura.trim() || `${f.nome ?? ''} ${f.empresa ?? ''} ${f.ref ?? ''}`.toLowerCase().includes(procura.trim().toLowerCase()))
+                  .map(f => (
+                    <li key={f.id}>
+                      <button type="button" onClick={() => abrirFicha(f.id)}
+                        className={`w-full text-left rounded-lg border px-3 py-2 transition-colors ${f.id === fichaId ? 'border-[#2e6cf6] bg-[#2e6cf6]/[0.12]' : 'border-white/[0.07] hover:border-white/25'}`}>
+                        <span className="block truncate text-[13.5px] text-white/90">{f.nome || 'Sem nome'}{f.empresa ? ` · ${f.empresa}` : ''}</span>
+                        <span className="block truncate text-[11px] text-white/45">{[f.ref, f.estado].filter(Boolean).join(' · ') || 'Sem ref'}</span>
+                      </button>
+                    </li>
+                  ))}
+              </ul>
+              {fichaId && (
+                <button type="button" onClick={limpar} className="mt-3 w-full rounded-md border border-white/20 hover:border-white/45 py-2 text-[13px] text-white/80 transition-colors">
+                  + Nova ficha
+                </button>
+              )}
+            </div>
+
             <div className="rounded-xl border border-white/[0.1] bg-[#00141f]/70 p-6">
               <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Obrigatórios</p>
               <div className="mt-4 flex items-baseline justify-between">

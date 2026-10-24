@@ -103,14 +103,24 @@ export default function PdfPage() {
   const [orcamento, setOrcamento] = useState<Orcamento | null>(null)
   const [loaded, setLoaded] = useState(false)
 
+  // Lê da base de dados; se falhar, usa a cópia local deste browser
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LS_KEY)
-      const list: Orcamento[] = raw ? JSON.parse(raw) : []
-      const o = list.find(x => x.id === id) ?? null
+    (async () => {
+      let o: Orcamento | null = null
+      try {
+        const r = await fetch(`/api/media-orcamentos?id=${encodeURIComponent(id)}`)
+        if (r.ok) o = await r.json()
+      } catch { /* sem rede */ }
+      if (!o) {
+        try {
+          const raw = localStorage.getItem(LS_KEY)
+          const list: Orcamento[] = raw ? JSON.parse(raw) : []
+          o = list.find(x => x.id === id) ?? null
+        } catch { o = null }
+      }
       setOrcamento(o)
-    } catch { setOrcamento(null) }
-    setLoaded(true)
+      setLoaded(true)
+    })()
   }, [id])
 
   useEffect(() => {
@@ -126,7 +136,7 @@ export default function PdfPage() {
         <div style={{ textAlign: 'center' }}>
           <p style={{ fontSize: 14, color: NAVY, letterSpacing: '0.4em', textTransform: 'uppercase', marginBottom: 16, fontWeight: 700 }}>RL PROD</p>
           <p style={{ fontSize: 18 }}>Orçamento não encontrado.</p>
-          <p style={{ fontSize: 12, color: SUB, marginTop: 12 }}>Os orçamentos estão guardados no browser onde foram criados.</p>
+          <p style={{ fontSize: 12, color: SUB, marginTop: 12 }}>Confirma que o orçamento ainda existe na lista de orçamentos.</p>
         </div>
       </main>
     )

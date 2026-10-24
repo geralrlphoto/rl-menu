@@ -13,7 +13,7 @@ import {
 /* ─────────────────────────────────────────────────────────────────────────── *
  *  RL PROD · Orçamentos (B2B / Empresas)
  *  Estrutura: Orçamento → 1..3 Propostas → serviços do catálogo fixo.
- *  Dados em localStorage (ver dados.ts).
+ *  Dados na base de dados (/api/media-orcamentos), com cópia em localStorage.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 type Ordem = 'recentes' | 'validade' | 'valor' | 'evento'
@@ -58,22 +58,44 @@ export default function OrcamentosPage() {
   const [showForm, setShowForm]     = useState(false)
   const [editingId, setEditingId]   = useState<string | null>(null)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [erroBD, setErroBD]         = useState('')
 
+  // Os orçamentos vivem na base de dados (/api/media-orcamentos). Os que só existiam
+  // no localStorage deste browser (versão antiga) sobem uma vez e ficam lá também.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(LS_KEY)
-      const list = raw ? migrate(JSON.parse(raw)) : []
-      setOrcamentos(list.map(o =>
+    (async () => {
+      let lista: Orcamento[] = []
+      try {
+        const r = await fetch('/api/media-orcamentos')
+        if (!r.ok) throw new Error()
+        lista = migrate(await r.json())
+        let locais: Orcamento[] = []
+        try { const raw = localStorage.getItem(LS_KEY); locais = raw ? migrate(JSON.parse(raw)) : [] } catch { /* ignore */ }
+        const emFalta = locais.filter(l => !lista.some(o => o.id === l.id))
+        if (emFalta.length) {
+          const up = await fetch('/api/media-orcamentos', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(emFalta) })
+          if (up.ok) lista = [...emFalta, ...lista]
+        }
+      } catch {
+        setErroBD('Não foi possível ler os orçamentos da base de dados. Recarrega a página.')
+      }
+      setOrcamentos(lista.map(o =>
         o.estado === 'Pendente' && isExpired(o) ? { ...o, estado: 'Expirado' as Estado } : o
       ))
-    } catch { /* ignore */ }
-    setHydrated(true)
+      setHydrated(true)
+    })()
   }, [])
 
+  // Cópia local de segurança (e para o PDF abrir mesmo sem rede)
   useEffect(() => {
     if (!hydrated) return
     try { localStorage.setItem(LS_KEY, JSON.stringify(orcamentos)) } catch { /* ignore */ }
   }, [orcamentos, hydrated])
+
+  async function gravar(o: Orcamento) {
+    const r = await fetch('/api/media-orcamentos', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(o) }).catch(() => null)
+    setErroBD(r?.ok ? '' : 'O último orçamento não ficou gravado na base de dados. Tenta guardar outra vez.')
+  }
 
   /* ─── Estatísticas (só com os dados já guardados) ─── */
   const stats = useMemo(() => {
@@ -117,6 +139,7 @@ export default function OrcamentosPage() {
   const somaFiltrada = filtered.reduce((s, o) => s + valorMax(o), 0)
 
   function upsert(o: Orcamento) {
+    gravar(o)
     setOrcamentos(prev => {
       const ix = prev.findIndex(x => x.id === o.id)
       if (ix === -1) return [o, ...prev]
@@ -125,9 +148,13 @@ export default function OrcamentosPage() {
   }
   function remove(id: string) {
     if (!confirm('Eliminar este orçamento?')) return
+    fetch('/api/media-orcamentos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+      .then(r => { if (!r.ok) setErroBD('Não foi possível eliminar na base de dados.') })
     setOrcamentos(prev => prev.filter(o => o.id !== id))
   }
   function changeEstado(id: string, estado: Estado) {
+    const o = orcamentos.find(x => x.id === id)
+    if (o) gravar({ ...o, estado })
     setOrcamentos(prev => prev.map(o => o.id === id ? { ...o, estado } : o))
   }
   function novo() { setEditingId(null); setShowForm(true) }
@@ -161,6 +188,10 @@ export default function OrcamentosPage() {
             <span aria-hidden className="text-[22px] leading-none">+</span> Novo orçamento
           </button>
         </header>
+
+        {erroBD && (
+          <p className="mt-6 rounded-md border border-[#ff4747]/40 bg-[#ff4747]/[0.08] px-4 py-3 text-[14px] text-[#ff8a8a]">{erroBD}</p>
+        )}
 
         {/* ── Estatísticas ────────────────────────────────────────────── */}
         <section className="mt-12">
