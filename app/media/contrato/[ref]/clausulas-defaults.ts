@@ -102,7 +102,7 @@ d) O cliente desde já autoriza a prestadora a utilizar a(s) marca(s) do primeir
 
   disposicoes_finais:
 `Qualquer alteração ao presente contrato deverá revestir a forma de documento escrito e será válida desde que acordada por todas as partes por escrito, com menção expressa de cada uma das cláusulas eliminadas e da redação de cada uma das aditadas ou modificadas.
-Para efeitos do presente contrato, todas as comunicações oficiais deverão realizar-se para o seguinte endereço de correio eletrónico: geral.rlphoto@gmail.com
+Para efeitos do presente contrato, todas as comunicações oficiais deverão realizar-se para o seguinte endereço de correio eletrónico: geral@rlprod.pt
 Este presente contrato segue devidamente preenchido com os dados fornecidos e deve ser assinado pelo representante legal da segunda outorgante, bem como constar o carimbo da empresa no local indicado abaixo. Após assinatura e carimbo, o documento deverá ser digitalizado e encaminhado para o e-mail indicado acima para que seja realizado o mesmo procedimento pela parte da prestadora, formalizando-se, em duas vias de igual teor, o contrato entre as partes.`,
 
   anexo_intro:

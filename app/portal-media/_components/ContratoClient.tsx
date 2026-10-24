@@ -177,7 +177,7 @@ export default function ContratoClient({ projeto: initial, isAdmin, contratoGera
     metodo:  projeto.contaBancaria?.metodo  ?? 'Transferência Bancária',
     titular: projeto.contaBancaria?.titular ?? 'Liliana Sofia Barreto Gonçalves',
     iban:    projeto.contaBancaria?.iban    ?? 'PT50 0036 0167 9910 0068 3001 0',
-    email:   projeto.contaBancaria?.email   ?? 'geral.rlmedia@gmail.com',
+    email:   projeto.contaBancaria?.email   ?? 'geral@rlprod.pt',
   }
 
   const fichaFields: { label: string; field: keyof FichaCliente; placeholder?: string; isDate?: boolean }[] = [

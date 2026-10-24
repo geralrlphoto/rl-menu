@@ -125,7 +125,7 @@ export default function AtendimentoClient({ projeto: initial, isAdmin }: Props) 
                   isEditing={true}
                   onChange={v => set('gestorEmail', v)}
                   className="text-[15px]"
-                  placeholder="geral.rlmedia@gmail.com"
+                  placeholder="geral@rlprod.pt"
                   type="email"
                 />
               </label>

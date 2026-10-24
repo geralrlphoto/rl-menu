@@ -12,7 +12,7 @@ export const dynamic = 'force-dynamic'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 // Contactos da RL PROD no verso (os mesmos da proposta criativa)
-const RL = { telefone: '+351 916 162 728', email: 'geral.rlphoto@gmail.com', site: 'www.rlprod.pt', ig: '@rlprod_pt', morada: 'Pinhal Novo, Portugal' }
+const RL = { telefone: '+351 916 162 728', email: 'geral@rlprod.pt', site: 'www.rlprod.pt', ig: '@rlprod_pt', morada: 'Pinhal Novo, Portugal' }
 
 const iniciais = (n: string) => n.trim().split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase()
 

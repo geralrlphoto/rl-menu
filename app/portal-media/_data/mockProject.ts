@@ -224,7 +224,7 @@ const PROJETOS: Record<string, Projeto> = {
     dataFilmagem: '15 Jul 2025',
     dataEntrega: '25 Set 2025',
     gestorNome: 'Rui Lima',
-    gestorEmail: 'geral.rlmedia@gmail.com',
+    gestorEmail: 'geral@rlprod.pt',
     gestorTelefone: '+351 910 000 000',
     status: 'Em Produção',
     revisoes: { usadas: 0, total: 3 },

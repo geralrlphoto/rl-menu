@@ -209,7 +209,7 @@ export async function POST(req: NextRequest) {
     dataFilmagem: '',
     dataEntrega:  '',
     gestorNome:   'Rui Lima',
-    gestorEmail:  'geral.rlmedia@gmail.com',
+    gestorEmail:  'geral@rlprod.pt',
     gestorTelefone: '+351 910 000 000',
     status:       'Em Produção',
     revisoes:     { usadas: 0, total: 3 },

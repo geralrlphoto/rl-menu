@@ -19,7 +19,7 @@ const PRESTADORA = {
   nif: '238076415',
   cae: '74200 (Atividades Fotográficas/Vídeo)',
   morada: 'Centro Comercial os Mochos Loja 136 - 2955-185 Pinhal Novo',
-  email: 'geral.rlphoto@gmail.com',
+  email: 'geral@rlprod.pt',
   telefone: '916162728',
   iban: 'PT50 0018 0003 6110 2844 0284 0204 5',
 }

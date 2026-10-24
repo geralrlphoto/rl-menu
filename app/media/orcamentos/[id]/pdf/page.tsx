@@ -38,7 +38,7 @@ const RL_DADOS = {
   cae:      '74200',
   sede:     'Centro Comercial Os Mochos, Loja 124',
   cp:       '2955-185 Pinhal Novo',
-  email:    'geral.rlphoto@gmail.com',
+  email:    'geral@rlprod.pt',
   telefone: '+351 916 162 728',
   site:     'www.rlprod.pt',
 }

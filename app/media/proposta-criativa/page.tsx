@@ -42,7 +42,7 @@ const IMG = {
 
 /* Dados RL PROD */
 const RL_DADOS = {
-  email:    'geral.rlphoto@gmail.com',
+  email:    'geral@rlprod.pt',
   telefone: '+351 916 162 728',
   site:     'www.rlprod.pt',
   ig:       '@rlprod_pt',
