@@ -30,13 +30,13 @@ export default function NovoPortalRMButton({ className, children }: { className?
     <button
       onClick={handleClick}
       disabled={loading}
-      className="group flex items-center gap-3 border border-emerald-400/25 bg-emerald-400/[0.04] hover:bg-emerald-400/[0.10]
-                 hover:border-emerald-400/45 px-6 py-4 transition-all duration-300 disabled:opacity-40"
+      className="group flex items-center gap-3 border border-[#2e6cf6]/25 bg-[#2e6cf6]/[0.04] hover:bg-[#2e6cf6]/[0.10]
+                 hover:border-[#2e6cf6]/45 px-6 py-4 transition-all duration-300 disabled:opacity-40"
     >
-      <svg className="w-3.5 h-3.5 text-emerald-400/50 group-hover:text-emerald-300/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg className="w-3.5 h-3.5 text-[#2e6cf6]/50 group-hover:text-[#5a8bff]/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
       </svg>
-      <span className="text-[9px] tracking-[0.45em] text-emerald-400/50 group-hover:text-emerald-300/80 uppercase transition-colors whitespace-nowrap">
+      <span className="text-[9px] tracking-[0.45em] text-[#2e6cf6]/50 group-hover:text-[#5a8bff]/80 uppercase transition-colors whitespace-nowrap">
         {loading ? 'A criar...' : 'Novo Portal Reunião'}
       </span>
     </button>

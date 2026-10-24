@@ -55,211 +55,128 @@ export default function NovoPortalMediaButton() {
     }, 600)
   }
 
+  const LABEL = 'rlp-m block text-[9.5px] text-[#5a8bff] mb-2'
+  const INPUT = 'w-full rounded-xl border border-white/[0.12] bg-[#00141f]/80 px-4 py-3 text-[14px] text-white placeholder:text-white/25 outline-none focus:border-[#2e6cf6]/80 transition-colors'
+
   return (
     <>
       {/* Botão */}
       <button
         onClick={() => setStep('form')}
-        className="flex items-center gap-2 px-4 py-2 border transition-all duration-200"
-        style={{
-          background: 'rgba(70,120,255,0.08)',
-          border: '1px solid rgba(70,120,255,0.35)',
-          color: 'rgba(130,170,255,0.85)',
-        }}
+        className="inline-flex items-center gap-2 rounded-full bg-[#2e6cf6] hover:bg-[#3d79ff] px-6 py-3 text-[13.5px] font-medium text-white transition-colors"
+        style={{ boxShadow: '0 10px 30px -10px rgba(46,108,246,0.7)' }}
       >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-          <path d="M12 5v14M5 12h14"/>
-        </svg>
-        <span className="text-[9px] tracking-[0.45em] uppercase">Novo Portal</span>
+        <span aria-hidden>+</span> Novo portal
       </button>
 
-      {/* Modal overlay */}
+      {/* Modal */}
       {step !== 'idle' && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center px-4"
-          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
+          className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/75"
           onClick={(e) => { if (e.target === e.currentTarget) reset() }}
         >
-          <div
-            className="w-full max-w-md relative overflow-hidden"
-            style={{
-              background: '#06090f',
-              border: '1px solid rgba(70,120,255,0.18)',
-              boxShadow: '0 0 60px rgba(30,80,255,0.12)',
-            }}
-          >
-            {/* Grid bg */}
-            <div className="absolute inset-0 pointer-events-none" style={{
-              backgroundImage: 'linear-gradient(rgba(70,120,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.04) 1px,transparent 1px)',
-              backgroundSize: '40px 40px',
-            }} />
+          <div className="rlp w-full max-w-md relative rounded-2xl border border-white/[0.1] bg-[#0c2236] text-white p-7 sm:p-8"
+            style={{ boxShadow: '0 30px 80px -30px rgba(46,108,246,0.55)' }}>
 
-            <div className="relative z-10 p-8">
-              {/* Header */}
-              <div className="mb-7">
-                <p className="text-[8px] tracking-[0.6em] uppercase mb-2" style={{ color: 'rgba(130,170,255,0.4)' }}>
-                  RL PROD · Photography &amp; Video
+            {/* Cabeçalho */}
+            <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">RL Prod · Portais</p>
+            <h2 className="rlp-t mt-3 text-[32px] leading-none">
+              Novo portal<span className="text-[#5a8bff]">.</span>
+            </h2>
+
+            {step === 'creating' || step === 'done' ? (
+              <div className="py-10 flex flex-col items-center gap-4">
+                <div className="w-12 h-12 rounded-full border border-[#2e6cf6]/60 bg-[#2e6cf6]/[0.12] flex items-center justify-center">
+                  {step === 'done'
+                    ? <span className="text-lg text-[#a9c1ff]">✓</span>
+                    : <span className="text-xs tracking-widest animate-pulse text-[#5a8bff]">···</span>
+                  }
+                </div>
+                <p className="rlp-m text-[10px] text-white/55">
+                  {step === 'done' ? 'Portal criado' : 'A criar…'}
                 </p>
-                <h2 className="text-xl font-extralight tracking-[0.25em] uppercase" style={{ color: 'rgba(255,255,255,0.8)' }}>
-                  Novo Portal
-                </h2>
-                <div className="mt-3 flex items-center gap-2">
-                  <div className="h-px w-10" style={{ background: 'rgba(70,120,255,0.4)' }} />
-                  <div className="h-px flex-1" style={{ background: 'rgba(70,120,255,0.08)' }} />
-                </div>
               </div>
-
-              {step === 'creating' || step === 'done' ? (
-                <div className="py-8 flex flex-col items-center gap-4">
-                  <div className="w-10 h-10 border flex items-center justify-center"
-                    style={{ borderColor: 'rgba(70,120,255,0.35)' }}>
-                    {step === 'done'
-                      ? <span className="text-lg" style={{ color: 'rgba(100,200,130,0.9)' }}>✓</span>
-                      : <span className="text-xs tracking-widest animate-pulse" style={{ color: 'rgba(130,170,255,0.6)' }}>···</span>
-                    }
-                  </div>
-                  <p className="text-[10px] tracking-[0.4em] uppercase" style={{ color: 'rgba(255,255,255,0.3)' }}>
-                    {step === 'done' ? 'Portal criado' : 'A criar…'}
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {/* Campos */}
-                  <div className="flex flex-col gap-4 mb-6">
-                    {/* Ref */}
-                    <div>
-                      <label className="block text-[8px] tracking-[0.45em] uppercase mb-2" style={{ color: 'rgba(130,170,255,0.45)' }}>
-                        Referência <span style={{ color: 'rgba(255,100,100,0.7)' }}>*</span>
-                      </label>
-                      <input
-                        ref={refInput}
-                        value={ref}
-                        onChange={e => setRef(e.target.value.toUpperCase())}
-                        onKeyDown={e => e.key === 'Enter' && criar()}
-                        placeholder="Ex: EMPRESA_X"
-                        className="w-full bg-transparent outline-none text-sm tracking-wider placeholder:opacity-20"
-                        style={{
-                          border: 'none',
-                          borderBottom: '1px solid rgba(70,120,255,0.25)',
-                          color: 'rgba(255,255,255,0.75)',
-                          padding: '8px 0',
-                          fontFamily: 'monospace',
-                        }}
-                      />
-                      <p className="text-[8px] mt-1.5" style={{ color: 'rgba(255,255,255,0.15)' }}>
-                        Identificador único · sem espaços (ex: OLEOBIO, MARCA_PT)
-                      </p>
-                    </div>
-
-                    {/* Nome */}
-                    <div>
-                      <label className="block text-[8px] tracking-[0.45em] uppercase mb-2" style={{ color: 'rgba(130,170,255,0.45)' }}>
-                        Nome do Projeto
-                      </label>
-                      <input
-                        value={nome}
-                        onChange={e => setNome(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && criar()}
-                        placeholder="Ex: Campanha Verão 2026"
-                        className="w-full bg-transparent outline-none text-sm tracking-wide placeholder:opacity-20"
-                        style={{
-                          border: 'none',
-                          borderBottom: '1px solid rgba(70,120,255,0.15)',
-                          color: 'rgba(255,255,255,0.75)',
-                          padding: '8px 0',
-                        }}
-                      />
-                    </div>
-
-                    {/* Tipo de Portal */}
-                    <div>
-                      <label className="block text-[8px] tracking-[0.45em] uppercase mb-3" style={{ color: 'rgba(130,170,255,0.45)' }}>
-                        Tipo de Portal
-                      </label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {([
-                          { key: 'casamento', label: 'CASAMENTO', icon: '◈' },
-                          { key: 'batizado',  label: 'BATIZADO',  icon: '◎' },
-                        ] as { key: TipoPortal; label: string; icon: string }[]).map(({ key, label, icon }) => {
-                          const active = tipoPortal === key
-                          return (
-                            <button
-                              key={key}
-                              type="button"
-                              onClick={() => setTipoPortal(key)}
-                              className="flex flex-col items-center gap-1.5 py-3 transition-all duration-200"
-                              style={{
-                                border: active
-                                  ? '1px solid rgba(70,120,255,0.55)'
-                                  : '1px solid rgba(70,120,255,0.12)',
-                                background: active
-                                  ? 'rgba(70,120,255,0.12)'
-                                  : 'rgba(70,120,255,0.03)',
-                                boxShadow: active
-                                  ? '0 0 18px rgba(70,120,255,0.15)'
-                                  : 'none',
-                              }}
-                            >
-                              <span
-                                className="text-base"
-                                style={{ color: active ? 'rgba(130,170,255,0.9)' : 'rgba(255,255,255,0.2)' }}
-                              >
-                                {icon}
-                              </span>
-                              <span
-                                className="text-[8px] tracking-[0.45em]"
-                                style={{ color: active ? 'rgba(130,170,255,0.85)' : 'rgba(255,255,255,0.2)' }}
-                              >
-                                {label}
-                              </span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Erro */}
-                  {err && (
-                    <p className="text-[10px] tracking-wide mb-4" style={{ color: 'rgba(255,100,100,0.8)' }}>
-                      {err}
+            ) : (
+              <>
+                <div className="mt-7 flex flex-col gap-5">
+                  {/* Referência */}
+                  <div>
+                    <label className={LABEL}>
+                      Referência <span className="text-[#ff4747]">*</span>
+                    </label>
+                    <input
+                      ref={refInput}
+                      value={ref}
+                      onChange={e => setRef(e.target.value.toUpperCase())}
+                      onKeyDown={e => e.key === 'Enter' && criar()}
+                      placeholder="Ex: EMPRESA_X"
+                      className={`${INPUT} font-mono tracking-wider`}
+                    />
+                    <p className="mt-1.5 text-[11.5px] text-white/40">
+                      Identificador único, sem espaços (ex: OLEOBIO, MARCA_PT)
                     </p>
-                  )}
-
-                  {/* Botões */}
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={reset}
-                      className="flex-1 py-3 text-[9px] tracking-[0.4em] uppercase transition-all duration-200"
-                      style={{
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        color: 'rgba(255,255,255,0.25)',
-                        background: 'transparent',
-                      }}
-                    >
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={criar}
-                      className="flex-1 py-3 text-[9px] tracking-[0.4em] uppercase transition-all duration-200"
-                      style={{
-                        background: 'rgba(70,120,255,0.15)',
-                        border: '1px solid rgba(70,120,255,0.45)',
-                        color: 'rgba(130,170,255,0.9)',
-                      }}
-                    >
-                      Criar Portal →
-                    </button>
                   </div>
-                </>
-              )}
-            </div>
+
+                  {/* Nome */}
+                  <div>
+                    <label className={LABEL}>Nome do projeto</label>
+                    <input
+                      value={nome}
+                      onChange={e => setNome(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && criar()}
+                      placeholder="Ex: Campanha Verão 2026"
+                      className={INPUT}
+                    />
+                  </div>
+
+                  {/* Tipo de portal */}
+                  <div>
+                    <label className={LABEL}>Tipo de portal</label>
+                    <div className="flex gap-1 rounded-full border border-white/[0.12] bg-[#00141f]/60 p-1">
+                      {([
+                        { key: 'casamento', label: 'Casamento' },
+                        { key: 'batizado',  label: 'Batizado' },
+                      ] as { key: TipoPortal; label: string }[]).map(({ key, label }) => (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => setTipoPortal(key)}
+                          className={`flex-1 rounded-full px-4 py-2 text-[13px] transition-colors ${
+                            tipoPortal === key ? 'bg-[#2e6cf6] text-white' : 'text-white/55 hover:text-white'}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Erro */}
+                {err && <p className="mt-4 text-[12.5px] text-[#ff4747]">{err}</p>}
+
+                {/* Botões */}
+                <div className="mt-7 flex items-center gap-3">
+                  <button
+                    onClick={reset}
+                    className="flex-1 rounded-full border border-white/25 hover:border-white/50 py-3 text-[13px] text-white/75 hover:text-white transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={criar}
+                    className="flex-1 rounded-full bg-[#2e6cf6] hover:bg-[#3d79ff] py-3 text-[13px] font-medium text-white transition-colors"
+                  >
+                    Criar portal →
+                  </button>
+                </div>
+              </>
+            )}
 
             {/* Fechar */}
             <button
               onClick={reset}
-              className="absolute top-4 right-4 text-[16px] transition-opacity"
-              style={{ color: 'rgba(255,255,255,0.2)' }}
+              aria-label="Fechar"
+              className="absolute top-4 right-5 text-[20px] leading-none text-white/40 hover:text-white transition-colors"
             >
               ×
             </button>

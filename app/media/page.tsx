@@ -31,12 +31,14 @@ const euros = (n: number) => n.toLocaleString('pt-PT', { style: 'currency', curr
 const diaCurto = (d: Date) => d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })
 
 export default async function MediaDashboard() {
-  const [{ data: sections }, { count: leadsNovas }, { count: propostasEnv }, { portais, leads }] = await Promise.all([
+  const [{ data: sections }, { data: todasLeads }, { portais, leads }] = await Promise.all([
     supabase.from('media_sections').select('*').order('order_index'),
-    supabase.from('media_leads').select('id', { count: 'exact', head: true }).eq('estado', 'Novo'),
-    supabase.from('media_leads').select('id', { count: 'exact', head: true }).eq('estado', 'Proposta Env.'),
+    supabase.from('media_leads').select('id, nome, empresa, estado, created_at, updated_at').order('created_at', { ascending: false }).limit(300),
     lerFontesMedia(supabase),
   ])
+  const listaLeads = (todasLeads ?? []) as { id: string; nome: string | null; empresa: string | null; estado: string; created_at: string; updated_at: string | null }[]
+  const leadsNovas = listaLeads.filter(l => l.estado === 'Novo').length
+  const propostasEnv = listaLeads.filter(l => l.estado === 'Proposta Env.').length
   const eventos = montarEventos(portais, leads)
 
   // Pagamentos em falta: pendentes + em atraso de todos os portais
@@ -59,6 +61,37 @@ export default async function MediaDashboard() {
     { valor: euros(emFalta), titulo: 'Pagamentos em falta', sub: nEmFalta === 1 ? '1 prestação' : `${nEmFalta} prestações`, href: '/media/financas' },
     { valor: String(proximas.length), titulo: 'Próximos trabalhos', sub: proximas[0] ? `o próximo a ${diaCurto(proximas[0])}` : 'nada marcado', href: '/media/portal-cliente' },
   ]
+
+  // ── Hoje: o que precisa de atenção ──────────────────────────────────────
+  const DIA_MS = 86400000
+  const diasDesde = (iso: string | null) => iso ? Math.floor((Date.now() - new Date(iso).getTime()) / DIA_MS) : 0
+  type Tarefa = { cor: string; etiqueta: string; titulo: string; detalhe: string; href: string; peso: number }
+  const tarefas: Tarefa[] = []
+  for (const l of listaLeads) {
+    const nome = l.empresa || l.nome || 'Lead'
+    if (l.estado === 'Novo' && diasDesde(l.created_at) >= 2) {
+      tarefas.push({ cor: ACCENT, etiqueta: 'Contactar', titulo: nome, detalhe: `Entrou há ${diasDesde(l.created_at)} dias e ainda não foi contactada`, href: `/media/crm/leads?lead=${l.id}`, peso: 2 })
+    }
+    if (l.estado === 'Proposta Env.' && diasDesde(l.updated_at ?? l.created_at) >= 5) {
+      tarefas.push({ cor: '#a9c1ff', etiqueta: 'Seguimento', titulo: nome, detalhe: `Proposta sem resposta há ${diasDesde(l.updated_at ?? l.created_at)} dias`, href: `/media/crm/leads?lead=${l.id}`, peso: 3 })
+    }
+  }
+  for (const p of portais) {
+    for (const pg of Array.isArray(p.pagamentos) ? p.pagamentos : []) {
+      const d = lerData(pg?.data)
+      if (pg?.estado === 'em_atraso' || (pg?.estado === 'pendente' && d && d < hoje)) {
+        tarefas.push({ cor: '#ff4747', etiqueta: 'Cobrar', titulo: `${p.nome || p.ref}`, detalhe: `${pg?.descricao || 'Pagamento'} · ${euros(Number(pg?.valor) || 0)} em atraso`, href: '/media/financas', peso: 4 })
+      }
+    }
+  }
+  const em7 = new Date(hoje); em7.setDate(em7.getDate() + 7)
+  for (const e of eventos) {
+    const d = lerData(e.dia)
+    if (d && d >= hoje && d <= em7) {
+      tarefas.push({ cor: TIPOS[e.tipo].cor, etiqueta: TIPOS[e.tipo].nome, titulo: e.titulo, detalhe: d.getTime() === hoje.getTime() ? 'Hoje' : d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'short' }), href: e.href, peso: 1 })
+    }
+  }
+  tarefas.sort((a, b) => b.peso - a.peso)
 
   // Calendário dos próximos 30 dias, alinhado à semana (segunda a domingo)
   const porDia = new Map<string, typeof eventos>()
@@ -116,6 +149,40 @@ export default async function MediaDashboard() {
               <p className="text-[11.5px] text-white/40">{n.sub}</p>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {/* ── Hoje ───────────────────────────────────────────────────────── */}
+      <section className="relative z-10 px-4 mt-10">
+        <div className="max-w-5xl mx-auto rounded-2xl border border-white/[0.1] bg-[#00141f]/70 p-4 sm:p-6">
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+            <div>
+              <p className="rlp-m traco text-[10px] text-[#5a8bff]">Hoje</p>
+              <h2 className="mt-1 text-[20px] rlp-t">O que precisa de ti</h2>
+            </div>
+            <p className="text-[12px] text-white/45">{tarefas.length === 0 ? 'Está tudo em dia' : tarefas.length === 1 ? '1 coisa por tratar' : `${tarefas.length} coisas por tratar`}</p>
+          </div>
+          {tarefas.length === 0 ? (
+            <p className="text-[14px] text-white/55">Sem leads paradas, pagamentos em atraso ou trabalhos nos próximos 7 dias.</p>
+          ) : (
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {tarefas.slice(0, 8).map((t, i) => (
+                <li key={i}>
+                  <Link href={t.href} className="group flex items-center gap-3 rounded-xl border border-white/[0.07] bg-[#0c2236]/60 hover:border-white/25 px-3.5 py-2.5 transition-colors">
+                    <span className="rlp-m shrink-0 w-[86px] text-[9px]" style={{ color: t.cor }}>{t.etiqueta}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13.5px] text-white/90">{t.titulo}</span>
+                      <span className="block truncate text-[11.5px] text-white/45">{t.detalhe}</span>
+                    </span>
+                    <span className="text-white/30 group-hover:text-[#5a8bff]">→</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {tarefas.length > 8 && (
+            <Link href="/media/crm/leads" className="mt-3 inline-block text-[12px] text-[#5a8bff] hover:underline">Ver tudo no CRM →</Link>
+          )}
         </div>
       </section>
 

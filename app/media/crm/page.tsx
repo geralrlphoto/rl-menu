@@ -43,7 +43,7 @@ const GRUPOS: { titulo: string; itens: { label: string; href?: string; novoPorta
   ] },
 ]
 
-const CHIP = 'group inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] backdrop-blur px-4 py-2 text-[13px] text-white/80 hover:text-white hover:border-[#2e6cf6]/70 hover:bg-[#2e6cf6]/[0.08] transition-colors'
+const CHIP = 'group inline-flex items-center gap-2 rounded-full border border-white/[0.12] bg-white/[0.04] px-4 py-2 text-[13px] text-white/80 hover:text-white hover:border-[#2e6cf6]/70 hover:bg-[#2e6cf6]/[0.08] transition-colors'
 
 const Icone = ({ d }: { d: string }) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
@@ -122,7 +122,7 @@ export default async function CrmPage() {
       <section className="relative z-10 px-4 mt-12">
         <div className="max-w-5xl mx-auto rounded-[22px] p-[1.5px]"
           style={{ background: `linear-gradient(120deg, ${ACCENT} 0%, ${ACCENT}66 35%, ${AMARELO}55 70%, ${AMARELO} 100%)`, boxShadow: `0 30px 80px -30px ${ACCENT}55` }}>
-          <div className="rounded-[21px] bg-[#0a1d2e]/95 backdrop-blur-xl overflow-hidden">
+          <div className="rounded-[21px] bg-[#0a1d2e] overflow-hidden">
             <div className="flex items-center justify-between px-5 sm:px-7 py-3 border-b border-white/[0.06] text-[11px] text-white/45">
               <span>O teu funil</span>
               <span>{todas.length} leads · {taxa}% convertidas</span>
@@ -213,7 +213,7 @@ export default async function CrmPage() {
           <div className="relative mt-2 lg:mt-10">
             <div className="absolute inset-0 translate-x-3 translate-y-3 rounded-[20px] border border-white/[0.06] bg-white/[0.02]" />
             <div className="absolute inset-0 translate-x-1.5 translate-y-1.5 rounded-[20px] border border-white/[0.08] bg-white/[0.03]" />
-            <div className="relative rounded-[20px] border border-white/[0.12] bg-[#0c2236]/90 backdrop-blur-xl p-6">
+            <div className="relative rounded-[20px] border border-white/[0.12] bg-[#0c2236] p-6">
               <div className="flex items-center justify-between text-[10px] tracking-[0.2em] uppercase">
                 <span style={{ color: ACCENT }}>Próxima reunião</span>
                 <span className="text-white/35">Agenda</span>

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import EstiloRLProd from '@/app/media/_components/EstiloRLProd'
+import PesquisaRapida from '@/app/media/_components/PesquisaRapida'
 import { LogoutButton } from '@/app/components/LogoutButton'
 import MediaNotificationsBell from '@/app/media/_components/MediaNotificationsBell'
 
@@ -43,6 +44,7 @@ export default function MediaPillNav() {
         </div>
 
         <div className="flex items-center gap-3">
+          <PesquisaRapida />
           <Link href="/photo" className="hidden sm:inline text-[12.5px] text-white/35 hover:text-white transition-colors">
             RL Photo
           </Link>

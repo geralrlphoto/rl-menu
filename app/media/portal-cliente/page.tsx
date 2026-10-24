@@ -1,230 +1,417 @@
 ﻿import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 import { getProjeto, type Projeto } from '@/app/portal-media/_data/mockProject'
+import { FUNDO } from '@/app/media/_lib/estilo'
+import { lerData, hojeLisboa } from '@/app/media/_lib/eventos'
 import PortalSenhaInput from './PortalSenhaInput'
 import NovoPortalMediaButton from './NovoPortalMediaButton'
 
 export const dynamic = 'force-dynamic'
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
-function getFaseAtual(projeto: Projeto): string {
-  const emCurso = projeto.fases?.find(f => f.estado === 'em_curso')
-  if (emCurso) return emCurso.nome
-  const concluidas = projeto.fases?.filter(f => f.estado === 'concluido') || []
-  if (concluidas.length > 0) return concluidas[concluidas.length - 1].nome
-  return '—'
+// Só os caminhos do JSON que a lista usa (egress: nada de chat, imagens, briefing…)
+const SELECT = [
+  'ref',
+  'nome:dados->>nome',
+  'cliente:dados->>cliente',
+  'tipo:dados->>tipo',
+  'status:dados->>status',
+  'dataFilmagem:dados->>dataFilmagem',
+  'dataEntrega:dados->>dataEntrega',
+  'senha:dados->>senha',
+  'portalEnviadoEm:dados->>portalEnviadoEm',
+  'email:dados->fichaCliente->>email',
+  'fases:dados->fases',
+  'pagamentos:dados->pagamentos',
+  'entregas:dados->entregas',
+].join(', ')
+
+type Linha = {
+  ref: string
+  nome?: string | null
+  cliente?: string | null
+  tipo?: string | null
+  status?: string | null
+  dataFilmagem?: string | null
+  dataEntrega?: string | null
+  senha?: string | null
+  portalEnviadoEm?: string | null
+  email?: string | null
+  fases?: Projeto['fases'] | null
+  pagamentos?: Projeto['pagamentos'] | null
+  entregas?: Projeto['entregas'] | null
 }
 
-function getStatusColor(status: string) {
-  const s = status?.toLowerCase() || ''
-  if (s.includes('produção') || s.includes('producao')) return { dot: 'bg-blue-400', text: 'text-blue-400/70' }
-  if (s.includes('concluí') || s.includes('conclu')) return { dot: 'bg-emerald-400', text: 'text-emerald-400/70' }
-  if (s.includes('pausa')) return { dot: 'bg-amber-400', text: 'text-amber-400/70' }
-  return { dot: 'bg-white/30', text: 'text-white/30' }
+type Item = Projeto & { portalEnviadoEm?: string }
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+type Grupo = 'producao' | 'concluido' | 'pausa' | 'outro'
+
+function grupoStatus(status?: string): Grupo {
+  const s = (status || '').toLowerCase()
+  if (s.includes('produ')) return 'producao'
+  if (s.includes('conclu')) return 'concluido'
+  if (s.includes('pausa')) return 'pausa'
+  return 'outro'
 }
+
+const ESTILO_GRUPO: Record<Grupo, { cor: string; fundo: string; borda: string }> = {
+  producao:  { cor: '#ffffff', fundo: 'rgba(46,108,246,0.9)',  borda: 'rgba(46,108,246,0.9)' },
+  concluido: { cor: '#a9c1ff', fundo: 'rgba(169,193,255,0.08)', borda: 'rgba(169,193,255,0.35)' },
+  pausa:     { cor: '#7c8893', fundo: 'rgba(124,136,147,0.08)', borda: 'rgba(124,136,147,0.4)' },
+  outro:     { cor: '#5a8bff', fundo: 'rgba(90,139,255,0.08)',  borda: 'rgba(90,139,255,0.35)' },
+}
+
+function faseAtual(p: Projeto): string | null {
+  const emCurso = p.fases?.find(f => f.estado === 'em_curso')
+  if (emCurso) return emCurso.nome
+  const proxima = p.fases?.find(f => f.estado === 'pendente')
+  if (proxima) return proxima.nome
+  const concl = p.fases?.filter(f => f.estado === 'concluido') || []
+  return concl.length ? concl[concl.length - 1].nome : null
+}
+
+const euro = (v: number) =>
+  new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(v)
+
+function relativo(d: Date, hoje: Date): string {
+  const dias = Math.round((d.getTime() - hoje.getTime()) / 86400000)
+  if (dias === 0) return 'hoje'
+  if (dias === 1) return 'amanhã'
+  if (dias === -1) return 'ontem'
+  return dias > 0 ? `daqui a ${dias} dias` : `há ${-dias} dias`
+}
+
+function resumo(p: Item, hoje: Date) {
+  const fases = p.fases || []
+  const fasesFeitas = fases.filter(f => f.estado === 'concluido').length
+  const pag = p.pagamentos || []
+  const totalPag = pag.reduce((s, x) => s + (Number(x.valor) || 0), 0)
+  const pago = pag.filter(x => x.estado === 'pago').reduce((s, x) => s + (Number(x.valor) || 0), 0)
+  const atraso = pag.filter(x => x.estado === 'em_atraso')
+  const entregas = p.entregas || []
+  const entregasPend = entregas.filter(e => e.estado !== 'disponivel').length
+  const grupo = grupoStatus(p.status)
+
+  const filmagem = lerData(p.dataFilmagem)
+  const entrega = lerData(p.dataEntrega)
+  const entregaAtrasada = !!entrega && entrega < hoje && grupo !== 'concluido' && entregasPend > 0
+
+  // Próxima data relevante: a mais próxima de hoje para a frente
+  const futuras = [
+    filmagem && filmagem >= hoje ? { k: 'Filmagem', d: filmagem } : null,
+    entrega && entrega >= hoje ? { k: 'Entrega', d: entrega } : null,
+  ].filter(Boolean) as { k: string; d: Date }[]
+  futuras.sort((a, b) => a.d.getTime() - b.d.getTime())
+
+  return {
+    grupo, fasesFeitas, fasesTotal: fases.length, fase: faseAtual(p),
+    totalPag, pago, porReceber: totalPag - pago,
+    atraso: atraso.length, valorAtraso: atraso.reduce((s, x) => s + (Number(x.valor) || 0), 0),
+    entregasTotal: entregas.length, entregasPend,
+    proxima: futuras[0] ?? null, entregaAtrasada,
+  }
+}
+
+const FILTROS: { id: string; label: string }[] = [
+  { id: 'todos',     label: 'Todos' },
+  { id: 'producao',  label: 'Em produção' },
+  { id: 'concluido', label: 'Concluídos' },
+  { id: 'pausa',     label: 'Em pausa' },
+  { id: 'atraso',    label: 'Pagamentos em atraso' },
+]
 
 // ─── página ───────────────────────────────────────────────────────────────────
-export default async function PortalClientePage() {
+export default async function PortalClientePage({ searchParams }: { searchParams: Promise<{ estado?: string }> }) {
+  const { estado: estadoParam } = await searchParams
+  const filtro = FILTROS.some(f => f.id === estadoParam) ? estadoParam! : 'todos'
+
   const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // 1. Buscar todos os portais do Supabase
-  const { data: rows } = await supabase
+  const { data } = await supabase
     .from('media_portais')
-    .select('ref, dados')
+    .select(SELECT)
     .order('updated_at', { ascending: false })
+  const rows = (data || []) as unknown as Linha[]
 
-  // 2. Montar lista: Supabase primeiro, depois mocks que não existam já
-  const supabaseRefs = new Set((rows || []).map((r: any) => r.ref.toUpperCase()))
+  const supabaseRefs = new Set(rows.map(r => r.ref.toUpperCase()))
 
-  // Mapa ref → senha e portalEnviadoEm (raw from Supabase, not merged)
+  // Mapa ref → senha e portalEnviadoEm (tal como estão no Supabase)
   const senhaMap: Record<string, string | undefined> = {}
   const enviadoEmMap: Record<string, string | undefined> = {}
-  ;(rows || []).forEach((r: any) => {
-    senhaMap[r.ref.toUpperCase()] = r.dados?.senha as string | undefined
-    enviadoEmMap[r.ref.toUpperCase()] = r.dados?.portalEnviadoEm as string | undefined
+  rows.forEach(r => {
+    senhaMap[r.ref.toUpperCase()] = r.senha ?? undefined
+    enviadoEmMap[r.ref.toUpperCase()] = r.portalEnviadoEm ?? undefined
   })
 
-  const mockProjetos: Projeto[] = []
+  const mockProjetos: Item[] = []
   const oleobio = getProjeto('OLEOBIO')
   if (oleobio && !supabaseRefs.has('OLEOBIO')) mockProjetos.push(oleobio)
 
-  const supabaseProjetos: Projeto[] = (rows || [])
-    .map((r: any) => {
-      const mock = getProjeto(r.ref)
-      return mock ? { ...mock, ...r.dados } : (r.dados as Projeto)
-    })
-    .filter(Boolean)
+  const supabaseProjetos: Item[] = rows.map(r => {
+    // Sem as chaves vazias, para o mock (se existir) preencher o que falta
+    const { email, ...resto } = r
+    const dados = Object.fromEntries(Object.entries(resto).filter(([, v]) => v !== null && v !== undefined)) as Partial<Item>
+    const mock = getProjeto(r.ref)
+    const base = (mock ? { ...mock, ...dados } : dados) as Item
+    const emailFinal = email ?? mock?.fichaCliente?.email
+    return emailFinal ? { ...base, fichaCliente: { ...(base.fichaCliente || {}), email: emailFinal } } : base
+  })
 
-  const todos: Projeto[] = [...supabaseProjetos, ...mockProjetos]
+  const todos: Item[] = [...supabaseProjetos, ...mockProjetos]
+  const hoje = hojeLisboa()
+  const lista = todos.map(p => ({ p, r: resumo(p, hoje) }))
+
+  // ── Resumo geral ──
+  const ativos = lista.filter(({ p }) => enviadoEmMap[p.ref?.toUpperCase()] ?? p.portalEnviadoEm).length
+  const emProducao = lista.filter(x => x.r.grupo === 'producao').length
+  const entregasPend = lista.reduce((s, x) => s + x.r.entregasPend, 0)
+  const porReceber = lista.reduce((s, x) => s + x.r.porReceber, 0)
+  const comAtraso = lista.filter(x => x.r.atraso > 0).length
+  const valorAtraso = lista.reduce((s, x) => s + x.r.valorAtraso, 0)
+
+  const contagem: Record<string, number> = {
+    todos: lista.length,
+    producao: emProducao,
+    concluido: lista.filter(x => x.r.grupo === 'concluido').length,
+    pausa: lista.filter(x => x.r.grupo === 'pausa').length,
+    atraso: comAtraso,
+  }
+
+  const visiveis = lista.filter(x =>
+    filtro === 'todos' ? true : filtro === 'atraso' ? x.r.atraso > 0 : x.r.grupo === filtro)
 
   return (
-    <main className="min-h-screen bg-[#02060f] relative">
+    <main className="rlp min-h-screen relative text-white">
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
 
-      {/* ── Mesh gradient (mesmo de /media/crm/nova-lead) ── */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'linear-gradient(180deg, #06122a 0%, #030814 55%, #02060f 100%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 95% 65% at 50% 0%, rgba(37,99,235,0.32) 0%, rgba(37,99,235,0.08) 35%, transparent 60%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 55% 70% at 0% 40%, rgba(56,189,248,0.14) 0%, transparent 55%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59,130,246,0.16) 0%, transparent 60%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.45) 100%)',
-      }} />
+      <div className="relative z-10 max-w-6xl mx-auto px-6 sm:px-10 pt-8 pb-16">
 
-      <div className="relative z-10 max-w-4xl mx-auto px-6 sm:px-10 py-10">
+        <Link href="/media" className="text-[12px] text-white/45 hover:text-white transition-colors">‹ RL Prod</Link>
 
-        {/* Back */}
-        <Link href="/media"
-          className="inline-flex items-center gap-2 text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
-          <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
-          Menu RL PROD
-        </Link>
-
-        {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · Photography & Video</p>
-              <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Portal Cliente</h1>
-            </div>
-            {/* Botão Acesso ao Portal */}
+        {/* Cabeçalho */}
+        <div className="mt-6 mb-8 flex flex-wrap items-end justify-between gap-6">
+          <div>
+            <p className="rlp-m traco text-[11px] text-[#5a8bff]">RL Prod · Portais</p>
+            <h1 className="rlp-t mt-3 text-[48px] sm:text-[64px] leading-[0.95]">
+              Portal cliente<span className="text-[#5a8bff]">.</span>
+            </h1>
+            <p className="mt-3 text-[14px] text-white/55">
+              {todos.length} {todos.length === 1 ? 'projeto' : 'projetos'}, do arranque à entrega final.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3">
             <Link href="/media/portal-cliente/acesso"
-              className="group flex items-center gap-3 border border-white/15 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/30 px-5 py-3 transition-all duration-300">
-              <svg className="w-3.5 h-3.5 text-white/40 group-hover:text-white/80 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              className="inline-flex items-center gap-2 rounded-full border border-white/25 hover:border-white/50 px-5 py-3 text-[13.5px] text-white/85 hover:text-white transition-colors">
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
-              <span className="text-[9px] tracking-[0.4em] text-white/50 group-hover:text-white/85 uppercase transition-colors whitespace-nowrap">Acesso ao Portal</span>
-              <span className="text-white/25 group-hover:text-white/60 group-hover:translate-x-0.5 transition-all duration-200">→</span>
+              Acesso ao portal
             </Link>
-          </div>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="h-px w-12 bg-white/25" />
-            <div className="h-px flex-1 bg-white/[0.04]" />
-            <span className="text-[8px] font-mono text-white/15">{String(todos.length).padStart(2, '0')} PORTAIS</span>
+            <NovoPortalMediaButton />
           </div>
         </div>
 
-        {/* Cards */}
-        <div className="flex flex-col gap-3 mb-10">
-          {todos.map((portal) => {
-            const fase = getFaseAtual(portal)
-            const { dot, text } = getStatusColor(portal.status)
-            const href = `/portal-media/${portal.ref}`
-            return (
-              <div key={portal.ref}
-                className="group border border-white/[0.08] hover:border-white/[0.18] bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-400 p-6 relative overflow-hidden">
+        {/* Resumo */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[
+            { k: 'Portais ativos', v: String(ativos), sub: `de ${todos.length} enviados ao cliente`, cor: '#ffffff' },
+            { k: 'Em produção', v: String(emProducao), sub: 'projetos a decorrer', cor: '#5a8bff' },
+            { k: 'Entregas pendentes', v: String(entregasPend), sub: 'ainda por disponibilizar', cor: '#ffffff' },
+            { k: 'Valor por receber', v: euro(porReceber), sub: comAtraso ? `${euro(valorAtraso)} em atraso` : 'nada em atraso', cor: '#a9c1ff', alerta: comAtraso > 0 },
+          ].map(c => (
+            <div key={c.k} className="rounded-2xl border border-white/[0.1] bg-[#00141f]/70 p-5">
+              <p className="rlp-m text-[10px] text-white/45">{c.k}</p>
+              <p className="rlp-t mt-2 text-[34px] sm:text-[40px] leading-none" style={{ color: c.cor }}>{c.v}</p>
+              <p className={`mt-2 text-[12px] ${c.alerta ? 'text-[#ff4747]' : 'text-white/45'}`}>{c.sub}</p>
+            </div>
+          ))}
+        </div>
 
-                {/* Corner TL */}
-                <div className="absolute top-4 left-4 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <div className="w-3 h-px bg-white/30" /><div className="w-px h-3 bg-white/30" />
-                </div>
-                {/* Corner BR */}
-                <div className="absolute bottom-4 right-4 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-end">
-                  <div className="w-px h-3 bg-white/30" /><div className="w-3 h-px bg-white/30" />
-                </div>
+        {/* Filtros */}
+        <div className="mt-10 mb-5 flex flex-wrap items-center justify-between gap-4">
+          <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Projetos</p>
+          <div className="flex flex-wrap gap-1 rounded-full border border-white/[0.12] bg-[#00141f]/60 p-1">
+            {FILTROS.filter(f => f.id === 'todos' || f.id === filtro || contagem[f.id] > 0).map(f => {
+              const ativo = filtro === f.id
+              const alerta = f.id === 'atraso'
+              return (
+                <Link key={f.id} href={f.id === 'todos' ? '/media/portal-cliente' : `/media/portal-cliente?estado=${f.id}`}
+                  scroll={false}
+                  className={`rounded-full px-3.5 py-1.5 text-[12px] transition-colors ${
+                    ativo ? (alerta ? 'bg-[#ff4747] text-white' : 'bg-[#2e6cf6] text-white')
+                      : alerta ? 'text-[#ff4747]/80 hover:text-[#ff4747]' : 'text-white/55 hover:text-white'}`}>
+                  {f.label} <span className="opacity-60">{contagem[f.id]}</span>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
 
-                {/* ACTIVO badge — aparece quando o portal foi enviado ao cliente */}
-                {enviadoEmMap[portal.ref?.toUpperCase()] && (
-                  <div className="absolute top-0 right-0 flex items-center gap-2 border-l border-b border-emerald-400/30 bg-emerald-400/[0.07] px-4 py-2"
-                    style={{ boxShadow: '0 0 18px rgba(52,211,153,0.12), inset 0 0 12px rgba(52,211,153,0.04)' }}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                    <span className="text-[8px] tracking-[0.6em] text-emerald-400/85 uppercase font-semibold">Activo</span>
-                  </div>
-                )}
+        {/* Cartões */}
+        {visiveis.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-2xl border border-white/[0.1] bg-[#00141f]/60">
+            <p className="rlp-m text-[11px] text-white/40">Sem projetos neste filtro</p>
+            <Link href="/media/portal-cliente" className="text-[14px] text-[#5a8bff] hover:underline">Ver todos</Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {visiveis.map(({ p: portal, r }) => {
+              const href = `/portal-media/${portal.ref}`
+              const refU = portal.ref?.toUpperCase()
+              const enviado = enviadoEmMap[refU] ?? portal.portalEnviadoEm
+              const est = ESTILO_GRUPO[r.grupo]
+              const pctFases = r.fasesTotal ? Math.round((r.fasesFeitas / r.fasesTotal) * 100) : 0
+              const pctPago = r.totalPag ? Math.round((r.pago / r.totalPag) * 100) : 0
+              const alerta = r.atraso > 0 || r.entregaAtrasada
+              return (
+                <article key={portal.ref}
+                  className={`group flex flex-col rounded-2xl border bg-[#00141f]/70 hover:bg-[#0c2236]/80 transition-colors p-5 sm:p-6 ${
+                    alerta ? 'border-[#ff4747]/40' : 'border-white/[0.1] hover:border-[#2e6cf6]/60'}`}>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-                  {/* Info */}
-                  <div className="flex items-start gap-5">
-                    <div className="w-11 h-11 border border-white/10 flex items-center justify-center shrink-0 mt-0.5"
-                      style={{ boxShadow: '0 0 20px rgba(180,200,255,0.06)' }}>
-                      <span className="text-base text-white/20 select-none">◎</span>
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-3 mb-1">
-                        <h2 className="text-[13px] tracking-[0.3em] font-medium text-white/75 uppercase">
-                          {portal.nome || portal.ref}
-                        </h2>
-                        <span className="flex items-center gap-1.5">
-                          <span className={`w-1.5 h-1.5 rounded-full ${dot} animate-pulse`} />
-                          <span className={`text-[8px] tracking-[0.35em] ${text} uppercase`}>{portal.status}</span>
-                        </span>
-                      </div>
-                      <p className="text-[10px] tracking-[0.15em] text-white/30">{portal.cliente}</p>
-                      {/* Email do cliente */}
+                  {/* Topo */}
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <p className="rlp-m text-[9.5px] text-white/40 truncate">
+                        {portal.ref}{portal.tipo ? ` · ${portal.tipo}` : ''}
+                      </p>
+                      <h2 className="rlp-t mt-1.5 text-[24px] sm:text-[26px] leading-[1.05] truncate">
+                        {portal.nome || portal.ref}
+                      </h2>
+                      {portal.cliente && <p className="mt-1 text-[13px] text-white/55 truncate">{portal.cliente}</p>}
                       {portal.fichaCliente?.email && (
-                        <div className="mt-2">
-                          <p className="text-[8px] tracking-[0.4em] text-white/35 uppercase mb-0.5">Email</p>
-                          <a href={`mailto:${portal.fichaCliente.email}`}
-                            className="text-[13px] font-medium text-white/85 hover:text-white transition-colors">
-                            {portal.fichaCliente.email}
-                          </a>
+                        <a href={`mailto:${portal.fichaCliente.email}`}
+                          className="mt-0.5 inline-block text-[12.5px] text-[#a9c1ff] hover:text-white transition-colors truncate max-w-full">
+                          {portal.fichaCliente.email}
+                        </a>
+                      )}
+                    </div>
+                    <div className="shrink-0 flex flex-col items-end gap-1.5">
+                      {portal.status && (
+                        <span className="rlp-m text-[9px] px-3 py-1.5 rounded-full border"
+                          style={{ color: est.cor, background: est.fundo, borderColor: est.borda }}>
+                          {portal.status}
+                        </span>
+                      )}
+                      {enviado && (
+                        <span className="inline-flex items-center gap-1.5 text-[11px] text-[#5a8bff]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#5a8bff] animate-pulse" /> Ativo
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Progresso das fases */}
+                  <div className="mt-5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="text-[13px] text-white/85 truncate">
+                        <span className="rlp-m text-[9.5px] text-white/40 mr-2">Fase</span>
+                        {r.fase ?? 'Sem fases definidas'}
+                      </p>
+                      <span className="shrink-0 text-[12px] text-white/50">
+                        {r.fasesFeitas}/{r.fasesTotal} <span className="text-[#5a8bff]">{pctFases}%</span>
+                      </span>
+                    </div>
+                    {r.fasesTotal > 0 && (
+                      <div className="mt-2 flex gap-1">
+                        {(portal.fases || []).map((f, i) => (
+                          <span key={f.id ?? i} title={f.nome}
+                            className={`h-1.5 flex-1 rounded-full ${
+                              f.estado === 'concluido' ? 'bg-[#2e6cf6]'
+                                : f.estado === 'em_curso' ? 'bg-[#5a8bff]/50 animate-pulse'
+                                : 'bg-white/[0.08]'}`} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Datas, pagamentos, entregas */}
+                  <div className="mt-5 grid grid-cols-3 gap-2">
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 min-w-0">
+                      <p className="rlp-m text-[9px] text-white/40 truncate">{r.proxima ? r.proxima.k : 'Entrega'}</p>
+                      {r.proxima ? (
+                        <>
+                          <p className="mt-1 text-[13px] text-white/90 truncate">
+                            {r.proxima.d.toLocaleDateString('pt-PT', { day: 'numeric', month: 'short' })}
+                          </p>
+                          <p className="text-[11px] text-[#5a8bff] truncate">{relativo(r.proxima.d, hoje)}</p>
+                        </>
+                      ) : (
+                        <>
+                          <p className="mt-1 text-[13px] text-white/90 truncate">{portal.dataEntrega || 'Por definir'}</p>
+                          <p className={`text-[11px] truncate ${r.entregaAtrasada ? 'text-[#ff4747]' : 'text-white/40'}`}>
+                            {r.entregaAtrasada ? 'Prazo ultrapassado' : 'sem datas próximas'}
+                          </p>
+                        </>
+                      )}
+                    </div>
+
+                    <div className={`rounded-xl border px-3 py-2.5 min-w-0 ${r.atraso ? 'border-[#ff4747]/40 bg-[#ff4747]/[0.06]' : 'border-white/[0.06] bg-white/[0.03]'}`}>
+                      <p className="rlp-m text-[9px] text-white/40 truncate">Pago</p>
+                      <p className="mt-1 text-[13px] text-white/90 truncate">{r.totalPag ? `${pctPago}%` : 'Sem plano'}</p>
+                      {r.totalPag > 0 && (
+                        <div className="mt-1.5 h-1 rounded-full bg-white/[0.08] overflow-hidden">
+                          <div className="h-full rounded-full bg-[#2e6cf6]" style={{ width: `${pctPago}%` }} />
                         </div>
                       )}
-                      <div className="flex items-center gap-4 mt-2">
-                        <span className="text-[8px] tracking-[0.25em] text-white/20 uppercase">{portal.tipo}</span>
-                        <span className="text-white/10">·</span>
-                        <span className="text-[8px] tracking-[0.25em] text-white/20 uppercase">Fase: {fase}</span>
-                        {portal.dataEntrega && <>
-                          <span className="text-white/10">·</span>
-                          <span className="text-[8px] tracking-[0.25em] text-white/20 uppercase">Entrega: {portal.dataEntrega}</span>
-                        </>}
-                      </div>
+                      {r.atraso > 0 ? (
+                        <p className="mt-1 text-[11px] text-[#ff4747] truncate">{r.atraso} em atraso</p>
+                      ) : r.porReceber > 0 ? (
+                        <p className="mt-1 text-[11px] text-white/40 truncate">{euro(r.porReceber)} por receber</p>
+                      ) : null}
+                    </div>
+
+                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.03] px-3 py-2.5 min-w-0">
+                      <p className="rlp-m text-[9px] text-white/40 truncate">Entregas</p>
+                      <p className="mt-1 text-[13px] text-white/90 truncate">
+                        {r.entregasTotal ? `${r.entregasTotal - r.entregasPend}/${r.entregasTotal}` : 'Nenhuma'}
+                      </p>
+                      <p className="text-[11px] text-white/40 truncate">
+                        {r.entregasTotal ? (r.entregasPend ? `${r.entregasPend} por entregar` : 'tudo entregue') : 'por definir'}
+                      </p>
                     </div>
                   </div>
 
-                  {/* CTAs */}
-                  <div className="shrink-0 flex items-center gap-2">
-                    <Link href={`${href}/card`} target="_blank"
-                      className="flex items-center gap-2 border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] hover:border-white/20 px-4 py-3 transition-all duration-300 group/card">
-                      <svg className="w-3 h-3 text-white/25 group-hover/card:text-white/55 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>
-                      </svg>
-                      <span className="text-[9px] tracking-[0.4em] text-white/30 group-hover/card:text-white/60 uppercase transition-colors whitespace-nowrap">Card</span>
-                    </Link>
+                  {/* Ações */}
+                  <div className="mt-5 flex flex-wrap items-center gap-2">
                     <Link href={href} target="_blank"
-                      className="flex items-center gap-3 border border-white/15 bg-white/[0.04] hover:bg-white/[0.09] hover:border-white/30 px-5 py-3 transition-all duration-300 group/btn">
-                      <span className="text-[9px] tracking-[0.4em] text-white/50 group-hover/btn:text-white/80 uppercase transition-colors whitespace-nowrap">Abrir Portal</span>
-                      <span className="text-white/25 group-hover/btn:text-white/60 group-hover/btn:translate-x-0.5 transition-all duration-200">→</span>
+                      className="inline-flex items-center gap-2 rounded-full bg-[#2e6cf6] hover:bg-[#3d79ff] px-5 py-2.5 text-[13px] font-medium text-white transition-colors">
+                      Abrir portal <span aria-hidden>→</span>
+                    </Link>
+                    <Link href={`${href}/card`} target="_blank"
+                      className="inline-flex items-center gap-2 rounded-full border border-white/25 hover:border-white/50 px-4 py-2.5 text-[13px] text-white/80 hover:text-white transition-colors">
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                        <rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" />
+                      </svg>
+                      Card
                     </Link>
                   </div>
-                </div>
 
-                {/* Senha do portal */}
-                <div className="mt-4 pt-4 border-t border-white/[0.04] flex items-center gap-3">
-                  <span className="text-[8px] tracking-[0.4em] text-white/15 uppercase shrink-0">Senha</span>
-                  <div className="h-px flex-1 bg-white/[0.03]" />
-                  <PortalSenhaInput
-                    portalRef={portal.ref}
-                    senhaInicial={senhaMap[portal.ref?.toUpperCase()] ?? (portal as any).senha}
-                    portalEnviadoEm={enviadoEmMap[portal.ref?.toUpperCase()] ?? (portal as any).portalEnviadoEm}
-                  />
-                </div>
-              </div>
-            )
-          })}
-        </div>
+                  {/* Senha e envio */}
+                  <div className="mt-5 pt-4 border-t border-white/[0.08]">
+                    <PortalSenhaInput
+                      portalRef={portal.ref}
+                      senhaInicial={senhaMap[refU] ?? portal.senha}
+                      portalEnviadoEm={enviado}
+                    />
+                  </div>
+                </article>
+              )
+            })}
+          </div>
+        )}
 
         {/* Novo portal */}
-        <div className="border border-dashed border-white/[0.06] px-6 py-5 flex items-center justify-between">
+        <div className="mt-8 rounded-2xl border border-dashed border-white/[0.15] bg-[#00141f]/50 px-6 py-5 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-[10px] tracking-[0.3em] text-white/20 uppercase">Novo Portal</p>
-            <p className="text-[9px] text-white/[0.12] mt-1">Criar manualmente ou via CRM</p>
+            <p className="rlp-t text-[18px]">Novo portal</p>
+            <p className="mt-0.5 text-[13px] text-white/50">Criar à mão ou a partir de uma lead do CRM.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/media/crm/leads"
-              className="text-[9px] tracking-[0.3em] text-white/20 hover:text-white/45 uppercase transition-colors">
-              CRM →
-            </Link>
+            <Link href="/media/crm/leads" className="text-[13px] text-[#5a8bff] hover:underline">Ir para o CRM →</Link>
             <NovoPortalMediaButton />
           </div>
         </div>
@@ -233,4 +420,3 @@ export default async function PortalClientePage() {
     </main>
   )
 }
-

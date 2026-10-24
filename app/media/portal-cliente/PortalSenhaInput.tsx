@@ -84,69 +84,57 @@ export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviad
     }
   }
 
+  const BTN = 'rounded-full border px-3.5 py-1.5 text-[12px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {!editing ? (
         <>
-          {/* Status badge */}
-          <div className="flex items-center gap-1.5">
-            {temSenha || senha ? (
-              <>
-                <span className="text-[9px] text-amber-400/60">🔒</span>
-                <span className="text-[8px] tracking-[0.25em] text-amber-400/50 uppercase">Senha activa</span>
-              </>
-            ) : (
-              <>
-                <span className="text-[9px] text-white/20">🔓</span>
-                <span className="text-[8px] tracking-[0.25em] text-white/20 uppercase">Acesso livre</span>
-              </>
-            )}
-          </div>
-
-          {saved && (
-            <span className="text-[8px] tracking-[0.25em] text-emerald-400/60 uppercase">✓ Guardado</span>
-          )}
-
-          {sendMsg && (
-            <span className={`text-[8px] tracking-[0.25em] uppercase ${sendMsg.ok ? 'text-emerald-400/70' : 'text-red-400/70'}`}>
-              {sendMsg.text}
-            </span>
-          )}
+          {/* Estado da senha */}
+          <span className={`inline-flex items-center gap-1.5 text-[12px] mr-1 ${temSenha || senha ? 'text-[#a9c1ff]' : 'text-[#7c8893]'}`}>
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" />
+              <path d={temSenha || senha ? 'M7 11V7a5 5 0 0 1 10 0v4' : 'M7 11V7a5 5 0 0 1 9.9-1'} />
+            </svg>
+            {temSenha || senha ? 'Senha ativa' : 'Acesso livre'}
+          </span>
 
           {/* Alterar senha */}
           <button
             onClick={() => setEditing(true)}
-            className="text-[8px] tracking-[0.3em] text-white/20 hover:text-white/50 uppercase transition-colors border border-white/[0.06] hover:border-white/20 px-2 py-1"
+            className={`${BTN} border-white/[0.15] text-white/65 hover:text-white hover:border-white/40`}
           >
             {temSenha || senha ? 'Alterar senha' : 'Definir senha'}
           </button>
 
-          {/* Enviar portal + badge ACTIVO */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={handleEnviarPortal}
-              disabled={sending}
-              className="flex items-center gap-1.5 text-[8px] tracking-[0.3em] text-blue-400/60 hover:text-blue-400/90 uppercase transition-colors border border-blue-400/20 hover:border-blue-400/45 bg-blue-400/[0.04] hover:bg-blue-400/[0.08] px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <svg className="w-2.5 h-2.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-              </svg>
-              {sending ? 'A enviar...' : 'Enviar portal'}
-            </button>
-            {enviadoEm && (
-              <div className="flex items-center gap-2 border border-emerald-400/30 bg-emerald-400/[0.07] px-3 py-1"
-                style={{ boxShadow: '0 0 10px rgba(52,211,153,0.12)' }}>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                <span className="text-[8px] tracking-[0.5em] text-emerald-400/85 uppercase font-semibold">Activo</span>
-                <span className="text-[7px] text-emerald-400/35 tracking-[0.1em] ml-1">{enviadoEm}</span>
-              </div>
-            )}
-          </div>
+          {/* Enviar portal */}
+          <button
+            onClick={handleEnviarPortal}
+            disabled={sending}
+            className={`${BTN} inline-flex items-center gap-1.5 border-[#2e6cf6]/60 bg-[#2e6cf6]/[0.12] text-[#a9c1ff] hover:bg-[#2e6cf6]/25 hover:text-white`}
+          >
+            <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+            {sending ? 'A enviar…' : 'Enviar portal'}
+          </button>
+
+          {saved && <span className="text-[12px] text-[#5a8bff]">✓ Guardado</span>}
+
+          {sendMsg && (
+            <span className={`text-[12px] ${sendMsg.ok ? 'text-[#5a8bff]' : 'text-[#ff4747]'}`}>{sendMsg.text}</span>
+          )}
+
+          {enviadoEm && !sendMsg && (
+            <span className="rlp-m text-[9px] text-white/40 tracking-[0.15em]">Enviado {enviadoEm}</span>
+          )}
         </>
       ) : (
         <>
-          <div className="flex items-center gap-1 border border-white/[0.08] bg-black/20 px-2">
-            <span className="text-white/20 text-[10px]">🔑</span>
+          <div className="flex items-center gap-2 rounded-full border border-white/[0.15] bg-[#00141f]/70 px-3.5 focus-within:border-[#2e6cf6]/70">
+            <svg className="w-3.5 h-3.5 text-[#5a8bff]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="8" cy="15" r="4" /><path d="M10.8 12.2L20 3m-3 3l3 3m-6 0l2 2" />
+            </svg>
             <input
               type="text"
               value={senha}
@@ -154,14 +142,14 @@ export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviad
               onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
               placeholder="Senha..."
               autoFocus
-              className="bg-transparent py-1.5 text-[10px] tracking-[0.15em] text-white/60 placeholder:text-white/15 focus:outline-none w-28"
+              className="bg-transparent py-1.5 text-[13px] text-white/90 placeholder:text-white/30 focus:outline-none w-32"
             />
           </div>
 
           <button
             onClick={handleSave}
             disabled={saving}
-            className="text-[8px] tracking-[0.3em] text-emerald-400/60 hover:text-emerald-400 uppercase transition-colors border border-emerald-400/20 hover:border-emerald-400/50 px-2 py-1.5 disabled:opacity-40"
+            className={`${BTN} border-[#2e6cf6] bg-[#2e6cf6] text-white hover:bg-[#3d79ff]`}
           >
             {saving ? '...' : 'Guardar'}
           </button>
@@ -170,7 +158,7 @@ export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviad
             <button
               onClick={handleRemove}
               disabled={saving}
-              className="text-[8px] tracking-[0.3em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors border border-red-400/10 hover:border-red-400/30 px-2 py-1.5 disabled:opacity-40"
+              className={`${BTN} border-[#ff4747]/30 text-[#ff4747]/80 hover:text-[#ff4747] hover:border-[#ff4747]/60`}
             >
               Remover
             </button>
@@ -178,7 +166,7 @@ export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviad
 
           <button
             onClick={() => { setEditing(false); setSenha(senhaInicial ?? '') }}
-            className="text-[8px] tracking-[0.3em] text-white/20 hover:text-white/45 uppercase transition-colors"
+            className="px-2 text-[12px] text-white/45 hover:text-white transition-colors"
           >
             Cancelar
           </button>

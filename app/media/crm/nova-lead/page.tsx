@@ -314,7 +314,7 @@ export default function NovaLeadPage() {
 
           {/* ── Lateral ──────────────────────────────────────────────────── */}
           <aside className={`flex-col gap-5 ${interno ? 'hidden' : 'flex'}`}>
-            <div className="rounded-xl border border-white/[0.1] bg-[#00141f]/60 backdrop-blur p-6">
+            <div className="rounded-xl border border-white/[0.1] bg-[#00141f]/70 p-6">
               <p className="rlp-m traco text-[10.5px] text-[#5a8bff] mb-6">Como funciona</p>
               <div className="space-y-5">
                 {PASSOS.map((p, i) => (

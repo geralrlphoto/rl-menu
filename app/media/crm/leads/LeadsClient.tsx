@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 const ESTADOS = ['Novo', 'Em Contacto', 'Qualificado', 'Proposta Env.', 'Perdido', 'Convertido']
 
@@ -357,6 +357,14 @@ export default function LeadsClient({ leads: initial }: Props) {
     setVista('lista'); setFiltroEstado('Todos'); setExpanded(lead.id); loadContent(lead)
     setTimeout(() => document.getElementById(`lead-${lead.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80)
   }
+
+  // Vindo da pesquisa rápida (?lead=id): abre essa lead na lista
+  useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('lead')
+    const lead = id ? initial.find(l => l.id === id) : undefined
+    if (lead) abrirNaLista(lead)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── Estatísticas (recalculadas sempre que um estado muda) ─────────────────
   const stats = useMemo(() => {
