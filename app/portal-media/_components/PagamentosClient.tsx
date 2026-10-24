@@ -8,6 +8,7 @@ import EditableField from './EditableField'
 import EditableSelect from './EditableSelect'
 import EditableDateField from './EditableDateField'
 import HeroUploadBlock from './HeroUploadBlock'
+import MovimentosProjeto from './MovimentosProjeto'
 
 /* ── Identidade rlprod.pt ── */
 const CARTAO    = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/70'
@@ -282,6 +283,9 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
             <span className="text-[#a9c1ff] group-hover:translate-x-0.5 transition-transform">→</span>
           </div>
         </button>
+
+        {/* ── Receitas e despesas do projeto (só admin) ── */}
+        {isAdmin && <MovimentosProjeto portalRef={projeto.ref} recebido={pago} />}
 
         {/* ── Plano de Pagamento (admin edita) ── */}
         <section className="mb-10">

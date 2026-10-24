@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { contasPagamento } from '@/app/portal-media/_data/contasPagamento'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -8,36 +9,42 @@ const supabase = createClient(
 
 export async function GET() {
   try {
+    // Só os campos usados (poupar egress); portais de teste ficam de fora
     const { data, error } = await supabase
       .from('media_portais')
-      .select('ref, dados, created_at, updated_at')
+      .select('ref, created_at, nome:dados->>nome, cliente:dados->>cliente, tipo:dados->>tipo, status:dados->>status, dataFilmagem:dados->>dataFilmagem, dataEntrega:dados->>dataEntrega, pagamentos:dados->pagamentos, registosPagamento:dados->registosPagamento, teste:dados->>teste')
       .order('created_at', { ascending: false })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-    // Portais marcados como teste (dados.teste = true) não entram nas contas
-    const projetos = (data ?? []).filter((row: any) => row.dados?.teste !== true).map((row: any) => {
-      const d = row.dados ?? {}
+    const projetos = (data ?? []).filter((row: any) => row.teste !== 'true').map((row: any) => {
       const pagamentos: Array<{ descricao: string; valor: number; estado: string; data: string }> =
-        Array.isArray(d.pagamentos) ? d.pagamentos : []
+        Array.isArray(row.pagamentos) ? row.pagamentos : []
+      const registos: Array<{ data: string; valor: number; fase?: string; metodo?: string; validado?: boolean; prestacao?: string }> =
+        Array.isArray(row.registosPagamento) ? row.registosPagamento : []
 
-      const totalValor    = pagamentos.reduce((s, p) => s + (Number(p.valor) || 0), 0)
-      const totalPago     = pagamentos.filter(p => p.estado === 'pago').reduce((s, p) => s + (Number(p.valor) || 0), 0)
-      const totalPendente = pagamentos.filter(p => p.estado === 'pendente').reduce((s, p) => s + (Number(p.valor) || 0), 0)
-      const totalAtraso   = pagamentos.filter(p => p.estado === 'em_atraso').reduce((s, p) => s + (Number(p.valor) || 0), 0)
+      // Mesma conta do portal do cliente (registos, senão as prestações pagas)
+      const { total: totalValor, pago: totalPago, emFalta } = contasPagamento({ pagamentos: pagamentos as any, registosPagamento: registos as any })
+      const totalAtraso = pagamentos.filter(p => p.estado === 'em_atraso').reduce((s, p) => s + (Number(p.valor) || 0), 0)
+
+      // Recebimentos com data, para o mês a mês da página Finanças
+      const recebimentos = registos.length
+        ? registos.map(r => ({ data: r.data, valor: Number(r.valor) || 0, descricao: r.prestacao || r.fase || 'Pagamento', validado: !!r.validado }))
+        : pagamentos.filter(p => p.estado === 'pago').map(p => ({ data: p.data, valor: Number(p.valor) || 0, descricao: p.descricao, validado: true }))
 
       return {
-        ref:          row.ref ?? d.ref ?? '',
-        nome:         d.nome ?? row.ref ?? '',
-        cliente:      d.cliente ?? '',
-        tipo:         d.tipo ?? '',
-        status:       d.status ?? '',
-        dataFilmagem: d.dataFilmagem ?? '',
-        dataEntrega:  d.dataEntrega ?? '',
+        ref:          row.ref ?? '',
+        nome:         row.nome ?? row.ref ?? '',
+        cliente:      row.cliente ?? '',
+        tipo:         row.tipo ?? '',
+        status:       row.status ?? '',
+        dataFilmagem: row.dataFilmagem ?? '',
+        dataEntrega:  row.dataEntrega ?? '',
         pagamentos,
+        recebimentos,
         totalValor,
         totalPago,
-        totalPendente,
+        totalPendente: Math.max(0, emFalta - totalAtraso),
         totalAtraso,
         createdAt:    row.created_at,
       }
