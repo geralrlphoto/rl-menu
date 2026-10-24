@@ -193,7 +193,7 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
             <div className={`${CARD} p-5`}>
               <p className="rlp-m text-[9px] text-white/45">A receber</p>
               <p className="rlp-t mt-2 text-[36px] leading-none text-[#5a8bff]">{eur(aReceber)}</p>
-              <p className="mt-2 text-[12.5px] text-white/45">{trabalhos.filter(t => !t.pago && t.valor > 0).length} trabalhos por pagar</p>
+              <p className="mt-2 text-[12.5px] text-white/45">{(n => n === 1 ? '1 trabalho por pagar' : `${n} trabalhos por pagar`)(trabalhos.filter(t => !t.pago && t.valor > 0).length)}</p>
             </div>
             <div className={`${CARD} p-5`}>
               <p className="rlp-m text-[9px] text-white/45">Já recebido</p>
