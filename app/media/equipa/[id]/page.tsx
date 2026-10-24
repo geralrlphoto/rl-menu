@@ -165,7 +165,6 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
             </button>
             <input ref={fotoRef} type="file" accept="image/*" className="hidden"
               onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) carregarFoto(f) }} />
-            </div>
             <div className="min-w-0 flex-1">
               {editar
                 ? <input className={INPUT + ' rlp-t text-[18px]'} value={v.nome} onChange={e => setC('nome', e.target.value)} />
