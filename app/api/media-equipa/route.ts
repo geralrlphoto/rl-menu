@@ -11,21 +11,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-// ?projeto=REF → equipa do projeto + pessoas já usadas noutros projetos (sugestões)
+// ?projeto=REF → equipa do projeto + o staff ativo da RL PROD (/media/equipa)
 export async function GET(req: NextRequest) {
   const bloqueio = exigeAdmin(req)
   if (bloqueio) return bloqueio
   const projeto = (req.nextUrl.searchParams.get('projeto') ?? '').toUpperCase()
 
   const [{ data: equipa, error }, { data: membros }] = await Promise.all([
-    supabase.from('media_equipa_projeto').select('id, nome, funcao, contacto, notas').eq('projeto_ref', projeto).order('criado_em'),
-    supabase.from('media_equipa').select('id, nome, categoria, telefone, email').eq('ativo', true).order('nome'),
+    supabase.from('media_equipa_projeto').select('id, nome, funcao, contacto, notas, membro_id').eq('projeto_ref', projeto).order('criado_em'),
+    supabase.from('media_equipa').select('id, nome, categoria, telefone, email, foto_url').eq('ativo', true).order('nome'),
   ])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Sugestões: a equipa da RL PROD (/media/equipa)
+  // Staff da RL PROD, para nomear com um clique
   const pessoas = (membros ?? []).map(m => ({
-    id: m.id, nome: m.nome, funcao: singular(m.categoria), contacto: m.telefone || m.email || null,
+    id: m.id, nome: m.nome, categoria: m.categoria, funcao: singular(m.categoria), contacto: m.telefone || m.email || null, foto_url: m.foto_url,
   }))
   return NextResponse.json({ equipa: equipa ?? [], pessoas })
 }
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       notas: String(notas ?? '').trim() || null,
       membro_id: membro_id || null,
     })
-    .select('id, nome, funcao, contacto, notas')
+    .select('id, nome, funcao, contacto, notas, membro_id')
     .single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true, membro: data })
