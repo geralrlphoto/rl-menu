@@ -44,6 +44,9 @@ export type FichaDados = {
   titular?: string
   nif?: string
   morada?: string
+  urgenciaNome?: string
+  urgenciaRelacao?: string
+  urgenciaTelefone?: string
 }
 
 export const singular = (id: string) => CATEGORIAS.find(c => c.id === id)?.singular ?? id

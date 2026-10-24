@@ -327,6 +327,20 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
           )}
         </section>
 
+        {/* contacto de urgência */}
+        <section className={CARD + ' border-[#ff4747]/30'}>
+          <Titulo>Contacto de urgência</Titulo>
+          {linha({ rotulo: 'Nome', k: 'urgenciaNome' })}
+          {linha({ rotulo: 'Relação', k: 'urgenciaRelacao', placeholder: 'Mãe, companheiro...' })}
+          {linha({ rotulo: 'Telemóvel', k: 'urgenciaTelefone', tipo: 'tel', placeholder: '912 345 678' })}
+          {!editar && d.urgenciaTelefone && (
+            <a href={`tel:${d.urgenciaTelefone.replace(/\s/g, '')}`}
+              className="mt-4 inline-flex rounded-full border border-[#ff4747]/50 px-4 py-2 text-[13px] text-white hover:bg-[#ff4747]/15">
+              ✆ Ligar a {d.urgenciaNome || 'contacto de urgência'}
+            </a>
+          )}
+        </section>
+
         {/* notas internas */}
         <section className={CARD + ' lg:col-span-3'}>
           <Titulo>Notas internas</Titulo>
