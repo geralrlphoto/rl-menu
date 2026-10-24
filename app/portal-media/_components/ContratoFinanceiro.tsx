@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { supabase } from '@/lib/supabase'
 
 // Secção "Contrato" da página Financeiro do portal: consultar o contrato sem
@@ -174,8 +175,9 @@ export default function ContratoFinanceiro({ portalRef, contrato, contratoFinalU
       )}
 
       {/* Consultar sem descarregar */}
-      {aberto && (
-        <div className="fixed inset-0 z-[70] flex flex-col bg-[#000d17]/90 p-2 sm:p-6" onClick={() => setAberto(false)}>
+      {/* createPortal: fora da página para ficar por cima da barra fixa do topo */}
+      {aberto && createPortal(
+        <div className="rlp fixed inset-0 z-[90] text-white flex flex-col bg-[#000d17]/90 p-2 sm:p-6" onClick={() => setAberto(false)}>
           <div className="mx-auto flex h-full w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/[0.14] bg-[#00141f]" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between gap-3 border-b border-white/[0.08] px-4 py-3">
               <p className="rlp-t text-[17px]">Contrato</p>
@@ -188,7 +190,8 @@ export default function ContratoFinanceiro({ portalRef, contrato, contratoFinalU
             </div>
             <iframe src={url} title="Contrato" className="flex-1 w-full bg-white" />
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </section>
   )
