@@ -96,37 +96,18 @@ export default function NotificationsBell({ portalRef }: Props) {
   const historyCount = notifs.length - (readAt ? notifs.filter(n => String(n?.at ?? '') > readAt).length : notifs.length)
 
   return (
-    <div ref={wrapperRef} className="relative">
-      {/* Botão sino — contraste alto contra o top bar navy.
-       *  Brilha em azul suave quando há por ler (pm-bell-glow). */}
+    <div ref={wrapperRef} className="relative rlp">
+      {/* Botão sino: contorno azul quando há por ler */}
       <button
         onClick={handleOpen}
         aria-label={`Notificações${unread > 0 ? ` (${unread} não lidas)` : ''}`}
-        className={'relative w-9 h-9 flex items-center justify-center rounded-lg transition-all duration-150' + (unread > 0 && !open ? ' pm-bell-glow' : '')}
-        style={{
-          border: '1px solid oklch(0.66 0.13 245 / 0.55)',
-          color: '#fff',
-          background: open
-            ? 'oklch(0.66 0.13 245 / 0.30)'
-            : (unread > 0 ? 'oklch(0.66 0.13 245 / 0.22)' : 'oklch(0.66 0.13 245 / 0.14)'),
-          boxShadow: open
-            ? '0 0 0 3px oklch(0.66 0.13 245 / 0.18), 0 0 12px oklch(0.66 0.13 245 / 0.4)'
-            : (unread > 0 ? undefined : '0 0 10px oklch(0.66 0.13 245 / 0.18)'),
-        }}
-        onMouseEnter={e => {
-          if (!open) {
-            e.currentTarget.style.borderColor = 'oklch(0.80 0.11 245)'
-            e.currentTarget.style.background = 'oklch(0.66 0.13 245 / 0.24)'
-            e.currentTarget.style.boxShadow = '0 0 14px oklch(0.66 0.13 245 / 0.32)'
-          }
-        }}
-        onMouseLeave={e => {
-          if (!open) {
-            e.currentTarget.style.borderColor = 'oklch(0.66 0.13 245 / 0.55)'
-            e.currentTarget.style.background = 'oklch(0.66 0.13 245 / 0.14)'
-            e.currentTarget.style.boxShadow = '0 0 10px oklch(0.66 0.13 245 / 0.18)'
-          }
-        }}
+        className={`relative w-9 h-9 flex items-center justify-center rounded-lg border text-white transition-colors ${
+          open
+            ? 'bg-[#2e6cf6] border-[#2e6cf6]'
+            : unread > 0
+              ? 'bg-[#2e6cf6]/20 border-[#2e6cf6] hover:bg-[#2e6cf6]/35'
+              : 'bg-[#00141f]/70 border-white/[0.14] hover:border-[#5a8bff]'
+        }`}
       >
         <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor"
           strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
@@ -135,14 +116,7 @@ export default function NotificationsBell({ portalRef }: Props) {
         </svg>
         {unread > 0 && (
           <span aria-hidden
-            className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-[4px] rounded-full flex items-center justify-center text-[10px] font-bold leading-none"
-            style={{
-              background: 'oklch(0.66 0.16 30)' /* danger tone */,
-              color: '#fff',
-              border: '2px solid #122230',
-              fontFamily: 'Manrope, system-ui, sans-serif',
-              boxShadow: '0 0 8px oklch(0.66 0.16 30 / 0.6)',
-            }}>
+            className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-[5px] rounded-full flex items-center justify-center text-[10px] font-semibold leading-none bg-[#ff4747] text-white border-2 border-[#00141f]">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -151,33 +125,18 @@ export default function NotificationsBell({ portalRef }: Props) {
       {/* Dropdown */}
       {open && (
         <div
-          className="absolute right-0 top-[calc(100%+8px)] z-50"
-          style={{
-            width: 'min(320px, calc(100vw - 20px))',
-            background: 'linear-gradient(180deg, #16293a, #122230 60%, #0e1b27)',
-            border: '1px solid oklch(0.50 0.03 245 / 0.22)',
-            borderRadius: 12,
-            boxShadow: '0 18px 40px -12px rgba(0,0,0,0.55), 0 4px 8px rgba(0,0,0,0.3)',
-            fontFamily: 'Manrope, system-ui, sans-serif',
-            overflow: 'hidden',
-          }}
+          className="absolute right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-2xl border border-white/[0.14] bg-[#00141f] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)]"
+          style={{ width: 'min(340px, calc(100vw - 20px))' }}
         >
-          {/* Header dropdown — título + toggle Novas/Histórico */}
-          <div className="px-4 py-3"
-            style={{ borderBottom: '1px solid oklch(0.50 0.03 245 / 0.18)' }}>
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[10.5px] tracking-[0.28em] uppercase font-semibold"
-                style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', color: 'oklch(0.80 0.11 245)' }}>
-                Notificações
-              </p>
-              <span className="text-[10px] tracking-[0.14em] uppercase font-semibold"
-                style={{ color: 'oklch(0.58 0.03 245)' }}>
-                {viewMode === 'new' ? visible.length : `${notifs.length} no total`}
+          {/* Cabeçalho + Novas / Histórico */}
+          <div className="px-4 pt-3.5 pb-3 border-b border-white/[0.08]">
+            <div className="flex items-center justify-between mb-2.5">
+              <p className="rlp-t text-[16px] leading-none text-white">Notificações</p>
+              <span className="rlp-m text-[9px] tracking-[0.15em] text-[#7c8893]">
+                {viewMode === 'new' ? `${visible.length} novas` : `${notifs.length} no total`}
               </span>
             </div>
-            {/* Tabs segmented Novas / Histórico */}
-            <div className="flex items-center gap-1 p-0.5 rounded-md"
-              style={{ background: 'oklch(0.30 0.03 245 / 0.4)', border: '1px solid oklch(0.50 0.03 245 / 0.18)' }}>
+            <div className="flex items-center gap-1 p-1 rounded-lg bg-[#0c2236]/70">
               <TabBtn active={viewMode === 'new'} onClick={() => setViewMode('new')}>
                 Novas {viewMode === 'new' && visible.length > 0 ? `· ${visible.length}` : ''}
               </TabBtn>
@@ -188,7 +147,7 @@ export default function NotificationsBell({ portalRef }: Props) {
           </div>
 
           {/* Conteúdo */}
-          <div className="max-h-[380px] overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+          <div className="max-h-[380px] overflow-y-auto p-1.5" style={{ scrollbarWidth: 'thin' }}>
             {loading ? (
               <EmptyState text="A carregar…" />
             ) : visible.length === 0 ? (
@@ -200,7 +159,7 @@ export default function NotificationsBell({ portalRef }: Props) {
                 <EmptyState text="Sem histórico" />
               )
             ) : (
-              <ul className="m-0 p-0 list-none">
+              <ul className="m-0 p-0 list-none flex flex-col gap-0.5">
                 {visible.map((n, i) => {
                   const isRead = readAt ? String(n?.at ?? '') <= readAt : false
                   return (
@@ -223,13 +182,9 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
     <button
       type="button"
       onClick={onClick}
-      className="flex-1 px-2.5 py-1.5 rounded-[5px] text-[10.5px] tracking-[0.16em] uppercase font-semibold transition-all"
-      style={{
-        background: active ? 'oklch(0.66 0.13 245 / 0.20)' : 'transparent',
-        color: active ? '#fff' : 'oklch(0.70 0.03 245)',
-        border: active ? '1px solid oklch(0.66 0.13 245 / 0.40)' : '1px solid transparent',
-        fontFamily: 'Space Grotesk, Manrope, sans-serif',
-      }}
+      className={`rlp-m flex-1 px-2.5 py-1.5 rounded-md text-[9px] tracking-[0.18em] transition-colors ${
+        active ? 'bg-[#2e6cf6] text-white' : 'text-white/55 hover:text-white'
+      }`}
     >
       {children}
     </button>
@@ -240,28 +195,26 @@ function TabBtn({ active, onClick, children }: { active: boolean; onClick: () =>
 function EmptyState({ text }: { text: string }) {
   return (
     <div className="px-4 py-10 text-center">
-      <svg className="mx-auto mb-3" width={32} height={32} viewBox="0 0 24 24"
-        fill="none" stroke="oklch(0.50 0.03 245)" strokeWidth="1.4"
+      <svg className="mx-auto mb-3" width={30} height={30} viewBox="0 0 24 24"
+        fill="none" stroke="#5a8bff" strokeWidth="1.4"
         strokeLinecap="round" strokeLinejoin="round">
         <path d="M6 9a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6Z" />
         <path d="M10.5 19a1.5 1.5 0 0 0 3 0" />
       </svg>
-      <p className="text-[12px] leading-snug" style={{ color: 'oklch(0.58 0.03 245)' }}>
-        {text}
-      </p>
+      <p className="text-[13px] leading-snug text-[#7c8893]">{text}</p>
     </div>
   )
 }
 
 function NotifRow({ n, fresh, faded }: { n: Notification; fresh: boolean; faded?: boolean }) {
-  // Determina tipo + label + cor por defeito
+  // Determina tipo + etiqueta + cor
   const type = String(n.type ?? (n.phase ? 'fase' : 'generic'))
   const isFase = type === 'fase' || !!n.phase
   const isRoadmap = type === 'roadmap-status' || type === 'roadmap'
 
-  // Header label + cor
+  // Concluído = azul pálido, em curso = azul, resto = cinza
   let headerLabel = 'Notificação'
-  let headerColor = 'oklch(0.80 0.11 245)' // accent navy default
+  let headerColor = '#5a8bff'
   if (isFase) {
     const ps = n.phase?.state ?? ''
     headerLabel = n.phase?.n ? `Fase ${n.phase.n}` : 'Fase'
@@ -269,47 +222,35 @@ function NotifRow({ n, fresh, faded }: { n: Notification; fresh: boolean; faded?
       const lbl = ps === 'done' ? 'Concluído' : ps === 'doing' ? 'Em curso' : ps === 'pending' ? 'Pendente' : ps
       headerLabel += ` · ${lbl}`
     }
-    headerColor = ps === 'done' ? 'oklch(0.72 0.12 165)' : ps === 'doing' ? 'oklch(0.80 0.11 245)' : 'oklch(0.66 0.15 35)'
+    headerColor = ps === 'done' ? '#a9c1ff' : ps === 'doing' ? '#5a8bff' : '#7c8893'
   } else if (isRoadmap) {
     headerLabel = 'Road Map · Estado'
-    // Cor por novo estado
     const ne = String(n.meta?.novoEstado ?? '')
-    headerColor = ne === 'concluido' ? 'oklch(0.72 0.12 165)'
-      : ne === 'em_andamento' ? 'oklch(0.80 0.11 245)'
-      : ne === 'aguardar' ? 'oklch(0.78 0.10 80)'
-      : 'oklch(0.66 0.15 35)'
+    headerColor = ne === 'concluido' ? '#a9c1ff'
+      : ne === 'em_andamento' ? '#5a8bff'
+      : '#7c8893'
   }
 
-  // Title + body
   const title = (n.title ?? '').trim() || (isFase ? (n.phase?.name ?? 'Atualização da fase') : 'Atualização')
   const body = (n.body ?? '').trim() || (isFase && n.phase?.date ? `Data: ${n.phase.date}` : '')
   const when = formatRelative(n.at)
 
   return (
-    <li className="relative px-4 py-3"
-      style={{
-        borderBottom: '1px solid oklch(0.50 0.03 245 / 0.12)',
-        opacity: faded ? 0.55 : 1,
-      }}>
+    <li className={`relative rounded-xl pl-7 pr-3 py-2.5 hover:bg-[#0c2236]/70 transition-colors ${faded ? 'opacity-55' : ''}`}>
       {fresh && (
-        <span aria-hidden className="absolute left-1.5 top-3 w-1.5 h-1.5 rounded-full"
-          style={{ background: 'oklch(0.80 0.11 245)', boxShadow: '0 0 6px oklch(0.66 0.13 245 / .6)' }} />
+        <span aria-label="Não lida" className="absolute left-3 top-[15px] w-2 h-2 rounded-full bg-[#2e6cf6]" />
       )}
-      <div className="flex items-center justify-between gap-2 mb-1">
-        <p className="text-[10px] tracking-[0.2em] uppercase font-bold"
-          style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', color: headerColor }}>
+      <div className="flex items-center justify-between gap-2 mb-0.5">
+        <p className="rlp-m text-[9px] tracking-[0.18em] truncate" style={{ color: headerColor }}>
           {headerLabel}
         </p>
-        <span className="text-[10px]" style={{ color: 'oklch(0.58 0.03 245)' }}>{when}</span>
+        <span className="text-[11px] text-[#7c8893] shrink-0">{when}</span>
       </div>
-      <p className="text-[12.5px] leading-snug font-medium"
-        style={{ color: '#fff' }}>
+      <p className={`text-[13.5px] leading-snug font-medium ${fresh ? 'text-white' : 'text-white/75'}`}>
         {title}
       </p>
       {body && (
-        <p className="text-[11px] mt-1" style={{ color: 'oklch(0.70 0.03 245)' }}>
-          {body}
-        </p>
+        <p className="text-[12px] mt-0.5 text-white/55 leading-snug">{body}</p>
       )}
     </li>
   )

@@ -1,26 +1,19 @@
 'use client'
 /* ============================================================
-   BriefingClient — Briefing fiel ao handoff RL PROD
-   Design 1:1 ao briefing.css + Briefing.html do handoff (v5):
-   - bg-fx fixed com radial accent breathing
-   - Crumb + título "BRIEFING" letter-by-letter + title-rule
-   - Head: count de sessões + botões "Resumo" (print) e "+ Sessão" (admin)
-   - Next session card (calculado da sessão futura mais próxima)
-   - Explainer 4 features
-   - Histórico de sessões EXPANSÍVEIS (data lateral, título+tag, descrição,
-     chevron, painel detail com Objetivos/Tom/Notas)
-   - Empty state
-   - Statusbar (Estado da fase) com pulse
-   - Footer
+   BriefingClient: identidade rlprod.pt (classes rlp / rlp-t / rlp-m
+   do layout, fundo vem do layout).
+   - Cabeçalho com resumo de sessões + "Resumo" (print) e Agendar/Pedir
+   - Secções numeradas: Próxima sessão (countdown), O que é o Briefing,
+     Histórico de sessões (expansíveis), Estado da fase
+   - Modal de agendamento (admin agenda, cliente pede)
 
-   Lógica preservada do legado: addSessao, update, eliminar, notificar,
-   handleSave, AdminBar. Tudo "+Sessão"/Notificar/edit/eliminar só
-   aparece para isAdmin.
+   Lógica preservada: saveData, confirmSchedule, aprovar/recusar,
+   update, eliminar, notificar, handleSave, AdminBar. Edição,
+   Notificar e Eliminar só aparecem para isAdmin.
    ============================================================ */
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Manrope, Space_Grotesk } from 'next/font/google'
 import type { Projeto, BriefingSessao } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import HeroUploadBlock from './HeroUploadBlock'
@@ -29,9 +22,6 @@ import HeroUploadBlock from './HeroUploadBlock'
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
 /** Link Maps p/ a morada do atelier */
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video/@38.7071885,-9.1450227,17z'
-
-const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-manrope', display: 'swap' })
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
 
 const MONTHS = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ']
 const MONTHS_LONG = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -42,6 +32,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
   const [sessoes, setSessoes] = useState<BriefingSessao[]>(initial.briefingSessoes ?? [])
   const [isEditing, setIsEditing] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [savedFlash, setSavedFlash] = useState(false)
   const [heroUrl, setHeroUrl] = useState(initial.briefingImageUrl ?? '')
   const [notifying, setNotifying] = useState<string | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
@@ -73,6 +64,8 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     try { await saveData() } catch {}
     setSaving(false)
     setIsEditing(false)
+    setSavedFlash(true)
+    setTimeout(() => setSavedFlash(false), 2500)
   }
 
   const cancel = () => {
@@ -279,9 +272,6 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     return { label: 'Aguardar', color: 'wait' as const }
   }, [initial.fases])
 
-  /* ── Letra-a-letra do título "BRIEFING" ──────────────── */
-  const titleLetters = 'BRIEFING'.split('')
-
   /* ── Print "Resumo" ─────────────────────────────────── */
   const handlePrint = () => {
     if (typeof window !== 'undefined') {
@@ -312,510 +302,548 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
     [sessoes]
   )
 
-  return (
-    <div className={`rl-briefing ${manrope.variable} ${spaceGrotesk.variable}`}>
-      <div className="rl-bg-fx" aria-hidden />
-      <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
+  /* Contagens para o resumo do topo */
+  const contagem = useMemo(() => {
+    let pendentes = 0, agendadas = 0, realizadas = 0
+    for (const s of sessoes) {
+      const e = estadoSessao(s)
+      if (e === 'pendente') pendentes++
+      else if (e === 'agendada') agendadas++
+      else realizadas++
+    }
+    return { pendentes, agendadas, realizadas }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessoes, now])
 
-      <div className="rl-page">
+  /* Numeração das secções (a próxima sessão só aparece quando existe) */
+  const temHero = !!(proximaSessao && countdown)
+  const nSec = (i: number) => String(i + (temHero ? 1 : 0)).padStart(2, '0')
+
+  /* ── Classes partilhadas (identidade rlprod.pt) ─────────── */
+  const cardCls = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/70'
+  const inputCls = 'w-full rounded-md border border-white/[0.12] bg-[#00141f]/70 px-4 py-3 text-[15px] text-white placeholder:text-white/30 focus:outline-none focus:border-[#2e6cf6] transition-colors'
+  const labelCls = 'rlp-m block text-[10.5px] text-white/55 mb-2.5'
+  const btnPrimary = 'inline-flex items-center justify-center gap-2 rounded-md bg-[#2e6cf6] hover:bg-[#3d79ff] px-5 py-3 text-[14px] font-medium text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
+  const btnGhost = 'inline-flex items-center justify-center gap-2 rounded-md border border-white/20 hover:border-white/45 px-4 py-2.5 text-[13px] text-white/75 hover:text-white transition-colors disabled:cursor-default'
+  const btnText = 'rlp-m text-[10px] text-white/50 hover:text-white transition-colors px-2 py-2'
+
+  return (
+    <div className="rlp relative text-white">
+      <div className="print:hidden">
+        <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-8 pt-6 sm:pt-8 pb-32">
 
         {/* Crumb */}
-        <p className="rl-crumb">
-          <Link href={`/portal-media/${initial.ref}`}>› Portal · {initial.nome}</Link>
+        <p className="rlp-m text-[10.5px] text-white/45">
+          <Link href={`/portal-media/${initial.ref}`} className="hover:text-white transition-colors">‹ Portal · {initial.nome}</Link>
         </p>
 
         {/* Header */}
-        <header className="rl-head">
-          <div className="rl-head-l">
-            <p className="rl-eyebrow">RL PROD · {initial.nome}</p>
-            <h1 className="rl-title" aria-label="Briefing">
-              {titleLetters.map((ch, i) => (
-                <span key={i} style={{ animationDelay: `${(0.2 + i * 0.06).toFixed(2)}s` }}>{ch}</span>
-              ))}
-            </h1>
-            <div className="rl-title-rule" />
-          </div>
-          <div className="rl-head-actions">
-            <div className="rl-head-count">
-              <b>{sessoes.length}</b>
-              <span>Sessões</span>
+        <header className="mt-8 sm:mt-10">
+          <p className="rlp-m traco text-[11px] text-[#5a8bff]">RL PROD · {initial.nome}</p>
+          <h1 className="rlp-t mt-4 text-[52px] sm:text-[80px] leading-[0.95]">
+            Briefing<span className="text-[#5a8bff]">.</span>
+          </h1>
+          <p className="mt-5 max-w-xl text-[15px] sm:text-[17px] leading-relaxed text-white/65">
+            As sessões em que alinhamos objetivos, tom e referências do teu projeto. Fica tudo registado aqui.
+          </p>
+
+          {/* Resumo + ações */}
+          <div className="mt-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="rlp-m flex flex-wrap gap-x-6 gap-y-2 text-[10.5px] text-white/55">
+              <span><b className="rlp-t text-[22px] tracking-normal text-white mr-1.5 align-[-2px]">{sessoes.length}</b> Sessões</span>
+              <span><span className="text-white/35">●</span> {contagem.realizadas} Registadas</span>
+              <span><span className="text-[#2e6cf6]">●</span> {contagem.agendadas} Agendadas</span>
+              {contagem.pendentes > 0 && <span><span className="text-[#a9c1ff]">●</span> {contagem.pendentes} Pendentes</span>}
             </div>
-            <button onClick={handlePrint} className="rl-btn-ghost" title="Imprimir / PDF">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/>
-              </svg>
-              Resumo
-            </button>
-            <button onClick={openSchedule} className="rl-btn-add">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M12 5v14M5 12h14"/>
-              </svg>
-              {isAdmin ? 'Agendar Sessão' : 'Pedir Sessão'}
-            </button>
+            <div className="flex flex-col gap-2.5 sm:flex-row print:hidden">
+              <button onClick={handlePrint} className={btnGhost} title="Imprimir / PDF">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16"/>
+                </svg>
+                Resumo
+              </button>
+              <button onClick={openSchedule} className={btnPrimary}>
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                {isAdmin ? 'Agendar Sessão' : 'Pedir Sessão'}
+              </button>
+            </div>
           </div>
         </header>
 
-        {/* Aviso admin: pedidos pendentes (amarelo) OU info permanente (azul) */}
+        <div className="mt-10 h-px bg-white/[0.1]" />
+
+        {/* Aviso admin: pedidos pendentes OU info permanente */}
         {isAdmin && (
-          pedidosPendentes.length > 0 ? (
-            <div className="rl-alert rl-alert--warn">
-              <div className="rl-alert-ic">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 7v5l3 2" />
-                </svg>
-              </div>
-              <div className="rl-alert-txt">
-                <p className="rl-alert-k">{pedidosPendentes.length === 1 ? 'Pedido pendente' : 'Pedidos pendentes'}</p>
-                <p className="rl-alert-v">
-                  {pedidosPendentes.length === 1
-                    ? 'O cliente pediu uma sessão. Confirma a disponibilidade na lista abaixo.'
-                    : `${pedidosPendentes.length} pedidos do cliente aguardam confirmação.`}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="rl-alert rl-alert--info">
-              <div className="rl-alert-ic">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <div className={`mt-8 flex items-start gap-3.5 rounded-2xl border px-5 py-4 print:hidden ${pedidosPendentes.length > 0 ? 'border-[#2e6cf6]/60 bg-[#2e6cf6]/[0.12]' : 'border-white/[0.1] bg-[#00141f]/70'}`}>
+            <span className={`mt-0.5 ${pedidosPendentes.length > 0 ? 'text-[#5a8bff]' : 'text-white/45'}`}>
+              {pedidosPendentes.length > 0 ? <IconClock s={18} /> : (
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 8v5" />
                   <circle cx="12" cy="16" r="0.6" fill="currentColor" />
                 </svg>
-              </div>
-              <div className="rl-alert-txt">
-                <p className="rl-alert-k">Pedidos do cliente</p>
-                <p className="rl-alert-v">
-                  Os clientes podem pedir sessões a partir do botão <b>+ Pedir Sessão</b>. Aparecem aqui como <b>Pendente</b> e podes Confirmar ou Recusar.
-                </p>
-              </div>
-            </div>
-          )
-        )}
-
-        {/* ── Hero: Próxima sessão agendada c/ countdown live ── */}
-        {proximaSessao && countdown && (
-          <section className="rl-hero">
-            <div className="rl-hero-glow" aria-hidden />
-
-            <div className="rl-hero-head">
-              <span className="rl-hero-eyebrow">
-                <span className="rl-hero-pulse" />
-                Próxima sessão agendada
-              </span>
-              {proximaSessao.tipo && (
-                <span className={`rl-sess-tipo rl-sess-tipo--${proximaSessao.tipo}`}>
-                  {proximaSessao.tipo === 'videochamada' ? (
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="6" width="12" height="12" rx="2" />
-                      <path d="M15 10l6-3v10l-6-3z" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
-                      <circle cx="12" cy="9" r="2.6" />
-                    </svg>
-                  )}
-                  {proximaSessao.tipo === 'videochamada' ? 'Videochamada' : 'Presencial'}
-                </span>
               )}
+            </span>
+            <div>
+              <p className={`rlp-m text-[10.5px] ${pedidosPendentes.length > 0 ? 'text-[#5a8bff]' : 'text-white/55'}`}>
+                {pedidosPendentes.length > 0
+                  ? (pedidosPendentes.length === 1 ? 'Pedido pendente' : 'Pedidos pendentes')
+                  : 'Pedidos do cliente'}
+              </p>
+              <p className="mt-1.5 text-[14px] leading-relaxed text-white/70">
+                {pedidosPendentes.length > 0
+                  ? (pedidosPendentes.length === 1
+                    ? 'O cliente pediu uma sessão. Confirma a disponibilidade na lista abaixo.'
+                    : `${pedidosPendentes.length} pedidos do cliente aguardam confirmação.`)
+                  : <>Os clientes podem pedir sessões a partir do botão <b className="text-white">Pedir Sessão</b>. Aparecem aqui como <b className="text-white">Pendente</b> e podes Confirmar ou Recusar.</>}
+              </p>
             </div>
-
-            <h2 className="rl-hero-title">{proximaSessao.titulo}</h2>
-            <p className="rl-hero-when">
-              {fmtFullDate(proximaSessao.data)}
-              {proximaSessao.hora && (
-                <span className="rl-hero-time"> · {proximaSessao.hora.replace(':', 'h')}</span>
-              )}
-              {proximaSessao.tipo === 'presencial' && proximaSessao.local && (
-                <span className="rl-hero-local"> · {proximaSessao.local}</span>
-              )}
-            </p>
-
-            {/* Countdown live */}
-            <div className="rl-hero-count">
-              <div className="rl-hero-cu">
-                <span className="rl-hero-num">{String(countdown.dias).padStart(2,'0')}</span>
-                <span className="rl-hero-lbl">Dias</span>
-              </div>
-              <div className="rl-hero-cu">
-                <span className="rl-hero-num">{String(countdown.horas).padStart(2,'0')}</span>
-                <span className="rl-hero-lbl">Horas</span>
-              </div>
-              <div className="rl-hero-cu">
-                <span className="rl-hero-num">{String(countdown.mins).padStart(2,'0')}</span>
-                <span className="rl-hero-lbl">Min</span>
-              </div>
-              <div className="rl-hero-cu">
-                <span className="rl-hero-num">{String(countdown.segs).padStart(2,'0')}</span>
-                <span className="rl-hero-lbl">Seg</span>
-              </div>
-            </div>
-
-            {/* CTA — derivamos o estado (sessões antigas s/ campo
-                estado caem em 'agendada' quando data está no futuro)
-                e default de tipo = 'videochamada' (caso ainda não
-                tenha sido escolhido). */}
-            {(() => {
-              const est = estadoSessao(proximaSessao)
-              const tipo = proximaSessao.tipo ?? 'videochamada'
-              if (est === 'agendada' && tipo === 'videochamada') {
-                return (
-                  <a href={MEET_LINK} target="_blank" rel="noopener noreferrer" className="rl-hero-cta">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="6" width="12" height="12" rx="2" />
-                      <path d="M15 10l6-3v10l-6-3z" />
-                    </svg>
-                    Entrar na Reunião
-                    <span className="rl-hero-cta-arrow">→</span>
-                  </a>
-                )
-              }
-              if (est === 'agendada' && tipo === 'presencial') {
-                return (
-                  <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer" className="rl-hero-cta">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
-                      <circle cx="12" cy="9" r="2.6" />
-                    </svg>
-                    Ver Localização
-                    <span className="rl-hero-cta-arrow">→</span>
-                  </a>
-                )
-              }
-              if (est === 'pendente') {
-                return (
-                  <p className="rl-hero-pendinfo">
-                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="9" />
-                      <path d="M12 7v5l3 2" />
-                    </svg>
-                    Pedido a aguardar confirmação — o link da reunião fica disponível assim que for aceite.
-                  </p>
-                )
-              }
-              return null
-            })()}
-          </section>
-        )}
-
-        {/* Explainer */}
-        <section className="rl-card rl-explain">
-          <h2 className="rl-explain-h">O que é o Briefing?</h2>
-          <p className="rl-explain-lead">
-            O briefing é a base de tudo o que fazemos juntos. É o momento em que nos sentamos contigo, presencialmente ou à distância, para perceber exatamente o que precisas, o que sentes e o que esperas do projeto.
-          </p>
-          {[
-            { n: '01', t: 'Primeira sessão',  d: 'Recolhemos os objetivos, o tom, as referências visuais e tudo o que define a tua visão para o projeto.' },
-            { n: '02', t: 'Sessões seguintes', d: 'À medida que o projeto avança, podemos fazer sessões adicionais para afinar detalhes, validar decisões ou ajustar o rumo.' },
-            { n: '03', t: 'Resumo registado',  d: 'Cada sessão fica registada aqui com data e resumo. Tens sempre acesso ao histórico completo do que foi discutido.' },
-            { n: '04', t: 'Notificação',       d: 'Sempre que adicionarmos um novo registo de briefing, recebes uma notificação por email para ficares a par.' },
-          ].map(({ n, t, d }) => (
-            <div key={n} className="rl-feat">
-              <span className="rl-feat-n">{n}</span>
-              <div>
-                <p className="rl-feat-t">{t}</p>
-                <p className="rl-feat-d">{d}</p>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        {/* Histórico de sessões */}
-        <div className="rl-section-h">
-          <h2>Histórico de sessões</h2>
-          {sessoes.length > 0 && <span>Clica numa sessão para ver os detalhes</span>}
-        </div>
-
-        {sortedSessoes.length === 0 ? (
-          <div className="rl-empty">
-            <div className="rl-empty-ic">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="5" y="3" width="14" height="18" rx="2.5"/>
-                <path d="M9 8h6M9 12h6M9 16h3"/>
-              </svg>
-            </div>
-            <p className="rl-empty-h">Sem briefings registados</p>
-            {isAdmin && (
-              <p className="rl-empty-p">Clica em <b>&ldquo;+ Sessão&rdquo;</b> para adicionar o primeiro briefing</p>
-            )}
           </div>
-        ) : (
-          <div className="rl-sessions">
-            {sortedSessoes.map((sessao) => {
-              const isOpen = openId === sessao.id || openId === '__ALL__'
-              const { day, mon } = fmtDayMonth(sessao.data)
-              const objetivos = sessao.objetivos ?? []
-              const tom = sessao.tom ?? []
-              const notas = sessao.notas ?? ''
-              const estado = estadoSessao(sessao)
+        )}
 
-              return (
-                <div
-                  key={sessao.id}
-                  className={`rl-sess rl-sess--${estado}${isOpen ? ' rl-sess--open' : ''}${isEditing ? ' rl-sess--edit' : ''}`}
-                  onClick={() => !isEditing && setOpenId(p => p === sessao.id ? null : sessao.id)}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <div className="rl-sess-date">
-                    <div className="rl-sess-day">{day}</div>
-                    <div className="rl-sess-mon">{mon}</div>
-                    {sessao.hora && (
-                      <div className="rl-sess-hora">{sessao.hora.replace(':', 'h')}</div>
-                    )}
-                  </div>
-                  <div className="rl-sess-body">
-                    <div className="rl-sess-top">
-                      {isEditing ? (
-                        <input
-                          value={sessao.titulo}
-                          onChange={e => update(sessao.id, 'titulo', e.target.value)}
-                          onClick={e => e.stopPropagation()}
-                          className="rl-sess-title rl-input"
-                          placeholder="Título da sessão"
-                        />
-                      ) : (
-                        <p className="rl-sess-title">{sessao.titulo}</p>
-                      )}
-                      {sessao.tipo && (
-                        <span className={`rl-sess-tipo rl-sess-tipo--${sessao.tipo}`} title={sessao.tipo === 'presencial' && sessao.local ? sessao.local : undefined}>
-                          {sessao.tipo === 'videochamada' ? (
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                              <rect x="3" y="6" width="12" height="12" rx="2" />
-                              <path d="M15 10l6-3v10l-6-3z" />
-                            </svg>
-                          ) : (
-                            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
-                              <circle cx="12" cy="9" r="2.6" />
-                            </svg>
-                          )}
-                          {sessao.tipo === 'videochamada' ? 'Videochamada' : 'Presencial'}
-                        </span>
-                      )}
-                      <span className={`rl-sess-tag rl-sess-tag--${estado}`}>
-                        {estado === 'pendente'  ? 'Pendente'
-                          : estado === 'agendada' ? 'Agendada'
-                          : 'Registado'}
-                      </span>
+        <div className="mt-12 flex flex-col gap-14 sm:gap-16">
+
+          {/* ── 01 Próxima sessão c/ countdown live ── */}
+          {proximaSessao && countdown && (
+            <section>
+              <SecHead n="01" t="Próxima sessão" />
+              <div className="relative overflow-hidden rounded-2xl border border-[#2e6cf6]/50 bg-[#0c2236]/80 p-5 sm:p-8">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="rlp-m inline-flex items-center gap-2 text-[10.5px] text-[#5a8bff]">
+                    <span className="relative flex h-2 w-2">
+                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#2e6cf6] opacity-60 motion-reduce:animate-none" />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-[#2e6cf6]" />
+                    </span>
+                    {estadoSessao(proximaSessao) === 'pendente' ? 'Pedido de sessão' : 'Sessão agendada'}
+                  </span>
+                  {proximaSessao.tipo && <TipoTag tipo={proximaSessao.tipo} />}
+                </div>
+
+                <h3 className="rlp-t mt-4 text-[28px] sm:text-[38px] leading-[1.02]">{proximaSessao.titulo}</h3>
+                <p className="mt-2 text-[15px] text-white/65">
+                  {fmtFullDate(proximaSessao.data)}
+                  {proximaSessao.hora && <span className="text-white"> · {proximaSessao.hora.replace(':', 'h')}</span>}
+                  {proximaSessao.tipo === 'presencial' && proximaSessao.local && (
+                    <span> · {proximaSessao.local}</span>
+                  )}
+                </p>
+
+                {/* Countdown live */}
+                <div className="mt-6 grid grid-cols-4 gap-2 sm:gap-3 max-w-md">
+                  {[
+                    { v: countdown.dias, l: 'Dias' },
+                    { v: countdown.horas, l: 'Horas' },
+                    { v: countdown.mins, l: 'Min' },
+                    { v: countdown.segs, l: 'Seg' },
+                  ].map(({ v, l }) => (
+                    <div key={l} className="rounded-md border border-white/[0.1] bg-[#00141f]/70 px-2 py-3 text-center">
+                      <span className="rlp-t block text-[28px] sm:text-[36px] leading-none tabular-nums">{String(v).padStart(2, '0')}</span>
+                      <span className="rlp-m mt-2 block text-[9px] text-white/45">{l}</span>
                     </div>
-                    {isEditing ? (
-                      <textarea
-                        value={sessao.resumo}
-                        onChange={e => update(sessao.id, 'resumo', e.target.value)}
-                        onClick={e => e.stopPropagation()}
-                        rows={2}
-                        className="rl-sess-desc rl-input"
-                        placeholder="Descrição curta da reunião…"
-                      />
-                    ) : (
-                      <p className="rl-sess-desc">{sessao.resumo || 'Sem descrição registada.'}</p>
-                    )}
-                    {sessao.tipo === 'presencial' && sessao.local && (
-                      <p className="rl-sess-local">
-                        <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
-                          <circle cx="12" cy="9" r="2.6" />
-                        </svg>
-                        {sessao.local}
-                      </p>
-                    )}
+                  ))}
+                </div>
 
-                    {/* Detail expansível */}
-                    <div className="rl-sess-detail">
-                      <div className="rl-sess-detail-in">
-                        <div className="rl-detail-grid">
-                          <div className="rl-dfield">
-                            <p className="rl-dfield-k">Objetivos</p>
-                            {isEditing ? (
-                              <textarea
-                                value={(objetivos).join('\n')}
-                                onChange={e => update(sessao.id, 'objetivos', e.target.value.split('\n').filter(Boolean))}
-                                onClick={e => e.stopPropagation()}
-                                rows={3}
-                                className="rl-input"
-                                placeholder="Um objetivo por linha"
-                              />
-                            ) : objetivos.length > 0 ? (
-                              <ul>{objetivos.map((o, i) => <li key={i}>{o}</li>)}</ul>
-                            ) : (
-                              <p style={{ color: 'var(--faint)', fontStyle: 'italic' }}>Sem objetivos registados</p>
-                            )}
-                          </div>
-                          <div className="rl-dfield">
-                            <p className="rl-dfield-k">Tom</p>
-                            {isEditing ? (
-                              <input
-                                value={(tom).join(', ')}
-                                onChange={e => update(sessao.id, 'tom', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
-                                onClick={e => e.stopPropagation()}
-                                className="rl-input"
-                                placeholder="Cinematográfico, Próximo, Autêntico"
-                              />
-                            ) : tom.length > 0 ? (
-                              <div className="rl-dchips">
-                                {tom.map((t, i) => <span key={i} className="rl-dchip">{t}</span>)}
-                              </div>
-                            ) : (
-                              <p style={{ color: 'var(--faint)', fontStyle: 'italic' }}>Sem tom definido</p>
-                            )}
-                          </div>
-                          <div className="rl-dfield rl-dfield--full">
-                            <p className="rl-dfield-k">Notas</p>
-                            {isEditing ? (
-                              <textarea
-                                value={notas}
-                                onChange={e => update(sessao.id, 'notas', e.target.value)}
-                                onClick={e => e.stopPropagation()}
-                                rows={3}
-                                className="rl-input"
-                                placeholder="Notas finais da sessão…"
-                              />
-                            ) : notas ? (
-                              <p>{notas}</p>
-                            ) : (
-                              <p style={{ color: 'var(--faint)', fontStyle: 'italic' }}>Sem notas registadas</p>
-                            )}
-                          </div>
+                {/* CTA: estado derivado (sessões antigas sem campo estado
+                    caem em 'agendada' quando a data está no futuro) e
+                    tipo por defeito = 'videochamada'. */}
+                {(() => {
+                  const est = estadoSessao(proximaSessao)
+                  const tipo = proximaSessao.tipo ?? 'videochamada'
+                  if (est === 'agendada' && tipo === 'videochamada') {
+                    return (
+                      <a href={MEET_LINK} target="_blank" rel="noopener noreferrer" className={`${btnPrimary} mt-7 w-full sm:w-auto`}>
+                        <IconVideo s={16} />
+                        Entrar na Reunião
+                        <span aria-hidden>→</span>
+                      </a>
+                    )
+                  }
+                  if (est === 'agendada' && tipo === 'presencial') {
+                    return (
+                      <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer" className={`${btnPrimary} mt-7 w-full sm:w-auto`}>
+                        <IconPin s={16} />
+                        Ver Localização
+                        <span aria-hidden>→</span>
+                      </a>
+                    )
+                  }
+                  if (est === 'pendente') {
+                    return (
+                      <p className="mt-7 flex items-start gap-2.5 text-[14px] leading-relaxed text-[#a9c1ff]">
+                        <span className="mt-0.5"><IconClock /></span>
+                        Pedido a aguardar confirmação. O link da reunião fica disponível assim que for aceite.
+                      </p>
+                    )
+                  }
+                  return null
+                })()}
+              </div>
+            </section>
+          )}
+
+          {/* ── O que é o Briefing ── */}
+          <section>
+            <SecHead n={nSec(1)} t="O que é o Briefing?" />
+            <div className={`${cardCls} p-5 sm:p-8`}>
+              <p className="text-[15px] sm:text-[16px] leading-relaxed text-white/70">
+                O briefing é a base de tudo o que fazemos juntos. É o momento em que nos sentamos contigo, presencialmente ou à distância, para perceber exatamente o que precisas, o que sentes e o que esperas do projeto.
+              </p>
+              <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-px overflow-hidden rounded-xl border border-white/[0.08] bg-white/[0.08]">
+                {[
+                  { n: '01', t: 'Primeira sessão',  d: 'Recolhemos os objetivos, o tom, as referências visuais e tudo o que define a tua visão para o projeto.' },
+                  { n: '02', t: 'Sessões seguintes', d: 'À medida que o projeto avança, podemos fazer sessões adicionais para afinar detalhes, validar decisões ou ajustar o rumo.' },
+                  { n: '03', t: 'Resumo registado',  d: 'Cada sessão fica registada aqui com data e resumo. Tens sempre acesso ao histórico completo do que foi discutido.' },
+                  { n: '04', t: 'Notificação',       d: 'Sempre que adicionarmos um novo registo de briefing, recebes uma notificação por email para ficares a par.' },
+                ].map(({ n, t, d }) => (
+                  <div key={n} className="bg-[#00141f] p-4 sm:p-5">
+                    <span className="rlp-m text-[10px] text-[#5a8bff]">{n}</span>
+                    <p className="rlp-t mt-2 text-[17px] leading-tight">{t}</p>
+                    <p className="mt-1.5 text-[13.5px] leading-relaxed text-white/55">{d}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* ── Histórico de sessões ── */}
+          <section>
+            <SecHead
+              n={nSec(2)}
+              t="Histórico de sessões"
+              sub={sessoes.length > 0 ? 'Toca numa sessão para ver os detalhes' : undefined}
+            />
+
+            {sortedSessoes.length === 0 ? (
+              <div className={`${cardCls} flex flex-col items-center px-6 py-12 text-center`}>
+                <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/[0.12] text-white/45">
+                  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="5" y="3" width="14" height="18" rx="2.5"/>
+                    <path d="M9 8h6M9 12h6M9 16h3"/>
+                  </svg>
+                </span>
+                <p className="rlp-t mt-4 text-[20px]">Sem briefings registados</p>
+                {isAdmin && (
+                  <p className="mt-2 text-[14px] text-white/55">Clica em <b className="text-white">Agendar Sessão</b> para adicionar o primeiro briefing.</p>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {sortedSessoes.map((sessao) => {
+                  const isOpen = openId === sessao.id || openId === '__ALL__'
+                  const { day, mon } = fmtDayMonth(sessao.data)
+                  const objetivos = sessao.objetivos ?? []
+                  const tom = sessao.tom ?? []
+                  const notas = sessao.notas ?? ''
+                  const estado = estadoSessao(sessao)
+                  const mostrarDetalhe = isOpen || isEditing
+
+                  return (
+                    <div
+                      key={sessao.id}
+                      className={`rounded-2xl border bg-[#00141f]/70 transition-colors ${
+                        estado === 'pendente' ? 'border-[#a9c1ff]/35'
+                          : isOpen ? 'border-[#2e6cf6]/60'
+                          : 'border-white/[0.1] hover:border-white/25'
+                      } ${isEditing ? '' : 'cursor-pointer'}`}
+                      onClick={() => !isEditing && setOpenId(p => p === sessao.id ? null : sessao.id)}
+                      onKeyDown={e => {
+                        if (isEditing) return
+                        if (e.target !== e.currentTarget) return
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpenId(p => p === sessao.id ? null : sessao.id) }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      aria-expanded={mostrarDetalhe}
+                    >
+                      <div className="flex gap-4 sm:gap-6 p-4 sm:p-6">
+                        {/* Data lateral */}
+                        <div className="w-14 sm:w-16 shrink-0 border-r border-white/[0.08] pr-4 sm:pr-6">
+                          <div className={`rlp-t text-[34px] sm:text-[40px] leading-none ${estado === 'agendada' ? 'text-[#5a8bff]' : 'text-white'}`}>{day}</div>
+                          <div className="rlp-m mt-1.5 text-[8.5px] tracking-[0.2em] text-white/45">{mon}</div>
+                          {sessao.hora && (
+                            <div className="rlp-m mt-1 text-[9px] tracking-[0.2em] text-[#a9c1ff]">{sessao.hora.replace(':', 'h')}</div>
+                          )}
                         </div>
 
-                        {/* Botão "Entrar na Reunião" / "Ver Localização" para
-                            sessões agendadas no detalhe expandido (visível a
-                            todos quando estado === 'agendada'). */}
-                        {estado === 'agendada' && (
-                          <div className="rl-sess-cta">
-                            {(sessao.tipo ?? 'videochamada') === 'videochamada' ? (
-                              <a href={MEET_LINK} target="_blank" rel="noopener noreferrer"
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            {isEditing ? (
+                              <input
+                                value={sessao.titulo}
+                                onChange={e => update(sessao.id, 'titulo', e.target.value)}
                                 onClick={e => e.stopPropagation()}
-                                className="rl-sess-link rl-sess-link--video">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                  <rect x="3" y="6" width="12" height="12" rx="2" />
-                                  <path d="M15 10l6-3v10l-6-3z" />
-                                </svg>
-                                Entrar na Reunião
-                              </a>
+                                className={`${inputCls} rlp-t !text-[18px]`}
+                                placeholder="Título da sessão"
+                              />
                             ) : (
-                              <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer"
-                                onClick={e => e.stopPropagation()}
-                                className="rl-sess-link rl-sess-link--maps">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                  <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
-                                  <circle cx="12" cy="9" r="2.6" />
-                                </svg>
-                                Ver Localização
-                              </a>
+                              <p className="rlp-t mr-1 text-[19px] sm:text-[21px] leading-tight">{sessao.titulo}</p>
                             )}
-                          </div>
-                        )}
-
-                        {/* Linha admin: aprovar/recusar pendentes OU notificar + eliminar */}
-                        {isAdmin && estado === 'pendente' && (
-                          <div className="rl-sess-admin rl-sess-admin--pending">
-                            <span className="rl-pending-note">
-                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="9" />
-                                <path d="M12 7v5l3 2" />
-                              </svg>
-                              Pedido do cliente — aguarda a tua confirmação
-                            </span>
-                            <span className="rl-pending-actions">
-                              <button onClick={e => { e.stopPropagation(); aprovarPedido(sessao.id) }} className="rl-btn-approve">
-                                ✓ Confirmar
-                              </button>
-                              <button onClick={e => { e.stopPropagation(); recusarPedido(sessao.id) }} className="rl-btn-danger">
-                                Recusar
-                              </button>
-                            </span>
-                          </div>
-                        )}
-                        {isAdmin && estado !== 'pendente' && (
-                          <div className="rl-sess-admin">
-                            <button
-                              onClick={e => { e.stopPropagation(); !sessao.notificacaoEnviada && notificar(sessao.id) }}
-                              disabled={!!sessao.notificacaoEnviada || notifying === sessao.id}
-                              className={`rl-btn-ghost ${sessao.notificacaoEnviada ? 'rl-btn-ghost--done' : ''}`}
-                            >
-                              {notifying === sessao.id
-                                ? '⏳ A enviar…'
-                                : sessao.notificacaoEnviada
-                                  ? `✓ Notificado ${sessao.notificacaoEnviada}`
-                                  : 'Notificar Cliente'}
-                            </button>
-                            {confirmDelete === sessao.id ? (
-                              <span className="rl-confirm">
-                                <span>Tens a certeza?</span>
-                                <button onClick={e => { e.stopPropagation(); eliminar(sessao.id) }} className="rl-btn-danger">Eliminar</button>
-                                <button onClick={e => { e.stopPropagation(); setConfirmDelete(null) }} className="rl-btn-text">Cancelar</button>
-                              </span>
-                            ) : (
-                              <button onClick={e => { e.stopPropagation(); setConfirmDelete(sessao.id) }} className="rl-btn-text rl-btn-text--danger">
-                                Eliminar Sessão
-                              </button>
+                            {sessao.tipo && (
+                              <TipoTag tipo={sessao.tipo} title={sessao.tipo === 'presencial' && sessao.local ? sessao.local : undefined} />
                             )}
-                          </div>
-                        )}
-
-                        {/* Aviso para o cliente quando o próprio pedido está pendente */}
-                        {!isAdmin && estado === 'pendente' && (
-                          <div className="rl-sess-admin">
-                            <span className="rl-pending-note rl-pending-note--client">
-                              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                <circle cx="12" cy="12" r="9" />
-                                <path d="M12 7v5l3 2" />
-                              </svg>
-                              O teu pedido está <b>pendente de confirmação</b> pela nossa equipa.
+                            <span className={`rlp-m inline-flex items-center rounded-full border px-2.5 py-1 text-[9.5px] ${
+                              estado === 'pendente' ? 'border-[#a9c1ff]/40 text-[#a9c1ff]'
+                                : estado === 'agendada' ? 'border-[#2e6cf6] bg-[#2e6cf6] text-white'
+                                : 'border-white/15 text-white/55'
+                            }`}>
+                              {estado === 'pendente'  ? 'Pendente'
+                                : estado === 'agendada' ? 'Agendada'
+                                : 'Registado'}
                             </span>
                           </div>
+
+                          {isEditing ? (
+                            <textarea
+                              value={sessao.resumo}
+                              onChange={e => update(sessao.id, 'resumo', e.target.value)}
+                              onClick={e => e.stopPropagation()}
+                              rows={2}
+                              className={`${inputCls} mt-3 resize-y`}
+                              placeholder="Descrição curta da reunião…"
+                            />
+                          ) : (
+                            <p className={`mt-2 text-[14px] leading-relaxed ${sessao.resumo ? 'text-white/65' : 'text-white/35 italic'}`}>
+                              {sessao.resumo || 'Sem descrição registada.'}
+                            </p>
+                          )}
+                          {sessao.tipo === 'presencial' && sessao.local && (
+                            <p className="mt-2 flex items-center gap-1.5 text-[13px] text-white/55">
+                              <IconPin />
+                              {sessao.local}
+                            </p>
+                          )}
+
+                          {/* Detalhe expansível */}
+                          {mostrarDetalhe && (
+                            <div className="mt-5 border-t border-white/[0.08] pt-5">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                                <div>
+                                  <p className={labelCls}>Objetivos</p>
+                                  {isEditing ? (
+                                    <textarea
+                                      value={(objetivos).join('\n')}
+                                      onChange={e => update(sessao.id, 'objetivos', e.target.value.split('\n').filter(Boolean))}
+                                      onClick={e => e.stopPropagation()}
+                                      rows={3}
+                                      className={`${inputCls} resize-y`}
+                                      placeholder="Um objetivo por linha"
+                                    />
+                                  ) : objetivos.length > 0 ? (
+                                    <ul className="flex flex-col gap-1.5">
+                                      {objetivos.map((o, i) => (
+                                        <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-white/75">
+                                          <span className="mt-[9px] h-1 w-1 shrink-0 rounded-full bg-[#2e6cf6]" />
+                                          {o}
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  ) : (
+                                    <p className="text-[14px] italic text-white/35">Sem objetivos registados</p>
+                                  )}
+                                </div>
+                                <div>
+                                  <p className={labelCls}>Tom</p>
+                                  {isEditing ? (
+                                    <input
+                                      value={(tom).join(', ')}
+                                      onChange={e => update(sessao.id, 'tom', e.target.value.split(',').map(t => t.trim()).filter(Boolean))}
+                                      onClick={e => e.stopPropagation()}
+                                      className={inputCls}
+                                      placeholder="Cinematográfico, Próximo, Autêntico"
+                                    />
+                                  ) : tom.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
+                                      {tom.map((t, i) => (
+                                        <span key={i} className="rounded-full border border-white/[0.15] px-3 py-1 text-[13px] text-white/80">{t}</span>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <p className="text-[14px] italic text-white/35">Sem tom definido</p>
+                                  )}
+                                </div>
+                                <div className="sm:col-span-2">
+                                  <p className={labelCls}>Notas</p>
+                                  {isEditing ? (
+                                    <textarea
+                                      value={notas}
+                                      onChange={e => update(sessao.id, 'notas', e.target.value)}
+                                      onClick={e => e.stopPropagation()}
+                                      rows={3}
+                                      className={`${inputCls} resize-y`}
+                                      placeholder="Notas finais da sessão…"
+                                    />
+                                  ) : notas ? (
+                                    <p className="whitespace-pre-line text-[14px] leading-relaxed text-white/75">{notas}</p>
+                                  ) : (
+                                    <p className="text-[14px] italic text-white/35">Sem notas registadas</p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {/* Entrar na Reunião / Ver Localização (visível a todos quando agendada) */}
+                              {estado === 'agendada' && (
+                                <div className="mt-5 print:hidden">
+                                  {(sessao.tipo ?? 'videochamada') === 'videochamada' ? (
+                                    <a href={MEET_LINK} target="_blank" rel="noopener noreferrer"
+                                      onClick={e => e.stopPropagation()}
+                                      className={`${btnPrimary} w-full sm:w-auto !py-2.5 !text-[13px]`}>
+                                      <IconVideo s={14} />
+                                      Entrar na Reunião
+                                    </a>
+                                  ) : (
+                                    <a href={MAPS_LINK} target="_blank" rel="noopener noreferrer"
+                                      onClick={e => e.stopPropagation()}
+                                      className={`${btnGhost} w-full sm:w-auto`}>
+                                      <IconPin s={14} />
+                                      Ver Localização
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Admin: aprovar/recusar pendentes */}
+                              {isAdmin && estado === 'pendente' && (
+                                <div className="mt-5 flex flex-col gap-3 rounded-xl border border-[#a9c1ff]/25 bg-[#0c2236]/70 p-4 sm:flex-row sm:items-center sm:justify-between print:hidden">
+                                  <span className="flex items-center gap-2 text-[13.5px] text-[#a9c1ff]">
+                                    <IconClock />
+                                    Pedido do cliente. Aguarda a tua confirmação.
+                                  </span>
+                                  <span className="flex gap-2">
+                                    <button onClick={e => { e.stopPropagation(); aprovarPedido(sessao.id) }} className={`${btnPrimary} flex-1 sm:flex-none !py-2.5 !text-[13px]`}>
+                                      ✓ Confirmar
+                                    </button>
+                                    <button onClick={e => { e.stopPropagation(); recusarPedido(sessao.id) }} className="flex-1 sm:flex-none rounded-md border border-[#ff4747]/50 px-4 py-2.5 text-[13px] text-[#ff4747] hover:bg-[#ff4747]/10 transition-colors">
+                                      Recusar
+                                    </button>
+                                  </span>
+                                </div>
+                              )}
+                              {/* Admin: notificar + eliminar */}
+                              {isAdmin && estado !== 'pendente' && (
+                                <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-white/[0.08] pt-4 print:hidden">
+                                  <button
+                                    onClick={e => { e.stopPropagation(); !sessao.notificacaoEnviada && notificar(sessao.id) }}
+                                    disabled={!!sessao.notificacaoEnviada || notifying === sessao.id}
+                                    className={sessao.notificacaoEnviada
+                                      ? 'inline-flex items-center gap-2 rounded-md border border-[#2e6cf6]/40 bg-[#2e6cf6]/10 px-4 py-2.5 text-[13px] text-[#a9c1ff] cursor-default'
+                                      : btnGhost}
+                                  >
+                                    {notifying === sessao.id
+                                      ? 'A enviar…'
+                                      : sessao.notificacaoEnviada
+                                        ? `✓ Notificado ${sessao.notificacaoEnviada}`
+                                        : 'Notificar Cliente'}
+                                  </button>
+                                  {confirmDelete === sessao.id ? (
+                                    <span className="flex flex-wrap items-center gap-2">
+                                      <span className="text-[13px] text-white/60">Tens a certeza?</span>
+                                      <button onClick={e => { e.stopPropagation(); eliminar(sessao.id) }} className="rounded-md bg-[#ff4747] px-4 py-2.5 text-[13px] font-medium text-white hover:opacity-90">Eliminar</button>
+                                      <button onClick={e => { e.stopPropagation(); setConfirmDelete(null) }} className={btnText}>Cancelar</button>
+                                    </span>
+                                  ) : (
+                                    <button onClick={e => { e.stopPropagation(); setConfirmDelete(sessao.id) }} className="rlp-m px-2 py-2 text-[10px] text-white/45 hover:text-[#ff4747] transition-colors">
+                                      Eliminar Sessão
+                                    </button>
+                                  )}
+                                </div>
+                              )}
+
+                              {/* Cliente: o próprio pedido está pendente */}
+                              {!isAdmin && estado === 'pendente' && (
+                                <p className="mt-5 flex items-start gap-2 rounded-xl border border-[#a9c1ff]/25 bg-[#0c2236]/70 p-4 text-[13.5px] leading-relaxed text-[#a9c1ff]">
+                                  <span className="mt-0.5"><IconClock /></span>
+                                  <span>O teu pedido está <b className="text-white">pendente de confirmação</b> pela nossa equipa.</span>
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+
+                        {!isEditing && (
+                          <span className={`mt-1 h-5 w-5 shrink-0 text-white/40 transition-transform print:hidden ${isOpen ? 'rotate-180 text-[#5a8bff]' : ''}`}>
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M6 9l6 6 6-6"/>
+                            </svg>
+                          </span>
                         )}
                       </div>
                     </div>
-                  </div>
-                  <span className="rl-sess-chev">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M6 9l6 6 6-6"/>
-                    </svg>
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        )}
+                  )
+                })}
+              </div>
+            )}
+          </section>
 
-        {/* Status bar — estado da fase de Briefing */}
-        <div className={`rl-statusbar rl-statusbar--${estadoFase.color}`}>
-          <span className="rl-statusbar-dot" />
-          <div className="rl-statusbar-txt">
-            <p className="rl-statusbar-k">Estado da fase</p>
-            <p className="rl-statusbar-v">{estadoFase.label}</p>
-          </div>
-          {isAdmin && (
-            <button className="rl-statusbar-edit" aria-label="Editar estado" onClick={() => setIsEditing(true)}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M14 5l5 5M4 20l1-4L16 5l3 3L8 19l-4 1Z"/>
-              </svg>
-            </button>
-          )}
+          {/* ── Estado da fase de Briefing ── */}
+          <section>
+            <SecHead n={nSec(3)} t="Estado da fase" />
+            <div className={`${cardCls} flex items-center gap-4 px-5 py-4 sm:px-6 sm:py-5`}>
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                {estadoFase.color === 'doing' && (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#5a8bff] opacity-60 motion-reduce:animate-none" />
+                )}
+                <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${
+                  estadoFase.color === 'done' ? 'bg-[#2e6cf6]'
+                    : estadoFase.color === 'doing' ? 'bg-[#5a8bff]'
+                    : 'bg-[#7c8893]'
+                }`} />
+              </span>
+              <div className="flex-1">
+                <p className="rlp-m text-[10px] text-white/45">Briefing</p>
+                <p className={`rlp-t mt-1 text-[20px] leading-none ${estadoFase.color === 'wait' ? 'text-white/70' : 'text-white'}`}>{estadoFase.label}</p>
+              </div>
+              {isAdmin && (
+                <button
+                  className="flex h-10 w-10 items-center justify-center rounded-md border border-white/[0.12] text-white/55 hover:border-[#2e6cf6] hover:text-white transition-colors print:hidden"
+                  aria-label="Editar estado"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 5l5 5M4 20l1-4L16 5l3 3L8 19l-4 1Z"/>
+                  </svg>
+                </button>
+              )}
+            </div>
+          </section>
         </div>
 
         {/* Footer */}
-        <footer className="rl-foot">
-          <p className="rl-foot-tag">More than a product, <b>an experience.</b></p>
-          <p className="rl-foot-sub">RL PROD · Photography &amp; Video</p>
+        <footer className="mt-20 border-t border-white/[0.1] pt-8 text-center">
+          <p className="rlp-t text-[20px] sm:text-[24px]">More than a product, <span className="text-[#5a8bff]">an experience.</span></p>
+          <p className="rlp-m mt-3 text-[10px] text-white/40">RL PROD · Photography &amp; Video</p>
         </footer>
       </div>
 
-      {isAdmin && (
-        <AdminBar isEditing={isEditing} saving={saving}
-          onToggle={() => setIsEditing(true)} onSave={handleSave} onCancel={cancel} />
+      {/* Feedback de gravação (admin) */}
+      {isAdmin && (saving || savedFlash) && (
+        <div className="rlp-m fixed bottom-20 right-6 z-50 rounded-md border border-[#2e6cf6]/50 bg-[#0c2236] px-4 py-2.5 text-[10.5px] text-[#a9c1ff] print:hidden" role="status">
+          {saving ? 'A guardar…' : '✓ Alterações guardadas'}
+        </div>
       )}
 
-      {/* ── Modal: Agendar Nova Sessão ─────────────────────── */}
+      {isAdmin && (
+        <div className="print:hidden">
+          <AdminBar isEditing={isEditing} saving={saving}
+            onToggle={() => setIsEditing(true)} onSave={handleSave} onCancel={cancel} />
+        </div>
+      )}
+
+      {/* ── Modal: Agendar / Pedir sessão ─────────────────────── */}
       {scheduleOpen && (
-        <div className="rl-modal-backdrop" onClick={closeSchedule}>
-          <div className="rl-modal" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-[#00141f]/80 sm:items-center sm:p-6 print:hidden" onClick={closeSchedule}>
+          <div
+            className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-2xl border border-white/[0.1] bg-[#0c2236] p-5 pb-6 sm:max-w-lg sm:rounded-2xl sm:p-8"
+            onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
             <button
-              className="rl-modal-close"
+              className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-md border border-white/[0.12] text-white/60 hover:border-white/40 hover:text-white transition-colors"
               onClick={closeSchedule}
               aria-label="Fechar"
               type="button"
@@ -824,102 +852,96 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </button>
-            <p className="rl-modal-eyebrow">{isAdmin ? 'Nova sessão' : 'Pedido de sessão'}</p>
-            <h3 className="rl-modal-title">
+            <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">{isAdmin ? 'Nova sessão' : 'Pedido de sessão'}</p>
+            <h3 className="rlp-t mt-3 pr-10 text-[30px] sm:text-[36px] leading-[1]">
               {isAdmin
-                ? <>Agendar <em>sessão de briefing</em></>
-                : <>Pedir <em>sessão de briefing</em></>}
+                ? <>Agendar <span className="text-[#5a8bff]">sessão de briefing</span></>
+                : <>Pedir <span className="text-[#5a8bff]">sessão de briefing</span></>}
             </h3>
-            <p className="rl-modal-sub">
+            <p className="mt-3 text-[14px] leading-relaxed text-white/60">
               {isAdmin
                 ? 'Escolhe o dia, a hora e o título da próxima sessão. Fica imediatamente registada no histórico.'
-                : 'Indica a tua preferência de dia e hora. O pedido fica pendente da disponibilidade da nossa equipa — assim que confirmarmos, recebes uma notificação.'}
+                : 'Indica a tua preferência de dia e hora. O pedido fica pendente da disponibilidade da nossa equipa. Assim que confirmarmos, recebes uma notificação.'}
             </p>
 
             {!isAdmin && (
-              <div className="rl-modal-warn">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <div className="mt-5 flex items-start gap-2.5 rounded-xl border border-[#a9c1ff]/25 bg-[#00141f]/60 p-4 text-[13.5px] leading-relaxed text-[#a9c1ff]">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0">
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 8v5" /><circle cx="12" cy="16" r="0.6" fill="currentColor" />
                 </svg>
-                <span>O pedido fica <b>pendente de confirmação</b>. A nossa equipa valida a disponibilidade e responde com a data final.</span>
+                <span>O pedido fica <b className="text-white">pendente de confirmação</b>. A nossa equipa valida a disponibilidade e responde com a data final.</span>
               </div>
             )}
 
-            <div className="rl-modal-grid">
-              <label className="rl-field">
-                <span>Data</span>
+            <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <label className="block">
+                <span className={labelCls}>Data <span className="text-[#ff4747]">*</span></span>
                 <input
                   type="date"
                   value={schedDate}
                   onChange={e => setSchedDate(e.target.value)}
-                  className="rl-input"
+                  className={`${inputCls} [color-scheme:dark]`}
                   required
                 />
               </label>
-              <label className="rl-field">
-                <span>Hora</span>
+              <label className="block">
+                <span className={labelCls}>Hora</span>
                 <input
                   type="time"
                   value={schedTime}
                   onChange={e => setSchedTime(e.target.value)}
-                  className="rl-input"
+                  className={`${inputCls} [color-scheme:dark]`}
                   step={900}
                 />
               </label>
-              <label className="rl-field rl-field--full">
-                <span>Título</span>
+              <label className="block sm:col-span-2">
+                <span className={labelCls}>Título <span className="text-[#ff4747]">*</span></span>
                 <input
                   type="text"
                   value={schedTitle}
                   onChange={e => setSchedTitle(e.target.value)}
-                  className="rl-input"
+                  className={inputCls}
                   placeholder="Ex.: Sessão de afinação"
                   maxLength={80}
                 />
               </label>
 
               {/* Tipo: Videochamada / Presencial */}
-              <div className="rl-field rl-field--full">
-                <span>Formato da reunião</span>
-                <div className="rl-segmented" role="radiogroup" aria-label="Formato da reunião">
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={schedTipo === 'videochamada'}
-                    className={`rl-seg-btn${schedTipo === 'videochamada' ? ' is-on' : ''}`}
-                    onClick={() => setSchedTipo('videochamada')}
-                  >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="6" width="12" height="12" rx="2" />
-                      <path d="M15 10l6-3v10l-6-3z" />
-                    </svg>
-                    Videochamada
-                  </button>
-                  <button
-                    type="button"
-                    role="radio"
-                    aria-checked={schedTipo === 'presencial'}
-                    className={`rl-seg-btn${schedTipo === 'presencial' ? ' is-on' : ''}`}
-                    onClick={() => setSchedTipo('presencial')}
-                  >
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
-                      <circle cx="12" cy="9" r="2.6" />
-                    </svg>
-                    Presencial
-                  </button>
+              <div className="sm:col-span-2">
+                <span className={labelCls}>Formato da reunião</span>
+                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Formato da reunião">
+                  {([
+                    { v: 'videochamada' as const, l: 'Videochamada', ic: <IconVideo s={15} /> },
+                    { v: 'presencial' as const, l: 'Presencial', ic: <IconPin s={15} /> },
+                  ]).map(o => (
+                    <button
+                      key={o.v}
+                      type="button"
+                      role="radio"
+                      aria-checked={schedTipo === o.v}
+                      onClick={() => setSchedTipo(o.v)}
+                      className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-[14px] transition-colors ${
+                        schedTipo === o.v
+                          ? 'border-[#2e6cf6] bg-[#2e6cf6] text-white'
+                          : 'border-white/[0.15] text-white/70 hover:border-white/40 hover:text-white'
+                      }`}
+                    >
+                      {o.ic}
+                      {o.l}
+                    </button>
+                  ))}
                 </div>
               </div>
 
               {schedTipo === 'presencial' && (
-                <label className="rl-field rl-field--full">
-                  <span>Local</span>
+                <label className="block sm:col-span-2">
+                  <span className={labelCls}>Local</span>
                   <input
                     type="text"
                     value={schedLocal}
                     onChange={e => setSchedLocal(e.target.value)}
-                    className="rl-input"
+                    className={inputCls}
                     placeholder="Ex.: Estúdio RL PROD, Lisboa"
                     maxLength={120}
                   />
@@ -927,10 +949,10 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               )}
             </div>
 
-            <div className="rl-modal-actions">
+            <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
               <button
                 type="button"
-                className="rl-btn-text"
+                className={`${btnText} py-3`}
                 onClick={closeSchedule}
                 disabled={schedSaving}
               >
@@ -938,7 +960,7 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
               </button>
               <button
                 type="button"
-                className="rl-btn-add"
+                className={`${btnPrimary} w-full sm:w-auto`}
                 onClick={confirmSchedule}
                 disabled={schedSaving || !schedDate || !schedTitle.trim()}
               >
@@ -950,1058 +972,39 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
           </div>
         </div>
       )}
-
-      {/* ── Tokens + animations 1:1 ao briefing.css do handoff ── */}
-      <style jsx>{`
-        .rl-briefing {
-          --navy-950: #0e1b27;
-          --navy-900: #122230;
-          --navy-850: #16293a;
-          --navy-800: #1f3647;
-          --navy-700: #274458;
-          --accent: oklch(0.66 0.13 245);
-          --accent-bright: oklch(0.80 0.11 245);
-          --done:  oklch(0.72 0.12 165);
-          --doing: oklch(0.80 0.12 245);
-          --wait:  oklch(0.80 0.13 80);
-          --ink:   #eaf1f7;
-          --soft:  oklch(0.86 0.025 245);
-          --muted: oklch(0.70 0.03 245);
-          --faint: oklch(0.56 0.03 245);
-          --line:  oklch(0.42 0.03 245 / 0.40);
-          --line-soft: oklch(0.50 0.03 245 / 0.18);
-          --rl-card-bg: oklch(0.30 0.035 245 / 0.34);
-          --rl-r: 16px;
-          --rl-r-sm: 12px;
-          font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
-          color: var(--ink);
-          position: relative;
-        }
-        .rl-bg-fx {
-          position: fixed; inset: 0; z-index: -1; pointer-events: none;
-          background:
-            radial-gradient(120% 70% at 85% -8%, var(--navy-700) 0%, transparent 42%),
-            radial-gradient(100% 60% at 0% 0%, var(--navy-800) 0%, transparent 38%),
-            linear-gradient(180deg, var(--navy-900), var(--navy-950) 55%);
-        }
-        .rl-bg-fx::after {
-          content: ""; position: absolute; inset: 0;
-          background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
-          background-size: 4px 4px; opacity: .5; mix-blend-mode: overlay;
-        }
-        .rl-bg-fx::before {
-          content: ""; position: absolute; left: 50%; top: -10%;
-          width: 55vw; height: 55vw; transform: translateX(-50%);
-          background: radial-gradient(circle, var(--accent) 0%, transparent 60%);
-          opacity: .09; filter: blur(40px);
-          animation: rlBreathe 8s ease-in-out infinite;
-        }
-        @keyframes rlBreathe {
-          0%, 100% { opacity: .06; transform: translateX(-50%) scale(1); }
-          50%      { opacity: .12; transform: translateX(-50%) scale(1.1); }
-        }
-
-        .rl-page {
-          max-width: 780px; margin: 0 auto;
-          padding: 46px 22px 64px;
-          position: relative; z-index: 1;
-        }
-
-        .rl-crumb {
-          font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
-          color: var(--faint); font-weight: 600;
-          margin: 0 0 22px;
-          opacity: 0; animation: rlFadeUp .6s .05s forwards;
-        }
-        .rl-briefing :global(.rl-crumb a) {
-          color: inherit; text-decoration: none; transition: color .25s;
-        }
-        .rl-briefing :global(.rl-crumb a:hover) { color: var(--soft); }
-        @keyframes rlFadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: none; }
-        }
-
-        .rl-head {
-          display: flex; align-items: flex-end; justify-content: space-between;
-          gap: 20px; flex-wrap: wrap;
-        }
-        .rl-eyebrow {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          text-transform: uppercase; letter-spacing: .26em;
-          font-size: 10.5px; font-weight: 500;
-          color: var(--muted);
-          margin: 0 0 12px;
-          opacity: 0; animation: rlFadeUp .6s .12s forwards;
-        }
-        .rl-title {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-weight: 600;
-          font-size: clamp(32px, 7vw, 52px);
-          letter-spacing: .16em; text-transform: uppercase;
-          margin: 0; color: #fff;
-          display: flex; flex-wrap: wrap; line-height: 1;
-        }
-        .rl-briefing :global(.rl-title span) {
-          display: inline-block;
-          opacity: 0; transform: translateY(24px); filter: blur(10px);
-          animation: rlFocusIn .6s forwards;
-        }
-        @keyframes rlFocusIn { to { opacity: 1; transform: none; filter: blur(0); } }
-        .rl-title-rule {
-          height: 3px; width: 96px; border-radius: 3px;
-          margin-top: 16px;
-          background: linear-gradient(90deg, var(--accent-bright), transparent);
-          transform-origin: left; transform: scaleX(0);
-          animation: rlRuleIn .7s .5s cubic-bezier(.3,.05,.2,1) forwards;
-        }
-        @keyframes rlRuleIn { to { transform: scaleX(1); } }
-
-        .rl-head-actions {
-          display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-          opacity: 0; animation: rlFadeUp .6s .4s forwards;
-        }
-        .rl-head-count {
-          display: flex; flex-direction: column; gap: 3px;
-          padding: 9px 16px;
-          border: 1px solid var(--line-soft);
-          border-radius: 11px;
-          background: oklch(0.30 0.035 245 / .3);
-        }
-        .rl-head-count b {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 20px; font-weight: 600; color: #fff; line-height: 1;
-        }
-        .rl-head-count span {
-          font-size: 9px; letter-spacing: .18em; text-transform: uppercase;
-          color: var(--faint); font-weight: 600;
-        }
-
-        .rl-btn-ghost {
-          display: inline-flex; align-items: center; gap: 8px;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 11px; font-weight: 700;
-          letter-spacing: .12em; text-transform: uppercase;
-          color: var(--muted);
-          background: oklch(0.30 0.04 245 / .4);
-          border: 1px solid var(--line-soft);
-          border-radius: 10px;
-          padding: 9px 15px;
-          cursor: pointer; transition: all .16s;
-        }
-        .rl-btn-ghost:hover:not(:disabled) {
-          color: #fff; border-color: var(--accent);
-        }
-        .rl-btn-ghost:disabled { opacity: .55; cursor: default; }
-        .rl-btn-ghost.rl-btn-ghost--done {
-          color: var(--done);
-          border-color: color-mix(in oklch, var(--done) 30%, transparent);
-        }
-        .rl-btn-ghost :global(svg) { width: 14px; height: 14px; }
-
-        .rl-btn-add {
-          display: inline-flex; align-items: center; gap: 9px;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 12px; font-weight: 700;
-          letter-spacing: .14em; text-transform: uppercase;
-          color: var(--soft);
-          background: oklch(0.30 0.04 245 / .5);
-          border: 1px solid var(--line);
-          border-radius: 11px;
-          padding: 13px 20px;
-          cursor: pointer; transition: all .16s;
-        }
-        .rl-btn-add:hover {
-          color: #fff; border-color: var(--accent);
-          background: oklch(0.36 0.05 245 / .6);
-          box-shadow: 0 0 22px -8px var(--accent);
-        }
-        .rl-btn-add :global(svg) { width: 15px; height: 15px; }
-
-        /* ── HERO: próxima sessão c/ countdown live + CTA ──── */
-        .rl-hero {
-          position: relative; overflow: hidden;
-          margin-top: 26px;
-          padding: 30px 32px 30px;
-          border-radius: var(--rl-r);
-          border: 1px solid oklch(0.66 0.13 245 / .45);
-          background:
-            linear-gradient(135deg, oklch(0.38 0.10 245 / .60) 0%, oklch(0.28 0.05 245 / .55) 55%, oklch(0.22 0.03 245 / .65) 100%);
-          backdrop-filter: blur(10px);
-          -webkit-backdrop-filter: blur(10px);
-          opacity: 0; animation: rlFadeUp .8s .2s forwards;
-          box-shadow:
-            0 0 0 1px oklch(0.66 0.13 245 / 0.10) inset,
-            0 30px 60px -30px oklch(0.66 0.13 245 / 0.40);
-        }
-        .rl-hero-glow {
-          position: absolute; inset: 0;
-          background:
-            radial-gradient(60% 90% at 90% -20%, var(--accent) 0%, transparent 55%),
-            radial-gradient(50% 80% at -10% 110%, var(--accent-bright) 0%, transparent 55%);
-          opacity: .22; pointer-events: none;
-          animation: rlBreathe 6s ease-in-out infinite;
-        }
-        .rl-hero-head {
-          position: relative; z-index: 1;
-          display: flex; align-items: center; gap: 12px;
-          flex-wrap: wrap;
-          margin-bottom: 14px;
-        }
-        .rl-hero-eyebrow {
-          display: inline-flex; align-items: center; gap: 9px;
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10px; font-weight: 600;
-          letter-spacing: .28em; text-transform: uppercase;
-          color: var(--accent-bright);
-        }
-        .rl-hero-pulse {
-          width: 8px; height: 8px; border-radius: 50%;
-          background: var(--accent-bright);
-          box-shadow: 0 0 0 0 var(--accent-bright);
-          animation: rlHeroPulse 1.8s infinite;
-        }
-        @keyframes rlHeroPulse {
-          0%   { box-shadow: 0 0 0 0 oklch(0.80 0.11 245 / .55); }
-          70%  { box-shadow: 0 0 0 10px oklch(0.80 0.11 245 / 0); }
-          100% { box-shadow: 0 0 0 0 oklch(0.80 0.11 245 / 0); }
-        }
-        .rl-hero-title {
-          position: relative; z-index: 1;
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: clamp(20px, 3vw, 28px);
-          font-weight: 600;
-          color: #fff;
-          margin: 0 0 4px;
-          line-height: 1.18;
-        }
-        .rl-hero-when {
-          position: relative; z-index: 1;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 14px;
-          color: var(--soft);
-          margin: 0 0 22px;
-          font-weight: 500;
-        }
-        .rl-hero-time { color: #fff; font-weight: 600; }
-        .rl-hero-local { color: var(--muted); }
-
-        .rl-hero-count {
-          position: relative; z-index: 1;
-          display: grid;
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-          gap: 10px;
-          max-width: 520px;
-          margin: 0 0 20px;
-        }
-        .rl-hero-cu {
-          position: relative;
-          padding: 12px 10px 10px;
-          border-radius: 12px;
-          border: 1px solid oklch(0.50 0.05 245 / 0.35);
-          background:
-            linear-gradient(180deg, oklch(0.22 0.03 245 / 0.55), oklch(0.16 0.02 245 / 0.55));
-          text-align: center;
-        }
-        .rl-hero-num {
-          display: block;
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: clamp(24px, 4vw, 32px);
-          font-weight: 700;
-          color: #fff;
-          line-height: 1;
-          font-variant-numeric: tabular-nums;
-        }
-        .rl-hero-lbl {
-          display: block;
-          margin-top: 6px;
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 9px; font-weight: 600;
-          letter-spacing: .22em; text-transform: uppercase;
-          color: var(--accent-bright);
-        }
-
-        .rl-hero-cta {
-          position: relative; z-index: 1;
-          display: inline-flex; align-items: center; gap: 10px;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 12.5px; font-weight: 700;
-          letter-spacing: .12em; text-transform: uppercase;
-          color: #16293a;
-          background: linear-gradient(135deg, var(--accent-bright), var(--accent));
-          border: 0;
-          border-radius: 12px;
-          padding: 13px 24px;
-          text-decoration: none;
-          cursor: pointer;
-          transition: all .2s;
-          box-shadow:
-            0 12px 28px -10px var(--accent),
-            inset 0 1px 0 rgba(255,255,255,.4);
-        }
-        .rl-hero-cta:hover {
-          transform: translateY(-1px);
-          box-shadow:
-            0 18px 36px -12px var(--accent),
-            inset 0 1px 0 rgba(255,255,255,.5);
-        }
-        .rl-hero-cta-arrow {
-          font-size: 16px;
-          transition: transform .25s;
-        }
-        .rl-hero-cta:hover .rl-hero-cta-arrow {
-          transform: translateX(3px);
-        }
-        .rl-hero-cta :global(svg) { color: inherit; }
-
-        .rl-hero-pendinfo {
-          position: relative; z-index: 1;
-          display: inline-flex; align-items: center; gap: 8px;
-          font-size: 12.5px; line-height: 1.5;
-          color: var(--wait);
-          background: oklch(0.80 0.13 80 / 0.10);
-          border: 1px solid oklch(0.80 0.13 80 / 0.30);
-          border-radius: 10px;
-          padding: 10px 14px;
-          margin: 0;
-        }
-        .rl-hero-pendinfo :global(svg) { flex: none; }
-
-        .rl-card {
-          background: var(--rl-card-bg);
-          border: 1px solid var(--line-soft);
-          border-radius: var(--rl-r);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-        }
-        .rl-explain {
-          margin-top: 30px;
-          padding: 28px 30px;
-          opacity: 0; animation: rlFadeUp .7s .3s forwards;
-        }
-        .rl-explain-h {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          color: var(--accent-bright); margin: 0 0 14px;
-        }
-        .rl-explain-lead {
-          font-size: 15.5px; line-height: 1.65;
-          color: var(--soft);
-          margin: 0 0 24px; max-width: 62ch;
-        }
-        .rl-feat {
-          display: flex; gap: 15px;
-          padding: 16px 0;
-          border-top: 1px solid var(--line-soft);
-        }
-        .rl-feat:first-of-type { border-top: 0; padding-top: 0; }
-        .rl-feat-n {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; font-weight: 600;
-          color: var(--faint);
-          padding-top: 3px; flex: none;
-          letter-spacing: .1em;
-        }
-        .rl-feat-t {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 14px; font-weight: 600;
-          letter-spacing: .04em; text-transform: uppercase;
-          color: var(--ink);
-          margin: 0 0 6px;
-        }
-        .rl-feat-d {
-          font-size: 13.5px; line-height: 1.55;
-          color: var(--muted);
-          margin: 0; max-width: 60ch;
-        }
-
-        .rl-section-h {
-          display: flex; align-items: baseline; justify-content: space-between;
-          gap: 14px; margin: 36px 0 16px;
-        }
-        .rl-section-h h2 {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 12px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          color: var(--accent-bright); margin: 0;
-        }
-        .rl-section-h span {
-          font-size: 11.5px; color: var(--faint); letter-spacing: .02em;
-        }
-
-        .rl-sessions {
-          margin-top: 0;
-          display: flex; flex-direction: column; gap: 13px;
-        }
-
-        .rl-sess {
-          display: flex; gap: 16px;
-          padding: 18px 20px;
-          border-radius: var(--rl-r-sm);
-          border: 1px solid var(--line-soft);
-          background:
-            linear-gradient(180deg, oklch(0.30 0.04 245 / .42), oklch(0.22 0.03 245 / .42));
-          position: relative; overflow: hidden;
-          cursor: pointer;
-          animation: rlSessIn .5s cubic-bezier(.2,.7,.2,1);
-          transition: border-color .2s, background .2s;
-        }
-        .rl-sess:not(.rl-sess--edit):hover {
-          border-color: oklch(0.55 0.05 245 / 0.55);
-        }
-        .rl-sess--edit { cursor: default; }
-        @keyframes rlSessIn {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: none; }
-        }
-        .rl-sess::before {
-          content: ""; position: absolute; left: 0; top: 0; bottom: 0;
-          width: 3px; background: var(--accent);
-        }
-        .rl-sess-date {
-          flex: none; text-align: center; min-width: 54px;
-        }
-        .rl-sess-day {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 22px; font-weight: 600;
-          color: #fff; line-height: 1;
-        }
-        .rl-sess-mon {
-          font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
-          color: var(--faint); font-weight: 600;
-          margin-top: 3px;
-        }
-        .rl-sess-body { flex: 1; min-width: 0; }
-        .rl-sess-top {
-          display: flex; align-items: center; gap: 10px;
-          margin-bottom: 6px;
-        }
-        .rl-sess-title {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 14px; font-weight: 600;
-          letter-spacing: .03em;
-          color: #fff; margin: 0; flex: 1;
-        }
-        .rl-sess-tag {
-          font-size: 9.5px; font-weight: 700;
-          letter-spacing: .1em; text-transform: uppercase;
-          color: var(--done);
-          background: color-mix(in oklch, var(--done) 14%, transparent);
-          border: 1px solid color-mix(in oklch, var(--done) 32%, transparent);
-          border-radius: 999px;
-          padding: 3px 9px;
-          flex: none;
-        }
-        .rl-sess-desc {
-          font-size: 13px; line-height: 1.55;
-          color: var(--muted); margin: 0;
-        }
-        .rl-sess-chev {
-          flex: none; color: var(--faint);
-          transition: transform .25s;
-          align-self: center;
-        }
-        .rl-sess-chev :global(svg) { width: 18px; height: 18px; display: block; }
-        .rl-sess--open .rl-sess-chev { transform: rotate(180deg); }
-        .rl-sess-detail {
-          display: grid; grid-template-rows: 0fr;
-          transition: grid-template-rows .3s ease;
-          margin-top: 0;
-        }
-        .rl-sess--open .rl-sess-detail {
-          grid-template-rows: 1fr;
-          margin-top: 14px;
-        }
-        .rl-sess-detail-in { overflow: hidden; min-height: 0; }
-
-        .rl-detail-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px 22px;
-          padding-top: 14px;
-          border-top: 1px solid var(--line-soft);
-        }
-        .rl-dfield--full { grid-column: 1 / -1; }
-        .rl-dfield-k {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 9.5px; font-weight: 600;
-          letter-spacing: .16em; text-transform: uppercase;
-          color: var(--faint);
-          margin: 0 0 6px;
-        }
-        .rl-briefing :global(.rl-dfield ul) {
-          margin: 0; padding-left: 16px;
-          display: flex; flex-direction: column; gap: 4px;
-        }
-        .rl-briefing :global(.rl-dfield li),
-        .rl-briefing :global(.rl-dfield p) {
-          font-size: 13px; line-height: 1.55;
-          color: var(--soft); margin: 0;
-        }
-        .rl-dchips {
-          display: flex; flex-wrap: wrap; gap: 7px;
-        }
-        .rl-dchip {
-          font-size: 11px; font-weight: 600;
-          color: var(--soft);
-          padding: 5px 11px;
-          border-radius: 999px;
-          border: 1px solid var(--line-soft);
-          background: oklch(0.30 0.04 245 / .4);
-        }
-
-        .rl-sess-admin {
-          margin-top: 14px;
-          padding-top: 14px;
-          border-top: 1px solid var(--line-soft);
-          display: flex; align-items: center; justify-content: space-between;
-          gap: 12px; flex-wrap: wrap;
-        }
-        .rl-confirm {
-          display: inline-flex; align-items: center; gap: 10px;
-          font-size: 12.5px; color: var(--muted);
-        }
-        .rl-btn-danger {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 11px; font-weight: 700;
-          letter-spacing: .18em; text-transform: uppercase;
-          padding: 7px 14px;
-          border-radius: 8px;
-          border: 1px solid oklch(0.65 0.18 25 / .5);
-          background: oklch(0.65 0.18 25 / .08);
-          color: oklch(0.74 0.16 25);
-          cursor: pointer;
-          transition: all .16s;
-        }
-        .rl-btn-danger:hover {
-          border-color: oklch(0.74 0.16 25);
-          background: oklch(0.65 0.18 25 / .14);
-        }
-        .rl-btn-text {
-          background: transparent; border: 0;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          color: var(--faint);
-          padding: 6px 10px;
-          cursor: pointer; transition: color .16s;
-        }
-        .rl-btn-text:hover { color: var(--soft); }
-        .rl-btn-text--danger:hover { color: oklch(0.74 0.16 25); }
-
-        .rl-input {
-          background: oklch(0.22 0.03 245 / 0.45);
-          border: 1px solid var(--line-soft);
-          border-radius: 8px;
-          padding: 9px 12px;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 13.5px;
-          color: var(--ink);
-          width: 100%;
-          outline: none;
-          transition: border-color .15s;
-          resize: vertical;
-        }
-        .rl-input:focus { border-color: var(--accent-bright); }
-        .rl-sess-title.rl-input {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-weight: 600; letter-spacing: .03em;
-        }
-        .rl-sess-desc.rl-input {
-          font-size: 13px; line-height: 1.55;
-        }
-
-        .rl-empty {
-          margin-top: 26px;
-          border: 1.5px dashed var(--line);
-          border-radius: var(--rl-r);
-          padding: 52px 24px;
-          text-align: center;
-          background: oklch(0.26 0.03 245 / .2);
-          opacity: 0; animation: rlFadeUp .7s .55s forwards;
-        }
-        .rl-empty-ic {
-          width: 50px; height: 50px; margin: 0 auto 16px;
-          border-radius: 14px;
-          display: flex; align-items: center; justify-content: center;
-          color: var(--faint);
-          background: oklch(0.32 0.04 245 / .5);
-          border: 1px solid var(--line-soft);
-        }
-        .rl-empty-ic :global(svg) { width: 24px; height: 24px; }
-        .rl-empty-h {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 12px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          color: var(--muted); margin: 0 0 8px;
-        }
-        .rl-empty-p {
-          font-size: 13.5px; color: var(--faint); margin: 0;
-        }
-        .rl-empty-p b { color: var(--soft); font-weight: 600; }
-
-        .rl-statusbar {
-          margin-top: 30px;
-          display: flex; align-items: center; gap: 14px;
-          padding: 20px 24px;
-          border-radius: var(--rl-r);
-          border: 1px solid var(--line-soft);
-          background: oklch(0.28 0.035 245 / .4);
-          opacity: 0; animation: rlFadeUp .7s .65s forwards;
-        }
-        .rl-statusbar-dot {
-          width: 10px; height: 10px; border-radius: 50%;
-          flex: none;
-          animation: rlPulse 2s infinite;
-        }
-        .rl-statusbar--wait .rl-statusbar-dot {
-          background: var(--wait);
-          box-shadow: 0 0 0 0 var(--wait);
-        }
-        .rl-statusbar--done .rl-statusbar-dot { background: var(--done); }
-        .rl-statusbar--doing .rl-statusbar-dot { background: var(--doing); }
-        @keyframes rlPulse {
-          0%   { box-shadow: 0 0 0 0 oklch(0.80 0.13 80 / .5); }
-          70%  { box-shadow: 0 0 0 8px oklch(0.80 0.13 80 / 0); }
-          100% { box-shadow: 0 0 0 0 oklch(0.80 0.13 80 / 0); }
-        }
-        .rl-statusbar-txt { flex: 1; min-width: 0; }
-        .rl-statusbar-k {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 9.5px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          color: var(--faint); margin: 0 0 3px;
-        }
-        .rl-statusbar-v {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 16px; font-weight: 600;
-          letter-spacing: .16em; text-transform: uppercase;
-          margin: 0;
-        }
-        .rl-statusbar--wait  .rl-statusbar-v { color: var(--wait); }
-        .rl-statusbar--done  .rl-statusbar-v { color: var(--done); }
-        .rl-statusbar--doing .rl-statusbar-v { color: var(--doing); }
-        .rl-statusbar-edit {
-          flex: none; width: 40px; height: 40px;
-          border-radius: 11px;
-          border: 1px solid var(--line-soft);
-          background: oklch(0.30 0.04 245 / .4);
-          color: var(--muted);
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; transition: all .16s;
-        }
-        .rl-statusbar-edit:hover {
-          color: #fff; border-color: var(--accent);
-        }
-        .rl-statusbar-edit :global(svg) { width: 16px; height: 16px; }
-
-        .rl-foot {
-          margin-top: 42px; text-align: center;
-        }
-        .rl-foot-tag {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: clamp(15px, 3vw, 19px);
-          letter-spacing: .06em;
-          color: var(--muted); font-weight: 400;
-          margin: 0;
-        }
-        .rl-foot-tag b { color: #fff; font-weight: 600; }
-        .rl-foot-sub {
-          margin-top: 9px;
-          font-size: 10px; letter-spacing: .24em; text-transform: uppercase;
-          color: var(--faint); font-weight: 600;
-        }
-
-        /* ── Aviso admin: pedidos pendentes ou info permanente ── */
-        .rl-alert {
-          margin-top: 24px;
-          display: flex; align-items: center; gap: 14px;
-          padding: 16px 20px;
-          border-radius: var(--rl-r);
-          position: relative; overflow: hidden;
-          opacity: 0; animation: rlFadeUp .6s .18s forwards;
-        }
-        .rl-alert--warn {
-          border: 1px solid oklch(0.80 0.13 80 / 0.4);
-          background:
-            linear-gradient(120deg, oklch(0.42 0.11 80 / 0.32), oklch(0.30 0.05 245 / 0.35));
-        }
-        .rl-alert--info {
-          border: 1px solid oklch(0.66 0.13 245 / 0.35);
-          background:
-            linear-gradient(120deg, oklch(0.34 0.06 245 / 0.50), oklch(0.26 0.04 245 / 0.40));
-        }
-        .rl-alert::after {
-          content: ""; position: absolute; right: -30px; top: -30px;
-          width: 100px; height: 100px; border-radius: 50%;
-          opacity: .22;
-        }
-        .rl-alert--warn::after {
-          background: radial-gradient(circle, var(--wait), transparent 70%);
-        }
-        .rl-alert--info::after {
-          background: radial-gradient(circle, var(--accent), transparent 70%);
-        }
-        .rl-alert-ic {
-          flex: none; width: 38px; height: 38px;
-          border-radius: 11px;
-          display: flex; align-items: center; justify-content: center;
-          position: relative; z-index: 1;
-        }
-        .rl-alert--warn .rl-alert-ic {
-          color: var(--wait);
-          background: oklch(0.80 0.13 80 / 0.14);
-          border: 1px solid oklch(0.80 0.13 80 / 0.32);
-        }
-        .rl-alert--info .rl-alert-ic {
-          color: var(--accent-bright);
-          background: oklch(0.66 0.13 245 / 0.14);
-          border: 1px solid oklch(0.66 0.13 245 / 0.32);
-        }
-        .rl-alert-ic :global(svg) { width: 18px; height: 18px; }
-        .rl-alert-txt { flex: 1; min-width: 0; position: relative; z-index: 1; }
-        .rl-alert-k {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 9.5px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          margin: 0 0 3px;
-        }
-        .rl-alert--warn .rl-alert-k { color: var(--wait); }
-        .rl-alert--info .rl-alert-k { color: var(--accent-bright); }
-        .rl-alert-v {
-          font-size: 13.5px; color: var(--soft); margin: 0;
-          font-weight: 400; line-height: 1.5;
-        }
-        .rl-alert-v b { color: #fff; font-weight: 600; }
-
-        /* ── Modal warn (cliente): aviso de pendente ───────── */
-        .rl-modal-warn {
-          display: flex; align-items: flex-start; gap: 10px;
-          padding: 12px 14px;
-          margin: 0 0 18px;
-          border-radius: 10px;
-          border: 1px solid oklch(0.80 0.13 80 / 0.35);
-          background: oklch(0.80 0.13 80 / 0.06);
-          color: var(--soft);
-          font-size: 12.5px; line-height: 1.5;
-        }
-        .rl-modal-warn :global(svg) {
-          flex: none; color: var(--wait); margin-top: 1px;
-        }
-        .rl-modal-warn b { color: var(--wait); font-weight: 700; }
-
-        /* ── Tag de estado da sessão ──────────────────────── */
-        .rl-sess-tag--pendente {
-          color: var(--wait);
-          background: color-mix(in oklch, var(--wait) 14%, transparent);
-          border-color: color-mix(in oklch, var(--wait) 32%, transparent);
-        }
-        .rl-sess-tag--agendada {
-          color: var(--accent-bright);
-          background: color-mix(in oklch, var(--accent-bright) 14%, transparent);
-          border-color: color-mix(in oklch, var(--accent-bright) 32%, transparent);
-        }
-        /* (rl-sess-tag base + cor 'done' permanecem para 'realizada') */
-
-        /* Strip lateral por estado */
-        .rl-sess--pendente::before { background: var(--wait); }
-        .rl-sess--agendada::before { background: var(--accent-bright); }
-        .rl-sess--realizada::before { background: var(--done); }
-
-        /* ── Linha admin de pendente: notinha + 2 botões ──── */
-        .rl-sess-admin--pending {
-          flex-direction: column; align-items: stretch;
-        }
-        .rl-pending-note {
-          display: inline-flex; align-items: center; gap: 8px;
-          font-size: 12.5px; color: var(--wait);
-          line-height: 1.45;
-        }
-        .rl-pending-note--client { color: var(--accent-bright); }
-        .rl-pending-note--client b { color: #fff; font-weight: 700; }
-        .rl-pending-note :global(svg) { flex: none; }
-        .rl-pending-actions {
-          display: inline-flex; gap: 10px; align-items: center;
-        }
-        .rl-btn-approve {
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 11px; font-weight: 700;
-          letter-spacing: .18em; text-transform: uppercase;
-          padding: 8px 14px;
-          border-radius: 8px;
-          border: 1px solid color-mix(in oklch, var(--done) 50%, transparent);
-          background: color-mix(in oklch, var(--done) 14%, transparent);
-          color: var(--done);
-          cursor: pointer;
-          transition: all .16s;
-        }
-        .rl-btn-approve:hover {
-          background: color-mix(in oklch, var(--done) 22%, transparent);
-          border-color: var(--done);
-          color: #fff;
-        }
-
-        /* ── Botão da reunião dentro de cada sessão expandida ── */
-        .rl-sess-cta {
-          margin-top: 14px;
-          padding-top: 14px;
-          border-top: 1px solid var(--line-soft);
-        }
-        .rl-sess-link {
-          display: inline-flex; align-items: center; gap: 9px;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 11.5px; font-weight: 700;
-          letter-spacing: .14em; text-transform: uppercase;
-          padding: 9px 16px;
-          border-radius: 10px;
-          text-decoration: none;
-          transition: all .18s;
-        }
-        .rl-sess-link--video {
-          color: #0e1b27;
-          background: linear-gradient(135deg, var(--accent-bright), var(--accent));
-          border: 0;
-          box-shadow:
-            0 8px 22px -8px var(--accent),
-            inset 0 1px 0 rgba(255,255,255,.4);
-        }
-        .rl-sess-link--video:hover {
-          transform: translateY(-1px);
-          box-shadow:
-            0 12px 28px -8px var(--accent),
-            inset 0 1px 0 rgba(255,255,255,.5);
-        }
-        .rl-sess-link--maps {
-          color: var(--done);
-          background: color-mix(in oklch, var(--done) 14%, transparent);
-          border: 1px solid color-mix(in oklch, var(--done) 35%, transparent);
-        }
-        .rl-sess-link--maps:hover {
-          background: color-mix(in oklch, var(--done) 22%, transparent);
-          border-color: var(--done);
-          color: #fff;
-        }
-        .rl-sess-link :global(svg) { flex: none; color: inherit; }
-
-        /* ── Segmented control: Videochamada / Presencial ──── */
-        .rl-segmented {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 8px;
-          background: oklch(0.20 0.03 245 / 0.4);
-          border: 1px solid var(--line-soft);
-          border-radius: 12px;
-          padding: 4px;
-        }
-        .rl-seg-btn {
-          display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 12px; font-weight: 600;
-          letter-spacing: .06em;
-          color: var(--faint);
-          padding: 10px 12px;
-          border-radius: 8px;
-          border: 0;
-          background: transparent;
-          cursor: pointer;
-          transition: all .18s;
-        }
-        .rl-seg-btn:hover {
-          color: var(--soft);
-          background: oklch(0.30 0.04 245 / 0.4);
-        }
-        .rl-seg-btn.is-on {
-          color: #fff;
-          background: oklch(0.66 0.13 245 / 0.22);
-          box-shadow:
-            inset 0 0 0 1px oklch(0.66 0.13 245 / 0.45),
-            0 0 14px -6px var(--accent);
-        }
-        .rl-seg-btn :global(svg) {
-          color: inherit;
-          flex: none;
-        }
-        .rl-seg-btn.is-on :global(svg) { color: var(--accent-bright); }
-
-        /* ── Pill do tipo (Videochamada / Presencial) na sessão ── */
-        .rl-sess-tipo {
-          display: inline-flex; align-items: center; gap: 5px;
-          font-family: var(--font-manrope), Manrope, sans-serif;
-          font-size: 10px; font-weight: 700;
-          letter-spacing: .08em;
-          padding: 3px 8px;
-          border-radius: 999px;
-          border: 1px solid var(--line-soft);
-          background: oklch(0.30 0.04 245 / 0.4);
-          color: var(--soft);
-          flex: none;
-        }
-        .rl-sess-tipo--videochamada {
-          color: var(--accent-bright);
-          border-color: color-mix(in oklch, var(--accent-bright) 28%, transparent);
-          background: color-mix(in oklch, var(--accent-bright) 10%, transparent);
-        }
-        .rl-sess-tipo--presencial {
-          color: var(--done);
-          border-color: color-mix(in oklch, var(--done) 32%, transparent);
-          background: color-mix(in oklch, var(--done) 12%, transparent);
-        }
-        .rl-sess-tipo :global(svg) { flex: none; }
-
-        /* Linha do local presencial */
-        .rl-sess-local {
-          margin: 6px 0 0;
-          font-size: 12px;
-          color: var(--muted);
-          display: inline-flex; align-items: center; gap: 6px;
-        }
-        .rl-sess-local :global(svg) {
-          color: var(--done); flex: none;
-        }
-
-        /* Hora lateral na data da sessão (debaixo do mês) */
-        .rl-sess-hora {
-          margin-top: 6px;
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: .12em;
-          color: var(--accent-bright);
-          background: oklch(0.66 0.13 245 / .12);
-          border: 1px solid oklch(0.66 0.13 245 / .25);
-          border-radius: 999px;
-          padding: 2px 7px;
-          display: inline-block;
-          line-height: 1.2;
-        }
-
-        /* ── Modal: Agendar Sessão ─────────────────────────── */
-        .rl-modal-backdrop {
-          position: fixed; inset: 0; z-index: 1000;
-          background: oklch(0.10 0.02 245 / 0.72);
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
-          display: flex; align-items: center; justify-content: center;
-          padding: 20px;
-          animation: rlBackdropIn .2s ease forwards;
-        }
-        @keyframes rlBackdropIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        .rl-modal {
-          position: relative;
-          background:
-            linear-gradient(180deg, oklch(0.32 0.04 245 / 0.94), oklch(0.20 0.03 245 / 0.96));
-          border: 1px solid var(--line);
-          border-radius: var(--rl-r);
-          padding: 32px 32px 26px;
-          max-width: 480px; width: 100%;
-          box-shadow:
-            0 30px 80px -20px rgba(0,0,0,.6),
-            0 0 0 1px oklch(0.66 0.13 245 / 0.10) inset;
-          animation: rlModalIn .35s cubic-bezier(.2,.85,.25,1) forwards;
-          opacity: 0;
-        }
-        @keyframes rlModalIn {
-          from { opacity: 0; transform: translateY(14px) scale(0.97); }
-          to   { opacity: 1; transform: none; }
-        }
-        .rl-modal-close {
-          position: absolute; top: 14px; right: 14px;
-          width: 30px; height: 30px;
-          border-radius: 8px;
-          border: 1px solid var(--line-soft);
-          background: oklch(0.30 0.04 245 / 0.5);
-          color: var(--muted);
-          display: flex; align-items: center; justify-content: center;
-          cursor: pointer; transition: all .15s;
-        }
-        .rl-modal-close:hover {
-          color: #fff; border-color: var(--accent);
-        }
-        .rl-modal-eyebrow {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10px; font-weight: 600;
-          letter-spacing: .28em; text-transform: uppercase;
-          color: var(--accent-bright);
-          margin: 0 0 10px;
-        }
-        .rl-modal-title {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 22px; font-weight: 600;
-          color: #fff;
-          margin: 0 0 8px;
-          line-height: 1.18;
-        }
-        .rl-modal-title em {
-          font-style: italic;
-          color: var(--accent-bright);
-          font-weight: 500;
-        }
-        .rl-modal-sub {
-          font-size: 13px; line-height: 1.6;
-          color: var(--muted);
-          margin: 0 0 22px;
-        }
-        .rl-modal-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 14px 16px;
-          margin-bottom: 22px;
-        }
-        .rl-field {
-          display: flex; flex-direction: column; gap: 6px;
-        }
-        .rl-field--full { grid-column: 1 / -1; }
-        .rl-field > span {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 9.5px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          color: var(--faint);
-        }
-        .rl-modal :global(input.rl-input) {
-          background: oklch(0.20 0.03 245 / 0.6);
-          border-color: var(--line);
-        }
-        .rl-modal :global(input[type="date"].rl-input),
-        .rl-modal :global(input[type="time"].rl-input) {
-          color-scheme: dark;
-        }
-        .rl-modal-actions {
-          display: flex; align-items: center; justify-content: flex-end;
-          gap: 10px;
-        }
-        .rl-modal-actions :global(.rl-btn-add:disabled) {
-          opacity: .5; cursor: not-allowed;
-          box-shadow: none;
-        }
-
-        @media (max-width: 560px) {
-          .rl-head { align-items: flex-start; }
-          .rl-btn-add { width: 100%; justify-content: center; }
-          .rl-detail-grid { grid-template-columns: 1fr; }
-          .rl-modal { padding: 26px 22px 22px; }
-          .rl-modal-grid { grid-template-columns: 1fr; }
-        }
-        @media print {
-          .rl-bg-fx,
-          .rl-btn-add,
-          .rl-head-actions,
-          .rl-statusbar-edit,
-          .rl-sess-chev,
-          .rl-sess-admin { display: none !important; }
-          .rl-briefing { background: #fff; color: #111; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .rl-briefing,
-          .rl-briefing :global(*) {
-            animation-duration: .01ms !important;
-            transition-duration: .01ms !important;
-            animation-delay: 0s !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }
+
+/* ── Peças visuais (fora do componente para não remontarem a cada segundo do countdown) ── */
+const IconVideo = ({ s = 12 }: { s?: number }) => (
+  <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <rect x="3" y="6" width="12" height="12" rx="2" />
+    <path d="M15 10l6-3v10l-6-3z" />
+  </svg>
+)
+const IconPin = ({ s = 12 }: { s?: number }) => (
+  <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <path d="M12 22s7-7.5 7-13a7 7 0 1 0-14 0c0 5.5 7 13 7 13Z" />
+    <circle cx="12" cy="9" r="2.6" />
+  </svg>
+)
+const IconClock = ({ s = 14 }: { s?: number }) => (
+  <svg viewBox="0 0 24 24" width={s} height={s} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+    <circle cx="12" cy="12" r="9" />
+    <path d="M12 7v5l3 2" />
+  </svg>
+)
+const TipoTag = ({ tipo, title }: { tipo: 'videochamada' | 'presencial'; title?: string }) => (
+  <span title={title} className="rlp-m inline-flex items-center gap-1.5 rounded-full border border-[#a9c1ff]/30 px-2.5 py-1 text-[9.5px] text-[#a9c1ff]">
+    {tipo === 'videochamada' ? <IconVideo /> : <IconPin />}
+    {tipo === 'videochamada' ? 'Videochamada' : 'Presencial'}
+  </span>
+)
+const SecHead = ({ n, t, sub }: { n: string; t: string; sub?: string }) => (
+  <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 mb-5 sm:mb-6">
+    <span className="rlp-t text-[36px] sm:text-[44px] leading-none text-[#2e6cf6]">{n}</span>
+    <h2 className="rlp-t text-[22px] sm:text-[24px] leading-none">{t}</h2>
+    {sub && <span className="rlp-m w-full sm:w-auto sm:ml-auto text-[10px] text-white/40">{sub}</span>}
+  </div>
+)

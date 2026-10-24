@@ -10,6 +10,7 @@ interface Props {
   isMaster?: boolean
 }
 
+// Botões de edição do admin no canto do portal (só aparecem com sessão de admin)
 export default function AdminBar({ isEditing, saving, onToggle, onSave, onCancel, isMaster }: Props) {
   const [publishing, setPublishing] = useState(false)
   const [published,  setPublished]  = useState(false)
@@ -27,60 +28,36 @@ export default function AdminBar({ isEditing, saving, onToggle, onSave, onCancel
     setPublishing(false)
   }
 
+  const base = 'rlp-m rounded-full px-4 py-2.5 text-[10px] transition-colors disabled:opacity-40 shadow-[0_10px_30px_-10px_rgba(0,0,0,0.7)]'
+
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2">
+    <div className="fixed bottom-5 right-5 z-50 flex flex-wrap justify-end items-center gap-2 print:hidden">
       {isEditing ? (
         <>
-          <button
-            onClick={onCancel}
-            className="px-4 py-2 border border-white/15 bg-[#050507] text-white/40 hover:text-white/60 text-base tracking-[0.3em] uppercase transition-colors"
-          >
+          <button onClick={onCancel} className={`${base} border border-white/20 bg-[#00141f] text-white/70 hover:text-white hover:border-white/40`}>
             Cancelar
           </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="px-5 py-2 border border-emerald-400/40 bg-emerald-400/10 hover:bg-emerald-400/20
-                       text-emerald-400/80 hover:text-emerald-400 text-base tracking-[0.3em] uppercase
-                       transition-all disabled:opacity-40"
-          >
-            {saving ? 'A guardar...' : '✓ Guardar'}
+          <button onClick={onSave} disabled={saving} className={`${base} bg-[#2e6cf6] hover:bg-[#3d79ff] text-white`}>
+            {saving ? 'A guardar…' : '✓ Guardar'}
           </button>
-
-          {/* Botão Publicar — só na maquete mestre */}
+          {/* Publicar: só na maquete mestre, sincroniza para todos os portais */}
           {isMaster && (
-            <button
-              onClick={handlePublish}
-              disabled={publishing}
-              className="px-5 py-2 border border-blue-400/50 bg-blue-400/10 hover:bg-blue-400/20
-                         text-blue-400/80 hover:text-blue-400 text-base tracking-[0.3em] uppercase
-                         transition-all disabled:opacity-40"
-            >
-              {published ? '✓ Publicado' : publishing ? 'A publicar...' : '⬆ Publicar'}
+            <button onClick={handlePublish} disabled={publishing} className={`${base} border border-[#a9c1ff]/60 bg-[#00141f] text-[#a9c1ff] hover:border-[#a9c1ff]`}>
+              {published ? '✓ Publicado' : publishing ? 'A publicar…' : 'Publicar em todos'}
             </button>
           )}
         </>
       ) : (
         <>
-          <button
-            onClick={onToggle}
-            className="flex items-center gap-2 px-4 py-2 border border-white/10 bg-[#050507]/90
-                       hover:border-white/25 backdrop-blur-sm text-white/30 hover:text-white/60
-                       text-base tracking-[0.3em] uppercase transition-all"
-            style={{ boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
-          >
-            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-            Admin
-          </button>
-
-          {/* Badge maquete (modo visualização) */}
           {isMaster && (
-            <span className="px-3 py-2 border border-blue-400/25 bg-blue-400/5 text-blue-400/50 text-[12px] tracking-[0.35em] uppercase">
-              Maquete Mestre
-            </span>
+            <span className="rlp-m rounded-full border border-[#a9c1ff]/40 bg-[#00141f] px-3 py-2 text-[9px] text-[#a9c1ff]">Maquete mestre</span>
           )}
+          <button onClick={onToggle} className={`${base} flex items-center gap-2 border border-white/15 bg-[#00141f] text-white/70 hover:text-white hover:border-[#2e6cf6]`}>
+            <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            Editar
+          </button>
         </>
       )}
     </div>

@@ -1,13 +1,9 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
-import { Manrope, Space_Grotesk } from 'next/font/google'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import HeroUploadBlock from './HeroUploadBlock'
-
-const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' })
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
 
 /* ────────────────────────────────────────────────────────── */
 /*  DEFAULT — 7 colunas padrão para qualquer projeto          */
@@ -90,50 +86,39 @@ const ESTADO_OPTIONS: { value: TarefaEstado; label: string }[] = [
   { value: 'concluido',    label: 'Concluído'    },
   { value: 'em_andamento', label: 'Em andamento' },
   { value: 'nao_iniciada', label: 'Não iniciada' },
-  { value: 'aguardar',     label: 'Aguardar'     },
+  { value: 'aguardar',     label: 'A aguardar'   },
   { value: 'enviado',      label: 'Enviado'      },
 ]
 
-type EstadoCfg = { pill: string; dot: string; text: string; label: string }
+/* Identidade rlprod.pt: concluído = azul cheio, em curso = azul claro a pulsar,
+   pendente = cinza. Aguardar/Enviado em azul pálido (contorno tracejado / cheio suave). */
+type EstadoCfg = { pill: string; dot: string; strip: string; label: string; hint: string }
 
 const ESTADO_CFG: Record<TarefaEstado, EstadoCfg> = {
-  concluido:    { pill: 'bg-emerald-400/15 border border-emerald-400/25', dot: 'bg-emerald-400',        text: 'text-emerald-400',  label: 'Concluído'    },
-  em_andamento: { pill: 'bg-blue-400/15 border border-blue-400/25',       dot: 'bg-blue-400 animate-pulse', text: 'text-blue-400', label: 'Em andamento' },
-  nao_iniciada: { pill: 'bg-white/[0.05] border border-white/10',         dot: 'bg-white/25',            text: 'text-white/35',     label: 'Não iniciada' },
-  aguardar:     { pill: 'bg-amber-400/15 border border-amber-400/25',     dot: 'bg-amber-400',           text: 'text-amber-400',    label: 'Aguardar'     },
-  enviado:      { pill: 'bg-violet-400/15 border border-violet-400/25',   dot: 'bg-violet-400',          text: 'text-violet-400',   label: 'Enviado'      },
+  concluido:    { pill: 'bg-[#2e6cf6] border-[#2e6cf6] text-white',                        dot: 'bg-white',                         strip: '#2e6cf6',               label: 'Concluído',    hint: 'Tarefa terminada' },
+  em_andamento: { pill: 'bg-[#5a8bff]/[0.1] border-[#5a8bff]/60 text-[#5a8bff]',          dot: 'bg-[#5a8bff] animate-pulse',       strip: '#5a8bff',               label: 'Em andamento', hint: 'Estamos a trabalhar nisto' },
+  nao_iniciada: { pill: 'bg-transparent border-white/[0.14] text-[#7c8893]',               dot: 'bg-[#7c8893]',                     strip: 'rgba(124,136,147,0.5)', label: 'Não iniciada', hint: 'Ainda por começar' },
+  aguardar:     { pill: 'bg-transparent border-dashed border-[#a9c1ff]/55 text-[#a9c1ff]', dot: 'border border-[#a9c1ff] bg-transparent', strip: '#a9c1ff',      label: 'A aguardar',   hint: 'À espera de resposta ou material' },
+  enviado:      { pill: 'bg-[#a9c1ff]/[0.12] border-[#a9c1ff]/40 text-[#a9c1ff]',          dot: 'bg-[#a9c1ff]',                     strip: '#a9c1ff',               label: 'Enviado',      hint: 'Enviado para ti' },
 }
 
-const CORES = [
-  { value: 'blue',    cls: 'bg-blue-400',    ring: 'ring-blue-400/60'    },
-  { value: 'cyan',    cls: 'bg-cyan-400',    ring: 'ring-cyan-400/60'    },
-  { value: 'emerald', cls: 'bg-emerald-400', ring: 'ring-emerald-400/60' },
-  { value: 'yellow',  cls: 'bg-yellow-400',  ring: 'ring-yellow-400/60'  },
-  { value: 'amber',   cls: 'bg-amber-400',   ring: 'ring-amber-400/60'   },
-  { value: 'orange',  cls: 'bg-orange-400',  ring: 'ring-orange-400/60'  },
-  { value: 'red',     cls: 'bg-red-400',     ring: 'ring-red-400/60'     },
-  { value: 'purple',  cls: 'bg-purple-400',  ring: 'ring-purple-400/60'  },
-  { value: 'violet',  cls: 'bg-violet-400',  ring: 'ring-violet-400/60'  },
-  { value: 'white',   cls: 'bg-white/50',    ring: 'ring-white/40'       },
+/* Cores das fases (valor guardado na coluna mantém-se; só a tradução visual muda) */
+const CORES: { value: string; hex: string }[] = [
+  { value: 'blue',    hex: '#2e6cf6' },
+  { value: 'cyan',    hex: '#5a8bff' },
+  { value: 'emerald', hex: '#a9c1ff' },
+  { value: 'yellow',  hex: '#ffffff' },
+  { value: 'amber',   hex: 'rgba(255,255,255,0.6)' },
+  { value: 'orange',  hex: '#7c8893' },
+  { value: 'red',     hex: 'rgba(46,108,246,0.55)' },
+  { value: 'purple',  hex: 'rgba(90,139,255,0.55)' },
+  { value: 'violet',  hex: 'rgba(169,193,255,0.55)' },
+  { value: 'white',   hex: 'rgba(255,255,255,0.35)' },
 ]
 
-const corDot: Record<string, string> = Object.fromEntries(CORES.map(c => [c.value, c.cls]))
+const corHex: Record<string, string> = Object.fromEntries(CORES.map(c => [c.value, c.hex]))
 
 const DEFAULT_ROADMAP_IMAGE = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1600&q=80'
-
-/* Cor suave do lane (background da coluna) */
-const corLane: Record<string, string> = {
-  blue:    'bg-blue-400/[0.03]    border-blue-400/[0.08]',
-  cyan:    'bg-cyan-400/[0.03]    border-cyan-400/[0.08]',
-  emerald: 'bg-emerald-400/[0.03] border-emerald-400/[0.08]',
-  yellow:  'bg-yellow-400/[0.03]  border-yellow-400/[0.08]',
-  amber:   'bg-amber-400/[0.03]   border-amber-400/[0.08]',
-  orange:  'bg-orange-400/[0.03]  border-orange-400/[0.08]',
-  red:     'bg-red-400/[0.03]     border-red-400/[0.08]',
-  purple:  'bg-purple-400/[0.03]  border-purple-400/[0.08]',
-  violet:  'bg-violet-400/[0.03]  border-violet-400/[0.08]',
-  white:   'bg-white/[0.02]       border-white/[0.06]',
-}
 
 const fmtDate = (iso: string) => {
   if (!iso) return ''
@@ -141,27 +126,19 @@ const fmtDate = (iso: string) => {
   return d.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
-/* Map: estado da tarefa → oklch token --sc (cor do strip + badge) */
-const ESTADO_OKLCH: Record<TarefaEstado, string> = {
-  concluido:    'oklch(0.72 0.12 165)',
-  em_andamento: 'oklch(0.80 0.12 245)',
-  nao_iniciada: 'oklch(0.62 0.02 245)',
-  aguardar:     'oklch(0.80 0.13 80)',
-  enviado:      'oklch(0.70 0.13 300)',
+/* Hoje em AAAA-MM-DD (local), para assinalar tarefas com a data ultrapassada */
+const hojeISO = () => {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-/* Map: classe Tailwind de cor da coluna → oklch token --cc (dot + rail) */
-const CORES_OKLCH: Record<string, string> = {
-  blue:    'oklch(0.70 0.13 245)',
-  cyan:    'oklch(0.74 0.12 210)',
-  emerald: 'oklch(0.74 0.13 165)',
-  yellow:  'oklch(0.80 0.13 90)',
-  amber:   'oklch(0.78 0.14 75)',
-  orange:  'oklch(0.72 0.15 50)',
-  red:     'oklch(0.65 0.18 20)',
-  purple:  'oklch(0.70 0.14 295)',
-  violet:  'oklch(0.68 0.15 280)',
-  white:   'oklch(0.85 0.02 245)',
-}
+
+const SetaIcon = ({ dir }: { dir: 'up' | 'down' }) => (
+  <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d={dir === 'up' ? 'M2 7l3-4 3 4' : 'M2 3l3 4 3-4'} />
+  </svg>
+)
+
+const SETA_CLS = 'w-6 h-6 flex items-center justify-center rounded-md border border-white/[0.1] hover:border-[#2e6cf6] bg-[#00141f]/60 text-white/40 hover:text-white transition-colors'
 
 /* ────────────────────────────────────────────────────────── */
 /*  COMPONENT                                                 */
@@ -383,296 +360,326 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
     }).catch(() => {})
   }
 
+
+  /* Data de hoje só no cliente (evita diferenças entre servidor e browser) */
+  const [hoje, setHoje] = useState('')
+  useEffect(() => { setHoje(hojeISO()) }, [])
+
+  /* Fase atual = primeira coluna com tarefas que ainda não está toda concluída */
+  const faseAtualIdx = colunas.findIndex(c => c.tarefas.length > 0 && c.tarefas.some(t => t.estado !== 'concluido'))
+  const faseAtual = faseAtualIdx >= 0 ? colunas[faseAtualIdx] : null
+  const emAtraso = hoje
+    ? colunas.reduce((s, c) => s + c.tarefas.filter(t => t.data && t.data < hoje && t.estado !== 'concluido' && t.estado !== 'enviado').length, 0)
+    : 0
+
   /* ────────────────────────────────────────────────────────── */
   /*  RENDER                                                    */
   /* ────────────────────────────────────────────────────────── */
   return (
-    <div className={`rl-roadmap ${manrope.variable} ${spaceGrotesk.variable}`}>
-      {/* Background fx — radial accent breathing (fixed) */}
-      <div className="rl-bg-fx" aria-hidden="true" />
+    <div className="rlp relative text-white">
 
       <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
 
-      <div className="rl-page">
+      <div className="relative z-10 max-w-[1480px] mx-auto px-4 sm:px-8 lg:px-10 pt-6 pb-24">
 
-        {/* ── Crumb ── */}
-        <p className="rl-crumb">
-          <Link href={`/portal-media/${initial.ref}`}>› Portal · {initial.nome}</Link>
-        </p>
+        {/* ── Voltar ── */}
+        <Link href={`/portal-media/${initial.ref}`}
+          className="inline-flex items-center gap-2 text-[12px] text-white/50 hover:text-white transition-colors">
+          <span aria-hidden>‹</span> Portal · {initial.nome}
+        </Link>
 
-        {/* ── Header (title left + stats right) ── */}
-        <header className="rl-head">
-          <div className="rl-head-l">
-            <p className="rl-eyebrow">RL PROD · {initial.nome}</p>
-            <h1 className="rl-title" aria-label="Road Map">
-              {'ROAD MAP'.split('').map((ch, i) => ch === ' '
-                ? <span key={i} className="sp" />
-                : <span key={i} style={{ animationDelay: `${(0.2 + i * 0.06).toFixed(2)}s` }}>{ch}</span>
-              )}
+        {/* ── Cabeçalho ── */}
+        <header className="mt-6 flex flex-wrap items-end justify-between gap-6">
+          <div className="min-w-0">
+            <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">RL Prod · {initial.nome}</p>
+            <h1 className="rlp-t mt-3 text-[44px] sm:text-[60px] leading-[0.95]">
+              Road <span className="text-[#5a8bff]">map</span>
             </h1>
+            <p className="mt-3 text-[14px] text-white/55 max-w-[52ch]">
+              {faseAtual
+                ? <>Neste momento estamos na fase <span className="text-white">{faseAtual.titulo}</span>.</>
+                : totalTarefas > 0
+                  ? 'Todas as fases estão concluídas.'
+                  : 'As fases do projeto vão aparecer aqui.'}
+            </p>
           </div>
-          <div className="rl-stats">
-            <div className="rl-stat">
-              <span className="rl-stat-k">Fases</span>
-              <span className="rl-stat-v">{colunas.length}</span>
-            </div>
-            <div className="rl-stat">
-              <span className="rl-stat-k">Tarefas</span>
-              <span className="rl-stat-v">{totalConcluidas}<small>/{totalTarefas}</small></span>
-            </div>
-            <div className="rl-stat is-pct">
-              <span className="rl-stat-k">Concluído</span>
-              <span className="rl-stat-v">{progresso}<small>%</small></span>
-              <span className="rl-stat-bar"><i style={{ width: `${progresso}%` }} /></span>
-            </div>
-            {isAdmin && isEditing && (
-              <button onClick={addColuna} className="rl-btn-dashed">+ Coluna</button>
-            )}
-          </div>
+          {isAdmin && isEditing && (
+            <button onClick={addColuna}
+              className="rounded-full border border-dashed border-white/25 hover:border-[#2e6cf6] px-5 py-2.5 text-[13px] text-white/70 hover:text-white transition-colors">
+              + Coluna
+            </button>
+          )}
         </header>
 
-        {/* ── Explainer ── */}
-        <section className="rl-card rl-explain">
-          <h2 className="rl-explain-h">O que é o Road Map?</h2>
-          <p className="rl-explain-lead">
+        {/* ── Resumo ── */}
+        <div className="mt-6 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="rounded-2xl border border-white/[0.1] bg-[#00141f]/70 p-4 sm:p-5">
+            <p className="rlp-m text-[10px] text-white/45">Fases</p>
+            <p className="rlp-t mt-2 text-[34px] sm:text-[40px] leading-none">{colunas.length}</p>
+            <p className="mt-2 text-[12px] text-white/45">
+              {faseAtual ? `Atual: ${faseAtual.titulo}` : 'sem fase em curso'}
+            </p>
+          </div>
+          <div className="rounded-2xl border border-white/[0.1] bg-[#00141f]/70 p-4 sm:p-5">
+            <p className="rlp-m text-[10px] text-white/45">Tarefas</p>
+            <p className="rlp-t mt-2 text-[34px] sm:text-[40px] leading-none">
+              {totalConcluidas}<span className="text-white/35 text-[22px]">/{totalTarefas}</span>
+            </p>
+            <p className="mt-2 text-[12px] text-white/45">concluídas</p>
+          </div>
+          <div className="col-span-2 rounded-2xl border border-white/[0.1] bg-[#00141f]/70 p-4 sm:p-5">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="rlp-m text-[10px] text-white/45">Progresso</p>
+              {emAtraso > 0 && (
+                <span className="text-[12px] text-[#ff4747]">{emAtraso} {emAtraso === 1 ? 'tarefa' : 'tarefas'} com data ultrapassada</span>
+              )}
+            </div>
+            <p className="rlp-t mt-2 text-[34px] sm:text-[40px] leading-none text-[#5a8bff]">
+              {progresso}<span className="text-[22px] text-white/40">%</span>
+            </p>
+            <div className="mt-3 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+              <div className="h-full rounded-full bg-[#2e6cf6] transition-[width] duration-700" style={{ width: `${progresso}%` }} />
+            </div>
+            {colunas.length > 0 && (
+              <div className="mt-2 flex gap-1">
+                {colunas.map((c, i) => {
+                  const feito = c.tarefas.length > 0 && c.tarefas.every(t => t.estado === 'concluido')
+                  return (
+                    <span key={c.id} title={c.titulo}
+                      className={`h-1 flex-1 rounded-full ${feito ? 'bg-[#2e6cf6]' : i === faseAtualIdx ? 'bg-[#5a8bff]/60 animate-pulse' : 'bg-white/[0.08]'}`} />
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Explicação ── */}
+        <section className="mt-6 rounded-2xl border border-white/[0.1] bg-[#00141f]/70 p-5 sm:p-7">
+          <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">O que é o Road Map?</p>
+          <p className="mt-4 text-[14.5px] leading-relaxed text-white/75 max-w-[88ch]">
             O Road Map é o quadro visual que mostra, em tempo real, o estado de cada fase do seu projeto. Está organizado em colunas que representam as grandes etapas do processo, desde o briefing inicial até à entrega final.
           </p>
-          <div className="rl-explain-grid">
+          <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { n: '01', t: 'Visão geral do projeto',   d: 'Num único ecrã tens o panorama completo: o que já foi concluído, o que está em curso e o que ainda está por fazer.' },
               { n: '02', t: 'Fases e tarefas',          d: 'Cada coluna é uma fase do projeto. Dentro de cada fase existem tarefas específicas, cada uma com o seu estado e data prevista.' },
-              { n: '03', t: 'Estados em tempo real',    d: 'As tarefas atualizam o estado à medida que o trabalho avança: Concluído, Em andamento, Aguardar, Enviado ou Não iniciada.' },
+              { n: '03', t: 'Estados em tempo real',    d: 'As tarefas atualizam o estado à medida que o trabalho avança: Concluído, Em andamento, A aguardar, Enviado ou Não iniciada.' },
               { n: '04', t: 'Transparência total',      d: 'O objetivo é garantir que estás sempre informado sobre o progresso. Tens acesso ao mesmo quadro que a nossa equipa.' },
             ].map(({ n, t, d }) => (
-              <div key={n} className="rl-feat">
-                <span className="rl-feat-n">{n}</span>
-                <div>
-                  <p className="rl-feat-t">{t}</p>
-                  <p className="rl-feat-d">{d}</p>
-                </div>
+              <div key={n} className="rounded-xl bg-[#0c2236]/70 border border-white/[0.06] p-4">
+                <span className="rlp-t text-[22px] leading-none text-[#5a8bff]">{n}</span>
+                <p className="rlp-t mt-2 text-[16px] leading-tight">{t}</p>
+                <p className="mt-1.5 text-[12.5px] leading-relaxed text-white/55">{d}</p>
               </div>
             ))}
           </div>
         </section>
 
         {/* ── Legenda de estados ── */}
-        <div className="rl-legend">
-          {ESTADO_OPTIONS.map(opt => (
-            <span key={opt.value} className={`rl-chip rl-chip--${opt.value}`}>
-              <i />{opt.label}
-            </span>
-          ))}
+        <div className="mt-8 mb-4 flex flex-wrap items-center justify-between gap-4">
+          <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Quadro</p>
+          <div className="flex flex-wrap gap-2">
+            {ESTADO_OPTIONS.map(opt => {
+              const c = ESTADO_CFG[opt.value]
+              return (
+                <span key={opt.value} title={c.hint}
+                  className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11.5px] ${c.pill}`}>
+                  <i className={`w-1.5 h-1.5 rounded-full ${c.dot}`} />{opt.label}
+                </span>
+              )
+            })}
+          </div>
         </div>
 
         {/* ── Board ── */}
         {colunas.length === 0 ? (
-          <div className="rl-empty">
-            <p className="rl-empty-lbl">Road map vazio</p>
-            {isAdmin && <p className="rl-empty-hint">Clica em &ldquo;Editar&rdquo; e depois em &ldquo;+ Coluna&rdquo; para começar</p>}
+          <div className="flex flex-col items-center justify-center py-16 gap-2 rounded-2xl border border-dashed border-white/[0.15] bg-[#00141f]/60 text-center px-6">
+            <p className="rlp-m text-[11px] text-white/45">Road map vazio</p>
+            <p className="text-[14px] text-white/55">
+              {isAdmin
+                ? <>Clica em &ldquo;Editar&rdquo; e depois em &ldquo;+ Coluna&rdquo; para começar.</>
+                : 'As fases do projeto vão aparecer aqui em breve.'}
+            </p>
           </div>
         ) : (
-          <div className="rl-board" style={{ ['--rl-cols' as any]: colunas.length }}>
-              {colunas.map((coluna, ci) => {
-                const dot      = corDot[coluna.cor] ?? 'bg-white/30'
-                const lane     = corLane[coluna.cor] ?? 'bg-white/[0.02] border-white/[0.06]'
-                const concluidas = coluna.tarefas.filter(t => t.estado === 'concluido').length
-                const colCC = CORES_OKLCH[coluna.cor] ?? 'oklch(0.66 0.13 245)'
+          <div className="flex flex-col gap-4 md:grid md:grid-flow-col md:auto-cols-[minmax(268px,1fr)] md:overflow-x-auto md:pb-3">
+            {colunas.map((coluna, ci) => {
+              const concluidas = coluna.tarefas.filter(t => t.estado === 'concluido').length
+              const total = coluna.tarefas.length
+              const pctCol = total > 0 ? Math.round((concluidas / total) * 100) : 0
+              const feita = total > 0 && concluidas === total
+              const atual = ci === faseAtualIdx
+              const cc = corHex[coluna.cor] ?? '#2e6cf6'
 
-                return (
-                  <div
-                    key={coluna.id}
-                    className="rl-col"
-                    style={{
-                      ['--cc' as any]: colCC,
-                      animationDelay: `${(0.3 + ci * 0.09).toFixed(2)}s`,
-                    }}
-                  >
+              return (
+                <div key={coluna.id}
+                  className={`flex flex-col rounded-2xl border bg-[#00141f]/70 overflow-hidden ${
+                    atual && !isEditing ? 'border-[#5a8bff]/55' : 'border-white/[0.1]'}`}>
 
-                    {/* ── Cabeçalho da coluna ── */}
-                    {isEditing ? (
-                      <div className="border border-white/[0.08] bg-white/[0.025] px-3 pt-3 pb-3 mb-3 flex flex-col gap-3">
-                        {/* Seletor de cor */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {CORES.map(co => (
-                            <button key={co.value} onClick={() => updateColuna(coluna.id, 'cor', co.value)} title={co.value}
-                              className={`w-3.5 h-3.5 rounded-full shrink-0 ${co.cls} transition-all
-                                ${coluna.cor === co.value ? `ring-1 ${co.ring} ring-offset-[2px] ring-offset-[#04080f] scale-125` : 'opacity-30 hover:opacity-80'}`}
-                            />
-                          ))}
-                          <button onClick={() => removeColuna(coluna.id)}
-                            className="ml-auto text-[14px] text-red-400/40 hover:text-red-400/70 transition-colors">✕</button>
-                        </div>
-                        <input
-                          value={coluna.titulo}
-                          onChange={e => updateColuna(coluna.id, 'titulo', e.target.value)}
-                          className="w-full bg-transparent text-[13px] tracking-[0.3em] text-white/70 uppercase font-medium focus:outline-none border-b border-white/10 focus:border-white/30 pb-0.5"
-                          placeholder="Nome da fase"
-                        />
+                  {/* ── Cabeçalho da coluna ── */}
+                  {isEditing ? (
+                    <div className="border-b border-white/[0.08] bg-[#0c2236]/70 p-4 flex flex-col gap-3">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {CORES.map(co => (
+                          <button key={co.value} onClick={() => updateColuna(coluna.id, 'cor', co.value)} title={co.value}
+                            className={`w-4 h-4 rounded-full shrink-0 transition-all ${
+                              coluna.cor === co.value ? 'ring-2 ring-white/70 ring-offset-2 ring-offset-[#0c2236] scale-110' : 'opacity-40 hover:opacity-90'}`}
+                            style={{ background: co.hex }}
+                          />
+                        ))}
+                        <button onClick={() => removeColuna(coluna.id)} title="Remover coluna"
+                          className="ml-auto text-[14px] text-[#ff4747]/60 hover:text-[#ff4747] transition-colors">✕</button>
                       </div>
-                    ) : (
-                      <>
-                        <div className="rl-col-head">
-                          <span className="rl-col-dot" />
-                          <span className="rl-col-name">{coluna.titulo}</span>
-                          <span className="rl-col-count">{coluna.tarefas.length}</span>
+                      <input
+                        value={coluna.titulo}
+                        onChange={e => updateColuna(coluna.id, 'titulo', e.target.value)}
+                        className="rlp-t w-full bg-transparent text-[18px] text-white focus:outline-none border-b border-white/15 focus:border-[#2e6cf6] pb-1"
+                        placeholder="Nome da fase"
+                      />
+                    </div>
+                  ) : (
+                    <div className="px-4 pt-4 pb-3">
+                      <div className="flex items-center gap-2.5">
+                        <span className="rlp-m text-[10px] text-white/35 tracking-[0.15em]">{String(ci + 1).padStart(2, '0')}</span>
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: cc }} />
+                        <h3 className="rlp-t flex-1 min-w-0 truncate text-[18px] leading-tight">{coluna.titulo}</h3>
+                        <span className="shrink-0 text-[12px] text-white/50">{concluidas}/{total}</span>
+                      </div>
+                      <div className="mt-3 h-1 rounded-full bg-white/[0.08] overflow-hidden">
+                        <div className="h-full rounded-full bg-[#2e6cf6]" style={{ width: `${pctCol}%` }} />
+                      </div>
+                      <p className={`rlp-m mt-2 text-[9px] tracking-[0.22em] ${
+                        feita ? 'text-[#a9c1ff]' : atual ? 'text-[#5a8bff]' : 'text-[#7c8893]'}`}>
+                        {feita ? 'Fase concluída' : atual ? 'Fase atual' : total === 0 ? 'Sem tarefas' : 'Por iniciar'}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* ── Lane ── */}
+                  <div className={`flex flex-col gap-2.5 flex-1 px-3 pb-3 ${isEditing ? 'pt-3' : 'pt-1'}`}>
+
+                    {coluna.tarefas.map(tarefa => {
+                      const cfg = ESTADO_CFG[tarefa.estado]
+                      const atrasada = !!hoje && !!tarefa.data && tarefa.data < hoje && tarefa.estado !== 'concluido' && tarefa.estado !== 'enviado'
+                      return (
+                        <div key={tarefa.id}
+                          className={`group/card relative overflow-hidden rounded-xl border bg-[#0c2236]/70 p-3.5 pl-4 ${
+                            atrasada ? 'border-[#ff4747]/40' : 'border-white/[0.06]'}`}>
+                          <span className="absolute left-0 top-0 bottom-0 w-[3px]" style={{ background: atrasada ? '#ff4747' : cfg.strip }} />
+
+                          {isEditing ? (
+                            /* ── Modo edição ── */
+                            <div className="flex gap-2">
+                              <div className="flex flex-col gap-1 shrink-0 pt-0.5">
+                                <button onClick={() => moveTarefa(coluna.id, tarefa.id, 'up')} className={SETA_CLS} title="Mover para cima">
+                                  <SetaIcon dir="up" />
+                                </button>
+                                <button onClick={() => moveTarefa(coluna.id, tarefa.id, 'down')} className={SETA_CLS} title="Mover para baixo">
+                                  <SetaIcon dir="down" />
+                                </button>
+                              </div>
+                              <div className="flex flex-col gap-2 flex-1 min-w-0">
+                                <input
+                                  value={tarefa.titulo}
+                                  onChange={e => updateTarefa(coluna.id, tarefa.id, 'titulo', e.target.value)}
+                                  className="w-full bg-transparent text-[14px] text-white focus:outline-none border-b border-white/[0.12] focus:border-[#2e6cf6] pb-1 placeholder:text-white/25"
+                                  placeholder="Título da tarefa"
+                                />
+                                <select
+                                  value={tarefa.estado}
+                                  onChange={e => updateTarefa(coluna.id, tarefa.id, 'estado', e.target.value)}
+                                  className="bg-[#00141f] border border-white/[0.12] rounded-lg text-[13.5px] text-white/80 px-2 py-1.5 focus:outline-none focus:border-[#2e6cf6] w-full"
+                                >
+                                  {ESTADO_OPTIONS.map(o => (
+                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                  ))}
+                                </select>
+                                <input
+                                  type="date"
+                                  value={tarefa.data ?? ''}
+                                  onChange={e => updateTarefa(coluna.id, tarefa.id, 'data', e.target.value)}
+                                  className="bg-[#00141f] border border-white/[0.12] rounded-lg text-[13.5px] text-white/70 px-2 py-1.5 focus:outline-none focus:border-[#2e6cf6] w-full [color-scheme:dark]"
+                                />
+                                <button onClick={() => removeTarefa(coluna.id, tarefa.id)}
+                                  className="rlp-m text-[9.5px] text-[#ff4747]/60 hover:text-[#ff4747] transition-colors self-end">
+                                  Remover
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            /* ── Modo visualização ── */
+                            <div className="flex gap-2 items-start">
+                              {isAdmin && (
+                                <div className="flex flex-col gap-1 shrink-0 md:opacity-0 md:group-hover/card:opacity-100 transition-opacity duration-150">
+                                  <button onClick={() => moveTarefa(coluna.id, tarefa.id, 'up')} className={SETA_CLS} title="Mover para cima">
+                                    <SetaIcon dir="up" />
+                                  </button>
+                                  <button onClick={() => moveTarefa(coluna.id, tarefa.id, 'down')} className={SETA_CLS} title="Mover para baixo">
+                                    <SetaIcon dir="down" />
+                                  </button>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className={`text-[14px] leading-snug ${tarefa.estado === 'nao_iniciada' ? 'text-white/65' : 'text-white'}`}>
+                                  {tarefa.titulo}
+                                </p>
+                                <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2">
+                                  {isAdmin ? (
+                                    <EstadoQuickChanger
+                                      cfg={cfg}
+                                      current={tarefa.estado}
+                                      onChange={(novoEstado) => quickChangeEstado(coluna.id, tarefa.id, novoEstado)}
+                                    />
+                                  ) : (
+                                    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] ${cfg.pill}`}>
+                                      <i className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />{cfg.label}
+                                    </span>
+                                  )}
+                                  {tarefa.data ? (
+                                    <span className={`inline-flex items-center gap-1.5 text-[11.5px] whitespace-nowrap ${atrasada ? 'text-[#ff4747]' : 'text-white/50'}`}>
+                                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                                        <rect x="4" y="5" width="16" height="16" rx="2.5"/>
+                                        <path d="M4 9h16M8 3v4M16 3v4"/>
+                                      </svg>
+                                      {fmtDate(tarefa.data)}{atrasada && ' · em atraso'}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11.5px] text-white/30">Sem data</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                        <div className="rl-col-rail" style={{ animationDelay: `${(0.6 + ci * 0.09).toFixed(2)}s` }} />
-                      </>
+                      )
+                    })}
+
+                    {isEditing && (
+                      <button onClick={() => addTarefa(coluna.id)}
+                        className="w-full rounded-xl border border-dashed border-white/20 hover:border-[#2e6cf6] py-3 text-[13px] text-white/60 hover:text-white transition-colors">
+                        + Tarefa
+                      </button>
                     )}
 
-                    {/* ── Lane ── */}
-                    <div className={isEditing ? `rl-col-body rl-col-body--edit ${lane}` : 'rl-col-body'}>
-
-                      {/* ── Cards de tarefa ── */}
-                      {coluna.tarefas.map((tarefa, ti) => {
-                        const cfg = ESTADO_CFG[tarefa.estado]
-                        const taskSC = ESTADO_OKLCH[tarefa.estado]
-                        return (
-                          <div
-                            key={tarefa.id}
-                            className="rl-task group/card"
-                            style={{
-                              ['--sc' as any]: taskSC,
-                              animationDelay: `${(0.5 + ci * 0.08 + ti * 0.05).toFixed(2)}s`,
-                            }}
-                          >
-
-                            {isEditing ? (
-                              /* ── Modo edição ── */
-                              <div className="flex gap-2">
-                                {/* Setas de reordenação */}
-                                <div className="flex flex-col gap-1 shrink-0 pt-0.5">
-                                  <button
-                                    onClick={() => moveTarefa(coluna.id, tarefa.id, 'up')}
-                                    className="w-5 h-5 flex items-center justify-center border border-white/[0.08] hover:border-white/25 bg-white/[0.02] hover:bg-white/[0.06] transition-all text-white/25 hover:text-white/70"
-                                    title="Mover para cima"
-                                  >
-                                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M2 7l3-4 3 4"/>
-                                    </svg>
-                                  </button>
-                                  <button
-                                    onClick={() => moveTarefa(coluna.id, tarefa.id, 'down')}
-                                    className="w-5 h-5 flex items-center justify-center border border-white/[0.08] hover:border-white/25 bg-white/[0.02] hover:bg-white/[0.06] transition-all text-white/25 hover:text-white/70"
-                                    title="Mover para baixo"
-                                  >
-                                    <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M2 3l3 4 3-4"/>
-                                    </svg>
-                                  </button>
-                                </div>
-                                {/* Campos de edição */}
-                                <div className="flex flex-col gap-2 flex-1 min-w-0">
-                                  <input
-                                    value={tarefa.titulo}
-                                    onChange={e => updateTarefa(coluna.id, tarefa.id, 'titulo', e.target.value)}
-                                    className="w-full bg-transparent text-[14px] text-white/70 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5 placeholder:text-white/15"
-                                    placeholder="Título da tarefa"
-                                  />
-                                  <select
-                                    value={tarefa.estado}
-                                    onChange={e => updateTarefa(coluna.id, tarefa.id, 'estado', e.target.value)}
-                                    className="bg-[#04080f] border border-white/[0.08] text-[14px] text-white/50 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full rounded-none"
-                                  >
-                                    {ESTADO_OPTIONS.map(o => (
-                                      <option key={o.value} value={o.value}>{o.label}</option>
-                                    ))}
-                                  </select>
-                                  <input
-                                    type="date"
-                                    value={tarefa.data ?? ''}
-                                    onChange={e => updateTarefa(coluna.id, tarefa.id, 'data', e.target.value)}
-                                    className="bg-[#04080f] border border-white/[0.08] text-[14px] text-white/40 px-2 py-1.5 focus:outline-none focus:border-white/25 w-full"
-                                  />
-                                  <button onClick={() => removeTarefa(coluna.id, tarefa.id)}
-                                    className="text-[12px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors self-end">
-                                    Remover
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              /* ── Modo visualização ── */
-                              <div className="flex gap-2 items-start">
-                                {/* Setas — só visíveis para admin */}
-                                {isAdmin && (
-                                  <div className="flex flex-col gap-1 shrink-0 opacity-0 group-hover/card:opacity-100 transition-opacity duration-150">
-                                    <button
-                                      onClick={() => moveTarefa(coluna.id, tarefa.id, 'up')}
-                                      className="w-5 h-5 flex items-center justify-center border border-white/[0.08] hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.08] transition-all text-white/25 hover:text-white/80"
-                                      title="Mover para cima"
-                                    >
-                                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M2 7l3-4 3 4"/>
-                                      </svg>
-                                    </button>
-                                    <button
-                                      onClick={() => moveTarefa(coluna.id, tarefa.id, 'down')}
-                                      className="w-5 h-5 flex items-center justify-center border border-white/[0.08] hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.08] transition-all text-white/25 hover:text-white/80"
-                                      title="Mover para baixo"
-                                    >
-                                      <svg width="8" height="8" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M2 3l3 4 3-4"/>
-                                      </svg>
-                                    </button>
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0">
-                                  <p className="rl-task-name">{tarefa.titulo}</p>
-                                  <div className="rl-task-foot">
-                                    {isAdmin ? (
-                                      <EstadoQuickChanger
-                                        cfg={cfg}
-                                        current={tarefa.estado}
-                                        onChange={(novoEstado) => quickChangeEstado(coluna.id, tarefa.id, novoEstado)}
-                                      />
-                                    ) : (
-                                      <span className={`rl-badge rl-badge--${tarefa.estado}`}>
-                                        <i />{cfg.label}
-                                      </span>
-                                    )}
-                                    {tarefa.data ? (
-                                      <span className="rl-task-date">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                                          <rect x="4" y="5" width="16" height="16" rx="2.5"/>
-                                          <path d="M4 9h16M8 3v4M16 3v4"/>
-                                        </svg>
-                                        {fmtDate(tarefa.data)}
-                                      </span>
-                                    ) : (
-                                      <span className="rl-task-date" style={{ opacity: 0.6 }}>Sem data</span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )
-                      })}
-
-                      {/* Botão adicionar tarefa */}
-                      {isEditing && (
-                        <button onClick={() => addTarefa(coluna.id)} className="rl-btn-dashed-block">
-                          + Tarefa
-                        </button>
-                      )}
-
-                      {/* Estado vazio (não edição) */}
-                      {coluna.tarefas.length === 0 && !isEditing && (
-                        <div className="rl-col-empty">
-                          <p>Sem tarefas</p>
-                        </div>
-                      )}
-                    </div>
+                    {coluna.tarefas.length === 0 && !isEditing && (
+                      <div className="rounded-xl border border-dashed border-white/[0.1] py-6 text-center">
+                        <p className="rlp-m text-[9.5px] text-white/35">Sem tarefas</p>
+                      </div>
+                    )}
                   </div>
-                )
-              })}
+                </div>
+              )
+            })}
           </div>
         )}
 
-        {/* ── Footer ── */}
-        <footer className="rl-foot">
-          <p className="rl-foot-tag">More than a product, <b>an experience.</b></p>
-          <p className="rl-foot-sub">RL PROD · Photography &amp; Video</p>
+        {/* ── Rodapé ── */}
+        <footer className="mt-12 text-center">
+          <p className="rlp-t text-[20px] sm:text-[24px] text-white/60">
+            More than a product, <span className="text-white">an experience<span className="text-[#5a8bff]">.</span></span>
+          </p>
+          <p className="rlp-m mt-2 text-[9.5px] text-white/35">RL Prod · Photography &amp; Video</p>
         </footer>
       </div>
 
@@ -680,461 +687,6 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
         <AdminBar isEditing={isEditing} saving={saving}
           onToggle={() => setIsEditing(true)} onSave={save} onCancel={cancel} />
       )}
-
-      {/* ── Tokens + animations 1:1 ao roadmap.css do handoff RL PROD ── */}
-      <style jsx>{`
-        .rl-roadmap {
-          --navy-950: #0e1b27;
-          --navy-900: #122230;
-          --navy-850: #16293a;
-          --navy-800: #1f3647;
-          --navy-700: #274458;
-          --accent: oklch(0.66 0.13 245);
-          --accent-bright: oklch(0.80 0.11 245);
-          --done:  oklch(0.72 0.12 165);
-          --doing: oklch(0.80 0.12 245);
-          --wait:  oklch(0.80 0.13 80);
-          --sent:  oklch(0.70 0.13 300);
-          --none:  oklch(0.62 0.02 245);
-          --ink:   #eaf1f7;
-          --soft:  oklch(0.86 0.025 245);
-          --muted: oklch(0.70 0.03 245);
-          --faint: oklch(0.56 0.03 245);
-          --line:  oklch(0.42 0.03 245 / 0.40);
-          --line-soft: oklch(0.50 0.03 245 / 0.18);
-          --rl-card-bg: oklch(0.30 0.035 245 / 0.34);
-          --rl-r: 16px;
-          --rl-r-sm: 12px;
-          font-family: var(--font-manrope), Manrope, system-ui, sans-serif;
-          color: var(--ink);
-          position: relative;
-        }
-        .rl-bg-fx {
-          position: fixed; inset: 0; z-index: -1;
-          background:
-            radial-gradient(120% 70% at 85% -8%, var(--navy-700) 0%, transparent 42%),
-            radial-gradient(100% 60% at 0% 0%, var(--navy-800) 0%, transparent 38%),
-            linear-gradient(180deg, var(--navy-900), var(--navy-950) 55%);
-          pointer-events: none;
-        }
-        .rl-bg-fx::after {
-          content: ""; position: absolute; inset: 0;
-          background-image: radial-gradient(rgba(255,255,255,.04) 1px, transparent 1px);
-          background-size: 4px 4px; opacity: .5; mix-blend-mode: overlay;
-        }
-        .rl-bg-fx::before {
-          content: ""; position: absolute; left: 50%; top: -12%;
-          width: 55vw; height: 55vw; transform: translateX(-50%);
-          background: radial-gradient(circle, var(--accent) 0%, transparent 60%);
-          opacity: .09; filter: blur(40px);
-          animation: rlBreathe 8s ease-in-out infinite;
-        }
-        @keyframes rlBreathe {
-          0%,100% { opacity: .06; transform: translateX(-50%) scale(1); }
-          50%     { opacity: .12; transform: translateX(-50%) scale(1.1); }
-        }
-
-        .rl-page {
-          max-width: 1480px; margin: 0 auto;
-          padding: 44px clamp(20px, 3.5vw, 48px) 64px;
-          position: relative; z-index: 1;
-        }
-
-        .rl-crumb {
-          font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
-          color: var(--faint); font-weight: 600;
-          margin: 0 0 22px;
-          opacity: 0; animation: rlFadeUp .6s .05s forwards;
-        }
-        .rl-roadmap :global(.rl-crumb a) {
-          color: inherit; text-decoration: none; transition: color .25s;
-        }
-        .rl-roadmap :global(.rl-crumb a:hover) { color: var(--soft); }
-        @keyframes rlFadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: none; }
-        }
-
-        .rl-head {
-          display: flex; align-items: flex-end; justify-content: space-between;
-          gap: 26px; flex-wrap: wrap;
-          padding-bottom: 22px;
-          border-bottom: 1px solid var(--line-soft);
-        }
-        .rl-eyebrow {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          text-transform: uppercase; letter-spacing: .26em;
-          font-size: 10.5px; font-weight: 500;
-          color: var(--muted);
-          margin: 0 0 12px;
-          opacity: 0; animation: rlFadeUp .6s .12s forwards;
-        }
-        .rl-title {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-weight: 600;
-          font-size: clamp(30px, 5.5vw, 50px);
-          letter-spacing: .16em; text-transform: uppercase;
-          margin: 0; color: #fff;
-          display: flex; flex-wrap: wrap;
-          line-height: 1;
-        }
-        .rl-roadmap :global(.rl-title span) {
-          display: inline-block;
-          opacity: 0; transform: translateY(24px); filter: blur(10px);
-          animation: rlFocusIn .6s forwards;
-        }
-        .rl-roadmap :global(.rl-title .sp) { width: .32em; }
-        @keyframes rlFocusIn {
-          to { opacity: 1; transform: none; filter: blur(0); }
-        }
-
-        .rl-stats {
-          display: flex; align-items: stretch; gap: 12px;
-          opacity: 0; animation: rlFadeUp .7s .4s forwards;
-        }
-        .rl-stat {
-          display: flex; flex-direction: column; gap: 5px;
-          padding: 12px 18px;
-          border: 1px solid var(--line-soft);
-          border-radius: 12px;
-          background: oklch(0.30 0.035 245 / .3);
-          min-width: 84px;
-        }
-        .rl-stat-k {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 9.5px; font-weight: 600;
-          letter-spacing: .18em; text-transform: uppercase;
-          color: var(--faint);
-        }
-        .rl-stat-v {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 22px; font-weight: 600; color: #fff;
-          line-height: 1;
-        }
-        .rl-stat-v small {
-          font-size: 13px; color: var(--muted); font-weight: 500;
-        }
-        .rl-stat.is-pct .rl-stat-v { color: var(--done); }
-        .rl-stat-bar {
-          margin-top: 3px; height: 4px; border-radius: 4px;
-          background: oklch(0.40 0.03 245 / .5);
-          overflow: hidden; width: 74px; display: block;
-        }
-        .rl-stat-bar i {
-          display: block; height: 100%; width: 0;
-          border-radius: 4px;
-          background: linear-gradient(90deg, var(--done), var(--doing));
-          transition: width 1.5s cubic-bezier(.3,.1,.2,1) .6s;
-          animation: rlBarIn 1.5s cubic-bezier(.3,.1,.2,1) .6s forwards;
-        }
-        @keyframes rlBarIn { from { width: 0; } }
-
-        .rl-btn-dashed {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; letter-spacing: .22em; text-transform: uppercase;
-          font-weight: 600;
-          padding: 8px 16px; border-radius: 999px;
-          border: 1px dashed var(--line);
-          color: var(--muted); background: transparent;
-          cursor: pointer; transition: .2s;
-        }
-        .rl-btn-dashed:hover {
-          border-color: var(--accent-bright);
-          color: #fff;
-          background: oklch(0.66 0.13 245 / 0.08);
-        }
-
-        .rl-card {
-          background: var(--rl-card-bg);
-          border: 1px solid var(--line-soft);
-          border-radius: var(--rl-r);
-          backdrop-filter: blur(8px);
-          -webkit-backdrop-filter: blur(8px);
-        }
-        .rl-explain {
-          margin-top: 26px;
-          padding: 26px 30px;
-          opacity: 0; animation: rlFadeUp .7s .3s forwards;
-        }
-        .rl-explain-h {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; font-weight: 600;
-          letter-spacing: .2em; text-transform: uppercase;
-          color: var(--accent-bright);
-          margin: 0 0 12px;
-        }
-        .rl-explain-lead {
-          font-size: 14.5px; line-height: 1.6;
-          color: var(--soft);
-          margin: 0 0 22px; max-width: 88ch;
-        }
-        .rl-explain-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-          gap: 20px 34px;
-        }
-        .rl-feat { display: flex; gap: 13px; }
-        .rl-feat-n {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; font-weight: 600;
-          color: var(--faint);
-          padding-top: 2px; flex: none;
-        }
-        .rl-feat-t {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 13px; font-weight: 600;
-          letter-spacing: .02em;
-          color: var(--ink);
-          margin: 0 0 5px;
-        }
-        .rl-feat-d {
-          font-size: 12.5px; line-height: 1.5;
-          color: var(--muted);
-          margin: 0;
-        }
-
-        .rl-legend {
-          display: flex; flex-wrap: wrap; gap: 9px;
-          margin: 32px 0 18px;
-        }
-        .rl-chip {
-          display: inline-flex; align-items: center; gap: 8px;
-          font-size: 11px; font-weight: 600; letter-spacing: .04em;
-          padding: 6px 13px; border-radius: 999px;
-          border: 1px solid var(--line-soft);
-          background: oklch(0.30 0.04 245 / .3);
-          color: var(--soft);
-        }
-        .rl-chip i {
-          width: 8px; height: 8px; border-radius: 50%;
-          background: currentColor;
-        }
-        .rl-chip--concluido    { color: var(--done); }
-        .rl-chip--em_andamento { color: var(--doing); }
-        .rl-chip--nao_iniciada { color: var(--none); }
-        .rl-chip--aguardar     { color: var(--wait); }
-        .rl-chip--enviado      { color: var(--sent); }
-
-        .rl-empty {
-          border: 1px dashed var(--line);
-          padding: 60px 24px; text-align: center;
-          border-radius: var(--rl-r);
-          background: var(--rl-card-bg);
-        }
-        .rl-empty-lbl {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10.5px; letter-spacing: .36em; text-transform: uppercase;
-          color: var(--faint); font-weight: 600; margin: 0 0 8px;
-        }
-        .rl-empty-hint {
-          font-size: 15px; color: var(--muted); margin: 0;
-        }
-
-        .rl-board {
-          display: grid;
-          grid-auto-flow: column;
-          grid-auto-columns: minmax(248px, 1fr);
-          gap: 16px;
-          overflow-x: auto;
-          padding: 6px 2px 18px;
-          scrollbar-width: thin;
-          scrollbar-color: var(--line) transparent;
-        }
-        .rl-board::-webkit-scrollbar { height: 9px; }
-        .rl-board::-webkit-scrollbar-thumb {
-          background: var(--line); border-radius: 9px;
-        }
-        .rl-col {
-          display: flex; flex-direction: column;
-          border: 1px solid var(--line-soft);
-          border-radius: var(--rl-r);
-          background: oklch(0.22 0.03 245 / .42);
-          overflow: hidden;
-          opacity: 0; transform: translateY(16px);
-          animation: rlColIn .6s cubic-bezier(.2,.7,.2,1) forwards;
-        }
-        @keyframes rlColIn { to { opacity: 1; transform: none; } }
-
-        .rl-col-head {
-          display: flex; align-items: center; gap: 9px;
-          padding: 15px 16px 13px;
-        }
-        .rl-col-dot {
-          width: 9px; height: 9px; border-radius: 50%;
-          background: var(--cc, var(--accent));
-          box-shadow: 0 0 10px var(--cc, var(--accent));
-          flex: none;
-        }
-        .rl-col-name {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 12px; font-weight: 600;
-          letter-spacing: .16em; text-transform: uppercase;
-          color: var(--soft);
-          flex: 1; line-height: 1.2;
-          white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        }
-        .rl-col-count {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; font-weight: 600;
-          color: var(--faint);
-          background: oklch(0.34 0.03 245 / .5);
-          border-radius: 999px;
-          min-width: 22px; height: 22px;
-          display: inline-flex; align-items: center; justify-content: center;
-          padding: 0 6px; flex: none;
-        }
-        .rl-col-rail {
-          height: 3px; border-radius: 3px;
-          background: var(--cc, var(--accent));
-          margin: 0 12px 12px;
-          width: 0;
-          animation: rlRailIn 1s ease .5s forwards;
-          box-shadow: 0 0 10px var(--cc, var(--accent));
-        }
-        @keyframes rlRailIn { to { width: calc(100% - 24px); } }
-
-        .rl-col-body {
-          display: flex; flex-direction: column; gap: 11px;
-          padding: 4px 12px 14px;
-          flex: 1;
-        }
-        .rl-col-body--edit { padding-top: 12px; }
-
-        .rl-col-empty {
-          padding: 28px 0; text-align: center;
-        }
-        .rl-col-empty p {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10.5px; letter-spacing: .26em; text-transform: uppercase;
-          color: var(--faint); font-weight: 600; margin: 0;
-        }
-
-        .rl-task {
-          position: relative;
-          padding: 14px 15px;
-          border-radius: var(--rl-r-sm);
-          border: 1px solid var(--line-soft);
-          background:
-            linear-gradient(180deg, oklch(0.30 0.04 245 / .5), oklch(0.22 0.03 245 / .5));
-          overflow: hidden;
-          opacity: 0; transform: translateY(10px);
-          animation: rlTaskIn .5s ease forwards;
-        }
-        @keyframes rlTaskIn { to { opacity: 1; transform: none; } }
-        .rl-task::before {
-          content: ""; position: absolute; left: 0; top: 0; bottom: 0;
-          width: 3px;
-          background: var(--sc, var(--none));
-          opacity: .85;
-        }
-        .rl-task-name {
-          font-size: 13.5px; font-weight: 600; letter-spacing: .01em;
-          color: var(--ink);
-          margin: 0 0 10px; line-height: 1.35;
-        }
-        .rl-task-foot {
-          display: flex; align-items: center; justify-content: space-between;
-          gap: 8px;
-        }
-        .rl-badge {
-          display: inline-flex; align-items: center; gap: 6px;
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 10.5px; font-weight: 700; letter-spacing: .06em;
-          padding: 5px 10px; border-radius: 999px;
-          white-space: nowrap;
-        }
-        .rl-badge i {
-          width: 6px; height: 6px; border-radius: 50%;
-          background: currentColor;
-        }
-        .rl-badge--concluido {
-          color: var(--done);
-          background: color-mix(in oklch, var(--done) 14%, transparent);
-          border: 1px solid color-mix(in oklch, var(--done) 34%, transparent);
-        }
-        .rl-badge--em_andamento {
-          color: var(--doing);
-          background: color-mix(in oklch, var(--doing) 14%, transparent);
-          border: 1px solid color-mix(in oklch, var(--doing) 34%, transparent);
-        }
-        .rl-badge--em_andamento i { animation: rlBpulse 1.8s infinite; }
-        @keyframes rlBpulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
-        .rl-badge--nao_iniciada {
-          color: var(--none);
-          background: color-mix(in oklch, var(--none) 14%, transparent);
-          border: 1px solid color-mix(in oklch, var(--none) 34%, transparent);
-        }
-        .rl-badge--aguardar {
-          color: var(--wait);
-          background: color-mix(in oklch, var(--wait) 14%, transparent);
-          border: 1px solid color-mix(in oklch, var(--wait) 34%, transparent);
-        }
-        .rl-badge--enviado {
-          color: var(--sent);
-          background: color-mix(in oklch, var(--sent) 14%, transparent);
-          border: 1px solid color-mix(in oklch, var(--sent) 34%, transparent);
-        }
-        .rl-task-date {
-          font-size: 10.5px; letter-spacing: .06em;
-          color: var(--faint);
-          display: inline-flex; align-items: center; gap: 5px;
-          white-space: nowrap;
-        }
-        .rl-task-date :global(svg) {
-          width: 11px; height: 11px; opacity: .8;
-        }
-
-        .rl-btn-dashed-block {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: 11px; letter-spacing: .26em; text-transform: uppercase;
-          font-weight: 600;
-          padding: 12px; border-radius: var(--rl-r-sm);
-          border: 1px dashed var(--line);
-          color: var(--muted); background: transparent;
-          cursor: pointer; transition: .2s;
-          width: 100%;
-        }
-        .rl-btn-dashed-block:hover {
-          border-color: var(--accent-bright);
-          color: #fff;
-          background: oklch(0.66 0.13 245 / 0.06);
-        }
-
-        .rl-foot {
-          margin-top: 42px; text-align: center;
-        }
-        .rl-foot-tag {
-          font-family: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
-          font-size: clamp(15px, 3vw, 19px);
-          letter-spacing: .06em;
-          color: var(--muted); font-weight: 400;
-          margin: 0;
-        }
-        .rl-foot-tag b { color: #fff; font-weight: 600; }
-        .rl-foot-sub {
-          margin-top: 9px;
-          font-size: 10px; letter-spacing: .24em; text-transform: uppercase;
-          color: var(--faint); font-weight: 600;
-        }
-
-        @media (max-width: 760px) {
-          .rl-head { align-items: flex-start; }
-          .rl-stats { flex-wrap: wrap; }
-          .rl-board {
-            grid-auto-flow: row;
-            grid-auto-columns: auto;
-            grid-template-columns: 1fr;
-          }
-        }
-        @media (prefers-reduced-motion: reduce) {
-          .rl-roadmap,
-          .rl-roadmap :global(*) {
-            animation-duration: .01ms !important;
-            transition-duration: .01ms !important;
-            animation-delay: 0s !important;
-          }
-        }
-      `}</style>
     </div>
   )
 }
@@ -1147,7 +699,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 function EstadoQuickChanger({
   cfg, current, onChange,
 }: {
-  cfg: { pill: string; dot: string; text: string; label: string }
+  cfg: EstadoCfg
   current: TarefaEstado
   onChange: (e: TarefaEstado) => void
 }) {
@@ -1171,10 +723,7 @@ function EstadoQuickChanger({
         type="button"
         onClick={() => setOpen(o => !o)}
         title="Clica para alterar o estado"
-        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] cursor-pointer transition-all ${cfg.pill} ${cfg.text}`}
-        style={{ border: '1px solid transparent' }}
-        onMouseEnter={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.18)' }}
-        onMouseLeave={e => { e.currentTarget.style.borderColor = 'transparent' }}
+        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] cursor-pointer transition-colors hover:border-white/40 ${cfg.pill}`}
       >
         <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${cfg.dot}`} />
         {cfg.label}
@@ -1186,38 +735,23 @@ function EstadoQuickChanger({
       </button>
 
       {open && (
-        <div
-          className="absolute left-0 top-[calc(100%+6px)] z-30 min-w-[180px] rounded-lg overflow-hidden"
-          style={{
-            background: 'linear-gradient(180deg, #16293a, #122230 60%, #0e1b27)',
-            border: '1px solid oklch(0.50 0.03 245 / 0.30)',
-            boxShadow: '0 14px 30px -10px rgba(0,0,0,0.55), 0 4px 8px rgba(0,0,0,0.3)',
-            fontFamily: 'Manrope, system-ui, sans-serif',
-          }}
-        >
+        <div className="absolute left-0 top-[calc(100%+6px)] z-30 min-w-[190px] rounded-xl overflow-hidden border border-white/[0.12] bg-[#00141f] shadow-[0_14px_30px_-10px_rgba(0,0,0,0.6)]">
           {ESTADO_OPTIONS.map(opt => {
-            const optCfg = estadoCfg(opt.value)
+            const optCfg = ESTADO_CFG[opt.value]
             const isActive = opt.value === current
             return (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => { onChange(opt.value); setOpen(false) }}
-                className="w-full text-left px-3 py-2 flex items-center gap-2.5 text-[12px] transition-all"
-                style={{
-                  background: isActive ? 'oklch(0.66 0.13 245 / 0.16)' : 'transparent',
-                  borderBottom: '1px solid oklch(0.50 0.03 245 / 0.10)',
-                  color: '#fff',
-                }}
-                onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'oklch(0.40 0.04 245 / 0.40)' }}
-                onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent' }}
+                className={`w-full text-left px-3 py-2.5 flex items-center gap-2.5 text-[12.5px] text-white border-b border-white/[0.06] last:border-b-0 transition-colors ${
+                  isActive ? 'bg-[#2e6cf6]/20' : 'hover:bg-[#0c2236]'}`}
               >
                 <span className={`w-2 h-2 rounded-full shrink-0 ${optCfg.dot}`} />
                 <span className="flex-1">{opt.label}</span>
                 {isActive && (
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                    strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ color: 'oklch(0.80 0.11 245)' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#5a8bff"
+                    strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M5 12l5 5L20 7" />
                   </svg>
                 )}
@@ -1229,16 +763,3 @@ function EstadoQuickChanger({
     </div>
   )
 }
-
-/* Helper para ir buscar a config visual de um estado (cores) */
-function estadoCfg(estado: TarefaEstado): { pill: string; dot: string; text: string; label: string } {
-  switch (estado) {
-    case 'concluido':    return { pill: 'bg-emerald-500/10',  dot: 'bg-emerald-400',  text: 'text-emerald-400',  label: 'Concluído' }
-    case 'em_andamento': return { pill: 'bg-blue-500/10',     dot: 'bg-blue-400',     text: 'text-blue-400',     label: 'Em andamento' }
-    case 'aguardar':     return { pill: 'bg-yellow-500/10',   dot: 'bg-yellow-400',   text: 'text-yellow-400',   label: 'Aguardar' }
-    case 'enviado':      return { pill: 'bg-purple-500/10',   dot: 'bg-purple-400',   text: 'text-purple-400',   label: 'Enviado' }
-    case 'nao_iniciada':
-    default:             return { pill: 'bg-white/[0.03]',    dot: 'bg-white/30',     text: 'text-white/40',     label: 'Não iniciada' }
-  }
-}
-

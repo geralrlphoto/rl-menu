@@ -4,6 +4,8 @@ import { createClient } from '@supabase/supabase-js'
 import { getProjeto } from '@/app/portal-media/_data/mockProject'
 import PortalLoginClient from '@/app/portal-media/_components/PortalLoginClient'
 import PortalHamburger from '@/app/portal-media/_components/PortalHamburger'
+import EstiloRLProd from '@/app/media/_components/EstiloRLProd'
+import { FUNDO } from '@/app/media/_lib/estilo'
 
 type Props = {
   children: React.ReactNode
@@ -72,13 +74,9 @@ export default async function PortalMediaLayout({ children, params }: Props) {
     const portalCookie = cookieStore.get(`pm_${ref.toUpperCase()}`)?.value
     if (portalCookie !== senha) {
       return (
-        <div className="min-h-screen bg-[#02060f]">
-          {/* mesh gradient também na tela de login */}
-          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'linear-gradient(180deg, #06122a 0%, #030814 55%, #02060f 100%)' }} />
-          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 95% 65% at 50% 0%, rgba(37,99,235,0.32) 0%, rgba(37,99,235,0.08) 35%, transparent 60%)' }} />
-          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 55% 70% at 0% 40%, rgba(56,189,248,0.14) 0%, transparent 55%)' }} />
-          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 60% 50% at 100% 100%, rgba(59,130,246,0.16) 0%, transparent 60%)' }} />
-          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: 'radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.45) 100%)' }} />
+        <div className="rlp min-h-screen bg-[#00141f] text-white">
+          <EstiloRLProd />
+          <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
           <PortalLoginClient
             portalRef={ref.toUpperCase()}
             nomeProjeto={nomeProjeto}
@@ -90,43 +88,29 @@ export default async function PortalMediaLayout({ children, params }: Props) {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#0e1b27' /* navy-950 */ }}>
-      {/* ── Background navy v2: gradiente + accent breathing ── */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: `
-          radial-gradient(120% 80% at 80% -10%, #274458 0%, transparent 45%),
-          radial-gradient(110% 70% at 0% 0%, #1f3647 0%, transparent 40%),
-          linear-gradient(180deg, #122230, #0e1b27 60%)
-        `,
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: 'radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px)',
-        backgroundSize: '4px 4px',
-        opacity: 0.6,
-        mixBlendMode: 'overlay',
-      }} />
+    <div className="rlp min-h-screen text-white" style={{ background: '#00141f' }}>
+      {/* Letras e fundo do rlprod.pt (os mesmos das páginas internas da RL PROD) */}
+      <EstiloRLProd />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
 
       {/* Hambúrguer de navegação do portal */}
       <PortalHamburger portalRef={ref.toUpperCase()} nomeProjeto={nomeProjeto} />
 
       {/* Espaço top para a barra fixa de cabeçalho */}
-      <div className="pt-11 relative z-10">
+      <div className="pt-[52px] relative z-10">
         {children}
       </div>
 
-      {/* Rodapé global — tom navy v2 (Space Grotesk + accent-bright) */}
-      <div className="relative z-10 w-full py-12 px-6 flex flex-col items-center gap-2.5"
-        style={{ borderTop: '1px solid oklch(0.50 0.03 245 / 0.18)' }}>
-        <p className="text-center leading-tight tracking-[0.06em]"
-          style={{ fontFamily: 'Space Grotesk, Manrope, sans-serif', fontSize: 'clamp(15px, 3.5vw, 20px)' }}>
-          <span style={{ color: 'oklch(0.70 0.03 245)', fontWeight: 400 }}>More than a product,&nbsp;</span>
-          <span style={{ color: '#fff', fontWeight: 600 }}>an experience.</span>
+      {/* Rodapé global */}
+      <footer className="relative z-10 w-full py-12 px-6 flex flex-col items-center gap-3 border-t border-white/[0.08]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-10 h-10 object-contain opacity-80" />
+        <p className="rlp-t text-center leading-tight text-[clamp(20px,4vw,28px)]">
+          <span className="text-white/55">More than a product,&nbsp;</span>
+          <span className="text-white">an experience.</span>
         </p>
-        <p className="text-[10.5px] tracking-[0.24em] uppercase font-semibold"
-          style={{ color: 'oklch(0.58 0.03 245)' }}>
-          RL PROD · Photography &amp; Video
-        </p>
-      </div>
+        <p className="rlp-m text-[10px] text-[#5a8bff]">RL PROD · Photography &amp; Video · Setúbal, Worldwide</p>
+      </footer>
     </div>
   )
 }

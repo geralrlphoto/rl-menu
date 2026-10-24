@@ -39,73 +39,62 @@ export default function PortalLoginClient({ portalRef, nomeProjeto, cliente }: P
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 relative">
+    // O fundo de metal escovado vem do layout (FUNDO); aqui só o cartão centrado.
+    <div className="rlp min-h-screen flex items-center justify-center px-4 py-12 relative z-10">
+      <div className="w-full max-w-[400px]">
 
-      {/* Grid neon background */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(70,120,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.04) 1px,transparent 1px)`,
-        backgroundSize: '64px 64px',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.10) 0%, transparent 70%)',
-      }} />
+        <div className="rounded-2xl border border-white/[0.1] bg-[#00141f]/70 px-6 sm:px-8 py-9 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)]">
 
-      <div className="relative z-10 w-full max-w-[360px]">
-
-        {/* Logo */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border border-white/15 bg-white/[0.03] mb-8"
-            style={{ boxShadow: '0 0 24px rgba(255,255,255,0.06), inset 0 0 12px rgba(255,255,255,0.03)' }}>
-            <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-11 opacity-90" style={{ mixBlendMode: 'screen' }} />
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="h-12 w-auto" />
           </div>
 
-          {/* Neon line */}
-          <div className="h-px mb-8" style={{ background: 'linear-gradient(90deg,transparent,rgba(37,99,235,0.4),transparent)' }} />
-
-          <p className="text-sm tracking-[0.6em] text-white/20 uppercase mb-2">Portal do Cliente</p>
-          <h1 className="text-2xl font-extralight tracking-[0.3em] text-white/80 uppercase mb-1">{nomeProjeto}</h1>
-          <p className="text-base tracking-[0.3em] text-white/25 uppercase">{cliente}</p>
-        </div>
-
-        {/* Card */}
-        <div className="border border-white/[0.07] bg-white/[0.02] p-6 flex flex-col gap-4">
-          <p className="text-sm tracking-[0.4em] text-white/20 uppercase mb-1">Acesso protegido</p>
+          {/* Projeto */}
+          <div className="text-center mb-8">
+            <p className="rlp-m text-[10px] text-[#5a8bff] mb-3">Portal do cliente</p>
+            <h1 className="rlp-t text-[clamp(26px,6vw,34px)] leading-tight text-white break-words">{nomeProjeto}</h1>
+            {cliente && <p className="mt-1 text-[14px] text-[#a9c1ff]">{cliente}</p>}
+          </div>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            <div className="border border-white/[0.08] bg-black/20 flex items-center gap-3 px-4">
-              <span className="text-white/20 text-base shrink-0">🔑</span>
+            <label htmlFor="pm-senha" className="rlp-m text-[9px] text-[#7c8893]">Senha de acesso</label>
+            <div className="relative">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+                className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#7c8893]">
+                <rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
+              </svg>
               <input
+                id="pm-senha"
                 type="password"
                 value={senha}
                 onChange={e => { setSenha(e.target.value); setErro(null) }}
-                placeholder="Senha de acesso"
+                placeholder="Escreve a senha"
                 autoFocus
-                className="flex-1 bg-transparent py-4 text-base tracking-[0.2em] text-white/65
-                           placeholder:text-white/15 focus:outline-none"
+                className={`w-full rounded-md border bg-[#00141f]/70 pl-11 pr-4 py-3 text-[15px] text-white placeholder:text-white/35 focus:outline-none transition-colors ${
+                  erro ? 'border-[#ff4747]' : 'border-white/[0.12] focus:border-[#2e6cf6]'
+                }`}
               />
             </div>
 
             {erro && (
-              <p className="text-sm text-red-400/70 tracking-[0.2em] leading-relaxed">⚠ {erro}</p>
+              <p className="text-[13px] text-[#ff4747] leading-relaxed">{erro}</p>
             )}
 
             <button
               type="submit"
               disabled={loading || !senha.trim()}
-              className="border border-white/20 bg-white/[0.03] hover:bg-white/[0.07]
-                         py-4 text-base tracking-[0.5em] text-white/50 hover:text-white/80 uppercase
-                         transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+              className="rlp-m mt-2 rounded-md bg-[#2e6cf6] hover:bg-[#5a8bff] py-4 text-[11px] tracking-[0.25em] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {loading ? '⏳ A verificar...' : 'Entrar'}
+              {loading ? 'A verificar…' : 'Entrar'}
             </button>
           </form>
         </div>
 
-        <p className="text-center mt-8 text-sm tracking-[0.4em] text-white/10 uppercase">
-          RL PROD · Photography & Video
+        <p className="rlp-m text-center mt-6 text-[9px] text-white/35">
+          RL PROD · Photography &amp; Video
         </p>
       </div>
     </div>
   )
 }
-

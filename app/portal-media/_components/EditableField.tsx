@@ -13,7 +13,7 @@ interface Props {
 export default function EditableField({ value, isEditing, onChange, className = '', placeholder, multiline, type = 'text' }: Props) {
   if (!isEditing) return <span className={className}>{value || <span className="opacity-30 italic">vazio</span>}</span>
 
-  const base = `bg-white/[0.06] border border-white/20 text-white/80 px-2 py-1 outline-none focus:border-white/40 rounded-sm w-full ${className}`
+  const base = `bg-[#00141f]/70 border border-white/[0.14] text-white px-2.5 py-1.5 outline-none focus:border-[#2e6cf6] rounded-md w-full ${className}`
 
   if (multiline) return (
     <textarea

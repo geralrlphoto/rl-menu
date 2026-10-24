@@ -97,40 +97,40 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
   }
 
   return (
-    <div className="flex flex-col border border-white/[0.07] bg-white/[0.01]" style={{ height: 520 }}>
+    <div className="rlp flex flex-col rounded-2xl border border-white/[0.1] bg-[#00141f]/70 overflow-hidden h-[70vh] min-h-[420px] max-h-[600px]">
 
-      {/* ── Header ── */}
-      <div className="px-5 py-3.5 border-b border-white/[0.06] flex items-center gap-3 shrink-0">
-        <div className="w-1.5 h-1.5 rounded-full bg-white/25 shrink-0" />
-        <div className="flex-1">
-          <p className="text-base tracking-[0.4em] text-white/45 uppercase">Mensagens do Projeto</p>
-        </div>
-        <span className="text-base text-white/15 font-mono">{mensagens.length} msg{mensagens.length !== 1 ? 's' : ''}</span>
+      {/* Cabeçalho */}
+      <div className="px-4 sm:px-5 py-3.5 border-b border-white/[0.08] flex items-center gap-3 shrink-0">
+        <span className="w-2 h-2 rounded-full bg-[#2e6cf6] shrink-0" />
+        <p className="rlp-m flex-1 text-[10px] text-white/80">Mensagens do projeto</p>
+        <span className="rlp-m text-[9px] text-[#7c8893] tracking-[0.15em]">{mensagens.length} msg{mensagens.length !== 1 ? 's' : ''}</span>
       </div>
 
-      {/* ── Mensagens ── */}
-      <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-1">
+      {/* Mensagens */}
+      <div className="flex-1 overflow-y-auto px-3 sm:px-5 py-4 flex flex-col gap-1">
         {loading && (
           <div className="flex-1 flex items-center justify-center">
-            <p className="text-base tracking-[0.3em] text-white/15 uppercase">A carregar...</p>
+            <p className="rlp-m text-[10px] text-[#7c8893]">A carregar…</p>
           </div>
         )}
 
         {!loading && mensagens.length === 0 && (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3">
-            <span className="text-3xl opacity-20">💬</span>
-            <p className="text-base tracking-[0.3em] text-white/20 uppercase">Sem mensagens ainda</p>
-            <p className="text-base text-white/12 text-center">Inicia a conversa sobre o projeto</p>
+          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center px-6">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#5a8bff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="w-9 h-9 opacity-70">
+              <path d="M4 5h16v10a1.5 1.5 0 0 1-1.5 1.5H8l-4 3.5V5Z" />
+            </svg>
+            <p className="rlp-t text-[18px] text-white">Sem mensagens ainda</p>
+            <p className="text-[14px] text-white/55">Inicia a conversa sobre o projeto.</p>
           </div>
         )}
 
         {grupos.map(({ dia, msgs }) => (
-          <div key={dia} className="flex flex-col gap-2">
+          <div key={dia} className="flex flex-col gap-1">
             {/* Separador de dia */}
-            <div className="flex items-center gap-3 my-2">
-              <div className="h-px flex-1 bg-white/[0.05]" />
-              <span className="text-base tracking-[0.25em] text-white/18 uppercase shrink-0">{dia}</span>
-              <div className="h-px flex-1 bg-white/[0.05]" />
+            <div className="flex items-center gap-3 my-3">
+              <div className="h-px flex-1 bg-white/[0.08]" />
+              <span className="rlp-m text-[9px] text-[#7c8893] shrink-0">{dia}</span>
+              <div className="h-px flex-1 bg-white/[0.08]" />
             </div>
 
             {msgs.map((m, idx) => {
@@ -139,26 +139,33 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
               return (
                 <div
                   key={m.id}
-                  className={`flex flex-col ${m.isAdmin ? 'items-end' : 'items-start'} ${sameSender ? 'mt-0.5' : 'mt-2'}`}
+                  className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${sameSender ? 'mt-0.5' : 'mt-3'}`}
                 >
-                  {/* Nome — só mostra quando muda de remetente */}
+                  {/* Nome: só quando muda de remetente */}
                   {!sameSender && (
-                    <span className={`text-base tracking-[0.2em] text-white/20 uppercase mb-1 ${m.isAdmin ? 'text-right' : 'text-left'}`}>
-                      {m.autor}
+                    <span className={`flex items-center gap-2 mb-1 px-1 ${isMe ? 'flex-row-reverse' : ''}`}>
+                      <span className={`rlp-m text-[9px] tracking-[0.18em] ${m.isAdmin ? 'text-[#5a8bff]' : 'text-[#a9c1ff]'}`}>
+                        {m.autor}
+                      </span>
+                      <span className={`rlp-m text-[8px] tracking-[0.15em] rounded-full px-2 py-0.5 ${
+                        m.isAdmin ? 'bg-[#2e6cf6]/20 text-[#a9c1ff]' : 'bg-white/[0.06] text-white/50'
+                      }`}>
+                        {m.isAdmin ? 'Equipa' : 'Cliente'}
+                      </span>
                     </span>
                   )}
 
                   {/* Bolha */}
-                  <div className={`max-w-[78%] px-4 py-2.5 ${
-                    m.isAdmin
-                      ? 'bg-white/[0.07] border border-white/[0.14]'
-                      : 'bg-white/[0.025] border border-white/[0.06]'
+                  <div className={`max-w-[85%] sm:max-w-[75%] px-4 py-2.5 rounded-2xl ${
+                    isMe
+                      ? 'bg-[#2e6cf6] text-white rounded-br-md'
+                      : 'bg-[#0c2236] border border-white/[0.1] text-white/90 rounded-bl-md'
                   }`}>
-                    <p className="text-base text-white/70 leading-relaxed">{m.texto}</p>
+                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap break-words">{m.texto}</p>
                   </div>
 
                   {/* Hora */}
-                  <span className={`text-base text-white/15 mt-0.5 ${m.isAdmin ? 'text-right' : 'text-left'}`}>
+                  <span className="text-[11px] text-[#7c8893] mt-1 px-1">
                     {fmtHora(m.criadoEm)}
                   </span>
                 </div>
@@ -170,38 +177,33 @@ export default function ChatBox({ projetoRef, isAdmin, clienteNome }: Props) {
         <div ref={bottomRef} />
       </div>
 
-      {/* ── Aviso: entrega por email ── */}
-      <div className="shrink-0 border-t border-white/[0.06] px-5 pt-2.5 pb-0">
-        <p className="text-sm text-white/25">
+      {/* Aviso: entrega por email */}
+      <div className="shrink-0 border-t border-white/[0.08] px-4 sm:px-5 pt-2.5">
+        <p className="text-[12px] text-[#7c8893]">
           {isAdmin
             ? 'O cliente é avisado por email quando envias.'
             : 'A resposta chega também ao teu email.'}
         </p>
       </div>
 
-      {/* ── Input ── */}
-      <div className="shrink-0 px-4 py-3 flex items-center gap-3">
-        <div className="flex-1 border border-white/[0.07] bg-white/[0.02] flex items-center px-4 py-2.5 gap-2 focus-within:border-white/20 transition-colors">
-          <input
-            ref={inputRef}
-            value={texto}
-            onChange={e => setTexto(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
-            placeholder={isAdmin ? 'Mensagem para o cliente...' : 'Escreve a tua mensagem...'}
-            className="flex-1 bg-transparent text-base text-white/65 placeholder:text-white/15 focus:outline-none min-w-0"
-          />
-        </div>
+      {/* Campo de escrita */}
+      <div className="shrink-0 px-3 sm:px-4 py-3 flex items-center gap-2">
+        <input
+          ref={inputRef}
+          value={texto}
+          onChange={e => setTexto(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar() } }}
+          placeholder={isAdmin ? 'Mensagem para o cliente…' : 'Escreve a tua mensagem…'}
+          className="flex-1 min-w-0 rounded-md border border-white/[0.12] bg-[#00141f]/70 px-4 py-3 text-[15px] text-white placeholder:text-white/35 focus:outline-none focus:border-[#2e6cf6] transition-colors"
+        />
         <button
           onClick={enviar}
           disabled={sending || !texto.trim()}
-          className="border border-white/15 hover:border-white/35 bg-white/[0.03] hover:bg-white/[0.07]
-                     px-5 py-2.5 text-base tracking-[0.35em] text-white/40 hover:text-white/70
-                     uppercase transition-colors disabled:opacity-25 disabled:cursor-not-allowed shrink-0"
+          className="rlp-m shrink-0 rounded-md bg-[#2e6cf6] hover:bg-[#5a8bff] px-4 sm:px-5 py-3 text-[11px] tracking-[0.2em] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {sending ? '⏳' : 'Enviar'}
+          {sending ? 'A enviar' : 'Enviar'}
         </button>
       </div>
     </div>
   )
 }
-

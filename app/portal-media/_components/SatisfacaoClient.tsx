@@ -89,45 +89,40 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
   return (
     <>
       <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
-      <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
+      <div className="rlp relative z-10 max-w-3xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
 
         <Link href={`/portal-media/${projeto.ref}`}
-          className="inline-flex items-center gap-2 text-[12px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="rlp-m inline-flex items-center gap-2 text-[10px] text-white/45 hover:text-white transition-colors mb-8 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {projeto.nome}
         </Link>
 
-        <div className="mb-10">
-          <p className="text-[9px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {projeto.nome}</p>
-          <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Satisfação</h1>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="h-px w-12 bg-white/25" />
-            <div className="h-px flex-1 bg-white/[0.04]" />
-          </div>
-        </div>
+        <header className="mb-8">
+          <p className="rlp-m traco text-[10px] text-[#5a8bff] mb-3">RL PROD · {projeto.nome}</p>
+          <h1 className="rlp-t text-[clamp(32px,7vw,48px)] leading-none text-white">Satisfação</h1>
+        </header>
 
-        {/* ── Já submetido ── */}
+        {/* Já submetido */}
         {(jaSubmeteu || enviado) ? (
-          <div className={`border px-8 py-10 flex flex-col items-center text-center gap-6 ${
-            isAdmin
-              ? 'border-white/[0.10] bg-white/[0.02]'
-              : 'border-emerald-400/20 bg-emerald-400/[0.03]'
-          }`}>
+          <section className="rounded-2xl border border-white/[0.1] bg-[#00141f]/70 px-5 sm:px-8 py-8 sm:py-10 flex flex-col items-center text-center gap-6">
 
-            {/* Ícone */}
-            <div className={`w-14 h-14 border flex items-center justify-center ${
-              isAdmin ? 'border-white/[0.08]' : 'border-emerald-400/25'
-            }`}>
-              <span className={`text-2xl select-none ${isAdmin ? 'text-white/20' : 'text-emerald-400/50'}`}>
-                {isAdmin ? '◒' : '✓'}
-              </span>
+            <div className="w-14 h-14 rounded-full bg-[#2e6cf6]/20 border border-[#2e6cf6]/50 flex items-center justify-center">
+              {isAdmin ? (
+                <svg viewBox="0 0 24 24" fill="none" stroke="#a9c1ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7Z" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" stroke="#a9c1ff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <path d="M5 12.5l4.5 4.5L19 7.5" />
+                </svg>
+              )}
             </div>
 
             <div>
               {isAdmin ? (
                 <>
-                  <p className="text-[12px] tracking-[0.5em] text-white/30 uppercase mb-2">Avaliação do Cliente</p>
-                  <p className="text-[15px] font-light text-white/20 leading-relaxed">
+                  <p className="rlp-m text-[10px] text-[#5a8bff] mb-2">Avaliação do cliente</p>
+                  <p className="text-[15px] text-white/60 leading-relaxed">
                     Submetida em{' '}
                     {dataFinal
                       ? new Date(dataFinal).toLocaleDateString('pt-PT', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -136,111 +131,109 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
                 </>
               ) : (
                 <>
-                  <p className="text-[12px] tracking-[0.5em] text-emerald-400/60 uppercase mb-2">Obrigado pelo teu feedback</p>
-                  <p className="text-[16px] font-light text-white/35 leading-relaxed max-w-sm">
+                  <p className="rlp-t text-[24px] text-white mb-2">Obrigado pelo teu feedback</p>
+                  <p className="text-[15px] text-white/60 leading-relaxed max-w-sm">
                     A tua avaliação foi registada. A equipa RL PROD agradece a confiança.
                   </p>
                 </>
               )}
             </div>
 
-            {/* Estrelas */}
+            {/* Nota */}
             <div className="flex gap-1.5">
               {[1, 2, 3, 4, 5].map(i => (
-                <span key={i} className="text-3xl leading-none select-none"
-                  style={{ color: i <= notaFinal ? '#f59e0b' : 'rgba(255,255,255,0.08)' }}>
-                  ★
+                <span key={i}
+                  className={`w-10 h-10 rounded-md flex items-center justify-center rlp-t text-[18px] ${
+                    i <= notaFinal ? 'bg-[#2e6cf6] text-white' : 'bg-[#0c2236]/70 border border-white/[0.1] text-white/30'
+                  }`}>
+                  {i}
                 </span>
               ))}
             </div>
 
-            {/* Label nota */}
             {notaFinal > 0 && (
-              <p className="text-[13px] tracking-[0.4em] text-amber-400/50 uppercase -mt-2">
-                {LABELS[notaFinal]}
-              </p>
+              <p className="rlp-m text-[11px] text-[#a9c1ff] -mt-2">{LABELS[notaFinal]}</p>
             )}
 
-            {/* Comentário */}
             {comentarioFinal && (
-              <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5 max-w-sm w-full text-left">
-                <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase mb-3">Comentário</p>
-                <p className="text-[16px] font-light text-white/50 leading-relaxed italic">
+              <div className="rounded-xl bg-[#0c2236]/70 px-5 py-4 max-w-md w-full text-left">
+                <p className="rlp-m text-[9px] text-[#7c8893] mb-2">Comentário</p>
+                <p className="text-[15px] text-white/80 leading-relaxed italic">
                   &quot;{comentarioFinal}&quot;
                 </p>
               </div>
             )}
-          </div>
+          </section>
 
-        /* ── Formulário (admin e cliente) ── */
+        /* Formulário (admin e cliente) */
         ) : (
-          <div className="border border-white/[0.07] bg-white/[0.02] px-8 py-10 flex flex-col items-center text-center gap-8">
-
-            <div className="w-14 h-14 border border-white/[0.08] flex items-center justify-center"
-              style={{ boxShadow: '0 0 30px rgba(180,200,255,0.05)' }}>
-              <span className="text-2xl text-white/15 select-none">◒</span>
-            </div>
+          <section className="rounded-2xl border border-white/[0.1] bg-[#00141f]/70 px-5 sm:px-8 py-8 flex flex-col gap-7">
 
             <div>
-              <p className="text-[12px] tracking-[0.3em] text-white/50 uppercase mb-2">Avaliação do Projeto</p>
-              <p className="text-[16px] font-light text-white/25 leading-relaxed max-w-sm">
-                A tua opinião é importante para nós.<br />
-                Avalia a tua experiência com a RL PROD.
+              <p className="rlp-m traco text-[10px] text-[#5a8bff] mb-3">Avaliação do projeto</p>
+              <p className="rlp-t text-[24px] leading-tight text-white mb-1">Como correu a experiência?</p>
+              <p className="text-[15px] text-white/60 leading-relaxed">
+                A tua opinião é importante para nós. Avalia a tua experiência com a RL PROD.
               </p>
             </div>
 
-            {/* ── Estrelas ── */}
-            <div className="flex flex-col items-center gap-3">
-              <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase">Classificação</p>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4, 5].map(i => (
-                  <button key={i}
-                    onClick={() => setNota(i)}
-                    onMouseEnter={() => setHoverNota(i)}
-                    onMouseLeave={() => setHoverNota(0)}
-                    className="text-4xl leading-none transition-all duration-100"
-                    style={{ color: i <= displayNota ? '#f59e0b' : 'rgba(255,255,255,0.10)' }}
-                  >★</button>
-                ))}
+            {/* Classificação */}
+            <div>
+              <p className="rlp-m text-[9px] text-[#7c8893] mb-3">Classificação</p>
+              <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-label="Classificação de 1 a 5">
+                {[1, 2, 3, 4, 5].map(i => {
+                  const ativo = i <= displayNota
+                  return (
+                    <button key={i}
+                      type="button"
+                      role="radio"
+                      aria-checked={i === nota}
+                      onClick={() => setNota(i)}
+                      onMouseEnter={() => setHoverNota(i)}
+                      onMouseLeave={() => setHoverNota(0)}
+                      className={`flex flex-col items-center justify-center gap-1 rounded-xl py-4 sm:py-5 min-h-[76px] border transition-colors ${
+                        ativo
+                          ? 'bg-[#2e6cf6] border-[#2e6cf6] text-white'
+                          : 'bg-[#0c2236]/70 border-white/[0.1] text-white/70 hover:border-[#2e6cf6]'
+                      }`}
+                    >
+                      <span className="rlp-t text-[26px] leading-none">{i}</span>
+                      <span className={`hidden sm:block text-[11px] ${ativo ? 'text-white/85' : 'text-[#7c8893]'}`}>{LABELS[i]}</span>
+                    </button>
+                  )
+                })}
               </div>
-              <p className={`text-[13px] tracking-[0.35em] uppercase transition-all duration-150 ${
-                displayNota > 0 ? 'text-amber-400/55 opacity-100' : 'opacity-0'
-              }`}>
-                {LABELS[displayNota] ?? ''}
+              <p className={`rlp-m mt-3 text-[11px] text-[#a9c1ff] transition-opacity ${displayNota > 0 ? 'opacity-100' : 'opacity-0'}`}>
+                {LABELS[displayNota] || '·'}
               </p>
             </div>
 
-            {/* ── Comentário ── */}
-            <div className="w-full max-w-md text-left">
-              <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase mb-3">
-                Comentário <span className="text-white/12 normal-case tracking-normal">(opcional)</span>
+            {/* Comentário */}
+            <div>
+              <p className="rlp-m text-[9px] text-[#7c8893] mb-3">
+                Comentário <span className="normal-case tracking-normal text-white/40">(opcional)</span>
               </p>
               <textarea
                 value={comentario}
                 onChange={e => setComentario(e.target.value)}
-                placeholder="Partilha a tua experiência com a RL PROD..."
+                placeholder="Partilha a tua experiência com a RL PROD…"
                 rows={4}
-                className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[16px] font-light
-                           text-white/60 placeholder:text-white/12 focus:outline-none focus:border-white/20
-                           resize-none leading-relaxed transition-colors"
+                className="w-full rounded-md border border-white/[0.12] bg-[#00141f]/70 px-4 py-3 text-[15px] text-white placeholder:text-white/35 focus:outline-none focus:border-[#2e6cf6] resize-none leading-relaxed transition-colors"
               />
             </div>
 
             {erro && (
-              <p className="text-[14px] text-red-400/70 -mt-4">⚠ {erro}</p>
+              <p className="text-[14px] text-[#ff4747] -mt-3">{erro}</p>
             )}
 
             <button
               onClick={submeter}
               disabled={enviando || nota === 0}
-              className="border border-white/30 bg-white/[0.04] hover:bg-white/[0.10] px-10 py-4
-                         text-[12px] tracking-[0.5em] text-white/70 hover:text-white uppercase
-                         transition-all duration-200 disabled:opacity-30 disabled:cursor-not-allowed"
-              style={{ boxShadow: nota > 0 ? '0 0 18px rgba(255,255,255,0.06)' : 'none' }}
+              className="rlp-m w-full sm:w-auto sm:self-start rounded-md bg-[#2e6cf6] hover:bg-[#5a8bff] px-8 py-4 text-[11px] tracking-[0.25em] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {enviando ? '⏳ A enviar...' : 'Submeter Avaliação'}
+              {enviando ? 'A enviar…' : 'Submeter avaliação'}
             </button>
-          </div>
+          </section>
         )}
 
       </div>
@@ -252,4 +245,3 @@ export default function SatisfacaoClient({ projeto: initial, isAdmin }: Props) {
     </>
   )
 }
-

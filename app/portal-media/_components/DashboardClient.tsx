@@ -1,25 +1,17 @@
 'use client'
 
 /* ============================================================
-   DashboardClient — Portal do Cliente RL PROD (v2)
-   Design do handoff design_handoff_portal_cliente (Portal Dashboard.html).
-   Tema escuro navy, fiel ao login. Identidade + Welcome + Stats +
-   Fase actual (stepper) + Menu 8 tiles + Tile Interno (admin only).
-
-   A versão anterior (com AdminBar e edição inline de campos) está
-   preservada em DashboardClientLegacy.tsx para fallback futuro.
+   DashboardClient: página inicial do Portal do Cliente RL PROD.
+   Identidade do rlprod.pt (Saira Condensed, JetBrains Mono, azul #2E6CF6),
+   fundo e letras vêm do layout. Hero + projeto + próximo passo + números +
+   fase atual (o admin escolhe a fase) + pagamentos + workflow + menu +
+   mosaico interno (só admin).
    ============================================================ */
 
 import Link from 'next/link'
 import { useEffect, useState, type ReactNode } from 'react'
-import { Manrope, Space_Grotesk } from 'next/font/google'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
-import './portal-dashboard.css'
 
-const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' })
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
-
-/* ── Helpers ─────────────────────────────────────────────────── */
 function detectActivePhase(projeto: Projeto): number {
   const emCurso = (projeto.fases ?? []).findIndex(f => f.estado === 'em_curso')
   if (emCurso >= 0) return emCurso
@@ -27,350 +19,264 @@ function detectActivePhase(projeto: Projeto): number {
   return Math.max(0, concluidas)
 }
 
-/* ── Menu (links para sub-rotas existentes) ────────────────── */
 const MENU_ITEMS = [
-  { num: '01', icon: 'workflow', name: 'Workflow',         desc: 'Fases do projeto',       slug: 'workflow' },
-  { num: '02', icon: 'map',      name: 'Road Map',         desc: 'Planeamento e tarefas',  slug: 'roadmap' },
+  { num: '01', icon: 'workflow', name: 'Workflow',         desc: 'Fases do projeto',        slug: 'workflow' },
+  { num: '02', icon: 'map',      name: 'Road Map',         desc: 'Planeamento e tarefas',   slug: 'roadmap' },
   { num: '03', icon: 'briefing', name: 'Briefing',         desc: 'Objetivos e referências', slug: 'briefing' },
-  { num: '04', icon: 'doc',      name: 'Contrato & Dados', desc: 'Documentos e dados',     slug: 'contrato' },
-  { num: '05', icon: 'pay',      name: 'Pagamentos',       desc: 'Estado financeiro',      slug: 'pagamentos' },
-  { num: '06', icon: 'deliver',  name: 'Entregas',         desc: 'Ficheiros e revisões',   slug: 'entregas' },
-  { num: '07', icon: 'support',  name: 'Atendimento',      desc: 'Equipa e contactos',     slug: 'atendimento' },
-  { num: '08', icon: 'star',     name: 'Satisfação',       desc: 'Avaliação do projeto',   slug: 'satisfacao' },
+  { num: '04', icon: 'doc',      name: 'Contrato & Dados', desc: 'Documentos e dados',      slug: 'contrato' },
+  { num: '05', icon: 'pay',      name: 'Pagamentos',       desc: 'Estado financeiro',       slug: 'pagamentos' },
+  { num: '06', icon: 'deliver',  name: 'Entregas',         desc: 'Ficheiros e revisões',    slug: 'entregas' },
+  { num: '07', icon: 'support',  name: 'Atendimento',      desc: 'Equipa e contactos',      slug: 'atendimento' },
+  { num: '08', icon: 'star',     name: 'Satisfação',       desc: 'Avaliação do projeto',    slug: 'satisfacao' },
 ] as const
 
-/* ============================================================
-   COMPONENT
-   ============================================================ */
-export default function DashboardClient({
-  projeto, isAdmin,
-}: { projeto: Projeto; isAdmin: boolean }) {
-  const totalFases = (projeto.fases ?? []).length || 5
-  const initialActive = detectActivePhase(projeto)
-  const [active, setActive] = useState(initialActive)
+const CARD = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/70'
+const fmtEur = (n: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
 
-  // Persistência local da escolha do stepper (apenas para admin).
-  // Quando o Supabase voltar, isto pode ser substituído por uma chamada
-  // à API que escreve em media_portais.dados.fase_atual.
+export default function DashboardClient({ projeto, isAdmin }: { projeto: Projeto; isAdmin: boolean }) {
+  const totalFases = (projeto.fases ?? []).length || 5
+  const [active, setActive] = useState(detectActivePhase(projeto))
+
+  // Escolha da fase pelo admin, guardada neste browser (como antes)
   useEffect(() => {
     if (!isAdmin) return
     try {
-      const k = `pcd-phase-${projeto.ref}`
-      const v = localStorage.getItem(k)
+      const v = localStorage.getItem(`pcd-phase-${projeto.ref}`)
       if (v !== null) setActive(parseInt(v, 10))
-    } catch {/* noop */}
+    } catch { /* noop */ }
   }, [projeto.ref, isAdmin])
 
   const handleStepClick = (i: number) => {
     if (!isAdmin) return
     setActive(i)
-    try { localStorage.setItem(`pcd-phase-${projeto.ref}`, String(i)) } catch {/* noop */}
+    try { localStorage.setItem(`pcd-phase-${projeto.ref}`, String(i)) } catch { /* noop */ }
   }
 
-  const phaseName = (projeto.fases?.[active]?.nome) ?? `Fase ${active + 1}`
+  const fase = projeto.fases?.[active]
+  const phaseName = fase?.nome ?? `Fase ${active + 1}`
+  const proximaFase = projeto.fases?.[active + 1]?.nome ?? null
   const phasePct = Math.round(((active + 1) / totalFases) * 100)
 
-  // ── Mini-chart pagamentos ──────────────────────────────────────
   const pagamentos = projeto.pagamentos ?? []
   const valorTotal = pagamentos.reduce((s, p) => s + (p.valor ?? 0), 0)
   const valorPago = pagamentos.filter(p => p.estado === 'pago').reduce((s, p) => s + (p.valor ?? 0), 0)
   const valorPendente = valorTotal - valorPago
   const pctPago = valorTotal > 0 ? Math.round((valorPago / valorTotal) * 100) : 0
-  const fmtEur = (n: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(n)
-  const RING_R = 36
-  const RING_C = 2 * Math.PI * RING_R
-  const ringPayOffset = RING_C * (1 - pctPago / 100)
-  const ringFlowOffset = RING_C * (1 - phasePct / 100)
+  const proxPagamento = pagamentos.find(p => p.estado !== 'pago')
+  const emAtraso = pagamentos.some(p => (p.estado as string) === 'em_atraso')
 
-  // Stats — fallbacks honestos quando faltam dados.
   const local = projeto.local?.trim() ? projeto.local : null
   const filmagem = projeto.dataFilmagem?.trim() ? projeto.dataFilmagem : null
   const revUsadas = projeto.revisoes?.usadas ?? 0
   const revTotal = projeto.revisoes?.total ?? 3
   const entrega = projeto.dataEntrega?.trim() ? projeto.dataEntrega : null
+  const base = `/portal-media/${projeto.ref}`
 
   return (
-    <div className={`portal-cliente-dashboard ${manrope.variable} ${spaceGrotesk.variable}`}>
-      <div className="pcd-bg-fx" />
+    <div className="max-w-5xl mx-auto px-4 sm:px-8 pb-16">
 
-      <div className="pcd-page">
-        {/* HERO */}
-        <div className="pcd-hero">
-          {projeto.heroImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={projeto.heroImageUrl} alt="" />
-          ) : (
-            <div className="pcd-hero-ph">Imagem do projeto</div>
-          )}
-          <div className="pcd-hero__fade" />
-          <div className="pcd-hero__edge" />
+      {/* ── Hero ─────────────────────────────────────────────────── */}
+      <section className="relative mt-4 sm:mt-6 overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0c2236] aspect-[16/9] sm:aspect-[21/9]">
+        {projeto.heroImageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={projeto.heroImageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/logo-rl-prod-branco.png" alt="" className="w-20 h-20 object-contain opacity-30" />
+          </div>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#00141f] via-[#00141f]/45 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-5 sm:p-8">
+          <p className="rlp-m traco text-[10px] sm:text-[11px] text-[#5a8bff]">Portal do cliente · Produção de fotografia e vídeo</p>
+          <h1 className="rlp-t mt-2 text-[34px] sm:text-[58px] leading-[0.95] break-words">{projeto.nome ?? projeto.cliente ?? 'O seu projeto'}</h1>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="rlp-m inline-flex items-center gap-2 rounded-full border border-[#2e6cf6]/60 bg-[#2e6cf6]/[0.15] px-3 py-1.5 text-[9.5px] text-[#a9c1ff]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#5a8bff] animate-pulse" />{projeto.status ?? 'Em produção'}
+            </span>
+            {projeto.cliente && projeto.cliente !== projeto.nome && <span className="text-[13px] text-white/60">{projeto.cliente}</span>}
+          </div>
         </div>
+      </section>
 
-        {/* IDENTITY */}
-        <header className="pcd-ident">
-          <div className="pcd-ident__row">
-            <div className="pcd-ident__logo">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/portal-cliente/mark-white.png" alt="RL PROD" />
-            </div>
-            <div className="pcd-ident__txt">
-              <span className="pcd-eyebrow">Produção de Fotografia e Vídeo</span>
-              <h1 className="pcd-ident__name">RL&nbsp;PROD</h1>
-            </div>
-          </div>
-          <div className="pcd-ident__meta">
-            <span className="pcd-ident__client">Projeto · {projeto.nome ?? projeto.cliente ?? '—'}</span>
-            <span className="pcd-badge"><span className="pcd-pulse" />{projeto.status ?? 'Em produção'}</span>
-          </div>
-        </header>
-
-        {/* WELCOME */}
-        <section className="pcd-card pcd-welcome">
-          <div className="pcd-welcome__head">
-            <span className="pcd-ic"><IcWave /></span>
-            <h2>Bem-vindo ao Portal do Cliente</h2>
-          </div>
-          <p className="pcd-welcome__intro">
-            Olá, seja bem-vindo ao Portal do Cliente. Aqui encontra <b>tudo o que precisa saber sobre o andamento do seu projeto</b> de forma clara, organizada e transparente.
+      {/* ── Próximo passo ────────────────────────────────────────── */}
+      <section className={`${CARD} mt-4 p-5 sm:p-6 grid gap-4 sm:grid-cols-[1fr_auto] items-center`}>
+        <div>
+          <p className="rlp-m text-[9.5px] text-[#5a8bff]">Onde estamos</p>
+          <p className="rlp-t mt-1.5 text-[24px] sm:text-[28px] leading-tight">{phaseName}</p>
+          <p className="mt-1 text-[14px] text-white/60">
+            {fase?.descricao || 'A equipa RL PROD está a trabalhar nesta fase.'}
+            {proximaFase && <> A seguir: <span className="text-white/85">{proximaFase}</span>.</>}
           </p>
+        </div>
+        <Link href={`${base}/atendimento`}
+          className="rlp-t inline-flex items-center justify-center gap-2 rounded-md bg-[#2e6cf6] hover:bg-[#3d79ff] px-6 py-3 text-[17px] tracking-[0.05em] transition-colors"
+          style={{ boxShadow: '0 10px 30px -10px rgba(46,108,246,0.7)' }}>
+          Falar com a equipa →
+        </Link>
+      </section>
 
-          <div className="pcd-welcome__cols">
-            <div className="pcd-col">
-              <p className="pcd-col__title"><span className="pcd-ic"><IcEye /></span>O que pode acompanhar</p>
-              <ul>
-                <li><span className="pcd-mk"><IcDot /></span><span><b>Workflow do Projeto:</b> Etapas concluídas, em curso e próximas fases</span></li>
-                <li><span className="pcd-mk"><IcDot /></span><span><b>Cronograma:</b> Progresso detalhado de cada fase</span></li>
-                <li><span className="pcd-mk"><IcDot /></span><span><b>Contactos Dedicados:</b> A quem falar em cada momento</span></li>
-                <li><span className="pcd-mk"><IcDot /></span><span><b>Documentos &amp; Entregas:</b> Ficheiros e registos importantes</span></li>
-              </ul>
-            </div>
-            <div className="pcd-col pcd-col--how">
-              <p className="pcd-col__title"><span className="pcd-ic"><IcGrid /></span>Como usar</p>
-              <ol>
-                <li><span className="pcd-num">1</span><span>Navegue pelo menu para explorar cada secção.</span></li>
-                <li><span className="pcd-num">2</span><span>Clique na fase do projeto para ver detalhes, prazos e status.</span></li>
-                <li><span className="pcd-num">3</span><span>Use a área de contactos para falar diretamente com os responsáveis.</span></li>
-              </ol>
-            </div>
+      {/* ── Números ──────────────────────────────────────────────── */}
+      <section className="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[
+          { k: 'Local', v: local, vazio: 'Por definir' },
+          { k: 'Filmagem', v: filmagem, vazio: 'Sem data' },
+          { k: 'Revisões', v: `${revUsadas} de ${revTotal}`, vazio: '' },
+          { k: 'Entrega final', v: entrega, vazio: 'Sem data' },
+        ].map(s => (
+          <div key={s.k} className={`${CARD} px-5 py-4`}>
+            <p className="rlp-m text-[9.5px] text-white/45">{s.k}</p>
+            <p className={`mt-2 text-[17px] sm:text-[19px] font-medium truncate ${s.v ? 'text-white' : 'text-white/35 italic'}`}>{s.v ?? s.vazio}</p>
           </div>
+        ))}
+      </section>
 
-          <p className="pcd-welcome__foot">
-            <span className="pcd-ic"><IcHand /></span>
-            <span>Este portal foi criado para <b>garantir transparência, confiança e proximidade</b> durante todo o processo. Obrigado pela confiança na nossa equipa.</span>
-          </p>
-        </section>
+      {/* ── Fase atual ───────────────────────────────────────────── */}
+      <section className={`${CARD} mt-4 p-5 sm:p-6`}>
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <p className="rlp-m traco text-[10px] text-[#5a8bff]">Fase atual</p>
+            <p className="rlp-t mt-1.5 text-[22px]">{phaseName}</p>
+          </div>
+          <span className="rlp-t text-[40px] leading-none text-[#5a8bff]">{phasePct}%</span>
+        </div>
+        {isAdmin && <p className="mt-2 text-[12px] text-white/45">Clica numa fase para definir a fase atual.</p>}
 
-        {/* STATS */}
-        <section className="pcd-stats">
-          <div className="pcd-card pcd-stat">
-            <p className="pcd-stat__k">Local</p>
-            <p className={'pcd-stat__v' + (local ? '' : ' pcd-empty')}>{local ?? 'vazio'}</p>
-          </div>
-          <div className="pcd-card pcd-stat">
-            <p className="pcd-stat__k">Filmagem</p>
-            <p className={'pcd-stat__v' + (filmagem ? '' : ' pcd-empty')}>{filmagem ?? 'sem data'}</p>
-          </div>
-          <div className="pcd-card pcd-stat">
-            <p className="pcd-stat__k">Revisões</p>
-            <p className="pcd-stat__v"><em>{revUsadas}</em> / {revTotal}</p>
-          </div>
-          <div className="pcd-card pcd-stat">
-            <p className="pcd-stat__k">Entrega final</p>
-            <p className={'pcd-stat__v' + (entrega ? '' : ' pcd-empty')}>{entrega ?? 'sem data'}</p>
-          </div>
-        </section>
-
-        {/* FASE ACTUAL */}
-        <section className="pcd-card pcd-phase">
-          <div className="pcd-phase__top">
-            <p className="pcd-phase__title">Fase actual · <em>{phaseName}</em></p>
-            <span className="pcd-phase__pct">{phasePct}%</span>
-          </div>
-          {isAdmin && (
-            <p className="pcd-phase__hint"><IcCursor /> Clica numa fase para definir a fase actual</p>
-          )}
-
-          <div className="pcd-steps">
+        <div className="mt-5 -mx-1 overflow-x-auto pb-1">
+          <div className="flex min-w-max gap-1.5 px-1">
             {Array.from({ length: totalFases }).map((_, i) => {
-              const f = projeto.fases?.[i]
-              const lbl = f?.nome ?? `Fase ${i + 1}`
-              const cls = [
-                'pcd-step',
-                i < active ? 'pcd-done' : '',
-                i === active ? 'pcd-active' : '',
-              ].filter(Boolean).join(' ')
+              const nome = projeto.fases?.[i]?.nome ?? `Fase ${i + 1}`
+              const feito = i < active
+              const atual = i === active
               return (
-                <button key={i} type="button" className={cls}
-                  onClick={() => handleStepClick(i)}
-                  disabled={!isAdmin}
-                  style={{ cursor: isAdmin ? 'pointer' : 'default' }}>
-                  <span className="pcd-step__dot" />
-                  <span className="pcd-step__lbl">{lbl}</span>
+                <button key={i} type="button" onClick={() => handleStepClick(i)} disabled={!isAdmin}
+                  className={`w-[92px] sm:w-[104px] shrink-0 rounded-xl border px-2.5 py-2.5 text-left transition-colors ${atual ? 'border-[#2e6cf6] bg-[#2e6cf6]/[0.15]' : feito ? 'border-[#2e6cf6]/30 bg-[#0c2236]/60' : 'border-white/[0.07] bg-transparent'} ${isAdmin ? 'cursor-pointer hover:border-[#5a8bff]' : 'cursor-default'}`}>
+                  <span className={`rlp-t block text-[15px] ${atual ? 'text-[#5a8bff]' : feito ? 'text-[#2e6cf6]' : 'text-white/30'}`}>
+                    {feito ? '✓' : String(i + 1).padStart(2, '0')}
+                  </span>
+                  <span className={`block mt-1 text-[11px] leading-tight ${atual ? 'text-white' : feito ? 'text-white/70' : 'text-white/40'}`}>{nome}</span>
                 </button>
               )
             })}
           </div>
+        </div>
+        <div className="mt-4 h-1.5 rounded-full bg-white/[0.07] overflow-hidden">
+          <div className="h-full rounded-full bg-[#2e6cf6] transition-all duration-700" style={{ width: `${phasePct}%` }} />
+        </div>
+      </section>
 
-          <div className="pcd-bar">
-            <div className="pcd-bar__fill" style={{ width: `${phasePct}%` }} />
+      {/* ── Pagamentos + Workflow ────────────────────────────────── */}
+      <section className="mt-4 grid gap-3 md:grid-cols-2">
+        <Link href={`${base}/pagamentos`} className={`${CARD} group p-5 sm:p-6 hover:border-[#2e6cf6]/60 transition-colors`}>
+          <div className="flex items-center justify-between">
+            <p className="rlp-m traco text-[10px] text-[#5a8bff]">Pagamentos</p>
+            <span className="text-[12px] text-white/45 group-hover:text-[#5a8bff]">Ver tudo →</span>
           </div>
-        </section>
-
-        {/* MINI GRÁFICOS — Pagamentos + Workflow */}
-        <section className="pcd-graphs">
-          {/* Pagamentos */}
-          <Link className="pcd-graph-card pcd-card"
-            href={`/portal-media/${projeto.ref}/pagamentos`}>
-            <div className="pcd-graph-head">
-              <p className="pcd-graph-title">Pagamentos</p>
-              <span className="pcd-graph-go">Ver tudo →</span>
-            </div>
-            <div className="pcd-graph-body">
-              <div className="pcd-mini-ring">
-                <svg width={88} height={88} viewBox="0 0 88 88">
-                  <circle className="pcd-mini-ring__track" cx={44} cy={44} r={RING_R} />
-                  <circle className="pcd-mini-ring__fill pcd-color-pay" cx={44} cy={44} r={RING_R}
-                    style={{ strokeDasharray: RING_C, strokeDashoffset: ringPayOffset, transition: 'stroke-dashoffset 1.4s cubic-bezier(.3,.1,.2,1)' }} />
-                </svg>
-                <div className="pcd-mini-ring__num">
-                  <span className="pcd-mini-ring__pct">{pctPago}<small>%</small></span>
-                  <span className="pcd-mini-ring__cap">Pago</span>
-                </div>
-              </div>
-              <div className="pcd-graph-info">
-                <div className="pcd-graph-row">
-                  <span className="pcd-graph-row__k">Total</span>
-                  <span className="pcd-graph-row__v">{fmtEur(valorTotal)}</span>
-                </div>
-                <div className="pcd-graph-row">
-                  <span className="pcd-graph-row__k">Pago</span>
-                  <span className="pcd-graph-row__v"><em>{fmtEur(valorPago)}</em></span>
-                </div>
-                <div className="pcd-graph-row">
-                  <span className="pcd-graph-row__k">Em falta</span>
-                  <span className="pcd-graph-row__v"><em className="pending">{fmtEur(valorPendente)}</em></span>
-                </div>
-              </div>
-            </div>
-          </Link>
-
-          {/* Workflow snapshot */}
-          <Link className="pcd-graph-card pcd-card"
-            href={`/portal-media/${projeto.ref}/workflow`}>
-            <div className="pcd-graph-head">
-              <p className="pcd-graph-title">Workflow</p>
-              <span className="pcd-graph-go">Ver tudo →</span>
-            </div>
-            <div className="pcd-graph-body">
-              <div className="pcd-mini-ring">
-                <svg width={88} height={88} viewBox="0 0 88 88">
-                  <circle className="pcd-mini-ring__track" cx={44} cy={44} r={RING_R} />
-                  <circle className="pcd-mini-ring__fill pcd-color-flow" cx={44} cy={44} r={RING_R}
-                    style={{ strokeDasharray: RING_C, strokeDashoffset: ringFlowOffset, transition: 'stroke-dashoffset 1.4s cubic-bezier(.3,.1,.2,1) .1s' }} />
-                </svg>
-                <div className="pcd-mini-ring__num">
-                  <span className="pcd-mini-ring__pct">{phasePct}<small>%</small></span>
-                  <span className="pcd-mini-ring__cap">Concluído</span>
-                </div>
-              </div>
-              <div className="pcd-graph-info">
-                <div className="pcd-graph-row">
-                  <span className="pcd-graph-row__k">Fase atual</span>
-                  <span className="pcd-graph-row__v" style={{ fontSize: 12, letterSpacing: '.04em' }}>{phaseName}</span>
-                </div>
-                <div className="pcd-graph-row">
-                  <span className="pcd-graph-row__k">Progresso</span>
-                  <span className="pcd-graph-row__v">{active + 1} / {totalFases}</span>
-                </div>
-              </div>
-            </div>
-            {/* Mini-timeline horizontal */}
-            <div className="pcd-mini-tl">
-              {Array.from({ length: totalFases }).map((_, i) => (
-                <span key={i} style={{ display: 'contents' }}>
-                  <span className={
-                    'pcd-mini-tl__dot' +
-                    (i < active ? ' pcd-done' : '') +
-                    (i === active ? ' pcd-doing' : '')
-                  } />
-                  {i < totalFases - 1 && (
-                    <span className={'pcd-mini-tl__seg' + (i < active ? ' pcd-done' : '')} />
-                  )}
-                </span>
-              ))}
-            </div>
-          </Link>
-        </section>
-
-        {/* MENU */}
-        <p className="pcd-section-label">Menu</p>
-        <nav className="pcd-menu">
-          {MENU_ITEMS.map(item => (
-            <Link key={item.slug} className="pcd-tile"
-              href={`/portal-media/${projeto.ref}/${item.slug}`}>
-              <div className="pcd-tile__top">
-                <span className="pcd-tile__ic"><MenuIcon name={item.icon} /></span>
-                <span className="pcd-tile__num">{item.num}</span>
-              </div>
-              <p className="pcd-tile__name">{item.name}</p>
-              <p className="pcd-tile__desc">{item.desc}</p>
-            </Link>
-          ))}
-        </nav>
-
-        {/* INTERNO — só admin */}
-        {isAdmin && (
-          <div className="pcd-intern">
-            <Link className="pcd-tile pcd-tile--intern"
-              href={`/portal-media/${projeto.ref}/reproducao`}>
-              <span className="pcd-tag-intern">Interno</span>
-              <div className="pcd-tile__top">
-                <span className="pcd-tile__ic"><IcFilm /></span>
-                <span className="pcd-tile__num">★</span>
-              </div>
-              <p className="pcd-tile__name">Reprodução</p>
-              <p className="pcd-tile__desc">Storytelling · Storyboard · Moodboard</p>
-            </Link>
+          <div className="mt-4 flex items-end justify-between gap-3">
+            <span className="rlp-t text-[44px] leading-none">{pctPago}<span className="text-[22px] text-white/45">%</span></span>
+            <span className="text-right text-[12.5px] text-white/55">pago de {fmtEur(valorTotal)}</span>
           </div>
-        )}
+          <div className="mt-3 h-2 rounded-full bg-white/[0.07] overflow-hidden">
+            <div className="h-full rounded-full bg-[#2e6cf6]" style={{ width: `${pctPago}%` }} />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-2 text-[13px]">
+            <div className="rounded-xl bg-[#0c2236]/70 px-3 py-2.5">
+              <p className="rlp-m text-[9px] text-white/45">Pago</p>
+              <p className="mt-1 text-white">{fmtEur(valorPago)}</p>
+            </div>
+            <div className="rounded-xl bg-[#0c2236]/70 px-3 py-2.5">
+              <p className="rlp-m text-[9px] text-white/45">Em falta</p>
+              <p className={`mt-1 ${emAtraso ? 'text-[#ff4747]' : 'text-white'}`}>{fmtEur(valorPendente)}</p>
+            </div>
+          </div>
+          {proxPagamento && (
+            <p className="mt-3 text-[12.5px] text-white/55">
+              Próximo: <span className="text-white/85">{proxPagamento.descricao}</span>{proxPagamento.data ? ` · ${proxPagamento.data}` : ''}
+            </p>
+          )}
+        </Link>
 
-        <p className="pcd-foot">
-          © 2026 RL PROD · Portal do Cliente · <a href="#">Ajuda</a> · <a href="#">Contacto</a>
+        <Link href={`${base}/workflow`} className={`${CARD} group p-5 sm:p-6 hover:border-[#2e6cf6]/60 transition-colors`}>
+          <div className="flex items-center justify-between">
+            <p className="rlp-m traco text-[10px] text-[#5a8bff]">Workflow</p>
+            <span className="text-[12px] text-white/45 group-hover:text-[#5a8bff]">Ver tudo →</span>
+          </div>
+          <div className="mt-4 flex items-end justify-between gap-3">
+            <span className="rlp-t text-[44px] leading-none">{active + 1}<span className="text-[22px] text-white/45"> / {totalFases}</span></span>
+            <span className="text-right text-[12.5px] text-white/55">fases</span>
+          </div>
+          <div className="mt-4 flex items-center">
+            {Array.from({ length: totalFases }).map((_, i) => (
+              <span key={i} className="flex items-center flex-1 last:flex-none">
+                <span className={`w-2.5 h-2.5 shrink-0 rounded-full ${i < active ? 'bg-[#2e6cf6]' : i === active ? 'bg-[#5a8bff] ring-4 ring-[#5a8bff]/20' : 'bg-white/15'}`} />
+                {i < totalFases - 1 && <span className={`h-px flex-1 ${i < active ? 'bg-[#2e6cf6]' : 'bg-white/10'}`} />}
+              </span>
+            ))}
+          </div>
+          <p className="mt-4 text-[13px] text-white/60">Fase atual: <span className="text-white/90">{phaseName}</span></p>
+        </Link>
+      </section>
+
+      {/* ── Menu ─────────────────────────────────────────────────── */}
+      <p className="rlp-m traco mt-10 mb-3 text-[10.5px] text-[#5a8bff]">O seu portal</p>
+      <nav className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {MENU_ITEMS.map(item => (
+          <Link key={item.slug} href={`${base}/${item.slug}`}
+            className={`${CARD} group p-4 sm:p-5 hover:border-[#2e6cf6]/70 hover:-translate-y-0.5 transition-all`}>
+            <div className="flex items-start justify-between">
+              <span className="w-10 h-10 rounded-full flex items-center justify-center border border-[#2e6cf6]/40 bg-[#2e6cf6]/[0.1] text-[#5a8bff] group-hover:bg-[#2e6cf6] group-hover:text-white transition-colors">
+                <MenuIcon name={item.icon} />
+              </span>
+              <span className="rlp-m text-[9.5px] text-white/30">{item.num}</span>
+            </div>
+            <p className="rlp-t mt-4 text-[18px] tracking-[0.02em] leading-tight">{item.name}</p>
+            <p className="mt-0.5 text-[12.5px] text-white/50">{item.desc}</p>
+          </Link>
+        ))}
+      </nav>
+
+      {isAdmin && (
+        <div className="mt-3 grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Link href={`${base}/reproducao`}
+            className="relative rounded-2xl border border-dashed border-[#a9c1ff]/40 bg-[#0c2236]/60 p-4 sm:p-5 hover:border-[#a9c1ff] transition-colors">
+            <span className="rlp-m absolute top-3 right-3 rounded-full border border-[#a9c1ff]/60 px-2 py-0.5 text-[8.5px] text-[#a9c1ff]">Interno</span>
+            <span className="w-10 h-10 rounded-full flex items-center justify-center border border-[#a9c1ff]/40 text-[#a9c1ff]"><IcFilm /></span>
+            <p className="rlp-t mt-4 text-[18px] leading-tight">Reprodução</p>
+            <p className="mt-0.5 text-[12.5px] text-white/50">Storytelling · Storyboard · Moodboard</p>
+          </Link>
+        </div>
+      )}
+
+      {/* ── Boas-vindas (curto, no fim) ──────────────────────────── */}
+      <section className={`${CARD} mt-10 p-5 sm:p-6`}>
+        <p className="rlp-m traco text-[10px] text-[#5a8bff]">Bem-vindo</p>
+        <p className="mt-3 text-[14.5px] leading-relaxed text-white/70 max-w-3xl">
+          Aqui encontra tudo sobre o andamento do seu projeto: as fases e o que vem a seguir, os pagamentos, os documentos, as entregas e o contacto direto com a equipa. Este portal existe para garantir <span className="text-white">transparência, confiança e proximidade</span> durante todo o processo. Obrigado pela confiança na RL PROD.
         </p>
-      </div>
+      </section>
     </div>
   )
 }
 
-/* ============================================================
-   ICONS (SVG inline, leves — reaproveitados de portal.js)
-   ============================================================ */
-function S(children: ReactNode, sw: number = 1.7, w: number = 16) {
+/* ── Ícones (SVG inline) ─────────────────────────────────────── */
+function S(children: ReactNode, sw: number = 1.7, w: number = 18) {
   return (
-    <svg width={w} height={w} viewBox="0 0 24 24" fill="none"
-      stroke="currentColor" strokeWidth={sw}
-      strokeLinecap="round" strokeLinejoin="round">{children}</svg>
+    <svg width={w} height={w} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">{children}</svg>
   )
 }
 
-const IcWave = () => S(<path d="M7 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1V4.5a1.5 1.5 0 0 1 3 0V10m0-.5V6a1.5 1.5 0 0 1 3 0v6.5c0 3.6-2.4 6.5-6 6.5-2.2 0-3.6-1-4.7-2.6l-2-3a1.5 1.5 0 0 1 2.4-1.8L7 13" />)
-const IcEye = () => S(<><path d="M2.5 12s3.3-6 9.5-6 9.5 6 9.5 6-3.3 6-9.5 6S2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.6" /></>)
-const IcGrid = () => S(<><rect x="4" y="4" width="7" height="7" rx="1.5" /><rect x="13" y="4" width="7" height="7" rx="1.5" /><rect x="4" y="13" width="7" height="7" rx="1.5" /><rect x="13" y="13" width="7" height="7" rx="1.5" /></>)
-const IcHand = () => S(<path d="M7 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1V4.5a1.5 1.5 0 0 1 3 0V10m0-.5V6a1.5 1.5 0 0 1 3 0v6.5c0 3.6-2.4 6.5-6 6.5-2.2 0-3.6-1-4.7-2.6l-2-3a1.5 1.5 0 0 1 2.4-1.8L7 13" />)
-const IcDot = () => (<svg width={7} height={7} viewBox="0 0 8 8"><circle cx="4" cy="4" r="3" fill="currentColor" /></svg>)
-const IcCursor = () => S(<path d="M5 3l14 7-6 1.6L9 19 5 3Z" />, 1.7, 14)
-const IcFilm = () => S(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M3 9h18M3 15h18M8 4v16M16 4v16" /></>, 1.6, 22)
+const IcFilm = () => S(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M3 9h18M3 15h18M8 4v16M16 4v16" /></>, 1.6, 18)
 
 function MenuIcon({ name }: { name: string }) {
   switch (name) {
-    case 'workflow': return S(<><circle cx="6" cy="6" r="2.5" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="12" r="2.5" /><path d="M8.4 6.8 15.6 11M8.4 17.2 15.6 13" /></>, 1.6, 22)
-    case 'map':      return S(<><path d="M9 4 4 6.5v13l5-2.5 6 2.5 5-2.5v-13L15 6.5 9 4Z" /><path d="M9 4v13M15 6.5v13" /></>, 1.6, 22)
-    case 'briefing': return S(<><rect x="5" y="3" width="14" height="18" rx="2.5" /><path d="M9 8h6M9 12h6M9 16h3" /></>, 1.6, 22)
-    case 'doc':      return S(<><path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4M9 13h6M9 17h6" /></>, 1.6, 22)
-    case 'pay':      return S(<><rect x="3" y="6" width="18" height="12" rx="2.5" /><path d="M3 10h18" /><path d="M7 14.5h3" /></>, 1.6, 22)
-    case 'deliver':  return S(<><path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" /><path d="M3.5 8v8L12 20l8.5-4V8M12 12v8" /></>, 1.6, 22)
-    case 'support':  return S(<><path d="M4.5 13a7.5 7.5 0 0 1 15 0" /><rect x="3" y="13" width="3.5" height="6" rx="1.5" /><rect x="17.5" y="13" width="3.5" height="6" rx="1.5" /><path d="M19 19v.5a2.5 2.5 0 0 1-2.5 2.5H12" /></>, 1.6, 22)
-    case 'star':     return S(<path d="M12 3.5 14.6 9l6 .7-4.5 4.1 1.3 5.9L12 16.7 6.6 19.7l1.3-5.9L3.4 9.7l6-.7L12 3.5Z" />, 1.6, 22)
+    case 'workflow': return S(<><circle cx="6" cy="6" r="2.5" /><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="12" r="2.5" /><path d="M8.4 6.8 15.6 11M8.4 17.2 15.6 13" /></>, 1.6)
+    case 'map':      return S(<><path d="M9 4 4 6.5v13l5-2.5 6 2.5 5-2.5v-13L15 6.5 9 4Z" /><path d="M9 4v13M15 6.5v13" /></>, 1.6)
+    case 'briefing': return S(<><rect x="5" y="3" width="14" height="18" rx="2.5" /><path d="M9 8h6M9 12h6M9 16h3" /></>, 1.6)
+    case 'doc':      return S(<><path d="M7 3h7l4 4v14a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" /><path d="M14 3v4h4M9 13h6M9 17h6" /></>, 1.6)
+    case 'pay':      return S(<><rect x="3" y="6" width="18" height="12" rx="2.5" /><path d="M3 10h18" /><path d="M7 14.5h3" /></>, 1.6)
+    case 'deliver':  return S(<><path d="M3.5 8 12 4l8.5 4-8.5 4-8.5-4Z" /><path d="M3.5 8v8L12 20l8.5-4V8M12 12v8" /></>, 1.6)
+    case 'support':  return S(<><path d="M4.5 13a7.5 7.5 0 0 1 15 0" /><rect x="3" y="13" width="3.5" height="6" rx="1.5" /><rect x="17.5" y="13" width="3.5" height="6" rx="1.5" /><path d="M19 19v.5a2.5 2.5 0 0 1-2.5 2.5H12" /></>, 1.6)
+    case 'star':     return S(<path d="M12 3.5 14.6 9l6 .7-4.5 4.1 1.3 5.9L12 16.7 6.6 19.7l1.3-5.9L3.4 9.7l6-.7L12 3.5Z" />, 1.6)
     default:         return null
   }
 }

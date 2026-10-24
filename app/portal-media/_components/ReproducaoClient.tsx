@@ -17,12 +17,12 @@ import HeroUploadBlock from './HeroUploadBlock'
 /* ──────────────────────────────────────────────────────── */
 
 const TIPO_OPTS: { value: StoryboardTipo; label: string; dot: string }[] = [
-  { value: 'abertura',      label: 'Abertura',       dot: 'bg-violet-400'  },
-  { value: 'cerimonia',     label: 'Cerimónia',      dot: 'bg-blue-400'    },
-  { value: 'momento_chave', label: 'Momento-chave',  dot: 'bg-amber-400'   },
-  { value: 'detalhe',       label: 'Detalhe',        dot: 'bg-white/40'    },
-  { value: 'final',         label: 'Final',          dot: 'bg-emerald-400' },
-  { value: 'outro',         label: 'Outro',          dot: 'bg-white/20'    },
+  { value: 'abertura',      label: 'Abertura',       dot: 'bg-[#a9c1ff]'   },
+  { value: 'cerimonia',     label: 'Cerimónia',      dot: 'bg-[#2e6cf6]'   },
+  { value: 'momento_chave', label: 'Momento-chave',  dot: 'bg-[#5a8bff]'   },
+  { value: 'detalhe',       label: 'Detalhe',        dot: 'bg-white/50'    },
+  { value: 'final',         label: 'Final',          dot: 'bg-white'       },
+  { value: 'outro',         label: 'Outro',          dot: 'bg-[#7c8893]'   },
 ]
 
 const CAT_OPTS: { value: MoodboardCategoria; label: string }[] = [
@@ -189,52 +189,58 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
   /* ──────────────────────────────────────────────────────── */
   /*  RENDER                                                  */
   /* ──────────────────────────────────────────────────────── */
+  const CARD  = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/70'
+  const TILE  = 'rounded-xl border border-white/[0.08] bg-[#0c2236]/70'
+  const INPUT = 'w-full rounded-md border border-white/[0.12] bg-[#00141f]/70 px-4 py-3 text-[15px] text-white/85 placeholder:text-white/30 focus:outline-none focus:border-[#2e6cf6] transition-colors'
+  const SELECT = 'rounded-md border border-white/[0.12] bg-[#00141f] px-3 py-2.5 text-[14px] text-white/75 focus:outline-none focus:border-[#2e6cf6] shrink-0'
+  const BTN_ADD = 'rlp-m shrink-0 rounded-md border border-dashed border-[#2e6cf6]/60 hover:border-[#2e6cf6] hover:bg-[#2e6cf6]/10 px-4 py-2.5 text-[10px] text-[#a9c1ff] transition-colors'
+  const VAZIO = 'rounded-2xl border border-dashed border-white/[0.14] bg-[#00141f]/50 px-6 py-12 text-center'
+  const concluidas = senas.filter(s => s.concluido).length
+
   return (
     <>
       <HeroUploadBlock url={heroUrl} isEditing={isEditing} onChange={setHeroUrl} />
 
-      <div className="relative z-10 max-w-3xl mx-auto px-6 sm:px-10 py-10">
+      <div className="rlp relative z-10 max-w-3xl mx-auto px-4 sm:px-8 py-8 sm:py-12">
 
         {/* Back */}
         <Link href={`/portal-media/${initial.ref}`}
-          className="inline-flex items-center gap-2 text-[12px] tracking-[0.4em] text-white/25 hover:text-white/55 transition-colors uppercase mb-12 group">
+          className="rlp-m inline-flex items-center gap-2 text-[11px] text-white/45 hover:text-white/80 transition-colors mb-10 group">
           <span className="group-hover:-translate-x-1 transition-transform duration-200">‹</span>
           Portal {initial.nome}
         </Link>
 
         {/* Header */}
-        <div className="flex items-end justify-between mb-10">
-          <div>
-            <p className="text-[9px] tracking-[0.6em] text-white/20 uppercase mb-2">RL PROD · {initial.nome}</p>
-            <h1 className="text-3xl font-extralight tracking-[0.3em] text-white/80 uppercase">Reprodução</h1>
-            <div className="mt-4 flex items-center gap-3">
-              <div className="h-px w-12 bg-white/25" />
-              <div className="h-px flex-1 bg-white/[0.04]" />
-            </div>
+        <header className="flex items-start justify-between gap-4 mb-8">
+          <div className="min-w-0">
+            <p className="rlp-m traco text-[11px] text-[#5a8bff] mb-3">RL PROD · {initial.nome}</p>
+            <h1 className="rlp-t text-4xl sm:text-5xl text-white leading-none">Reprodução</h1>
+            <p className="mt-4 text-[15px] text-white/60 leading-relaxed max-w-xl">
+              Narrativa, guião de cenas e referências visuais do projeto.
+            </p>
           </div>
           {/* Admin-only badge */}
-          <div className="flex items-center gap-2 border border-amber-400/20 bg-amber-400/[0.04] px-3 py-1.5 shrink-0">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-400/60 shrink-0" />
-            <span className="text-[12px] tracking-[0.3em] text-amber-400/60 uppercase">Interno</span>
-          </div>
-        </div>
+          <span className="rlp-m shrink-0 inline-flex items-center gap-2 rounded-full border border-[#a9c1ff]/60 px-3 py-1.5 text-[9px] text-[#a9c1ff]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#a9c1ff] shrink-0" />
+            Interno
+          </span>
+        </header>
 
         {/* Tab nav */}
-        <div className="flex items-center gap-0 border-b border-white/[0.07] mb-8">
+        <div className="grid grid-cols-3 gap-1 rounded-xl border border-white/[0.1] bg-[#00141f]/70 p-1 mb-8">
           {([
-            { key: 'storytelling', label: 'Storytelling', icon: '✦' },
-            { key: 'storyboard',   label: 'Storyboard',   icon: '◫' },
-            { key: 'moodboard',    label: 'Moodboard',    icon: '⬡' },
-          ] as { key: Tab; label: string; icon: string }[]).map(t => (
+            { key: 'storytelling', label: 'Storytelling' },
+            { key: 'storyboard',   label: 'Storyboard'   },
+            { key: 'moodboard',    label: 'Moodboard'    },
+          ] as { key: Tab; label: string }[]).map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className={`flex items-center gap-2 px-5 py-3 text-[12px] tracking-[0.35em] uppercase transition-colors border-b-2 -mb-px
+              className={`rlp-m rounded-lg px-2 py-2.5 text-[9px] sm:text-[10px] tracking-[0.15em] sm:tracking-[0.3em] transition-colors truncate
                 ${tab === t.key
-                  ? 'border-white/40 text-white/70'
-                  : 'border-transparent text-white/20 hover:text-white/45'}`}
+                  ? 'bg-[#2e6cf6] text-white'
+                  : 'text-white/50 hover:text-white/85 hover:bg-[#0c2236]'}`}
             >
-              <span className="text-[14px]">{t.icon}</span>
               {t.label}
             </button>
           ))}
@@ -247,45 +253,44 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
           <div className="flex flex-col gap-6">
 
             {/* Narrativa */}
-            <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5">
-              <p className="text-[12px] tracking-[0.5em] text-white/30 uppercase mb-3">Narrativa Geral</p>
+            <div className={`${CARD} px-5 sm:px-6 py-5`}>
+              <p className="rlp-m traco text-[11px] text-white/50 mb-3">Narrativa geral</p>
               {isEditing ? (
                 <textarea
                   value={storytelling}
                   onChange={e => setStorytelling(e.target.value)}
                   placeholder="Escreve aqui a história e a narrativa do projeto: quem são, o que os une, o que querem sentir quando veem o resultado, os momentos que não podem faltar, a essência do dia..."
                   rows={6}
-                  className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[16px] font-light text-white/55
-                             placeholder:text-white/15 focus:outline-none focus:border-white/20 leading-relaxed resize-none tracking-wide"
+                  className={`${INPUT} leading-relaxed resize-none`}
                 />
               ) : storytelling ? (
-                <p className="text-[16px] font-light text-white/50 leading-relaxed whitespace-pre-wrap">{storytelling}</p>
+                <p className="text-[16px] text-white/80 leading-relaxed whitespace-pre-wrap">{storytelling}</p>
               ) : (
-                <p className="text-[15px] font-light text-white/18 italic">Sem narrativa escrita ainda.</p>
+                <p className="text-[15px] text-white/40">Sem narrativa escrita ainda.</p>
               )}
             </div>
 
             {/* ── Divisor Cenas ── */}
-            <div className="flex items-center justify-between gap-4 pt-2">
-              <div className="flex items-center gap-4 flex-1">
-                <span className="text-[12px] tracking-[0.5em] text-white/25 uppercase">Cenas</span>
-                <div className="h-px flex-1 bg-white/[0.06]" />
-                <span className="text-[12px] font-mono text-white/15">{senas.filter(s => s.concluido).length}/{senas.length}</span>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <span className="rlp-m traco text-[11px] text-white/50">Cenas</span>
+                <span className="rlp-m rounded-full border border-white/[0.12] px-2.5 py-0.5 text-[9px] tracking-[0.1em] text-white/60">{concluidas}/{senas.length}</span>
               </div>
-              <button
-                onClick={addSena}
-                className="border border-dashed border-white/20 hover:border-white/40 px-4 py-1.5
-                           text-[12px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors shrink-0"
-              >
-                + Cena
-              </button>
+              <button onClick={addSena} className={BTN_ADD}>+ Cena</button>
             </div>
+
+            {senas.length > 0 && (
+              <div className="h-1.5 w-full rounded-full bg-[#0c2236] overflow-hidden -mt-3">
+                <div className="h-full rounded-full bg-[#2e6cf6] transition-all duration-500"
+                  style={{ width: `${Math.round((concluidas / senas.length) * 100)}%` }} />
+              </div>
+            )}
 
             {/* Empty */}
             {senas.length === 0 && (
-              <div className="border border-dashed border-white/[0.06] px-6 py-10 text-center">
-                <p className="text-[12px] tracking-[0.4em] text-white/18 uppercase mb-2">Sem cenas</p>
-                <p className="text-[15px] font-light text-white/12">Clica em "+ Cena" para adicionar</p>
+              <div className={VAZIO}>
+                <p className="rlp-t text-2xl text-white/80 mb-2">Sem cenas</p>
+                <p className="text-[15px] text-white/50">Clica em &quot;+ Cena&quot; para adicionar a primeira.</p>
               </div>
             )}
 
@@ -294,32 +299,32 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
               {senas.map((sena, i) => (
                 <div
                   key={sena.id}
-                  className={`border transition-colors duration-300 ${
+                  className={`rounded-2xl border overflow-hidden transition-colors duration-300 ${
                     sena.concluido
-                      ? 'border-emerald-400/30 bg-emerald-400/[0.05]'
-                      : 'border-white/[0.08] bg-white/[0.02]'
+                      ? 'border-[#2e6cf6]/45 bg-[#2e6cf6]/[0.07]'
+                      : 'border-white/[0.1] bg-[#00141f]/70'
                   }`}
                 >
                   {/* Header da cena */}
-                  <div className="flex items-center gap-3 px-5 py-3 border-b border-white/[0.05]">
+                  <div className="flex items-center gap-3 px-4 sm:px-5 py-3 border-b border-white/[0.07]">
 
                     {/* Checkbox */}
                     <button
                       onClick={() => toggleSena(sena.id)}
-                      className={`w-5 h-5 shrink-0 border flex items-center justify-center transition-all duration-200
+                      className={`w-6 h-6 shrink-0 rounded-md border flex items-center justify-center transition-all duration-200
                         ${sena.concluido
-                          ? 'border-emerald-400/60 bg-emerald-400/20'
-                          : 'border-white/20 bg-white/[0.03] hover:border-white/40'}`}
-                      title={sena.concluido ? 'Marcar como não efectuado' : 'Marcar como efectuado'}
+                          ? 'border-[#2e6cf6] bg-[#2e6cf6]'
+                          : 'border-white/[0.2] bg-[#0c2236]/70 hover:border-[#5a8bff]'}`}
+                      title={sena.concluido ? 'Marcar como não efetuado' : 'Marcar como efetuado'}
                     >
                       {sena.concluido && (
-                        <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                          <path d="M1.5 5L4 7.5L8.5 2.5" stroke="rgb(52 211 153 / 0.9)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <svg width="11" height="11" viewBox="0 0 10 10" fill="none">
+                          <path d="M1.5 5L4 7.5L8.5 2.5" stroke="#ffffff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
                       )}
                     </button>
 
-                    <span className="text-[13px] font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="rlp-m text-[10px] text-white/35 shrink-0">{String(i + 1).padStart(2, '0')}</span>
 
                     {/* Título */}
                     {isEditing ? (
@@ -327,12 +332,12 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
                         value={sena.titulo}
                         onChange={e => updateSena(sena.id, 'titulo', e.target.value)}
                         placeholder="Título da cena"
-                        className="flex-1 bg-transparent text-[14px] tracking-[0.25em] text-white/65 uppercase
-                                   placeholder:text-white/15 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5"
+                        className="flex-1 min-w-0 rounded-md border border-white/[0.12] bg-[#00141f]/70 px-3 py-2 text-[15px] text-white/85
+                                   placeholder:text-white/30 focus:outline-none focus:border-[#2e6cf6]"
                       />
                     ) : (
-                      <span className={`flex-1 text-[14px] tracking-[0.25em] uppercase font-medium
-                        ${sena.concluido ? 'text-emerald-400/70 line-through decoration-emerald-400/30' : 'text-white/65'}`}>
+                      <span className={`rlp-t flex-1 min-w-0 text-lg leading-tight
+                        ${sena.concluido ? 'text-[#a9c1ff] line-through decoration-[#a9c1ff]/40' : 'text-white'}`}>
                         {sena.titulo}
                       </span>
                     )}
@@ -340,35 +345,35 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
                     {/* Estado + delete */}
                     <div className="flex items-center gap-3 shrink-0">
                       {sena.concluido && (
-                        <span className="text-[12px] tracking-[0.25em] text-emerald-400/60 uppercase">✓ Efectuado</span>
+                        <span className="rlp-m hidden sm:inline-flex rounded-full bg-[#2e6cf6] px-2.5 py-1 text-[9px] text-white">Efetuado</span>
                       )}
                       {isEditing && (
                         <button
                           onClick={() => removeSena(sena.id)}
-                          className="text-[12px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors"
+                          title="Remover cena"
+                          className="text-[14px] text-white/40 hover:text-[#ff4747] transition-colors"
                         >✕</button>
                       )}
                     </div>
                   </div>
 
                   {/* Texto / Resumo */}
-                  <div className="px-5 py-4">
+                  <div className="px-4 sm:px-5 py-4">
                     {isEditing ? (
                       <textarea
                         value={sena.texto}
                         onChange={e => updateSena(sena.id, 'texto', e.target.value)}
                         placeholder="Resumo desta cena: o que acontece, emoção, momentos-chave..."
                         rows={4}
-                        className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[16px] font-light text-white/55
-                                   placeholder:text-white/15 focus:outline-none focus:border-white/20 leading-relaxed resize-none"
+                        className={`${INPUT} leading-relaxed resize-none`}
                       />
                     ) : sena.texto ? (
-                      <p className={`text-[16px] font-light leading-relaxed whitespace-pre-wrap
-                        ${sena.concluido ? 'text-emerald-400/40' : 'text-white/40'}`}>
+                      <p className={`text-[15px] leading-relaxed whitespace-pre-wrap
+                        ${sena.concluido ? 'text-white/50' : 'text-white/75'}`}>
                         {sena.texto}
                       </p>
                     ) : (
-                      <p className="text-[15px] font-light text-white/15 italic">Sem resumo.</p>
+                      <p className="text-[14px] text-white/40">Sem resumo.</p>
                     )}
                   </div>
                 </div>
@@ -385,26 +390,20 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
           <div className="flex flex-col gap-4">
 
             {/* Header + add */}
-            <div className="flex items-center justify-between gap-4 mb-2">
+            <div className="flex items-start justify-between gap-4 mb-1">
               <div>
-                <p className="text-[12px] tracking-[0.5em] text-white/25 uppercase mb-1">Guião de Cenas</p>
-                <p className="text-[15px] font-light text-white/30 leading-relaxed">
+                <p className="rlp-m traco text-[11px] text-white/50 mb-2">Guião de cenas</p>
+                <p className="text-[15px] text-white/60 leading-relaxed">
                   Sequência de momentos e cenas a captar. Define a ordem, o tipo e a duração estimada.
                 </p>
               </div>
-              <button
-                onClick={() => { addCena(); setIsEditing(true) }}
-                className="border border-dashed border-white/20 hover:border-white/40 px-4 py-2
-                           text-[12px] tracking-[0.3em] text-white/30 hover:text-white/60 uppercase transition-colors shrink-0"
-              >
-                + Cena
-              </button>
+              <button onClick={() => { addCena(); setIsEditing(true) }} className={BTN_ADD}>+ Cena</button>
             </div>
 
             {/* Legenda de tipos */}
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-2 mb-1">
               {TIPO_OPTS.map(t => (
-                <span key={t.value} className="flex items-center gap-1.5 text-[12px] text-white/25">
+                <span key={t.value} className="rlp-m inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-[#0c2236]/70 px-2.5 py-1 text-[9px] tracking-[0.15em] text-white/60">
                   <span className={`w-1.5 h-1.5 rounded-full ${t.dot}`} />
                   {t.label}
                 </span>
@@ -413,21 +412,21 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
 
             {/* Empty state */}
             {cenas.length === 0 && (
-              <div className="border border-dashed border-white/[0.07] px-6 py-14 text-center">
-                <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase mb-2">Sem cenas definidas</p>
-                <p className="text-[15px] font-light text-white/15">Clica em "+ Cena" para começar o storyboard</p>
+              <div className={VAZIO}>
+                <p className="rlp-t text-2xl text-white/80 mb-2">Sem cenas definidas</p>
+                <p className="text-[15px] text-white/50">Clica em &quot;+ Cena&quot; para começar o storyboard.</p>
               </div>
             )}
 
             {/* Cenas */}
             {cenas.map((cena, i) => {
-              const dot = tipoDot[cena.tipo ?? 'outro'] ?? 'bg-white/20'
+              const dot = tipoDot[cena.tipo ?? 'outro'] ?? 'bg-[#7c8893]'
               const tlabel = tipoLabel[cena.tipo ?? 'outro'] ?? 'Outro'
               return (
-                <div key={cena.id} className="border border-white/[0.08] bg-white/[0.02]">
+                <div key={cena.id} className={`${CARD} overflow-hidden`}>
                   {/* Header */}
-                  <div className="flex flex-wrap items-center gap-3 px-5 py-3 border-b border-white/[0.06]">
-                    <span className="text-[13px] font-mono text-white/15 shrink-0">{String(i + 1).padStart(2, '0')}</span>
+                  <div className="flex flex-wrap items-center gap-3 px-4 sm:px-5 py-3 border-b border-white/[0.07]">
+                    <span className="rlp-m text-[10px] text-white/35 shrink-0">{String(i + 1).padStart(2, '0')}</span>
 
                     {isEditing ? (
                       <>
@@ -435,13 +434,13 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
                           value={cena.momento}
                           onChange={e => updateCena(cena.id, 'momento', e.target.value)}
                           placeholder="Nome da cena"
-                          className="flex-1 min-w-[140px] bg-transparent text-[14px] tracking-[0.25em] text-white/65 uppercase
-                                     placeholder:text-white/15 focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5"
+                          className="flex-1 min-w-[140px] rounded-md border border-white/[0.12] bg-[#00141f]/70 px-3 py-2 text-[15px] text-white/85
+                                     placeholder:text-white/30 focus:outline-none focus:border-[#2e6cf6]"
                         />
                         <select
                           value={cena.tipo ?? 'outro'}
                           onChange={e => updateCena(cena.id, 'tipo', e.target.value)}
-                          className="bg-[#04080f] border border-white/[0.08] text-[13px] text-white/40 px-2 py-1 focus:outline-none shrink-0"
+                          className={SELECT}
                         >
                           {TIPO_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
@@ -449,50 +448,49 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
                           value={cena.duracao ?? ''}
                           onChange={e => updateCena(cena.id, 'duracao', e.target.value)}
                           placeholder="Duração"
-                          className="w-20 bg-transparent text-[13px] text-white/30 placeholder:text-white/15
-                                     focus:outline-none border-b border-white/[0.08] focus:border-white/25 pb-0.5 shrink-0"
+                          className="w-24 rounded-md border border-white/[0.12] bg-[#00141f]/70 px-3 py-2 text-[14px] text-white/80
+                                     placeholder:text-white/30 focus:outline-none focus:border-[#2e6cf6] shrink-0"
                         />
                       </>
                     ) : (
                       <>
-                        <span className="flex-1 text-[14px] tracking-[0.25em] text-white/65 uppercase font-medium">{cena.momento}</span>
-                        <span className="flex items-center gap-1.5 text-[12px] text-white/30 shrink-0">
+                        <span className="rlp-t flex-1 min-w-0 text-lg text-white leading-tight">{cena.momento}</span>
+                        <span className="rlp-m inline-flex items-center gap-1.5 rounded-full border border-white/[0.1] px-2.5 py-1 text-[9px] tracking-[0.15em] text-white/65 shrink-0">
                           <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`} />{tlabel}
                         </span>
                         {cena.duracao && (
-                          <span className="text-[12px] text-white/20 shrink-0">{cena.duracao}</span>
+                          <span className="rlp-m text-[9px] tracking-[0.15em] text-white/45 shrink-0">{cena.duracao}</span>
                         )}
                       </>
                     )}
 
                     {/* Move + remove (edit mode) */}
                     {isEditing && (
-                      <div className="flex items-center gap-2 shrink-0 ml-auto">
-                        <button onClick={() => moveCena(cena.id, -1)} disabled={i === 0}
-                          className="text-[14px] text-white/20 hover:text-white/50 disabled:opacity-20 transition-colors">↑</button>
-                        <button onClick={() => moveCena(cena.id, 1)} disabled={i === cenas.length - 1}
-                          className="text-[14px] text-white/20 hover:text-white/50 disabled:opacity-20 transition-colors">↓</button>
-                        <button onClick={() => removeCena(cena.id)}
-                          className="text-[12px] tracking-[0.25em] text-red-400/40 hover:text-red-400/70 uppercase transition-colors">✕</button>
+                      <div className="flex items-center gap-1 shrink-0 ml-auto">
+                        <button onClick={() => moveCena(cena.id, -1)} disabled={i === 0} title="Subir"
+                          className="w-8 h-8 rounded-md border border-white/[0.12] text-[14px] text-white/50 hover:text-white hover:border-[#2e6cf6] disabled:opacity-25 transition-colors">↑</button>
+                        <button onClick={() => moveCena(cena.id, 1)} disabled={i === cenas.length - 1} title="Descer"
+                          className="w-8 h-8 rounded-md border border-white/[0.12] text-[14px] text-white/50 hover:text-white hover:border-[#2e6cf6] disabled:opacity-25 transition-colors">↓</button>
+                        <button onClick={() => removeCena(cena.id)} title="Remover cena"
+                          className="w-8 h-8 rounded-md text-[14px] text-white/40 hover:text-[#ff4747] transition-colors">✕</button>
                       </div>
                     )}
                   </div>
 
                   {/* Descrição */}
-                  <div className="px-5 py-4">
+                  <div className="px-4 sm:px-5 py-4">
                     {isEditing ? (
                       <textarea
                         value={cena.descricao}
                         onChange={e => updateCena(cena.id, 'descricao', e.target.value)}
                         placeholder="Descreve o que acontece nesta cena: ação, enquadramento, luz, emoção esperada..."
                         rows={3}
-                        className="w-full bg-white/[0.03] border border-white/[0.08] px-4 py-3 text-[16px] font-light text-white/55
-                                   placeholder:text-white/15 focus:outline-none focus:border-white/20 leading-relaxed resize-none"
+                        className={`${INPUT} leading-relaxed resize-none`}
                       />
                     ) : cena.descricao ? (
-                      <p className="text-[16px] font-light text-white/40 leading-relaxed">{cena.descricao}</p>
+                      <p className="text-[15px] text-white/75 leading-relaxed">{cena.descricao}</p>
                     ) : (
-                      <p className="text-[15px] font-light text-white/15 italic">Sem descrição.</p>
+                      <p className="text-[14px] text-white/40">Sem descrição.</p>
                     )}
                   </div>
                 </div>
@@ -508,49 +506,46 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
           <div className="flex flex-col gap-6">
 
             {/* Adicionar imagem */}
-            <div className="border border-white/[0.08] bg-white/[0.02] px-6 py-5 flex flex-col gap-3">
-              <p className="text-[12px] tracking-[0.5em] text-white/30 uppercase mb-1">Adicionar Referência</p>
+            <div className={`${CARD} px-5 sm:px-6 py-5 flex flex-col gap-3`}>
+              <p className="rlp-m traco text-[11px] text-white/50 mb-1">Adicionar referência</p>
 
               {/* Upload ou URL */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   value={novaUrl}
                   onChange={e => setNovaUrl(e.target.value)}
                   placeholder="URL da imagem (https://...)"
-                  className="flex-1 bg-white/[0.03] border border-white/[0.08] px-4 py-2.5 text-[15px] font-light text-white/55
-                             placeholder:text-white/15 focus:outline-none focus:border-white/20"
+                  className={INPUT}
                 />
-                <label className={`shrink-0 border border-white/15 bg-white/[0.02] hover:bg-white/[0.05] px-4 py-2.5
-                                   text-[12px] tracking-[0.3em] text-white/35 hover:text-white/60 uppercase transition-colors cursor-pointer
+                <label className={`rlp-m shrink-0 inline-flex items-center justify-center rounded-md border border-[#2e6cf6]/60 hover:bg-[#2e6cf6]/15 px-4 py-3
+                                   text-[10px] text-[#a9c1ff] transition-colors cursor-pointer
                                    ${uploading ? 'opacity-40 cursor-not-allowed' : ''}`}>
-                  {uploading ? '⏳' : '⬆ Upload'}
+                  {uploading ? 'A carregar...' : '↑ Upload'}
                   <input type="file" accept="image/*" className="hidden"
                     disabled={uploading}
                     onChange={e => { const f = e.target.files?.[0]; if (f) handleUpload(f) }} />
                 </label>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input
                   value={novaLegenda}
                   onChange={e => setNovaLegenda(e.target.value)}
                   placeholder="Legenda (opcional)"
-                  className="flex-1 min-w-[160px] bg-white/[0.03] border border-white/[0.08] px-4 py-2.5 text-[15px] font-light text-white/55
-                             placeholder:text-white/15 focus:outline-none focus:border-white/20"
+                  className={INPUT}
                 />
                 <select
                   value={novaCat}
                   onChange={e => setNovaCat(e.target.value as MoodboardCategoria)}
-                  className="bg-[#04080f] border border-white/[0.08] text-[14px] text-white/40 px-3 py-2.5 focus:outline-none shrink-0"
+                  className={`${SELECT} py-3`}
                 >
                   {CAT_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
                 <button
                   onClick={addItem}
                   disabled={!novaUrl.trim()}
-                  className="shrink-0 border border-white/20 hover:border-white/40 bg-white/[0.02] hover:bg-white/[0.05]
-                             px-5 py-2.5 text-[12px] tracking-[0.3em] text-white/40 hover:text-white/70 uppercase transition-colors
-                             disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="rlp-m shrink-0 inline-flex items-center justify-center rounded-md bg-[#2e6cf6] hover:bg-[#2e6cf6]/85 px-5 py-3
+                             text-[10px] text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   + Adicionar
                 </button>
@@ -559,14 +554,14 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
 
             {/* Grid de imagens */}
             {items.length === 0 ? (
-              <div className="border border-dashed border-white/[0.07] px-6 py-14 text-center">
-                <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase mb-2">Moodboard vazio</p>
-                <p className="text-[15px] font-light text-white/15">Adiciona imagens de referência acima</p>
+              <div className={VAZIO}>
+                <p className="rlp-t text-2xl text-white/80 mb-2">Moodboard vazio</p>
+                <p className="text-[15px] text-white/50">Adiciona imagens de referência acima.</p>
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {items.map(item => (
-                  <div key={item.id} className="group relative border border-white/[0.07] overflow-hidden bg-white/[0.02]">
+                  <div key={item.id} className={`group relative overflow-hidden ${TILE}`}>
                     <div className="aspect-square overflow-hidden">
                       <img
                         src={item.url}
@@ -574,22 +569,23 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     </div>
-                    <div className="px-3 py-2 border-t border-white/[0.06]">
+                    <div className="px-3 py-2.5 border-t border-white/[0.07]">
                       {item.categoria && (
-                        <p className="text-[9px] tracking-[0.3em] text-white/25 uppercase mb-0.5">
+                        <p className="rlp-m text-[8px] text-[#5a8bff] mb-1">
                           {CAT_OPTS.find(c => c.value === item.categoria)?.label ?? item.categoria}
                         </p>
                       )}
                       {item.legenda && (
-                        <p className="text-[14px] font-light text-white/40 leading-snug">{item.legenda}</p>
+                        <p className="text-[14px] text-white/75 leading-snug">{item.legenda}</p>
                       )}
                     </div>
                     {/* Remove overlay */}
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="absolute top-2 right-2 w-7 h-7 flex items-center justify-center
-                                 bg-black/60 border border-white/10 text-white/40 hover:text-red-400/80
-                                 text-[14px] opacity-0 group-hover:opacity-100 transition-all"
+                      title="Remover referência"
+                      className="absolute top-2 right-2 w-8 h-8 rounded-md flex items-center justify-center
+                                 bg-[#00141f]/85 border border-white/[0.12] text-white/60 hover:text-[#ff4747]
+                                 text-[14px] opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all"
                     >
                       ✕
                     </button>
@@ -599,7 +595,7 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
             )}
 
             {items.length > 0 && (
-              <p className="text-[12px] tracking-[0.3em] text-white/15 uppercase text-center">
+              <p className="rlp-m text-[10px] text-white/45 text-center">
                 {items.length} referência{items.length !== 1 ? 's' : ''}
               </p>
             )}
@@ -617,4 +613,3 @@ export default function ReproducaoClient({ projeto: initial }: Props) {
     </>
   )
 }
-

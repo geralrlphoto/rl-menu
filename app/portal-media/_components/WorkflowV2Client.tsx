@@ -3,7 +3,7 @@
 /* ============================================================
    WorkflowV2Client — cronograma das 12 fases do projecto.
    Design do handoff design_handoff_portal_cliente/Workflow v2.html.
-   Tema escuro navy. Motion: focus-pull do título, anel de progresso
+   Identidade rlprod.pt (letras rlp / rlp-t / rlp-m e fundo vêm do layout). Motion: focus-pull do título, anel de progresso
    que conta a %, linha da timeline que se desenha até à fase em curso,
    reveal on-scroll dos cartões, checkmark que se desenha, dot da fase
    "em curso" a pulsar. Respeita prefers-reduced-motion.
@@ -11,12 +11,9 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { Manrope, Space_Grotesk } from 'next/font/google'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
 import './workflow-v2.css'
 
-const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-manrope', display: 'swap' })
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
 
 /* ── Tipo público das fases ───────────────────────────────── */
 export type WorkflowPhase = {
@@ -36,15 +33,16 @@ const DEFAULT_PHASES: WorkflowPhase[] = [
   { n: '04', icon: 'handshake', name: 'Adjudicação',                            state: 'done',    desc: 'A proposta foi do vosso agrado, então vamos iniciar o processo.' },
   { n: '05', icon: 'cps',       name: 'Elaboração do CPS',                      state: 'done',    desc: 'Após o serviço estar adjudicado vamos recolher todos os dados para realizar este passo.' },
   { n: '06', icon: 'briefFull', name: 'Briefing Completo',                      state: 'doing',   desc: 'Vamos entregar-te um briefing mais completo e detalhado.' },
-  { n: '07', icon: 'contract',  name: 'CPS — Contrato de Prestação de Serviços', state: 'pending', desc: 'Por vezes juntamos o briefing com o CPS assim evita-se mais um documento. O CPS tem que ser assinado e devolvido.' },
+  { n: '07', icon: 'contract',  name: 'CPS · Contrato de Prestação de Serviços', state: 'pending', desc: 'Por vezes juntamos o briefing com o CPS assim evita-se mais um documento. O CPS tem que ser assinado e devolvido.' },
   { n: '08', icon: 'plan',      name: 'Planeamento',                            state: 'pending', desc: 'Vamos definir como e quando tudo vai acontecer.' },
   { n: '09', icon: 'prod',      name: 'Produção',                               state: 'pending', desc: 'Chegou o dia de irmos para o terreno fazer acontecer.',                   date: '19 Jul 2025' },
   { n: '10', icon: 'post',      name: 'Pós-Produção',                           state: 'pending', desc: 'Nesta fase vamos começar a editar e a criar o que foi planeado.',         date: 'Ago 2025' },
-  { n: '11', icon: 'approve',   name: 'Aprovação',                              state: 'pending', desc: 'Uma das fases mais esperadas de todo o processo — a tua avaliação.',     date: 'Set 2025' },
+  { n: '11', icon: 'approve',   name: 'Aprovação',                              state: 'pending', desc: 'Uma das fases mais esperadas de todo o processo: a tua avaliação.',     date: 'Set 2025' },
   { n: '12', icon: 'deliver',   name: 'Entrega',                                state: 'pending', desc: 'Vamos entregar todos os conteúdos que foram acordados.',                  date: '25 Set 2025' },
 ]
 
 const STATE_LABEL = { done: 'Concluído', doing: 'Em curso', pending: 'Pendente' } as const
+const STATE_ORDER: WorkflowPhase['state'][] = ['done', 'doing', 'pending']
 
 /* ============================================================
    COMPONENT
@@ -62,7 +60,8 @@ export default function WorkflowV2Client({
   const doneCount = phases.filter(p => p.state === 'done').length
   const totalCount = phases.length
   const pct = Math.round((doneCount / totalCount) * 100)
-  const nowName = phases.find(p => p.state === 'doing')?.name ?? '—'
+  const nowPhase = phases.find(p => p.state === 'doing')
+  const nowName = nowPhase?.name ?? (doneCount === totalCount ? 'Projeto concluído' : 'Sem fase em curso')
 
   // Refs para animações
   const ringFillRef = useRef<SVGCircleElement | null>(null)
@@ -163,49 +162,62 @@ export default function WorkflowV2Client({
   const backHref = `/portal-media/${projeto.ref}`
 
   return (
-    <div className={`portal-workflow-v2 ${manrope.variable} ${spaceGrotesk.variable}`}>
-      <div className="pwv-bg-fx" />
-
+    <div className="portal-workflow-v2 rlp">
       <div className="pwv-page">
         <p className="pwv-crumb">
-          <Link href={backHref}>‹ Portal · {projeto.nome ?? projeto.cliente ?? '—'}</Link>
+          <Link href={backHref}>‹ Portal · {projeto.nome ?? projeto.cliente ?? 'Projeto'}</Link>
         </p>
 
         <header>
-          <p className="pwv-eyebrow pwv-head__eyebrow">RL PROD · {projeto.nome ?? projeto.cliente ?? 'Projeto'}</p>
-          <h1 className="pwv-title" aria-label="Workflow">
+          <p className="rlp-m traco pwv-head__eyebrow">RL Prod · {projeto.nome ?? projeto.cliente ?? 'Projeto'}</p>
+          <h1 className="rlp-t pwv-title" aria-label="Workflow">
             {titleWord.split('').map((ch, i) => (
-              <span key={i} style={{ animationDelay: `${0.2 + i * 0.06}s` }}>{ch}</span>
+              <span key={i} className={i >= 4 ? 'pwv-acc' : undefined}
+                style={{ animationDelay: `${0.2 + i * 0.06}s` }}>{ch}</span>
             ))}
           </h1>
+          <p className="pwv-lead">
+            Todas as fases do projeto, do primeiro contacto à entrega. Acompanha aqui o que já está feito e o que vem a seguir.
+          </p>
         </header>
 
         {/* Progress panel */}
         <section className="pwv-card pwv-prog">
           <div className="pwv-ring">
             <svg width={118} height={118} viewBox="0 0 118 118">
-              <defs>
-                <linearGradient id="pwv-grad" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stopColor="oklch(0.72 0.12 165)" />
-                  <stop offset="100%" stopColor="oklch(0.80 0.11 245)" />
-                </linearGradient>
-              </defs>
               <circle className="pwv-ring__track" cx={59} cy={59} r={50} />
               <circle ref={ringFillRef} className="pwv-ring__fill" cx={59} cy={59} r={50}
                 style={{ strokeDasharray: C, strokeDashoffset: C }} />
             </svg>
             <div className="pwv-ring__num">
-              <span className="pwv-ring__pct">{pctNum}<small>%</small></span>
-              <span className="pwv-ring__cap">Concluído</span>
+              <span className="rlp-t pwv-ring__pct">{pctNum}<small>%</small></span>
+              <span className="rlp-m pwv-ring__cap">Concluído</span>
             </div>
           </div>
           <div className="pwv-prog__info">
-            <h2>Progresso do projeto</h2>
+            <h2 className="rlp-t">Progresso do projeto</h2>
             <p className="pwv-count"><b>{doneNum}</b> de {totalCount} fases concluídas</p>
-            <p className="pwv-nowlbl">Fase atual</p>
-            <span className="pwv-prog__now"><span className="pwv-pdot" />{nowName}</span>
+            <div className="pwv-bar" aria-hidden="true">
+              {phases.map((p, i) => (
+                <i key={i} title={p.name} className={p.state === 'done' ? 'is-done' : p.state === 'doing' ? 'is-doing' : undefined} />
+              ))}
+            </div>
+            <p className="rlp-m pwv-nowlbl">Fase atual</p>
+            <span className={`pwv-prog__now${nowPhase ? '' : ' is-none'}`}>
+              <span className="pwv-pdot" /><span>{nowName}</span>
+            </span>
           </div>
         </section>
+
+        {/* Legenda */}
+        <div className="pwv-legend">
+          <p className="rlp-m traco pwv-legend__lbl">Fases</p>
+          <div className="pwv-legend__chips">
+            {STATE_ORDER.map(st => (
+              <span key={st} className={`pwv-chip pwv-chip--${st}`}><i />{STATE_LABEL[st]}</span>
+            ))}
+          </div>
+        </div>
 
         {/* Timeline */}
         <div ref={tlRef} className="pwv-tl">
@@ -221,13 +233,13 @@ export default function WorkflowV2Client({
                   </span>
                 )}
                 {p.state === 'doing' && (
-                  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" fill="#fff" /></svg>
+                  <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="4" /></svg>
                 )}
               </div>
               <div className="pwv-pcard">
                 <div className="pwv-pcard__top">
-                  <p className="pwv-pcard__name">
-                    <span className="pwv-pcard__num">{p.n}</span>
+                  <p className="rlp-t pwv-pcard__name">
+                    <span className="rlp-m pwv-pcard__num">{p.n}</span>
                     <span className="pwv-pcard__ic">
                       <svg width={16} height={16} viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" strokeWidth={1.6}
@@ -243,9 +255,14 @@ export default function WorkflowV2Client({
                 </div>
                 <p className="pwv-pcard__desc">{p.desc}</p>
                 <div className="pwv-pcard__foot">
-                  <p className="pwv-pcard__date">{p.date ?? 'Data estimada'}</p>
+                  <p className={`pwv-pcard__date${p.date ? '' : ' is-empty'}`}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="4" y="5" width="16" height="16" rx="2.5" /><path d="M4 9h16M8 3v4M16 3v4" />
+                    </svg>
+                    {p.date ?? 'Data a definir'}
+                  </p>
                   {isAdmin && (
-                    <button type="button" className="pwv-btn-notify"
+                    <button type="button" className={`pwv-btn-notify${notifySuccess === i ? ' is-ok' : ''}`}
                       disabled={notifyingIdx === i}
                       onClick={() => handleNotify(i, p)}>
                       <BellIcon />
@@ -263,8 +280,8 @@ export default function WorkflowV2Client({
         </div>
 
         <footer className="pwv-foot">
-          <p className="pwv-foot__tag">More than a product, <b>an experience.</b></p>
-          <p className="pwv-foot__sub">RL PROD · Photography &amp; Video</p>
+          <p className="rlp-t pwv-foot__tag">More than a product, <b>an experience<em>.</em></b></p>
+          <p className="rlp-m pwv-foot__sub">RL Prod · Photography &amp; Video</p>
         </footer>
       </div>
     </div>
