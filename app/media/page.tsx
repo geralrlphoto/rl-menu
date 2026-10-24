@@ -103,7 +103,8 @@ export default async function MediaDashboard() {
   const items = [
     ...(sections ?? []).map(s => ({
       id: String(s.id),
-      name: s.name as string,
+      // A secção "Portal Cliente" aparece como "Projetos" (o nome na tabela fica igual)
+      name: s.name === 'Portal Cliente' ? 'Projetos' : s.name as string,
       image_url: s.image_url as string | null,
       href: SECTION_META[s.name]?.href ?? `/media/secao/${s.id}`,
       icon: SECTION_META[s.name]?.icon ?? '◌',

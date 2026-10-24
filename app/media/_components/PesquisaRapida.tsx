@@ -18,7 +18,7 @@ const FIXOS: Item[] = [
   { tipo: 'Página', titulo: 'Leads e pipeline',        href: '/media/crm/leads' },
   { tipo: 'Página', titulo: 'Calendário do ano',       href: '/media/calendario' },
   { tipo: 'Página', titulo: 'Finanças',                href: '/media/financas' },
-  { tipo: 'Página', titulo: 'Portal Cliente',          href: '/media/portal-cliente' },
+  { tipo: 'Página', titulo: 'Projetos',                href: '/media/portal-cliente' },
   { tipo: 'Página', titulo: 'Orçamentos',              href: '/media/orcamentos' },
   { tipo: 'Página', titulo: 'Proposta Criativa',       href: '/media/proposta-criativa' },
   { tipo: 'Página', titulo: 'Ficha de Cliente',        href: '/media/ficha-cliente' },

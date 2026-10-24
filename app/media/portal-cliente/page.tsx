@@ -223,9 +223,9 @@ export default async function PortalClientePage({ searchParams }: { searchParams
         {/* Cabeçalho */}
         <div className="mt-6 mb-8 flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="rlp-m traco text-[11px] text-[#5a8bff]">RL Prod · Portais</p>
+            <p className="rlp-m traco text-[11px] text-[#5a8bff]">RL Prod · Projetos e portais</p>
             <h1 className="rlp-t mt-3 text-[48px] sm:text-[64px] leading-[0.95]">
-              Portal cliente<span className="text-[#5a8bff]">.</span>
+              Projetos<span className="text-[#5a8bff]">.</span>
             </h1>
             <p className="mt-3 text-[14px] text-white/55">
               {todos.length} {todos.length === 1 ? 'projeto' : 'projetos'}, do arranque à entrega final.

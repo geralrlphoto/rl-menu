@@ -13,7 +13,7 @@ const NAV = [
   { label: 'Equipa',           href: '/media/equipa' },
   { label: 'Recursos Humanos', href: '/media/recursos-humanos' },
   { label: 'Finanças',         href: '/media/financas' },
-  { label: 'Portal Cliente',   href: '/media/portal-cliente' },
+  { label: 'Projetos',         href: '/media/portal-cliente' },
 ]
 
 // Barra em pílula de todas as páginas /media (desenhada pelo GlobalMenu)
