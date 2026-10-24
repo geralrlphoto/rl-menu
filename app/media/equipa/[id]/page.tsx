@@ -414,8 +414,27 @@ function PortalMembro({ id, token, senha, nome, telefone, onSenha }: { id: strin
   const url = `https://portal.rlphotovideo.pt/equipa-rlprod/${token}`
   const primeiro = nome.trim().split(/\s+/)[0]
   const tel = (telefone ?? '').replace(/\D/g, '')
-  const texto = `Olá ${primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase()}! Este é o teu portal da equipa RL PROD, com os teus trabalhos, a agenda e os pagamentos: ${url}
-Senha: ${senha}`
+  // Mensagem de boas-vindas (sem emojis: no link wa.me podem chegar como "?")
+  const texto = [
+    `Olá ${primeiro.charAt(0).toUpperCase() + primeiro.slice(1).toLowerCase()}!`,
+    '',
+    'Bem-vindo(a) à equipa *RL PROD*. É um gosto enorme ter-te connosco.',
+    '',
+    'Criámos o teu portal pessoal da equipa. Lá encontras:',
+    '- os trabalhos para que foste escolhido(a) e a agenda',
+    '- o briefing de cada projeto',
+    '- o sítio para nos enviares o material depois de cada trabalho',
+    '- os teus pagamentos e os teus dados',
+    '',
+    `*Link:* ${url}`,
+    `*Senha:* ${senha}`,
+    '',
+    'Guarda esta mensagem. A senha é só tua, não a partilhes.',
+    'Qualquer dúvida, fala connosco por aqui.',
+    '',
+    'Bom trabalho!',
+    'RL PROD',
+  ].join('\n')
   return (
     <section className={CARD + ' lg:col-span-3 border-[#2e6cf6]/40'}>
       <div className="flex flex-wrap items-center justify-between gap-4">
