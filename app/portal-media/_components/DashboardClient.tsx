@@ -243,6 +243,13 @@ export default function DashboardClient({ projeto, isAdmin }: { projeto: Projeto
             <p className="rlp-t mt-4 text-[18px] leading-tight">Reprodução</p>
             <p className="mt-0.5 text-[12.5px] text-white/50">Storytelling · Storyboard · Moodboard</p>
           </Link>
+          <Link href={`${base}/equipa`}
+            className="relative rounded-2xl border border-dashed border-[#a9c1ff]/40 bg-[#0c2236]/60 p-4 sm:p-5 hover:border-[#a9c1ff] transition-colors">
+            <span className="rlp-m absolute top-3 right-3 rounded-full border border-[#a9c1ff]/60 px-2 py-0.5 text-[8.5px] text-[#a9c1ff]">Interno</span>
+            <span className="w-10 h-10 rounded-full flex items-center justify-center border border-[#a9c1ff]/40 text-[#a9c1ff]"><IcEquipa /></span>
+            <p className="rlp-t mt-4 text-[18px] leading-tight">Equipa</p>
+            <p className="mt-0.5 text-[12.5px] text-white/50">Quem trabalha neste projeto</p>
+          </Link>
         </div>
       )}
 
@@ -264,6 +271,7 @@ function S(children: ReactNode, sw: number = 1.7, w: number = 18) {
   )
 }
 
+const IcEquipa = () => S(<><circle cx="9" cy="8" r="3.2" /><path d="M3 19c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5" /><circle cx="17" cy="9" r="2.5" /><path d="M16.5 13.6c2.6.2 4.5 2.1 4.5 4.9" /></>, 1.6, 18)
 const IcFilm = () => S(<><rect x="3" y="4" width="18" height="16" rx="2.5" /><path d="M3 9h18M3 15h18M8 4v16M16 4v16" /></>, 1.6, 18)
 
 function MenuIcon({ name }: { name: string }) {
