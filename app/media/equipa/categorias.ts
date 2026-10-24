@@ -18,6 +18,32 @@ export type MembroEquipa = {
   instagram?: string | null
   notas?: string | null
   ativo: boolean
+  foto_url?: string | null
+}
+
+// Ficha do membro (media_equipa.dados), preenchida pela RL PROD
+export type FichaDados = {
+  nomeCompleto?: string
+  nascimento?: string
+  localizacao?: string
+  website?: string
+  idiomas?: string
+  sobre?: string
+  experiencia?: string
+  estilo?: string
+  especialidades?: { nome: string; nivel: number }[]
+  equipamento?: string
+  diasTrabalho?: string
+  horario?: string
+  comunicacao?: string
+  disponibilidade?: string
+  valorDia?: string
+  valorMeioDia?: string
+  metodoPagamento?: string
+  iban?: string
+  titular?: string
+  nif?: string
+  morada?: string
 }
 
 export const singular = (id: string) => CATEGORIAS.find(c => c.id === id)?.singular ?? id

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { FUNDO } from '@/app/media/_lib/estilo'
 import { CATEGORIAS, type CategoriaId, type MembroEquipa } from './categorias'
 
@@ -16,6 +17,7 @@ const iniciais = (n: string) => n.trim().split(/\s+/).map(p => p[0]).slice(0, 2)
 const insta = (v: string) => v.replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '')
 
 export default function EquipaPage() {
+  const router = useRouter()
   const [membros, setMembros] = useState<Membro[] | null>(null)
   const [filtro, setFiltro] = useState<CategoriaId | 'todos'>('todos')
   const [form, setForm] = useState<Form | null>(null)
@@ -39,9 +41,9 @@ export default function EquipaPage() {
       })
       const d = await r.json()
       if (!r.ok) throw new Error(d.error)
-      setMembros(ms => form.id
-        ? (ms ?? []).map(m => m.id === form.id ? { ...m, ...d.membro } : m)
-        : [...(ms ?? []), d.membro].sort((a, b) => a.nome.localeCompare(b.nome)))
+      // Membro novo: abre logo a ficha para completar os dados
+      if (!form.id) { router.push(`/media/equipa/${d.membro.id}`); return }
+      setMembros(ms => (ms ?? []).map(m => m.id === form.id ? { ...m, ...d.membro } : m))
       setForm(null)
     } catch (e) { setErro(e instanceof Error && e.message ? e.message : 'Não foi possível gravar.') }
     setAGravar(false)
@@ -61,7 +63,6 @@ export default function EquipaPage() {
     if (r.ok) { setMembros(ms => (ms ?? []).filter(x => x.id !== m.id)); setForm(null) }
   }
 
-  const editar = (m: Membro) => setForm({ id: m.id, nome: m.nome, categoria: m.categoria, telefone: m.telefone ?? '', email: m.email ?? '', instagram: m.instagram ?? '', notas: m.notas ?? '' })
   const conta = (c: CategoriaId) => (membros ?? []).filter(m => m.categoria === c && m.ativo).length
   const grupos = CATEGORIAS.filter(c => filtro === 'todos' || c.id === filtro)
 
@@ -123,12 +124,17 @@ export default function EquipaPage() {
                   {lista.map(m => (
                     <article key={m.id} className={`rounded-2xl border border-white/[0.1] bg-[#0c2236]/70 p-4 flex flex-col gap-3 ${m.ativo ? '' : 'opacity-50'}`}>
                       <div className="flex items-start gap-3.5">
-                        <span className="rlp-t w-12 h-12 shrink-0 rounded-full flex items-center justify-center bg-[#2e6cf6] text-[17px]">{iniciais(m.nome)}</span>
-                        <div className="min-w-0 flex-1">
-                          <p className="rlp-t text-[20px] leading-tight truncate">{m.nome}</p>
-                          <p className="rlp-m mt-1 text-[9px] text-[#a9c1ff]">{m.ativo ? c.singular : 'Inativo'}</p>
-                        </div>
-                        <button onClick={() => editar(m)} className="rlp-m shrink-0 text-[9.5px] text-white/45 hover:text-white">Editar</button>
+                        <Link href={`/media/equipa/${m.id}`} className="flex min-w-0 flex-1 items-start gap-3.5 group">
+                          {m.foto_url
+                            // eslint-disable-next-line @next/next/no-img-element
+                            ? <img src={m.foto_url} alt="" className="w-12 h-12 shrink-0 rounded-full object-cover" />
+                            : <span className="rlp-t w-12 h-12 shrink-0 rounded-full flex items-center justify-center bg-[#2e6cf6] text-[17px]">{iniciais(m.nome)}</span>}
+                          <span className="min-w-0 flex-1">
+                            <span className="rlp-t block text-[20px] leading-tight truncate group-hover:text-[#a9c1ff]">{m.nome}</span>
+                            <span className="rlp-m block mt-1 text-[9px] text-[#a9c1ff]">{m.ativo ? c.singular : 'Inativo'}</span>
+                          </span>
+                        </Link>
+                        <Link href={`/media/equipa/${m.id}`} className="rlp-m shrink-0 text-[9.5px] text-white/45 hover:text-white">Ficha ›</Link>
                       </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-white/65">
                         {m.telefone && <a href={`tel:${m.telefone.replace(/\s/g, '')}`} className="hover:text-white">{m.telefone}</a>}
@@ -185,7 +191,7 @@ export default function EquipaPage() {
               ) : <span />}
               <button type="button" onClick={gravar} disabled={aGravar}
                 className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-6 py-2.5 text-[13.5px] font-medium disabled:opacity-50">
-                {aGravar ? 'A gravar…' : 'Gravar'}
+                {aGravar ? 'A gravar…' : form.id ? 'Gravar' : 'Criar e abrir ficha'}
               </button>
             </div>
           </div>

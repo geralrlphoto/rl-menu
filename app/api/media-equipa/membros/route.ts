@@ -18,8 +18,28 @@ const limpo = (v: unknown) => String(v ?? '').trim() || null
 export async function GET(req: NextRequest) {
   const bloqueio = exigeAdmin(req)
   if (bloqueio) return bloqueio
+
+  // ?id= → ficha completa de um membro, com os projetos onde foi nomeado
+  const id = req.nextUrl.searchParams.get('id')
+  if (id) {
+    const [{ data: membro, error }, { data: ligacoes }] = await Promise.all([
+      supabase.from('media_equipa').select(`${CAMPOS}, foto_url, dados, criado_em`).eq('id', id).single(),
+      supabase.from('media_equipa_projeto').select('projeto_ref, funcao, criado_em').eq('membro_id', id).order('criado_em', { ascending: false }),
+    ])
+    if (error || !membro) return NextResponse.json({ error: 'Membro não encontrado.' }, { status: 404 })
+    const refs = [...new Set((ligacoes ?? []).map(l => l.projeto_ref))]
+    const { data: portais } = refs.length
+      ? await supabase.from('media_portais').select('ref, nome:dados->>nome, filmagem:dados->>dataFilmagem, status:dados->>status').in('ref', refs)
+      : { data: [] as { ref: string; nome: string | null; filmagem: string | null; status: string | null }[] }
+    const projetos = (ligacoes ?? []).map(l => {
+      const p = (portais ?? []).find(x => x.ref === l.projeto_ref)
+      return { ref: l.projeto_ref, funcao: l.funcao, nome: p?.nome ?? l.projeto_ref, filmagem: p?.filmagem ?? null, status: p?.status ?? null }
+    })
+    return NextResponse.json({ membro: { ...membro, projetos } })
+  }
+
   const [{ data: membros, error }, { data: ligacoes }] = await Promise.all([
-    supabase.from('media_equipa').select(CAMPOS).order('nome'),
+    supabase.from('media_equipa').select(`${CAMPOS}, foto_url`).order('nome'),
     supabase.from('media_equipa_projeto').select('membro_id, projeto_ref').not('membro_id', 'is', null),
   ])
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -55,7 +75,9 @@ export async function PATCH(req: NextRequest) {
   if ('categoria' in b) { if (!ok(b.categoria)) return NextResponse.json({ error: 'Categoria inválida.' }, { status: 400 }); alt.categoria = b.categoria }
   for (const k of ['telefone', 'email', 'instagram', 'notas']) if (k in b) alt[k] = limpo(b[k])
   if ('ativo' in b) alt.ativo = !!b.ativo
-  const { data, error } = await supabase.from('media_equipa').update(alt).eq('id', b.id).select(CAMPOS).single()
+  if ('foto_url' in b) alt.foto_url = limpo(b.foto_url)
+  if ('dados' in b && b.dados && typeof b.dados === 'object') alt.dados = b.dados
+  const { data, error } = await supabase.from('media_equipa').update(alt).eq('id', b.id).select(`${CAMPOS}, foto_url, dados, criado_em`).single()
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true, membro: data })
 }
