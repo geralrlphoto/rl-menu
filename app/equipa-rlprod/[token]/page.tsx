@@ -94,6 +94,7 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
             <a href="#trabalhos" className="hover:text-white">Trabalhos</a>
             <a href="#pagamentos" className="hover:text-white">Pagamentos</a>
             <a href="#dados" className="hover:text-white">Os meus dados</a>
+            <Link href={`/equipa-rlprod/${token}/guia`} className="hover:text-white">Guia</Link>
           </span>
           <span className="flex items-center gap-2 rounded-full border border-white/[0.12] py-1 pl-1 pr-3">
             {m.foto_url
@@ -135,6 +136,17 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
             </div>
           </div>
         </section>
+
+        {/* guia de boas práticas */}
+        <Link href={`/equipa-rlprod/${token}/guia`}
+          className="group mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#2e6cf6]/50 bg-[#2e6cf6]/[0.12] px-5 py-5 sm:px-6 hover:border-[#5a8bff] transition-colors">
+          <span>
+            <span className="rlp-m block text-[9.5px] text-[#a9c1ff]">Lê antes do teu primeiro trabalho</span>
+            <span className="rlp-t mt-1 block text-[26px] leading-none">Guia de boas práticas</span>
+            <span className="mt-1.5 block text-[13px] text-white/60">Preparação, postura nos dias de captação, entrega do material e confidencialidade.</span>
+          </span>
+          <span className="rounded-full bg-[#2e6cf6] group-hover:bg-[#5a8bff] px-5 py-2.5 text-[13.5px] font-medium">Abrir guia ›</span>
+        </Link>
 
         {/* agenda: próximos trabalhos em deslize */}
         <section id="agenda" className="mt-14 scroll-mt-6">
