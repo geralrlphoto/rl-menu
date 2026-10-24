@@ -31,12 +31,25 @@ export const SECOES: SecaoGuia[] = [
     ],
   },
   {
+    id: 'kit',
+    titulo: 'O teu kit RL PROD',
+    intro: 'Vai-te ser dado um kit RL PROD. É a tua farda e a tua identificação nos trabalhos: usa-o com orgulho e cuida dele.',
+    regras: [
+      { t: 'T-shirt RL PROD', d: 'Para usares nos dias de captação. Sempre limpa e passada.' },
+      { t: 'Casaco polar com fecho RL PROD', d: 'Para os dias mais frescos ou trabalhos no exterior, por cima da t-shirt.' },
+      { t: 'Fita credencial RL PROD', d: 'Com a tua identificação, a tua foto e o nome do cliente. Usa-a sempre ao peito e bem visível durante todo o trabalho: é assim que o cliente, os convidados e os outros profissionais sabem quem és.' },
+      { t: 'Saco de pano RL PROD', d: 'Para levares o kit e pequenos acessórios (cartões, baterias, cabos) arrumados.' },
+      { t: 'O kit é só para trabalhos da RL PROD', d: 'Não o uses em trabalhos de outras marcas nem em ocasiões pessoais.' },
+      { t: 'Cuida do kit', d: 'Se alguma peça se estragar ou perder, avisa a RL PROD para ser substituída.' },
+    ],
+  },
+  {
     id: 'postura',
     titulo: 'Postura no dia de captação',
     intro: 'Para o cliente, tu és a RL PROD. A forma como estás conta tanto como as imagens que fazes.',
     regras: [
       { t: 'Chega 30 minutos antes da hora marcada', d: 'Tempo para montar, ver a luz e o espaço com calma.' },
-      { t: 'Veste-te de forma sóbria', d: 'Roupa escura (preto de preferência), limpa e cuidada, sem logótipos de outras marcas. Calçado confortável e silencioso. Em eventos formais, segue o código combinado.' },
+      { t: 'Usa o kit RL PROD e a credencial', d: 'T-shirt ou casaco polar RL PROD e a fita credencial sempre visível. O resto da roupa escura (preto de preferência), limpa e sem logótipos de outras marcas. Calçado confortável e silencioso. Em eventos formais, segue o código combinado.' },
       { t: 'Apresenta-te sempre', d: '"Olá, sou o/a [nome], da equipa RL PROD." Um sorriso e um aperto de mão abrem portas.' },
       { t: 'Telemóvel em silêncio e no bolso', d: 'Só o usas para trabalho. Nada de redes sociais nem chamadas pessoais à frente do cliente ou dos convidados.' },
       { t: 'Sê invisível, mas presente', d: 'Movimenta-te com discrição, não te ponhas à frente dos convidados nem de outros profissionais (fotógrafo, celebrante, DJ).' },
@@ -126,10 +139,11 @@ export const NUNCA = [
   'Usar o telemóvel pessoal à frente do cliente',
   'Esconder um problema técnico ou um momento perdido',
   'Deixar o equipamento sem vigilância',
+  'Trabalhar sem a credencial RL PROD visível',
 ]
 
 export const CHECKLISTS = [
-  { titulo: 'Na véspera', itens: ['Briefing e guião lidos', 'Baterias carregadas e de reserva', 'Cartões vazios e formatados', 'Lentes e sensor limpos', 'Definições de câmara combinadas', 'Roupa preparada', 'Percurso e hora de saída', 'Confirmação com o responsável'] },
-  { titulo: 'No dia', itens: ['Chegar 30 minutos antes', 'Apresentar-me ao cliente', 'Telemóvel em silêncio', 'Testar áudio', 'Planos de segurança dos momentos-chave', 'Cartões cheios guardados à parte'] },
+  { titulo: 'Na véspera', itens: ['Briefing e guião lidos', 'Baterias carregadas e de reserva', 'Cartões vazios e formatados', 'Lentes e sensor limpos', 'Definições de câmara combinadas', 'Kit RL PROD: t-shirt, casaco polar e credencial', 'Percurso e hora de saída', 'Confirmação com o responsável'] },
+  { titulo: 'No dia', itens: ['Chegar 30 minutos antes', 'Credencial ao peito e visível', 'Apresentar-me ao cliente', 'Telemóvel em silêncio', 'Testar áudio', 'Planos de segurança dos momentos-chave', 'Cartões cheios guardados à parte'] },
   { titulo: 'Depois', itens: ['Duas cópias de segurança no próprio dia', 'Pastas organizadas com o nome certo', 'Link enviado no portal até 48 horas', 'Nota com o resumo do trabalho', 'Cartões guardados até confirmação'] },
 ]
