@@ -28,9 +28,17 @@ export default async function PagamentosPage({ params }: Props) {
   const cookieStore = await cookies()
   const isAdmin = cookieStore.get('rl_auth')?.value === process.env.AUTH_SECRET
 
+  // Contrato devolvido pelo cliente: bucket privado, link temporário de 1 h
+  const assinado = (projeto as any).contratoAssinado as { path?: string } | undefined
+  let contratoAssinadoUrl: string | null = null
+  if (assinado?.path) {
+    const { data } = await supabase.storage.from('contratos-assinados').createSignedUrl(assinado.path, 3600)
+    contratoAssinadoUrl = data?.signedUrl ?? null
+  }
+
   return (
     <main className="min-h-screen relative">
-      <PagamentosClient projeto={projeto} isAdmin={isAdmin} />
+      <PagamentosClient projeto={projeto} isAdmin={isAdmin} contratoAssinadoUrl={contratoAssinadoUrl} />
     </main>
   )
 }

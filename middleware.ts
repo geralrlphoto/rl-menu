@@ -301,6 +301,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/media-portal/notify-workflow') ||
     pathname.startsWith('/api/test-portal-card') ||
     /^\/api\/media-portal\/[^/]+\/feedback/.test(pathname) ||
+    /^\/api\/media-portal\/[^/]+\/contrato-assinado/.test(pathname) || // cliente devolve o contrato (rota valida a senha do portal)
     /^\/api\/media-portal\/[^/]+\/chat/.test(pathname) ||
     /^\/api\/media-portal\/[^/]+\/auth/.test(pathname) ||
     /^\/api\/media-portal\/[^/]+\/notifications/.test(pathname) ||

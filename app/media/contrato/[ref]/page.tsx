@@ -2,6 +2,7 @@
 import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import ContratoEditBar from './ContratoEditBar'
+import AutoImprimir from './AutoImprimir'
 import { getClausula, type ClausulasMap } from './clausulas-defaults'
 
 const supabase = createClient(
@@ -88,6 +89,7 @@ export default async function ContratoPage({ params }: Props) {
 
   return (
     <>
+      <AutoImprimir />
       <ContratoEditBar
         refUp={refUp}
         contrato={contrato}
