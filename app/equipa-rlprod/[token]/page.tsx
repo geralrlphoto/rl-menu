@@ -24,7 +24,7 @@ const iniciais = (n: string) => n.trim().split(/\s+/).map(p => p[0]).slice(0, 2)
 const SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
 type Trabalho = {
-  id: string; ref: string; funcao: string; valor: number; pago: boolean; pago_em: string | null; notas: string | null
+  id: string; ref: string; funcao: string; valor: number; pago: boolean; pago_em: string | null; notas: string | null; comprovativo: string | null
   nome: string; local: string | null; filmagem: Date | null; entrega: Date | null; status: string | null
 }
 
@@ -41,7 +41,12 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
   const d = (m.dados ?? {}) as FichaDados
 
   const { data: ligacoes } = await supabase.from('media_equipa_projeto')
-    .select('id, projeto_ref, funcao, valor, pago, pago_em, notas').eq('membro_id', m.id)
+    .select('id, projeto_ref, funcao, valor, pago, pago_em, notas, comprovativo_path').eq('membro_id', m.id)
+  // Comprovativos de pagamento (bucket privado): links temporários de 1 hora
+  const caminhos = (ligacoes ?? []).map(l => l.comprovativo_path).filter(Boolean) as string[]
+  const { data: assinados } = caminhos.length
+    ? await supabase.storage.from('comprovativos-equipa').createSignedUrls(caminhos, 3600)
+    : { data: [] as { path: string | null; signedUrl: string }[] }
   const refs = [...new Set((ligacoes ?? []).map(l => l.projeto_ref))]
   const { data: portais } = refs.length
     ? await supabase.from('media_portais')
@@ -54,6 +59,7 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
     return {
       id: l.id, ref: l.projeto_ref, funcao: l.funcao || singular(m.categoria), valor: Number(l.valor) || 0,
       pago: !!l.pago, pago_em: l.pago_em, notas: l.notas,
+      comprovativo: (assinados ?? []).find(a => a.path === l.comprovativo_path)?.signedUrl ?? null,
       nome: p?.nome || l.projeto_ref, local: p?.local || null, status: p?.status || null,
       filmagem: lerData(p?.filmagem), entrega: lerData(p?.entrega),
     }
@@ -229,6 +235,7 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[14px] text-white/90">{t.nome}</span>
                     <span className="block text-[11.5px] text-white/45">{t.funcao}{t.pago && t.pago_em ? ` · pago a ${new Date(t.pago_em + 'T12:00:00').toLocaleDateString('pt-PT')}` : ''}</span>
+                    {t.comprovativo && <a href={t.comprovativo} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-block text-[12px] text-[#a9c1ff] hover:text-white">↓ Ver comprovativo</a>}
                   </span>
                   <span className="rlp-t text-[17px]">{eur(t.valor)}</span>
                   <span className={`rlp-m w-[86px] text-center rounded-full border px-2 py-1 text-[8px] ${t.pago ? 'border-[#2e6cf6] bg-[#2e6cf6]/20 text-[#a9c1ff]' : 'border-white/25 text-white/60'}`}>{t.pago ? '✓ Pago' : 'Por pagar'}</span>

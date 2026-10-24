@@ -104,18 +104,19 @@ export default function ContratoEditBar({
     setSaving(false)
   }
 
+  // Estado do contrato com as cores da RL PROD
   const estadoBadge = (() => {
     switch (contrato.estado) {
-      case 'Assinado':   return 'border-emerald-400/30 text-emerald-400/60'
-      case 'disponivel': return 'border-emerald-400/20 text-emerald-400/50'
-      case 'rascunho':   return 'border-amber-400/30 text-amber-400/50'
-      default:           return 'border-white/10 text-white/25'
+      case 'Assinado':   return 'border-[#2e6cf6] bg-[#2e6cf6]/25 text-[#a9c1ff]'
+      case 'disponivel': return 'border-[#5a8bff]/60 text-[#a9c1ff]'
+      case 'rascunho':   return 'border-white/25 text-white/60'
+      default:           return 'border-white/15 text-white/40'
     }
   })()
 
   const estadoLabel = contrato.estado === 'rascunho' ? 'Rascunho'
     : contrato.estado === 'disponivel' ? 'Disponível'
-    : contrato.estado ?? '—'
+    : contrato.estado ?? 'Sem estado'
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'dados',     label: 'Dados' },
@@ -123,33 +124,34 @@ export default function ContratoEditBar({
     { id: 'clausulas', label: 'Cláusulas' },
   ]
 
+  const INPUT = 'w-full rounded-md border border-white/[0.12] bg-[#00141f]/70 px-3.5 py-2.5 text-[14px] text-white placeholder:text-white/25 focus:outline-none focus:border-[#2e6cf6] transition-colors'
+  const ROTULO = 'rlp-m text-[9px] text-white/50'
+  const SECAO = 'rlp-m traco text-[9.5px] text-[#5a8bff]'
+
   return (
     <>
       {/* ── Barra topo ── */}
-      <div className="print:hidden bg-black border-b border-white/10 px-6 py-3 flex items-center justify-between sticky top-0 z-50">
+      <div className="rlp print:hidden sticky top-0 z-50 border-b border-white/[0.08] bg-[#00141f]/90 backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 text-white">
         <Link href={`/portal-media/${refUp}/contrato`}
-          className="text-[9px] tracking-[0.4em] text-white/30 hover:text-white/60 uppercase transition-colors">
-          ‹ Voltar ao Portal
+          className="rlp-m text-[10px] text-white/50 hover:text-white transition-colors">
+          ‹ Voltar ao portal
         </Link>
-        <div className="flex items-center gap-3">
-          <span className="text-[8px] tracking-[0.4em] text-white/20 uppercase font-mono">{contrato.ref}</span>
-          <span className={`text-[8px] tracking-[0.3em] uppercase px-2 py-1 border ${estadoBadge}`}>{estadoLabel}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="rlp-m text-[9px] text-white/40">{contrato.ref}</span>
+          <span className={`rlp-m rounded-full border px-2.5 py-1 text-[8.5px] ${estadoBadge}`}>{estadoLabel}</span>
           {isAdmin && contrato.estado === 'disponivel' && (
             <button
               onClick={marcarAssinado}
               disabled={marcandoAssinado}
-              className="border border-emerald-400/30 bg-emerald-400/[0.05] hover:bg-emerald-400/[0.12]
-                         px-3 py-1.5 text-[8px] tracking-[0.35em] text-emerald-400/60 hover:text-emerald-400/90
-                         uppercase transition-colors disabled:opacity-40"
+              className="rounded-full border border-[#2e6cf6] bg-[#2e6cf6]/15 hover:bg-[#2e6cf6]/30 px-4 py-2 text-[12.5px] text-[#a9c1ff] hover:text-white transition-colors disabled:opacity-40"
             >
-              {marcandoAssinado ? '⏳' : '✓ Marcar Assinado'}
+              {marcandoAssinado ? 'A marcar…' : '✓ Marcar assinado'}
             </button>
           )}
           {isAdmin && (
             <button
               onClick={() => { setTab('dados'); setEditing(true) }}
-              className="border border-white/20 hover:border-white/40 px-3 py-1.5
-                         text-[8px] tracking-[0.35em] text-white/40 hover:text-white/70 uppercase transition-colors"
+              className="rounded-full border border-white/[0.16] hover:border-white/40 px-4 py-2 text-[12.5px] text-white/80 hover:text-white transition-colors"
             >
               ✎ Editar
             </button>
@@ -161,50 +163,47 @@ export default function ContratoEditBar({
       {/* ── Gaveta de edição ── */}
       {editing && (
         <>
-          <div className="fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm"
+          <div className="print:hidden fixed inset-0 z-[90] bg-black/70 backdrop-blur-sm"
             onClick={() => !saving && setEditing(false)} />
 
-          <div className="fixed inset-y-0 right-0 z-[100] w-full max-w-lg flex flex-col"
-            style={{ background: '#06090f', borderLeft: '1px solid rgba(255,255,255,0.07)' }}>
+          <div className="rlp print:hidden fixed inset-y-0 right-0 z-[100] w-full max-w-lg flex flex-col border-l border-white/[0.08] bg-[#00141f] text-white">
 
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.08]">
               <div>
-                <p className="text-[9px] tracking-[0.5em] text-white/25 uppercase">Editar Contrato</p>
-                <p className="text-[11px] tracking-[0.15em] text-white/45 mt-0.5 font-light">{contrato.ref}</p>
+                <p className={SECAO}>Editar contrato</p>
+                <p className="rlp-t mt-1.5 text-[24px] leading-none">{contrato.ref}</p>
               </div>
-              <button onClick={() => setEditing(false)}
-                className="text-white/20 hover:text-white/60 text-xl transition-colors leading-none">✕</button>
+              <button onClick={() => setEditing(false)} aria-label="Fechar"
+                className="text-white/40 hover:text-white text-xl transition-colors leading-none">✕</button>
             </div>
 
             {/* Tabs */}
-            <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              {TABS.map(t => (
-                <button key={t.id} onClick={() => setTab(t.id)}
-                  className={`flex-1 py-3 text-[9px] tracking-[0.35em] uppercase transition-colors ${
-                    tab === t.id ? 'text-white/70 border-b border-white/30' : 'text-white/25 hover:text-white/50'
-                  }`}>
-                  {t.label}
-                </button>
-              ))}
+            <div className="px-6 pt-4">
+              <div className="grid grid-cols-3 gap-1 rounded-full border border-white/[0.1] bg-[#0c2236]/60 p-1">
+                {TABS.map(t => (
+                  <button key={t.id} onClick={() => setTab(t.id)}
+                    className={`rounded-full py-2 text-[12.5px] transition-colors ${
+                      tab === t.id ? 'bg-[#2e6cf6] text-white' : 'text-white/55 hover:text-white'
+                    }`}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Scroll */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-5">
+            <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-4">
 
               {/* ── Tab Dados ── */}
               {tab === 'dados' && (
                 <>
-                  <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Dados do Cliente</p>
+                  <p className={SECAO}>Dados do cliente</p>
                   {FIELDS.map(({ key, label, placeholder }) => (
                     <div key={key} className="flex flex-col gap-1.5">
-                      <label className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{label}</label>
+                      <label className={ROTULO}>{label}</label>
                       <input value={ficha[key] ?? ''} onChange={e => setFichaField(key, e.target.value)}
-                        placeholder={placeholder}
-                        className="bg-white/[0.03] border border-white/[0.08] px-3 py-2 text-[12px] font-light
-                                   text-white/70 focus:outline-none focus:border-white/20 placeholder:text-white/15
-                                   transition-colors w-full" />
+                        placeholder={placeholder} className={INPUT} />
                     </div>
                   ))}
                 </>
@@ -213,15 +212,12 @@ export default function ContratoEditBar({
               {/* ── Tab Conteúdo ── */}
               {tab === 'conteudo' && (
                 <>
-                  <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Conteúdo do Contrato</p>
+                  <p className={SECAO}>Conteúdo do contrato</p>
                   {TEXT_AREAS.map(({ key, label, placeholder, rows }) => (
                     <div key={key} className="flex flex-col gap-1.5">
-                      <label className="text-[9px] tracking-[0.3em] text-white/25 uppercase">{label}</label>
+                      <label className={ROTULO}>{label}</label>
                       <textarea value={ficha[key] ?? ''} onChange={e => setFichaField(key, e.target.value)}
-                        placeholder={placeholder} rows={rows}
-                        className="bg-white/[0.03] border border-white/[0.08] px-3 py-2 text-[12px] font-light
-                                   text-white/70 focus:outline-none focus:border-white/20 placeholder:text-white/15
-                                   resize-none transition-colors w-full" />
+                        placeholder={placeholder} rows={rows} className={`${INPUT} resize-none leading-relaxed`} />
                     </div>
                   ))}
                 </>
@@ -230,9 +226,9 @@ export default function ContratoEditBar({
               {/* ── Tab Cláusulas ── */}
               {tab === 'clausulas' && (
                 <>
-                  <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Cláusulas Padrão</p>
-                  <p className="text-[10px] font-light text-white/20 leading-relaxed -mt-2">
-                    Edita o texto, remove ou restaura cada cláusula. Linhas com &quot;1.&quot; ficam a bold no contrato.
+                  <p className={SECAO}>Cláusulas padrão</p>
+                  <p className="text-[12.5px] text-white/50 leading-relaxed -mt-1">
+                    Edita o texto, remove ou restaura cada cláusula. Linhas com &quot;1.&quot; ficam a negrito no contrato.
                   </p>
 
                   {/* Default clauses */}
@@ -240,25 +236,23 @@ export default function ContratoEditBar({
                     const isRemovida = removidas.includes(key)
                     return (
                       <div key={key}
-                        className={`flex flex-col gap-1.5 pb-4 border-b border-white/[0.05] ${isRemovida ? 'opacity-40' : ''}`}>
-                        {/* Title row */}
+                        className={`flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-[#0c2236]/50 p-3.5 ${isRemovida ? 'opacity-50' : ''}`}>
                         <div className="flex items-center justify-between gap-2">
-                          <label className={`text-[9px] tracking-[0.25em] uppercase ${isRemovida ? 'line-through text-white/20' : 'text-white/30'}`}>
+                          <label className={`rlp-t text-[16px] leading-tight ${isRemovida ? 'line-through text-white/40' : 'text-white'}`}>
                             {titulo}
                           </label>
                           {isRemovida ? (
                             <button onClick={() => restaurar(key)}
-                              className="text-[9px] tracking-[0.25em] text-emerald-400/50 hover:text-emerald-400/80 uppercase transition-colors shrink-0">
+                              className="shrink-0 text-[12px] text-[#a9c1ff] hover:text-white transition-colors">
                               ↺ Restaurar
                             </button>
                           ) : (
                             <button onClick={() => remover(key)}
-                              className="text-[9px] tracking-[0.25em] text-white/15 hover:text-red-400/50 uppercase transition-colors shrink-0">
+                              className="shrink-0 text-[12px] text-white/40 hover:text-[#ff4747] transition-colors">
                               Remover
                             </button>
                           )}
                         </div>
-                        {/* Textarea only if not removed */}
                         {!isRemovida && (
                           <>
                             <textarea
@@ -266,13 +260,11 @@ export default function ContratoEditBar({
                               onChange={e => setClausulaVal(key, e.target.value)}
                               placeholder={CLAUSULAS_DEFAULT[key] ?? ''}
                               rows={4}
-                              className="bg-white/[0.03] border border-white/[0.08] px-3 py-2 text-[11px] font-light
-                                         text-white/65 focus:outline-none focus:border-white/20 placeholder:text-white/10
-                                         resize-y transition-colors w-full leading-relaxed"
+                              className={`${INPUT} text-[13px] resize-y leading-relaxed`}
                             />
                             {clausulas[key] && clausulas[key] !== CLAUSULAS_DEFAULT[key] && (
                               <button onClick={() => setClausulaVal(key, '')}
-                                className="self-start text-[9px] text-white/20 hover:text-white/45 tracking-[0.2em] uppercase transition-colors">
+                                className="self-start text-[12px] text-white/45 hover:text-white transition-colors">
                                 ↺ Repor padrão
                               </button>
                             )}
@@ -284,21 +276,19 @@ export default function ContratoEditBar({
 
                   {/* Custom clauses */}
                   {custom.length > 0 && (
-                    <div className="flex flex-col gap-4 pt-2">
-                      <p className="text-[8px] tracking-[0.6em] text-white/20 uppercase">Cláusulas Adicionadas</p>
+                    <div className="flex flex-col gap-3 pt-2">
+                      <p className={SECAO}>Cláusulas adicionadas</p>
                       {custom.map(c => (
-                        <div key={c.id} className="flex flex-col gap-2 pb-4 border-b border-white/[0.05]">
+                        <div key={c.id} className="flex flex-col gap-2 rounded-xl border border-[#2e6cf6]/30 bg-[#0c2236]/50 p-3.5">
                           <div className="flex items-center justify-between gap-2">
                             <input
                               value={c.titulo}
                               onChange={e => updateCustom(c.id, 'titulo', e.target.value)}
                               placeholder="Título da cláusula"
-                              className="flex-1 bg-white/[0.03] border border-white/[0.08] px-3 py-1.5 text-[11px]
-                                         font-light text-white/70 focus:outline-none focus:border-white/20
-                                         placeholder:text-white/15 transition-colors"
+                              className={`${INPUT} flex-1`}
                             />
                             <button onClick={() => removeCustom(c.id)}
-                              className="text-[9px] tracking-[0.25em] text-white/15 hover:text-red-400/60 uppercase transition-colors shrink-0">
+                              className="shrink-0 text-[12px] text-white/40 hover:text-[#ff4747] transition-colors">
                               Eliminar
                             </button>
                           </div>
@@ -307,9 +297,7 @@ export default function ContratoEditBar({
                             onChange={e => updateCustom(c.id, 'texto', e.target.value)}
                             placeholder="Texto da cláusula..."
                             rows={4}
-                            className="bg-white/[0.03] border border-white/[0.08] px-3 py-2 text-[11px] font-light
-                                       text-white/65 focus:outline-none focus:border-white/20 placeholder:text-white/15
-                                       resize-y transition-colors w-full leading-relaxed"
+                            className={`${INPUT} text-[13px] resize-y leading-relaxed`}
                           />
                         </div>
                       ))}
@@ -317,47 +305,39 @@ export default function ContratoEditBar({
                   )}
 
                   {/* Add new clause */}
-                  <div className="pt-2" style={{ borderTop: custom.length > 0 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="pt-2">
                     {addingNew ? (
-                      <div className="flex flex-col gap-3">
-                        <p className="text-[8px] tracking-[0.6em] text-white/25 uppercase">Nova Cláusula</p>
+                      <div className="flex flex-col gap-3 rounded-xl border border-dashed border-[#2e6cf6]/50 p-3.5">
+                        <p className={SECAO}>Nova cláusula</p>
                         <input
                           value={novaClausula.titulo}
                           onChange={e => setNovaClausula(n => ({ ...n, titulo: e.target.value }))}
                           placeholder="Título (ex: Décima Terceira Cláusula)"
-                          className="bg-white/[0.03] border border-white/[0.08] px-3 py-2 text-[12px] font-light
-                                     text-white/70 focus:outline-none focus:border-white/20 placeholder:text-white/15
-                                     transition-colors w-full"
+                          className={INPUT}
                         />
                         <textarea
                           value={novaClausula.texto}
                           onChange={e => setNovaClausula(n => ({ ...n, texto: e.target.value }))}
                           placeholder="Texto da nova cláusula..."
                           rows={5}
-                          className="bg-white/[0.03] border border-white/[0.08] px-3 py-2 text-[11px] font-light
-                                     text-white/65 focus:outline-none focus:border-white/20 placeholder:text-white/15
-                                     resize-none transition-colors w-full leading-relaxed"
+                          className={`${INPUT} text-[13px] resize-none leading-relaxed`}
                         />
                         <div className="flex items-center gap-3">
                           <button onClick={addClausula}
                             disabled={!novaClausula.titulo.trim()}
-                            className="border border-white/25 bg-white/[0.04] hover:bg-white/[0.09] px-5 py-2
-                                       text-[9px] tracking-[0.35em] text-white/60 hover:text-white/90 uppercase
-                                       transition-all disabled:opacity-30">
+                            className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-5 py-2 text-[13px] font-medium transition-colors disabled:opacity-40">
                             + Adicionar
                           </button>
                           <button onClick={() => { setAddingNew(false); setNovaClausula({ titulo: '', texto: '' }) }}
-                            className="text-[9px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors">
+                            className="text-[13px] text-white/50 hover:text-white transition-colors">
                             Cancelar
                           </button>
                         </div>
                       </div>
                     ) : (
                       <button onClick={() => setAddingNew(true)}
-                        className="w-full border border-dashed border-white/15 hover:border-white/30 py-3
-                                   text-[9px] tracking-[0.4em] text-white/25 hover:text-white/55 uppercase
-                                   transition-colors text-center">
-                        + Nova Cláusula
+                        className="w-full rounded-xl border border-dashed border-white/20 hover:border-[#2e6cf6] py-3 text-[13px] text-white/55 hover:text-white transition-colors">
+                        + Nova cláusula
                       </button>
                     )}
                   </div>
@@ -366,18 +346,14 @@ export default function ContratoEditBar({
             </div>
 
             {/* Footer */}
-            <div className="px-6 py-4 flex items-center justify-between gap-3"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+            <div className="px-6 py-4 flex items-center justify-between gap-3 border-t border-white/[0.08]">
               <button onClick={() => setEditing(false)} disabled={saving}
-                className="text-[9px] tracking-[0.3em] text-white/25 hover:text-white/50 uppercase transition-colors disabled:opacity-40">
+                className="text-[13px] text-white/50 hover:text-white transition-colors disabled:opacity-40">
                 Cancelar
               </button>
               <button onClick={save} disabled={saving}
-                className="border border-white/30 bg-white/[0.04] hover:bg-white/[0.10] px-7 py-2.5
-                           text-[9px] tracking-[0.4em] text-white/70 hover:text-white uppercase
-                           transition-all duration-200 disabled:opacity-40"
-                style={{ boxShadow: '0 0 16px rgba(255,255,255,0.06)' }}>
-                {saving ? '⏳ A guardar...' : 'Guardar e Atualizar'}
+                className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-6 py-2.5 text-[13.5px] font-medium transition-colors disabled:opacity-40">
+                {saving ? 'A guardar…' : 'Guardar e atualizar'}
               </button>
             </div>
           </div>

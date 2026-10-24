@@ -7,7 +7,7 @@ import { CATEGORIAS } from '@/app/media/equipa/categorias'
 // um clique põe a pessoa no projeto, outro clique tira. Pessoas de fora do staff
 // entram pelo formulário. Grava em media_equipa_projeto via /api/media-equipa.
 
-type Membro = { id: string; nome: string; funcao: string; contacto?: string | null; notas?: string | null; membro_id?: string | null; valor: number; pago: boolean; ver_guiao?: boolean; ver_briefing?: boolean; envios?: { id: string; link: string; nota: string | null; enviadoEm: string }[] }
+type Membro = { id: string; nome: string; funcao: string; contacto?: string | null; notas?: string | null; membro_id?: string | null; valor: number; pago: boolean; ver_guiao?: boolean; ver_briefing?: boolean; comprovativo_path?: string | null; envios?: { id: string; link: string; nota: string | null; enviadoEm: string }[] }
 type Pessoa = { id: string; nome: string; categoria: string; funcao: string; contacto?: string | null; foto_url?: string | null; valorDia?: number }
 type Financeiro = { valorProjeto: number; recebido: number; receitasExtra: number; custoEquipa: number; outrasDespesas: number; custoTotal: number }
 
@@ -42,6 +42,20 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
     const r = await fetch('/api/media-equipa', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.id, ...alt }) })
     if (!r.ok) alert('Não foi possível gravar.')
     carregar()
+  }
+
+  // Comprovativo do pagamento: carrega o ficheiro (PDF ou imagem) e marca como pago
+  const [aCarregar, setACarregar] = useState<string | null>(null)
+  async function carregarComprovativo(m: Membro, f: File) {
+    setACarregar(m.id)
+    const fd = new FormData(); fd.append('id', m.id); fd.append('file', f)
+    try {
+      const r = await fetch('/api/media-equipa/comprovativo', { method: 'POST', body: fd })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) alert(d.error || 'Não foi possível carregar o comprovativo.')
+      await carregar()
+    } catch { alert('Erro de ligação.') }
+    setACarregar(null)
   }
 
   function gravarValor(m: Membro) {
@@ -164,6 +178,17 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
                   className={`rlp-m rounded-full border px-3 py-1.5 text-[8.5px] transition-colors disabled:opacity-30 ${m.pago ? 'border-[#2e6cf6] bg-[#2e6cf6]/25 text-[#a9c1ff]' : 'border-[#ff4747]/50 text-[#ff8a8a] hover:bg-[#ff4747]/10'}`}>
                   {m.pago ? '✓ Pago' : 'Por pagar'}
                 </button>
+                {Number(m.valor) > 0 && (m.comprovativo_path ? (
+                  <a href={`/api/media-equipa/comprovativo?id=${m.id}`} target="_blank" rel="noopener noreferrer" title="Ver o comprovativo enviado"
+                    className="rlp-m rounded-full border border-[#2e6cf6]/60 px-3 py-1.5 text-[8.5px] text-[#a9c1ff] hover:text-white">↓ Comprovativo</a>
+                ) : (
+                  <label title="Carrega o comprovativo (PDF ou imagem). Fica marcado como pago."
+                    className="rlp-m cursor-pointer rounded-full border border-dashed border-white/25 px-3 py-1.5 text-[8.5px] text-white/55 hover:text-white">
+                    {aCarregar === m.id ? 'A carregar…' : '+ Comprovativo'}
+                    <input type="file" accept="application/pdf,image/*" className="hidden" disabled={aCarregar === m.id}
+                      onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) carregarComprovativo(m, f) }} />
+                  </label>
+                ))}
                 {m.membro_id && (
                   <button type="button" onClick={() => mudar(m, { ver_briefing: !m.ver_briefing })}
                     title={m.ver_briefing ? 'Vê o briefing no portal da equipa' : 'Não vê o briefing'}
@@ -177,6 +202,10 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
                     className={`rlp-m rounded-full border px-3 py-1.5 text-[8.5px] transition-colors ${m.ver_guiao ? 'border-[#2e6cf6] bg-[#2e6cf6]/25 text-[#a9c1ff]' : 'border-white/20 text-white/45 hover:text-white'}`}>
                     {m.ver_guiao ? '✓ Guião' : 'Sem guião'}
                   </button>
+                )}
+                {m.membro_id && (
+                  <a href={`/media/equipa/${m.membro_id}/credencial?projeto=${encodeURIComponent(portalRef)}`} target="_blank" rel="noopener noreferrer"
+                    className="rlp-m rounded-full border border-white/20 px-3 py-1.5 text-[8.5px] text-white/55 hover:text-white">Credencial</a>
                 )}
                 <button type="button" onClick={() => remover(m)} aria-label={`Tirar ${m.nome}`} className="text-white/30 hover:text-[#ff4747] text-[13px]">✕</button>
                 {/* material enviado pela pessoa no portal da equipa */}

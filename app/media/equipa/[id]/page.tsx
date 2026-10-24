@@ -450,6 +450,7 @@ function PortalMembro({ id, token, senha, nome, telefone, onSenha }: { id: strin
         </div>
         <div className="flex flex-wrap gap-2">
           <a href={url} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/[0.16] px-4 py-2 text-[13px] text-white/80 hover:text-white">Abrir portal ↗</a>
+          <a href={`/media/equipa/${id}/credencial`} className="rounded-full border border-white/[0.16] px-4 py-2 text-[13px] text-white/80 hover:text-white">Credencial</a>
           <button type="button" onClick={() => copiar(`${url}
 Senha: ${senha}`, 'link')}
             className="rounded-full border border-white/[0.16] px-4 py-2 text-[13px] text-white/80 hover:text-white">{copiado === 'link' ? '✓ Copiado' : 'Copiar link e senha'}</button>
