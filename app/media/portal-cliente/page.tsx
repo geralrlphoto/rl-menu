@@ -120,9 +120,18 @@ const FILTROS: { id: string; label: string }[] = [
   { id: 'atraso',    label: 'Pagamentos em atraso' },
 ]
 
+// Separadores: Novos (portal ainda não enviado ao cliente), Ativos (enviado, a decorrer)
+// e Fechados (projeto concluído)
+const SEPARADORES = [
+  { id: 'novos',    label: 'Novos projetos',    sub: 'Ainda não enviados ao cliente' },
+  { id: 'ativos',   label: 'Projetos ativos',   sub: 'Com o cliente, a decorrer' },
+  { id: 'fechados', label: 'Projetos fechados', sub: 'Concluídos' },
+] as const
+type Separador = typeof SEPARADORES[number]['id']
+
 // ─── página ───────────────────────────────────────────────────────────────────
-export default async function PortalClientePage({ searchParams }: { searchParams: Promise<{ estado?: string }> }) {
-  const { estado: estadoParam } = await searchParams
+export default async function PortalClientePage({ searchParams }: { searchParams: Promise<{ estado?: string; ver?: string }> }) {
+  const { estado: estadoParam, ver: verParam } = await searchParams
   const filtro = FILTROS.some(f => f.id === estadoParam) ? estadoParam! : 'todos'
 
   const supabase = createClient(
@@ -162,7 +171,26 @@ export default async function PortalClientePage({ searchParams }: { searchParams
 
   const todos: Item[] = [...supabaseProjetos, ...mockProjetos]
   const hoje = hojeLisboa()
-  const lista = todos.map(p => ({ p, r: resumo(p, hoje) }))
+  const lista = todos.map(p => {
+    const r = resumo(p, hoje)
+    const enviado = enviadoEmMap[p.ref?.toUpperCase()] ?? p.portalEnviadoEm
+    const sep: Separador = r.grupo === 'concluido' ? 'fechados' : enviado ? 'ativos' : 'novos'
+    return { p, r, sep }
+  })
+  const porSep: Record<Separador, number> = {
+    novos: lista.filter(x => x.sep === 'novos').length,
+    ativos: lista.filter(x => x.sep === 'ativos').length,
+    fechados: lista.filter(x => x.sep === 'fechados').length,
+  }
+  const separador: Separador = SEPARADORES.some(x => x.id === verParam) ? verParam as Separador : 'ativos'
+  const doSep = lista.filter(x => x.sep === separador)
+  const ligacao = (sep: Separador, est?: string) => {
+    const q = new URLSearchParams()
+    if (sep !== 'ativos') q.set('ver', sep)
+    if (est && est !== 'todos') q.set('estado', est)
+    const t = q.toString()
+    return `/media/portal-cliente${t ? `?${t}` : ''}`
+  }
 
   // ── Resumo geral ──
   const ativos = lista.filter(({ p }) => enviadoEmMap[p.ref?.toUpperCase()] ?? p.portalEnviadoEm).length
@@ -172,15 +200,16 @@ export default async function PortalClientePage({ searchParams }: { searchParams
   const comAtraso = lista.filter(x => x.r.atraso > 0).length
   const valorAtraso = lista.reduce((s, x) => s + x.r.valorAtraso, 0)
 
+  // Os filtros finos contam dentro do separador escolhido
   const contagem: Record<string, number> = {
-    todos: lista.length,
-    producao: emProducao,
-    concluido: lista.filter(x => x.r.grupo === 'concluido').length,
-    pausa: lista.filter(x => x.r.grupo === 'pausa').length,
-    atraso: comAtraso,
+    todos: doSep.length,
+    producao: doSep.filter(x => x.r.grupo === 'producao').length,
+    concluido: separador === 'fechados' ? 0 : doSep.filter(x => x.r.grupo === 'concluido').length,
+    pausa: doSep.filter(x => x.r.grupo === 'pausa').length,
+    atraso: doSep.filter(x => x.r.atraso > 0).length,
   }
 
-  const visiveis = lista.filter(x =>
+  const visiveis = doSep.filter(x =>
     filtro === 'todos' ? true : filtro === 'atraso' ? x.r.atraso > 0 : x.r.grupo === filtro)
 
   return (
@@ -231,15 +260,32 @@ export default async function PortalClientePage({ searchParams }: { searchParams
           ))}
         </div>
 
-        {/* Filtros */}
-        <div className="mt-10 mb-5 flex flex-wrap items-center justify-between gap-4">
-          <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Projetos</p>
+        {/* Separadores */}
+        <nav className="mt-10 grid grid-cols-3 gap-2" aria-label="Separadores de projetos">
+          {SEPARADORES.map(t => {
+            const ativo = separador === t.id
+            return (
+              <Link key={t.id} href={ligacao(t.id)} scroll={false}
+                className={`rounded-2xl border px-4 py-3.5 sm:px-5 sm:py-4 transition-colors ${ativo ? 'border-[#2e6cf6] bg-[#2e6cf6]/20' : 'border-white/[0.1] bg-[#00141f]/60 hover:border-white/30'}`}>
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className={`rlp-t text-[17px] sm:text-[22px] leading-tight ${ativo ? 'text-white' : 'text-white/75'}`}>{t.label}</span>
+                  <span className={`rlp-t text-[22px] sm:text-[28px] leading-none ${ativo ? 'text-[#a9c1ff]' : 'text-white/40'}`}>{porSep[t.id]}</span>
+                </span>
+                <span className="mt-1 hidden sm:block text-[12px] text-white/45">{t.sub}</span>
+              </Link>
+            )
+          })}
+        </nav>
+
+        {/* Filtros dentro do separador */}
+        <div className="mt-6 mb-5 flex flex-wrap items-center justify-between gap-4">
+          <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">{SEPARADORES.find(t => t.id === separador)!.label}</p>
           <div className="flex flex-wrap gap-1 rounded-full border border-white/[0.12] bg-[#00141f]/60 p-1">
-            {FILTROS.filter(f => f.id === 'todos' || f.id === filtro || contagem[f.id] > 0).map(f => {
+            {FILTROS.filter(f => f.id === 'todos' || f.id === filtro || contagem[f.id] > 0).filter(f => !(separador === 'fechados' && f.id === 'concluido')).map(f => {
               const ativo = filtro === f.id
               const alerta = f.id === 'atraso'
               return (
-                <Link key={f.id} href={f.id === 'todos' ? '/media/portal-cliente' : `/media/portal-cliente?estado=${f.id}`}
+                <Link key={f.id} href={ligacao(separador, f.id)}
                   scroll={false}
                   className={`rounded-full px-3.5 py-1.5 text-[12px] transition-colors ${
                     ativo ? (alerta ? 'bg-[#ff4747] text-white' : 'bg-[#2e6cf6] text-white')
@@ -254,8 +300,8 @@ export default async function PortalClientePage({ searchParams }: { searchParams
         {/* Cartões */}
         {visiveis.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 rounded-2xl border border-white/[0.1] bg-[#00141f]/60">
-            <p className="rlp-m text-[11px] text-white/40">Sem projetos neste filtro</p>
-            <Link href="/media/portal-cliente" className="text-[14px] text-[#5a8bff] hover:underline">Ver todos</Link>
+            <p className="rlp-m text-[11px] text-white/40">{doSep.length === 0 ? (separador === 'novos' ? 'Sem projetos novos' : separador === 'fechados' ? 'Sem projetos fechados' : 'Sem projetos ativos') : 'Sem projetos neste filtro'}</p>
+            {doSep.length > 0 && <Link href={ligacao(separador)} className="text-[14px] text-[#5a8bff] hover:underline">Ver todos</Link>}
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
