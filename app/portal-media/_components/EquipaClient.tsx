@@ -7,7 +7,7 @@ import { CATEGORIAS } from '@/app/media/equipa/categorias'
 // um clique põe a pessoa no projeto, outro clique tira. Pessoas de fora do staff
 // entram pelo formulário. Grava em media_equipa_projeto via /api/media-equipa.
 
-type Membro = { id: string; nome: string; funcao: string; contacto?: string | null; notas?: string | null; membro_id?: string | null; valor: number; pago: boolean; envios?: { id: string; link: string; nota: string | null; enviadoEm: string }[] }
+type Membro = { id: string; nome: string; funcao: string; contacto?: string | null; notas?: string | null; membro_id?: string | null; valor: number; pago: boolean; ver_guiao?: boolean; envios?: { id: string; link: string; nota: string | null; enviadoEm: string }[] }
 type Pessoa = { id: string; nome: string; categoria: string; funcao: string; contacto?: string | null; foto_url?: string | null; valorDia?: number }
 type Financeiro = { valorProjeto: number; recebido: number; receitasExtra: number; custoEquipa: number; outrasDespesas: number; custoTotal: number }
 
@@ -37,7 +37,7 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
   useEffect(() => { carregar() // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [portalRef])
 
-  async function mudar(m: Membro, alt: { valor?: number; pago?: boolean }) {
+  async function mudar(m: Membro, alt: { valor?: number; pago?: boolean; ver_guiao?: boolean }) {
     setEquipa(e => (e ?? []).map(x => x.id === m.id ? { ...x, ...alt } : x))
     const r = await fetch('/api/media-equipa', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: m.id, ...alt }) })
     if (!r.ok) alert('Não foi possível gravar.')
@@ -164,6 +164,13 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
                   className={`rlp-m rounded-full border px-3 py-1.5 text-[8.5px] transition-colors disabled:opacity-30 ${m.pago ? 'border-[#2e6cf6] bg-[#2e6cf6]/25 text-[#a9c1ff]' : 'border-[#ff4747]/50 text-[#ff8a8a] hover:bg-[#ff4747]/10'}`}>
                   {m.pago ? '✓ Pago' : 'Por pagar'}
                 </button>
+                {m.membro_id && (
+                  <button type="button" onClick={() => mudar(m, { ver_guiao: !m.ver_guiao })}
+                    title={m.ver_guiao ? 'Vê o guião criativo no portal da equipa' : 'Não vê o guião criativo'}
+                    className={`rlp-m rounded-full border px-3 py-1.5 text-[8.5px] transition-colors ${m.ver_guiao ? 'border-[#2e6cf6] bg-[#2e6cf6]/25 text-[#a9c1ff]' : 'border-white/20 text-white/45 hover:text-white'}`}>
+                    {m.ver_guiao ? '✓ Guião' : 'Sem guião'}
+                  </button>
+                )}
                 <button type="button" onClick={() => remover(m)} aria-label={`Tirar ${m.nome}`} className="text-white/30 hover:text-[#ff4747] text-[13px]">✕</button>
                 {/* material enviado pela pessoa no portal da equipa */}
                 {!!m.envios?.length && (

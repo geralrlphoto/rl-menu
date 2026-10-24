@@ -31,7 +31,7 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
   const { data: m } = await supabase.from('media_equipa').select('id, nome, categoria, ativo').eq('acesso_token', token).maybeSingle()
   if (!m || !m.ativo) notFound()
   const { data: t } = await supabase.from('media_equipa_projeto')
-    .select('id, projeto_ref, funcao, valor, pago, notas, envios').eq('id', id).eq('membro_id', m.id).maybeSingle()
+    .select('id, projeto_ref, funcao, valor, pago, notas, envios, ver_guiao').eq('id', id).eq('membro_id', m.id).maybeSingle()
   if (!t) notFound()
 
   // Só o que a equipa precisa do portal do cliente (nada de pagamentos nem contactos do cliente)
@@ -57,7 +57,8 @@ export default async function FichaTrabalho({ params }: { params: Promise<{ toke
   const itens = Array.isArray(pj.briefingItems) ? pj.briefingItems.filter(i => i.label || i.desc) : []
   const senas = Array.isArray(pj.senas) ? pj.senas : []
   const storyboard = Array.isArray(pj.storyboard) ? pj.storyboard : []
-  const temGuiao = !!(pj.storytelling || pj.palavras || pj.tom || senas.length || storyboard.length)
+  // O guião criativo só aparece a quem a RL PROD deu acesso na Equipa do projeto
+  const temGuiao = !!t.ver_guiao && !!(pj.storytelling || pj.palavras || pj.tom || senas.length || storyboard.length)
   const envios: Envio[] = Array.isArray(t.envios) ? t.envios : []
   const fmt = (d: Date) => d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
