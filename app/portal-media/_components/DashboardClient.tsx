@@ -11,6 +11,7 @@
 import Link from 'next/link'
 import { useEffect, useState, type ReactNode } from 'react'
 import type { Projeto } from '@/app/portal-media/_data/mockProject'
+import { contasPagamento } from '@/app/portal-media/_data/contasPagamento'
 
 function detectActivePhase(projeto: Projeto): number {
   const emCurso = (projeto.fases ?? []).findIndex(f => f.estado === 'em_curso')
@@ -24,7 +25,7 @@ const MENU_ITEMS = [
   { num: '02', icon: 'map',      name: 'Road Map',         desc: 'Planeamento e tarefas',   slug: 'roadmap' },
   { num: '03', icon: 'briefing', name: 'Briefing',         desc: 'Objetivos e referências', slug: 'briefing' },
   { num: '04', icon: 'doc',      name: 'Contrato & Dados', desc: 'Documentos e dados',      slug: 'contrato' },
-  { num: '05', icon: 'pay',      name: 'Pagamentos',       desc: 'Estado financeiro',       slug: 'pagamentos' },
+  { num: '05', icon: 'pay',      name: 'Financeiro',       desc: 'Pagamentos e prestações',       slug: 'pagamentos' },
   { num: '06', icon: 'deliver',  name: 'Entregas',         desc: 'Ficheiros e revisões',    slug: 'entregas' },
   { num: '07', icon: 'support',  name: 'Atendimento',      desc: 'Equipa e contactos',      slug: 'atendimento' },
   { num: '08', icon: 'star',     name: 'Satisfação',       desc: 'Avaliação do projeto',    slug: 'satisfacao' },
@@ -58,10 +59,8 @@ export default function DashboardClient({ projeto, isAdmin }: { projeto: Projeto
   const phasePct = Math.round(((active + 1) / totalFases) * 100)
 
   const pagamentos = projeto.pagamentos ?? []
-  const valorTotal = pagamentos.reduce((s, p) => s + (p.valor ?? 0), 0)
-  const valorPago = pagamentos.filter(p => p.estado === 'pago').reduce((s, p) => s + (p.valor ?? 0), 0)
-  const valorPendente = valorTotal - valorPago
-  const pctPago = valorTotal > 0 ? Math.round((valorPago / valorTotal) * 100) : 0
+  // Mesma conta da página Financeiro (registos se existirem, senão o plano)
+  const { total: valorTotal, pago: valorPago, emFalta: valorPendente, pct: pctPago } = contasPagamento(projeto)
   const proxPagamento = pagamentos.find(p => p.estado !== 'pago')
   const emAtraso = pagamentos.some(p => (p.estado as string) === 'em_atraso')
 
@@ -169,7 +168,7 @@ export default function DashboardClient({ projeto, isAdmin }: { projeto: Projeto
       <section className="mt-4 grid gap-3 md:grid-cols-2">
         <Link href={`${base}/pagamentos`} className={`${CARD} group p-5 sm:p-6 hover:border-[#2e6cf6]/60 transition-colors`}>
           <div className="flex items-center justify-between">
-            <p className="rlp-m traco text-[10px] text-[#5a8bff]">Pagamentos</p>
+            <p className="rlp-m traco text-[10px] text-[#5a8bff]">Financeiro</p>
             <span className="text-[12px] text-white/45 group-hover:text-[#5a8bff]">Ver tudo →</span>
           </div>
           <div className="mt-4 flex items-end justify-between gap-3">

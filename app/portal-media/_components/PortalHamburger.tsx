@@ -13,7 +13,7 @@ const NAV = [
   { slug: 'roadmap',    label: 'Road Map',       desc: 'Planeamento e tarefas' },
   { slug: 'briefing',   label: 'Briefing',       desc: 'Objetivos e referências' },
   { slug: 'contrato',   label: 'Contrato & CPS', desc: 'Documentos e dados' },
-  { slug: 'pagamentos', label: 'Pagamentos',     desc: 'Estado financeiro' },
+  { slug: 'pagamentos', label: 'Financeiro',     desc: 'Pagamentos e prestações' },
   { slug: 'entregas',   label: 'Entregas',       desc: 'Ficheiros e revisões' },
   { slug: 'atendimento',label: 'Atendimento',    desc: 'Equipa e contactos' },
   { slug: 'satisfacao', label: 'Satisfação',     desc: 'Avaliação do projeto' },

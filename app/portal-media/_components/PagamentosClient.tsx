@@ -1,4 +1,5 @@
 'use client'
+import { contasPagamento } from '@/app/portal-media/_data/contasPagamento'
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import type { Projeto, RegistoPagamento } from '@/app/portal-media/_data/mockProject'
@@ -163,10 +164,8 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
     setProjeto(p => ({ ...p, pagamentos: p.pagamentos.filter((_, i) => i !== idx) }))
 
   /* ── Cálculos ── */
-  const total    = projeto.pagamentos.reduce((s, pg) => s + pg.valor, 0)
-  const pago     = registos.reduce((s, r) => s + r.valor, 0)
-  const restante = Math.max(0, total - pago)
-  const pct      = total > 0 ? Math.min(100, Math.round((pago / total) * 100)) : 0
+  // Mesma conta do início do portal (registos se existirem, senão o plano)
+  const { total, pago, emFalta: restante, pct } = contasPagamento(projeto, registos)
   const emAtraso = projeto.pagamentos.filter(pg => pg.estado === 'em_atraso')
   const valorAtraso = emAtraso.reduce((s, pg) => s + pg.valor, 0)
 
@@ -189,7 +188,7 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
         {/* ── Cabeçalho ── */}
         <header className="mb-8">
           <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">RL Prod · {projeto.nome}</p>
-          <h1 className="rlp-t mt-3 text-[44px] sm:text-[60px] leading-[0.95]">Pagamentos</h1>
+          <h1 className="rlp-t mt-3 text-[44px] sm:text-[60px] leading-[0.95]">Financeiro</h1>
           <p className="mt-3 text-[15px] text-white/60 leading-relaxed max-w-xl">
             O registo oficial dos pagamentos do vosso projeto. Acompanhem aqui o que já está liquidado e o que falta.
           </p>
