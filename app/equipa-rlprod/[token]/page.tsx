@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import EstiloRLProd from '@/app/media/_components/EstiloRLProd'
@@ -142,7 +143,7 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
           ) : (
             <div className="mt-4 flex gap-3 overflow-x-auto pb-2 snap-x">
               {proximos.map(t => (
-                <article key={t.id} className={`${CARD} snap-start shrink-0 w-[250px] p-4 ${t === proximo ? 'border-[#2e6cf6]' : ''}`}>
+                <Link key={t.id} href={`/equipa-rlprod/${token}/trabalho/${t.id}`} className={`${CARD} snap-start shrink-0 w-[250px] p-4 hover:border-[#5a8bff] ${t === proximo ? 'border-[#2e6cf6]' : ''}`}>
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <p className="rlp-m text-[9px] text-white/45">{t.filmagem ? SEMANA[t.filmagem.getDay()] : ''}</p>
@@ -154,7 +155,8 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
                   <p className="rlp-t mt-4 text-[20px] leading-tight">{t.nome}</p>
                   <p className="mt-1 text-[12.5px] text-white/55">{t.funcao}{t.local ? ` · ${t.local}` : ''}</p>
                   {t.notas && <p className="mt-2 text-[12px] text-white/45">{t.notas}</p>}
-                </article>
+                  <p className="rlp-m mt-3 text-[9px] text-[#5a8bff]">Briefing e envio ›</p>
+                </Link>
               ))}
             </div>
           )}
@@ -170,7 +172,8 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
               {[...proximos, ...passados].map(t => {
                 const feito = !t.filmagem || t.filmagem < hoje
                 return (
-                  <li key={t.id} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 sm:px-5 py-3.5">
+                  <li key={t.id}>
+                  <Link href={`/equipa-rlprod/${token}/trabalho/${t.id}`} className="group flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 sm:px-5 py-3.5 hover:bg-white/[0.03]">
                     <span className="rlp-m w-24 shrink-0 text-[9px] text-white/45">{t.filmagem ? t.filmagem.toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Sem data'}</span>
                     <span className="min-w-0 flex-1 basis-48">
                       <span className="block truncate text-[15px] text-white">{t.nome}</span>
@@ -179,6 +182,8 @@ export default async function PortalStaff({ params }: { params: Promise<{ token:
                       </span>
                     </span>
                     <span className={`rlp-m rounded-full border px-2.5 py-1 text-[8px] ${feito ? 'border-white/20 text-white/50' : 'border-[#2e6cf6]/60 text-[#a9c1ff]'}`}>{feito ? 'Feito' : 'Marcado'}</span>
+                    <span className="rlp-m text-[9px] text-[#5a8bff] group-hover:text-white">Abrir ›</span>
+                  </Link>
                   </li>
                 )
               })}

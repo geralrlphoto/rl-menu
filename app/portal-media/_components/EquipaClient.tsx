@@ -7,7 +7,7 @@ import { CATEGORIAS } from '@/app/media/equipa/categorias'
 // um clique põe a pessoa no projeto, outro clique tira. Pessoas de fora do staff
 // entram pelo formulário. Grava em media_equipa_projeto via /api/media-equipa.
 
-type Membro = { id: string; nome: string; funcao: string; contacto?: string | null; notas?: string | null; membro_id?: string | null; valor: number; pago: boolean }
+type Membro = { id: string; nome: string; funcao: string; contacto?: string | null; notas?: string | null; membro_id?: string | null; valor: number; pago: boolean; envios?: { id: string; link: string; nota: string | null; enviadoEm: string }[] }
 type Pessoa = { id: string; nome: string; categoria: string; funcao: string; contacto?: string | null; foto_url?: string | null; valorDia?: number }
 type Financeiro = { valorProjeto: number; recebido: number; receitasExtra: number; custoEquipa: number; outrasDespesas: number; custoTotal: number }
 
@@ -165,6 +165,20 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
                   {m.pago ? '✓ Pago' : 'Por pagar'}
                 </button>
                 <button type="button" onClick={() => remover(m)} aria-label={`Tirar ${m.nome}`} className="text-white/30 hover:text-[#ff4747] text-[13px]">✕</button>
+                {/* material enviado pela pessoa no portal da equipa */}
+                {!!m.envios?.length && (
+                  <div className="basis-full pl-[52px] grid gap-1">
+                    {m.envios.map(e => (
+                      <a key={e.id} href={e.link} target="_blank" rel="noopener noreferrer"
+                        className="flex items-center gap-2 rounded-md border border-[#2e6cf6]/40 bg-[#2e6cf6]/10 px-3 py-1.5 text-[12.5px] text-[#a9c1ff] hover:text-white">
+                        <span>↓ Material</span>
+                        <span className="text-white/45">{new Date(e.enviadoEm).toLocaleString('pt-PT', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</span>
+                        {e.nota && <span className="truncate text-white/60">· {e.nota}</span>}
+                        <span className="ml-auto">↗</span>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
           </ul>

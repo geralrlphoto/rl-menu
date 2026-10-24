@@ -16,7 +16,7 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-const CAMPOS = 'id, nome, funcao, contacto, notas, membro_id, valor, pago, pago_em, despesa_id'
+const CAMPOS = 'id, nome, funcao, contacto, notas, membro_id, valor, pago, pago_em, despesa_id, envios'
 const num = (v: unknown) => { const n = Number(String(v ?? '').replace(',', '.')); return isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : 0 }
 
 // Data da despesa: dia da filmagem do projeto (ou hoje, se não houver)

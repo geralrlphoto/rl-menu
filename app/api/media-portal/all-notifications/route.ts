@@ -80,6 +80,7 @@ export async function GET(req: Request) {
           kind === 'roadmap-status'  ? `/portal-media/${ref}/roadmap?admin=1`  :
           kind === 'fase'            ? `/portal-media/${ref}/workflow?admin=1` :
           n.type === 'contrato-assinado' ? `/portal-media/${ref}/contrato` :
+          n.type === 'material-staff' ? `/portal-media/${ref}/equipa` :
           `/portal-media/${ref}?admin=1`
         items.push({
           id: `${ref}:notify:${n.at}:${Math.random().toString(36).slice(2,6)}`,
