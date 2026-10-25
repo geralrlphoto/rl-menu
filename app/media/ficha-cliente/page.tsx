@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { FUNDO } from '@/app/media/_lib/estilo'
 import { Secao, Campo, ComCopiar, Copiar, inputCls, chip, nLinhas } from './_ui'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 const TIPOS = [
   'Produção Photography & Video',
@@ -328,10 +329,10 @@ export default function FichaClientePage() {
               </Campo>
               <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <Campo label="Data de filmagem">
-                  <input type="date" value={form.dataFilmagem} onChange={set('dataFilmagem')} className={dateCls} />
+                  <CampoDataPT value={form.dataFilmagem} onChange={v => setV('dataFilmagem', v)} className={dateCls + ' w-full'} />
                 </Campo>
                 <Campo label="Data de entrega">
-                  <input type="date" value={form.dataEntrega} onChange={set('dataEntrega')} className={dateCls} />
+                  <CampoDataPT value={form.dataEntrega} onChange={v => setV('dataEntrega', v)} className={dateCls + ' w-full'} />
                 </Campo>
                 <Campo label="Valor do serviço (€)">
                   <div className="relative">
@@ -385,10 +386,10 @@ export default function FichaClientePage() {
                   </ComCopiar>
                 </Campo>
                 <Campo label="Data de envio">
-                  <input type="date" value={form.contratoDataEnvio} onChange={set('contratoDataEnvio')} className={dateCls} />
+                  <CampoDataPT value={form.contratoDataEnvio} onChange={v => setV('contratoDataEnvio', v)} className={dateCls + ' w-full'} />
                 </Campo>
                 <Campo label="Data de assinatura">
-                  <input type="date" value={form.contratoDataAssinatura} onChange={set('contratoDataAssinatura')} className={dateCls} />
+                  <CampoDataPT value={form.contratoDataAssinatura} onChange={v => setV('contratoDataAssinatura', v)} className={dateCls + ' w-full'} />
                 </Campo>
               </div>
               <Campo label="Link do contrato (PDF / Drive)" className="mt-5">

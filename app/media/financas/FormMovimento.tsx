@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CATS_DESPESA, CATS_RECEITA, type Movimento, type TipoMov } from './categorias'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 // Janela para criar ou editar um movimento manual (despesa ou receita extra).
 
@@ -96,7 +97,7 @@ export default function FormMovimento({ inicial, projetos, hoje, onFechar, onGua
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={LABEL}>Data</label>
-            <input type="date" value={data} onChange={e => setData(e.target.value)} className={INPUT} />
+            <CampoDataPT value={data} onChange={setData} className={INPUT + ' w-full'} />
             {erro('data')}
           </div>
           <div>

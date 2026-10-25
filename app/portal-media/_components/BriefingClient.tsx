@@ -17,6 +17,7 @@ import Link from 'next/link'
 import type { Projeto, BriefingSessao } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import HeroUploadBlock from './HeroUploadBlock'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 /** Link Google Meet partilhado da RL PROD (mesmo do /api/send-reuniao-email) */
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
@@ -877,12 +878,10 @@ export default function BriefingClient({ projeto: initial, isAdmin }: Props) {
             <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
               <label className="block">
                 <span className={labelCls}>Data <span className="text-[#ff4747]">*</span></span>
-                <input
-                  type="date"
+                <CampoDataPT
                   value={schedDate}
-                  onChange={e => setSchedDate(e.target.value)}
-                  className={`${inputCls} [color-scheme:dark]`}
-                  required
+                  onChange={setSchedDate}
+                  className={`${inputCls} w-full`}
                 />
               </label>
               <label className="block">

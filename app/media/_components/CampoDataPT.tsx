@@ -10,7 +10,7 @@ const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 const lerIso = (v: string) => { const m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? new Date(+m[1], +m[2] - 1, +m[3]) : null }
 
-export default function CampoDataPT({ value, onChange, className = '' }: { value: string; onChange: (v: string) => void; className?: string }) {
+export default function CampoDataPT({ value, onChange, className = '', min }: { value: string; onChange: (v: string) => void; className?: string; min?: string }) {
   const escolhida = lerIso(value)
   const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
   const [aberto, setAberto] = useState(false)
@@ -46,9 +46,10 @@ export default function CampoDataPT({ value, onChange, className = '' }: { value
               const doMes = d.getMonth() === mes.getMonth()
               const sel = escolhida && iso(d) === iso(escolhida)
               const eHoje = iso(d) === iso(hoje)
+              const antes = !!min && iso(d) < min
               return (
-                <button key={iso(d)} type="button" onClick={() => escolher(d)}
-                  className={`h-9 rounded-lg text-[13.5px] transition-colors ${sel ? 'bg-[#2e6cf6] text-white' : eHoje ? 'border border-[#2e6cf6]/70 text-white' : doMes ? 'text-white/85 hover:bg-white/10' : 'text-white/25 hover:bg-white/5'}`}>
+                <button key={iso(d)} type="button" onClick={() => escolher(d)} disabled={antes}
+                  className={`h-9 rounded-lg text-[13.5px] transition-colors disabled:opacity-20 disabled:pointer-events-none ${sel ? 'bg-[#2e6cf6] text-white' : eHoje ? 'border border-[#2e6cf6]/70 text-white' : doMes ? 'text-white/85 hover:bg-white/10' : 'text-white/25 hover:bg-white/5'}`}>
                   {d.getDate()}
                 </button>
               )

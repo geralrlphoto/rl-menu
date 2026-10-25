@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { FUNDO } from '@/app/media/_lib/estilo'
 import { lerData, hojeLisboa } from '@/app/media/_lib/eventos'
 import { CATEGORIAS, singular, type CategoriaId, type FichaDados, type MembroEquipa } from '../categorias'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 // Ficha de um membro da equipa RL PROD: a RL PROD preenche os dados
 // (contactos, perfil, especialidades, preferências, pagamento) e vê os projetos.
@@ -115,7 +116,9 @@ export default function FichaMembro({ params }: { params: Promise<{ id: string }
               {opcoes.map(o => <option key={o}>{o}</option>)}
             </select>
           ) : (
-            <input className={INPUT + ' max-w-[60%] text-right [color-scheme:dark]'} type={tipo} placeholder={placeholder} value={val} onChange={e => setD(k, e.target.value)} />
+            tipo === 'date'
+              ? <div className="max-w-[60%] w-full"><CampoDataPT value={val} onChange={v => setD(k, v)} className={INPUT + ' w-full'} /></div>
+              : <input className={INPUT + ' max-w-[60%] text-right'} type={tipo} placeholder={placeholder} value={val} onChange={e => setD(k, e.target.value)} />
           )
         ) : (
           <span className="text-[13.5px] text-white/90 text-right min-w-0 break-words">

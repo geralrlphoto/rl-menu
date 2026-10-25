@@ -5,6 +5,7 @@ import Link from 'next/link'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
 import HeroUploadBlock from './HeroUploadBlock'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 /* ────────────────────────────────────────────────────────── */
 /*  DEFAULT — 7 colunas padrão para qualquer projeto          */
@@ -604,11 +605,10 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
                                     <option key={o.value} value={o.value}>{o.label}</option>
                                   ))}
                                 </select>
-                                <input
-                                  type="date"
+                                <CampoDataPT
                                   value={tarefa.data ?? ''}
-                                  onChange={e => updateTarefa(coluna.id, tarefa.id, 'data', e.target.value)}
-                                  className="bg-[#00141f] border border-white/[0.12] rounded-lg text-[13.5px] text-white/70 px-2 py-1.5 focus:outline-none focus:border-[#2e6cf6] w-full [color-scheme:dark]"
+                                  onChange={v => updateTarefa(coluna.id, tarefa.id, 'data', v)}
+                                  className="bg-[#00141f] border border-white/[0.12] rounded-lg text-[13.5px] text-white/70 px-2 py-1.5 focus:outline-none focus:border-[#2e6cf6] w-full"
                                 />
                                 <button onClick={() => removeTarefa(coluna.id, tarefa.id)}
                                   className="rlp-m text-[9.5px] text-[#ff4747]/60 hover:text-[#ff4747] transition-colors self-end">

@@ -9,6 +9,7 @@ import EditableSelect from './EditableSelect'
 import EditableDateField from './EditableDateField'
 import HeroUploadBlock from './HeroUploadBlock'
 import MovimentosProjeto from './MovimentosProjeto'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 /* ── Identidade rlprod.pt ── */
 const CARTAO    = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/70'
@@ -604,11 +605,10 @@ export default function PagamentosClient({ projeto: initial, isAdmin }: Props) {
                   {/* Data */}
                   <div>
                     <label className={LABEL}>Data do pagamento</label>
-                    <input
-                      type="date"
+                    <CampoDataPT
                       value={form.data}
-                      onChange={e => setField('data', e.target.value)}
-                      className={`${INPUT} [color-scheme:dark]`}
+                      onChange={v => setField('data', v)}
+                      className={`${INPUT} w-full`}
                     />
                   </div>
 

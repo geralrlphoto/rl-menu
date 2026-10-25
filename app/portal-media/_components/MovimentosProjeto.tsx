@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { CATS_DESPESA, CATS_RECEITA, normCategoria, nomeCategoria } from '@/app/media/financas/categorias'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 // Receitas e despesas de um projeto, só para o admin, no Financeiro do portal.
 // Grava em media_despesas (tipo despesa/receita, projeto_ref) e aparece também
@@ -106,7 +107,7 @@ export default function MovimentosProjeto({ portalRef, recebido }: { portalRef: 
           <div className="grid gap-3 sm:grid-cols-[1fr_140px_150px]">
             <input className={input} placeholder="Descrição (ex.: aluguer de drone)" value={form.descricao} onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))} />
             <input className={input} placeholder="Valor €" inputMode="decimal" value={form.valor} onChange={e => setForm(f => ({ ...f, valor: e.target.value }))} />
-            <input className={input + ' [color-scheme:dark]'} type="date" value={form.data} onChange={e => setForm(f => ({ ...f, data: e.target.value }))} />
+            <CampoDataPT value={form.data} onChange={v => setForm(f => ({ ...f, data: v }))} className={input} />
           </div>
           <div className="flex flex-wrap gap-1.5">
             {CAT[form.tipo].map(c => <button key={c.id} type="button" onClick={() => setForm(f => ({ ...f, categoria: c.id }))} className={chip(form.categoria === c.id)}>{c.nome}</button>)}

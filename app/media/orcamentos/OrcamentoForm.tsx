@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 import {
   CATALOG, COBERTURAS, ESTADOS, ICONE_COBERTURA, COR_ESTADO,
   fmtEur, fmtIntervaloEvento, fmtRange, inputCls, labelCls, uid,
@@ -195,13 +196,11 @@ export default function OrcamentoForm({
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Início do evento</label>
-                <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
-                  className={inputCls + ' [color-scheme:dark]'} />
+                <CampoDataPT value={dataInicio} onChange={setDataInicio} className={inputCls + ' w-full'} />
               </div>
               <div>
                 <label className={labelCls}>Fim <span className="normal-case tracking-normal text-white/35">(opcional, multi-dia)</span></label>
-                <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} min={dataInicio || undefined}
-                  className={inputCls + ' [color-scheme:dark]'} />
+                <CampoDataPT value={dataFim} onChange={setDataFim} min={dataInicio || undefined} className={inputCls + ' w-full'} />
               </div>
             </div>
             {dataInicio && dataFim && (
@@ -343,8 +342,7 @@ export default function OrcamentoForm({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className={labelCls}>Validade do orçamento</label>
-                <input type="date" value={validade} onChange={e => setValidade(e.target.value)}
-                  className={inputCls + ' [color-scheme:dark]'} />
+                <CampoDataPT value={validade} onChange={setValidade} className={inputCls + ' w-full'} />
               </div>
               <div>
                 <label className={labelCls}>Estado</label>

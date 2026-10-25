@@ -1,4 +1,5 @@
 'use client'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 // Portuguese month abbreviations
 const PT_MONTHS = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -54,12 +55,10 @@ export default function EditableDateField({ value, isEditing, onChange, classNam
   const isoValue = toISO(value)
 
   return (
-    <input
-      type="date"
+    <CampoDataPT
       value={isoValue}
-      onChange={e => onChange(e.target.value ? fromISO(e.target.value) : '')}
-      placeholder={placeholder}
-      className={`[color-scheme:dark] bg-[#00141f]/70 border border-white/[0.14] text-white
+      onChange={v => onChange(v ? fromISO(v) : '')}
+      className={`bg-[#00141f]/70 border border-white/[0.14] text-white
                   px-2.5 py-1.5 outline-none focus:border-[#2e6cf6] rounded-md w-full text-base ${className}`}
     />
   )
