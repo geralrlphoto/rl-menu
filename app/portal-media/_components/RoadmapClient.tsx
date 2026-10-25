@@ -97,7 +97,7 @@ const ESTADO_OPTIONS: { value: TarefaEstado; label: string }[] = [
 type EstadoCfg = { pill: string; dot: string; strip: string; label: string; hint: string }
 
 // Concluído e Efetuado contam ambos como tarefa feita (progresso, fase atual e atrasos)
-const feita = (e: TarefaEstado) => e === 'concluido' || e === 'efetuado'
+const tarefaFeita = (e: TarefaEstado) => e === 'concluido' || e === 'efetuado'
 
 const ESTADO_CFG: Record<TarefaEstado, EstadoCfg> = {
   concluido:    { pill: 'bg-[#2e6cf6] border-[#2e6cf6] text-white',                        dot: 'bg-white',                         strip: '#2e6cf6',               label: 'Concluído',    hint: 'Tarefa terminada' },
@@ -180,7 +180,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
   /* totais para o header */
   const totalTarefas   = colunas.reduce((s, c) => s + c.tarefas.length, 0)
-  const totalConcluidas = colunas.reduce((s, c) => s + c.tarefas.filter(t => feita(t.estado)).length, 0)
+  const totalConcluidas = colunas.reduce((s, c) => s + c.tarefas.filter(t => tarefaFeita(t.estado)).length, 0)
   const progresso      = totalTarefas > 0 ? Math.round((totalConcluidas / totalTarefas) * 100) : 0
 
   /* Baseline do roadmap (último estado guardado) — para detectar mudanças
@@ -374,10 +374,10 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   useEffect(() => { setHoje(hojeISO()) }, [])
 
   /* Fase atual = primeira coluna com tarefas que ainda não está toda concluída */
-  const faseAtualIdx = colunas.findIndex(c => c.tarefas.length > 0 && c.tarefas.some(t => !feita(t.estado)))
+  const faseAtualIdx = colunas.findIndex(c => c.tarefas.length > 0 && c.tarefas.some(t => !tarefaFeita(t.estado)))
   const faseAtual = faseAtualIdx >= 0 ? colunas[faseAtualIdx] : null
   const emAtraso = hoje
-    ? colunas.reduce((s, c) => s + c.tarefas.filter(t => t.data && t.data < hoje && !feita(t.estado) && t.estado !== 'enviado').length, 0)
+    ? colunas.reduce((s, c) => s + c.tarefas.filter(t => t.data && t.data < hoje && !tarefaFeita(t.estado) && t.estado !== 'enviado').length, 0)
     : 0
 
   /* ────────────────────────────────────────────────────────── */
@@ -452,7 +452,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
             {colunas.length > 0 && (
               <div className="mt-2 flex gap-1">
                 {colunas.map((c, i) => {
-                  const feito = c.tarefas.length > 0 && c.tarefas.every(t => feita(t.estado))
+                  const feito = c.tarefas.length > 0 && c.tarefas.every(t => tarefaFeita(t.estado))
                   return (
                     <span key={c.id} title={c.titulo}
                       className={`h-1 flex-1 rounded-full ${feito ? 'bg-[#2e6cf6]' : i === faseAtualIdx ? 'bg-[#5a8bff]/60 animate-pulse' : 'bg-white/[0.08]'}`} />
@@ -514,7 +514,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
         ) : (
           <div className="flex flex-col gap-4 md:grid md:grid-flow-col md:auto-cols-[minmax(268px,1fr)] md:overflow-x-auto md:pb-3">
             {colunas.map((coluna, ci) => {
-              const concluidas = coluna.tarefas.filter(t => feita(t.estado)).length
+              const concluidas = coluna.tarefas.filter(t => tarefaFeita(t.estado)).length
               const total = coluna.tarefas.length
               const pctCol = total > 0 ? Math.round((concluidas / total) * 100) : 0
               const feita = total > 0 && concluidas === total
@@ -570,7 +570,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
                     {coluna.tarefas.map(tarefa => {
                       const cfg = ESTADO_CFG[tarefa.estado]
-                      const atrasada = !!hoje && !!tarefa.data && tarefa.data < hoje && !feita(tarefa.estado) && tarefa.estado !== 'enviado'
+                      const atrasada = !!hoje && !!tarefa.data && tarefa.data < hoje && !tarefaFeita(tarefa.estado) && tarefa.estado !== 'enviado'
                       return (
                         <div key={tarefa.id}
                           className={`group/card relative overflow-hidden rounded-xl border bg-[#0c2236]/70 p-3.5 pl-4 ${
