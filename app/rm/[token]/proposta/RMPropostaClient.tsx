@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { RMPageContent, RMPackage, RMProposta } from '../RMLeadPageClient'
+import EstiloRLProd from '@/app/media/_components/EstiloRLProd'
+import { FUNDO } from '@/app/media/_lib/estilo'
 
 // ─── Comprime imagem no browser → base64 JPEG ────────────────────────────────
 function compressImage(file: File, maxWidth = 1400, quality = 0.80): Promise<string> {
@@ -166,18 +168,18 @@ function getServDesc(nome: string): string {
 const EDITABLE_SLIDES = [0, 1, 2, 3, 4, 5, 6]
 const TOTAL_SLIDES = 11
 
-const T = {
-  xs:  'text-[13px]',
-  sm:  'text-[14px]',
-  md:  'text-[15px]',
-  lg:  'text-[16px]',
-  xl:  'text-[17px]',
-  xxl: 'text-[18px]',
-}
-
-const INP  = 'w-full bg-white/[0.04] border border-white/[0.12] px-3 py-2.5 text-[13px] text-white/80 placeholder:text-white/25 focus:outline-none focus:border-white/30 transition-colors'
+const INP  = 'w-full rounded-md border border-white/[0.12] bg-[#00141f]/70 px-3 py-2 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-[#2e6cf6] transition-colors'
 const AREA = INP + ' resize-none leading-relaxed'
-const LBL  = 'text-[10px] tracking-[0.5em] text-white/40 uppercase mb-1.5 block'
+const LBL  = 'rlp-m text-[9.5px] text-white/45 mb-1.5 block'
+
+// Linguagem visual do portal da reunião (RMLeadPageClient)
+const CARD    = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/75 backdrop-blur-sm'
+const EYEBROW = 'rlp-m traco text-[10.5px] text-[#5a8bff]'
+const BTN_PRI = 'rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] text-white font-medium transition-colors disabled:opacity-40'
+const BTN_SEC = 'rounded-full border border-white/[0.16] hover:border-white/40 text-white/75 hover:text-white transition-colors disabled:opacity-40'
+const PONTO   = <span className="text-[#5a8bff]">.</span>
+// Contentor dos slides: 16px de margem no telemóvel
+const WRAP    = 'w-full mx-auto px-4 sm:px-10 pt-10 sm:pt-16 pb-28'
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function RMPropostaClient({ token, isAdmin }: { token: string; isAdmin: boolean }) {
@@ -334,16 +336,20 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     } else { setPwError(true); setPwInput('') }
   }
 
-  const labelCls = `${T.xs} tracking-[0.55em] text-white/50 uppercase`
+  const labelCls = 'rlp-m text-[10px] text-white/45'
 
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center" style={{ background: '#04080f' }}>
-      <p className={`${T.xs} tracking-[0.6em] text-white/40 uppercase animate-pulse`}>A carregar...</p>
+    <main className="rlp min-h-screen flex items-center justify-center bg-[#00141f] text-white">
+      <EstiloRLProd />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
+      <p className="rlp-m relative z-10 text-[10.5px] text-[#a9c1ff] animate-pulse">A carregar...</p>
     </main>
   )
   if (notFound) return (
-    <main className="min-h-screen flex items-center justify-center" style={{ background: '#04080f' }}>
-      <p className={`${T.xs} tracking-[0.6em] text-white/40 uppercase`}>Página não disponível</p>
+    <main className="rlp min-h-screen flex items-center justify-center bg-[#00141f] text-white">
+      <EstiloRLProd />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
+      <p className="rlp-m relative z-10 text-[10.5px] text-white/50">Página não disponível</p>
     </main>
   )
 
@@ -355,7 +361,8 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     const img = proposta.slideImages?.[idx]
     if (!img) return null
     return (
-      <div className="w-full shrink-0 overflow-hidden" style={{ height: 280 }}>
+      <div className="relative w-full shrink-0 overflow-hidden h-[200px] sm:h-[300px]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={img}
           alt=""
@@ -365,6 +372,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
             WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 35%, transparent 100%)',
           }}
         />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(0,20,31,0.55) 0%, rgba(0,20,31,0.1) 60%, transparent 100%)' }} />
       </div>
     )
   }
@@ -379,84 +387,80 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
         <SlideHeader idx={idx} />
 
         {/* ── Layout principal: dois painéis ── */}
-        <div className="flex-1 flex flex-col sm:flex-row min-h-0">
+        <div className={`${WRAP} max-w-6xl flex-1 flex flex-col`}>
+          <p className={EYEBROW}>Investimento · Opção {num}</p>
 
-          {/* Painel esquerdo — identidade + valor */}
-          <div className="flex flex-col justify-between px-8 sm:px-12 py-10 sm:py-14 border-b sm:border-b-0 sm:border-r border-white/[0.07]"
-            style={{ minWidth: 0, flex: '0 0 auto', width: '100%', maxWidth: 320 }}>
+          <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,380px)_minmax(0,1fr)] items-start">
 
-            {/* Número de fundo */}
-            <div className="relative select-none pointer-events-none mb-6" style={{ lineHeight: 1 }}>
-              <span className="font-black text-white/[0.04]" style={{ fontSize: 'clamp(80px, 14vw, 130px)', letterSpacing: '-0.02em' }}>
-                {num}
-              </span>
-            </div>
+            {/* Painel esquerdo — identidade + valor */}
+            <div className={`${CARD} relative overflow-hidden p-6 sm:p-8 flex flex-col`}>
+              <div className="absolute inset-x-0 top-0 h-[3px] bg-[#2e6cf6]" />
+              <div className="flex items-start justify-between gap-4">
+                <span className="rlp-t text-[56px] sm:text-[72px] leading-[0.85] text-[#2e6cf6]">{num}</span>
+                <p className="rlp-m text-[9.5px] text-[#a9c1ff] mt-2">Opção {num}</p>
+              </div>
 
-            {/* Título */}
-            <div className="flex flex-col gap-3 mb-auto">
-              <p className="text-[10px] tracking-[0.6em] text-white/35 uppercase">Opção {num}</p>
-              <h2 className="text-[26px] sm:text-[30px] font-extrabold tracking-[0.04em] text-white/90 uppercase leading-tight">
-                {prop.titulo}
+              {/* Título */}
+              <h2 className="rlp-t mt-6 text-[32px] sm:text-[40px] leading-[0.95] break-words">
+                {prop.titulo}{PONTO}
               </h2>
-              <div className="h-px w-10 bg-white/25 mt-1" />
+
+              {/* Valor */}
+              <div className="mt-8 pt-6 border-t border-white/[0.08] flex flex-col gap-2">
+                <p className={labelCls}>Investimento</p>
+                {prop.valor ? (
+                  <p className="rlp-t text-[44px] sm:text-[56px] leading-none text-white break-words">
+                    {prop.valor}
+                  </p>
+                ) : (
+                  <p className="rlp-t text-[36px] leading-none text-white/30">—</p>
+                )}
+              </div>
             </div>
 
-            {/* Valor */}
-            <div className="mt-8 flex flex-col gap-1.5">
-              <p className="text-[10px] tracking-[0.55em] text-white/35 uppercase">Investimento</p>
-              {prop.valor ? (
-                <p className="text-[36px] sm:text-[42px] font-extralight tracking-[0.06em] text-white/90 leading-none">
-                  {prop.valor}
-                </p>
+            {/* Painel direito — serviços */}
+            <div className={`${CARD} p-5 sm:p-8 flex flex-col min-w-0`}>
+              <p className="rlp-m traco text-[10px] text-[#5a8bff] mb-4 shrink-0">Serviços Incluídos</p>
+
+              {prop.servicos.length > 0 ? (
+                <div className="flex flex-col">
+                  {prop.servicos.map((s, i) => {
+                    const key  = `${propIdx}-${i}`
+                    const open = expandedServicos.includes(key)
+                    const desc = getServDesc(s)
+                    return (
+                      <div key={i} className="border-b border-white/[0.07] last:border-0">
+                        {/* Linha principal */}
+                        <div className="flex items-center gap-3 sm:gap-4 py-3.5">
+                          <span className="rlp-m text-[10px] text-[#5a8bff] shrink-0 w-6 tabular-nums" style={{ letterSpacing: '0.1em' }}>{String(i + 1).padStart(2,'0')}</span>
+                          <p className="text-[15px] sm:text-[16px] text-white/85 leading-snug flex-1 min-w-0 break-words">{s}</p>
+                          {desc && (
+                            <button
+                              onClick={() => toggleServico(key)}
+                              className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center border transition-colors ${open ? 'border-[#2e6cf6] bg-[#2e6cf6]/20 text-white' : 'border-white/[0.16] hover:border-[#2e6cf6] text-white/60 hover:text-white'}`}
+                              style={{ fontSize: 16, lineHeight: 1, transform: open ? 'rotate(45deg)' : 'none', transition: 'transform 0.25s ease, border-color 0.2s, color 0.2s, background-color 0.2s' }}
+                              title="Saber mais"
+                            >+</button>
+                          )}
+                        </div>
+                        {/* Descrição expandível */}
+                        <div style={{
+                          maxHeight: open ? 160 : 0,
+                          overflow: 'hidden',
+                          transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
+                        }}>
+                          <p className="text-[13.5px] text-white/55 leading-relaxed pb-4 pl-9 sm:pl-10 pr-2">{desc}</p>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               ) : (
-                <p className="text-[28px] font-extralight tracking-[0.06em] text-white/30 leading-none">—</p>
+                <div className="flex items-center justify-center py-12">
+                  <p className="rlp-m text-[10px] text-white/30">A definir</p>
+                </div>
               )}
             </div>
-          </div>
-
-          {/* Painel direito — serviços */}
-          <div className="flex-1 flex flex-col px-8 sm:px-12 py-10 sm:py-14 min-h-0 overflow-y-auto">
-            <p className="text-[10px] tracking-[0.6em] text-white/35 uppercase mb-6 shrink-0">Serviços Incluídos</p>
-
-            {prop.servicos.length > 0 ? (
-              <div className="flex flex-col gap-0">
-                {prop.servicos.map((s, i) => {
-                  const key  = `${propIdx}-${i}`
-                  const open = expandedServicos.includes(key)
-                  const desc = getServDesc(s)
-                  return (
-                    <div key={i} className="border-b border-white/[0.055] last:border-0">
-                      {/* Linha principal */}
-                      <div className="flex items-center gap-4 py-3">
-                        <span className="text-[11px] font-bold text-white/20 shrink-0 w-5 text-right tabular-nums">{String(i + 1).padStart(2,'0')}</span>
-                        <div className="w-px h-3 bg-white/10 shrink-0" />
-                        <p className="text-[15px] font-light text-white/75 leading-snug flex-1">{s}</p>
-                        {desc && (
-                          <button
-                            onClick={() => toggleServico(key)}
-                            className="shrink-0 w-6 h-6 flex items-center justify-center border border-white/[0.15] hover:border-white/40 text-white/40 hover:text-white/80 transition-all"
-                            style={{ fontSize: 16, lineHeight: 1, transform: open ? 'rotate(45deg)' : 'none', transition: 'transform 0.25s ease, border-color 0.2s, color 0.2s' }}
-                            title="Saber mais"
-                          >+</button>
-                        )}
-                      </div>
-                      {/* Descrição expandível */}
-                      <div style={{
-                        maxHeight: open ? 120 : 0,
-                        overflow: 'hidden',
-                        transition: 'max-height 0.35s cubic-bezier(0.4,0,0.2,1)',
-                      }}>
-                        <p className="text-[13px] font-light text-white/45 leading-relaxed pb-4 pl-9 pr-2">{desc}</p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            ) : (
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-[12px] tracking-[0.4em] text-white/20 uppercase">A definir</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -468,13 +472,13 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     if (!draft) return null
     const img = draft.slideImages?.[idx] || ''
     return (
-      <div className="border-t border-white/[0.06] pt-5 mt-5">
+      <div className="border-t border-white/[0.08] pt-5 mt-5">
         <label className={LBL}>Foto do Cabeçalho</label>
 
         {/* Upload por ficheiro */}
-        <label className={`relative mb-3 flex items-center justify-center gap-2 w-full py-4 border border-dashed cursor-pointer transition-all ${uploading ? 'border-white/10 text-white/25' : 'border-white/20 hover:border-white/40 text-white/45 hover:text-white/65'}`}>
+        <label className={`relative mb-3 flex items-center justify-center gap-2 w-full py-4 rounded-xl border border-dashed cursor-pointer transition-colors ${uploading ? 'border-white/10 text-white/30' : 'border-white/20 hover:border-[#2e6cf6] text-white/55 hover:text-white'}`}>
           <span style={{ fontSize: 16 }}>↑</span>
-          <span className="text-[11px] tracking-[0.4em] uppercase">
+          <span className="rlp-m text-[10px]">
             {uploading ? 'A processar...' : 'Carregar imagem'}
           </span>
           <input
@@ -491,7 +495,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
         </label>
 
         {uploadErr && (
-          <p className="mb-3 text-[11px] text-red-400/60 tracking-wide">Erro ao processar imagem. Tenta novamente.</p>
+          <p className="mb-3 text-[12px] text-[#ff4747]">Erro ao processar imagem. Tenta novamente.</p>
         )}
 
         {/* URL manual */}
@@ -507,17 +511,18 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
         {/* Preview */}
         {img ? (
-          <div className="relative overflow-hidden" style={{ height: 110 }}>
+          <div className="relative overflow-hidden rounded-xl border border-white/[0.1]" style={{ height: 110 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={img} alt="" className="w-full h-full object-cover object-center" />
-            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(4,8,15,0.9) 100%)' }} />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(0,20,31,0.9) 100%)' }} />
             <button
               onClick={() => { setSlideImage(idx, ''); setUploadErr(false) }}
-              className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center bg-black/60 hover:bg-black/80 text-white/60 hover:text-white text-[11px] border border-white/15 transition-all"
+              className="absolute top-2 right-2 w-7 h-7 rounded-full flex items-center justify-center bg-[#00141f]/80 hover:bg-[#00141f] text-white/70 hover:text-[#ff4747] text-[11px] border border-white/20 transition-colors"
             >✕</button>
           </div>
         ) : (
-          <div className="border border-dashed border-white/[0.07] flex items-center justify-center" style={{ height: 50 }}>
-            <p className="text-[10px] tracking-widest text-white/20 uppercase">Sem imagem</p>
+          <div className="rounded-xl border border-dashed border-white/[0.1] flex items-center justify-center" style={{ height: 50 }}>
+            <p className="rlp-m text-[9.5px] text-white/30">Sem imagem</p>
           </div>
         )}
       </div>
@@ -526,45 +531,32 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
   // ── PASSWORD GATE ──────────────────────────────────────────────────────────
   if (!unlocked) return (
-    <main className="min-h-screen flex flex-col items-center justify-center px-6 relative" style={{ background: '#04080f' }}>
-      <div className="pointer-events-none fixed inset-0" style={{
-        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
-        backgroundSize: '64px 64px',
-      }} />
-      <div className="pointer-events-none fixed inset-0" style={{
-        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.13) 0%, rgba(30,70,200,0.05) 45%, transparent 70%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at -6% 45%, rgba(60,130,255,0.07) 0%, transparent 55%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
-      }} />
-      <div className="relative z-10 w-full max-w-sm flex flex-col items-center gap-10 text-center">
-        <div className="flex flex-col items-center gap-3">
-          <p className={labelCls}>RL PROD · Photography & Video</p>
-          <h1 className={`${T.xxl} font-extralight tracking-[0.3em] text-white/80 uppercase`}>Proposta Criativa</h1>
-          <div className="flex items-center gap-3 mt-2">
-            <div className="h-px w-8 bg-white/30" />
-            <div className="w-1 h-1 bg-white/40 rotate-45" />
-            <div className="h-px w-8 bg-white/30" />
-          </div>
-          {empresa && <p className={`${T.xs} tracking-[0.5em] text-white/50 uppercase mt-2`}>{empresa}</p>}
+    <main className="rlp min-h-screen flex flex-col items-center justify-center px-4 relative bg-[#00141f] text-white">
+      <EstiloRLProd />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
+      <div className="relative z-10 w-full max-w-sm flex flex-col gap-8">
+        <div className="flex flex-col gap-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-12 h-12 object-contain opacity-90 mb-4" />
+          <p className={EYEBROW}>RL PROD · Photography & Video</p>
+          <h1 className="rlp-t text-[44px] sm:text-[56px] leading-[0.9]">Proposta Criativa{PONTO}</h1>
+          {empresa && <p className="rlp-t text-[20px] text-white/75 mt-1">{empresa}</p>}
         </div>
-        <form onSubmit={handleUnlock} className="w-full flex flex-col gap-4">
+        <form onSubmit={handleUnlock} className={`${CARD} w-full flex flex-col gap-4 p-5 sm:p-6`}>
           <div>
+            <label className={LBL}>Password de acesso</label>
             <input type="password" value={pwInput}
               onChange={e => { setPwInput(e.target.value); setPwError(false) }}
               placeholder="Password de acesso" autoFocus
-              className={`w-full bg-white/[0.03] border px-5 py-4 ${T.sm} text-white/70 placeholder:text-white/30 tracking-wider text-center focus:outline-none transition-colors ${pwError ? 'border-red-400/40' : 'border-white/[0.12] focus:border-white/30'}`}
+              className={`w-full rounded-md border bg-[#00141f]/70 px-3 py-3 text-[14px] text-white placeholder:text-white/30 focus:outline-none transition-colors ${pwError ? 'border-[#ff4747]/70' : 'border-white/[0.12] focus:border-[#2e6cf6]'}`}
             />
-            {pwError && <p className={`mt-2 ${T.xs} tracking-[0.4em] text-red-400/70 uppercase text-center`}>Password incorreta</p>}
+            {pwError && <p className="rlp-m mt-2 text-[9.5px] text-[#ff4747]">Password incorreta</p>}
           </div>
-          <button type="submit" className={`w-full border border-white/30 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/45 py-4 ${T.xs} tracking-[0.5em] text-white/60 hover:text-white/80 uppercase transition-all`}>
+          <button type="submit" className={`${BTN_PRI} w-full py-3.5 text-[14px]`}>
             Aceder →
           </button>
         </form>
-        <a href={`/rm/${token}`} className={`${T.xs} tracking-[0.4em] text-white/40 hover:text-white/60 uppercase transition-colors`}>‹ Voltar ao Portal</a>
+        <a href={`/rm/${token}`} className="rlp-m text-[10px] text-white/50 hover:text-white transition-colors">‹ Voltar ao Portal</a>
       </div>
     </main>
   )
@@ -642,7 +634,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
                 <input className={INP + ' pr-8'} placeholder="https://youtu.be/... ou https://vimeo.com/..." value={url}
                   onChange={e => { const n = [...draft.videoUrls]; n[i] = e.target.value; setDraft({ ...draft, videoUrls: n }) }}
                 />
-                {url && <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[13px] ${valid ? 'text-emerald-400/70' : 'text-red-400/60'}`}>{valid ? '✓' : '✕'}</span>}
+                {url && <span className={`absolute right-3 top-1/2 -translate-y-1/2 text-[13px] ${valid ? 'text-[#5a8bff]' : 'text-[#ff4747]'}`}>{valid ? '✓' : '✕'}</span>}
               </div>
             </div>
           )
@@ -675,31 +667,34 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
   }
 
   // ── SLIDES ─────────────────────────────────────────────────────────────────
+  const capaImg = proposta.slideImages?.[0]
+
   const slides = [
 
     // 0 — CAPA
-    <div key={0} className="flex flex-col h-full w-full">
-      <SlideHeader idx={0} />
-      <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-8 py-8">
-        <div style={{ background:'#04080f', borderRadius:'9999px', padding:'6px', boxShadow:'0 0 24px rgba(255,255,255,0.22), 0 0 56px rgba(255,255,255,0.09)' }}>
-          <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-36 h-36 object-contain block" style={{ mixBlendMode:'screen', borderRadius:'9999px' }} />
+    <div key={0} className="relative flex flex-col h-full w-full min-h-full">
+      {capaImg && (
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={capaImg} alt="" className="w-full h-full object-cover object-center" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(0,20,31,0.94) 0%, rgba(0,20,31,0.6) 55%, rgba(0,20,31,0.3) 100%)' }} />
+          <div className="absolute inset-x-0 bottom-0 h-1/3" style={{ background: 'linear-gradient(to top, #00141f 0%, transparent 100%)' }} />
         </div>
-        <div className="flex flex-col items-center gap-5">
-          <p className="text-[16px] tracking-[0.55em] text-white/55 uppercase">RL PROD · Photography & Video</p>
-          <h1 className="text-[42px] font-extralight tracking-[0.35em] text-white/90 uppercase leading-snug">Proposta<br />Criativa</h1>
-          <div className="flex items-center gap-5 my-1">
-            <div className="h-px w-16 bg-white/30" />
-            <div className="w-2 h-2 bg-white/40 rotate-45" />
-            <div className="h-px w-16 bg-white/30" />
-          </div>
-          {empresa && <p className="text-[20px] font-extralight tracking-[0.4em] text-white/65 uppercase">{empresa}</p>}
-          <p className="text-[15px] tracking-[0.5em] text-white/40 uppercase font-mono">
+      )}
+      <div className={`${WRAP} relative max-w-6xl flex-1 flex flex-col justify-center gap-8`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-14 h-14 sm:w-16 sm:h-16 object-contain opacity-90" />
+        <div className="flex flex-col">
+          <p className="rlp-m traco text-[10.5px] sm:text-[11px] text-[#5a8bff]">RL PROD · Photography & Video</p>
+          <h1 className="rlp-t mt-4 text-[58px] sm:text-[104px] leading-[0.86]">Proposta<br />Criativa{PONTO}</h1>
+          {empresa && <p className="rlp-t mt-6 text-[24px] sm:text-[32px] text-white/85 break-words">{empresa}</p>}
+          <p className="rlp-m mt-4 text-[10.5px] text-[#a9c1ff]">
             {new Date().toLocaleDateString('pt-PT', { day:'2-digit', month:'long', year:'numeric' })}
           </p>
-          <div className="mt-2 leading-tight text-center">
-            <p className="text-[26px] sm:text-[30px] tracking-[0.18em] uppercase font-normal" style={{ color: '#b044d4' }}>More Than a Product,</p>
-            <p className="text-[26px] sm:text-[30px] tracking-[0.18em] uppercase font-black text-white">An Experience.</p>
-          </div>
+        </div>
+        <div className="mt-2 pt-6 border-t border-white/[0.1] max-w-xl leading-[0.95]">
+          <p className="rlp-t text-[26px] sm:text-[36px] text-[#5a8bff]">More Than a Product,</p>
+          <p className="rlp-t text-[26px] sm:text-[36px] text-white">An Experience.</p>
         </div>
       </div>
     </div>,
@@ -707,38 +702,45 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 1 — PLANO DE AÇÃO
     <div key={1} className="flex flex-col h-full w-full">
       <SlideHeader idx={1} />
-      <div className="flex-1 flex flex-col justify-start gap-8 px-8 sm:px-20 pt-10 sm:pt-14 pb-8 max-w-3xl mx-auto w-full">
-        <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase leading-tight text-center">
-          Plano de Ação<br />Personalizado<br />com 3 Etapas
-        </h2>
-        <div className="flex flex-col gap-6">
+      <div className={`${WRAP} max-w-6xl grid gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-16`}>
+        <div className="flex flex-col gap-6 lg:sticky lg:top-0 self-start">
+          <p className={EYEBROW}>Plano de ação</p>
+          <h2 className="rlp-t text-[40px] sm:text-[60px] leading-[0.92]">
+            Plano de Ação<br />Personalizado<br />com 3 Etapas{PONTO}
+          </h2>
+          <p className="text-[15px] sm:text-[16px] text-white/60 leading-relaxed max-w-md">
+            {(proposta as any).planoFrase ?? 'Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência do briefing à entrega final.'}
+          </p>
+        </div>
+        <div className="flex flex-col gap-3">
           {proposta.planoEtapas.map((etapa, i) => (
-            <div key={i} className={`flex flex-col gap-2 ${i < proposta.planoEtapas.length - 1 ? 'pb-6 border-b border-white/[0.07]' : ''}`}>
-              <h3 className="text-[22px] font-bold text-white/85">{i + 1}. {etapa.titulo}</h3>
-              <p className="text-[17px] font-light text-white/60 leading-relaxed">{etapa.texto}</p>
-            </div>
+            <article key={i} className={`${CARD} p-5 sm:p-7 flex gap-5 sm:gap-7`}>
+              <span className="rlp-t text-[44px] sm:text-[56px] leading-[0.85] text-[#2e6cf6] shrink-0">{String(i + 1).padStart(2, '0')}</span>
+              <div className="flex flex-col gap-2 min-w-0">
+                <h3 className="rlp-t text-[22px] sm:text-[26px] leading-tight">{etapa.titulo}</h3>
+                <p className="text-[15px] text-white/60 leading-relaxed">{etapa.texto}</p>
+              </div>
+            </article>
           ))}
         </div>
-        <p className="text-[16px] font-light text-white/45 leading-relaxed tracking-wide">
-          {(proposta as any).planoFrase ?? 'Uma proposta desenvolvida com base nos objetivos da vossa marca. Foco em resultados, narrativa estratégica e produção de excelência do briefing à entrega final.'}
-        </p>
       </div>
     </div>,
 
     // 2 — COMO FUNCIONA
     <div key={2} className="flex flex-col h-full w-full">
       <SlideHeader idx={2} />
-      <div className="flex-1 flex flex-col justify-start gap-8 px-8 sm:px-16 pt-10 sm:pt-14 pb-8 max-w-5xl mx-auto w-full">
-        <h2 className="text-[32px] font-extrabold tracking-[0.12em] text-white/90 uppercase text-center">Como Funciona?</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-6">
+      <div className={`${WRAP} max-w-6xl flex flex-col gap-8 sm:gap-10`}>
+        <div className="flex flex-col gap-3">
+          <p className={EYEBROW}>O processo</p>
+          <h2 className="rlp-t text-[40px] sm:text-[60px] leading-[0.92]">Como Funciona?</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {COMO_FUNCIONA.map((item, i) => (
-            <div key={i} className="flex flex-col gap-1">
-              <div className="flex items-center gap-3 pb-2 border-b border-white/[0.10]">
-                <span className="w-7 h-7 flex items-center justify-center bg-white/[0.08] border border-white/[0.15] text-[13px] font-bold text-white/70 shrink-0">{item.n}</span>
-                <h3 className="text-[22px] font-bold text-white/85 uppercase tracking-wide leading-tight">{item.titulo}</h3>
-              </div>
-              <p className="text-[17px] font-light text-white/55 leading-relaxed pt-1">{item.desc}</p>
-            </div>
+            <article key={i} className={`${CARD} h-full p-5 sm:p-6 transition-colors hover:border-[#2e6cf6]/70 hover:bg-[#0c2236]/80`}>
+              <span className="rlp-t text-[34px] leading-none text-[#2e6cf6]">{item.n.padStart(2, '0')}</span>
+              <h3 className="rlp-t mt-4 text-[20px] sm:text-[22px] leading-tight">{item.titulo}</h3>
+              <p className="mt-2 text-[14px] text-white/60 leading-relaxed">{item.desc}</p>
+            </article>
           ))}
         </div>
       </div>
@@ -747,13 +749,16 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 3 — O QUE ESTÁ INCLUÍDO
     <div key={3} className="flex flex-col h-full w-full">
       <SlideHeader idx={3} />
-      <div className="flex-1 flex flex-col justify-start gap-8 px-8 sm:px-20 pt-10 sm:pt-14 pb-8 max-w-3xl mx-auto w-full">
-        <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase">O Que Está Incluído?</h2>
-        <div className="flex flex-col gap-5">
+      <div className={`${WRAP} max-w-5xl flex flex-col gap-8 sm:gap-10`}>
+        <div className="flex flex-col gap-3">
+          <p className={EYEBROW}>Incluído</p>
+          <h2 className="rlp-t text-[40px] sm:text-[60px] leading-[0.92]">O Que Está Incluído?</h2>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
           {proposta.incluido.map((item, i) => (
-            <div key={i} className="flex items-start gap-4">
-              <span className="text-[22px] font-bold text-white/50 shrink-0 leading-tight">✓</span>
-              <p className="text-[22px] font-bold text-white/85 leading-tight">{item}</p>
+            <div key={i} className={`${CARD} flex items-start gap-4 p-4 sm:p-5`}>
+              <span className="shrink-0 w-7 h-7 rounded-full bg-[#2e6cf6] flex items-center justify-center text-[13px] text-white">✓</span>
+              <p className="rlp-t text-[18px] sm:text-[20px] leading-snug pt-0.5 min-w-0 break-words">{item}</p>
             </div>
           ))}
         </div>
@@ -763,19 +768,23 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 4 — VÍDEOS
     <div key={4} className="flex flex-col h-full w-full">
       <SlideHeader idx={4} />
-      <div className="flex-1 flex flex-col justify-start gap-8 px-8 sm:px-16 pt-10 sm:pt-14 pb-8 max-w-5xl mx-auto w-full">
-        <h2 className="text-[32px] font-extrabold tracking-[0.08em] text-white/90 uppercase text-center">O Nosso Trabalho</h2>
-        <div className="grid grid-cols-1 gap-4">
+      <div className={`${WRAP} max-w-6xl flex flex-col gap-8 sm:gap-10`}>
+        <div className="flex flex-col gap-3">
+          <p className={EYEBROW}>Portfólio</p>
+          <h2 className="rlp-t text-[40px] sm:text-[60px] leading-[0.92]">O Nosso Trabalho{PONTO}</h2>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {proposta.videoUrls.map((url, i) => {
             const embed = toEmbedUrl(url)
+            const span = i === 0 ? 'sm:col-span-2' : ''
             if (embed) return (
-              <div key={i} className="border border-white/[0.08] w-full" style={{ aspectRatio:'16/9' }}>
+              <div key={i} className={`${span} rounded-2xl overflow-hidden border border-white/[0.1] bg-[#00141f] w-full`} style={{ aspectRatio:'16/9' }}>
                 <iframe src={embed} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
               </div>
             )
             return (
-              <div key={i} className="border border-dashed border-white/[0.08] flex items-center justify-center" style={{ aspectRatio:'16/9' }}>
-                <p className={`${T.xs} text-white/20 tracking-widest uppercase`}>Vídeo {i + 1}</p>
+              <div key={i} className={`${span} rounded-2xl border border-dashed border-white/[0.12] bg-[#00141f]/50 flex items-center justify-center`} style={{ aspectRatio:'16/9' }}>
+                <p className="rlp-m text-[10px] text-white/30">Vídeo {i + 1}</p>
               </div>
             )
           })}
@@ -786,25 +795,27 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
     // 5 — CHECKPOINT
     <div key={5} className="flex flex-col h-full w-full">
       <SlideHeader idx={5} />
-      <div className="flex-1 flex flex-col items-center justify-start gap-10 px-8 sm:px-20 text-center pt-10 sm:pt-14 pb-8 max-w-3xl mx-auto w-full">
-        <p className={labelCls}>A Tua Opinião</p>
-        <h2 className="text-[38px] font-extrabold tracking-[0.06em] text-white/90 uppercase leading-tight">Momento de<br />Reflexão</h2>
-        <div className="flex items-center gap-4">
-          <div className="h-px w-12 bg-white/20" />
-          <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
-          <div className="h-px w-12 bg-white/20" />
+      <div className={`${WRAP} max-w-4xl flex-1 flex flex-col justify-center gap-8`}>
+        <div className="flex flex-col gap-3">
+          <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">A Tua Opinião</p>
+          <h2 className="rlp-t text-[44px] sm:text-[72px] leading-[0.9]">Momento de<br />Reflexão{PONTO}</h2>
         </div>
-        <p className="text-[24px] font-light text-white/70 leading-relaxed max-w-xl">{proposta.checkpointPergunta}</p>
+        <div className={`${CARD} relative overflow-hidden p-6 sm:p-10`}>
+          <div className="absolute inset-y-0 left-0 w-[3px] bg-[#2e6cf6]" />
+          <p className="text-[20px] sm:text-[26px] font-light text-white/85 leading-snug">{proposta.checkpointPergunta}</p>
+        </div>
       </div>
     </div>,
 
     // 6 — INVESTIMENTO
     <div key={6} className="flex flex-col h-full w-full">
       <SlideHeader idx={6} />
-      <div className="flex-1 flex items-center justify-center px-8 text-center">
-        <h1 className="text-[80px] sm:text-[110px] font-extralight tracking-[0.3em] text-white/90 uppercase leading-none">
-          INVESTIMENTO
+      <div className={`${WRAP} max-w-6xl flex-1 flex flex-col justify-center gap-4`}>
+        <p className={EYEBROW}>RL PROD · Photography & Video</p>
+        <h1 className="rlp-t leading-[0.85] break-words" style={{ fontSize: 'clamp(48px, 14vw, 168px)' }}>
+          INVESTIMENTO{PONTO}
         </h1>
+        <div className="h-[3px] w-16 bg-[#2e6cf6] mt-2" />
       </div>
     </div>,
 
@@ -819,31 +830,30 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
     // 10 — CONFIRMAR PROPOSTA
     <div key={10} className="flex flex-col h-full w-full overflow-y-auto">
-      <div className="flex-1 flex flex-col items-center justify-start px-6 sm:px-16 pt-12 pb-10 max-w-2xl mx-auto w-full gap-8">
+      <div className={`${WRAP} max-w-3xl flex-1 flex flex-col gap-8`}>
 
         {/* ── ESTADO: ACEITE ── */}
         {confirmStatus === 'aceite' && (
-          <div className="flex flex-col items-center gap-6 text-center pt-8">
-            <div className="w-16 h-16 rounded-full border-2 border-emerald-400/60 flex items-center justify-center">
-              <span className="text-emerald-400 text-[28px]">✓</span>
+          <div className={`${CARD} flex flex-col gap-6 p-6 sm:p-10 mt-4`}>
+            <div className="w-14 h-14 rounded-full bg-[#2e6cf6] flex items-center justify-center">
+              <span className="text-white text-[24px]">✓</span>
             </div>
-            <div className="flex flex-col gap-2">
-              <h2 className="text-[28px] font-extrabold tracking-[0.08em] text-white/90 uppercase">Proposta Confirmada</h2>
-              <p className="text-[15px] font-light text-white/55 leading-relaxed">Recebemos a vossa confirmação. Entraremos em contacto brevemente para dar início ao projeto.</p>
+            <div className="flex flex-col gap-3">
+              <h2 className="rlp-t text-[36px] sm:text-[48px] leading-[0.95]">Proposta Confirmada{PONTO}</h2>
+              <p className="text-[15px] text-white/65 leading-relaxed">Recebemos a vossa confirmação. Entraremos em contacto brevemente para dar início ao projeto.</p>
             </div>
-            <div className="h-px w-16 bg-white/20" />
-            <p className="text-[12px] tracking-[0.4em] text-white/35 uppercase">RL PROD · Obrigado</p>
+            <p className="rlp-m traco text-[10px] text-[#5a8bff]">RL PROD · Obrigado</p>
           </div>
         )}
 
         {/* ── ESTADO: REJEITADA ── */}
         {confirmStatus === 'rejeitada' && (
-          <div className="flex flex-col items-center gap-6 text-center pt-8">
+          <div className={`${CARD} flex flex-col gap-6 p-6 sm:p-10 mt-4`}>
             <div className="flex flex-col gap-3">
-              <h2 className="text-[28px] font-extrabold tracking-[0.08em] text-white/90 uppercase">Recebido</h2>
-              <p className="text-[15px] font-light text-white/55 leading-relaxed max-w-sm">Obrigado pelo vosso tempo. Se mudarem de ideias ou tiverem questões, estamos disponíveis.</p>
+              <h2 className="rlp-t text-[36px] sm:text-[48px] leading-[0.95]">Recebido{PONTO}</h2>
+              <p className="text-[15px] text-white/65 leading-relaxed max-w-md">Obrigado pelo vosso tempo. Se mudarem de ideias ou tiverem questões, estamos disponíveis.</p>
             </div>
-            <a href={`/rm/${token}`} className="text-[12px] tracking-[0.35em] text-white/40 hover:text-white/65 uppercase transition-colors border border-white/10 hover:border-white/25 px-5 py-3">‹ Voltar ao Portal</a>
+            <a href={`/rm/${token}`} className={`${BTN_SEC} self-start px-5 py-3 text-[13.5px]`}>‹ Voltar ao Portal</a>
           </div>
         )}
 
@@ -851,16 +861,11 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
         {(confirmStatus === 'idle' || confirmStatus === 'form' || confirmStatus === 'submitting') && (<>
 
           {/* Cabeçalho */}
-          <div className="flex flex-col gap-3 text-center">
-            <p className="text-[11px] tracking-[0.55em] text-white/35 uppercase">A Vossa Decisão</p>
-            <h2 className="text-[30px] sm:text-[36px] font-extrabold tracking-[0.08em] text-white/90 uppercase leading-tight">
+          <div className="flex flex-col gap-3">
+            <p className={EYEBROW}>A Vossa Decisão</p>
+            <h2 className="rlp-t text-[38px] sm:text-[60px] leading-[0.92]">
               Esta Proposta<br />Alinha-se com<br />o Que Procuram?
             </h2>
-            <div className="flex items-center justify-center gap-4 mt-1">
-              <div className="h-px w-10 bg-white/20" />
-              <div className="w-1.5 h-1.5 bg-white/30 rotate-45" />
-              <div className="h-px w-10 bg-white/20" />
-            </div>
           </div>
 
           {/* Botões de decisão (sempre visíveis) */}
@@ -868,12 +873,12 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
             <div className="flex flex-col sm:flex-row gap-3 w-full">
               <button
                 onClick={() => setConfirmStatus('form')}
-                className="flex-1 py-4 border-2 border-white/30 hover:border-white/60 bg-white/[0.04] hover:bg-white/[0.09] text-[13px] tracking-[0.4em] text-white/80 hover:text-white uppercase font-medium transition-all">
+                className={`${BTN_PRI} flex-1 py-4 text-[14.5px]`}>
                 ✓ Aceitar Proposta
               </button>
               <button
                 onClick={() => submitConfirm('rejeitada')}
-                className="flex-1 py-4 border border-white/[0.10] hover:border-red-400/30 text-[13px] tracking-[0.4em] text-white/30 hover:text-red-400/60 uppercase transition-all">
+                className="flex-1 rounded-full border border-white/[0.16] hover:border-[#ff4747]/70 py-4 text-[14px] text-white/60 hover:text-[#ff4747] transition-colors">
                 ✕ Não, Obrigado
               </button>
             </div>
@@ -881,13 +886,13 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
           {/* Formulário de aceitação */}
           {(confirmStatus === 'form' || confirmStatus === 'submitting') && (
-            <div className="flex flex-col gap-5 w-full">
-              <p className="text-[11px] tracking-[0.4em] text-white/35 uppercase border-b border-white/[0.07] pb-3">Dados para a Ficha de Cliente</p>
+            <div className={`${CARD} flex flex-col gap-5 w-full p-5 sm:p-8`}>
+              <p className="rlp-m traco text-[10px] text-[#5a8bff] border-b border-white/[0.08] pb-4">Dados para a Ficha de Cliente</p>
 
               {/* Nome + Empresa */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={LBL}>Nome Completo <span className="text-white/25">*</span></label>
+                  <label className={LBL}>Nome Completo <span className="text-[#5a8bff]">*</span></label>
                   <input className={INP} placeholder="Nome completo" value={confirmForm.nome}
                     onChange={e => setConfirmForm(f => ({ ...f, nome: e.target.value }))} />
                 </div>
@@ -901,12 +906,12 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
               {/* Email + Telefone */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={LBL}>Email <span className="text-white/25">*</span></label>
+                  <label className={LBL}>Email <span className="text-[#5a8bff]">*</span></label>
                   <input className={INP} type="email" placeholder="email@exemplo.com" value={confirmForm.email}
                     onChange={e => setConfirmForm(f => ({ ...f, email: e.target.value }))} />
                 </div>
                 <div>
-                  <label className={LBL}>Telefone <span className="text-white/25">*</span></label>
+                  <label className={LBL}>Telefone <span className="text-[#5a8bff]">*</span></label>
                   <input className={INP} type="tel" placeholder="+351 9XX XXX XXX" value={confirmForm.telefone}
                     onChange={e => setConfirmForm(f => ({ ...f, telefone: e.target.value }))} />
                 </div>
@@ -930,7 +935,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className={LBL}>Data do Evento</label>
-                  <input className={INP} type="date" value={confirmForm.data_evento}
+                  <input className={INP + ' [color-scheme:dark]'} type="date" value={confirmForm.data_evento}
                     onChange={e => setConfirmForm(f => ({ ...f, data_evento: e.target.value }))} />
                 </div>
                 <div>
@@ -943,11 +948,11 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
               {/* Proposta escolhida */}
               <div>
                 <label className={LBL}>Proposta Escolhida</label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {(content!.propostas || []).map((p, i) => (
                     <button key={i}
                       onClick={() => setConfirmForm(f => ({ ...f, proposta_escolhida: p.titulo }))}
-                      className={`flex-1 py-2.5 text-[12px] tracking-[0.25em] uppercase border transition-all ${confirmForm.proposta_escolhida === p.titulo ? 'border-white/40 text-white/85 bg-white/[0.07]' : 'border-white/[0.10] text-white/35 hover:border-white/25'}`}>
+                      className={`flex-1 min-w-[96px] rounded-full py-2.5 px-3 text-[13px] border transition-colors ${confirmForm.proposta_escolhida === p.titulo ? 'border-[#2e6cf6] bg-[#2e6cf6]/20 text-white' : 'border-white/[0.14] text-white/55 hover:border-white/40 hover:text-white'}`}>
                       {p.titulo}
                     </button>
                   ))}
@@ -962,20 +967,20 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
               </div>
 
               {/* Erro */}
-              {confirmErr && <p className="text-[12px] text-red-400/70 tracking-wide">{confirmErr}</p>}
+              {confirmErr && <p className="text-[13px] text-[#ff4747]">{confirmErr}</p>}
 
               {/* Botões */}
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <button
                   onClick={() => submitConfirm('aceite')}
                   disabled={confirmStatus === 'submitting'}
-                  className="flex-1 py-4 border-2 border-white/30 hover:border-white/60 bg-white/[0.04] hover:bg-white/[0.09] text-[13px] tracking-[0.4em] text-white/80 hover:text-white uppercase font-medium transition-all disabled:opacity-40">
+                  className={`${BTN_PRI} flex-1 py-4 text-[14.5px]`}>
                   {confirmStatus === 'submitting' ? 'A enviar...' : '✓ Confirmar e Enviar'}
                 </button>
                 <button
                   onClick={() => { setConfirmStatus('idle'); setConfirmErr('') }}
                   disabled={confirmStatus === 'submitting'}
-                  className="px-6 py-4 border border-white/[0.10] text-[12px] tracking-[0.3em] text-white/30 hover:text-white/55 uppercase transition-all disabled:opacity-40">
+                  className={`${BTN_SEC} px-6 py-4 text-[13.5px]`}>
                   Cancelar
                 </button>
               </div>
@@ -988,28 +993,17 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
 
   // ── RENDER ─────────────────────────────────────────────────────────────────
   return (
-    <div className="h-screen relative overflow-hidden flex flex-col" style={{ background: '#04080f' }}>
+    <div className="rlp h-screen h-[100dvh] relative overflow-hidden flex flex-col bg-[#00141f] text-white">
+      <EstiloRLProd />
 
       {/* Background */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
-        backgroundSize: '64px 64px',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.13) 0%, rgba(30,70,200,0.05) 45%, transparent 70%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at -6% 45%, rgba(60,130,255,0.07) 0%, transparent 55%)',
-      }} />
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
-      }} />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
 
       {/* Top bar */}
-      <div className="relative z-20 flex items-center justify-between px-6 py-4 border-b border-white/[0.06] shrink-0">
-        <a href={`/rm/${token}`} className={`${T.xs} tracking-[0.4em] text-white/45 hover:text-white/65 uppercase transition-colors`}>‹ Portal</a>
-        <p className={`${T.xs} tracking-[0.5em] text-white/40 uppercase`}>RL PROD · Proposta Criativa</p>
-        <p className={`${T.xs} tracking-widest text-white/45 font-mono`}>
+      <div className="relative z-20 flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-white/[0.08] bg-[#00141f]/85 backdrop-blur-md shrink-0">
+        <a href={`/rm/${token}`} className="rlp-m text-[10px] text-white/55 hover:text-white transition-colors shrink-0">‹ Portal</a>
+        <p className="rlp-m hidden sm:block text-[9.5px] text-white/45 truncate">RL Prod · Proposta criativa</p>
+        <p className="rlp-m text-[10px] text-[#a9c1ff] tabular-nums shrink-0" style={{ letterSpacing: '0.15em' }}>
           {String(current + 1).padStart(2,'0')} / {String(TOTAL_SLIDES).padStart(2,'0')}
         </p>
       </div>
@@ -1019,7 +1013,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
         {slides.map((slide, i) => (
           <div
             key={i}
-            className="absolute inset-0 overflow-y-auto"
+            className="absolute inset-0 overflow-y-auto overflow-x-hidden"
             style={{
               opacity:       current === i ? 1 : 0,
               pointerEvents: current === i ? 'auto' : 'none',
@@ -1033,35 +1027,37 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
             {isAdmin && editingSlide !== i && (
               <button
                 onClick={() => startEdit(i)}
-                className="absolute bottom-5 right-5 z-40 flex items-center gap-2 px-4 py-2.5 border border-white/25 hover:border-white/50 bg-[#0d1120] hover:bg-[#141a2e] text-white/60 hover:text-white/90 transition-all"
+                className="absolute bottom-5 right-4 sm:right-5 z-40 flex items-center gap-2 rounded-full border border-[#2e6cf6]/60 bg-[#00141f]/90 hover:bg-[#2e6cf6] backdrop-blur-md px-4 py-2 text-[12.5px] text-[#a9c1ff] hover:text-white transition-colors"
               >
-                <span style={{ fontSize: 15 }}>✎</span>
-                <span className="text-[10px] tracking-[0.45em] uppercase">Editar</span>
+                <span style={{ fontSize: 14 }}>✎</span>
+                <span>Editar</span>
               </button>
             )}
 
             {/* ── Overlay de edição ── */}
             {isAdmin && editingSlide === i && draft && (
-              <div className="absolute inset-0 z-50 flex flex-col overflow-y-auto" style={{ background: '#04080f' }}>
-                <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-4 border-b border-white/[0.08]" style={{ background: '#04080f' }}>
-                  <p className="text-[10px] tracking-[0.6em] text-white/40 uppercase">✎ Slide {i + 1}</p>
+              <div className="absolute inset-0 z-50 flex flex-col overflow-y-auto bg-[#00141f]">
+                <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 sm:px-8 py-3 border-b border-white/[0.08] bg-[#00141f]/95 backdrop-blur-md">
+                  <p className="rlp-m traco text-[10px] text-[#5a8bff]">✎ Slide {i + 1}</p>
                   <div className="flex items-center gap-2">
                     <button onClick={cancelEdit}
-                      className="px-4 py-2 text-[10px] tracking-[0.4em] text-white/40 hover:text-white/65 border border-white/[0.08] hover:border-white/20 uppercase transition-all">
+                      className={`${BTN_SEC} px-4 py-1.5 text-[12.5px]`}>
                       ✕ Cancelar
                     </button>
                     <button onClick={saveEdit} disabled={saving}
-                      className={`px-6 py-2 text-[10px] tracking-[0.4em] uppercase transition-all border disabled:opacity-40 ${
+                      className={`rounded-full px-5 py-1.5 text-[12.5px] font-medium transition-colors disabled:opacity-40 ${
                         savedOk
-                          ? 'border-emerald-400/50 text-emerald-400/80 bg-emerald-400/[0.06]'
-                          : 'border-white/30 text-white/70 hover:text-white/90 hover:border-white/50 bg-white/[0.04] hover:bg-white/[0.08]'
+                          ? 'border border-[#2e6cf6] bg-[#2e6cf6]/20 text-[#a9c1ff]'
+                          : 'bg-[#2e6cf6] hover:bg-[#5a8bff] text-white'
                       }`}>
                       {savedOk ? '✓ Guardado' : saving ? 'A guardar...' : '✓ Guardar'}
                     </button>
                   </div>
                 </div>
-                <div className="flex-1 px-8 sm:px-16 py-8 max-w-2xl w-full mx-auto">
-                  {renderEditForm(i)}
+                <div className="flex-1 px-4 sm:px-8 py-8 max-w-2xl w-full mx-auto">
+                  <div className={`${CARD} p-5 sm:p-6`}>
+                    {renderEditForm(i)}
+                  </div>
                 </div>
               </div>
             )}
@@ -1070,27 +1066,30 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
       </div>
 
       {/* Bottom nav */}
-      <div className="relative z-20 shrink-0 flex items-center justify-between px-6 py-5 border-t border-white/[0.06]">
-        <button onClick={() => goTo(current - 1)} disabled={current === 0 || editingSlide !== null}
-          className="flex items-center gap-2 border border-white/[0.12] hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.07] px-5 py-3 text-white/50 hover:text-white/80 transition-all disabled:opacity-20 disabled:cursor-not-allowed">
-          <span className={`${T.xxl} leading-none`}>‹</span>
-          <span className={`${T.xs} tracking-[0.4em] uppercase hidden sm:inline`}>Anterior</span>
-        </button>
+      <div className="relative z-20 shrink-0 px-4 sm:px-6 py-3 sm:py-4 border-t border-white/[0.08] bg-[#00141f]/85 backdrop-blur-md">
+        <div className="mx-auto max-w-3xl flex items-center justify-between gap-3">
+          <button onClick={() => goTo(current - 1)} disabled={current === 0 || editingSlide !== null}
+            className="flex items-center gap-2 rounded-full border border-white/[0.16] hover:border-white/40 px-4 sm:px-5 py-2.5 text-[13.5px] text-white/75 hover:text-white transition-colors disabled:opacity-25 disabled:cursor-not-allowed">
+            <span className="text-[18px] leading-none">‹</span>
+            <span className="hidden sm:inline">Anterior</span>
+          </button>
 
-        <div className="flex items-center gap-2">
-          {Array.from({ length: TOTAL_SLIDES }).map((_, i) => (
-            <button key={i} onClick={() => goTo(i)} disabled={editingSlide !== null}
-              className="transition-all duration-300 disabled:cursor-not-allowed"
-              style={{ width: current === i ? 20 : 6, height: 6, background: current === i ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.18)' }}
-            />
-          ))}
+          <div className="flex items-center gap-1.5 rounded-full border border-white/[0.1] bg-[#00141f]/75 px-3 py-2.5 min-w-0">
+            {Array.from({ length: TOTAL_SLIDES }).map((_, i) => (
+              <button key={i} onClick={() => goTo(i)} disabled={editingSlide !== null}
+                aria-label={`Slide ${i + 1}`}
+                className="rounded-full transition-all duration-300 disabled:cursor-not-allowed"
+                style={{ width: current === i ? 20 : 6, height: 6, background: current === i ? '#2e6cf6' : 'rgba(255,255,255,0.22)' }}
+              />
+            ))}
+          </div>
+
+          <button onClick={() => goTo(current + 1)} disabled={current === TOTAL_SLIDES - 1 || editingSlide !== null}
+            className="flex items-center gap-2 rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-4 sm:px-5 py-2.5 text-[13.5px] font-medium text-white transition-colors disabled:opacity-25 disabled:cursor-not-allowed">
+            <span className="hidden sm:inline">Seguinte</span>
+            <span className="text-[18px] leading-none">›</span>
+          </button>
         </div>
-
-        <button onClick={() => goTo(current + 1)} disabled={current === TOTAL_SLIDES - 1 || editingSlide !== null}
-          className="flex items-center gap-2 border border-white/[0.12] hover:border-white/30 bg-white/[0.02] hover:bg-white/[0.07] px-5 py-3 text-white/50 hover:text-white/80 transition-all disabled:opacity-20 disabled:cursor-not-allowed">
-          <span className={`${T.xs} tracking-[0.4em] uppercase hidden sm:inline`}>Seguinte</span>
-          <span className={`${T.xxl} leading-none`}>›</span>
-        </button>
       </div>
     </div>
   )
