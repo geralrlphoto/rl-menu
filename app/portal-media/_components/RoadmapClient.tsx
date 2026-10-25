@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import type { Projeto, RoadmapColuna, RoadmapTarefa, TarefaEstado } from '@/app/portal-media/_data/mockProject'
 import AdminBar from './AdminBar'
@@ -705,24 +706,44 @@ function EstadoQuickChanger({
   onChange: (e: TarefaEstado) => void
 }) {
   const [open, setOpen] = useState(false)
+  // O menu abre por cima da página (portal), senão o cartão da tarefa (overflow-hidden) corta-o
+  const [pos, setPos] = useState<{ left: number; top?: number; bottom?: number } | null>(null)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
+
+  const abrir = () => {
+    if (open) { setOpen(false); return }
+    const r = wrapperRef.current?.getBoundingClientRect()
+    if (!r) return
+    const alturaMenu = ESTADO_OPTIONS.length * 42 + 8
+    const left = Math.min(r.left, window.innerWidth - 200)
+    // Sem espaço por baixo: abre para cima
+    setPos(window.innerHeight - r.bottom < alturaMenu + 12 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 })
+    setOpen(true)
+  }
 
   useEffect(() => {
     if (!open) return
     const onDocClick = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const alvo = e.target as Node
+      if (!wrapperRef.current?.contains(alvo) && !menuRef.current?.contains(alvo)) setOpen(false)
     }
+    const fechar = () => setOpen(false)
     document.addEventListener('mousedown', onDocClick)
-    return () => document.removeEventListener('mousedown', onDocClick)
+    window.addEventListener('scroll', fechar, true)
+    window.addEventListener('resize', fechar)
+    return () => {
+      document.removeEventListener('mousedown', onDocClick)
+      window.removeEventListener('scroll', fechar, true)
+      window.removeEventListener('resize', fechar)
+    }
   }, [open])
 
   return (
     <div ref={wrapperRef} className="relative inline-block">
       <button
         type="button"
-        onClick={() => setOpen(o => !o)}
+        onClick={abrir}
         title="Clica para alterar o estado"
         className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] cursor-pointer transition-colors hover:border-white/40 ${cfg.pill}`}
       >
@@ -735,8 +756,9 @@ function EstadoQuickChanger({
         </svg>
       </button>
 
-      {open && (
-        <div className="absolute left-0 top-[calc(100%+6px)] z-30 min-w-[190px] rounded-xl overflow-hidden border border-white/[0.12] bg-[#00141f] shadow-[0_14px_30px_-10px_rgba(0,0,0,0.6)]">
+      {open && pos && createPortal(
+        <div ref={menuRef} style={{ position: 'fixed', left: pos.left, top: pos.top, bottom: pos.bottom }}
+          className="rlp z-[95] min-w-[190px] rounded-xl overflow-hidden border border-white/[0.12] bg-[#00141f] shadow-[0_14px_30px_-10px_rgba(0,0,0,0.6)]">
           {ESTADO_OPTIONS.map(opt => {
             const optCfg = ESTADO_CFG[opt.value]
             const isActive = opt.value === current
@@ -759,7 +781,8 @@ function EstadoQuickChanger({
               </button>
             )
           })}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )
