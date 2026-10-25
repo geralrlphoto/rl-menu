@@ -61,7 +61,10 @@ export async function GET() {
       { faturado: 0, recebido: 0, pendente: 0, atraso: 0 }
     )
 
-    return NextResponse.json({ projetos, totais, total: projetos.length })
+    // Nome de todos os projetos (incluindo os de teste), só para mostrar nos movimentos
+    const nomes: Record<string, string> = {}
+    for (const row of (data ?? []) as any[]) nomes[String(row.ref).toUpperCase()] = row.nome || row.cliente || row.ref
+    return NextResponse.json({ projetos, totais, total: projetos.length, nomes })
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 })
   }

@@ -87,6 +87,7 @@ const sinal  = (n: number) => (n < 0 ? '−' : '+') + fmt(Math.abs(n))
 
 function FinancasMediaContent() {
   const [projetos, setProjetos] = useState<Projeto[]>([])
+  const [nomes, setNomes] = useState<Record<string, string>>({})
   const [movs, setMovs]         = useState<Movimento[]>([])
   const [loading, setLoading]   = useState(true)
   const [erro, setErro]         = useState('')
@@ -124,6 +125,7 @@ function FinancasMediaContent() {
       const jM = await rM.json()
       if (!rP.ok || !rM.ok) throw new Error()
       setProjetos(jP.projetos ?? [])
+      setNomes(jP.nomes ?? {})
       setMovs((jM.despesas ?? []).map((m: Movimento) => ({
         ...m, tipo: m.tipo === 'receita' ? 'receita' : 'despesa', valor: num(m.valor),
       })))
@@ -174,11 +176,11 @@ function FinancasMediaContent() {
       out.push({
         key: `m-${m.id}`, auto: false, tipo: m.tipo, d: lerData(m.data),
         descricao: m.descricao, categoria: normCategoria(m.categoria), valor: m.valor,
-        ref, projetoNome: ref ? (projPorRef.get(ref)?.nome || ref) : null, validado: true, mov: m,
+        ref, projetoNome: ref ? (projPorRef.get(ref)?.nome || nomes[ref] || ref) : null, validado: true, mov: m,
       })
     }
     return out.sort((a, b) => (b.d?.getTime() ?? -Infinity) - (a.d?.getTime() ?? -Infinity))
-  }, [projetos, movs, projPorRef])
+  }, [projetos, movs, projPorRef, nomes])
 
   const noPeriodo = useMemo(() => linhas.filter(l => dentro(l.d, iv)), [linhas, iv])
 
