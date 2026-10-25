@@ -182,6 +182,9 @@ const PONTO   = <span className="text-[#5a8bff]">.</span>
 const WRAP    = 'w-full mx-auto px-4 sm:px-10 pt-10 sm:pt-16 pb-28'
 
 // ─── Component ────────────────────────────────────────────────────────────────
+// "5500" → "5 500 €" (texto livre fica como está)
+const fmtValor = (v: string) => /^\s*\d+([.,]\d+)?\s*€?\s*$/.test(v) ? `${Number(v.replace(/[^\d.,]/g, '').replace(',', '.')).toLocaleString('pt-PT')} €` : v
+
 export default function RMPropostaClient({ token, isAdmin }: { token: string; isAdmin: boolean }) {
   const [lead,     setLead]     = useState<Record<string, any> | null>(null)
   const [loading,  setLoading]  = useState(true)
@@ -410,7 +413,7 @@ export default function RMPropostaClient({ token, isAdmin }: { token: string; is
                 <p className={labelCls}>Investimento</p>
                 {prop.valor ? (
                   <p className="rlp-t text-[44px] sm:text-[56px] leading-none text-white break-words">
-                    {prop.valor}
+                    {fmtValor(prop.valor)}
                   </p>
                 ) : (
                   <p className="rlp-t text-[36px] leading-none text-white/30">—</p>
