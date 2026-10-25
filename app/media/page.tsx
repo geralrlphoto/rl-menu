@@ -39,7 +39,7 @@ export default async function MediaDashboard() {
   ])
   const listaLeads = (todasLeads ?? []) as { id: string; nome: string | null; empresa: string | null; estado: string; created_at: string; updated_at: string | null }[]
   const leadsNovas = listaLeads.filter(l => l.estado === 'Novo').length
-  const propostasEnv = listaLeads.filter(l => l.estado === 'Proposta Env.').length
+  const propostasEnv = listaLeads.filter(l => l.estado === 'Negociação').length
   const eventos = montarEventos(portais, leads)
 
   // Pagamentos em falta: pendentes + em atraso de todos os portais
@@ -58,7 +58,7 @@ export default async function MediaDashboard() {
 
   const NUMEROS = [
     { valor: String(leadsNovas ?? 0), titulo: 'Leads novas', sub: 'por contactar', href: '/media/crm/leads' },
-    { valor: String(propostasEnv ?? 0), titulo: 'Propostas', sub: 'à espera de resposta', href: '/media/crm/leads' },
+    { valor: String(propostasEnv ?? 0), titulo: 'Em negociação', sub: 'à espera de decisão', href: '/media/crm/leads' },
     { valor: euros(emFalta), titulo: 'Pagamentos em falta', sub: nEmFalta === 1 ? '1 prestação' : `${nEmFalta} prestações`, href: '/media/financas' },
     { valor: String(proximas.length), titulo: 'Próximos trabalhos', sub: proximas[0] ? `o próximo a ${diaCurto(proximas[0])}` : 'nada marcado', href: '/media/portal-cliente' },
   ]
@@ -73,8 +73,8 @@ export default async function MediaDashboard() {
     if (l.estado === 'Novo' && diasDesde(l.created_at) >= 2) {
       tarefas.push({ cor: ACCENT, etiqueta: 'Contactar', titulo: nome, detalhe: `Entrou há ${diasDesde(l.created_at)} dias e ainda não foi contactada`, href: `/media/crm/leads?lead=${l.id}`, peso: 2 })
     }
-    if (l.estado === 'Proposta Env.' && diasDesde(l.updated_at ?? l.created_at) >= 5) {
-      tarefas.push({ cor: '#a9c1ff', etiqueta: 'Seguimento', titulo: nome, detalhe: `Proposta sem resposta há ${diasDesde(l.updated_at ?? l.created_at)} dias`, href: `/media/crm/leads?lead=${l.id}`, peso: 3 })
+    if (l.estado === 'Negociação' && diasDesde(l.updated_at ?? l.created_at) >= 5) {
+      tarefas.push({ cor: '#a9c1ff', etiqueta: 'Seguimento', titulo: nome, detalhe: `Em negociação sem resposta há ${diasDesde(l.updated_at ?? l.created_at)} dias`, href: `/media/crm/leads?lead=${l.id}`, peso: 3 })
     }
   }
   for (const p of portais) {

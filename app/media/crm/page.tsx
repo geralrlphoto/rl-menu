@@ -17,12 +17,12 @@ const AMARELO = '#cfdcff'
 
 // Funil pela ordem do CRM (ESTADOS em leads/LeadsClient.tsx)
 const FUNIL = [
-  { estado: 'Novo',          cor: '#5a8bff' },
-  { estado: 'Em Contacto',   cor: '#7fa6ff' },
-  { estado: 'Qualificado',   cor: '#2e6cf6' },
-  { estado: 'Proposta Env.', cor: '#a9c1ff' },
-  { estado: 'Convertido',    cor: '#ffffff' },
-  { estado: 'Perdido',       cor: '#ff4747' },
+  { estado: 'Novo',            cor: '#5a8bff' },
+  { estado: 'Contactado',      cor: '#7fa6ff' },
+  { estado: 'Reunião marcada', cor: '#2e6cf6' },
+  { estado: 'Negociação',      cor: '#a9c1ff' },
+  { estado: 'Validada',        cor: '#ffffff' },
+  { estado: 'Não validada',    cor: '#ff4747' },
 ]
 
 const corEstado = (e: string) => FUNIL.find(f => f.estado === e)?.cor ?? '#9aa4ad'
@@ -71,7 +71,7 @@ export default async function CrmPage() {
   const contagem = FUNIL.map(f => ({ ...f, n: todas.filter(l => l.estado === f.estado).length }))
   const maximo = Math.max(1, ...contagem.map(c => c.n))
   const recentes = todas.slice(0, 5)
-  const convertidas = contagem.find(c => c.estado === 'Convertido')?.n ?? 0
+  const convertidas = contagem.find(c => c.estado === 'Validada')?.n ?? 0
   const taxa = todas.length ? Math.round((convertidas / todas.length) * 100) : 0
 
   // Próxima reunião marcada (de hoje para a frente)
@@ -125,7 +125,7 @@ export default async function CrmPage() {
           <div className="rounded-[21px] bg-[#0a1d2e] overflow-hidden">
             <div className="flex items-center justify-between px-5 sm:px-7 py-3 border-b border-white/[0.06] text-[11px] text-white/45">
               <span>O teu funil</span>
-              <span>{todas.length} leads · {taxa}% convertidas</span>
+              <span>{todas.length} leads · {taxa}% validadas</span>
             </div>
 
             <div className="grid lg:grid-cols-[1.35fr_1fr]">
@@ -235,7 +235,7 @@ export default async function CrmPage() {
                 {[
                   { k: 'Leads novas', v: contagem[0].n },
                   { k: 'Propostas enviadas', v: contagem[3].n },
-                  { k: 'Convertidas', v: convertidas },
+                  { k: 'Validadas', v: convertidas },
                 ].map(r => (
                   <div key={r.k} className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.03] px-3.5 py-2.5">
                     <span className="text-[13px] text-white/75">{r.k}</span>

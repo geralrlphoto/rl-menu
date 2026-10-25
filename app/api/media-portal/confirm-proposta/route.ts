@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { portalDaLead } from '@/lib/portalMediaModelo'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
   const updates: Record<string, any> = {
     page_content: newContent,
     updated_at:   new Date().toISOString(),
-    estado:       acao === 'aceite' ? 'Convertido' : 'Perdido',
+    estado:       acao === 'aceite' ? 'Validada' : 'Não validada',
   }
 
   if (dados) {
@@ -57,6 +58,9 @@ export async function POST(req: NextRequest) {
     .from('media_leads')
     .update(updates)
     .eq('id', lead.id)
+
+  // Proposta aceite = lead Validada: o projeto nasce em Projetos com o portal pronto a enviar
+  if (!updateErr && acao === 'aceite') await portalDaLead(supabase, lead.id)
 
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
   return NextResponse.json({ ok: true })

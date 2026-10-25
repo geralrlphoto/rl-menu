@@ -1,3 +1,6 @@
+import { randomBytes } from 'node:crypto'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
 // Modelo do Road Map dos portais RL PROD (Briefing → Proposta → Planeamento → … → Entrega).
 // Usado no "Novo portal" e no portal criado ao qualificar uma lead.
 
@@ -122,4 +125,30 @@ export function dadosPortalDaLead(lead: LeadParaPortal, ref: string) {
     },
     origemLead: true,
   }
+}
+
+// Cria (uma só vez) o portal do projeto de uma lead e guarda a referência em media_leads.portal_ref
+export async function portalDaLead(supabase: SupabaseClient, id: string): Promise<string | null> {
+  const { data: lead } = await supabase.from('media_leads')
+    .select('nome, empresa, email, telefone, tipo, ramo, mensagem, page_token, portal_ref').eq('id', id).maybeSingle()
+  if (!lead) return null
+  if (lead.portal_ref) return lead.portal_ref
+
+  // Se já existe um portal com o token da proposta, usa esse; senão cria uma referência nova
+  let ref = lead.page_token ? String(lead.page_token).toUpperCase() : ''
+  if (ref) {
+    const { data: existe } = await supabase.from('media_portais').select('ref').eq('ref', ref).maybeSingle()
+    if (existe) {
+      await supabase.from('media_leads').update({ portal_ref: ref }).eq('id', id)
+      return ref
+    }
+  } else {
+    ref = randomBytes(12).toString('hex').toUpperCase()
+  }
+
+  const { error } = await supabase.from('media_portais')
+    .insert({ ref, dados: dadosPortalDaLead(lead, ref), updated_at: new Date().toISOString() })
+  if (error) return null
+  await supabase.from('media_leads').update({ portal_ref: ref }).eq('id', id)
+  return ref
 }

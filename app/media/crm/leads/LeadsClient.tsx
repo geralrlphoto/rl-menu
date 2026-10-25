@@ -2,16 +2,17 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
-const ESTADOS = ['Novo', 'Em Contacto', 'Qualificado', 'Proposta Env.', 'Perdido', 'Convertido']
+// Fases da lead RL PROD (Validada cria o projeto em Projetos com o portal pronto a enviar)
+const ESTADOS = ['Novo', 'Contactado', 'Reunião marcada', 'Negociação', 'Validada', 'Não validada']
 
 // Cores do rlprod.pt por estado (as mesmas do funil em /media/crm)
 const COR_ESTADO: Record<string, string> = {
-  'Novo':          '#5a8bff',
-  'Em Contacto':   '#7fa6ff',
-  'Qualificado':   '#2e6cf6',
-  'Proposta Env.': '#a9c1ff',
-  'Convertido':    '#ffffff',
-  'Perdido':       '#ff4747',
+  'Novo':            '#5a8bff',
+  'Contactado':      '#7fa6ff',
+  'Reunião marcada': '#2e6cf6',
+  'Negociação':      '#a9c1ff',
+  'Validada':        '#ffffff',
+  'Não validada':    '#ff4747',
 }
 const estiloEstado = (e: string) => {
   const c = COR_ESTADO[e] ?? '#7c8893'
@@ -19,9 +20,9 @@ const estiloEstado = (e: string) => {
 }
 
 // Pipeline = leads em curso (já contactadas e ainda sem decisão)
-const PIPELINE = ['Em Contacto', 'Qualificado', 'Proposta Env.']
-// Já passaram a fase de qualificação
-const QUALIFICADAS = ['Qualificado', 'Proposta Env.', 'Convertido']
+const PIPELINE = ['Contactado', 'Reunião marcada', 'Negociação']
+// Já chegaram à reunião (reunião marcada, negociação ou validada)
+const QUALIFICADAS = ['Reunião marcada', 'Negociação', 'Validada']
 const PERIODOS = [
   { id: 7,   nome: '7 dias' },
   { id: 30,  nome: '30 dias' },
@@ -108,6 +109,8 @@ const DEFAULT_PROPOSTAS: PropostaItem[] = [
 
 const BASE_URL  = process.env.NEXT_PUBLIC_BASE_URL || 'https://portal.rlphotovideo.pt'
 const MEET_LINK = 'https://meet.google.com/dih-etvh-xkh'
+// Link por modo da reunião (presencial = morada a indicar)
+const linkReuniao = (tipo: string) => tipo === 'Videochamada' ? MEET_LINK : tipo === 'Instalações da empresa' ? MAPS_LINK : ''
 const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casamentos,Batizados,Eventos)/@38.634382,-8.9147077,212m/data=!3m2!1e3!4b1!4m6!3m5!1s0xd19414ebaa9e467:0x1d9b63c70ffe06a!8m2!3d38.634381!4d-8.914064!16s%2Fg%2F11w219lx62?authuser=0&entry=ttu&g_ep=EgoyMDI2MDQxMi4wIKXMDSoASAFQAw%3D%3D'
 
 export default function LeadsClient({ leads: initial }: Props) {
@@ -342,9 +345,19 @@ export default function LeadsClient({ leads: initial }: Props) {
     const r = await fetch('/api/media-leads', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, estado }) })
     const d = await r.json().catch(() => ({}))
     setLeads(ls => ls.map(l => l.id === id ? { ...l, estado, portal_ref: d.portal_ref ?? l.portal_ref } : l))
-    if (estado === 'Qualificado' && d.portal_ref) {
+    if (estado === 'Validada' && d.portal_ref) {
       const lead = leads.find(l => l.id === id)
       setAvisoPortal({ ref: d.portal_ref, nome: lead?.empresa || lead?.nome || 'Projeto' })
+    }
+    // Reunião marcada: abre logo os dados da reunião para enviar o portal ao cliente
+    if (estado === 'Reunião marcada') {
+      const lead = leads.find(l => l.id === id)
+      if (lead) {
+        const tipo = lead.reuniao_tipo || 'Instalações da empresa'
+        setPortalForm({ reuniao_data: lead.reuniao_data || '', reuniao_hora: lead.reuniao_hora || '', reuniao_tipo: tipo, reuniao_link: lead.reuniao_link || linkReuniao(tipo) })
+        abrirNaLista(lead)
+        setPortalFormId(lead.id)
+      }
     }
     setUpdatingId(null)
   }
@@ -355,7 +368,11 @@ export default function LeadsClient({ leads: initial }: Props) {
       const res  = await fetch('/api/media-portal/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: lead.id, ...portalForm }) })
       const data = await res.json()
       if (data.ok) {
-        setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, page_token: data.token, page_publicada: true, reuniao_data: portalForm.reuniao_data || undefined, reuniao_hora: portalForm.reuniao_hora || undefined, reuniao_tipo: portalForm.reuniao_tipo, reuniao_link: portalForm.reuniao_link || undefined } : l))
+        if (!['Reunião marcada', 'Negociação', 'Validada', 'Não validada'].includes(lead.estado)) {
+          fetch('/api/media-leads', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: lead.id, estado: 'Reunião marcada' }) })
+          lead = { ...lead, estado: 'Reunião marcada' }
+        }
+        setLeads(ls => ls.map(l => l.id === lead.id ? { ...l, estado: lead.estado, page_token: data.token, page_publicada: true, reuniao_data: portalForm.reuniao_data || undefined, reuniao_hora: portalForm.reuniao_hora || undefined, reuniao_tipo: portalForm.reuniao_tipo, reuniao_link: portalForm.reuniao_link || undefined } : l))
         setPortalFormId(null)
       }
     } catch { /* silent */ }
@@ -383,7 +400,7 @@ export default function LeadsClient({ leads: initial }: Props) {
     const anterior  = leads.filter(l => agora - t(l) >= periodo * DIA && agora - t(l) < 2 * periodo * DIA)
     const variacao  = anterior.length ? Math.round(((noPeriodo.length - anterior.length) / anterior.length) * 100) : null
     const contar = (lista: Lead[], est: string[]) => lista.filter(l => est.includes(l.estado)).length
-    const decididas = contar(leads, ['Convertido', 'Perdido'])
+    const decididas = contar(leads, ['Validada', 'Não validada'])
 
     // Entradas por semana, últimas 12 semanas (segunda a domingo)
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0)
@@ -407,8 +424,8 @@ export default function LeadsClient({ leads: initial }: Props) {
       taxaQual: noPeriodo.length ? Math.round((contar(noPeriodo, QUALIFICADAS) / noPeriodo.length) * 100) : 0,
       pipeline: contar(leads, PIPELINE),
       porTratar: contar(leads, ['Novo']),
-      convertidas: contar(leads, ['Convertido']),
-      taxaConv: decididas ? Math.round((contar(leads, ['Convertido']) / decididas) * 100) : 0,
+      convertidas: contar(leads, ['Validada']),
+      taxaConv: decididas ? Math.round((contar(leads, ['Validada']) / decididas) * 100) : 0,
       semanas, maxSemana: Math.max(1, ...semanas.map(s => s.n)),
       origens: agrupar('fonte'), servicos: agrupar('tipo'),
     }
@@ -453,7 +470,7 @@ export default function LeadsClient({ leads: initial }: Props) {
       {avisoPortal && (
         <div className="fixed bottom-5 right-5 z-[80] max-w-sm rounded-2xl border border-[#2e6cf6]/60 bg-[#00141f]/95 backdrop-blur-md p-4 shadow-2xl">
           <div className="flex items-start justify-between gap-3">
-            <p className="rlp-m text-[9.5px] text-[#a9c1ff]">Lead qualificada</p>
+            <p className="rlp-m text-[9.5px] text-[#a9c1ff]">Lead validada</p>
             <button type="button" onClick={() => setAvisoPortal(null)} aria-label="Fechar" className="text-white/40 hover:text-white">✕</button>
           </div>
           <p className="rlp-t mt-1 text-[20px] leading-tight">{avisoPortal.nome}</p>
@@ -486,7 +503,7 @@ export default function LeadsClient({ leads: initial }: Props) {
           </p>
         </div>
         <div className={kpi}>
-          <p className="rlp-m text-[9.5px] text-white/45">Qualificadas</p>
+          <p className="rlp-m text-[9.5px] text-white/45">Com reunião</p>
           <p className="rlp-t mt-2 text-[40px] leading-none text-[#5a8bff]">{stats.qualificadas}</p>
           <p className="mt-2 text-[12px] text-white/45">{stats.taxaQual}% das entradas do período</p>
         </div>
@@ -496,7 +513,7 @@ export default function LeadsClient({ leads: initial }: Props) {
           <p className="mt-2 text-[12px] text-white/45">{stats.porTratar} ainda por contactar</p>
         </button>
         <div className={kpi}>
-          <p className="rlp-m text-[9.5px] text-white/45">Convertidas</p>
+          <p className="rlp-m text-[9.5px] text-white/45">Validadas</p>
           <p className="rlp-t mt-2 text-[40px] leading-none text-white">{stats.convertidas}</p>
           <p className="mt-2 text-[12px] text-white/45">{stats.taxaConv}% das leads já decididas</p>
         </div>
@@ -509,7 +526,7 @@ export default function LeadsClient({ leads: initial }: Props) {
             <p className="rlp-m text-[10px] text-[#5a8bff]">Entradas por semana</p>
             <span className="flex items-center gap-3 text-[11px] text-white/45">
               <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#2e6cf6]/45" />Entradas</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#5a8bff]" />Qualificadas</span>
+              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-sm bg-[#5a8bff]" />Com reunião</span>
             </span>
           </div>
           <div className="flex items-end gap-1.5 h-[130px]">
@@ -927,14 +944,14 @@ export default function LeadsClient({ leads: initial }: Props) {
                           className="text-[12px] tracking-[0.25em] text-white/35 hover:text-white/60 border border-white/[0.10] hover:border-white/20 px-4 py-2.5 uppercase transition-all">
                           {copiedId === lead.page_token ? '✓ Copiado' : 'Copiar Link'}
                         </button>
-                        <button onClick={() => { const tipo = lead.reuniao_tipo || 'Presencial'; setPortalForm({ reuniao_data: lead.reuniao_data || '', reuniao_hora: lead.reuniao_hora || '', reuniao_tipo: tipo, reuniao_link: lead.reuniao_link || (tipo === 'Videochamada' ? MEET_LINK : MAPS_LINK) }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
+                        <button onClick={() => { const tipo = lead.reuniao_tipo || 'Instalações da empresa'; setPortalForm({ reuniao_data: lead.reuniao_data || '', reuniao_hora: lead.reuniao_hora || '', reuniao_tipo: tipo, reuniao_link: lead.reuniao_link || linkReuniao(tipo) }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
                           className="text-[12px] tracking-[0.25em] text-white/35 hover:text-white/60 border border-white/[0.10] hover:border-white/20 px-4 py-2.5 uppercase transition-all">
                           Editar Reunião
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <button onClick={() => { setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Presencial', reuniao_link: MAPS_LINK }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
+                    <button onClick={() => { setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Instalações da empresa', reuniao_link: MAPS_LINK }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
                       className="text-[12px] tracking-[0.25em] text-white/40 hover:text-white/65 border border-white/[0.10] hover:border-white/25 px-5 py-3 uppercase transition-all">
                       + Criar Portal de Reunião
                     </button>
@@ -950,19 +967,19 @@ export default function LeadsClient({ leads: initial }: Props) {
                       <div>
                         <label className={labelCls + ' mb-2 block'}>Modo</label>
                         <div className="flex gap-3">
-                          {['Presencial', 'Videochamada'].map(tipo => (
-                            <button key={tipo} onClick={() => setPortalForm(f => ({ ...f, reuniao_tipo: tipo, reuniao_link: tipo === 'Videochamada' ? MEET_LINK : MAPS_LINK }))}
+                          {['Videochamada', 'Presencial', 'Instalações da empresa'].map(tipo => (
+                            <button key={tipo} onClick={() => setPortalForm(f => ({ ...f, reuniao_tipo: tipo, reuniao_link: linkReuniao(tipo) }))}
                               className={`flex-1 py-3 text-[12px] tracking-[0.2em] uppercase border transition-all ${portalForm.reuniao_tipo === tipo ? 'border-white/30 text-white/70 bg-white/[0.05]' : 'border-white/[0.09] text-white/30 hover:border-white/20'}`}>
                               {tipo}
                             </button>
                           ))}
                         </div>
                       </div>
-                      <div><label className={labelCls + ' mb-2 block'}>{portalForm.reuniao_tipo === 'Videochamada' ? 'Link Google Meet' : 'Link Google Maps'}</label><input type="url" value={portalForm.reuniao_link} placeholder="https://..." onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))} className={inputCls} /></div>
+                      <div><label className={labelCls + ' mb-2 block'}>{portalForm.reuniao_tipo === 'Videochamada' ? 'Link Google Meet' : portalForm.reuniao_tipo === 'Presencial' ? 'Local (link do Google Maps)' : 'Link Google Maps da RL PROD'}</label><input type="url" value={portalForm.reuniao_link} placeholder="https://..." onChange={e => setPortalForm(f => ({ ...f, reuniao_link: e.target.value }))} className={inputCls} /></div>
                       <div className="flex items-center gap-3 pt-1">
                         <button onClick={() => criarPortal(lead)} disabled={creatingPortal}
                           className="flex-1 py-3 border border-white/25 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/35 text-[12px] tracking-[0.35em] text-white/60 hover:text-white/80 uppercase transition-all disabled:opacity-30">
-                          {creatingPortal ? 'A criar...' : lead.page_token ? '✓ Atualizar' : '✓ Criar Portal'}
+                          {creatingPortal ? 'A enviar...' : lead.page_token ? '✓ Atualizar e reenviar' : '✓ Enviar portal da reunião'}
                         </button>
                         <button onClick={() => setPortalFormId(null)} className="px-5 py-3 border border-white/[0.09] text-[12px] tracking-[0.25em] text-white/30 hover:text-white/55 uppercase transition-all">Cancelar</button>
                       </div>
