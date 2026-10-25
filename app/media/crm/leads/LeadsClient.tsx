@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 // Fases da lead RL PROD (Validada cria o projeto em Projetos com o portal pronto a enviar)
 const ESTADOS = ['Novo', 'Contactado', 'Reunião marcada', 'Negociação', 'Validada', 'Não validada']
@@ -961,7 +962,7 @@ export default function LeadsClient({ leads: initial }: Props) {
                     <div className="mt-5 border border-white/[0.09] bg-white/[0.02] p-5 flex flex-col gap-5">
                       <p className="text-[11px] tracking-[0.4em] text-white/35 uppercase">{lead.page_token ? 'Atualizar Reunião' : 'Dados da Reunião'}</p>
                       <div className="grid grid-cols-2 gap-4">
-                        <div><label className={labelCls + ' mb-2 block'}>Data</label><input type="date" value={portalForm.reuniao_data} onChange={e => setPortalForm(f => ({ ...f, reuniao_data: e.target.value }))} className={inputCls} /></div>
+                        <div><label className={labelCls + ' mb-2 block'}>Data</label><CampoDataPT value={portalForm.reuniao_data} onChange={v => setPortalForm(f => ({ ...f, reuniao_data: v }))} className={inputCls + ' w-full'} /></div>
                         <div><label className={labelCls + ' mb-2 block'}>Hora</label><input type="time" value={portalForm.reuniao_hora} onChange={e => setPortalForm(f => ({ ...f, reuniao_hora: e.target.value }))} className={inputCls} /></div>
                       </div>
                       <div>
