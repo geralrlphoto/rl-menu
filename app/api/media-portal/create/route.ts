@@ -18,7 +18,9 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}))
-  const { lead_id, reuniao_data, reuniao_hora, reuniao_tipo, reuniao_link } = body
+  // semEmail: só guarda a reunião. apenasEnviar: não mexe nos dados e só envia o email ao cliente.
+  const { lead_id, semEmail, apenasEnviar } = body
+  let { reuniao_data, reuniao_hora, reuniao_tipo, reuniao_link } = body
   if (!lead_id) return NextResponse.json({ error: 'lead_id required' }, { status: 400 })
 
   const supabase = createClient(
@@ -39,7 +41,13 @@ export async function POST(req: NextRequest) {
   const isNew  = !lead.page_token
   const token  = lead.page_token || crypto.randomBytes(12).toString('hex')
 
-  const { error } = await supabase
+  if (apenasEnviar) {
+    if (!lead.page_token) return NextResponse.json({ error: 'Guarda primeiro a reunião.' }, { status: 400 })
+    if (!lead.email?.trim()) return NextResponse.json({ error: 'Esta lead não tem email.' }, { status: 400 })
+    reuniao_data = lead.reuniao_data; reuniao_hora = lead.reuniao_hora; reuniao_tipo = lead.reuniao_tipo; reuniao_link = lead.reuniao_link
+  }
+
+  const { error } = apenasEnviar ? { error: null } : await supabase
     .from('media_leads')
     .update({
       page_token:    token,
@@ -55,7 +63,7 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // ── Enviar email de notificação ao cliente ─────────────────────────────
-  if (lead.email?.trim()) {
+  if (!semEmail && lead.email?.trim()) {
     try {
       const portalUrl    = `https://portal.rlphotovideo.pt/rm/${token}`
       const primeiroNome = String(lead.nome).split(' ')[0]
@@ -67,18 +75,18 @@ export async function POST(req: NextRequest) {
       const detalhesTr = [
         dataFmt ? `
             <tr>
-              <td style="font-size:8px;letter-spacing:5px;color:rgba(180,150,90,0.4);text-transform:uppercase;padding-bottom:10px;">Data</td>
+              <td style="font-size:8px;letter-spacing:5px;color:rgba(90,139,255,0.4);text-transform:uppercase;padding-bottom:10px;">Data</td>
               <td style="font-size:13px;font-weight:300;color:rgba(255,255,255,0.65);text-align:right;letter-spacing:1px;">${dataFmt}</td>
             </tr>
-            <tr><td colspan="2" style="border-top:1px solid rgba(180,150,90,0.1);padding:0;font-size:0;">&nbsp;</td></tr>` : '',
+            <tr><td colspan="2" style="border-top:1px solid rgba(90,139,255,0.1);padding:0;font-size:0;">&nbsp;</td></tr>` : '',
         horaFmt ? `
             <tr>
-              <td style="font-size:8px;letter-spacing:5px;color:rgba(180,150,90,0.4);text-transform:uppercase;padding-top:10px;padding-bottom:10px;">Hora</td>
+              <td style="font-size:8px;letter-spacing:5px;color:rgba(90,139,255,0.4);text-transform:uppercase;padding-top:10px;padding-bottom:10px;">Hora</td>
               <td style="font-size:13px;font-weight:300;color:rgba(255,255,255,0.65);text-align:right;letter-spacing:2px;font-family:monospace;">${horaFmt}</td>
             </tr>
-            <tr><td colspan="2" style="border-top:1px solid rgba(180,150,90,0.1);padding:0;font-size:0;">&nbsp;</td></tr>` : '',
+            <tr><td colspan="2" style="border-top:1px solid rgba(90,139,255,0.1);padding:0;font-size:0;">&nbsp;</td></tr>` : '',
         `<tr>
-              <td style="font-size:8px;letter-spacing:5px;color:rgba(180,150,90,0.4);text-transform:uppercase;padding-top:10px;">Modo</td>
+              <td style="font-size:8px;letter-spacing:5px;color:rgba(90,139,255,0.4);text-transform:uppercase;padding-top:10px;">Modo</td>
               <td style="font-size:13px;font-weight:300;color:rgba(255,255,255,0.65);text-align:right;letter-spacing:1px;">${tipoIcon} ${tipoTxt}</td>
             </tr>`,
       ].filter(Boolean).join('')
@@ -86,42 +94,42 @@ export async function POST(req: NextRequest) {
       const cardHtml = `<!DOCTYPE html>
 <html lang="pt">
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;padding:0;background:#080d18;font-family:Arial,Helvetica,sans-serif;">
+<body style="margin:0;padding:0;background:#00141f;font-family:Arial,Helvetica,sans-serif;">
 
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#080d18;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#00141f;">
 <tr><td align="center" style="padding:36px 12px 44px;">
 
-  <table width="500" cellpadding="0" cellspacing="0" style="max-width:500px;width:100%;border-radius:12px;overflow:hidden;border:1px solid rgba(180,150,90,0.18);">
+  <table width="500" cellpadding="0" cellspacing="0" style="max-width:500px;width:100%;border-radius:12px;overflow:hidden;border:1px solid rgba(90,139,255,0.18);">
 
     <!-- Corpo principal -->
-    <tr><td style="background:radial-gradient(ellipse 100% 85% at 50% 10%,#1c2a4a 0%,#101928 50%,#080d18 100%);padding:52px 52px 44px;text-align:center;">
+    <tr><td style="background:radial-gradient(ellipse 100% 85% at 50% 10%,#0c2a44 0%,#00141f 55%,#000c13 100%);padding:52px 52px 44px;text-align:center;">
 
       <!-- Logo circular com neon -->
-      <img src="https://portal.rlphotovideo.pt/logo_marca_advocacia__8_-removebg-preview.png"
+      <img src="https://portal.rlphotovideo.pt/logo-rl-prod-branco.png"
         width="88" height="88" alt="RL PROD"
-        style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:cover;border-radius:50%;border:1.5px solid rgba(200,170,100,0.65);box-shadow:0 0 10px rgba(200,170,100,0.7),0 0 24px rgba(200,170,100,0.35),0 0 50px rgba(200,170,100,0.15);" />
+        style="display:block;margin:0 auto 32px;width:88px;height:88px;object-fit:contain;" />
 
       <!-- Brand -->
-      <p style="margin:0 0 36px;font-size:9px;letter-spacing:7px;color:rgba(180,150,90,0.6);text-transform:uppercase;">
+      <p style="margin:0 0 36px;font-size:9px;letter-spacing:7px;color:rgba(90,139,255,0.6);text-transform:uppercase;">
         RL PROD &nbsp;&middot;&nbsp; Photography & Video
       </p>
 
       <!-- Nome -->
-      <h1 style="margin:0 0 10px;font-size:52px;font-weight:400;letter-spacing:12px;color:#c4a46a;text-transform:uppercase;line-height:1;font-family:Georgia,'Times New Roman',serif;">
+      <h1 style="margin:0 0 10px;font-size:52px;font-weight:400;letter-spacing:12px;color:#ffffff;text-transform:uppercase;line-height:1;font-family:Arial,Helvetica,sans-serif;">
         ${primeiroNome}
       </h1>
 
       <!-- Subtítulo -->
-      <p style="margin:0 0 40px;font-size:10px;letter-spacing:5px;color:rgba(180,150,90,0.4);text-transform:uppercase;">
+      <p style="margin:0 0 40px;font-size:10px;letter-spacing:5px;color:rgba(90,139,255,0.4);text-transform:uppercase;">
         Reunião Marcada
       </p>
 
       <!-- Separador com diamante -->
       <table cellpadding="0" cellspacing="0" style="margin:0 auto 36px;width:200px;">
         <tr>
-          <td style="border-top:1px solid rgba(180,150,90,0.3);vertical-align:middle;">&nbsp;</td>
-          <td style="padding:0 12px;color:rgba(180,150,90,0.6);font-size:9px;white-space:nowrap;line-height:1;">&#9670;</td>
-          <td style="border-top:1px solid rgba(180,150,90,0.3);vertical-align:middle;">&nbsp;</td>
+          <td style="border-top:1px solid rgba(90,139,255,0.3);vertical-align:middle;">&nbsp;</td>
+          <td style="padding:0 12px;color:rgba(90,139,255,0.6);font-size:9px;white-space:nowrap;line-height:1;">&#9670;</td>
+          <td style="border-top:1px solid rgba(90,139,255,0.3);vertical-align:middle;">&nbsp;</td>
         </tr>
       </table>
 
@@ -131,7 +139,7 @@ export async function POST(req: NextRequest) {
       </p>
 
       <!-- Card detalhes da reunião -->
-      <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:32px;border:1px solid rgba(180,150,90,0.2);">
+      <table cellpadding="0" cellspacing="0" style="width:100%;margin-bottom:32px;border:1px solid rgba(90,139,255,0.2);">
         <tr><td style="background:rgba(0,0,0,0.25);padding:20px 24px;">
           <table cellpadding="0" cellspacing="0" style="width:100%;">
             ${detalhesTr}
@@ -142,9 +150,9 @@ export async function POST(req: NextRequest) {
       <!-- Botão CTA -->
       <table cellpadding="0" cellspacing="0" style="margin:0 auto 20px;">
         <tr>
-          <td style="background:rgba(180,150,90,0.12);border:1px solid rgba(180,150,90,0.45);">
+          <td style="background:rgba(90,139,255,0.12);border:1px solid rgba(90,139,255,0.45);">
             <a href="${portalUrl}"
-              style="display:block;padding:16px 40px;font-size:9px;letter-spacing:6px;color:#c4a46a;text-decoration:none;text-transform:uppercase;white-space:nowrap;">
+              style="display:block;padding:16px 40px;font-size:9px;letter-spacing:6px;color:#ffffff;text-decoration:none;text-transform:uppercase;white-space:nowrap;">
               Confirmar Reunião →
             </a>
           </td>
@@ -158,8 +166,8 @@ export async function POST(req: NextRequest) {
     </td></tr>
 
     <!-- Footer -->
-    <tr><td style="background:#060a12;border-top:1px solid rgba(180,150,90,0.12);padding:20px 52px;text-align:center;">
-      <p style="margin:0;font-size:8px;letter-spacing:6px;color:rgba(180,150,90,0.32);text-transform:uppercase;">
+    <tr><td style="background:#000c13;border-top:1px solid rgba(90,139,255,0.12);padding:20px 52px;text-align:center;">
+      <p style="margin:0;font-size:8px;letter-spacing:6px;color:rgba(90,139,255,0.32);text-transform:uppercase;">
         RL PROD &nbsp;&middot;&nbsp; Photography & Video
       </p>
     </td></tr>
@@ -182,14 +190,14 @@ export async function POST(req: NextRequest) {
           from: 'RL PROD <geral@rlphotovideo.pt>',
           to: [lead.email.trim()],
           subject: isNew
-            ? `RL PROD — Reunião marcada${dataFmt ? `, ${dataFmt}` : ''}`
-            : `RL PROD — Reunião atualizada${dataFmt ? `, ${dataFmt}` : ''}`,
+            ? `RL PROD · Reunião marcada${dataFmt ? `, ${dataFmt}` : ''}`
+            : `RL PROD · Reunião marcada${dataFmt ? `, ${dataFmt}` : ''}`,
           html: cardHtml,
         }),
       })
     } catch (_e) { /* não bloqueia */ }
   }
 
-  return NextResponse.json({ ok: true, token, emailSent: !!lead.email?.trim() })
+  return NextResponse.json({ ok: true, token, emailSent: !semEmail && !!lead.email?.trim() })
 }
 

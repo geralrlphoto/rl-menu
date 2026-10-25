@@ -363,10 +363,46 @@ export default function LeadsClient({ leads: initial }: Props) {
     setUpdatingId(null)
   }
 
+  // Envio do portal da reunião ao cliente: por email (Resend) ou por WhatsApp (wa.me, sem emojis)
+  const [enviandoEmail, setEnviandoEmail] = useState<string | null>(null)
+  const [enviado, setEnviado] = useState<Record<string, string>>({})
+  async function enviarPorEmail(lead: Lead) {
+    if (!lead.email?.trim()) { alert('Esta lead não tem email. Junta o email ou envia por WhatsApp.'); return }
+    setEnviandoEmail(lead.id)
+    try {
+      const r = await fetch('/api/media-portal/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: lead.id, apenasEnviar: true }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) alert(d.error || 'Não foi possível enviar o email.')
+      else setEnviado(e => ({ ...e, [lead.id]: `Email enviado para ${lead.email}` }))
+    } catch { alert('Erro de ligação.') }
+    setEnviandoEmail(null)
+  }
+  function linkWhatsApp(lead: Lead) {
+    const tel = (lead.telefone ?? '').replace(/\D/g, '')
+    const numero = tel.length === 9 ? `351${tel}` : tel
+    const primeiro = (lead.nome || '').trim().split(/\s+/)[0] || ''
+    const data = lead.reuniao_data ? new Date(lead.reuniao_data + 'T12:00:00').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' }) : ''
+    const texto = [
+      `Olá${primeiro ? ' ' + primeiro : ''}!`,
+      '',
+      'A nossa reunião está marcada. Preparámos uma página com todos os detalhes:',
+      '',
+      data ? `*Dia:* ${data}` : '',
+      lead.reuniao_hora ? `*Hora:* ${String(lead.reuniao_hora).slice(0, 5)}` : '',
+      lead.reuniao_tipo ? `*Modo:* ${lead.reuniao_tipo}` : '',
+      '',
+      `Confirma aqui: https://portal.rlphotovideo.pt/rm/${lead.page_token}`,
+      '',
+      'Até breve!',
+      'RL PROD',
+    ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n')
+    return `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`
+  }
+
   async function criarPortal(lead: Lead) {
     setCreatingPortal(true)
     try {
-      const res  = await fetch('/api/media-portal/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: lead.id, ...portalForm }) })
+      const res  = await fetch('/api/media-portal/create', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lead_id: lead.id, ...portalForm, semEmail: true }) })
       const data = await res.json()
       if (data.ok) {
         if (!['Reunião marcada', 'Negociação', 'Validada', 'Não validada'].includes(lead.estado)) {
@@ -941,6 +977,19 @@ export default function LeadsClient({ leads: initial }: Props) {
                             {creatingPortalCliente[lead.id] ? 'A criar...' : '+ Criar Portal Cliente'}
                           </button>
                         )}
+                        <button onClick={() => enviarPorEmail(lead)} disabled={enviandoEmail === lead.id}
+                          className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-4 py-2.5 text-[12.5px] font-medium text-white transition-colors disabled:opacity-50">
+                          {enviandoEmail === lead.id ? 'A enviar…' : '✉ Enviar por email'}
+                        </button>
+                        {lead.telefone ? (
+                          <a href={linkWhatsApp(lead)} target="_blank" rel="noopener noreferrer"
+                            onClick={() => setEnviado(e => ({ ...e, [lead.id]: 'WhatsApp aberto com a mensagem pronta' }))}
+                            className="rounded-full bg-[#25D366]/90 hover:bg-[#25D366] px-4 py-2.5 text-[12.5px] font-medium text-[#00141f] transition-colors">
+                            Enviar por WhatsApp
+                          </a>
+                        ) : (
+                          <span className="text-[12px] text-white/40">Sem telemóvel para WhatsApp</span>
+                        )}
                         <button onClick={() => copyLink(lead.page_token!)}
                           className="text-[12px] tracking-[0.25em] text-white/35 hover:text-white/60 border border-white/[0.10] hover:border-white/20 px-4 py-2.5 uppercase transition-all">
                           {copiedId === lead.page_token ? '✓ Copiado' : 'Copiar Link'}
@@ -950,6 +999,7 @@ export default function LeadsClient({ leads: initial }: Props) {
                           Editar Reunião
                         </button>
                       </div>
+                      {enviado[lead.id] && <p className="text-[12.5px] text-[#a9c1ff]">✓ {enviado[lead.id]}</p>}
                     </div>
                   ) : (
                     <button onClick={() => { setPortalForm({ reuniao_data: '', reuniao_hora: '', reuniao_tipo: 'Instalações da empresa', reuniao_link: MAPS_LINK }); setPortalFormId(portalFormId === lead.id ? null : lead.id) }}
@@ -980,7 +1030,7 @@ export default function LeadsClient({ leads: initial }: Props) {
                       <div className="flex items-center gap-3 pt-1">
                         <button onClick={() => criarPortal(lead)} disabled={creatingPortal}
                           className="flex-1 py-3 border border-white/25 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/35 text-[12px] tracking-[0.35em] text-white/60 hover:text-white/80 uppercase transition-all disabled:opacity-30">
-                          {creatingPortal ? 'A enviar...' : lead.page_token ? '✓ Atualizar e reenviar' : '✓ Enviar portal da reunião'}
+                          {creatingPortal ? 'A guardar...' : lead.page_token ? '✓ Guardar alterações' : '✓ Criar portal da reunião'}
                         </button>
                         <button onClick={() => setPortalFormId(null)} className="px-5 py-3 border border-white/[0.09] text-[12px] tracking-[0.25em] text-white/30 hover:text-white/55 uppercase transition-all">Cancelar</button>
                       </div>

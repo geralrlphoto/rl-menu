@@ -1,6 +1,8 @@
 ﻿'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import EstiloRLProd from '@/app/media/_components/EstiloRLProd'
+import { FUNDO } from '@/app/media/_lib/estilo'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type RMLead = Record<string, any>
@@ -269,6 +271,17 @@ function EditorField({ label, children }: { label: string; children: React.React
 
 const MASTER_TOKEN = 'rm-master-rlprod'
 
+// Foto do cabeçalho quando a página ainda não tem uma própria
+const HERO_PADRAO = 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=2000&q=80&auto=format&fit=crop'
+
+// "Antes da reunião": o espírito da conversa (adaptado do portal dos casamentos para marcas)
+const CONVERSA = [
+  { t: 'Não vamos mostrar uma tabela de preços', d: 'Se esta reunião fosse para apresentar valores, enviávamos um PDF, como muitos fazem. Não é isso que queremos convosco.' },
+  { t: 'Queremos conhecer a vossa marca', d: 'A história, o público, o que vos distingue e onde querem chegar. É isso que depois se vê em cada fotografia e em cada plano do vídeo.' },
+  { t: 'E que nos conheçam a nós', d: 'Quem somos, como trabalhamos e como é produzir connosco. Vamos estar ao vosso lado do briefing à entrega final.' },
+  { t: 'Estratégia antes de tudo', d: 'Uma boa produção começa com objetivos claros e confiança. Se no fim desta conversa houver sintonia entre nós, o resto flui naturalmente.' },
+]
+
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function RMLeadPageClient({ token, isAdmin }: { token: string; isAdmin: boolean }) {
   const isMaster = token === MASTER_TOKEN
@@ -386,12 +399,12 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
 
   // ─── Loading / Not Found ─────────────────────────────────────────────────
   if (loading) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#050507]">
+    <main className="min-h-screen flex items-center justify-center bg-[#00141f]">
       <p className="text-[9px] tracking-[0.6em] text-white/15 uppercase animate-pulse">A carregar...</p>
     </main>
   )
   if (notFound) return (
-    <main className="min-h-screen flex items-center justify-center bg-[#050507]">
+    <main className="min-h-screen flex items-center justify-center bg-[#00141f]">
       <p className="text-[9px] tracking-[0.6em] text-white/15 uppercase">Página não disponível</p>
     </main>
   )
@@ -408,384 +421,278 @@ export default function RMLeadPageClient({ token, isAdmin }: { token: string; is
     ? `${DEMO_DATA}T${horaFmt}:00` : null
 
   const { hero, videos, proposta, sobre } = content
-  const labelCls = "text-[8px] tracking-[0.5em] text-white/20 uppercase"
+  const labelCls = "rlp-m text-[9.5px] text-white/45"
+  const fotoHero = hero.imageUrl || HERO_PADRAO
+  const nomeMarca = isMaster ? 'Empresa / Marca' : (lead!.empresa || lead!.nome || '')
+  const nomePessoa = isMaster ? 'Nome do Cliente' : (lead!.nome || '')
+  const CARD = 'rounded-2xl border border-white/[0.1] bg-[#00141f]/75 backdrop-blur-sm'
 
   return (
-    <div className="min-h-screen relative" style={{ background: '#04080f' }}>
-
-      {/* ── Background: grelha + neon azul ── */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        backgroundImage: `linear-gradient(rgba(70,120,255,0.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,120,255,0.055) 1px,transparent 1px)`,
-        backgroundSize: '64px 64px',
-      }} />
-      {/* halo topo centro */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 110% 55% at 50% -8%, rgba(50,110,255,0.13) 0%, rgba(30,70,200,0.05) 45%, transparent 70%)',
-      }} />
-      {/* halo lateral esquerdo */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at -6% 45%, rgba(60,130,255,0.07) 0%, transparent 55%)',
-      }} />
-      {/* halo lateral direito */}
-      <div className="pointer-events-none fixed inset-0 z-0" style={{
-        background: 'radial-gradient(ellipse 45% 55% at 106% 55%, rgba(40,100,255,0.06) 0%, transparent 52%)',
-      }} />
+    <div className="rlp min-h-screen relative text-white">
+      <EstiloRLProd />
+      <div className="pointer-events-none fixed inset-0 z-0" style={{ background: FUNDO }} />
 
       {/* ── ADMIN BAR ── */}
       {isAdmin && (
-        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 py-2.5 bg-[#050507]/90 backdrop-blur-sm border-b border-white/[0.06]">
-          <a href="/media/crm/leads" className="text-[9px] tracking-[0.4em] text-white/20 hover:text-white/50 transition-colors uppercase">‹ Leads</a>
-          <div className="flex items-center gap-3">
-            <span className="text-[8px] tracking-[0.5em] text-white/15 uppercase">Admin · Portal de Reunião</span>
-            {isMaster && (
-              <span className="text-[8px] tracking-[0.4em] text-blue-400/60 border border-blue-400/20 px-2 py-0.5 uppercase">Maquete Mestre</span>
-            )}
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between gap-3 px-4 sm:px-5 py-2.5 bg-[#00141f]/90 backdrop-blur-md border-b border-white/[0.08]">
+          <a href="/media/crm/leads" className="rlp-m text-[10px] text-white/50 hover:text-white transition-colors">‹ Leads</a>
+          <div className="hidden sm:flex items-center gap-3">
+            <span className="rlp-m text-[9px] text-white/40">Admin · Portal da reunião</span>
+            {isMaster && <span className="rlp-m rounded-full border border-[#2e6cf6]/50 px-2.5 py-0.5 text-[8.5px] text-[#a9c1ff]">Maquete mestre</span>}
           </div>
           <div className="flex items-center gap-2">
             {isMaster && (
               <button onClick={handlePublish} disabled={publishing}
-                className="text-[10px] tracking-[0.3em] border border-blue-400/40 bg-blue-400/10 hover:bg-blue-400/20 text-blue-400/80 hover:text-blue-400 px-4 py-2 uppercase transition-all disabled:opacity-40">
-                {published ? '✓ Publicado' : publishing ? 'A publicar...' : '⬆ Publicar'}
+                className="rounded-full border border-[#2e6cf6]/60 bg-[#2e6cf6]/15 hover:bg-[#2e6cf6]/30 px-4 py-1.5 text-[12px] text-[#a9c1ff] transition-colors disabled:opacity-40">
+                {published ? '✓ Publicado' : publishing ? 'A publicar…' : '⬆ Publicar'}
               </button>
             )}
-            {/* Botão foto hero — na admin bar para ser sempre visível */}
             <button onClick={() => heroImageInputRef.current?.click()} disabled={uploadingHero}
-              className="flex items-center gap-1.5 text-[10px] tracking-[0.3em] border border-white/20 bg-white/[0.03] hover:bg-white/[0.09] text-white/45 hover:text-white/70 px-3 py-2 uppercase transition-all disabled:opacity-40">
-              <svg className="w-3 h-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
-                <circle cx="12" cy="13" r="3"/>
-              </svg>
-              <span className="whitespace-nowrap">
-                {uploadingHero ? '...' : hero.imageUrl ? 'Cabeçalho ✓' : 'Cabeçalho'}
-              </span>
+              className="rounded-full border border-white/[0.16] hover:border-white/40 px-4 py-1.5 text-[12px] text-white/75 hover:text-white transition-colors disabled:opacity-40">
+              {uploadingHero ? 'A carregar…' : hero.imageUrl ? '✓ Foto' : '✎ Foto'}
             </button>
             <button onClick={() => setEditorOpen(true)}
-              className="text-[11px] tracking-[0.35em] text-white/70 hover:text-white/90 border border-white/25 hover:border-white/50 bg-white/[0.05] hover:bg-white/[0.10] px-4 py-2 uppercase transition-all font-medium">
-              ✎ Editar
+              className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-4 py-1.5 text-[12px] font-medium transition-colors">
+              ✎ Editar página
             </button>
           </div>
         </div>
       )}
 
-      <div className={`relative z-10 ${isAdmin ? 'pt-10' : ''}`}>
+      <div className={`relative z-10 ${isAdmin ? 'pt-[46px]' : ''}`}>
+        <input ref={heroImageInputRef} type="file" accept="image/*" className="hidden" onChange={handleHeroImageUpload} />
 
-        {/* ── HERO ── */}
-        {/* Hidden file input for hero background */}
-        <input ref={heroImageInputRef} type="file" accept="image/*" className="hidden"
-          onChange={handleHeroImageUpload} />
-
-        <section className="flex flex-col items-center justify-center px-6 pt-20 pb-16 relative overflow-hidden">
-
-          {/* Hero background photo */}
-          {hero.imageUrl && (
-            <div className="absolute top-0 inset-x-0 h-1/2 z-0" style={{
-              WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
-              maskImage: 'linear-gradient(to bottom, black 0%, black 30%, transparent 100%)',
-            }}>
-              <img src={hero.imageUrl} alt="" className="w-full h-full object-cover" />
-            </div>
-          )}
-
-          {/* Admin: remover foto hero (só quando tem foto) */}
+        {/* ── HERO: foto em ecrã inteiro ── */}
+        <section className="relative min-h-[88vh] flex items-end overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={fotoHero} alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(0,20,31,0.92) 0%, rgba(0,20,31,0.55) 55%, rgba(0,20,31,0.25) 100%)' }} />
+          <div className="absolute inset-x-0 bottom-0 h-1/3" style={{ background: 'linear-gradient(to top, #00141f 0%, transparent 100%)' }} />
           {isAdmin && hero.imageUrl && (
-            <button
-              onClick={() => setHero('imageUrl', '')}
-              className="absolute top-4 right-4 z-20 flex items-center gap-1.5 border border-red-400/25 bg-black/60 backdrop-blur-sm hover:bg-red-900/40 hover:border-red-400/50 px-3 py-2 transition-all"
-            >
-              <span className="text-[8px] tracking-[0.4em] text-red-400/60 hover:text-red-400/90 uppercase whitespace-nowrap">✕ Remover Foto</span>
+            <button onClick={() => setHero('imageUrl', '')}
+              className="absolute top-4 right-4 z-20 rounded-full border border-white/25 bg-black/50 backdrop-blur-sm px-3 py-1.5 text-[11.5px] text-white/70 hover:text-[#ff8a8a]">
+              ✕ Remover foto
             </button>
           )}
-
-          <div className="relative z-10 flex flex-col items-center">
-          <FadeIn delay={0}>
-            <img
-              src="/logo-rl-prod-branco.png"
-              alt="RL PROD"
-              className="opacity-70 mb-10"
-              style={{ height: '150px', width: 'auto' }}
-            />
-          </FadeIn>
-          <FadeIn delay={80}>
-            <p className={`${labelCls} text-center mb-3`}>{hero.subtitulo}</p>
-          </FadeIn>
-          <FadeIn delay={200}>
-            <h1 className="text-4xl sm:text-6xl font-extralight tracking-[0.25em] text-white/85 uppercase text-center mb-6">
-              {hero.titulo}
-            </h1>
-          </FadeIn>
-          <FadeIn delay={340}>
-            <div className="flex items-center gap-3 justify-center mb-8">
-              <div className="h-px w-8 bg-white/20" />
-              <div className="h-px w-1 bg-white/[0.08]" />
-              <div className="h-px flex-shrink-0 w-1 bg-white/[0.08]" />
-              <div className="h-px w-8 bg-white/20" />
-            </div>
-          </FadeIn>
-          <FadeIn delay={440} className="flex flex-col items-center gap-2">
-            <p className="text-xl sm:text-2xl font-extralight tracking-[0.2em] text-white/60 uppercase">
-              {isMaster ? 'Nome do Cliente' : (lead!.nome || '')}
-            </p>
-            {(isMaster || lead!.empresa) && (
-              <p className="text-[11px] tracking-[0.4em] text-white/25 uppercase">
-                {isMaster ? 'Empresa / Marca' : lead!.empresa}
-              </p>
-            )}
-            {dataFmt && (
-              <p className="mt-3 text-[10px] tracking-[0.45em] text-white/20 uppercase font-mono">
-                {dataFmt}{horaFmt && ` · ${horaFmt}`}{DEMO_TIPO && ` · ${DEMO_TIPO}`}
-              </p>
-            )}
-            {isMaster && (
-              <p className="mt-2 text-[8px] tracking-[0.4em] text-blue-400/30 uppercase">— dados de demonstração —</p>
-            )}
-          </FadeIn>
-          </div>{/* /relative z-10 content wrapper */}
-
-          {/* Scroll cue */}
-          <div className="relative z-10 flex flex-col items-center gap-2 opacity-30 mt-10">
-            <div className="w-px h-10 bg-white/40" />
-            <span className="text-[7px] tracking-[0.6em] text-white uppercase">Scroll</span>
+          <div className="relative w-full max-w-6xl mx-auto px-6 sm:px-10 pb-20 pt-32">
+            <FadeIn>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-14 h-14 object-contain opacity-90 mb-8" />
+            </FadeIn>
+            <FadeIn delay={80}><p className="rlp-m traco text-[11px] text-[#5a8bff]">{hero.subtitulo || 'RL PROD · Photography & Video'}</p></FadeIn>
+            <FadeIn delay={180}><h1 className="rlp-t mt-4 text-[56px] sm:text-[96px] leading-[0.88]">{hero.titulo}<span className="text-[#5a8bff]">.</span></h1></FadeIn>
+            <FadeIn delay={300}>
+              <p className="rlp-t mt-5 text-[22px] sm:text-[28px] text-white/85">{nomeMarca}</p>
+              {nomePessoa && nomePessoa !== nomeMarca && <p className="mt-1 text-[14px] text-white/55">{nomePessoa}</p>}
+              {dataFmt && (
+                <p className="rlp-m mt-5 text-[10.5px] text-[#a9c1ff]">{dataFmt}{horaFmt && ` · ${horaFmt}`}{DEMO_TIPO && ` · ${DEMO_TIPO}`}</p>
+              )}
+              {isMaster && <p className="rlp-m mt-2 text-[8.5px] text-[#a9c1ff]/60">Dados de demonstração</p>}
+            </FadeIn>
           </div>
-
         </section>
 
-        <div className="w-full h-px bg-white/[0.04]" />
-
-        {/* ── COUNTDOWN ── */}
+        {/* ── CONTAGEM ── */}
         {targetDate && (
-          <section className="py-16 flex flex-col items-center px-6">
-            <FadeIn>
-              <p className={`${labelCls} text-center mb-10`}>Falta</p>
-            </FadeIn>
-            <FadeIn delay={120}>
+          <section className="px-6 pt-4 pb-14">
+            <FadeIn className="max-w-3xl mx-auto">
+              <p className={`${labelCls} text-center mb-6`}>Faltam</p>
               <Countdown targetDate={targetDate} />
             </FadeIn>
           </section>
         )}
 
-        {/* ── MEETING CARD + ACTIONS ── */}
-        <section className="py-16 flex flex-col items-center px-6">
-          <FadeIn className="w-full max-w-sm">
+        {/* ── ANTES DA REUNIÃO ── */}
+        <section className="px-6 sm:px-10 py-16 max-w-6xl mx-auto">
+          <FadeIn>
+            <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Antes da reunião</p>
+            <h2 className="rlp-t mt-3 text-[40px] sm:text-[56px] leading-[0.95]">Uma conversa, não uma proposta.</h2>
+          </FadeIn>
+          <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {CONVERSA.map((c, i) => (
+              <FadeIn key={c.t} delay={i * 90}>
+                <article className={`${CARD} group h-full p-6 transition-colors hover:border-[#2e6cf6]/70 hover:bg-[#0c2236]/80`}>
+                  <span className="rlp-t text-[34px] leading-none text-[#2e6cf6]">{String(i + 1).padStart(2, '0')}</span>
+                  <h3 className="rlp-t mt-5 text-[22px] leading-tight">{c.t}</h3>
+                  <p className="mt-3 text-[14px] leading-relaxed text-white/60">{c.d}</p>
+                </article>
+              </FadeIn>
+            ))}
+          </div>
+        </section>
 
-            {/* Card detalhes */}
-            <div className="border border-white/[0.07] bg-white/[0.02] mb-6">
-              <div className="px-6 py-4 border-b border-white/[0.05]">
-                <p className={labelCls}>Detalhes da Reunião</p>
-              </div>
-              <div className="px-6 py-5 flex flex-col gap-5">
-                {dataFmt && (
-                  <div className="flex items-center justify-between">
-                    <span className={labelCls}>Data</span>
-                    <span className="text-sm font-extralight text-white/70 tracking-wider">{dataFmt}</span>
+        {/* ── DETALHES DA REUNIÃO ── */}
+        <section className="px-6 py-14">
+          <FadeIn className="w-full max-w-md mx-auto">
+            <div className={`${CARD} overflow-hidden`}>
+              <div className="px-6 py-4 border-b border-white/[0.08]"><p className="rlp-m traco text-[10px] text-[#5a8bff]">Detalhes da reunião</p></div>
+              <div className="px-6 py-5 grid gap-4">
+                {[['Data', dataFmt], ['Hora', horaFmt], ['Modo', DEMO_TIPO]].filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k} className="flex items-center justify-between gap-4">
+                    <span className={labelCls}>{k}</span>
+                    <span className="rlp-t text-[19px]">{v}</span>
                   </div>
-                )}
-                {horaFmt && (
-                  <>
-                    <div className="h-px bg-white/[0.04]" />
-                    <div className="flex items-center justify-between">
-                      <span className={labelCls}>Hora</span>
-                      <span className="text-sm font-extralight text-white/70 tracking-wider font-mono">{horaFmt}</span>
-                    </div>
-                  </>
-                )}
-                {lead!.reuniao_tipo && (
-                  <>
-                    <div className="h-px bg-white/[0.04]" />
-                    <div className="flex items-center justify-between">
-                      <span className={labelCls}>Modo</span>
-                      <span className="text-sm font-extralight text-white/70 tracking-wider">{lead!.reuniao_tipo}</span>
-                    </div>
-                  </>
-                )}
+                ))}
               </div>
               {lead!.reuniao_link && (
                 <div className="px-6 pb-5">
                   <a href={lead!.reuniao_link} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-3 border border-white/[0.08] hover:border-white/20 text-[9px] tracking-[0.45em] text-white/35 hover:text-white/60 uppercase transition-all">
-                    <span>{isVideo ? '↗ Entrar na videochamada' : '↗ Ver localização'}</span>
+                    className="flex items-center justify-center w-full rounded-full border border-white/[0.16] hover:border-[#2e6cf6] py-3 text-[13.5px] text-white/80 hover:text-white transition-colors">
+                    {isVideo ? '↗ Entrar na videochamada' : '↗ Ver localização'}
                   </a>
                 </div>
               )}
             </div>
 
-            {/* Status badges */}
             {status === 'confirmada' && (
-              <div className="flex items-center justify-center gap-2 w-full px-5 py-3 border border-emerald-400/20 bg-emerald-400/5 mb-4">
-                <span className="text-emerald-400/70 text-[9px] tracking-[0.5em] uppercase">✓ Reunião Confirmada</span>
-              </div>
+              <p className="mt-4 rounded-full border border-[#2e6cf6] bg-[#2e6cf6]/20 py-3 text-center text-[13px] text-[#a9c1ff]">✓ Reunião confirmada</p>
             )}
             {status === 'alteracao_pedida' && (
-              <div className="flex items-center justify-center gap-2 w-full px-5 py-3 border border-amber-400/20 bg-amber-400/5 mb-4">
-                <span className="text-amber-400/60 text-[9px] tracking-[0.5em] uppercase">⏳ Pedido de Alteração Enviado</span>
-              </div>
+              <p className="mt-4 rounded-full border border-white/25 py-3 text-center text-[13px] text-white/70">Pedido de alteração enviado. Vamos entrar em contacto.</p>
             )}
 
-            {/* Actions */}
-            <div className="flex flex-col gap-2">
+            <div className="mt-4 grid gap-2">
               {status !== 'confirmada' && (
                 <button onClick={handleConfirm} disabled={confirming || isAdmin}
-                  className="w-full py-4 border border-white/25 bg-white/[0.04] hover:bg-white/[0.08] hover:border-white/40 text-[9px] tracking-[0.5em] text-white/60 hover:text-white/85 uppercase transition-all disabled:opacity-30">
-                  {confirming ? 'A confirmar...' : '✓  Confirmar Reunião'}
+                  className="w-full rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] py-3.5 text-[14px] font-medium transition-colors disabled:opacity-40">
+                  {confirming ? 'A confirmar…' : '✓ Confirmar reunião'}
                 </button>
               )}
               <button onClick={handleChangeRequest} disabled={requesting || isAdmin}
-                className="w-full py-3 border border-white/[0.07] hover:border-white/15 text-[9px] tracking-[0.45em] text-white/25 hover:text-white/45 uppercase transition-all disabled:opacity-30">
-                {requesting ? 'A enviar...' : 'Pedir Alteração'}
+                className="w-full rounded-full border border-white/[0.16] hover:border-white/40 py-3 text-[13.5px] text-white/70 hover:text-white transition-colors disabled:opacity-40">
+                {requesting ? 'A enviar…' : 'Pedir alteração'}
               </button>
-              {isAdmin && <p className="text-center text-[8px] text-white/15 tracking-widest uppercase mt-1">Botões desativados em modo admin</p>}
+              {isAdmin && <p className="text-center text-[11.5px] text-white/40 mt-1">Botões desativados em modo admin</p>}
             </div>
 
-            {/* Adicionar ao calendário */}
             {targetDate && !isAdmin && (() => {
               const fmt = (d: string, h: string) => `${d.replace(/-/g,'')}T${h.replace(':','')}00`
               const start = fmt(lead!.reuniao_data, horaFmt)
               const end   = fmt(lead!.reuniao_data, String(parseInt(horaFmt.split(':')[0])+1).padStart(2,'0') + ':' + horaFmt.split(':')[1])
               const title = encodeURIComponent('Reunião RL PROD · Photography & Video')
-              const loc   = encodeURIComponent(lead!.reuniao_link || (isVideo ? 'Videochamada' : 'Presencial'))
+              const loc   = encodeURIComponent(lead!.reuniao_link || DEMO_TIPO || 'Reunião')
               const gcal  = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${loc}`
               const downloadIcs = () => {
-                const ics = [
-                  'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RL PROD//Photography & Video//PT',
-                  'BEGIN:VEVENT',
-                  `DTSTART:${start}`, `DTEND:${end}`,
-                  `SUMMARY:Reunião RL PROD · Photography & Video`,
-                  `LOCATION:${decodeURIComponent(loc)}`,
-                  'END:VEVENT','END:VCALENDAR',
-                ].join('\r\n')
-                const blob = new Blob([ics], { type: 'text/calendar' })
-                const url  = URL.createObjectURL(blob)
-                Object.assign(document.createElement('a'), { href: url, download: 'reuniao-rl-media.ics' }).click()
+                const ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RL PROD//Photography & Video//PT','BEGIN:VEVENT',
+                  `DTSTART:${start}`, `DTEND:${end}`, 'SUMMARY:Reunião RL PROD · Photography & Video', `LOCATION:${decodeURIComponent(loc)}`,
+                  'END:VEVENT','END:VCALENDAR'].join('\r\n')
+                const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }))
+                Object.assign(document.createElement('a'), { href: url, download: 'reuniao-rl-prod.ics' }).click()
                 URL.revokeObjectURL(url)
               }
               return (
-                <div className="mt-6 flex flex-col items-center gap-3">
-                  <p className={labelCls}>Adicionar ao Calendário</p>
-                  <div className="flex gap-2 w-full">
-                    <a href={gcal} target="_blank" rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-white/[0.07] hover:border-white/15 text-[9px] tracking-[0.3em] text-white/20 hover:text-white/40 uppercase transition-all">
-                      Google
-                    </a>
-                    <button onClick={downloadIcs}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-white/[0.07] hover:border-white/15 text-[9px] tracking-[0.3em] text-white/20 hover:text-white/40 uppercase transition-all">
-                      Apple / ICS
-                    </button>
+                <div className="mt-6">
+                  <p className={`${labelCls} text-center mb-2`}>Adicionar ao calendário</p>
+                  <div className="flex gap-2">
+                    <a href={gcal} target="_blank" rel="noopener noreferrer" className="flex-1 rounded-full border border-white/[0.12] py-2.5 text-center text-[12.5px] text-white/65 hover:text-white">Google</a>
+                    <button onClick={downloadIcs} className="flex-1 rounded-full border border-white/[0.12] py-2.5 text-[12.5px] text-white/65 hover:text-white">Apple / ICS</button>
                   </div>
                 </div>
               )
             })()}
-
           </FadeIn>
         </section>
 
-        <div className="w-full h-px bg-white/[0.04]" />
-
-        {/* ── VÍDEOS ── */}
+        {/* ── O NOSSO TRABALHO ── */}
         {(videos.urls.some(u => u) || isAdmin) && (
-          <section className="py-16 px-6 flex flex-col items-center bg-white/[0.01]">
+          <section className="px-6 sm:px-10 py-16 max-w-6xl mx-auto">
             <FadeIn>
-              <p className={`${labelCls} text-center mb-3`}>{videos.label}</p>
+              <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">{videos.label}</p>
+              <h2 className="rlp-t mt-3 text-[36px] sm:text-[48px] leading-[0.95]">{videos.titulo}</h2>
             </FadeIn>
-            <FadeIn delay={100}>
-              <h2 className="text-xl sm:text-2xl font-extralight tracking-[0.2em] text-white/60 uppercase text-center mb-10">
-                {videos.titulo}
-              </h2>
-            </FadeIn>
-            <FadeIn delay={200} className="w-full max-w-5xl">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {videos.urls.map((url, i) => {
-                  const embed = toEmbedUrl(url)
-                  if (embed) return (
-                    <div key={i} className="border border-white/[0.06]" style={{ aspectRatio: '16/9' }}>
-                      <iframe src={embed} className="w-full h-full" allowFullScreen
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
-                    </div>
-                  )
-                  if (isAdmin) return (
-                    <div key={i} className="border border-dashed border-white/[0.06] flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
-                      <span className="text-[9px] tracking-[0.4em] text-white/15 uppercase">Vídeo {i + 1}</span>
-                    </div>
-                  )
-                  return null
-                })}
-              </div>
+            <FadeIn delay={150} className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              {videos.urls.map((url, i) => {
+                const embed = toEmbedUrl(url)
+                if (embed) return (
+                  <div key={i} className="overflow-hidden rounded-2xl border border-white/[0.1]" style={{ aspectRatio: '16/9' }}>
+                    <iframe src={embed} className="w-full h-full" allowFullScreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" />
+                  </div>
+                )
+                if (isAdmin) return (
+                  <div key={i} className="rounded-2xl border border-dashed border-white/[0.14] flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
+                    <span className="rlp-m text-[9px] text-white/35">Vídeo {i + 1} · no editor</span>
+                  </div>
+                )
+                return null
+              })}
             </FadeIn>
           </section>
         )}
 
-        {/* ── PROPOSTA CRIATIVA — banner ── */}
-        <section className="px-6 py-16 max-w-3xl mx-auto">
+        {/* ── PROPOSTA CRIATIVA ── */}
+        <section className="px-6 sm:px-10 py-14 max-w-6xl mx-auto">
           <FadeIn>
-            <div className="relative border border-white/[0.08] bg-white/[0.02] px-8 sm:px-14 py-12 flex flex-col sm:flex-row items-center justify-between gap-8">
-              {/* Cantos ornamentais */}
-              <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-white/20" />
-              <div className="absolute top-0 right-0 w-6 h-6 border-t border-r border-white/20" />
-              <div className="absolute bottom-0 left-0 w-6 h-6 border-b border-l border-white/20" />
-              <div className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-white/20" />
-              <div className="flex flex-col gap-3 text-center sm:text-left">
-                <p className={labelCls}>Proposta Criativa</p>
-                <p className="text-[13px] font-extralight text-white/50 tracking-wider leading-relaxed">
-                  {proposta.intro}
-                </p>
+            <div className="rounded-2xl border border-[#2e6cf6]/50 bg-[#2e6cf6]/[0.12] px-6 sm:px-10 py-10 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              <div className="max-w-2xl">
+                <p className="rlp-m traco text-[10.5px] text-[#a9c1ff]">Proposta criativa</p>
+                <p className="mt-3 text-[15px] leading-relaxed text-white/75">{proposta.intro}</p>
               </div>
               <a href={`/rm/${token}/proposta`}
-                className="shrink-0 flex items-center gap-3 border border-white/20 bg-white/[0.03] hover:bg-white/[0.08] hover:border-white/35 px-8 py-4 text-[9px] tracking-[0.5em] text-white/55 hover:text-white/80 uppercase transition-all duration-300 group whitespace-nowrap">
-                <span>Ver Proposta</span>
-                <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+                className="shrink-0 rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-7 py-3.5 text-[14px] font-medium text-white transition-colors">
+                Ver proposta →
               </a>
             </div>
           </FadeIn>
         </section>
 
-        <div className="w-full h-px bg-white/[0.04]" />
-
-        {/* ── PORTAL DO CLIENTE — card ── */}
+        {/* ── ÁREA DO CLIENTE ── */}
         {(!isMaster && (content as any).portal_cliente?.ativo) && (
-          <>
-            <div className="w-full h-px bg-white/[0.04]" />
-            <section className="px-6 py-16 max-w-3xl mx-auto">
-              <FadeIn>
-                <div className="relative border border-sky-400/20 bg-sky-400/[0.03] px-8 sm:px-14 py-12 flex flex-col sm:flex-row items-center justify-between gap-8">
-                  <div className="absolute top-0 left-0 w-6 h-6 border-t border-l border-sky-400/25" />
-                  <div className="absolute top-0 right-0 w-6 h-6 border-t border-r border-sky-400/25" />
-                  <div className="absolute bottom-0 left-0 w-6 h-6 border-b border-l border-sky-400/25" />
-                  <div className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-sky-400/25" />
-                  <div className="flex flex-col gap-3 text-center sm:text-left">
-                    <p className="text-[9px] tracking-[0.5em] text-sky-400/60 uppercase">Área do Cliente</p>
-                    <p className="text-[13px] font-extralight text-white/50 tracking-wider leading-relaxed">
-                      Acompanha o progresso do teu projeto, consulta as entregas e acede aos teus ficheiros.
-                    </p>
-                  </div>
-                  <a href={`/portal-media/${(content as any).portal_cliente?.ref || token}`}
-                    className="shrink-0 flex items-center gap-3 border border-sky-400/30 bg-sky-400/[0.04] hover:bg-sky-400/[0.09] hover:border-sky-400/55 px-8 py-4 text-[9px] tracking-[0.5em] text-sky-400/60 hover:text-sky-400/90 uppercase transition-all duration-300 group whitespace-nowrap">
-                    <span>Portal Cliente</span>
-                    <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
-                  </a>
+          <section className="px-6 sm:px-10 pb-14 max-w-6xl mx-auto">
+            <FadeIn>
+              <div className={`${CARD} px-6 sm:px-10 py-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6`}>
+                <div>
+                  <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Área do cliente</p>
+                  <p className="mt-3 text-[14.5px] text-white/65">Acompanha o progresso do projeto, as entregas e os ficheiros.</p>
                 </div>
-              </FadeIn>
-            </section>
-          </>
+                <a href={`/portal-media/${(content as any).portal_cliente?.ref || token}`}
+                  className="shrink-0 rounded-full border border-white/[0.2] hover:border-[#2e6cf6] px-7 py-3.5 text-[14px] text-white/85 hover:text-white transition-colors">
+                  Abrir área do cliente →
+                </a>
+              </div>
+            </FadeIn>
+          </section>
         )}
 
-        {/* ── SOBRE ── */}
-        <section className="py-16 px-6 flex flex-col items-center max-w-lg mx-auto text-center">
+        {/* ── UMA PALAVRA NOSSA ── */}
+        <section className="px-6 py-16 max-w-3xl mx-auto text-center">
           <FadeIn>
-            <p className={`${labelCls} mb-4`}>{sobre.label}</p>
-          </FadeIn>
-          <FadeIn delay={100}>
-            <h2 className="text-2xl font-extralight tracking-[0.3em] text-white/70 uppercase mb-6">{sobre.titulo}</h2>
-          </FadeIn>
-          <FadeIn delay={200}>
-            <p className="text-sm font-light text-white/30 leading-relaxed tracking-wide">{sobre.texto}</p>
+            <p className="rlp-m traco text-[10.5px] text-[#5a8bff] inline-block">Uma palavra nossa</p>
+            <p className="rlp-t mt-5 text-[26px] sm:text-[34px] leading-snug text-white/90">
+              &ldquo;Cada marca tem uma história que merece ser contada com verdade. Estamos aqui para a ouvir primeiro.&rdquo;
+            </p>
           </FadeIn>
         </section>
 
-        {/* ── FOOTER ── */}
-        <footer className="border-t border-white/[0.04] px-6 py-8 text-center">
+        {/* ── QUEM SOMOS + CONTACTOS ── */}
+        <section className="px-6 sm:px-10 py-16 max-w-6xl mx-auto grid gap-10 lg:grid-cols-[1.4fr_1fr]">
           <FadeIn>
-            <p className="text-[8px] tracking-[0.6em] text-white/12 uppercase">© RL PROD · Photography & Video</p>
+            <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">{sobre.label}</p>
+            <h2 className="rlp-t mt-3 text-[40px] leading-none">{sobre.titulo}</h2>
+            <p className="mt-5 text-[15px] leading-relaxed text-white/65">{sobre.texto}</p>
           </FadeIn>
-        </footer>
+          <FadeIn delay={120}>
+            <div className={`${CARD} p-6`}>
+              <p className="rlp-m traco text-[10px] text-[#5a8bff]">Contactos</p>
+              <div className="mt-4 grid gap-2.5 text-[14.5px]">
+                <a href="tel:+351916162728" className="text-white/85 hover:text-white">+351 916 162 728</a>
+                <a href="mailto:geral@rlprod.pt" className="text-white/85 hover:text-white">geral@rlprod.pt</a>
+                <a href="https://rlprod.pt" target="_blank" rel="noopener noreferrer" className="text-white/85 hover:text-white">rlprod.pt</a>
+                <a href="https://instagram.com/rlprod_pt" target="_blank" rel="noopener noreferrer" className="text-white/85 hover:text-white">@rlprod_pt</a>
+                <span className="text-white/50">Pinhal Novo, Portugal</span>
+              </div>
+              <a href="https://wa.me/351916162728" target="_blank" rel="noopener noreferrer"
+                className="mt-5 inline-flex rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-6 py-3 text-[13.5px] font-medium">Falar connosco</a>
+            </div>
+          </FadeIn>
+        </section>
 
+        {/* ── RODAPÉ ── */}
+        <footer className="border-t border-white/[0.08] px-6 py-10 text-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-rl-prod-branco.png" alt="RL PROD" className="w-10 h-10 object-contain mx-auto opacity-80" />
+          <p className="rlp-t mt-4 text-[18px]">More than a product, <span className="text-[#5a8bff]">an experience.</span></p>
+          <p className="rlp-m mt-2 text-[8.5px] text-white/35">RL Prod · Photography & Video · Setúbal</p>
+        </footer>
       </div>
 
       {/* ══════════════════════════════
