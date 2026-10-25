@@ -711,14 +711,18 @@ function EstadoQuickChanger({
   const wrapperRef = useRef<HTMLDivElement | null>(null)
   const menuRef = useRef<HTMLDivElement | null>(null)
 
-  const abrir = () => {
-    if (open) { setOpen(false); return }
+  const posicionar = () => {
     const r = wrapperRef.current?.getBoundingClientRect()
     if (!r) return
     const alturaMenu = ESTADO_OPTIONS.length * 42 + 8
-    const left = Math.min(r.left, window.innerWidth - 200)
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - 200))
     // Sem espaço por baixo: abre para cima
     setPos(window.innerHeight - r.bottom < alturaMenu + 12 ? { left, bottom: window.innerHeight - r.top + 6 } : { left, top: r.bottom + 6 })
+  }
+
+  const abrir = () => {
+    if (open) { setOpen(false); return }
+    posicionar()
     setOpen(true)
   }
 
@@ -728,14 +732,14 @@ function EstadoQuickChanger({
       const alvo = e.target as Node
       if (!wrapperRef.current?.contains(alvo) && !menuRef.current?.contains(alvo)) setOpen(false)
     }
-    const fechar = () => setOpen(false)
+    // Com scroll ou mudança de tamanho, o menu acompanha o botão
     document.addEventListener('mousedown', onDocClick)
-    window.addEventListener('scroll', fechar, true)
-    window.addEventListener('resize', fechar)
+    window.addEventListener('scroll', posicionar, true)
+    window.addEventListener('resize', posicionar)
     return () => {
       document.removeEventListener('mousedown', onDocClick)
-      window.removeEventListener('scroll', fechar, true)
-      window.removeEventListener('resize', fechar)
+      window.removeEventListener('scroll', posicionar, true)
+      window.removeEventListener('resize', posicionar)
     }
   }, [open])
 
