@@ -85,6 +85,7 @@ const DEFAULT_ROADMAP: RoadmapColuna[] = [
 
 const ESTADO_OPTIONS: { value: TarefaEstado; label: string }[] = [
   { value: 'concluido',    label: 'Concluído'    },
+  { value: 'efetuado',     label: 'Efetuado'     },
   { value: 'em_andamento', label: 'Em andamento' },
   { value: 'nao_iniciada', label: 'Não iniciada' },
   { value: 'aguardar',     label: 'A aguardar'   },
@@ -95,8 +96,12 @@ const ESTADO_OPTIONS: { value: TarefaEstado; label: string }[] = [
    pendente = cinza. Aguardar/Enviado em azul pálido (contorno tracejado / cheio suave). */
 type EstadoCfg = { pill: string; dot: string; strip: string; label: string; hint: string }
 
+// Concluído e Efetuado contam ambos como tarefa feita (progresso, fase atual e atrasos)
+const feita = (e: TarefaEstado) => e === 'concluido' || e === 'efetuado'
+
 const ESTADO_CFG: Record<TarefaEstado, EstadoCfg> = {
   concluido:    { pill: 'bg-[#2e6cf6] border-[#2e6cf6] text-white',                        dot: 'bg-white',                         strip: '#2e6cf6',               label: 'Concluído',    hint: 'Tarefa terminada' },
+  efetuado:     { pill: 'bg-[#2e6cf6]/25 border-[#2e6cf6] text-white',                    dot: 'bg-[#a9c1ff]',                     strip: '#2e6cf6',               label: 'Efetuado',     hint: 'Já foi feito' },
   em_andamento: { pill: 'bg-[#5a8bff]/[0.1] border-[#5a8bff]/60 text-[#5a8bff]',          dot: 'bg-[#5a8bff] animate-pulse',       strip: '#5a8bff',               label: 'Em andamento', hint: 'Estamos a trabalhar nisto' },
   nao_iniciada: { pill: 'bg-transparent border-white/[0.14] text-[#7c8893]',               dot: 'bg-[#7c8893]',                     strip: 'rgba(124,136,147,0.5)', label: 'Não iniciada', hint: 'Ainda por começar' },
   aguardar:     { pill: 'bg-transparent border-dashed border-[#a9c1ff]/55 text-[#a9c1ff]', dot: 'border border-[#a9c1ff] bg-transparent', strip: '#a9c1ff',      label: 'A aguardar',   hint: 'À espera de resposta ou material' },
@@ -175,7 +180,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
   /* totais para o header */
   const totalTarefas   = colunas.reduce((s, c) => s + c.tarefas.length, 0)
-  const totalConcluidas = colunas.reduce((s, c) => s + c.tarefas.filter(t => t.estado === 'concluido').length, 0)
+  const totalConcluidas = colunas.reduce((s, c) => s + c.tarefas.filter(t => feita(t.estado)).length, 0)
   const progresso      = totalTarefas > 0 ? Math.round((totalConcluidas / totalTarefas) * 100) : 0
 
   /* Baseline do roadmap (último estado guardado) — para detectar mudanças
@@ -205,6 +210,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
     if (changes.length === 0) return
     const labels: Record<string, string> = {
       concluido: 'Concluído',
+      efetuado: 'Efetuado',
       em_andamento: 'Em andamento',
       nao_iniciada: 'Não iniciada',
       aguardar: 'Aguardar',
@@ -260,6 +266,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
     // Notificação
     const labels: Record<string, string> = {
       concluido: 'Concluído',
+      efetuado: 'Efetuado',
       em_andamento: 'Em andamento',
       nao_iniciada: 'Não iniciada',
       aguardar: 'Aguardar',
@@ -367,10 +374,10 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
   useEffect(() => { setHoje(hojeISO()) }, [])
 
   /* Fase atual = primeira coluna com tarefas que ainda não está toda concluída */
-  const faseAtualIdx = colunas.findIndex(c => c.tarefas.length > 0 && c.tarefas.some(t => t.estado !== 'concluido'))
+  const faseAtualIdx = colunas.findIndex(c => c.tarefas.length > 0 && c.tarefas.some(t => !feita(t.estado)))
   const faseAtual = faseAtualIdx >= 0 ? colunas[faseAtualIdx] : null
   const emAtraso = hoje
-    ? colunas.reduce((s, c) => s + c.tarefas.filter(t => t.data && t.data < hoje && t.estado !== 'concluido' && t.estado !== 'enviado').length, 0)
+    ? colunas.reduce((s, c) => s + c.tarefas.filter(t => t.data && t.data < hoje && !feita(t.estado) && t.estado !== 'enviado').length, 0)
     : 0
 
   /* ────────────────────────────────────────────────────────── */
@@ -445,7 +452,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
             {colunas.length > 0 && (
               <div className="mt-2 flex gap-1">
                 {colunas.map((c, i) => {
-                  const feito = c.tarefas.length > 0 && c.tarefas.every(t => t.estado === 'concluido')
+                  const feito = c.tarefas.length > 0 && c.tarefas.every(t => feita(t.estado))
                   return (
                     <span key={c.id} title={c.titulo}
                       className={`h-1 flex-1 rounded-full ${feito ? 'bg-[#2e6cf6]' : i === faseAtualIdx ? 'bg-[#5a8bff]/60 animate-pulse' : 'bg-white/[0.08]'}`} />
@@ -507,7 +514,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
         ) : (
           <div className="flex flex-col gap-4 md:grid md:grid-flow-col md:auto-cols-[minmax(268px,1fr)] md:overflow-x-auto md:pb-3">
             {colunas.map((coluna, ci) => {
-              const concluidas = coluna.tarefas.filter(t => t.estado === 'concluido').length
+              const concluidas = coluna.tarefas.filter(t => feita(t.estado)).length
               const total = coluna.tarefas.length
               const pctCol = total > 0 ? Math.round((concluidas / total) * 100) : 0
               const feita = total > 0 && concluidas === total
@@ -563,7 +570,7 @@ export default function RoadmapClient({ projeto: initial, isAdmin }: Props) {
 
                     {coluna.tarefas.map(tarefa => {
                       const cfg = ESTADO_CFG[tarefa.estado]
-                      const atrasada = !!hoje && !!tarefa.data && tarefa.data < hoje && tarefa.estado !== 'concluido' && tarefa.estado !== 'enviado'
+                      const atrasada = !!hoje && !!tarefa.data && tarefa.data < hoje && !feita(tarefa.estado) && tarefa.estado !== 'enviado'
                       return (
                         <div key={tarefa.id}
                           className={`group/card relative overflow-hidden rounded-xl border bg-[#0c2236]/70 p-3.5 pl-4 ${

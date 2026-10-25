@@ -142,7 +142,7 @@ export interface MoodboardItem {
   categoria?: MoodboardCategoria
 }
 
-export type TarefaEstado = 'concluido' | 'em_andamento' | 'nao_iniciada' | 'aguardar' | 'enviado'
+export type TarefaEstado = 'concluido' | 'efetuado' | 'em_andamento' | 'nao_iniciada' | 'aguardar' | 'enviado'
 
 export interface RoadmapTarefa {
   id: string
