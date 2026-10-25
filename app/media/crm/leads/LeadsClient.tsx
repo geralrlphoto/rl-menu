@@ -37,6 +37,7 @@ const linkInstagram = (v: string) => /^https?:\/\//i.test(v) ? v
 
 interface Lead {
   id: string
+  portal_ref?: string | null
   nome: string
   empresa?: string
   email?: string
@@ -333,10 +334,18 @@ export default function LeadsClient({ leads: initial }: Props) {
     setDeletingId(null)
   }
 
+  // Aviso depois de qualificar: o projeto já está em Projetos com o portal pronto a enviar
+  const [avisoPortal, setAvisoPortal] = useState<{ ref: string; nome: string } | null>(null)
+
   async function updateEstado(id: string, estado: string) {
     setUpdatingId(id)
-    await fetch('/api/media-leads', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, estado }) })
-    setLeads(ls => ls.map(l => l.id === id ? { ...l, estado } : l))
+    const r = await fetch('/api/media-leads', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, estado }) })
+    const d = await r.json().catch(() => ({}))
+    setLeads(ls => ls.map(l => l.id === id ? { ...l, estado, portal_ref: d.portal_ref ?? l.portal_ref } : l))
+    if (estado === 'Qualificado' && d.portal_ref) {
+      const lead = leads.find(l => l.id === id)
+      setAvisoPortal({ ref: d.portal_ref, nome: lead?.empresa || lead?.nome || 'Projeto' })
+    }
     setUpdatingId(null)
   }
 
@@ -441,6 +450,20 @@ export default function LeadsClient({ leads: initial }: Props) {
 
   return (
     <div>
+      {avisoPortal && (
+        <div className="fixed bottom-5 right-5 z-[80] max-w-sm rounded-2xl border border-[#2e6cf6]/60 bg-[#00141f]/95 backdrop-blur-md p-4 shadow-2xl">
+          <div className="flex items-start justify-between gap-3">
+            <p className="rlp-m text-[9.5px] text-[#a9c1ff]">Lead qualificada</p>
+            <button type="button" onClick={() => setAvisoPortal(null)} aria-label="Fechar" className="text-white/40 hover:text-white">✕</button>
+          </div>
+          <p className="rlp-t mt-1 text-[20px] leading-tight">{avisoPortal.nome}</p>
+          <p className="mt-1 text-[13px] text-white/60">O projeto já está em Projetos (Novos projetos) com o portal pronto a enviar.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <a href="/media/portal-cliente?ver=novos" className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-4 py-2 text-[12.5px] font-medium">Ver em Projetos</a>
+            <a href={`/portal-media/${avisoPortal.ref}`} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/[0.16] px-4 py-2 text-[12.5px] text-white/80 hover:text-white">Abrir portal ↗</a>
+          </div>
+        </div>
+      )}
       {/* ── Estatísticas ─────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <p className="rlp-m traco text-[10.5px] text-[#5a8bff]">Estatísticas</p>

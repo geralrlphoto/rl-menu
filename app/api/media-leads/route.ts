@@ -1,6 +1,8 @@
 ﻿import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { exigeAdmin } from '@/lib/api-guard'
+import { randomBytes } from 'node:crypto'
+import { dadosPortalDaLead } from '@/lib/portalMediaModelo'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -354,7 +356,39 @@ export async function PATCH(req: NextRequest) {
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Lead qualificada: o projeto nasce em /media/portal-cliente (Novos projetos) com o portal pronto a enviar
+  if (updates.estado === 'Qualificado') {
+    const portal_ref = await portalDaLead(id)
+    return NextResponse.json({ ok: true, portal_ref })
+  }
   return NextResponse.json({ ok: true })
+}
+
+// Cria (uma só vez) o portal do projeto de uma lead e guarda a referência em media_leads.portal_ref
+async function portalDaLead(id: string): Promise<string | null> {
+  const { data: lead } = await supabase.from('media_leads')
+    .select('nome, empresa, email, telefone, tipo, ramo, mensagem, page_token, portal_ref').eq('id', id).maybeSingle()
+  if (!lead) return null
+  if (lead.portal_ref) return lead.portal_ref
+
+  // Se já existe um portal com o token da proposta, usa esse; senão cria uma referência nova
+  let ref = lead.page_token ? String(lead.page_token).toUpperCase() : ''
+  if (ref) {
+    const { data: existe } = await supabase.from('media_portais').select('ref').eq('ref', ref).maybeSingle()
+    if (existe) {
+      await supabase.from('media_leads').update({ portal_ref: ref }).eq('id', id)
+      return ref
+    }
+  } else {
+    ref = randomBytes(12).toString('hex').toUpperCase()
+  }
+
+  const { error } = await supabase.from('media_portais')
+    .insert({ ref, dados: dadosPortalDaLead(lead, ref), updated_at: new Date().toISOString() })
+  if (error) return null
+  await supabase.from('media_leads').update({ portal_ref: ref }).eq('id', id)
+  return ref
 }
 
 export async function DELETE(req: NextRequest) {
