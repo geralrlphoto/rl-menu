@@ -150,7 +150,13 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
       <section className="mb-6 rounded-2xl border border-[#2e6cf6]/40 bg-[#00141f]/75 p-4 sm:p-5">
         <div className="flex items-baseline justify-between gap-3">
           <p className="rlp-m text-[10px] text-[#a9c1ff]">No projeto{equipa ? ` · ${equipa.length}` : ''}</p>
-          {fin && equipa && equipa.length > 0 && <p className="text-[12.5px] text-white/55">Custo da equipa <span className="rlp-t text-[16px] text-white">{eur(fin.custoEquipa)}</span></p>}
+          <span className="flex flex-wrap items-baseline gap-3">
+            {fin && equipa && equipa.length > 0 && <span className="text-[12.5px] text-white/55">Custo da equipa <span className="rlp-t text-[16px] text-white">{eur(fin.custoEquipa)}</span></span>}
+            {equipa && equipa.some(m => m.membro_id) && (
+              <a href={`/media/credenciais/${encodeURIComponent(portalRef)}`} target="_blank" rel="noopener noreferrer"
+                className="rounded-full bg-[#2e6cf6] hover:bg-[#5a8bff] px-4 py-1.5 text-[12.5px] font-medium">Credenciais da equipa</a>
+            )}
+          </span>
         </div>
         {equipa === null && <p className="mt-3 text-[14px] text-white/45">A carregar…</p>}
         {equipa && equipa.length === 0 && <p className="mt-3 text-[14px] text-white/50">Ainda ninguém. Escolhe abaixo.</p>}
@@ -204,7 +210,7 @@ export default function EquipaClient({ portalRef, nome }: { portalRef: string; n
                   </button>
                 )}
                 {m.membro_id && (
-                  <a href={`/media/equipa/${m.membro_id}/credencial?projeto=${encodeURIComponent(portalRef)}`} target="_blank" rel="noopener noreferrer"
+                  <a href={`/media/credenciais/${encodeURIComponent(portalRef)}?membro=${m.membro_id}`} target="_blank" rel="noopener noreferrer"
                     className="rlp-m rounded-full border border-white/20 px-3 py-1.5 text-[8.5px] text-white/55 hover:text-white">Credencial</a>
                 )}
                 <button type="button" onClick={() => remover(m)} aria-label={`Tirar ${m.nome}`} className="text-white/30 hover:text-[#ff4747] text-[13px]">✕</button>
