@@ -11,7 +11,8 @@ type Reserva = { data: string; hora: string }
 
 const SERIF = { fontFamily: "'Cormorant Garamond', serif" }
 const GOLD = '#C9A84C'
-const HERO = '/eventos-hero-2026.webp'
+// Foto 18 do portfólio Wfolio (servida pelo i.wfolio.com)
+const HERO = 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuoqqXF-nkolK8KtGIG1Vea6I/nXJ4oTdrFWyFGuaG9KwDZvaU4wvQ0aQs/vHlNvjfYk_wxmkEUhSxqJZLGmPs5B-Ed/1Akl-ZG4LTSL3SzpaBY_5Qzt33q2Iq_L/pHSH1J526lkSCzGjCQ2e3EKnEE3-V2YJ/t51aG5gvFKOyYgjiz0uN96WFhJKJcbhL/VFxbmRXwibit9ttQN81Y06bhw4N6jeBA/ZR3fm62-taLTPDnGaex0aT113BBIGCSB/XbGKUHAHYevjxoiAB4vCHjj0RotPke4E/i_9JDb8cICRgFpgA9aLRi3ov0RLapw34/8Yd7kARjJZ0.jpg'
 const SEMANA = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D']
 
 const ymd = (d: Date) => `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`
