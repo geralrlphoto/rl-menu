@@ -4,6 +4,7 @@ import { getProjeto, type Projeto } from '@/app/portal-media/_data/mockProject'
 import { FUNDO } from '@/app/media/_lib/estilo'
 import { lerData, hojeLisboa } from '@/app/media/_lib/eventos'
 import PortalSenhaInput from './PortalSenhaInput'
+import ValorProjetoInput from './ValorProjetoInput'
 import NovoPortalMediaButton from './NovoPortalMediaButton'
 
 export const dynamic = 'force-dynamic'
@@ -424,6 +425,9 @@ export default async function PortalClientePage({ searchParams }: { searchParams
                       </p>
                     </div>
                   </div>
+
+                  {/* Valor do projeto: cria/ajusta o plano de pagamentos */}
+                  <ValorProjetoInput portalRef={portal.ref} valorInicial={r.totalPag} />
 
                   {/* Ações */}
                   <div className="mt-5 flex flex-wrap items-center gap-2">

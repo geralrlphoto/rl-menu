@@ -153,3 +153,41 @@ export async function portalDaLead(supabase: SupabaseClient, id: string): Promis
   await supabase.from('media_leads').update({ portal_ref: ref }).eq('id', id)
   return ref
 }
+
+type Prestacao = { descricao: string; valor: number; estado: 'pago' | 'pendente' | 'em_atraso'; data: string }
+const arred = (n: number) => Math.round(n * 100) / 100
+
+// Valor do projeto → plano de pagamentos (dados.valorProjeto + dados.pagamentos):
+//  - sem plano: cria Adjudicação 50% + Final 50% (por pagar)
+//  - com plano: reparte o novo valor pelas prestações na mesma proporção, sem mexer nos estados
+// Daí entra sozinho no Financeiro do portal, em Finanças e nas contas da Equipa do projeto.
+export async function aplicarValorProjeto(supabase: SupabaseClient, refRaw: string, total: number) {
+  const ref = refRaw.toUpperCase()
+  total = arred(total)
+  if (!isFinite(total) || total <= 0) return { error: 'Indica um valor maior que zero.' }
+  const { data: row } = await supabase.from('media_portais').select('dados').eq('ref', ref).maybeSingle()
+  if (!row?.dados) return { error: 'Projeto não encontrado.' }
+  const dados = row.dados as Record<string, unknown>
+  const plano = (Array.isArray(dados.pagamentos) ? dados.pagamentos : []) as Prestacao[]
+  const somaAtual = plano.reduce((s, p) => s + (Number(p.valor) || 0), 0)
+
+  let pagamentos: Prestacao[]
+  if (plano.length === 0 || somaAtual <= 0) {
+    const metade = arred(total / 2)
+    pagamentos = [
+      { descricao: 'Adjudicação · 50%', valor: metade, estado: 'pendente', data: '' },
+      { descricao: 'Final · 50%', valor: arred(total - metade), estado: 'pendente', data: '' },
+    ]
+  } else {
+    // Mesma proporção; o arredondamento vai para a última prestação para o total bater certo
+    pagamentos = plano.map(p => ({ ...p, valor: arred((Number(p.valor) || 0) / somaAtual * total) }))
+    const dif = arred(total - pagamentos.reduce((s, p) => s + p.valor, 0))
+    pagamentos[pagamentos.length - 1].valor = arred(pagamentos[pagamentos.length - 1].valor + dif)
+  }
+
+  const { error } = await supabase.from('media_portais')
+    .update({ dados: { ...dados, valorProjeto: total, pagamentos }, updated_at: new Date().toISOString() })
+    .eq('ref', ref)
+  if (error) return { error: error.message }
+  return { ok: true as const, valorProjeto: total, pagamentos }
+}

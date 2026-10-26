@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { portalDaLead } from '@/lib/portalMediaModelo'
+import { portalDaLead, aplicarValorProjeto } from '@/lib/portalMediaModelo'
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null)
@@ -60,7 +60,14 @@ export async function POST(req: NextRequest) {
     .eq('id', lead.id)
 
   // Proposta aceite = lead Validada: o projeto nasce em Projetos com o portal pronto a enviar
-  if (!updateErr && acao === 'aceite') await portalDaLead(supabase, lead.id)
+  if (!updateErr && acao === 'aceite') {
+    const ref = await portalDaLead(supabase, lead.id)
+    // Valor da proposta escolhida → valor do projeto e plano de pagamentos
+    const propostas = Array.isArray(lead.page_content?.propostas) ? lead.page_content.propostas : []
+    const escolhida = propostas.find((p: { titulo?: string }) => p?.titulo === dados?.proposta_escolhida) ?? (propostas.length === 1 ? propostas[0] : null)
+    const valor = escolhida?.valor ? Number(String(escolhida.valor).replace(/[^\d.,]/g, '').replace(',', '.')) : 0
+    if (ref && valor > 0) await aplicarValorProjeto(supabase, ref, valor)
+  }
 
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
   return NextResponse.json({ ok: true })
