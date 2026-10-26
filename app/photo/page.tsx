@@ -338,7 +338,8 @@ export default async function PhotoDashboard() {
       id: `pub-${m.id}`, nome: m.nome, reuniao_data: m.data, reuniao_hora: m.hora, href: '/calendario',
       publica: {
         assunto: m.assunto as string,
-        wa: whatsappLink(m.contacto, msg),
+        // Sem telemóvel válido abre o WhatsApp sem número, para escolher o contacto
+        wa: whatsappLink(m.contacto, msg) ?? `https://wa.me/?text=${encodeURIComponent(msg)}`,
       },
     }
   })
@@ -1276,15 +1277,11 @@ export default async function PhotoDashboard() {
                             <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">{(r.nome ?? '').trim() || 'Sem nome'}</p>
                             <p className="text-[9px] text-white/35 truncate mt-0.5">{r.publica.assunto}</p>
                           </Link>
-                          {r.publica.wa ? (
-                            <a href={r.publica.wa} target="_blank" rel="noopener noreferrer"
+                          <a href={r.publica.wa} target="_blank" rel="noopener noreferrer"
                               title="Abrir o WhatsApp com a confirmação e o link do Meet"
                               className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-green-500/50 bg-green-500/15 hover:bg-green-500/25 px-2 py-1 font-cond text-[11.5px] font-semibold text-green-300 transition-colors">
                               Confirmar no WhatsApp
                             </a>
-                          ) : (
-                            <p className="mt-2 text-center text-[10px] text-white/40">Sem telemóvel válido</p>
-                          )}
                         </div>
                         </AgendaItem>
                       ) : (
