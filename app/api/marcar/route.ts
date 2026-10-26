@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { revalidateTag } from 'next/cache'
 import { sbAdmin, hojeLisboa, fmtDataLonga, UUID_RE } from '@/lib/preparacao'
-import { MEET_LINK } from '@/lib/crm'
+import { MEET_LINK, whatsappLink } from '@/lib/crm'
 
 // Público: /marcar, para quem não é noivo (parceiros, fornecedores, clientes RL PROD...).
 // Usa a mesma disponibilidade da reunião de preparação (preparacao_slots, tipo preparacao).
@@ -34,7 +34,9 @@ export async function POST(req: NextRequest) {
   const assunto = limpo(body.assunto, 1000)
   const slotId = limpo(body.slotId, 40)
   if (!UUID_RE.test(slotId)) return NextResponse.json({ error: 'Escolha um horário, por favor.' }, { status: 400 })
-  if (!nome || !contacto || !assunto) return NextResponse.json({ error: 'Preencha o nome, o contacto e o assunto, por favor.' }, { status: 400 })
+  if (!nome || !contacto || !assunto) return NextResponse.json({ error: 'Preencha o nome, o telemóvel e o assunto, por favor.' }, { status: 400 })
+  // A confirmação vai por WhatsApp: tem de ser um telemóvel
+  if (!whatsappLink(contacto)) return NextResponse.json({ error: 'Indique um telemóvel válido, por favor.' }, { status: 400 })
 
   const sb = sbAdmin()
   // Tira o horário da disponibilidade só se ainda estiver livre (evita duas marcações no mesmo)
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
 <tr><td style="padding:28px 32px 8px;color:#C9A84C;font-size:11px;letter-spacing:4px;text-transform:uppercase;font-family:Arial,sans-serif">Reunião marcada no link público</td></tr>
 <tr><td style="padding:4px 32px 0;color:#fff;font-size:28px">${esc(nome)}</td></tr>
 <tr><td style="padding:18px 32px;color:rgba(255,255,255,.75);font-size:15px;line-height:1.7;font-family:Arial,sans-serif">
-<b style="color:#fff">${esc(quando)}</b><br/>Contacto: ${esc(contacto)}<br/>Videochamada: <a href="${MEET_LINK}" style="color:#C9A84C">${MEET_LINK.replace('https://', '')}</a>
+<b style="color:#fff">${esc(quando)}</b><br/>Telemóvel: ${esc(contacto)}<br/>Videochamada: <a href="${MEET_LINK}" style="color:#C9A84C">${MEET_LINK.replace('https://', '')}</a>
 <div style="margin:14px 0 4px;padding:12px 14px;border-left:2px solid #C9A84C;background:rgba(255,255,255,.04);color:#fff;font-style:italic;white-space:pre-wrap">${esc(assunto)}</div></td></tr>
 <tr><td style="padding:0 32px 30px"><a href="${SITE_BASE}/calendario" style="display:inline-block;background:#C9A84C;color:#000;text-decoration:none;font-family:Arial,sans-serif;font-size:12px;letter-spacing:2px;text-transform:uppercase;padding:12px 20px;border-radius:8px">Abrir calendário</a></td></tr>
 </table></td></tr></table></body></html>`

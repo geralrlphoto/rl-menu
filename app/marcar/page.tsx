@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 /* Página pública para marcar uma reunião com a RL quem não é noivo.
    Mesma disponibilidade e mesmo layout da reunião de preparação (/preparacao/<id>):
-   foto + gradiente à esquerda, calendário à direita. Pede nome, contacto e assunto. */
+   foto + gradiente à esquerda, calendário à direita. Pede nome, telemóvel (a confirmação vai por WhatsApp) e assunto. */
 
 type Slot = { id: string; data: string; hora: string }
 type Reserva = { data: string; hora: string }
@@ -52,7 +52,8 @@ export default function MarcarPage() {
   const meses = useMemo(() => [...new Set(slots.map(s => s.data.slice(0, 7)))].sort(), [slots])
   const horas = slots.filter(s => s.data === dia)
   const escolhido = slots.find(s => s.id === slotId) ?? null
-  const completo = !!escolhido && !!nome.trim() && !!contacto.trim() && !!assunto.trim()
+  const telOk = contacto.replace(/\D/g, '').length >= 9
+  const completo = !!escolhido && !!nome.trim() && telOk && !!assunto.trim()
 
   const grelha = useMemo(() => {
     if (!mes) return []
@@ -130,7 +131,7 @@ export default function MarcarPage() {
               <p className="text-4xl sm:text-5xl font-light mt-3 leading-tight" style={SERIF}>{diaLongo(reserva.data)}</p>
               <p className="mt-3 text-sm tracking-[0.3em] uppercase" style={{ color: GOLD }}>{reserva.hora} · Videochamada</p>
               <p className="text-white/45 text-sm mt-8 leading-relaxed max-w-sm">
-                Vamos enviar-lhe o link da videochamada para o contacto que indicou. Até breve!
+                Vamos confirmar por WhatsApp e enviar-lhe o link da videochamada. Até breve!
               </p>
             </div>
           )}
@@ -203,7 +204,7 @@ export default function MarcarPage() {
                   </p>
                   <div className="mt-5 flex flex-col gap-3">
                     <input value={nome} onChange={e => setNome(e.target.value.slice(0, 120))} placeholder="Nome" autoComplete="name" className={CAMPO} />
-                    <input value={contacto} onChange={e => setContacto(e.target.value.slice(0, 160))} placeholder="Email ou telefone" autoComplete="email" className={CAMPO} />
+                    <input value={contacto} onChange={e => setContacto(e.target.value.slice(0, 160))} type="tel" inputMode="tel" placeholder="Telemóvel (WhatsApp)" autoComplete="tel" className={CAMPO} />
                     <textarea value={assunto} onChange={e => setAssunto(e.target.value.slice(0, 1000))} rows={3}
                       placeholder="Sobre o que quer falar?" className={`${CAMPO} resize-none`} />
                     <input value={site} onChange={e => setSite(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true"

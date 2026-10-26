@@ -334,13 +334,11 @@ export default async function PhotoDashboard() {
   }
   const marcacoesPublicas = (await getMarcacoesPublicas()).map((m: any) => {
     const msg = msgConfirmarMarcacao(m)
-    const email = /@/.test(m.contacto ?? '') ? String(m.contacto).trim() : null
     return {
       id: `pub-${m.id}`, nome: m.nome, reuniao_data: m.data, reuniao_hora: m.hora, href: '/calendario',
       publica: {
         assunto: m.assunto as string,
-        wa: email ? null : whatsappLink(m.contacto, msg),
-        mail: email ? `mailto:${email}?subject=${encodeURIComponent('Reunião com a RL PhotoVideo')}&body=${encodeURIComponent(msg)}` : null,
+        wa: whatsappLink(m.contacto, msg),
       },
     }
   })
@@ -1267,7 +1265,7 @@ export default async function PhotoDashboard() {
                       {d.reunioes.map((r: any) => r.pedido ? (
                         <PedidoReuniaoCard key={`r-${r.id}`} p={r.pedido} opcao={r.opcao} />
                       ) : r.publica ? (
-                        /* Marcada no link público /marcar: WhatsApp (ou email) com a confirmação e o link do Meet */
+                        /* Marcada no link público /marcar: WhatsApp com a confirmação e o link do Meet */
                         <AgendaItem key={`r-${r.id}`} chave={chaveReuniao(r)}>
                         <div className="rounded-lg px-2 py-1.5 border border-dashed"
                           style={{ borderColor: 'rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.04)' }}>
@@ -1278,14 +1276,14 @@ export default async function PhotoDashboard() {
                             <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">{(r.nome ?? '').trim() || 'Sem nome'}</p>
                             <p className="text-[9px] text-white/35 truncate mt-0.5">{r.publica.assunto}</p>
                           </Link>
-                          {(r.publica.wa || r.publica.mail) ? (
-                            <a href={r.publica.wa ?? r.publica.mail} target="_blank" rel="noopener noreferrer"
-                              title={r.publica.wa ? 'Abrir o WhatsApp com a confirmação e o link do Meet' : 'Abrir o email com a confirmação e o link do Meet'}
+                          {r.publica.wa ? (
+                            <a href={r.publica.wa} target="_blank" rel="noopener noreferrer"
+                              title="Abrir o WhatsApp com a confirmação e o link do Meet"
                               className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-green-500/50 bg-green-500/15 hover:bg-green-500/25 px-2 py-1 font-cond text-[11.5px] font-semibold text-green-300 transition-colors">
-                              {r.publica.wa ? 'Confirmar no WhatsApp' : 'Confirmar por email'}
+                              Confirmar no WhatsApp
                             </a>
                           ) : (
-                            <p className="mt-2 text-center text-[10px] text-white/40">Contacto inválido</p>
+                            <p className="mt-2 text-center text-[10px] text-white/40">Sem telemóvel válido</p>
                           )}
                         </div>
                         </AgendaItem>
