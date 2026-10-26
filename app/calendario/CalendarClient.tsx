@@ -52,8 +52,10 @@ export type ReuniaoEvent = {
   reuniao_link: string | null
   contato?: string | null      // telefone do contacto CRM (WhatsApp)
   // Reuniões marcadas pelos noivos no link de preparação (não são fichas de CRM)
-  origem?: 'crm' | 'preparacao' | 'prewedding'
+  origem?: 'crm' | 'preparacao' | 'prewedding' | 'publica'
   evento_id?: string | null
+  // Marcadas no link público /marcar (quem não é noivo)
+  assunto?: string | null
 }
 
 export type TarefaEvent = {
@@ -133,6 +135,25 @@ function startsOn(dateStr: string | null | undefined, year: number, month: numbe
   if (!dateStr) return false
   return dateStr.startsWith(
     `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  )
+}
+
+// ─── Link público /marcar: a mesma disponibilidade para quem não é noivo ────
+function LinkMarcar() {
+  const url = linkPublico('/marcar')
+  const [copiado, setCopiado] = useState(false)
+  const copiar = async () => {
+    try { await navigator.clipboard.writeText(url); setCopiado(true); setTimeout(() => setCopiado(false), 2000) } catch {/* */}
+  }
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 text-[12px] text-white/50">
+      <span>Link para quem não é noivo:</span>
+      <a href="/marcar" target="_blank" rel="noopener noreferrer" className="text-[#C9A84C] hover:underline">{url.replace(/^https?:\/\//, '')}</a>
+      <button onClick={copiar}
+        className="h-7 px-3 rounded-full border border-white/[0.14] text-white/70 hover:text-white hover:border-[#C9A84C]/50 transition-all">
+        {copiado ? 'Copiado ✓' : 'Copiar'}
+      </button>
+    </div>
   )
 }
 
@@ -1014,6 +1035,7 @@ export default function CalendarClient({
             <div className="text-[10px] tracking-[0.3em] uppercase text-[#C9A84C]/80 mb-2">Disponibilidade · reunião de preparação</div>
             {/* Sem caixa com scroll: a lista dos horários abre num dropdown dentro do componente */}
             <DisponibilidadePreparacao slots={dispSlots} recarregar={carregarDisp} />
+            <LinkMarcar />
           </div>
         )}
 
@@ -1440,13 +1462,15 @@ export default function CalendarClient({
               return (
                 <>
                   <div className="text-[10px] tracking-[0.4em] uppercase mb-1" style={{ color: 'rgba(192,132,252,0.6)' }}>
-                    {r.origem && r.origem !== 'crm' ? 'REUNIÃO NOIVOS' : 'REUNIÃO CRM'} · {r.reuniao_tipo || 'Presencial'}
+                    {r.origem === 'publica' ? 'REUNIÃO LINK PÚBLICO' : r.origem && r.origem !== 'crm' ? 'REUNIÃO NOIVOS' : 'REUNIÃO CRM'} · {r.reuniao_tipo || 'Presencial'}
                   </div>
                   <h2 className="text-xl font-light text-white tracking-wide mb-4">{r.nome}</h2>
                   <div className="space-y-2 mb-6">
                     <Row label="Data">{fmtDate(r.reuniao_data)}</Row>
                     {r.reuniao_hora && <Row label="Hora">{r.reuniao_hora}</Row>}
                     <Row label="Tipo">{r.reuniao_tipo || 'Presencial'}</Row>
+                    {r.origem === 'publica' && r.contato && <Row label="Contacto">{r.contato}</Row>}
+                    {r.origem === 'publica' && r.assunto && <Row label="Assunto"><span className="whitespace-pre-wrap">{r.assunto}</span></Row>}
                     {r.reuniao_link && (
                       <Row label={r.reuniao_tipo === 'Videochamada' ? 'Meet' : 'Local'}>
                         <a href={r.reuniao_link} target="_blank" rel="noopener noreferrer"
@@ -1476,7 +1500,7 @@ export default function CalendarClient({
                     </div>
                   )}
                   <div className="flex gap-3">
-                    {r.origem && r.origem !== 'crm' ? (
+                    {r.origem === 'publica' ? null : r.origem && r.origem !== 'crm' ? (
                       <Link href={`/eventos-2026/${r.evento_id}`}
                         className="flex-1 text-center py-2.5 rounded-xl text-sm tracking-wider transition-colors"
                         style={{ background: 'rgba(192,132,252,0.10)', border: '1px solid rgba(192,132,252,0.30)', color: '#B8975A' }}>

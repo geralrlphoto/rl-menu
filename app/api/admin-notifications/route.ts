@@ -47,6 +47,7 @@ const TIPO_LABELS: Record<string, string> = {
   crm_proposta_vista:       'CRM · Viram a Proposta',
   pedido_reuniao:           'Pedido de Reunião',
   reuniao_marcada:          'Reunião de Preparação Marcada',
+  reuniao_publica:          'Reunião Marcada (Link Público)',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -85,6 +86,7 @@ const TIPO_ICONS: Record<string, string> = {
   crm_proposta_vista:       '👁',
   pedido_reuniao:           '📅',
   reuniao_marcada:          '📅',
+  reuniao_publica:          '📅',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -1255,6 +1257,33 @@ export async function GET(req: Request) {
       }
     } catch (err) {
       console.warn('[admin-notifications] reunioes marcadas read failed:', err)
+    }
+
+    // ── Reuniões marcadas no link público /marcar (quem não é noivo, últimos 60 dias) ──
+    try {
+      const desde = new Date(Date.now() - 60 * 86400000).toISOString()
+      const { data: publicas } = await supabase.from('marcacoes_publicas')
+        .select('id, data, hora, nome, contacto, assunto, created_at')
+        .gte('created_at', desde).limit(60)
+      for (const m of (publicas ?? []) as any[]) {
+        notifications.push({
+          id: `reuniao_publica::${m.id}`,
+          tipo: 'reuniao_publica',
+          tipo_label: TIPO_LABELS.reuniao_publica,
+          tipo_icon: TIPO_ICONS.reuniao_publica,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: m.nome || '—',
+          local: `${fmtDataCurta(m.data)} às ${String(m.hora ?? '').slice(0, 5)} · ${m.contacto}`,
+          data_casamento: null,
+          referencia: null,
+          url: '/calendario',
+          sent_at: m.created_at,
+          mensagem: `${m.contacto}: ${m.assunto}`,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] reunioes publicas read failed:', err)
     }
 
     // Ordenar por sent_at DESC

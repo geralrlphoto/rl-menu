@@ -93,7 +93,7 @@ const CATEGORIAS: { key: Categoria; label: string }[] = [
 ]
 function categoriaDe(tipo: string): Categoria {
   if (tipo === 'pagamento' || tipo === 'pagamento_registado') return 'pagamentos'
-  if (tipo === 'reuniao_marcada' || tipo === 'pedido_reuniao' || tipo === 'booking_reservado') return 'reunioes'
+  if (tipo === 'reuniao_marcada' || tipo === 'pedido_reuniao' || tipo === 'booking_reservado' || tipo === 'reuniao_publica') return 'reunioes'
   if (tipo === 'nova_selecao') return 'selecao'
   if (tipo === 'relatorio_diario_enviado') return 'relatorio'
   return 'outros'

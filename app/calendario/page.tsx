@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { MEET_LINK } from '@/lib/crm'
 import CalendarClient, {
   type CalEvent,
   type PreWeddingEvent,
@@ -203,6 +204,24 @@ export default async function CalendarioPage() {
       reuniao_link: pw && m.local ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(m.local)}` : null,
       origem:       pw ? 'prewedding' : 'preparacao',
       evento_id:    m.evento_id,
+    })
+  }
+
+  // ── 4a'. Reuniões marcadas no link público /marcar (quem não é noivo) ──────
+  const { data: publicasRaw } = await supabase
+    .from('marcacoes_publicas')
+    .select('id, data, hora, nome, contacto, assunto')
+  for (const m of (publicasRaw ?? []) as any[]) {
+    reunioes.push({
+      id:           `pub-${m.id}`,
+      nome:         m.nome,
+      contato:      m.contacto,
+      reuniao_data: m.data,
+      reuniao_hora: m.hora ? String(m.hora).slice(0, 5) : null,
+      reuniao_tipo: 'Videochamada',
+      reuniao_link: MEET_LINK,
+      origem:       'publica',
+      assunto:      m.assunto,
     })
   }
 

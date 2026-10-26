@@ -217,6 +217,8 @@ export async function middleware(request: NextRequest) {
     // Marcação da reunião de preparação pelos noivos (link do WhatsApp)
     pathname.startsWith('/preparacao/') ||
     pathname.startsWith('/api/preparacao-publico') ||
+    // Marcação de reunião para quem não é noivo (mesma disponibilidade)
+    pathname === '/marcar' || pathname === '/api/marcar' ||
     pathname === '/opiniao' || pathname.startsWith('/opiniao/') ||   // opinião dos casais que não fecharam
     pathname === '/api/opiniao' ||
     pathname === '/api/portfolio-wfolio' ||   // fotos do portfólio (galeria Wfolio)
