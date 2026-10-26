@@ -7,7 +7,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
-import { whatsappLink } from '@/lib/crm'
+import { whatsappLink, MEET_LINK } from '@/lib/crm'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
 import FraseDoDia from './FraseDoDia'
@@ -306,6 +306,45 @@ export default async function PhotoDashboard() {
     return p.opcoes.map((o, k) => ({ id: `pedido-${c.id}-${k}`, nome: p.nome, reuniao_data: o.data, reuniao_hora: o.hora, pedido: p, opcao: o }))
   })
 
+  // Reuniões marcadas no link público /marcar (quem não é noivo). Tag própria: o /api/marcar refaz esta leitura
+  const getMarcacoesPublicas = unstable_cache(
+    async () => {
+      const { data } = await supabase.from('marcacoes_publicas')
+        .select('id, data, hora, nome, contacto, assunto')
+        .gte('data', semanaDias[0])
+        .lte('data', semanaDias[DIAS_AGENDA - 1])
+        .limit(80)
+      return data ?? []
+    },
+    [`photo-agenda30-marcacoes-${semanaDias[0]}`],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-marcacoes'] }
+  )
+  // Mensagem de confirmação já escrita, com o link da sala do Google Meet
+  const msgConfirmarMarcacao = (m: any) => {
+    const dia = new Date(m.data + 'T12:00:00Z').toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' })
+    const primeiro = String(m.nome ?? '').trim().split(/\s+/)[0]
+    return [
+      `Olá${primeiro ? ` ${primeiro}` : ''}! Confirmamos a nossa reunião de ${dia} às ${String(m.hora).slice(0, 5)}, por videochamada.`,
+      '',
+      `Link da sala Google Meet: ${MEET_LINK}`,
+      '',
+      'Até breve!',
+      'RL PhotoVideo',
+    ].join('\n')
+  }
+  const marcacoesPublicas = (await getMarcacoesPublicas()).map((m: any) => {
+    const msg = msgConfirmarMarcacao(m)
+    const email = /@/.test(m.contacto ?? '') ? String(m.contacto).trim() : null
+    return {
+      id: `pub-${m.id}`, nome: m.nome, reuniao_data: m.data, reuniao_hora: m.hora, href: '/calendario',
+      publica: {
+        assunto: m.assunto as string,
+        wa: email ? null : whatsappLink(m.contacto, msg),
+        mail: email ? `mailto:${email}?subject=${encodeURIComponent('Reunião com a RL PhotoVideo')}&body=${encodeURIComponent(msg)}` : null,
+      },
+    }
+  })
+
   // Reuniões criadas como tarefa no calendário ("Reunião: Nome"). Tag própria: o /api/tarefas só refaz esta leitura
   const getReunioesTarefa = unstable_cache(
     async () => {
@@ -344,6 +383,7 @@ export default async function PhotoDashboard() {
       reuniao_data: t.data_prazo, reuniao_hora: t.hora ?? null, href: '/calendario',
     })),
     ...pedidosReuniao,
+    ...marcacoesPublicas,
   ].filter((r: any) => !ocultos.has(chaveReuniao(r)))
 
   // Tarefas de WhatsApp do CRM (lembrete 1h e follow ups), com as mesmas regras dos botões do /crm.
@@ -1226,6 +1266,29 @@ export default async function PhotoDashboard() {
                       {/* Reuniões marcadas no CRM: tracejado, para nao se confundirem com casamentos */}
                       {d.reunioes.map((r: any) => r.pedido ? (
                         <PedidoReuniaoCard key={`r-${r.id}`} p={r.pedido} opcao={r.opcao} />
+                      ) : r.publica ? (
+                        /* Marcada no link público /marcar: WhatsApp (ou email) com a confirmação e o link do Meet */
+                        <AgendaItem key={`r-${r.id}`} chave={chaveReuniao(r)}>
+                        <div className="rounded-lg px-2 py-1.5 border border-dashed"
+                          style={{ borderColor: 'rgba(201,168,76,0.3)', background: 'rgba(201,168,76,0.04)' }}>
+                          <Link href="/calendario" title={r.publica.assunto} className="group block">
+                            <p className="text-[8px] tracking-[0.25em] uppercase" style={{ color: 'rgba(201,168,76,0.8)' }}>
+                              Reunião {String(r.reuniao_hora ?? '').slice(0, 5)} · Link
+                            </p>
+                            <p className="text-[11px] text-white/80 group-hover:text-white leading-tight truncate mt-0.5">{(r.nome ?? '').trim() || 'Sem nome'}</p>
+                            <p className="text-[9px] text-white/35 truncate mt-0.5">{r.publica.assunto}</p>
+                          </Link>
+                          {(r.publica.wa || r.publica.mail) ? (
+                            <a href={r.publica.wa ?? r.publica.mail} target="_blank" rel="noopener noreferrer"
+                              title={r.publica.wa ? 'Abrir o WhatsApp com a confirmação e o link do Meet' : 'Abrir o email com a confirmação e o link do Meet'}
+                              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-full border border-green-500/50 bg-green-500/15 hover:bg-green-500/25 px-2 py-1 font-cond text-[11.5px] font-semibold text-green-300 transition-colors">
+                              {r.publica.wa ? 'Confirmar no WhatsApp' : 'Confirmar por email'}
+                            </a>
+                          ) : (
+                            <p className="mt-2 text-center text-[10px] text-white/40">Contacto inválido</p>
+                          )}
+                        </div>
+                        </AgendaItem>
                       ) : (
                         <AgendaItem key={`r-${r.id}`} chave={chaveReuniao(r)}>
                         <Link href={r.href ?? `/crm/${r.id}`}

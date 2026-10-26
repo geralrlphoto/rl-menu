@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidateTag } from 'next/cache'
 import { sbAdmin, hojeLisboa, fmtDataLonga, UUID_RE } from '@/lib/preparacao'
 import { MEET_LINK } from '@/lib/crm'
 
@@ -47,6 +48,9 @@ export async function POST(req: NextRequest) {
     await sb.from('preparacao_slots').insert({ data: slot.data, hora: slot.hora, tipo: 'preparacao' })
     return NextResponse.json({ error: 'Não foi possível marcar.' }, { status: 500 })
   }
+
+  // Aparece logo nos "Próximos 30 dias" do /photo
+  revalidateTag('photo-marcacoes', { expire: 0 })
 
   const quando = `${fmtDataLonga(slot.data)} às ${slot.hora}`
   const html = `<!doctype html><html><body style="margin:0;background:#0a0a0a;font-family:Georgia,serif">
