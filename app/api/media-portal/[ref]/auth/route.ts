@@ -33,7 +33,7 @@ export async function POST(req: NextRequest, { params }: Params) {
   if (!senhaDados)
     return NextResponse.json({ error: 'Este portal não tem senha configurada' }, { status: 400 })
 
-  if (senha.trim() !== senhaDados)
+  if (senha.trim().toUpperCase().replace(/\s+/g, '') !== String(senhaDados).trim().toUpperCase().replace(/\s+/g, ''))
     return NextResponse.json({ ok: false, error: 'Senha incorrecta. Tenta novamente.' }, { status: 401 })
 
   /* ── definir cookie ── */

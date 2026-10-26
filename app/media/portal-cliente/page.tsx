@@ -20,6 +20,7 @@ const SELECT = [
   'senha:dados->>senha',
   'portalEnviadoEm:dados->>portalEnviadoEm',
   'email:dados->fichaCliente->>email',
+  'telefoneCliente:dados->fichaCliente->>telefone',
   'fases:dados->fases',
   'pagamentos:dados->pagamentos',
   'entregas:dados->entregas',
@@ -36,6 +37,7 @@ type Linha = {
   senha?: string | null
   portalEnviadoEm?: string | null
   email?: string | null
+  telefoneCliente?: string | null
   fases?: Projeto['fases'] | null
   pagamentos?: Projeto['pagamentos'] | null
   entregas?: Projeto['entregas'] | null
@@ -150,9 +152,11 @@ export default async function PortalClientePage({ searchParams }: { searchParams
   // Mapa ref → senha e portalEnviadoEm (tal como estão no Supabase)
   const senhaMap: Record<string, string | undefined> = {}
   const enviadoEmMap: Record<string, string | undefined> = {}
+  const telMap: Record<string, string | undefined> = {}
   rows.forEach(r => {
     senhaMap[r.ref.toUpperCase()] = r.senha ?? undefined
     enviadoEmMap[r.ref.toUpperCase()] = r.portalEnviadoEm ?? undefined
+    telMap[r.ref.toUpperCase()] = r.telefoneCliente ?? undefined
   })
 
   const mockProjetos: Item[] = []
@@ -442,6 +446,8 @@ export default async function PortalClientePage({ searchParams }: { searchParams
                       portalRef={portal.ref}
                       senhaInicial={senhaMap[refU] ?? portal.senha}
                       portalEnviadoEm={enviado}
+                      telefone={telMap[refU] ?? portal.fichaCliente?.telefone}
+                      nomeCliente={portal.fichaCliente?.nome || portal.cliente || portal.nome}
                     />
                   </div>
                 </article>

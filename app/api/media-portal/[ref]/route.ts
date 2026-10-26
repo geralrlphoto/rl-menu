@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import { ehAdmin, naoAutorizado } from '@/lib/api-guard'
+import { novaSenhaPortal } from '@/lib/staffRlprod'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -55,6 +56,8 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const alteracoes = admin ? body : semSenha(body)
 
   const merged = { ...(existing?.dados ?? {}), ...alteracoes }
+  // Portal novo sem senha: gera uma automática (RL.XXXXXX)
+  if (!existing && !merged.senha) merged.senha = novaSenhaPortal()
 
   const { error } = await supabase
     .from('media_portais')

@@ -11,8 +11,19 @@ const supabase = createClient(
 export async function POST(req: NextRequest) {
   const bloqueio = exigeAdmin(req) // só admin
   if (bloqueio) return bloqueio
-  const { ref } = await req.json()
+  const { ref, apenasMarcar } = await req.json()
   if (!ref) return NextResponse.json({ error: 'ref em falta' }, { status: 400 })
+
+  // Enviado por WhatsApp: só regista a data do envio (o projeto passa a Ativo)
+  if (apenasMarcar) {
+    const { data: atual } = await supabase.from('media_portais').select('dados').eq('ref', ref.toUpperCase()).single()
+    if (!atual?.dados) return NextResponse.json({ error: 'Portal não encontrado' }, { status: 404 })
+    const portalEnviadoEm = new Date().toISOString()
+    await supabase.from('media_portais')
+      .update({ dados: { ...atual.dados, portalEnviadoEm, portalEnviadoPor: 'whatsapp' }, updated_at: portalEnviadoEm })
+      .eq('ref', ref.toUpperCase())
+    return NextResponse.json({ ok: true, portalEnviadoEm })
+  }
 
   // ── Buscar dados do portal ──
   const { data: row } = await supabase

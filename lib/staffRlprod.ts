@@ -20,5 +20,8 @@ export function novaSenhaStaff() {
   return 'RL.' + Array.from(b, x => letras[x % letras.length]).join('')
 }
 
+// Os portais dos clientes RL PROD usam o mesmo formato de senha
+export const novaSenhaPortal = novaSenhaStaff
+
 // A senha escreve-se sem ligar a maiúsculas e espaços
 export const normSenha = (s: string) => s.trim().toUpperCase().replace(/\s+/g, '')

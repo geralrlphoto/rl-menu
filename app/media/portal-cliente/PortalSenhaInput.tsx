@@ -5,9 +5,11 @@ interface Props {
   portalRef: string
   senhaInicial?: string
   portalEnviadoEm?: string
+  telefone?: string | null
+  nomeCliente?: string | null
 }
 
-export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviadoEm: enviadoEmInicial }: Props) {
+export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviadoEm: enviadoEmInicial, telefone, nomeCliente }: Props) {
   const [senha, setSenha]       = useState(senhaInicial ?? '')
   const [saving, setSaving]     = useState(false)
   const [saved, setSaved]       = useState(false)
@@ -84,6 +86,37 @@ export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviad
     }
   }
 
+  // WhatsApp: abre a conversa com o link e a senha, e regista o envio (o projeto passa a Ativo)
+  const tel = (telefone ?? '').replace(/\D/g, '')
+  const numeroWa = tel.length === 9 ? `351${tel}` : tel
+  const primeiro = (nomeCliente ?? '').trim().split(/\s+/)[0] || ''
+  const textoWa = [
+    `Olá${primeiro ? ' ' + primeiro : ''}!`,
+    '',
+    'O portal do vosso projeto com a RL PROD já está disponível. Lá vão acompanhar todas as fases, os pagamentos, os documentos e as entregas.',
+    '',
+    `*Link:* https://portal.rlphotovideo.pt/portal-media/${portalRef.toUpperCase()}`,
+    senha ? `*Senha:* ${senha}` : '',
+    '',
+    'Qualquer dúvida, estamos por aqui.',
+    'RL PROD',
+  ].filter((l, i, a) => l !== '' || a[i - 1] !== '').join('\n')
+
+  const handleWhatsApp = async () => {
+    try {
+      const res = await fetch('/api/media-portal/send-portal', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: portalRef, apenasMarcar: true }),
+      })
+      const data = await res.json()
+      if (data.ok && data.portalEnviadoEm) {
+        setEnviadoEm(new Date(data.portalEnviadoEm).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }))
+        setSendMsg({ ok: true, text: '✓ WhatsApp aberto, portal marcado como enviado' })
+        setTimeout(() => setSendMsg(null), 4000)
+      }
+    } catch { /* o WhatsApp abre na mesma */ }
+  }
+
   const BTN = 'rounded-full border px-3.5 py-1.5 text-[12px] transition-colors disabled:opacity-40 disabled:cursor-not-allowed'
 
   return (
@@ -116,8 +149,19 @@ export default function PortalSenhaInput({ portalRef, senhaInicial, portalEnviad
             <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
             </svg>
-            {sending ? 'A enviar…' : 'Enviar portal'}
+            {sending ? 'A enviar…' : 'Enviar por email'}
           </button>
+
+          {/* Enviar por WhatsApp */}
+          {numeroWa ? (
+            <a href={`https://wa.me/${numeroWa}?text=${encodeURIComponent(textoWa)}`} target="_blank" rel="noopener noreferrer"
+              onClick={handleWhatsApp}
+              className={`${BTN} border-[#25D366]/60 bg-[#25D366]/15 text-[#7ef0a8] hover:bg-[#25D366]/25 hover:text-white`}>
+              Enviar por WhatsApp
+            </a>
+          ) : (
+            <span className="text-[11.5px] text-white/35">Sem telemóvel na ficha para WhatsApp</span>
+          )}
 
           {saved && <span className="text-[12px] text-[#5a8bff]">✓ Guardado</span>}
 

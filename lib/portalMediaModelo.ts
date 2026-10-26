@@ -1,5 +1,6 @@
 import { randomBytes } from 'node:crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { novaSenhaPortal } from '@/lib/staffRlprod'
 
 // Modelo do Road Map dos portais RL PROD (Briefing → Proposta → Planeamento → … → Entrega).
 // Usado no "Novo portal" e no portal criado ao qualificar uma lead.
@@ -147,7 +148,7 @@ export async function portalDaLead(supabase: SupabaseClient, id: string): Promis
   }
 
   const { error } = await supabase.from('media_portais')
-    .insert({ ref, dados: dadosPortalDaLead(lead, ref), updated_at: new Date().toISOString() })
+    .insert({ ref, dados: { ...dadosPortalDaLead(lead, ref), senha: novaSenhaPortal() }, updated_at: new Date().toISOString() })
   if (error) return null
   await supabase.from('media_leads').update({ portal_ref: ref }).eq('id', id)
   return ref

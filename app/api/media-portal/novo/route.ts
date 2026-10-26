@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
 import { ROADMAP_RLPROD } from '@/lib/portalMediaModelo'
+import { novaSenhaPortal } from '@/lib/staffRlprod'
 
 const DEFAULT_ROADMAP_CASAMENTO = ROADMAP_RLPROD
 
@@ -159,7 +160,7 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabase
     .from('media_portais')
-    .insert({ ref: refUp, dados, updated_at: new Date().toISOString() })
+    .insert({ ref: refUp, dados: { ...dados, senha: novaSenhaPortal() }, updated_at: new Date().toISOString() })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
