@@ -1,7 +1,8 @@
 import { Fragment } from 'react'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
-import { cookieEditorial, cookieValido } from '@/lib/editorialAcesso'
+import { cookieEditorial, cookieValido, lerEditorial } from '@/lib/editorialAcesso'
+import { ENTREGAS_EDITORIAL, type EntregaLink } from '@/lib/editoriaisEntregas'
 import EntradaEditorial from '../EntradaEditorial'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
@@ -22,21 +23,8 @@ const EMAIL = 'geral.rlphoto@gmail.com'
 const SITE = 'https://www.rlphotovideo.pt'
 const TOTAL = 11
 
-/* Entregas: todo o material de vídeo é entregue aqui. Sem link fica "Aguardar";
-   com link (Drive, WeTransfer, Vimeo…) passa a "Disponível" com o botão Ver / Descarregar. */
-type Entrega = { nome: string; formato: string; link?: string; data?: string }
-const ENTREGAS: Array<{ parceiro: string; sub: string; itens: Entrega[] }> = [
-  { parceiro: 'Zankyou', sub: 'Editorial', itens: [
-    { nome: 'Filme editorial', formato: '16:9 · 60–90 s' },
-    { nome: 'Reel 1 · Detalhes', formato: '9:16 · 15–30 s' },
-    { nome: 'Reel 2 · Casal', formato: '9:16 · 15–30 s' },
-    { nome: 'Reel 3 · Ambiente', formato: '9:16 · 15–30 s' },
-    { nome: 'Teaser do lançamento', formato: '9:16 · vertical' },
-  ] },
-  { parceiro: 'Quinta da Ria', sub: 'Apresentação do espaço', itens: [
-    { nome: 'Filme de apresentação do espaço', formato: '16:9 · 60–90 s' },
-  ] },
-]
+/* Entregas: todo o material de vídeo é entregue aqui. A lista de vídeos está em lib/editoriaisEntregas.ts e os links
+   na tabela `editoriais` (janela do + em /portais-clientes). Sem link fica "Aguardar"; com link, "Ver / Descarregar". */
 
 // Fotos do portfólio no Wfolio (i.wfolio.com, 0 no Supabase), fixas por URL; o número é a posição na galeria
 const FOTOS = {
@@ -323,8 +311,9 @@ function Fotos({ cls, fotos }: { cls: string; fotos: Array<[string, string, stri
 const IcPlay = () => <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg>
 const IcRelogio = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
 
-function Entregas() {
-  const todas = ENTREGAS.flatMap(g => g.itens)
+function Entregas({ links }: { links: Record<string, EntregaLink> }) {
+  const grupos = ENTREGAS_EDITORIAL[SLUG] ?? []
+  const todas = grupos.flatMap(g => g.itens.map(i => ({ ...i, ...links[i.id] })))
   const feitas = todas.filter(e => e.link).length
   return (
     <>
@@ -332,14 +321,14 @@ function Entregas() {
         <div className="barra"><i style={{ width: `${(feitas / todas.length) * 100}%` }} /></div>
         <span>{feitas} de {todas.length} entregues</span>
       </div>
-      {ENTREGAS.map(g => (
+      {grupos.map(g => (
         <div key={g.parceiro} className="ent-grupo rv">
           <h3>{g.parceiro} <small>{g.sub}</small></h3>
           <div className="ent-lista">
-            {g.itens.map(e => (
-              <div key={e.nome} className={`ent${e.link ? ' ok' : ''}`}>
+            {g.itens.map(i => ({ ...i, ...links[i.id] })).map(e => (
+              <div key={e.id} className={`ent${e.link ? ' ok' : ''}`}>
                 <span className="ic">{e.link ? <IcPlay /> : <IcRelogio />}</span>
-                <span className="t"><b>{e.nome}</b><span>{e.formato}{e.data ? ` · entregue a ${e.data}` : ''}</span></span>
+                <span className="t"><b>{e.nome}</b><span>{e.formato}{e.data ? ` · entregue a ${e.data.split('-').reverse().join('/')}` : ''}</span></span>
                 {e.link
                   ? <a className="est" href={e.link} target="_blank" rel="noopener noreferrer">Ver / Descarregar ↗</a>
                   : <span className="est">Aguardar</span>}
@@ -375,7 +364,8 @@ export default async function EditorialZankyouPage() {
   // Só entra quem tem a senha do editorial (cookie assinado) ou a sessão de admin
   const c = await cookies()
   const admin = !!process.env.AUTH_SECRET && c.get('rl_auth')?.value === process.env.AUTH_SECRET
-  if (!admin && !cookieValido(SLUG, c.get(cookieEditorial(SLUG))?.value)) return <EntradaEditorial slug={SLUG} />
+  const ed = await lerEditorial(SLUG)
+  if (!admin && !cookieValido(SLUG, ed.senhaHash, c.get(cookieEditorial(SLUG))?.value)) return <EntradaEditorial slug={SLUG} />
 
   return (
     <main className="nlead ed" style={{ minHeight: '100vh', background: 'var(--ink)' }}>
@@ -654,7 +644,7 @@ export default async function EditorialZankyouPage() {
         <Cabeca n={11} etiqueta="Entregas" lead="Todo o material de vídeo é entregue aqui. Cada filme aparece como disponível assim que estiver pronto, com o link para ver e descarregar.">
           O material, <em>pronto a usar</em>
         </Cabeca>
-        <Entregas />
+        <Entregas links={ed.entregas} />
         <Rodape n={11} />
       </section>
 

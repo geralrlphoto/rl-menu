@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import NovoPortalButton from './NovoPortalButton'
 import CopiarLinkButton from './CopiarLinkButton'
 import AdminPortalLink from './AdminPortalLink'
+import EditorialAdminButton from './EditorialAdminButton'
 
 export const revalidate = 0
 
@@ -11,7 +12,7 @@ const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
 
 // Portais de editoriais (páginas em /editorial/…), mostrados à parte dos casamentos
 const EDITORIAIS = [
-  { nome: 'Zankyou × Quinta da Ria', sub: 'EDITORIAL · PLANO DE VÍDEO', href: '/editorial/zankyou-quinta-da-ria' },
+  { slug: 'zankyou-quinta-da-ria', nome: 'Zankyou × Quinta da Ria', sub: 'EDITORIAL · PLANO DE VÍDEO', href: '/editorial/zankyou-quinta-da-ria' },
 ]
 
 function formatDay(d: string) {
@@ -152,15 +153,16 @@ export default async function PortaisClientesPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {EDITORIAIS.map(ed => (
             <div key={ed.href} className="flex flex-col gap-1.5">
-              <Link href={ed.href} target="_blank"
-                className="flex items-start justify-between gap-3 px-5 py-4 rounded-2xl w-full transition-all duration-200"
+              <div className="flex items-center gap-3 px-5 py-4 rounded-2xl w-full"
                 style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)' }}>
-                <div className="min-w-0 flex-1">
+                <Link href={ed.href} target="_blank" className="min-w-0 flex-1">
                   <p className="font-playfair font-semibold text-base text-white leading-snug truncate">{ed.nome}</p>
                   <p className="font-mono text-[10px] mt-0.5 tracking-widest truncate" style={{ color: 'rgba(255,255,255,0.2)' }}>{ed.sub}</p>
-                </div>
-                <span className="shrink-0 text-sm mt-0.5" style={{ color: 'rgba(201,168,76,0.5)' }}>↗</span>
-              </Link>
+                </Link>
+                {/* + abre a janela da senha e dos links das entregas */}
+                <EditorialAdminButton slug={ed.slug} nome={ed.nome} />
+                <Link href={ed.href} target="_blank" className="shrink-0 text-sm" style={{ color: 'rgba(201,168,76,0.5)' }} aria-label="Abrir o editorial">↗</Link>
+              </div>
               <CopiarLinkButton url={ed.href} />
             </div>
           ))}
