@@ -1,5 +1,8 @@
 import { Fragment } from 'react'
 import type { Metadata } from 'next'
+import { cookies } from 'next/headers'
+import { cookieEditorial, cookieValido } from '@/lib/editorialAcesso'
+import EntradaEditorial from '../EntradaEditorial'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
 /* Portal do editorial Zankyou × Quinta da Ria: plano de vídeo (dois filmes, uma produção).
@@ -9,7 +12,10 @@ import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 export const metadata: Metadata = {
   title: 'Editorial de Casamento · Zankyou × Quinta da Ria',
   description: 'Plano de vídeo: dois filmes, uma produção. RL Photo Video.',
+  robots: { index: false, follow: false },
 }
+
+const SLUG = 'zankyou-quinta-da-ria'
 
 const TEL = '+351912923768'
 const EMAIL = 'geral.rlphoto@gmail.com'
@@ -364,7 +370,12 @@ function Titulo() {
 
 /* ── Página ────────────────────────────────────────────────────────────── */
 
-export default function EditorialZankyouPage() {
+export default async function EditorialZankyouPage() {
+  // Só entra quem tem a senha do editorial (cookie assinado) ou a sessão de admin
+  const c = await cookies()
+  const admin = !!process.env.AUTH_SECRET && c.get('rl_auth')?.value === process.env.AUTH_SECRET
+  if (!admin && !cookieValido(SLUG, c.get(cookieEditorial(SLUG))?.value)) return <EntradaEditorial slug={SLUG} />
+
   return (
     <main className="nlead ed" style={{ minHeight: '100vh', background: 'var(--ink)' }}>
       <style>{CSS_BRIEFING + CSS}</style>
