@@ -584,7 +584,6 @@ export default function EditorialZankyouPage() {
             'Fecho com convite a agendar visita',
           ]} />
           <Cartao k="Material partilhável" titulo={<>Fornecedores</>} itens={[
-            'Clip vertical com destaque do seu trabalho',
             'Créditos e identificação nas publicações',
             'Acesso às publicações em colaboração',
           ]} />
