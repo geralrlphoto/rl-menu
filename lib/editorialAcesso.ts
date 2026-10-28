@@ -1,12 +1,13 @@
-import { createHash, createHmac, timingSafeEqual } from 'node:crypto'
+import { createHmac, scryptSync, timingSafeEqual } from 'node:crypto'
 
 // Acesso aos portais de editoriais (/editorial/<slug>): senha "RL.XXXXXX" por editorial.
-// No código fica só a impressão digital (sha256) da senha, nunca a senha em claro.
+// No código fica só "sal:scrypt" da senha, nunca a senha em claro. O scrypt é lento de propósito:
+// mesmo com o código à vista, adivinhar a senha a partir daqui levaria anos.
 // Depois de entrar fica um cookie assinado com o AUTH_SECRET; mudar a senha invalida os cookies antigos.
 // Admin (rl_auth) entra sempre direto.
 
 export const EDITORIAIS_SENHA: Record<string, string> = {
-  'zankyou-quinta-da-ria': '09284cc9b9a1300986431d82270bceaeafb9b0cb8f2d7ee2c53240f940f2f8f1',
+  'zankyou-quinta-da-ria': '797d6b01345767f9d05f691a4477dde9:345d9171513379936dbc4f25bb3535e99d0ad786085fe85234934e1e74ebff8e',
 }
 
 export const EDITORIAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 60 // 60 dias
@@ -35,7 +36,9 @@ function iguais(a: string, b: string) {
 export function senhaCerta(slug: string, senha: string) {
   const esperada = EDITORIAIS_SENHA[slug]
   if (!esperada) return false
-  return iguais(createHash('sha256').update(normSenha(senha)).digest('hex'), esperada)
+  const [sal, hash] = esperada.split(':')
+  const tentativa = scryptSync(normSenha(senha), sal, 32, { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }).toString('hex')
+  return iguais(tentativa, hash)
 }
 
 export function cookieValido(slug: string, valor: string | undefined) {
