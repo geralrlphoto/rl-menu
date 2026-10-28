@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { cookieEditorial, cookieValido, lerEditorial } from '@/lib/editorialAcesso'
 import { ENTREGAS_EDITORIAL, type EntregaLink } from '@/lib/editoriaisEntregas'
 import EntradaEditorial from '../EntradaEditorial'
+import IndiceCapitulos from '../IndiceCapitulos'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
 /* Portal do editorial Zankyou × Quinta da Ria: plano de vídeo (dois filmes, uma produção).
@@ -67,15 +68,34 @@ const CSS = `
 
 /* ── Índice ── */
 .ed .indice{position:sticky;top:0;z-index:30;background:rgba(11,10,8,.86);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line-soft);}
-.ed .indice nav{max-width:1080px;margin:0 auto;display:flex;gap:6px;overflow-x:auto;padding:12px 16px;scrollbar-width:none;}
-.ed .indice nav::-webkit-scrollbar{display:none;}
-.ed .indice a{flex:none;font-family:var(--fm);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim);text-decoration:none;padding:8px 13px;border:1px solid var(--line-soft);border-radius:40px;transition:.3s var(--ease);}
+.ed .indice .chips{max-width:1080px;margin:0 auto;display:flex;gap:6px;overflow-x:auto;padding:12px 16px;scrollbar-width:none;}
+.ed .indice .chips::-webkit-scrollbar{display:none;}
+.ed .indice .chips a{flex:none;font-family:var(--fm);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim);text-decoration:none;padding:8px 13px;border:1px solid var(--line-soft);border-radius:40px;transition:.3s var(--ease);}
 .ed .indice a i{font-style:normal;color:var(--g);margin-right:.6em;}
 .ed .indice a:hover{color:var(--g);border-color:rgba(216,190,147,.5);}
-/* No computador os botões passam para a linha de baixo em vez de ficarem cortados; no telemóvel desliza */
+/* No computador os botões passam para a linha de baixo em vez de ficarem cortados */
 @media (min-width:760px){
-  .ed .indice nav{max-width:none;flex-wrap:wrap;justify-content:center;overflow:visible;}
-  .ed .indice a{letter-spacing:.14em;padding:7px 12px;}
+  .ed .indice .chips{max-width:none;flex-wrap:wrap;justify-content:center;overflow:visible;}
+  .ed .indice .chips a{letter-spacing:.14em;padding:7px 12px;}
+}
+/* Telemóvel: hambúrguer em vez dos botões */
+.ed .ham-barra,.ed .ham-lista,.ed .ham-fundo{display:none;}
+@media (max-width:759px){
+  .ed .indice .chips{display:none;}
+  .ed .ham-barra{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;}
+  .ed .ham-t{font-family:var(--fm);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ed .ham-t b{color:var(--g);font-weight:400;}
+  .ed .ham{display:flex;align-items:center;gap:4px;flex-direction:column;justify-content:center;position:relative;height:38px;padding:0 12px 0 98px;border:1px solid var(--line);border-radius:40px;background:transparent;color:var(--tx);cursor:pointer;}
+  .ed .ham span{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-family:var(--fm);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-mid);}
+  .ed .ham i{display:block;width:18px;height:1px;background:var(--g);transition:.35s var(--ease);}
+  .ed .indice.aberto .ham i:nth-of-type(1){transform:translateY(5px) rotate(45deg);}
+  .ed .indice.aberto .ham i:nth-of-type(2){opacity:0;}
+  .ed .indice.aberto .ham i:nth-of-type(3){transform:translateY(-5px) rotate(-45deg);}
+  .ed .ham-fundo{display:block;position:fixed;inset:0;top:59px;background:rgba(0,0,0,.55);}
+  .ed .ham-lista:not([hidden]){display:block;position:absolute;left:0;right:0;top:100%;background:rgba(11,10,8,.97);border-bottom:1px solid var(--line-soft);padding:6px 16px 14px;max-height:calc(100svh - 70px);overflow-y:auto;animation:edSobe .35s var(--ease);}
+  .ed .ham-lista a{display:flex;align-items:baseline;gap:16px;padding:14px 2px;border-bottom:1px solid var(--line-soft);font-family:var(--fd);font-weight:300;font-size:18px;color:var(--tx);text-decoration:none;}
+  .ed .ham-lista a:last-child{border-bottom:none;}
+  .ed .ham-lista a i{font-style:normal;font-family:var(--fs);font-size:20px;color:var(--g);width:28px;}
 }
 
 /* ── Capítulos ── */
@@ -391,13 +411,7 @@ export default async function EditorialZankyouPage() {
         <p className="apres">Apresentado por RL Photo Video | Palmela, Portugal</p>
       </section>
 
-      <div className="indice">
-        <nav aria-label="Capítulos">
-          {CAPITULOS.map((c, i) => (
-            <a key={c.id} href={`#${c.id}`}><i>{String(i + 2).padStart(2, '0')}</i>{c.nome}</a>
-          ))}
-        </nav>
-      </div>
+      <IndiceCapitulos capitulos={CAPITULOS} />
 
       {/* 02 · Quem somos */}
       <section className="cap" id="quem-somos">
