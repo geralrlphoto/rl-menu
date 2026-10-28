@@ -73,14 +73,30 @@ export default function EdicaoVideoPage() {
   }
   useEffect(carregar, [])
 
+  // Material só conta se for do editor atual (depois de trocar, o do antigo fica para trás)
+  const materialAtual = (p: Projeto) => p.material && p.editorIds.includes(p.material.freelancerId) ? p.material : null
+  const enviarMaterial = (p: Projeto, freelancer: string, link: string) => fetch('/api/painel-editor/projetos', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ freelancer, projeto: {
+      referencia: p.referencia, eventoId: p.fichaId, noivos: p.cliente, local: p.local,
+      dataCasamento: p.data.slice(0, 10).split('-').reverse().join('/'), clientLink: link,
+    } }),
+  }).catch(() => null)
+
+  // Atribuir ou trocar o editor. Ao trocar, o link do material segue para o novo editor.
+  const [trocar, setTrocar] = useState<number | null>(null)
   const atribuir = async (p: Projeto, nome: string) => {
     if (!nome) return
+    if (p.editores.length && !window.confirm(`Trocar o editor de ${p.cliente || p.referencia} para ${nome}? O novo editor recebe a notificação e o email.`)) { setTrocar(null); return }
     setAGravar(p.id)
     await fetch('/api/evento-equipa', {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ referencia: p.referencia, data_casamento: p.data, local: p.local, editor_video: [nome] }),
     }).catch(() => {})
+    const novo = dados?.editores.find(e => e.nome === nome)
+    if (novo && p.material?.link && p.material.freelancerId !== novo.id) await enviarMaterial(p, novo.id, p.material.link)
     setAGravar(null)
+    setTrocar(null)
     carregar()
   }
 
@@ -90,21 +106,16 @@ export default function EdicaoVideoPage() {
   const guardarMaterial = async (p: Projeto) => {
     const link = (materiais[p.id] ?? '').trim()
     if (!/^https?:\/\//i.test(link)) { alert('Cola o link de download (WeTransfer, Drive, Dropbox…).'); return }
-    const freelancer = p.material?.freelancerId ?? p.editorIds.find(Boolean)
+    const mat = materialAtual(p)
+    const freelancer = mat?.freelancerId ?? p.editorIds.find(Boolean)
     if (!freelancer) { alert('Não encontrei o editor na lista de editores.'); return }
     setAGravar(p.id)
-    const r = p.material
+    const r = mat
       ? await fetch('/api/painel-editor/projetos', {
           method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ freelancer, notifId: p.material.notifId, patch: { clientLink: link } }),
+          body: JSON.stringify({ freelancer, notifId: mat.notifId, patch: { clientLink: link } }),
         }).catch(() => null)
-      : await fetch('/api/painel-editor/projetos', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ freelancer, projeto: {
-            referencia: p.referencia, eventoId: p.fichaId, noivos: p.cliente, local: p.local,
-            dataCasamento: p.data.slice(0, 10).split('-').reverse().join('/'), clientLink: link,
-          } }),
-        }).catch(() => null)
+      : await enviarMaterial(p, freelancer, link)
     setAGravar(null)
     if (!r?.ok) { alert('Não foi possível guardar o link.'); return }
     setMateriais(m => { const { [p.id]: _, ...resto } = m; return resto })
@@ -400,14 +411,24 @@ export default function EdicaoVideoPage() {
                           {p.diasPrazo < 0 ? `Atrasado ${-p.diasPrazo} dias` : `Prazo em ${p.diasPrazo} dias`} · {fmt(p.prazo)}
                         </p>
                       )}
-                      {f === 'Por atribuir' ? (
-                        <select disabled={aGravar === p.id || !p.referencia} defaultValue="" onChange={e => atribuir(p, e.target.value)}
-                          className="w-full rounded-xl border border-[#C9A84C]/40 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[#C9A84C]">
-                          <option value="" disabled>{aGravar === p.id ? 'A atribuir…' : 'Atribuir editor…'}</option>
-                          {cargas.map(({ e, ativos }) => <option key={e.id} value={e.nome}>{e.nome} ({ativos} ativos)</option>)}
-                        </select>
+                      {f === 'Por atribuir' || trocar === p.id ? (
+                        <div className="flex gap-2">
+                          <select key={`${p.id}-${p.editores.join()}`} disabled={aGravar === p.id || !p.referencia} defaultValue="" onChange={e => atribuir(p, e.target.value)}
+                            className="min-w-0 flex-1 rounded-xl border border-[#C9A84C]/40 bg-black/40 px-3 py-2 text-sm text-white outline-none focus:border-[#C9A84C]">
+                            <option value="" disabled>{aGravar === p.id ? 'A gravar…' : f === 'Por atribuir' ? 'Atribuir editor…' : 'Novo editor…'}</option>
+                            {cargas.filter(({ e }) => !p.editorIds.includes(e.id)).map(({ e, ativos }) => <option key={e.id} value={e.nome}>{e.nome} ({ativos} ativos)</option>)}
+                          </select>
+                          {trocar === p.id && (
+                            <button type="button" onClick={() => setTrocar(null)} className="shrink-0 rounded-full border border-white/15 px-2.5 text-[10px] font-semibold tracking-[0.1em] uppercase text-white/45 hover:text-white">Cancelar</button>
+                          )}
+                        </div>
                       ) : (
-                        <p className="text-[12px] text-white/60">Editor: <span className="text-white">{p.editores.join(', ') || '—'}</span></p>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[12px] text-white/60">Editor: <span className="text-white">{p.editores.join(', ') || '—'}</span></p>
+                          {f !== 'Entregue' && (
+                            <button type="button" onClick={() => setTrocar(p.id)} className="shrink-0 rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase text-white/45 hover:text-white">Trocar</button>
+                          )}
+                        </div>
                       )}
                       {!p.entregas.teaser && p.diaTeaser >= 0 && p.diaTeaser <= 60 && f !== 'Entregue' && (
                         <p className={`text-[11px] font-semibold tracking-[0.1em] uppercase ${p.diaTeaser > p.teaserDias ? 'text-red-400' : p.diaTeaser >= p.teaserDias - 2 ? 'text-amber-300' : 'text-[#4ade80]'}`}>
@@ -424,10 +445,10 @@ export default function EdicaoVideoPage() {
                       {(f === 'Aguardar' || f === 'Em Edição') && (
                         <div className="flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-black/25 p-3">
                           <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Material para o editor</p>
-                          {p.material?.link && materiais[p.id] === undefined ? (
+                          {materialAtual(p)?.link && materiais[p.id] === undefined ? (
                             <div className="flex items-center justify-between gap-2">
-                              <a href={p.material.link} target="_blank" rel="noopener noreferrer" className="truncate text-[12px] font-semibold text-[#4ade80] hover:underline">✓ Link de download enviado</a>
-                              <button type="button" onClick={() => setMateriais(m => ({ ...m, [p.id]: p.material?.link ?? '' }))}
+                              <a href={materialAtual(p)!.link} target="_blank" rel="noopener noreferrer" className="truncate text-[12px] font-semibold text-[#4ade80] hover:underline">✓ Link de download enviado</a>
+                              <button type="button" onClick={() => setMateriais(m => ({ ...m, [p.id]: materialAtual(p)?.link ?? '' }))}
                                 className="shrink-0 rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase text-white/45 hover:text-white">Alterar</button>
                             </div>
                           ) : (
