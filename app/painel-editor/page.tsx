@@ -132,25 +132,20 @@ function TrabalhosRLSection({ freelancerId }: { freelancerId: string | null }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {jobs.map((j, i) => {
           const dia = j.data_casamento ? new Date(j.data_casamento).toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric' }) : null
-          const downloads: string[] = Array.isArray(j.downloads) ? j.downloads : []
+          // O download só abre na página do trabalho, depois de o vídeo estar Em Edição
+          const id = j.referencia || j.notifId || String(i)
           return (
-            <div key={j.notifId ?? i} className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+            <Link key={j.notifId ?? i} href={`/painel-editor/novos-projetos?open=${encodeURIComponent(id)}`}
+              className="block rounded-xl border border-white/10 bg-white/[0.02] p-4 hover:border-gold/40 transition-all">
               <div className="flex items-center justify-between gap-2 mb-1">
                 <p className="text-[14px] text-white font-medium">{j.noivos || j.local || 'Evento'}</p>
                 {!j.lida && <span className="text-[9px] px-2 py-0.5 rounded-full bg-gold text-black uppercase tracking-widest font-bold">Novo</span>}
               </div>
               {(j.local || dia) && <p className="text-[11px] text-white/45">{[j.local, dia].filter(Boolean).join(' · ')}</p>}
-              <div className="flex flex-wrap gap-2 mt-3">
-                {downloads.length > 0
-                  ? downloads.map((u, k) => (
-                      <a key={k} href={u} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-[11px] px-3 py-1.5 rounded-lg bg-gold/15 border border-gold/35 text-gold font-semibold tracking-wider uppercase hover:bg-gold/25 transition-all">
-                        ↓ Download{downloads.length > 1 ? ` ${k + 1}` : ''}
-                      </a>
-                    ))
-                  : <span className="text-[11px] text-white/30 italic">Sem link de download ainda.</span>}
-              </div>
-            </div>
+              <span className="inline-flex items-center gap-1.5 mt-3 text-[11px] px-3 py-1.5 rounded-lg bg-gold/15 border border-gold/35 text-gold font-semibold tracking-wider uppercase">
+                Abrir trabalho →
+              </span>
+            </Link>
           )
         })}
       </div>
