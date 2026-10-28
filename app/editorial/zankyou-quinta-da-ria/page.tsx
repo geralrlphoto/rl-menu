@@ -50,7 +50,7 @@ const FOTOS = {
 }
 
 const CSS = `
-.ed{overflow-x:hidden;}
+.ed{overflow-x:clip;} /* clip (e não hidden) para o índice ficar fixo no topo */
 /* ── Abertura ── */
 .ed .hero{position:relative;height:100svh;min-height:600px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;padding:0 20px clamp(44px,9vh,80px);}
 /* Cabeçalho igual ao do menu (/photo): foto a preto e branco esbatida, brilho dourado, pontilhado e anéis finos */
@@ -80,9 +80,14 @@ const CSS = `
 .ed .indice a{flex:none;font-family:var(--fm);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim);text-decoration:none;padding:8px 13px;border:1px solid var(--line-soft);border-radius:40px;transition:.3s var(--ease);}
 .ed .indice a i{font-style:normal;color:var(--g);margin-right:.6em;}
 .ed .indice a:hover{color:var(--g);border-color:rgba(216,190,147,.5);}
+/* No computador os botões passam para a linha de baixo em vez de ficarem cortados; no telemóvel desliza */
+@media (min-width:760px){
+  .ed .indice nav{max-width:none;flex-wrap:wrap;justify-content:center;overflow:visible;}
+  .ed .indice a{letter-spacing:.14em;padding:7px 12px;}
+}
 
 /* ── Capítulos ── */
-.ed .cap{max-width:1080px;margin:0 auto;padding:clamp(72px,12vh,120px) 16px 0;scroll-margin-top:48px;}
+.ed .cap{max-width:1080px;margin:0 auto;padding:clamp(72px,12vh,120px) 16px 0;scroll-margin-top:100px;}
 .ed .cap-h h2{font-size:clamp(36px,6vw,58px);margin:18px 0 0;}
 .ed .cap-h .ln{width:56px;height:1px;background:var(--g);margin-top:22px;}
 .ed .cap-h .lead{max-width:760px;margin-top:26px;}
