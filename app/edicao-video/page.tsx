@@ -218,6 +218,12 @@ export default function EdicaoVideoPage() {
     carregar()
   }
 
+  // Filtro do quadro pelo nome dos noivos (ou referência), sem acentos nem maiúsculas
+  const [busca, setBusca] = useState('')
+  const semAcentos = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
+  const termo = semAcentos(busca.trim())
+  const passa = (p: Projeto) => !termo || semAcentos(`${p.cliente ?? ''} ${p.referencia ?? ''}`).includes(termo)
+
   const projetos = dados?.projetos ?? []
   const porFase = useMemo(() => {
     const m = new Map<Fase, Projeto[]>(FASES.map(f => [f, []]))
@@ -365,9 +371,14 @@ export default function EdicaoVideoPage() {
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Quadro de trabalho</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Casamentos em edição</h2>
           <p className="mt-2 text-sm text-white/45">O editor põe Em Edição (desbloqueia o download) e Em Revisão (envia o link). A RL aprova (Finalizado) e entrega o filme aos noivos (Entregue). O prazo conta 180 dias úteis desde o casamento.</p>
+          <div className="mt-6 relative max-w-md">
+            <input type="search" value={busca} onChange={e => setBusca(e.target.value)} placeholder="Procurar noivos…"
+              className="w-full rounded-full border border-white/[0.1] bg-[#111111]/90 pl-11 pr-4 py-2.5 text-[15px] text-white placeholder:text-white/30 outline-none focus:border-[#C9A84C]/60 focus:shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)]" />
+            <svg className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke={OURO} strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+          </div>
           <div className="mt-6 flex gap-4 overflow-x-auto pb-4 snap-x">
             {FASES.map(f => {
-              const lista = porFase.get(f) ?? []
+              const lista = (porFase.get(f) ?? []).filter(passa)
               return (
                 <div key={f} className="snap-start flex-none w-[290px] flex flex-col gap-3">
                   <div className="flex items-center justify-between px-1">
