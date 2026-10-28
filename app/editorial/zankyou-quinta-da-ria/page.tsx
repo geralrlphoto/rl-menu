@@ -82,6 +82,9 @@ const CSS = `
 .ed .ham-barra,.ed .ham-lista,.ed .ham-fundo{display:none;}
 @media (max-width:759px){
   .ed .indice .chips{display:none;}
+  /* Barra fixa no topo do ecrã desde a abertura; a linha dos parceiros desce para não ficar por baixo */
+  .ed .indice{position:fixed;top:0;left:0;right:0;}
+  .ed .hero .parceiros{top:74px;}
   .ed .ham-barra{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 16px;}
   .ed .ham-t{font-family:var(--fm);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-mid);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .ed .ham-t b{color:var(--g);font-weight:400;}
