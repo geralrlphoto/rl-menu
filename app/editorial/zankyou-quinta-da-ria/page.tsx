@@ -16,6 +16,20 @@ const EMAIL = 'geral.rlphoto@gmail.com'
 const SITE = 'https://www.rlphotovideo.pt'
 const TOTAL = 10
 
+// Fotos do portfólio no Wfolio (i.wfolio.com, 0 no Supabase), fixas por URL; o número é a posição na galeria
+const FOTOS = {
+  escada: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuoqY-vLHW6sRUFwrtuKYLpjK/a_TLR17QiyyDObXJaCKKVzrmmybQN-0u/g8Vi1Abpxm_lQqASOuoK3jLfiSIcVN7h/5R5m9Sw2veSNI7ygjWtfP3hYBePE13UG/_eTwz0P7fqXpnQJvqwQAN-RxA2KHe_wz/Sn2NE0f2jW-qFK7f022Vc3rQ4CB4otOy/Y8OYEa4FcwAhOICxhuGN83EupFB3Cf8C/Dc-Dwk8GexAwgJq_Xvnm0sOIOfpBiWR_/GB4IqRDpfnsNnkNpAe6IZvdTmU-AX0-E/0e3F0q29wvhZUOeyYaKcam6143L4w14K/1aa8EmFP9VU.jpg', // 1
+  veu: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOB_kPne_I7mp/v99noRd8LUeBSHXoSkr_QbbI6hiIMeUL/rNl6Z1c9xSShuKDSIU4uboR9D5ia-pIt/XTdkMb0sJsLB6vFsg8adbTEetBWyHFDR/dRUEr1-h-TKPpWtGlTWviCl6O0mthhau/3GUrhwtIBy3xEoMaGAZgOw9n5kffjLTo/oO4fp_83uKxPh76CocEZt4ihAU8VELIs/xg0TNn524Gow99zJQm4f8qr03HNr44qW/i-JvpETOZW5cPbYtauYTr-F8OcoNB5od/4_8e5AMxT3WqIrSdaW-aiqtFA_qcoLmE/d_XlmuAZtcVWeGwIWzlRm691oudMZzrT/WKnLto29g0Q.jpg', // 14
+  detalhes: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuoo08jMtAYonXF5z8gyZ-DDT/pjLPGuyEdRc-kt1QRlluaUK8ROptAJUA/u03FjARsw-R59P1C61tZSBBqz_L6B4nU/SLphIa57vRqkH8bVyYxnARfexiu9BqEL/jWnr9-sLWcISZP1db_QuKJCwS7ibFtT7/NBogrbPQbfOpS0nPB1GFSVqMR7s_k9Mw/k6SCaX7AH6zV2kjxr64jiC5Otkhob_1w/d1Z8JKVaMKmAwTI4-_SiiDxIsI5183m0/3SyvoGcHbOw7ELAEUKDJ0xcP5QHl6a58/e_LgDNftvYjlblKLpWE4i_468Kwtetgi/U1cQ96Ax6pA.jpg', // 16
+  vestido: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOIMbcGxDJZtB/bOHCKTwSQU_4-G5KPNej9vWYznMV2agt/sQTzlkwrFWsm-vLux3bu66sT8tRurGMD/J29BRKSUFbf_8AJx2LnnNIJi4vYaGadq/qjgBOWFx9tLPJDKTeH0bMgoM52qBl4MA/uZqPVlb9dFbiSJeEFZ1AWDuiPPdwrjK7/MUWnkKsnd4oHPCVPOlQ1hoE-2ohmZuwj/UeXN_jQYzh-TJuzOFeZQEHNzpOHKWgB_/JNzSRYQsLl-qeNelnFyxaFVFWBs3Ud2v/Jn7V2UaC3KMjQH8CYjJHrMNGEWf5ywXW/WE-XHiGXXArISuuvTSuaedJXlLixBVee/J7moUGpVRrA.jpg', // 10
+  atar: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuoqqXF-nkolK8KtGIG1Vea6I/nXJ4oTdrFWyFGuaG9KwDZvaU4wvQ0aQs/vHlNvjfYk_wxmkEUhSxqJZLGmPs5B-Ed/1Akl-ZG4LTSL3SzpaBY_5Qzt33q2Iq_L/pHSH1J526lkSCzGjCQ2e3EKnEE3-V2YJ/t51aG5gvFKOyYgjiz0uN96WFhJKJcbhL/VFxbmRXwibit9ttQN81Y06bhw4N6jeBA/ZR3fm62-taLTPDnGaex0aT113BBIGCSB/XbGKUHAHYevjxoiAB4vCHjj0RotPke4E/i_9JDb8cICRgFpgA9aLRi3ov0RLapw34/8Yd7kARjJZ0.jpg', // 17
+  pedra: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOB_kPne_I7mp/v99noRd8LUewpUL3fCmY0lMfLPDSLUY-/GdrQsQjxLQhiVbHm81Lhn6djHOwo5B6f/BRISSv7jr-hy0PpPnLO7uUYyLACS8p5D/hhgrNbkgW-47MT71sJPi-qWzK5TVgiQa/RBuDxrApHu3r1OsTMzdaqZeCFWX9EDlQ/tvhNzghb0sPtPjzX-TWFZ62Hdc_jLevC/GfsJ1yzkN_lUnuky0emvJ-oLfMJHUCkZ/TyM592a0X9uDPk4_UCjKYOkDH8SUUlf0/JanzSxjirsq0z3S5tcgD20K-BcHcuX_l/R1oBYEk8jMH-6_z34pvw_g1sEmIxfpvV/4q54a8aYa3M.jpg', // 6
+  candeeiros: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuorKLUuIraQlIPOVD1sdllg5/BuUch2i1YLYD4lL_aMm9stBltlc--zYt/gr0a2mzXSYTcQ111X9C-FxcFUx296VQh/1I4zZcWeqoPftwKXkqm3xvXvHJ68nGt6/WeAxD_A50JNmKfcZRV6J5CGJ4O9YQvXS/M-Uo7kCGEWf_DTLs2-SvBUtoPKBDAjpK/tmWklHsOjngchxrIFYi_DSzEvi2yLhHz/CIIs2SPpaDt0W0vRotobIXY0TDA2QmpA/i0cod4MbXY-gNKEzaa69eb5SRCzowWbI/6vOKWkNUzdgpUHuMUBh6Rd65z8sTktd0/1qZCm58_ziY.jpg', // 25
+  dourada: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOB_kPne_I7mp/v99noRd8LUekd05hq-4QFo2LnT4LmYdH/oBfqci0iedSwKhVxdteGerz35FSTc9g8/ST298jZ_7i9IVCWHchJufoz1nvRebmuQ/TUHciwxVcXsDXPQ1xbPQQJlFBduRGxuR/ST5iymTIiQUpLWESejG_PNRc5ZzAzWit/okW0lciyqunTq9rULze6jlyR1U7ET80A/S_Apj1paGw0U3HB4Z1tPP6DtI2tzF3bU/ppFW_4tJNlk96fDG3K01C6dq_DXeI6K7/liYxsQU1Za6jQ_vXJH-nlMs9BzFaA7Vl/Od_OopiKfslunD9IJqGmmA2d4gB6hCig/Pb0MFK5a1zk.jpg', // 15
+  movimento: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuoqB1cKJOmpAzCW6YcyMPuYy/DRCk1fOU91Eo70wFmTZO34xlasI7WQJy/PMoWDtYqiH8acbnAVuFOKKFbFpXo0xEX/mtmX_9QPYNm8RVw63Eo9lesBqG2jfq77/DVLI3xZWuCexkq4Ii4luRoepD5LBMmbd/uIB_JsKpgRqUVwogE1ZG7llQAKLVNh3n/EP6Dt_pxQtofKP6Asfj3TZgq9XGOAkyS/PPAZ7250Gn0uhfMj_adc_We4gEqX2uwc/gSKQM3BoyIRUzA857qlpEurDi0Y5yE0e/3HJO5dJmj4HjGEsr52evdFpu14beJWBh/SsdWu56OaIg.jpg', // 3
+  maos: 'https://i.wfolio.com/x/KfN2JhbB89-m6UeUSQ-43b-4LTDPyZVn/q6sVLUvjujnOk6mXbO2srbIKpPlcOqy0/t7rVx8PT5NFW95R5iPfYgBdCvXqdZSYC/zyAGIGx14QnH8prwkbZ-T_VQC0dpw9Hp/imD7pN62XUepN3NSIwunZoos_XinagtM/fbvcdOyKJWF1e5Z62MJQXoK8GOyeLUdi/LKuebCPWUyqXzGP1hnLy0odg3uAVZ1Ek/I65fwkJIUKkYjy8XoUJP1k-dbpQ_WQPX/5sgMnZmG15TobA87u2fFOKOL4-cUkc2O/MZ4r9ovAuoqhmbQy9CfDa0daUXrv1zuz/YpfUV1ZRNWYCFIw_Tkd-ilkIPYKrEMRY/ES_rPO1P_nabPEQiVu9kM-u8wAW9xf74/_KpBIdRV95rGcuYqIbuxdhQk155K8CAr/Ho1EU1bzx29rTD5vFdpGrNGZgDk8k6cb/A45grNZxoXG2tk_ZVWgwxZY_y3OgdAAk/tEBKhq2GD4eSAL0pcHapVlJraJFPO_KG/t_O-50yUIB3P3_mZXu1pxjkQ6XI0CkvX/X-u99pvGJKkozQVHsHNyOFZFcYcqRCLg/k8O6e0xDTgxSqO5cl4gzpPP7zwtvBx2K/Cd5qVpOVgdI.jpg', // 20
+}
+
 const CSS = `
 .ed{overflow-x:hidden;}
 /* ── Abertura ── */
@@ -113,6 +127,27 @@ const CSS = `
 .ed .formatos{font-family:var(--fs);font-style:italic;font-size:clamp(19px,2.2vw,23px);color:var(--tx-mid);margin-top:26px;line-height:1.45;}
 .ed .formatos em{color:var(--g);}
 
+/* Fotos: faixa entre capítulos e grelhas dentro dos filmes */
+.ed .faixa-foto{position:relative;margin-top:clamp(72px,12vh,120px);height:clamp(280px,62vh,620px);overflow:hidden;}
+.ed .faixa-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.ed .faixa-foto::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--ink) 0%,rgba(11,10,8,.1) 22%,rgba(11,10,8,.1) 70%,var(--ink) 100%);}
+.ed .faixa-foto figcaption{position:absolute;z-index:2;left:0;right:0;bottom:clamp(22px,5vh,40px);text-align:center;font-family:var(--fs);font-style:italic;font-weight:300;font-size:clamp(22px,3.4vw,34px);color:var(--tx);padding:0 16px;}
+.ed .faixa-foto figcaption em{color:var(--g);}
+@supports (animation-timeline: view()){
+  .ed .faixa-foto img{animation:edParalaxe linear both;animation-timeline:view();}
+}
+@keyframes edParalaxe{from{transform:scale(1.14) translateY(-4%)}to{transform:scale(1.14) translateY(4%)}}
+.ed .fotos{display:grid;gap:12px;margin-top:clamp(30px,5vh,44px);}
+.ed .fotos figure{margin:0;position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line-soft);}
+.ed .fotos img{display:block;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease);}
+.ed .fotos figure:hover img{transform:scale(1.04);}
+.ed .fotos figcaption{position:absolute;left:12px;bottom:10px;font-family:var(--fm);font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx);text-shadow:0 1px 8px rgba(0,0,0,.8);}
+.ed .fotos.f3{grid-template-columns:repeat(3,minmax(0,1fr));}
+.ed .fotos.f3 figure{aspect-ratio:4/5;}
+.ed .fotos.f2{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);}
+.ed .fotos.f2 figure{aspect-ratio:auto;height:clamp(240px,42vw,460px);}
+@media (max-width:620px){.ed .fotos.f2{grid-template-columns:minmax(0,1fr);}.ed .fotos.f3{gap:6px;}.ed .fotos figcaption{font-size:8px;left:8px;}}
+
 /* Próximos passos */
 .ed .passos{list-style:none;margin:clamp(34px,5vh,48px) 0 0;padding:0;}
 .ed .passos li{display:flex;gap:20px;align-items:baseline;padding:20px 2px;border-top:1px solid var(--line-soft);}
@@ -121,7 +156,7 @@ const CSS = `
 .ed .passos .t{font-family:var(--fd);font-weight:300;font-size:clamp(17px,2vw,20px);color:var(--tx);line-height:1.4;}
 
 /* Faixa final */
-.ed .faixa{margin-top:clamp(80px,13vh,130px);background:#070605;border-top:1px solid var(--line-soft);text-align:center;padding:clamp(60px,11vh,100px) 16px 48px;}
+.ed .faixa{margin-top:0;background:#070605;border-top:1px solid var(--line-soft);text-align:center;padding:clamp(60px,11vh,100px) 16px 48px;}
 .ed .faixa h2{font-size:clamp(42px,8vw,72px);margin:0;}
 .ed .faixa .ln{width:56px;height:1px;background:var(--g);margin:24px auto 0;}
 .ed .faixa .ct{display:flex;flex-wrap:wrap;justify-content:center;gap:10px 26px;margin-top:28px;}
@@ -197,6 +232,25 @@ function Tabela({ colunas, largura, linhas }: { colunas: Col[]; largura: string;
         <div key={i} className="tr" style={{ gridTemplateColumns: largura }}>
           {l.map((cel, j) => <span key={j} className={colunas[j].cls} data-c={colunas[j].nome}>{cel}</span>)}
         </div>
+      ))}
+    </div>
+  )
+}
+
+function FaixaFoto({ src, pos = 'center', children }: { src: string; pos?: string; children?: React.ReactNode }) {
+  return (
+    <figure className="faixa-foto" style={{ margin: 0 }}>
+      <img src={src} alt="" loading="lazy" style={{ objectPosition: pos }} />
+      {children && <figcaption>{children}</figcaption>}
+    </figure>
+  )
+}
+
+function Fotos({ cls, fotos }: { cls: string; fotos: Array<[string, string, string?]> }) {
+  return (
+    <div className={`fotos ${cls} rv`}>
+      {fotos.map(([src, leg, pos]) => (
+        <figure key={src}><img src={src} alt={leg} loading="lazy" style={{ objectPosition: pos ?? 'center' }} /><figcaption>{leg}</figcaption></figure>
       ))}
     </div>
   )
@@ -288,6 +342,8 @@ export default function EditorialZankyouPage() {
         <Rodape n={2} />
       </section>
 
+      <FaixaFoto src={FOTOS.escada} pos="center 30%">Contamos histórias <em>reais</em></FaixaFoto>
+
       {/* 03 · Visão geral */}
       <section className="cap" id="visao-geral">
         <Cabeca n={3} etiqueta="Visão geral" lead="O editorial da Zankyou na Quinta da Ria é a oportunidade de criar, num só dia de produção, dois filmes complementares. Cada um tem um público e um objetivo diferente, mas partilham a mesma estética, a mesma equipa e o mesmo cenário.">
@@ -312,6 +368,8 @@ export default function EditorialZankyouPage() {
         <Rodape n={3} />
       </section>
 
+      <FaixaFoto src={FOTOS.veu} pos="center 40%">Véu ao vento, <em>luz dourada</em></FaixaFoto>
+
       {/* 04 · Filme 1 */}
       <section className="cap" id="filme-1">
         <Cabeca n={4} etiqueta="Filme 1" lead="Conceito narrativo: um dia de casamento condensado, dos preparativos ao pôr do sol, guiado por um fio condutor emocional: uma carta ou votos lidos em voz off pelos noivos. A luz dourada do Algarve e a paisagem da ria são personagens do filme.">
@@ -328,6 +386,7 @@ export default function EditorialZankyouPage() {
             ['Pôr do sol', 'Sessão dos noivos com luz dourada e vista da ria', 'Momento mais cinematográfico e fecho do filme'],
           ]}
         />
+        <Fotos cls="f3" fotos={[[FOTOS.detalhes, 'Detalhes'], [FOTOS.vestido, 'Vestido'], [FOTOS.atar, 'Últimos retoques']]} />
         <p className="formatos rv">Formatos: filme horizontal <em>16:9</em> para site e YouTube da Zankyou, e <em>3 reels verticais 9:16</em> (detalhes, casal, ambiente).</p>
         <Rodape n={4} />
       </section>
@@ -347,6 +406,7 @@ export default function EditorialZankyouPage() {
             <div key={n} className="bloco rv"><div className="n">{n}</div><h4>{t}</h4><p>{p}</p></div>
           ))}
         </div>
+        <Fotos cls="f2" fotos={[[FOTOS.pedra, 'O espaço vivido', 'center 30%'], [FOTOS.candeeiros, 'Interiores e acabamentos']]} />
         <div className="grid g2">
           <Cartao k="Planos" titulo={<>Como se filma <em>cada zona</em></>} itens={[
             'Plano aberto aéreo (drone) para escala e localização',
@@ -414,6 +474,8 @@ export default function EditorialZankyouPage() {
         <Rodape n={7} />
       </section>
 
+      <FaixaFoto src={FOTOS.dourada} pos="center 35%">Golden <em>hour</em></FaixaFoto>
+
       {/* 08 · Entregáveis */}
       <section className="cap" id="entregaveis">
         <Cabeca n={8} etiqueta="Entregáveis">
@@ -440,6 +502,8 @@ export default function EditorialZankyouPage() {
         </div>
         <Rodape n={8} />
       </section>
+
+      <FaixaFoto src={FOTOS.movimento} pos="center 25%">Um dia, <em>dois filmes</em></FaixaFoto>
 
       {/* 09 · Distribuição */}
       <section className="cap" id="distribuicao">
@@ -486,6 +550,8 @@ export default function EditorialZankyouPage() {
         </ol>
         <Rodape n={10} />
       </section>
+
+      <FaixaFoto src={FOTOS.maos} pos="center 45%">Vamos <em>começar?</em></FaixaFoto>
 
       <footer className="faixa">
         <p className="eyebrow">Fale connosco</p>
