@@ -20,9 +20,14 @@ const CSS = `
 .ed{overflow-x:hidden;}
 /* ── Abertura ── */
 .ed .hero{position:relative;height:100svh;min-height:600px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;padding:0 20px clamp(44px,9vh,80px);}
-.ed .hero-img{position:absolute;inset:0;background:url('/casamentos-2028.webp') 38% center/cover no-repeat;animation:edKen 16s cubic-bezier(.2,.6,.2,1) both;}
-.ed .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,10,8,.55) 0%,rgba(11,10,8,.1) 30%,rgba(11,10,8,.35) 55%,rgba(11,10,8,.92) 82%,var(--ink) 100%);}
-.ed .hero > *:not(.hero-img){position:relative;z-index:2;}
+/* Cabeçalho igual ao do menu (/photo): foto a preto e branco esbatida, brilho dourado, pontilhado e anéis finos */
+.ed .hero-img{position:absolute;inset:0;background:url('/casamentos-2028.webp') center 35%/cover no-repeat;filter:grayscale(1);opacity:.22;animation:edKen 16s cubic-bezier(.2,.6,.2,1) both;}
+.ed .hero-brilho{position:absolute!important;inset:0;background:radial-gradient(ellipse 55% 50% at 55% 38%,rgba(201,168,76,.10),transparent 70%);}
+.ed .hero-pontos{position:absolute!important;inset:0;opacity:.4;background-image:radial-gradient(rgba(255,255,255,.12) 1px,transparent 1px);background-size:26px 26px;
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 42%,#000 25%,transparent 75%);mask-image:radial-gradient(ellipse 70% 60% at 50% 42%,#000 25%,transparent 75%);}
+.ed .hero-aneis{position:absolute!important;left:55%;top:40%;width:1000px;height:1000px;transform:translate(-50%,-50%);opacity:.09;pointer-events:none;}
+.ed .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,#0b0b0b 0%,rgba(11,11,11,.45) 20%,rgba(11,11,11,.55) 65%,var(--ink) 100%);}
+.ed .hero > *:not(.hero-img):not(.hero-brilho):not(.hero-pontos):not(.hero-aneis){position:relative;z-index:2;}
 .ed .parceiros{position:absolute!important;top:clamp(26px,6vh,52px);left:0;right:0;font-family:var(--fm);font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--tx);opacity:0;animation:edFade 1.6s .3s var(--ease) forwards;padding:0 16px;}
 .ed .parceiros b{color:var(--g);font-weight:400;margin:0 .5em;}
 .ed .titulo{font-family:var(--fs);font-weight:300;font-size:clamp(50px,11vw,124px);line-height:.95;letter-spacing:-.02em;color:var(--tx);margin:18px 0 0;}
@@ -225,6 +230,13 @@ export default function EditorialZankyouPage() {
       {/* 01 · Capa */}
       <section className="hero" id="capa">
         <div className="hero-img" aria-hidden="true" />
+        <div className="hero-brilho" aria-hidden="true" />
+        <div className="hero-pontos" aria-hidden="true" />
+        <svg className="hero-aneis" viewBox="0 0 100 100" fill="none" stroke="#C9A84C" strokeWidth="0.1" aria-hidden="true">
+          <circle cx="50" cy="50" r="18" />
+          <circle cx="50" cy="50" r="30" strokeDasharray="0.5 1.2" />
+          <circle cx="50" cy="50" r="44" />
+        </svg>
         <p className="parceiros">Zankyou<b>×</b>Quinta da Ria<b>×</b>RL Photo Video</p>
         <p className="eyebrow">Plano de vídeo</p>
         <Titulo />
