@@ -30,9 +30,6 @@ const ENTREGAS: Array<{ parceiro: string; sub: string; itens: Entrega[] }> = [
   { parceiro: 'Quinta da Ria', sub: 'Apresentação do espaço', itens: [
     { nome: 'Filme de apresentação do espaço', formato: '16:9 · 60–90 s' },
   ] },
-  { parceiro: 'Fornecedores', sub: 'Material partilhável', itens: [
-    { nome: 'Clips verticais por fornecedor', formato: '9:16 · um por fornecedor' },
-  ] },
 ]
 
 // Fotos do portfólio no Wfolio (i.wfolio.com, 0 no Supabase), fixas por URL; o número é a posição na galeria
