@@ -136,6 +136,11 @@ const CSS = `
 @supports (animation-timeline: view()){
   .ed .faixa-foto img{animation:edParalaxe linear both;animation-timeline:view();}
 }
+/* Fotos verticais: inteiras ao centro (nunca cortam cabeças), com a mesma foto desfocada a encher a faixa */
+.ed .faixa-foto.vert{height:clamp(440px,86vh,820px);}
+.ed .faixa-foto.vert .fundo{filter:blur(28px) brightness(.45);transform:scale(1.2);animation:none;}
+.ed .faixa-foto.vert .inteira{position:relative;z-index:1;display:block;width:auto;height:84%;max-width:calc(100% - 32px);inset:auto;margin:6% auto 0;object-fit:contain;border-radius:6px;box-shadow:0 30px 80px -20px rgba(0,0,0,.8);animation:none;}
+.ed .faixa-foto.vert figcaption{bottom:clamp(10px,2.4vh,20px);}
 @keyframes edParalaxe{from{transform:scale(1.14) translateY(-4%)}to{transform:scale(1.14) translateY(4%)}}
 .ed .fotos{display:grid;gap:12px;margin-top:clamp(30px,5vh,44px);}
 .ed .fotos figure{margin:0;position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line-soft);}
@@ -237,7 +242,14 @@ function Tabela({ colunas, largura, linhas }: { colunas: Col[]; largura: string;
   )
 }
 
-function FaixaFoto({ src, pos = 'center', children }: { src: string; pos?: string; children?: React.ReactNode }) {
+function FaixaFoto({ src, pos = 'center', vertical, children }: { src: string; pos?: string; vertical?: boolean; children?: React.ReactNode }) {
+  if (vertical) return (
+    <figure className="faixa-foto vert" style={{ margin: 0 }}>
+      <img className="fundo" src={src} alt="" loading="lazy" />
+      <img className="inteira" src={src} alt="" loading="lazy" />
+      {children && <figcaption>{children}</figcaption>}
+    </figure>
+  )
   return (
     <figure className="faixa-foto" style={{ margin: 0 }}>
       <img src={src} alt="" loading="lazy" style={{ objectPosition: pos }} />
@@ -342,7 +354,7 @@ export default function EditorialZankyouPage() {
         <Rodape n={2} />
       </section>
 
-      <FaixaFoto src={FOTOS.escada} pos="center 30%">Contamos histórias <em>reais</em></FaixaFoto>
+      <FaixaFoto src={FOTOS.escada} vertical>Contamos histórias <em>reais</em></FaixaFoto>
 
       {/* 03 · Visão geral */}
       <section className="cap" id="visao-geral">
@@ -474,7 +486,7 @@ export default function EditorialZankyouPage() {
         <Rodape n={7} />
       </section>
 
-      <FaixaFoto src={FOTOS.dourada} pos="center 35%">Golden <em>hour</em></FaixaFoto>
+      <FaixaFoto src={FOTOS.dourada} vertical>Golden <em>hour</em></FaixaFoto>
 
       {/* 08 · Entregáveis */}
       <section className="cap" id="entregaveis">
@@ -503,7 +515,7 @@ export default function EditorialZankyouPage() {
         <Rodape n={8} />
       </section>
 
-      <FaixaFoto src={FOTOS.movimento} pos="center 25%">Um dia, <em>dois filmes</em></FaixaFoto>
+      <FaixaFoto src={FOTOS.movimento} vertical>Um dia, <em>dois filmes</em></FaixaFoto>
 
       {/* 09 · Distribuição */}
       <section className="cap" id="distribuicao">
@@ -551,7 +563,7 @@ export default function EditorialZankyouPage() {
         <Rodape n={10} />
       </section>
 
-      <FaixaFoto src={FOTOS.maos} pos="center 45%">Vamos <em>começar?</em></FaixaFoto>
+      <FaixaFoto src={FOTOS.maos} vertical>Vamos <em>começar?</em></FaixaFoto>
 
       <footer className="faixa">
         <p className="eyebrow">Fale connosco</p>
