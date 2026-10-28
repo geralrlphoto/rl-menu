@@ -556,7 +556,6 @@ export default function EditorialZankyouPage() {
           <Cartao k="No terreno" titulo={<>Boas <em>práticas</em></>} itens={[
             'Filmagem vertical nativa em paralelo, sem depender só de recortes',
             'Som ambiente e voz off gravados à parte',
-            'Lista de planos por fornecedor, para todos terem material próprio',
             'Planos de transição entre zonas para o Filme 2',
           ]} />
         </div>
@@ -614,7 +613,6 @@ export default function EditorialZankyouPage() {
             'Libertar o conteúdo ao longo de 3–4 semanas, em vez de tudo de uma vez',
             'Primeiros 2 segundos de cada reel com a imagem mais forte',
             'Legendas e texto no ecrã, porque a maioria vê sem som',
-            'Cada fornecedor com versão própria pronta a partilhar',
           ]} />
         </div>
         <Rodape n={9} />
