@@ -279,6 +279,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/apoio-fotografias') ||
     pathname.startsWith('/api/apoio-fotografias') ||
     pathname.startsWith('/form-selecao-fotos') ||
+    pathname.startsWith('/docs/') || // documentos de apoio para descarregar (ex.: Word da seleção)
     pathname.startsWith('/api/selecao-fotos-submit') ||
     pathname.startsWith('/api/selecao-fotos-evento') ||
     pathname.startsWith('/ticket-fotos-dia') ||

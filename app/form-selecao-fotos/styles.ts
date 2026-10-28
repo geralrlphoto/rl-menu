@@ -58,6 +58,9 @@ export const CSS = `
 .self .instr{border:1px solid var(--line-soft);border-radius:10px;background:var(--ink-2);padding:clamp(26px,4vw,38px);text-align:left;margin-top:clamp(30px,5vh,50px);}
 .self .instr h2{font-size:clamp(20px,2.4vw,26px);text-align:center;}
 .self .instr p{color:var(--tx-mid);font-size:14.5px;line-height:1.75;margin-top:16px;}
+.self .instr .doc{border-top:1px solid var(--line-soft);margin-top:26px;padding-top:6px;text-align:center;}
+.self .instr .doc__btn{display:inline-block;margin-top:18px;font-family:var(--fm);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--g);border:1px solid rgba(216,190,147,.55);border-radius:999px;padding:13px 26px;text-decoration:none;transition:background .4s,color .4s;}
+.self .instr .doc__btn:hover{background:var(--g);color:var(--ink);}
 .self .instr .ex{font-family:var(--fm);font-size:13px;letter-spacing:.1em;color:var(--g);text-align:center;border:1px solid var(--line-soft);border-radius:8px;padding:16px;margin-top:18px;background:rgba(216,190,147,.05);}
 
 .self .form{display:grid;gap:30px;text-align:left;margin-top:clamp(40px,6vh,70px);}

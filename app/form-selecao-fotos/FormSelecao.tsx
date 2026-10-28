@@ -25,6 +25,7 @@ export type FormSelecaoProps = {
   exemplo: string        // "LG-0001"
   iniciais: string       // como descrever as iniciais nas instruções
   seccoes: Seccao[]
+  documento?: string     // Word de apoio para fazerem a seleção (em /public)
 }
 
 // Divide o texto livre de uma secção nas fotografias indicadas (por vírgula).
@@ -43,7 +44,7 @@ function plural(n: number) {
 }
 
 export default function FormSelecao({
-  tipo, eyebrow, nomeLabel, nomePlaceholder, dataLabel, refPlaceholder, exemplo, iniciais, seccoes,
+  tipo, eyebrow, nomeLabel, nomePlaceholder, dataLabel, refPlaceholder, exemplo, iniciais, seccoes, documento,
 }: FormSelecaoProps) {
   const [dados, setDados]     = useState({ nome_noivos: '', date: '', referencia: '' })
   const [fotos, setFotos]     = useState<Record<string, string>>(
@@ -212,6 +213,19 @@ export default function FormSelecao({
                   A correta indicação das fotografias garante maior organização, rapidez e precisão
                   na preparação do vosso álbum.
                 </p>
+                {documento && (
+                  <div className="doc">
+                    <p>
+                      Para vos ajudar, preparámos um documento Word com as mesmas secções deste
+                      formulário. Podem descarregá-lo e fazer a vossa seleção com calma, enquanto
+                      veem a galeria. Quando estiver pronta, passem tudo para aqui e carreguem em
+                      Enviar seleção.
+                    </p>
+                    <a className="doc__btn" href={documento} download="Seleção de Fotografias - RL Photo Video.docx">
+                      Descarregar documento Word
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
 

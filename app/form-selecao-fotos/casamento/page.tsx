@@ -28,6 +28,7 @@ export default function FormSelecaoCasamentoPage() {
       exemplo="LG-0001"
       iniciais="as iniciais dos noivos"
       seccoes={SECCOES}
+      documento="/docs/selecao-fotos-casamento.docx"
     />
   )
 }
