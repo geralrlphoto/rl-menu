@@ -56,13 +56,14 @@ const CSS = `
 .ed{overflow-x:clip;} /* clip (e não hidden) para o índice ficar fixo no topo */
 /* ── Abertura ── */
 .ed .hero{position:relative;height:100svh;min-height:600px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;padding:0 20px clamp(44px,9vh,80px);}
-/* Cabeçalho igual ao do menu (/photo): foto a preto e branco esbatida, brilho dourado, pontilhado e anéis finos */
-.ed .hero-img{position:absolute;inset:0;background:url('/casamentos-2028.webp') center 35%/cover no-repeat;filter:grayscale(1);opacity:.22;animation:edKen 16s cubic-bezier(.2,.6,.2,1) both;}
+/* Cabeçalho com a vista aérea da Quinta da Ria (a cor suave, para se ver o espaço, a ria e o mar),
+   com o brilho dourado, o pontilhado e os anéis finos do menu (/photo) */
+.ed .hero-img{position:absolute;inset:0;background:url('/quinta-da-ria-aerea.webp') center 40%/cover no-repeat;filter:saturate(.8);opacity:.85;animation:edKen 16s cubic-bezier(.2,.6,.2,1) both;}
 .ed .hero-brilho{position:absolute!important;inset:0;background:radial-gradient(ellipse 55% 50% at 55% 38%,rgba(201,168,76,.10),transparent 70%);}
 .ed .hero-pontos{position:absolute!important;inset:0;opacity:.4;background-image:radial-gradient(rgba(255,255,255,.12) 1px,transparent 1px);background-size:26px 26px;
   -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 42%,#000 25%,transparent 75%);mask-image:radial-gradient(ellipse 70% 60% at 50% 42%,#000 25%,transparent 75%);}
 .ed .hero-aneis{position:absolute!important;left:55%;top:40%;width:1000px;height:1000px;transform:translate(-50%,-50%);opacity:.09;pointer-events:none;}
-.ed .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,#0b0b0b 0%,rgba(11,11,11,.45) 20%,rgba(11,11,11,.55) 65%,var(--ink) 100%);}
+.ed .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,11,11,.55) 0%,rgba(11,11,11,.15) 22%,rgba(11,11,11,.3) 50%,rgba(11,11,11,.85) 78%,var(--ink) 100%);}
 .ed .hero > *:not(.hero-img):not(.hero-brilho):not(.hero-pontos):not(.hero-aneis){position:relative;z-index:2;}
 .ed .parceiros{position:absolute!important;top:clamp(26px,6vh,52px);left:0;right:0;font-family:var(--fm);font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--tx);opacity:0;animation:edFade 1.6s .3s var(--ease) forwards;padding:0 16px;}
 .ed .parceiros b{color:var(--g);font-weight:400;margin:0 .5em;}
