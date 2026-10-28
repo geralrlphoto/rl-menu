@@ -14,7 +14,26 @@ export const metadata: Metadata = {
 const TEL = '+351912923768'
 const EMAIL = 'geral.rlphoto@gmail.com'
 const SITE = 'https://www.rlphotovideo.pt'
-const TOTAL = 10
+const TOTAL = 11
+
+/* Entregas: todo o material de vídeo é entregue aqui. Sem link fica "Aguardar";
+   com link (Drive, WeTransfer, Vimeo…) passa a "Disponível" com o botão Ver / Descarregar. */
+type Entrega = { nome: string; formato: string; link?: string; data?: string }
+const ENTREGAS: Array<{ parceiro: string; sub: string; itens: Entrega[] }> = [
+  { parceiro: 'Zankyou', sub: 'Editorial', itens: [
+    { nome: 'Filme editorial', formato: '16:9 · 60–90 s' },
+    { nome: 'Reel 1 · Detalhes', formato: '9:16 · 15–30 s' },
+    { nome: 'Reel 2 · Casal', formato: '9:16 · 15–30 s' },
+    { nome: 'Reel 3 · Ambiente', formato: '9:16 · 15–30 s' },
+    { nome: 'Teaser do lançamento', formato: '9:16 · vertical' },
+  ] },
+  { parceiro: 'Quinta da Ria', sub: 'Apresentação do espaço', itens: [
+    { nome: 'Filme de apresentação do espaço', formato: '16:9 · 60–90 s' },
+  ] },
+  { parceiro: 'Fornecedores', sub: 'Material partilhável', itens: [
+    { nome: 'Clips verticais por fornecedor', formato: '9:16 · um por fornecedor' },
+  ] },
+]
 
 // Fotos do portfólio no Wfolio (i.wfolio.com, 0 no Supabase), fixas por URL; o número é a posição na galeria
 const FOTOS = {
@@ -153,6 +172,29 @@ const CSS = `
 .ed .fotos.f2 figure{aspect-ratio:auto;height:clamp(240px,42vw,460px);}
 @media (max-width:620px){.ed .fotos.f2{grid-template-columns:minmax(0,1fr);}.ed .fotos.f3{gap:6px;}.ed .fotos figcaption{font-size:8px;left:8px;}}
 
+/* Entregas */
+.ed .ent-resumo{display:flex;align-items:center;gap:18px;margin-top:clamp(30px,5vh,44px);}
+.ed .ent-resumo .barra{flex:1;height:3px;border-radius:2px;background:var(--line-soft);overflow:hidden;}
+.ed .ent-resumo .barra i{display:block;height:100%;background:var(--g);}
+.ed .ent-resumo span{font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-mid);white-space:nowrap;}
+.ed .ent-grupo{margin-top:clamp(30px,5vh,44px);}
+.ed .ent-grupo h3{font-family:var(--fs);font-weight:300;font-size:clamp(26px,3vw,32px);color:var(--tx);margin:0;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+.ed .ent-grupo h3 small{font-family:var(--fm);font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);}
+.ed .ent-lista{margin-top:14px;border:1px solid var(--line-soft);border-radius:16px;overflow:hidden;}
+.ed .ent{display:flex;align-items:center;gap:16px;padding:16px 20px;}
+.ed .ent + .ent{border-top:1px solid var(--line-soft);}
+.ed .ent:nth-child(even){background:rgba(243,237,226,.025);}
+.ed .ent .ic{width:38px;height:38px;flex:none;display:grid;place-items:center;border-radius:50%;border:1px solid var(--line-soft);color:var(--tx-dim);}
+.ed .ent.ok .ic{border-color:rgba(216,190,147,.5);color:var(--g);}
+.ed .ent .ic svg{width:15px;height:15px;}
+.ed .ent .t{flex:1;min-width:0;}
+.ed .ent .t b{display:block;font-family:var(--fd);font-weight:300;font-size:clamp(16px,1.6vw,18px);color:var(--tx);}
+.ed .ent .t span{display:block;font-family:var(--fm);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tx-dim);margin-top:4px;}
+.ed .ent .est{flex:none;font-family:var(--fm);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;padding:9px 14px;border-radius:40px;border:1px solid var(--line-soft);color:var(--tx-dim);}
+.ed .ent a.est{border-color:var(--g);background:var(--g);color:var(--ink);text-decoration:none;transition:.3s var(--ease);}
+.ed .ent a.est:hover{background:transparent;color:var(--g);}
+@media (max-width:560px){.ed .ent{flex-wrap:wrap;padding:14px 16px;}.ed .ent .est{margin-left:54px;}}
+
 /* Próximos passos */
 .ed .passos{list-style:none;margin:clamp(34px,5vh,48px) 0 0;padding:0;}
 .ed .passos li{display:flex;gap:20px;align-items:baseline;padding:20px 2px;border-top:1px solid var(--line-soft);}
@@ -192,6 +234,7 @@ const CAPITULOS = [
   { id: 'entregaveis', nome: 'Entregáveis' },
   { id: 'distribuicao', nome: 'Distribuição' },
   { id: 'proximos-passos', nome: 'Próximos passos' },
+  { id: 'entregas', nome: 'Entregas' },
 ]
 
 /* ── Peças ─────────────────────────────────────────────────────────────── */
@@ -265,6 +308,38 @@ function Fotos({ cls, fotos }: { cls: string; fotos: Array<[string, string, stri
         <figure key={src}><img src={src} alt={leg} loading="lazy" style={{ objectPosition: pos ?? 'center' }} /><figcaption>{leg}</figcaption></figure>
       ))}
     </div>
+  )
+}
+
+const IcPlay = () => <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg>
+const IcRelogio = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
+
+function Entregas() {
+  const todas = ENTREGAS.flatMap(g => g.itens)
+  const feitas = todas.filter(e => e.link).length
+  return (
+    <>
+      <div className="ent-resumo rv">
+        <div className="barra"><i style={{ width: `${(feitas / todas.length) * 100}%` }} /></div>
+        <span>{feitas} de {todas.length} entregues</span>
+      </div>
+      {ENTREGAS.map(g => (
+        <div key={g.parceiro} className="ent-grupo rv">
+          <h3>{g.parceiro} <small>{g.sub}</small></h3>
+          <div className="ent-lista">
+            {g.itens.map(e => (
+              <div key={e.nome} className={`ent${e.link ? ' ok' : ''}`}>
+                <span className="ic">{e.link ? <IcPlay /> : <IcRelogio />}</span>
+                <span className="t"><b>{e.nome}</b><span>{e.formato}{e.data ? ` · entregue a ${e.data}` : ''}</span></span>
+                {e.link
+                  ? <a className="est" href={e.link} target="_blank" rel="noopener noreferrer">Ver / Descarregar ↗</a>
+                  : <span className="est">Aguardar</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </>
   )
 }
 
@@ -561,6 +636,15 @@ export default function EditorialZankyouPage() {
           ))}
         </ol>
         <Rodape n={10} />
+      </section>
+
+      {/* 11 · Entregas */}
+      <section className="cap" id="entregas">
+        <Cabeca n={11} etiqueta="Entregas" lead="Todo o material de vídeo é entregue aqui. Cada filme aparece como disponível assim que estiver pronto, com o link para ver e descarregar.">
+          O material, <em>pronto a usar</em>
+        </Cabeca>
+        <Entregas />
+        <Rodape n={11} />
       </section>
 
       <FaixaFoto src={FOTOS.maos} vertical>Vamos <em>começar?</em></FaixaFoto>
