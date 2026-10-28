@@ -9,6 +9,11 @@ export const revalidate = 0
 const MESES     = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
 
+// Portais de editoriais (páginas em /editorial/…), mostrados à parte dos casamentos
+const EDITORIAIS = [
+  { nome: 'Zankyou × Quinta da Ria', sub: 'EDITORIAL · PLANO DE VÍDEO', href: '/editorial/zankyou-quinta-da-ria' },
+]
+
 function formatDay(d: string) {
   try { return String(new Date(d + 'T00:00:00').getDate()).padStart(2, '0') } catch { return '' }
 }
@@ -134,6 +139,32 @@ export default async function PortaisClientesPage() {
       {/* Linha separadora */}
       <div className="max-w-5xl mx-auto px-6">
         <div className="h-px" style={{ background: 'linear-gradient(90deg,rgba(201,168,76,0.3),transparent)' }} />
+      </div>
+
+      {/* Editoriais (portais de parceiros, fora dos casamentos) */}
+      <div className="max-w-5xl mx-auto px-6 pt-10">
+        <div className="flex items-center gap-4 mb-5">
+          <p className="text-[11px] tracking-[0.4em] uppercase font-semibold shrink-0" style={{ color: 'rgba(201,168,76,0.7)' }}>
+            Editoriais
+          </p>
+          <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.06)' }} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {EDITORIAIS.map(ed => (
+            <div key={ed.href} className="flex flex-col gap-1.5">
+              <Link href={ed.href} target="_blank"
+                className="flex items-start justify-between gap-3 px-5 py-4 rounded-2xl w-full transition-all duration-200"
+                style={{ background: 'rgba(201,168,76,0.04)', border: '1px solid rgba(201,168,76,0.2)' }}>
+                <div className="min-w-0 flex-1">
+                  <p className="font-playfair font-semibold text-base text-white leading-snug truncate">{ed.nome}</p>
+                  <p className="font-mono text-[10px] mt-0.5 tracking-widest truncate" style={{ color: 'rgba(255,255,255,0.2)' }}>{ed.sub}</p>
+                </div>
+                <span className="shrink-0 text-sm mt-0.5" style={{ color: 'rgba(201,168,76,0.5)' }}>↗</span>
+              </Link>
+              <CopiarLinkButton url={ed.href} />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Grupos por mês */}

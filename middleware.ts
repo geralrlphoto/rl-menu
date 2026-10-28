@@ -287,6 +287,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/registar-pagamento') ||
     pathname.startsWith('/boas-vindas') ||
     pathname.startsWith('/rollup') ||
+    pathname.startsWith('/editorial/') || // portais de editoriais (ex.: Zankyou × Quinta da Ria), partilhados com os parceiros
     // Marcação da 1.ª reunião pela lead do CRM (link do WhatsApp da ficha rápida)
     pathname.startsWith('/reuniao/') ||
     // Marcação pública para qualquer pessoa (link de marcação)

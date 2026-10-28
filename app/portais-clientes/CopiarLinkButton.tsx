@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import { linkPublico } from '@/lib/site-url'
 
-export default function CopiarLinkButton({ referencia }: { referencia: string }) {
+// `url` (caminho) serve para portais fora dos casamentos, como os editoriais
+export default function CopiarLinkButton({ referencia, url: caminho }: { referencia?: string; url?: string }) {
   const [copied, setCopied] = useState(false)
 
   function handleCopy(e: React.MouseEvent) {
     e.preventDefault()
     e.stopPropagation()
-    const url = linkPublico(`/portal-cliente/ref/${encodeURIComponent(referencia)}`)
+    const url = linkPublico(caminho ?? `/portal-cliente/ref/${encodeURIComponent(referencia ?? '')}`)
     navigator.clipboard.writeText(url).then(() => {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
