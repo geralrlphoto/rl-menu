@@ -114,13 +114,15 @@ export function ContactButtons({ c, size = 'sm', proposta = true }: { c: Contact
 }
 
 /* ── Botão que abre o WhatsApp com a mensagem escrita e regista o envio no histórico ── */
-function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPortal }: {
+function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPortal, reenviavel }: {
   c: Contact
   /* Com onPortal, o texto recebe o link do portal; se a lead ainda não tiver portal, é criado no clique */
   texto: string | ((portal: string) => string)
   evento: string; label: string
   enviados: Record<string, string>; onEnviado: (evento: string) => void
   onPortal?: (token: string) => void
+  /* Fica ativo depois de enviado, para poder reenviar */
+  reenviavel?: boolean
 }) {
   const [aCriar, setACriar] = useState(false)
   const portal = portalUrl(c)
@@ -130,7 +132,8 @@ function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPor
     : whatsappLink(c.contato, portal ? texto(portal) : '')
   if (!href) return null
   // Depois de enviado fica bloqueado (o registo no histórico é a fonte de verdade)
-  if (evento in enviados) {
+  const jaEnviado = evento in enviados
+  if (jaEnviado && !reenviavel) {
     return (
       <div onClick={e => e.stopPropagation()}
         className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none">
@@ -167,7 +170,7 @@ function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPor
       }}
       className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 transition-colors"
     >
-      {aCriar ? 'A criar portal…' : label}
+      {aCriar ? 'A criar portal…' : jaEnviado ? `✓ ${label} · Reenviar` : label}
     </a>
   )
 }
@@ -299,7 +302,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
 
       {coluna === 'nova' && (
         <>
-          <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome, c.id)} evento="WhatsApp de boas-vindas enviado" label="Boas-vindas" enviados={enviados} onEnviado={onEnviado} />
+          <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome, c.id)} evento="WhatsApp de boas-vindas enviado" label="Boas-vindas" enviados={enviados} onEnviado={onEnviado} reenviavel />
           {/* Depois das boas-vindas: a lead já abriu o link de marcação? */}
           {'WhatsApp de boas-vindas enviado' in enviados && (
             enviados[EVENTO_ABRIU_LINK]
