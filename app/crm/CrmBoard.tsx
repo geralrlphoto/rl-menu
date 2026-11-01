@@ -131,12 +131,12 @@ function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPor
     ? whatsappLink(c.contato, texto)
     : whatsappLink(c.contato, portal ? texto(portal) : '')
   if (!href) return null
-  // Depois de enviado fica bloqueado (o registo no histórico é a fonte de verdade)
+  // Depois de enviado fica verde e bloqueado (o registo no histórico é a fonte de verdade)
   const jaEnviado = evento in enviados
   if (jaEnviado && !reenviavel) {
     return (
       <div onClick={e => e.stopPropagation()}
-        className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none">
+        className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/60 text-green-300 bg-green-500/25 cursor-default select-none">
         ✓ {label} · Enviado
       </div>
     )
@@ -168,9 +168,9 @@ function WhatsAppMsgButton({ c, texto, evento, label, enviados, onEnviado, onPor
         supabase.from('crm_status_history').insert({ contact_id: c.id, evento })
           .then(() => { fetch('/api/revalidate-photo?tag=whatsapp', { method: 'POST' }).catch(() => {}) })
       }}
-      className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50 transition-colors"
+      className={`text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border transition-colors ${jaEnviado ? 'border-green-500/60 text-green-300 bg-green-500/25 hover:bg-green-500/35' : 'border-green-500/30 text-green-400 bg-green-500/10 hover:bg-green-500/20 hover:border-green-500/50'}`}
     >
-      {aCriar ? 'A criar portal…' : jaEnviado ? `✓ ${label} · Reenviar` : label}
+      {aCriar ? 'A criar portal…' : jaEnviado ? `✓ ${label} · Enviado` : label}
     </a>
   )
 }
