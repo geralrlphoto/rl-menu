@@ -201,6 +201,22 @@ export default function EdicaoVideoPage() {
     carregar()
   }
 
+  // Trocar o link do filme já entregue (só o portal; os noivos não recebem novo email)
+  const [novoLink, setNovoLink] = useState<Record<number, string>>({})
+  const trocarLink = async (p: Projeto) => {
+    const url = (novoLink[p.id] ?? '').trim()
+    if (!/^https?:\/\//i.test(url)) { alert('Cola o novo link do filme (Vimeo ou YouTube).'); return }
+    setAGravar(p.id)
+    const r = await fetch('/api/edicao-video/entregar', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, url }),
+    }).catch(() => null)
+    setAGravar(null)
+    if (!r?.ok) { alert('Não foi possível trocar o link. Tenta outra vez.'); return }
+    setNovoLink(({ [p.id]: _, ...resto }) => resto)
+    carregar()
+  }
+
   // Pagamento ao editor: a mesma tabela do Painel do Editor (freelancer_pagamentos),
   // por isso o que se marca aqui aparece lá e vice-versa.
   const [valores, setValores] = useState<Record<number, string>>({})
@@ -532,6 +548,33 @@ export default function EdicaoVideoPage() {
                             className="rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#C9A84C]/30 disabled:opacity-40">
                             {aGravar === p.id ? 'A enviar…' : estreias[p.id] ? 'Marcar estreia →' : 'Enviar filme aos noivos →'}
                           </button>
+                        </div>
+                      )}
+                      {f === 'Entregue' && p.referencia && (
+                        <div className="rounded-xl border border-white/[0.08] bg-black/25 p-3 flex flex-col gap-2">
+                          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Link do filme</p>
+                          {novoLink[p.id] === undefined ? (
+                            <div className="flex items-center justify-between gap-2">
+                              {p.filmeUrl
+                                ? <a href={p.filmeUrl} target="_blank" rel="noopener noreferrer" className="truncate text-[12px] font-semibold text-[#4ade80] hover:underline">▶ {p.filmeUrl.replace(/^https?:\/\/(www\.)?/i, '')}</a>
+                                : <span className="text-[12px] text-white/40">Sem link guardado</span>}
+                              <button type="button" onClick={() => setNovoLink(l => ({ ...l, [p.id]: p.filmeUrl ?? '' }))}
+                                className="shrink-0 rounded-full border border-white/15 px-2.5 py-1 text-[10px] font-semibold tracking-[0.1em] uppercase text-white/45 hover:text-white">Trocar</button>
+                            </div>
+                          ) : (
+                            <>
+                              <input type="url" autoFocus placeholder="Novo link do filme (Vimeo / YouTube)" value={novoLink[p.id]}
+                                onChange={e => setNovoLink(l => ({ ...l, [p.id]: e.target.value }))}
+                                className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                              <div className="flex gap-2">
+                                <button type="button" disabled={aGravar === p.id} onClick={() => trocarLink(p)}
+                                  className="flex-1 rounded-full border border-[#C9A84C]/45 bg-[#C9A84C]/10 px-3 py-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase text-white hover:bg-[#C9A84C]/25 disabled:opacity-40">{aGravar === p.id ? 'A guardar…' : 'Guardar'}</button>
+                                <button type="button" onClick={() => setNovoLink(({ [p.id]: _, ...resto }) => resto)}
+                                  className="rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase text-white/50 hover:text-white">Cancelar</button>
+                              </div>
+                              <p className="text-[10px] text-white/35">Muda só o link no portal. Os noivos não recebem novo email.</p>
+                            </>
+                          )}
                         </div>
                       )}
                       {f !== 'Por atribuir' && (

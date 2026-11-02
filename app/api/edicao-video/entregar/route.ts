@@ -48,3 +48,20 @@ export async function POST(req: NextRequest) {
   await aplicarEstadoVideo(req.nextUrl.origin, { referencia, estado: 'Entregue' })
   return NextResponse.json({ ok: true })
 }
+
+// PATCH { referencia, url }: troca o link do filme já entregue (portal), sem novo email.
+export async function PATCH(req: NextRequest) {
+  const bloqueio = exigeAdmin(req)
+  if (bloqueio) return bloqueio
+  const { referencia, url } = await req.json().catch(() => ({}))
+  const link = String(url ?? '').trim()
+  if (!referencia || !/^https?:\/\//i.test(link)) {
+    return NextResponse.json({ error: 'Indica a referência e o link do filme (https://…).' }, { status: 400 })
+  }
+  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+  const { data: p } = await sb.from('portais').select('id, settings').eq('referencia', referencia).maybeSingle()
+  if (!p) return NextResponse.json({ error: 'Este casamento não tem portal.' }, { status: 404 })
+  const { error } = await sb.from('portais').update({ settings: { ...(p.settings ?? {}), wedding_film_url: link } }).eq('id', p.id)
+  if (error) return NextResponse.json({ error: 'Não foi possível guardar o link.' }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}
