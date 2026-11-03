@@ -6,6 +6,7 @@ import { supabase } from '@/lib/supabase'
 import { linkPublico } from '@/lib/site-url'
 import DisponibilidadePreparacao, { type SlotPreparacao } from '@/app/components/DisponibilidadePreparacao'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
+import { PedidoReuniaoPainel, type PedidoReuniao } from '@/app/photo/PedidoReuniaoCard'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
   fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, EVENTO_ABRIU_LINK, linkOpiniao, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
@@ -480,6 +481,24 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
     return () => { vivo = false }
   }, [c.id, c.status])
 
+  // Pedido de reunião por confirmar (feito em /reuniao): fica em destaque no topo da ficha.
+  // Só depende do id: depois de aceite o status muda e o painel continua com o botão de WhatsApp.
+  const [pedido, setPedido] = useState<PedidoReuniao | null>(null)
+  useEffect(() => {
+    let vivo = true
+    setPedido(null)
+    supabase.from('crm_contacts').select('nome,contato,data_casamento,reuniao_pedido').eq('id', c.id).single()
+      .then(({ data }) => {
+        const ped = data?.reuniao_pedido as { opcoes?: { data: string; hora: string }[]; formato?: string; mensagem?: string; origem?: string } | null
+        if (!vivo || !ped?.opcoes?.length) return
+        setPedido({
+          contactId: c.id, nome: (data?.nome ?? '').trim(), contato: data?.contato ?? '', dataCasamento: data?.data_casamento ?? null,
+          opcoes: ped.opcoes, formato: ped.formato ?? 'Videochamada', mensagem: ped.mensagem ?? null, origem: ped.origem ?? 'link',
+        })
+      })
+    return () => { vivo = false }
+  }, [c.id])
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -530,6 +549,13 @@ export function LeadDrawer({ c, onClose, onStatusChange, onPatch }: {
         </div>
 
         <div className="px-6 py-6 flex flex-col gap-6">
+          {pedido && (
+            <section className="font-cond rounded-[18px] border p-5"
+              style={{ borderColor: 'rgba(201,168,76,0.45)', background: 'rgba(201,168,76,0.05)', boxShadow: '0 0 40px -18px rgba(201,168,76,0.7)' }}>
+              <PedidoReuniaoPainel p={pedido} linkFicha={false} />
+            </section>
+          )}
+
           <div className="flex flex-col gap-3">
             <h2 className="text-2xl font-light text-white leading-tight">{c.nome || 'Sem nome'}</h2>
             <div className="flex items-center gap-3 flex-wrap">
