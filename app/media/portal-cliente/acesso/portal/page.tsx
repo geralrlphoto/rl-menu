@@ -7,14 +7,14 @@
    Conteúdo real (galerias / faturas / aprovações) vem depois.
    ============================================================ */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
-import { Manrope, Space_Grotesk } from 'next/font/google'
 import { supabase } from '@/lib/supabase'
 import '../acesso.css'
 
-const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' })
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
+// Letras por <link> e não por next/font/google: o Vercel falha a descarregar a Manrope no build
+const FONTES_CSS = 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap'
+const FONTES = { '--font-manrope': "'Manrope', sans-serif", '--font-space-grotesk': "'Space Grotesk', sans-serif" } as CSSProperties
 
 type UserInfo = { email: string; nome?: string }
 
@@ -52,7 +52,8 @@ export default function PortalDashboardPage() {
 
   if (checking) {
     return (
-      <div className={`portal-acesso ${manrope.variable} ${spaceGrotesk.variable}`} style={{ display: 'grid', placeItems: 'center', minHeight: '100dvh' }}>
+      <div className="portal-acesso" style={{ ...FONTES, display: 'grid', placeItems: 'center', minHeight: '100dvh' }}>
+      <link rel="stylesheet" href={FONTES_CSS} precedence="default" />
         <span className="spinner" style={{ borderTopColor: 'var(--navy-800)' }} />
       </div>
     )
@@ -61,8 +62,9 @@ export default function PortalDashboardPage() {
   const primeiroNome = (user?.nome ?? user?.email ?? '').split(/[\s@]/)[0]
 
   return (
-    <main className={`portal-acesso ${manrope.variable} ${spaceGrotesk.variable}`}
-      style={{ display: 'block', background: 'var(--bg)', minHeight: '100dvh', padding: '40px 24px' }}>
+    <main className="portal-acesso"
+      style={{ ...FONTES, display: 'block', background: 'var(--bg)', minHeight: '100dvh', padding: '40px 24px' }}>
+      <link rel="stylesheet" href={FONTES_CSS} precedence="default" />
       <div style={{ maxWidth: 960, margin: '0 auto' }}>
         {/* Header */}
         <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 48, gap: 16, flexWrap: 'wrap' }}>

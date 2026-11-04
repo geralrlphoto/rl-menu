@@ -8,14 +8,14 @@
    e chamar updateUser({ password }).
    ============================================================ */
 
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type CSSProperties } from 'react'
 import { useRouter } from 'next/navigation'
-import { Manrope, Space_Grotesk } from 'next/font/google'
 import { supabase } from '@/lib/supabase'
 import '../acesso.css'
 
-const manrope = Manrope({ subsets: ['latin'], weight: ['400','500','600','700','800'], variable: '--font-manrope', display: 'swap' })
-const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400','500','600','700'], variable: '--font-space-grotesk', display: 'swap' })
+// Letras por <link> e não por next/font/google: o Vercel falha a descarregar a Manrope no build
+const FONTES_CSS = 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap'
+const FONTES = { '--font-manrope': "'Manrope', sans-serif", '--font-space-grotesk': "'Space Grotesk', sans-serif" } as CSSProperties
 
 export default function RedefinirPasswordPage() {
   const router = useRouter()
@@ -55,7 +55,8 @@ export default function RedefinirPasswordPage() {
   }
 
   return (
-    <div className={`portal-acesso ${manrope.variable} ${spaceGrotesk.variable}`}>
+    <div className="portal-acesso" style={FONTES}>
+      <link rel="stylesheet" href={FONTES_CSS} precedence="default" />
       <BrandSide />
       <main className="panel">
         <div className="card">
