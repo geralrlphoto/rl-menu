@@ -1,4 +1,4 @@
-"""Robô dos discos para a página /armazenamento.
+﻿"""Robô dos discos para a página /armazenamento.
 
 Uso:
   python scripts/indexar-disco.py J        lê o disco J e envia a lista para a app
@@ -14,7 +14,7 @@ ficam só contados na pasta: são dezenas de milhares e o nome não diz nada.
 As pastas internas do Lightroom (*.lrdata, *.lrcat-data) contam como uma só.
 
 Precisa da variável de ambiente RL_AUTO_TOKEN (a mesma do robô das fotos).
-Log em %LOCALAPPDATA%\\rl-armazenamento.log
+Log em rui claude code\\rl-armazenamento.log
 """
 import ctypes
 import json
@@ -36,7 +36,8 @@ IGNORAR_PASTAS = {'$RECYCLE.BIN', 'System Volume Information', 'Seagate', 'Start
 IGNORAR_RAIZ = {'autorun.inf', 'warranty.pdf', 'start_here_win.exe'}
 
 APP_URL = os.environ.get('RL_APP_URL', 'https://rl-menu-lake.vercel.app').rstrip('/')
-LOG = os.path.join(os.environ.get('LOCALAPPDATA', os.path.expanduser('~')), 'rl-armazenamento.log')
+# Log na pasta "rui claude code" (fora do repositório; o AppData não é visto igual por todas as apps)
+LOG = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'rl-armazenamento.log')
 TRINCO = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'rl-armazenamento.lock')
 
 
@@ -161,6 +162,7 @@ def discos_usb():
            "? { $_.Size -gt 0 -and $_.FileSystemLabel } | % { \"$($_.DriveLetter)|$($_.FileSystemLabel)\" }")
     out = subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', cmd],
                          capture_output=True, text=True, encoding='utf-8', timeout=60,
+                         stdin=subprocess.DEVNULL,  # com pythonw não há consola: sem isto o PowerShell fica à espera
                          creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0)).stdout
     res = {}
     for linha in out.splitlines():
