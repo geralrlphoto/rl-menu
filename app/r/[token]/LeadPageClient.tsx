@@ -7,6 +7,7 @@ import PortfolioFaixa from '@/app/_lead/PortfolioFaixa'
 import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
+import TestemunhoDestaque from '@/app/_lead/TestemunhoDestaque'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { fmtOrcamento } from '@/lib/crm'
 import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
@@ -681,6 +682,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
       <PorqueReuniao tipo="casamento" />
+
+      {/* ── TESTEMUNHO EM DESTAQUE (Catarina & Ruben → rlphotovideo.pt/testemunho) ── */}
+      <TestemunhoDestaque />
 
       {/* ── CARD REUNIÃO ── */}
       <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
