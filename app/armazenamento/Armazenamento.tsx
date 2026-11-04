@@ -94,7 +94,7 @@ function BotaoAtualizar({ d }: { d: Disco }) {
   }
 
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-3">
+    <div className="mt-3 flex flex-wrap items-center gap-3" onClick={e => e.stopPropagation()}>
       <button type="button" onClick={pedir} disabled={aEspera}
         className="inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)] hover:border-[#C9A84C]/80 disabled:opacity-70 disabled:cursor-wait">
         <span className={aEspera ? 'animate-spin' : ''} style={{ color: OURO }}>↻</span>
@@ -110,6 +110,14 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
   const discos = lidos ?? []
   const [q, setQ] = useState('')
   const [abertas, setAbertas] = useState<Set<string>>(new Set())
+  const [escolhido, setEscolhido] = useState<string | null>(null)
+  const discoEscolhido = discos.find(d => d.disco === escolhido) ?? null
+
+  function escolher(nome: string) {
+    const novo = escolhido === nome ? null : nome
+    setEscolhido(novo)
+    if (novo) setTimeout(() => document.getElementById('conteudo-disco')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
 
   // Filhos de cada pasta, por disco (chave "disco|caminho do pai")
   const filhos = useMemo(() => {
@@ -196,8 +204,13 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
               const raiz = (filhos.get(`${d.disco}|`) ?? [])
               const n = raiz.reduce((a, p) => a.map((v, i) => v + p.n[i]) as Pasta['n'], [0, 0, 0, 0, 0] as Pasta['n'])
               const cor = pct >= 95 ? '#f87171' : pct >= 85 ? '#fbbf24' : OURO
+              const ativo = escolhido === d.disco
               return (
-                <div key={d.disco} className="rounded-[22px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md p-5" style={{ borderLeft: `2px solid ${cor}` }}>
+                <div key={d.disco} role="button" tabIndex={0} aria-pressed={ativo}
+                  onClick={() => escolher(d.disco)}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); escolher(d.disco) } }}
+                  className={`cursor-pointer rounded-[22px] border backdrop-blur-md p-5 transition-all duration-200 ${ativo ? 'border-[#C9A84C]/70 bg-[#16140f]/90 shadow-[0_0_40px_-16px_rgba(201,168,76,0.7)]' : 'border-white/[0.08] bg-[#111111]/85 hover:border-white/[0.2]'}`}
+                  style={{ borderLeft: `2px solid ${cor}` }}>
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-[22px] font-semibold leading-tight">{d.disco}</p>
                     <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: OURO, background: `${OURO}1f`, border: `1px solid ${OURO}55` }}>Disco {d.letra}</span>
@@ -218,10 +231,31 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
                     </span>
                   </p>
                   <BotaoAtualizar d={d} />
+                  <p className="mt-3 text-[11px] font-semibold tracking-[0.2em] uppercase" style={{ color: ativo ? OURO : 'rgba(255,255,255,.4)' }}>
+                    {ativo ? 'Fechar conteúdo ▴' : 'Ver o que tem dentro ▾'}
+                  </p>
                 </div>
               )
             })}
           </div>
+
+          {/* Conteúdo do disco escolhido: pastas de topo fechadas, abre-se uma a uma */}
+          {discoEscolhido && (
+            <div id="conteudo-disco" className="mt-8 scroll-mt-6">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Disco {discoEscolhido.letra} · Conteúdo</p>
+                  <h3 className="mt-1 text-2xl sm:text-3xl font-semibold">{discoEscolhido.disco}</h3>
+                </div>
+                <button type="button" onClick={() => setEscolhido(null)} className="text-[12px] tracking-[0.2em] uppercase text-white/45 hover:text-white">Fechar ✕</button>
+              </div>
+              <div className="mt-4 rounded-[22px] border border-white/[0.08] bg-[#111111]/85 px-2 sm:px-4 py-2">
+                {discoEscolhido.pastas.length
+                  ? <Linhas d={discoEscolhido} pai="" nivel={0} />
+                  : <p className="px-2 py-4 text-sm text-white/45">Este disco ainda não foi lido. Carrega em Atualizar no card.</p>}
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -260,19 +294,7 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
             </ul>
             {resultados.length > 300 && <p className="mt-3 text-[12px] text-white/40">A mostrar os primeiros 300. Escreve mais uma palavra para afinar.</p>}
           </section>
-        ) : (
-          <section className="mt-10 flex flex-col gap-10">
-            {discos.map(d => (
-              <div key={d.disco}>
-                <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Disco {d.letra}</p>
-                <h3 className="mt-1 text-2xl font-semibold">{d.disco}</h3>
-                <div className="mt-4 rounded-[22px] border border-white/[0.08] bg-[#111111]/85 px-2 sm:px-4 py-2">
-                  <Linhas d={d} pai="" nivel={0} />
-                </div>
-              </div>
-            ))}
-          </section>
-        )}
+        ) : null}
 
         <p className="mt-12 text-[12px] text-white/35 leading-relaxed">
           A lista é uma fotografia do disco no momento em que foi lido. Para a pôr em dia, carrega em Atualizar com o disco ligado ao PC (o PC tem de estar ligado). Nada é lido sem carregares no botão: um disco novo ligado ao PC aparece aqui como &quot;Ainda não lido&quot;. Os JPG, RAW e vídeos aparecem só contados em cada pasta.
