@@ -609,6 +609,24 @@ export default function DepartamentoFotografiaPage() {
                           <p className="text-[12px] text-[#4ade80]">✓ Entregues a {fmt(String(p.enviadas.entregue))}</p>
                         )}
 
+                        {/* Link das fotos editadas: sem ele o portal não mostra as fotografias */}
+                        {p.fase === 'entregue' && (p.links.entregue ? (
+                          <a href={p.links.entregue} target="_blank" rel="noopener noreferrer"
+                            className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#C9A84C]/80 hover:text-[#C9A84C]">Fotos dos noivos ↗</a>
+                        ) : (
+                          <div className="flex flex-col gap-2 rounded-xl border border-[#C9A84C]/30 bg-[#C9A84C]/[0.06] p-3">
+                            <p className="text-[11px] text-white/55">Sem link das fotos: o portal ainda não as mostra.</p>
+                            <input type="url" placeholder="Link das fotos editadas" value={link}
+                              onChange={e => setLinks(l => ({ ...l, [chave]: e.target.value }))}
+                              className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+                            <button type="button" disabled={aGravar === p.id || !/^https?:\/\//i.test(link.trim())}
+                              onClick={() => acao(p, 'entregue', `Enviar o link das fotos a ${nomes}? Os noivos recebem o email e as fotos abrem no portal.`, link.trim())}
+                              className="rounded-full border border-[#4ade80]/50 bg-[#4ade80]/10 px-3 py-2 text-[11px] font-semibold tracking-[0.15em] uppercase text-[#4ade80] hover:bg-[#4ade80]/20 disabled:opacity-40">
+                              {aGravar === p.id ? 'A enviar…' : 'Enviar aos noivos →'}
+                            </button>
+                          </div>
+                        ))}
+
                         {p.selecao && (
                           <button type="button" onClick={() => setSelAberta(p)}
                             className="rounded-full border border-white/15 bg-white/[0.03] px-3 py-1.5 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/75 hover:text-white hover:border-[#C9A84C]/50">
