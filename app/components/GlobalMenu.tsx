@@ -173,6 +173,8 @@ function GlobalMenuInner() {
   // Grupo da barra de topo com o painel aberto (ao passar o rato)
   const [mega, setMega] = useState<string | null>(null)
   const fecharMega = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Menu do telemóvel: grupo aberto (como os menus da barra de topo do desktop)
+  const [grupoAberto, setGrupoAberto] = useState<string | null>(null)
 
   useEffect(() => {
     setCompact(localStorage.getItem('rl-menu-compacto') === '1')
@@ -376,10 +378,49 @@ function GlobalMenuInner() {
             </>
           )}
 
-          {visiveis.map(({ href, label, sub, icon, exact }: any) => (
+          {/* Os mesmos grupos da barra de topo do desktop: primeiro os grupos, ao tocar abrem as páginas */}
+          {!isMedia && !mini && !filtro ? GRUPOS.map(g => {
+            const links = g.hrefs.map(linkDe).filter(Boolean) as any[]
+            if (links.length === 1) {
+              const l = links[0]
+              return <NavItem key={g.nome} href={l.href} label={g.nome} icon={l.icon} exact={l.exact} />
+            }
+            const aberto = grupoAberto === g.nome
+            const ativo = links.some(l => isActive(l.href, l.exact))
+            const colunas = COLUNAS_MENU[g.nome]
+            const item = (href: string, label?: string) => {
+              const l = linkDe(href)
+              return l ? <NavItem key={href} href={href} label={label ?? l.label} icon={l.icon} exact={l.exact} /> : null
+            }
+            return (
+              <div key={g.nome}>
+                <button type="button" onClick={() => setGrupoAberto(a => a === g.nome ? null : g.nome)} aria-expanded={aberto}
+                  className="w-full flex items-center justify-between gap-2 rounded-full px-3 py-2.5 transition-colors"
+                  style={{ background: aberto ? 'rgba(255,255,255,0.04)' : 'transparent' }}>
+                  <span className="font-cond text-[16px] font-semibold" style={{ color: ativo || aberto ? accent(0.95) : 'rgba(255,255,255,0.85)' }}>{g.nome}</span>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-4 h-4 transition-transform duration-200"
+                    style={{ color: accent(0.7), transform: aberto ? 'rotate(180deg)' : 'none' }} aria-hidden>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 9l6 6 6-6" />
+                  </svg>
+                </button>
+                {aberto && (
+                  <div className="ml-2 mb-1.5 pl-2 border-l" style={{ borderColor: accent(0.18) }}>
+                    {colunas
+                      ? colunas.map(c => (
+                          <div key={c.titulo} className="mt-1.5">
+                            <p className="px-2 pt-1 pb-0.5 font-cond text-[10.5px] tracking-[0.22em] uppercase font-medium" style={{ color: accent(0.75) }}>{c.titulo}</p>
+                            {c.links.map(l => item(l.href, l.label))}
+                          </div>
+                        ))
+                      : links.map(l => item(l.href))}
+                  </div>
+                )}
+              </div>
+            )
+          }) : visiveis.map(({ href, label, sub, icon, exact }: any) => (
             <NavItem key={href} href={href} label={label} sub={sub} icon={icon} exact={exact} mini={mini} />
           ))}
-          {visiveis.length === 0 && (
+          {filtro && visiveis.length === 0 && (
             <p className="text-[11px] text-white/25 italic px-2 py-3">Nada com esse nome.</p>
           )}
 
@@ -795,7 +836,12 @@ function GlobalMenuInner() {
 
       {/* ── Botão hambúrguer/seta (mobile sempre; desktop só em paths colapsados) ── */}
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          // abre já o grupo da página onde se está
+          const g = GRUPOS.find(x => x.hrefs.length > 1 && x.hrefs.some(h => isActive(h)))
+          setGrupoAberto(g?.nome ?? null)
+          setOpen(true)
+        }}
         data-global-menu
         className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-4 z-[60] w-10 h-10 flex flex-col items-center justify-center gap-[5px] rounded-xl transition-all duration-200 print:hidden`}
         style={{
@@ -840,7 +886,7 @@ function GlobalMenuInner() {
         data-global-menu
         className={`${isCollapsed ? '' : 'lg:hidden'} fixed top-3 left-3 max-h-[calc(100dvh-24px)] rounded-[20px] overflow-hidden z-[60] flex flex-col transition-transform duration-300 ease-in-out print:hidden ${open ? 'translate-x-0' : '-translate-x-[115%]'}`}
         style={{
-          width: '220px',
+          width: 'min(290px, calc(100vw - 24px))',
           background: '#0b0b0b',
           border: `1px solid ${accent(0.14)}`,
           boxShadow: `0 20px 50px -10px rgba(0,0,0,0.8)`,
