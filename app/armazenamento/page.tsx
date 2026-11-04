@@ -14,6 +14,7 @@ async function discos(): Promise<Disco[] | null> {
   try {
     const { data, error } = await sbAdmin().from('armazenamento_discos')
       .select('disco, letra, tamanho, livre, atualizado, pedido_em, ligado, visto_em, dados')
+      .eq('oculto', false) // discos escondidos (ex.: VD SDE) não aparecem
       .order('disco')
     if (error) return null
     return (data ?? []).map(r => ({
