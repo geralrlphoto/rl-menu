@@ -12,6 +12,9 @@ export type Disco = {
   tamanho: number
   livre: number
   atualizado: string
+  pedido_em?: string | null   // botão Atualizar (o robô do PC apanha o pedido)
+  ligado?: boolean            // o disco estava ligado ao PC na última volta do robô
+  visto_em?: string | null    // última vez que o robô viu o disco ligado
   pastas: Pasta[]
   ficheiros: Ficheiro[]
 }

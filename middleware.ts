@@ -296,6 +296,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/rollup-reuniao') ||
     pathname.startsWith('/api/registar-pagamento-noivos') ||
     pathname.startsWith('/api/fotos-auto') ||
+    pathname === '/api/armazenamento-robo' || // robô dos discos no PC (valida o x-auto-token)
     pathname.startsWith('/portal-media') ||
     pathname.startsWith('/media/portal-cliente/acesso') ||
     pathname.startsWith('/api/media-portal-acesso') ||

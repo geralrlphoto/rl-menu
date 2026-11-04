@@ -1,7 +1,8 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { Disco, Pasta } from './tipos'
 
 const OURO = '#C9A84C'
@@ -58,7 +59,55 @@ function Copiar({ texto }: { texto: string }) {
 
 const caminhoWindows = (d: Disco, p: string) => `${d.letra}:\\${p.replace(/\//g, '\\')}`
 
-export default function Armazenamento({ discos }: { discos: Disco[] }) {
+const pendente = (d: { pedido_em?: string | null; atualizado: string }) =>
+  !!d.pedido_em && (!d.atualizado || Date.parse(d.pedido_em) > Date.parse(d.atualizado))
+
+const quando = (iso: string) => new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+
+/* Botão Atualizar: deixa o pedido e vai vendo (só com a página à vista, de 20 em 20 s,
+   no máximo 15 min) até o robô do PC gravar a lista nova; depois recarrega os dados. */
+function BotaoAtualizar({ d }: { d: Disco }) {
+  const router = useRouter()
+  const [aEspera, setAEspera] = useState(pendente(d))
+  const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    if (!aEspera) return
+    const fim = Date.now() + 15 * 60_000
+    const id = setInterval(async () => {
+      if (document.hidden) return
+      if (Date.now() > fim) { clearInterval(id); setAEspera(false); setErro('O robô não respondeu. O PC está ligado?'); return }
+      try {
+        const r = await fetch('/api/armazenamento', { cache: 'no-store' }).then(x => x.json())
+        const x = (r.discos ?? []).find((k: { disco: string }) => k.disco === d.disco)
+        if (x && !pendente(x)) { clearInterval(id); setAEspera(false); router.refresh() }
+      } catch { /* tenta na volta seguinte */ }
+    }, 20_000)
+    return () => clearInterval(id)
+  }, [aEspera, d.disco, router])
+
+  async function pedir() {
+    setErro('')
+    const r = await fetch('/api/armazenamento', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ disco: d.disco }) })
+    if (r.ok) setAEspera(true)
+    else setErro('Não foi possível pedir. Tenta outra vez.')
+  }
+
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3">
+      <button type="button" onClick={pedir} disabled={aEspera}
+        className="inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/45 bg-[#0e0e0e]/90 px-4 py-2 text-[13px] font-semibold text-white shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)] hover:border-[#C9A84C]/80 disabled:opacity-70 disabled:cursor-wait">
+        <span className={aEspera ? 'animate-spin' : ''} style={{ color: OURO }}>↻</span>
+        {aEspera ? 'A atualizar…' : 'Atualizar'}
+      </button>
+      {aEspera && <span className="text-[12px] text-white/45">{d.ligado ? 'O PC lê o disco em 1 a 3 minutos.' : 'Fica à espera que o disco seja ligado ao PC.'}</span>}
+      {erro && <span className="text-[12px] text-red-400">{erro}</span>}
+    </div>
+  )
+}
+
+export default function Armazenamento({ discos: lidos }: { discos: Disco[] | null }) {
+  const discos = lidos ?? []
   const [q, setQ] = useState('')
   const [abertas, setAbertas] = useState<Set<string>>(new Set())
 
@@ -137,6 +186,8 @@ export default function Armazenamento({ discos }: { discos: Disco[] }) {
             <span className="text-sm tracking-[0.22em] uppercase text-white/60">Tudo o que está guardado em cada disco</span>
           </div>
 
+          {lidos === null && <p className="mt-10 text-sm text-red-400">Não foi possível carregar os discos. Atualiza a página.</p>}
+          {lidos && !discos.length && <p className="mt-10 text-sm text-white/50">Ainda não há discos lidos. Liga um disco ao PC: o robô lê-o sozinho em poucos minutos.</p>}
           {/* Discos */}
           <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {discos.map(d => {
@@ -159,7 +210,14 @@ export default function Armazenamento({ discos }: { discos: Disco[] }) {
                     <span className="text-white/45">{tamanho(d.livre)} livres</span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/[0.06] text-[13px]"><Contagens n={n} /></div>
-                  <p className="mt-2 text-[11px] tracking-[0.15em] uppercase text-white/35">Lido a {new Date(d.atualizado).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+                  <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tracking-[0.15em] uppercase text-white/35">
+                    <span>Lido a {d.atualizado ? quando(d.atualizado) : '–'}</span>
+                    <span className="inline-flex items-center gap-1.5" style={{ color: d.ligado ? '#4ade80' : 'rgba(255,255,255,.35)' }}>
+                      <span className="h-1.5 w-1.5 rounded-full" style={{ background: d.ligado ? '#4ade80' : 'rgba(255,255,255,.3)' }} />
+                      {d.ligado ? 'Ligado ao PC' : 'Não ligado'}
+                    </span>
+                  </p>
+                  <BotaoAtualizar d={d} />
                 </div>
               )
             })}
@@ -217,7 +275,7 @@ export default function Armazenamento({ discos }: { discos: Disco[] }) {
         )}
 
         <p className="mt-12 text-[12px] text-white/35 leading-relaxed">
-          A lista é uma fotografia do disco no momento em que foi lido. Para atualizar, liga o disco ao PC e corre <span className="text-white/60">python scripts/indexar-disco.py J</span> na pasta rl-menu (troca o J pela letra do disco). Os JPG, RAW e vídeos aparecem só contados em cada pasta.
+          A lista é uma fotografia do disco no momento em que foi lido. Para a pôr em dia, carrega em Atualizar com o disco ligado ao PC (o PC tem de estar ligado). Um disco novo ligado ao PC aparece aqui sozinho. Os JPG, RAW e vídeos aparecem só contados em cada pasta.
         </p>
       </div>
     </main>
