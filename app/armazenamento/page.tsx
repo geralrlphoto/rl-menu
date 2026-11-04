@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 async function discos(): Promise<Disco[] | null> {
   try {
     const { data, error } = await sbAdmin().from('armazenamento_discos')
-      .select('disco, letra, tamanho, livre, atualizado, pedido_em, ligado, visto_em, dados')
+      .select('disco, letra, tamanho, livre, atualizado, pedido_em, ligado, visto_em, dados, backups, backups_em')
       .eq('oculto', false) // discos escondidos (ex.: VD SDE) não aparecem
       .order('disco')
     if (error) return null
@@ -21,6 +21,7 @@ async function discos(): Promise<Disco[] | null> {
       disco: r.disco, letra: r.letra ?? '?', tamanho: Number(r.tamanho ?? 0), livre: Number(r.livre ?? 0),
       atualizado: r.atualizado, pedido_em: r.pedido_em, ligado: !!r.ligado, visto_em: r.visto_em,
       pastas: r.dados?.pastas ?? [], ficheiros: r.dados?.ficheiros ?? [], repetidos: r.dados?.repetidos ?? null,
+      backups: r.backups ?? null, backups_em: r.backups_em ?? null,
     }))
   } catch { return null }
 }

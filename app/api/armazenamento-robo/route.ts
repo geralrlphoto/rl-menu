@@ -9,6 +9,7 @@ export const dynamic = 'force-dynamic'
                                 do botão Atualizar e os discos já conhecidos.
    POST { novo: {...} }       → regista um disco novo, sem lista (só é lido com clique).
    POST { disco: {...} }      → grava o índice novo de um disco.
+   POST { backups: {...} }    → grava, por disco, os casamentos e a % que tem cópia noutro disco.
    Mesmo token do robô das fotos (x-auto-token, ver /api/fotos-auto). */
 
 const TOKEN_HASH = 'f2ce9de66682050f2ba6700743d9cd0426754ec00bea91f06f49d73158071f75'
@@ -27,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   if (Array.isArray(body.ligados)) {
     const ligados: string[] = body.ligados.map(String)
-    const { data, error } = await sb.from('armazenamento_discos').select('disco, atualizado, pedido_em, ligado')
+    const { data, error } = await sb.from('armazenamento_discos').select('disco, atualizado, pedido_em, ligado, oculto')
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     // só escreve quando um disco é ligado ou desligado (a volta normal é só uma leitura pequena)
     for (const r of data ?? []) {
@@ -35,7 +36,22 @@ export async function POST(req: NextRequest) {
       if (ligado !== !!r.ligado) await sb.from('armazenamento_discos').update(ligado ? { ligado, visto_em: new Date().toISOString() } : { ligado }).eq('disco', r.disco)
     }
     const pedidos = (data ?? []).filter(r => r.pedido_em && (!r.atualizado || Date.parse(r.pedido_em) > Date.parse(r.atualizado))).map(r => r.disco)
-    return NextResponse.json({ pedidos, conhecidos: (data ?? []).map(r => r.disco) })
+    return NextResponse.json({
+      pedidos,
+      conhecidos: (data ?? []).map(r => r.disco),
+      ocultos: (data ?? []).filter(r => r.oculto).map(r => r.disco),
+    })
+  }
+
+  // Backups calculados no PC: { disco: [casamentos com a % que existe noutro disco] }
+  if (body.backups && typeof body.backups === 'object') {
+    const agora = new Date().toISOString()
+    for (const [disco, lista] of Object.entries(body.backups)) {
+      if (!Array.isArray(lista)) continue
+      const { error } = await sb.from('armazenamento_discos').update({ backups: lista, backups_em: agora }).eq('disco', disco)
+      if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+    return NextResponse.json({ ok: true })
   }
 
   // Disco novo ligado ao PC: fica registado sem lista, à espera do botão Atualizar

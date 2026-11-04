@@ -14,6 +14,15 @@ export type Repetidos = {
   pastas: { a: string; b: string; n: number; bytes: number; ta: number; tb: number }[] // pares de pastas com ficheiros iguais
   ficheiros: { n: string; b: number; p: string[] }[]                                  // ficheiro e as pastas onde está
 }
+// Um casamento/batizado e que parte do conteúdo (em bytes) existe noutro disco
+export type Backup = {
+  p: string                          // pasta do evento
+  b: number                          // tamanho
+  pct: number                        // % que existe noutro disco
+  estado: 'com' | 'parcial' | 'sem'  // ≥95% · 5–94% · <5%
+  onde: { d: string; pct: number }[] // discos onde está a cópia
+}
+
 export type Disco = {
   disco: string
   letra: string
@@ -26,4 +35,6 @@ export type Disco = {
   pastas: Pasta[]
   ficheiros: Ficheiro[]
   repetidos?: Repetidos | null  // só existe depois de o disco ser lido com a versão nova do robô
+  backups?: Backup[] | null     // calculado no PC com a memória de todos os discos
+  backups_em?: string | null
 }

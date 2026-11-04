@@ -1,7 +1,8 @@
 """Robô dos discos para a página /armazenamento.
 
 Uso:
-  python scripts/indexar-disco.py J        lê o disco J e envia a lista para a app
+  python scripts/indexar-disco.py J K      lê os discos J e K, envia a lista e recalcula os backups
+  python scripts/indexar-disco.py --backups  só recalcula os backups com a memória dos discos
   pythonw scripts/indexar-disco.py --robo  o que a tarefa "RL Armazenamento" corre de 2 em 2 min:
       1. pergunta à app se houve clique no botão Atualizar (e diz que discos estão ligados);
       2. só lê os discos com clique; sem clique não toca em nenhum disco;
@@ -19,6 +20,7 @@ Log em rui claude code\\rl-armazenamento.log
 import ctypes
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -38,7 +40,15 @@ IGNORAR_RAIZ = {'autorun.inf', 'warranty.pdf', 'start_here_win.exe',
 
 APP_URL = os.environ.get('RL_APP_URL', 'https://rl-menu-lake.vercel.app').rstrip('/')
 # Log na pasta "rui claude code" (fora do repositório; o AppData não é visto igual por todas as apps)
-LOG = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'rl-armazenamento.log')
+TRABALHO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+LOG = os.path.join(TRABALHO, 'rl-armazenamento.log')
+# Memória de cada disco (ficheiros de cada casamento), para comparar discos que não estão ligados ao mesmo tempo
+MEMORIA = os.path.join(TRABALHO, 'armazenamento-memoria')
+
+# Pasta de um evento: "CAS ...", "CAS_...", "Casamento ...", "Batizado ...", "BTZ...", "Pre wedding ...", "Same day edit ..."
+# (não apanha as pastas que só agrupam, como "CASAMENTOS" ou "Casamentos_2025")
+EVENTO = re.compile(r'^(cas[ _]|casamento |batizado |btz|bat[ _]|pr[eé][ -]?wedding|same day edit)', re.I)
+COM_BACKUP, SEM_BACKUP = 95, 5  # % do conteúdo que existe noutro disco
 TRINCO = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'rl-armazenamento.lock')
 
 
@@ -108,8 +118,9 @@ def indexar(letra):
     raiz = f'{letra}:\\'
     pastas, ficheiros = [], []
     registo, por_pasta = {}, {}
+    eventos = {}  # pasta do evento -> [[chave, bytes]] (ficheiros ≥ 100 KB)
 
-    def andar(caminho, rel):
+    def andar(caminho, rel, evento=None):
         """Devolve [fotos, raw, videos, audio, outros, bytes] da pasta toda."""
         tot = [0, 0, 0, 0, 0, 0]
         filhos = []
@@ -135,6 +146,8 @@ def indexar(letra):
                     nome = nfc(e.name)
                     registo.setdefault((nome.lower(), b), []).append((rel, nome))
                     por_pasta[rel] = por_pasta.get(rel, 0) + 1
+                    if evento:
+                        eventos[evento].append([f'{nome.lower()}|{b}', b])
                 t = tipo(ext)
                 if t is not None:
                     tot[t] += 1
@@ -157,7 +170,11 @@ def indexar(letra):
                 tot[5] += b
                 pastas.append({'p': r, 'n': [0, 0, 0, 0, 0], 'b': b, 'lr': 1})
                 continue
-            sub = andar(e.path, r)
+            ev = evento
+            if not ev and EVENTO.match(e.name.strip()):
+                ev = r
+                eventos[ev] = []
+            sub = andar(e.path, r, ev)
             for k in range(6): tot[k] += sub[k]
         if rel:
             pastas[i] = {'p': rel, 'n': tot[:5], 'b': tot[5]}
@@ -170,7 +187,64 @@ def indexar(letra):
         'tamanho': uso.total, 'livre': uso.free,
         'pastas': pastas, 'ficheiros': ficheiros,
         'repetidos': repetidos(registo, por_pasta),
+        # só para a memória no PC (não vai para a app)
+        '_memoria': {'chaves': sorted({f'{n}|{b}' for (n, b) in registo}), 'eventos': eventos},
     }
+
+
+def guardar_memoria(disco, memoria):
+    os.makedirs(MEMORIA, exist_ok=True)
+    nome = re.sub(r'[^A-Za-z0-9_-]', '_', disco) + '.json'
+    memoria = dict(memoria, disco=disco, lido=datetime.now().isoformat(timespec='minutes'))
+    with open(os.path.join(MEMORIA, nome), 'w', encoding='utf-8') as fh:
+        json.dump(memoria, fh, ensure_ascii=False, separators=(',', ':'))
+
+
+def calcular_backups(ocultos):
+    """Para cada casamento de cada disco: que parte do conteúdo (em bytes) existe noutro disco.
+    Usa a memória de todos os discos lidos neste PC; discos escondidos não contam como backup."""
+    if not os.path.isdir(MEMORIA):
+        return {}
+    discos = {}
+    for f in os.listdir(MEMORIA):
+        if f.endswith('.json'):
+            with open(os.path.join(MEMORIA, f), encoding='utf-8') as fh:
+                m = json.load(fh)
+            if m['disco'] not in ocultos:
+                discos[m['disco']] = m
+    chaves = {n: set(m['chaves']) for n, m in discos.items()}
+    res = {}
+    for nome, m in discos.items():
+        outros = [(o, chaves[o]) for o in discos if o != nome]
+        lista = []
+        for pasta, fich in m['eventos'].items():
+            total = sum(b for _, b in fich)
+            if total < 1_000_000_000:  # menos de 1 GB: pastas vazias ou só com música/projetos
+                continue
+            achado, por_disco = 0, {}
+            for k, b in fich:
+                onde = [o for o, s in outros if k in s]
+                if onde:
+                    achado += b
+                    for o in onde:
+                        por_disco[o] = por_disco.get(o, 0) + b
+            pct = round(achado * 100 / total)
+            lista.append({
+                'p': pasta, 'b': total, 'pct': pct,
+                'estado': 'com' if pct >= COM_BACKUP else 'sem' if pct < SEM_BACKUP else 'parcial',
+                'onde': sorted(({'d': o, 'pct': round(v * 100 / total)} for o, v in por_disco.items()), key=lambda x: -x['pct'])[:3],
+            })
+        res[nome] = sorted(lista, key=lambda x: (x['pct'], -x['b']))
+    return res
+
+
+def atualizar_backups():
+    r = api({'ligados': list(volumes_com_nome())})
+    b = calcular_backups(set(r.get('ocultos', [])))
+    if b:
+        api({'backups': b})
+        sem = sum(1 for l in b.values() for x in l if x['estado'] == 'sem')
+        log(f'Backups recalculados: {sem} eventos sem backup em {len(b)} discos')
 
 
 def api(corpo):
@@ -187,6 +261,7 @@ def api(corpo):
 def enviar(letra):
     t = time.time()
     d = indexar(letra)
+    guardar_memoria(d['disco'], d.pop('_memoria'))
     api({'disco': d})
     log(f'{d["disco"]} ({letra}:) lido em {time.time() - t:.0f}s: {len(d["pastas"])} pastas, {len(d["ficheiros"])} ficheiros')
 
@@ -236,11 +311,15 @@ def robo():
         ligados = volumes_com_nome()
         r = api({'ligados': list(ligados)})
         conhecidos = set(r.get('conhecidos', []))
+        lidos = 0
         for nome in r.get('pedidos', []):
             if nome in ligados:
                 enviar(ligados[nome])
+                lidos += 1
             else:
                 log(f'{nome}: pedido de atualização, mas o disco não está ligado')
+        if lidos:
+            atualizar_backups()  # um disco novo pode mudar os backups dos outros
         # Disco novo (só USB, para não trazer os discos do sistema): fica "Ainda não lido",
         # é lido quando carregares em Atualizar
         for nome, letra in discos_usb().items():
@@ -257,8 +336,12 @@ def main():
     try:
         if '--robo' in sys.argv:
             robo()
+        elif '--backups' in sys.argv:
+            atualizar_backups()
         else:
-            enviar((sys.argv[1] if len(sys.argv) > 1 else 'J').strip(':\\').upper())
+            for letra in (sys.argv[1:] or ['J']):
+                enviar(letra.strip(':\\').upper())
+            atualizar_backups()
     except Exception as e:
         log(f'ERRO: {e}')
         raise

@@ -137,7 +137,96 @@ function VistaRepetidos({ d }: { d: Disco }) {
   )
 }
 
-const pendente = (d: { pedido_em?: string | null; atualizado: string }) =>
+/* Casamentos sem backup: junta os eventos de todos os discos cujo conteúdo não existe
+   (ou só existe em parte) noutro disco. Fechado por defeito; o resumo fica à vista. */
+const VERMELHO = '#f87171'
+const AMARELO = '#fbbf24'
+function SemBackup({ discos }: { discos: Disco[] }) {
+  const [aberto, setAberto] = useState(false)
+  const [filtro, setFiltro] = useState<'sem' | 'parcial'>('sem')
+  const todos = discos.flatMap(d => (d.backups ?? []).map(e => ({ ...e, d })))
+  if (!discos.some(d => d.backups)) return null
+  const sem = todos.filter(e => e.estado === 'sem')
+  const parcial = todos.filter(e => e.estado === 'parcial')
+  const lista = (filtro === 'sem' ? sem : parcial).sort((a, b) => a.pct - b.pct || b.b - a.b)
+  const gb = (l: typeof todos) => tamanho(l.reduce((s, e) => s + e.b, 0))
+  const calculado = discos.map(d => d.backups_em).filter(Boolean).sort().pop()
+
+  return (
+    <div className="mt-8">
+      <button type="button" onClick={() => setAberto(a => !a)}
+        className="w-full text-left rounded-[22px] border bg-[#111111]/85 backdrop-blur-md p-5 transition-colors hover:border-white/[0.2]"
+        style={{ borderColor: sem.length ? `${VERMELHO}55` : 'rgba(255,255,255,.08)', borderLeft: `2px solid ${sem.length ? VERMELHO : '#4ade80'}` }}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: sem.length ? VERMELHO : '#4ade80' }}>Cópias de segurança</p>
+            <p className="mt-1 text-[22px] font-semibold leading-tight">
+              {sem.length ? `${num(sem.length)} casamento${sem.length > 1 ? 's' : ''} sem backup` : 'Todos os casamentos têm backup'}
+            </p>
+            <p className="mt-1 text-[13px] text-white/50 tabular-nums">
+              {sem.length > 0 && <><span style={{ color: VERMELHO }}>{gb(sem)}</span> só num disco · </>}
+              {parcial.length > 0 && <><span style={{ color: AMARELO }}>{num(parcial.length)}</span> com backup incompleto · </>}
+              {num(todos.length - sem.length - parcial.length)} com backup
+            </p>
+          </div>
+          <span className="text-[11px] font-semibold tracking-[0.2em] uppercase text-white/45">{aberto ? 'Fechar ▴' : 'Ver a lista ▾'}</span>
+        </div>
+      </button>
+
+      {aberto && (
+        <div className="mt-3 rounded-[22px] border border-white/[0.08] bg-[#111111]/85 p-3 sm:p-5">
+          <div className="flex flex-wrap gap-2">
+            {([{ k: 'sem', t: `Sem backup · ${num(sem.length)}`, c: VERMELHO }, { k: 'parcial', t: `Backup incompleto · ${num(parcial.length)}`, c: AMARELO }] as const).map(t => (
+              <button key={t.k} type="button" onClick={() => setFiltro(t.k)}
+                className={`rounded-full border px-4 py-1.5 text-[13px] font-semibold transition-colors ${filtro === t.k ? 'text-white' : 'border-white/10 text-white/55 hover:text-white'}`}
+                style={filtro === t.k ? { borderColor: `${t.c}99`, background: `${t.c}1f` } : undefined}>
+                {t.t}
+              </button>
+            ))}
+          </div>
+          <p className="mt-3 text-[12px] text-white/40">
+            Compara o conteúdo de cada casamento (ficheiros com o mesmo nome e tamanho) com todos os outros discos, mesmo os que não estão ligados.
+            Sem backup = menos de 5% está noutro disco; incompleto = entre 5% e 94%.{calculado ? ` Calculado a ${quando(calculado)}.` : ''}
+          </p>
+          <ul className="mt-4 flex flex-col gap-2">
+            {lista.map(e => {
+              const cor = e.estado === 'sem' ? VERMELHO : AMARELO
+              return (
+                <li key={`${e.d.disco}|${e.p}`} className="rounded-[16px] border border-white/[0.08] bg-black/30 px-4 py-3" style={{ borderLeft: `2px solid ${cor}` }}>
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[16px] font-semibold break-words">{nomeDe(e.p)}</p>
+                      <p className="mt-0.5 text-[12px] text-white/40 break-words">
+                        <span className="font-semibold" style={{ color: OURO }}>{e.d.disco}</span>
+                        {paiDe(e.p) ? ` › ${paiDe(e.p).split('/').join(' › ')}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-end gap-1.5">
+                      <span className="text-[13px] tabular-nums text-white/60">{tamanho(e.b)}</span>
+                      <Copiar texto={caminhoWindows(e.d, e.p)} />
+                    </div>
+                  </div>
+                  <div className="mt-2.5 flex items-center gap-3">
+                    <div className="h-1.5 flex-1 rounded-full bg-white/[0.07] overflow-hidden">
+                      <div className="h-full rounded-full" style={{ width: `${Math.max(e.pct, 1)}%`, background: cor }} />
+                    </div>
+                    <span className="w-24 text-right text-[12px] tabular-nums" style={{ color: cor }}>{e.pct}% com cópia</span>
+                  </div>
+                  {e.onde.filter(o => o.pct > 0).length > 0 && (
+                    <p className="mt-1.5 text-[12px] text-white/45">Cópia em: {e.onde.filter(o => o.pct > 0).map(o => `${o.d} (${o.pct}%)`).join(' · ')}</p>
+                  )}
+                </li>
+              )
+            })}
+            {!lista.length && <li className="px-2 py-3 text-sm text-white/50">Nada nesta lista.</li>}
+          </ul>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const pendente = (d:{ pedido_em?: string | null; atualizado: string }) =>
   !!d.pedido_em && (!d.atualizado || Date.parse(d.pedido_em) > Date.parse(d.atualizado))
 
 const quando = (iso: string) => new Date(iso).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -309,6 +398,16 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
                         : <span className="text-white/45">Sem repetidos</span>}
                     </p>
                   )}
+                  {d.backups && (() => {
+                    const s = d.backups.filter(e => e.estado === 'sem').length
+                    return (
+                      <p className="mt-1 text-[13px] tabular-nums">
+                        {s
+                          ? <><span style={{ color: VERMELHO }}>{num(s)}</span> <span className="text-white/45">casamento{s > 1 ? 's' : ''} sem backup</span></>
+                          : <span className="text-white/45">Todos os casamentos com backup</span>}
+                      </p>
+                    )
+                  })()}
                   <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tracking-[0.15em] uppercase text-white/35">
                     <span>{d.atualizado ? `Lido a ${quando(d.atualizado)}` : 'Ainda não lido'}</span>
                     <span className="inline-flex items-center gap-1.5" style={{ color: d.ligado ? '#4ade80' : 'rgba(255,255,255,.35)' }}>
@@ -324,6 +423,8 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
               )
             })}
           </div>
+
+          <SemBackup discos={discos} />
 
           {/* Conteúdo do disco escolhido: pastas de topo fechadas, abre-se uma a uma */}
           {discoEscolhido && (
