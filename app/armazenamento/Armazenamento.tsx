@@ -187,7 +187,7 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
           </div>
 
           {lidos === null && <p className="mt-10 text-sm text-red-400">Não foi possível carregar os discos. Atualiza a página.</p>}
-          {lidos && !discos.length && <p className="mt-10 text-sm text-white/50">Ainda não há discos lidos. Liga um disco ao PC: o robô lê-o sozinho em poucos minutos.</p>}
+          {lidos && !discos.length && <p className="mt-10 text-sm text-white/50">Ainda não há discos lidos. Liga um disco ao PC: aparece aqui em poucos minutos, pronto para carregares em Atualizar.</p>}
           {/* Discos */}
           <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {discos.map(d => {
@@ -211,7 +211,7 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/[0.06] text-[13px]"><Contagens n={n} /></div>
                   <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tracking-[0.15em] uppercase text-white/35">
-                    <span>Lido a {d.atualizado ? quando(d.atualizado) : '–'}</span>
+                    <span>{d.atualizado ? `Lido a ${quando(d.atualizado)}` : 'Ainda não lido'}</span>
                     <span className="inline-flex items-center gap-1.5" style={{ color: d.ligado ? '#4ade80' : 'rgba(255,255,255,.35)' }}>
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: d.ligado ? '#4ade80' : 'rgba(255,255,255,.3)' }} />
                       {d.ligado ? 'Ligado ao PC' : 'Não ligado'}
@@ -275,7 +275,7 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
         )}
 
         <p className="mt-12 text-[12px] text-white/35 leading-relaxed">
-          A lista é uma fotografia do disco no momento em que foi lido. Para a pôr em dia, carrega em Atualizar com o disco ligado ao PC (o PC tem de estar ligado). Um disco novo ligado ao PC aparece aqui sozinho. Os JPG, RAW e vídeos aparecem só contados em cada pasta.
+          A lista é uma fotografia do disco no momento em que foi lido. Para a pôr em dia, carrega em Atualizar com o disco ligado ao PC (o PC tem de estar ligado). Nada é lido sem carregares no botão: um disco novo ligado ao PC aparece aqui como &quot;Ainda não lido&quot;. Os JPG, RAW e vídeos aparecem só contados em cada pasta.
         </p>
       </div>
     </main>

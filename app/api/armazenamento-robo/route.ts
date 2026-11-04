@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic'
 /* Robô dos discos (scripts/indexar-disco.py, tarefa "RL Armazenamento" no PC).
    POST { ligados: [nomes] }  → marca que discos estão ligados e devolve os pedidos
                                 do botão Atualizar e os discos já conhecidos.
+   POST { novo: {...} }       → regista um disco novo, sem lista (só é lido com clique).
    POST { disco: {...} }      → grava o índice novo de um disco.
    Mesmo token do robô das fotos (x-auto-token, ver /api/fotos-auto). */
 
@@ -26,15 +27,26 @@ export async function POST(req: NextRequest) {
 
   if (Array.isArray(body.ligados)) {
     const ligados: string[] = body.ligados.map(String)
-    const { data, error } = await sb.from('armazenamento_discos').select('disco, atualizado, pedido_em')
+    const { data, error } = await sb.from('armazenamento_discos').select('disco, atualizado, pedido_em, ligado')
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    const agora = new Date().toISOString()
+    // só escreve quando um disco é ligado ou desligado (a volta normal é só uma leitura pequena)
     for (const r of data ?? []) {
       const ligado = ligados.includes(r.disco)
-      await sb.from('armazenamento_discos').update(ligado ? { ligado, visto_em: agora } : { ligado }).eq('disco', r.disco)
+      if (ligado !== !!r.ligado) await sb.from('armazenamento_discos').update(ligado ? { ligado, visto_em: new Date().toISOString() } : { ligado }).eq('disco', r.disco)
     }
     const pedidos = (data ?? []).filter(r => r.pedido_em && (!r.atualizado || Date.parse(r.pedido_em) > Date.parse(r.atualizado))).map(r => r.disco)
     return NextResponse.json({ pedidos, conhecidos: (data ?? []).map(r => r.disco) })
+  }
+
+  // Disco novo ligado ao PC: fica registado sem lista, à espera do botão Atualizar
+  if (body.novo?.disco) {
+    const n = body.novo
+    const { error } = await sb.from('armazenamento_discos').upsert({
+      disco: String(n.disco), letra: n.letra ?? null, tamanho: n.tamanho ?? null, livre: n.livre ?? null,
+      ligado: true, visto_em: new Date().toISOString(),
+    }, { onConflict: 'disco', ignoreDuplicates: true })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true })
   }
 
   const d = body.disco

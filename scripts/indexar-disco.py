@@ -3,9 +3,10 @@
 Uso:
   python scripts/indexar-disco.py J        lê o disco J e envia a lista para a app
   pythonw scripts/indexar-disco.py --robo  o que a tarefa "RL Armazenamento" corre de 2 em 2 min:
-      1. diz à app que discos USB estão ligados;
-      2. lê os que têm o botão Atualizar carregado, e os discos novos que nunca foram lidos;
+      1. pergunta à app se houve clique no botão Atualizar (e diz que discos USB estão ligados);
+      2. só lê os discos com clique; sem clique não toca em nenhum disco;
       3. envia a lista nova para a app (tabela armazenamento_discos).
+      Um disco novo só fica registado (card "Ainda não lido"), sem ser lido.
 
 Guarda todas as pastas (com nº de fotos, RAW, vídeos e tamanho total) e os
 ficheiros que não são de câmara (projetos, música, zips...). Os JPG/RAW/vídeos
@@ -183,10 +184,12 @@ def robo():
                 enviar(ligados[nome])
             else:
                 log(f'{nome}: pedido de atualização, mas o disco não está ligado')
+        # Disco novo: só aparece na página (card "Ainda não lido"); é lido quando carregares em Atualizar
         for nome, letra in ligados.items():
             if nome not in conhecidos:
-                log(f'{nome}: disco novo')
-                enviar(letra)
+                uso = shutil.disk_usage(f'{letra}:\\')
+                api({'novo': {'disco': nome, 'letra': letra, 'tamanho': uso.total, 'livre': uso.free}})
+                log(f'{nome} ({letra}:): disco novo, à espera do botão Atualizar')
     finally:
         try: os.remove(TRINCO)
         except OSError: pass
