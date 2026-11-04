@@ -20,7 +20,7 @@ async function discos(): Promise<Disco[] | null> {
     return (data ?? []).map(r => ({
       disco: r.disco, letra: r.letra ?? '?', tamanho: Number(r.tamanho ?? 0), livre: Number(r.livre ?? 0),
       atualizado: r.atualizado, pedido_em: r.pedido_em, ligado: !!r.ligado, visto_em: r.visto_em,
-      pastas: r.dados?.pastas ?? [], ficheiros: r.dados?.ficheiros ?? [],
+      pastas: r.dados?.pastas ?? [], ficheiros: r.dados?.ficheiros ?? [], repetidos: r.dados?.repetidos ?? null,
     }))
   } catch { return null }
 }

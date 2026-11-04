@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   const { error } = await sb.from('armazenamento_discos').upsert({
     disco: String(d.disco), letra: d.letra ?? null, tamanho: d.tamanho ?? null, livre: d.livre ?? null,
     atualizado: agora, visto_em: agora, ligado: true,
-    dados: { pastas: d.pastas, ficheiros: d.ficheiros ?? [] },
+    dados: { pastas: d.pastas, ficheiros: d.ficheiros ?? [], repetidos: d.repetidos ?? null },
   })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json({ ok: true })

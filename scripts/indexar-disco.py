@@ -76,9 +76,38 @@ def tipo(ext):
     return None
 
 
+MIN_REPETIDO = 100_000  # ficheiros com menos de 100 KB não contam para os repetidos
+
+
+def repetidos(registo, por_pasta):
+    """Ficheiros com o mesmo nome e o mesmo tamanho em mais de uma pasta do disco.
+    registo: {(nome em minúsculas, bytes): [(pasta, nome)]}; por_pasta: {pasta: nº de ficheiros}."""
+    grupos = [(b, locs) for (_, b), locs in registo.items() if len(locs) > 1]
+    pares = {}
+    for b, locs in grupos:
+        sitios = sorted({p for p, _ in locs})
+        for i in range(len(sitios)):
+            for j in range(i + 1, len(sitios)):
+                x = pares.setdefault((sitios[i], sitios[j]), [0, 0])
+                x[0] += 1
+                x[1] += b
+    pastas = sorted(({'a': a, 'b': c, 'n': n, 'bytes': bb, 'ta': por_pasta.get(a, 0), 'tb': por_pasta.get(c, 0)}
+                     for (a, c), (n, bb) in pares.items()), key=lambda x: -x['bytes'])[:200]
+    fich = sorted(({'n': locs[0][1], 'b': b, 'p': sorted({p for p, _ in locs})} for b, locs in grupos),
+                  key=lambda x: -x['b'] * (len(x['p']) - 1))[:300]
+    return {
+        'n': sum(len(locs) - 1 for _, locs in grupos),          # cópias a mais
+        'bytes': sum(b * (len(locs) - 1) for b, locs in grupos),  # espaço que as cópias a mais ocupam
+        'grupos': len(grupos),
+        'pastas': pastas,
+        'ficheiros': fich,
+    }
+
+
 def indexar(letra):
     raiz = f'{letra}:\\'
     pastas, ficheiros = [], []
+    registo, por_pasta = {}, {}
 
     def andar(caminho, rel):
         """Devolve [fotos, raw, videos, audio, outros, bytes] da pasta toda."""
@@ -102,6 +131,10 @@ def indexar(letra):
                 b = e.stat(follow_symlinks=False).st_size
                 ext = os.path.splitext(e.name)[1].lower()
                 tot[5] += b
+                if b >= MIN_REPETIDO and ext not in IGNORAR_EXT:
+                    nome = nfc(e.name)
+                    registo.setdefault((nome.lower(), b), []).append((rel, nome))
+                    por_pasta[rel] = por_pasta.get(rel, 0) + 1
                 t = tipo(ext)
                 if t is not None:
                     tot[t] += 1
@@ -136,6 +169,7 @@ def indexar(letra):
         'disco': nome_volume(letra) or f'DISCO {letra}', 'letra': letra,
         'tamanho': uso.total, 'livre': uso.free,
         'pastas': pastas, 'ficheiros': ficheiros,
+        'repetidos': repetidos(registo, por_pasta),
     }
 
 

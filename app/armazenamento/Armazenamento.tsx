@@ -58,6 +58,84 @@ function Copiar({ texto }: { texto: string }) {
 }
 
 const caminhoWindows = (d: Disco, p: string) => `${d.letra}:\\${p.replace(/\//g, '\\')}`
+const caminhoLegivel = (p: string) => (p ? p.split('/').join(' › ') : 'Raiz do disco')
+
+/* Repetidos de um disco: pares de pastas com ficheiros iguais e a lista dos ficheiros,
+   do que ocupa mais espaço para o que ocupa menos. */
+function VistaRepetidos({ d }: { d: Disco }) {
+  const r = d.repetidos
+  const [verPastas, setVerPastas] = useState(30)
+  const [verFich, setVerFich] = useState(50)
+  if (!r) return <p className="px-2 py-4 text-sm text-white/45">Os repetidos aparecem depois de o disco ser lido outra vez. Carrega em Atualizar no card.</p>
+  if (!r.n) return <p className="px-2 py-4 text-sm text-white/55">Não há nada repetido neste disco.</p>
+  const ROSA = '#f9a8d4'
+  return (
+    <div className="flex flex-col gap-8 py-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+          { l: 'Espaço ocupado por cópias', v: tamanho(r.bytes) },
+          { l: 'Cópias a mais', v: num(r.n) },
+          { l: 'Ficheiros repetidos', v: num(r.grupos) },
+        ].map(k => (
+          <div key={k.l} className="rounded-[18px] border border-white/[0.08] bg-black/30 px-4 py-3.5" style={{ borderLeft: `2px solid ${ROSA}` }}>
+            <p className="text-[10px] tracking-[0.25em] uppercase text-white/45">{k.l}</p>
+            <p className="mt-1 text-[30px] font-thin leading-none tabular-nums" style={{ color: ROSA }}>{k.v}</p>
+          </div>
+        ))}
+      </div>
+      <p className="-mt-4 text-[12px] text-white/40">Conta como repetido um ficheiro com o mesmo nome e o mesmo tamanho exato em mais de uma pasta deste disco (só ficheiros com mais de 100 KB). Confirma sempre antes de apagar.</p>
+
+      <section>
+        <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Pastas com ficheiros iguais</p>
+        <ul className="mt-3 flex flex-col gap-2">
+          {r.pastas.slice(0, verPastas).map(p => {
+            const inteira = p.n === p.ta || p.n === p.tb
+            return (
+              <li key={`${p.a}|${p.b}`} className="rounded-[16px] border border-white/[0.08] bg-black/30 px-4 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[13px] tabular-nums">
+                    <span style={{ color: ROSA }}>{num(p.n)}</span> <span className="text-white/45">ficheiros iguais · </span>
+                    <span className="text-white/80">{tamanho(p.bytes)}</span>
+                  </span>
+                  {inteira && <span className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold tracking-[0.2em] uppercase" style={{ color: ROSA, background: `${ROSA}1f`, border: `1px solid ${ROSA}55` }}>Pasta copiada inteira</span>}
+                </div>
+                {[{ c: p.a, t: p.ta }, { c: p.b, t: p.tb }].map(x => (
+                  <div key={x.c} className="mt-2 flex items-start justify-between gap-3">
+                    <p className="min-w-0 text-[14px] break-words">{caminhoLegivel(x.c)} <span className="text-[12px] text-white/35">({num(x.t)} ficheiros)</span></p>
+                    <Copiar texto={caminhoWindows(d, x.c)} />
+                  </div>
+                ))}
+              </li>
+            )
+          })}
+        </ul>
+        {r.pastas.length > verPastas && <button type="button" onClick={() => setVerPastas(v => v + 30)} className="mt-3 text-[12px] tracking-[0.2em] uppercase text-white/50 hover:text-white">Ver mais pastas ({num(r.pastas.length - verPastas)})</button>}
+      </section>
+
+      <section>
+        <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Ficheiros repetidos</p>
+        <ul className="mt-3 flex flex-col gap-2">
+          {r.ficheiros.slice(0, verFich).map(f => (
+            <li key={`${f.n}|${f.b}`} className="rounded-[16px] border border-white/[0.08] bg-black/30 px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-[15px] font-semibold break-all">{f.n}</p>
+                <span className="text-[13px] tabular-nums text-white/55">{tamanho(f.b)} · <span style={{ color: ROSA }}>{f.p.length}×</span></span>
+              </div>
+              {f.p.map(c => (
+                <div key={c} className="mt-1.5 flex items-start justify-between gap-3">
+                  <p className="min-w-0 text-[13px] text-white/60 break-words">{caminhoLegivel(c)}</p>
+                  <Copiar texto={caminhoWindows(d, c ? `${c}/${f.n}` : f.n)} />
+                </div>
+              ))}
+            </li>
+          ))}
+        </ul>
+        {r.ficheiros.length > verFich && <button type="button" onClick={() => setVerFich(v => v + 50)} className="mt-3 text-[12px] tracking-[0.2em] uppercase text-white/50 hover:text-white">Ver mais ficheiros ({num(r.ficheiros.length - verFich)})</button>}
+        {r.grupos > r.ficheiros.length && <p className="mt-2 text-[12px] text-white/35">A lista mostra os {num(r.ficheiros.length)} que ocupam mais espaço.</p>}
+      </section>
+    </div>
+  )
+}
 
 const pendente = (d: { pedido_em?: string | null; atualizado: string }) =>
   !!d.pedido_em && (!d.atualizado || Date.parse(d.pedido_em) > Date.parse(d.atualizado))
@@ -111,6 +189,7 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
   const [q, setQ] = useState('')
   const [abertas, setAbertas] = useState<Set<string>>(new Set())
   const [escolhido, setEscolhido] = useState<string | null>(null)
+  const [vista, setVista] = useState<'conteudo' | 'repetidos'>('conteudo')
   const discoEscolhido = discos.find(d => d.disco === escolhido) ?? null
 
   function escolher(nome: string) {
@@ -223,6 +302,13 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
                     <span className="text-white/45">{tamanho(d.livre)} livres</span>
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/[0.06] text-[13px]"><Contagens n={n} /></div>
+                  {d.repetidos && (
+                    <p className="mt-1.5 text-[13px] tabular-nums">
+                      {d.repetidos.n
+                        ? <><span style={{ color: '#f9a8d4' }}>{tamanho(d.repetidos.bytes)}</span> <span className="text-white/45">em repetidos · {num(d.repetidos.n)} cópias a mais</span></>
+                        : <span className="text-white/45">Sem repetidos</span>}
+                    </p>
+                  )}
                   <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] tracking-[0.15em] uppercase text-white/35">
                     <span>{d.atualizado ? `Lido a ${quando(d.atualizado)}` : 'Ainda não lido'}</span>
                     <span className="inline-flex items-center gap-1.5" style={{ color: d.ligado ? '#4ade80' : 'rgba(255,255,255,.35)' }}>
@@ -249,10 +335,23 @@ export default function Armazenamento({ discos: lidos }: { discos: Disco[] | nul
                 </div>
                 <button type="button" onClick={() => setEscolhido(null)} className="text-[12px] tracking-[0.2em] uppercase text-white/45 hover:text-white">Fechar ✕</button>
               </div>
-              <div className="mt-4 rounded-[22px] border border-white/[0.08] bg-[#111111]/85 px-2 sm:px-4 py-2">
-                {discoEscolhido.pastas.length
-                  ? <Linhas d={discoEscolhido} pai="" nivel={0} />
-                  : <p className="px-2 py-4 text-sm text-white/45">Este disco ainda não foi lido. Carrega em Atualizar no card.</p>}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {([
+                  { k: 'conteudo', t: 'Conteúdo' },
+                  { k: 'repetidos', t: discoEscolhido.repetidos ? `Repetidos · ${tamanho(discoEscolhido.repetidos.bytes)}` : 'Repetidos' },
+                ] as const).map(t => (
+                  <button key={t.k} type="button" onClick={() => setVista(t.k)}
+                    className={`rounded-full border px-4 py-1.5 text-[13px] font-semibold transition-colors ${vista === t.k ? 'border-[#C9A84C]/70 bg-[#C9A84C]/15 text-white' : 'border-white/10 text-white/55 hover:text-white hover:border-white/25'}`}>
+                    {t.t}
+                  </button>
+                ))}
+              </div>
+              <div className="mt-3 rounded-[22px] border border-white/[0.08] bg-[#111111]/85 px-2 sm:px-4 py-2">
+                {!discoEscolhido.pastas.length
+                  ? <p className="px-2 py-4 text-sm text-white/45">Este disco ainda não foi lido. Carrega em Atualizar no card.</p>
+                  : vista === 'conteudo'
+                    ? <Linhas d={discoEscolhido} pai="" nivel={0} />
+                    : <VistaRepetidos key={discoEscolhido.disco} d={discoEscolhido} />}
               </div>
             </div>
           )}
