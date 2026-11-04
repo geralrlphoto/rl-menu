@@ -75,6 +75,7 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/tarefas', pill: 'Por fazer' },
     { href: '/formularios', pill: 'Entradas' },
     { href: '/tickets', pill: 'Tickets', label: 'Emails Enviados', sub: 'Exemplos' },
+    { href: '/armazenamento', pill: 'Discos' },
   ] },
   { titulo: 'Gestão', links: [
     { href: '/crm', pill: 'Leads', label: 'CRM Casamentos' },
@@ -473,6 +474,10 @@ function GlobalMenuInner() {
   {
     href: '/formularios', label: 'Formulários', sub: 'Entradas e rollup',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="4" y="3" width="16" height="18" rx="2"/><path strokeLinecap="round" d="M8 8h8M8 12h8M8 16h5"/></svg>,
+  },
+  {
+    href: '/armazenamento', label: 'Armazenamento', sub: 'Discos e ficheiros',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><ellipse cx="12" cy="5.5" rx="8" ry="2.8"/><path d="M4 5.5v13c0 1.5 3.6 2.8 8 2.8s8-1.3 8-2.8v-13"/><path d="M4 12c0 1.5 3.6 2.8 8 2.8s8-1.3 8-2.8"/></svg>,
   },
   {
     href: '/crm/follow-up', label: 'Follow-up', sub: 'Leads por contactar',
