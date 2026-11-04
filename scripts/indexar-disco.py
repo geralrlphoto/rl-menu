@@ -33,7 +33,8 @@ VIDEO = {'.mov', '.mp4', '.mxf', '.avi', '.mts', '.m4v', '.insv', '.lrv'}
 AUDIO = {'.wav', '.mp3', '.m4a', '.aac'}
 IGNORAR_EXT = {'.lrprev', '.thm', '.xmp', '.db', '.ini', '.ds_store', '.lock', '.lrcat-wal', '.lrcat-shm'}
 IGNORAR_PASTAS = {'$RECYCLE.BIN', 'System Volume Information', 'Seagate', 'Start_Here_Mac.app'}
-IGNORAR_RAIZ = {'autorun.inf', 'warranty.pdf', 'start_here_win.exe'}
+IGNORAR_RAIZ = {'autorun.inf', 'warranty.pdf', 'start_here_win.exe',
+                'install western digital software for mac.dmg', 'install western digital software for windows.exe'}
 
 APP_URL = os.environ.get('RL_APP_URL', 'https://rl-menu-lake.vercel.app').rstrip('/')
 # Log na pasta "rui claude code" (fora do repositório; o AppData não é visto igual por todas as apps)
