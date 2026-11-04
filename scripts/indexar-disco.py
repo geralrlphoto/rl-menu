@@ -1,9 +1,9 @@
-﻿"""Robô dos discos para a página /armazenamento.
+"""Robô dos discos para a página /armazenamento.
 
 Uso:
   python scripts/indexar-disco.py J        lê o disco J e envia a lista para a app
   pythonw scripts/indexar-disco.py --robo  o que a tarefa "RL Armazenamento" corre de 2 em 2 min:
-      1. pergunta à app se houve clique no botão Atualizar (e diz que discos USB estão ligados);
+      1. pergunta à app se houve clique no botão Atualizar (e diz que discos estão ligados);
       2. só lê os discos com clique; sem clique não toca em nenhum disco;
       3. envia a lista nova para a app (tabela armazenamento_discos).
       Um disco novo só fica registado (card "Ainda não lido"), sem ser lido.
@@ -159,16 +159,35 @@ def enviar(letra):
 
 def discos_usb():
     """{nome do volume: letra} dos discos USB ligados, com nome e tamanho."""
-    cmd = ("Get-Disk | ? BusType -eq 'USB' | Get-Partition | ? DriveLetter | Get-Volume | "
+    # saída em UTF-8: nomes com acentos (ex.: "VD EDIÇÃO") partiam a leitura
+    cmd = ("[Console]::OutputEncoding = [Text.Encoding]::UTF8; Get-Disk | ? BusType -eq 'USB' | Get-Partition | ? DriveLetter | Get-Volume | "
            "? { $_.Size -gt 0 -and $_.FileSystemLabel } | % { \"$($_.DriveLetter)|$($_.FileSystemLabel)\" }")
     out = subprocess.run(['powershell', '-NoProfile', '-NonInteractive', '-Command', cmd],
-                         capture_output=True, text=True, encoding='utf-8', timeout=60,
+                         capture_output=True, text=True, encoding='utf-8', errors='replace', timeout=120,
                          stdin=subprocess.DEVNULL,  # com pythonw não há consola: sem isto o PowerShell fica à espera
                          creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0)).stdout
     res = {}
-    for linha in out.splitlines():
+    for linha in (out or '').splitlines():
         if '|' in linha:
             letra, nome = linha.strip().split('|', 1)
+            res[nome] = letra
+    return res
+
+
+def volumes_com_nome():
+    """{nome do volume: letra} de todos os discos com nome (USB ou internos, como os NAS)."""
+    k32 = ctypes.windll.kernel32
+    k32.SetErrorMode(1)  # leitores de cartões vazios: sem janela de erro do Windows
+    res = {}
+    mascara = k32.GetLogicalDrives()
+    for i in range(26):
+        letra = chr(65 + i)
+        if not mascara & (1 << i) or letra == 'C':
+            continue
+        if k32.GetDriveTypeW(f'{letra}:\\') not in (2, 3):  # removível ou fixo
+            continue
+        nome = nome_volume(letra)
+        if nome:
             res[nome] = letra
     return res
 
@@ -179,7 +198,8 @@ def robo():
         return
     open(TRINCO, 'w').close()
     try:
-        ligados = discos_usb()
+        # Discos já conhecidos são reconhecidos pelo nome, ligados por USB ou internos (NAS, NAS 2)
+        ligados = volumes_com_nome()
         r = api({'ligados': list(ligados)})
         conhecidos = set(r.get('conhecidos', []))
         for nome in r.get('pedidos', []):
@@ -187,8 +207,9 @@ def robo():
                 enviar(ligados[nome])
             else:
                 log(f'{nome}: pedido de atualização, mas o disco não está ligado')
-        # Disco novo: só aparece na página (card "Ainda não lido"); é lido quando carregares em Atualizar
-        for nome, letra in ligados.items():
+        # Disco novo (só USB, para não trazer os discos do sistema): fica "Ainda não lido",
+        # é lido quando carregares em Atualizar
+        for nome, letra in discos_usb().items():
             if nome not in conhecidos:
                 uso = shutil.disk_usage(f'{letra}:\\')
                 api({'novo': {'disco': nome, 'letra': letra, 'tamanho': uso.total, 'livre': uso.free}})
