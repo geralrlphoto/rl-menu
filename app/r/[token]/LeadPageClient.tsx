@@ -567,6 +567,83 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
   const { hero, countdown, video, portfolio, testimonials, about, revista, banner, proposta } = content
 
+  // Detalhes da reunião junto da contagem regressiva (antes era um cartão à parte, com a mesma data e hora)
+  const calendario = (() => {
+    if (!targetDate) return null
+    const fmt = (d: string, h: string) => `${d.replace(/-/g,'') }T${h.replace(':','')}00`
+    const start = fmt(contact!.reuniao_data, horaFmt)
+    const end   = fmt(contact!.reuniao_data, String(parseInt(horaFmt.split(':')[0]) + 1).padStart(2,'0') + ':' + horaFmt.split(':')[1])
+    const title = encodeURIComponent('Reunião RL Photo · Video')
+    const loc   = encodeURIComponent(contact!.reuniao_link || (contact!.reuniao_tipo === 'Videochamada' ? 'Videochamada' : 'Presencial'))
+    const gcal  = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${loc}`
+    const downloadIcs = () => {
+      const ics = [
+        'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RL Photo//Video//PT',
+        'BEGIN:VEVENT',
+        `DTSTART:${start}`, `DTEND:${end}`,
+        `SUMMARY:Reunião RL Photo · Video`,
+        `LOCATION:${decodeURIComponent(loc)}`,
+        'END:VEVENT','END:VCALENDAR'
+      ].join('\r\n')
+      const blob = new Blob([ics], { type: 'text/calendar' })
+      const url  = URL.createObjectURL(blob)
+      const a    = Object.assign(document.createElement('a'), { href: url, download: 'reuniao-rl-photo.ics' })
+      a.click(); URL.revokeObjectURL(url)
+    }
+    return { gcal, downloadIcs }
+  })()
+
+  const blocoReuniao = (
+    <div className="rlp-reu">
+      <dl className="rlp-reu-det">
+        <div><dt>Data</dt><dd>{dataFmt}</dd></div>
+        <div><dt>Hora</dt><dd>{horaFmt}</dd></div>
+        <div><dt>Modo</dt><dd>{contact!.reuniao_tipo || 'Presencial'}</dd></div>
+      </dl>
+
+      {status === 'confirmada' && (
+        <div className="rlp-reu-estado on">✦&nbsp; Reunião Confirmada · Até breve</div>
+      )}
+      {status === 'alteracao_pedida' && (
+        <div className="rlp-reu-estado">Pedido enviado · Entraremos em contacto</div>
+      )}
+
+      {(status !== 'confirmada' || contact!.reuniao_link) && (
+        <div className="rlp-reu-acoes">
+          {status !== 'confirmada' && (
+            <button onClick={handleConfirm} disabled={confirming || isAdmin} className="rlp-btn full">
+              <span className="fill" /><span className="dot" />{confirming ? 'A confirmar…' : 'Confirmar Reunião'}
+            </button>
+          )}
+          {contact!.reuniao_link && (
+            <a href={contact!.reuniao_link} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost full">
+              <span className="fill" /><span className="dot" />{isVideo ? 'Entrar na videochamada' : 'Ver localização'}
+            </a>
+          )}
+        </div>
+      )}
+
+      <div className="rlp-reu-sec">
+        {calendario && (
+          <>
+            <a href={calendario.gcal} target="_blank" rel="noopener noreferrer" className="rlp-calbtn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-1V1h-2v2h-9V1h-2v2h-1A2.5 2.5 0 0 0 2 5.5v15A2.5 2.5 0 0 0 4.5 23h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 3zM20 20.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5V10h16v10.5zM20 8H4V5.5a.5.5 0 0 1 .5-.5H6v1h2V5h9v1h2V5h.5a.5.5 0 0 1 .5.5V8z"/></svg>
+              Google
+            </a>
+            <button onClick={calendario.downloadIcs} className="rlp-calbtn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+              Apple
+            </button>
+          </>
+        )}
+        <button onClick={handleChangeRequest} disabled={requesting || isAdmin} className="rlp-calbtn">
+          {requesting ? 'A enviar…' : 'Alterar reunião'}
+        </button>
+      </div>
+      {isAdmin && <p className="rlp-reu-admin">Botões desativados em modo admin</p>}
+    </div>
+  )
+
   return (
     <div className="rl-portal min-h-screen">
 
@@ -675,6 +752,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           <div className="rlp-wrap flex flex-col items-center gap-8" style={{ paddingTop: 'clamp(46px,7vh,88px)', paddingBottom: 'clamp(46px,7vh,88px)' }}>
             <FadeIn><span className="rlp-eyebrow c">{countdown.title}</span></FadeIn>
             <FadeIn delay={150}><Countdown targetDate={targetDate} /></FadeIn>
+            <FadeIn delay={250} className="w-full">{blocoReuniao}</FadeIn>
           </div>
         </section>
           } />
@@ -686,92 +764,10 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       {/* ── TESTEMUNHO EM DESTAQUE (Catarina & Ruben → rlphotovideo.pt/testemunho) ── */}
       <TestemunhoDestaque />
 
-      {/* ── CARD REUNIÃO ── */}
+      {/* ── RESPOSTA À PROPOSTA (os detalhes da reunião passaram para junto da contagem) ── */}
+      {propostaResposta && (
       <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
         <div className="mx-auto flex flex-col items-center md:flex-row md:items-stretch md:justify-center gap-6 md:gap-8" style={{ maxWidth: 900 }}>
-        <FadeIn className="w-full flex flex-col gap-3" style={{ maxWidth: 420 }}>
-        <div className="rlp-card w-full flex-1">
-          <div style={{ padding: '22px 26px', borderBottom: '1px solid var(--line-soft)' }}>
-            <span className="rlp-eyebrow">Detalhes da Reunião</span>
-          </div>
-          <div style={{ padding: '8px 26px 20px' }}>
-            <div className="rlp-drow"><span className="k">Data</span><span className="v">{dataFmt}</span></div>
-            <div className="rlp-drow"><span className="k">Hora</span><span className="v">{horaFmt}</span></div>
-            <div className="rlp-drow"><span className="k">Modo</span><span className="v">{contact!.reuniao_tipo || 'Presencial'}</span></div>
-          </div>
-          {contact!.reuniao_link && (
-            <div style={{ padding: '0 26px 18px' }}>
-              <a href={contact!.reuniao_link} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost full">
-                <span className="fill" /><span className="dot" />{isVideo ? 'Entrar na videochamada' : 'Ver localização'}
-              </a>
-            </div>
-          )}
-          {targetDate && (() => {
-            const fmt = (d: string, h: string) => `${d.replace(/-/g,'') }T${h.replace(':','')}00`
-            const start = fmt(contact!.reuniao_data, horaFmt)
-            const end   = fmt(contact!.reuniao_data, String(parseInt(horaFmt.split(':')[0]) + 1).padStart(2,'0') + ':' + horaFmt.split(':')[1])
-            const title = encodeURIComponent('Reunião RL Photo · Video')
-            const loc   = encodeURIComponent(contact!.reuniao_link || (contact!.reuniao_tipo === 'Videochamada' ? 'Videochamada' : 'Presencial'))
-            const gcal  = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${start}/${end}&location=${loc}`
-            const downloadIcs = () => {
-              const ics = [
-                'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//RL Photo//Video//PT',
-                'BEGIN:VEVENT',
-                `DTSTART:${start}`, `DTEND:${end}`,
-                `SUMMARY:Reunião RL Photo · Video`,
-                `LOCATION:${decodeURIComponent(loc)}`,
-                'END:VEVENT','END:VCALENDAR'
-              ].join('\r\n')
-              const blob = new Blob([ics], { type: 'text/calendar' })
-              const url  = URL.createObjectURL(blob)
-              const a    = Object.assign(document.createElement('a'), { href: url, download: 'reuniao-rl-photo.ics' })
-              a.click(); URL.revokeObjectURL(url)
-            }
-            return (
-              <div style={{ padding: '4px 26px 24px' }} className="flex flex-col items-center gap-3">
-                <p style={{ fontFamily: "'Roboto Condensed',sans-serif", fontSize: 10, letterSpacing: '.28em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Adicionar ao Calendário</p>
-                <div className="flex gap-2 w-full">
-                  <a href={gcal} target="_blank" rel="noopener noreferrer" className="rlp-calbtn">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 3h-1V1h-2v2h-9V1h-2v2h-1A2.5 2.5 0 0 0 2 5.5v15A2.5 2.5 0 0 0 4.5 23h15a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 19.5 3zM20 20.5a.5.5 0 0 1-.5.5h-15a.5.5 0 0 1-.5-.5V10h16v10.5zM20 8H4V5.5a.5.5 0 0 1 .5-.5H6v1h2V5h9v1h2V5h.5a.5.5 0 0 1 .5.5V8z"/></svg>
-                    Google
-                  </a>
-                  <button onClick={downloadIcs} className="rlp-calbtn">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
-                    Apple
-                  </button>
-                </div>
-              </div>
-            )
-          })()}
-        </div>
-
-          {/* Status badge */}
-          {status === 'confirmada' && (
-            <div className="w-full flex items-center justify-center gap-2 rounded-lg"
-              style={{ padding: '14px 20px', background: 'rgba(216,190,147,.08)', color: 'var(--g)', border: '1px solid rgba(216,190,147,.28)', fontFamily: "'Roboto Condensed',sans-serif", fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase' }}>
-              ✦&nbsp; Reunião Confirmada · Até breve
-            </div>
-          )}
-          {status === 'alteracao_pedida' && (
-            <div className="w-full flex items-center justify-center gap-2 rounded-lg"
-              style={{ padding: '14px 20px', background: 'rgba(243,237,226,.05)', color: 'var(--tx-mid)', border: '1px solid var(--line)', fontFamily: "'Roboto Condensed',sans-serif", fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase' }}>
-              Pedido enviado · Entraremos em contacto
-            </div>
-          )}
-
-          {/* Confirmar — só se ainda não confirmou */}
-          {status !== 'confirmada' && (
-            <button onClick={handleConfirm} disabled={confirming || isAdmin} className="rlp-btn full">
-              <span className="fill" /><span className="dot" />{confirming ? 'A confirmar…' : 'Confirmar Reunião'}
-            </button>
-          )}
-
-          {/* Alterar — sempre visível */}
-          <button onClick={handleChangeRequest} disabled={requesting || isAdmin} className="rlp-btn ghost full">
-            <span className="fill" /><span className="dot" />{requesting ? 'A enviar…' : 'Alterar Reunião'}
-          </button>
-        </FadeIn>
-
         {/* Confirmar/rejeitar saiu daqui: aceitam na proposta. Fica só a mensagem depois da resposta */}
         {propostaResposta && (
         <FadeIn delay={150} className="w-full flex flex-col gap-3" style={{ maxWidth: 420 }}>
@@ -813,8 +809,8 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         </FadeIn>
         )}
         </div>
-        {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Roboto Condensed',sans-serif", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
       </section>
+      )}
 
       {/* ── VÍDEO: roda (como a página de marcas) ── */}
       {(video.urls.some(u => u) || isAdmin) && (

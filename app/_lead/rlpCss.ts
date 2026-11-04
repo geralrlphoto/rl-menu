@@ -108,6 +108,27 @@ export const RLP_CSS = `
 .rlp-calbtn{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:.6em;padding:13px 0;border:1px solid rgba(255,255,255,.14);border-radius:40px;font-family:var(--fm);font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-mid);background:transparent;cursor:pointer;transition:border-color .4s var(--ease),color .4s var(--ease);}
 .rlp-calbtn:hover{border-color:rgba(216,190,147,.6);color:var(--g);box-shadow:0 0 24px -12px rgba(216,190,147,.7);}
 .rlp-calbtn svg{width:13px;height:13px;}
+.rlp-calbtn:disabled{opacity:.5;cursor:default;box-shadow:none;}
+
+/* Detalhes da reunião, por baixo da contagem regressiva */
+.rlp-reu{width:100%;max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:18px;}
+.rlp-reu-det{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:4px 0 6px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);}
+.rlp-reu-det>div{padding:20px 12px;text-align:center;border-left:1px solid var(--line-soft);}
+.rlp-reu-det>div:first-child{border-left:0;}
+.rlp-reu-det dt{font-family:var(--fm);font-weight:600;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--tx-dim);}
+.rlp-reu-det dd{margin:8px 0 0;font-family:var(--fd);font-weight:300;font-size:clamp(16px,1.6vw,20px);color:var(--tx);}
+.rlp-reu-estado{display:flex;align-items:center;justify-content:center;padding:14px 20px;border-radius:8px;border:1px solid var(--line);background:rgba(243,237,226,.05);color:var(--tx-mid);font-family:var(--fm);font-size:11px;letter-spacing:.16em;text-transform:uppercase;text-align:center;}
+.rlp-reu-estado.on{border-color:rgba(216,190,147,.28);background:rgba(216,190,147,.08);color:var(--g);}
+.rlp-reu-acoes{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;}
+.rlp-reu-sec{display:flex;flex-wrap:wrap;gap:10px;}
+.rlp-reu-sec .rlp-calbtn{flex:1 1 150px;}
+.rlp-reu-admin{text-align:center;font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim);}
+@media (max-width:560px){
+  .rlp-reu-det{grid-template-columns:1fr;}
+  .rlp-reu-det>div{display:flex;align-items:center;justify-content:space-between;padding:16px 2px;border-left:0;border-top:1px solid var(--line-soft);text-align:left;}
+  .rlp-reu-det>div:first-child{border-top:0;}
+  .rlp-reu-det dd{margin:0;}
+}
 
 /* Botão flutuante WhatsApp */
 .rlp-wa{position:fixed;bottom:24px;right:24px;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:8100;background:var(--g);color:var(--ink);box-shadow:0 10px 30px rgba(0,0,0,.4),0 0 30px -6px rgba(216,190,147,.55);transition:transform .4s var(--ease);}
