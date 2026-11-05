@@ -122,6 +122,21 @@ export default function EdicaoVideoPage() {
     carregar()
   }
 
+  // Estado da edição mudado pela RL, com as mesmas regras do editor (Aguardar, Em Edição, Em Revisão):
+  // serve para os vídeos que a RL edita e que não estão no Painel do Editor
+  const FASE_EDITOR: Record<string, string> = { 'Aguardar': 'Novo', 'Em Edição': 'Em Edição', 'Em Revisão': 'Para Revisão' }
+  const mudarEstado = async (p: Projeto, estado: 'Aguardar' | 'Em Edição' | 'Em Revisão') => {
+    if (!window.confirm(`Pôr o vídeo de ${p.cliente || p.referencia} em ${estado}? Funciona como se fosse o editor: o portal dos noivos fica igual e, da primeira vez neste passo, os noivos recebem o Ticket do Filme.`)) return
+    setAGravar(p.id)
+    const r = await fetch('/api/painel-editor/sync-video-estado', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ freelancer: p.editorIds.find(Boolean) ?? null, referencia: p.referencia, evento_id: p.fichaId, stage: FASE_EDITOR[estado], data_casamento: p.data, local: p.local, origem: 'RL' }),
+    }).catch(() => null)
+    setAGravar(null)
+    if (!r?.ok) alert('Não foi possível mudar o estado. Tenta outra vez.')
+    carregar()
+  }
+
   // Revisão: aprovar (→ Finalizado, Ticket de Aprovação) ou pedir alterações (→ Em Edição)
   const decidir = async (p: Projeto, status: 'Aprovado' | 'Requer Alterações') => {
     let feedback: string | null = null
@@ -458,6 +473,23 @@ export default function EdicaoVideoPage() {
                           </span>
                         ))}
                       </div>
+                      {(f === 'Aguardar' || f === 'Em Edição' || f === 'Em Revisão') && p.referencia && (
+                        <div className="flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-black/25 p-3">
+                          <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Estado da edição</p>
+                          <div className="flex gap-1.5">
+                            {(['Aguardar', 'Em Edição', 'Em Revisão'] as const).map(e => (
+                              <button key={e} type="button" disabled={aGravar === p.id || e === f} onClick={() => mudarEstado(p, e)}
+                                className="flex-1 rounded-full border px-2 py-1.5 text-[10px] font-semibold tracking-[0.08em] uppercase transition-colors disabled:cursor-default"
+                                style={e === f
+                                  ? { borderColor: `${COR_FASE[e]}99`, background: `${COR_FASE[e]}26`, color: COR_FASE[e] }
+                                  : { borderColor: 'rgba(255,255,255,.12)', color: 'rgba(255,255,255,.5)' }}>
+                                {e === f ? '● ' : ''}{e}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-[11px] text-white/40">Para os vídeos que editas tu. Funciona como o editor no Painel do Editor.</p>
+                        </div>
+                      )}
                       {(f === 'Aguardar' || f === 'Em Edição') && (
                         <div className="flex flex-col gap-2 rounded-xl border border-white/[0.08] bg-black/25 p-3">
                           <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Material para o editor</p>

@@ -16,7 +16,7 @@ function db() {
 //   1) Sincroniza video_estado no portal dos noivos (Notion + Supabase).
 //   2) Notifica o admin (sino) e regista o dia da mudança (freelancer_notificacoes).
 export async function POST(req: NextRequest) {
-  const { freelancer, referencia, evento_id, stage, local, data_casamento } =
+  const { freelancer, referencia, evento_id, stage, local, data_casamento, origem } =
     await req.json().catch(() => ({}))
   const bloqueio = await exigeAdminOuProprio(req, freelancer)
   if (bloqueio) return bloqueio
@@ -35,6 +35,8 @@ export async function POST(req: NextRequest) {
   // 1-2) Evento, Notion, portal dos noivos e fase no Painel do Editor (lib/videoEstado.ts)
   const { ok: synced, eventId } = await aplicarEstadoVideo(req.nextUrl.origin, {
     referencia: referencia ?? null, evento_id: evento_id ?? null, estado: videoEstado, freelancerId: freelancer ?? null,
+    // a RL também muda o estado no Departamento (vídeos que ela própria edita): fica "RL" no histórico
+    origem: ehAdmin(req) && origem === 'RL' ? 'RL' : undefined,
   })
 
   // 3) Regista a mudança + notifica o admin (sino).
@@ -49,7 +51,8 @@ export async function POST(req: NextRequest) {
     changedAt,
   })
   const mensagem = `__META__${meta}__/META__\nEstado do vídeo: ${videoEstado} (${stage}).`
-  if (freelancer) {
+  // quando é a RL a mudar (Departamento), não há aviso no sino: foi ela própria
+  if (freelancer && origem !== 'RL') {
     await supabase.from('freelancer_notificacoes').insert({
       freelancer_id: freelancer,
       titulo: `🎬 Estado do vídeo: ${videoEstado}`,
