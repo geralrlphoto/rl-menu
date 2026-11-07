@@ -7,6 +7,7 @@ import {
   whatsappLink, mensagemLembreteReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemReuniaoPreparacao,
   mensagemLembreteBriefing, mensagemLembretePreparacao, mensagemPreWedding,
   mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
+  mensagemFollowUpContacto1, mensagemFollowUpContacto2, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2,
 } from '@/lib/crm'
 
 /* Tarefa de WhatsApp da faixa "Próximos 30 dias" do /photo.
@@ -14,7 +15,7 @@ import {
    envio no histórico da lead (o mesmo registo que os botões do /crm usam). */
 
 export type WaTarefa = {
-  tipo: 'lembrete' | 'follow1' | 'follow2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
+  tipo: 'lembrete' | 'follow1' | 'follow2' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
   contactId: string    // id da lead no CRM; nos tipos de evento (preparação e lembretes) é o id do evento; em 'obrigado' é o id da tarefa
   nome: string
   contato: string | null
@@ -32,6 +33,8 @@ const CONFIG = {
   lembrete: { rotulo: 'Lembrete 1h', evento: 'WhatsApp lembrete 1h enviado' },
   follow1: { rotulo: '1.º Follow up', evento: 'WhatsApp follow-up enviado' },
   follow2: { rotulo: '2.º Follow up', evento: 'WhatsApp 2.º follow-up enviado' },
+  contacto1: { rotulo: '1.º Follow-up · lead', evento: EVENTO_FOLLOW_CONTACTO1 },
+  contacto2: { rotulo: '2.º Follow-up · lead', evento: EVENTO_FOLLOW_CONTACTO2 },
   preparacao: { rotulo: 'Reunião preparação', evento: 'reuniao_preparacao' },
   lembrete_briefing: { rotulo: 'Lembrar briefing', evento: 'lembrete_briefing' },
   lembrete_prep: { rotulo: 'Preparação · lembrete', evento: 'lembrete_preparacao' },
@@ -48,6 +51,8 @@ function textoDe(t: WaTarefa): string {
   if (t.tipo === 'obrigado') return t.mensagem ?? ''
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
   if (t.tipo === 'follow1') return mensagemFollowUp(t.nome, t.dataCasamento)
+  if (t.tipo === 'contacto1') return mensagemFollowUpContacto1(t.nome, t.contactId)
+  if (t.tipo === 'contacto2') return mensagemFollowUpContacto2(t.nome, t.contactId)
   if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome, t.contactId, t.batizado)
   if (t.tipo === 'lembrete_briefing') return mensagemLembreteBriefing(t.nome, t.contactId, t.batizado)
   if (t.tipo === 'lembrete_prep') return mensagemLembretePreparacao(t.nome, t.reuniaoHora)

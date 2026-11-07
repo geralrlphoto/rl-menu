@@ -7,7 +7,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
-import { whatsappLink, MEET_LINK } from '@/lib/crm'
+import { whatsappLink, MEET_LINK, colunaDe, followContactoPendente, ENCERRADA_STATUSES } from '@/lib/crm'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
 import FraseDoDia from './FraseDoDia'
@@ -385,13 +385,13 @@ export default async function PhotoDashboard() {
     ...marcacoesPublicas,
   ].filter((r: any) => !ocultos.has(chaveReuniao(r)))
 
-  // Tarefas de WhatsApp do CRM (lembrete 1h e follow ups), com as mesmas regras dos botões do /crm.
+  // Tarefas de WhatsApp do CRM (lembrete 1h e follow ups, incluindo os das novas leads), com as mesmas regras dos botões do /crm.
   // Tag própria: um envio só refaz esta leitura, não o painel todo.
   const getWaTarefas = unstable_cache(
     async () => {
       const { data: leads } = await supabase.from('crm_contacts')
-        .select('id, nome, contato, status, reuniao_data, reuniao_hora, data_casamento, status_updated_at')
-        .in('status', [...REUNIAO_STATUSES, ...FOLLOW_STATUSES])
+        .select('id, nome, contato, status, reuniao_data, reuniao_hora, reuniao_pedido, data_casamento, status_updated_at')
+        .or(`status.is.null,status.not.in.(${ENCERRADA_STATUSES.map(s => `"${s}"`).join(',')})`)
         .limit(300)
       const ids = (leads ?? []).map((l: any) => l.id)
       if (ids.length === 0) return { leads: [], hist: [] }
@@ -418,12 +418,17 @@ export default async function PhotoDashboard() {
       const dia = devido < hojeLx ? hojeLx : devido
       waTarefas.push({ ...base, tipo, dia, atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx })
     }
+    if (colunaDe(l.status) === 'nova') {
+      const f = followContactoPendente(l, env)
+      if (f && f.n < 3) push(f.n === 1 ? 'contacto1' : 'contacto2', f.devido)
+      continue
+    }
     if (REUNIAO_STATUSES.includes(l.status)) {
       // Lembrete: só no próprio dia da reunião
       if (l.reuniao_data === hojeLx && l.reuniao_hora && !env['WhatsApp lembrete 1h enviado']) push('lembrete', hojeLx)
       continue
     }
-    if (env['WhatsApp fecho enviado']) continue // já aceitaram
+    if (!FOLLOW_STATUSES.includes(l.status) || env['WhatsApp fecho enviado']) continue // já aceitaram
     const inicio = l.reuniao_data || (l.status_updated_at ? lisboaISO(new Date(l.status_updated_at)) : null)
     if (!inicio) continue
     const env1 = env['WhatsApp follow-up enviado']

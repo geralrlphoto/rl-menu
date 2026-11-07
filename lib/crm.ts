@@ -668,6 +668,30 @@ function diaCasamento(dataCasamento?: string | null): string {
   return m ? ` (${m[3]}/${m[2]}/${m[1]})` : ''
 }
 
+/* Follow-ups depois das Boas-vindas: enquanto a lead não marcar reunião, 3 dias depois do envio
+   fica disponível o 1.º e 3 dias depois deste o 2.º. Mesma regra no card do CRM, no sino e no
+   calendário dos 30 dias. n = 3: já foram os dois, a RL decide se passa a Sem resposta. */
+export const FOLLOW_CONTACTO_DIAS = 3
+export const EVENTO_FOLLOW_CONTACTO1 = 'WhatsApp 1.º follow-up de contacto enviado'
+export const EVENTO_FOLLOW_CONTACTO2 = 'WhatsApp 2.º follow-up de contacto enviado'
+const maisDiasContacto = (iso: string) => {
+  const dia = new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Europe/Lisbon' })
+  const d = new Date(dia + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + FOLLOW_CONTACTO_DIAS)
+  return d.toISOString().slice(0, 10)
+}
+export function followContactoPendente(
+  c: { status?: string | null; reuniao_data?: string | null; reuniao_pedido?: unknown },
+  enviados: Record<string, string>,
+): { n: 1 | 2 | 3; devido: string } | null {
+  if (colunaDe(c.status) !== 'nova' || c.reuniao_data || c.reuniao_pedido) return null
+  const inicio = enviados['WhatsApp de boas-vindas enviado'] || enviados['WhatsApp marcar reunião enviado']
+  if (!inicio) return null
+  const f1 = enviados[EVENTO_FOLLOW_CONTACTO1], f2 = enviados[EVENTO_FOLLOW_CONTACTO2]
+  if (f2) return { n: 3, devido: maisDiasContacto(f2) }
+  if (f1) return { n: 2, devido: maisDiasContacto(f1) }
+  return { n: 1, devido: maisDiasContacto(inicio) }
+}
+
 /* Lead sem resposta ao contacto para reunião: 1.º follow-up (+3 dias) */
 export function mensagemFollowUpContacto1(nome: string | null | undefined, id: string): string {
   const quem = (nome ?? '').trim()

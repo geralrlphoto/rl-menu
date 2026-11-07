@@ -13,7 +13,7 @@ import { EncerrarModal, KanbanCard, LeadDrawer, StatusSelect, type Contact } fro
 // Colunas que a LISTA do CRM usa — exclui de propósito o `page_content`
 // (propostas, ~3 KB/linha) e as notas, que só são precisas na ficha/painel.
 const LIST_COLUMNS =
-  'id,notion_id,nome,contato,email,status,lead_prioridade,tipo_evento,data_casamento,data_entrada,local_casamento,orcamento,como_chegou,servicos,status_updated_at,data_fecho,proxima_acao,proxima_acao_data,motivo_nao_fechou,reuniao_data,reuniao_hora,page_token,page_views,page_last_viewed,valor_proposto,valor_fechado,consentimento_marketing,page_tipo:page_content->>tipo'
+  'id,notion_id,nome,contato,email,status,lead_prioridade,tipo_evento,data_casamento,data_entrada,local_casamento,orcamento,como_chegou,servicos,status_updated_at,data_fecho,proxima_acao,proxima_acao_data,motivo_nao_fechou,reuniao_data,reuniao_hora,page_token,page_views,page_last_viewed,reuniao_pedido,valor_proposto,valor_fechado,consentimento_marketing,page_tipo:page_content->>tipo'
 
 const COLUNAS: { key: ColunaKey; label: string; accent: string }[] = [
   { key: 'nova', label: 'Nova Entrada', accent: 'bg-red-400' },

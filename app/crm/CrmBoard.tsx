@@ -9,6 +9,7 @@ import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { PedidoReuniaoPainel, type PedidoReuniao } from '@/app/photo/PedidoReuniaoCard'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
+  followContactoPendente, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUpContacto1, mensagemFollowUpContacto2,
   fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, EVENTO_ABRIU_LINK, linkOpiniao, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
@@ -38,6 +39,7 @@ export type Contact = {
   page_tipo?: string | null
   page_views?: number | null
   page_last_viewed?: string | null
+  reuniao_pedido?: unknown
   valor_proposto?: number | null
   valor_fechado?: number | null
   consentimento_marketing?: boolean | null
@@ -319,6 +321,18 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
           )}
         </>
       )}
+
+      {/* Follow-ups depois das Boas-vindas, enquanto não marcarem reunião */}
+      {coluna === 'nova' && (() => {
+        const f = followContactoPendente(c, enviados)
+        if (!f) return null
+        const hoje = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/Lisbon' })
+        if (f.devido > hoje) return <p className="text-[11px] text-center text-white/35">{f.n === 3 ? '2.º follow-up enviado, a aguardar resposta' : `${f.n}.º follow-up disponível a ${fmtDataCurta(f.devido)}`}</p>
+        if (f.n === 3) return <p className="text-[11px] text-center text-orange-300/85">Sem resposta aos 2 follow-ups. Passar a Sem resposta?</p>
+        return f.n === 1
+          ? <WhatsAppMsgButton c={c} texto={mensagemFollowUpContacto1(c.nome, c.id)} evento={EVENTO_FOLLOW_CONTACTO1} label="1.º Follow-up" enviados={enviados} onEnviado={onEnviado} />
+          : <WhatsAppMsgButton c={c} texto={mensagemFollowUpContacto2(c.nome, c.id)} evento={EVENTO_FOLLOW_CONTACTO2} label="2.º Follow-up" enviados={enviados} onEnviado={onEnviado} />
+      })()}
 
       {coluna === 'reuniao' && whatsappLink(c.contato) && !(c.reuniao_data && c.reuniao_hora) && (
         <Link

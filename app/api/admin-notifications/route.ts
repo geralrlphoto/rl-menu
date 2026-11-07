@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { eventoPreparacao } from '@/lib/preparacao'
 import { faseFoto } from '@/lib/fotografiaFluxo'
-import { ENCERRADA_STATUSES, FOLLOW_PARADO_DIAS, FOLLOW_STATUSES, daysSince, fmtDataCurta, hojeISO } from '@/lib/crm'
+import { ENCERRADA_STATUSES, FOLLOW_PARADO_DIAS, FOLLOW_STATUSES, colunaDe, daysSince, fmtDataCurta, followContactoPendente, hojeISO } from '@/lib/crm'
 
 function db() {
   return createClient(
@@ -44,6 +44,7 @@ const TIPO_LABELS: Record<string, string> = {
   entrega_projeto:          'Entrega do Projeto · Editor',
   crm_acao_atrasada:        'CRM · Próxima Ação Atrasada',
   crm_follow_parado:        'CRM · Follow Up Parado',
+  crm_follow_contacto:      'CRM · Follow-up por Enviar',
   crm_proposta_vista:       'CRM · Viram a Proposta',
   pedido_reuniao:           'Pedido de Reunião',
   reuniao_marcada:          'Reunião de Preparação Marcada',
@@ -83,6 +84,7 @@ const TIPO_ICONS: Record<string, string> = {
   entrega_projeto:          '📦',
   crm_acao_atrasada:        '⏰',
   crm_follow_parado:        '⚠',
+  crm_follow_contacto:      '⚠',
   crm_proposta_vista:       '👁',
   pedido_reuniao:           '📅',
   reuniao_marcada:          '📅',
@@ -1089,7 +1091,7 @@ export async function GET(req: Request) {
       const hojeStr = hojeISO()
       const { data: leads } = await supabase
         .from('crm_contacts')
-        .select('id, nome, status, status_updated_at, proxima_acao, proxima_acao_data, page_views, page_last_viewed')
+        .select('id, nome, status, status_updated_at, proxima_acao, proxima_acao_data, page_views, page_last_viewed, reuniao_data, reuniao_pedido')
         .or(`status.is.null,status.not.in.(${ENCERRADA_STATUSES.map(s => `"${s}"`).join(',')})`)
         .limit(1000)
       const ativos = (leads ?? []) as any[]
@@ -1104,6 +1106,15 @@ export async function GET(req: Request) {
           .order('created_at', { ascending: false })
         for (const h of (hist ?? []) as any[]) if (!ultimaMudanca.has(h.contact_id)) ultimaMudanca.set(h.contact_id, h.created_at)
       }
+      // Follow-ups depois das Boas-vindas: precisam dos envios das leads que ainda não marcaram
+      const semMarcar = ativos.filter(l => colunaDe(l.status) === 'nova' && !l.reuniao_data && !l.reuniao_pedido)
+      const envios = new Map<string, Record<string, string>>()
+      if (semMarcar.length > 0) {
+        const { data: hist } = await supabase.from('crm_status_history')
+          .select('contact_id, evento, created_at')
+          .in('contact_id', semMarcar.map(l => l.id)).like('evento', 'WhatsApp%')
+        for (const h of (hist ?? []) as any[]) envios.set(h.contact_id, { ...(envios.get(h.contact_id) ?? {}), [h.evento]: h.created_at })
+      }
       for (const l of ativos) {
         const base = { casamento_id: '', freelancer_id: '', freelancer_nome: l.nome || 'Sem nome', local: l.status || '—', data_casamento: null, url: `/crm/${l.id}` }
         const acaoData = l.proxima_acao_data ? String(l.proxima_acao_data).slice(0, 10) : null
@@ -1116,6 +1127,18 @@ export async function GET(req: Request) {
             tipo_icon: TIPO_ICONS.crm_acao_atrasada,
             sent_at: new Date(acaoData + 'T09:00:00').toISOString(),
             mensagem: `${l.proxima_acao || 'Próxima ação'} estava marcada para ${fmtDataCurta(acaoData)}.`,
+          })
+        }
+        const contacto = followContactoPendente(l, envios.get(l.id) ?? {})
+        if (contacto && contacto.n < 3 && contacto.devido <= hojeStr) {
+          notifications.push({
+            ...base,
+            id: `crm_follow_contacto::${l.id}::${contacto.n}`,
+            tipo: 'crm_follow_contacto',
+            tipo_label: TIPO_LABELS.crm_follow_contacto,
+            tipo_icon: TIPO_ICONS.crm_follow_contacto,
+            sent_at: new Date(contacto.devido + 'T09:00:00').toISOString(),
+            mensagem: `Ainda não marcaram reunião. Podes enviar o ${contacto.n}.º follow-up pelo WhatsApp.`,
           })
         }
         // Os noivos abriram o portal da proposta nas últimas 48 horas: é o melhor momento para ligar
