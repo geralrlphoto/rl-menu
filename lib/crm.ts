@@ -628,14 +628,18 @@ export function mensagemMarcarReuniao(nome: string | null | undefined, id: strin
    (/reuniao/<id>), que abre o portal da reunião; ao marcar, o pedido fica logo na ficha da lead.
    (A chamada rápida de 2 minutos deixou de ser feita.) */
 export const EVENTO_ABRIU_LINK = 'Abriu o link de marcação'
-export function mensagemBoasVindas(nome: string | null | undefined, id: string): string {
+// Leads importadas do email do Casamentos.pt: não preencheram o nosso formulário
+export const COMO_CHEGOU_MAIL = 'Casamentos.pt (email)'
+export function mensagemBoasVindas(nome: string | null | undefined, id: string, comoChegou?: string | null): string {
   const quem = (nome ?? '').trim()
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
     'Que bom receber o vosso contacto. Muito obrigado por pensarem em nós para fazer parte de um dia tão especial.',
     '',
-    'Já lemos com calma as respostas ao vosso formulário e ficámos com vontade de conhecer melhor a vossa história.',
+    comoChegou === COMO_CHEGOU_MAIL
+      ? 'Recebemos o vosso pedido através do Casamentos.pt e ficámos com vontade de conhecer melhor a vossa história.'
+      : 'Já lemos com calma as respostas ao vosso formulário e ficámos com vontade de conhecer melhor a vossa história.',
     '',
     'Preparámos um portal só para vocês. O primeiro passo é escolherem, com toda a tranquilidade, o momento ideal para conversarmos, por videochamada ou aqui no estúdio. Assim que a reunião estiver confirmada, o resto do portal fica disponível:',
     linkPublico(`/reuniao/${id}`),

@@ -72,6 +72,7 @@ function MiniTable({ contacts, onStatusChange, onOpen, borderColor, rowHover }: 
 
 /* ── BOTÃO QUADRADO DA BARRA DE AÇÕES ── */
 const ICONS: Record<string, string> = {
+  mail: 'M3 6h18v12H3zM3 7l9 7 9-7',
   sync: 'M4 4v6h6M20 20v-6h-6M5.5 15a7 7 0 0011.9 2.5L20 14M18.5 9A7 7 0 006.6 6.5L4 10',
   aneis: 'M9 21a6 6 0 100-12 6 6 0 000 12zM15 15a6 6 0 100-12 6 6 0 000 12z',
   estrela: 'M12 3l1.9 5.6H20l-4.9 3.6 1.9 5.8L12 14.4 7 18l1.9-5.8L4 8.6h6.1L12 3z',
@@ -180,6 +181,22 @@ export default function CRMPage() {
     try { localStorage.setItem('crm_atencao_aberta', v ? '0' : '1') } catch {}
     return !v
   })
+
+  // Leads Mail: vai buscar ao Gmail os pedidos do Casamentos.pt; as novas entram sozinhas no quadro (realtime)
+  const [aBuscarMail, setABuscarMail] = useState(false)
+  const handleLeadsMail = async () => {
+    setABuscarMail(true)
+    setSyncMsg('')
+    const d = await fetch('/api/crm/leads-mail', { method: 'POST' }).then(r => r.json()).catch(() => ({ error: 'Erro de ligação' }))
+    if (d.error) setSyncMsg(`Erro: ${d.error}`)
+    else {
+      const n = d.novas.length
+      setSyncMsg((n ? `✓ ${n === 1 ? '1 lead nova' : `${n} leads novas`}: ${d.novas.join(', ')}` : '✓ Sem leads novas no email')
+        + (d.ilegiveis ? ` · ${d.ilegiveis} por ler, ver no Gmail` : ''))
+    }
+    setABuscarMail(false)
+    setTimeout(() => setSyncMsg(''), 8000)
+  }
 
   const handleSync = async () => {
     setSyncing(true)
@@ -486,6 +503,7 @@ export default function CRMPage() {
             <ActionTile num={8} label="Form. Batizado" icon="formulario" href="/batizado" external />
             <ActionTile num={9} label={syncing ? 'A sincronizar' : 'Sync Notion'} icon="sync" onClick={handleSync} disabled={syncing} />
             <ActionTile num={10} label="Análise Reuniões" icon="analise" href="/crm/analises" />
+            <ActionTile num={11} label={aBuscarMail ? 'A procurar' : 'Leads Mail'} icon="mail" onClick={handleLeadsMail} disabled={aBuscarMail} />
           </div>
           {syncMsg && <p className="text-[13px] text-[#C9A84C] text-right mt-2">{syncMsg}</p>}
         </div>

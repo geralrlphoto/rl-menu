@@ -303,7 +303,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
 
       {coluna === 'nova' && (
         <>
-          <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome, c.id)} evento="WhatsApp de boas-vindas enviado" label="Boas-vindas" enviados={enviados} onEnviado={onEnviado} reenviavel />
+          <WhatsAppMsgButton c={c} texto={mensagemBoasVindas(c.nome, c.id, c.como_chegou)} evento="WhatsApp de boas-vindas enviado" label="Boas-vindas" enviados={enviados} onEnviado={onEnviado} reenviavel />
           {/* Depois das boas-vindas: a lead já abriu o link de marcação? */}
           {'WhatsApp de boas-vindas enviado' in enviados && (
             enviados[EVENTO_ABRIU_LINK]
