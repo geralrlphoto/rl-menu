@@ -27,6 +27,12 @@ export function colunaDe(status: string | null | undefined): ColunaKey {
   return 'nova'
 }
 
+/* Nova lead que ainda não escolheu horário: no portal da reunião (/r, /b) só vê o calendário.
+   Basta escolher (mesmo a aguardar a confirmação da RL) para o resto do portal abrir. */
+export function portalPorMarcar(c: { status?: string | null; reuniao_data?: string | null; reuniao_pedido?: unknown }): boolean {
+  return colunaDe(c.status) === 'nova' && !c.reuniao_data && !c.reuniao_pedido
+}
+
 export const MOTIVOS_NAO_FECHOU = ['Preço', 'Data ocupada', 'Escolheram outro fornecedor', 'Sem resposta', 'Desistiram do serviço', 'Outro']
 
 // Dias parado no mesmo passo do Follow Up sem próxima ação agendada
@@ -163,7 +169,7 @@ export function mensagemReuniaoConfirmada(nome: string | null | undefined, quand
     '',
     `A vossa reunião está confirmada para ${quando}, ${presencial ? 'no nosso estúdio' : 'por videochamada'}.`,
     '',
-    'Preparámos o vosso portal da reunião:',
+    'Tem tudo no vosso portal da reunião:',
     portalUrl,
     '',
     presencial
@@ -592,7 +598,8 @@ export function mensagemVesperaPreWedding(nome: string | null | undefined, hora?
   ].join('\n')
 }
 
-/* Link para os noivos marcarem a reunião no calendário (/reuniao/<id da lead>) */
+/* Link pessoal /reuniao/<id da lead>: abre o portal da reunião (criado no 1.º acesso), que só mostra
+   o calendário até escolherem horário. A password das propostas nunca vai na mensagem. */
 export function mensagemMarcarReuniao(nome: string | null | undefined, id: string): string {
   const quem = (nome ?? '').trim()
   return [
@@ -600,7 +607,7 @@ export function mensagemMarcarReuniao(nome: string | null | undefined, id: strin
     '',
     'Obrigado pelo vosso contacto. Gostávamos muito de conhecer a vossa história e conversar sobre o vosso dia.',
     '',
-    'Escolham aqui o dia e a hora que vos dá mais jeito para a nossa reunião (videochamada ou no estúdio):',
+    'Preparámos o vosso portal da reunião. Comecem por escolher o dia e a hora que vos dão mais jeito (videochamada ou no estúdio) e, assim que estiver marcada, o resto do portal fica disponível:',
     linkPublico(`/reuniao/${id}`),
     '',
     ...ASSINATURA,
@@ -608,7 +615,7 @@ export function mensagemMarcarReuniao(nome: string | null | undefined, id: strin
 }
 
 /* Mensagem de boas-vindas enviada às leads da coluna NOVA ENTRADA: leva o link pessoal
-   de marcação (/reuniao/<id>); ao marcar, a reunião fica logo na ficha da lead.
+   (/reuniao/<id>), que abre o portal da reunião; ao marcar, o pedido fica logo na ficha da lead.
    (A chamada rápida de 2 minutos deixou de ser feita.) */
 export const EVENTO_ABRIU_LINK = 'Abriu o link de marcação'
 export function mensagemBoasVindas(nome: string | null | undefined, id: string): string {
@@ -620,7 +627,7 @@ export function mensagemBoasVindas(nome: string | null | undefined, id: string):
     '',
     'Já lemos com calma as respostas ao vosso formulário e ficámos com vontade de conhecer melhor a vossa história.',
     '',
-    'Preparámos um espaço só para vocês, onde podem escolher com toda a tranquilidade o momento ideal para conversarmos, por videochamada ou aqui no estúdio:',
+    'Preparámos um portal só para vocês. O primeiro passo é escolherem, com toda a tranquilidade, o momento ideal para conversarmos, por videochamada ou aqui no estúdio. Assim que a reunião estiver marcada, o resto do portal fica disponível:',
     linkPublico(`/reuniao/${id}`),
     '',
     'Sem pressas e sem compromisso. Estamos por aqui para o que precisarem.',

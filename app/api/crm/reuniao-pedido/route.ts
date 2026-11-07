@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
   revalidateTag('photo-dashboard', { expire: 0 })
   revalidateTag('photo-whatsapp', { expire: 0 })
 
-  const portalUrl = linkPublico(`/r/${token}`)
+  const portalUrl = linkPublico(`/${(c.page_content as any)?.tipo === 'batizado' ? 'b' : 'r'}/${token}`)
   const quando = `${fmtDataLonga(data)}, às ${hora}`
   return NextResponse.json({
     ok: true, nome: c.nome ?? '', contato: c.contato ?? '', data, hora, tipo, portalUrl, password,

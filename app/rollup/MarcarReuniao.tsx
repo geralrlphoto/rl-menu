@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState } from 'react'
 type Slot = { id: string; data: string; hora: string }
 type Reserva = { data: string; hora: string; formato: string; link: string }
 type Opcao = { data: string; hora: string }
+export type PedidoMarcado = { opcoes: Opcao[]; formato: string }
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 const DIAS_LONGOS = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
@@ -34,12 +35,13 @@ function diasUteis(): string[] {
   return out
 }
 
-export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoInicial, onPasso, sujeitaConfirmacao }: {
+export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoInicial, onPasso, sujeitaConfirmacao, onMarcada }: {
   dataCasamento: string; leadId?: string
   origem?: 'link'          // página pública /reuniao (a lead fica com "Link de marcação")
   abertoInicial?: boolean  // calendário já aberto, sem ter de tocar no botão
   sujeitaConfirmacao?: boolean // /reuniao: avisa que a reunião ainda tem de ser confirmada pela RL
   onPasso?: (passo: number) => void // 0 horário, 1 dados, 2 confirmar, 3 feito (fotogramas da /reuniao)
+  onMarcada?: (p: PedidoMarcado) => void // portais /r e /b: abre o resto do portal
 }) {
   const [aberto, setAberto] = useState(!!leadId || !!abertoInicial)
   const [slots, setSlots] = useState<Slot[] | null>(null)
@@ -117,6 +119,7 @@ export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoIni
       }
       if (outro) setPedidoOk(j.pedido.opcoes)
       else setReserva(j.reserva)
+      onMarcada?.(outro ? j.pedido : { opcoes: [{ data: j.reserva.data, hora: j.reserva.hora }], formato: j.reserva.formato })
     } catch {
       setErro('Sem ligação. Tentem outra vez, por favor.')
     } finally {

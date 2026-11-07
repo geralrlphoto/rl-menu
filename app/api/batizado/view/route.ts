@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
       .single(),
     supabase
       .from('crm_contacts')
-      .select('reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content,proposta_pdf_url,page_publicada')
+      .select('id,status,data_casamento,reuniao_pedido,reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content,proposta_pdf_url,page_publicada')
       .eq('page_token', token)
       .maybeSingle(),
   ])
@@ -57,6 +57,8 @@ export async function GET(req: NextRequest) {
   } : null
 
   const crm_nome = crmContact?.nome || ''
+  // Para o calendário do portal enquanto a lead não marcar (como em /r)
+  const crm_lead = crmContact ? { id: crmContact.id, status: crmContact.status, data_casamento: crmContact.data_casamento, reuniao_data: crmContact.reuniao_data, reuniao_pedido: crmContact.reuniao_pedido } : null
 
   // ── CRM page_content é a fonte autoritária dos propostas ──────────────────
   // O admin edita propostas em /crm/[id] e a edição é guardada em
@@ -103,6 +105,7 @@ export async function GET(req: NextRequest) {
       proposta_resposta: settings.proposta_resposta ?? null,
       crm_reuniao,
       crm_nome,
+      crm_lead,
       crm_proposta_pdf_url,
     })
   }
@@ -130,11 +133,12 @@ export async function GET(req: NextRequest) {
         proposta_resposta: null,
         crm_reuniao,
         crm_nome,
+        crm_lead,
       })
     }
   }
 
   // Master doesn't exist yet — return empty settings but still inject CRM propostas if any
   const fallback = injectCrmIntoSettings({ content: {} })
-  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome, crm_proposta_pdf_url })
+  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome, crm_lead, crm_proposta_pdf_url })
 }

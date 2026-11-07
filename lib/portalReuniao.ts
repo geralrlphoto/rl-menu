@@ -11,8 +11,8 @@ export const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casa
 // Password das propostas: 4 algarismos, fácil de dizer por mensagem
 export const gerarPassword = () => String(1000 + Math.floor(Math.random() * 9000))
 
-/* Campos a gravar para publicar (ou despublicar) o portal. Com `password`, as propostas ficam
-   protegidas por ela; sem ela, mantém-se a que o casal já tinha. */
+/* Campos a gravar para publicar (ou despublicar) o portal. As propostas ficam sempre protegidas:
+   com `password` usa essa; sem ela, mantém a do casal ou gera uma só para ele. */
 export async function camposPublicar(sb: SupabaseClient, id: string, publish: boolean, password?: string) {
   const { data: existing } = await sb.from('crm_contacts').select('page_token, page_content').eq('id', id).single()
   const token: string = existing?.page_token || randomUUID()
@@ -25,6 +25,7 @@ export async function camposPublicar(sb: SupabaseClient, id: string, publish: bo
     // Da maquete vem tudo; de cada casal ficam as propostas, os extras, a proposta ativa e a password
     campos.page_content = {
       ...masterPC,
+      ...(currentPC.tipo ? { tipo: currentPC.tipo } : {}),
       propostas: currentPC.propostas ?? masterPC.propostas,
       extras_proposta: currentPC.extras_proposta ?? masterPC.extras_proposta,
       propostaPage: {
@@ -33,7 +34,7 @@ export async function camposPublicar(sb: SupabaseClient, id: string, publish: bo
       },
       proposta: {
         ...(masterPC.proposta ?? {}),
-        password: password ?? currentPC.proposta?.password ?? masterPC.proposta?.password ?? '',
+        password: password || currentPC.proposta?.password || gerarPassword(),
       },
     }
   }

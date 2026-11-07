@@ -7,6 +7,8 @@ import PortfolioFaixa from '@/app/_lead/PortfolioFaixa'
 import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
+import { portalPorMarcar } from '@/lib/crm'
+import { MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
 import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 
 const WHATSAPP      = 'https://wa.me/351912932768'
@@ -337,6 +339,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
 
   // Nome do CRM (aparece no hero automaticamente)
   const [crmNome, setCrmNome] = useState('')
+  // Lead do CRM: enquanto não marcar a reunião o portal só mostra o calendário
+  const [crmLead, setCrmLead] = useState<Record<string, any> | null>(null)
 
   // URL público do PDF da proposta (gerado pelo admin em /crm/[id]/proposta-pdf)
   const [propostaPdfUrl, setPropostaPdfUrl] = useState<string | null>(null)
@@ -403,6 +407,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         }
         // Nome do CRM para o hero
         if (data.crm_nome) setCrmNome(data.crm_nome)
+        if (data.crm_lead) setCrmLead(data.crm_lead)
         // URL do PDF da proposta (mostra botão "Ver Proposta PDF" quando existe)
         if (data.crm_proposta_pdf_url) setPropostaPdfUrl(data.crm_proposta_pdf_url)
         setLoading(false)
@@ -566,6 +571,10 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   )
 
   const heroImage = heroPreview || DEFAULT_HERO
+  // Sem reunião escolhida o portal só mostra o calendário (o admin vê sempre tudo)
+  const porMarcar = !!crmLead && portalPorMarcar(crmLead)
+  const bloqueado = porMarcar && !isAdmin
+  const pedido    = crmLead && !crmLead.reuniao_data && crmLead.reuniao_pedido?.opcoes?.length ? crmLead.reuniao_pedido : null
   const { hero, evento, reuniao, video, portfolio, revista, testimonials, about, banner, proposta } = content
   const isVideo     = reuniao.tipo === 'Videochamada'
   const reuniaoData = reuniao.data ? fmtData(reuniao.data) : ''
@@ -617,7 +626,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       )}
 
       {/* ── HERO ── */}
-      <section id="sec-reuniao" className="relative flex items-end overflow-hidden" style={{ minHeight: '92svh', paddingTop: isAdmin ? 60 : 0 }}>
+      <section id="sec-reuniao" className="relative flex items-end overflow-hidden" style={{ minHeight: porMarcar || pedido ? '50svh' : '92svh', paddingTop: isAdmin ? 60 : 0 }}>
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(11,10,8,.35) 0%, rgba(11,10,8,.55) 45%, var(--ink) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(11,10,8,.62) 0%, rgba(11,10,8,.15) 55%, transparent 100%)' }} />
@@ -676,7 +685,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           </FadeIn>
           <FadeIn delay={220}>
             <h1 className="rlp-h1" style={{ fontSize: 'clamp(42px,8vw,112px)', margin: '18px 0 0', maxWidth: '15ch', color: (hero.titleColor && hero.titleColor !== '#ffffff') ? hero.titleColor : undefined }}>
-              {hero.title}
+              {porMarcar ? 'Vamos Conversar' : pedido ? 'Reunião Pedida' : hero.title}
             </h1>
           </FadeIn>
           <FadeIn delay={380} className="mt-6 flex flex-col gap-3" style={{ maxWidth: '52ch' }}>
@@ -687,7 +696,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       </section>
 
       {/* ── CARD EVENTO ── */}
-      {(evento.nome || evento.data || evento.hora || evento.local) && (
+      {!bloqueado && (evento.nome || evento.data || evento.hora || evento.local) && (
       <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)', paddingBottom: 0 }}>
         <FadeIn className="mx-auto w-full" style={{ maxWidth: 420 }}>
           <div className="rlp-card w-full">
@@ -740,11 +749,18 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           } />
       )}
 
+      {/* ── POR MARCAR: calendário no lugar da contagem; marcado, abre o resto ── */}
+      {bloqueado && <MarcarNoPortal leadId={crmLead!.id} dataCasamento={crmLead!.data_casamento ?? ''}
+        onMarcada={p => { setCrmLead(c => c ? { ...c, reuniao_pedido: p } : c); scrollTo({ top: 0, behavior: 'smooth' }) }} />}
+      {pedido && <PedidoNoPortal pedido={pedido} />}
+      {isAdmin && porMarcar && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o calendário até marcarem a reunião</p>}
+
+      {!bloqueado && <>
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
       <PorqueReuniao tipo="batizado" fotos={[heroImage === DEFAULT_HERO ? '' : heroImage, ...portfolio.photos]} />
 
-      {/* ── CARD REUNIÃO ── */}
-      <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
+      {/* ── CARD REUNIÃO (com o pedido a aguardar confirmação ainda não há o que mostrar) ── */}
+      {!pedido && !porMarcar && <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
         <div className="mx-auto flex flex-col items-center md:flex-row md:items-stretch md:justify-center gap-6 md:gap-8" style={{ maxWidth: 900 }}>
 
         {/* ── COLUNA ESQUERDA — Reunião ── */}
@@ -879,7 +895,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         )}
         </div>
         {isAdmin && <p className="text-center" style={{ marginTop: 22, fontFamily: "'Roboto Condensed',sans-serif", fontSize: 10, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--tx-dim)' }}>Botões desativados em modo admin</p>}
-      </section>
+      </section>}
 
       {/* ── VÍDEO: roda (como a página de marcas) ── */}
       {(video.urls.some(u => u) || isAdmin) && (
@@ -1005,6 +1021,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           </FadeIn>
         </div>
       </section>
+
+      </>}
 
       {/* ── FOOTER ── */}
       <footer className="rlp-foot">
