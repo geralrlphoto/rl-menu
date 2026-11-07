@@ -160,8 +160,10 @@ export function mensagemLembreteReuniao(nome: string | null | undefined, hora?: 
 }
 
 /* Pedido de reunião aceite (calendário do /photo): data, formato e portal.
+   Sem portalUrl os noivos já têm o link (foi por aí que marcaram): só se avisa que o portal abriu.
+   O link só vai a quem marcou sem portal (/reuniao pública, rollup).
    A password das propostas é só para a RL: nunca vai na mensagem. */
-export function mensagemReuniaoConfirmada(nome: string | null | undefined, quando: string, tipo: string, portalUrl: string): string {
+export function mensagemReuniaoConfirmada(nome: string | null | undefined, quando: string, tipo: string, portalUrl: string | null): string {
   const quem = (nome ?? '').trim()
   const presencial = tipo === 'Presencial'
   return [
@@ -169,8 +171,9 @@ export function mensagemReuniaoConfirmada(nome: string | null | undefined, quand
     '',
     `A vossa reunião está confirmada para ${quando}, ${presencial ? 'no nosso estúdio' : 'por videochamada'}.`,
     '',
-    'Tem tudo no vosso portal da reunião:',
-    portalUrl,
+    ...(portalUrl
+      ? ['Tem tudo no vosso portal da reunião:', portalUrl]
+      : ['O vosso portal da reunião já está todo disponível, no link que vos enviámos.']),
     '',
     presencial
       ? 'No portal encontram a localização do estúdio e, na altura certa, as nossas propostas.'

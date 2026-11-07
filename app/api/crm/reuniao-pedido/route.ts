@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
   const sb = sbAdmin()
   const { data: c } = await sb.from('crm_contacts')
-    .select('nome, contato, status, reuniao_pedido, page_content').eq('id', id).maybeSingle()
+    .select('nome, contato, status, reuniao_pedido, page_content, page_token').eq('id', id).maybeSingle()
   if (!c) return NextResponse.json({ error: 'Lead não encontrada.' }, { status: 404 })
 
   // O horário que o pedido tinha reservado volta à disponibilidade se a reunião ficar noutro
@@ -62,6 +62,7 @@ export async function POST(req: NextRequest) {
   const quando = `${fmtDataLonga(data)}, às ${hora}`
   return NextResponse.json({
     ok: true, nome: c.nome ?? '', contato: c.contato ?? '', data, hora, tipo, portalUrl, password,
-    mensagem: mensagemReuniaoConfirmada(c.nome, quando, tipo, portalUrl),
+    // Com portal, marcaram por ele: o link já lhes foi enviado
+    mensagem: mensagemReuniaoConfirmada(c.nome, quando, tipo, c.page_token ? null : portalUrl),
   })
 }
