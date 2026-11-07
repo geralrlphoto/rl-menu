@@ -251,6 +251,13 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
         )}
       </div>
 
+      {/* Vinda do Casamentos.pt (pelo Leads Mail ou escolhida no formulário) */}
+      {/casamentos\.pt/i.test(c.como_chegou ?? '') && (
+        <span className="self-start text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-md border border-gold/40 bg-gold/10 text-gold">
+          Lead Casamentos.pt
+        </span>
+      )}
+
       <div className="flex items-center justify-between text-xs text-white/35">
         <span className="truncate">{c.tipo_evento?.replace(/[\[\]"]/g, '') || '—'}</span>
         <span className="flex-shrink-0">{c.data_casamento || c.data_entrada || '—'}</span>
