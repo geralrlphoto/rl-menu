@@ -9,7 +9,7 @@ import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 import TestemunhoDestaque from '@/app/_lead/TestemunhoDestaque'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
-import { fmtOrcamento, portalPorMarcar } from '@/lib/crm'
+import { fmtOrcamento, portalFechado } from '@/lib/crm'
 import { MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
 import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 
@@ -557,9 +557,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
   )
 
   const heroImage  = heroPreview || DEFAULT_HERO
-  // Sem reunião escolhida o portal só mostra o calendário (o admin vê sempre tudo)
-  const porMarcar  = portalPorMarcar(contact!)
-  const bloqueado  = porMarcar && !isAdmin
+  // Sem reunião aceite pela RL o portal fica fechado: calendário ou pedido a aguardar (o admin vê sempre tudo)
+  const fechado    = portalFechado(contact!)
+  const bloqueado  = fechado && !isAdmin
   const pedido     = !contact!.reuniao_data && contact!.reuniao_pedido?.opcoes?.length ? contact!.reuniao_pedido : null
   const isVideo    = contact!.reuniao_tipo === 'Videochamada'
   const dataFmt    = fmtData(contact!.reuniao_data || '')
@@ -693,7 +693,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       )}
 
       {/* ── HERO ── */}
-      <section id="sec-reuniao" className="relative flex items-end overflow-hidden" style={{ minHeight: porMarcar || pedido ? '50svh' : '92svh', paddingTop: isAdmin ? 60 : 0 }}>
+      <section id="sec-reuniao" className="relative flex items-end overflow-hidden" style={{ minHeight: fechado || pedido ? '50svh' : '92svh', paddingTop: isAdmin ? 60 : 0 }}>
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(11,10,8,.35) 0%, rgba(11,10,8,.55) 45%, var(--ink) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(11,10,8,.62) 0%, rgba(11,10,8,.15) 55%, transparent 100%)' }} />
@@ -738,7 +738,7 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           </FadeIn>
           <FadeIn delay={220}>
             <h1 className="rlp-h1" style={{ fontSize: 'clamp(42px,8vw,112px)', margin: '18px 0 0', maxWidth: '15ch', color: (hero.titleColor && hero.titleColor !== '#ffffff') ? hero.titleColor : undefined }}>
-              {porMarcar ? 'Vamos Conversar' : pedido ? 'Reunião Pedida' : hero.title}
+              {pedido ? 'Reunião Pedida' : fechado ? 'Vamos Conversar' : hero.title}
             </h1>
           </FadeIn>
           <FadeIn delay={380} className="mt-6 flex flex-col gap-3" style={{ maxWidth: '52ch' }}>
@@ -763,11 +763,11 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
           } />
       )}
 
-      {/* ── POR MARCAR: calendário no lugar da contagem; marcado, abre o resto ── */}
-      {bloqueado && <MarcarNoPortal leadId={contact!.id} dataCasamento={contact!.data_casamento ?? ''}
+      {/* ── FECHADO: calendário no lugar da contagem; o resto abre quando a RL aceitar ── */}
+      {bloqueado && !pedido && <MarcarNoPortal leadId={contact!.id} dataCasamento={contact!.data_casamento ?? ''}
         onMarcada={p => { setContact(c => c ? { ...c, reuniao_pedido: p } : c); scrollTo({ top: 0, behavior: 'smooth' }) }} />}
       {pedido && <PedidoNoPortal pedido={pedido} />}
-      {isAdmin && porMarcar && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o calendário até marcarem a reunião</p>}
+      {isAdmin && fechado && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o resto do portal depois de aceitares a reunião</p>}
 
       {!bloqueado && <>
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}

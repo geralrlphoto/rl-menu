@@ -27,10 +27,10 @@ export function colunaDe(status: string | null | undefined): ColunaKey {
   return 'nova'
 }
 
-/* Nova lead que ainda não escolheu horário: no portal da reunião (/r, /b) só vê o calendário.
-   Basta escolher (mesmo a aguardar a confirmação da RL) para o resto do portal abrir. */
-export function portalPorMarcar(c: { status?: string | null; reuniao_data?: string | null; reuniao_pedido?: unknown }): boolean {
-  return colunaDe(c.status) === 'nova' && !c.reuniao_data && !c.reuniao_pedido
+/* Nova lead sem reunião aceite pela RL: o portal da reunião (/r, /b) fica fechado.
+   Sem pedido mostra o calendário; com pedido mostra-o a aguardar confirmação. */
+export function portalFechado(c: { status?: string | null; reuniao_data?: string | null }): boolean {
+  return colunaDe(c.status) === 'nova' && !c.reuniao_data
 }
 
 export const MOTIVOS_NAO_FECHOU = ['Preço', 'Data ocupada', 'Escolheram outro fornecedor', 'Sem resposta', 'Desistiram do serviço', 'Outro']
@@ -607,7 +607,7 @@ export function mensagemMarcarReuniao(nome: string | null | undefined, id: strin
     '',
     'Obrigado pelo vosso contacto. Gostávamos muito de conhecer a vossa história e conversar sobre o vosso dia.',
     '',
-    'Preparámos o vosso portal da reunião. Comecem por escolher o dia e a hora que vos dão mais jeito (videochamada ou no estúdio) e, assim que estiver marcada, o resto do portal fica disponível:',
+    'Preparámos o vosso portal da reunião. Comecem por escolher o dia e a hora que vos dão mais jeito (videochamada ou no estúdio) e, assim que estiver confirmada, o resto do portal fica disponível:',
     linkPublico(`/reuniao/${id}`),
     '',
     ...ASSINATURA,
@@ -627,7 +627,7 @@ export function mensagemBoasVindas(nome: string | null | undefined, id: string):
     '',
     'Já lemos com calma as respostas ao vosso formulário e ficámos com vontade de conhecer melhor a vossa história.',
     '',
-    'Preparámos um portal só para vocês. O primeiro passo é escolherem, com toda a tranquilidade, o momento ideal para conversarmos, por videochamada ou aqui no estúdio. Assim que a reunião estiver marcada, o resto do portal fica disponível:',
+    'Preparámos um portal só para vocês. O primeiro passo é escolherem, com toda a tranquilidade, o momento ideal para conversarmos, por videochamada ou aqui no estúdio. Assim que a reunião estiver confirmada, o resto do portal fica disponível:',
     linkPublico(`/reuniao/${id}`),
     '',
     'Sem pressas e sem compromisso. Estamos por aqui para o que precisarem.',

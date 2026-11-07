@@ -7,7 +7,7 @@ import PortfolioFaixa from '@/app/_lead/PortfolioFaixa'
 import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
-import { portalPorMarcar } from '@/lib/crm'
+import { portalFechado } from '@/lib/crm'
 import { MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
 import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 
@@ -571,9 +571,9 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
   )
 
   const heroImage = heroPreview || DEFAULT_HERO
-  // Sem reunião escolhida o portal só mostra o calendário (o admin vê sempre tudo)
-  const porMarcar = !!crmLead && portalPorMarcar(crmLead)
-  const bloqueado = porMarcar && !isAdmin
+  // Sem reunião aceite pela RL o portal fica fechado: calendário ou pedido a aguardar (o admin vê sempre tudo)
+  const fechado   = !!crmLead && portalFechado(crmLead)
+  const bloqueado = fechado && !isAdmin
   const pedido    = crmLead && !crmLead.reuniao_data && crmLead.reuniao_pedido?.opcoes?.length ? crmLead.reuniao_pedido : null
   const { hero, evento, reuniao, video, portfolio, revista, testimonials, about, banner, proposta } = content
   const isVideo     = reuniao.tipo === 'Videochamada'
@@ -626,7 +626,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       )}
 
       {/* ── HERO ── */}
-      <section id="sec-reuniao" className="relative flex items-end overflow-hidden" style={{ minHeight: porMarcar || pedido ? '50svh' : '92svh', paddingTop: isAdmin ? 60 : 0 }}>
+      <section id="sec-reuniao" className="relative flex items-end overflow-hidden" style={{ minHeight: fechado || pedido ? '50svh' : '92svh', paddingTop: isAdmin ? 60 : 0 }}>
         <div className="absolute inset-0 bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${heroImage})` }}>
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(11,10,8,.35) 0%, rgba(11,10,8,.55) 45%, var(--ink) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(11,10,8,.62) 0%, rgba(11,10,8,.15) 55%, transparent 100%)' }} />
@@ -685,7 +685,7 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           </FadeIn>
           <FadeIn delay={220}>
             <h1 className="rlp-h1" style={{ fontSize: 'clamp(42px,8vw,112px)', margin: '18px 0 0', maxWidth: '15ch', color: (hero.titleColor && hero.titleColor !== '#ffffff') ? hero.titleColor : undefined }}>
-              {porMarcar ? 'Vamos Conversar' : pedido ? 'Reunião Pedida' : hero.title}
+              {pedido ? 'Reunião Pedida' : fechado ? 'Vamos Conversar' : hero.title}
             </h1>
           </FadeIn>
           <FadeIn delay={380} className="mt-6 flex flex-col gap-3" style={{ maxWidth: '52ch' }}>
@@ -749,18 +749,18 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
           } />
       )}
 
-      {/* ── POR MARCAR: calendário no lugar da contagem; marcado, abre o resto ── */}
-      {bloqueado && <MarcarNoPortal leadId={crmLead!.id} dataCasamento={crmLead!.data_casamento ?? ''}
+      {/* ── FECHADO: calendário no lugar da contagem; o resto abre quando a RL aceitar ── */}
+      {bloqueado && !pedido && <MarcarNoPortal leadId={crmLead!.id} dataCasamento={crmLead!.data_casamento ?? ''}
         onMarcada={p => { setCrmLead(c => c ? { ...c, reuniao_pedido: p } : c); scrollTo({ top: 0, behavior: 'smooth' }) }} />}
       {pedido && <PedidoNoPortal pedido={pedido} />}
-      {isAdmin && porMarcar && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o calendário até marcarem a reunião</p>}
+      {isAdmin && fechado && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o resto do portal depois de aceitares a reunião</p>}
 
       {!bloqueado && <>
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
       <PorqueReuniao tipo="batizado" fotos={[heroImage === DEFAULT_HERO ? '' : heroImage, ...portfolio.photos]} />
 
       {/* ── CARD REUNIÃO (com o pedido a aguardar confirmação ainda não há o que mostrar) ── */}
-      {!pedido && !porMarcar && <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
+      {!pedido && !fechado && <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>
         <div className="mx-auto flex flex-col items-center md:flex-row md:items-stretch md:justify-center gap-6 md:gap-8" style={{ maxWidth: 900 }}>
 
         {/* ── COLUNA ESQUERDA — Reunião ── */}

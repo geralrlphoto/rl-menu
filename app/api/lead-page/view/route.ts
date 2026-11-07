@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { portalPorMarcar } from '@/lib/crm'
+import { portalFechado } from '@/lib/crm'
 
 // Defaults usados quando o admin define data/hora/tipo da reunião mas não
 // preencheu o link explícito — o cliente continua a poder entrar/abrir o mapa.
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
   // Registar visita (só dos noivos: as do admin não contam para o alerta de "viram a proposta").
   // Antes de haver reunião também não: nessa fase só veem o calendário.
-  if (!isAdmin && !portalPorMarcar(contact) && !contact.reuniao_pedido) {
+  if (!isAdmin && !portalFechado(contact) && !contact.reuniao_pedido) {
     await supabase.from('crm_contacts').update({
       page_views: (contact.page_views || 0) + 1,
       page_last_viewed: new Date().toISOString(),

@@ -2,7 +2,7 @@
 
 // Portais da reunião (/r e /b): a nova lead recebe logo o link do portal. Enquanto não escolher
 // horário só vê o calendário (o mesmo da /reuniao, com a mesma confirmação da RL no /photo);
-// assim que escolhe, o resto do portal abre e fica o pedido à espera da confirmação.
+// depois fica só o pedido à espera da confirmação, e o resto do portal abre quando a RL aceitar.
 
 import MarcarReuniao, { CSS_MARCAR, type PedidoMarcado } from '@/app/rollup/MarcarReuniao'
 
@@ -25,7 +25,7 @@ export function MarcarNoPortal({ leadId, dataCasamento, onMarcada }: {
         <span className="rlp-eyebrow c">O primeiro passo</span>
         <h2 className="rlp-h2" style={{ fontSize: 'clamp(30px,4.4vw,52px)' }}>Escolham o <em>vosso momento</em></h2>
         <p className="rlp-lede" style={{ maxWidth: '50ch' }}>
-          Assim que escolherem o dia e a hora, o resto do vosso portal fica disponível.
+          Escolham o dia e a hora. Assim que confirmarmos a reunião, o resto do vosso portal fica disponível.
         </p>
         <p className="rlp-lede" style={{ maxWidth: '50ch', fontSize: 14 }}>
           Não enviamos valores por mensagem nem em PDF. Gostamos sempre de falar com os nossos noivos, criar empatia e ganhar confiança mútua.
@@ -49,7 +49,7 @@ export function PedidoNoPortal({ pedido }: { pedido: PedidoMarcado }) {
           <p>{pedido.formato === 'Presencial' ? 'No nosso estúdio' : 'Por videochamada'}</p>
         </div>
         <p className="rlp-lede" style={{ maxWidth: '46ch', fontSize: 14 }}>
-          A reunião está sujeita a confirmação. Vamos confirmar convosco muito em breve pelo WhatsApp.
+          A reunião está sujeita a confirmação. Vamos confirmar convosco muito em breve pelo WhatsApp e, nessa altura, o resto do vosso portal fica disponível.
         </p>
       </div>
     </section>

@@ -41,7 +41,7 @@ export default function MarcarReuniao({ dataCasamento, leadId, origem, abertoIni
   abertoInicial?: boolean  // calendário já aberto, sem ter de tocar no botão
   sujeitaConfirmacao?: boolean // /reuniao: avisa que a reunião ainda tem de ser confirmada pela RL
   onPasso?: (passo: number) => void // 0 horário, 1 dados, 2 confirmar, 3 feito (fotogramas da /reuniao)
-  onMarcada?: (p: PedidoMarcado) => void // portais /r e /b: abre o resto do portal
+  onMarcada?: (p: PedidoMarcado) => void // portais /r e /b: passa ao pedido a aguardar confirmação
 }) {
   const [aberto, setAberto] = useState(!!leadId || !!abertoInicial)
   const [slots, setSlots] = useState<Slot[] | null>(null)
