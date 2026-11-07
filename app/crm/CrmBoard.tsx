@@ -9,7 +9,7 @@ import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { PedidoReuniaoPainel, type PedidoReuniao } from '@/app/photo/PedidoReuniaoCard'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  EVENTO_FOLLOW3, FOLLOW3_WA_DIAS, mensagemFollowUp3, followContactoPendente, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUpContacto1, mensagemFollowUpContacto2,
+  EVENTO_LEMBRETE_VESPERA, mensagemVesperaReuniao, EVENTO_FOLLOW3, FOLLOW3_WA_DIAS, mensagemFollowUp3, followContactoPendente, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUpContacto1, mensagemFollowUpContacto2,
   fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, EVENTO_ABRIU_LINK, linkOpiniao, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
@@ -348,6 +348,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
       {coluna === 'reuniao' && whatsappLink(c.contato) && c.reuniao_data && c.reuniao_hora && (
         <div className="flex flex-col gap-1.5">
           <WhatsAppMsgButton c={c} texto={p => mensagemPortalReuniao(c.nome, p, c.reuniao_data, c.reuniao_hora)} evento="WhatsApp portal da reunião enviado" label="Portal da reunião" enviados={enviados} onEnviado={onEnviado} onPortal={onPortal} />
+          <WhatsAppMsgButton c={c} texto={mensagemVesperaReuniao(c.nome, c.reuniao_hora)} evento={EVENTO_LEMBRETE_VESPERA} label="Lembrete: véspera" enviados={enviados} onEnviado={onEnviado} />
           <WhatsAppMsgButton c={c} texto={mensagemLembreteReuniao(c.nome, c.reuniao_hora)} evento="WhatsApp lembrete 1h enviado" label="Lembrete: falta 1 hora" enviados={enviados} onEnviado={onEnviado} />
         </div>
       )}

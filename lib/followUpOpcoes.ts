@@ -6,7 +6,7 @@ import {
 } from '@/lib/crm'
 import { linkPublico } from '@/lib/site-url'
 
-export type TipoFollow = 'contacto1' | 'contacto2' | 'follow1' | 'follow2' | 'follow3'
+export type TipoFollow = 'ligar' | 'contacto1' | 'contacto2' | 'follow1' | 'follow2' | 'follow3'
 type Lead = { nome: string; id: string; dataCasamento?: string | null }
 export type Opcao = { titulo: string; texto: string }
 export type Script = {
@@ -25,7 +25,7 @@ const texto = (nome: string, linhas: string[]) => {
 
 export function opcoesFollowUp(tipo: TipoFollow, l: Lead): Opcao[] {
   const portal = linkPublico(`/reuniao/${l.id}`)
-  if (tipo === 'contacto1') return [
+  if (tipo === 'contacto1' || tipo === 'ligar') return [
     { titulo: 'Confirmar que receberam', texto: mensagemFollowUpContacto1(l.nome, l.id) },
     { titulo: 'Curta e direta', texto: texto(l.nome, [
       'Já conseguiram ver o vosso portal? Basta escolherem o dia e a hora para a nossa reunião, não demora mais de um minuto:',
@@ -104,4 +104,4 @@ const SCRIPT_PROPOSTA: Script = {
 }
 
 export const scriptTelefone = (tipo: TipoFollow): Script =>
-  tipo === 'contacto1' || tipo === 'contacto2' ? SCRIPT_CONTACTO : SCRIPT_PROPOSTA
+  tipo === 'ligar' || tipo === 'contacto1' || tipo === 'contacto2' ? SCRIPT_CONTACTO : SCRIPT_PROPOSTA

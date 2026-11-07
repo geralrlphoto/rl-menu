@@ -10,6 +10,7 @@ import {
   mensagemLembreteBriefing, mensagemLembretePreparacao, mensagemPreWedding,
   mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
   mensagemFollowUpContacto1, mensagemFollowUpContacto2, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUp3, EVENTO_FOLLOW3,
+  EVENTO_LIGAR_ABRIU, EVENTO_LEMBRETE_VESPERA, mensagemVesperaReuniao,
 } from '@/lib/crm'
 
 /* Tarefa de WhatsApp da faixa "Próximos 30 dias" do /photo.
@@ -17,7 +18,7 @@ import {
    envio no histórico da lead (o mesmo registo que os botões do /crm usam). */
 
 export type WaTarefa = {
-  tipo: 'lembrete' | 'follow1' | 'follow2' | 'follow3' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
+  tipo: 'lembrete' | 'vespera' | 'ligar' | 'follow1' | 'follow2' | 'follow3' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
   contactId: string    // id da lead no CRM; nos tipos de evento (preparação e lembretes) é o id do evento; em 'obrigado' é o id da tarefa
   nome: string
   contato: string | null
@@ -36,6 +37,8 @@ const CONFIG = {
   follow1: { rotulo: '1.º Follow up', evento: 'WhatsApp follow-up enviado' },
   follow2: { rotulo: '2.º Follow up', evento: 'WhatsApp 2.º follow-up enviado' },
   follow3: { rotulo: '3.º Follow up', evento: EVENTO_FOLLOW3 },
+  vespera: { rotulo: 'Reunião amanhã · lembrete', evento: EVENTO_LEMBRETE_VESPERA },
+  ligar: { rotulo: 'Ligar · abriu o portal', evento: EVENTO_LIGAR_ABRIU },
   contacto1: { rotulo: '1.º Follow-up · lead', evento: EVENTO_FOLLOW_CONTACTO1 },
   contacto2: { rotulo: '2.º Follow-up · lead', evento: EVENTO_FOLLOW_CONTACTO2 },
   preparacao: { rotulo: 'Reunião preparação', evento: 'reuniao_preparacao' },
@@ -48,7 +51,7 @@ const CONFIG = {
 }
 
 /* Follow-ups: carregar abre a janela com as opções de mensagem e o script de telefonema */
-const FOLLOW = new Set<WaTarefa['tipo']>(['contacto1', 'contacto2', 'follow1', 'follow2', 'follow3'])
+const FOLLOW = new Set<WaTarefa['tipo']>(['ligar', 'contacto1', 'contacto2', 'follow1', 'follow2', 'follow3'])
 
 /* Tarefas ligadas ao evento (registo em eventos_whatsapp_envios); as outras são do CRM */
 const DO_EVENTO = new Set(['preparacao', 'lembrete_briefing', 'lembrete_prep', 'prewedding', 'lembrete_marcar_pw', 'vespera_pw'])
@@ -58,6 +61,8 @@ function textoDe(t: WaTarefa): string {
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
   if (t.tipo === 'follow1') return mensagemFollowUp(t.nome, t.dataCasamento)
   if (t.tipo === 'follow3') return mensagemFollowUp3(t.nome, t.dataCasamento)
+  if (t.tipo === 'vespera') return mensagemVesperaReuniao(t.nome, t.reuniaoHora)
+  if (t.tipo === 'ligar') return mensagemFollowUpContacto1(t.nome, t.contactId)
   if (t.tipo === 'contacto1') return mensagemFollowUpContacto1(t.nome, t.contactId)
   if (t.tipo === 'contacto2') return mensagemFollowUpContacto2(t.nome, t.contactId)
   if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome, t.contactId, t.batizado)

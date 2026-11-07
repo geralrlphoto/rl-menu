@@ -16,7 +16,8 @@ export default function FollowUpJanela({ tipo, rotulo, contactId, nome, contato,
   dataCasamento: string | null; atrasoDias: number
   onEnviar: () => void; onLigou: () => void; onFechar: () => void
 }) {
-  const [aba, setAba] = useState<'mensagem' | 'telefone'>('mensagem')
+  // Abriram o portal e não marcaram: abre já no script de telefonema
+  const [aba, setAba] = useState<'mensagem' | 'telefone'>(tipo === 'ligar' ? 'telefone' : 'mensagem')
   const [sel, setSel] = useState(0)
   const opcoes = opcoesFollowUp(tipo, { nome, id: contactId, dataCasamento })
   const s = scriptTelefone(tipo)

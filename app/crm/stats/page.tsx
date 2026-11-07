@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import FunilFluxo from './FunilFluxo'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -290,6 +291,9 @@ export default function StatsPage() {
           )}
         </div>
       )}
+
+      {/* ── FLUXO DA LEAD (portal com calendário primeiro) ── */}
+      <FunilFluxo />
 
       {/* ── LEADS & FECHOS POR MÊS ── */}
       {monthlyData.length > 0 && (

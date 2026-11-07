@@ -152,6 +152,26 @@ function quandoReuniao(data?: string | null, hora?: string | null): string {
   return [d && `dia ${d}`, h && `às ${h}`].filter(Boolean).join(' ')
 }
 
+/* Lembrete na véspera da reunião (calendário dos 30 dias e card) */
+export const EVENTO_LEMBRETE_VESPERA = 'WhatsApp lembrete véspera enviado'
+export function mensagemVesperaReuniao(nome: string | null | undefined, hora?: string | null): string {
+  const quem = (nome ?? '').trim()
+  const h = (hora ?? '').slice(0, 5)
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    `Amanhã${h ? ` às ${h}` : ''} temos a nossa reunião e estamos muito contentes por vos conhecer.`,
+    '',
+    'No vosso portal da reunião têm tudo o que precisam: o link da videochamada ou a localização do estúdio.',
+    '',
+    'Se surgir algum imprevisto, digam-nos por aqui.',
+    '',
+    'Até amanhã!',
+    '',
+    ...ASSINATURA,
+  ].join('\n')
+}
+
 /* Lembrete enviado 1 hora antes da reunião */
 export function mensagemLembreteReuniao(nome: string | null | undefined, hora?: string | null): string {
   const quem = (nome ?? '').trim()
@@ -678,10 +698,23 @@ export const EVENTO_FOLLOW3 = 'WhatsApp 3.º follow-up enviado'
 export const FOLLOW_CONTACTO_DIAS = 3
 export const EVENTO_FOLLOW_CONTACTO1 = 'WhatsApp 1.º follow-up de contacto enviado'
 export const EVENTO_FOLLOW_CONTACTO2 = 'WhatsApp 2.º follow-up de contacto enviado'
-const maisDiasContacto = (iso: string) => {
+const maisDiasContacto = (iso: string, dias = FOLLOW_CONTACTO_DIAS) => {
   const dia = new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Europe/Lisbon' })
-  const d = new Date(dia + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + FOLLOW_CONTACTO_DIAS)
+  const d = new Date(dia + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + dias)
   return d.toISOString().slice(0, 10)
+}
+
+/* Abriram o portal mas não marcaram: 1 dia depois de abrirem, tarefa de telefonar no calendário.
+   Deixa de aparecer quando ligas, quando enviam o pedido ou quando já foi o 1.º follow-up. */
+export const EVENTO_LIGAR_ABRIU = 'Telefonema depois de abrir o portal'
+export function ligarDepoisDeAbrir(
+  c: { status?: string | null; reuniao_data?: string | null; reuniao_pedido?: unknown },
+  enviados: Record<string, string>,
+): string | null {
+  if (colunaDe(c.status) !== 'nova' || c.reuniao_data || c.reuniao_pedido) return null
+  const abriu = enviados[EVENTO_ABRIU_LINK]
+  if (!abriu || enviados[EVENTO_LIGAR_ABRIU] || enviados[EVENTO_FOLLOW_CONTACTO1]) return null
+  return maisDiasContacto(abriu, 1)
 }
 export function followContactoPendente(
   c: { status?: string | null; reuniao_data?: string | null; reuniao_pedido?: unknown },

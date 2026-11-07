@@ -7,7 +7,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
-import { whatsappLink, MEET_LINK, colunaDe, followContactoPendente, ENCERRADA_STATUSES, EVENTO_FOLLOW3, FOLLOW3_WA_DIAS } from '@/lib/crm'
+import { whatsappLink, MEET_LINK, colunaDe, followContactoPendente, ENCERRADA_STATUSES, EVENTO_FOLLOW3, FOLLOW3_WA_DIAS, ligarDepoisDeAbrir, EVENTO_ABRIU_LINK, EVENTO_LIGAR_ABRIU, EVENTO_LEMBRETE_VESPERA } from '@/lib/crm'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
 import FraseDoDia from './FraseDoDia'
@@ -397,7 +397,7 @@ export default async function PhotoDashboard() {
       if (ids.length === 0) return { leads: [], hist: [] }
       const { data: hist } = await supabase.from('crm_status_history')
         .select('contact_id, evento, created_at')
-        .in('contact_id', ids).like('evento', 'WhatsApp%')
+        .in('contact_id', ids).or(`evento.like.WhatsApp%,evento.eq."${EVENTO_ABRIU_LINK}",evento.eq."${EVENTO_LIGAR_ABRIU}"`)
       return { leads: leads ?? [], hist: hist ?? [] }
     },
     [`photo-wa-tarefas-${semanaDias[0]}`],
@@ -421,9 +421,13 @@ export default async function PhotoDashboard() {
     if (colunaDe(l.status) === 'nova') {
       const f = followContactoPendente(l, env)
       if (f && f.n < 3) push(f.n === 1 ? 'contacto1' : 'contacto2', f.devido)
+      const ligar = ligarDepoisDeAbrir(l, env)
+      if (ligar) push('ligar', ligar)
       continue
     }
     if (REUNIAO_STATUSES.includes(l.status)) {
+      // Véspera: no dia anterior à reunião
+      if (l.reuniao_data && l.reuniao_data > hojeLx && !env[EVENTO_LEMBRETE_VESPERA]) push('vespera', somaDias(l.reuniao_data, -1))
       // Lembrete: só no próprio dia da reunião
       if (l.reuniao_data === hojeLx && l.reuniao_hora && !env['WhatsApp lembrete 1h enviado']) push('lembrete', hojeLx)
       continue

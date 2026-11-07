@@ -14,7 +14,7 @@
    no fim da fase e ajusta o fluxo.
    ────────────────────────────────────────────────────────────── */
 import {
-  mensagemBoasVindas, mensagemMarcarReuniao, mensagemPortalReuniao, mensagemReuniaoConfirmada, mensagemLembreteReuniao, COMO_CHEGOU_MAIL,
+  mensagemBoasVindas, mensagemMarcarReuniao, mensagemPortalReuniao, mensagemReuniaoConfirmada, mensagemLembreteReuniao, mensagemVesperaReuniao, COMO_CHEGOU_MAIL,
   mensagemFollowUp, mensagemFollowUp2, mensagemFollowUp3, mensagemFecho, mensagemObrigadoEscolha,
   mensagemNaoAceitou, mensagemLembreteAdjudicacao, mensagemFollowUpContacto1, mensagemFollowUpContacto2,
   mensagemPreWedding, mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
@@ -301,9 +301,10 @@ export const FASES: Fase[] = [
       },
       {
         id: '1-4', titulo: 'Não marcou', sub: 'não escolheu horário',
-        descricao: 'O casal recebeu as Boas-vindas mas não escolheu horário. A contagem dos follow-ups corre sozinha desde o envio.',
-        quem: ['Automático'], prazo: 'Desde as Boas-vindas', onde: '/crm · card',
-        tarefas: ['Ver no card se abriram o link'],
+        descricao: 'O casal recebeu as Boas-vindas mas não escolheu horário. Se abriu o portal e não marcou, no dia seguinte aparece no calendário uma tarefa para telefonar, já com o script. A contagem dos follow-ups corre sozinha desde o envio.',
+        quem: ['Automático', 'Rui'], prazo: 'Desde as Boas-vindas', onde: '/crm · card + calendário /photo',
+        tarefas: ['Ver no card se abriram o link', 'Abriram e não marcaram: telefonar com o script'],
+        regras: [['Abriram o portal e não marcaram', 'Tarefa Ligar no dia seguinte, com o script', 'Calendário /photo']],
       },
       {
         id: '1-5', titulo: 'Follow-up', sub: '3 e 6 dias sem marcar',
@@ -331,13 +332,16 @@ export const FASES: Fase[] = [
     fluxo: { seq: { 0: [1], 1: [2, 3] }, saida: [2] },
     passos: [
       {
-        id: '2-0', titulo: 'Lembrete 1 h', sub: 'WhatsApp antes da reunião',
-        descricao: 'Lembrete por WhatsApp uma hora antes da reunião, a partir do card ou do calendário.',
-        quem: ['Rui'], prazo: '1 h antes', onde: '/crm · card + calendário /photo',
-        tarefas: ['Enviar o lembrete 1 hora antes', 'Preparar galeria e filme parecidos com o casamento deles'],
-        mensagens: [{ titulo: 'Lembrete 1 h antes', quando: 'No dia da reunião', texto: mensagemLembreteReuniao(EX.nome, EX.reuniaoHora), tipo: 'crm' }],
+        id: '2-0', titulo: 'Lembretes', sub: 'véspera e 1 h antes',
+        descricao: 'Lembrete por WhatsApp na véspera e outro uma hora antes da reunião, a partir do card ou do calendário.',
+        quem: ['Rui'], prazo: 'Véspera e 1 h antes', onde: '/crm · card + calendário /photo',
+        tarefas: ['Enviar o lembrete na véspera', 'Enviar o lembrete 1 hora antes', 'Preparar galeria e filme parecidos com o casamento deles'],
+        mensagens: [
+          { titulo: 'Lembrete na véspera', quando: 'Dia anterior à reunião', texto: mensagemVesperaReuniao(EX.nome, EX.reuniaoHora), tipo: 'crm' },
+          { titulo: 'Lembrete 1 h antes', quando: 'No dia da reunião', texto: mensagemLembreteReuniao(EX.nome, EX.reuniaoHora), tipo: 'crm' },
+        ],
         emails: [{ assunto: '⏰ A vossa reunião começa em 30 minutos' }],
-        regras: [['No dia da reunião', 'Lembrete 1 hora antes', '/crm · card + /photo']],
+        regras: [['Dia anterior', 'Lembrete na véspera', '/crm · card + /photo'], ['No dia da reunião', 'Lembrete 1 hora antes', '/crm · card + /photo']],
       },
       {
         id: '2-1', titulo: 'Reunião', sub: 'videochamada',
