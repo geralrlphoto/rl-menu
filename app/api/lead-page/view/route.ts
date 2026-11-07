@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { portalFechado } from '@/lib/crm'
+import { contactoParaNoivos } from '@/lib/portalReuniao'
 
 // Defaults usados quando o admin define data/hora/tipo da reunião mas não
 // preencheu o link explícito — o cliente continua a poder entrar/abrir o mapa.
@@ -45,5 +46,8 @@ export async function GET(req: NextRequest) {
     contact.reuniao_link = contact.reuniao_tipo === 'Videochamada' ? MEET_LINK : MAPS_LINK
   }
 
-  return NextResponse.json({ contact })
+  // O admin recebe a ficha; os noivos só o que o portal mostra
+  if (isAdmin) return NextResponse.json({ contact })
+  const fechado = portalFechado(contact)
+  return NextResponse.json({ contact: contactoParaNoivos(contact, fechado), portal_fechado: fechado })
 }

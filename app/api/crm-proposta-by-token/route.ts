@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { portalFechado } from '@/lib/crm'
 
 // Public endpoint — returns ONLY proposal service data (no personal/financial info)
 export async function GET(req: NextRequest) {
@@ -13,11 +14,11 @@ export async function GET(req: NextRequest) {
 
   const { data: contact } = await supabase
     .from('crm_contacts')
-    .select('page_content')
+    .select('page_content, status, reuniao_data')
     .eq('page_token', token)
     .single()
 
-  if (!contact) return NextResponse.json({ found: false })
+  if (!contact || portalFechado(contact)) return NextResponse.json({ found: false })
 
   const pc = typeof contact.page_content === 'string'
     ? JSON.parse(contact.page_content || '{}')

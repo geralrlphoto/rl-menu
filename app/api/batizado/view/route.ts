@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { MASTER_TOKEN, buildSyncedContent } from '../_lib'
+import { portalFechado } from '@/lib/crm'
+import { semDadosDaProposta } from '@/lib/portalReuniao'
 
 // Uses portal_template_settings table with key 'batizado_{token}'
 // settings shape: { content: BatizadoContent }
@@ -41,7 +43,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'not found' }, { status: 404 })
   }
 
-  const crm_proposta_pdf_url = crmContact?.proposta_pdf_url || null
+  // Reunião por aceitar: propostas, valores e password não saem do servidor
+  const portal_fechado = !isAdmin && !!crmContact && portalFechado(crmContact)
+  const crm_proposta_pdf_url = portal_fechado ? null : crmContact?.proposta_pdf_url || null
 
   // CRM meeting data (auto-populates reunião card if admin saved it in CRM)
   // Se o admin marcou data/hora/tipo mas deixou o link em branco, usar o
@@ -89,7 +93,7 @@ export async function GET(req: NextRequest) {
         },
       },
     }
-    return merged
+    return portal_fechado ? { ...merged, content: semDadosDaProposta(merged.content) } : merged
   }
 
   if (error && error.code !== 'PGRST116') {
@@ -107,6 +111,7 @@ export async function GET(req: NextRequest) {
       crm_nome,
       crm_lead,
       crm_proposta_pdf_url,
+      portal_fechado,
     })
   }
 
@@ -134,11 +139,12 @@ export async function GET(req: NextRequest) {
         crm_reuniao,
         crm_nome,
         crm_lead,
+        portal_fechado,
       })
     }
   }
 
   // Master doesn't exist yet — return empty settings but still inject CRM propostas if any
   const fallback = injectCrmIntoSettings({ content: {} })
-  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome, crm_lead, crm_proposta_pdf_url })
+  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome, crm_lead, crm_proposta_pdf_url, portal_fechado })
 }

@@ -228,6 +228,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
       .then(r => r.json())
       .then(data => {
         if (!data.contact) { setNotFound(true); setLoading(false); return }
+        // Reunião por aceitar: a proposta ainda não existe para os noivos, volta ao portal
+        if (data.portal_fechado) { window.location.replace(`/r/${token}`); return }
         setContact(data.contact)
         const merged = mergeContent(data.contact.page_content)
         setContent(merged)

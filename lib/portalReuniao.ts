@@ -11,6 +11,25 @@ export const MAPS_LINK = 'https://www.google.com/maps/place/RL+Photo.Video+(Casa
 // Password das propostas: 4 algarismos, fácil de dizer por mensagem
 export const gerarPassword = () => String(1000 + Math.floor(Math.random() * 9000))
 
+/* O que sai do servidor para os noivos: nunca as notas nem outros dados internos da ficha.
+   Com o portal fechado (reunião por aceitar) também não saem propostas, valores nem password. */
+const CAMPOS_NOIVOS = ['id', 'nome', 'status', 'data_casamento', 'page_confirmacao', 'page_content', 'page_foto_url', 'proposta_pdf_url',
+  'proposta_resposta', 'reuniao_data', 'reuniao_hora', 'reuniao_link', 'reuniao_pedido', 'reuniao_tipo']
+
+export function semDadosDaProposta(pc: Record<string, any>) {
+  const { propostas: _p, extras_proposta: _e, propostas_auto: _a, propostaAceite: _c, ...resto } = pc
+  return { ...resto, proposta: { ...(pc.proposta ?? {}), password: '' } }
+}
+
+export function contactoParaNoivos(c: Record<string, any>, fechado: boolean) {
+  const out: Record<string, any> = Object.fromEntries(CAMPOS_NOIVOS.map(k => [k, c[k] ?? null]))
+  const pc = (typeof c.page_content === 'string' ? JSON.parse(c.page_content || '{}') : c.page_content) ?? {}
+  const { propostas_auto: _a, ...semInternos } = pc
+  out.page_content = fechado ? semDadosDaProposta(pc) : semInternos
+  if (fechado) out.proposta_pdf_url = null
+  return out
+}
+
 /* Campos a gravar para publicar (ou despublicar) o portal. As propostas ficam sempre protegidas:
    com `password` usa essa; sem ela, mantém a do casal ou gera uma só para ele. */
 export async function camposPublicar(sb: SupabaseClient, id: string, publish: boolean, password?: string) {

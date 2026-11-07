@@ -167,6 +167,8 @@ export default function BatizadoPropostaClient({ token, isAdmin }: { token: stri
       .then(r => r.json())
       .then(data => {
         if (data.error) { setNotFound(true); setLoading(false); return }
+        // Reunião por aceitar: a proposta ainda não existe para os noivos, volta ao portal
+        if (data.portal_fechado) { window.location.replace(`/b/${token}`); return }
         const saved = data.maquete?.settings?.content
         const merged = mergeBatizado(saved)
         setContent(merged)

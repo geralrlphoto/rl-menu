@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
+import { portalFechado } from '@/lib/crm'
 import { DEFAULT_CONTENT } from '@/app/r/[token]/LeadPageClient'
 import PrintView from '@/app/crm/[id]/proposta-pdf/PrintView'
 
@@ -35,6 +37,9 @@ export default async function Page({ params }: { params: Promise<{ token: string
     .single()
 
   if (!contact) notFound()
+  // Reunião por aceitar: a proposta não abre sem ser ao admin
+  const admin = (await cookies()).get('rl_auth')?.value === process.env.AUTH_SECRET
+  if (!admin && portalFechado(contact)) notFound()
 
   const saved = typeof contact.page_content === 'string'
     ? JSON.parse(contact.page_content || '{}')
