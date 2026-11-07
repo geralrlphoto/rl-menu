@@ -14,7 +14,7 @@
    no fim da fase e ajusta o fluxo.
    ────────────────────────────────────────────────────────────── */
 import {
-  mensagemBoasVindas, mensagemMarcarReuniao, mensagemPortalReuniao, mensagemLembreteReuniao,
+  mensagemBoasVindas, mensagemMarcarReuniao, mensagemPortalReuniao, mensagemReuniaoConfirmada, mensagemLembreteReuniao, COMO_CHEGOU_MAIL,
   mensagemFollowUp, mensagemFollowUp2, mensagemFollowUp3, mensagemFecho, mensagemObrigadoEscolha,
   mensagemNaoAceitou, mensagemLembreteAdjudicacao, mensagemFollowUpContacto1, mensagemFollowUpContacto2,
   mensagemPreWedding, mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
@@ -128,42 +128,6 @@ RL` },
   ],
 }
 
-const ORIGEM_CASAMENTOS = {
-  inicial: `Olá! 😊
-
-Que bom ter-vos por aqui! Antes de mais, obrigado por terem entrado em contacto connosco. Agora queremos conhecer-vos um pouco melhor.
-
-Preparámos um pequeno formulário que demora cerca de 2 minutos a preencher e que nos ajuda a perceber aquilo que procuram para o vosso casamento.
-
-👉 ${FORM_URL}
-
-Enquanto isso, espreitem o nosso Instagram. Lá partilhamos muitos casamentos reais e histórias de outros casais. 📷 @rl.photo.video
-
-Assim que recebermos o vosso formulário, entramos em contacto para conversarmos com calma.
-
-Mal podemos esperar para vos conhecer!`,
-  lembretes: [
-    { quando: '24h sem resposta · passar para WhatsApp', texto: `Olá! 🙂
-
-Passámos por aqui só para confirmar que a nossa mensagem chegou. Sabemos que nesta fase estão a falar com vários fornecedores, por isso não queremos ocupar muito do vosso tempo.
-
-Deixamos outra vez o formulário. São só 2 minutos e ajuda-nos a preparar tudo à vossa medida:
-
-👉 ${FORM_URL}
-
-Ficamos a aguardar. Um abraço!` },
-    { quando: '~7 dias sem resposta', texto: `Olá! 💫
-
-Esperamos que os preparativos estejam a correr bem. Continuamos disponíveis e adorávamos poder conhecer-vos melhor.
-
-Se fizer sentido para vós, é só preencherem o formulário quando puderem:
-
-👉 ${FORM_URL}
-
-Um abraço!` },
-  ],
-}
-
 const ORIGEM_DIRETO = {
   inicial: `Olá! 😊 Que bom ter-vos por aqui!
 
@@ -212,13 +176,6 @@ export const TELEFONEMA = {
   destaque: 'Que disponibilidade têm em termos de horários? Assim ajustamo-nos a vocês e combinamos logo o melhor dia.',
 }
 export const textoTelefonema = () => ['ABERTURA', TELEFONEMA.intro, '', 'PERGUNTAR APENAS', ...TELEFONEMA.perguntas.map(p => '• ' + p), '', 'FECHO', TELEFONEMA.fecho, '', '➤ ' + TELEFONEMA.destaque].join('\n')
-
-const AGUARDAR_AGENDAMENTO = `Olá [nome], tudo bem? 🙂
-
-Ficámos de combinar a nossa reunião. Já conseguiram ver a vossa disponibilidade? Digam-me só dois ou três horários que vos deem jeito e eu ajusto-me a vocês.
-
-Fico a aguardar. Um abraço,
-RL`
 
 const REUNIAO_DFP = `Foi um enorme prazer conversar convosco! 😊
 
@@ -272,11 +229,16 @@ export const FASES: Fase[] = [
     titulo: 'Captação', sub: 'de onde vêm os casais',
     passos: [
       {
-        id: '0-0', titulo: 'Casamentos.pt', sub: 'canal pago',
-        descricao: 'Vem da plataforma e costuma comparar vários fornecedores. Enviamos o formulário logo no primeiro contacto. Sem resposta em 24 h na plataforma, o seguimento passa para WhatsApp.',
-        quem: ['Rui'], prazo: 'Mesmo dia', onde: 'Casamentos.pt › CRM · como chegou',
-        tarefas: ['Responder a pedidos em menos de 2 h', 'Enviar o formulário na 1.ª mensagem', 'Sem resposta em 24 h, passar para WhatsApp', 'Pedir avaliação aos casais entregues', 'Confirmar origem no CRM'],
-        mensagens: mensagensOrigem(ORIGEM_CASAMENTOS), regras: regrasOrigem(ORIGEM_CASAMENTOS),
+        id: '0-0', titulo: 'Casamentos.pt', sub: 'canal pago · botão Leads Mail',
+        descricao: 'O pedido chega ao email. No CRM, o botão Leads Mail vai buscá-lo ao Gmail e a lead entra na Nova Entrada com a etiqueta Lead Casamentos.pt. Daí segue como as outras: Boas-vindas com o portal da reunião. Como não preencheram o nosso formulário, o portal pede-lhes que o façam, já com os dados deles, e as respostas entram na mesma ficha.',
+        quem: ['Rui'], prazo: 'Mesmo dia', onde: '/crm · atalho Leads Mail',
+        tarefas: ['Carregar em Leads Mail no CRM', 'Confirmar a data e o telefone na ficha', 'Corrigir o indicativo, se a ficha o pedir', 'Enviar as Boas-vindas', 'Pedir avaliação aos casais entregues'],
+        mensagens: [{ titulo: 'Boas-vindas · Casamentos.pt', quando: 'Assim que entra', texto: mensagemBoasVindas(EX.nome, EX.leadId, COMO_CHEGOU_MAIL), tipo: 'crm' }],
+        regras: [
+          ['Ao carregar em Leads Mail', 'Importa os pedidos dos últimos 30 dias; quem já existe fica de fora', '/crm · atalho Leads Mail'],
+          ['Telefone fora do formato português', 'Próxima ação: confirmar o indicativo antes do WhatsApp', '/crm · card'],
+          ['Enquanto não preencherem', 'O portal mostra o bloco do formulário, sem os obrigar', 'Portal da reunião'],
+        ],
         dica: 'Quem responde primeiro cria a primeira ligação e fica logo à frente.',
         dados: s => s.origem['Casamentos.pt'] ? `${s.origem['Casamentos.pt']} leads` : null,
       },
@@ -324,62 +286,67 @@ export const FASES: Fase[] = [
         dados: s => `${s.total} leads no CRM`,
       },
       {
-        id: '1-1', titulo: 'Boas-vindas', sub: 'WhatsApp + chamada de 2 min',
-        descricao: 'Primeira mensagem logo após a entrada da lead, enviada a partir do card. Os noivos dizem o dia e a hora e fazes a chamada de 2 minutos com o guião.',
-        quem: ['Rui'], prazo: 'Mesmo dia', onde: '/crm · card › ENVIAR BOAS-VINDAS',
-        tarefas: ['No card, clicar em ENVIAR BOAS-VINDAS', 'Os noivos dizem o dia e a hora', 'Ligar e seguir o guião da chamada', 'Confirmar registo no histórico'],
+        id: '1-1', titulo: 'Boas-vindas', sub: 'WhatsApp com o portal',
+        descricao: 'Primeira mensagem logo após a entrada da lead, enviada a partir do card. Leva o link pessoal, que abre o portal da reunião. O portal é criado no 1.º acesso, com password nas propostas, e fica fechado: só mostra o calendário, os 4 painéis e o testemunho.',
+        quem: ['Rui'], prazo: 'Mesmo dia', onde: '/crm · card › BOAS-VINDAS',
+        tarefas: ['No card, clicar em BOAS-VINDAS', 'Confirmar registo no histórico', 'Ver no card se abriram o link'],
         mensagens: [{ titulo: 'Boas-vindas', quando: 'Assim que entra', texto: mensagemBoasVindas(EX.nome, EX.leadId), tipo: 'crm' }],
         regras: [
-          ['Assim que entra', 'Boas-vindas pelo WhatsApp (pede dia e hora)', '/crm · card Nova Entrada'],
-          ['Depois de enviado', 'Fica "✓ Enviado" e registado no histórico', '/crm'],
+          ['Assim que entra', 'Boas-vindas pelo WhatsApp com o link do portal', '/crm · card Nova Entrada'],
+          ['Depois de enviado', 'Fica "✓ Enviado" e pode reenviar-se; o card mostra se abriram o link', '/crm'],
+          ['A partir do envio', 'Começam a contar os dias dos follow-ups', '/crm · card'],
         ],
-        dica: 'Sorri enquanto falas, ouve-se do outro lado. E deixa-os falar mais do que tu.',
-        guiao: true,
+        dica: 'A password das propostas nunca vai na mensagem: está na ficha e dá-la na reunião.',
       },
       {
-        id: '1-2', titulo: 'Contacto para reunião', sub: 'WhatsApp marcar reunião',
-        descricao: 'Convite para a reunião, com o link onde os noivos escolhem o dia e a hora (videochamada ou estúdio).',
-        quem: ['Rui'], prazo: '1 a 2 dias após as boas-vindas', onde: '/crm · card',
-        tarefas: ['Enviar WhatsApp marcar reunião', 'Propor 2 ou 3 horários se preferirem combinar à mão'],
+        id: '1-2', titulo: 'Escolhem horário', sub: 'no portal da reunião',
+        descricao: 'Os noivos escolhem no portal o dia, a hora e se preferem videochamada ou estúdio, entre os horários da tua disponibilidade, ou pedem outro. O portal passa a mostrar "Pedido de reunião enviado" e continua fechado até aceitares.',
+        quem: ['Noivos'], prazo: 'Quando quiserem', onde: 'Portal da reunião (/r/…, /b/…)',
+        tarefas: ['Manter a disponibilidade atualizada', 'Se pedirem outro horário, ver as opções no calendário'],
+        mensagens: [{ titulo: 'Marcar reunião (ficha rápida)', quando: 'Se precisares de reenviar o link', texto: mensagemMarcarReuniao(EX.nome, EX.leadId), tipo: 'crm' }],
+        regras: [
+          ['Escolhem um horário livre', 'Fica reservado e entra como pedido', 'Calendário /photo + email'],
+          ['Pedem outro horário', 'Até 2 opções, para aceitares ou agendares outro', 'Calendário /photo + ficha'],
+        ],
+      },
+      {
+        id: '1-3', titulo: 'Reunião aceite', sub: 'abre o portal completo',
+        descricao: 'O pedido aparece no calendário dos 30 dias e na ficha. Aceitas ou agendas outro horário: a lead passa a Reunião Agendada, o resto do portal abre e a mensagem de confirmação sai pronta para o WhatsApp. Quem marcou pelo portal já tem o link, por isso a mensagem não o repete.',
+        quem: ['Rui'], prazo: 'Em poucas horas', onde: 'Calendário /photo › Aceitar',
+        tarefas: ['Aceitar o pedido ou agendar outro horário', 'Enviar a mensagem de confirmação', 'Confirmar que abriram o portal'],
         mensagens: [
-          { titulo: 'Marcar reunião', quando: 'Depois da chamada', texto: mensagemMarcarReuniao(EX.nome, EX.leadId), tipo: 'crm' },
-          { titulo: 'Sem horário', quando: '24 h sem resposta', texto: AGUARDAR_AGENDAMENTO, tipo: 'copiar' },
+          { titulo: 'Reunião confirmada', quando: 'Ao aceitar', texto: mensagemReuniaoConfirmada(EX.nome, EX.quando, 'Videochamada', null), tipo: 'crm' },
+          { titulo: 'Portal da reunião', quando: 'Se marcares tu na ficha, sem pedido', texto: mensagemPortalReuniao(EX.nome, PORTAL_REUNIAO, EX.reuniaoData, EX.reuniaoHora), tipo: 'crm' },
         ],
-        regras: [['24 h sem resposta', 'Mensagem "sem horário"', 'Copiar e enviar']],
-      },
-      {
-        id: '1-3', titulo: 'Aceitou', sub: 'portal da reunião por WhatsApp',
-        descricao: 'O casal aceita a reunião. Na ficha preenches data, hora e tipo, e só aí os botões de WhatsApp desbloqueiam. Envias o portal da reunião, com o link da videochamada, e o estado passa a Reunião Agendada.',
-        quem: ['Rui'], prazo: 'Ao aceitar', onde: '/crm/[id] › Marcação de Reunião',
-        tarefas: ['Registar data, hora e tipo na ficha', 'Enviar portal da reunião por WhatsApp', 'Mudar estado para Reunião Agendada', 'Confirmar que abriram o portal'],
-        mensagens: [{ titulo: 'Portal da reunião', quando: 'Logo após marcar', texto: mensagemPortalReuniao(EX.nome, PORTAL_REUNIAO, EX.reuniaoData, EX.reuniaoHora), tipo: 'crm' }],
         emails: [{ assunto: 'Tens uma reunião marcada · {data} às {hora}' }],
         regras: [
-          ['Sem data e hora na ficha', 'Botões bloqueados: 🔒 Agendar reunião', '/crm/[id] › Marcação de Reunião'],
-          ['Logo após marcar', 'Portal da reunião (cria o portal se não existir)', '/crm · card'],
+          ['Ao aceitar', 'Portal abre por completo e fica a contagem regressiva', 'Calendário /photo'],
+          ['Quem marcou sem portal (rollup, /reuniao pública)', 'A mensagem leva o link do portal', 'Calendário /photo'],
+          ['Marcação feita à mão', 'Data e hora na ficha; botões bloqueados até lá', '/crm/[id] › Marcação de Reunião'],
         ],
-        dica: 'Confirma que receberam mesmo o portal e que o conseguiram abrir num computador.',
+        dica: 'Enquanto não aceitares, o casal fica à espera com o portal fechado. Quanto mais depressa, melhor.',
         dados: s => n(s, 'Reunião Agendada') ? `${n(s, 'Reunião Agendada')} com reunião agendada agora` : null,
       },
       {
-        id: '1-4', titulo: 'Não aceitou', sub: 'não quer reunião agora',
-        descricao: 'O casal não aceita a reunião ou não responde ao contacto. A lead passa para follow-up.',
-        quem: ['Rui'], prazo: 'Na resposta', onde: '/crm · status',
-        tarefas: ['Registar que não aceitou', 'Definir próxima ação e data'],
+        id: '1-4', titulo: 'Não marcou', sub: 'não escolheu horário',
+        descricao: 'O casal recebeu as Boas-vindas mas não escolheu horário. A contagem dos follow-ups corre sozinha desde o envio.',
+        quem: ['Automático'], prazo: 'Desde as Boas-vindas', onde: '/crm · card',
+        tarefas: ['Ver no card se abriram o link'],
       },
       {
-        id: '1-5', titulo: 'Follow-up', sub: '3.º e 6.º dia',
-        descricao: 'Mensagens de follow-up para retomar a conversa. Se o casal aceitar, envias o portal da reunião. Sem resposta depois dos dois follow-ups, passa a Sem resposta.',
-        quem: ['Rui'], prazo: '+3 e +6 dias', onde: '/crm · próxima ação',
-        tarefas: ['1.º follow-up ao 3.º dia', '2.º follow-up ao 6.º dia', 'Se aceitar, enviar portal da reunião', 'Sem resposta: marcar Sem resposta'],
+        id: '1-5', titulo: 'Follow-up', sub: '3 e 6 dias sem marcar',
+        descricao: 'Se não marcarem, 3 dias depois das Boas-vindas fica disponível o 1.º follow-up e 3 dias depois deste o 2.º. Aparecem no card, no sino e no calendário dos 30 dias, e param assim que escolherem horário. Depois do 2.º, o card pergunta se passa a Sem resposta: nunca é automático, porque isso desliga o portal.',
+        quem: ['Rui'], prazo: '+3 e +6 dias', onde: '/crm · card + sino + calendário /photo',
+        tarefas: ['Enviar o 1.º follow-up (card ou calendário)', 'Enviar o 2.º follow-up, 3 dias depois', 'Sem resposta aos dois: decidir se passa a Sem resposta'],
         mensagens: [
-          { titulo: '1.º follow-up · sem resposta ao contacto', quando: '+3 dias', texto: mensagemFollowUpContacto1(EX.nome, EX.leadId), tipo: 'nova' },
-          { titulo: '2.º follow-up · última mensagem', quando: '+6 dias', texto: mensagemFollowUpContacto2(EX.nome, EX.leadId), tipo: 'nova' },
+          { titulo: '1.º follow-up · sem resposta ao contacto', quando: '+3 dias', texto: mensagemFollowUpContacto1(EX.nome, EX.leadId), tipo: 'crm' },
+          { titulo: '2.º follow-up · última mensagem', quando: '+3 dias após o 1.º', texto: mensagemFollowUpContacto2(EX.nome, EX.leadId), tipo: 'crm' },
         ],
         regras: [
-          ['3 dias sem resposta', '1.º follow-up', '/crm · próxima ação'],
-          ['6 dias sem resposta', '2.º follow-up, última mensagem', '/crm · próxima ação'],
-          ['Sem resposta aos dois', 'Estado Sem resposta', '/crm · status'],
+          ['3 dias sem marcar', '1.º follow-up', '/crm · card + sino + /photo'],
+          ['3 dias depois do 1.º', '2.º follow-up, última mensagem', '/crm · card + sino + /photo'],
+          ['Escolhem horário', 'Os alertas param sozinhos', 'Portal da reunião'],
+          ['Sem resposta aos dois', 'O card pergunta; o estado Sem resposta desliga o portal', '/crm · status'],
         ],
         dados: s => n(s, 'Sem resposta') ? `${n(s, 'Sem resposta')} leads ficaram Sem resposta` : null,
       },
@@ -410,9 +377,9 @@ export const FASES: Fase[] = [
       },
       {
         id: '2-2', titulo: 'Gerar proposta', sub: 'no portal da reunião',
-        descricao: 'Com base na reunião, geras a proposta no portal da reunião, com pacote e valor. O DFP fica disponível no portal e o casal pode confirmar ou rejeitar.',
+        descricao: 'Com base na reunião, geras a proposta no portal da reunião, com pacote e valor. O DFP fica disponível no portal e o casal pode confirmar ou rejeitar. Até gerares a proposta, os valores só abrem na proposta criativa, com a password que está na ficha.',
         quem: ['Rui'], prazo: 'Logo após a reunião', onde: '/crm/[id] › Propostas',
-        tarefas: ['Definir pacote e valor proposto', 'Gerar a proposta', 'Enviar o link ao casal', 'Mudar estado para Proposta Enviada'],
+        tarefas: ['Definir pacote e valor proposto', 'Dar a password da proposta criativa, na reunião', 'Gerar a proposta', 'Enviar o link ao casal', 'Mudar estado para Proposta Enviada'],
         mensagens: [{ titulo: 'Proposta (DFP) disponível no portal', quando: 'No dia da reunião', texto: REUNIAO_DFP, tipo: 'copiar' }],
         dica: 'A proposta encaixa melhor depois de perceberes o que o casal valoriza.',
       },
