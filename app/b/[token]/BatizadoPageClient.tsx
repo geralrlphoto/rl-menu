@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 import { portalFechado } from '@/lib/crm'
-import { MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
+import { AvisoPortalFechado, MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
 import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 
 const WHATSAPP      = 'https://wa.me/351912932768'
@@ -755,9 +755,12 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
       {pedido && <PedidoNoPortal pedido={pedido} />}
       {isAdmin && fechado && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o resto do portal depois de aceitares a reunião</p>}
 
-      {!bloqueado && <>
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
       <PorqueReuniao tipo="batizado" fotos={[heroImage === DEFAULT_HERO ? '' : heroImage, ...portfolio.photos]} />
+
+      {bloqueado && <AvisoPortalFechado pedido={!!pedido} />}
+
+      {!bloqueado && <>
 
       {/* ── CARD REUNIÃO (com o pedido a aguardar confirmação ainda não há o que mostrar) ── */}
       {!pedido && !fechado && <section className="rlp-sec" style={{ paddingLeft: 'var(--pad)', paddingRight: 'var(--pad)' }}>

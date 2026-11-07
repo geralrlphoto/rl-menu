@@ -2,7 +2,8 @@
 
 // Portais da reunião (/r e /b): a nova lead recebe logo o link do portal. Enquanto não escolher
 // horário só vê o calendário (o mesmo da /reuniao, com a mesma confirmação da RL no /photo);
-// depois fica só o pedido à espera da confirmação, e o resto do portal abre quando a RL aceitar.
+// depois fica o pedido à espera da confirmação. Os 4 painéis (e o testemunho, em /r) ficam sempre
+// visíveis, seguidos do aviso; o resto do portal abre quando a RL aceitar.
 
 import MarcarReuniao, { CSS_MARCAR, type PedidoMarcado } from '@/app/rollup/MarcarReuniao'
 
@@ -49,8 +50,31 @@ export function PedidoNoPortal({ pedido }: { pedido: PedidoMarcado }) {
           <p>{pedido.formato === 'Presencial' ? 'No nosso estúdio' : 'Por videochamada'}</p>
         </div>
         <p className="rlp-lede" style={{ maxWidth: '46ch', fontSize: 14 }}>
-          A reunião está sujeita a confirmação. Vamos confirmar convosco muito em breve pelo WhatsApp e, nessa altura, o resto do vosso portal fica disponível.
+          A reunião está sujeita a confirmação. Vamos confirmar convosco muito em breve pelo WhatsApp.
         </p>
+      </div>
+    </section>
+  )
+}
+
+// Depois dos blocos que ficam visíveis: explica porque o resto do portal ainda não aparece
+export function AvisoPortalFechado({ pedido }: { pedido: boolean }) {
+  return (
+    <section id="sec-aviso" style={{ background: 'var(--ink-2)', borderTop: '1px solid var(--line-soft)' }}>
+      <div className="rlp-wrap flex flex-col items-center gap-5 text-center" style={espaco}>
+        <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="var(--g)" strokeWidth="1.2" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="10" rx="2" /><path d="M8 11V7.5a4 4 0 0 1 8 0V11" />
+        </svg>
+        <span className="rlp-eyebrow c">O vosso portal</span>
+        <h2 className="rlp-h2" style={{ fontSize: 'clamp(30px,4.4vw,52px)' }}>Ainda há mais <em>à vossa espera</em></h2>
+        <p className="rlp-lede" style={{ maxWidth: '50ch' }}>
+          Os nossos filmes, o portfólio e tudo o que preparámos para vocês ficam disponíveis {pedido ? 'assim que confirmarmos a vossa reunião' : 'assim que a vossa reunião estiver agendada'}.
+        </p>
+        {!pedido && (
+          <a href="#sec-marcar" className="rlp-btn" style={{ marginTop: 8 }}>
+            <span className="fill" /><span className="dot" />Escolher o dia e a hora
+          </a>
+        )}
       </div>
     </section>
   )

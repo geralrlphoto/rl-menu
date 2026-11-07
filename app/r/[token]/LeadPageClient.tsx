@@ -10,7 +10,7 @@ import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 import TestemunhoDestaque from '@/app/_lead/TestemunhoDestaque'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { fmtOrcamento, portalFechado } from '@/lib/crm'
-import { MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
+import { AvisoPortalFechado, MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
 import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 
 const WHATSAPP     = 'https://wa.me/351912932768'
@@ -769,12 +769,15 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
       {pedido && <PedidoNoPortal pedido={pedido} />}
       {isAdmin && fechado && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o resto do portal depois de aceitares a reunião</p>}
 
-      {!bloqueado && <>
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
       <PorqueReuniao tipo="casamento" />
 
       {/* ── TESTEMUNHO EM DESTAQUE (Catarina & Ruben → rlphotovideo.pt/testemunho) ── */}
       <TestemunhoDestaque />
+
+      {bloqueado && <AvisoPortalFechado pedido={!!pedido} />}
+
+      {!bloqueado && <>
 
       {/* ── RESPOSTA À PROPOSTA (os detalhes da reunião passaram para junto da contagem) ── */}
       {propostaResposta && (
