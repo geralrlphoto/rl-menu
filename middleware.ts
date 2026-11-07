@@ -233,6 +233,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/lead-page/request-change-email') ||
     pathname.startsWith('/api/lead-page/check-admin') ||
     pathname.startsWith('/api/lead-page/proposta-response') ||
+    pathname === '/api/lead-page/proposta-acesso' || // confere a password da proposta criativa
     pathname.startsWith('/api/lembrete-reuniao') ||
     pathname.startsWith('/api/upload-image') ||
     pathname.startsWith('/api/portal-notif-prewedding') ||

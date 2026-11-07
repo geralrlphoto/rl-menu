@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { portalFechado } from '@/lib/crm'
+import { propostaLiberada } from '@/lib/crm'
 
 // Public endpoint — returns ONLY proposal service data (no personal/financial info)
 export async function GET(req: NextRequest) {
@@ -14,15 +14,18 @@ export async function GET(req: NextRequest) {
 
   const { data: contact } = await supabase
     .from('crm_contacts')
-    .select('page_content, status, reuniao_data')
+    .select('page_content, status, proposta_pdf_url')
     .eq('page_token', token)
     .single()
 
-  if (!contact || portalFechado(contact)) return NextResponse.json({ found: false })
+  if (!contact) return NextResponse.json({ found: false })
 
   const pc = typeof contact.page_content === 'string'
     ? JSON.parse(contact.page_content || '{}')
     : (contact.page_content || {})
+
+  // Valores só depois de a RL apresentar a proposta
+  if (!pc.propostaAceite && !propostaLiberada(contact)) return NextResponse.json({ found: false })
 
   const propostas: Array<{ nome: string; servicos_foto: string[]; servicos_video: string[]; valor: string }> =
     pc.propostas || []

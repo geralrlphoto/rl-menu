@@ -186,7 +186,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [content,  setContent]  = useState<PageContent>(DEFAULT_CONTENT)
   const [locked,   setLocked]   = useState(true)
   const [pwInput,  setPwInput]  = useState('')
-  const [pwError,  setPwError]  = useState(false)
+  const [pwError,  setPwError]  = useState('')
 
   // Slides
   const [current,   setCurrent]   = useState(0)
@@ -223,10 +223,23 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
   const [uploadingRelive, setUploadingRelive] = useState(false)
   const [uploadingSlidePhoto, setUploadingSlidePhoto] = useState<string | null>(null)
 
+  // A password confere-se no servidor, que só então devolve as propostas e os valores
+  const abrirProposta = async (password: string): Promise<string> => {
+    const r = await fetch('/api/lead-page/proposta-acesso', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    }).catch(() => null)
+    const j = await r?.json().catch(() => ({}))
+    if (!r?.ok) return j?.error || 'Sem ligação. Tentem outra vez.'
+    setContent(c => ({ ...c, propostas: j.propostas ?? c.propostas, extras_proposta: j.extras_proposta ?? c.extras_proposta }))
+    setLocked(false)
+    return ''
+  }
+
   useEffect(() => {
     fetch(`/api/lead-page/view?token=${token}`)
       .then(r => r.json())
-      .then(data => {
+      .then(async data => {
         if (!data.contact) { setNotFound(true); setLoading(false); return }
         // Reunião por aceitar: a proposta ainda não existe para os noivos, volta ao portal
         if (data.portal_fechado) { window.location.replace(`/r/${token}`); return }
@@ -234,8 +247,8 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
         const merged = mergeContent(data.contact.page_content)
         setContent(merged)
         const stored = localStorage.getItem(`proposta_${token}`)
-        const pw = merged.proposta?.password || ''
-        if (isAdmin || !pw || stored === pw) setLocked(false)
+        if (isAdmin) setLocked(false)
+        else if (!data.contact.proposta_com_password || stored) await abrirProposta(stored || '')
         setLoading(false)
       })
       .catch(() => { setNotFound(true); setLoading(false) })
@@ -292,14 +305,10 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
     return () => window.removeEventListener('keydown', handler)
   }, [next, prev])
 
-  const handleUnlock = () => {
-    const pw = content.proposta?.password || ''
-    if (!pw || pwInput === pw) {
-      localStorage.setItem(`proposta_${token}`, pwInput)
-      setLocked(false)
-    } else {
-      setPwError(true); setTimeout(() => setPwError(false), 1500)
-    }
+  const handleUnlock = async () => {
+    const erro = await abrirProposta(pwInput)
+    if (!erro) { try { localStorage.setItem(`proposta_${token}`, pwInput) } catch {} ; return }
+    setPwError(erro); setTimeout(() => setPwError(''), 2500)
   }
 
   const handleSave = async () => {
@@ -428,7 +437,7 @@ export default function PropostaClient({ token, isAdmin }: { token: string; isAd
                 onChange={e => setPwInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleUnlock()}
                 className={`w-full bg-white/[0.05] rounded-xl px-4 py-3 text-sm text-white text-center outline-none placeholder:text-white/20 transition-all ${pwError ? 'border border-red-400/60' : 'border border-white/10 focus:border-gold/40'}`} />
-              {pwError && <p className="text-[11px] text-red-400/70 text-center">Password incorreta</p>}
+              {pwError && <p className="text-[11px] text-red-400/70 text-center">{pwError}</p>}
               <button onClick={handleUnlock}
                 className="w-full py-3 text-xs tracking-[0.35em] uppercase transition-all"
                 style={{ background: 'rgba(201,168,76,0.15)', border: '0.5px solid rgba(201,168,76,0.4)', color: '#C9A84C' }}>

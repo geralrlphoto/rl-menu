@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { cookies } from 'next/headers'
-import { portalFechado } from '@/lib/crm'
+import { propostaLiberada } from '@/lib/crm'
+import { semDadosDaProposta } from '@/lib/portalReuniao'
 import { DEFAULT_CONTENT } from '@/app/r/[token]/LeadPageClient'
 import PrintView from '@/app/crm/[id]/proposta-pdf/PrintView'
 
@@ -37,9 +38,9 @@ export default async function Page({ params }: { params: Promise<{ token: string
     .single()
 
   if (!contact) notFound()
-  // Reunião por aceitar: a proposta não abre sem ser ao admin
+  // Antes de a RL apresentar a proposta, só o admin a abre
   const admin = (await cookies()).get('rl_auth')?.value === process.env.AUTH_SECRET
-  if (!admin && portalFechado(contact)) notFound()
+  if (!admin && !propostaLiberada(contact)) notFound()
 
   const saved = typeof contact.page_content === 'string'
     ? JSON.parse(contact.page_content || '{}')
@@ -47,11 +48,13 @@ export default async function Page({ params }: { params: Promise<{ token: string
 
   const content = {
     ...DEFAULT_CONTENT,
-    ...saved,
+    ...semDadosDaProposta(saved, true),
     propostas: saved?.propostas || DEFAULT_CONTENT.propostas,
     extras_proposta: saved?.extras_proposta || [],
   }
 
   // autoPrint=false: o cliente não tem o diálogo de impressão automático
-  return <PrintView contact={contact} content={content} autoPrint={false} />
+  // Só o que o PDF mostra: tudo o que se passa ao componente chega ao browser
+  const { nome, data_casamento, local_casamento } = contact
+  return <PrintView contact={{ nome, data_casamento, local_casamento }} content={content} autoPrint={false} />
 }

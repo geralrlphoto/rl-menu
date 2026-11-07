@@ -33,6 +33,13 @@ export function portalFechado(c: { status?: string | null; reuniao_data?: string
   return colunaDe(c.status) === 'nova' && !c.reuniao_data
 }
 
+/* A RL já apresentou a proposta (PDF gerado ou lead depois da reunião): os valores podem ir para
+   o portal. Antes disso só saem com a password, em /api/lead-page/proposta-acesso. */
+export function propostaLiberada(c: { status?: string | null; proposta_pdf_url?: string | null }): boolean {
+  const coluna = colunaDe(c.status)
+  return !!c.proposta_pdf_url || coluna === 'proposta' || coluna === 'follow' || coluna === 'encerrada'
+}
+
 export const MOTIVOS_NAO_FECHOU = ['Preço', 'Data ocupada', 'Escolheram outro fornecedor', 'Sem resposta', 'Desistiram do serviço', 'Outro']
 
 // Dias parado no mesmo passo do Follow Up sem próxima ação agendada

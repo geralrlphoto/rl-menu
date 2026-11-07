@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { MASTER_TOKEN, buildSyncedContent } from '../_lib'
-import { portalFechado } from '@/lib/crm'
+import { portalFechado, propostaLiberada } from '@/lib/crm'
 import { semDadosDaProposta } from '@/lib/portalReuniao'
 
 // Uses portal_template_settings table with key 'batizado_{token}'
@@ -43,8 +43,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'not found' }, { status: 404 })
   }
 
-  // Reunião por aceitar: propostas, valores e password não saem do servidor
+  // A password nunca sai do servidor; propostas e valores só depois de a RL os apresentar
+  // (antes disso, só com a password certa em /api/lead-page/proposta-acesso)
   const portal_fechado = !isAdmin && !!crmContact && portalFechado(crmContact)
+  const manterPropostas = !portal_fechado && !!crmContact && propostaLiberada(crmContact)
+  let proposta_com_password = false
   const crm_proposta_pdf_url = portal_fechado ? null : crmContact?.proposta_pdf_url || null
 
   // CRM meeting data (auto-populates reunião card if admin saved it in CRM)
@@ -93,7 +96,8 @@ export async function GET(req: NextRequest) {
         },
       },
     }
-    return portal_fechado ? { ...merged, content: semDadosDaProposta(merged.content) } : merged
+    proposta_com_password = !!merged.content.proposta?.password
+    return isAdmin ? merged : { ...merged, content: semDadosDaProposta(merged.content, manterPropostas) }
   }
 
   if (error && error.code !== 'PGRST116') {
@@ -112,6 +116,7 @@ export async function GET(req: NextRequest) {
       crm_lead,
       crm_proposta_pdf_url,
       portal_fechado,
+      proposta_com_password,
     })
   }
 
@@ -140,11 +145,12 @@ export async function GET(req: NextRequest) {
         crm_nome,
         crm_lead,
         portal_fechado,
+        proposta_com_password,
       })
     }
   }
 
   // Master doesn't exist yet — return empty settings but still inject CRM propostas if any
   const fallback = injectCrmIntoSettings({ content: {} })
-  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome, crm_lead, crm_proposta_pdf_url, portal_fechado })
+  return NextResponse.json({ maquete: { token, settings: fallback }, page_confirmacao: null, proposta_resposta: null, crm_reuniao, crm_nome, crm_lead, crm_proposta_pdf_url, portal_fechado, proposta_com_password })
 }
