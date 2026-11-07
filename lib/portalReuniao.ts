@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { propostaLiberada } from '@/lib/crm'
+import { pedirFormulario, propostaLiberada } from '@/lib/crm'
 
 /* Portal da reunião (/r/<token>): publicar copia a maquete e guarda só o que é de cada casal.
    Usado pelo botão Publicar da ficha e por "Aceitar" num pedido de reunião. */
@@ -28,6 +28,7 @@ export function contactoParaNoivos(c: Record<string, any>, fechado: boolean) {
   const pc = (typeof c.page_content === 'string' ? JSON.parse(c.page_content || '{}') : c.page_content) ?? {}
   out.page_content = semDadosDaProposta(pc, !fechado && propostaLiberada(c))
   out.proposta_com_password = !!pc.proposta?.password
+  out.pedir_formulario = pedirFormulario(c)
   if (fechado) out.proposta_pdf_url = null
   return out
 }

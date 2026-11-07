@@ -35,6 +35,11 @@ export function portalFechado(c: { status?: string | null; reuniao_data?: string
 
 /* A RL já apresentou a proposta (PDF gerado ou lead depois da reunião): os valores podem ir para
    o portal. Antes disso só saem com a password, em /api/lead-page/proposta-acesso. */
+/* Lead do Casamentos.pt por email que ainda não preencheu o formulário: o portal pede-lhe que o faça */
+export function pedirFormulario(c: { como_chegou?: string | null; orcamento?: string | null }): boolean {
+  return c.como_chegou === COMO_CHEGOU_MAIL && !c.orcamento
+}
+
 export function propostaLiberada(c: { status?: string | null; proposta_pdf_url?: string | null }): boolean {
   const coluna = colunaDe(c.status)
   return !!c.proposta_pdf_url || coluna === 'proposta' || coluna === 'follow' || coluna === 'encerrada'
@@ -644,6 +649,7 @@ export function mensagemBoasVindas(nome: string | null | undefined, id: string, 
     'Preparámos um portal só para vocês. O primeiro passo é escolherem, com toda a tranquilidade, o momento ideal para conversarmos, por videochamada ou aqui no estúdio. Assim que a reunião estiver confirmada, o resto do portal fica disponível:',
     linkPublico(`/reuniao/${id}`),
     '',
+    ...(comoChegou === COMO_CHEGOU_MAIL ? ['No portal têm também um pequeno formulário para nos contarem mais sobre o vosso dia.', ''] : []),
     'Sem pressas e sem compromisso. Estamos por aqui para o que precisarem.',
     '',
     ...ASSINATURA,

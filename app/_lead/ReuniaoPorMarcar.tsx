@@ -57,6 +57,24 @@ export function PedidoNoPortal({ pedido }: { pedido: PedidoMarcado }) {
   )
 }
 
+// Leads do Casamentos.pt por email: ainda não preencheram o nosso formulário
+export function PedirFormulario({ leadId }: { leadId: string }) {
+  return (
+    <section id="sec-formulario" style={{ background: 'var(--ink)', borderBottom: '1px solid var(--line-soft)' }}>
+      <div className="rlp-wrap flex flex-col items-center gap-5 text-center" style={espaco}>
+        <span className="rlp-eyebrow c">Um pequeno pedido</span>
+        <h2 className="rlp-h2" style={{ fontSize: 'clamp(30px,4.4vw,52px)' }}>Contem-nos mais sobre <em>o vosso dia</em></h2>
+        <p className="rlp-lede" style={{ maxWidth: '50ch' }}>
+          Para aproveitarmos melhor o tempo da reunião, pedimos-vos que preencham o nosso formulário. São poucos minutos e já vai com os vossos dados.
+        </p>
+        <a href={`/nova-lead?lead=${leadId}`} target="_blank" rel="noopener noreferrer" className="rlp-btn" style={{ marginTop: 8 }}>
+          <span className="fill" /><span className="dot" />Preencher o formulário
+        </a>
+      </div>
+    </section>
+  )
+}
+
 // Depois dos blocos que ficam visíveis: explica porque o resto do portal ainda não aparece
 export function AvisoPortalFechado({ pedido }: { pedido: boolean }) {
   return (

@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 import { portalFechado } from '@/lib/crm'
-import { AvisoPortalFechado, MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
+import { AvisoPortalFechado, MarcarNoPortal, PedidoNoPortal, PedirFormulario } from '@/app/_lead/ReuniaoPorMarcar'
 import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 
 const WHATSAPP      = 'https://wa.me/351912932768'
@@ -754,6 +754,8 @@ export default function BatizadoPageClient({ token, isAdmin }: { token: string; 
         onMarcada={p => { setCrmLead(c => c ? { ...c, reuniao_pedido: p } : c); scrollTo({ top: 0, behavior: 'smooth' }) }} />}
       {pedido && <PedidoNoPortal pedido={pedido} />}
       {isAdmin && fechado && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o resto do portal depois de aceitares a reunião</p>}
+
+      {crmLead?.pedir_formulario && <PedirFormulario leadId={crmLead.id} />}
 
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
       <PorqueReuniao tipo="batizado" fotos={[heroImage === DEFAULT_HERO ? '' : heroImage, ...portfolio.photos]} />

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { portalFechado } from '@/lib/crm'
+import { pedirFormulario, portalFechado } from '@/lib/crm'
 import { contactoParaNoivos } from '@/lib/portalReuniao'
 
 // Defaults usados quando o admin define data/hora/tipo da reunião mas não
@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
   }
 
   // O admin recebe a ficha; os noivos só o que o portal mostra
-  if (isAdmin) return NextResponse.json({ contact })
+  if (isAdmin) return NextResponse.json({ contact: { ...contact, pedir_formulario: pedirFormulario(contact) } })
   const fechado = portalFechado(contact)
   return NextResponse.json({ contact: contactoParaNoivos(contact, fechado), portal_fechado: fechado })
 }

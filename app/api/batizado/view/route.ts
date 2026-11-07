@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { MASTER_TOKEN, buildSyncedContent } from '../_lib'
-import { portalFechado, propostaLiberada } from '@/lib/crm'
+import { pedirFormulario, portalFechado, propostaLiberada } from '@/lib/crm'
 import { semDadosDaProposta } from '@/lib/portalReuniao'
 
 // Uses portal_template_settings table with key 'batizado_{token}'
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       .single(),
     supabase
       .from('crm_contacts')
-      .select('id,status,data_casamento,reuniao_pedido,reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content,proposta_pdf_url,page_publicada')
+      .select('id,status,como_chegou,orcamento,data_casamento,reuniao_pedido,reuniao_data,reuniao_hora,reuniao_tipo,reuniao_link,nome,page_content,proposta_pdf_url,page_publicada')
       .eq('page_token', token)
       .maybeSingle(),
   ])
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
 
   const crm_nome = crmContact?.nome || ''
   // Para o calendário do portal enquanto a lead não marcar (como em /r)
-  const crm_lead = crmContact ? { id: crmContact.id, status: crmContact.status, data_casamento: crmContact.data_casamento, reuniao_data: crmContact.reuniao_data, reuniao_pedido: crmContact.reuniao_pedido } : null
+  const crm_lead = crmContact ? { id: crmContact.id, status: crmContact.status, data_casamento: crmContact.data_casamento, reuniao_data: crmContact.reuniao_data, reuniao_pedido: crmContact.reuniao_pedido, pedir_formulario: pedirFormulario(crmContact) } : null
 
   // ── CRM page_content é a fonte autoritária dos propostas ──────────────────
   // O admin edita propostas em /crm/[id] e a edição é guardada em

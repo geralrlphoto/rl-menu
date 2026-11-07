@@ -10,7 +10,7 @@ import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 import TestemunhoDestaque from '@/app/_lead/TestemunhoDestaque'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { fmtOrcamento, portalFechado } from '@/lib/crm'
-import { AvisoPortalFechado, MarcarNoPortal, PedidoNoPortal } from '@/app/_lead/ReuniaoPorMarcar'
+import { AvisoPortalFechado, MarcarNoPortal, PedidoNoPortal, PedirFormulario } from '@/app/_lead/ReuniaoPorMarcar'
 import { NOMES_PROPOSTAS, propostaVisivel } from '@/lib/crm'
 
 const WHATSAPP     = 'https://wa.me/351912932768'
@@ -768,6 +768,8 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
         onMarcada={p => { setContact(c => c ? { ...c, reuniao_pedido: p } : c); scrollTo({ top: 0, behavior: 'smooth' }) }} />}
       {pedido && <PedidoNoPortal pedido={pedido} />}
       {isAdmin && fechado && <p className="rlp-reu-admin" style={{ padding: '20px var(--pad)' }}>Os noivos só veem o resto do portal depois de aceitares a reunião</p>}
+
+      {contact!.pedir_formulario && <PedirFormulario leadId={contact!.id} />}
 
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
       <PorqueReuniao tipo="casamento" />

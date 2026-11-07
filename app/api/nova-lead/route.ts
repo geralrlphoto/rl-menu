@@ -1,7 +1,8 @@
 ﻿import { NextRequest, NextResponse } from 'next/server'
 import { buildNovaLeadEmail } from '@/lib/emailsClientes'
 import { createClient } from '@supabase/supabase-js'
-import { qualificarLead } from '@/lib/crm'
+import { COMO_CHEGOU_MAIL, qualificarLead } from '@/lib/crm'
+import { UUID_RE } from '@/lib/preparacao'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,31 +37,43 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Nome em falta' }, { status: 400 })
     }
 
-    const { error } = await supabase.from('crm_contacts').insert({
+    // Link pessoal das leads do Casamentos.pt: atualiza a ficha que já existe, em vez de criar outra
+    const leadId = typeof body.lead_id === 'string' && UUID_RE.test(body.lead_id) ? body.lead_id : null
+    let mensagemAntiga = ''
+    if (leadId) {
+      const { data: atual } = await supabase.from('crm_contacts').select('mensagem').eq('id', leadId).eq('como_chegou', COMO_CHEGOU_MAIL).maybeSingle()
+      if (!atual) return NextResponse.json({ error: 'Link inválido.' }, { status: 404 })
+      mensagemAntiga = atual.mensagem ?? ''
+    }
+
+    const campos = {
       nome:            nome ?? '',
       email:           email ?? '',
       contato:         contato ?? '',
       data_casamento:  data_casamento ?? '',
       local_casamento: local_casamento ?? '',
-      como_chegou:     como_chegou ?? '',
+      como_chegou:     leadId ? COMO_CHEGOU_MAIL : como_chegou ?? '',
       servicos:        Array.isArray(servicos) ? servicos.join(', ') : (servicos ?? ''),
       tipo_cerimonia:  Array.isArray(tipo_cerimonia) ? tipo_cerimonia.join(', ') : (tipo_cerimonia ?? ''),
       tipo_evento:     tipo_evento ?? '',
       orcamento:       orcamento ?? '',
       num_convidados:  num_convidados ?? '',
       mensagem:        [
+        mensagemAntiga,
         zona_residencia ? `Zona: ${zona_residencia}` : '',
         motivo_contacto ? `Motivo do contacto: ${motivo_contacto}` : '',
         mensagem ?? '',
       ].filter(Boolean).join('\n\n'),
-      status:          'Por Contactar',
       lead_prioridade: qualificarLead(orcamento, data_casamento), // QUENTE / MORNA / FRIA
-      data_entrada:    new Date().toISOString().slice(0, 10),
       consentimento_marketing: body.consentimento_marketing === true,
       consentimento_em: body.consentimento_marketing === true ? new Date().toISOString() : null,
-    })
+    }
+    const { error } = leadId
+      ? await supabase.from('crm_contacts').update(campos).eq('id', leadId)
+      : await supabase.from('crm_contacts').insert({ ...campos, status: 'Por Contactar', data_entrada: new Date().toISOString().slice(0, 10) })
 
     if (error) throw new Error(error.message)
+    if (leadId) await supabase.from('crm_status_history').insert({ contact_id: leadId, evento: 'Formulário preenchido' })
 
     // ── Data livre? Quantos eventos já há nessa data (para responder logo aos noivos) ──
     let disponibilidade = ''
@@ -110,7 +123,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         from: 'RL Photo.Video <geral@rlphotovideo.pt>',
         to: ['geral.rlphoto@gmail.com'],
-        subject: `Nova Lead — ${nome}${data_casamento ? ' · ' + data_casamento : ''}`,
+        subject: `${leadId ? 'Formulário preenchido' : 'Nova Lead'} — ${nome}${data_casamento ? ' · ' + data_casamento : ''}`,
         html: `
           <div style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:40px 24px;background:#000;color:#fff;">
             <p style="font-size:10px;letter-spacing:0.5em;color:#555;text-transform:uppercase;margin:0 0 28px;">RL PHOTO.VIDEO · NOVA LEAD</p>
@@ -126,7 +139,7 @@ export async function POST(req: NextRequest) {
     }).catch(() => null)
 
     // ── Email para os noivos ─────────────────────────────────────────────────
-    if (email) {
+    if (email && !leadId) {
       const servicosList = (Array.isArray(servicos) ? servicos.join(', ') : (servicos ?? '')).trim()
 
       const emailHtml = buildNovaLeadEmail(nome, servicosList)

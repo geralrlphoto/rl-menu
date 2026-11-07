@@ -185,9 +185,22 @@ export default function NovaLeadPage() {
   const visible               = useFadeIn(step)
   const topRef                = useRef<HTMLDivElement>(null)
   const [form, setForm]       = useState(FORM_DEFAULT)
+  // Link pessoal (?lead=<id>) das leads do Casamentos.pt: vem preenchido e atualiza a ficha que já existe
+  const [leadId, setLeadId]   = useState('')
 
   // Rascunho guardado no browser (retoma onde ficaram)
   useEffect(() => {
+    const id = new URLSearchParams(window.location.search).get('lead')
+    if (id) {
+      fetch(`/api/nova-lead/lead?id=${encodeURIComponent(id)}`).then(r => r.json()).then(d => {
+        if (!d.lead) return
+        setLeadId(id)
+        if (d.respondido) { setDone(true); return }
+        setForm({ ...FORM_DEFAULT, nome: d.lead.nome ?? '', email: d.lead.email ?? '', contato: d.lead.contato ?? '',
+          dataEvento: d.lead.data_casamento ?? '', tipoEvento: d.lead.tipo_evento ?? '', comoChegou: 'Casamentos.pt' })
+      }).catch(() => {})
+      return
+    }
     try {
       const saved = localStorage.getItem(LS_KEY)
       if (saved) {
@@ -199,6 +212,7 @@ export default function NovaLeadPage() {
   }, [])
 
   useEffect(() => {
+    if (new URLSearchParams(window.location.search).has('lead')) return // não mistura com o rascunho
     if (done) { localStorage.removeItem(LS_KEY); return }
     try { localStorage.setItem(LS_KEY, JSON.stringify({ step, form })) } catch {}
   }, [step, form, done])
@@ -255,6 +269,7 @@ export default function NovaLeadPage() {
   // Ao sair da primeira página, o admin recebe logo nome e contactos por email
   // (só uma vez para os mesmos dados, mesmo que voltem atrás e avancem outra vez)
   function avisarInicio() {
+    if (leadId) return // já está no CRM
     const dados = { nome: form.nome, contato: form.contato, email: form.email, zona_residencia: form.zonaResidencia, como_chegou: form.comoChegou }
     const assinatura = JSON.stringify(dados)
     try { if (localStorage.getItem(LS_INICIO) === assinatura) return } catch {}
@@ -298,6 +313,7 @@ export default function NovaLeadPage() {
           trabalho_favorito: form.trabalhoFavorito,
           mensagem:          form.preocupacoes,
           consentimento_marketing: consentimento,
+          lead_id:           leadId || undefined,
         }),
       })
       if (!res.ok) { const d = await res.json(); setErro(d.error || 'Erro ao enviar'); return }
@@ -322,8 +338,9 @@ export default function NovaLeadPage() {
         </h1>
         <p className="lead sobe mt-7" style={{ animationDelay: '.45s' }}>
           {form.nome ? `${form.nome}, obrigado` : 'Obrigado'} por nos contarem a vossa história.
-          A partir daqui, a produção do vosso casamento está nas nossas mãos: vamos ler tudo com atenção
-          e entramos em contacto em breve para a primeira conversa.
+          {leadId
+            ? 'Vamos ler tudo com atenção antes da nossa reunião, para aproveitarmos melhor o tempo convosco.'
+            : 'A partir daqui, a produção do vosso casamento está nas nossas mãos: vamos ler tudo com atenção e entramos em contacto em breve para a primeira conversa.'}
         </p>
         {/* Antes da conversa: conhecerem o nosso trabalho */}
         <div className="sobe mt-10 rounded-2xl p-6 sm:p-7 text-left"
