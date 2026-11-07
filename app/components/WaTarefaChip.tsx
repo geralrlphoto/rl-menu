@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import FollowUpJanela from '@/app/components/FollowUpJanela'
+import type { TipoFollow } from '@/lib/followUpOpcoes'
 import {
   whatsappLink, mensagemLembreteReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemReuniaoPreparacao,
   mensagemLembreteBriefing, mensagemLembretePreparacao, mensagemPreWedding,
   mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
-  mensagemFollowUpContacto1, mensagemFollowUpContacto2, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2,
+  mensagemFollowUpContacto1, mensagemFollowUpContacto2, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUp3, EVENTO_FOLLOW3,
 } from '@/lib/crm'
 
 /* Tarefa de WhatsApp da faixa "Próximos 30 dias" do /photo.
@@ -15,7 +17,7 @@ import {
    envio no histórico da lead (o mesmo registo que os botões do /crm usam). */
 
 export type WaTarefa = {
-  tipo: 'lembrete' | 'follow1' | 'follow2' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
+  tipo: 'lembrete' | 'follow1' | 'follow2' | 'follow3' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
   contactId: string    // id da lead no CRM; nos tipos de evento (preparação e lembretes) é o id do evento; em 'obrigado' é o id da tarefa
   nome: string
   contato: string | null
@@ -33,6 +35,7 @@ const CONFIG = {
   lembrete: { rotulo: 'Lembrete 1h', evento: 'WhatsApp lembrete 1h enviado' },
   follow1: { rotulo: '1.º Follow up', evento: 'WhatsApp follow-up enviado' },
   follow2: { rotulo: '2.º Follow up', evento: 'WhatsApp 2.º follow-up enviado' },
+  follow3: { rotulo: '3.º Follow up', evento: EVENTO_FOLLOW3 },
   contacto1: { rotulo: '1.º Follow-up · lead', evento: EVENTO_FOLLOW_CONTACTO1 },
   contacto2: { rotulo: '2.º Follow-up · lead', evento: EVENTO_FOLLOW_CONTACTO2 },
   preparacao: { rotulo: 'Reunião preparação', evento: 'reuniao_preparacao' },
@@ -44,6 +47,9 @@ const CONFIG = {
   obrigado: { rotulo: 'Agradecer escolha', evento: '' },
 }
 
+/* Follow-ups: carregar abre a janela com as opções de mensagem e o script de telefonema */
+const FOLLOW = new Set<WaTarefa['tipo']>(['contacto1', 'contacto2', 'follow1', 'follow2', 'follow3'])
+
 /* Tarefas ligadas ao evento (registo em eventos_whatsapp_envios); as outras são do CRM */
 const DO_EVENTO = new Set(['preparacao', 'lembrete_briefing', 'lembrete_prep', 'prewedding', 'lembrete_marcar_pw', 'vespera_pw'])
 
@@ -51,6 +57,7 @@ function textoDe(t: WaTarefa): string {
   if (t.tipo === 'obrigado') return t.mensagem ?? ''
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
   if (t.tipo === 'follow1') return mensagemFollowUp(t.nome, t.dataCasamento)
+  if (t.tipo === 'follow3') return mensagemFollowUp3(t.nome, t.dataCasamento)
   if (t.tipo === 'contacto1') return mensagemFollowUpContacto1(t.nome, t.contactId)
   if (t.tipo === 'contacto2') return mensagemFollowUpContacto2(t.nome, t.contactId)
   if (t.tipo === 'preparacao') return mensagemReuniaoPreparacao(t.nome, t.contactId, t.batizado)
@@ -64,6 +71,7 @@ function textoDe(t: WaTarefa): string {
 
 export function WaTarefaChip({ t }: { t: WaTarefa }) {
   const [enviado, setEnviado] = useState(false)
+  const [janela, setJanela] = useState(false)
   const cfg = CONFIG[t.tipo]
   const rotulo = t.tipo === 'lembrete_prep' && t.reuniaoHora ? `Preparação ${t.reuniaoHora.slice(0, 5)} · lembrete` : cfg.rotulo
   const href = t.futura ? null : whatsappLink(t.contato, textoDe(t))
@@ -81,6 +89,22 @@ export function WaTarefaChip({ t }: { t: WaTarefa }) {
   )
   const cls = 'group block rounded-lg px-2 py-1.5 border border-dashed transition-all'
   const estilo = { borderColor: t.futura || enviado ? 'rgba(74,222,128,0.15)' : 'rgba(74,222,128,0.4)', background: t.futura || enviado ? 'transparent' : 'rgba(74,222,128,0.05)' }
+
+  // Follow-up: abre a janela, também nos dias futuros, para se poder telefonar antes
+  if (FOLLOW.has(t.tipo) && !enviado) {
+    const regista = (...eventos: string[]) => {
+      setEnviado(true); setJanela(false)
+      supabase.from('crm_status_history').insert(eventos.map(evento => ({ contact_id: t.contactId, evento })))
+        .then(() => { fetch('/api/revalidate-photo?tag=whatsapp', { method: 'POST' }).catch(() => {}) })
+    }
+    return (
+      <>
+        <button type="button" onClick={() => setJanela(true)} className={`${cls} w-full text-left hover:bg-green-500/10`} style={estilo} title="Ver as opções de mensagem e o script de telefonema">{corpo}</button>
+        {janela && <FollowUpJanela tipo={t.tipo as TipoFollow} rotulo={rotulo} contactId={t.contactId} nome={t.nome} contato={t.contato} dataCasamento={t.dataCasamento}
+          atrasoDias={t.atrasoDias} onEnviar={() => regista(cfg.evento)} onLigou={() => regista(cfg.evento, 'Telefonema de follow-up feito')} onFechar={() => setJanela(false)} />}
+      </>
+    )
+  }
 
   // Futura, já enviada ou sem telefone: não envia daqui (sem telefone abre a ficha)
   if (enviado || t.futura) return <div className={cls} style={estilo} title={t.futura ? 'Fica disponível neste dia' : undefined}>{corpo}</div>

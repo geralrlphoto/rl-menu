@@ -668,6 +668,10 @@ function diaCasamento(dataCasamento?: string | null): string {
   return m ? ` (${m[3]}/${m[2]}/${m[1]})` : ''
 }
 
+/* 3.º follow up depois da reunião: última tentativa, 5 dias depois do 2.º */
+export const FOLLOW3_WA_DIAS = FOLLOW_PARADO_DIAS
+export const EVENTO_FOLLOW3 = 'WhatsApp 3.º follow-up enviado'
+
 /* Follow-ups depois das Boas-vindas: enquanto a lead não marcar reunião, 3 dias depois do envio
    fica disponível o 1.º e 3 dias depois deste o 2.º. Mesma regra no card do CRM, no sino e no
    calendário dos 30 dias. n = 3: já foram os dois, a RL decide se passa a Sem resposta. */

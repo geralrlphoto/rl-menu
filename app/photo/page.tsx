@@ -7,7 +7,7 @@ import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDra
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
-import { whatsappLink, MEET_LINK, colunaDe, followContactoPendente, ENCERRADA_STATUSES } from '@/lib/crm'
+import { whatsappLink, MEET_LINK, colunaDe, followContactoPendente, ENCERRADA_STATUSES, EVENTO_FOLLOW3, FOLLOW3_WA_DIAS } from '@/lib/crm'
 import { FOLLOW_STATUSES, REUNIAO_STATUSES, FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS, PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, nomeNoivos, ehBatizado } from '@/lib/crm'
 import TempoChip from './TempoChip'
 import FraseDoDia from './FraseDoDia'
@@ -434,6 +434,7 @@ export default async function PhotoDashboard() {
     const env1 = env['WhatsApp follow-up enviado']
     if (!env1) push('follow1', somaDias(inicio, FOLLOW_WA_DIAS))
     else if (!env['WhatsApp 2.º follow-up enviado']) push('follow2', somaDias(lisboaISO(new Date(env1)), FOLLOW2_WA_DIAS))
+    else if (!env[EVENTO_FOLLOW3]) push('follow3', somaDias(lisboaISO(new Date(env['WhatsApp 2.º follow-up enviado'])), FOLLOW3_WA_DIAS))
   }
   // Reuniões criadas como tarefa ("Reunião: Liliana e André") também têm lembrete 1h no próprio dia.
   // O telefone vem da ficha do CRM cujo nome contém todos os nomes da tarefa.

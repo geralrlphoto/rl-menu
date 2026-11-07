@@ -20,7 +20,7 @@ import {
   mensagemPreWedding, mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
   mensagemReuniaoPreparacao, mensagemReuniaoAceite, mensagemReuniaoProposta, mensagemReuniaoIndisponivel,
   mensagemLembreteBriefing, mensagemLembretePreparacao, mensagemAvaliacaoGoogle, mensagemAniversario,
-  FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, FOLLOW_PARADO_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS,
+  FOLLOW_WA_DIAS, FOLLOW2_WA_DIAS, FOLLOW3_WA_DIAS, FOLLOW_PARADO_DIAS, PREPARACAO_DIAS, LEMBRETE_BRIEFING_DIAS,
   PREWEDDING_ALERTA_DIAS, LEMBRETE_PREWEDDING_DIAS, PRAZO_VIDEO_DIAS, MOTIVOS_NAO_FECHOU,
 } from '@/lib/crm'
 import { linkPublico } from '@/lib/site-url'
@@ -99,35 +99,6 @@ const PORTAL_REUNIAO = linkPublico('/r/exemplo')
 const FORM_URL = linkPublico('/nova-lead')
 
 /* ── Mensagens de copiar (vêm da página antiga do follow up) ── */
-const ORIGEM_SITE = {
-  inicial: `Olá [nome], tudo bem? 😊
-
-Muito obrigado por nos terem visitado e por preencherem o formulário no nosso site. Com as informações que nos deixaram, já ficámos com uma primeira ideia do vosso casamento e daquilo que procuram.
-
-Ficámos muito felizes por terem chegado até nós. Cada casal tem uma história única e adoramos poder fazer parte de um dia tão especial.
-
-O próximo passo é nosso: vamos analisar tudo com atenção e entramos em contacto convosco em breve.
-
-Entretanto, espreitem o nosso Instagram, onde partilhamos casamentos reais e muitos momentos espontâneos. 📷 @rl.photo.video
-
-Um abraço,
-RL`,
-  lembretes: [
-    { quando: '2 a 3 dias sem resposta', texto: `Olá [nome], voltei a passar por aqui só para confirmar que a minha mensagem vos chegou. 🙂
-
-Sei que esta fase de planeamento é uma correria. Sempre que fizer sentido para vocês, estou totalmente disponível para conversar sem qualquer compromisso.
-
-Um abraço,
-RL` },
-    { quando: '~7 dias sem resposta', texto: `Olá [nome], espero que esteja tudo a correr bem com os preparativos. 💫
-
-Queria só deixar a porta aberta. Se ainda estiverem a ponderar quem irá registar o vosso dia, adorava mostrar-vos o nosso trabalho e perceber se somos a escolha certa para vós.
-
-Qualquer coisa, é só dizer. Um abraço,
-RL` },
-  ],
-}
-
 const ORIGEM_DIRETO = {
   inicial: `Olá! 😊 Que bom ter-vos por aqui!
 
@@ -139,7 +110,7 @@ Preparámos um pequeno formulário de 2 minutos que nos ajuda a perceber aquilo 
 
 Espreitem também o nosso Instagram: 📷 @rl.photo.video
 
-Assim que recebermos o vosso formulário, entramos em contacto. Mal podemos esperar para vos conhecer! 🙌`,
+Assim que recebermos o vosso formulário, enviamos-vos o vosso portal para marcarmos a reunião. Mal podemos esperar para vos conhecer! 🙌`,
   lembretes: [
     { quando: '1 a 2 dias sem resposta', texto: `Olá! 🙂 Só a dar um toque para não perdermos o contacto.
 
@@ -150,7 +121,7 @@ Se ainda não tiveram tempo, aqui fica outra vez o formulário. São 2 minutinho
 Estamos por aqui para o que precisarem! 🙌` },
     { quando: '4 a 5 dias sem resposta', texto: `Olá! 💫 Esperamos que esteja tudo bem com os preparativos.
 
-Adorávamos fazer parte do vosso dia. Sempre que puderem, preencham o formulário e falamos com calma:
+Adorávamos fazer parte do vosso dia. Sempre que puderem, preencham o formulário e enviamos-vos o portal para marcarmos a reunião:
 
 👉 ${FORM_URL}
 
@@ -158,13 +129,13 @@ Um abraço! 😊` },
   ],
 }
 
-function mensagensOrigem(o: typeof ORIGEM_SITE): Mensagem[] {
+function mensagensOrigem(o: typeof ORIGEM_DIRETO): Mensagem[] {
   return [
     { titulo: '1.ª mensagem', quando: 'Mesmo dia', texto: o.inicial, tipo: 'copiar' },
     ...o.lembretes.map((l, i) => ({ titulo: `${i + 1}.º lembrete`, quando: l.quando, texto: l.texto, tipo: 'copiar' as const })),
   ]
 }
-const regrasOrigem = (o: typeof ORIGEM_SITE): Regra[] => [
+const regrasOrigem = (o: typeof ORIGEM_DIRETO): Regra[] => [
   ['Mesmo dia', '1.ª mensagem de resposta', 'Copiar e enviar'],
   ...o.lembretes.map((l, i): Regra => [l.quando, `${i + 1}.º lembrete`, 'Copiar e enviar']),
 ]
@@ -244,7 +215,7 @@ export const FASES: Fase[] = [
       },
       {
         id: '0-1', titulo: 'Indicação', sub: 'amigos e ex-clientes',
-        descricao: 'Recomendações de casais anteriores e amigos. É o canal com melhor qualidade de lead. O contacto chega direto, por isso seguem-se as mensagens de contacto direto.',
+        descricao: 'Recomendações de casais anteriores e amigos. É o canal com melhor qualidade de lead. O contacto chega direto: o formulário faz a lead entrar no CRM e, a partir daí, seguem as Boas-vindas com o portal.',
         quem: ['Rui'], prazo: 'Mesmo dia', onde: 'CRM · como chegou',
         tarefas: ['Perguntar sempre como nos conheceu', 'Agradecer a quem recomendou', 'Registar quem indicou na ficha'],
         mensagens: mensagensOrigem(ORIGEM_DIRETO), regras: regrasOrigem(ORIGEM_DIRETO),
@@ -253,7 +224,7 @@ export const FASES: Fase[] = [
       },
       {
         id: '0-2', titulo: 'Redes sociais', sub: 'Instagram, Facebook e TikTok',
-        descricao: 'Contacto por mensagem ou pelo link da bio. Tom próximo e ritmo mais rápido. Enviamos o formulário logo no primeiro contacto.',
+        descricao: 'Contacto por mensagem ou pelo link da bio. Tom próximo e ritmo mais rápido. Enviamos o formulário no primeiro contacto: ao preenchê-lo a lead entra no CRM e seguem as Boas-vindas com o portal.',
         quem: ['Rui'], prazo: 'Mesmo dia', onde: 'CRM · como chegou',
         tarefas: ['Publicar 3 vezes por semana', 'Responder a mensagens no próprio dia', 'Link da bio para o formulário', 'Passar o contacto para o CRM'],
         mensagens: mensagensOrigem(ORIGEM_DIRETO), regras: regrasOrigem(ORIGEM_DIRETO),
@@ -262,10 +233,11 @@ export const FASES: Fase[] = [
       },
       {
         id: '0-3', titulo: 'Site', sub: 'formulário',
-        descricao: 'Visitou o site e preencheu o formulário. Já temos a informação base, por isso a lead entra logo no CRM em Nova Entrada.',
+        descricao: 'Visitou o site e preencheu o formulário. Já temos a informação base, por isso a lead entra logo no CRM em Nova Entrada e seguem as Boas-vindas com o portal.',
         quem: ['Automático'], prazo: 'Sempre ativo', onde: 'Site › /nova-lead › CRM',
         tarefas: ['Testar o formulário uma vez por mês', 'Confirmar que entra no CRM', 'Atualizar portefólio do site'],
-        mensagens: mensagensOrigem(ORIGEM_SITE), regras: regrasOrigem(ORIGEM_SITE),
+        mensagens: [{ titulo: 'Boas-vindas', quando: 'Assim que entra', texto: mensagemBoasVindas(EX.nome, EX.leadId), tipo: 'crm' }],
+        regras: [['Assim que entra', 'Boas-vindas com o link do portal', '/crm · card Nova Entrada']],
         emails: [{ assunto: 'Recebemos o vosso contacto · RL Photo.Video' }],
         dica: 'Quem responde primeiro cria a primeira ligação e fica logo à frente.',
         dados: s => s.origem['Site'] ? `${s.origem['Site']} leads` : null,
@@ -335,7 +307,7 @@ export const FASES: Fase[] = [
       },
       {
         id: '1-5', titulo: 'Follow-up', sub: '3 e 6 dias sem marcar',
-        descricao: 'Se não marcarem, 3 dias depois das Boas-vindas fica disponível o 1.º follow-up e 3 dias depois deste o 2.º. Aparecem no card, no sino e no calendário dos 30 dias, e param assim que escolherem horário. Depois do 2.º, o card pergunta se passa a Sem resposta: nunca é automático, porque isso desliga o portal.',
+        descricao: 'Se não marcarem, 3 dias depois das Boas-vindas fica disponível o 1.º follow-up e 3 dias depois deste o 2.º. Aparecem no card, no sino e no calendário dos 30 dias, e param assim que escolherem horário. No calendário, carregar na lead abre as opções de mensagem e o script de telefonema. Depois do 2.º, o card pergunta se passa a Sem resposta: nunca é automático, porque isso desliga o portal.',
         quem: ['Rui'], prazo: '+3 e +6 dias', onde: '/crm · card + sino + calendário /photo',
         tarefas: ['Enviar o 1.º follow-up (card ou calendário)', 'Enviar o 2.º follow-up, 3 dias depois', 'Sem resposta aos dois: decidir se passa a Sem resposta'],
         mensagens: [
@@ -498,12 +470,12 @@ export const FASES: Fase[] = [
       },
       {
         id: '3-9', titulo: 'Follow Up 3', sub: 'última tentativa',
-        descricao: 'Última tentativa de contacto. Se continuar sem resposta, a lead passa a Sem resposta e é encerrada.',
-        quem: ['Rui'], prazo: `Lead parada há ${FOLLOW_PARADO_DIAS} dias`, onde: '/crm · Follow Up 3',
+        descricao: `Última tentativa, ${FOLLOW3_WA_DIAS} dias depois do 2.º. Aparece no card, no sino e no calendário, onde carregar na lead abre as opções de mensagem e o script de telefonema. Se continuar sem resposta, a lead passa a Sem resposta e é encerrada.`,
+        quem: ['Rui'], prazo: `+${FOLLOW3_WA_DIAS} dias após o Follow Up 2`, onde: '/crm · card + sino + /photo',
         tarefas: ['Última tentativa de contacto', 'Sem resposta: mudar para Sem resposta'],
-        mensagens: [{ titulo: 'Follow Up 3 · última tentativa', quando: 'Depois do 2.º sem resposta', texto: mensagemFollowUp3(EX.nome, EX.casamento), tipo: 'nova' }],
+        mensagens: [{ titulo: 'Follow Up 3 · última tentativa', quando: 'Depois do 2.º sem resposta', texto: mensagemFollowUp3(EX.nome, EX.casamento), tipo: 'crm' }],
         regras: [
-          [`${FOLLOW_PARADO_DIAS} dias parada`, 'Follow Up 3', '/crm · alertas'],
+          [`${FOLLOW3_WA_DIAS} dias após o 2.º`, 'Última tentativa', '/crm · card + sino + /photo'],
           ['Sem resposta', 'Estado Sem resposta e encerrada', '/crm · status'],
         ],
         dados: s => n(s, 'Sem resposta') ? `${n(s, 'Sem resposta')} leads ficaram Sem resposta` : null,

@@ -9,7 +9,7 @@ import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { PedidoReuniaoPainel, type PedidoReuniao } from '@/app/photo/PedidoReuniaoCard'
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
-  followContactoPendente, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUpContacto1, mensagemFollowUpContacto2,
+  EVENTO_FOLLOW3, FOLLOW3_WA_DIAS, mensagemFollowUp3, followContactoPendente, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUpContacto1, mensagemFollowUpContacto2,
   fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, EVENTO_ABRIU_LINK, linkOpiniao, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
@@ -369,6 +369,18 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
               ) : (
                 <WhatsAppMsgButton c={c} texto={mensagemFollowUp2(c.nome, c.data_casamento)} evento="WhatsApp 2.º follow-up enviado" label="2.º Follow up" enviados={enviados} onEnviado={onEnviado} />
               )}
+              {enviados['WhatsApp 2.º follow-up enviado'] && (() => {
+                const faltam3 = diasParaFollowUp(enviados['WhatsApp 2.º follow-up enviado'], FOLLOW3_WA_DIAS)
+                if (faltam3 > 0 && !(EVENTO_FOLLOW3 in enviados)) return (
+                  <div onClick={e => e.stopPropagation()}
+                    title="A última tentativa fica disponível 5 dias depois do 2.º, se não houver resposta"
+                    className="text-[11px] font-semibold tracking-wider uppercase text-center px-3 py-2 rounded-lg border border-white/10 text-white/35 bg-white/[0.03] cursor-not-allowed select-none">
+                    🔒 3.º Follow up · {faltam3 === 1 ? 'Falta 1 dia' : `Faltam ${faltam3} dias`}
+                  </div>
+                )
+                return <WhatsAppMsgButton c={c} texto={mensagemFollowUp3(c.nome, c.data_casamento)} evento={EVENTO_FOLLOW3} label="3.º Follow up" enviados={enviados} onEnviado={onEnviado} />
+              })()}
+              {EVENTO_FOLLOW3 in enviados && <p className="text-[11px] text-center text-orange-300/85">Sem resposta aos 3 follow-ups? Passar a Sem resposta.</p>}
             </div>
           )
         }

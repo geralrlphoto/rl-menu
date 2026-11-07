@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { eventoPreparacao } from '@/lib/preparacao'
 import { faseFoto } from '@/lib/fotografiaFluxo'
-import { ENCERRADA_STATUSES, FOLLOW_PARADO_DIAS, FOLLOW_STATUSES, colunaDe, daysSince, fmtDataCurta, followContactoPendente, hojeISO } from '@/lib/crm'
+import { ENCERRADA_STATUSES, EVENTO_FOLLOW3, FOLLOW3_WA_DIAS, FOLLOW_PARADO_DIAS, FOLLOW_STATUSES, colunaDe, daysSince, fmtDataCurta, followContactoPendente, hojeISO } from '@/lib/crm'
 
 function db() {
   return createClient(
@@ -45,6 +45,7 @@ const TIPO_LABELS: Record<string, string> = {
   crm_acao_atrasada:        'CRM · Próxima Ação Atrasada',
   crm_follow_parado:        'CRM · Follow Up Parado',
   crm_follow_contacto:      'CRM · Follow-up por Enviar',
+  crm_follow3:              'CRM · Última Tentativa',
   crm_proposta_vista:       'CRM · Viram a Proposta',
   pedido_reuniao:           'Pedido de Reunião',
   reuniao_marcada:          'Reunião de Preparação Marcada',
@@ -85,6 +86,7 @@ const TIPO_ICONS: Record<string, string> = {
   crm_acao_atrasada:        '⏰',
   crm_follow_parado:        '⚠',
   crm_follow_contacto:      '⚠',
+  crm_follow3:              '⚠',
   crm_proposta_vista:       '👁',
   pedido_reuniao:           '📅',
   reuniao_marcada:          '📅',
@@ -1106,13 +1108,13 @@ export async function GET(req: Request) {
           .order('created_at', { ascending: false })
         for (const h of (hist ?? []) as any[]) if (!ultimaMudanca.has(h.contact_id)) ultimaMudanca.set(h.contact_id, h.created_at)
       }
-      // Follow-ups depois das Boas-vindas: precisam dos envios das leads que ainda não marcaram
+      // Follow-ups por WhatsApp: precisam dos envios das leads que ainda não marcaram e das que estão em Follow Up
       const semMarcar = ativos.filter(l => colunaDe(l.status) === 'nova' && !l.reuniao_data && !l.reuniao_pedido)
       const envios = new Map<string, Record<string, string>>()
-      if (semMarcar.length > 0) {
+      if (semMarcar.length + follow.length > 0) {
         const { data: hist } = await supabase.from('crm_status_history')
           .select('contact_id, evento, created_at')
-          .in('contact_id', semMarcar.map(l => l.id)).like('evento', 'WhatsApp%')
+          .in('contact_id', [...semMarcar, ...follow].map(l => l.id)).like('evento', 'WhatsApp%')
         for (const h of (hist ?? []) as any[]) envios.set(h.contact_id, { ...(envios.get(h.contact_id) ?? {}), [h.evento]: h.created_at })
       }
       for (const l of ativos) {
@@ -1139,6 +1141,19 @@ export async function GET(req: Request) {
             tipo_icon: TIPO_ICONS.crm_follow_contacto,
             sent_at: new Date(contacto.devido + 'T09:00:00').toISOString(),
             mensagem: `Ainda não marcaram reunião. Podes enviar o ${contacto.n}.º follow-up pelo WhatsApp.`,
+          })
+        }
+        const env = envios.get(l.id) ?? {}
+        const env2 = env['WhatsApp 2.º follow-up enviado']
+        if (FOLLOW_STATUSES.includes(l.status) && env2 && !env[EVENTO_FOLLOW3] && !env['WhatsApp fecho enviado'] && daysSince(env2) >= FOLLOW3_WA_DIAS) {
+          notifications.push({
+            ...base,
+            id: `crm_follow3::${l.id}`,
+            tipo: 'crm_follow3',
+            tipo_label: TIPO_LABELS.crm_follow3,
+            tipo_icon: TIPO_ICONS.crm_follow3,
+            sent_at: new Date(new Date(env2).getTime() + FOLLOW3_WA_DIAS * 86400000).toISOString(),
+            mensagem: 'Sem resposta ao 2.º follow-up. Podes enviar a última tentativa pelo WhatsApp.',
           })
         }
         // Os noivos abriram o portal da proposta nas últimas 48 horas: é o melhor momento para ligar
