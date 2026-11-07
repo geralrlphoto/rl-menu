@@ -9,8 +9,11 @@ export function lerEmailCasamentos(texto: string): LeadMail | null {
   const email = (t.match(/Email:\s*<?([^\s<>]+@[^\s<>]+)/i)?.[1] ?? '').toLowerCase()
   const contato = (t.match(/Telefone:[ \t]*([+\d][\d \t.()-]*)/i)?.[1] ?? '').trim()
   const d = t.match(/Data Evento:\s*(\d{2})\/(\d{2})\/(\d{4})/i)
-  const corpo = t.match(/seus serviços\.\s*([\s\S]*?)\s*Setor:/i)?.[1] ?? ''
-  const mensagem = corpo.replace(/^\d{2}\/\d{2}\/\d{2,4}\s+\d{2}:\d{2}\s*/, '').trim()
+  // Há dois formatos: depois da mensagem vem "Setor:" ou "À procura de:" (com o que os noivos procuram)
+  const corpo = t.match(/seus serviços\.\s*([\s\S]*?)\s*(?:Setor|À procura de|Data Evento):/i)?.[1] ?? ''
+  const pedido = corpo.replace(/^\d{2}\/\d{2}\/\d{2,4}\s+\d{2}:\d{2}\s*/, '').trim()
+  const procura = (t.match(/(À procura de:[\s\S]*?)\s*Data Evento:/i)?.[1] ?? '').trim()
+  const mensagem = [pedido, procura].filter(Boolean).join('\n\n')
   if (!nome || (!email && !contato)) return null
   return { nome, email, contato, dataCasamento: d ? `${d[3]}-${d[2]}-${d[1]}` : '', mensagem }
 }
