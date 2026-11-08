@@ -100,8 +100,10 @@ export function buildBilheteNoivos(o: {
   nota?: string                // texto pequeno por baixo do botão
   preheader?: string
   chave?: string               // que email é (lib/staff.ts): por cima do bilhete aparece o responsável
+  fundo?: string               // foto do topo (por defeito a do casamento/batizado)
 }): string {
   const tipo = o.tipo ?? 'casamento'
+  const fundo = o.fundo || `${SITE}/email/bilhete-${tipo}.jpg`
   const data = dataBilhete(o.data)
   const nomes = esc(o.nomes).replace(/ \| /g, `<span style="color:${GOLD};padding:0 .18em;">|</span>`)
   const campos = (o.campos ?? []).filter(c => c.v)
@@ -146,8 +148,8 @@ ${o.preheader ? `<div style="display:none;max-height:0;overflow:hidden;">${esc(o
 ${o.chave ? `<img src="${urlCartaoStaff(o.chave)}" width="520" alt="" style="display:block;max-width:520px;width:100%;height:auto;border:0;margin:0 auto 14px;">` : ''}
 <table width="520" cellpadding="0" cellspacing="0" role="presentation" bgcolor="${CARD}" style="max-width:520px;width:100%;background:${CARD};border:1px solid rgba(216,190,147,.35);border-radius:24px;overflow:hidden;">
 
-  <tr><td background="${SITE}/email/bilhete-${tipo}.jpg" bgcolor="${CARD}" valign="top"
-    style="background:${CARD} url('${SITE}/email/bilhete-${tipo}.jpg') center/cover no-repeat;background-image:url('${SITE}/email/bilhete-${tipo}.jpg');background-size:cover;background-position:center;text-align:center;padding:40px 24px 34px;">
+  <tr><td background="${fundo}" bgcolor="${CARD}" valign="top"
+    style="background:${CARD} url('${fundo}') center/cover no-repeat;background-image:url('${fundo}');background-size:cover;background-position:center;text-align:center;padding:40px 24px 34px;">
     <img src="${SITE}/logo_rl_gold.png" width="50" alt="RL Photo · Video" style="display:block;margin:0 auto;width:50px;height:auto;border:0;">
     <table cellpadding="0" cellspacing="0" role="presentation" style="margin:24px auto 0;"><tr>
       <td style="padding:7px 16px;border:1px solid rgba(216,190,147,.6);border-radius:999px;background:rgba(216,190,147,.12);font-family:${MONO};font-size:11px;letter-spacing:.3em;color:${GOLD_SOFT};">${esc(o.pill.toUpperCase())}</td>

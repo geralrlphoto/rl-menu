@@ -18,6 +18,9 @@
 import { useEffect, useState } from 'react'
 import { DEFAULT_SYSTEM_PROMPT, TOPICS_USER_PROMPT, ARTICLE_USER_PROMPT_TEMPLATE } from './_data/system-prompt'
 import { DEFAULT_VIDEO_SYSTEM_PROMPT } from './_data/video-prompt'
+import CodigoSite from './_components/CodigoSite'
+import TemasFila from './_components/TemasFila'
+import EnviarNoivas from './_components/EnviarNoivas'
 
 type Topic = {
   title: string
@@ -122,6 +125,9 @@ export default function BlogClient() {
         <span className="ai-fab-pulse" aria-hidden="true" />
       </button>
 
+      {/* Fila de temas: o Rui escolhe, o Claude escreve */}
+      <TemasFila themes={THEMES} />
+
       {/* Lista de artigos guardados OU empty state */}
       {articles.length > 0 ? (
         <section className="blg-list">
@@ -189,12 +195,6 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
   // Histórico de títulos já gerados (qualquer status) — para o Claude não repetir
   const [usedTitles, setUsedTitles] = useState<string[]>([])
 
-  // Fotografias do artigo + prompt para o Claude Design (HTML pronto)
-  const [photoUrls, setPhotoUrls] = useState<string[]>(['', '', '', '', ''])
-  const [coverIndex, setCoverIndex] = useState<number>(0) // qual das 5 é a CAPA
-  const [showHtmlPrompt, setShowHtmlPrompt] = useState(false)
-  const [htmlPaste, setHtmlPaste] = useState('')
-  const [htmlShowPasted, setHtmlShowPasted] = useState(false)
 
   useEffect(() => {
     try {
@@ -351,117 +351,9 @@ function AgentModal({ onClose, onSaved }: { onClose: () => void; onSaved: () => 
     setTopics([]); setTopicsPaste(''); setTopicsErr(null)
     setChosen(null); setArticle(null); setArticlePaste(''); setArticleErr(null)
     setSavedAs(null); setView('article')
-    setPhotoUrls(['', '', '', '', ''])
-    setCoverIndex(0)
-    setShowHtmlPrompt(false); setHtmlPaste(''); setHtmlShowPasted(false)
     setSelectedTheme(null)
   }
 
-  /** Gera o prompt para o Claude Design devolver HTML pronto a colar. */
-  function buildHtmlPrompt(): string {
-    if (!article || !chosen) return ''
-
-    const coverUrl = (photoUrls[coverIndex] ?? '').trim()
-    const bodyUrls = photoUrls
-      .map((u, i) => ({ idx: i + 1, url: u.trim(), isCover: i === coverIndex }))
-      .filter(x => !x.isCover && x.url.length > 0)
-
-    const hasCover = coverUrl.length > 0
-    const bodyCount = bodyUrls.length
-
-    const coverLine = hasCover
-      ? `URL: ${coverUrl}`
-      : '(SEM capa — não uses hero com imagem. Faz hero só com tipografia sobre fundo escuro #120d08.)'
-
-    const bodyBlock = bodyCount
-      ? bodyUrls.map((u, i) => `${i + 1}. ${u.url}   (do input #${String(u.idx).padStart(2, '0')})`).join('\n')
-      : '(NENHUMA fotografia fornecida para o corpo — o artigo é todo texto. Ignora TODOS os markers [FOTO — ...] do corpo.)'
-
-    return `És Claude Design. Vou-te dar um artigo de blog do estúdio RL Photo Video, opcionalmente uma fotografia de CAPA e um número VARIÁVEL (0 a 4) de fotografias para o corpo. Quero código HTML pronto a colar no meu site (CMS aceita HTML+CSS inline).
-
-# Regras absolutas (não negociáveis)
-
-1. **AS FOTOGRAFIAS NÃO LEVAM LEGENDA NENHUMA.** Nada de <figcaption>. Nada de tag de tipo (close-up/plano-largo/etc). Nada de texto descritivo por baixo ou por cima. Só a imagem.
-2. **USA APENAS AS URLs QUE EU TE DER.** Se eu te der 3 URLs para o corpo, o HTML mostra exactamente 3 fotografias. Se eu te der 0, não mostra nenhuma.
-3. **MARKERS [FOTO — ...] SÃO PISTAS, NÃO OBRIGAÇÕES.** O corpo do artigo tem markers \`[FOTO — TIPO: descrição]\` para te indicar BONS sítios onde inserir as fotos. Distribui as URLs fornecidas pelos PRIMEIROS markers, pela ordem. Se houver mais markers do que URLs, IGNORA os markers em excesso — não aparecem no HTML, não há placeholder, não há mensagem. Limpa-os do output.
-4. **NUNCA inventes URLs.** Nunca uses placeholder.com nem outros stubs. Se não há URL para um sítio, esse sítio não tem imagem.
-
-# Identidade visual obrigatória (Atmosphère)
-- Fundo: #120d08
-- Texto principal (ink): #efe7d6
-- Texto secundário: #b8a98b
-- Acento gold: #c8a866 (suave: #d7bd87)
-- Tipografia: 'Cormorant Garamond' (títulos, italics), 'Hanken Grotesk' ou system-ui (corpo)
-- Importa as fontes do Google Fonts no topo do <style>
-- Letterspacing largo em eyebrows (0.32em), tudo MAIÚSCULAS, peso 600, 10-11px
-
-# Estrutura do artigo
-
-## 1. HERO
-- ${hasCover ? 'Foto de CAPA full-bleed no topo, ANTES do título. Aspect-ratio aproximado 21/9 em desktop, 4/3 em mobile. Gradiente escuro de baixo para cima (\`linear-gradient(180deg, transparent 30%, #120d08 95%)\`) sobreposto à imagem.' : 'SEM imagem. Hero só com tipografia sobre fundo #120d08, com padding vertical generoso (clamp(80px, 12vw, 140px) topo e fundo).'}
-- ${hasCover ? 'Por cima do gradiente, alinhado em baixo:' : 'Centrado:'}
-  - Eyebrow (categoria + tempo de leitura) em gold uppercase
-  - Título em Cormorant Garamond light, clamp(28px, 4vw, 52px), branco/ink
-  - Linha gold de 60px abaixo do título
-  - Subtítulo em italic gold-soft, max-width 620px
-
-## 2. CORPO
-- Container max-width: 720px, centrado, padding 0 24px no mobile
-- Parágrafos em Hanken Grotesk, 16-17px, line-height 1.75, cor ink
-- Subtítulos internos (texto em **bold** que tu detectes como subtítulo) viram <h2> Cormorant Garamond medium, gold, 22-24px, margem generosa por cima
-- **bold** inline (não-subtítulo) vira <strong> gold-soft
-
-## 3. FOTOGRAFIAS DO CORPO (${bodyCount} no total — usa exactamente este número)
-- Cada URL vira <figure> full-width do container. SEM <figcaption>. SEM tag de tipo. SEM texto descritivo.
-- <img> com aspect-ratio 3/2, object-fit: cover, border-radius: 4px, width: 100%
-- Margem vertical generosa (≈ 40-48px top/bottom)
-- Substitui os PRIMEIROS ${bodyCount} markers \`[FOTO — ...]\` do corpo pelas URLs, na ordem.
-- Os restantes markers (se houver) DESAPARECEM do HTML final.
-- A capa NÃO entra aqui — está no hero.
-
-## 4. RODAPÉ SEO
-- Pequena linha discreta com "Palavras-chave:" + keywords em gold-soft, 11px, letterspacing largo, centrado
-
-# Responsive (mobile-first)
-- Padding lateral 24px no mobile, 0 em desktop
-- Hero aspect-ratio: 4/3 mobile, 21/9 desktop ${hasCover ? '' : '(não aplicável — sem imagem)'}
-- Título cai para 28px no mobile
-- Figuras mantêm aspect-ratio em qualquer ecrã
-
-# Output
-Devolve APENAS um bloco <article class="rl-blog">...</article> com <style scoped></style> no topo dentro do article. Sem markdown fences, sem explicação, sem placeholders TODO. Nada antes nem depois. Pronto a colar.
-
----
-
-# ARTIGO
-
-Título: ${article.title}
-${article.subtitle ? `Subtítulo: ${article.subtitle}` : ''}
-Categoria: ${chosen.category}
-Leitura: ${chosen.readingMin} min
-Palavras-chave SEO: ${article.seoKeywords}
-
----
-
-# FOTO DE CAPA
-
-${coverLine}
-
----
-
-# CORPO DO ARTIGO (markers [FOTO — ...] são pistas — substitui APENAS os primeiros ${bodyCount} e descarta os restantes)
-
-${article.body}
-
----
-
-# FOTOGRAFIAS DO CORPO (${bodyCount} fornecidas — usa exactamente este número, sem legenda)
-
-${bodyBlock}
-`
-  }
-
-  const htmlPrompt = step === 'article-view' && article && chosen ? buildHtmlPrompt() : ''
 
   return (
     <div className="ai-backdrop" onClick={onClose}>
@@ -720,126 +612,13 @@ ${bodyBlock}
                 <p className="ai-article-seo"><strong>SEO:</strong> {article.seoKeywords}</p>
                 <button type="button" className="ai-btn-ghost" onClick={() => copy(article.body)}>Copiar texto do artigo</button>
 
-                {/* === FOTOGRAFIAS + PROMPT PARA CLAUDE DESIGN === */}
-                <div className="ai-photos-box">
-                  <p className="ai-photos-title">
-                    <span className="ai-photos-tag">Fotografias</span>
-                    URLs (até 5)
-                  </p>
-                  <p className="ai-photos-hint">
-                    Cola só as URLs que tens — <strong>não é obrigatório preencher as 5</strong>.
-                    Marca <strong>1 como CAPA</strong> (★) se quiseres hero com imagem.
-                    As restantes URLs vão para o corpo pela ordem. <strong>Linhas vazias não entram no blog</strong> e
-                    as fotografias publicadas não levam legenda.
-                  </p>
-                  <div className="ai-photos-grid">
-                    {photoUrls.map((u, i) => {
-                      const isCover = i === coverIndex
-                      return (
-                        <div key={i} className={`ai-photo-row ${isCover ? 'is-cover' : ''}`}>
-                          <button
-                            type="button"
-                            className={`ai-photo-star ${isCover ? 'is-on' : ''}`}
-                            onClick={() => setCoverIndex(i)}
-                            title={isCover ? 'Esta é a CAPA' : 'Marcar como CAPA'}
-                            aria-label={isCover ? 'Foto de capa' : 'Marcar como capa'}
-                          >
-                            {isCover ? '★' : '☆'}
-                          </button>
-                          <span className="ai-photo-num">
-                            {String(i + 1).padStart(2, '0')}
-                            {isCover && <span className="ai-photo-cover-tag">CAPA</span>}
-                          </span>
-                          <input
-                            type="url"
-                            inputMode="url"
-                            placeholder={isCover ? 'https://… (URL da foto de capa)' : 'https://…'}
-                            value={u}
-                            onChange={(e) => {
-                              const next = [...photoUrls]
-                              next[i] = e.target.value
-                              setPhotoUrls(next)
-                            }}
-                            className="ai-photo-input"
-                          />
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  <div className="ai-step-actions" style={{ marginTop: 14 }}>
-                    <button
-                      type="button"
-                      className="ai-btn-primary"
-                      onClick={() => setShowHtmlPrompt(s => !s)}
-                    >
-                      {showHtmlPrompt ? '▾ Esconder prompt HTML' : '✨ Gerar prompt para Claude Design (HTML)'}
-                    </button>
-                  </div>
-
-                  {showHtmlPrompt && (
-                    <div className="ai-html-flow">
-                      <p className="ai-section-label" style={{ marginTop: 18 }}>
-                        Passo 1 · Copia este prompt e cola no chat
-                      </p>
-                      <textarea
-                        readOnly
-                        className="ai-textarea ai-prompt-show"
-                        value={htmlPrompt}
-                        rows={10}
-                        onFocus={e => e.currentTarget.select()}
-                      />
-                      <div className="ai-step-actions">
-                        <button type="button" className="ai-btn-ghost" onClick={() => copy(htmlPrompt)}>
-                          📋 Copiar prompt
-                        </button>
-                      </div>
-
-                      <p className="ai-section-label" style={{ marginTop: 18 }}>
-                        Passo 2 · Cola aqui o HTML que o Claude te devolveu
-                      </p>
-                      <textarea
-                        className="ai-textarea"
-                        rows={8}
-                        value={htmlPaste}
-                        onChange={e => setHtmlPaste(e.target.value)}
-                        placeholder='<article class="rl-blog">…</article>'
-                      />
-                      <div className="ai-step-actions">
-                        <button
-                          type="button"
-                          className="ai-btn-ghost"
-                          onClick={() => copy(htmlPaste)}
-                          disabled={!htmlPaste.trim()}
-                        >
-                          📋 Copiar HTML
-                        </button>
-                        <button
-                          type="button"
-                          className="ai-btn-primary"
-                          onClick={() => setHtmlShowPasted(s => !s)}
-                          disabled={!htmlPaste.trim()}
-                        >
-                          {htmlShowPasted ? '▾ Esconder preview' : '👁 Pré-visualizar no site'}
-                        </button>
-                      </div>
-
-                      {htmlShowPasted && htmlPaste.trim() && (
-                        <div className="ai-html-preview">
-                          <p className="ai-photos-hint" style={{ margin: '8px 0' }}>
-                            Pré-visualização (aproximada — o site real pode renderizar diferente):
-                          </p>
-                          <iframe
-                            title="Preview HTML"
-                            srcDoc={`<html><head><meta charset="utf-8"><style>html,body{margin:0;background:#120d08;color:#efe7d6;font-family:'Hanken Grotesk',system-ui,sans-serif}</style></head><body>${htmlPaste}</body></html>`}
-                            sandbox=""
-                            style={{ width: '100%', minHeight: 480, border: '1px solid rgba(200,168,102,0.25)', borderRadius: 4, background: '#120d08' }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
+                <CodigoSite
+                  title={article.title}
+                  subtitle={article.subtitle}
+                  body={article.body}
+                  category={chosen?.category}
+                  readingMin={chosen?.readingMin}
+                />
               </div>
             )}
 
@@ -910,6 +689,7 @@ ${bodyBlock}
 function SavedArticleCard({ article, idx, onChange }: { article: Article; idx: number; onChange: () => void }) {
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [noivas, setNoivas] = useState(false)
 
   async function setStatus(status: 'draft' | 'used') {
     setBusy(true)
@@ -966,6 +746,9 @@ function SavedArticleCard({ article, idx, onChange }: { article: Article; idx: n
             {article.facebook_post && (
               <button type="button" className="blg-btn" onClick={(e) => { e.stopPropagation(); copyText(article.facebook_post!) }}>Copiar Facebook</button>
             )}
+            <button type="button" className="blg-btn blg-btn--primary" onClick={(e) => { e.stopPropagation(); setNoivas(n => !n) }}>
+              ✉ Enviar às noivas
+            </button>
             {!isUsed ? (
               <button type="button" className="blg-btn blg-btn--primary" disabled={busy} onClick={(e) => { e.stopPropagation(); setStatus('used') }}>
                 ✓ Marcar como Utilizado
@@ -979,6 +762,18 @@ function SavedArticleCard({ article, idx, onChange }: { article: Article; idx: n
               ✕ Eliminar
             </button>
           </div>
+
+          {noivas && (
+            <EnviarNoivas id={article.id} title={article.title} subtitle={article.subtitle} body={article.body} onClose={() => setNoivas(false)} onEnviado={onChange} />
+          )}
+
+          <CodigoSite
+            title={article.title}
+            subtitle={article.subtitle}
+            body={article.body}
+            category={article.category}
+            readingMin={article.reading_min}
+          />
 
           <div className="blg-body">
             <BodyRenderer body={article.body} />

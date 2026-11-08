@@ -17,6 +17,26 @@ export async function POST(req: NextRequest) {
 
     if (!resendId || !type) return NextResponse.json({ ok: true })
 
+    // Card do blog enviado às noivas (/api/blog-enviar-noivas): só aberturas, cliques e emails com erro
+    const { data: blogEnvio } = await supabase
+      .from('blog_envios')
+      .select('article_id, email, aberto_at, clicado_at')
+      .eq('resend_id', resendId)
+      .maybeSingle()
+    if (blogEnvio) {
+      const agora = new Date().toISOString()
+      if (type === 'email.opened' && !blogEnvio.aberto_at) {
+        await supabase.from('blog_envios').update({ aberto_at: agora }).eq('resend_id', resendId)
+      }
+      if (type === 'email.clicked' && !blogEnvio.clicado_at) {
+        await supabase.from('blog_envios').update({ clicado_at: agora, aberto_at: blogEnvio.aberto_at || agora }).eq('resend_id', resendId)
+      }
+      if (type === 'email.bounced' || type === 'email.complained') {
+        await supabase.from('blog_noivas_removidas').upsert({ email: blogEnvio.email }, { onConflict: 'email' })
+      }
+      return NextResponse.json({ ok: true, blog: true })
+    }
+
     // Encontrar o envio correspondente
     const { data: send } = await supabase
       .from('newsletter_sends')

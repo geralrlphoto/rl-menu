@@ -738,6 +738,21 @@ export default async function PhotoDashboard() {
       }
     })
 
+  // Blog: sem temas na fila para escrever → alerta na próxima segunda (ou hoje, se for segunda).
+  // Desaparece assim que houver temas "Por escrever" em /social-media/blog.
+  const getBlogPendentes = unstable_cache(
+    async () => {
+      const { count, error } = await supabase.from('blog_temas')
+        .select('id', { count: 'exact', head: true }).eq('status', 'pendente')
+      return error ? -1 : (count ?? 0)
+    },
+    ['photo-blog-temas-pendentes'],
+    { revalidate: 1800, tags: ['photo-dashboard', 'blog-temas'] }
+  )
+  const blogSemTemas = (await getBlogPendentes()) === 0
+  const blogDia = semanaDias.find(iso => new Date(iso + 'T12:00:00Z').getUTCDay() === 1) ?? null
+  const chaveBlog = (iso: string) => `blog:sem-temas:${iso}`
+
   const DIAS_SEM = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
   const MESES_LONGOS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
   const semana = semanaDias.map((iso, i) => {
@@ -759,6 +774,7 @@ export default async function PhotoDashboard() {
       briefingEquipa: briefingEquipa.filter(b => b.dia === iso),
       adjudicacao: adjudicacaoFalta.filter(a => a.dia === iso),
       whatsapp: waAgenda.filter(t => t.dia === iso).sort((a, b) => b.atrasoDias - a.atrasoDias),
+      blog: blogSemTemas && iso === blogDia && !ocultos.has(chaveBlog(iso)),
     }
   })
 
@@ -1233,7 +1249,7 @@ export default async function PhotoDashboard() {
 
           <div className="agenda-scroll flex gap-3 overflow-x-auto pb-3 snap-x snap-mandatory scroll-smooth">
             {semana.map((d, i) => {
-              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0 || d.preparacoes.length > 0 || d.briefingEquipa.length > 0 || d.adjudicacao.length > 0
+              const cheio = d.eventos.length > 0 || d.reunioes.length > 0 || d.whatsapp.length > 0 || d.preparacoes.length > 0 || d.briefingEquipa.length > 0 || d.adjudicacao.length > 0 || d.blog
               return (
                 <div key={d.iso} className="snap-start shrink-0 w-[150px] sm:w-[158px] flex flex-col">
                   {/* Mês por cima do primeiro dia e de cada dia 1 */}
@@ -1365,6 +1381,16 @@ export default async function PhotoDashboard() {
                         </div>
                         </AgendaItem>
                       ))}
+                      {/* Blog sem temas na fila: dourado tracejado, abre o /social-media/blog */}
+                      {d.blog && (
+                        <AgendaItem key={`blog-${d.iso}`} chave={chaveBlog(d.iso)}>
+                        <Link href="/social-media/blog" title="Não há temas na fila do blog: escolher os temas da semana"
+                          className="group block rounded-lg px-2 py-1.5 border border-dashed border-[#C9A84C]/45 bg-[#C9A84C]/[0.06] hover:bg-[#C9A84C]/15 transition-all">
+                          <p className="text-[8px] tracking-[0.25em] uppercase text-[#C9A84C]">Blog</p>
+                          <p className="text-[11px] leading-tight mt-0.5 text-white/85 group-hover:text-white">Escolher temas</p>
+                        </Link>
+                        </AgendaItem>
+                      )}
                       {/* WhatsApp a enviar (lembrete 1h e follow ups): verde tracejado; no próprio dia envia com um clique */}
                       {d.whatsapp.map(t => (
                         <AgendaItem key={`w-${t.contactId}-${t.tipo}`} chave={chaveWa(t)}><WaTarefaChip t={t} /></AgendaItem>

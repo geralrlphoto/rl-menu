@@ -31,6 +31,7 @@ const TIPO_LABELS: Record<string, string> = {
   pagamento:                'Pagamentos',
   pagamento_registado:      'Pagamento Registado',
   blog_subscriber:          'Nova Subscrição do Blog',
+  blog_artigo:              'Novo artigo do blog',
   nova_candidatura:         'Nova Candidatura de Recrutamento',
   video_prazo:              'Prazo de Entrega do Vídeo',
   fotos_edicao_prazo:       'Prazo das Fotos Editadas (30 dias)',
@@ -72,6 +73,7 @@ const TIPO_ICONS: Record<string, string> = {
   pagamento:                '💳',
   pagamento_registado:      '💶',
   blog_subscriber:          '✉',
+  blog_artigo:              '✎',
   nova_candidatura:         '✦',
   video_prazo:              '🎬',
   fotos_edicao_prazo:       '✎',
@@ -788,6 +790,36 @@ export async function GET(req: Request) {
       }
     } catch (err) {
       console.warn('[admin-notifications] blog_subscribers read failed:', err)
+    }
+
+    // ── Notificações de ARTIGO DO BLOG ESCRITO PELO CLAUDE ──
+    //   Temas da fila (blog_temas) que o Claude escreveu nos últimos 14 dias.
+    try {
+      const { data: escritos } = await supabase
+        .from('blog_temas')
+        .select('id, tema, escrito_at')
+        .eq('status', 'escrito')
+        .gte('escrito_at', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString())
+        .order('escrito_at', { ascending: false })
+        .limit(20)
+      for (const t of (escritos ?? []) as any[]) {
+        if (!t.escrito_at) continue
+        notifications.push({
+          id: `blog_artigo::${t.id}`,
+          tipo: 'blog_artigo',
+          tipo_label: TIPO_LABELS.blog_artigo,
+          tipo_icon: TIPO_ICONS.blog_artigo,
+          casamento_id: '',
+          freelancer_id: '',
+          freelancer_nome: String(t.tema ?? '').slice(0, 120),
+          local: 'Rascunho pronto a copiar',
+          data_casamento: null,
+          url: '/social-media/blog',
+          sent_at: t.escrito_at,
+        })
+      }
+    } catch (err) {
+      console.warn('[admin-notifications] blog_temas read failed:', err)
     }
 
     // ── Notificações de NOVA CANDIDATURA (Notion · Novos Freelancers) ──
