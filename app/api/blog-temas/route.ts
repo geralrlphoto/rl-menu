@@ -9,6 +9,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { revalidateTag } from 'next/cache'
 
+export const dynamic = 'force-dynamic'
+
 function db() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,7 +21,7 @@ function db() {
 export async function GET() {
   const { data, error } = await db()
     .from('blog_temas')
-    .select('id, tema, categoria, status, article_id, escrito_at, created_at')
+    .select('id, tema, categoria, status, article_id, escrito_at, created_at, artigo:blog_articles(title)')
     .order('created_at', { ascending: false })
     .limit(60)
   if (error) return NextResponse.json({ ok: false, temas: [], error: error.message })

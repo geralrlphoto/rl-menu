@@ -691,6 +691,19 @@ function SavedArticleCard({ article, idx, onChange }: { article: Article; idx: n
   const [busy, setBusy] = useState(false)
   const [noivas, setNoivas] = useState(false)
 
+  // "Abrir artigo ↓" na caixa de temas: #artigo-<id> abre e mostra este artigo
+  useEffect(() => {
+    function verHash() {
+      if (window.location.hash === `#artigo-${article.id}`) {
+        setOpen(true)
+        setTimeout(() => document.getElementById(`artigo-${article.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+      }
+    }
+    verHash()
+    window.addEventListener('hashchange', verHash)
+    return () => window.removeEventListener('hashchange', verHash)
+  }, [article.id])
+
   async function setStatus(status: 'draft' | 'used') {
     setBusy(true)
     try {
@@ -717,7 +730,7 @@ function SavedArticleCard({ article, idx, onChange }: { article: Article; idx: n
   const isUsed = article.status === 'used'
 
   return (
-    <article className={`blg-card ${isUsed ? 'is-used' : ''}`}>
+    <article id={`artigo-${article.id}`} className={`blg-card ${isUsed ? 'is-used' : ''}`} style={{ scrollMarginTop: 80 }}>
       <button type="button" className="blg-head" onClick={() => setOpen(o => !o)}>
         <span className="blg-num">{String(idx).padStart(2, '0')}</span>
         <div className="blg-head-body">

@@ -19,6 +19,8 @@ type Tema = {
   tema: string
   categoria: string | null
   status: 'pendente' | 'escrito'
+  article_id?: string | null
+  artigo?: { title: string } | null
   created_at: string
 }
 
@@ -123,8 +125,14 @@ export default function TemasFila({ themes }: Props) {
             </li>
           ))}
           {escritos.map(t => (
-            <li key={t.id} style={{ ...LI, opacity: 0.55 }}>
-              <span className="ai-photos-hint" style={{ margin: 0 }}>✓ Escrito · {t.tema}</span>
+            <li key={t.id} style={LI}>
+              <span className="ai-photos-hint" style={{ margin: 0 }}>
+                <span style={{ opacity: 0.55 }}>✓ Escrito · {t.tema}</span>
+                {t.artigo?.title && <> → <strong style={{ color: '#d8be93' }}>{t.artigo.title}</strong></>}
+              </span>
+              {t.article_id && (
+                <a href={`#artigo-${t.article_id}`} className="ai-btn-ghost" style={{ textDecoration: 'none', whiteSpace: 'nowrap' }}>Abrir artigo ↓</a>
+              )}
             </li>
           ))}
         </ul>
