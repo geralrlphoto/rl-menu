@@ -2,7 +2,7 @@ import { Fragment } from 'react'
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { cookieEditorial, cookieValido, lerEditorial } from '@/lib/editorialAcesso'
-import { ENTREGAS_EDITORIAL, type EntregaLink } from '@/lib/editoriaisEntregas'
+import { montarEntregas, type EntregaLink } from '@/lib/editoriaisEntregas'
 import EntradaEditorial from '../EntradaEditorial'
 import IndiceCapitulos from '../IndiceCapitulos'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
@@ -24,8 +24,9 @@ const EMAIL = 'geral.rlphoto@gmail.com'
 const SITE = 'https://www.rlphotovideo.pt'
 const TOTAL = 11
 
-/* Entregas: todo o material de vídeo é entregue aqui. A lista de vídeos está em lib/editoriaisEntregas.ts e os links
-   na tabela `editoriais` (janela do + em /portais-clientes). Sem link fica "Aguardar"; com link, "Ver / Descarregar". */
+/* Entregas: todo o material de vídeo é entregue aqui. A lista de partida está em lib/editoriaisEntregas.ts; títulos,
+   links, vídeos acrescentados e removidos vêm da tabela `editoriais` (janela do + em /portais-clientes).
+   Sem link fica "Aguardar"; com link, "Ver / Descarregar". */
 
 // Fotos do portfólio no Wfolio (i.wfolio.com, 0 no Supabase), fixas por URL; o número é a posição na galeria
 const FOTOS = {
@@ -335,9 +336,10 @@ const IcPlay = () => <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.
 const IcRelogio = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
 
 function Entregas({ links }: { links: Record<string, EntregaLink> }) {
-  const grupos = ENTREGAS_EDITORIAL[SLUG] ?? []
-  const todas = grupos.flatMap(g => g.itens.map(i => ({ ...i, ...links[i.id] })))
+  const grupos = montarEntregas(SLUG, links).filter(g => g.itens.length)
+  const todas = grupos.flatMap(g => g.itens)
   const feitas = todas.filter(e => e.link).length
+  if (!todas.length) return null
   return (
     <>
       <div className="ent-resumo rv">
@@ -348,10 +350,10 @@ function Entregas({ links }: { links: Record<string, EntregaLink> }) {
         <div key={g.parceiro} className="ent-grupo rv">
           <h3>{g.parceiro} <small>{g.sub}</small></h3>
           <div className="ent-lista">
-            {g.itens.map(i => ({ ...i, ...links[i.id] })).map(e => (
+            {g.itens.map(e => (
               <div key={e.id} className={`ent${e.link ? ' ok' : ''}`}>
                 <span className="ic">{e.link ? <IcPlay /> : <IcRelogio />}</span>
-                <span className="t"><b>{e.nome}</b><span>{e.formato}{e.data ? ` · entregue a ${e.data.split('-').reverse().join('/')}` : ''}</span></span>
+                <span className="t"><b>{e.nome}</b><span>{[e.formato, e.data && `entregue a ${e.data.split('-').reverse().join('/')}`].filter(Boolean).join(' · ')}</span></span>
                 {e.link
                   ? <a className="est" href={e.link} target="_blank" rel="noopener noreferrer">Ver / Descarregar ↗</a>
                   : <span className="est">Aguardar</span>}

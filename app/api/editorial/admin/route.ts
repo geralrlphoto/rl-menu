@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { exigeAdmin } from '@/lib/api-guard'
 import { ehEditorial, lerEditorial, gravarEditorial, normSenha, novaSenhaEditorial } from '@/lib/editorialAcesso'
-import { ENTREGAS_EDITORIAL, type EntregaLink } from '@/lib/editoriaisEntregas'
+import { ENTREGAS_EDITORIAL, ehIdExtra, type EntregaLink } from '@/lib/editoriaisEntregas'
 
-// Janela do + em /portais-clientes: senha e links das entregas de um editorial. Só admin.
+// Janela do + em /portais-clientes: senha e vídeos das entregas de um editorial (título, formato, link,
+// vídeos acrescentados e removidos). Só admin.
 
 export async function GET(req: Request) {
   const bloqueio = exigeAdmin(req); if (bloqueio) return bloqueio
@@ -20,14 +21,31 @@ export async function PATCH(req: Request) {
   if (!slug || !ehEditorial(slug)) return NextResponse.json({ error: 'Editorial desconhecido' }, { status: 404 })
   if (senha && normSenha(senha).length < 8) return NextResponse.json({ error: 'A senha tem de ter pelo menos 8 caracteres.' }, { status: 400 })
 
-  // Só ficam links dos vídeos que existem neste editorial, e só http(s)
-  const ids = new Set((ENTREGAS_EDITORIAL[slug] ?? []).flatMap(g => g.itens.map(i => i.id)))
+  // Ficam os vídeos da lista de partida (com título/formato mudados, link ou removidos)
+  // e os acrescentados (id "extra-…", com título). Links só http(s).
+  const grupos = ENTREGAS_EDITORIAL[slug] ?? []
+  const ids = new Set(grupos.flatMap(g => g.itens.map(i => i.id)))
+  const parceiros = new Set(grupos.map(g => g.parceiro))
+  const txt = (s: unknown, max: number) => (typeof s === 'string' ? s.trim().slice(0, max) : '')
   const limpas: Record<string, EntregaLink> = {}
   for (const [id, v] of Object.entries(entregas ?? {})) {
-    const link = (v?.link ?? '').trim()
-    if (!ids.has(id) || !link) continue
-    if (!/^https?:\/\//i.test(link)) return NextResponse.json({ error: 'Os links têm de começar por http:// ou https://' }, { status: 400 })
-    limpas[id] = { link, data: v.data || new Date().toISOString().slice(0, 10) }
+    const extra = ehIdExtra(id)
+    if (!ids.has(id) && !extra) continue
+    const link = txt(v?.link, 1000)
+    if (link && !/^https?:\/\//i.test(link)) return NextResponse.json({ error: 'Os links têm de começar por http:// ou https://' }, { status: 400 })
+    const nome = txt(v?.nome, 120)
+    const formato = typeof v?.formato === 'string' ? txt(v.formato, 60) : undefined
+    const e: EntregaLink = {}
+    if (link) { e.link = link; e.data = txt(v?.data, 10) || new Date().toISOString().slice(0, 10) }
+    if (extra) {
+      if (!nome) return NextResponse.json({ error: 'Os vídeos acrescentados precisam de título.' }, { status: 400 })
+      Object.assign(e, { extra: true, nome, formato: formato ?? '', grupo: parceiros.has(v?.grupo ?? '') ? v.grupo : grupos[0]?.parceiro, ordem: Number(v?.ordem) || Date.now() })
+    } else {
+      if (nome) e.nome = nome
+      if (formato !== undefined) e.formato = formato
+      if (v?.oculto) e.oculto = true
+    }
+    if (Object.keys(e).length) limpas[id] = e
   }
 
   try {
