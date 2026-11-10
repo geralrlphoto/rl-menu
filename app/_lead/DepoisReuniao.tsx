@@ -1,28 +1,32 @@
 'use client'
 
-// Portais da reunião (/r e /b): quando a hora da reunião passa, a contagem
-// (que ficaria a zeros) dá lugar a um agradecimento com o caminho para a proposta.
+// Portais da reunião (/r e /b): quando a reunião acaba, a contagem dá lugar a
+// um agradecimento com o caminho para a proposta. Até lá (hora marcada + 2 h)
+// ficam visíveis a data, a hora e o botão "Entrar na videochamada", porque os
+// noivos costumam abrir o portal à hora certa ou já atrasados.
 
 import { useEffect, useState } from 'react'
 
-/** true quando a data/hora já passou; atualiza sozinho com a página aberta. */
-export function useJaPassou(alvo: string | null): boolean {
-  const calc = () => !!alvo && new Date(alvo).getTime() <= Date.now()
+const DURACAO_REUNIAO_MS = 2 * 60 * 60 * 1000
+
+/** true quando a data/hora (mais a margem) já passou; atualiza sozinho com a página aberta. */
+export function useJaPassou(alvo: string | null, margemMs = 0): boolean {
+  const calc = () => !!alvo && new Date(alvo).getTime() + margemMs <= Date.now()
   const [passou, setPassou] = useState(calc)
   useEffect(() => {
     setPassou(calc())
     if (!alvo) return
     const id = setInterval(() => setPassou(calc()), 30_000)
     return () => clearInterval(id)
-  }, [alvo]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [alvo, margemMs]) // eslint-disable-line react-hooks/exhaustive-deps
   return passou
 }
 
-/** Mostra a contagem até à reunião; depois da hora, o agradecimento. */
+/** Mostra a contagem e os detalhes da reunião até ela acabar; depois, o agradecimento. */
 export function ContagemOuObrigado({ alvo, contagem, onVerProposta, evento }: {
   alvo: string; contagem: React.ReactNode; onVerProposta?: () => void; evento?: string
 }) {
-  const passou = useJaPassou(alvo)
+  const passou = useJaPassou(alvo, DURACAO_REUNIAO_MS)
   return passou ? <DepoisReuniao onVerProposta={onVerProposta} evento={evento} /> : <>{contagem}</>
 }
 
