@@ -138,15 +138,26 @@ export default function BatizadoPage() {
     setForm(p => ({ ...p, [k]: v }))
   }
 
-  // Só os campos que o formulário marca como obrigatórios (*)
+  // Todos os campos são obrigatórios (*), exceto os serviços adicionais e o consentimento RGPD
   function validateStep(s: number): string | null {
     if (s === 0 && !form.nomePais.trim()) return 'Digam-nos como se chamam.'
     if (s === 2) {
       if (!form.nomeBebe.trim()) return 'Digam-nos o nome do bebé ou da criança.'
       if (!form.dataBatizado) return 'A data do batizado é obrigatória.'
+      if (!form.localCerimonia.trim()) return 'O local da cerimónia é obrigatório.'
+      if (!form.localFesta.trim()) return 'O local da festa é obrigatório.'
+      if (!form.padrinhos.trim()) return 'Digam-nos o nome dos padrinhos.'
+      if (!form.numConvidados.trim()) return 'Digam-nos o número de convidados, mesmo que aproximado.'
+    }
+    if (s === 3) {
+      if (!form.estilo.length) return 'Escolham pelo menos um estilo.'
+      if (!form.visao20anos.trim()) return 'Contem-nos como imaginam olhar para estas imagens daqui a 20 anos.'
+      if (!form.trabalhoFavorito.trim()) return 'Digam-nos se já viram algum trabalho nosso (se não, escrevam "ainda não").'
+      if (!form.preocupacoes.trim()) return 'Digam-nos se há algo que não gostam (se não houver, escrevam "nada").'
     }
     if (s === 4) {
       if (!form.servicos.some(x => x === 'Fotografia' || x === 'Vídeo')) return 'Escolham fotografia, vídeo ou os dois.'
+      if (!form.orcamento.trim()) return 'Digam-nos o orçamento previsto, mesmo que aproximado.'
     }
     if (s === 5) {
       if (!form.contato.trim()) return 'O telemóvel é obrigatório.'
@@ -172,7 +183,7 @@ export default function BatizadoPage() {
   }
 
   async function handleSubmit() {
-    for (const s of [0, 2, 4, 5]) {
+    for (const s of [0, 2, 3, 4, 5]) {
       const err = validateStep(s)
       if (err) { setErro(err); setStep(s); return }
     }
@@ -444,13 +455,13 @@ export default function BatizadoPage() {
                   placeholder="Ex: Maria" required />
                 <LeadInput label="Data do batizado" type="date" value={form.dataBatizado} onChange={v => set('dataBatizado', v)} required />
                 <LeadInput label="Local da cerimónia (igreja / capela)" value={form.localCerimonia} onChange={v => set('localCerimonia', v)}
-                  placeholder="Ex: Igreja de São Pedro, Lisboa" />
+                  placeholder="Ex: Igreja de São Pedro, Lisboa" required />
                 <LeadInput label="Local da festa / receção" value={form.localFesta} onChange={v => set('localFesta', v)}
-                  placeholder="Ex: Quinta das Flores, Sintra" />
+                  placeholder="Ex: Quinta das Flores, Sintra" required />
                 <LeadInput label="Nome dos padrinhos" value={form.padrinhos} onChange={v => set('padrinhos', v)}
-                  placeholder="Ex: Padrinho Rui & Madrinha Sofia" />
+                  placeholder="Ex: Padrinho Rui & Madrinha Sofia" required />
                 <LeadInput label="Número de convidados (sensivelmente)" value={form.numConvidados} onChange={v => set('numConvidados', v)}
-                  placeholder="Ex: 80" />
+                  placeholder="Ex: 80" required />
               </div>
             )}
 
@@ -459,23 +470,23 @@ export default function BatizadoPage() {
               <div className="space-y-11">
                 <div className="space-y-3">
                   <div>
-                    <p className="quest">Qual é o <em>vosso estilo?</em></p>
+                    <p className="quest">Qual é o <em>vosso estilo?</em> <span className="opt">*</span></p>
                     <p className="hint mt-2">Podem escolher mais do que um</p>
                   </div>
                   <PillToggle options={ESTILO} value={form.estilo} onChange={v => set('estilo', v)} />
                 </div>
                 <div className="space-y-3">
-                  <p className="quest">Como imaginam olhar para estas imagens <em>daqui a 20 anos?</em></p>
+                  <p className="quest">Como imaginam olhar para estas imagens <em>daqui a 20 anos?</em> <span className="opt">*</span></p>
                   <textarea value={form.visao20anos} onChange={e => set('visao20anos', e.target.value)} rows={3}
                     placeholder="Partilhem o que sentem..." className="finput" />
                 </div>
                 <div className="space-y-3">
                   <p className="quest">Já viram algum trabalho nosso que <em>vos emocionou?</em></p>
                   <LeadInput label="Link ou descrição" value={form.trabalhoFavorito} onChange={v => set('trabalhoFavorito', v)}
-                    placeholder="Ex: o vídeo do batizado partilhado no Instagram..." />
+                    placeholder="Ex: o vídeo do batizado partilhado no Instagram..." required />
                 </div>
                 <div className="space-y-3">
-                  <p className="quest">Há algo que <em>não gostam</em> em fotos ou vídeo?</p>
+                  <p className="quest">Há algo que <em>não gostam</em> em fotos ou vídeo? <span className="opt">*</span></p>
                   <textarea value={form.preocupacoes} onChange={e => set('preocupacoes', e.target.value)} rows={3}
                     placeholder="Poses, ângulos, estilos de edição..." className="finput" />
                 </div>
@@ -523,7 +534,7 @@ export default function BatizadoPage() {
                   </div>
                 </div>
                 <LeadInput label="Orçamento previsto (sensivelmente)" value={form.orcamento} onChange={v => set('orcamento', v)}
-                  placeholder="Ex: 1.000 a 1.500€" />
+                  placeholder="Ex: 1.000 a 1.500€" required />
               </div>
             )}
 
