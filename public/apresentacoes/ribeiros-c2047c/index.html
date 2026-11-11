@@ -49,7 +49,7 @@ h1 em,h2 em{font-style:normal;color:var(--azul)}
 .capa .foto{position:absolute;right:0;top:0;bottom:0;width:48%;background:url(/apresentacoes/ribeiros-c2047c/drone-montijo.webp) center/cover}
 .capa .foto:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.5) 35%,rgba(255,255,255,0) 70%)}
 .capa .x{color:var(--azul);font-weight:600;margin:0 .12em}
-.capa .lead{margin-top:26px;max-width:520px}
+.capa .in{position:relative;z-index:1}.capa .lead{margin-top:26px;max-width:min(520px,44vw)}@media (max-width:800px){.capa .lead{max-width:520px}}
 .desce{margin-top:44px;display:inline-flex;align-items:center;gap:12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--tinta);text-decoration:none}
 .desce i{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--azul);display:grid;place-items:center;color:var(--azul);font-style:normal;animation:sobe 2s infinite}
 @keyframes sobe{50%{transform:translateY(5px)}}
