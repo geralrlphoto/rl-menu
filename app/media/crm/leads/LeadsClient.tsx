@@ -1,6 +1,7 @@
 ﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import FicheirosLead from './FicheirosLead'
 import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 // Fases da lead RL PROD (Validada cria o projeto em Projetos com o portal pronto a enviar)
@@ -710,9 +711,12 @@ export default function LeadsClient({ leads: initial }: Props) {
                 {lead.mensagem && (
                   <div>
                     <p className={labelCls + ' mb-2'}>Mensagem</p>
-                    <p className="text-[14px] text-white/50 leading-relaxed bg-white/[0.02] border border-white/[0.06] px-5 py-4">{lead.mensagem}</p>
+                    <p className="text-[14px] text-white/50 leading-relaxed whitespace-pre-line bg-white/[0.02] border border-white/[0.06] px-5 py-4">{lead.mensagem}</p>
                   </div>
                 )}
+
+                {/* Ficheiros */}
+                <FicheirosLead leadId={lead.id} labelCls={labelCls} />
 
                 {/* Estado */}
                 <div>
