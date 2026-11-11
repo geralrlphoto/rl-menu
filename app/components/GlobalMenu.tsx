@@ -10,7 +10,7 @@ import MediaPillNav from '@/app/media/_components/MediaPillNav'
 const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media', '/painel-editor', '/convidados/', '/opiniao', '/equipa-rlprod/', '/rm/']
 // Paths em que o menu lateral permanente é colapsado (só botão flutuante visível)
 const COLLAPSED_PATHS = ['/freelancers/', '/painel-fotografo']
-const HIDDEN_EXACT = ['/'] // brand selector — sem menu lateral
+const HIDDEN_EXACT = ['/', '/batizado'] // brand selector e formulário de batizado (enviado ao cliente) — sem menu lateral
 
 const MEDIA_LINKS = [
   {

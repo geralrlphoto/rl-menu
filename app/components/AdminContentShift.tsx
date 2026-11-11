@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 
 // Paths where the sidebar is hidden (matches GlobalMenu HIDDEN_PATHS)
 const HIDDEN_PATHS = ['/login', '/portal-cliente', '/portal-batizado', '/freelancer-view', '/r/', '/b/', '/nova-lead', '/portal-media', '/painel-editor', '/convidados/', '/opiniao']
-const HIDDEN_EXACT = ['/']
+const HIDDEN_EXACT = ['/', '/batizado']
 
 export default function AdminContentShift({ children }: { children: ReactNode }) {
   const pathname = usePathname()
