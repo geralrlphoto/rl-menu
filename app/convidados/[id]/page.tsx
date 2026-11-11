@@ -26,7 +26,8 @@ async function carregar(id: string) {
     nomes: [a, b].filter(Boolean).join(' & '),
     nomesForm: [a, b].filter(Boolean).join(' e '),
     data: String(data.data ?? s.data ?? '').slice(0, 10),
-    galeria: String(s.galerias_url ?? '') || null,
+    // Link próprio dos convidados (ficha do evento → Estado das Entregas); sem ele, a Galeria Online
+    galeria: String(s.convidados_url || s.galerias_url || '') || null,
     foto: String(s.heroImageUrl ?? '') || null,
   }
 }

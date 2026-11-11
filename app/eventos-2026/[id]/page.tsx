@@ -4293,6 +4293,7 @@ export default function EventoPage() {
                 fotos_finais: s.fotos_finais_url ?? fl['Fotos Editadas']            ?? '',
                 galerias:     s.galerias_url     ?? fl['Galeria On-line']           ?? '',
                 maquete:      s.maquete_url      ?? fl['Maquete Album']             ?? '',
+                convidados:   s.convidados_url   ?? '',
               })
             })
             .catch(() => {})
@@ -5214,6 +5215,40 @@ export default function EventoPage() {
                 onSaved={(_key, val) => setPortalSelecaoEstado(val)} />
             </>}
           </div>
+
+          {/* Link das Fotos para convidados (cartão "Fotografias para os convidados" do portal) */}
+          {e.referencia && (
+            <div className="print:hidden flex flex-col gap-1.5 px-4 py-3 rounded-xl border border-white/[0.06] bg-white/[0.02]">
+              <span className="text-[10px] tracking-widest text-white/40 uppercase">Link Fotos para convidados</span>
+              <div className="flex items-center gap-2">
+                <input
+                  type="url"
+                  placeholder="Cole aqui o link da galeria dos convidados..."
+                  value={actionUrls.convidados ?? ''}
+                  onChange={ev => setActionUrls(prev => ({ ...prev, convidados: ev.target.value }))}
+                  onBlur={async () => {
+                    const res = await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { convidados_url: (actionUrls.convidados ?? '').trim() } } }) })
+                    if (!res.ok) {
+                      const err = await res.json().catch(() => ({}))
+                      alert(`❌ Falhou a guardar o link: ${err?.error ?? res.statusText}`)
+                    }
+                  }}
+                  className="flex-1 bg-white/[0.03] border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white/60 placeholder-white/20 focus:outline-none focus:border-gold/40 transition-colors"
+                />
+                {actionUrls.convidados && (
+                  <button
+                    onClick={async () => {
+                      setActionUrls(prev => ({ ...prev, convidados: '' }))
+                      await fetch('/api/portais', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ referencia: e.referencia, updates: { settings: { convidados_url: '' } } }) })
+                    }}
+                    className="text-white/20 hover:text-white/50 transition-colors text-xs"
+                    title="Apagar link"
+                  >✕</button>
+                )}
+              </div>
+              <span className="text-[10px] text-white/25">Abre no portal dos noivos em Fotografias → Fotografias para os convidados</span>
+            </div>
+          )}
 
           {/* Link rápido → Seleção dos Noivos */}
           {e.referencia && (

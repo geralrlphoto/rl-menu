@@ -3312,7 +3312,11 @@ function PortalSubPageContent() {
               dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
               estadoEdicao={eventoData?.fotos_edicao_estado ?? null}
               capaFallback={_atmEffectiveHeader || portalHeroImageUrl || null}
-              convidadosUrl={portalRowId ? `/convidados/${portalRowId}` : null}
+              // Cartão dos convidados: disponível quando há link (Estado das Entregas → Link Fotos para
+              // convidados; sem ele, a Galeria Online). Vazio = "A aguardar".
+              convidadosUrl={portalRowId
+                ? ((portalSettingsObj?.convidados_url || portalSettingsObj?.galerias_url) ? `/convidados/${portalRowId}` : '')
+                : null}
             />
           </div>
 

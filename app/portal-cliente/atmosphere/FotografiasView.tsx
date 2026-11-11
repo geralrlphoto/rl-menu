@@ -523,12 +523,12 @@ export function FotografiasView(props: FotografiasViewProps) {
     if (c.key === 'galerias') return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 7))}` : `Até 7 dias úteis depois do ${evento}`, tom: 'wait' }
     if (c.key === 'editadas') return { estado: 'A aguardar', nota: '30 dias úteis depois de nos enviarem a seleção', tom: 'wait' }
     if (c.key === 'prewedding') return { estado: 'A aguardar', nota: 'Depois da sessão pré-wedding', tom: 'wait' }
-    if (c.key === 'convidados') return { estado: 'Disponível', tom: 'ok' }
+    if (c.key === 'convidados') return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 7))}` : `Até 7 dias úteis depois do ${evento}`, tom: 'wait' }
     return { estado: 'A aguardar', tom: 'wait' }
   }
-  // Tema RL: cartão de compra de fotografias para os convidados
-  const cards: FotografiasCard[] = temaRL && props.convidadosUrl
-    ? [...props.cards, {
+  // Tema RL: o cartão dos convidados substitui a Galeria Online (abriam a mesma galeria)
+  const cards: FotografiasCard[] = temaRL && props.convidadosUrl != null
+    ? [...props.cards.filter(c => c.key !== 'galerias'), {
         key: 'convidados',
         lead: { kicker: 'Convidados', title: <>Fotografias para os <em>convidados</em>.</>, subtitle: `Vocês e os vossos convidados podem adquirir fotografias do ${evento}. Digital em 15 dias úteis; papel em 30 dias úteis, por correio em carta registada.` },
         title: 'FOTOS PARA CONVIDADOS',
@@ -571,16 +571,16 @@ export function FotografiasView(props: FotografiasViewProps) {
       <SectionTitle kicker="Alguns momentos" title={<>As vossas <em>fotografias.</em></>} />
 
       {/* ── Tema RL: resumo de cada galeria (disponível ou a aguardar) ── */}
-      {temaRL && props.cards.length > 0 && (() => {
-        const prontas = props.cards.filter(c => c.url && c.url.length > 0).length
+      {temaRL && cards.length > 0 && (() => {
+        const prontas = cards.filter(c => c.url && c.url.length > 0).length
         return (
           <div className="fp-resumo">
             <div className="fp-resumo-head">
               <span className="eyebrow"><span className="pip" />Estado das galerias</span>
-              <span className="fp-resumo-total">{prontas} de {props.cards.length} disponíveis</span>
+              <span className="fp-resumo-total">{prontas} de {cards.length} disponíveis</span>
             </div>
             <div className="fp-resumo-grid">
-              {props.cards.map(c => {
+              {cards.map(c => {
                 const e = estadoGaleria(c)
                 return (
                   <a key={c.key} className={`fp-resumo-item ${e.tom}`} href={`#galeria-${c.key}`}>
@@ -600,7 +600,8 @@ export function FotografiasView(props: FotografiasViewProps) {
         {cards.map(c => {
           const available = Boolean(c.url && c.url.length > 0)
           const lead = c.lead ?? { kicker: c.title, title: c.heading, subtitle: c.caption }
-          const cover = covers[c.key] ?? (temaRL ? (props.capaFallback ?? undefined) : undefined)
+          // o cartão dos convidados usa a capa da Galeria Online (o cartão dela já não aparece)
+          const cover = covers[c.key] ?? (c.key === 'convidados' ? covers.galerias : undefined) ?? (temaRL ? (props.capaFallback ?? undefined) : undefined)
           const est = temaRL ? estadoGaleria(c) : null
           return (
             <div key={c.key} className="fp-grid-item" id={`galeria-${c.key}`}>
