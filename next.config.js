@@ -19,6 +19,21 @@ const nextConfig = {
       },
     ],
   },
+  // Apresentações online às leads: link secreto, sem login, protegido por cabeçalhos
+  async headers() {
+    const seguranca = [
+      { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+      { key: 'X-Frame-Options', value: 'DENY' },
+      { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+      { key: 'X-Content-Type-Options', value: 'nosniff' },
+      { key: 'Referrer-Policy', value: 'no-referrer' },
+      { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+    ]
+    return [
+      { source: '/apresentacao/:path*', headers: seguranca },
+      { source: '/apresentacoes/:path*', headers: seguranca },
+    ]
+  },
   async rewrites() {
     return [
       { source: '/newsletter', destination: '/nl/index.html' },
