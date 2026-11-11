@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RL PROD × Ribeiros</title>
+<link rel="icon" href="/apresentacoes/ribeiros-c2047c/logo.png">
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;700&family=Saira:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--azul:#2E6CF6;--tinta:#00141F;--txt:#33414f;--cinza:#55616d;--linha:#E3E8EE;--suave:#F3F5F8}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (min-width:900px) and (min-height:620px){html{scroll-snap-type:y mandatory}}
+body{font-family:Saira,Arial,sans-serif;background:#fff;color:var(--tinta);-webkit-font-smoothing:antialiased}
+img{display:block;max-width:100%}
+.s{min-height:100vh;min-height:100svh;scroll-snap-align:start;position:relative;display:flex;flex-direction:column;justify-content:center;padding:96px clamp(20px,6vw,96px) 72px;overflow:hidden}
+.in{width:100%;max-width:1240px;margin:0 auto}
+.eb{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--azul);display:flex;align-items:center;gap:12px;font-weight:500}
+.eb:before{content:"";width:34px;height:1.5px;background:currentColor}
+h1,h2,h3{font-family:"Saira Condensed",sans-serif;text-transform:uppercase;font-weight:700;line-height:.95}
+h1{font-size:clamp(56px,10vw,132px)}
+h2{font-size:clamp(38px,5.6vw,76px);margin:16px 0 22px}
+h3{font-size:clamp(20px,1.8vw,24px);line-height:1.05}
+h1 em,h2 em{font-style:normal;color:var(--azul)}
+.lead{font-size:clamp(17px,1.5vw,21px);font-weight:300;line-height:1.55;color:var(--txt);max-width:720px}
+.sm{font-size:15px;line-height:1.55;color:var(--cinza)}
+.mono{font-family:"JetBrains Mono",monospace}
+
+/* topo fixo */
+.barra{position:fixed;inset:0 0 auto;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:18px clamp(20px,6vw,96px);background:rgba(255,255,255,.86);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid transparent;transition:border-color .3s}
+.barra.sombra{border-color:var(--linha)}
+.barra img{height:44px}
+.barra span{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--cinza)}
+.prog{position:fixed;left:0;top:0;height:3px;background:var(--azul);z-index:30;width:0}
+.pontos{position:fixed;right:clamp(10px,2vw,28px);top:50%;transform:translateY(-50%);z-index:20;display:flex;flex-direction:column;gap:12px}
+.pontos a{width:9px;height:9px;border-radius:50%;border:1.5px solid #b9c3cf;transition:.25s}
+.pontos a.on{background:var(--azul);border-color:var(--azul);transform:scale(1.25)}
+@media (max-width:700px){.pontos{display:none}.barra span{display:none}.barra img{height:36px}}
+
+/* animação */
+.r{opacity:0;transform:translateY(28px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
+.vis .r{opacity:1;transform:none}
+.vis .r:nth-child(2){transition-delay:.08s}.vis .r:nth-child(3){transition-delay:.16s}.vis .r:nth-child(4){transition-delay:.24s}.vis .r:nth-child(5){transition-delay:.32s}
+@media (prefers-reduced-motion:reduce){.r{opacity:1;transform:none;transition:none}}
+
+/* capa */
+.capa{padding-top:120px}
+.capa .foto{position:absolute;right:0;top:0;bottom:0;width:48%;background:url(/apresentacoes/ribeiros-c2047c/drone-montijo.webp) center/cover}
+.capa .foto:after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.5) 35%,rgba(255,255,255,0) 70%)}
+.capa .x{color:var(--azul);font-weight:600;margin:0 .12em}
+.capa .lead{margin-top:26px;max-width:520px}
+.desce{margin-top:44px;display:inline-flex;align-items:center;gap:12px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--tinta);text-decoration:none}
+.desce i{width:38px;height:38px;border-radius:50%;border:1.5px solid var(--azul);display:grid;place-items:center;color:var(--azul);font-style:normal;animation:sobe 2s infinite}
+@keyframes sobe{50%{transform:translateY(5px)}}
+@media (max-width:800px){.capa .foto{position:relative;width:auto;height:240px;margin:-20px -24px 28px;order:-1}.capa .foto:after{background:linear-gradient(0deg,#fff,rgba(255,255,255,0) 60%)}}
+
+/* grelhas */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.g2{display:grid;grid-template-columns:1.15fr 1fr;gap:clamp(30px,5vw,72px);align-items:center}
+.g-site{grid-template-columns:.8fr 1.4fr}.g-tel{grid-template-columns:auto 1fr}
+@media (max-width:900px){.g4{grid-template-columns:1fr 1fr}.g3,.g2,.g-site,.g-tel{grid-template-columns:1fr}}
+@media (max-width:520px){.g4{grid-template-columns:1fr}}
+.num{border-top:2px solid var(--azul);padding-top:18px}
+.num i{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--azul)}
+.num h3{margin:12px 0 10px}
+.caixa{background:var(--suave);border:1px solid var(--linha);border-radius:14px;padding:clamp(24px,3vw,38px)}
+ul.l{list-style:none;display:grid;gap:16px}
+ul.l li{position:relative;padding-left:30px;font-size:17px;line-height:1.45}
+ul.l li:before{content:"";position:absolute;left:0;top:.72em;width:16px;height:1.5px;background:var(--azul)}
+.srv{background:var(--suave);border:1px solid var(--linha);border-radius:14px;padding:30px 26px 34px;transition:transform .3s,box-shadow .3s,border-color .3s}
+.srv:hover{transform:translateY(-6px);box-shadow:0 22px 40px -24px rgba(0,20,31,.35);border-color:var(--azul)}
+.srv i{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:14px;color:var(--azul)}
+.srv h3{margin:26px 0 12px;font-size:24px}
+.proc{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:56px}
+.proc div{border-top:2px solid var(--azul);padding-top:12px}
+.proc b{display:block;font-family:"Saira Condensed",sans-serif;text-transform:uppercase;font-size:17px;margin-top:4px}
+.proc span{font-size:13.5px;color:var(--cinza);line-height:1.45;display:block;margin-top:4px}
+.proc i{font-style:normal;font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--azul)}
+@media (max-width:900px){.proc{grid-template-columns:1fr 1fr 1fr}}
+@media (max-width:520px){.proc{grid-template-columns:1fr 1fr}}
+
+/* ecrãs */
+.ecra{border-radius:12px;overflow:hidden;border:1px solid var(--linha);box-shadow:0 30px 60px -30px rgba(0,20,31,.45);background:#071a36;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.ecra:hover{transform:scale(1.015)}
+.ecra img{width:100%;height:100%;object-fit:cover;object-position:left top}
+.cap{font-family:"JetBrains Mono",monospace;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--cinza);margin-top:14px}
+.cap b{color:var(--azul);font-weight:500}
+.ideia .ecra{aspect-ratio:16/10}
+.ideia h3{margin:22px 0 8px;padding-top:16px;border-top:1px solid var(--linha)}
+.tel{display:grid;grid-template-columns:repeat(3,minmax(0,200px));gap:18px}
+.tel .ecra{aspect-ratio:9/19;border-radius:22px}
+@media (max-width:520px){.tel{gap:10px}.tel .ecra{border-radius:14px}}
+
+/* fecho */
+.fim h2{font-size:clamp(46px,8vw,112px);max-width:1000px}
+.botao{display:inline-flex;align-items:center;gap:12px;margin-top:34px;background:var(--azul);color:#fff;text-decoration:none;font-weight:500;font-size:17px;padding:16px 28px;border-radius:999px;box-shadow:0 16px 34px -14px rgba(46,108,246,.8);transition:transform .2s}
+.botao:hover{transform:translateY(-2px)}
+.rod{margin-top:60px;font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--cinza)}
+</style>
+</head>
+<body>
+<div class="prog" id="prog"></div>
+<header class="barra" id="barra"><img src="/apresentacoes/ribeiros-c2047c/logo.png" alt="RL PROD"><span>RL PROD × Ribeiros</span></header>
+<nav class="pontos" id="pontos"></nav>
+
+<!-- capa -->
+<section class="s capa" id="inicio">
+  <div class="foto"></div>
+  <div class="in">
+    <div class="eb r">Apresentação</div>
+    <h1 class="r" style="margin-top:18px">RL PROD<span class="x">×</span><br><em>Ribeiros</em></h1>
+    <p class="lead r">Quem somos e o que propomos para o novo site da Ribeiros.</p>
+    <a class="desce r" href="#porque"><i>↓</i>Começar</a>
+  </div>
+</section>
+
+<!-- porquê -->
+<section class="s" id="porque">
+  <div class="in">
+    <div class="eb r">Porque estamos a falar convosco</div>
+    <h2 class="r">A Ribeiros cresceu.<br><em>O site ficou para trás.</em></h2>
+    <p class="lead r">Olhámos para a Ribeiros com atenção: mais de 40 anos, duas fábricas automatizadas, frota própria, três unidades e uma marca que se vende sozinha. Depois abrimos o site e não encontrámos nada disso à primeira vista.</p>
+    <div class="g4" style="margin-top:56px">
+      <div class="num r"><i>01</i><h3>O site é a primeira impressão</h3><p class="sm">É lá que revendedores, clientes e candidatos conhecem a empresa antes de ligar.</p></div>
+      <div class="num r"><i>02</i><h3>Hoje não mostra a escala</h3><p class="sm">Fotografias pequenas, texto corrido e pouca ajuda no telemóvel. A empresa parece mais pequena do que é.</p></div>
+      <div class="num r"><i>03</i><h3>Em vez de um orçamento, um protótipo</h3><p class="sm">Fizemos um site de exemplo com o vosso conteúdo, para verem o resultado antes de decidirem.</p></div>
+      <div class="num r"><i>04</i><h3>Só pedimos uma conversa</h3><p class="sm">Meia hora para mostrar o protótipo e perceber o que faz sentido para a Ribeiros.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- quem somos -->
+<section class="s" id="quem">
+  <div class="in g2">
+    <div>
+      <div class="eb r">Sobre a RL PROD</div>
+      <h2 class="r">Uma produtora <em>especializada</em> em conteúdo visual.</h2>
+      <p class="lead r">Somos uma produtora dedicada a marcas que querem destacar-se. Juntamos técnica, criatividade e estratégia para entregar produções com propósito e alta qualidade.</p>
+      <p class="sm r" style="margin-top:18px;max-width:600px">Fazemos a imagem e o site na mesma casa. Quem filma a empresa é quem desenha o site, por isso tudo fala a mesma língua.</p>
+    </div>
+    <div class="caixa r">
+      <div class="eb" style="margin-bottom:24px">O nosso diferencial</div>
+      <ul class="l">
+        <li>Abordagem estratégica e personalizada.</li>
+        <li>Conteúdo alinhado com os objetivos de marketing.</li>
+        <li>Equipamento profissional, incluindo drone.</li>
+        <li>Pós-produção de alto nível: edição, cor e som.</li>
+        <li>Compromisso com prazos e resultados.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- o que fazemos -->
+<section class="s" id="servicos">
+  <div class="in">
+    <div class="eb r">Serviços</div>
+    <h2 class="r">Da câmara <em>ao site.</em></h2>
+    <div class="g4">
+      <div class="srv r"><i>01</i><h3>Vídeo institucional</h3><p class="sm">Filmes de marca, entrevistas e vídeos curtos para o site e as redes sociais.</p></div>
+      <div class="srv r"><i>02</i><h3>Fotografia</h3><p class="sm">Reportagem de instalações, equipas e produção, pronta para o site e para feiras.</p></div>
+      <div class="srv r"><i>03</i><h3>Imagem aérea</h3><p class="sm">Drone para mostrar a escala das instalações e o território.</p></div>
+      <div class="srv r"><i>04</i><h3>Sites e Google</h3><p class="sm">Design, desenvolvimento, SEO, Search Console e Analytics, com manutenção.</p></div>
+    </div>
+    <div class="eb r" style="margin-top:56px">Como trabalhamos</div>
+    <div class="proc r" style="margin-top:20px">
+      <div><i>01</i><b>Briefing</b><span>Conhecer a marca, os objetivos e o público.</span></div>
+      <div><i>02</i><b>Planeamento</b><span>Conceito, guião e referências visuais.</span></div>
+      <div><i>03</i><b>Pré-produção</b><span>Locais, equipa e calendário.</span></div>
+      <div><i>04</i><b>Produção</b><span>Filmagens e fotografia no terreno.</span></div>
+      <div><i>05</i><b>Pós-produção</b><span>Edição, cor, som e tratamento de imagem.</span></div>
+      <div><i>06</i><b>Entrega</b><span>Formatos certos e apoio depois.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- o novo site -->
+<section class="s" id="site">
+  <div class="in g2 g-site">
+    <div>
+      <div class="eb r">Ribeiros.pt</div>
+      <h2 class="r">Uma grande empresa merece <em>um grande site.</em></h2>
+      <p class="lead r">A Ribeiros tem mais de 40 anos, duas fábricas, frota própria e a marca Crescer. O novo site mostra isso logo à entrada, com vídeo, números e as duas marcas lado a lado.</p>
+      <p class="sm r" style="margin-top:16px">Mantém o logótipo de sempre, com cores e letras novas.</p>
+    </div>
+    <div class="r">
+      <div class="ecra" style="aspect-ratio:16/10"><img src="/apresentacoes/ribeiros-c2047c/01-hero.webp" alt="Entrada do novo site da Ribeiros" loading="lazy"></div>
+      <div class="cap"><b>Entrada</b> · vídeo de fundo, números e acesso rápido a produtos e encomendas</div>
+    </div>
+  </div>
+</section>
+
+<!-- três ideias -->
+<section class="s" id="ideias">
+  <div class="in">
+    <div class="eb r">Três ideias</div>
+    <h2 class="r">Simples de usar, <em>fácil de lembrar.</em></h2>
+    <div class="g3">
+      <div class="ideia r"><div class="ecra"><img src="/apresentacoes/ribeiros-c2047c/06-animais.webp" alt="" loading="lazy"></div><h3>Para que animal procura?</h3><p class="sm">Escolhe-se o animal e o site mostra os produtos certos.</p></div>
+      <div class="ideia r"><div class="ecra"><img src="/apresentacoes/ribeiros-c2047c/08-mapa.webp" alt="" loading="lazy"></div><h3>Três unidades num mapa</h3><p class="sm">Montijo, Beja e Estremoz, com moradas, áreas e contactos.</p></div>
+      <div class="ideia r"><div class="ecra"><img src="/apresentacoes/ribeiros-c2047c/10-historia-1985.webp" alt="" loading="lazy"></div><h3>40 anos de história</h3><p class="sm">De 1985 até hoje, contada ano a ano com fotografias.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- telemóvel e google -->
+<section class="s" id="telemovel">
+  <div class="in g2 g-tel">
+    <div class="tel r">
+      <div class="ecra"><img src="/apresentacoes/ribeiros-c2047c/19-movel-hero.webp" alt="" loading="lazy"></div>
+      <div class="ecra" style="margin-top:40px"><img src="/apresentacoes/ribeiros-c2047c/20-movel-mapa.webp" alt="" loading="lazy"></div>
+      <div class="ecra"><img src="/apresentacoes/ribeiros-c2047c/21-movel-menu.webp" alt="" loading="lazy"></div>
+    </div>
+    <div>
+      <div class="eb r">Feito para ser encontrado</div>
+      <h2 class="r">Rápido no telemóvel, <em>visível no Google.</em></h2>
+      <ul class="l r">
+        <li>Pensado primeiro para o telemóvel.</li>
+        <li>Português e inglês.</li>
+        <li>SEO, Google Search Console e Google Analytics.</li>
+        <li>Área de encomendas para revendedores.</li>
+        <li>Fotografia e vídeo novos feitos pela RL PROD.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- fecho -->
+<section class="s fim" id="fim">
+  <div class="in">
+    <div class="eb r">Próximo passo</div>
+    <h2 class="r">A Ribeiros já é grande. <em>Falta mostrar.</em></h2>
+    <p class="lead r">Vamos ver o protótipo juntos e escolher o caminho que faz sentido.</p>
+    <p class="rod r">RL PROD · rlprod.pt</p>
+  </div>
+</section>
+
+<script>
+(function(){
+  var sec=[].slice.call(document.querySelectorAll('.s')), pontos=document.getElementById('pontos');
+  sec.forEach(function(s){var a=document.createElement('a');a.href='#'+s.id;a.setAttribute('aria-label',s.id);pontos.appendChild(a)});
+  var dots=[].slice.call(pontos.children);
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){e.target.classList.add('vis');var i=sec.indexOf(e.target);dots.forEach(function(d,k){d.classList.toggle('on',k===i)})}
+  })},{threshold:.35});
+  sec.forEach(function(s){io.observe(s)});
+  var prog=document.getElementById('prog'),barra=document.getElementById('barra');
+  addEventListener('scroll',function(){
+    var h=document.documentElement.scrollHeight-innerHeight;prog.style.width=(h>0?scrollY/h*100:0)+'%';
+    barra.classList.toggle('sombra',scrollY>20)
+  },{passive:true});
+  addEventListener('keydown',function(e){
+    if(['ArrowDown','PageDown','ArrowRight',' '].indexOf(e.key)<0&&['ArrowUp','PageUp','ArrowLeft'].indexOf(e.key)<0)return;
+    var atual=sec.findIndex(function(s){return s.getBoundingClientRect().top>-innerHeight/2&&s.getBoundingClientRect().top<innerHeight/2});
+    var prox=atual+(['ArrowUp','PageUp','ArrowLeft'].indexOf(e.key)>=0?-1:1);
+    if(sec[prox]){e.preventDefault();sec[prox].scrollIntoView({behavior:'smooth'})}
+  });
+  sec[0].classList.add('vis');
+})();
+</script>
+</body>
+</html>

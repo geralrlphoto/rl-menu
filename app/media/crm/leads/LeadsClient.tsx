@@ -49,6 +49,7 @@ interface Lead {
   fonte?: string
   ramo?: string
   website?: string
+  apresentacao_url?: string | null
   instagram?: string
   mensagem?: string
   estado: string
@@ -712,6 +713,20 @@ export default function LeadsClient({ leads: initial }: Props) {
                   <div>
                     <p className={labelCls + ' mb-2'}>Mensagem</p>
                     <p className="text-[14px] text-white/50 leading-relaxed whitespace-pre-line bg-white/[0.02] border border-white/[0.06] px-5 py-4">{lead.mensagem}</p>
+                  </div>
+                )}
+
+                {/* Apresentação online */}
+                {lead.apresentacao_url && (
+                  <div>
+                    <p className={labelCls + ' mb-3'}>Apresentação online</p>
+                    <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[#2e6cf6]/40 bg-[#2e6cf6]/[0.08] px-4 py-3">
+                      <a href={lead.apresentacao_url} target="_blank" rel="noopener noreferrer" className="flex-1 min-w-0 truncate text-[13.5px] text-[#a9c1ff] hover:text-white">{lead.apresentacao_url} ↗</a>
+                      <button onClick={() => { navigator.clipboard.writeText(lead.apresentacao_url!); setCopiedId('apr-' + lead.id); setTimeout(() => setCopiedId(null), 2000) }}
+                        className="text-[11px] tracking-[0.2em] uppercase px-4 py-2 rounded-full bg-[#2e6cf6] hover:bg-[#3d79ff] text-white">
+                        {copiedId === 'apr-' + lead.id ? 'Copiado' : 'Copiar link'}
+                      </button>
+                    </div>
                   </div>
                 )}
 

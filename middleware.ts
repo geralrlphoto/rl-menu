@@ -250,6 +250,7 @@ export async function middleware(request: NextRequest) {
     // A raiz (menu das 3 áreas) já não é pública: sem sessão de admin vai para o login
     pathname.startsWith('/wedding-mentor') ||
     pathname === '/newsletter' ||
+    pathname.startsWith('/apresentacao/') || // apresentações online às leads RL PROD (link secreto, public/apresentacoes)
     pathname.startsWith('/newsletter/') ||
     pathname.startsWith('/api/newsletter-subscribe') ||
     pathname.startsWith('/api/newsletter-confirm') ||
