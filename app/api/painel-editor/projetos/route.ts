@@ -150,10 +150,22 @@ export async function GET(req: NextRequest) {
   // é a fonte de verdade para dividir os projetos em Em Edição / Em Revisão / Entregue.
   if (refs.length) {
     for (const t of ['eventos_2026', 'eventos_2027']) {
-      const { data: evs } = await supabase.from(t).select('referencia, video_estado').in('referencia', refs)
+      const { data: evs } = await supabase.from(t).select('referencia, video_estado, cliente').in('referencia', refs)
       for (const e of (evs ?? []) as any[]) {
         const j = jobs.find(x => x.referencia === e.referencia)
         if (j && e.video_estado && !j.videoEstado) j.videoEstado = e.video_estado
+        // Nome dos noivos para o editor reconhecer o casamento (antes só via a quinta)
+        if (j && e.cliente && !j.noivos) j.noivos = String(e.cliente).trim()
+      }
+    }
+    // Sem cliente no evento: nomes do portal dos noivos
+    const semNome = jobs.filter(j => j.referencia && !j.noivos).map(j => j.referencia)
+    if (semNome.length) {
+      const { data: ps } = await supabase.from('portais').select('referencia, noiva, noivo').in('referencia', semNome)
+      for (const p of (ps ?? []) as any[]) {
+        const j = jobs.find(x => x.referencia === p.referencia)
+        const nome = [p.noiva, p.noivo].filter(Boolean).join(' & ')
+        if (j && nome) j.noivos = nome
       }
     }
   }
