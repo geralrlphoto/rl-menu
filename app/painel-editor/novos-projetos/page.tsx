@@ -496,7 +496,7 @@ export default function NovosProjetosPage() {
     rememberAdminMode(urlAdmin)
     setIsAdminView(isAdminMode(urlAdmin))
   }, [searchParams])
-  const [projects, setProjects] = useState<Project[]>(PROJECTS)
+  const [projects, setProjects] = useState<Project[]>([])   // vazio até carregar: os exemplos (Amanda & Lucas…) já não piscam antes dos projetos reais
   const [unseenIds, setUnseenIds] = useState<Set<string>>(new Set())
   const [hydrated, setHydrated] = useState(false)
   // Editor real (?freelancer=<id>): mostra os trabalhos enviados pela RL em vez dos mocks
@@ -504,7 +504,7 @@ export default function NovosProjetosPage() {
   const realMode = !!freelancerId
   const [activeTab, setActiveTab] = useState<Grupo>('Em Edição')
   const [search, setSearch] = useState('')
-    const [expanded, setExpanded] = useState<string | null>(openParam || 'p1')
+    const [expanded, setExpanded] = useState<string | null>(openParam)
 
   // Se URL tiver ?open={id} → expande esse projeto + scroll
   useEffect(() => {
@@ -951,7 +951,12 @@ export default function NovosProjetosPage() {
                 />
               </div>
             ))}
-            {filtered.length === 0 && (
+            {!hydrated && (
+              <div className="rounded-[22px] border border-white/[0.08] bg-[#111111]/60 text-center py-20">
+                <p className="text-[13px] tracking-[0.3em] uppercase text-white/35">A carregar projetos…</p>
+              </div>
+            )}
+            {hydrated && filtered.length === 0 && (
               <div className="rounded-[22px] border border-dashed border-white/[0.1] bg-[#111111]/60 text-center py-20">
                 <p className="text-[13px] tracking-[0.3em] uppercase text-white/35">Sem projetos {activeTab === 'Entregue' ? 'entregues' : activeTab.toLowerCase()}</p>
               </div>
