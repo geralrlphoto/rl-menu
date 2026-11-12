@@ -133,6 +133,19 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Avaliação da RL na aprovação (Departamento de Edição de Vídeo): o editor vê
+  // a classificação e as notas no projeto a que dizem respeito.
+  if (refs.length) {
+    const { data: avs } = await supabase
+      .from('video_avaliacoes')
+      .select('referencia, ritmo, cor, audio, historia, notas_rl, avaliado_em')
+      .in('referencia', refs)
+    for (const j of jobs) {
+      const a = (avs ?? []).find((x: any) => x.referencia === j.referencia)
+      if (a) j.avaliacao = { ritmo: a.ritmo, cor: a.cor, audio: a.audio, historia: a.historia, notas: a.notas_rl, em: a.avaliado_em }
+    }
+  }
+
   // Estado do vídeo do Departamento de Edição de Vídeo (eventos_YYYY.video_estado):
   // é a fonte de verdade para dividir os projetos em Em Edição / Em Revisão / Entregue.
   if (refs.length) {

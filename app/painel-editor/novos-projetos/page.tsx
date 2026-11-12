@@ -201,6 +201,7 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     entregaEm: j.revisao?.entregaEm || undefined,
     rlDownloads: downloads,
     rlRelatorios: Array.isArray(j.relatorios) ? j.relatorios.filter(Boolean) : [],
+    avaliacao: j.avaliacao || undefined,
   }
   // Edições do admin (guardadas em META.overrides) mandam sobre o que é
   // derivado do envio original.
@@ -257,6 +258,29 @@ type Project = {
   entregaEm?: string          // timestamp ISO da entrega
   rlDownloads?: string[]      // link(s) de download do material
   rlRelatorios?: RelatorioDiario[]   // relatório(s) diário(s) da equipa
+  avaliacao?: AvaliacaoRL           // classificação e notas da RL na aprovação (Departamento de Vídeo)
+}
+
+// Avaliação da RL ao aprovar o filme (video_avaliacoes, 1 a 5 cada)
+type AvaliacaoRL = { ritmo: number | null; cor: number | null; audio: number | null; historia: number | null; notas: string | null; em: string | null }
+const CRITERIOS_AVAL = [['ritmo', 'Ritmo'], ['cor', 'Cor'], ['audio', 'Áudio'], ['historia', 'História']] as const
+
+function AvaliacaoRLBox({ a }: { a: AvaliacaoRL }) {
+  const vals = CRITERIOS_AVAL.map(([k]) => a[k]).filter((v): v is number => typeof v === 'number')
+  const media = vals.length ? Math.round(vals.reduce((x, y) => x + y, 0) / vals.length * 10) / 10 : null
+  return (
+    <div className="mt-3 rounded-[14px] border border-[#C9A84C]/30 bg-[#C9A84C]/[0.06] px-4 py-3">
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <p className="text-[10px] tracking-[0.25em] uppercase text-[#C9A84C] font-semibold">Avaliação da RL</p>
+        {media !== null && <p className="text-[15px] font-semibold text-white">★ {media}<span className="text-white/40 text-[12px]"> / 5</span></p>}
+        {CRITERIOS_AVAL.map(([k, l]) => (
+          <p key={k} className="text-[12px] text-white/60">{l} <b className="text-white">{a[k] ?? '—'}</b></p>
+        ))}
+        {a.em && <p className="text-[11px] text-white/35 ml-auto">{isoToPt(a.em)}</p>}
+      </div>
+      {a.notas && <p className="mt-2 text-[13px] text-white/75 leading-relaxed whitespace-pre-line">{a.notas}</p>}
+    </div>
+  )
 }
 
 // Relatório Diário do videógrafo (subset usado para mostrar ao editor)
@@ -1998,6 +2022,8 @@ function ProjectCard({
                 }} />
             </div>
           </div>
+
+          {p.avaliacao && <AvaliacaoRLBox a={p.avaliacao} />}
         </div>
 
         {/* Right actions */}
