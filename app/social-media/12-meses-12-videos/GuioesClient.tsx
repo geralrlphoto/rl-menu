@@ -377,7 +377,7 @@ export default function GuioesClient() {
 }
 
 /* ── Modo teleponto: ecrã inteiro, rolagem automática ── */
-function Prompter({ guiao, onClose }: { guiao: Guiao; onClose: () => void }) {
+export function Prompter({ guiao, onClose }: { guiao: Pick<Guiao, 'teleponto'>; onClose: () => void }) {
   const boxRef = useRef<HTMLDivElement>(null)
   const [play, setPlay]   = useState(false)
   const [vel, setVel]     = useState(40) // píxeis por segundo

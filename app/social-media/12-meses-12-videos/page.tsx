@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import GuioesClient from './GuioesClient'
+import StoriesClient from './StoriesClient'
 
 /* ============================================================
    /social-media/12-meses-12-videos
@@ -45,6 +46,7 @@ export default function DozeMesesDozeVideosPage() {
       <div className="mv-page">
       {/* Grelha + painel (cliente) */}
       <GuioesClient />
+      <StoriesClient />
 
 
       <style>{`
@@ -692,6 +694,54 @@ export default function DozeMesesDozeVideosPage() {
             #111111; }
         .mv-chip, .mv-tab, .mv-plano-tab, .mv-pipe-label, .mv-frame-mes, .mv-stage-meta { letter-spacing: 0.16em; }
         .mv-tele p { font-weight: 300; font-size: 16px; }
+
+        /* ── Stories de 1 minuto ── */
+        .st { margin-top: 64px; padding-top: 40px; border-top: 1px solid var(--line); }
+        .st-head { text-align: center; margin-bottom: 20px; }
+        .st-head .mv-plano-title { margin-bottom: 10px; }
+        .st-sub { margin: 0 auto; max-width: 52ch; font-size: 14px; line-height: 1.6; color: var(--ink-3); }
+        .st-cats {
+          display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;
+          padding: 4px; margin: 0 auto 22px; width: max-content; max-width: 100%;
+          border-radius: 999px; border: 1px solid var(--line);
+        }
+        .st-cats b { margin-left: 4px; opacity: 0.6; }
+        .st-grid {
+          display: grid; gap: 10px; margin-bottom: 28px;
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        }
+        .st-card {
+          display: flex; flex-direction: column; gap: 8px; text-align: left;
+          font-family: inherit; cursor: pointer;
+          padding: 16px 18px; border-radius: 18px;
+          border: 1px solid var(--line);
+          background: linear-gradient(180deg, var(--surface), var(--surface-2));
+          transition: 0.25s;
+        }
+        .st-card:hover { border-color: var(--gold-line); }
+        .st-card.is-sel { border-color: var(--gold); box-shadow: 0 0 32px -16px rgba(201,168,76,0.6); }
+        .st-card-cat { font-size: 9.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); }
+        .st-card-titulo { font-family: 'Jost', sans-serif; font-weight: 300; font-size: 19px; line-height: 1.25; color: var(--ink); }
+        .st-card-gancho { font-size: 13px; line-height: 1.5; color: var(--ink-3); }
+        .st-stage { scroll-margin-top: 24px; }
+        .st-gancho {
+          margin: 0 0 18px; max-width: 64ch;
+          font-family: 'Jost', sans-serif; font-weight: 300;
+          font-size: clamp(19px, 2.6vw, 24px); line-height: 1.4; color: var(--gold-soft);
+        }
+        .st-gancho small, .st-extra small {
+          display: block; margin-bottom: 6px;
+          font-family: 'Roboto Condensed', sans-serif;
+          font-size: 9.5px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-4);
+        }
+        .st-extras { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); margin: 6px 0 18px; }
+        .st-extra {
+          margin: 0; padding: 14px 18px; font-size: 13.5px; line-height: 1.6; color: var(--ink-2);
+          border-left: 2px solid var(--gold); background: rgba(200,168,102,0.05); border-radius: 0 10px 10px 0;
+        }
+        .st-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
+        .st-copiar { padding: 8px 20px; }
+        .st-dicas { margin-top: 40px; }
       `}</style>
       </div>
     </main>
