@@ -140,6 +140,29 @@ function toWfStage(s: WorkflowStage): string {
   return s
 }
 
+/** O estado do Departamento de Edição de Vídeo manda; a fase do workflow só
+ *  afina dentro de Em Edição (Color Grading, Áudio…). */
+function stageDoDepartamento(estado: string | undefined, doWf: WorkflowStage): WorkflowStage {
+  if (!estado) return doWf
+  if (estado === 'Aguardar') return 'Novo Projeto'
+  if (estado === 'Em Revisão') return doWf === 'Correções' ? 'Correções' : 'Para Revisão'
+  if (estado === 'Finalizado') return 'Finalizado'
+  if (estado === 'Entregue') return 'Entregue'
+  return grupoDoStage(doWf) === 'Em Edição' && doWf !== 'Novo Projeto' ? doWf : 'Em Edição'
+}
+
+// ── As três divisões da página ───────────────────────────────────────────
+//  Em Edição  = Aguardar + Em Edição (e as fases detalhadas)
+//  Em Revisão = Em Revisão + Finalizado (aprovado pela RL, à espera de seguir)
+//  Entregue   = Entregue aos noivos
+type Grupo = 'Em Edição' | 'Em Revisão' | 'Entregue'
+const GRUPOS: Grupo[] = ['Em Edição', 'Em Revisão', 'Entregue']
+function grupoDoStage(s: WorkflowStage): Grupo {
+  if (s === 'Entregue') return 'Entregue'
+  if (s === 'Para Revisão' || s === 'Correções' || s === 'Finalizado') return 'Em Revisão'
+  return 'Em Edição'
+}
+
 /** Converte um trabalho real enviado pela RL (API /projetos) num Project desta página */
 function jobToProject(j: any, wf: Record<string, string>, idx: number): Project {
   const key = j.referencia || j.notifId || String(idx)
@@ -157,7 +180,7 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     entregaPrevista: isoToPt(j.prazoVideo || ''),
     pacote: 'Pacote Premium 👑',
     duracao: '~12 min',
-    stage: fromWfStage(wf[key] || 'Novo'),
+    stage: stageDoDepartamento(j.videoEstado, fromWfStage(wf[key] || 'Novo')),
     approval: 'Aguardando Revisão',
     observacoes: [],
     clientLink: downloads[0] || '',
@@ -445,7 +468,7 @@ function shortBadge(s: WorkflowStage): { label: string; cls: string } {
 
 const NAV_ITEMS = [
   { key: 'dashboard',   label: 'Dashboard',           icon: '⌂', href: '/painel-editor' },
-  { key: 'novos',       label: 'Novos Projetos',      icon: '+', href: '/painel-editor/novos-projetos', active: true },
+  { key: 'novos',       label: 'Projetos',            icon: '+', href: '/painel-editor/novos-projetos', active: true },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-editor/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-editor/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario' },
@@ -455,7 +478,6 @@ const NAV_ITEMS = [
   { key: 'guia',        label: 'Guia do Portal',      icon: '?', href: '/painel-editor/guia' },
 ]
 
-const FILTER_TABS = ['Todos','Novo Projeto','Em Edição','Para Revisão','Aprovados','Não Aprovados','Entregues','Aguardando Cliente']
 
 // ──────────────────────────────────────────────────────────────────────────
 //  PAGE
@@ -480,10 +502,9 @@ export default function NovosProjetosPage() {
   // Editor real (?freelancer=<id>): mostra os trabalhos enviados pela RL em vez dos mocks
   const [freelancerId, setFreelancerId] = useState<string | null>(null)
   const realMode = !!freelancerId
-  const [activeTab, setActiveTab] = useState('Todos')
+  const [activeTab, setActiveTab] = useState<Grupo>('Em Edição')
   const [search, setSearch] = useState('')
-  const [showOnlyActive, setShowOnlyActive] = useState(false)
-  const [sort, setSort] = useState('Mais recentes')
+    const [sort, setSort] = useState('Mais recentes')
   const [expanded, setExpanded] = useState<string | null>(openParam || 'p1')
 
   // Se URL tiver ?open={id} → expande esse projeto + scroll
@@ -664,22 +685,21 @@ export default function NovosProjetosPage() {
   const filtered = useMemo(() => {
     let arr = [...projects]
     if (search.trim()) arr = arr.filter(p => p.noivos.toLowerCase().includes(search.toLowerCase()))
-    if (activeTab !== 'Todos') {
-      const tab = activeTab.toLowerCase()
-      arr = arr.filter(p => {
-        if (tab === 'aprovados') return p.approval === 'Aprovado Cliente'
-        if (tab === 'não aprovados') return p.approval === 'Não Aprovado'
-        if (tab === 'aguardando cliente') return p.approval === 'Aguardando Revisão'
-        if (tab === 'entregues') return p.stage === 'Entregue'
-        if (tab === 'novo projeto') return p.stage === 'Novo Projeto'
-        if (tab === 'em edição') return ['Em Edição','Color Grading','Trailer em Produção','Áudio / Sincronização'].includes(p.stage)
-        if (tab === 'para revisão') return p.stage === 'Para Revisão' || p.stage === 'Correções'
-        return true
-      })
-    }
-    if (showOnlyActive) arr = arr.filter(p => p.stage !== 'Entregue')
+    arr = arr.filter(p => grupoDoStage(p.stage) === activeTab)
     return arr
-  }, [projects, search, activeTab, showOnlyActive])
+  }, [projects, search, activeTab])
+  // Link direto (?open=…) para um projeto: abre o separador onde ele está.
+  useEffect(() => {
+    if (!hydrated || !openParam) return
+    const alvo = projects.find(p => p.id === openParam)
+    if (alvo) setActiveTab(grupoDoStage(alvo.stage))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hydrated, openParam])
+  const contagem = useMemo(() => {
+    const c: Record<Grupo, number> = { 'Em Edição': 0, 'Em Revisão': 0, 'Entregue': 0 }
+    projects.forEach(p => { c[grupoDoStage(p.stage)]++ })
+    return c
+  }, [projects])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / 10))
 
@@ -846,11 +866,11 @@ export default function NovosProjetosPage() {
               <div className="max-w-xl">
                 <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
                 <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-                  NOVOS <span className="italic text-gold">Projetos</span>
+                  <span className="italic text-gold">Projetos</span>
                 </h1>
                 <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
                 <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
-                  Acompanhe todos os projetos recebidos e o fluxo completo de edição — da chegada do material à entrega final.
+                  Os teus projetos divididos em Em Edição, Em Revisão e Entregue, sempre iguais ao Departamento de Edição de Vídeo.
                 </p>
               </div>
 
@@ -881,14 +901,15 @@ export default function NovosProjetosPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Tabs */}
               <div className="flex flex-wrap items-center gap-1.5">
-                {FILTER_TABS.map(t => (
+                {GRUPOS.map(t => (
                   <button key={t} onClick={() => setActiveTab(t)}
-                    className={`px-3 py-1.5 rounded-lg text-[12px] tracking-wide transition-all ${
+                    className={`px-4 py-2 rounded-lg text-[13px] tracking-wide transition-all inline-flex items-center gap-2 ${
                       activeTab === t
                         ? 'bg-gold/15 text-gold border border-gold/35'
                         : 'border border-white/[0.06] text-white/45 hover:text-white/80 hover:bg-white/[0.03]'
                     }`}>
                     {t}
+                    <span className={`text-[11px] px-1.5 rounded ${activeTab === t ? 'bg-gold/20' : 'bg-white/[0.06]'}`}>{contagem[t]}</span>
                   </button>
                 ))}
               </div>
@@ -915,19 +936,7 @@ export default function NovosProjetosPage() {
               </div>
             </div>
 
-            {/* Toggle ativos */}
-            <div className="mt-3 flex items-center gap-3">
-              <label className="inline-flex items-center gap-2 cursor-pointer select-none">
-                <span className="relative inline-block w-9 h-5">
-                  <input type="checkbox" className="peer sr-only" checked={showOnlyActive} onChange={e => setShowOnlyActive(e.target.checked)} />
-                  <span className="absolute inset-0 rounded-full bg-white/[0.08] peer-checked:bg-gold/30 transition-colors" />
-                  <span className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white/60 peer-checked:left-[18px] peer-checked:bg-gold transition-all" />
-                </span>
-                <span className="text-[12px] text-white/55">Mostrar apenas projetos ativos</span>
-              </label>
-              <span className="text-[11px] text-white/30">·</span>
-              <p className="text-[11px] text-white/35">{filtered.length} projetos · {projects.filter(p => p.stage !== 'Entregue').length} ativos</p>
-            </div>
+            <p className="mt-3 text-[11px] text-white/35">{filtered.length} projetos {activeTab === 'Entregue' ? 'entregues' : activeTab.toLowerCase()} · sincronizado com o Departamento de Edição de Vídeo</p>
           </div>
 
           {/* PROJECT LIST */}

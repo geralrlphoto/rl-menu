@@ -18,7 +18,7 @@ const PASSOS: Passo[] = [
     n: '01', titulo: 'És nomeado editor', quem: 'Automático', onde: 'Email · Ticket de Edição',
     texto: [
       'Quando a RL te põe como editor de vídeo de um casamento, recebes por email o Ticket de Edição com os noivos, a data, o local e o prazo de entrega do filme.',
-      'O projeto aparece logo em Novos Projetos, no estado Aguardar. Nesta fase o download do material está bloqueado.',
+      'O projeto aparece logo em Projetos › Em Edição, no estado Aguardar. Nesta fase o download do material está bloqueado.',
     ],
     dica: 'Confirma em até 2 dias que recebeste o projeto, abrindo-o no painel.',
   },
@@ -31,7 +31,7 @@ const PASSOS: Passo[] = [
     dica: 'Lê o Relatório Diário antes de começar. Lá estão os detalhes que não se veem nas imagens.',
   },
   {
-    n: '03', titulo: 'Desbloqueias e descarregas', quem: 'Tu', onde: 'Novos Projetos › o projeto',
+    n: '03', titulo: 'Desbloqueias e descarregas', quem: 'Tu', onde: 'Projetos › o projeto',
     texto: [
       'Abre o projeto e muda o estado do vídeo para Em Edição. Só assim o botão ↓ Download fica ativo.',
       'Carrega em ↓ Download e descarrega todo o material. Ao passares a Em Edição, a RL e os noivos ficam a saber que o filme começou a ganhar forma.',
@@ -96,7 +96,7 @@ const ESTADOS: { e: string; quem: string; texto: string }[] = [
 ]
 
 const PAGINAS: { t: string; href: string; texto: string }[] = [
-  { t: 'Novos Projetos', href: '/painel-editor/novos-projetos', texto: 'Os teus casamentos: estado, material, revisão, entrega e mensagens com a RL.' },
+  { t: 'Projetos', href: '/painel-editor/novos-projetos', texto: 'Os teus casamentos: estado, material, revisão, entrega e mensagens com a RL.' },
   { t: 'Workflow', href: '/painel-editor/workflow', texto: 'Todos os trabalhos numa lista, com o estado de cada um.' },
   { t: 'Calendário', href: '/painel-editor/calendario', texto: 'Casamentos e prazos de entrega.' },
   { t: 'Tarefas', href: '/painel-editor/tarefas', texto: 'Pedidos da RL que precisam de resposta.' },

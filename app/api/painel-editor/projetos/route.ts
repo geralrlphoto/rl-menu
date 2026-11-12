@@ -133,6 +133,18 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Estado do vídeo do Departamento de Edição de Vídeo (eventos_YYYY.video_estado):
+  // é a fonte de verdade para dividir os projetos em Em Edição / Em Revisão / Entregue.
+  if (refs.length) {
+    for (const t of ['eventos_2026', 'eventos_2027']) {
+      const { data: evs } = await supabase.from(t).select('referencia, video_estado').in('referencia', refs)
+      for (const e of (evs ?? []) as any[]) {
+        const j = jobs.find(x => x.referencia === e.referencia)
+        if (j && e.video_estado && !j.videoEstado) j.videoEstado = e.video_estado
+      }
+    }
+  }
+
   return NextResponse.json({ jobs })
 }
 

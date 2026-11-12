@@ -248,7 +248,7 @@ function userProjectsToEvents(): CalendarEvent[] {
 
 const NAV_ITEMS = [
   { key: 'dashboard',   label: 'Dashboard',           icon: '⌂', href: '/painel-editor' },
-  { key: 'novos',       label: 'Novos Projetos',      icon: '+', href: '/painel-editor/novos-projetos' },
+  { key: 'novos',       label: 'Projetos',            icon: '+', href: '/painel-editor/novos-projetos' },
   { key: 'pagamentos',  label: 'Pagamentos',          icon: '€', href: '/painel-editor/pagamentos' },
   { key: 'tarefas',     label: 'Tarefas',             icon: '◷', href: '/painel-editor/tarefas' },
   { key: 'calendario',  label: 'Calendário',          icon: '◉', href: '/painel-editor/calendario', active: true },
