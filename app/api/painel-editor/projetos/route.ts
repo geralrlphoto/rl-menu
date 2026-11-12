@@ -83,7 +83,9 @@ export async function GET(req: NextRequest) {
   for (const n of (notifs ?? []) as any[]) {
     const meta = parseMeta(n.mensagem) ?? {}
     const key = meta.referencia || meta.evento_id || n.id
-    if (byRef.has(key)) continue
+    // Envio repetido do mesmo trabalho: fica a data do PRIMEIRO envio (o dia em
+    // que a RL entregou o vídeo ao editor), não a do reenvio.
+    if (byRef.has(key)) { byRef.get(key).sentAt = n.created_at; continue }
     byRef.set(key, {
       notifId: n.id,
       referencia: meta.referencia ?? null,

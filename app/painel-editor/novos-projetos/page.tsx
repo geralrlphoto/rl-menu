@@ -1446,7 +1446,7 @@ function EditarDadosModal({
           {/* Datas */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <Label>Criado em</Label>
+              <Label>Enviado para edição</Label>
               <input type="date" value={criadoEm} onChange={e => setCriadoEm(e.target.value)}
                 className="w-full bg-black/40 border border-white/15 rounded-lg px-3 py-2.5 text-[13px] text-white focus:outline-none focus:border-gold/50 [color-scheme:dark]" />
             </div>
@@ -1855,7 +1855,7 @@ function ProjectCard({
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-1">
-            <Meta label="Criado em"     value={p.recebido} />
+            <Meta label="Enviado p/ edição" value={p.recebido} />
             <Meta label="Data Casamento" value={p.dataCasamento} />
             <Meta label="Entrega Prevista" value={p.entregaPrevista} />
             <DiasMeta recebido={p.recebido} entregueEm={p.entregueEm} entregaPrevista={p.entregaPrevista} stage={p.stage} />
