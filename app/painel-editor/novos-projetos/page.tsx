@@ -504,8 +504,7 @@ export default function NovosProjetosPage() {
   const realMode = !!freelancerId
   const [activeTab, setActiveTab] = useState<Grupo>('Em Edição')
   const [search, setSearch] = useState('')
-    const [sort, setSort] = useState('Mais recentes')
-  const [expanded, setExpanded] = useState<string | null>(openParam || 'p1')
+    const [expanded, setExpanded] = useState<string | null>(openParam || 'p1')
 
   // Se URL tiver ?open={id} → expande esse projeto + scroll
   useEffect(() => {
@@ -522,7 +521,6 @@ export default function NovosProjetosPage() {
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }, 200)
   }, [openParam])
-  const [page, setPage] = useState(1)
   const [showAddModal, setShowAddModal] = useState(false)
 
   // ── Carregar projetos ────────────────────────────────────────────────
@@ -701,8 +699,6 @@ export default function NovosProjetosPage() {
     return c
   }, [projects])
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / 10))
-
   function updateProject(id: string, patch: Partial<Project>) {
     setProjects(prev => prev.map(p => {
       if (p.id !== id) return p
@@ -789,7 +785,7 @@ export default function NovosProjetosPage() {
   }
 
   return (
-    <div className="min-h-screen text-white relative" style={{ background: '#0A0A0A' }}>
+    <div className="min-h-screen text-white relative" style={{ background: '#070707' }}>
       {/* Animação gold pulse para projetos novos não-abertos */}
       <style jsx global>{`
         @keyframes unseenGlow {
@@ -798,11 +794,6 @@ export default function NovosProjetosPage() {
         }
         .unseen-glow { animation: unseenGlow 2.4s ease-in-out infinite; }
       `}</style>
-      {/* Atmosfera */}
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse 80% 60% at 80% 15%, rgba(201,164,92,0.07), transparent 65%)' }} />
-      <div className="pointer-events-none fixed inset-0 z-0"
-        style={{ background: 'radial-gradient(ellipse 60% 50% at 15% 85%, rgba(201,164,92,0.05), transparent 70%)' }} />
 
       {/* ── SIDEBAR ─────────────────────────────────────────────────── */}
       <aside
@@ -849,94 +840,97 @@ export default function NovosProjetosPage() {
       <main className="painel-main relative z-10 pl-[230px]">
         <div className="px-6 sm:px-8 py-6 max-w-[1500px] mx-auto">
 
-          {/* HERO */}
-          <div className="relative overflow-hidden rounded-3xl border border-white/[0.08] mb-7"
-            style={{ boxShadow: '0 30px 60px -20px rgba(0,0,0,0.6)' }}>
-            <div className="absolute inset-0 z-0">
-              <img
-                src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1600&h=400&fit=crop"
-                alt=""
-                className="w-full h-full object-cover scale-105"
-                style={{ filter: 'blur(2px)' }}
-              />
+          {/* ── CAPA (cartaz, como o dashboard e o Guia) ─────────────── */}
+          <section className="relative -mx-6 sm:-mx-8 -mt-6 mb-10 min-h-[440px] lg:min-h-[54vh] flex flex-col overflow-hidden border-b border-[#C9A84C]/15">
+            <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/email/equipa-camera.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-35 lg:opacity-55" />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
             </div>
-            <div className="absolute inset-0 z-[1]"
-              style={{ background: 'linear-gradient(90deg, rgba(10,10,10,0.95) 0%, rgba(10,10,10,0.85) 40%, rgba(10,10,10,0.5) 70%, rgba(10,10,10,0.15) 100%)' }} />
-            <div className="painel-hero-linha relative z-10 flex items-start justify-between gap-6 px-8 sm:px-12 py-10 sm:py-12">
-              <div className="max-w-xl">
-                <p className="text-[12px] tracking-[0.5em] text-gold/70 uppercase mb-2">Editorial Workspace</p>
-                <h1 className="text-4xl sm:text-5xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
-                  <span className="italic text-gold">Projetos</span>
-                </h1>
-                <div className="mt-4 h-px w-16 bg-gradient-to-r from-gold/70 to-transparent" />
-                <p className="text-[14px] text-white/55 mt-4 leading-relaxed max-w-md">
-                  Os teus projetos divididos em Em Edição, Em Revisão e Entregue, sempre iguais ao Departamento de Edição de Vídeo.
-                </p>
-              </div>
+            <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
+            <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
+              Equipa RL · {new Date().getFullYear()}
+            </p>
 
-              <div className="painel-acoes flex items-center gap-2 shrink-0">
-                <div className="painel-acoes-topo flex items-center gap-2">
-                  <NotificationBell />
-                  <MessagesBell />
-                </div>
-                <button className="w-10 h-10 rounded-xl border border-white/15 bg-black/40 backdrop-blur-md hover:border-gold/40 transition-all flex items-center justify-center text-white/65 hover:text-gold">
-                  ◉
-                </button>
+            <div className="painel-hero-linha relative z-20 flex justify-end px-5 sm:px-8 pt-5 min-h-[56px]">
+              <div className="painel-acoes painel-acoes-topo flex items-center gap-3 shrink-0">
+                <NotificationBell />
+                <MessagesBell />
                 {/* Criar projetos é do admin: o membro só recebe trabalho, não o cria. */}
                 {isAdminView && (
                   <button
                     onClick={() => setShowAddModal(true)}
-                    className="inline-flex items-center gap-2 px-5 h-10 rounded-xl bg-gold text-black text-[13px] font-semibold tracking-wider hover:bg-gold/90 transition-all"
-                    style={{ boxShadow: '0 0 24px -4px rgba(201,164,92,0.5)' }}>
-                    <span className="text-lg leading-none">+</span> Novo Projeto
+                    className="inline-flex items-center gap-2 rounded-full border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-5 h-10 text-[13px] font-semibold tracking-[0.18em] uppercase text-white transition-all">
+                    <span className="text-[#C9A84C] text-lg leading-none">+</span> Novo projeto
                   </button>
                 )}
               </div>
             </div>
+
+            <div className="relative flex-1 grid grid-cols-[minmax(0,1fr)] xl:grid-cols-[minmax(0,1fr)_360px] gap-10 items-end pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pb-10 lg:pb-14">
+              <div className="min-w-0">
+                <Link href={`/painel-editor${freelancerId ? `?freelancer=${freelancerId}` : ''}`} className="text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ O meu painel</Link>
+                <p className="text-[13px] sm:text-[17px] font-bold tracking-[0.5em] uppercase text-[#C9A84C] mt-10">RL Photo.Video</p>
+                <h1 className="font-bold uppercase text-white leading-[0.88] text-[54px] sm:text-[100px] lg:text-[124px] mt-2">Projetos</h1>
+                <div className="flex items-center gap-4 mt-5">
+                  <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
+                  <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">Editor de <span className="text-[#C9A84C]">vídeo</span></p>
+                </div>
+                <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
+                  Os teus projetos divididos em Em Edição, Em Revisão e Entregue, sempre iguais ao Departamento de Edição de Vídeo.
+                </p>
+              </div>
+
+              <aside className="rounded-[22px] border border-[#C9A84C]/30 bg-[#111111]/80 backdrop-blur-xl p-5 shadow-[0_0_48px_-22px_rgba(201,168,76,0.5)]">
+                <p className="flex items-center gap-2 text-[11px] font-semibold tracking-[0.12em] uppercase text-white/85">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C] shadow-[0_0_8px_#C9A84C]" />
+                  Os teus projetos
+                </p>
+                <div className="grid grid-cols-3 gap-3 mt-4">
+                  {GRUPOS.map(g => (
+                    <button key={g} onClick={() => setActiveTab(g)}
+                      className={`text-left rounded-[14px] border px-3.5 py-3 transition-all ${activeTab === g ? 'border-[#C9A84C]/60 bg-[#C9A84C]/10' : 'border-white/[0.08] bg-black/30 hover:border-white/20'}`}>
+                      <p className="text-[10px] tracking-[0.2em] uppercase text-white/40">{g}</p>
+                      <p className={`font-semibold text-[26px] leading-none mt-1.5 ${activeTab === g ? 'text-[#C9A84C]' : 'text-white'}`}>{contagem[g]}</p>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-white/40 mt-3">Sincronizado com o Departamento de Edição de Vídeo</p>
+              </aside>
+            </div>
+          </section>
+
+          {/* ── SEPARADORES + PESQUISA ─────────────────────────────────── */}
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <nav className="flex flex-wrap gap-2">
+              {GRUPOS.map(t => (
+                <button key={t} onClick={() => setActiveTab(t)}
+                  className={`inline-flex items-center gap-2 text-[12px] px-4 py-2 rounded-full border tracking-[0.12em] uppercase font-semibold transition-all ${
+                    activeTab === t
+                      ? 'border-[#C9A84C]/70 bg-[#C9A84C]/15 text-white'
+                      : 'border-white/12 text-white/60 hover:text-white hover:border-[#C9A84C]/60'
+                  }`}>
+                  {t}
+                  <span className={activeTab === t ? 'text-[#C9A84C]' : 'text-white/35'}>{contagem[t]}</span>
+                </button>
+              ))}
+            </nav>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30 text-[14px]">⌕</span>
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Pesquisar projeto…"
+                className="bg-[#111111] border border-white/[0.08] rounded-full pl-10 pr-4 py-2 text-[13px] text-white placeholder:text-white/30 focus:outline-none focus:border-[#C9A84C]/50 w-64"
+              />
+            </div>
           </div>
 
-          {/* FILTERS BAR */}
-          <div className="rounded-2xl border border-white/[0.06] p-4 mb-6 backdrop-blur-md"
-            style={{ background: 'linear-gradient(135deg, rgba(20,15,8,0.4), rgba(11,11,11,0.5))' }}>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              {/* Tabs */}
-              <div className="flex flex-wrap items-center gap-1.5">
-                {GRUPOS.map(t => (
-                  <button key={t} onClick={() => setActiveTab(t)}
-                    className={`px-4 py-2 rounded-lg text-[13px] tracking-wide transition-all inline-flex items-center gap-2 ${
-                      activeTab === t
-                        ? 'bg-gold/15 text-gold border border-gold/35'
-                        : 'border border-white/[0.06] text-white/45 hover:text-white/80 hover:bg-white/[0.03]'
-                    }`}>
-                    {t}
-                    <span className={`text-[11px] px-1.5 rounded ${activeTab === t ? 'bg-gold/20' : 'bg-white/[0.06]'}`}>{contagem[t]}</span>
-                  </button>
-                ))}
-              </div>
-
-              {/* Search + Sort + Filter */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[14px]">⌕</span>
-                  <input
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Pesquisar projeto…"
-                    className="bg-black/30 border border-white/[0.08] rounded-lg pl-9 pr-3 py-1.5 text-[12px] text-white placeholder:text-white/30 focus:outline-none focus:border-gold/40 w-56"
-                  />
-                </div>
-                <select value={sort} onChange={e => setSort(e.target.value)}
-                  className="bg-black/30 border border-white/[0.08] rounded-lg px-3 py-1.5 text-[12px] text-white/70 focus:outline-none focus:border-gold/40 cursor-pointer">
-                  <option>Mais recentes</option>
-                  <option>Mais antigos</option>
-                  <option>Entrega mais próxima</option>
-                  <option>A → Z</option>
-                </select>
-                <button className="px-3 py-1.5 rounded-lg text-[12px] border border-white/[0.08] text-white/55 hover:text-gold hover:border-gold/30 transition-all">⚙ Filtros</button>
-              </div>
-            </div>
-
-            <p className="mt-3 text-[11px] text-white/35">{filtered.length} projetos {activeTab === 'Entregue' ? 'entregues' : activeTab.toLowerCase()} · sincronizado com o Departamento de Edição de Vídeo</p>
+          <div className="flex items-center gap-4 mb-6">
+            <span className="w-10 h-px bg-[#C9A84C]" />
+            <h2 className="text-[15px] sm:text-[18px] font-bold tracking-[0.3em] uppercase text-white">{activeTab}</h2>
+            <span className="text-[12px] tracking-[0.2em] uppercase text-white/35">{filtered.length} {filtered.length === 1 ? 'projeto' : 'projetos'}</span>
           </div>
 
           {/* PROJECT LIST */}
@@ -958,28 +952,10 @@ export default function NovosProjetosPage() {
               </div>
             ))}
             {filtered.length === 0 && (
-              <div className="rounded-2xl border border-dashed border-white/[0.08] text-center py-20">
-                <p className="text-gold/40 text-4xl font-serif leading-none mb-3">∅</p>
-                <p className="text-[14px] text-white/35">Sem projetos com este filtro.</p>
+              <div className="rounded-[22px] border border-dashed border-white/[0.1] bg-[#111111]/60 text-center py-20">
+                <p className="text-[13px] tracking-[0.3em] uppercase text-white/35">Sem projetos {activeTab === 'Entregue' ? 'entregues' : activeTab.toLowerCase()}</p>
               </div>
             )}
-          </div>
-
-          {/* PAGINATION */}
-          <div className="mt-8 flex items-center justify-between flex-wrap gap-3">
-            <p className="text-[12px] text-white/35">Mostrando 1–{filtered.length} de {projects.length} projetos</p>
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPage(Math.max(1, page - 1))} className="w-9 h-9 rounded-lg border border-white/10 text-white/50 hover:text-gold hover:border-gold/30 transition-all">‹</button>
-              {[1,2,3,'…',totalPages].map((n, i) => (
-                <button key={i} onClick={() => typeof n === 'number' && setPage(n)}
-                  className={`min-w-[36px] h-9 px-2.5 rounded-lg text-[12px] transition-all ${
-                    n === page
-                      ? 'bg-gold/20 border border-gold/40 text-gold font-bold'
-                      : 'border border-white/10 text-white/50 hover:text-gold hover:border-gold/30'
-                  }`}>{n}</button>
-              ))}
-              <button onClick={() => setPage(Math.min(totalPages, page + 1))} className="w-9 h-9 rounded-lg border border-white/10 text-white/50 hover:text-gold hover:border-gold/30 transition-all">›</button>
-            </div>
           </div>
 
           <p className="text-center text-[10px] tracking-[0.4em] uppercase text-white/15 mt-12 mb-4">RL Photo.Video · Wedding Moments Films</p>
@@ -1942,9 +1918,10 @@ function ProjectCard({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl border transition-all ${isUnseen ? 'unseen-glow' : ''}`}
+      className={`group relative overflow-hidden rounded-[22px] border transition-all ${isUnseen ? 'unseen-glow' : ''}`}
       style={{
-        background: 'linear-gradient(135deg, rgba(20,15,8,0.5), rgba(11,11,11,0.85))',
+        background: '#111111',
+        borderLeft: '2px solid rgba(201,168,76,0.55)',
         borderColor: expanded ? 'rgba(201,164,92,0.4)' : isUnseen ? 'rgba(201,164,92,0.55)' : 'rgba(255,255,255,0.06)',
         boxShadow: expanded
           ? '0 30px 70px -20px rgba(0,0,0,0.6), 0 0 30px -8px rgba(201,164,92,0.25)'
@@ -1963,13 +1940,13 @@ function ProjectCard({
       )}
 
       {/* Hover glow sweep */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-gold/0 via-gold/[0.04] to-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+
 
       {/* TOP — compact view */}
       <div className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr_auto] gap-5 p-5">
         {/* Thumb */}
         <button onClick={onToggle} className="relative aspect-[16/10] rounded-xl overflow-hidden border border-white/10 group/img">
-          <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover group-hover/img:scale-105 transition-transform duration-700" />
+          <img src={p.foto} alt={p.noivos} className="w-full h-full object-cover grayscale-[40%] group-hover/img:grayscale-0 group-hover/img:scale-105 transition-all duration-700" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           <span className={`absolute top-3 left-3 text-[10px] px-2.5 py-1 rounded-full border tracking-widest uppercase font-bold ${badge.cls}`}>
             {badge.label}
@@ -1983,9 +1960,9 @@ function ProjectCard({
               {/* A referência interna do evento não é mostrada no cartão: o
                   projeto identifica-se pelo nome. Continua guardada e a servir
                   de chave para o workflow, os pagamentos e a ficha. */}
-              <span className="text-[10px] px-2 py-0.5 rounded-md bg-gold/15 border border-gold/30 text-gold uppercase tracking-widest font-bold">Novo Projeto</span>
+              <span className="text-[10px] px-2.5 py-0.5 rounded-full border border-[#C9A84C]/40 text-[#C9A84C] uppercase tracking-[0.2em] font-semibold">{grupoDoStage(p.stage)}</span>
             </div>
-            <h2 className="text-2xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{p.noivos}</h2>
+            <h2 className="font-bold uppercase text-white text-[24px] sm:text-[28px] leading-tight">{p.noivos}</h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {p.local && <span className="text-[11px] text-white/55">📍 {p.local}</span>}
               <span className="text-[11px] text-white/30">·</span>
@@ -2011,8 +1988,8 @@ function ProjectCard({
               <div className="h-full rounded-full transition-all duration-700"
                 style={{
                   width: `${progress}%`,
-                  background: 'linear-gradient(90deg, #C9A45C, #E8C76D, #C9A45C)',
-                  boxShadow: '0 0 12px rgba(201,164,92,0.5)',
+                  background: '#C9A84C',
+                  boxShadow: '0 0 10px rgba(201,168,76,0.4)',
                 }} />
             </div>
           </div>
