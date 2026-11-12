@@ -178,8 +178,9 @@ function jobToProject(j: any, wf: Record<string, string>, idx: number): Project 
     // Prazo do vídeo (evento + 180 dias úteis) calculado na API; o override
     // do admin, se existir, sobrepõe-se logo a seguir.
     entregaPrevista: isoToPt(j.prazoVideo || ''),
-    pacote: 'Pacote Premium 👑',
-    duracao: '~12 min',
+    // Sem pacote nem duração inventados: só aparecem se o admin os puser em Editar Dados
+    pacote: '' as Project['pacote'],
+    duracao: '',
     stage: stageDoDepartamento(j.videoEstado, fromWfStage(wf[key] || 'Novo')),
     approval: 'Aguardando Revisão',
     observacoes: [],
@@ -301,157 +302,9 @@ type RelatorioDiario = {
   enviadoEm?: string
 }
 
-const PROJECTS: Project[] = [
-  {
-    id: 'p1',
-    referencia: 'CAS_001_26_RL',
-    noivos: 'Amanda & Lucas',
-    local: 'Quinta da Bichinha, Lisboa',
-    foto: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=900&h=600&fit=crop',
-    recebido: '18/05/2026 — 14:32',
-    dataCasamento: '28/06/2026',
-    entregaPrevista: '15/07/2026',
-    pacote: 'Pacote Premium 👑',
-    duracao: '~12 min',
-    stage: 'Em Edição',
-    approval: 'Aguardando Revisão',
-    observacoes: [],
-    clientLink: 'https://drive.google.com/drive/folders/AmandaLucas2026',
-    materialStatus: 'Material descarregado',
-    downloadStatus: 'Download concluído',
-    ultimoDownload: '19/05/2026 — 15:42',
-    materialItems: [
-      { categoria: 'Making Off Noiva', status: 'Descarregado', size: '3.1 GB', date: '19/05/2026' },
-      { categoria: 'Cerimónia',         status: 'Descarregado', size: '4.2 GB', date: '19/05/2026' },
-      { categoria: 'Drone',             status: 'Descarregado', size: '1.8 GB', date: '19/05/2026' },
-      { categoria: 'Áudio Geral',       status: 'Descarregado', size: '420 MB', date: '19/05/2026' },
-      { categoria: 'Votos dos Noivos',  status: 'Descarregado', size: '2.4 GB', date: '19/05/2026' },
-    ],
-    finalLink: '',
-    deliveries: [
-      { type: 'Trailer Final',       status: 'Não enviado' },
-      { type: 'Filme Completo',      status: 'Não enviado' },
-      { type: 'Instagram Reels',     status: 'Não enviado' },
-      { type: 'Teaser',              status: 'Não enviado' },
-      { type: 'Cerimónia Completa',  status: 'Não enviado' },
-      { type: 'Discursos',           status: 'Não enviado' },
-      { type: 'RAW Export',          status: 'Não enviado' },
-    ],
-    versions: [],
-    feedback: [],
-  },
-  {
-    id: 'p2',
-    referencia: 'CAS_002_26_RL',
-    noivos: 'Beatriz & Gabriel',
-    local: 'Solar do Pelourinho, Sintra',
-    foto: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=900&h=600&fit=crop',
-    recebido: '17/05/2026 — 09:12',
-    dataCasamento: '31/05/2026',
-    entregaPrevista: '20/06/2026',
-    pacote: 'Pacote Premium 👑',
-    duracao: '~14 min',
-    stage: 'Para Revisão',
-    approval: 'Requer Alterações',
-    observacoes: ['Mudar música do trailer', 'Adicionar mais planos drone', 'Reduzir cena de discursos'],
-    clientLink: 'https://www.dropbox.com/sh/abc123/BeatrizGabriel',
-    materialStatus: 'Material descarregado',
-    downloadStatus: 'Download concluído',
-    ultimoDownload: '18/05/2026 — 11:20',
-    materialItems: [
-      { categoria: 'Cerimónia',         status: 'Descarregado', size: '5.6 GB', date: '18/05/2026' },
-      { categoria: 'Drone',             status: 'Descarregado', size: '2.2 GB', date: '18/05/2026' },
-      { categoria: 'Discursos',         status: 'Descarregado', size: '180 MB', date: '18/05/2026' },
-      { categoria: 'Dança dos Noivos',  status: 'Descarregado', size: '1.9 GB', date: '18/05/2026' },
-      { categoria: 'Festa',             status: 'Recebido' },
-    ],
-    finalLink: 'https://vimeo.com/beatriz-gabriel-v2',
-    deliveries: [
-      { type: 'Trailer Final',  status: 'Enviado' },
-      { type: 'Filme Completo', status: 'Necessita alterações' },
-      { type: 'Instagram Reels', status: 'Aprovado' },
-      { type: 'Teaser',          status: 'Não enviado' },
-    ],
-    versions: [
-      { tag: 'V1',           date: '15/06/2026', nota: 'V1 enviada para revisão' },
-      { tag: 'Feedback',     date: '16/06/2026', nota: 'Cliente pediu alterações na música' },
-      { tag: 'V2',           date: '18/06/2026', nota: 'V2 enviada com nova música' },
-    ],
-    feedback: ['Gostámos muito mas alterar música', 'Diminuir cena de entrada', 'Adicionar mais drone na receção'],
-  },
-  {
-    id: 'p3',
-    referencia: 'CAS_003_26_RL',
-    noivos: 'Juliana & Matheus',
-    local: 'Quinta da Lagoalva, Alpiarça',
-    foto: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=900&h=600&fit=crop',
-    recebido: '16/05/2026 — 18:45',
-    dataCasamento: '07/06/2026',
-    entregaPrevista: '28/06/2026',
-    pacote: 'Pacote Essencial',
-    duracao: '~8 min',
-    stage: 'Novo Projeto',
-    approval: 'Aguardando Revisão',
-    observacoes: [],
-    clientLink: 'https://wetransfer.com/downloads/juliana-matheus',
-    materialStatus: 'Material pendente',
-    downloadStatus: 'Não descarregado',
-    ultimoDownload: null,
-    materialItems: [
-      { categoria: 'Cerimónia',  status: 'Pendente' },
-      { categoria: 'Cocktail',   status: 'Pendente' },
-      { categoria: 'Festa',      status: 'Pendente' },
-    ],
-    finalLink: '',
-    deliveries: [
-      { type: 'Trailer Final', status: 'Não enviado' },
-      { type: 'Filme Completo', status: 'Não enviado' },
-    ],
-    versions: [],
-    feedback: [],
-  },
-  {
-    id: 'p4',
-    referencia: 'CAS_004_26_RL',
-    noivos: 'Carolina & Felipe',
-    local: 'Quinta dos Lagares, Óbidos',
-    foto: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=900&h=600&fit=crop',
-    recebido: '14/05/2026 — 11:08',
-    dataCasamento: '14/06/2026',
-    entregaPrevista: '05/07/2026',
-    pacote: 'Pacote Premium 👑',
-    duracao: '~15 min',
-    stage: 'Entregue',
-    approval: 'Aprovado Cliente',
-    observacoes: [],
-    clientLink: 'https://frame.io/carolinafelipe',
-    materialStatus: 'Material descarregado',
-    downloadStatus: 'Download concluído',
-    ultimoDownload: '15/05/2026 — 09:32',
-    materialItems: [
-      { categoria: 'Making Off Noivo', status: 'Descarregado', size: '2.2 GB', date: '15/05/2026' },
-      { categoria: 'Making Off Noiva', status: 'Descarregado', size: '3.4 GB', date: '15/05/2026' },
-      { categoria: 'Cerimónia',         status: 'Descarregado', size: '6.8 GB', date: '15/05/2026' },
-      { categoria: 'Cocktail',          status: 'Descarregado', size: '4.1 GB', date: '15/05/2026' },
-      { categoria: 'Festa',             status: 'Descarregado', size: '8.4 GB', date: '15/05/2026' },
-      { categoria: 'Drone',             status: 'Descarregado', size: '2.9 GB', date: '15/05/2026' },
-      { categoria: 'Áudio Lapela',      status: 'Descarregado', size: '320 MB', date: '15/05/2026' },
-    ],
-    finalLink: 'https://vimeo.com/carolina-felipe-final',
-    deliveries: [
-      { type: 'Trailer Final',     status: 'Aprovado' },
-      { type: 'Filme Completo',    status: 'Aprovado' },
-      { type: 'Instagram Reels',   status: 'Aprovado' },
-      { type: 'Cerimónia Completa', status: 'Enviado' },
-    ],
-    versions: [
-      { tag: 'V1',           date: '20/06/2026', nota: 'V1 enviada' },
-      { tag: 'V2',           date: '25/06/2026', nota: 'V2 com ajustes' },
-      { tag: 'Versão Final', date: '04/07/2026', nota: 'Entrega final' },
-    ],
-    feedback: ['Adorámos! Está perfeito 💛'],
-  },
-]
+// Os exemplos fictícios (Amanda & Lucas, Beatriz & Gabriel…) saíram: sem editor no link
+// a página mostra só os projetos criados aqui, nunca projetos inventados.
+const PROJECTS: Project[] = []
 
 // Helpers
 const WORKFLOW_STAGES: WorkflowStage[] = ['Novo Projeto','Em Edição','Color Grading','Trailer em Produção','Áudio / Sincronização','Para Revisão','Correções','Finalizado','Entregue']
@@ -1131,7 +984,7 @@ function NewProjectModal({ onClose, onCreate }: { onClose: () => void; onCreate:
       entregaPrevista: form.entregaPrevista,
       pacote:       'Pacote Premium 👑',
       preco:        precoNum,
-      duracao:      form.duracao.trim() || '~12 min',
+      duracao:      form.duracao.trim(),
       stage:        'Novo Projeto',
       approval:     'Aguardando Revisão',
       observacoes:  [],
@@ -1994,8 +1847,10 @@ function ProjectCard({
             <h2 className="font-bold uppercase text-white text-[24px] sm:text-[28px] leading-tight">{p.noivos}</h2>
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               {p.local && <span className="text-[11px] text-white/55">📍 {p.local}</span>}
-              <span className="text-[11px] text-white/30">·</span>
-              <span className="text-[11px] text-white/40">{p.duracao}</span>
+              {p.duracao && <>
+                <span className="text-[11px] text-white/30">·</span>
+                <span className="text-[11px] text-white/40">{p.duracao}</span>
+              </>}
             </div>
           </div>
 

@@ -137,6 +137,16 @@ export function NotificationBell() {
       const seenDec = new Set<string>(seenDecRaw ? JSON.parse(seenDecRaw) : [])
       decisoes.forEach(d => {
         if (!d?.id || seenDec.has(d.id)) return
+        if (d.tipo === 'video_avaliado') {
+          items.push({
+            id: `dec-${d.id}`,
+            type: 'decisao',
+            title: 'Avaliação da RL ★',
+            sub: [d.noivos || d.local, d.media != null ? `★ ${d.media} / 5 · vê as notas no projeto` : 'Vê as notas no projeto'].filter(Boolean).join(' · '),
+            href: d.referencia ? `/painel-editor/novos-projetos?open=${d.referencia}` : '/painel-editor/novos-projetos',
+          })
+          return
+        }
         const aprovado = d.tipo === 'video_aprovado'
         items.push({
           id: `dec-${d.id}`,

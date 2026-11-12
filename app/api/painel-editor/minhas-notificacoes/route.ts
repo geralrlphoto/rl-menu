@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     .from('freelancer_notificacoes')
     .select('id, tipo, titulo, mensagem, lida, created_at')
     .eq('freelancer_id', freelancer)
-    .in('tipo', ['video_aprovado', 'video_alteracoes'])
+    .in('tipo', ['video_aprovado', 'video_alteracoes', 'video_avaliado'])
     .order('created_at', { ascending: false })
     .limit(50)
 
@@ -40,6 +40,7 @@ export async function GET(req: NextRequest) {
       local: meta.local ?? null,
       feedback: meta.feedback ?? null,
       status: meta.status ?? null,
+      media: meta.media ?? null,
     }
   })
   return NextResponse.json({ notifs })

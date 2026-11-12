@@ -23,5 +23,27 @@ export async function POST(req: NextRequest) {
     notas_rl: String(b.notas ?? '').trim() || null, avaliado_em: new Date().toISOString(),
   }, { onConflict: 'referencia' })
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Avisa o editor no sino do painel: a avaliação fica no cartão do projeto.
+  // Uma falha aqui nunca estraga a avaliação.
+  if (b.freelancerId) {
+    try {
+      let noivos: string | null = null
+      for (const t of ['eventos_2026', 'eventos_2027']) {
+        const { data } = await sb.from(t).select('cliente').eq('referencia', referencia).maybeSingle()
+        if (data?.cliente) { noivos = String(data.cliente).replace(/\s*\([^)]*\)/g, '').trim(); break }
+      }
+      const vals = Object.values(notas) as number[]
+      const media = Math.round(vals.reduce((x, y) => x + y, 0) / vals.length * 10) / 10
+      const meta = JSON.stringify({ referencia, noivos, media })
+      await sb.from('freelancer_notificacoes').insert({
+        freelancer_id: b.freelancerId,
+        titulo: '★ Avaliação da RL',
+        mensagem: `__META__${meta}__/META__\nA RL avaliou o teu filme: ★ ${media} / 5.`,
+        tipo: 'video_avaliado',
+        lida: false,
+      })
+    } catch (e) { console.error('[avaliar] notificação ao editor:', e) }
+  }
   return NextResponse.json({ ok: true })
 }

@@ -155,7 +155,7 @@ export async function GET(req: NextRequest) {
         const j = jobs.find(x => x.referencia === e.referencia)
         if (j && e.video_estado && !j.videoEstado) j.videoEstado = e.video_estado
         // Nome dos noivos para o editor reconhecer o casamento (antes só via a quinta)
-        if (j && e.cliente && !j.noivos) j.noivos = String(e.cliente).trim()
+        if (j && e.cliente && !j.noivos) j.noivos = String(e.cliente).replace(/\s*\([^)]*\)/g, '').trim()   // sem notas internas entre parênteses, ex. "(Kappa)"
       }
     }
     // Sem cliente no evento: nomes do portal dos noivos

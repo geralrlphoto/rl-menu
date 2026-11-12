@@ -141,7 +141,7 @@ function jobToProjectWF(j: any, wf: Record<string, string>, idx: number): Projec
     dataCasamento: isoToPtWF(j.data_casamento || ''),
     // Prazo do vídeo (evento + 180 dias úteis) calculado na API.
     entregaPrevista: isoToPtWF(j.prazoVideo || ''),
-    pacote: 'Pacote Premium 👑',
+    pacote: '' as Project['pacote'],
     preco: 0,
     duracao: '',
     stage,
@@ -464,9 +464,11 @@ export default function WorkflowPage() {
                         <div className="min-w-0">
                           <p className="text-[13px] font-medium text-white truncate">{p.noivos}</p>
                           <p className="text-[10px] text-white/40">Casamento: {p.dataCasamento}</p>
-                          <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.5 rounded-md bg-gold/10 border border-gold/25 text-gold uppercase tracking-widest font-bold">
-                            {p.pacote.replace(' 👑','')}
-                          </span>
+                          {p.pacote && (
+                            <span className="inline-block mt-0.5 text-[9px] px-1.5 py-0.5 rounded-md bg-gold/10 border border-gold/25 text-gold uppercase tracking-widest font-bold">
+                              {p.pacote.replace(' 👑','')}
+                            </span>
+                          )}
                         </div>
                       </div>
 

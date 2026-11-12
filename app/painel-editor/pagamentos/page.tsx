@@ -138,7 +138,7 @@ function pagamentoParaRow(pag: any, hoje: string): Row {
     recebido: isoToPtPag(pag.created_at),
     dataCasamento: '',
     entregaPrevista: '',
-    pacote: 'Pacote Premium 👑',
+    pacote: '' as Project['pacote'],
     preco: valor,
     duracao: '',
     stage: 'Novo Projeto',
@@ -891,7 +891,7 @@ function DetailPanel({
           <div className="flex-1 min-w-0">
             <p className="text-[11px] tracking-[0.4em] uppercase text-gold/70 font-bold mb-1">Projeto Sincronizado</p>
             <h2 className="text-2xl font-light text-white" style={{ fontFamily: 'Georgia, serif' }}>{project.noivos}</h2>
-            <p className="text-[12px] text-white/45 mt-1">{project.pacote} · {fmtEUR(project.preco)} · {project.duracao}</p>
+            <p className="text-[12px] text-white/45 mt-1">{[project.pacote, fmtEUR(project.preco), project.duracao].filter(Boolean).join(' · ')}</p>
           </div>
           <div className="text-right shrink-0 flex flex-col items-end gap-1.5">
             <p className="text-[10px] tracking-widest uppercase text-white/35">Pago</p>
