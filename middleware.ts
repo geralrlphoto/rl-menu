@@ -179,6 +179,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/login-batizado' ||
     pathname.startsWith('/api/portais') ||
     pathname.startsWith('/api/link-preview') ||
+    pathname.startsWith('/api/reels-marca') || // vídeos públicos da pasta MARCA PESSOAL do Vimeo (portal da reunião)
     pathname.startsWith('/api/previsao-ipma') ||
     pathname.startsWith('/api/equipa-do-dia') ||
     pathname.startsWith('/api/pagamentos-by-ref') ||

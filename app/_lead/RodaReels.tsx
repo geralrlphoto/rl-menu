@@ -5,28 +5,15 @@
 // não uma proposta". O do centro ganha vida (zoom lento, brilho, pré-visualização
 // sem som nos verticais) e inclina com o rato. Arrastar, pontos, ← → e Enter
 // também funcionam. Clicar no centro abre o leitor tipo story.
-// Capas em /public/reels (Vercel, sem egress do Supabase).
+// A lista vem de /api/reels-marca: tudo o que estiver na pasta MARCA PESSOAL
+// do Vimeo aparece aqui (cache de 10 min). Capas 9:16 em /public/reels.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type Reel = { id: string; vimeo: string; t: string; p: string; d: string; vertical: boolean }
-
-// Ordem pensada como uma conversa: dúvida → dinheiro → confiança → prova.
-// "Qualificação de leads" fica de fora: é para profissionais, não para noivos.
-export const REELS: Reel[] = [
-  { id: '2027',       vimeo: '1246417908', t: 'Vais casar em 2027?',         d: '00:55', vertical: false, p: 'O que tratar já, o que pode esperar e porque é que as melhores datas voam primeiro.' },
-  { id: 'pedida',     vimeo: '1246417910', t: 'Foste pedida em casamento?',  d: '01:03', vertical: false, p: 'Os três primeiros passos depois do “sim”, antes de entrar em pânico com listas.' },
-  { id: 'custa',      vimeo: '1246417909', t: 'Quanto custa casar?',         d: '00:55', vertical: false, p: 'Onde vai cada euro de um casamento, sem rodeios.' },
-  { id: 'erro',       vimeo: '1246416051', t: 'O maior erro do meu negócio', d: '00:52', vertical: true,  p: 'O que aprendi pelo caminho e como deixei de o cometer.' },
-  { id: 'sde',        vimeo: '1246444384', t: 'Same day edit',               d: '00:53', vertical: true,  p: 'O vosso filme, mostrado na própria festa, a todos os convidados.' },
-  { id: 'comentario', vimeo: '1246453964', t: 'O comentário dos noivos',     d: '00:44', vertical: true,  p: 'Palavra dos noivos no momento em que viram o same day edit.' },
-]
-
-const capa = (r: Reel) => `/reels/${r.id}.jpg`
-const N = REELS.length
+import { REELS_FIXOS, type Reel } from '@/lib/reelsMarca'
 
 const CSS = `
-.rr-sec{height:520vh;background:var(--ink-2);position:relative}
+.rr-sec{background:var(--ink-2);position:relative}
 .rr-pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:grid;grid-template-columns:minmax(300px,32%) 1fr;align-items:center;padding:0 var(--pad)}
 .rr-pin::before{content:"";position:absolute;inset:0;background:radial-gradient(50% 60% at 66% 52%,rgba(216,190,147,.10),transparent 70%);pointer-events:none}
 .rr-txt{position:relative;z-index:3}
@@ -106,6 +93,15 @@ export default function RodaReels() {
   const [pronto, setPronto] = useState(false)
   const [leitor, setLeitor] = useState<number | null>(null)
   const ativoRef = useRef(0)
+  const [reels, setReels] = useState<Reel[]>(REELS_FIXOS)
+  const nRef = useRef(REELS_FIXOS.length)
+  nRef.current = reels.length
+  useEffect(() => {
+    fetch('/api/reels-marca').then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.reels?.length) setReels(d.reels) }).catch(() => {})
+  }, [])
+  const N = reels.length
+  cartoes.current.length = N
 
   const curso = () => {
     const s = sec.current
@@ -115,13 +111,13 @@ export default function RodaReels() {
     const s = sec.current
     if (!s) return 0
     const r = s.getBoundingClientRect()
-    return Math.min(Math.max(-r.top / curso(), 0), 1) * (N - 1)
+    return Math.min(Math.max(-r.top / curso(), 0), 1) * (nRef.current - 1)
   }, [])
   const irPara = useCallback((i: number) => {
     const s = sec.current
     if (!s) return
     const topo = s.getBoundingClientRect().top + scrollY
-    scrollTo({ top: topo + curso() * i / (N - 1) + 2, behavior: 'smooth' })
+    scrollTo({ top: topo + curso() * i / (nRef.current - 1) + 2, behavior: 'smooth' })
   }, [])
 
   // ciclo de animação: lê o scroll e desenha a roda
@@ -171,22 +167,22 @@ export default function RodaReels() {
   useEffect(() => {
     setSai(true); setPreview(null); setPronto(false)
     const t1 = setTimeout(() => { setMostra(ativo); setSai(false) }, 220)
-    const t2 = setTimeout(() => { if (REELS[ativo].vertical) setPreview(ativo) }, 700)
+    const t2 = setTimeout(() => { if (reels[ativo]?.vertical) setPreview(ativo) }, 700)
     return () => { clearTimeout(t1); clearTimeout(t2) }
-  }, [ativo])
+  }, [ativo, reels])
 
   // teclado: ← → Enter dentro da secção; Esc fecha o leitor
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (leitor !== null) {
         if (e.key === 'Escape') setLeitor(null)
-        if (e.key === 'ArrowRight') setLeitor(l => ((l ?? 0) + 1) % N)
-        if (e.key === 'ArrowLeft') setLeitor(l => ((l ?? 0) - 1 + N) % N)
+        if (e.key === 'ArrowRight') setLeitor(l => ((l ?? 0) + 1) % nRef.current)
+        if (e.key === 'ArrowLeft') setLeitor(l => ((l ?? 0) - 1 + nRef.current) % nRef.current)
         return
       }
       const s = sec.current; if (!s) return
       const r = s.getBoundingClientRect(); if (r.top > 0 || r.bottom < innerHeight) return
-      if (e.key === 'ArrowRight' && ativoRef.current < N - 1) { e.preventDefault(); irPara(ativoRef.current + 1) }
+      if (e.key === 'ArrowRight' && ativoRef.current < nRef.current - 1) { e.preventDefault(); irPara(ativoRef.current + 1) }
       if (e.key === 'ArrowLeft' && ativoRef.current > 0) { e.preventDefault(); irPara(ativoRef.current - 1) }
       if (e.key === 'Enter') setLeitor(ativoRef.current)
     }
@@ -221,7 +217,7 @@ export default function RodaReels() {
       const dx = e.clientX - a.x
       if (Math.abs(dx) > 6) a.moveu = true
       const w = (cartoes.current[0]?.offsetWidth ?? 260) * .68
-      scrollTo(0, a.scroll - dx / w * (curso() / (N - 1)))
+      scrollTo(0, a.scroll - dx / w * (curso() / (nRef.current - 1)))
     }
   }
   const onUp = (e: React.PointerEvent) => {
@@ -235,11 +231,11 @@ export default function RodaReels() {
   }
   const onLeave = () => { cursor.current?.classList.remove('on'); rato.current = { x: 0, y: 0 } }
 
-  const r = REELS[mostra]
-  const lr = leitor !== null ? REELS[leitor] : null
+  const r = reels[Math.min(mostra, N - 1)]
+  const lr = leitor !== null ? reels[leitor] : null
 
   return (
-    <section ref={sec} id="sec-reels" className="rr-sec">
+    <section ref={sec} id="sec-reels" className="rr-sec" style={{ height: `${100 + (N - 1) * 84}vh` }}>
       <style>{CSS}</style>
       <div className="rr-pin">
         <div className="rr-txt">
@@ -252,13 +248,13 @@ export default function RodaReels() {
             <button className="rr-ver" onClick={() => setLeitor(ativo)}><span>▶</span> Ver vídeo · <em>{r.d}</em></button>
           </div>
           <div className="rr-pontos">
-            {REELS.map((x, i) => <button key={x.id} aria-label={x.t} className={i === ativo ? 'on' : ''} onClick={() => irPara(i)} />)}
+            {reels.map((x, i) => <button key={x.vimeo} aria-label={x.t} className={i === ativo ? 'on' : ''} onClick={() => irPara(i)} />)}
           </div>
         </div>
         <div ref={palco} className="rr-palco" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onLeave}>
-          {REELS.map((x, i) => (
-            <div key={x.id} ref={el => { cartoes.current[i] = el }} data-i={i} className={`rr-c${i === ativo ? ' centro' : ''}`}>
-              <img src={capa(x)} alt={x.t} draggable={false} />
+          {reels.map((x, i) => (
+            <div key={x.vimeo} ref={el => { cartoes.current[i] = el }} data-i={i} className={`rr-c${i === ativo ? ' centro' : ''}`}>
+              <img src={x.capa} alt={x.t} draggable={false} />
               {preview === i && (
                 <iframe
                   src={`https://player.vimeo.com/video/${x.vimeo}?background=1&muted=1&loop=1&autopause=0&dnt=1`}
@@ -281,7 +277,7 @@ export default function RodaReels() {
           <button className="rr-fechar" onClick={() => setLeitor(null)}>Fechar ×</button>
           <button className="rr-nav p" aria-label="Anterior" onClick={() => setLeitor(l => ((l ?? 0) - 1 + N) % N)}>←</button>
           <div className={`rr-ecra ${lr.vertical ? 'v' : 'h'}`}>
-            <div className="rr-barras">{REELS.map((x, i) => <i key={x.id} className={i < leitor! ? 'feito' : i === leitor ? 'agora' : ''} />)}</div>
+            <div className="rr-barras">{reels.map((x, i) => <i key={x.vimeo} className={i < leitor! ? 'feito' : i === leitor ? 'agora' : ''} />)}</div>
             <iframe key={lr.vimeo} src={`https://player.vimeo.com/video/${lr.vimeo}?autoplay=1&title=0&byline=0&portrait=0&dnt=1`}
               allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={lr.t} />
           </div>
