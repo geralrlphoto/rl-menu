@@ -31,7 +31,8 @@ type VimeoVideo = {
 }
 
 export async function GET() {
-  const token = process.env.VIMEO_TOKEN
+  // tira espaços, aspas ou um "bearer " colados por engano na Vercel
+  const token = process.env.VIMEO_TOKEN?.trim().replace(/^["']|["']$/g, '').replace(/^bearer\s+/i, '')
   if (!token) return NextResponse.json({ reels: REELS_FIXOS, fonte: 'fixa' })
 
   try {
@@ -41,7 +42,7 @@ export async function GET() {
       headers: { Authorization: `bearer ${token}`, Accept: 'application/vnd.vimeo.*+json;version=3.4' },
       next: { revalidate: 600 },
     })
-    if (!r.ok) throw new Error(`Vimeo ${r.status}`)
+    if (!r.ok) throw new Error(`Vimeo ${r.status} (chave com ${token.length} caracteres)`)
     const j = await r.json() as { data: VimeoVideo[] }
 
     const fixos = new Map(REELS_FIXOS.map(x => [x.vimeo, x]))
