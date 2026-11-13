@@ -2,9 +2,9 @@
 
 // "O nosso trabalho" dos portais da reunião (/r e /b) em forma de roda,
 // a mesma da página de marcas (app/_marcas/Opcao4.tsx): meia roda com o
-// centro na borda direita e os vídeos presos a ela. A secção fica presa ao
-// ecrã (sticky) enquanto se faz scroll; o scroll roda tudo junto, os vídeos
-// sobem pela esquerda e o do meio fica aceso, pronto a ver.
+// centro na borda direita e os vídeos presos a ela. Desde 2026-11-13 a roda
+// já não prende o scroll: roda com as setas ← →, os pontos, deslizar ou as
+// teclas ← →. O do meio fica aceso, pronto a ver.
 
 import { useEffect, useRef, useState } from 'react'
 import Mostrador from '@/app/_marcas/Mostrador'
@@ -80,14 +80,8 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
     let raf = 0
     const max = (n - 1) * PASSO
 
-    const lerScroll = () => {
-      const s = sec.current
-      if (!s) return
-      const r = s.getBoundingClientRect()
-      const curso = r.height - innerHeight
-      const p = curso > 0 ? Math.max(0, Math.min(1, -r.top / curso)) : 0
-      alvo.current = p * max
-    }
+    // a roda já não segue o scroll: alvo.current muda com as setas / pontos / arrastar
+    alvo.current = Math.min(alvo.current, max)
 
     const desenhar = (ang: number) => {
       const el = palco.current
@@ -141,13 +135,11 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
       raf = requestAnimationFrame(passo)
     }
     const onResize = () => desenhar(atual.current)
-    lerScroll(); atual.current = alvo.current; desenhar(atual.current)
+    atual.current = alvo.current; desenhar(atual.current)
     raf = requestAnimationFrame(passo)
-    addEventListener('scroll', lerScroll, { passive: true })
     addEventListener('resize', onResize)
     return () => {
       cancelAnimationFrame(raf)
-      removeEventListener('scroll', lerScroll)
       removeEventListener('resize', onResize)
     }
   }, [n]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -155,22 +147,50 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
   // O vídeo que estava a tocar para quando sai do meio
   useEffect(() => { setATocar(t => (t === ativa ? t : null)) }, [ativa])
 
-  /** Leva um vídeo para o meio da roda (faz o scroll da página por nós). */
+  /** Leva um vídeo para o meio da roda (a página não se mexe). */
   const irPara = (k: number) => {
-    const s = sec.current
-    if (!s || n < 2) return
-    const topo = s.getBoundingClientRect().top + scrollY
-    const curso = s.offsetHeight - innerHeight
-    scrollTo({ top: topo + (curso * k) / (n - 1), behavior: 'smooth' })
+    if (n < 2) return
+    alvo.current = Math.max(0, Math.min(n - 1, k)) * PASSO
+  }
+  /** Setas: anda um vídeo; no fim volta ao início (e vice-versa). */
+  const passoRoda = (d: number) => irPara((ativaRef.current + d + n) % n)
+  const passoRef = useRef(passoRoda)
+  passoRef.current = passoRoda
+
+  // teclas ← → quando a roda está à vista (e não há outro leitor aberto)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const s = sec.current; if (!s) return
+      const r = s.getBoundingClientRect()
+      if (r.bottom < innerHeight * .3 || r.top > innerHeight * .7) return
+      if (document.querySelector('.rr-leitor')) return
+      if (e.key === 'ArrowRight') { e.preventDefault(); passoRef.current(1) }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); passoRef.current(-1) }
+    }
+    addEventListener('keydown', onKey)
+    return () => removeEventListener('keydown', onKey)
+  }, [])
+
+  // deslizar com o dedo/rato (mais de 50 px) também anda um vídeo
+  const toque = useRef<{ x: number; y: number } | null>(null)
+  const onDown = (e: React.PointerEvent) => { toque.current = { x: e.clientX, y: e.clientY } }
+  const onUp = (e: React.PointerEvent) => {
+    const t = toque.current; toque.current = null
+    if (!t) return
+    const dx = e.clientX - t.x, dy = e.clientY - t.y
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) passoRoda(dx < 0 ? 1 : -1)
   }
 
   if (!n) return null
 
   return (
-    <section ref={sec} id="sec-video" className="rlv" style={{ height: n > 1 ? `${100 + (n - 1) * 70}vh` : '100vh' }}>
+    <section ref={sec} id="sec-video" className="rlv">
       <style>{`
         .rlv{position:relative;background:var(--ink-2,#111);}
-        .rlv-palco{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;}
+        .rlv-palco{position:relative;height:100vh;height:100svh;min-height:600px;max-height:1000px;overflow:hidden;touch-action:pan-y;}
+        .rlv-setas{display:flex;gap:10px;pointer-events:auto;}
+        .rlv-setas button{width:46px;height:46px;border-radius:50%;border:1px solid rgba(243,237,226,.14);background:none;color:rgba(243,237,226,.6);font-size:17px;cursor:pointer;display:grid;place-items:center;transition:border-color .35s,color .35s;}
+        .rlv-setas button:hover{border-color:${OURO};color:${OURO};}
         .rlv-palco::before{content:"";position:absolute;inset:0;pointer-events:none;
           background:radial-gradient(ellipse 50% 60% at 100% 55%,rgba(216,190,147,.12),transparent 70%);}
         .rlv-mostrador{position:absolute;transform:translate(-50%,-50%);pointer-events:none;}
@@ -202,12 +222,13 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
         .rlv-pontos button.on{width:44px;background:${OURO};box-shadow:0 0 8px rgba(216,190,147,.7);}
         @media (max-width:767px){
           .rlv-cab{top:76px;}
-          .rlv-conta{left:50%;transform:translateX(-50%);bottom:22px;}
+          .rlv-conta{left:50%;transform:translateX(-50%);bottom:96px;} /* acima do botão do WhatsApp */
+          .rlv-setas button{width:42px;height:42px;}
           .rlv-conta b{font-size:40px;}
         }
       `}</style>
 
-      <div ref={palco} className="rlv-palco">
+      <div ref={palco} className="rlv-palco" onPointerDown={onDown} onPointerUp={onUp} onPointerCancel={() => { toque.current = null }}>
         <Mostrador gira={gira} giraInv={giraInv} roda={roda} className="rlv-mostrador" semLetras />
 
         <div className="rlv-cab">
@@ -246,12 +267,16 @@ export default function RodaVideos({ label, title, embeds, isAdmin }: {
           <div className="rlv-conta">
             <b>{String(ativa + 1).padStart(2, '0')}</b>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <span>de {String(n).padStart(2, '0')} · scroll para rodar</span>
+              <span>de {String(n).padStart(2, '0')}</span>
               <div className="rlv-pontos">
                 {itens.map((it, k) => (
                   <button key={it.i} type="button" className={k === ativa ? 'on' : ''} aria-label={`Ir para o vídeo ${it.i + 1}`} onClick={() => irPara(k)} />
                 ))}
               </div>
+            </div>
+            <div className="rlv-setas">
+              <button type="button" aria-label="Vídeo anterior" onClick={() => passoRoda(-1)}>←</button>
+              <button type="button" aria-label="Vídeo seguinte" onClick={() => passoRoda(1)}>→</button>
             </div>
           </div>
         )}
