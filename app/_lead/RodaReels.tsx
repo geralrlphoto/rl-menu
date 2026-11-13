@@ -1,10 +1,12 @@
 'use client'
 
 // "Ouçam-nos primeiro": os vídeos da marca pessoal do Rui (Vimeo, pasta
-// MARCA PESSOAL) numa roda 3D presa ao scroll, logo a seguir a "Uma conversa,
-// não uma proposta". O do centro ganha vida (zoom lento, brilho, pré-visualização
-// sem som nos verticais) e inclina com o rato. Arrastar, pontos, ← → e Enter
-// também funcionam. Clicar no centro abre o leitor tipo story.
+// MARCA PESSOAL) numa roda 3D, logo a seguir a "Uma conversa, não uma proposta".
+// A roda anda sozinha (um vídeo a cada AUTO ms, dá a volta) e a página desce
+// normalmente com o scroll. Setas ← →, botão de pausa, pontos, arrastar e as
+// teclas ← → / Enter também funcionam. O do centro ganha vida (zoom lento,
+// brilho, pré-visualização sem som nos verticais) e inclina com o rato.
+// Clicar no centro abre o leitor tipo story.
 // A lista vem de /api/reels-marca: tudo o que estiver na pasta MARCA PESSOAL
 // do Vimeo aparece aqui (cache de 10 min). Capas 9:16 em /public/reels.
 
@@ -12,9 +14,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { REELS_FIXOS, type Reel } from '@/lib/reelsMarca'
 
+const AUTO = 6000 // ms em cada vídeo antes de passar ao seguinte
+
 const CSS = `
 .rr-sec{background:var(--ink-2);position:relative}
-.rr-pin{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:grid;grid-template-columns:minmax(300px,32%) 1fr;align-items:center;padding:0 var(--pad)}
+.rr-pin{position:relative;height:100vh;height:100svh;min-height:640px;max-height:1000px;overflow:hidden;display:grid;grid-template-columns:minmax(300px,32%) 1fr;align-items:center;padding:0 var(--pad)}
 .rr-pin::before{content:"";position:absolute;inset:0;background:radial-gradient(50% 60% at 66% 52%,rgba(216,190,147,.10),transparent 70%);pointer-events:none}
 .rr-txt{position:relative;z-index:3}
 .rr-atual{margin-top:clamp(30px,6vh,64px);min-height:250px}
@@ -30,8 +34,15 @@ const CSS = `
 .rr-ver span{font-size:9px}.rr-ver em{font-style:normal;color:var(--tx-mid)}
 .rr-ver:hover{background:var(--g);color:var(--ink)}.rr-ver:hover em{color:var(--ink)}
 .rr-pontos{display:flex;gap:8px;margin-top:34px}
-.rr-pontos button{width:26px;height:3px;border-radius:3px;background:var(--line);border:0;padding:0;cursor:pointer;transition:.5s var(--ease)}
-.rr-pontos button.on{width:56px;background:var(--g)}
+.rr-pontos button{position:relative;overflow:hidden;width:26px;height:3px;border-radius:3px;background:var(--line);border:0;padding:0;cursor:pointer;transition:width .5s var(--ease)}
+.rr-pontos button.on{width:56px}
+.rr-pontos button i{position:absolute;inset:0;background:var(--g);transform-origin:left;animation:rr-enche linear forwards}
+.rr-pontos.parado button i{animation-play-state:paused}
+@keyframes rr-enche{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.rr-ctrl{display:flex;gap:10px;margin-top:26px}
+.rr-ctrl button{width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--tx-mid);font-size:16px;cursor:pointer;display:grid;place-items:center;transition:.35s var(--ease)}
+.rr-ctrl button:hover{border-color:var(--g);color:var(--g)}
+.rr-ctrl button.pp{border-color:rgba(216,190,147,.5);color:var(--g)}
 .rr-palco{position:relative;height:100%;perspective:1400px;cursor:grab;touch-action:pan-y;user-select:none}
 .rr-palco.drag{cursor:grabbing}
 .rr-c{--w:clamp(200px,19vw,290px);position:absolute;left:50%;top:50%;width:var(--w);aspect-ratio:9/16;margin-left:calc(var(--w)/-2);translate:0 -50%;
@@ -48,9 +59,6 @@ const CSS = `
 .rr-c.centro .rr-brilho{opacity:1}
 .rr-c::after{content:"";position:absolute;inset:0;border-radius:16px;box-shadow:inset 0 0 0 1px rgba(216,190,147,0);transition:box-shadow .5s;pointer-events:none}
 .rr-c.centro::after{box-shadow:inset 0 0 0 1px rgba(216,190,147,.55)}
-.rr-dica{position:absolute;bottom:60px;left:50%;translate:-50% 0;display:flex;flex-direction:column;align-items:center;gap:10px;font-family:var(--fm);font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--tx-dim);z-index:3;transition:opacity .5s;pointer-events:none}
-.rr-dica i{width:1px;height:34px;background:linear-gradient(var(--g),transparent);animation:rr-dica 1.8s ease-in-out infinite}
-@keyframes rr-dica{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
 .rr-cursor{position:fixed;left:0;top:0;width:86px;height:86px;margin:-43px 0 0 -43px;border-radius:50%;background:var(--g);color:var(--ink);display:grid;place-items:center;
   font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;pointer-events:none;z-index:8500;scale:0;transition:scale .35s var(--ease)}
 .rr-cursor.on{scale:1}
@@ -73,22 +81,27 @@ const CSS = `
   .rr-atual{margin-top:14px;min-height:0;display:grid;grid-template-columns:auto 1fr;column-gap:16px;align-items:center}
   .rr-n b{font-size:44px}.rr-n i{display:none}
   .rr-atual h3{margin-top:0;font-size:20px}
-  .rr-atual p,.rr-pontos,.rr-dica{display:none}
+  .rr-atual p{display:none}
   .rr-ver{grid-column:1/-1;margin-top:14px;justify-self:start}
+  .rr-pontos{margin-top:16px}
+  .rr-ctrl{margin-top:14px}.rr-ctrl button{width:42px;height:42px}
   .rr-c{--w:min(52vw,240px)}
   .rr-leitor .rr-nav{position:absolute;bottom:20px}.rr-leitor .rr-nav.p{left:24%}.rr-leitor .rr-nav.n{right:24%}
   .rr-ecra.h{width:calc(100vw - 32px)}
 }
 `
 
+const mod = (v: number, n: number) => ((v % n) + n) % n
+// distância mais curta (dando a volta) entre o cartão i e a posição p
+const dist = (i: number, p: number, n: number) => { const d = mod(i - p, n); return d > n / 2 ? d - n : d }
+
 export default function RodaReels() {
   const sec = useRef<HTMLElement>(null)
   const palco = useRef<HTMLDivElement>(null)
   const cartoes = useRef<(HTMLDivElement | null)[]>([])
   const cursor = useRef<HTMLDivElement>(null)
-  const dica = useRef<HTMLDivElement>(null)
   const rato = useRef({ x: 0, y: 0 })
-  const arrasto = useRef<{ x: number; scroll: number; moveu: boolean } | null>(null)
+  const arrasto = useRef<{ x: number; base: number; moveu: boolean } | null>(null)
   const [ativo, setAtivo] = useState(0)
   const [mostra, setMostra] = useState(0)     // texto à esquerda (troca com transição)
   const [sai, setSai] = useState(false)
@@ -106,65 +119,71 @@ export default function RodaReels() {
   const N = reels.length
   cartoes.current.length = N
 
-  const curso = () => {
-    const s = sec.current
-    return s ? s.offsetHeight - innerHeight : 1
-  }
-  const progresso = useCallback(() => {
-    const s = sec.current
-    if (!s) return 0
-    const r = s.getBoundingClientRect()
-    return Math.min(Math.max(-r.top / curso(), 0), 1) * (nRef.current - 1)
-  }, [])
+  // posição da roda: inteiro "sem fim" (a roda dá a volta); ativo = posição módulo N
+  const alvo = useRef(0)
+  const posRef = useRef(0)
+  const [pos, setPos] = useState(0)
+  const [pausado, setPausado] = useState(false)
+  const [visivel, setVisivel] = useState(false)
+  const visivelRef = useRef(false)
+
+  const passo = useCallback((d: number) => { alvo.current = Math.round(alvo.current) + d }, [])
   const irPara = useCallback((i: number) => {
-    const s = sec.current
-    if (!s) return
-    const topo = s.getBoundingClientRect().top + scrollY
-    scrollTo({ top: topo + curso() * i / (nRef.current - 1) + 2, behavior: 'smooth' })
+    alvo.current = Math.round(alvo.current) + Math.round(dist(i, alvo.current, nRef.current))
   }, [])
 
-  // ciclo de animação: lê o scroll e desenha a roda
+  // ciclo de animação: aproxima a roda do alvo e desenha
   useEffect(() => {
-    let raf = 0, atual = progresso(), tAnt = performance.now()
+    let raf = 0, atual = alvo.current, tAnt = performance.now()
     const desenhar = (now: number) => {
       const dt = Math.min(now - tAnt, 200); tAnt = now
-      const alvo = progresso()
-      atual += (alvo - atual) * (1 - Math.pow(.86, dt / 16.7))
-      if (Math.abs(alvo - atual) < .001) atual = alvo
+      const n = nRef.current
+      atual += (alvo.current - atual) * (1 - Math.pow(.88, dt / 16.7))
+      if (Math.abs(alvo.current - atual) < .001) atual = alvo.current
       const mob = innerWidth <= 860, gap = mob ? .58 : .68
       cartoes.current.forEach((c, i) => {
         if (!c) return
-        const d = i - atual, a = Math.abs(d), w = c.offsetWidth
+        const d = dist(i, atual, n), a = Math.abs(d), w = c.offsetWidth
         const centro = a < .5
         const tx = centro ? rato.current.y * -6 : 0, ty = centro ? rato.current.x * 8 : 0
         c.style.transform = `translateX(${(d * w * gap).toFixed(1)}px) translateZ(${(-a * (mob ? 160 : 240)).toFixed(1)}px) rotateY(${(-d * (mob ? 22 : 30) + ty).toFixed(2)}deg) rotateX(${tx.toFixed(2)}deg) scale(${(1 - Math.min(a, 3) * .04).toFixed(3)})`
-        c.style.opacity = String(Math.max(0, 1 - Math.max(0, a - 1.6) * .6))
+        c.style.opacity = String(Math.max(0, 1 - Math.max(0, a - 1.6) * .75))
         c.style.zIndex = String(100 - Math.round(a * 10))
         c.style.filter = `brightness(${(1 - Math.min(a, 2) * .28).toFixed(3)}) blur(${(Math.max(0, a - .6) * 1.2).toFixed(2)}px)`
       })
-      const novo = Math.round(atual)
-      if (novo !== ativoRef.current) { ativoRef.current = novo; setAtivo(novo) }
-      if (dica.current) dica.current.style.opacity = alvo > .15 ? '0' : '1'
+      const p = Math.round(atual)
+      if (p !== posRef.current) {
+        posRef.current = p; setPos(p)
+        const at = mod(p, n)
+        if (at !== ativoRef.current) { ativoRef.current = at; setAtivo(at) }
+      }
       raf = requestAnimationFrame(desenhar)
     }
     raf = requestAnimationFrame(desenhar)
-    // quando o scroll pára, encaixa no vídeo mais próximo
-    let encaixe: ReturnType<typeof setTimeout>
-    const onScroll = () => {
-      if (arrasto.current) return
-      clearTimeout(encaixe)
-      encaixe = setTimeout(() => {
-        const s = sec.current; if (!s) return
-        const r = s.getBoundingClientRect()
-        if (r.top < 0 && r.bottom > innerHeight) {
-          const f = progresso()
-          if (Math.abs(f - Math.round(f)) > .04) irPara(Math.round(f))
-        }
-      }, 160)
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  // só anda sozinha quando a secção está à vista
+  useEffect(() => {
+    const ver = () => {
+      const s = sec.current; if (!s) return
+      const r = s.getBoundingClientRect()
+      const vis = Math.max(0, Math.min(r.bottom, innerHeight) - Math.max(r.top, 0))
+      const v = vis >= Math.min(r.height, innerHeight) * .45
+      if (v !== visivelRef.current) { visivelRef.current = v; setVisivel(v) }
     }
-    addEventListener('scroll', onScroll, { passive: true })
-    return () => { cancelAnimationFrame(raf); clearTimeout(encaixe); removeEventListener('scroll', onScroll) }
-  }, [progresso, irPara])
+    ver()
+    addEventListener('scroll', ver, { passive: true })
+    addEventListener('resize', ver)
+    return () => { removeEventListener('scroll', ver); removeEventListener('resize', ver) }
+  }, [])
+
+  // avanço automático (recomeça a contar sempre que muda de vídeo)
+  useEffect(() => {
+    if (pausado || !visivel || leitor !== null) return
+    const t = setTimeout(() => passo(1), AUTO)
+    return () => clearTimeout(t)
+  }, [pos, pausado, visivel, leitor, passo])
 
   // troca do texto e pré-visualização do vídeo do centro
   useEffect(() => {
@@ -174,7 +193,7 @@ export default function RodaReels() {
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [ativo, reels])
 
-  // teclado: ← → Enter dentro da secção; Esc fecha o leitor
+  // teclado: ← → Enter com a secção à vista; Esc fecha o leitor
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (leitor !== null) {
@@ -183,24 +202,23 @@ export default function RodaReels() {
         if (e.key === 'ArrowLeft') setLeitor(l => ((l ?? 0) - 1 + nRef.current) % nRef.current)
         return
       }
-      const s = sec.current; if (!s) return
-      const r = s.getBoundingClientRect(); if (r.top > 0 || r.bottom < innerHeight) return
-      if (e.key === 'ArrowRight' && ativoRef.current < nRef.current - 1) { e.preventDefault(); irPara(ativoRef.current + 1) }
-      if (e.key === 'ArrowLeft' && ativoRef.current > 0) { e.preventDefault(); irPara(ativoRef.current - 1) }
-      if (e.key === 'Enter') setLeitor(ativoRef.current)
+      if (!visivelRef.current) return
+      if (e.key === 'ArrowRight') { e.preventDefault(); passo(1) }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); passo(-1) }
+      if (e.key === 'Enter' && (e.target as HTMLElement)?.tagName !== 'BUTTON') setLeitor(ativoRef.current)
     }
     addEventListener('keydown', onKey)
     return () => removeEventListener('keydown', onKey)
-  }, [leitor, irPara])
+  }, [leitor, passo])
 
   useEffect(() => {
     document.body.style.overflow = leitor !== null ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [leitor])
 
-  // arrastar / clicar no palco
+  // arrastar / clicar no palco (o scroll da página fica livre)
   const onDown = (e: React.PointerEvent) => {
-    arrasto.current = { x: e.clientX, scroll: scrollY, moveu: false }
+    arrasto.current = { x: e.clientX, base: alvo.current, moveu: false }
     palco.current?.classList.add('drag')
     palco.current?.setPointerCapture(e.pointerId)
   }
@@ -213,14 +231,13 @@ export default function RodaReels() {
     if (c) {
       c.style.transform = `translate(${e.clientX}px,${e.clientY}px)`
       c.classList.toggle('on', !!sobre && !arrasto.current)
-      if (sobre) { const i = +sobre.dataset.i!; c.textContent = i === ativoRef.current ? 'Ver' : i < ativoRef.current ? '←' : '→' }
+      if (sobre) { const d = dist(+sobre.dataset.i!, alvo.current, nRef.current); c.textContent = Math.abs(d) < .5 ? 'Ver' : d < 0 ? '←' : '→' }
     }
     const a = arrasto.current
     if (a) {
       const dx = e.clientX - a.x
       if (Math.abs(dx) > 6) a.moveu = true
-      const w = (cartoes.current[0]?.offsetWidth ?? 260) * .68
-      scrollTo(0, a.scroll - dx / w * (curso() / (nRef.current - 1)))
+      if (a.moveu) alvo.current = a.base - dx / ((cartoes.current[0]?.offsetWidth ?? 260) * .68)
     }
   }
   const onUp = (e: React.PointerEvent) => {
@@ -230,7 +247,7 @@ export default function RodaReels() {
     if (a && !a.moveu) {
       const el = document.elementsFromPoint(e.clientX, e.clientY).find(x => x.classList?.contains('rr-c')) as HTMLElement | undefined
       if (el) { const i = +el.dataset.i!; if (i === ativoRef.current) setLeitor(i); else irPara(i) }
-    } else if (a) irPara(Math.round(progresso()))
+    } else if (a) alvo.current = Math.round(alvo.current)
   }
   const onLeave = () => { cursor.current?.classList.remove('on'); rato.current = { x: 0, y: 0 } }
 
@@ -238,7 +255,7 @@ export default function RodaReels() {
   const lr = leitor !== null ? reels[leitor] : null
 
   return (
-    <section ref={sec} id="sec-reels" className="rr-sec" style={{ height: `${100 + (N - 1) * 84}vh` }}>
+    <section ref={sec} id="sec-reels" className="rr-sec">
       <style>{CSS}</style>
       <div className="rr-pin">
         <div className="rr-txt">
@@ -250,8 +267,21 @@ export default function RodaReels() {
             <p className={sai ? 'sai' : ''}>{r.p}</p>
             <button className="rr-ver" onClick={() => setLeitor(ativo)}><span>▶</span> Ver vídeo · <em>{r.d}</em></button>
           </div>
-          <div className="rr-pontos">
-            {reels.map((x, i) => <button key={x.vimeo} aria-label={x.t} className={i === ativo ? 'on' : ''} onClick={() => irPara(i)} />)}
+          <div className={`rr-pontos${pausado || !visivel ? ' parado' : ''}`}>
+            {reels.map((x, i) => (
+              <button key={x.vimeo} aria-label={x.t} className={i === ativo ? 'on' : ''} onClick={() => irPara(i)}>
+                {i === ativo && <i key={pos} style={{ animationDuration: `${AUTO}ms` }} />}
+              </button>
+            ))}
+          </div>
+          <div className="rr-ctrl">
+            <button aria-label="Vídeo anterior" onClick={() => passo(-1)}>←</button>
+            <button aria-label={pausado ? 'Retomar' : 'Pausar'} className="pp" onClick={() => setPausado(v => !v)}>
+              {pausado
+                ? <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M7 4.5v15l13-7.5z" /></svg>
+                : <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1" /><rect x="14" y="4.5" width="4" height="15" rx="1" /></svg>}
+            </button>
+            <button aria-label="Vídeo seguinte" onClick={() => passo(1)}>→</button>
           </div>
         </div>
         <div ref={palco} className="rr-palco" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onLeave}>
@@ -271,7 +301,6 @@ export default function RodaReels() {
             </div>
           ))}
         </div>
-        <div ref={dica} className="rr-dica"><span>Scroll ou arrastar</span><i /></div>
       </div>
       <div ref={cursor} className="rr-cursor">Ver</div>
 
