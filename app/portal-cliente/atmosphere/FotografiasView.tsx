@@ -641,6 +641,19 @@ export function FotografiasView(props: FotografiasViewProps) {
                   {/* Galerias que fazem sentido partilhar com os convidados:
                       botão de partilha assim que houver link. */}
                   {c.key === 'convidados' && available && <ShareConvidadosButton path={c.url!} />}
+                  {/* Fora do tema RL (batizado) a Galeria Online fica, com a partilha e a
+                      página onde os convidados adquirem fotografias */}
+                  {c.key === 'galerias' && available && props.convidadosUrl && (
+                    <>
+                      <a className="fp-btn ghost" href={props.convidadosUrl} target="_blank" rel="noopener noreferrer">
+                        Página para adquirir
+                        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M7 17 17 7" /><path d="M9 7h8v8" />
+                        </svg>
+                      </a>
+                      <ShareConvidadosButton path={props.convidadosUrl} />
+                    </>
+                  )}
                   {SHAREABLE.has(c.key) && available && (
                     <ShareGalleryButton url={c.url!} storageKey={`rl_share_${props.portalRef ?? 'portal'}_${c.key}`} />
                   )}

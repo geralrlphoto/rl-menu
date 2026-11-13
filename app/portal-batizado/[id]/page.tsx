@@ -903,6 +903,8 @@ function PortalSubPageContent() {
   const [error, setError] = useState('')
   const [pagamentos, setPagamentos] = useState<Pagamento[]>([])
   const [portalRef, setPortalRef] = useState('')
+  // id do portal: endereço da página dos convidados (/convidados/<id>)
+  const [portalRowId, setPortalRowId] = useState<string | null>(null)
 
   // Also check admin when portalRef state loads (for portals without URL refParam)
   useEffect(() => {
@@ -1110,6 +1112,7 @@ function PortalSubPageContent() {
           fetch(`/api/portais-clientes?id=${PORTAL_PAGE_ID}&settingsOnly=1`).then(r => r.json()).catch(() => null),
         ])
         ps = d.portal?.settings ?? {}
+        setPortalRowId(d.portal?.id ?? null)
 
         // ── Apply template fallback APENAS para campos visuais ──
         const tmpl: Record<string, any> = templateD?.settings ?? {}
@@ -2600,6 +2603,10 @@ function PortalSubPageContent() {
               dataCasamento={String(eventoData?.data_evento ?? portalSettingsObj?.data ?? '').slice(0, 10) || null}
               estadoEdicao={eventoData?.fotos_edicao_estado ?? null}
               capaFallback={_atmEffectiveHeader || portalHeroImageUrl || null}
+              // Galeria Online: partilhar com os convidados a página deles (ver + adquirir)
+              convidadosUrl={portalRowId
+                ? ((portalSettingsObj?.convidados_url || portalSettingsObj?.galerias_url) ? `/convidados/${portalRowId}` : '')
+                : null}
             />
           </div>
 

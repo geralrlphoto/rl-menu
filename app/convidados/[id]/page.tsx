@@ -18,11 +18,14 @@ const primeiro = (n?: string | null) => {
 async function carregar(id: string) {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-  const { data } = await sb.from('portais').select('noiva, noivo, data, settings').eq('id', id).maybeSingle()
+  const { data } = await sb.from('portais').select('referencia, noiva, noivo, data, settings').eq('id', id).maybeSingle()
   if (!data) return null
   const s: any = data.settings ?? {}
-  const a = primeiro(data.noiva ?? s.noiva), b = primeiro(data.noivo ?? s.noivo)
+  // Batizado (BAT_…): os nomes são os dos pais (mãe/pai quando não há noiva/noivo)
+  const batizado = String(data.referencia ?? s.referencia ?? '').toUpperCase().startsWith('BAT_')
+  const a = primeiro(data.noiva ?? s.noiva ?? s.mae), b = primeiro(data.noivo ?? s.noivo ?? s.pai)
   return {
+    evento: batizado ? 'batizado' : 'casamento',
     nomes: [a, b].filter(Boolean).join(' & '),
     nomesForm: [a, b].filter(Boolean).join(' e '),
     data: String(data.data ?? s.data ?? '').slice(0, 10),
@@ -44,7 +47,7 @@ export default async function ConvidadosPage({ params }: { params: Promise<{ id:
   const dataLonga = /^\d{4}-\d{2}-\d{2}$/.test(c.data)
     ? new Date(c.data + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
     : ''
-  const comprar = `/adquirir-fotografias?noivos=${encodeURIComponent(c.nomesForm)}${c.data ? `&data=${c.data}` : ''}`
+  const comprar = `/adquirir-fotografias?noivos=${encodeURIComponent(c.nomesForm)}${c.data ? `&data=${c.data}` : ''}${c.evento === 'batizado' ? '&tipo=batizado' : ''}`
 
   const cartao = 'group relative block overflow-hidden rounded-[22px] border border-white/[0.08] bg-[#141414] transition-all duration-300 hover:-translate-y-1 hover:border-[#d8be93]/45 hover:shadow-[0_0_40px_-18px_rgba(216,190,147,0.6)]'
 
@@ -65,7 +68,7 @@ export default async function ConvidadosPage({ params }: { params: Promise<{ id:
         <div className="relative mx-auto max-w-3xl px-5 pt-20 pb-16 sm:pt-28 sm:pb-20 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/portal-noivos/logo-gold.png" alt="RL Photo Video · Wedding Moments" className="mx-auto mb-8 h-28 w-auto sm:h-32" />
-          <p className="font-cond text-[11px] font-medium tracking-[0.25em] uppercase" style={{ color: G }}>As fotografias do casamento</p>
+          <p className="font-cond text-[11px] font-medium tracking-[0.25em] uppercase" style={{ color: G }}>As fotografias do {c.evento}</p>
           <h1 className="mt-4 font-cond font-light text-[46px] sm:text-[72px] leading-[1.02]">
             {c.nomes.split(' & ').map((n, i) => (
               <span key={n}>{i > 0 && <span style={{ color: G }}> &amp; </span>}{n}</span>

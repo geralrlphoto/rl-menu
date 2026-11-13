@@ -363,6 +363,13 @@ export default function AdquirirFotografiasPage() {
       var qs = new URLSearchParams(window.location.search)
       var pNoivos = qs.get('noivos'), pData = qs.get('data')
       if (pNoivos) (document.getElementById('f-noivos') as HTMLInputElement).value = pNoivos
+      // Batizado: os rótulos falam dos pais e do batizado (os campos enviados são os mesmos)
+      if (qs.get('tipo') === 'batizado') {
+        var lN = document.getElementById('f-noivos')?.closest('.field')?.querySelector('label')
+        var lD = document.getElementById('f-data')?.closest('.field')?.querySelector('label')
+        if (lN) lN.textContent = 'Nome dos pais'
+        if (lD) lD.textContent = 'Data do batizado'
+      }
       if (pData && /^\d{4}-\d{2}-\d{2}$/.test(pData)) {
         var pd = pData.split('-');
         (document.getElementById('f-data') as HTMLInputElement).value = pd[2] + ' / ' + pd[1] + ' / ' + pd[0]
