@@ -1,13 +1,14 @@
 'use client'
 
-// Portfólio dos portais da reunião (/r e /b) em faixa a deslizar.
-// A secção fica presa ao ecrã (sticky) e o scroll da página faz a faixa de
-// fotos deslizar da esquerda para a direita. A foto que passa ao centro fica
-// acesa (a cores e um pouco maior); as outras ficam mais apagadas.
+// Portfólio dos portais da reunião (/r e /b) em faixa de fotos.
+// A página desce normalmente (o scroll já não fica preso aqui): a faixa anda
+// com as setas ← →, arrastando (rato ou dedo) ou com as teclas ← → quando está
+// à vista. A foto do centro fica acesa (a cores e um pouco maior); as outras
+// ficam mais apagadas. No fim dá a volta ao início.
 // As fotos vêm da galeria do Wfolio (/api/portfolio-wfolio): servidas pelo
 // i.wfolio.com, sem gastar Supabase. Se o Wfolio falhar, usa as do editor.
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 type FotoWf = { src: string; srcSet: string }
 
@@ -25,105 +26,146 @@ export default function PortfolioFaixa({ label, title, titleColor, photos, isAdm
   }, [])
 
   const doWfolio = !!wf && wf.fotos.length > 0
-  const unicas: { url: string; srcSet?: string; i: number }[] = !wf
+  const fotos: { url: string; srcSet?: string; i: number }[] = !wf
     ? []   // à espera do Wfolio: não carrega as do Supabase à toa
     : doWfolio
       ? wf.fotos.map((f, i) => ({ url: f.src, srcSet: f.srcSet, i }))
       : photos.map((url, i) => ({ url, i })).filter(f => f.url || isAdmin)
-  // Com poucas fotos a faixa quase não andava: repete-as até ter pelo menos 8
-  const fotos = unicas.length
-    ? Array.from({ length: Math.max(unicas.length, 8) }, (_, k) => unicas[k % unicas.length])
-    : []
   const n = fotos.length
+  const nRef = useRef(n)
+  nRef.current = n
 
   const sec = useRef<HTMLElement>(null)
   const palco = useRef<HTMLDivElement>(null)
   const faixa = useRef<HTMLDivElement>(null)
   const cartoes = useRef<(HTMLDivElement | null)[]>([])
+  cartoes.current.length = n
+  const alvo = useRef(1)          // índice (com casas decimais ao arrastar) da foto ao centro
+  const [atual, setAtual] = useState(1)
+  const arrasto = useRef<{ x: number; base: number; moveu: boolean } | null>(null)
 
+  const ir = useCallback((i: number) => {
+    const m = nRef.current
+    if (!m) return
+    alvo.current = ((Math.round(i) % m) + m) % m
+  }, [])
+  const passo = useCallback((d: number) => ir(Math.round(alvo.current) + d), [ir])
+
+  // desenha: põe a foto "alvo" ao centro, com movimento suave
   useEffect(() => {
     if (!n) return
-    let raf = 0, alvo = 0, atual = 0
-
-    // A altura da secção = ecrã + o que a faixa tem de andar
-    const medir = () => {
-      const s = sec.current, f = faixa.current, p = palco.current
-      if (!s || !f || !p) return
-      const sobra = Math.max(0, f.scrollWidth - p.clientWidth)
-      s.style.height = `${innerHeight + sobra}px`
-    }
-    const ler = () => {
-      const s = sec.current
-      if (!s) return
-      const r = s.getBoundingClientRect()
-      const curso = r.height - innerHeight
-      alvo = curso > 0 ? Math.max(0, Math.min(1, -r.top / curso)) : 0
-    }
-    const desenhar = (p: number) => {
+    if (alvo.current >= n) alvo.current = Math.min(1, n - 1)
+    let raf = 0, x = NaN, tAnt = performance.now(), ultimo = -1
+    const desenhar = (now: number) => {
+      const dt = Math.min(now - tAnt, 200); tAnt = now
       const f = faixa.current, pal = palco.current
-      if (!f || !pal) return
-      const W = pal.clientWidth
-      const sobra = Math.max(0, f.scrollWidth - W)
-      // começa no fim da faixa e anda para a direita: as fotos entram pela esquerda
-      const x = -sobra * (1 - p)
-      f.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`
-      const meio = W / 2
-      fotos.forEach((_, k) => {
-        const c = cartoes.current[k]
-        if (!c) return
-        const centro = c.offsetLeft + c.offsetWidth / 2 + x
-        const foco = Math.max(0, 1 - Math.abs(centro - meio) / (W * .6))
-        c.style.transform = `scale(${(.9 + .1 * foco).toFixed(3)})`
-        c.style.filter = `grayscale(${(.7 * (1 - foco)).toFixed(3)}) brightness(${(.55 + .45 * foco).toFixed(3)})`
-      })
+      if (f && pal) {
+        const W = pal.clientWidth
+        const k = Math.max(0, Math.min(n - 1, alvo.current))
+        const k0 = Math.floor(k), k1 = Math.min(n - 1, k0 + 1), fr = k - k0
+        const c0 = cartoes.current[k0], c1 = cartoes.current[k1]
+        if (c0 && c1) {
+          const centro = (c0.offsetLeft + c0.offsetWidth / 2) * (1 - fr) + (c1.offsetLeft + c1.offsetWidth / 2) * fr
+          const xAlvo = W / 2 - centro
+          x = isNaN(x) ? xAlvo : x + (xAlvo - x) * (1 - Math.pow(.86, dt / 16.7))
+          if (Math.abs(xAlvo - x) < .3) x = xAlvo
+          f.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`
+          const meio = W / 2
+          cartoes.current.forEach(c => {
+            if (!c) return
+            const cc = c.offsetLeft + c.offsetWidth / 2 + x
+            const foco = Math.max(0, 1 - Math.abs(cc - meio) / (W * .6))
+            c.style.transform = `scale(${(.9 + .1 * foco).toFixed(3)})`
+            c.style.filter = `grayscale(${(.7 * (1 - foco)).toFixed(3)}) brightness(${(.55 + .45 * foco).toFixed(3)})`
+          })
+        }
+        const r = Math.round(k)
+        if (r !== ultimo) { ultimo = r; setAtual(r) }
+      }
+      raf = requestAnimationFrame(desenhar)
     }
-    const passo = () => {
-      const d = alvo - atual
-      if (Math.abs(d) > .0005) { atual += d * .14; desenhar(atual) }
-      raf = requestAnimationFrame(passo)
-    }
-    const onResize = () => { medir(); ler(); desenhar(atual) }
+    raf = requestAnimationFrame(desenhar)
+    return () => cancelAnimationFrame(raf)
+  }, [n])
 
-    medir(); ler(); atual = alvo; desenhar(atual)
-    raf = requestAnimationFrame(passo)
-    addEventListener('scroll', ler, { passive: true })
-    addEventListener('resize', onResize)
-    // as fotos podem chegar depois e mudar a largura da faixa
-    const ro = new ResizeObserver(onResize)
-    if (faixa.current) ro.observe(faixa.current)
-    return () => {
-      cancelAnimationFrame(raf)
-      removeEventListener('scroll', ler)
-      removeEventListener('resize', onResize)
-      ro.disconnect()
+  // teclas ← → quando a faixa está à vista
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const s = sec.current; if (!s) return
+      const r = s.getBoundingClientRect()
+      if (r.bottom < innerHeight * .3 || r.top > innerHeight * .7) return
+      if (document.querySelector('.rr-leitor')) return // leitor dos vídeos aberto
+      if (e.key === 'ArrowRight') { e.preventDefault(); passo(1) }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); passo(-1) }
     }
-  }, [n]) // eslint-disable-line react-hooks/exhaustive-deps
+    addEventListener('keydown', onKey)
+    return () => removeEventListener('keydown', onKey)
+  }, [passo])
+
+  // arrastar com o rato ou o dedo (o scroll vertical da página fica livre)
+  const largura = () => {
+    const c = cartoes.current[0]
+    return c ? c.offsetWidth + parseFloat(getComputedStyle(faixa.current!).columnGap || '20') : 300
+  }
+  const onDown = (e: React.PointerEvent) => {
+    arrasto.current = { x: e.clientX, base: alvo.current, moveu: false }
+    palco.current?.setPointerCapture(e.pointerId)
+  }
+  const onMove = (e: React.PointerEvent) => {
+    const a = arrasto.current; if (!a) return
+    const dx = e.clientX - a.x
+    if (Math.abs(dx) > 6) a.moveu = true
+    if (a.moveu) alvo.current = Math.max(0, Math.min(nRef.current - 1, a.base - dx / largura()))
+  }
+  const onUp = (e: React.PointerEvent) => {
+    const a = arrasto.current
+    arrasto.current = null
+    if (!a) return
+    if (a.moveu) { alvo.current = Math.round(alvo.current); return }
+    // toque sem arrastar numa foto do lado: trá-la para o centro
+    const el = document.elementsFromPoint(e.clientX, e.clientY).find(x => x.classList?.contains('rlf-cartao'))
+    const k = el ? cartoes.current.indexOf(el as HTMLDivElement) : -1
+    if (k >= 0) ir(k)
+  }
 
   if (!n) return null
   const corTitulo = titleColor && titleColor !== '#ffffff' ? titleColor : undefined
 
   return (
-    <section ref={sec} id="sec-portfolio" className="rlf" style={{ height: '200vh' }}>
+    <section ref={sec} id="sec-portfolio" className="rlf">
       <style>{`
-        .rlf{position:relative;}
-        .rlf-palco{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;display:flex;flex-direction:column;justify-content:center;}
-        .rlf-cab{padding:0 var(--pad,24px);margin-bottom:clamp(24px,5vh,48px);}
-        .rlf-faixa{display:flex;gap:clamp(14px,2vw,28px);padding:0 var(--pad,24px);width:max-content;will-change:transform;}
+        .rlf{position:relative;padding:clamp(70px,10vh,120px) 0;}
+        .rlf-palco{overflow:hidden;cursor:grab;touch-action:pan-y;user-select:none;}
+        .rlf-palco:active{cursor:grabbing;}
+        .rlf-cab{padding:0 var(--pad,24px);margin-bottom:clamp(24px,5vh,48px);display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;}
+        .rlf-ctrl{display:flex;align-items:center;gap:10px;}
+        .rlf-ctrl span{font-family:var(--fm,'Space Mono',monospace);font-size:11px;letter-spacing:.2em;color:rgba(243,237,226,.45);margin-right:8px;font-variant-numeric:tabular-nums;}
+        .rlf-ctrl span b{color:#d8be93;font-weight:400;}
+        .rlf-ctrl button{width:48px;height:48px;border-radius:50%;border:1px solid rgba(243,237,226,.14);background:none;color:rgba(243,237,226,.6);font-size:17px;cursor:pointer;display:grid;place-items:center;transition:border-color .35s,color .35s;}
+        .rlf-ctrl button:hover{border-color:#d8be93;color:#d8be93;}
+        .rlf-faixa{display:flex;gap:clamp(14px,2vw,28px);width:max-content;will-change:transform;padding:12px 0;}
         .rlf-cartao{flex:none;width:clamp(240px,30vw,420px);aspect-ratio:4/5;border-radius:22px;overflow:hidden;position:relative;background:#141414;
           border:1px solid rgba(216,190,147,.2);border-left:2px solid rgba(216,190,147,.45);box-shadow:0 30px 70px -30px rgba(0,0,0,.85);
           transform-origin:center;transition:box-shadow .4s ease;}
-        .rlf-cartao img{width:100%;height:100%;object-fit:cover;display:block;}
+        .rlf-cartao img{width:100%;height:100%;object-fit:cover;display:block;pointer-events:none;}
         .rlf-n{position:absolute;left:16px;bottom:14px;font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.3em;color:#d8be93;text-shadow:0 1px 8px rgba(0,0,0,.6);}
         .rlf-vazio{position:absolute;inset:0;display:grid;place-items:center;font-family:'Roboto Condensed',sans-serif;font-weight:600;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(243,237,226,.4);
           background-image:repeating-linear-gradient(122deg,rgba(243,237,226,.022) 0 1px,transparent 1px 11px);}
-        @media (max-width:767px){ .rlf-cartao{width:72vw;} }
+        @media (max-width:767px){ .rlf-cartao{width:72vw;} .rlf-ctrl button{width:42px;height:42px;} }
       `}</style>
 
-      <div ref={palco} className="rlf-palco">
-        <div className="rlf-cab">
+      <div className="rlf-cab">
+        <div>
           <span className="rlp-eyebrow">{label}</span>
           <h2 className="rlp-h2" style={{ marginTop: 16, maxWidth: '18ch', fontSize: 'clamp(30px,4.4vw,58px)', color: corTitulo }}>{title}</h2>
         </div>
+        <div className="rlf-ctrl">
+          <span><b>{String(atual + 1).padStart(2, '0')}</b> / {String(n).padStart(2, '0')}</span>
+          <button aria-label="Foto anterior" onClick={() => passo(-1)}>←</button>
+          <button aria-label="Foto seguinte" onClick={() => passo(1)}>→</button>
+        </div>
+      </div>
+      <div ref={palco} className="rlf-palco" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
         <div ref={faixa} className="rlf-faixa">
           {fotos.map((f, k) => (
             <div key={k} ref={el => { cartoes.current[k] = el }} className="rlf-cartao">
