@@ -8,6 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import PropostasDropdown from '@/app/_lead/PropostasDropdown'
 import PorqueReuniao from '@/app/_lead/PorqueReuniao'
 import TestemunhoDestaque from '@/app/_lead/TestemunhoDestaque'
+import RodaReels from '@/app/_lead/RodaReels'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { fmtOrcamento, portalFechado } from '@/lib/crm'
 import { AvisoPortalFechado, MarcarNoPortal, PedidoNoPortal, PedirFormulario } from '@/app/_lead/ReuniaoPorMarcar'
@@ -773,6 +774,9 @@ export default function LeadPageClient({ token, isAdmin }: { token: string; isAd
 
       {/* ── UMA CONVERSA, NÃO UMA PROPOSTA (4 painéis) ── */}
       <PorqueReuniao tipo="casamento" />
+
+      {/* ── OUÇAM-NOS PRIMEIRO: vídeos da marca pessoal (Vimeo) numa roda 3D ── */}
+      <RodaReels />
 
       {/* ── TESTEMUNHO EM DESTAQUE (Catarina & Ruben → rlphotovideo.pt/testemunho) ── */}
       <TestemunhoDestaque />
