@@ -9,6 +9,7 @@ export type Reel = {
   d: string          // duração mm:ss
   vertical: boolean
   capa: string       // /reels/<id>.jpg ou a capa do Vimeo
+  capaH?: boolean    // capa horizontal do Vimeo (sem capa 9:16 nossa): mostra-se inteira sobre fundo desfocado
 }
 
 // Ficam fora do portal dos noivos (conteúdo para profissionais)
@@ -22,3 +23,11 @@ export const REELS_FIXOS: Reel[] = [
   { vimeo: '1246444384', t: 'Same day edit',               d: '00:53', vertical: true,  capa: '/reels/sde.jpg',        p: 'O vosso filme, mostrado na própria festa, a todos os convidados.' },
   { vimeo: '1246453964', t: 'O comentário dos noivos',     d: '00:44', vertical: true,  capa: '/reels/comentario.jpg', p: 'Palavra dos noivos no momento em que viram o same day edit.' },
 ]
+
+// Capas 9:16 próprias (public/reels), por id do Vimeo. Vídeo novo na pasta sem
+// capa aqui → usa a do Vimeo (horizontal) inteira. Para pôr a capa certa:
+// gravar a 9:16 em public/reels e acrescentar a linha.
+export const CAPAS: Record<string, string> = {
+  ...Object.fromEntries(REELS_FIXOS.map(r => [r.vimeo, r.capa])),
+  '1246741648': '/reels/prewedding.jpg', // Pre wedding
+}

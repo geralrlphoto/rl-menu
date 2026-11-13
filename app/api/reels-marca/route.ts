@@ -7,7 +7,7 @@
 // Sem token, ou se o Vimeo falhar, devolve a lista fixa (REELS_FIXOS).
 
 import { NextResponse } from 'next/server'
-import { REELS_FIXOS, REELS_FORA, type Reel } from '@/lib/reelsMarca'
+import { CAPAS, REELS_FIXOS, REELS_FORA, type Reel } from '@/lib/reelsMarca'
 
 export const revalidate = 600
 
@@ -61,7 +61,8 @@ export async function GET() {
           p: v.description?.trim() || f?.p || '',
           d: mmss(v.duration),
           vertical,
-          capa: f?.capa ?? capaVimeo,
+          capa: CAPAS[id] ?? capaVimeo,
+          capaH: !CAPAS[id],
         }
       })
 

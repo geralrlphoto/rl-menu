@@ -38,6 +38,9 @@ const CSS = `
   will-change:transform;border-radius:16px;overflow:hidden;background:var(--ink-3);box-shadow:0 40px 80px -20px rgba(0,0,0,.7);border:1px solid var(--line-soft)}
 .rr-c img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
 .rr-c.centro img{animation:rr-kb 9s ease-in-out infinite alternate}
+.rr-c img.rr-fundo{filter:blur(18px) brightness(.55);transform:scale(1.3)}
+.rr-c img.rr-inteira{object-fit:contain}
+.rr-c.centro img.rr-fundo{animation:none}
 @keyframes rr-kb{from{transform:scale(1)}to{transform:scale(1.12) translateY(-2%)}}
 .rr-c iframe{position:absolute;inset:0;width:100%;height:100%;border:0;pointer-events:none;opacity:0;transition:opacity .8s}
 .rr-c iframe.pronto{opacity:1}
@@ -254,7 +257,8 @@ export default function RodaReels() {
         <div ref={palco} className="rr-palco" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerLeave={onLeave}>
           {reels.map((x, i) => (
             <div key={x.vimeo} ref={el => { cartoes.current[i] = el }} data-i={i} className={`rr-c${i === ativo ? ' centro' : ''}`}>
-              <img src={x.capa} alt={x.t} draggable={false} />
+              {x.capaH && <img src={x.capa} alt="" aria-hidden className="rr-fundo" draggable={false} />}
+              <img src={x.capa} alt={x.t} className={x.capaH ? 'rr-inteira' : undefined} draggable={false} />
               {preview === i && (
                 <iframe
                   src={`https://player.vimeo.com/video/${x.vimeo}?background=1&muted=1&loop=1&autopause=0&dnt=1`}
