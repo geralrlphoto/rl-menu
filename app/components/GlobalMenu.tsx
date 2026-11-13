@@ -61,6 +61,14 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/fotos-convidados', pill: 'Convidados' },
     { href: '/painel-fotografo', pill: 'Fotógrafo' },
   ] },
+  { titulo: 'Dep. de Social Media', links: [
+    { href: '/social-media', pill: 'Início' },
+    { href: '/social-media/anuncios', pill: 'Leads' },
+    { href: '/newsletter-admin', pill: 'Emails' },
+    { href: '/social-media/blog', pill: 'Artigos' },
+    { href: '/social-media/12-meses-12-videos', pill: 'Guiões' },
+    { href: '/social-media/podcast', pill: 'Episódios' },
+  ] },
   ],
   Gestão: [
   { titulo: 'Finanças', links: [
@@ -83,9 +91,6 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/crm/analises', pill: 'Reuniões' },
     { href: '/crm/stats', pill: 'Números' },
     { href: '/crescimento', pill: 'Marketing' },
-    { href: '/social-media', pill: 'Redes' },
-    { href: '/social-media/anuncios', pill: 'Anúncios' },
-    { href: '/newsletter-admin', pill: 'Emails' },
   ] },
   { titulo: 'Staff', links: [
     { href: '/staff', pill: 'Equipa' },
@@ -538,16 +543,28 @@ function GlobalMenuInner() {
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>,
   },
   {
-    href: '/social-media', label: 'Social Media', sub: 'Departamento',
+    href: '/social-media', label: 'Social Media', sub: 'Departamento', exact: true,
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>,
   },
   {
-    href: '/social-media/anuncios', label: 'Anúncios', sub: 'Social Media',
+    href: '/social-media/anuncios', label: 'Anúncios', sub: 'Pagos no Instagram',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1zM15.5 8.5a5 5 0 010 7M18 6a8.5 8.5 0 010 12"/></svg>,
   },
   {
-    href: '/newsletter-admin', label: 'Newsletter', sub: 'Social Media',
+    href: '/newsletter-admin', label: 'Newsletter', sub: 'Envios quinzenais',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="5" width="18" height="14" rx="2"/><path strokeLinecap="round" strokeLinejoin="round" d="M3 7l9 6 9-6"/></svg>,
+  },
+  {
+    href: '/social-media/blog', label: 'Blog', sub: 'Artigos para o site',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M5 4h10l4 4v12H5zM15 4v4h4M8 12h8M8 16h6"/></svg>,
+  },
+  {
+    href: '/social-media/12-meses-12-videos', label: '12 Meses 12 Vídeos', sub: 'Guiões do ano',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="6" width="13" height="12" rx="2"/><path strokeLinecap="round" strokeLinejoin="round" d="M16 10l5-3v10l-5-3"/></svg>,
+  },
+  {
+    href: '/social-media/podcast', label: 'Antes do Sim', sub: 'Podcast',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="9" y="3" width="6" height="11" rx="3"/><path strokeLinecap="round" d="M5 11a7 7 0 0014 0M12 18v3"/></svg>,
   },
   {
     href: '/recrutamento', label: 'Recrutamento', sub: 'Novos freelancers',
