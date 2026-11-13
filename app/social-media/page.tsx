@@ -9,6 +9,8 @@ import Link from 'next/link'
 type Cartao = { href?: string; titulo: string; desc: string; img: string; embreve?: boolean }
 
 const CARTOES: Cartao[] = [
+  { href: '/social-media/anuncios', titulo: 'Anúncios', desc: 'Investimento, resultados e custo por lead de cada anúncio', img: '/crm-hero.webp' },
+  { href: '/newsletter-admin', titulo: 'Newsletter', desc: 'Calendário editorial, envios e subscritores', img: '/testemunho-catarina-ruben-1200.webp' },
   { href: '/social-media/blog', titulo: 'Blog', desc: 'Artigos prontos a copiar para o blog', img: '/eventos-hero-2026.webp' },
   { href: '/social-media/12-meses-12-videos', titulo: '12 Meses 12 Vídeos', desc: 'Guiões prontos, de setembro 2026 a agosto 2027', img: '/eventos-hero-2027.webp' },
   { href: '/social-media/podcast', titulo: 'Antes do Sim', desc: 'Episódios, candidaturas e leads do podcast', img: '/prewedding-hero.webp' },
@@ -28,7 +30,7 @@ export default function SocialMediaPage() {
         </div>
         <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
         <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
-          Blog · Vídeos · Podcast · Instagram
+          Anúncios · Newsletter · Blog · Vídeos · Podcast
         </p>
 
         <div className="relative flex-1 flex flex-col pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-16 lg:pt-8 pb-12 lg:pb-16">
@@ -39,11 +41,11 @@ export default function SocialMediaPage() {
             <div className="flex items-center gap-4 mt-5">
               <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
               <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
-                Blog · Vídeos · <span className="text-[#C9A84C]">Podcast</span>
+                Anúncios · Newsletter · <span className="text-[#C9A84C]">Conteúdo</span>
               </p>
             </div>
             <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
-              Gestão de Instagram, planeamento editorial, blog e podcast, num só sítio.
+              O departamento de Social Media: anúncios pagos, newsletter, blog, vídeos e podcast, num só sítio.
             </p>
           </div>
         </div>
@@ -51,10 +53,10 @@ export default function SocialMediaPage() {
 
       {/* ── Cartões com foto, como os do Menu do /photo ─────────────────── */}
       <section className="max-w-[1400px] mx-auto px-5 sm:px-10 lg:px-14 pt-6 pb-20">
-        <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Atalhos</p>
-        <h2 className="font-semibold text-white text-[28px] leading-tight mt-1 mb-6">Ferramentas de Social Media</h2>
+        <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Áreas</p>
+        <h2 className="font-semibold text-white text-[28px] leading-tight mt-1 mb-6">Departamento de Social Media</h2>
 
-        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 gap-4">
           {CARTOES.map((c, i) => {
             const conteudo = (
               <>
@@ -73,7 +75,7 @@ export default function SocialMediaPage() {
                 <span className="sm-linha absolute left-0 bottom-0 h-[2px]" />
               </>
             )
-            const cls = `sm-cartao group relative block overflow-hidden rounded-[20px] border border-white/[0.1] bg-[#0e0e0e]/70 aspect-[4/5]${c.embreve ? ' is-embreve' : ''}`
+            const cls = `sm-cartao group relative block overflow-hidden rounded-[20px] border border-white/[0.1] bg-[#0e0e0e]/70 aspect-[4/5] lg:aspect-[5/4]${c.embreve ? ' is-embreve' : ''}`
             return c.href
               ? <Link key={c.titulo} href={c.href} className={cls}>{conteudo}</Link>
               : <div key={c.titulo} className={cls} aria-disabled="true">{conteudo}</div>

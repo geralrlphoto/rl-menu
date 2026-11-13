@@ -84,6 +84,7 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/crm/stats', pill: 'Números' },
     { href: '/crescimento', pill: 'Marketing' },
     { href: '/social-media', pill: 'Redes' },
+    { href: '/social-media/anuncios', pill: 'Anúncios' },
     { href: '/newsletter-admin', pill: 'Emails' },
   ] },
   { titulo: 'Staff', links: [
@@ -537,11 +538,15 @@ function GlobalMenuInner() {
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>,
   },
   {
-    href: '/social-media', label: 'Social Media', sub: 'Publicações',
+    href: '/social-media', label: 'Social Media', sub: 'Departamento',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>,
   },
   {
-    href: '/newsletter-admin', label: 'Newsletter', sub: 'Envios',
+    href: '/social-media/anuncios', label: 'Anúncios', sub: 'Social Media',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 11v2a1 1 0 001 1h2l5 4V6L6 10H4a1 1 0 00-1 1zM15.5 8.5a5 5 0 010 7M18 6a8.5 8.5 0 010 12"/></svg>,
+  },
+  {
+    href: '/newsletter-admin', label: 'Newsletter', sub: 'Social Media',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="5" width="18" height="14" rx="2"/><path strokeLinecap="round" strokeLinejoin="round" d="M3 7l9 6 9-6"/></svg>,
   },
   {
