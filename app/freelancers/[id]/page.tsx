@@ -629,13 +629,13 @@ function FreelancerDetailInner() {
           texto={afazer.length === 0 ? 'Está tudo em dia.' : `${afazer.length} ${afazer.length === 1 ? 'coisa' : 'coisas'} por fazer${emAtraso > 0 ? ` · ${emAtraso} em atraso` : ''}`}
           lateral={`Equipa RL · ${anoAtual}`}
           botoes={<>
-            <button onClick={() => setTab('casamentos')} className={capaBtn}>Casamentos <span className="text-[#d8be93]">→</span></button>
+            <button onClick={() => setTab('casamentos')} className={capaBtn}>Eventos <span className="text-[#d8be93]">→</span></button>
             <button onClick={() => setTab('mensagens')} className={capaBtnSec}>/ Mensagens</button>
           </>}
           numeros={{ titulo: 'Resumo', itens: [
-            { l: 'Por fazer', v: afazer.length, s: 'casamentos com ação', onClick: () => setTab('casamentos') },
+            { l: 'Por fazer', v: afazer.length, s: 'eventos com ação', onClick: () => setTab('casamentos') },
             { l: 'Em atraso', v: emAtraso, s: emAtraso > 0 ? 'passaram o prazo' : 'tudo no prazo', ouro: emAtraso > 0 },
-            { l: 'Próximo casamento', v: dtu === null ? '—' : dtu === 0 ? 'Hoje' : `${dtu} dias`, s: upcoming ? (upcoming.nome_noivos || upcoming.local) : 'sem marcações' },
+            { l: 'Próximo evento', v: dtu === null ? '—' : dtu === 0 ? 'Hoje' : `${dtu} dias`, s: upcoming ? (upcoming.nome_noivos || upcoming.local) : 'sem marcações' },
             { l: 'Avisos', v: contaNaoLidas.notificacoes + contaNaoLidas.mensagens, s: 'por ler', ouro: contaNaoLidas.notificacoes + contaNaoLidas.mensagens > 0, onClick: () => setTab('notificacoes') },
           ] }} />
       )
@@ -2367,7 +2367,7 @@ function CasamentosTab({ freelancerId, casamentos, etapaDe, filtroInicial, onFil
                 <button onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}
                   className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gold/30 text-gold text-[12px] tracking-wider uppercase font-semibold hover:bg-gold/10 transition-all whitespace-nowrap"
                   style={{ boxShadow: '0 0 12px -4px rgba(201,164,92,0.3)' }}>
-                  {expandedId === c.id ? <>Fechar <span className="text-base">⌃</span></> : <>Abrir Casamento <span className="text-base">⌄</span></>}
+                  {expandedId === c.id ? <>Fechar <span className="text-base">⌃</span></> : <>Abrir Evento <span className="text-base">⌄</span></>}
                 </button>
                 {/* CTAs principais — Confirmar (verde) sobre Indisponível (vermelho subtil) */}
                 {!isPast && !c.data_confirmada && !c.indisponivel && (
@@ -8742,7 +8742,7 @@ function NotificacoesAdminTab({ freelancerId, notificacoes, casamentos = [], onR
                         </span>
                         {clickable && (
                           <span className="text-[9px] tracking-[0.3em] uppercase text-white/30 group-hover:text-gold/80 transition-colors">
-                            · Clica para abrir casamento →
+                            · Clica para abrir evento →
                           </span>
                         )}
                       </div>
