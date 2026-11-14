@@ -221,7 +221,7 @@ export default async function BriefingZankyouSud() {
       <section className="relative min-h-[460px] lg:min-h-[62vh] flex flex-col overflow-hidden">
         <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/editorial/zankyou-sud-lisboa/cartaz.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_35%] grayscale opacity-40 lg:opacity-55" />
+          <img src="/editorial/zankyou-sud-lisboa/sud-terrazza.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_55%] grayscale opacity-40 lg:opacity-55" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
         </div>
