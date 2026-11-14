@@ -224,13 +224,13 @@ export default async function BriefingZankyouSud() {
           ))}
         </div>
 
-        <h2>O que <em>entregamos</em></h2>
+        <h2>O que tens de <em>entregar</em></h2>
+        <div className="nota" style={{ color: 'var(--tx)' }}>Dois vídeos, ambos <b style={{ display: 'inline', fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 0, textTransform: 'none', color: 'var(--g)' }}>até 59 segundos</b>, e todos os brutos do evento.</div>
         <div className="ent">
-          <div className="cx"><span className="k">16:9 · 60–90 s</span><b>Aftermovie do evento</b><p>O filme principal: ambiente, discursos, gastronomia e festa.</p></div>
-          <div className="cx"><span className="k">9:16 · 30–45 s</span><b>Reel do evento</b><p>Filmado em horizontal 16:9, como o resto. O corte vertical faz-se na edição.</p></div>
-          <div className="cx"><span className="k">9:16 · 15 s</span><b>Teaser do dia seguinte</b><p>Os planos mais fortes da tarde, para sair logo no dia 17.</p></div>
-          <div className="cx"><span className="k">9:16 · por marca</span><b>Clips dos parceiros</b><p>Cada parceiro precisa de planos próprios: ver a lista abaixo.</p></div>
+          <div className="cx"><span className="k">Vídeo 1 · até 59 s</span><b>Recap do evento</b><p>O resumo da tarde: o espaço, as pessoas, os discursos, a gastronomia, os parceiros e a festa.</p></div>
+          <div className="cx"><span className="k">Vídeo 2 · até 59 s</span><b>Marca pessoal do Rui</b><p>O Rui a falar para a câmara sobre o evento, com bastidores e planos do dia a cobrir a voz. Ver a secção abaixo.</p></div>
         </div>
+        <div className="cx" style={{ marginTop: 12 }}><span className="k">Depois do evento</span><b>Todos os brutos para a RL Photo Video</b><p>Além dos dois vídeos, entregas à RL Photo Video todo o material em bruto que filmaste no evento, sem cortes.</p></div>
 
         <h2>Marca pessoal do <em>Rui</em></h2>
         <div className="nota" style={{ color: 'var(--tx)' }}>
@@ -253,6 +253,12 @@ export default async function BriefingZankyouSud() {
         <h2>Planos de cada <em>parceiro</em></h2>
         <div className="tab">
           {PARCEIROS.map(([n, o]) => <div key={n} className="tr"><span>{n}</span><span>{o}</span></div>)}
+        </div>
+
+        <h2><em>Pagamento</em></h2>
+        <div className="ent">
+          <div className="cx"><span className="k">1.ª fase · 50%</span><b>No dia do evento</b><p>Metade do valor é paga no dia, a 16 de novembro.</p></div>
+          <div className="cx"><span className="k">2.ª fase · 50%</span><b>Na entrega dos vídeos finais</b><p>A outra metade é paga quando entregares os dois vídeos finais.</p></div>
         </div>
 
         <h2>Contacto no <em>dia</em></h2>
