@@ -29,7 +29,7 @@ const BLOCOS = [
   { hora: '18:00', fim: '20:00', nome: 'Taste & Experience', evento: 'Experiência gastronómica e sensorial, com espetáculo e surpresa.',
     filmar: ['Pratos, empratamento e convidados a provar', 'Atuação da Annia', 'Momentos de surpresa e espetáculo', 'Networking: conversas e gargalhadas'] },
   { hora: '20:00', fim: '22:00', nome: "Let's Celebrate!", evento: 'Música, animação e celebração.',
-    filmar: ['Pista e energia da festa', 'Luz e som da Floor Sensation', 'Planos para fechar o aftermovie', 'Material vertical para o reel'] },
+    filmar: ['Pista e energia da festa', 'Luz e som da Floor Sensation', 'Planos para fechar o aftermovie', 'Planos de fecho da noite'] },
 ]
 
 const PARCEIROS = [
@@ -78,7 +78,7 @@ const GUIA_EVENTO: BlocoGuia[] = [
       'Cada parceiro precisa dos seus planos: flores, joias, looks, maquilhagem, som e luz, gastronomia.',
       'Nos discursos, som limpo e planos dos oradores e do público.',
       'Guardar sempre alguns segundos antes e depois de cada momento importante.',
-      'Material vertical para os reels e para a marca pessoal do Rui.',
+      'Filmar tudo em horizontal 16:9, também a marca pessoal do Rui. Os cortes verticais fazem-se na edição.',
     ],
   },
   {
@@ -192,6 +192,8 @@ export default async function BriefingZankyouSud() {
           <span className="k" style={{ display: 'block', marginBottom: 8 }}>Dress code</span>
           Adequado ao evento: roupa toda preta, sem imagens, logótipos nem estampados, e calçado fechado preto.
           No guia está o material a levar, como nos apresentamos e as regras do dia.
+          <span className="k" style={{ display: 'block', margin: '14px 0 8px' }}>Formato</span>
+          Todo o material é filmado em horizontal 16:9, incluindo a marca pessoal do Rui.
         </div>
         <div style={{ marginTop: 18 }}>
           <GuiaEquipa material={MATERIAL_EVENTO} blocos={GUIA_EVENTO} chave="rl-guia-zankyou-sud"
@@ -225,7 +227,7 @@ export default async function BriefingZankyouSud() {
         <h2>O que <em>entregamos</em></h2>
         <div className="ent">
           <div className="cx"><span className="k">16:9 · 60–90 s</span><b>Aftermovie do evento</b><p>O filme principal: ambiente, discursos, gastronomia e festa.</p></div>
-          <div className="cx"><span className="k">9:16 · 30–45 s</span><b>Reel do evento</b><p>Filmar com espaço para o corte vertical, ou com uma câmara na vertical.</p></div>
+          <div className="cx"><span className="k">9:16 · 30–45 s</span><b>Reel do evento</b><p>Filmado em horizontal 16:9, como o resto. O corte vertical faz-se na edição.</p></div>
           <div className="cx"><span className="k">9:16 · 15 s</span><b>Teaser do dia seguinte</b><p>Os planos mais fortes da tarde, para sair logo no dia 17.</p></div>
           <div className="cx"><span className="k">9:16 · por marca</span><b>Clips dos parceiros</b><p>Cada parceiro precisa de planos próprios: ver a lista abaixo.</p></div>
         </div>
@@ -235,7 +237,7 @@ export default async function BriefingZankyouSud() {
           Além do vídeo oficial, filmar conteúdo para o vídeo de marca pessoal do Rui: <b style={{ display: 'inline', fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 0, textTransform: 'none', color: 'var(--g)' }}>o Rui a falar para a câmara</b>, a contar o que estamos a fazer, que fomos convidados pela Zankyou e que somos parceiros do evento, como vídeo oficial.
         </div>
         <div className="ent">
-          <div className="cx"><span className="k">Formato</span><b>Vertical 9:16</b><p>Tomadas curtas, de 10 a 30 s, com o Rui a olhar para a câmara. Várias tomadas de cada ideia.</p></div>
+          <div className="cx"><span className="k">Formato</span><b>Horizontal 16:9</b><p>Tomadas curtas, de 10 a 30 s, com o Rui a olhar para a câmara. Várias tomadas de cada ideia.</p></div>
           <div className="cx"><span className="k">Som</span><b>Voz limpa</b><p>Microfone no Rui e sítios mais calmos para falar. Evitar gravar ao lado das colunas.</p></div>
         </div>
         <div className="tab">
