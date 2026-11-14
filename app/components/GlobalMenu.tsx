@@ -68,6 +68,7 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/social-media/blog', pill: 'Artigos' },
     { href: '/social-media/12-meses-12-videos', pill: 'Guiões' },
     { href: '/social-media/podcast', pill: 'Episódios' },
+    { href: '/comunicacao', pill: 'Landing' },
   ] },
   ],
   Gestão: [
@@ -91,9 +92,6 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/crm/analises', pill: 'Reuniões' },
     { href: '/crm/stats', pill: 'Números' },
     { href: '/crescimento', pill: 'Marketing' },
-  ] },
-  { titulo: 'Dep. de Comunicação', links: [
-    { href: '/comunicacao', pill: 'Landing' },
   ] },
   { titulo: 'Staff', links: [
     { href: '/staff', pill: 'Equipa' },
@@ -508,7 +506,7 @@ function GlobalMenuInner() {
     href: '/painel-fotografo', label: 'Painel do Fotógrafo', sub: 'Vista do fotógrafo',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="4" width="18" height="13" rx="2"/><path strokeLinecap="round" d="M8 21h8M12 17v4"/></svg>,
   },
-  // Páginas que só aparecem nas colunas do menu Gestão
+  // Social Media › Comunicação (landing pages para os clientes)
   {
     href: '/comunicacao', label: 'Comunicação', sub: 'Landing pages',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path strokeLinecap="round" d="M16 9a4 4 0 010 6M19 6a8 8 0 010 12"/></svg>,
@@ -716,8 +714,7 @@ function GlobalMenuInner() {
             }}
             onMouseEnter={() => abrirMega(mega)} onMouseLeave={sairMega}>
             {pn && g && dest && msg && (
-              <div key={g.nome} className="max-w-7xl mx-auto grid grid-cols-4 gap-5 [animation:megaIn_.25s_ease-out]"
-                style={colunas && colunas.length > 4 ? { gridTemplateColumns: `repeat(${colunas.length}, minmax(0, 1fr))` } : undefined}>
+              <div key={g.nome} className="max-w-7xl mx-auto grid grid-cols-4 gap-5 [animation:megaIn_.25s_ease-out]">
 
                 {/* Produção e Gestão: uma coluna por tema (título + cartões de acesso, como a coluna Staff) */}
                 {colunas && colunas.map(c => (

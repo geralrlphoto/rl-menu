@@ -1,6 +1,6 @@
 'use client'
 
-// Gestão › Departamento de Comunicação. Landing pages públicas para entregar aos
+// Social Media › Comunicação. Landing pages públicas para entregar aos
 // clientes (ficheiros em public/lp, rota pública /lp/... no middleware).
 // Cada landing tem: pré-visualização, abrir, copiar o link e WhatsApp de boas-vindas
 // a pedir o preenchimento do formulário (wa.me manual, sem emojis).
@@ -114,7 +114,7 @@ export default function ComunicacaoPage() {
       <section className="relative overflow-hidden border-b border-white/[0.06]">
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 60% 70% at 85% 10%, rgba(201,168,76,0.12), transparent 70%)' }} />
         <div className="relative max-w-7xl mx-auto px-5 sm:px-8 pt-24 pb-12">
-          <p className="text-[13px] font-bold tracking-[0.5em] uppercase" style={{ color: OURO }}>Gestão</p>
+          <p className="text-[13px] font-bold tracking-[0.5em] uppercase" style={{ color: OURO }}>Social Media</p>
           <h1 className="mt-3 font-bold uppercase leading-[0.9] text-[44px] sm:text-[80px] lg:text-[100px]">Comunicação</h1>
           <div className="mt-5 flex items-center gap-4">
             <span className="w-12 h-px" style={{ background: OURO }} />
