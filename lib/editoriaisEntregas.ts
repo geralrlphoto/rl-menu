@@ -43,9 +43,6 @@ export const ENTREGAS_EDITORIAL: Record<string, GrupoEntregas[]> = {
       { id: 'reel-evento', nome: 'Reel do evento', formato: '9:16 · 30–45 s' },
       { id: 'teaser', nome: 'Teaser do dia seguinte', formato: '9:16 · 15 s' },
     ] },
-    { parceiro: 'Parceiros', sub: 'Conteúdo para cada marca', itens: [
-      { id: 'clips-parceiros', nome: 'Clips dos parceiros', formato: '9:16 · por marca' },
-    ] },
   ],
 }
 

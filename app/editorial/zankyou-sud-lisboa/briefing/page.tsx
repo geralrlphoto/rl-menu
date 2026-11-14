@@ -22,7 +22,7 @@ const WAZE = `https://waze.com/ul?ll=${LAT},${LON}&navigate=yes`
 
 const BLOCOS = [
   { hora: '15:00', fim: '16:00', nome: 'Chegada da equipa RL', evento: 'Estamos no SUD Lisboa às 15h00 para o nosso briefing e para produzir conteúdos antes da chegada dos convidados.',
-    filmar: ['Briefing rápido entre a equipa: planos, divisão de tarefas e som', 'O espaço vazio e arrumado, com boa luz: interiores, esplanada e o Tejo', 'Decoração e detalhes dos parceiros antes de haver gente', 'Primeiras falas do Rui para a marca pessoal', 'Se for possível, drone: o SUD, o Tejo e a ponte vistos do ar'] },
+    filmar: ['Briefing rápido entre a equipa: planos, divisão de tarefas e som', 'O espaço vazio e arrumado, com boa luz: interiores, esplanada e o Tejo', 'Decoração e detalhes do espaço antes de haver gente', 'Primeiras falas do Rui para a marca pessoal', 'Se for possível, drone: o SUD, o Tejo e a ponte vistos do ar'] },
   { hora: '16:00', fim: '17:00', nome: 'Welcome & Connect', evento: 'Receção, welcome drink e primeiros momentos de networking.',
     filmar: ['Chegada dos convidados e cumprimentos', 'O espaço a encher: planos largos e das entradas', 'Decoração floral da Madame Boutique Floral', 'Detalhes de marca: Zankyou e SUD Lisboa'] },
   { hora: '17:00', fim: '18:00', nome: 'Inspire & Share', evento: 'Abertura pela Zankyou Portugal, agradecimento aos parceiros e intervenção do SUD / SANA.',
@@ -33,17 +33,6 @@ const BLOCOS = [
     filmar: ['Pista e energia da festa', 'Luz e som da Floor Sensation', 'Planos para fechar o aftermovie', 'Planos de fecho da noite'] },
 ]
 
-const PARCEIROS = [
-  ['Zankyou', 'Equipa da organização, branding e momentos de palco'],
-  ['SUD Lisboa', 'O espaço: interiores, esplanada e vista para o Tejo'],
-  ['Floor Sensation', 'Som, luz e produção técnica em ação'],
-  ['Madame Boutique Floral', 'Arranjos florais, de perto e no ambiente'],
-  ['Detail Wedding Photography', 'Os fotógrafos oficiais a trabalhar'],
-  ['Annia', 'A atuação ao vivo'],
-  ['Gio Rodrigues Atelier', 'Os vestidos e looks em destaque'],
-  ['Filipa Martins Make Up & Hair', 'Maquilhagem e cabelos'],
-  ['Halus Stories', 'Joias em detalhe'],
-]
 
 // Guia da equipa (o dos casamentos, em app/p/[token]/GuiaEquipa.tsx) adaptado a um evento de networking
 const MATERIAL_EVENTO = [
@@ -77,7 +66,7 @@ const GUIA_EVENTO: BlocoGuia[] = [
     icone: '◉',
     itens: [
       'Filmar o espaço à chegada, antes de os convidados entrarem, enquanto está arrumado e com boa luz.',
-      'Cada parceiro precisa dos seus planos: flores, joias, looks, maquilhagem, som e luz, gastronomia.',
+      'Detalhes do ambiente para o recap: decoração, flores, gastronomia, som e luz.',
       'Nos discursos, som limpo e planos dos oradores e do público.',
       'Se for possível, imagens de drone: o SUD, o Tejo e a ponte, de preferência antes dos convidados e ao pôr do sol. Só se as regras de voo do local o permitirem.',
       'Guardar sempre alguns segundos antes e depois de cada momento importante.',
@@ -326,11 +315,6 @@ export default async function BriefingZankyouSud() {
           </div>
         </Seccao>
 
-        <Seccao ey="Para o recap" titulo="Planos de cada parceiro">
-          <div className="lista">
-            {PARCEIROS.map(([n, o]) => <div key={n}><span>{n}</span><span>{o}</span></div>)}
-          </div>
-        </Seccao>
 
         <Seccao ey="Duas fases" titulo="Pagamento">
           <div className="g2">

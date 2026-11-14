@@ -47,7 +47,7 @@ const FASES = [
   { n: '01', quando: '15h00', titulo: 'Antes dos convidados', itens: [
     'Chegamos uma hora antes para preparar a captação.',
     'O espaço vazio e arrumado, com a melhor luz: interiores, esplanada e o Tejo.',
-    'Decoração, flores e detalhes de cada parceiro, ainda sem gente.',
+    'A decoração, as flores e os detalhes do espaço, ainda sem gente.',
     'Se for possível, imagens aéreas de drone do SUD, do rio e da ponte.',
   ] },
   { n: '02', quando: '16h00 → 22h00', titulo: 'Durante o evento', itens: [
@@ -59,32 +59,18 @@ const FASES = [
   { n: '03', quando: 'Depois', titulo: 'Montagem e entrega', itens: [
     'Selecionamos os melhores momentos e montamos as peças.',
     'Cada peça aparece neste portal, na secção Entregas, assim que estiver pronta.',
-    'Prontas a partilhar nas redes da Zankyou, do SUD e de cada parceiro.',
+    'Prontas a partilhar nas redes da Zankyou e do SUD Lisboa.',
   ] },
-]
-
-const DESTAQUES: Array<[string, string]> = [
-  ['SUD Lisboa', 'O espaço, a esplanada e a vista para o Tejo'],
-  ['Floor Sensation', 'Som, luz e ambiente da festa'],
-  ['Madame Boutique Floral', 'Os arranjos florais, de perto'],
-  ['Detail Wedding Photography', 'A fotografia oficial em ação'],
-  ['Annia', 'A atuação ao vivo'],
-  ['Gio Rodrigues Atelier', 'Os vestidos e looks'],
-  ['Filipa Martins Make Up & Hair', 'Maquilhagem e cabelos'],
-  ['Halus Stories', 'As joias, em detalhe'],
-  ['Zankyou', 'A organização e os momentos de palco'],
 ]
 
 const SAIDAS = [
   { nome: 'Aftermovie', formato: '16:9 · 60–90 s', texto: 'O filme da tarde: o ambiente, as pessoas e os melhores momentos.' },
   { nome: 'Reel', formato: '9:16 · 30–45 s', texto: 'O evento em vertical, pensado para o Instagram.' },
   { nome: 'Teaser', formato: '9:16 · 15 s', texto: 'Uma primeira amostra, logo no dia seguinte.' },
-  { nome: 'Clips', formato: '9:16 · por marca', texto: 'Planos de cada parceiro, para as suas redes.' },
 ]
 
 const PEDIDOS: Array<[string, string]> = [
   ['Tudo pronto até às 15h30', 'Decoração, produtos e espaços montados, para filmarmos os detalhes antes de chegar gente.'],
-  ['Digam-nos o que querem em destaque', 'Um produto, um look, um momento: falem connosco antes ou no dia e garantimos esse plano.'],
   ['Som dos discursos', 'Coordenamos com a Floor Sensation uma saída de áudio para gravar as intervenções com qualidade.'],
   ['Uma palavra para a câmara', 'Se quiserem deixar um pequeno testemunho no vídeo, falem com o Rui no dia.'],
 ]
@@ -241,7 +227,7 @@ const CSS = `
 .zw .chip.feito{background:transparent;border:1px solid var(--line);color:var(--soft);}
 @media (max-width:640px){.zw .pg-b{grid-template-columns:minmax(0,1fr);gap:10px;padding:22px;}.zw .pg-h b{font-size:38px;}}
 
-/* O vídeo oficial: fases, destaques e pedidos */
+/* O vídeo oficial: fases, peças e pedidos */
 .zw .fases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
 .zw .fs{border-radius:24px;background:var(--card);border:1px solid var(--line);padding:24px;transition:transform .5s var(--ease),box-shadow .5s var(--ease);}
 .zw .fs:hover{transform:translateY(-4px);box-shadow:0 24px 50px -30px rgba(47,44,47,.35);}
@@ -254,14 +240,6 @@ const CSS = `
 .zw .fases .fs:nth-child(2){background:var(--deep);color:#fff;border-color:var(--deep);}
 .zw .fases .fs:nth-child(2) li{color:rgba(255,255,255,.75);}
 .zw .fases .fs:nth-child(2) .chip{background:rgba(255,255,255,.12);color:#fff;}
-.zw .plano{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px;margin-top:12px;border-radius:24px;background:var(--bg2);padding:clamp(22px,3vw,34px);}
-.zw .plano .k,.zw .pedido .k{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--sun);}
-.zw .plano .txt{font-family:var(--serif);font-size:clamp(26px,2.6vw,34px);line-height:1.15;margin:12px 0 0;}
-.zw .plano .txt em{color:var(--sun);}
-.zw .plano-lista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 24px;}
-.zw .plano-lista div{padding:11px 0;border-top:1px solid var(--line);}
-.zw .plano-lista b{display:block;font-weight:500;font-size:15px;}
-.zw .plano-lista span{display:block;font-size:14px;color:var(--mute);margin-top:2px;}
 .zw .pedido{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:24px;margin-top:12px;border-radius:24px;border:1px dashed rgba(61,138,130,.45);padding:clamp(22px,3vw,34px);}
 .zw .pedido h3{font-family:var(--serif);font-weight:400;font-size:clamp(30px,3vw,40px);line-height:1.05;margin:12px 0 0;}
 .zw .pedido h3 em{color:var(--sun);}
@@ -270,8 +248,10 @@ const CSS = `
 .zw .pedido li::before{content:counter(p);grid-row:span 2;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--sun2);color:#fff;font-size:13px;font-weight:600;}
 .zw .pedido li b{font-weight:500;font-size:16px;}
 .zw .pedido li span{font-size:14.5px;line-height:1.55;color:var(--mute);}
-@media (max-width:900px){.zw .fases,.zw .plano,.zw .pedido{grid-template-columns:minmax(0,1fr);}}
-@media (max-width:560px){.zw .plano-lista{grid-template-columns:minmax(0,1fr);}}
+@media (max-width:900px){.zw .fases,.zw .pedido{grid-template-columns:minmax(0,1fr);}}
+.zw .pedido .k{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--sun);}
+.zw .bento.tres{grid-template-columns:repeat(3,minmax(0,1fr));}
+@media (max-width:760px){.zw .bento.tres{grid-template-columns:minmax(0,1fr);}}
 /* Parceiros */
 .zw .logos{border-radius:24px;background:#fff;border:1px solid var(--line);padding:14px 10px;}
 .zw .logos img{width:100%;height:auto;}
@@ -483,17 +463,7 @@ export default function PortalEvento({ entregas }: { entregas: Record<string, En
             ))}
           </div>
 
-          <div className="plano rv">
-            <div>
-              <span className="k">Cada parceiro em destaque</span>
-              <p className="txt">Cada marca tem planos <em>próprios</em> no vídeo, para usar também nas suas redes.</p>
-            </div>
-            <div className="plano-lista">
-              {DESTAQUES.map(([n, o]) => <div key={n}><b>{n}</b><span>{o}</span></div>)}
-            </div>
-          </div>
-
-          <div className="bento" style={{ marginTop: 12 }}>
+          <div className="bento tres" style={{ marginTop: 12 }}>
             {SAIDAS.map(s => (
               <div key={s.nome} className="bx rv"><span className="k">{s.formato}</span><div><div className="v" style={{ fontSize: 'clamp(30px,2.8vw,40px)' }}>{s.nome}</div><p>{s.texto}</p></div></div>
             ))}
