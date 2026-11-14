@@ -60,12 +60,21 @@ const TOTAL = CAPITULOS.length + 1 // a capa é a 01
 
 const CSS = `
 .ev{overflow-x:clip;}
-/* ── Capa: o cartaz do evento, inteiro ── */
-.ev .capa{position:relative;text-align:center;}
-.ev .capa-img{position:relative;overflow:hidden;}
-.ev .capa-img img{display:block;width:100%;height:auto;max-height:86svh;object-fit:cover;object-position:center top;animation:evKen 14s cubic-bezier(.2,.6,.2,1) both;}
-.ev .capa-img::after{content:"";position:absolute;left:0;right:0;bottom:0;height:28%;background:linear-gradient(transparent,var(--ink));}
-.ev .capa-info{position:relative;padding:8px 20px clamp(36px,7vh,64px);}
+/* ── Capa: fotos do SUD Lisboa a aparecer e desaparecer, com o título por cima ── */
+.ev .capa{position:relative;height:100svh;min-height:600px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;}
+.ev .capa-fotos{position:absolute;inset:0;background:var(--ink);}
+.ev .capa-fotos img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;animation:evFoto 24s linear infinite;}
+.ev .capa-fotos img:nth-child(1){animation-delay:0s;}
+.ev .capa-fotos img:nth-child(2){animation-delay:6s;}
+.ev .capa-fotos img:nth-child(3){animation-delay:12s;}
+.ev .capa-fotos img:nth-child(4){animation-delay:18s;}
+@keyframes evFoto{0%{opacity:0;transform:scale(1.1)}6%{opacity:1}25%{opacity:1}31%{opacity:0;transform:scale(1)}100%{opacity:0}}
+.ev .capa::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,11,11,.55) 0%,rgba(11,11,11,.1) 25%,rgba(11,11,11,.35) 55%,rgba(11,11,11,.92) 82%,var(--ink) 100%);}
+.ev .capa-info{position:relative;z-index:2;padding:0 20px clamp(44px,9vh,80px);}
+.ev .capa-t{font-family:var(--fs);font-weight:300;font-size:clamp(46px,10vw,112px);line-height:.95;letter-spacing:-.02em;color:var(--tx);margin:16px 0 0;}
+.ev .capa-t em{font-style:italic;color:var(--g);}
+.ev .capa-l{font-family:var(--fs);font-style:italic;font-weight:300;font-size:clamp(22px,5vw,30px);color:var(--tx-mid);margin-top:14px;}
+@media (prefers-reduced-motion:reduce){.ev .capa-fotos img{animation:none;}.ev .capa-fotos img:first-child{opacity:1;}}
 .ev .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 .ev .parceiros-t{font-family:var(--fm);font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--tx);margin-top:18px;}
 .ev .parceiros-t b{color:var(--g);font-weight:400;margin:0 .5em;}
@@ -299,12 +308,18 @@ export default async function ZankyouSudLisboaPage() {
       <div className="fx-grain" aria-hidden="true" />
 
       {/* Capa */}
-      {/* O cartaz já tem o título: mostra-se inteiro, sem texto por cima */}
+      {/* Fotos do SUD Lisboa (esplanada, fachada, placa, noite) a alternar, com o título por cima */}
       <section className="capa" id="capa">
-        <div className="capa-img"><img src={`${IMG}/cartaz.webp`} alt="XIX Edição Zankyou Wedding Club × SUD Lisboa, Party & Experience, 16 de novembro, das 16 às 22" /></div>
+        <div className="capa-fotos" aria-hidden="true">
+          <img src={`${IMG}/sud-terrazza.webp`} alt="" style={{ objectPosition: 'center 60%' }} />
+          <img src={`${IMG}/sud-fachada.webp`} alt="" />
+          <img src={`${IMG}/sud-placa.webp`} alt="" style={{ objectPosition: 'center 40%' }} />
+          <img src={`${IMG}/sud-noite.webp`} alt="" />
+        </div>
         <div className="capa-info">
-          <h1 className="sr">XIX Zankyou Wedding Club × SUD Lisboa</h1>
-          <p className="eyebrow">Portal do evento</p>
+          <p className="eyebrow">XIX Edição · Portal do evento</p>
+          <h1 className="capa-t">Zankyou <em>Wedding Club</em></h1>
+          <p className="capa-l">SUD Lisboa · Party &amp; Experience</p>
           <p className="parceiros-t">Zankyou<b>×</b>SUD Lisboa<b>×</b>RL Photo Video</p>
           <div className="linha" />
           <p className="plano">Segunda, 16 de novembro · das 16h às 22h</p>
