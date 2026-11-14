@@ -10,6 +10,22 @@ const portalFreelancer = (id: string) => `${SITE}/freelancers/${id}?view=freelan
 type Membro = { nome?: string | null; status?: string | null }
 type Evento = { referencia?: string | null; noivos?: string | null; data?: string | null; local?: string | null }
 
+/** Acesso ao portal: link, email e password do membro (botão "Email acesso" em /freelancers). */
+export function emailAcessoPortal(o: Membro & { freelancerId: string; email: string; password: string }): string {
+  return buildCardEquipa({
+    pill: 'Acesso ao portal', nome: o.nome ?? '', funcao: funcaoDe(o.status), contexto: 'Equipa',
+    frase: 'O teu portal da RL Photo.Video está pronto. Aqui ficam os dados para entrares.',
+    texto: 'No portal tens os teus eventos, os briefings e tudo o que precisas para cada trabalho.',
+    campos: [
+      { k: 'Email', v: o.email, mono: true },
+      { k: 'Password', v: o.password, mono: true },
+    ],
+    cta: { label: 'Abrir o meu portal', url: portalFreelancer(o.freelancerId) },
+    nota: 'Guarda este email. Se não conseguires entrar, fala com o Rui.',
+    preheader: 'O teu acesso ao portal da RL Photo.Video',
+  })
+}
+
 /** "Tens novidades no portal": novo evento na ficha do freelancer (send-freelancer-notification). */
 export function emailNovidadesFreelancer(o: Membro & Evento & { freelancerId: string }): string {
   return buildCardEquipa({

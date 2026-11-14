@@ -110,6 +110,53 @@ function Contador({ valor, duracao = 900 }: { valor: number; duracao?: number })
   return <>{n}</>
 }
 
+// Enviar o acesso ao portal (link + email + password): por WhatsApp (mensagem pronta, sem emojis)
+// ou por email no card da equipa (/api/freelancer-acesso-email). Precisa de email e password na ficha.
+function EnviarAcesso({ f, onSom }: { f: Freelancer; onSom?: () => void }) {
+  const [estado, setEstado] = useState<'' | 'a enviar' | 'enviado' | 'erro'>('')
+  const url = f.status === 'EDITORES'
+    ? linkPublico(`/painel-editor?freelancer=${f.id}`)
+    : linkPublico(`/freelancers/${f.id}?view=freelancer`)
+  const falta = !f.email ? 'Falta o email na ficha' : !f.password ? 'Falta definir a password' : ''
+  const primeiro = f.nome.trim().split(/\s+/)[0] ?? ''
+  const msg = `Olá ${primeiro}! Segue o acesso ao teu portal da RL Photo.Video:\n\n${url}\n\nEmail: ${f.email ?? ''}\nPassword: ${f.password ?? ''}\n\nNo portal tens os teus eventos, os briefings e tudo o que precisas para cada trabalho. Qualquer dúvida diz.`
+  const wa = linkWhatsapp(f.contato)
+  const waUrl = wa ? `${wa}?text=${encodeURIComponent(msg)}` : `https://wa.me/?text=${encodeURIComponent(msg)}`
+
+  async function enviarEmail() {
+    if (falta || estado === 'a enviar') return
+    if (!window.confirm(`Enviar o acesso ao portal por email para ${f.email}?`)) return
+    setEstado('a enviar')
+    const r = await fetch('/api/freelancer-acesso-email', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: f.id }) }).catch(() => null)
+    const d = await r?.json().catch(() => ({}))
+    if (r?.ok) { setEstado('enviado'); onSom?.(); setTimeout(() => setEstado(''), 4000) }
+    else { setEstado('erro'); alert(d?.error ?? 'Não foi possível enviar o email.'); setTimeout(() => setEstado(''), 3000) }
+  }
+
+  const base = 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold border transition-all disabled:opacity-35 disabled:cursor-not-allowed'
+  return (
+    <div className="mt-3 flex items-center gap-1.5 flex-wrap">
+      <span className="text-[10.5px] tracking-[0.18em] uppercase text-white/35 mr-1">Enviar acesso</span>
+      {falta ? (
+        <span className={`${base} cursor-not-allowed opacity-40`} title={falta} style={{ borderColor: 'rgba(37,211,102,0.45)', color: '#25D366' }}>WhatsApp</span>
+      ) : (
+        <a href={waUrl} target="_blank" rel="noopener noreferrer" onClick={onSom}
+          title={`Enviar a ${f.nome} o link do portal com o email e a password`}
+          className={base} style={{ background: 'rgba(37,211,102,0.10)', borderColor: 'rgba(37,211,102,0.45)', color: '#25D366' }}>
+          WhatsApp
+        </a>
+      )}
+      <button type="button" onClick={enviarEmail} disabled={!!falta || estado === 'a enviar'} title={falta || `Enviar por email para ${f.email}`}
+        className={base} style={estado === 'enviado'
+          ? { background: 'rgba(74,222,128,0.12)', borderColor: 'rgba(74,222,128,0.5)', color: '#4ade80' }
+          : { background: 'rgba(201,168,76,0.10)', borderColor: 'rgba(201,168,76,0.5)', color: '#C9A84C' }}>
+        {estado === 'a enviar' ? 'A enviar…' : estado === 'enviado' ? 'Email enviado ✓' : 'Ticket por email'}
+      </button>
+      {falta && <span className="text-[11px] text-white/35">{falta}</span>}
+    </div>
+  )
+}
+
 function CopiarUrlButton({ id, status, onSom }: { id: string; status?: string | null; onSom?: () => void }) {
   const [copied, setCopied] = useState(false)
   function copy() {
@@ -507,6 +554,9 @@ export default function FreelancersPage() {
                         </svg>
                       </button>
                     </div>
+
+                    {/* Enviar o acesso ao portal: WhatsApp e ticket por email */}
+                    <EnviarAcesso f={f} onSom={sfx.sucesso} />
 
                     {/* Palavra-passe */}
                     {pwEditId === f.id && (
