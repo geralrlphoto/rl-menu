@@ -22,8 +22,10 @@ const GMAPS = `https://www.google.com/maps/dir/?api=1&destination=${LAT},${LON}`
 const WAZE = `https://waze.com/ul?ll=${LAT},${LON}&navigate=yes`
 
 const BLOCOS = [
+  { hora: '15:00', fim: '16:00', nome: 'Chegada da equipa RL', evento: 'Estamos no SUD Lisboa às 15h00 para o nosso briefing e para produzir conteúdos antes da chegada dos convidados.',
+    filmar: ['Briefing rápido entre a equipa: planos, divisão de tarefas e som', 'O espaço vazio e arrumado, com boa luz: interiores, esplanada e o Tejo', 'Decoração e detalhes dos parceiros antes de haver gente', 'Primeiras falas do Rui para a marca pessoal'] },
   { hora: '16:00', fim: '17:00', nome: 'Welcome & Connect', evento: 'Receção, welcome drink e primeiros momentos de networking.',
-    filmar: ['Chegada dos convidados e cumprimentos', 'O espaço com o Tejo: planos largos e de entrada', 'Decoração floral da Madame Boutique Floral', 'Detalhes de marca: Zankyou e SUD Lisboa'] },
+    filmar: ['Chegada dos convidados e cumprimentos', 'O espaço a encher: planos largos e das entradas', 'Decoração floral da Madame Boutique Floral', 'Detalhes de marca: Zankyou e SUD Lisboa'] },
   { hora: '17:00', fim: '18:00', nome: 'Inspire & Share', evento: 'Abertura pela Zankyou Portugal, agradecimento aos parceiros e intervenção do SUD / SANA.',
     filmar: ['Discursos com som limpo (falar com a Floor Sensation para a saída de áudio)', 'Oradores em plano médio e apertado', 'Reações do público', 'Pôr do sol perto das 17h20: prioridade aos planos sobre o rio'] },
   { hora: '18:00', fim: '20:00', nome: 'Taste & Experience', evento: 'Experiência gastronómica e sensorial, com espetáculo e surpresa.',
@@ -97,7 +99,7 @@ const GUIA_EVENTO: BlocoGuia[] = [
     titulo: 'Boas práticas no dia',
     icone: '✓',
     itens: [
-      'Chegar 15 minutos antes da hora combinada com o Rui.',
+      'Estar no SUD Lisboa às 15h00, para o briefing e os conteúdos antes dos convidados.',
       'Telemóvel em silêncio e discrição total durante os discursos e a atuação.',
       'Não comer nem beber à frente dos convidados enquanto se filma; só quando a organização indicar.',
       'No fim do dia, copiar os cartões para dois sítios antes de os voltar a formatar.',
@@ -184,7 +186,7 @@ export default async function BriefingZankyouSud() {
           <p className="eyebrow">Briefing de vídeo · RL Photo Video</p>
           <h1>XIX Zankyou <em>Wedding Club</em></h1>
           <div className="ln" />
-          <p className="sub">SUD Lisboa · segunda, 16 de novembro de 2026 · evento das 16h às 22h<br />Vídeo oficial do evento</p>
+          <p className="sub">SUD Lisboa · segunda, 16 de novembro de 2026 · equipa às 15h00 · evento das 16h às 22h<br />Vídeo oficial do evento</p>
         </header>
 
         <h2>Guia do <em>dia</em></h2>
@@ -202,7 +204,7 @@ export default async function BriefingZankyouSud() {
 
         <h2>O <em>essencial</em></h2>
         <div className="grid">
-          <div className="cx"><span className="k">Equipa de vídeo</span><b>Rui Gonçalves<br />Guilherme Paim</b><p>O Rui coordena: hora de chegada e quem filma o quê combinam-se com ele.</p></div>
+          <div className="cx"><span className="k">Equipa de vídeo</span><b>Rui Gonçalves<br />Guilherme Paim</b><p>Chegada às 15h00, uma hora antes dos convidados. O Rui coordena quem filma o quê.</p></div>
           <div className="cx"><span className="k">Local</span><b>SUD Lisboa</b><p>Avenida Brasília, Pavilhão Poente, ao lado do MAAT, 1300-598 Lisboa. Tem estacionamento.</p><p><a href={GMAPS} target="_blank" rel="noopener noreferrer">Google Maps ↗</a><a href={WAZE} target="_blank" rel="noopener noreferrer">Waze ↗</a></p></div>
           <div className="cx"><span className="k">O que é</span><b>Networking do setor</b><p>Encontro da Zankyou com profissionais de casamentos. Não há noivos: o foco são as pessoas, as marcas e o ambiente.</p></div>
         </div>
@@ -242,7 +244,7 @@ export default async function BriefingZankyouSud() {
         </div>
         <div className="tab">
           {[
-            ['À chegada', 'Com o SUD e o Tejo atrás: onde estamos e o que vamos fazer hoje.'],
+            ['À chegada, 15h00', 'Com o SUD e o Tejo atrás, ainda sem convidados: onde estamos e o que vamos fazer hoje.'],
             ['Antes de começar', 'Fomos convidados pela Zankyou e somos parceiros: fazemos o vídeo oficial do evento.'],
             ['Ao pôr do sol', 'Na esplanada, com a luz das 17h20: o que é estar aqui com os melhores do setor.'],
             ['Durante a festa', 'Um momento mais solto, com o ambiente atrás, e uma despedida para fechar.'],
