@@ -640,10 +640,10 @@ function FreelancerDetailInner() {
           ] }} />
       )
       case 'casamentos': return (
-        <CapaPortal foto="/casamentos-2026.jpg" eyebrow="RL Photo.Video" titulo="CASAMENTOS"
+        <CapaPortal foto="/casamentos-2026.jpg" eyebrow="RL Photo.Video" titulo="EVENTOS"
           linha={<>Confirmar · Briefing · <span className="text-[#d8be93]">Entregas</span></>}
-          texto={`${casamentos.length} casamentos · ${upcomingList.length} por acontecer · ${afazer.length} com algo por fazer`}
-          lateral={`Casamentos · ${anoAtual}`} />
+          texto={`${casamentos.length} ${casamentos.length === 1 ? 'evento' : 'eventos'} · ${upcomingList.length} por acontecer · ${afazer.length} com algo por fazer`}
+          lateral={`Eventos · ${anoAtual}`} />
       )
       case 'edicao': return (
         <CapaPortal foto="/eventos-hero-2026.webp" eyebrow="RL Photo.Video" titulo="EDIÇÃO"
@@ -1458,7 +1458,7 @@ type ItemMenu = { key: AdminTabKey; label: string; icon: string; href?: string; 
 function itensMenuMembro({ isVideografo, isFotografo, freelancerId }: { isVideografo: boolean; isFotografo: boolean; freelancerId?: string }): ItemMenu[] {
   return [
     { key: null,          label: 'Início',              icon: '⌂' },
-    { key: 'casamentos',  label: 'Casamentos',          icon: '◆' },
+    { key: 'casamentos',  label: 'Eventos',             icon: '◆' },
     ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição de fotos', icon: '✎' }] : []),
     ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫' }] : []),
     { key: 'tarefas',     label: 'Mensagens e tarefas', icon: '◷', grupo: ['tarefas', 'notificacoes', 'mensagens'] },
