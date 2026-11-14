@@ -156,6 +156,24 @@ export default async function BriefingZankyouSud() {
           <div className="cx"><span className="k">9:16 · por marca</span><b>Clips dos parceiros</b><p>Cada parceiro precisa de planos próprios: ver a lista abaixo.</p></div>
         </div>
 
+        <h2>Marca pessoal do <em>Rui</em></h2>
+        <div className="nota" style={{ color: 'var(--tx)' }}>
+          Além do vídeo oficial, filmar conteúdo para o vídeo de marca pessoal do Rui: <b style={{ display: 'inline', fontFamily: 'inherit', fontSize: 'inherit', letterSpacing: 0, textTransform: 'none', color: 'var(--g)' }}>o Rui a falar para a câmara</b>, a contar o que estamos a fazer, que fomos convidados pela Zankyou e que somos parceiros do evento, como vídeo oficial.
+        </div>
+        <div className="ent">
+          <div className="cx"><span className="k">Formato</span><b>Vertical 9:16</b><p>Tomadas curtas, de 10 a 30 s, com o Rui a olhar para a câmara. Várias tomadas de cada ideia.</p></div>
+          <div className="cx"><span className="k">Som</span><b>Voz limpa</b><p>Microfone no Rui e sítios mais calmos para falar. Evitar gravar ao lado das colunas.</p></div>
+        </div>
+        <div className="tab">
+          {[
+            ['À chegada', 'Com o SUD e o Tejo atrás: onde estamos e o que vamos fazer hoje.'],
+            ['Antes de começar', 'Fomos convidados pela Zankyou e somos parceiros: fazemos o vídeo oficial do evento.'],
+            ['Ao pôr do sol', 'Na esplanada, com a luz das 17h20: o que é estar aqui com os melhores do setor.'],
+            ['Durante a festa', 'Um momento mais solto, com o ambiente atrás, e uma despedida para fechar.'],
+            ['Bastidores', 'O Rui a filmar, a falar com os parceiros e a preparar planos, para cobrir a voz.'],
+          ].map(([m, o]) => <div key={m} className="tr"><span>{m}</span><span>{o}</span></div>)}
+        </div>
+
         <h2>Planos de cada <em>parceiro</em></h2>
         <div className="tab">
           {PARCEIROS.map(([n, o]) => <div key={n} className="tr"><span>{n}</span><span>{o}</span></div>)}
