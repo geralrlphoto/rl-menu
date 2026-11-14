@@ -254,6 +254,13 @@ a{color:inherit;text-decoration:none}
 .alt a{color:var(--g);border-bottom:1px solid rgba(216,190,147,.4)}
 @media (max-width:700px){.date .card{padding:26px 10px 30px}.frm{border-radius:14px}.frm iframe{height:88vh}}
 
+/* logótipo */
+.logo{display:inline-flex;align-items:center}
+.logo img{height:64px;width:auto;filter:drop-shadow(0 2px 12px rgba(0,0,0,.45));transition:height .6s var(--ease)}
+.bar.s .logo img{height:46px}
+.foot-logo{height:120px;width:auto;margin-bottom:30px}
+@media (max-width:700px){.logo img{height:52px}.bar.s .logo img{height:40px}.foot-logo{height:96px}}
+
 /* rodapé */
 .foot{background:rgba(6,6,6,.92);border-top:1px solid var(--line-soft);padding-top:clamp(50px,7vh,90px)}
 .foot .cols{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:32px}
@@ -314,7 +321,7 @@ a{color:inherit;text-decoration:none}
 <div class="prog" id="prog" aria-hidden="true"></div>
 
 <header class="bar" id="bar">
-  <a href="#top" class="mono" aria-label="RL Photo · Video"><span>RL</span><i>Photo · Video</i></a>
+  <a href="#top" class="logo" aria-label="RL Photo · Video"><img src="/lp/casamentos/img/logo.png" alt="RL Photo · Video"></a>
 </header>
 
 <!-- 1. TOPO -->
@@ -520,6 +527,7 @@ a{color:inherit;text-decoration:none}
 <footer class="foot">
   <div class="wrap cols">
     <div>
+      <img class="foot-logo" src="/lp/casamentos/img/logo.png" alt="RL Photo · Video" loading="lazy">
       <h2 class="h2">Vamos <em>registar</em> a vossa história</h2>
       <a class="btn" href="#formulario">Iniciar conversa</a>
     </div>
