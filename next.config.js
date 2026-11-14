@@ -37,6 +37,7 @@ const nextConfig = {
   async rewrites() {
     return [
       { source: '/newsletter', destination: '/nl/index.html' },
+      { source: '/lp/casamentos', destination: '/lp/casamentos/index.html' },
       { source: '/apresentacao/:slug', destination: '/apresentacoes/:slug/index.html' },
     ]
   },

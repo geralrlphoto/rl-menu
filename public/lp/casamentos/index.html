@@ -1,0 +1,598 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RL Photo · Video · Fotografia e filme de casamento</title>
+<meta name="description" content="Fotografia e filme de casamento. Sneak peek em 48 horas, galeria em 7 dias, Same Day Edit e um portal só vosso. Vejam se a vossa data ainda está livre.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,200;0,300;0,400;1,200;1,300&family=Roboto+Condensed:wght@100;300;400;600&family=Marcellus&family=Lora:ital@1&display=swap" rel="stylesheet">
+<style>
+/* Sistema RL dos portais (rl-menu/app/_lead/rlpCss.ts + tema-rl.css) */
+:root{
+  --ink:#0b0b0b; --ink-2:#111; --ink-3:#141414;
+  --g:#d8be93; --g-deep:#c8a866;
+  --tx:rgba(243,237,226,.92); --tx-mid:rgba(243,237,226,.6); --tx-dim:rgba(243,237,226,.4);
+  --line:rgba(243,237,226,.14); --line-soft:rgba(243,237,226,.08);
+  --fd:'Jost',sans-serif; --fb:'Roboto Condensed',sans-serif;
+  --glow-lg:0 0 48px -22px rgba(216,190,147,.5);
+  --ease:cubic-bezier(.16,1,.3,1); --pad:clamp(16px,5vw,80px);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{color:var(--tx);font-family:var(--fb);font-weight:300;-webkit-font-smoothing:antialiased;overflow-x:clip;
+  background-color:var(--ink);
+  background-image:radial-gradient(ellipse 70% 45% at 50% 0%,rgba(216,190,147,.08),transparent 70%),radial-gradient(rgba(216,190,147,.10) 1px,transparent 1px);
+  background-size:100% 100%,26px 26px;background-attachment:fixed,fixed}
+::selection{background:rgba(216,190,147,.28);color:#0b0a08}
+img,video{display:block;max-width:100%}
+a{color:inherit;text-decoration:none}
+.vig{position:fixed;inset:0;z-index:50;pointer-events:none;box-shadow:inset 0 0 240px 40px rgba(0,0,0,.5)}
+.prog{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,rgba(216,190,147,.5),var(--g));box-shadow:0 0 12px rgba(216,190,147,.6);z-index:100}
+
+.wrap{width:100%;max-width:1280px;margin:0 auto;padding-inline:var(--pad)}
+.sec{position:relative;padding-block:clamp(80px,12vh,150px)}
+.eyebrow{font-family:var(--fb);font-weight:600;font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--g);display:inline-flex;gap:.8em;align-items:center}
+.eyebrow::before{content:"";width:34px;height:1px;background:var(--g);opacity:.6}
+.eyebrow.c{justify-content:center}
+.h1{font-family:var(--fd);font-weight:200;line-height:.92;letter-spacing:-.02em}
+.h2{font-family:var(--fd);font-weight:200;line-height:1.04;letter-spacing:-.02em;font-size:clamp(34px,5.4vw,70px)}
+.h1 em,.h2 em{font-style:italic;color:var(--g)}
+.lede{font-weight:300;letter-spacing:.01em;color:var(--tx-mid);line-height:1.75;font-size:clamp(16px,1.4vw,19px)}
+.div{width:100%;max-width:1280px;margin:0 auto;height:1px;background:linear-gradient(90deg,transparent,rgba(216,190,147,.45),transparent)}
+
+/* botão em pílula com ponto */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.9em;position:relative;isolation:isolate;font-family:var(--fb);font-weight:600;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#fff;padding:17px 34px;border:1px solid rgba(216,190,147,.6);border-radius:40px;overflow:hidden;background:rgba(216,190,147,.15);box-shadow:0 0 34px -12px rgba(216,190,147,.7);transition:background .4s var(--ease),border-color .4s var(--ease),transform .4s var(--ease);cursor:pointer}
+.btn::after{content:"";position:absolute;inset:0;z-index:-1;background:rgba(216,190,147,.2);transform:translateY(101%);transition:transform .6s var(--ease)}
+.btn::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--g);box-shadow:0 0 8px var(--g);flex:none}
+.btn:hover{border-color:var(--g);transform:translateY(-2px)}.btn:hover::after{transform:none}
+.btn.ghost{background:rgba(0,0,0,.3);color:var(--tx);border-color:rgba(255,255,255,.14);box-shadow:none}
+.btn.ghost::after{background:rgba(255,255,255,.06)}.btn.ghost:hover{border-color:rgba(255,255,255,.3)}
+.btn.full{width:100%}
+
+/* cartão com reflexo */
+.card{border:1px solid rgba(216,190,147,.14);border-left:2px solid rgba(216,190,147,.45);border-radius:22px;background:rgba(17,17,17,.85);backdrop-filter:blur(12px);position:relative;overflow:hidden;box-shadow:var(--glow-lg);transition:border-color .5s var(--ease),transform .5s var(--ease),box-shadow .5s var(--ease)}
+.card::before{content:"";position:absolute;top:0;left:-70%;width:55%;height:100%;background:linear-gradient(100deg,transparent,rgba(216,190,147,.08),transparent);transform:skewX(-18deg);animation:sheen 6s ease-in-out infinite;pointer-events:none}
+@keyframes sheen{0%{left:-70%}55%,100%{left:170%}}
+.card:hover{border-color:rgba(216,190,147,.45);border-left-color:var(--g);transform:translateY(-2px);box-shadow:0 0 32px -14px rgba(216,190,147,.7)}
+
+/* barra fixa */
+.bar{position:fixed;left:0;top:0;width:100%;z-index:80;display:flex;align-items:center;justify-content:space-between;padding:20px var(--pad);border-bottom:1px solid transparent;transition:background .6s var(--ease),padding .6s var(--ease),border-color .6s}
+.bar.s{background:rgba(11,11,11,.78);backdrop-filter:blur(14px);padding-block:13px;border-color:var(--line-soft)}
+.mono{display:inline-flex;align-items:baseline;gap:.6em}
+.mono span{font-family:var(--fd);font-weight:300;letter-spacing:.3em;font-size:16px}
+.mono i{font-style:normal;font-weight:600;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--g);opacity:.85}
+.link-u{font-weight:600;font-size:12px;letter-spacing:.18em;text-transform:uppercase;display:inline-flex;gap:.7em;align-items:center;position:relative;color:var(--tx-mid)}
+.link-u::after{content:"";position:absolute;left:0;bottom:-5px;width:100%;height:1px;background:var(--g);transform:scaleX(0);transform-origin:right;transition:transform .5s var(--ease)}
+.link-u:hover::after{transform:scaleX(1);transform-origin:left}
+.link-u b{color:var(--g);font-weight:600;transition:transform .4s var(--ease)}.link-u:hover b{transform:translateX(5px)}
+
+/* 1. topo */
+.hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;padding-top:100px}
+.slides{position:absolute;inset:0;overflow:hidden;background:var(--ink)}
+.sl{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.12);transition:opacity 2.2s ease,transform 9s linear}
+.sl.on{opacity:1;transform:scale(1)}
+@media (prefers-reduced-motion:reduce){.sl{transition:opacity 1.2s ease;transform:none}}
+
+/* teaser */
+.teaser{text-align:center;border-top:1px solid var(--line-soft)}
+.teaser .h2{max-width:16ch;margin:16px auto 14px}
+.teaser .lede{max-width:46ch;margin:0 auto 44px}
+.tz{position:relative;max-width:1180px;margin:0 auto;aspect-ratio:16/9;border-radius:22px;overflow:hidden;border:1px solid rgba(216,190,147,.25);border-left:2px solid var(--g);box-shadow:0 0 60px -22px rgba(216,190,147,.55);background:#000}
+.tz video{width:100%;height:100%;object-fit:cover;display:block}
+.tz .play{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at center,rgba(11,11,11,.15),rgba(11,11,11,.6));border:0;cursor:pointer;color:var(--tx);transition:opacity .5s}
+.tz .play i{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(216,190,147,.7);background:rgba(216,190,147,.15);backdrop-filter:blur(8px);box-shadow:0 0 50px -10px rgba(216,190,147,.7);transition:transform .5s var(--ease)}
+.tz .play i::after{content:"";margin-left:6px;border-left:22px solid var(--g);border-top:13px solid transparent;border-bottom:13px solid transparent}
+.tz .play:hover i{transform:scale(1.08)}
+.tz .play span{font:600 11px var(--fb);letter-spacing:.32em;text-transform:uppercase}
+.tz .play::before{content:"";position:absolute;width:96px;height:96px;border-radius:50%;border:1px solid rgba(216,190,147,.5);animation:pulse 2.4s ease-out infinite;top:calc(50% - 63px)}
+@keyframes pulse{to{transform:scale(1.9);opacity:0}}
+.tz.playing .play{opacity:0;pointer-events:none}
+.tz-meta{display:flex;justify-content:center;gap:28px;flex-wrap:wrap;margin-top:22px;font:600 11px var(--fb);letter-spacing:.26em;text-transform:uppercase;color:var(--tx-dim)}
+.tz-meta b{color:var(--g);font-weight:600}
+@media (max-width:700px){.tz{border-radius:16px}.tz .play i,.tz .play::before{width:72px;height:72px}.tz .play::before{top:calc(50% - 51px)}}
+.hero .sh1{position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,10,8,.35) 0%,rgba(11,10,8,.55) 45%,var(--ink) 100%)}
+.hero .sh2{position:absolute;inset:0;background:linear-gradient(90deg,rgba(11,10,8,.62) 0%,rgba(11,10,8,.15) 55%,transparent 100%)}
+.hero .in{position:relative;z-index:2;padding-bottom:clamp(48px,9vh,110px)}
+.hero .h1{font-size:clamp(46px,8.4vw,120px);margin:18px 0 0;max-width:13ch}
+.hero .ed{font-family:var(--fd);font-weight:200;font-size:clamp(20px,2.3vw,28px);line-height:1.3;color:var(--tx-mid);max-width:36ch;margin-top:24px}
+.hero .ctas{display:flex;gap:12px;flex-wrap:wrap;margin-top:34px}
+.rec{position:absolute;top:96px;right:var(--pad);z-index:2;font-weight:600;font-size:11px;letter-spacing:.3em;display:flex;gap:8px;align-items:center}
+.rec i{width:7px;height:7px;border-radius:50%;background:#e2483c;box-shadow:0 0 10px #e2483c;animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.15}}
+
+/* faixa */
+.ticker{border-block:1px solid var(--line-soft);overflow:hidden;background:var(--ink-2)}
+.ticker .track{display:flex;width:max-content;animation:roll 40s linear infinite}
+.ticker span{font-weight:600;font-size:11px;letter-spacing:.3em;text-transform:uppercase;padding:18px 30px;white-space:nowrap;color:var(--tx-dim)}
+.ticker span b{color:var(--g);font-weight:600}
+@keyframes roll{to{transform:translateX(-50%)}}
+
+/* 2. o que não vão ver */
+.miss .head{display:grid;grid-template-columns:1.15fr 1fr;gap:48px;align-items:end;margin-bottom:56px}
+.miss .head .h2{margin-top:16px}
+.miss .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.miss figure{position:relative;overflow:hidden;aspect-ratio:3/4;border-radius:22px;border:1px solid rgba(216,190,147,.2);background:var(--ink-3)}
+.miss figure img{width:100%;height:100%;object-fit:cover;filter:grayscale(.6);opacity:.85;transition:filter .7s,opacity .7s,transform .7s}
+.miss figure:hover img,.miss figure.on img{filter:none;opacity:1;transform:scale(1.04)}
+.miss figcaption{position:absolute;inset:auto 0 0;padding:30px 24px 24px;background:linear-gradient(transparent,rgba(6,5,4,.9));font-family:var(--fd);font-weight:200;font-size:24px;line-height:1.2}
+.miss figcaption small{display:block;font-family:var(--fb);font-weight:600;font-size:10px;letter-spacing:.3em;color:var(--g);margin-bottom:10px}
+.miss .grid figure:nth-child(2){margin-top:56px}
+
+/* promessa */
+.mani{text-align:center;background:var(--ink-2);border-block:1px solid var(--line-soft)}
+.mani .h2{max-width:20ch;margin:20px auto 0;font-size:clamp(30px,4.4vw,58px)}
+.mani .sig{font-family:var(--fd);font-weight:200;font-style:italic;color:var(--g);font-size:clamp(18px,2.2vw,24px);margin-top:26px}
+
+/* 3. galeria */
+.reel{padding-bottom:clamp(60px,9vh,110px)}
+.reel .head{display:flex;justify-content:space-between;align-items:end;gap:24px;margin-bottom:36px;flex-wrap:wrap}
+.reel .h2{margin-top:16px}
+.hint{font-weight:600;font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--tx-dim)}
+.strip{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:0 max(var(--pad),calc((100vw - 1280px)/2 + var(--pad))) 24px;scrollbar-width:thin;scrollbar-color:rgba(216,190,147,.35) transparent;cursor:grab}
+.strip figure{flex:0 0 auto;height:min(66vh,600px);scroll-snap-align:center;position:relative;border-radius:22px;overflow:hidden;border:1px solid rgba(216,190,147,.14)}
+.strip img{height:100%;width:auto;object-fit:cover}
+.strip figcaption{position:absolute;left:18px;bottom:16px;font-weight:600;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#fff;text-shadow:0 1px 8px rgba(0,0,0,.8)}
+
+/* 4. entregas */
+.deliver .head{max-width:780px;margin-bottom:56px}
+.deliver .head .h2{margin:16px 0 20px}
+.rows{display:grid;gap:10px}
+.row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;column-gap:18px;align-items:center;border-radius:18px;border:1px solid rgba(216,190,147,.14);background:rgba(17,17,17,.9);padding:16px 20px;transition:transform .3s,border-color .3s,background .3s,box-shadow .3s}
+.row:hover{transform:translateY(-2px);border-color:rgba(216,190,147,.45);background:#141414;box-shadow:0 0 32px -18px rgba(216,190,147,.6)}
+.row .r{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:rgba(216,190,147,.12);color:var(--g);font-family:var(--fd);font-weight:300;font-size:18px}
+.row h3{font-family:var(--fd);font-weight:300;font-size:clamp(20px,2vw,26px)}
+.row p{color:var(--tx-mid);font-size:15px;line-height:1.6;margin-top:2px}
+.row .pill{font-weight:600;font-size:10px;letter-spacing:.24em;text-transform:uppercase;padding:8px 14px;border-radius:999px;border:1px solid rgba(216,190,147,.45);color:var(--g);background:rgba(216,190,147,.08);white-space:nowrap}
+.row.hot{border-left:2px solid var(--g);box-shadow:0 0 40px -18px rgba(216,190,147,.6)}
+.row.hot .pill{background:rgba(216,190,147,.2);color:#fff}
+
+/* 5. acordeão (como "Uma conversa, não uma proposta") */
+.ac-cab{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:34px}
+.ac-cab .h2{margin-top:16px}
+.dica{margin-top:14px;font-weight:600;font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--tx-dim)}
+.dica .dedo{display:none}
+.ac{display:flex;gap:12px;height:500px;max-width:1180px;margin:0 auto}
+.pn{position:relative;flex:1 1 0%;min-width:0;overflow:hidden;border-radius:22px;border:1px solid rgba(255,255,255,.08);background:#0b0b0b;padding:0;cursor:pointer;text-align:left;color:inherit;font:inherit;transition:flex .55s cubic-bezier(.2,.7,.2,1),border-color .4s,height .55s cubic-bezier(.2,.7,.2,1)}
+.pn.on{flex:4 1 0%;border-color:rgba(216,190,147,.45);border-left:2px solid var(--g);box-shadow:0 0 40px -18px rgba(216,190,147,.6);cursor:default}
+.pn .im{position:absolute;inset:0;background-size:cover;background-position:center;filter:grayscale(.55) brightness(.6);transition:filter .55s,transform .9s}
+.pn.on .im{filter:saturate(1.02) brightness(.9);transform:scale(1.03)}
+.pn .veu{position:absolute;inset:0;background:linear-gradient(to top,rgba(6,5,4,.9),rgba(6,5,4,.55));transition:background .5s}
+.pn.on .veu{background:linear-gradient(to top,rgba(6,5,4,.95) 18%,rgba(6,5,4,.55) 60%,rgba(6,5,4,.2) 100%)}
+.pn .fe{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .3s}
+.pn .fe .cu{writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--fd);font-weight:200;font-size:26px;letter-spacing:.12em;color:rgba(243,237,226,.85);white-space:nowrap}
+.pn.on .fe{opacity:0}
+.pn .n{font-weight:600;font-size:12px;letter-spacing:.22em;color:var(--g)}
+.pn .ab{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:flex-end;padding:34px;opacity:0;transition:opacity .4s .1s;pointer-events:none}
+.pn.on .ab{opacity:1}
+.pn .t{display:block;margin-top:12px;font-family:var(--fd);font-weight:200;letter-spacing:-.01em;font-size:clamp(30px,3.4vw,46px);line-height:1.05;color:#f3ede2;max-width:16ch}
+.pn .t em{font-style:italic;color:var(--g)}
+.pn .li{display:block;width:56px;height:1px;background:var(--g);opacity:.7;margin:20px 0}
+.pn .tx{display:block;font-weight:300;font-size:16px;line-height:1.7;color:rgba(243,237,226,.78);max-width:46ch}
+
+/* 6. testemunho (visual de rlphotovideo.pt/testemunho) */
+.td{position:relative;display:flex;align-items:center;min-height:clamp(560px,86vh,820px);background:#120d00;color:#f5f1ea;overflow:hidden;border-top:1px solid var(--line-soft)}
+.td-foto{position:absolute;top:0;right:0;bottom:0;width:58%}
+.td-foto img{width:100%;height:100%;object-fit:cover;object-position:62% 45%}
+.td-foto::after{content:'';position:absolute;inset:0;background:linear-gradient(to right,#120d00 0%,rgba(18,13,0,.75) 12%,rgba(18,13,0,.3) 28%,rgba(18,13,0,0) 46%),linear-gradient(to bottom,rgba(18,13,0,.5) 0%,rgba(18,13,0,0) 18%,rgba(18,13,0,0) 75%,rgba(18,13,0,.5) 100%)}
+.td-in{position:relative;z-index:1;width:100%;max-width:1240px;margin:0 auto;padding:clamp(64px,10vh,110px) var(--pad)}
+.td-in>*{max-width:min(44vw,640px)}
+.td-id{display:flex;flex-wrap:wrap;align-items:center;gap:10px 28px;font:600 11px/1 var(--fb);letter-spacing:.26em;text-transform:uppercase}
+.td-id span:first-child{color:rgba(245,241,234,.68)}
+.td-id span+span::before{content:'';display:inline-block;width:28px;height:1px;background:currentColor;vertical-align:middle;margin-right:28px;opacity:.6}
+.td-t{margin-top:clamp(24px,4vh,36px);font-family:'Marcellus',serif;font-weight:400;font-size:clamp(36px,4.6vw,76px);line-height:1.05;letter-spacing:-.012em;max-width:16ch}
+.td-t span{display:block}.td-t span:last-child{font-family:'Lora',Georgia,serif;font-style:italic}
+.td-sub{max-width:40ch;margin-top:clamp(22px,3.5vh,32px);font-size:clamp(16px,1.3vw,19px);line-height:1.6;color:rgba(245,241,234,.75)}
+.td-btn{display:inline-flex;align-items:center;gap:12px;margin-top:clamp(30px,5vh,44px);padding:15px 26px;border:1px solid #f5f1ea;border-radius:5px;font:600 13px/1.3 var(--fb);letter-spacing:.12em;text-transform:uppercase;transition:background .35s,color .35s}
+.td-btn svg{width:16px;height:16px;transition:transform .35s}
+.td-btn:hover{background:#f5f1ea;color:#120d00}.td-btn:hover svg{transform:translateX(4px)}
+
+/* 7. como funciona */
+.how .cab{text-align:center}
+.how .cab .h2{margin-top:16px}
+.how .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:56px}
+.how .card{padding:38px 32px 36px}
+.how .big{font-family:var(--fd);font-weight:200;font-size:84px;line-height:.8;color:var(--g)}
+.how h3{font-family:var(--fd);font-weight:300;font-size:28px;margin:22px 0 10px}
+.how p{color:var(--tx-mid);font-size:16px;line-height:1.7}
+.how .note{margin-top:44px;text-align:center;font-family:var(--fd);font-weight:200;font-style:italic;font-size:clamp(20px,2.4vw,28px);color:var(--g)}
+
+/* 8. data */
+.date{background:var(--ink-2);border-top:1px solid var(--line-soft);overflow:hidden}
+.date .card{max-width:1000px;margin:0 auto;padding:clamp(34px,5vw,64px);text-align:center}
+.date .h2{max-width:14ch;margin:18px auto 18px}
+.date .lede{max-width:44ch;margin:0 auto 40px}
+.form{position:relative;z-index:1;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px 22px;text-align:left}
+.form label{display:block;font-weight:600;font-size:11px;letter-spacing:.26em;text-transform:uppercase;color:var(--tx-dim);margin-bottom:8px}
+.form input{width:100%;background:transparent;border:0;border-bottom:1px solid var(--line);color:var(--tx);font-family:var(--fd);font-weight:300;font-size:22px;padding:10px 2px;outline:none;color-scheme:dark;transition:border-color .3s}
+.form input:focus{border-color:var(--g)}
+.form input::placeholder{color:rgba(243,237,226,.25)}
+.form .btn{grid-column:1/-1;margin-top:22px}
+.cd{position:relative;z-index:1;display:none;justify-content:center;align-items:flex-start;gap:clamp(10px,2.4vw,28px);margin:34px 0 4px}
+.cd.on{display:flex}
+.cd div{display:flex;flex-direction:column;align-items:center;gap:8px}
+.cd b{font-weight:100;font-size:clamp(44px,8vw,92px);line-height:.9;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+.cd small{font-weight:400;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:var(--tx-dim)}
+.cd .sep{font-family:var(--fd);font-weight:200;font-size:36px;color:var(--g);opacity:.35;margin-top:8px}
+.cd-txt{position:relative;z-index:1;font-family:var(--fd);font-weight:200;font-style:italic;color:var(--g);font-size:20px;min-height:28px;margin-top:8px}
+.trust{display:flex;justify-content:center;gap:clamp(16px,3vw,40px);flex-wrap:wrap;margin-top:36px;font-weight:600;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim)}
+.trust span::before{content:"✦ ";color:var(--g)}
+
+/* fotos de fundo */
+.mani{overflow:hidden;min-height:80vh;display:grid;align-items:center}
+.mani-bg,.date-bg{position:absolute;inset:-8% 0;width:100%;height:116%;object-fit:cover;will-change:transform}
+.mani-bg{opacity:.85}
+.mani::before{content:"";position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse at center,rgba(11,11,11,.55) 0%,rgba(11,11,11,.35) 45%,rgba(11,11,11,.85) 100%),linear-gradient(180deg,var(--ink-2),transparent 18%,transparent 82%,var(--ink))}
+.mani .wrap{position:relative;z-index:2}
+.date{position:relative}
+.date-bg{opacity:.35;object-position:50% 70%}
+.date::before{content:"";position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,var(--ink-2) 0%,rgba(17,17,17,.55) 40%,rgba(17,17,17,.8) 100%)}
+/* separadores da galeria */
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.tabs button{font:600 11px var(--fb);letter-spacing:.22em;text-transform:uppercase;color:var(--tx-mid);background:transparent;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:11px 18px;cursor:pointer;transition:all .3s}
+.tabs button:hover{border-color:rgba(216,190,147,.45);color:var(--tx)}
+.tabs button.on{background:rgba(216,190,147,.15);border-color:rgba(216,190,147,.6);color:var(--g);box-shadow:0 0 28px -14px rgba(216,190,147,.7)}
+.strip figure{transition:opacity .4s}
+.strip figure.off{display:none}
+.strip img{cursor:zoom-in;transition:transform .8s var(--ease)}
+.strip figure:hover img{transform:scale(1.03)}
+/* foto em grande */
+.lb{position:fixed;inset:0;z-index:200;background:rgba(5,5,5,.94);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:24px}
+.lb.on{display:flex}
+.lb img{max-width:100%;max-height:88vh;border-radius:14px;box-shadow:0 0 60px -20px rgba(216,190,147,.5)}
+.lb button{position:absolute;width:48px;height:48px;border-radius:50%;border:1px solid rgba(216,190,147,.4);background:rgba(216,190,147,.08);color:var(--g);font-size:20px;cursor:pointer}
+.lb .x{top:20px;right:20px}.lb .pv{left:20px;top:50%}.lb .nx{right:20px;top:50%}
+.lb .ct{position:absolute;bottom:22px;left:0;right:0;text-align:center;font:600 11px var(--fb);letter-spacing:.3em;color:var(--tx-dim)}
+
+.btn-top{padding:12px 22px;font-size:11px}
+#formulario{scroll-margin-top:90px}
+@media (max-width:700px){.btn-top{padding:10px 16px;font-size:10px;letter-spacing:.16em}}
+.frm{position:relative;z-index:1;border-radius:18px;overflow:hidden;border:1px solid rgba(216,190,147,.2);background:#0b0b0b;text-align:left}
+.frm iframe{display:block;width:100%;height:min(1100px,88vh);min-height:640px;border:0}
+.alt{position:relative;z-index:1;margin-top:22px;font-size:15px;color:var(--tx-mid)}
+.alt a{color:var(--g);border-bottom:1px solid rgba(216,190,147,.4)}
+@media (max-width:700px){.date .card{padding:26px 10px 30px}.frm{border-radius:14px}.frm iframe{height:88vh}}
+
+/* rodapé */
+.foot{background:rgba(6,6,6,.92);border-top:1px solid var(--line-soft);padding-top:clamp(50px,7vh,90px)}
+.foot .cols{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:32px}
+.foot .h2{font-size:clamp(28px,3.4vw,44px);max-width:14ch;margin-bottom:28px}
+.foot h5{font-weight:600;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--g);margin-bottom:18px}
+.foot .cols a,.foot .cols span{display:block;color:var(--tx-mid);margin-bottom:10px;transition:color .4s}
+.foot .cols a:hover{color:var(--tx)}
+.foot .end{border-top:1px solid var(--line-soft);margin-top:clamp(40px,6vh,70px);padding:22px var(--pad);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-size:12px;letter-spacing:.06em;color:var(--tx-dim)}
+
+/* WhatsApp flutuante */
+.wa{position:fixed;bottom:24px;right:24px;width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;z-index:81;background:var(--g);color:var(--ink);box-shadow:0 10px 30px rgba(0,0,0,.4),0 0 30px -6px rgba(216,190,147,.55);transition:transform .4s var(--ease)}
+.wa:hover{transform:translateY(-3px) scale(1.05)}
+
+/* aparecer */
+.rv{opacity:0;transform:translateY(30px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.rv.in{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none}.ticker .track,.card::before{animation:none}*{transition:none!important}}
+
+@media (max-width:900px){
+  .miss .head{grid-template-columns:1fr;gap:20px}
+  .miss .grid{grid-template-columns:1fr 1fr}
+  .miss .grid figure:nth-child(2){margin-top:0}
+  .miss .grid figure:nth-child(3){grid-column:1/-1;aspect-ratio:16/11}
+  .row{grid-template-columns:44px minmax(0,1fr);row-gap:10px}
+  .row .r{width:44px;height:44px;font-size:16px}
+  .row .pill{grid-column:2;justify-self:start}
+  .how .steps{grid-template-columns:1fr}
+  .form{grid-template-columns:1fr}
+  .foot .cols{grid-template-columns:1fr}
+  .td{display:block;min-height:0}
+  .td-foto{position:relative;width:100%;height:60vh;min-height:340px}
+  .td-foto img{object-position:55% 35%}
+  .td-foto::after{background:linear-gradient(to bottom,rgba(18,13,0,.45) 0%,rgba(18,13,0,0) 22%,rgba(18,13,0,0) 55%,#120d00 100%)}
+  .td-in{margin-top:-40px;padding-top:0;padding-bottom:64px}
+  .td-in>*{max-width:none}
+  .bar .link-u{display:none}
+  .mono i{display:none}
+}
+@media (max-width:700px){
+  .dica .rato{display:none}.dica .dedo{display:inline}
+  .ac{flex-direction:column;height:auto;gap:10px}
+  .pn{flex:none;height:78px;border-radius:18px}
+  .pn.on{flex:none;height:400px}
+  .pn .fe{flex-direction:row;justify-content:flex-start;padding:0 24px;gap:18px}
+  .pn .fe .cu{writing-mode:horizontal-tb;transform:none;font-size:22px;letter-spacing:.06em}
+  .pn .ab{padding:26px 22px}
+  .pn .tx{font-size:15px}
+  .hero .h1{font-size:46px}
+  .hero .ctas .btn{width:100%}
+  .rec{top:78px}
+  .strip figure{height:56vh}
+  .wa{bottom:18px;right:18px}
+}
+</style>
+</head>
+<body>
+<div class="vig" aria-hidden="true"></div>
+<div class="prog" id="prog" aria-hidden="true"></div>
+
+<header class="bar" id="bar">
+  <a href="#top" class="mono" aria-label="RL Photo · Video"><span>RL</span><i>Photo · Video</i></a>
+  <a href="#formulario" class="btn btn-top">Preencher formulário</a>
+</header>
+
+<!-- 1. TOPO -->
+<section class="hero" id="top">
+  <div class="slides" id="slides" aria-hidden="true">
+    <img class="sl on" src="/lp/casamentos/img/p-ret-veu-ar.webp" alt="">
+    <img class="sl" src="/lp/casamentos/img/p-cer-petalas.webp" alt="" loading="lazy">
+    <img class="sl" src="/lp/casamentos/img/p-ret-sol.webp" alt="" loading="lazy">
+    <img class="sl" src="/lp/casamentos/img/p-fes-bolo.webp" alt="" loading="lazy">
+    <img class="sl" src="/lp/casamentos/img/p-ret-vinha.webp" alt="" loading="lazy">
+    <img class="sl" src="/lp/casamentos/img/p-cer-entrada.webp" alt="" loading="lazy">
+    <img class="sl" src="/lp/casamentos/img/p-fes-faiscas.webp" alt="" loading="lazy">
+  </div>
+  <div class="sh1"></div><div class="sh2"></div>
+  <div class="rec"><i></i>REC</div>
+  <div class="wrap in">
+    <span class="eyebrow rv">Fotografia e filme de casamento</span>
+    <h1 class="h1 rv">Vão esquecer metade do dia. <em>Nós não.</em></h1>
+    <p class="ed rv">O casamento passa a correr. Ficamos com tudo o que vocês não conseguem ver, para o voltarem a sentir daqui a trinta anos.</p>
+    <div class="ctas rv">
+      <a class="btn" href="#formulario">Preencher o formulário</a>
+      <a class="btn ghost" href="#filme">Ver o teaser</a>
+    </div>
+  </div>
+</section>
+
+<div class="ticker" aria-hidden="true"><div class="track">
+  <span><b>48 h</b> · primeiras fotografias</span><span><b>7 dias</b> · galeria online</span><span><b>Same Day Edit</b> · o filme na própria festa</span><span><b>Pré-wedding</b> · antes do grande dia</span><span><b>Portal</b> · só vosso, do sim à entrega</span><span><b>Foto + Filme</b> · uma só equipa</span>
+  <span><b>48 h</b> · primeiras fotografias</span><span><b>7 dias</b> · galeria online</span><span><b>Same Day Edit</b> · o filme na própria festa</span><span><b>Pré-wedding</b> · antes do grande dia</span><span><b>Portal</b> · só vosso, do sim à entrega</span><span><b>Foto + Filme</b> · uma só equipa</span>
+</div></div>
+
+<!-- 2. O QUE NÃO VÃO VER -->
+<section class="sec miss">
+  <div class="wrap">
+    <div class="head">
+      <div>
+        <span class="eyebrow rv">O que acontece no dia</span>
+        <h2 class="h2 rv">Vão estar <em>em todo o lado</em>. E em lado nenhum.</h2>
+      </div>
+      <p class="lede rv">Cumprimentos, abraços, horários, mais uma fotografia com a tia. É normal. Por isso há momentos que só vão descobrir depois. Estes, por exemplo.</p>
+    </div>
+    <div class="grid">
+      <figure class="rv"><img src="/lp/casamentos/img/p-olhar.webp" alt="Noivo emocionado ao ver a noiva pela primeira vez" loading="lazy" style="object-position:30% 50%"><figcaption><small>11:20 · Primeiro olhar</small>Ninguém conseguiu dizer nada.</figcaption></figure>
+      <figure class="rv"><img src="/lp/casamentos/img/p-pai.webp" alt="Noivo emocionado no altar" loading="lazy" style="object-position:58% 50%"><figcaption><small>13:15 · Cerimónia</small>Quando ela apareceu ao fundo.</figcaption></figure>
+      <figure class="rv"><img src="/lp/casamentos/img/p-festa-loucura.webp" alt="Convidados a dançar com loucura na festa" loading="lazy"><figcaption><small>01:30 · Festa</small>A loucura que ninguém pediu para repetir.</figcaption></figure>
+    </div>
+  </div>
+</section>
+
+<section class="sec mani">
+  <img class="mani-bg" src="/lp/casamentos/img/p-ret-veu.webp" alt="" loading="lazy">
+  <div class="wrap">
+    <span class="eyebrow c rv">A nossa promessa</span>
+    <h2 class="h2 rv">Não fazemos fotografias de casamento. Guardamos <em>a forma como se sentiram</em> nesse dia.</h2>
+    <p class="sig rv">registamos com foco na verdade</p>
+  </div>
+</section>
+
+<!-- TEASER -->
+<section class="sec teaser" id="filme">
+  <div class="wrap">
+    <span class="eyebrow c rv">O filme</span>
+    <h2 class="h2 rv">Quarenta segundos. <em>Liguem o som.</em></h2>
+    <p class="lede rv">O teaser da Cátia e do Ricardo, tal como o receberam. É assim que um dia inteiro cabe num minuto e continua a arrepiar.</p>
+    <div class="tz rv" id="tz">
+      <video id="tzv" src="/lp/casamentos/video/teaser.mp4" poster="/lp/casamentos/video/teaser.jpg" preload="none" playsinline controls></video>
+      <button class="play" id="tzp" type="button" aria-label="Ver o teaser com som"><i></i><span>Ver o teaser</span></button>
+    </div>
+    <div class="tz-meta rv"><span><b>Teaser</b> · Cátia &amp; Ricardo</span><span><b>0:44</b> · com som</span></div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- 3. TRABALHO -->
+<section class="sec reel" id="trabalho">
+  <div class="wrap head">
+    <div>
+      <span class="eyebrow rv">Portfólio</span>
+      <h2 class="h2 rv">Casamentos reais. <em>Nada encenado.</em></h2>
+    </div>
+    <div class="tabs rv" id="tabs" role="tablist">
+      <button class="on" data-c="all">Tudo</button><button data-c="prep">Preparação</button><button data-c="cer">Cerimónia</button><button data-c="ret">Retratos</button><button data-c="fes">Festa</button>
+    </div>
+  </div>
+  <div class="strip" id="strip">
+    <figure data-c="prep"><img src="/lp/casamentos/img/p-prep-cabide.webp" alt="Vestido de noiva pendurado" loading="lazy"><figcaption>Preparação</figcaption></figure>
+    <figure data-c="prep"><img src="/lp/casamentos/img/p-prep-janela.webp" alt="Noiva à janela" loading="lazy"><figcaption>Preparação</figcaption></figure>
+    <figure data-c="prep"><img src="/lp/casamentos/img/p-prep-make2.webp" alt="Maquilhagem da noiva" loading="lazy"><figcaption>Preparação</figcaption></figure>
+    <figure data-c="prep"><img src="/lp/casamentos/img/p-prep-vestido.webp" alt="Apertar o vestido" loading="lazy"><figcaption>Preparação</figcaption></figure>
+    <figure data-c="prep"><img src="/lp/casamentos/img/p-prep-make.webp" alt="Noiva a ser maquilhada" loading="lazy"><figcaption>Preparação</figcaption></figure>
+    <figure data-c="prep"><img src="/lp/casamentos/img/p-prep-detalhes2.webp" alt="Detalhes dos sapatos e alianças" loading="lazy"><figcaption>Detalhes</figcaption></figure>
+    <figure data-c="cer"><img src="/lp/casamentos/img/p-cer-igreja.webp" alt="Igreja durante a cerimónia" loading="lazy"><figcaption>Cerimónia</figcaption></figure>
+    <figure data-c="cer"><img src="/lp/casamentos/img/p-cer-entrada.webp" alt="Entrada da noiva com o pai" loading="lazy"><figcaption>A entrada</figcaption></figure>
+    <figure data-c="cer"><img src="/lp/casamentos/img/p-cer-espadas.webp" alt="Saída dos noivos sob espadas" loading="lazy"><figcaption>Cerimónia</figcaption></figure>
+    <figure data-c="cer"><img src="/lp/casamentos/img/p-cer-petalas.webp" alt="Saída dos noivos com pétalas" loading="lazy"><figcaption>A saída</figcaption></figure>
+    <figure data-c="cer"><img src="/lp/casamentos/img/p-cer-saida.webp" alt="Noivos a sair entre os convidados" loading="lazy"><figcaption>Casados</figcaption></figure>
+    <figure data-c="ret"><img src="/lp/casamentos/img/p-ret-sol.webp" alt="Casal ao pôr do sol" loading="lazy"><figcaption>Pôr do sol</figcaption></figure>
+    <figure data-c="ret"><img src="/lp/casamentos/img/p-ret-perfil.webp" alt="Casal de perfil em contraluz" loading="lazy"><figcaption>Retratos</figcaption></figure>
+    <figure data-c="ret"><img src="/lp/casamentos/img/p-ret-veu-ar.webp" alt="Véu a voar ao fim da tarde" loading="lazy"><figcaption>Retratos</figcaption></figure>
+    <figure data-c="ret"><img src="/lp/casamentos/img/p-ret-beijo.webp" alt="Beijo dos noivos" loading="lazy"><figcaption>Retratos</figcaption></figure>
+    <figure data-c="ret"><img src="/lp/casamentos/img/p-ret-vinha.webp" alt="Noivos numa vinha" loading="lazy"><figcaption>Na vinha</figcaption></figure>
+    <figure data-c="ret"><img src="/lp/casamentos/img/p-ret-veu-dentro.webp" alt="Noivos debaixo do véu" loading="lazy"><figcaption>Debaixo do véu</figcaption></figure>
+    <figure data-c="fes"><img src="/lp/casamentos/img/p-fes-danca.webp" alt="Primeira dança" loading="lazy"><figcaption>Primeira dança</figcaption></figure>
+    <figure data-c="fes"><img src="/lp/casamentos/img/p-fes-ombros.webp" alt="Noivo levantado em ombros" loading="lazy"><figcaption>Festa</figcaption></figure>
+    <figure data-c="fes"><img src="/lp/casamentos/img/p-fes-bolo.webp" alt="Bolo com fogo de artifício" loading="lazy"><figcaption>O bolo</figcaption></figure>
+    <figure data-c="fes"><img src="/lp/casamentos/img/p-fes-ramo.webp" alt="Lançamento do ramo" loading="lazy"><figcaption>O ramo</figcaption></figure>
+    <figure data-c="fes"><img src="/lp/casamentos/img/p-fes-pista.webp" alt="Pista de dança cheia" loading="lazy"><figcaption>A pista</figcaption></figure>
+    <figure data-c="fes"><img src="/lp/casamentos/img/p-fes-faiscas.webp" alt="Saída com faíscas" loading="lazy"><figcaption>Até ao fim</figcaption></figure>
+  </div>
+  <p class="hint wrap" style="margin-top:6px">Arrastem para o lado · toquem numa foto para a ver em grande</p>
+</section>
+
+<div class="div"></div>
+
+<!-- 4. ENTREGAS (como o Estado das Entregas do portal) -->
+<section class="sec deliver">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow rv">Sem meses de silêncio</span>
+      <h2 class="h2 rv">Não vão ter de <em>esperar para sentir</em> outra vez.</h2>
+      <p class="lede rv">A pior parte de muitos casamentos é o depois: semanas sem notícias. Connosco veem em que fase está cada entrega, no vosso portal.</p>
+    </div>
+    <div class="rows">
+      <div class="row hot rv"><span class="r">I</span><div><h3>Same Day Edit</h3><p>Um filme do dia montado durante o casamento e mostrado aos convidados, ainda na festa.</p></div><span class="pill">No próprio dia</span></div>
+      <div class="row rv"><span class="r">II</span><div><h3>Primeiras fotografias</h3><p>Um sneak peek para partilharem enquanto ainda têm o coração cheio.</p></div><span class="pill">48 horas</span></div>
+      <div class="row rv"><span class="r">III</span><div><h3>Galeria online</h3><p>Para a família e os convidados verem e guardarem as suas fotografias.</p></div><span class="pill">7 dias</span></div>
+      <div class="row rv"><span class="r">IV</span><div><h3>Fotos para seleção</h3><p>Escolhem as vossas preferidas para a edição final e o álbum.</p></div><span class="pill">30 dias</span></div>
+      <div class="row rv"><span class="r">V</span><div><h3>O filme</h3><p>Montado com tempo, com a vossa música, para ver e rever a vida toda.</p></div><span class="pill">Feito com tempo</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. O QUE LEVAM (acordeão) -->
+<section class="sec" style="border-top:1px solid var(--line-soft);padding-inline:var(--pad)">
+  <div class="ac-cab">
+    <span class="eyebrow c rv">O que levam</span>
+    <h2 class="h2 rv">Tudo o que o dia merece. <em>Nada a mais.</em></h2>
+    <p class="dica rv"><span class="rato">Passem o rato para abrir</span><span class="dedo">Toquem para abrir</span></p>
+  </div>
+  <div class="ac rv" id="ac">
+    <button class="pn on" type="button" aria-expanded="true"><span class="im" style="background-image:url(/lp/casamentos/img/p-ret-sol.webp)"></span><span class="veu"></span>
+      <span class="fe"><span class="n">01</span><span class="cu">Fotografia</span></span>
+      <span class="ab"><span class="n">01</span><span class="t">Fotografia <em>sem pose</em></span><span class="li"></span><span class="tx">Reportagem do dia inteiro, da preparação ao último pé de dança. Natural, sem vos pôr a posar o dia todo.</span></span></button>
+    <button class="pn" type="button" aria-expanded="false"><span class="im" style="background-image:url(/lp/casamentos/img/p-filme-pipas.webp)"></span><span class="veu"></span>
+      <span class="fe"><span class="n">02</span><span class="cu">Filme</span></span>
+      <span class="ab"><span class="n">02</span><span class="t">Um filme, <em>não um vídeo</em></span><span class="li"></span><span class="tx">Com o som real dos votos, dos discursos e das gargalhadas. Para ver e rever com quem não pôde estar.</span></span></button>
+    <button class="pn" type="button" aria-expanded="false"><span class="im" style="background-image:url(/lp/casamentos/img/p-fes-faiscas.webp)"></span><span class="veu"></span>
+      <span class="fe"><span class="n">03</span><span class="cu">Same Day Edit</span></span>
+      <span class="ab"><span class="n">03</span><span class="t">O dia, <em>no próprio dia</em></span><span class="li"></span><span class="tx">O momento em que os convidados se veem no ecrã, horas depois de o terem vivido. Ninguém esquece.</span></span></button>
+    <button class="pn" type="button" aria-expanded="false"><span class="im" style="background-image:url(/lp/casamentos/img/p-pw-reflexo.webp)"></span><span class="veu"></span>
+      <span class="fe"><span class="n">04</span><span class="cu">Pré-wedding</span></span>
+      <span class="ab"><span class="n">04</span><span class="t">Conhecemo-nos <em>antes</em></span><span class="li"></span><span class="tx">Uma sessão a dois antes do grande dia. No casamento, já não somos estranhos com uma câmara.</span></span></button>
+    <button class="pn" type="button" aria-expanded="false"><span class="im" style="background-image:url(/lp/casamentos/img/p-det-convites.webp)"></span><span class="veu"></span>
+      <span class="fe"><span class="n">05</span><span class="cu">Portal</span></span>
+      <span class="ab"><span class="n">05</span><span class="t">Um portal <em>só vosso</em></span><span class="li"></span><span class="tx">Cronograma, guias, pagamentos, estado das entregas e conversa direta connosco. Tudo num só sítio.</span></span></button>
+  </div>
+</section>
+
+<!-- 6. TESTEMUNHO -->
+<section class="td" aria-labelledby="td-t">
+  <div class="td-foto"><img src="/lp/casamentos/img/testemunho-catarina-ruben-1200.webp" alt="Catarina e Ruben abraçados numa vinha ao pôr do sol" loading="lazy"></div>
+  <div class="td-in">
+    <p class="td-id rv"><span>Testemunho Nº 001</span><span>Catarina &amp; Ruben</span></p>
+    <h2 id="td-t" class="td-t rv"><span>Não nos conheciam.</span><span>Não tinham referências nossas.</span><span>Mas confiaram.</span></h2>
+    <p class="td-sub rv">Uma história sobre confiança, escolhas e a responsabilidade de contar um dos dias mais importantes da vida de um casal.</p>
+    <a class="td-btn rv" href="https://rlphotovideo.pt/testemunho" target="_blank" rel="noopener">Ler a história deles <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M1 8h13M9 3l5 5-5 5"/></svg></a>
+  </div>
+</section>
+
+<!-- 7. COMO FUNCIONA -->
+<section class="sec how">
+  <div class="wrap">
+    <div class="cab">
+      <span class="eyebrow c rv">Como funciona</span>
+      <h2 class="h2 rv">Três passos. <em>Zero pressão.</em></h2>
+    </div>
+    <div class="steps">
+      <div class="card rv"><div class="big">01</div><h3>Mandam a data</h3><p>Dizem-nos quando e onde. Respondemos no próprio dia se ainda está livre.</p></div>
+      <div class="card rv"><div class="big">02</div><h3>Conversamos</h3><p>Por videochamada ou ao vivo. Uma conversa, não uma proposta: queremos conhecer-vos e que nos conheçam.</p></div>
+      <div class="card rv"><div class="big">03</div><h3>A data fica vossa</h3><p>Recebem a proposta e o acesso ao portal. A partir daqui, tratamos de tudo convosco.</p></div>
+    </div>
+    <p class="note rv">Primeiro conhecemo-nos. Só depois falamos de valores.</p>
+  </div>
+</section>
+
+<!-- 8. DATA -->
+<section class="sec date" id="data">
+  <img class="date-bg" src="/lp/casamentos/img/p-pw-silhueta.webp" alt="" loading="lazy">
+  <div class="wrap" style="position:relative">
+    <div class="card rv">
+      <span class="eyebrow c">Agenda</span>
+      <h2 class="h2">Cada data só se marca <em>uma vez.</em></h2>
+      <p class="lede">Quando alguém a reserva, deixa de estar disponível. Contem-nos sobre vocês e o vosso dia, e respondemos hoje.</p>
+      <div class="frm" id="formulario">
+        <iframe src="https://portal.rlphotovideo.pt/nova-lead" title="Formulário para os noivos" loading="lazy"></iframe>
+      </div>
+      <p class="alt">Preferem falar já? <a href="https://wa.me/351912932768" target="_blank" rel="noopener">Escrevam-nos no WhatsApp →</a></p>
+    </div>
+    <div class="trust rv"><span>Resposta no próprio dia</span><span>Sem compromisso</span><span>Fotografia e filme, uma só equipa</span></div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap cols">
+    <div>
+      <h2 class="h2">Vamos <em>registar</em> a vossa história</h2>
+      <a class="btn" href="#formulario">Iniciar conversa</a>
+    </div>
+    <div>
+      <h5>Contactos</h5>
+      <a href="mailto:geral.rlphoto@gmail.com">geral.rlphoto@gmail.com</a>
+      <a href="tel:+351912932768">912 932 768</a>
+      <span>Pinhal Novo, Palmela</span>
+    </div>
+    <div>
+      <h5>Seguir</h5>
+      <a href="https://www.instagram.com/rlphoto_fotografia.video/" target="_blank" rel="noopener">Instagram</a>
+      <a href="https://www.facebook.com/people/RL_Photo/100089058572642/" target="_blank" rel="noopener">Facebook</a>
+      <a href="https://rlphotovideo.pt" target="_blank" rel="noopener">rlphotovideo.pt</a>
+    </div>
+  </div>
+  <div class="end"><span>© RL Photo · Video</span><span>registamos com foco na verdade</span></div>
+</footer>
+
+<a class="wa" id="wa" href="https://wa.me/351912932768" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="Fotografia em grande">
+  <img alt=""><button class="x" aria-label="Fechar">×</button><button class="pv" aria-label="Anterior">‹</button><button class="nx" aria-label="Seguinte">›</button><span class="ct"></span>
+</div>
+
+<script>
+// topo: fotos a aparecer e desaparecer
+const sls=[...document.querySelectorAll('.sl')];let si=0;
+setInterval(()=>{if(document.hidden)return;sls[si].classList.remove('on');si=(si+1)%sls.length;sls[si].loading='eager';sls[si].classList.add('on')},5000);
+// teaser com som
+const tz=document.getElementById('tz'),tzv=document.getElementById('tzv');
+document.getElementById('tzp').addEventListener('click',()=>{tzv.muted=false;tzv.play();tz.classList.add('playing')});
+tzv.addEventListener('ended',()=>tz.classList.remove('playing'));
+// separadores da galeria
+const strip=document.getElementById('strip'),figs=[...strip.querySelectorAll('figure')];
+document.getElementById('tabs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+  document.querySelectorAll('#tabs button').forEach(x=>x.classList.toggle('on',x===b));
+  figs.forEach(f=>f.classList.toggle('off',b.dataset.c!=='all'&&f.dataset.c!==b.dataset.c));strip.scrollTo({left:0,behavior:'smooth'})});
+// foto em grande
+const lb=document.getElementById('lb'),lbi=lb.querySelector('img'),lbc=lb.querySelector('.ct');let cur=0,moved=false;
+const vis=()=>figs.filter(f=>!f.classList.contains('off'));
+const show=i=>{const v=vis();cur=(i+v.length)%v.length;const im=v[cur].querySelector('img');lbi.src=im.src;lbi.alt=im.alt;lbc.textContent=`${cur+1} / ${v.length}`};
+strip.addEventListener('mousedown',()=>moved=false);strip.addEventListener('mousemove',()=>moved=true);
+strip.addEventListener('click',e=>{const f=e.target.closest('figure');if(!f||moved)return;show(vis().indexOf(f));lb.classList.add('on')});
+lb.addEventListener('click',e=>{if(e.target.matches('.pv'))show(cur-1);else if(e.target.matches('.nx'))show(cur+1);else if(e.target===lb||e.target.matches('.x'))lb.classList.remove('on')});
+addEventListener('keydown',e=>{if(!lb.classList.contains('on'))return;if(e.key==='Escape')lb.classList.remove('on');if(e.key==='ArrowLeft')show(cur-1);if(e.key==='ArrowRight')show(cur+1)});
+// paralaxe suave nas fotos de fundo
+const bgs=[...document.querySelectorAll('.mani-bg,.date-bg')];
+const para=()=>bgs.forEach(b=>{const r=b.parentElement.getBoundingClientRect();if(r.bottom<0||r.top>innerHeight)return;b.style.transform=`translateY(${(r.top+r.height/2-innerHeight/2)*-.08}px)`});
+addEventListener('scroll',para,{passive:true});para();
+const WA='351912932768';
+// aparecer ao fazer scroll
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+document.querySelectorAll('.rv').forEach((el,i)=>{el.style.transitionDelay=(i%4)*90+'ms';io.observe(el)});
+setTimeout(()=>document.querySelectorAll('.hero .rv').forEach(e=>e.classList.add('in')),150);
+// fotos a ganhar cor no telemóvel
+if(matchMedia('(hover:none)').matches){const io2=new IntersectionObserver(es=>es.forEach(e=>e.target.classList.toggle('on',e.intersectionRatio>.6)),{threshold:[0,.6,1]});document.querySelectorAll('.miss figure').forEach(f=>io2.observe(f))}
+// barra fixa e progresso
+const bar=document.getElementById('bar'),prog=document.getElementById('prog');
+addEventListener('scroll',()=>{bar.classList.toggle('s',scrollY>60);const h=document.documentElement.scrollHeight-innerHeight;prog.style.width=(h>0?scrollY/h*100:0)+'%'},{passive:true});
+// acordeão
+const pns=[...document.querySelectorAll('.pn')];
+const abre=p=>pns.forEach(x=>{x.classList.toggle('on',x===p);x.setAttribute('aria-expanded',x===p)});
+pns.forEach(p=>{p.addEventListener('mouseenter',()=>abre(p));p.addEventListener('focus',()=>abre(p));p.addEventListener('click',()=>abre(p))});
+// arrastar a galeria
+const s=document.getElementById('strip');let down=false,x0,sl;
+s.addEventListener('mousedown',e=>{down=true;x0=e.pageX;sl=s.scrollLeft;s.style.scrollSnapType='none'});
+addEventListener('mouseup',()=>{down=false;s.style.scrollSnapType=''});
+s.addEventListener('mousemove',e=>{if(down){e.preventDefault();s.scrollLeft=sl-(e.pageX-x0)}});
+</script>
+</body>
+</html>

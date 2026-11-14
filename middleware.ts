@@ -252,6 +252,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/wedding-mentor') ||
     pathname === '/newsletter' ||
     pathname.startsWith('/apresentacao/') || // apresentações online às leads RL PROD (link secreto, public/apresentacoes)
+    pathname.startsWith('/lp/') || // landing pages públicas do Dep. de Comunicação (public/lp)
     pathname.startsWith('/newsletter/') ||
     pathname.startsWith('/api/newsletter-subscribe') ||
     pathname.startsWith('/api/newsletter-confirm') ||

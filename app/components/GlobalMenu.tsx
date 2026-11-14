@@ -92,6 +92,9 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/crm/stats', pill: 'Números' },
     { href: '/crescimento', pill: 'Marketing' },
   ] },
+  { titulo: 'Dep. de Comunicação', links: [
+    { href: '/comunicacao', pill: 'Landing' },
+  ] },
   { titulo: 'Staff', links: [
     { href: '/staff', pill: 'Equipa' },
     { href: '/freelancers', pill: 'Equipa' },
@@ -507,6 +510,10 @@ function GlobalMenuInner() {
   },
   // Páginas que só aparecem nas colunas do menu Gestão
   {
+    href: '/comunicacao', label: 'Comunicação', sub: 'Landing pages',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path strokeLinecap="round" d="M16 9a4 4 0 010 6M19 6a8 8 0 010 12"/></svg>,
+  },
+  {
     href: '/registar-pagamento', label: 'Registar Pagamento', sub: 'Pagamentos dos noivos',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="2" y="5" width="20" height="14" rx="2"/><path strokeLinecap="round" d="M2 10h20M6 15h4"/></svg>,
   },
@@ -709,7 +716,8 @@ function GlobalMenuInner() {
             }}
             onMouseEnter={() => abrirMega(mega)} onMouseLeave={sairMega}>
             {pn && g && dest && msg && (
-              <div key={g.nome} className="max-w-7xl mx-auto grid grid-cols-4 gap-5 [animation:megaIn_.25s_ease-out]">
+              <div key={g.nome} className="max-w-7xl mx-auto grid grid-cols-4 gap-5 [animation:megaIn_.25s_ease-out]"
+                style={colunas && colunas.length > 4 ? { gridTemplateColumns: `repeat(${colunas.length}, minmax(0, 1fr))` } : undefined}>
 
                 {/* Produção e Gestão: uma coluna por tema (título + cartões de acesso, como a coluna Staff) */}
                 {colunas && colunas.map(c => (
