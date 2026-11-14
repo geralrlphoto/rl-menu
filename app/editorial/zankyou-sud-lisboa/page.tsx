@@ -60,21 +60,20 @@ const TOTAL = CAPITULOS.length + 1 // a capa é a 01
 
 const CSS = `
 .ev{overflow-x:clip;}
-/* ── Capa: fotos do SUD Lisboa a aparecer e desaparecer, com o título por cima ── */
+/* ── Capa: foto fixa do interior do SUD Lisboa com a Ponte 25 de Abril, com o título por cima ── */
 .ev .capa{position:relative;height:100svh;min-height:600px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;}
-.ev .capa-fotos{position:absolute;inset:0;background:var(--ink);}
-.ev .capa-fotos img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;animation:evFoto 24s linear infinite;}
-.ev .capa-fotos img:nth-child(1){animation-delay:0s;}
-.ev .capa-fotos img:nth-child(2){animation-delay:6s;}
-.ev .capa-fotos img:nth-child(3){animation-delay:12s;}
-.ev .capa-fotos img:nth-child(4){animation-delay:18s;}
-@keyframes evFoto{0%{opacity:0;transform:scale(1.1)}6%{opacity:1}25%{opacity:1}31%{opacity:0;transform:scale(1)}100%{opacity:0}}
+.ev .capa-foto{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 60%;}
+/* Fotos do SUD ao longo do portal, entre capítulos */
+.ev .faixa-foto{position:relative;margin:clamp(72px,12vh,120px) 0 0;height:clamp(280px,62vh,620px);overflow:hidden;}
+.ev .faixa-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+.ev .faixa-foto::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,var(--ink) 0%,rgba(11,10,8,.1) 22%,rgba(11,10,8,.1) 70%,var(--ink) 100%);}
+.ev .faixa-foto figcaption{position:absolute;z-index:2;left:0;right:0;bottom:clamp(22px,5vh,40px);text-align:center;font-family:var(--fs);font-style:italic;font-weight:300;font-size:clamp(22px,3.4vw,34px);color:var(--tx);padding:0 16px;}
+.ev .faixa-foto figcaption em{color:var(--g);}
 .ev .capa::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,11,11,.55) 0%,rgba(11,11,11,.1) 25%,rgba(11,11,11,.35) 55%,rgba(11,11,11,.92) 82%,var(--ink) 100%);}
 .ev .capa-info{position:relative;z-index:2;padding:0 20px clamp(44px,9vh,80px);}
 .ev .capa-t{font-family:var(--fs);font-weight:300;font-size:clamp(46px,10vw,112px);line-height:.95;letter-spacing:-.02em;color:var(--tx);margin:16px 0 0;}
 .ev .capa-t em{font-style:italic;color:var(--g);}
 .ev .capa-l{font-family:var(--fs);font-style:italic;font-weight:300;font-size:clamp(22px,5vw,30px);color:var(--tx-mid);margin-top:14px;}
-@media (prefers-reduced-motion:reduce){.ev .capa-fotos img{animation:none;}.ev .capa-fotos img:first-child{opacity:1;}}
 .ev .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 .ev .parceiros-t{font-family:var(--fm);font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--tx);margin-top:18px;}
 .ev .parceiros-t b{color:var(--g);font-weight:400;margin:0 .5em;}
@@ -308,14 +307,9 @@ export default async function ZankyouSudLisboaPage() {
       <div className="fx-grain" aria-hidden="true" />
 
       {/* Capa */}
-      {/* Fotos do SUD Lisboa (esplanada, fachada, placa, noite) a alternar, com o título por cima */}
+      {/* Foto fixa: o interior do SUD Lisboa, com o Tejo e a Ponte 25 de Abril */}
       <section className="capa" id="capa">
-        <div className="capa-fotos" aria-hidden="true">
-          <img src={`${IMG}/sud-terrazza.webp`} alt="" style={{ objectPosition: 'center 60%' }} />
-          <img src={`${IMG}/sud-fachada.webp`} alt="" />
-          <img src={`${IMG}/sud-placa.webp`} alt="" style={{ objectPosition: 'center 40%' }} />
-          <img src={`${IMG}/sud-noite.webp`} alt="" />
-        </div>
+        <img className="capa-foto" src={`${IMG}/sud-terrazza.webp`} alt="Interior do SUD Lisboa com vista para o Tejo e a Ponte 25 de Abril" />
         <div className="capa-info">
           <p className="eyebrow">XIX Edição · Portal do evento</p>
           <h1 className="capa-t">Zankyou <em>Wedding Club</em></h1>
@@ -343,6 +337,8 @@ export default async function ZankyouSudLisboaPage() {
         <Rodape n={2} />
       </section>
 
+      <figure className="faixa-foto"><img src={`${IMG}/sud-fachada.webp`} alt="Fachada do SUD Lisboa ao fim da tarde" loading="lazy" /><figcaption>A casa desta <em>edição</em></figcaption></figure>
+
       {/* 02 · Localização */}
       <section className="cap" id="local">
         <Cabeca n={3} etiqueta="Localização" lead="O SUD Lisboa fica junto ao Tejo, em Belém, ao lado do MAAT. Do Aeroporto Humberto Delgado são 20 a 30 minutos de carro, conforme o trânsito. O espaço tem estacionamento; táxi e TVDE deixam-vos à porta.">
@@ -360,12 +356,21 @@ export default async function ZankyouSudLisboaPage() {
         <Rodape n={3} />
       </section>
 
+      <figure className="faixa-foto"><img src={`${IMG}/sud-placa.webp`} alt="Placa do SUD Lisboa junto ao Tejo, com a Ponte 25 de Abril" loading="lazy" style={{ objectPosition: 'center 40%' }} /><figcaption>À beira do <em>Tejo</em></figcaption></figure>
+
       {/* 03 · Meteorologia */}
       <section className="cap" id="meteo">
         <Cabeca n={4} etiqueta="Meteorologia" lead="Previsão hora a hora para Belém, das 16h às 22h. O pôr do sol é por volta das 17h20: a melhor luz da tarde sobre o Tejo.">
           O tempo no <em>dia</em>
         </Cabeca>
         <MeteoEvento lat={LAT} lon={LON} data={DATA} inicio={16} fim={22} por={17} />
+        <figure className="rv" style={{ margin: '18px 0 0', display: 'flex', gap: 18, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+          <img src={`${IMG}/sud-terrazza-barco.webp`} alt="Esplanada do SUD Lisboa com um veleiro no Tejo" loading="lazy"
+            style={{ width: 'min(100%, 300px)', aspectRatio: '4 / 5', objectFit: 'cover', borderRadius: 16, border: '1px solid var(--line-soft)' }} />
+          <figcaption style={{ flex: '1 1 220px', fontFamily: 'var(--fs)', fontStyle: 'italic', fontWeight: 300, fontSize: 'clamp(20px,2.4vw,26px)', color: 'var(--tx-mid)', lineHeight: 1.35 }}>
+            A esplanada do SUD, de frente para o rio. Por volta das <em style={{ color: 'var(--g)' }}>17h20</em>, o sol põe-se sobre o Tejo.
+          </figcaption>
+        </figure>
         <Rodape n={4} />
       </section>
 
@@ -384,6 +389,8 @@ export default async function ZankyouSudLisboaPage() {
         </ol>
         <Rodape n={5} />
       </section>
+
+      <figure className="faixa-foto"><img src={`${IMG}/sud-noite.webp`} alt="Entrada do SUD Lisboa à noite" loading="lazy" /><figcaption>E a noite <em>continua</em></figcaption></figure>
 
       {/* 05 · Parceiros */}
       <section className="cap" id="parceiros">
