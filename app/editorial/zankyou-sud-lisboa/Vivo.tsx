@@ -33,7 +33,7 @@ export function Contagem() {
   )
 }
 
-type Bloco = { hora: string; fim: string; nome: string; texto: string }
+type Bloco = { hora: string; fim: string; nome: string; texto: string; equipa?: boolean }
 
 const min = (h: string) => { const [a, b] = h.split(':').map(Number); return a * 60 + b }
 
@@ -60,11 +60,12 @@ export function ProgramaVivo({ blocos }: { blocos: Bloco[] }) {
         if (m !== null) estado = m >= fim ? 'feito' : m >= ini ? 'agora' : i === proximo ? 'seguir' : ''
         else if (agora !== null && agora > FIM) estado = 'feito'
         return (
-          <article key={b.hora} className={`pg-b rv ${estado}`}>
+          <article key={b.hora} className={`pg-b rv ${estado}${b.equipa ? ' eq' : ''}`}>
             <div className="pg-h"><b>{b.hora}</b><span>até às {b.fim}</span></div>
             <div className="pg-c">
               <div className="pg-top">
                 <h3>{b.nome}</h3>
+                {b.equipa && !estado && <span className="chip">Equipa RL</span>}
                 {estado === 'agora' && <span className="chip agora"><i />A decorrer</span>}
                 {estado === 'seguir' && <span className="chip">A seguir</span>}
                 {estado === 'feito' && <span className="chip feito">Concluído</span>}

@@ -18,6 +18,7 @@ const APPLE = `https://maps.apple.com/?daddr=${LAT},${LON}&q=SUD%20Lisboa`
 const IMG = '/editorial/zankyou-sud-lisboa'
 
 const PROGRAMA = [
+  { hora: '15:00', fim: '16:00', nome: 'Chegada da equipa RL', equipa: true, texto: 'A equipa da RL Photo Video chega ao SUD Lisboa para o briefing e para captar o espaço e os detalhes antes da chegada dos convidados.' },
   { hora: '16:00', fim: '17:00', nome: 'Welcome & Connect', texto: 'Receção dos convidados, welcome drink e os primeiros momentos de networking.' },
   { hora: '17:00', fim: '18:00', nome: 'Inspire & Share', texto: 'Abertura oficial pela Zankyou Portugal, apresentação do conceito desta edição e agradecimento aos parceiros. Intervenção de um representante do SUD / SANA.' },
   { hora: '18:00', fim: '20:00', nome: 'Taste & Experience', texto: 'Uma experiência gastronómica e sensorial, onde os sabores se encontram com o espetáculo e a surpresa.' },
@@ -180,6 +181,8 @@ const CSS = `
 .zw .pg-b.agora::before{background:var(--sun);box-shadow:0 0 0 5px rgba(91,170,162,.25);}
 .zw .pg-b.agora p,.zw .pg-b.agora .pg-h span{color:rgba(246,250,249,.65);}
 .zw .pg-b.feito{opacity:.55;}
+.zw .pg-b.eq:not(.agora){background:transparent;border-style:dashed;border-color:rgba(61,138,130,.45);}
+.zw .pg-b.eq:not(.agora)::before{border-style:dashed;}
 .zw .pg-h b{display:block;font-family:var(--serif);font-weight:400;font-size:46px;line-height:1;}
 .zw .pg-h span{display:block;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-top:8px;}
 .zw .pg-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
