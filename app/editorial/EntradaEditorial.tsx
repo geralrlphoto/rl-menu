@@ -22,7 +22,10 @@ const CSS = `
 .ent-ed .hint{margin-top:22px;}
 `
 
-export default function EntradaEditorial({ slug }: { slug: string }) {
+// Por omissão, o texto do editorial Zankyou × Quinta da Ria; os outros portais passam o seu
+export default function EntradaEditorial({ slug, parceiros = ['Zankyou', 'Quinta da Ria', 'RL Photo Video'], titulo, fundo }: {
+  slug: string; parceiros?: string[]; titulo?: React.ReactNode; fundo?: string
+}) {
   const router = useRouter()
   const [senha, setSenha] = useState('')
   const [erro, setErro] = useState('')
@@ -45,11 +48,11 @@ export default function EntradaEditorial({ slug }: { slug: string }) {
   return (
     <main className="nlead ent-ed">
       <style>{CSS_BRIEFING + CSS}</style>
-      <div className="fundo" aria-hidden="true" />
+      <div className="fundo" aria-hidden="true" style={fundo ? { backgroundImage: `url('${fundo}')` } : undefined} />
       <form onSubmit={entrar}>
         <img src="/logo_rl_gold.png" alt="RL Photo Video" />
-        <p className="parc">Zankyou<b>×</b>Quinta da Ria<b>×</b>RL Photo Video</p>
-        <h1>Editorial de <em>Casamento</em></h1>
+        <p className="parc">{parceiros.map((p, i) => <span key={p}>{i > 0 && <b>×</b>}{p}</span>)}</p>
+        <h1>{titulo ?? <>Editorial de <em>Casamento</em></>}</h1>
         <div className="ln" />
         <p className="lead">Escreva a senha para entrar. Começa por <span style={{ color: 'var(--tx)' }}>RL.</span></p>
         <input

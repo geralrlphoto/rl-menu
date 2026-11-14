@@ -12,6 +12,7 @@ import type { EntregaLink } from './editoriaisEntregas'
 // Enquanto a tabela não tiver a linha do editorial, vale esta senha
 const SENHA_INICIAL: Record<string, string> = {
   'zankyou-quinta-da-ria': '797d6b01345767f9d05f691a4477dde9:345d9171513379936dbc4f25bb3535e99d0ad786085fe85234934e1e74ebff8e',
+  'zankyou-sud-lisboa': '74838c2d72074305daaff6fdfecf86c1:f1c3ca8025b2f6a176f69c0ff37d7e5d1219c049da9881d39eb3aec53e74d8a4',
 }
 
 export const EDITORIAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 60 // 60 dias

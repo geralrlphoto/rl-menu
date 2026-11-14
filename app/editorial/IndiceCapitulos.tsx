@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 // que abre a lista e fecha ao escolher um capítulo (ou ao tocar fora).
 // O estilo (.indice, .ham…) está no CSS da página, dentro de .ed.
 
-export default function IndiceCapitulos({ capitulos }: { capitulos: Array<{ id: string; nome: string }> }) {
+export default function IndiceCapitulos({ capitulos, rotulo = 'Quinta da Ria' }: { capitulos: Array<{ id: string; nome: string }>; rotulo?: string }) {
   const [aberto, setAberto] = useState(false)
 
   useEffect(() => {
@@ -34,7 +34,7 @@ export default function IndiceCapitulos({ capitulos }: { capitulos: Array<{ id: 
       </nav>
 
       <div className="ham-barra">
-        <span className="ham-t">Quinta da Ria</span>
+        <span className="ham-t">{rotulo}</span>
         <button type="button" className="ham" aria-expanded={aberto} aria-label={aberto ? 'Fechar capítulos' : 'Abrir capítulos'} onClick={() => setAberto(a => !a)}>
           <span>Capítulos</span><i /><i /><i />
         </button>

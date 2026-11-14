@@ -36,6 +36,17 @@ export const ENTREGAS_EDITORIAL: Record<string, GrupoEntregas[]> = {
       { id: 'filme-espaco', nome: 'Filme de apresentação do espaço', formato: '16:9 · 60–90 s' },
     ] },
   ],
+  // XIX Zankyou Wedding Club × SUD Lisboa (evento de 16/11/2026): RL Photo Video é o vídeo oficial
+  'zankyou-sud-lisboa': [
+    { parceiro: 'Zankyou × SUD Lisboa', sub: 'Vídeo oficial do evento', itens: [
+      { id: 'aftermovie', nome: 'Aftermovie do evento', formato: '16:9 · 60–90 s' },
+      { id: 'reel-evento', nome: 'Reel do evento', formato: '9:16 · 30–45 s' },
+      { id: 'teaser', nome: 'Teaser do dia seguinte', formato: '9:16 · 15 s' },
+    ] },
+    { parceiro: 'Parceiros', sub: 'Conteúdo para cada marca', itens: [
+      { id: 'clips-parceiros', nome: 'Clips dos parceiros', formato: '9:16 · por marca' },
+    ] },
+  ],
 }
 
 export const ehIdExtra = (id: string) => /^extra-[a-z0-9]{4,20}$/.test(id)

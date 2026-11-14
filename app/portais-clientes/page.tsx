@@ -13,6 +13,7 @@ const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
 // Portais de editoriais (páginas em /editorial/…), mostrados à parte dos casamentos
 const EDITORIAIS = [
   { slug: 'zankyou-quinta-da-ria', nome: 'Zankyou × Quinta da Ria', sub: 'EDITORIAL · PLANO DE VÍDEO', href: '/editorial/zankyou-quinta-da-ria' },
+  { slug: 'zankyou-sud-lisboa', nome: 'Zankyou Wedding Club × SUD Lisboa', sub: 'EVENTO · 16 NOV 2026 · VÍDEO OFICIAL', href: '/editorial/zankyou-sud-lisboa' },
 ]
 
 function formatDay(d: string) {
