@@ -138,6 +138,8 @@ export function whatsappLink(contato: string | null | undefined, texto?: string)
   if (n.startsWith('+')) n = n.slice(1)
   else if (n.startsWith('00')) n = n.slice(2)
   else if (n.length === 9) n = '351' + n
+  // Telemóvel do Reino Unido escrito à moda local (07xxxxxxxxx): 44 + sem o 0
+  else if (n.length === 11 && n.startsWith('07')) n = '44' + n.slice(1)
   if (n.length < 9) return null
   return texto ? `https://wa.me/${n}?text=${encodeURIComponent(texto)}` : `https://wa.me/${n}`
 }
