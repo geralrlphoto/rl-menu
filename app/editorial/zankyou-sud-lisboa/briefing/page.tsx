@@ -43,12 +43,9 @@ const PARCEIROS = [
   ['Halus Stories', 'Joias em detalhe'],
 ]
 
+// Só o contacto da RL: os contactos dos fornecedores não entram no briefing da equipa
 const CONTACTOS = [
   ['Rui Gonçalves', 'RL Photo Video · responsável do vídeo', '+351 912 932 768'],
-  ['Zankyou Portugal', 'Organização', '+351 930 563 680'],
-  ['SUD Lisboa', 'Eventos do espaço', '+351 211 592 703'],
-  ['Douglas Silva', 'Floor Sensation · som e técnica', '+351 961 681 052'],
-  ['Nuno e Fátima', 'Detail · fotografia oficial', '+351 925 038 324'],
 ]
 
 const CSS = `
@@ -164,7 +161,7 @@ export default async function BriefingZankyouSud() {
           {PARCEIROS.map(([n, o]) => <div key={n} className="tr"><span>{n}</span><span>{o}</span></div>)}
         </div>
 
-        <h2>Contactos no <em>dia</em></h2>
+        <h2>Contacto no <em>dia</em></h2>
         <div className="tab">
           {CONTACTOS.map(([n, p, t]) => (
             <div key={n} className="tr"><span>{n}</span><span>{p} · <a href={`tel:${t.replace(/\s/g, '')}`}>{t}</a></span></div>
