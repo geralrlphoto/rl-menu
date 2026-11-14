@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { linkPublico } from '@/lib/site-url'
@@ -10,6 +11,7 @@ import { PedidoReuniaoPainel, type PedidoReuniao } from '@/app/photo/PedidoReuni
 import {
   STATUSES, MOTIVOS_NAO_FECHOU, FOLLOW_PARADO_DIAS, colunaDe, daysSince, estadoAcao,
   EVENTO_LEMBRETE_VESPERA, mensagemVesperaReuniao, EVENTO_FOLLOW3, FOLLOW3_WA_DIAS, mensagemFollowUp3, followContactoPendente, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUpContacto1, mensagemFollowUpContacto2,
+  EVENTO_LANDING, LINK_LANDING, mensagemLandingPage,
   fmtDataCurta, fmtOrcamento, whatsappLink, mensagemBoasVindas, mensagemLembreteReuniao, mensagemPortalReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemFecho, mensagemOpiniao, EVENTO_OPINIAO, EVENTO_ABRIU_LINK, linkOpiniao, mensagemMarcarReuniao, diasParaFollowUp, FOLLOW2_WA_DIAS, telLink, type ColunaKey,
 } from '@/lib/crm'
 
@@ -183,6 +185,100 @@ function portalUrl(c: Contact): string | null {
   return linkPublico(`/${c.page_tipo === 'batizado' ? 'b' : 'r'}/${c.page_token}`)
 }
 
+/* Link para abrir o portal da lead: o da proposta (/r ou /b) se já existir; senão o link pessoal
+   /reuniao/<id>, que abre (ou cria) o portal da reunião. As aberturas do admin não contam como "abriu". */
+function linkPortalLead(c: Contact): string {
+  return portalUrl(c) ?? linkPublico(`/reuniao/${c.id}`)
+}
+
+/* ── JANELA DE AÇÕES DA LEAD (botão + no cartão): pesquisa e escolhe o que fazer ── */
+type AcaoLead = { id: string; titulo: string; sub: string; chaves: string; href?: string; novaJanela?: boolean; correr?: () => void; enviado?: string }
+
+function AcoesLeadModal({ c, enviados, onEnviado, onClose }: {
+  c: Contact; enviados: Record<string, string>; onEnviado: (evento: string) => void; onClose: () => void
+}) {
+  const [q, setQ] = useState('')
+  const [aviso, setAviso] = useState('')
+  const input = useRef<HTMLInputElement>(null)
+  const fechar = useRef(onClose)
+  fechar.current = onClose
+  useEffect(() => {
+    input.current?.focus()
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') fechar.current() }
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [])
+
+  const copiar = (txt: string, msg: string) => {
+    navigator.clipboard.writeText(txt).then(() => { setAviso(msg); setTimeout(() => setAviso(''), 2000) }).catch(() => alert(txt))
+  }
+  const waLanding = whatsappLink(c.contato, mensagemLandingPage(c.nome))
+  const portal = linkPortalLead(c)
+  const tel = telLink(c.contato)
+
+  const acoes: AcaoLead[] = [
+    ...(waLanding ? [{
+      id: 'landing-wa', titulo: 'Enviar a landing page por WhatsApp', sub: 'Follow-up com o teaser, o portfólio e o formulário',
+      chaves: 'landing page follow up followup whatsapp casamentos teaser portfolio enviar', href: waLanding, novaJanela: true,
+      enviado: enviados[EVENTO_LANDING],
+      correr: () => {
+        onEnviado(EVENTO_LANDING)
+        supabase.from('crm_status_history').insert({ contact_id: c.id, evento: EVENTO_LANDING })
+          .then(() => { fetch('/api/revalidate-photo?tag=whatsapp', { method: 'POST' }).catch(() => {}) })
+      },
+    }] : []),
+    { id: 'landing-copiar', titulo: 'Copiar o link da landing page', sub: LINK_LANDING.replace(/^https?:\/\//, ''), chaves: 'landing page link copiar', correr: () => copiar(LINK_LANDING, 'Link da landing page copiado') },
+    { id: 'landing-abrir', titulo: 'Ver a landing page', sub: 'Abre num separador novo', chaves: 'landing page ver abrir', href: LINK_LANDING, novaJanela: true },
+    { id: 'portal-abrir', titulo: 'Abrir o portal da lead', sub: c.page_token ? 'Portal da proposta' : 'Portal da reunião (calendário)', chaves: 'portal abrir browser reuniao proposta', href: portal, novaJanela: true },
+    { id: 'portal-copiar', titulo: 'Copiar o link do portal', sub: portal.replace(/^https?:\/\//, ''), chaves: 'portal link copiar', correr: () => copiar(portal, 'Link do portal copiado') },
+    ...(whatsappLink(c.contato) ? [{ id: 'wa', titulo: 'Abrir conversa no WhatsApp', sub: c.contato ?? '', chaves: 'whatsapp conversa mensagem', href: whatsappLink(c.contato)!, novaJanela: true }] : []),
+    ...(tel ? [{ id: 'ligar', titulo: 'Ligar', sub: c.contato ?? '', chaves: 'ligar telefone chamada', href: tel }] : []),
+    ...(c.email ? [{ id: 'email', titulo: 'Enviar email', sub: c.email, chaves: 'email mail', href: `mailto:${c.email}` }] : []),
+    { id: 'ficha', titulo: 'Abrir a ficha da lead', sub: 'Todos os dados e o histórico', chaves: 'ficha detalhes dados historico', href: `/crm/${c.id}` },
+  ]
+  const termo = q.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const lista = termo ? acoes.filter(a => (a.titulo + ' ' + a.sub + ' ' + a.chaves).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').includes(termo)) : acoes
+
+  const executar = (a: AcaoLead) => {
+    a.correr?.()
+    if (a.href) { if (a.novaJanela) window.open(a.href, '_blank', 'noopener'); else window.location.href = a.href }
+    if (a.href) onClose()
+  }
+
+  return createPortal(
+    <div className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-start sm:items-center justify-center p-4 pt-[12vh] sm:pt-4"
+      onClick={e => { e.stopPropagation(); onClose() }} onMouseDown={e => e.stopPropagation()}>
+      <div className="w-full max-w-lg rounded-2xl border border-gold/25 bg-[#0f0f0f] shadow-[0_0_60px_-24px_rgba(201,168,76,0.5)] overflow-hidden"
+        onClick={e => e.stopPropagation()}>
+        <div className="px-5 pt-5 pb-3 border-b border-white/[0.07]">
+          <p className="text-[10px] tracking-[0.25em] uppercase text-gold/70">Ações da lead</p>
+          <p className="text-white text-lg font-semibold mt-1 truncate">{c.nome || 'Sem nome'}</p>
+          <input ref={input} value={q} onChange={e => setQ(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && lista[0]) executar(lista[0]) }}
+            placeholder="Procurar: landing, portal, WhatsApp, ficha…"
+            className="mt-3 w-full rounded-xl border border-white/10 bg-black/40 px-4 py-2.5 text-[14px] text-white outline-none focus:border-gold/50 placeholder:text-white/25" />
+        </div>
+        <div className="max-h-[56vh] overflow-y-auto p-2">
+          {lista.length === 0 && <p className="text-center text-white/35 text-sm py-8">Nada encontrado.</p>}
+          {lista.map(a => (
+            <button key={a.id} type="button" onClick={() => executar(a)}
+              className="w-full text-left flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/[0.05] transition-colors">
+              <span className="flex-1 min-w-0">
+                <span className="block text-[14px] text-white/90 font-medium">{a.titulo}</span>
+                <span className="block text-[12px] text-white/40 truncate">{a.sub}</span>
+              </span>
+              {a.enviado && <span className="shrink-0 text-[10px] font-semibold tracking-wider uppercase px-2 py-1 rounded-md border border-green-500/50 text-green-300 bg-green-500/15">Enviada {fmtDataCurta(a.enviado.slice(0, 10))}</span>}
+              <span className="shrink-0 text-gold/60">{a.href && a.novaJanela ? '↗' : '→'}</span>
+            </button>
+          ))}
+        </div>
+        {aviso && <p className="px-5 py-3 border-t border-white/[0.07] text-[13px] text-green-300">✓ {aviso}</p>}
+      </div>
+    </div>,
+    document.body,
+  )
+}
+
 function AcaoLinha({ c }: { c: Contact }) {
   const estado = estadoAcao(c.proxima_acao_data)
   if (!c.proxima_acao && !estado) return null
@@ -227,6 +323,7 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
   const hojeISO = new Date().toISOString().slice(0, 10)
   const dataFutura = !!c.data_casamento && c.data_casamento >= hojeISO
   const viuHa = c.page_last_viewed ? Math.floor((Date.now() - new Date(c.page_last_viewed).getTime()) / 3600000) : null
+  const [acoesAbertas, setAcoesAbertas] = useState(false)
 
   return (
     <div
@@ -238,6 +335,18 @@ export function KanbanCard({ c, coluna, diasNoPasso, ocupacao = null, enviados, 
     >
       <div className="flex items-start justify-between gap-2">
         <span className="text-white text-sm font-medium leading-snug line-clamp-2">{c.nome || 'Sem nome'}</span>
+        {/* Portal da lead (abre no browser) e o + com as ações (janela central com pesquisa) */}
+        <span className="ml-auto flex-shrink-0 flex items-center gap-1" onClick={e => e.stopPropagation()} onMouseDown={e => e.stopPropagation()} draggable={false} onDragStart={e => e.preventDefault()}>
+          <a href={linkPortalLead(c)} target="_blank" rel="noopener noreferrer" title={c.page_token ? 'Abrir o portal da proposta' : 'Abrir o portal da reunião'}
+            className="h-7 px-2.5 rounded-full border border-gold/35 bg-gold/10 text-gold text-[10px] font-semibold tracking-wider uppercase flex items-center hover:bg-gold/20 transition-colors">
+            Portal ↗
+          </a>
+          <button type="button" onClick={() => setAcoesAbertas(true)} title="Ações: landing page, portal, WhatsApp…" aria-label="Ações da lead"
+            className="w-7 h-7 rounded-full border border-white/15 text-white/70 text-base leading-none flex items-center justify-center hover:border-gold/50 hover:text-gold transition-colors">
+            +
+          </button>
+        </span>
+        {acoesAbertas && <AcoesLeadModal c={c} enviados={enviados} onEnviado={onEnviado} onClose={() => setAcoesAbertas(false)} />}
         {emFollow && (
           <span
             title={coluna === 'proposta' ? 'Dias desde que a proposta foi enviada' : 'Dias em follow up'}

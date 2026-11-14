@@ -676,6 +676,25 @@ export function mensagemBoasVindas(nome: string | null | undefined, id: string, 
   ].join('\n')
 }
 
+/* Follow-up com a landing page de casamentos (/lp/casamentos): teaser, portfólio e formulário.
+   Enviada a partir da janela do + no cartão da lead (/crm). */
+export const EVENTO_LANDING = 'WhatsApp landing page enviado'
+export const LINK_LANDING = linkPublico('/lp/casamentos')
+export function mensagemLandingPage(nome: string | null | undefined): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    'Preparámos uma página para conhecerem melhor o nosso trabalho: o teaser de um casamento, o portfólio e tudo o que fazemos no vosso dia.',
+    '',
+    LINK_LANDING,
+    '',
+    'Vejam com calma. Se quiserem, no fim da página podem contar-nos mais sobre o vosso casamento.',
+    '',
+    ...ASSINATURA,
+  ].join('\n')
+}
+
 export function telLink(contato: string | null | undefined): string | null {
   const n = (contato ?? '').replace(/[^\d+]/g, '')
   return n.length >= 9 ? `tel:${n}` : null
