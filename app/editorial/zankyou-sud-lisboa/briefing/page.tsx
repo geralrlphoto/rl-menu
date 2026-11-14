@@ -22,11 +22,11 @@ const WAZE = `https://waze.com/ul?ll=${LAT},${LON}&navigate=yes`
 
 const BLOCOS = [
   { hora: '15:00', fim: '16:00', nome: 'Chegada da equipa RL', evento: 'Estamos no SUD Lisboa às 15h00 para o nosso briefing e para produzir conteúdos antes da chegada dos convidados.',
-    filmar: ['Briefing rápido entre a equipa: planos, divisão de tarefas e som', 'O espaço vazio e arrumado, com boa luz: interiores, esplanada e o Tejo', 'Decoração e detalhes dos parceiros antes de haver gente', 'Primeiras falas do Rui para a marca pessoal'] },
+    filmar: ['Briefing rápido entre a equipa: planos, divisão de tarefas e som', 'O espaço vazio e arrumado, com boa luz: interiores, esplanada e o Tejo', 'Decoração e detalhes dos parceiros antes de haver gente', 'Primeiras falas do Rui para a marca pessoal', 'Se for possível, drone: o SUD, o Tejo e a ponte vistos do ar'] },
   { hora: '16:00', fim: '17:00', nome: 'Welcome & Connect', evento: 'Receção, welcome drink e primeiros momentos de networking.',
     filmar: ['Chegada dos convidados e cumprimentos', 'O espaço a encher: planos largos e das entradas', 'Decoração floral da Madame Boutique Floral', 'Detalhes de marca: Zankyou e SUD Lisboa'] },
   { hora: '17:00', fim: '18:00', nome: 'Inspire & Share', evento: 'Abertura pela Zankyou Portugal, agradecimento aos parceiros e intervenção do SUD / SANA.',
-    filmar: ['Discursos com som limpo (falar com a Floor Sensation para a saída de áudio)', 'Oradores em plano médio e apertado', 'Reações do público', 'Pôr do sol perto das 17h20: prioridade aos planos sobre o rio'] },
+    filmar: ['Discursos com som limpo (falar com a Floor Sensation para a saída de áudio)', 'Oradores em plano médio e apertado', 'Reações do público', 'Pôr do sol perto das 17h20: prioridade aos planos sobre o rio', 'Se for possível, drone ao pôr do sol sobre o Tejo'] },
   { hora: '18:00', fim: '20:00', nome: 'Taste & Experience', evento: 'Experiência gastronómica e sensorial, com espetáculo e surpresa.',
     filmar: ['Pratos, empratamento e convidados a provar', 'Atuação da Annia', 'Momentos de surpresa e espetáculo', 'Networking: conversas e gargalhadas'] },
   { hora: '20:00', fim: '22:00', nome: "Let's Celebrate!", evento: 'Música, animação e celebração.',
@@ -54,6 +54,7 @@ const MATERIAL_EVENTO = [
   'Microfone de lapela para o Rui (marca pessoal)',
   'Gravadores de áudio e microfones',
   'Estabilizador',
+  'Drone, se for possível',
   'Luzes de apoio',
   'Carregadores das baterias',
   'Panos de limpeza das lentes',
@@ -78,6 +79,7 @@ const GUIA_EVENTO: BlocoGuia[] = [
       'Filmar o espaço à chegada, antes de os convidados entrarem, enquanto está arrumado e com boa luz.',
       'Cada parceiro precisa dos seus planos: flores, joias, looks, maquilhagem, som e luz, gastronomia.',
       'Nos discursos, som limpo e planos dos oradores e do público.',
+      'Se for possível, imagens de drone: o SUD, o Tejo e a ponte, de preferência antes dos convidados e ao pôr do sol. Só se as regras de voo do local o permitirem.',
       'Guardar sempre alguns segundos antes e depois de cada momento importante.',
       'Filmar tudo em horizontal 16:9, também a marca pessoal do Rui. Os cortes verticais fazem-se na edição.',
     ],
@@ -261,6 +263,7 @@ export default async function BriefingZankyouSud() {
             <div><span>Dress code</span><p>Adequado ao evento: roupa toda preta, sem imagens, logótipos nem estampados, e calçado fechado preto.</p></div>
             <div><span>Formato</span><p>Todo o material é filmado em horizontal 16:9, incluindo a marca pessoal do Rui.</p></div>
             <div><span>Chegada</span><p>No SUD Lisboa às 15h00, para o briefing e os conteúdos antes dos convidados.</p></div>
+            <div><span>Drone</span><p>Se for possível, traz drone: imagens aéreas do SUD, do Tejo e da ponte, antes dos convidados e ao pôr do sol. Só se as regras de voo do local o permitirem.</p></div>
           </div>
           <div className="guia-btn" style={{ marginTop: 16 }}>
             <GuiaEquipa material={MATERIAL_EVENTO} blocos={GUIA_EVENTO} chave="rl-guia-zankyou-sud"
