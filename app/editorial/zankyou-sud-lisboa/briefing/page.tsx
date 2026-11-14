@@ -24,13 +24,23 @@ const BLOCOS = [
   { hora: '15:00', fim: '16:00', nome: 'Chegada da equipa RL', evento: 'Estamos no SUD Lisboa às 15h00 para o nosso briefing e para produzir conteúdos antes da chegada dos convidados.',
     filmar: ['Briefing rápido entre a equipa: planos, divisão de tarefas e som', 'O espaço vazio e arrumado, com boa luz: interiores, esplanada e o Tejo', 'Decoração e detalhes do espaço antes de haver gente', 'Primeiras falas do Rui para a marca pessoal', 'Se for possível, drone: o SUD, o Tejo e a ponte vistos do ar'] },
   { hora: '16:00', fim: '17:00', nome: 'Welcome & Connect', evento: 'Receção, welcome drink e primeiros momentos de networking.',
-    filmar: ['Chegada dos convidados e cumprimentos', 'O espaço a encher: planos largos e das entradas', 'Decoração floral da Madame Boutique Floral', 'Detalhes de marca: Zankyou e SUD Lisboa'] },
+    filmar: ['16:00 · Kapa Loop Sessions no cocktail', 'Chegada dos convidados e cumprimentos', 'O espaço a encher: planos largos e das entradas', 'Detalhes de marca: Zankyou e SUD Lisboa'] },
   { hora: '17:00', fim: '18:00', nome: 'Inspire & Share', evento: 'Abertura pela Zankyou Portugal, agradecimento aos parceiros e intervenção do SUD / SANA.',
     filmar: ['Discursos com som limpo (falar com a Floor Sensation para a saída de áudio)', 'Oradores em plano médio e apertado', 'Reações do público', 'Pôr do sol perto das 17h20: prioridade aos planos sobre o rio', 'Se for possível, drone ao pôr do sol sobre o Tejo'] },
   { hora: '18:00', fim: '20:00', nome: 'Taste & Experience', evento: 'Experiência gastronómica e sensorial, com espetáculo e surpresa.',
-    filmar: ['Pratos, empratamento e convidados a provar', 'Atuação da Annia', 'Momentos de surpresa e espetáculo', 'Networking: conversas e gargalhadas'] },
+    filmar: ['18:20 · Dançarinos (Fábio Trindade), logo após a entrada', '19:00 · Priceless Band, a meio do jantar', '19:50 · Annia, no final do jantar', 'Pratos, empratamento e convidados a provar', 'Networking: conversas e gargalhadas'] },
   { hora: '20:00', fim: '22:00', nome: "Let's Celebrate!", evento: 'Música, animação e celebração.',
-    filmar: ['Pista e energia da festa', 'Luz e som da Floor Sensation', 'Planos para fechar o aftermovie', 'Planos de fecho da noite'] },
+    filmar: ['20:05 · Tropicana Queens na abertura da pista (por confirmar)', '20:20 · DJ com saxofonista: a festa', 'Pista e energia da festa, luz e som', 'Planos de fecho da noite'] },
+]
+
+// Cartaz: a ordem das atuações (informação da organização)
+const CARTAZ: Array<[string, string, string, boolean?]> = [
+  ['16:00', 'Cocktail', 'Kapa Loop Sessions'],
+  ['18:20', 'Após a entrada', 'Dançarinos (Fábio Trindade)'],
+  ['19:00', 'Meio do jantar', 'Priceless Band'],
+  ['19:50', 'Final do jantar', 'Annia'],
+  ['20:05', 'Abertura da pista', 'Tropicana Queens', true],
+  ['20:20', 'Festa', 'DJ com saxofonista'],
 ]
 
 
@@ -286,6 +296,15 @@ export default async function BriefingZankyouSud() {
               </div>
             ))}
           </div>
+        </Seccao>
+
+        <Seccao ey="Cartaz" titulo="A ordem das atuações">
+          <div className="lista">
+            {CARTAZ.map(([h, q, n, pc]) => (
+              <div key={n}><span>{h} · {n}</span><span>{q}{pc ? ' · por confirmar' : ''}</span></div>
+            ))}
+          </div>
+          <p style={{ marginTop: 14, color: 'rgba(255,255,255,.45)', fontSize: 15, fontWeight: 300 }}>Estar em posição uns minutos antes de cada atuação, com som e planos preparados.</p>
         </Seccao>
 
         <Seccao ey="Dois vídeos até 59 s e os brutos" titulo="O que tens de entregar">

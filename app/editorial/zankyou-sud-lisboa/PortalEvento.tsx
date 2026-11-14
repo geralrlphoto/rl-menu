@@ -42,6 +42,16 @@ const NAV = [
   ['evento', 'Evento'], ['local', 'Local'], ['meteo', 'Tempo'], ['programa', 'Programa'], ['video', 'Vídeo'], ['parceiros', 'Parceiros'], ['entregas', 'Entregas'],
 ]
 
+// Cartaz: a ordem das atuações (informação da organização)
+const CARTAZ = [
+  { hora: '16:00', quando: 'Cocktail', nome: 'Kapa Loop Sessions' },
+  { hora: '18:20', quando: 'Após a entrada', nome: 'Dançarinos (Fábio Trindade)' },
+  { hora: '19:00', quando: 'Meio do jantar', nome: 'Priceless Band' },
+  { hora: '19:50', quando: 'Final do jantar', nome: 'Annia' },
+  { hora: '20:05', quando: 'Abertura da pista', nome: 'Tropicana Queens', porConfirmar: true },
+  { hora: '20:20', quando: 'Festa', nome: 'DJ com saxofonista' },
+]
+
 // O vídeo oficial: plano explicado ao cliente (sem detalhes internos da equipa)
 const FASES = [
   { n: '01', quando: '15h00', titulo: 'Antes dos convidados', itens: [
@@ -54,7 +64,7 @@ const FASES = [
     'A chegada dos convidados e os primeiros momentos de networking.',
     'Os discursos da Zankyou e do SUD, com som limpo.',
     'O pôr do sol sobre o Tejo, por volta das 17h20.',
-    'A experiência gastronómica, a atuação da Annia e a festa até ao fim.',
+    'A gastronomia, as atuações do cartaz (dos Kapa Loop Sessions ao DJ com saxofonista) e a festa até ao fim.',
   ] },
   { n: '03', quando: 'Depois', titulo: 'Montagem e entrega', itens: [
     'Selecionamos os melhores momentos e montamos as peças.',
@@ -226,6 +236,21 @@ const CSS = `
 .zw .chip.agora i{width:7px;height:7px;border-radius:50%;background:#fff;animation:zwPisca 1.2s infinite;}
 .zw .chip.feito{background:transparent;border:1px solid var(--line);color:var(--soft);}
 @media (max-width:640px){.zw .pg-b{grid-template-columns:minmax(0,1fr);gap:10px;padding:22px;}.zw .pg-h b{font-size:38px;}}
+
+/* Cartaz das atuações */
+.zw .cartaz-h{margin-top:clamp(40px,6vh,64px);}
+.zw .cartaz-h .k{font-size:11px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--sun);}
+.zw .cartaz-h h3{font-family:var(--serif);font-weight:400;font-size:clamp(32px,3.6vw,48px);line-height:1;margin:10px 0 0;}
+.zw .cartaz-h h3 em{color:var(--sun);}
+.zw .cartaz{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px;}
+.zw .at{display:flex;flex-direction:column;align-items:flex-start;border-radius:24px;background:var(--card);border:1px solid var(--line);padding:24px;min-height:170px;transition:transform .5s var(--ease),box-shadow .5s var(--ease);}
+.zw .at:hover{transform:translateY(-4px);box-shadow:0 24px 50px -30px rgba(47,44,47,.35);}
+.zw .at-n{font-family:var(--serif);font-size:46px;line-height:1;color:var(--sun2);}
+.zw .at-q{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-top:14px;}
+.zw .at b{font-family:var(--serif);font-weight:400;font-size:clamp(26px,2.4vw,32px);line-height:1.1;margin-top:8px;}
+.zw .at-pc{margin-top:12px;padding:5px 12px;border-radius:999px;background:rgba(91,170,162,.14);color:var(--sun);font-size:12px;font-weight:600;}
+@media (max-width:900px){.zw .cartaz{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:560px){.zw .cartaz{grid-template-columns:minmax(0,1fr);}}
 
 /* O vídeo oficial: fases, peças e pedidos */
 .zw .fases{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;}
@@ -447,6 +472,18 @@ export default function PortalEvento({ entregas }: { entregas: Record<string, En
           <Cabeca n="04 · Programa" titulo={<>A <em>timeline</em></>}
             texto="An Afternoon of Connections, Inspiration & Celebration. No dia, o momento que está a decorrer fica assinalado aqui." />
           <ProgramaVivo blocos={PROGRAMA} />
+
+          <div className="cartaz-h rv"><span className="k">Cartaz</span><h3>A ordem das <em>atuações</em></h3></div>
+          <div className="cartaz">
+            {CARTAZ.map((a, i) => (
+              <div key={a.nome} className="at rv">
+                <span className="at-n">{i + 1}</span>
+                <span className="at-q">{a.hora} · {a.quando}</span>
+                <b>{a.nome}</b>
+                {a.porConfirmar && <span className="at-pc">Por confirmar</span>}
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* O vídeo oficial: o que vamos fazer */}
