@@ -4,6 +4,7 @@ import { cookieEditorial, cookieValido, lerEditorial } from '@/lib/editorialAces
 import { FL_COOKIE_NAME, verifyFlSession } from '@/lib/freelancer-session'
 import EntradaEditorial from '../../EntradaEditorial'
 import MeteoEvento from '../../MeteoEvento'
+import GuiaEquipa, { type BlocoGuia } from '@/app/p/[token]/GuiaEquipa'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
 /* Briefing de vídeo do XIX Zankyou Wedding Club × SUD Lisboa, para a equipa da RL.
@@ -43,6 +44,68 @@ const PARCEIROS = [
   ['Halus Stories', 'Joias em detalhe'],
 ]
 
+// Guia da equipa (o dos casamentos, em app/p/[token]/GuiaEquipa.tsx) adaptado a um evento de networking
+const MATERIAL_EVENTO = [
+  'Câmaras',
+  'Lentes',
+  'Baterias carregadas e suplentes',
+  'Cartões de memória vazios e formatados',
+  'Microfone de lapela para o Rui (marca pessoal)',
+  'Gravadores de áudio e microfones',
+  'Estabilizador',
+  'Luzes de apoio',
+  'Carregadores das baterias',
+  'Panos de limpeza das lentes',
+]
+
+const GUIA_EVENTO: BlocoGuia[] = [
+  {
+    titulo: 'Apresentação e dress code',
+    icone: '◆',
+    itens: [
+      'Dress code adequado ao evento: um encontro elegante de profissionais dos casamentos, num espaço sofisticado.',
+      'Podes e deves levar roupa toda preta, sem imagens, logótipos nem estampados.',
+      'Calçado fechado, preto e confortável: são seis horas de pé.',
+      'Roupa limpa e cuidada e um perfume suave. Combina a roupa com o Rui antes do dia.',
+    ],
+    proibido: ['Roupa com imagens ou estampados', 'Calças de ganga', 'Chinelos', 'Bonés'],
+  },
+  {
+    titulo: 'Captação',
+    icone: '◉',
+    itens: [
+      'Filmar o espaço à chegada, antes de os convidados entrarem, enquanto está arrumado e com boa luz.',
+      'Cada parceiro precisa dos seus planos: flores, joias, looks, maquilhagem, som e luz, gastronomia.',
+      'Nos discursos, som limpo e planos dos oradores e do público.',
+      'Guardar sempre alguns segundos antes e depois de cada momento importante.',
+      'Material vertical para os reels e para a marca pessoal do Rui.',
+    ],
+  },
+  {
+    titulo: 'Redes sociais e postura',
+    icone: '✕',
+    itens: [
+      'Não publicar nada sobre o evento nas redes sociais. O vídeo oficial e os conteúdos saem pela RL e pela organização.',
+      'Se quiseres partilhar alguma coisa, envia ao Rui. É ele que publica.',
+      'Apresenta-te sempre como RL Photo.Video, a equipa do vídeo oficial do evento.',
+      'O evento é de networking, mas estamos a trabalhar: não promovas serviços teus junto de convidados ou parceiros.',
+    ],
+    proibido: ['Publicar nas redes sociais', 'Partilhar o Instagram pessoal', 'Promover serviços próprios'],
+    nota: 'São regras de boas práticas e de consciência profissional.',
+  },
+  {
+    titulo: 'Boas práticas no dia',
+    icone: '✓',
+    itens: [
+      'Chegar 15 minutos antes da hora combinada com o Rui.',
+      'Telemóvel em silêncio e discrição total durante os discursos e a atuação.',
+      'Não comer nem beber à frente dos convidados enquanto se filma; só quando a organização indicar.',
+      'No fim do dia, copiar os cartões para dois sítios antes de os voltar a formatar.',
+      'Em caso de dúvida no dia, falar com o Rui.',
+    ],
+  },
+]
+
 // Só o contacto da RL: os contactos dos fornecedores não entram no briefing da equipa
 const CONTACTOS = [
   ['Rui Gonçalves', 'RL Photo Video · responsável do vídeo', '+351 912 932 768'],
@@ -66,9 +129,9 @@ const CSS = `
 .bf .bl .h small{display:block;font-family:var(--fm);font-size:9.5px;letter-spacing:.14em;color:var(--tx-dim);margin-top:6px;}
 .bf .bl h3{font-family:var(--fs);font-weight:300;font-size:26px;color:var(--tx);margin:0;}
 .bf .bl .ev{color:var(--tx-mid);font-size:14px;margin:6px 0 0;}
-.bf ul{list-style:none;margin:12px 0 0;padding:0;}
-.bf li{position:relative;padding:7px 0 7px 20px;color:var(--tx);font-size:14.5px;line-height:1.5;}
-.bf li::before{content:"";position:absolute;left:2px;top:16px;width:9px;height:1px;background:var(--g);}
+.bf .bl ul{list-style:none;margin:12px 0 0;padding:0;}
+.bf .bl li{position:relative;padding:7px 0 7px 20px;color:var(--tx);font-size:14.5px;line-height:1.5;}
+.bf .bl li::before{content:"";position:absolute;left:2px;top:16px;width:9px;height:1px;background:var(--g);}
 @media (max-width:600px){.bf .bl{grid-template-columns:minmax(0,1fr);gap:8px;}}
 .bf .ent{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:22px;}
 @media (max-width:600px){.bf .ent{grid-template-columns:minmax(0,1fr);}}
@@ -123,6 +186,17 @@ export default async function BriefingZankyouSud() {
           <div className="ln" />
           <p className="sub">SUD Lisboa · segunda, 16 de novembro de 2026 · evento das 16h às 22h<br />Vídeo oficial do evento</p>
         </header>
+
+        <h2>Guia do <em>dia</em></h2>
+        <div className="nota" style={{ color: 'var(--tx)' }}>
+          <span className="k" style={{ display: 'block', marginBottom: 8 }}>Dress code</span>
+          Adequado ao evento: roupa toda preta, sem imagens, logótipos nem estampados, e calçado fechado preto.
+          No guia está o material a levar, como nos apresentamos e as regras do dia.
+        </div>
+        <div style={{ marginTop: 18 }}>
+          <GuiaEquipa material={MATERIAL_EVENTO} blocos={GUIA_EVENTO} chave="rl-guia-zankyou-sud"
+            subtitulo="O que todos na equipa devem cumprir no XIX Zankyou Wedding Club." />
+        </div>
 
         <h2>O <em>essencial</em></h2>
         <div className="grid">

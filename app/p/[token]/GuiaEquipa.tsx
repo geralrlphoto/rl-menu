@@ -18,7 +18,9 @@ const MATERIAL = [
   'Panos de limpeza das lentes',
 ]
 
-const BLOCOS: Array<{ titulo: string; icone: string; itens: string[]; proibido?: string[]; nota?: string }> = [
+export type BlocoGuia = { titulo: string; icone: string; itens: string[]; proibido?: string[]; nota?: string }
+
+const BLOCOS: BlocoGuia[] = [
   {
     titulo: 'Apresentação',
     icone: '◆',
@@ -65,9 +67,11 @@ const BLOCOS: Array<{ titulo: string; icone: string; itens: string[]; proibido?:
   },
 ]
 
-const CHAVE = 'rl-guia-material'
-
-export default function GuiaEquipa() {
+// Por omissão é o guia dos casamentos; outros eventos passam o seu material, blocos e subtítulo
+export default function GuiaEquipa({
+  material: MATERIAL_EV = MATERIAL, blocos: BLOCOS_EV = BLOCOS,
+  subtitulo = 'O que todos na equipa devem cumprir em cada casamento.', chave: CHAVE = 'rl-guia-material',
+}: { material?: string[]; blocos?: BlocoGuia[]; subtitulo?: string; chave?: string } = {}) {
   const [aberto, setAberto] = useState(false)
   const [feitos, setFeitos] = useState<string[]>([])
 
@@ -92,7 +96,7 @@ export default function GuiaEquipa() {
     })
   }
 
-  const prontos = MATERIAL.filter(m => feitos.includes(m)).length
+  const prontos = MATERIAL_EV.filter(m => feitos.includes(m)).length
 
   return (
     <>
@@ -112,7 +116,7 @@ export default function GuiaEquipa() {
               <div>
                 <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">RL Photo.Video · Equipa</p>
                 <h3 className="font-bold text-[30px] sm:text-[36px] leading-none text-white mt-1.5">Guia do dia</h3>
-                <p className="text-[14px] text-white/50 mt-2">O que todos na equipa devem cumprir em cada casamento.</p>
+                <p className="text-[14px] text-white/50 mt-2">{subtitulo}</p>
               </div>
               <button onClick={() => setAberto(false)} aria-label="Fechar"
                 className="shrink-0 w-10 h-10 rounded-full border border-white/10 bg-white/[0.04] text-white/50 hover:text-white hover:rotate-90 transition-all duration-300 flex items-center justify-center">✕</button>
@@ -126,10 +130,10 @@ export default function GuiaEquipa() {
                     <span className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] text-[#C9A84C]" style={{ background: 'rgba(201,168,76,0.12)' }}>▣</span>
                     Material antes de sair de casa
                   </p>
-                  <span className="shrink-0 rounded-full border border-[#C9A84C]/35 bg-[#C9A84C]/10 px-2.5 py-0.5 text-[12px] text-[#C9A84C]">{prontos}/{MATERIAL.length}</span>
+                  <span className="shrink-0 rounded-full border border-[#C9A84C]/35 bg-[#C9A84C]/10 px-2.5 py-0.5 text-[12px] text-[#C9A84C]">{prontos}/{MATERIAL_EV.length}</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {MATERIAL.map(m => {
+                  {MATERIAL_EV.map(m => {
                     const ok = feitos.includes(m)
                     return (
                       <button key={m} onClick={() => alternar(m)}
@@ -143,10 +147,10 @@ export default function GuiaEquipa() {
                     )
                   })}
                 </div>
-                {prontos === MATERIAL.length && <p className="text-[13px] text-[#C9A84C] mt-3 pl-1">Tudo confirmado. Bom trabalho!</p>}
+                {prontos === MATERIAL_EV.length && <p className="text-[13px] text-[#C9A84C] mt-3 pl-1">Tudo confirmado. Bom trabalho!</p>}
               </div>
 
-              {BLOCOS.map(b => (
+              {BLOCOS_EV.map(b => (
                 <div key={b.titulo} className="rounded-[18px] border border-[#C9A84C]/20 bg-black/30 p-4 sm:p-5" style={{ borderLeft: '2px solid rgba(201,168,76,0.7)' }}>
                   <p className="flex items-center gap-2.5 text-[20px] font-semibold text-white mb-3">
                     <span className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] text-[#C9A84C]" style={{ background: 'rgba(201,168,76,0.12)' }}>{b.icone}</span>
