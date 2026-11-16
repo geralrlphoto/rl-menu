@@ -7,17 +7,18 @@ import { useEffect, useState } from 'react'
 // (videógrafo + editor). Daí sai o ponto de equilíbrio e o lucro.
 // Valores editáveis, guardados no browser por ano.
 
+// O nº de casamentos vem dos Objetivos (único sítio onde se muda).
 type Cfg = {
   renda: number; internet: number; luz: number
   videografo: number; editor: number
-  casamentos: number; preco: number
+  preco: number
   incluirOutros: boolean
 }
 
 const DEFAULT_CFG: Cfg = {
   renda: 320, internet: 15, luz: 25,
   videografo: 300, editor: 150,
-  casamentos: 40, preco: 1200,
+  preco: 1200,
   incluirOutros: false,
 }
 
@@ -41,9 +42,10 @@ function Campo({ label, value, onChange, step = 5, sufixo = '€', cor = 'text-w
   )
 }
 
-export default function CustoProdutora({ ano, outrosFixosAnuais }: { ano: number; outrosFixosAnuais: number }) {
+export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos }: { ano: number; outrosFixosAnuais: number; casamentos: number }) {
   const KEY = `custo-produtora-${ano}`
-  const [cfg, setCfg] = useState<Cfg>(DEFAULT_CFG)
+  const [cfgBase, setCfg] = useState<Cfg>(DEFAULT_CFG)
+  const cfg = { ...cfgBase, casamentos }
 
   useEffect(() => {
     try {
@@ -53,7 +55,7 @@ export default function CustoProdutora({ ano, outrosFixosAnuais }: { ano: number
   }, [KEY])
 
   const set = (patch: Partial<Cfg>) => {
-    const next = { ...cfg, ...patch }
+    const next = { ...cfgBase, ...patch }
     setCfg(next)
     try { localStorage.setItem(KEY, JSON.stringify(next)) } catch {}
   }
@@ -99,7 +101,13 @@ export default function CustoProdutora({ ano, outrosFixosAnuais }: { ano: number
         </div>
         <div className="rounded-2xl border border-gold/20 bg-gold/[0.04] p-4 space-y-2">
           <p className="text-[9px] tracking-[0.35em] text-gold/60 uppercase mb-1">Objetivo</p>
-          <Campo label="Casamentos / ano" value={cfg.casamentos} onChange={v => set({ casamentos: Math.round(v) })} step={1} sufixo="" cor="text-blue-300" />
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+            <span className="text-[11px] text-white/50">Casamentos / ano</span>
+            <span className="text-right">
+              <span className="text-sm font-mono text-blue-300">{cfg.casamentos}</span>
+              <span className="block text-[9px] text-white/25">muda nos Objetivos</span>
+            </span>
+          </div>
           <Campo label="Preço por casamento" value={cfg.preco} onChange={v => set({ preco: v })} step={50} cor="text-gold" />
           {outrosFixosAnuais > 0 && (
             <label className="flex items-center gap-2 px-3 pt-1 text-[11px] text-white/45 cursor-pointer">

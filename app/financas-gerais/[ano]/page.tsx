@@ -464,6 +464,18 @@ export default function FinancasAnoPage({ params }: Props) {
   const [packsCfg, setPacksCfg] = useState<AllPacksCfg>(DEFAULT_PACKS_CFG)
   const [newServicoInput, setNewServicoInput] = useState<Record<string, string>>({ p1: '', p2: '', p3: '', bat: '', corp: '' })
 
+  // Objetivos da Estratégia (meta líquida + nº de eventos) guardados por ano
+  useEffect(() => {
+    try {
+      const o = JSON.parse(localStorage.getItem(`objetivos-${anoNum}`) || 'null')
+      if (o?.meta > 0) setMetaAnualSim(o.meta)
+      if (o?.eventos > 0) setNumEventosSim(o.eventos)
+    } catch {}
+  }, [anoNum])
+  useEffect(() => {
+    try { localStorage.setItem(`objetivos-${anoNum}`, JSON.stringify({ meta: metaAnualSim, eventos: numEventosSim })) } catch {}
+  }, [anoNum, metaAnualSim, numEventosSim])
+
   useEffect(() => {
     // Meta mensal from localStorage
     const saved = localStorage.getItem(`meta-mensal-${anoNum}`)
@@ -1713,23 +1725,32 @@ export default function FinancasAnoPage({ params }: Props) {
               </div>
               {/* Resumo instantâneo */}
               {(() => {
-                const custoFix = totalCustosFixosAnuais + 3840 + 480
-                const recNec = metaAnualSim + custoFix
+                // Receita necessária = meta + custos fixos + equipa (videógrafo + editor) de todos os eventos.
+                // Equipa pelo mix de packs (40% P1, 40% P2, 20% P3).
+                const custoFix  = totalCustosFixosAnuais + 3840 + 480
+                const equipaAno = p1Equipa * mx1 + p2Equipa * mx2 + p3Equipa * mx3
+                const recNec    = metaAnualSim + custoFix + equipaAno
                 const ticketNec = numEventosSim > 0 ? Math.round(recNec / numEventosSim) : 0
-                const margemNec = numEventosSim > 0 ? Math.round(metaAnualSim / numEventosSim) : 0
+                const margemNec = numEventosSim > 0 ? Math.round((metaAnualSim + custoFix) / numEventosSim) : 0
                 const viavel = ticketNec <= p3Preco
                 return (
-                  <div className="grid grid-cols-3 gap-3 pt-1">
-                    {[
-                      { l: 'Receita necessária', v: `${recNec.toLocaleString('pt-PT')} €`, c: 'text-white/50' },
-                      { l: 'Ticket médio mínimo', v: `${ticketNec.toLocaleString('pt-PT')} €`, c: viavel ? 'text-green-400' : 'text-red-400' },
-                      { l: 'Margem / evento', v: `${margemNec.toLocaleString('pt-PT')} €`, c: 'text-gold' },
-                    ].map(({ l, v, c }) => (
-                      <div key={l} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
-                        <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">{l}</p>
-                        <p className={`text-sm font-mono font-semibold ${c}`}>{v}</p>
-                      </div>
-                    ))}
+                  <div className="space-y-2 pt-1">
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { l: 'Receita necessária', v: `${recNec.toLocaleString('pt-PT')} €`, s: 'por ano', c: 'text-white/60' },
+                        { l: 'Preço médio mínimo', v: `${ticketNec.toLocaleString('pt-PT')} €`, s: viavel ? 'por evento' : `acima da Proposta 3 (${p3Preco} €)`, c: viavel ? 'text-green-400' : 'text-red-400' },
+                        { l: 'Margem / evento', v: `${margemNec.toLocaleString('pt-PT')} €`, s: 'depois da equipa', c: 'text-gold' },
+                      ].map(({ l, v, s, c }) => (
+                        <div key={l} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 text-center">
+                          <p className="text-[8px] tracking-[0.25em] text-white/20 uppercase mb-1">{l}</p>
+                          <p className={`text-sm font-mono font-semibold ${c}`}>{v}</p>
+                          <p className="text-[9px] text-white/25 mt-0.5">{s}</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-white/30 text-center">
+                      Meta {metaAnualSim.toLocaleString('pt-PT')} € + custos fixos {custoFix.toLocaleString('pt-PT')} € + equipa {equipaAno.toLocaleString('pt-PT')} € ({numEventosSim} eventos)
+                    </p>
                   </div>
                 )
               })()}
@@ -1737,7 +1758,7 @@ export default function FinancasAnoPage({ params }: Props) {
             </div>
 
             {/* ── Custo da Produtora (conta direta: fixos + equipa por casamento) ── */}
-            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} />
+            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} />
 
             {/* ── Serviços & Preços ── */}
             <div className="space-y-3">
@@ -2447,45 +2468,17 @@ export default function FinancasAnoPage({ params }: Props) {
                 <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Simulador de Meta Anual</p>
                 <div className="h-px flex-1 bg-white/[0.06]" />
               </div>
-              <div className="space-y-2">
-                {/* Slider Meta Líquida */}
-                <div className="flex items-center gap-4 rounded-2xl border border-gold/20 bg-gold/[0.04] px-5 py-4">
-                  <p className="text-[10px] tracking-[0.3em] text-gold/60 uppercase flex-shrink-0 w-28">Meta Líquida</p>
-                  <div className="flex-1">
-                    <input type="range" min={15000} max={60000} step={1000} value={metaAnualSim}
-                      onChange={e => setMetaAnualSim(Number(e.target.value))}
-                      className="w-full accent-yellow-400" />
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <input type="number" value={metaAnualSim} step={1000}
-                      onChange={e => setMetaAnualSim(Number(e.target.value) || 30000)}
-                      className="w-24 bg-white/5 border border-gold/20 rounded-xl px-3 py-1.5 text-sm text-gold font-mono text-right focus:outline-none focus:border-gold/40" />
-                    <span className="text-white/30 text-sm">€</span>
-                  </div>
-                </div>
-                {/* Slider Nº de Eventos */}
-                <div className="flex items-center gap-4 rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] px-5 py-4">
-                  <p className="text-[10px] tracking-[0.3em] text-blue-400/60 uppercase flex-shrink-0 w-28">Nº Eventos</p>
-                  <div className="flex-1">
-                    <input type="range" min={1} max={60} step={1} value={numEventosSim}
-                      onChange={e => setNumEventosSim(Number(e.target.value))}
-                      className="w-full accent-blue-400" />
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <input type="number" value={numEventosSim} step={1} min={1} max={60}
-                      onChange={e => setNumEventosSim(Math.max(1, Number(e.target.value) || 1))}
-                      className="w-24 bg-white/5 border border-blue-500/20 rounded-xl px-3 py-1.5 text-sm text-blue-300 font-mono text-right focus:outline-none focus:border-blue-400/40" />
-                    <span className="text-white/30 text-sm">ev.</span>
-                  </div>
-                </div>
-              </div>
+              <p className="text-[10px] text-white/30 text-center">
+                Meta de <span className="text-gold font-mono">{metaAnualSim.toLocaleString('pt-PT')} €</span> e <span className="text-blue-300 font-mono">{numEventosSim}</span> eventos · altera nos <span className="text-white/50">Objetivos</span>, no topo
+              </p>
               {(() => {
+                // Eventos precisos para pagar os custos fixos E chegar à meta, só com cada pack
                 const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
-                const receitasNec = metaAnualSim + custoFixoAnual
+                const nec = (margem: number) => margem > 0 ? Math.ceil((metaAnualSim + custoFixoAnual) / margem) : 0
                 const simData = [
-                  { label: 'Proposta 1', preco: p1Preco, margem: p1Margem, eventos: Math.ceil(receitasNec / p1Preco), evMargem: Math.ceil(metaAnualSim / p1Margem), fill: 'rgba(96,165,250,0.65)', tc: 'text-blue-300' },
-                  { label: 'Proposta 2', preco: p2Preco, margem: p2Margem, eventos: Math.ceil(receitasNec / p2Preco), evMargem: Math.ceil(metaAnualSim / p2Margem), fill: 'rgba(201,168,76,0.70)', tc: 'text-gold' },
-                  { label: 'Proposta 3', preco: p3Preco, margem: p3Margem, eventos: Math.ceil(receitasNec / p3Preco), evMargem: Math.ceil(metaAnualSim / p3Margem), fill: 'rgba(167,139,250,0.65)', tc: 'text-purple-300' },
+                  { label: 'Proposta 1', preco: p1Preco, margem: p1Margem, evMargem: nec(p1Margem), fill: 'rgba(96,165,250,0.65)', tc: 'text-blue-300' },
+                  { label: 'Proposta 2', preco: p2Preco, margem: p2Margem, evMargem: nec(p2Margem), fill: 'rgba(201,168,76,0.70)', tc: 'text-gold' },
+                  { label: 'Proposta 3', preco: p3Preco, margem: p3Margem, evMargem: nec(p3Margem), fill: 'rgba(167,139,250,0.65)', tc: 'text-purple-300' },
                 ]
                 return (
                   <>
@@ -2495,7 +2488,7 @@ export default function FinancasAnoPage({ params }: Props) {
                         <div key={s.label} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
                           <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-3">{s.label} · {s.preco}€</p>
                           <p className={`text-3xl font-light ${s.tc}`}>{s.evMargem}</p>
-                          <p className="text-[9px] text-white/20 mt-1">eventos / ano</p>
+                          <p className="text-[9px] text-white/20 mt-1">eventos / ano só com este pack</p>
                           <p className="text-[9px] text-white/20 mt-2">{Math.ceil(s.evMargem / 12)} a {Math.ceil(s.evMargem / 10)} / mês</p>
                           <div className="mt-3 h-1.5 bg-white/[0.05] rounded-full overflow-hidden">
                             <div className="h-full rounded-full" style={{ width: `${Math.min(100, (s.evMargem / 35) * 100)}%`, background: s.fill }} />
