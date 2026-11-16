@@ -61,9 +61,10 @@ function Campo({ label, value, onChange, step = 5, sufixo = '€', cor = 'text-w
   )
 }
 
-export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, meta, casamentosAno, onFixosChange }: {
+export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, meta, casamentosAno, onFixosChange, onLucroPrevisto }: {
   ano: number; outrosFixosAnuais: number; casamentos: number; meta: number
   casamentosAno: CasamentoVideo[]; onFixosChange?: (f: FixosCfg) => void
+  onLucroPrevisto?: (lucro: number | null) => void
 }) {
   const KEY = `custo-produtora-${ano}`
   const [cfgBase, setCfg] = useState<Cfg>(DEFAULT_CFG)
@@ -95,6 +96,17 @@ export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, met
   const equilibrio   = sobraEvento > 0 ? Math.ceil(fixoAno / sobraEvento) : null
   const receitaAno   = cfg.preco * cfg.casamentos
   const lucroAno     = receitaAno - custoAno
+
+  // Lucro previsto com os casamentos marcados (mesma conta do quadro Previsão),
+  // enviado para a página mostrar a % da meta nos Objetivos.
+  const nAno      = casamentosAno.length
+  const diasAno   = new Set(casamentosAno.map(c => c.dia)).size
+  const receitaPrev = casamentosAno.reduce((s, c) => s + c.valor, 0)
+  const editoPrev = Math.min(Math.max(0, Math.round(cfg.editoEu)), nAno)
+  const lucroPrev = receitaPrev - (nAno - diasAno) * cfg.videografo - (nAno - editoPrev) * cfg.editor - fixoAno
+  useEffect(() => {
+    onLucroPrevisto?.(nAno > 0 ? lucroPrev : null)
+  }, [lucroPrev, nAno, onLucroPrevisto])
 
   return (
     <div className="space-y-4">

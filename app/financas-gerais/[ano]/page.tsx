@@ -433,6 +433,8 @@ export default function FinancasAnoPage({ params }: Props) {
   const [eventDespesas, setEventDespesas]   = useState<DespesaRow[]>([])
   // Casamentos do ano (dia + valor do vídeo) para a previsão do bloco Custo da Produtora
   const [casamentosVideo, setCasamentosVideo] = useState<CasamentoVideo[]>([])
+  // Lucro previsto com os casamentos marcados (vem do bloco Custo da Produtora)
+  const [lucroPrevisto, setLucroPrevisto] = useState<number | null>(null)
   const [prevYearReceitas, setPrevYearReceitas] = useState<ReceitaRow[]>([])
   const [prevYearDespesas, setPrevYearDespesas] = useState<DespesaRow[]>([])
   const [metaMensal, setMetaMensal]     = useState<number>(0)
@@ -1792,11 +1794,44 @@ export default function FinancasAnoPage({ params }: Props) {
                   </div>
                 )
               })()}
+              {/* Progresso da meta: lucro previsto com os casamentos marcados */}
+              {lucroPrevisto !== null && metaAnualSim > 0 && (() => {
+                const pct = Math.max(0, Math.round((lucroPrevisto / metaAnualSim) * 100))
+                const falta = metaAnualSim - lucroPrevisto
+                const ok = falta <= 0
+                return (
+                  <div className={`rounded-xl border px-4 py-4 ${ok ? 'border-green-500/30 bg-green-500/[0.06]' : 'border-gold/25 bg-gold/[0.05]'}`}>
+                    <div className="flex items-end justify-between gap-4 flex-wrap mb-3">
+                      <div>
+                        <p className="text-[9px] tracking-[0.3em] text-white/35 uppercase mb-1">Meta já garantida com os casamentos marcados</p>
+                        <p className={`text-4xl font-light font-mono ${ok ? 'text-green-400' : 'text-gold'}`}>{pct}%</p>
+                      </div>
+                      <div className="text-right">
+                        {ok ? (
+                          <p className="text-sm text-green-400">Meta atingida · sobram {(-falta).toLocaleString('pt-PT')} €</p>
+                        ) : (
+                          <>
+                            <p className="text-[9px] tracking-[0.3em] text-white/35 uppercase mb-1">Falta</p>
+                            <p className="text-2xl font-light font-mono text-red-300">{100 - pct}%</p>
+                            <p className="text-[11px] text-white/45">{falta.toLocaleString('pt-PT')} € de {metaAnualSim.toLocaleString('pt-PT')} €</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-2.5 bg-white/[0.06] rounded-full overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${ok ? 'bg-green-400/70' : 'bg-gold/70'}`} style={{ width: `${Math.min(100, pct)}%` }} />
+                    </div>
+                    <p className="text-[10px] text-white/30 mt-2">
+                      Lucro previsto {lucroPrevisto.toLocaleString('pt-PT')} € · detalhe na Previsão, logo abaixo
+                    </p>
+                  </div>
+                )
+              })()}
               <p className="text-[9px] text-white/15 text-center">Altera estes valores — toda a estratégia recalcula automaticamente ↓</p>
             </div>
 
             {/* ── Custo da Produtora (conta direta: fixos + equipa por casamento) ── */}
-            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} meta={metaAnualSim} casamentosAno={casamentosVideo} onFixosChange={setFixosCfg} />
+            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} meta={metaAnualSim} casamentosAno={casamentosVideo} onFixosChange={setFixosCfg} onLucroPrevisto={setLucroPrevisto} />
 
             <BlocoTitulo n={2} titulo="Packs e preços" sub="O que cobras, o que pagas à equipa e quanto sobra em cada pack." />
 
