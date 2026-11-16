@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
 import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, ReferenceLine, LineChart, Legend } from 'recharts'
 import { supabase } from '@/lib/supabase'
-import CustoProdutora, { DEFAULT_FIXOS, pickFixos, type FixosCfg } from './CustoProdutora'
+import CustoProdutora, { DEFAULT_FIXOS, pickFixos, type FixosCfg, type CasamentoVideo } from './CustoProdutora'
 
 // ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
@@ -431,6 +431,8 @@ export default function FinancasAnoPage({ params }: Props) {
   const [dbEntries, setDbEntries]       = useState<DbEntry[]>([])
   const [eventReceitas, setEventReceitas]   = useState<ReceitaRow[]>([])
   const [eventDespesas, setEventDespesas]   = useState<DespesaRow[]>([])
+  // Casamentos do ano (dia + valor do vídeo) para a previsão do bloco Custo da Produtora
+  const [casamentosVideo, setCasamentosVideo] = useState<CasamentoVideo[]>([])
   const [prevYearReceitas, setPrevYearReceitas] = useState<ReceitaRow[]>([])
   const [prevYearDespesas, setPrevYearDespesas] = useState<DespesaRow[]>([])
   const [metaMensal, setMetaMensal]     = useState<number>(0)
@@ -546,6 +548,13 @@ export default function FinancasAnoPage({ params }: Props) {
         )
         setEventReceitas(mapEvents(events))
         setEventDespesas(despesasDeEventos(events, custos))
+        setCasamentosVideo(events
+          .filter((e: any) => e.data_evento && !/cancel/i.test(e.status ?? '')
+            && (e.tipo_evento ?? []).some((t: string) => /casamento/i.test(t)))
+          .map((e: any) => ({
+            dia: String(e.data_evento).slice(0, 10),
+            valor: Number(e.valor_video ?? e.valor_liquido) || 0,
+          })))
       })
     }
 
@@ -1787,7 +1796,7 @@ export default function FinancasAnoPage({ params }: Props) {
             </div>
 
             {/* ── Custo da Produtora (conta direta: fixos + equipa por casamento) ── */}
-            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} meta={metaAnualSim} onFixosChange={setFixosCfg} />
+            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} meta={metaAnualSim} casamentosAno={casamentosVideo} onFixosChange={setFixosCfg} />
 
             <BlocoTitulo n={2} titulo="Packs e preços" sub="O que cobras, o que pagas à equipa e quanto sobra em cada pack." />
 

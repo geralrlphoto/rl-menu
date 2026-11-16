@@ -13,7 +13,6 @@ type Cfg = {
   videografo: number; editor: number
   preco: number
   incluirOutros: boolean
-  captoEu: number   // casamentos que o Rui capta ele próprio (poupa o videógrafo)
   editoEu: number   // casamentos que o Rui edita ele próprio (poupa o editor)
 }
 
@@ -22,7 +21,6 @@ const DEFAULT_CFG: Cfg = {
   videografo: 300, editor: 150,
   preco: 1200,
   incluirOutros: false,
-  captoEu: 0,
   editoEu: 0,
 }
 
@@ -39,6 +37,9 @@ export function pickFixos(c: Partial<Cfg>): Partial<FixosCfg> {
   if (typeof c.incluirOutros === 'boolean') out.incluirOutros = c.incluirOutros
   return out
 }
+
+// Casamento marcado no ano: dia (AAAA-MM-DD) e valor do vídeo
+export type CasamentoVideo = { dia: string; valor: number }
 
 const PRECOS_TABELA = [800, 1000, 1200, 1500, 2000]
 
@@ -60,8 +61,9 @@ function Campo({ label, value, onChange, step = 5, sufixo = '€', cor = 'text-w
   )
 }
 
-export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, meta, onFixosChange }: {
-  ano: number; outrosFixosAnuais: number; casamentos: number; meta: number; onFixosChange?: (f: FixosCfg) => void
+export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, meta, casamentosAno, onFixosChange }: {
+  ano: number; outrosFixosAnuais: number; casamentos: number; meta: number
+  casamentosAno: CasamentoVideo[]; onFixosChange?: (f: FixosCfg) => void
 }) {
   const KEY = `custo-produtora-${ano}`
   const [cfgBase, setCfg] = useState<Cfg>(DEFAULT_CFG)
@@ -165,83 +167,114 @@ export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, met
         <p className="text-[11px] text-white/40 mt-1">{eur(lucroAno / 12)} por mês · receita {eur(receitaAno)} − custos {eur(custoAno)}</p>
       </div>
 
-      {/* O que fazes tu: captações e edições próprias para chegar à meta */}
+      {/* Previsão com os casamentos marcados no ano (dados reais dos eventos) */}
       {(() => {
-        const V = cfg.videografo, E = cfg.editor, N = cfg.casamentos
-        const falta = meta - lucroAno                       // o que falta para a meta se tudo for freelancer
-        const capt  = Math.min(Math.max(0, Math.round(cfg.captoEu)), N)
-        const edit  = Math.min(Math.max(0, Math.round(cfg.editoEu)), N)
-        const lucroFinal = lucroAno + capt * V + edit * E   // lucro com as tuas captações e edições
-        const diff = lucroFinal - meta                      // > 0 sobra, < 0 falta
-        const maisEdit = E > 0 ? Math.ceil(-diff / E) : Infinity
-        const maisCapt = V > 0 ? Math.ceil(-diff / V) : Infinity
-        const opcoes = [
-          { l: 'Só captar', v: V > 0 ? Math.ceil(falta / V) : Infinity, t: 'captações tuas', s: 'e todas as edições pelo editor' },
-          { l: 'Só editar', v: E > 0 ? Math.ceil(falta / E) : Infinity, t: 'edições tuas', s: 'e todas as captações por freelancers' },
-          { l: 'Captar e editar', v: V + E > 0 ? Math.ceil(falta / (V + E)) : Infinity, t: 'casamentos inteiros teus', s: 'captas e editas os mesmos' },
-        ]
+        const V = cfg.videografo, E = cfg.editor
+        const N = casamentosAno.length
+        // Um casamento por dia é do Rui; os restantes no mesmo dia vão para o videógrafo freelancer
+        const porDia = new Map<string, number>()
+        casamentosAno.forEach(c => porDia.set(c.dia, (porDia.get(c.dia) ?? 0) + 1))
+        const diasDuplos = [...porDia.entries()].filter(([, n]) => n > 1)
+        const captoEu  = porDia.size
+        const captoFree = N - captoEu
+        const receita  = casamentosAno.reduce((s, c) => s + c.valor, 0)
+        const comValor = casamentosAno.filter(c => c.valor > 0)
+        const semValor = N - comValor.length
+        const media    = comValor.length > 0 ? receita / comValor.length : cfg.preco
+        const edito    = Math.min(Math.max(0, Math.round(cfg.editoEu)), N)
+        const custoVid = captoFree * V
+        const custoEd  = (N - edito) * E
+        const lucro    = receita - custoVid - custoEd - fixoAno
+        const diff     = lucro - meta
+        // Casamentos novos: captados por ti (dia livre); editados pelo editor ou por ti
+        const margemNovoEditor = media - E
+        const margemNovoTu     = media
+        const novosEditor = diff < 0 && margemNovoEditor > 0 ? Math.ceil(-diff / margemNovoEditor) : 0
+        const novosTu     = diff < 0 && margemNovoTu > 0 ? Math.ceil(-diff / margemNovoTu) : 0
+        const fmtDia = (d: string) => d.split('-').reverse().slice(0, 2).join('/')
+        if (N === 0) {
+          return (
+            <div className="rounded-2xl border border-gold/25 bg-gold/[0.04] p-5 text-center">
+              <p className="text-[10px] tracking-[0.35em] text-gold/70 uppercase">Previsão {ano}</p>
+              <p className="text-[12px] text-white/45 mt-2">Ainda não há casamentos marcados em {ano}.</p>
+            </div>
+          )
+        }
         return (
           <div className="rounded-2xl border border-gold/25 bg-gold/[0.04] p-5 space-y-4">
             <div className="text-center">
-              <p className="text-[10px] tracking-[0.35em] text-gold/70 uppercase">O que tens de fazer tu</p>
+              <p className="text-[10px] tracking-[0.35em] text-gold/70 uppercase">Previsão {ano} com os casamentos marcados</p>
               <p className="text-[11px] text-white/40 mt-1">
-                Meta de lucro <span className="text-gold font-mono">{eur(meta)}</span> (muda nos Objetivos).
-                Cada captação tua poupa {eur(V)} e cada edição tua poupa {eur(E)}.
+                Só o valor dos vídeos. Num dia com mais de um casamento, o segundo é do videógrafo freelancer.
               </p>
             </div>
 
-            {falta <= 0 ? (
-              <p className="text-center text-sm text-green-400">
-                Já chegas à meta só com freelancers. Sobram {eur(-falta)} acima da meta.
-              </p>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {opcoes.map(o => {
-                    const ok = o.v <= N
-                    return (
-                      <div key={o.l} className="rounded-xl border border-white/[0.08] bg-black/20 p-4 text-center">
-                        <p className="text-[9px] tracking-[0.3em] text-white/35 uppercase mb-2">{o.l}</p>
-                        <p className={`text-3xl font-light font-mono ${ok ? 'text-gold' : 'text-red-400/80'}`}>{ok ? o.v : '✕'}</p>
-                        <p className="text-[10px] text-white/45 mt-1">{ok ? o.t : `não chega com ${N} casamentos`}</p>
-                        {ok && <p className="text-[9px] text-white/25 mt-0.5">{o.s}</p>}
-                      </div>
-                    )
-                  })}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {[
+                { l: 'Casamentos marcados', v: String(N), s: `${porDia.size} dias diferentes`, c: 'text-white/80' },
+                { l: 'Captas tu', v: String(captoEu), s: 'um por dia', c: 'text-gold' },
+                { l: 'Videógrafo freelancer', v: String(captoFree), s: diasDuplos.length ? `dias ${diasDuplos.map(([d]) => fmtDia(d)).join(', ')}` : 'nenhum dia duplo', c: 'text-red-300/80' },
+                { l: 'Receita de vídeo', v: eur(receita), s: `média ${eur(media)}${semValor ? ` · ${semValor} sem valor` : ''}`, c: 'text-green-400' },
+              ].map(k => (
+                <div key={k.l} className="rounded-xl border border-white/[0.08] bg-black/20 p-3 text-center">
+                  <p className="text-[9px] tracking-[0.25em] text-white/30 uppercase mb-1">{k.l}</p>
+                  <p className={`text-xl font-light font-mono ${k.c}`}>{k.v}</p>
+                  <p className="text-[9px] text-white/25 mt-0.5">{k.s}</p>
                 </div>
-              </>
-            )}
+              ))}
+            </div>
 
-                {/* A tua combinação: escolhes quantos captas e quantos editas (sempre visível) */}
-                <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4 space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-white/35 uppercase text-center">A tua combinação</p>
-                  {([
-                    { l: 'Casamentos que captas', v: capt, k: 'captoEu' as const, p: V },
-                    { l: 'Casamentos que editas', v: edit, k: 'editoEu' as const, p: E },
-                  ]).map(r => (
-                    <div key={r.k} className="flex items-center gap-4">
-                      <span className="text-[11px] text-white/50 w-40 shrink-0">{r.l}</span>
-                      <input type="range" min={0} max={N} step={1} value={r.v}
-                        onChange={e => set({ [r.k]: Number(e.target.value) })}
-                        className="flex-1 accent-yellow-400" />
-                      <span className="text-lg font-mono text-gold w-10 text-right">{r.v}</span>
-                      <span className="text-[10px] font-mono text-green-400/60 w-20 text-right">+{eur(r.v * r.p)}</span>
-                    </div>
-                  ))}
-                  <div className="border-t border-white/[0.06] pt-3 text-center space-y-1">
-                    <p className={`text-2xl font-light font-mono ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                      {eur(lucroFinal)} <span className="text-sm text-white/30">/ ano</span>
-                    </p>
-                    <p className="text-[11px] text-white/40">
-                      Captas {capt} e editas {edit} de {N} casamentos · {eur(lucroFinal / 12)} por mês
-                    </p>
-                    <p className={`text-[11px] ${diff >= 0 ? 'text-green-400/80' : 'text-red-400/80'}`}>
-                      {diff >= 0
-                        ? <>Meta atingida. Sobram {eur(diff)}.</>
-                        : <>Faltam {eur(-diff)} para a meta: mais {maisEdit} edições{edit + maisEdit > N ? ' (não há casamentos que cheguem)' : ''} ou mais {maisCapt} captações{capt + maisCapt > N ? ' (não há casamentos que cheguem)' : ''}.</>}
-                    </p>
+            {/* Régua: quantos casamentos editas tu */}
+            <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4 space-y-3">
+              <div className="flex items-center gap-4">
+                <span className="text-[11px] text-white/50 w-40 shrink-0">Casamentos que editas tu</span>
+                <input type="range" min={0} max={N} step={1} value={edito}
+                  onChange={e => set({ editoEu: Number(e.target.value) })}
+                  className="flex-1 accent-yellow-400" />
+                <span className="text-lg font-mono text-gold w-10 text-right">{edito}</span>
+              </div>
+              <p className="text-[10px] text-white/30 text-right">o editor faz {N - edito} · poupas {eur(edito * E)}</p>
+
+              <div className="border-t border-white/[0.06] pt-3 space-y-1 text-[12px]">
+                {[
+                  { l: 'Receita de vídeo', v: receita, c: 'text-green-400/80' },
+                  { l: `Videógrafo freelancer (${captoFree} × ${eur(V)})`, v: -custoVid, c: 'text-red-300/70' },
+                  { l: `Editor (${N - edito} × ${eur(E)})`, v: -custoEd, c: 'text-red-300/70' },
+                  { l: 'Custos fixos do ano', v: -fixoAno, c: 'text-red-300/70' },
+                ].map(r => (
+                  <div key={r.l} className="flex justify-between">
+                    <span className="text-white/45">{r.l}</span>
+                    <span className={`font-mono ${r.c}`}>{r.v < 0 ? '−' : ''}{eur(Math.abs(r.v))}</span>
                   </div>
+                ))}
+                <div className="flex justify-between border-t border-white/[0.06] pt-2 mt-1">
+                  <span className="text-white/70 font-medium">Lucro previsto</span>
+                  <span className={`font-mono text-lg ${lucro >= 0 ? 'text-green-400' : 'text-red-400'}`}>{lucro < 0 ? '−' : ''}{eur(Math.abs(lucro))}</span>
                 </div>
+                <p className="text-[10px] text-white/30 text-right">{eur(lucro / 12)} por mês</p>
+              </div>
+            </div>
+
+            {/* Meta */}
+            <div className={`rounded-xl border p-4 text-center ${diff >= 0 ? 'border-green-500/25 bg-green-500/[0.05]' : 'border-red-500/25 bg-red-500/[0.05]'}`}>
+              <p className="text-[10px] tracking-[0.3em] text-white/35 uppercase mb-1">Meta de lucro {eur(meta)} (muda nos Objetivos)</p>
+              {diff >= 0 ? (
+                <p className="text-sm text-green-400">Meta atingida com os casamentos já marcados. Sobram {eur(diff)}.</p>
+              ) : (
+                <>
+                  <p className="text-sm text-red-400">Faltam {eur(-diff)}.</p>
+                  <p className="text-[12px] text-white/60 mt-2">
+                    Precisas de mais <span className="text-gold font-mono text-base">{novosEditor}</span> casamentos
+                    (a {eur(media)} de média, captados por ti e editados pelo editor),
+                    ou <span className="text-gold font-mono text-base">{novosTu}</span> se também os editares tu.
+                  </p>
+                  <p className="text-[10px] text-white/30 mt-1">
+                    Total no ano: {N + novosEditor} casamentos ({N + novosTu} se editares os novos).
+                    Os novos têm de cair em dias livres para seres tu a captar.
+                  </p>
+                </>
+              )}
+            </div>
             <p className="text-[9px] text-white/25 text-center">
               O lucro inclui o valor do teu trabalho: o que poupas em freelancers é o que ganhas por captar e editar.
             </p>
