@@ -108,6 +108,56 @@ const GUIA_EVENTO: BlocoGuia[] = [
   },
 ]
 
+// Marca pessoal: o Rui vai como CEO / empreendedor da RL, não a filmar. A equipa filma-o.
+// Guião A é o Vídeo 2 a entregar; B e C são editados pela RL com os planos do dia.
+type Linha = { t: string; img: string; fala?: string; txt?: string }
+const GUIAO_A: Linha[] = [
+  { t: '0–3 s', img: 'O Rui a sair do carro ou a entrar no SUD, bem vestido, passo seguro.', fala: 'Hoje não venho filmar. Venho representar a empresa.' },
+  { t: '3–10 s', img: 'Plano largo do espaço com o Tejo ao fundo.', fala: 'Zankyou Wedding Club, no SUD Lisboa. A RL é a responsável pelo vídeo oficial, e quem está atrás das câmaras hoje é a minha equipa.' },
+  { t: '10–22 s', img: 'O Rui no briefing com a equipa; eles acenam e seguem para os seus postos.', fala: 'O meu trabalho começa antes. Escolher as pessoas certas, combinar o plano, confiar nelas. Depois, deixá-las fazer.' },
+  { t: '22–35 s', img: 'Mais tarde: o Rui a cumprimentar parceiros e a conversar à mesa, de copo na mão; a equipa a filmar ao fundo, desfocada.', fala: 'Aqui estão espaços, planners e marcas com quem trabalhamos ou queremos trabalhar. Para mim, um evento destes é para criar relações.' },
+  { t: '35–48 s', img: 'Discursos, pôr do sol, a sala cheia; o Rui a observar com calma.', txt: '16h00 · convidados / 17h20 · pôr do sol sobre o Tejo / 20h00 · festa' },
+  { t: '48–56 s', img: 'O Rui na esplanada, plano médio, ao pôr do sol.', fala: 'Quando comecei, eu fazia tudo sozinho. Hoje consigo estar na sala enquanto a equipa faz o filme.' },
+  { t: '56–60 s', img: 'O Rui vira-se para o rio e sai de plano.', fala: 'É isto que eu quero construir.', txt: 'RL Photo.Video' },
+]
+const GUIAO_B: Linha[] = [
+  { t: '0–5 s', img: 'O Rui sozinho na esplanada, de costas, a olhar para o Tejo.', fala: 'Há três anos, eu não me imaginava aqui.' },
+  { t: '5–15 s', img: 'A equipa a preparar o material, a montar luzes e a testar o som. O Rui a ver de longe.', fala: 'Na altura eu [era a empresa inteira: filmava, editava, respondia aos emails, fazia tudo].' },
+  { t: '15–28 s', img: 'O espaço a encher, o logótipo da Zankyou, o Rui a cumprimentar pessoas.', fala: 'Hoje, a RL faz o vídeo oficial do Zankyou Wedding Club. E eu estou numa sala com as pessoas que sempre admirei neste meio, como colega.' },
+  { t: '28–40 s', img: 'Pôr do sol sobre o rio e a ponte; a equipa a filmar em plano largo; o Rui de perfil, de mãos nos bolsos.', fala: 'Não foi sorte. Foram anos a dizer que sim a tudo, a errar, a contratar as pessoas certas e a aprender a confiar nelas.' },
+  { t: '40–50 s', img: 'A festa, as luzes, o Rui a rir numa conversa.', fala: 'Crescer é isto: largar a câmara para poder ver o que está à volta.' },
+  { t: '50–55 s', img: 'O Rui de frente para a câmara, em silêncio. Corte para preto.', txt: 'O dia chegou. · RL Photo.Video' },
+]
+const PLANOS_C = [
+  'Os sapatos do Rui a entrar no SUD (plano baixo, em movimento)',
+  'O Rui a ajustar o casaco ou o relógio (close)',
+  'O Rui a olhar pela janela para o Tejo (silhueta)',
+  'O Rui a dar indicações à equipa, a apontar para o espaço (plano médio)',
+  'A equipa a filmar e o Rui ao fundo a observar',
+  'Aperto de mão com um parceiro (close das mãos)',
+  'O Rui a conversar à mesa, de copo na mão, descontraído',
+  'O Rui ao pôr do sol na esplanada, de perfil (o plano principal: 2 ou 3 versões)',
+  'O Rui a atravessar a festa com as luzes desfocadas à frente',
+  'Fim: o Rui sai de plano e fica só o rio',
+]
+
+function Guiao({ linhas }: { linhas: Linha[] }) {
+  return (
+    <div className="guiao">
+      {linhas.map(l => (
+        <div key={l.t}>
+          <span className="gt">{l.t}</span>
+          <div>
+            <p className="gi">{l.img}</p>
+            {l.fala && <p className="gf"><span>Fala</span>«{l.fala}»</p>}
+            {l.txt && <p className="gf"><span>Texto no ecrã</span>{l.txt}</p>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // Só o contacto da RL: os contactos dos fornecedores não entram no briefing da equipa
 const CONTACTOS = [
   ['Rui Gonçalves', 'RL Photo Video · responsável do vídeo', '+351 912 932 768'],
@@ -181,6 +231,18 @@ const CSS = `
 .fb .meteo-h .tag{position:absolute;top:-9px;font-size:8px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;background:var(--g);color:#070707;padding:2px 7px;border-radius:20px;white-space:nowrap;}
 .fb .meteo-fonte,.fb .meteo-aviso{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.35);margin:14px 0 0;}
 @media (max-width:600px){.fb .meteo-horas{grid-template-columns:repeat(4,minmax(0,1fr));}}
+/* Guiões da marca pessoal */
+.fb .guiao{margin-top:20px;border:1px solid var(--line);border-left:2px solid rgba(216,190,147,.35);border-radius:18px;background:rgba(17,17,17,.9);padding:0 22px;}
+.fb .guiao > div{display:grid;grid-template-columns:90px minmax(0,1fr);gap:18px;padding:18px 0;border-top:1px solid var(--line-soft);}
+.fb .guiao > div:first-child{border-top:0;}
+.fb .guiao .gt{font-weight:700;font-size:18px;color:var(--g);}
+.fb .guiao .gi{margin:0;color:rgba(255,255,255,.55);font-size:15px;font-weight:300;line-height:1.5;}
+.fb .guiao .gf{margin:8px 0 0;color:#fff;font-size:17px;line-height:1.45;}
+.fb .guiao .gf span{display:block;font-size:10.5px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:var(--g);margin-bottom:2px;}
+.fb .gsub{margin-top:28px;font-weight:700;text-transform:uppercase;font-size:20px;letter-spacing:.02em;}
+.fb .gsub small{display:block;font-weight:400;font-size:12px;letter-spacing:.16em;color:var(--g);margin-bottom:4px;}
+.fb .nota{margin-top:14px;color:rgba(255,255,255,.45);font-size:15px;font-weight:300;}
+@media (max-width:600px){.fb .guiao > div{grid-template-columns:minmax(0,1fr);gap:4px;}}
 `
 
 function Seccao({ ey, titulo, children }: { ey: string; titulo: string; children: React.ReactNode }) {
@@ -310,28 +372,44 @@ export default async function BriefingZankyouSud() {
         <Seccao ey="Dois vídeos até 59 s e os brutos" titulo="O que tens de entregar">
           <div className="g2">
             <div className="card"><span className="k">Vídeo 1 · até 59 s</span><b>Recap do evento</b><p>O resumo da tarde: o espaço, as pessoas, os discursos, a gastronomia, os parceiros e a festa.</p></div>
-            <div className="card"><span className="k">Vídeo 2 · até 59 s</span><b>Marca pessoal do Rui</b><p>O Rui a falar para a câmara sobre o evento, com bastidores e planos do dia a cobrir a voz.</p></div>
+            <div className="card"><span className="k">Vídeo 2 · até 59 s</span><b>Marca pessoal do Rui</b><p>O Rui como CEO da RL no evento: falas para a câmara e planos dele com parceiros e com a equipa. Segue o Guião A.</p></div>
           </div>
           <div className="card" style={{ marginTop: 12 }}><span className="k">Depois do evento</span><b>Todos os brutos para a RL Photo Video</b><p>Além dos dois vídeos, entregas à RL Photo Video todo o material em bruto que filmaste no evento, sem cortes.</p></div>
         </Seccao>
 
         <Seccao ey="Vídeo 2" titulo="Marca pessoal do Rui">
           <div className="destaque">
-            <div><span>O que é</span><p>O Rui a falar para a câmara, a contar o que estamos a fazer, que fomos convidados pela Zankyou e que somos parceiros do evento, como vídeo oficial.</p></div>
+            <div><span>O ângulo</span><p>O Rui não vai filmar. Vai como CEO e empreendedor da RL Photo.Video, a representar a empresa enquanto a equipa faz o vídeo oficial. Em todos os planos dele, o Rui está a liderar, a falar com parceiros ou a observar, nunca de câmara na mão.</p></div>
+            <div><span>Três guiões</span><p>O Guião A é o Vídeo 2 que entregas. Os Guiões B e C são montados depois pela RL com os planos que filmares hoje, por isso filma também os planos deles.</p></div>
           </div>
           <div className="g2">
-            <div className="card"><span className="k">Formato</span><b>Horizontal 16:9</b><p>Tomadas curtas, de 10 a 30 s, com o Rui a olhar para a câmara. Várias tomadas de cada ideia.</p></div>
-            <div className="card"><span className="k">Som</span><b>Voz limpa</b><p>Microfone no Rui e sítios mais calmos para falar. Evitar gravar ao lado das colunas.</p></div>
+            <div className="card"><span className="k">Formato</span><b>Horizontal 16:9, Rui ao centro</b><p>Tomadas curtas, de 10 a 30 s, com o Rui a olhar para a câmara. Várias tomadas de cada fala. O Rui sempre ao centro para os cortes verticais na edição.</p></div>
+            <div className="card"><span className="k">Som</span><b>Lapela só nas falas</b><p>Microfone no Rui e sítios mais calmos para falar. Nas conversas com parceiros, só imagem. Grava 30 s de som ambiente da esplanada e da festa.</p></div>
           </div>
           <div className="lista">
             {[
-              ['À chegada, 15h00', 'Com o SUD e o Tejo atrás, ainda sem convidados: onde estamos e o que vamos fazer hoje.'],
-              ['Antes de começar', 'Fomos convidados pela Zankyou e somos parceiros: fazemos o vídeo oficial do evento.'],
-              ['Ao pôr do sol', 'Na esplanada, com a luz das 17h20: o que é estar aqui com os melhores do setor.'],
-              ['Durante a festa', 'Um momento mais solto, com o ambiente atrás, e uma despedida para fechar.'],
-              ['Bastidores', 'O Rui a filmar, a falar com os parceiros e a preparar planos, para cobrir a voz.'],
+              ['Antes das 16h00', 'As falas do Guião A e os planos 1 a 5 do Guião C, com o espaço vazio e boa luz.'],
+              ['Durante o evento', 'Filmar o Rui de forma discreta, nunca a interromper conversas. Planos de longe com zoom ficam mais naturais.'],
+              ['17h00 às 17h30', 'Pôr do sol: prioridade aos planos do Rui de perfil na esplanada (Guiões A, B e C) e ao drone, se for permitido.'],
+              ['A equipa', 'Um ou dois planos da equipa a trabalhar bem: reforçam a ideia de empresa e não de fotógrafo sozinho.'],
             ].map(([m, o]) => <div key={m}><span>{m}</span><span>{o}</span></div>)}
           </div>
+
+          <p className="gsub"><small>Guião A · 60 s · é o Vídeo 2</small>Um dia como CEO no Zankyou Wedding Club</p>
+          <Guiao linhas={GUIAO_A} />
+          <p className="nota">Gancho alternativo: «A minha equipa está a filmar. Eu estou aqui para outra coisa.»</p>
+
+          <p className="gsub"><small>Guião B · 45 a 60 s · voz off gravada depois pela RL</small>Há 3 anos</p>
+          <Guiao linhas={GUIAO_B} />
+          <p className="nota">Hoje só tens de filmar as imagens. A voz é gravada mais tarde pelo Rui, com calma.</p>
+
+          <p className="gsub"><small>Guião C · 15 a 25 s · só imagem e música, montado pela RL</small>O escritório de hoje</p>
+          <div className="guiao">
+            {PLANOS_C.map((p, i) => (
+              <div key={p}><span className="gt">{String(i + 1).padStart(2, '0')}</span><div><p className="gf" style={{ marginTop: 0 }}>{p}</p></div></div>
+            ))}
+          </div>
+          <p className="nota">Texto no ecrã, a escolher na edição: «Antes filmava. Hoje lidero.» · «O escritório de hoje.» · «A equipa filma. Eu construo.»</p>
         </Seccao>
 
 
