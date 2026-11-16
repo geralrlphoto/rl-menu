@@ -30,4 +30,5 @@ export const REELS_FIXOS: Reel[] = [
 export const CAPAS: Record<string, string> = {
   ...Object.fromEntries(REELS_FIXOS.map(r => [r.vimeo, r.capa])),
   '1246741648': '/reels/prewedding.jpg', // Pre wedding
+  '1246761907': '/reels/bts-adraga.jpg', // Bts adraga
 }
