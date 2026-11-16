@@ -450,15 +450,17 @@ export default function FinancasAnoPage({ params }: Props) {
   }
   const [crmEst, setCrmEst]             = useState<CrmEst | null>(null)
   // Packs config (editável, persistido em localStorage)
-  type PacksCfg = { preco: number; freelancer: number; servicos: string[] }
+  // freelancer = videógrafo; editor = editor de vídeo. Margem = preço − freelancer − editor.
+  type PacksCfg = { preco: number; freelancer: number; editor: number; servicos: string[] }
   type AllPacksCfg = { p1: PacksCfg; p2: PacksCfg; p3: PacksCfg; bat: PacksCfg; corp: PacksCfg }
   const DEFAULT_PACKS_CFG: AllPacksCfg = {
-    p1:   { preco: 850,  freelancer: 300, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída'] },
-    p2:   { preco: 1050, freelancer: 300, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding'] },
-    p3:   { preco: 1300, freelancer: 350, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding', 'Imagens de Drone', 'Same-Day Edit (SDE)'] },
-    bat:  { preco: 450,  freelancer: 120, servicos: ['Reportagem completa', 'Vídeo highlights', 'Deslocação incluída'] },
-    corp: { preco: 700,  freelancer: 80,  servicos: ['Captação de evento', 'Edição profissional', 'Entrega digital'] },
+    p1:   { preco: 850,  freelancer: 300, editor: 150, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída'] },
+    p2:   { preco: 1050, freelancer: 300, editor: 150, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding'] },
+    p3:   { preco: 1300, freelancer: 350, editor: 150, servicos: ['1 Videógrafo', 'Reportagem completa', 'Vídeo final 20 min', 'Qualidade Full HD', 'Deslocação incluída', 'Sessão Pré-Wedding', 'Imagens de Drone', 'Same-Day Edit (SDE)'] },
+    bat:  { preco: 450,  freelancer: 120, editor: 0,   servicos: ['Reportagem completa', 'Vídeo highlights', 'Deslocação incluída'] },
+    corp: { preco: 700,  freelancer: 80,  editor: 0,   servicos: ['Captação de evento', 'Edição profissional', 'Entrega digital'] },
   }
+  const margemPack = (c: PacksCfg) => c.preco - c.freelancer - (c.editor ?? 0)
   const [packsCfg, setPacksCfg] = useState<AllPacksCfg>(DEFAULT_PACKS_CFG)
   const [newServicoInput, setNewServicoInput] = useState<Record<string, string>>({ p1: '', p2: '', p3: '', bat: '', corp: '' })
 
@@ -1595,9 +1597,9 @@ export default function FinancasAnoPage({ params }: Props) {
       {/* ── ESTRATÉGIA ── */}
       {tab === 'estratégia' && (() => {
         // ── Packs de vídeo (editáveis via UI)
-        const p1Preco = packsCfg.p1.preco, p1Freelancer = packsCfg.p1.freelancer, p1Margem = p1Preco - p1Freelancer
-        const p2Preco = packsCfg.p2.preco, p2Freelancer = packsCfg.p2.freelancer, p2Margem = p2Preco - p2Freelancer
-        const p3Preco = packsCfg.p3.preco, p3Freelancer = packsCfg.p3.freelancer, p3Margem = p3Preco - p3Freelancer
+        const p1Preco = packsCfg.p1.preco, p1Equipa = packsCfg.p1.freelancer + packsCfg.p1.editor, p1Margem = margemPack(packsCfg.p1)
+        const p2Preco = packsCfg.p2.preco, p2Equipa = packsCfg.p2.freelancer + packsCfg.p2.editor, p2Margem = margemPack(packsCfg.p2)
+        const p3Preco = packsCfg.p3.preco, p3Equipa = packsCfg.p3.freelancer + packsCfg.p3.editor, p3Margem = margemPack(packsCfg.p3)
 
         // ── Ticket médio video atual (entradas com "Videografo"/"Letras" no info 2025)
         const videoEntries2025 = RECEITAS_2025.filter(r =>
@@ -1616,7 +1618,9 @@ export default function FinancasAnoPage({ params }: Props) {
         const ticketMedioAno = casamentosAno.length > 0
           ? Math.round(casamentosAno.reduce((s, r) => s + r.valor, 0) / casamentosAno.length)
           : 0
-        const margemAno = ticketMedioAno > 0 ? ticketMedioAno - 280 : 0
+        // Desde 2026 as receitas dos eventos já entram líquidas (sem videógrafo,
+        // editor e fotografia), por isso não se desconta mais nada aqui.
+        const margemAno = ticketMedioAno > 0 ? (anoNum >= 2026 ? ticketMedioAno : ticketMedioAno - 280) : 0
 
         // ── Mix dinâmico baseado em numEventosSim (40% P1, 40% P2, 20% P3)
         const mx1 = Math.round(numEventosSim * 0.40)
@@ -1637,7 +1641,7 @@ export default function FinancasAnoPage({ params }: Props) {
           : ['rgba(96,165,250,0.65)','rgba(201,168,76,0.70)']
 
         const savePacks = (next: AllPacksCfg) => { setPacksCfg(next); localStorage.setItem('packs-config', JSON.stringify(next)) }
-        const updatePack = (key: keyof AllPacksCfg, field: 'preco' | 'freelancer', val: number) =>
+        const updatePack = (key: keyof AllPacksCfg, field: 'preco' | 'freelancer' | 'editor', val: number) =>
           savePacks({ ...packsCfg, [key]: { ...packsCfg[key], [field]: val } })
         const removeServico = (key: keyof AllPacksCfg, idx: number) => {
           const next = { ...packsCfg, [key]: { ...packsCfg[key], servicos: packsCfg[key].servicos.filter((_, i) => i !== idx) } }
@@ -1755,7 +1759,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   { key: 'p3' as const, label: 'Proposta 3', color: 'text-purple-300',  chipBg: 'bg-purple-500/10 border-purple-500/20', border: 'border-purple-500/15' },
                 ] as { key: keyof AllPacksCfg; label: string; color: string; chipBg: string; border: string }[]).map(row => {
                   const cfg = packsCfg[row.key]
-                  const margem = cfg.preco - cfg.freelancer
+                  const margem = margemPack(cfg)
                   return (
                     <div key={row.key} className={`px-5 py-4 border-b last:border-b-0 ${row.border}`}>
                       {/* Row header */}
@@ -1770,9 +1774,16 @@ export default function FinancasAnoPage({ params }: Props) {
                             <span className="text-[10px] text-white/20">€</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <span className="text-[8px] text-white/20 uppercase tracking-wider">Freelancer</span>
+                            <span className="text-[8px] text-white/20 uppercase tracking-wider">Videógrafo</span>
                             <input type="number" min={0} step={10} value={cfg.freelancer}
                               onChange={e => updatePack(row.key, 'freelancer', Number(e.target.value) || 0)}
+                              className="w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors" />
+                            <span className="text-[10px] text-white/20">€</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <span className="text-[8px] text-white/20 uppercase tracking-wider">Editor</span>
+                            <input type="number" min={0} step={10} value={cfg.editor}
+                              onChange={e => updatePack(row.key, 'editor', Number(e.target.value) || 0)}
                               className="w-20 bg-white/5 border border-white/10 rounded-lg px-2 py-1 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors" />
                             <span className="text-[10px] text-white/20">€</span>
                           </div>
@@ -1819,7 +1830,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   { key: 'corp' as const, label: 'Corporate', color: 'text-emerald-300', chipBg: 'bg-emerald-500/10 border-emerald-500/20' },
                 ] as { key: keyof AllPacksCfg; label: string; color: string; chipBg: string }[]).map(row => {
                   const cfg = packsCfg[row.key]
-                  const margem = cfg.preco - cfg.freelancer
+                  const margem = margemPack(cfg)
                   return (
                     <div key={row.key} className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 space-y-3">
                       <div className="flex items-center justify-between">
@@ -1840,10 +1851,19 @@ export default function FinancasAnoPage({ params }: Props) {
                           </div>
                         </div>
                         <div className="flex-1">
-                          <p className="text-[8px] text-white/20 uppercase tracking-wider mb-1">Freelancer</p>
+                          <p className="text-[8px] text-white/20 uppercase tracking-wider mb-1">Videógrafo</p>
                           <div className="flex items-center gap-1">
                             <input type="number" min={0} step={10} value={cfg.freelancer}
                               onChange={e => updatePack(row.key, 'freelancer', Number(e.target.value) || 0)}
+                              className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors" />
+                            <span className="text-[10px] text-white/20">€</span>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[8px] text-white/20 uppercase tracking-wider mb-1">Editor</p>
+                          <div className="flex items-center gap-1">
+                            <input type="number" min={0} step={10} value={cfg.editor}
+                              onChange={e => updatePack(row.key, 'editor', Number(e.target.value) || 0)}
                               className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-sm font-mono text-right text-red-400/60 focus:outline-none focus:border-white/25 transition-colors" />
                             <span className="text-[10px] text-white/20">€</span>
                           </div>
@@ -1925,7 +1945,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     <p className={`text-base font-mono ${margemAno > 0 ? 'text-green-400/70' : 'text-white/30'}`}>
                       {ticketMedioAno > 0 ? `${margemAno} €` : '—'}
                     </p>
-                    <p className="text-[9px] text-white/15">após ~280€ freelancer</p>
+                    <p className="text-[9px] text-white/15">{anoNum >= 2026 ? 'equipa já descontada' : 'após ~280€ freelancer'}</p>
                   </div>
                 </div>
                 {/* 2027 objetivo */}
@@ -1937,7 +1957,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   <div className="mt-3 pt-3 border-t border-gold/[0.10]">
                     <p className="text-[9px] text-white/20">margem média</p>
                     <p className="text-base font-mono text-green-400">{numEventosSim > 0 ? Math.round((p1Margem*mx1 + p2Margem*mx2 + p3Margem*mx3) / numEventosSim) : 0} €</p>
-                    <p className="text-[9px] text-green-400/30">após freelancer</p>
+                    <p className="text-[9px] text-green-400/30">após videógrafo e editor</p>
                   </div>
                 </div>
               </div>
@@ -2074,7 +2094,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
                       <p className="text-xl font-mono font-semibold text-green-400">{p1Margem} €</p>
-                      <p className="text-[9px] text-white/20 mt-0.5">após {p1Freelancer}€ videógrafo</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">após {p1Equipa}€ de equipa</p>
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
@@ -2100,7 +2120,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
                       <p className="text-xl font-mono font-semibold text-green-400">{p2Margem} €</p>
-                      <p className="text-[9px] text-white/20 mt-0.5">após {p2Freelancer}€ videógrafo</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">após {p2Equipa}€ de equipa</p>
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
@@ -2126,7 +2146,7 @@ export default function FinancasAnoPage({ params }: Props) {
                     <div className="text-right">
                       <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
                       <p className="text-xl font-mono font-semibold text-green-400">{p3Margem} €</p>
-                      <p className="text-[9px] text-white/20 mt-0.5">após {p3Freelancer}€ videógrafo</p>
+                      <p className="text-[9px] text-white/20 mt-0.5">após {p3Equipa}€ de equipa</p>
                     </div>
                   </div>
                   <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
@@ -2140,7 +2160,7 @@ export default function FinancasAnoPage({ params }: Props) {
 
                 {/* Comparação de margens */}
                 <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                  <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-3">Margem por Pack (após freelancer)</p>
+                  <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-3">Margem por Pack (após videógrafo e editor)</p>
                   <div className="space-y-3">
                     {[
                       { label: `Proposta 1 · ${p1Preco}€`, margem: p1Margem, max: p3Margem, pct: Math.round(p1Margem/p3Margem*100), fill: 'rgba(96,165,250,0.5)' },
@@ -2203,7 +2223,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   <div className="space-y-2">
                     {[
                       { l: `${numEventosSim} eventos × ~${ticketMedio2027}€`, v: `${mixReceitas.toLocaleString('pt-PT')} €`, c: 'text-green-400/70' },
-                      { l: 'Custo freelancers', v: `−${(mixReceitas - mixMargem).toLocaleString('pt-PT')} €`, c: 'text-red-400/50' },
+                      { l: 'Custo equipa (videógrafo + editor)', v: `−${(mixReceitas - mixMargem).toLocaleString('pt-PT')} €`, c: 'text-red-400/50' },
                     ].map(r => (
                       <div key={r.l} className="flex justify-between text-sm">
                         <span className="text-white/35">{r.l}</span>
@@ -2576,8 +2596,8 @@ export default function FinancasAnoPage({ params }: Props) {
             {(() => {
               const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
               const margemNecessaria = metaAnualSim + custoFixoAnual
-              const PREC_BAT = packsCfg.bat.preco,  MARG_BAT = packsCfg.bat.preco  - packsCfg.bat.freelancer
-              const PREC_CORP = packsCfg.corp.preco, MARG_CORP = packsCfg.corp.preco - packsCfg.corp.freelancer
+              const PREC_BAT = packsCfg.bat.preco,  MARG_BAT = margemPack(packsCfg.bat)
+              const PREC_CORP = packsCfg.corp.preco, MARG_CORP = margemPack(packsCfg.corp)
               // Seasonal weights Jan–Dec (sum ≈ 13.0)
               const SW = [0, 0.4, 0.3, 1.0, 1.5, 1.8, 1.8, 2.0, 2.0, 1.2, 0.5, 0.5]
               const SW_SUM = SW.reduce((a, b) => a + b, 0)
