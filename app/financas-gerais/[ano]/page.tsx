@@ -1787,7 +1787,7 @@ export default function FinancasAnoPage({ params }: Props) {
             </div>
 
             {/* ── Custo da Produtora (conta direta: fixos + equipa por casamento) ── */}
-            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} onFixosChange={setFixosCfg} />
+            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} meta={metaAnualSim} onFixosChange={setFixosCfg} />
 
             <BlocoTitulo n={2} titulo="Packs e preços" sub="O que cobras, o que pagas à equipa e quanto sobra em cada pack." />
 

@@ -13,6 +13,7 @@ type Cfg = {
   videografo: number; editor: number
   preco: number
   incluirOutros: boolean
+  captoEu: number   // casamentos que o Rui capta ele próprio (poupa o videógrafo)
 }
 
 const DEFAULT_CFG: Cfg = {
@@ -20,6 +21,7 @@ const DEFAULT_CFG: Cfg = {
   videografo: 300, editor: 150,
   preco: 1200,
   incluirOutros: false,
+  captoEu: 0,
 }
 
 // Parte fixa (renda, internet, luz, outros): a página lê-a para usar em toda a Estratégia.
@@ -56,8 +58,8 @@ function Campo({ label, value, onChange, step = 5, sufixo = '€', cor = 'text-w
   )
 }
 
-export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, onFixosChange }: {
-  ano: number; outrosFixosAnuais: number; casamentos: number; onFixosChange?: (f: FixosCfg) => void
+export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, meta, onFixosChange }: {
+  ano: number; outrosFixosAnuais: number; casamentos: number; meta: number; onFixosChange?: (f: FixosCfg) => void
 }) {
   const KEY = `custo-produtora-${ano}`
   const [cfgBase, setCfg] = useState<Cfg>(DEFAULT_CFG)
@@ -153,13 +155,88 @@ export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, onF
 
       <div className={`rounded-2xl border p-5 text-center ${lucroAno >= 0 ? 'border-green-500/25 bg-green-500/[0.05]' : 'border-red-500/25 bg-red-500/[0.05]'}`}>
         <p className="text-[10px] tracking-[0.35em] text-white/35 uppercase mb-2">
-          Lucro com {cfg.casamentos} casamentos a {eur(cfg.preco)}
+          Lucro com {cfg.casamentos} casamentos a {eur(cfg.preco)}, tudo feito por freelancers
         </p>
         <p className={`text-3xl font-light font-mono ${lucroAno >= 0 ? 'text-green-400' : 'text-red-400'}`}>
           {lucroAno < 0 ? '−' : ''}{eur(Math.abs(lucroAno))} <span className="text-sm text-white/30">/ ano</span>
         </p>
         <p className="text-[11px] text-white/40 mt-1">{eur(lucroAno / 12)} por mês · receita {eur(receitaAno)} − custos {eur(custoAno)}</p>
       </div>
+
+      {/* O que fazes tu: captações e edições próprias para chegar à meta */}
+      {(() => {
+        const V = cfg.videografo, E = cfg.editor, N = cfg.casamentos
+        const falta = meta - lucroAno                       // o que falta para a meta se tudo for freelancer
+        const capt  = Math.min(Math.max(0, Math.round(cfg.captoEu)), N)
+        const restante = falta - capt * V                   // o que ainda falta depois das tuas captações
+        const edicoes  = restante > 0 ? (E > 0 ? Math.ceil(restante / E) : Infinity) : 0
+        const possivel = edicoes <= N
+        const lucroFinal = lucroAno + capt * V + (possivel ? edicoes : N) * E
+        const opcoes = [
+          { l: 'Só captar', v: V > 0 ? Math.ceil(falta / V) : Infinity, t: 'captações tuas', s: 'e todas as edições pelo editor' },
+          { l: 'Só editar', v: E > 0 ? Math.ceil(falta / E) : Infinity, t: 'edições tuas', s: 'e todas as captações por freelancers' },
+          { l: 'Captar e editar', v: V + E > 0 ? Math.ceil(falta / (V + E)) : Infinity, t: 'casamentos inteiros teus', s: 'captas e editas os mesmos' },
+        ]
+        return (
+          <div className="rounded-2xl border border-gold/25 bg-gold/[0.04] p-5 space-y-4">
+            <div className="text-center">
+              <p className="text-[10px] tracking-[0.35em] text-gold/70 uppercase">O que tens de fazer tu</p>
+              <p className="text-[11px] text-white/40 mt-1">
+                Meta de lucro <span className="text-gold font-mono">{eur(meta)}</span> (muda nos Objetivos).
+                Cada captação tua poupa {eur(V)} e cada edição tua poupa {eur(E)}.
+              </p>
+            </div>
+
+            {falta <= 0 ? (
+              <p className="text-center text-sm text-green-400">
+                Já chegas à meta só com freelancers. Sobram {eur(-falta)} acima da meta.
+              </p>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {opcoes.map(o => {
+                    const ok = o.v <= N
+                    return (
+                      <div key={o.l} className="rounded-xl border border-white/[0.08] bg-black/20 p-4 text-center">
+                        <p className="text-[9px] tracking-[0.3em] text-white/35 uppercase mb-2">{o.l}</p>
+                        <p className={`text-3xl font-light font-mono ${ok ? 'text-gold' : 'text-red-400/80'}`}>{ok ? o.v : '✕'}</p>
+                        <p className="text-[10px] text-white/45 mt-1">{ok ? o.t : `não chega com ${N} casamentos`}</p>
+                        {ok && <p className="text-[9px] text-white/25 mt-0.5">{o.s}</p>}
+                      </div>
+                    )
+                  })}
+                </div>
+
+                {/* Combinação à medida: escolhes quantas captas, diz quantas edições faltam */}
+                <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4 space-y-3">
+                  <p className="text-[9px] tracking-[0.3em] text-white/35 uppercase text-center">A tua combinação</p>
+                  <div className="flex items-center gap-4">
+                    <span className="text-[11px] text-white/50 w-36 shrink-0">Casamentos que captas</span>
+                    <input type="range" min={0} max={N} step={1} value={capt}
+                      onChange={e => set({ captoEu: Number(e.target.value) })}
+                      className="flex-1 accent-yellow-400" />
+                    <span className="text-lg font-mono text-gold w-10 text-right">{capt}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-white/[0.06] pt-3">
+                    <span className="text-[11px] text-white/50">Edições que tens de fazer</span>
+                    <span className={`text-lg font-mono ${possivel ? 'text-gold' : 'text-red-400'}`}>
+                      {possivel ? edicoes : `${N} não chegam`}
+                    </span>
+                  </div>
+                  <p className={`text-[11px] text-center ${lucroFinal >= meta ? 'text-green-400/80' : 'text-red-400/80'}`}>
+                    {possivel
+                      ? <>Captas {capt} e editas {edicoes} de {N}: lucro de {eur(lucroFinal)} ({eur(lucroFinal / 12)} / mês)</>
+                      : <>Mesmo editando os {N}, o lucro fica em {eur(lucroFinal)}. Capta mais, sobe o preço ou faz mais casamentos.</>}
+                  </p>
+                </div>
+              </>
+            )}
+            <p className="text-[9px] text-white/25 text-center">
+              O lucro inclui o valor do teu trabalho: o que poupas em freelancers é o que ganhas por captar e editar.
+            </p>
+          </div>
+        )
+      })()}
 
       {/* Tabela de preços */}
       <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden">
