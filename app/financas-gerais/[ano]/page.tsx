@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
 import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, ReferenceLine, LineChart, Legend } from 'recharts'
 import { supabase } from '@/lib/supabase'
+import CustoProdutora from './CustoProdutora'
 
 // ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
@@ -1730,6 +1731,9 @@ export default function FinancasAnoPage({ params }: Props) {
               })()}
               <p className="text-[9px] text-white/15 text-center">Altera estes valores — toda a estratégia recalcula automaticamente ↓</p>
             </div>
+
+            {/* ── Custo da Produtora (conta direta: fixos + equipa por casamento) ── */}
+            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} />
 
             {/* ── Serviços & Preços ── */}
             <div className="space-y-3">
