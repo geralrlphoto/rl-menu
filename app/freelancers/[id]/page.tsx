@@ -4295,8 +4295,13 @@ function isOverdueT(t: TarefaItem): boolean {
   return t.dueDate < todayIso()
 }
 
+// Membros que NÃO podem enviar tarefas a outros membros (não veem a lista da equipa).
+// 442b5b59… = Gui (videógrafo), pedido do Rui a 2026-11-15.
+const SEM_ENVIO_TAREFAS = new Set<string>(['442b5b59-2be2-48f0-9391-de697464fcb7'])
+
 function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, onRefresh }: { freelancerId: string; viewAsFreelancer?: boolean; freelancer: Freelancer | null; notificacoes: Notificacao[]; onRefresh: () => void }) {
   const KEY = `freelancer_${freelancerId}_tasks`
+  const podeEnviarTarefas = !SEM_ENVIO_TAREFAS.has(freelancerId)
   const [showAdminAssignModal, setShowAdminAssignModal] = useState(false)
   const [tasks, setTasks] = useState<TarefaItem[]>([])
   const [loaded, setLoaded] = useState(false)
@@ -4802,11 +4807,13 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
                 ✓ Atribuir Tarefa
               </button>
             )}
+            {podeEnviarTarefas && (
             <button onClick={() => setShowSendModal(true)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-blue-500/40 bg-blue-500/10 text-blue-200 text-[13px] font-bold tracking-wider hover:bg-blue-500/20 hover:border-blue-400/60 transition-all"
               style={{ boxShadow: '0 0 12px -4px rgba(59,130,246,0.45)' }}>
               ✈ Enviar Tarefa
             </button>
+            )}
             <button onClick={() => setShowNewModal(true)}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gold text-black text-[13px] font-bold tracking-wider hover:bg-gold/90 transition-all"
               style={{ boxShadow: '0 0 20px -4px rgba(201,164,92,0.5)' }}>
@@ -4821,7 +4828,7 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
         {([
           { key: 'minhas'   as const, label: 'Minhas Tarefas',    count: tasks.length },
           { key: 'enviadas' as const, label: 'Tarefas Enviadas',  count: sentTasks.length },
-        ]).map(t => (
+        ]).filter(t => podeEnviarTarefas || t.key !== 'enviadas').map(t => (
           <button key={t.key} onClick={() => setMainTab(t.key)}
             className={`relative px-4 py-2.5 text-[13px] tracking-[0.2em] uppercase font-semibold transition-all ${
               mainTab === t.key ? 'text-gold' : 'text-white/40 hover:text-white/75'
@@ -4846,6 +4853,7 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
       )}
 
       {/* Aviso: envio de tarefas entre membros — visível em ambas as abas */}
+      {podeEnviarTarefas && (
       <div className="rounded-2xl p-4 sm:p-5"
         style={{
           background: 'linear-gradient(135deg, rgba(168,85,247,0.10), rgba(168,85,247,0.03))',
@@ -4877,6 +4885,7 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
           </div>
         </div>
       </div>
+      )}
 
       {/* ── Tarefas Atribuídas a Mim (do admin / outros membros) ── */}
       {mainTab === 'minhas' && (() => {
@@ -5236,7 +5245,7 @@ function TarefasTab({ freelancerId, viewAsFreelancer, freelancer, notificacoes, 
       )}
 
       {/* Modal Enviar Tarefa para outro membro */}
-      {showSendModal && (
+      {showSendModal && podeEnviarTarefas && (
         <EnviarTarefaModal
           senderId={freelancerId}
           onClose={() => setShowSendModal(false)}
