@@ -14,6 +14,7 @@ type Cfg = {
   preco: number
   incluirOutros: boolean
   captoEu: number   // casamentos que o Rui capta ele próprio (poupa o videógrafo)
+  editoEu: number   // casamentos que o Rui edita ele próprio (poupa o editor)
 }
 
 const DEFAULT_CFG: Cfg = {
@@ -22,6 +23,7 @@ const DEFAULT_CFG: Cfg = {
   preco: 1200,
   incluirOutros: false,
   captoEu: 0,
+  editoEu: 0,
 }
 
 // Parte fixa (renda, internet, luz, outros): a página lê-a para usar em toda a Estratégia.
@@ -168,10 +170,11 @@ export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, met
         const V = cfg.videografo, E = cfg.editor, N = cfg.casamentos
         const falta = meta - lucroAno                       // o que falta para a meta se tudo for freelancer
         const capt  = Math.min(Math.max(0, Math.round(cfg.captoEu)), N)
-        const restante = falta - capt * V                   // o que ainda falta depois das tuas captações
-        const edicoes  = restante > 0 ? (E > 0 ? Math.ceil(restante / E) : Infinity) : 0
-        const possivel = edicoes <= N
-        const lucroFinal = lucroAno + capt * V + (possivel ? edicoes : N) * E
+        const edit  = Math.min(Math.max(0, Math.round(cfg.editoEu)), N)
+        const lucroFinal = lucroAno + capt * V + edit * E   // lucro com as tuas captações e edições
+        const diff = lucroFinal - meta                      // > 0 sobra, < 0 falta
+        const maisEdit = E > 0 ? Math.ceil(-diff / E) : Infinity
+        const maisCapt = V > 0 ? Math.ceil(-diff / V) : Infinity
         const opcoes = [
           { l: 'Só captar', v: V > 0 ? Math.ceil(falta / V) : Infinity, t: 'captações tuas', s: 'e todas as edições pelo editor' },
           { l: 'Só editar', v: E > 0 ? Math.ceil(falta / E) : Infinity, t: 'edições tuas', s: 'e todas as captações por freelancers' },
@@ -206,31 +209,39 @@ export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, met
                     )
                   })}
                 </div>
-
-                {/* Combinação à medida: escolhes quantas captas, diz quantas edições faltam */}
-                <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4 space-y-3">
-                  <p className="text-[9px] tracking-[0.3em] text-white/35 uppercase text-center">A tua combinação</p>
-                  <div className="flex items-center gap-4">
-                    <span className="text-[11px] text-white/50 w-36 shrink-0">Casamentos que captas</span>
-                    <input type="range" min={0} max={N} step={1} value={capt}
-                      onChange={e => set({ captoEu: Number(e.target.value) })}
-                      className="flex-1 accent-yellow-400" />
-                    <span className="text-lg font-mono text-gold w-10 text-right">{capt}</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t border-white/[0.06] pt-3">
-                    <span className="text-[11px] text-white/50">Edições que tens de fazer</span>
-                    <span className={`text-lg font-mono ${possivel ? 'text-gold' : 'text-red-400'}`}>
-                      {possivel ? edicoes : `${N} não chegam`}
-                    </span>
-                  </div>
-                  <p className={`text-[11px] text-center ${lucroFinal >= meta ? 'text-green-400/80' : 'text-red-400/80'}`}>
-                    {possivel
-                      ? <>Captas {capt} e editas {edicoes} de {N}: lucro de {eur(lucroFinal)} ({eur(lucroFinal / 12)} / mês)</>
-                      : <>Mesmo editando os {N}, o lucro fica em {eur(lucroFinal)}. Capta mais, sobe o preço ou faz mais casamentos.</>}
-                  </p>
-                </div>
               </>
             )}
+
+                {/* A tua combinação: escolhes quantos captas e quantos editas (sempre visível) */}
+                <div className="rounded-xl border border-white/[0.08] bg-black/20 p-4 space-y-3">
+                  <p className="text-[9px] tracking-[0.3em] text-white/35 uppercase text-center">A tua combinação</p>
+                  {([
+                    { l: 'Casamentos que captas', v: capt, k: 'captoEu' as const, p: V },
+                    { l: 'Casamentos que editas', v: edit, k: 'editoEu' as const, p: E },
+                  ]).map(r => (
+                    <div key={r.k} className="flex items-center gap-4">
+                      <span className="text-[11px] text-white/50 w-40 shrink-0">{r.l}</span>
+                      <input type="range" min={0} max={N} step={1} value={r.v}
+                        onChange={e => set({ [r.k]: Number(e.target.value) })}
+                        className="flex-1 accent-yellow-400" />
+                      <span className="text-lg font-mono text-gold w-10 text-right">{r.v}</span>
+                      <span className="text-[10px] font-mono text-green-400/60 w-20 text-right">+{eur(r.v * r.p)}</span>
+                    </div>
+                  ))}
+                  <div className="border-t border-white/[0.06] pt-3 text-center space-y-1">
+                    <p className={`text-2xl font-light font-mono ${diff >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {eur(lucroFinal)} <span className="text-sm text-white/30">/ ano</span>
+                    </p>
+                    <p className="text-[11px] text-white/40">
+                      Captas {capt} e editas {edit} de {N} casamentos · {eur(lucroFinal / 12)} por mês
+                    </p>
+                    <p className={`text-[11px] ${diff >= 0 ? 'text-green-400/80' : 'text-red-400/80'}`}>
+                      {diff >= 0
+                        ? <>Meta atingida. Sobram {eur(diff)}.</>
+                        : <>Faltam {eur(-diff)} para a meta: mais {maisEdit} edições{edit + maisEdit > N ? ' (não há casamentos que cheguem)' : ''} ou mais {maisCapt} captações{capt + maisCapt > N ? ' (não há casamentos que cheguem)' : ''}.</>}
+                    </p>
+                  </div>
+                </div>
             <p className="text-[9px] text-white/25 text-center">
               O lucro inclui o valor do teu trabalho: o que poupas em freelancers é o que ganhas por captar e editar.
             </p>
