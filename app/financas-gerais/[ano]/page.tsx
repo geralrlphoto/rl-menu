@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState, useEffect, use } from 'react'
 import { ComposedChart, BarChart, Bar, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, ReferenceLine, LineChart, Legend } from 'recharts'
 import { supabase } from '@/lib/supabase'
-import CustoProdutora from './CustoProdutora'
+import CustoProdutora, { DEFAULT_FIXOS, pickFixos, type FixosCfg } from './CustoProdutora'
 
 // ─── DADOS BASE 2025 ───────────────────────────────────────────────────────────
 
@@ -293,6 +293,19 @@ function PencilIcon() {
   )
 }
 
+// Título de cada um dos 5 blocos do separador Estratégia
+function BlocoTitulo({ n, titulo, sub }: { n: number; titulo: string; sub: string }) {
+  return (
+    <div className="pt-6 first:pt-0 flex items-end gap-4 border-b border-gold/15 pb-3">
+      <span className="text-4xl font-extralight text-gold/50 leading-none font-mono">{n}</span>
+      <div>
+        <h2 className="text-xl font-light text-white tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>{titulo}</h2>
+        <p className="text-[11px] text-white/35 mt-0.5">{sub}</p>
+      </div>
+    </div>
+  )
+}
+
 function fmt(n: number) {
   return n.toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
@@ -464,6 +477,15 @@ export default function FinancasAnoPage({ params }: Props) {
   const [packsCfg, setPacksCfg] = useState<AllPacksCfg>(DEFAULT_PACKS_CFG)
   const [newServicoInput, setNewServicoInput] = useState<Record<string, string>>({ p1: '', p2: '', p3: '', bat: '', corp: '' })
 
+  // Custos fixos mensais (mesma chave que o bloco CustoProdutora guarda)
+  const [fixosCfg, setFixosCfg] = useState<FixosCfg>(DEFAULT_FIXOS)
+  useEffect(() => {
+    try {
+      const c = JSON.parse(localStorage.getItem(`custo-produtora-${anoNum}`) || 'null')
+      if (c) setFixosCfg({ ...DEFAULT_FIXOS, ...pickFixos(c) })
+    } catch {}
+  }, [anoNum])
+
   // Objetivos da Estratégia (meta líquida + nº de eventos) guardados por ano
   useEffect(() => {
     try {
@@ -627,6 +649,11 @@ export default function FinancasAnoPage({ params }: Props) {
   }
 
   const totalCustosFixosAnuais = custosFixosAnuais.reduce((s, c) => s + c.valor, 0)
+  // Custo fixo anual da produtora: fonte única para toda a Estratégia e Crescimento.
+  // Renda, internet e luz editam-se no bloco "Os teus números" (CustoProdutora);
+  // os outros custos fixos do ano (separador Despesas) entram se a opção estiver ligada.
+  const custoFixoBase = (fixosCfg.renda + fixosCfg.internet + fixosCfg.luz) * 12
+    + (fixosCfg.incluirOutros ? totalCustosFixosAnuais : 0)
 
   // Base hardcoded para 2025; API de eventos para 2026+
   const baseAnual = DATA_BY_ANO[anoNum] ?? { receitas: [], despesas: [] }
@@ -1684,6 +1711,8 @@ export default function FinancasAnoPage({ params }: Props) {
               </button>
             </div>
 
+            <BlocoTitulo n={1} titulo="Os teus números" sub="Meta, nº de eventos e custos da produtora. Tudo o resto lê daqui." />
+
             {/* ── Objetivos ── */}
             <div className="rounded-2xl border border-white/[0.10] bg-white/[0.02] p-5 space-y-4">
               <div className="flex items-center gap-3">
@@ -1727,7 +1756,7 @@ export default function FinancasAnoPage({ params }: Props) {
               {(() => {
                 // Receita necessária = meta + custos fixos + equipa (videógrafo + editor) de todos os eventos.
                 // Equipa pelo mix de packs (40% P1, 40% P2, 20% P3).
-                const custoFix  = totalCustosFixosAnuais + 3840 + 480
+                const custoFix  = custoFixoBase
                 const equipaAno = p1Equipa * mx1 + p2Equipa * mx2 + p3Equipa * mx3
                 const recNec    = metaAnualSim + custoFix + equipaAno
                 const ticketNec = numEventosSim > 0 ? Math.round(recNec / numEventosSim) : 0
@@ -1758,7 +1787,9 @@ export default function FinancasAnoPage({ params }: Props) {
             </div>
 
             {/* ── Custo da Produtora (conta direta: fixos + equipa por casamento) ── */}
-            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} />
+            <CustoProdutora ano={anoNum} outrosFixosAnuais={totalCustosFixosAnuais} casamentos={numEventosSim} onFixosChange={setFixosCfg} />
+
+            <BlocoTitulo n={2} titulo="Packs e preços" sub="O que cobras, o que pagas à equipa e quanto sobra em cada pack." />
 
             {/* ── Serviços & Preços ── */}
             <div className="space-y-3">
@@ -1929,410 +1960,11 @@ export default function FinancasAnoPage({ params }: Props) {
               </div>
             </div>
 
-            {/* ── Ticket Médio ── */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/[0.06]" />
-                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Ticket Médio — Vídeo</p>
-                <div className="h-px flex-1 bg-white/[0.06]" />
-              </div>
-
-              {/* Destaque: 2025 → 2026 → 2027 */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {/* 2025 — vídeo */}
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1">2025 · Vídeo</p>
-                  <p className="text-[9px] text-white/20 mb-2">ticket médio recebido</p>
-                  <p className="text-3xl font-light text-white/55">{ticketMedioVideo}</p>
-                  <p className="text-[9px] text-white/20 mt-1">€ / evento</p>
-                  <div className="mt-3 pt-3 border-t border-white/[0.05]">
-                    <p className="text-[9px] text-white/20">margem líquida</p>
-                    <p className={`text-base font-mono ${margemVideoAtual > 0 ? 'text-green-400/60' : 'text-red-400/60'}`}>{margemVideoAtual} €</p>
-                    <p className="text-[9px] text-white/15">após ~280€ freelancer</p>
-                  </div>
-                </div>
-                {/* Ano atual */}
-                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.05] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-1">{anoNum} · Casamentos</p>
-                  <p className="text-[9px] text-white/20 mb-2">
-                    {casamentosAno.length > 0 ? `${casamentosAno.length} entradas` : 'sem dados'}
-                  </p>
-                  <p className="text-3xl font-light text-blue-300">
-                    {ticketMedioAno > 0 ? ticketMedioAno.toLocaleString('pt-PT') : '—'}
-                  </p>
-                  <p className="text-[9px] text-blue-400/30 mt-1">€ / entrada</p>
-                  <div className="mt-3 pt-3 border-t border-blue-500/[0.10]">
-                    <p className="text-[9px] text-white/20">margem estimada</p>
-                    <p className={`text-base font-mono ${margemAno > 0 ? 'text-green-400/70' : 'text-white/30'}`}>
-                      {ticketMedioAno > 0 ? `${margemAno} €` : '—'}
-                    </p>
-                    <p className="text-[9px] text-white/15">{anoNum >= 2026 ? 'equipa já descontada' : 'após ~280€ freelancer'}</p>
-                  </div>
-                </div>
-                {/* 2027 objetivo */}
-                <div className="rounded-2xl border border-gold/20 bg-gold/[0.05] p-4 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-1">2027 · Objetivo</p>
-                  <p className="text-[9px] text-white/20 mb-2">mix de propostas</p>
-                  <p className="text-3xl font-light text-gold">{ticketMedio2027.toLocaleString('pt-PT')}</p>
-                  <p className="text-[9px] text-gold/30 mt-1">€ / evento</p>
-                  <div className="mt-3 pt-3 border-t border-gold/[0.10]">
-                    <p className="text-[9px] text-white/20">margem média</p>
-                    <p className="text-base font-mono text-green-400">{numEventosSim > 0 ? Math.round((p1Margem*mx1 + p2Margem*mx2 + p3Margem*mx3) / numEventosSim) : 0} €</p>
-                    <p className="text-[9px] text-green-400/30">após videógrafo e editor</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {/* 2025 vídeo */}
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-3 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-white/30 uppercase mb-1.5">2025 Vídeo</p>
-                  <p className="text-xl font-light text-white/55">{ticketMedioVideo}</p>
-                  <p className="text-[9px] text-white/20 mt-0.5">€ / evento</p>
-                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-white/25 rounded-full" style={{ width: `${(ticketMedioVideo / p3Preco) * 100}%` }} />
-                  </div>
-                </div>
-                {/* Ano atual */}
-                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.05] p-3 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-1.5">{anoNum} Real</p>
-                  <p className="text-xl font-light text-blue-300">
-                    {ticketMedioAno > 0 ? ticketMedioAno.toLocaleString('pt-PT') : '—'}
-                  </p>
-                  <p className="text-[9px] text-blue-400/30 mt-0.5">€ / entrada</p>
-                  {ticketMedioAno > 0 && ticketMedioVideo > 0 && (
-                    <p className="text-[9px] text-white/25 mt-1">
-                      {ticketMedioAno > ticketMedioVideo
-                        ? <span className="text-green-400/60">+{Math.round((ticketMedioAno / ticketMedioVideo - 1) * 100)}% vs 2025</span>
-                        : <span className="text-red-400/50">{Math.round((ticketMedioAno / ticketMedioVideo - 1) * 100)}% vs 2025</span>
-                      }
-                    </p>
-                  )}
-                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-400/40 rounded-full" style={{ width: `${Math.min(100, (ticketMedioAno / p3Preco) * 100)}%` }} />
-                  </div>
-                </div>
-                {/* P1 */}
-                <div className="rounded-2xl border border-blue-500/25 bg-blue-500/[0.06] p-3 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-blue-400/60 uppercase mb-1.5">Proposta 1</p>
-                  <p className="text-xl font-light text-blue-300">{p1Preco.toLocaleString('pt-PT')}</p>
-                  <p className="text-[9px] text-blue-400/30 mt-0.5">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((p1Preco / ticketMedioVideo - 1) * 100)}% vs 2025</p>
-                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-400/50 rounded-full" style={{ width: `${(p1Preco / p3Preco) * 100}%` }} />
-                  </div>
-                </div>
-                {/* P2 */}
-                <div className="rounded-2xl border border-gold/25 bg-gold/[0.06] p-3 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-gold/60 uppercase mb-1.5">Proposta 2</p>
-                  <p className="text-xl font-light text-gold">{p2Preco.toLocaleString('pt-PT')}</p>
-                  <p className="text-[9px] text-gold/30 mt-0.5">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((p2Preco / ticketMedioVideo - 1) * 100)}% vs 2025</p>
-                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-gold/50 rounded-full" style={{ width: `${(p2Preco / p3Preco) * 100}%` }} />
-                  </div>
-                </div>
-                {/* P3 */}
-                <div className="rounded-2xl border border-purple-500/25 bg-purple-500/[0.06] p-3 text-center">
-                  <p className="text-[9px] tracking-[0.3em] text-purple-400/60 uppercase mb-1.5">Proposta 3</p>
-                  <p className="text-xl font-light text-purple-300">{p3Preco.toLocaleString('pt-PT')}</p>
-                  <p className="text-[9px] text-purple-400/30 mt-0.5">€ / evento</p>
-                  <p className="text-[9px] text-green-400/70 mt-1">+{Math.round((p3Preco / ticketMedioVideo - 1) * 100)}% vs 2025</p>
-                  <div className="mt-2 h-1 bg-white/[0.05] rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-400/50 rounded-full" style={{ width: '100%' }} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Gráfico ticket médio */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Evolução Ticket Médio (€ / evento)</p>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart
-                    data={[
-                      { label: '2025 Vídeo', valor: ticketMedioVideo, margem: margemVideoAtual },
-                      ...(ticketMedioAno > 0 ? [{ label: `${anoNum} Real`, valor: ticketMedioAno, margem: margemAno }] : []),
-                      { label: 'Proposta 1', valor: p1Preco, margem: p1Margem },
-                      { label: 'Proposta 2', valor: p2Preco, margem: p2Margem },
-                      { label: 'Proposta 3', valor: p3Preco, margem: p3Margem },
-                    ]}
-                    barCategoryGap="20%" barGap={3}
-                  >
-                    <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                      contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
-                      formatter={(v: number, name: string) => [`${v.toLocaleString('pt-PT')} €`, name === 'valor' ? 'Ticket' : 'Margem Líquida']}
-                    />
-                    <Bar dataKey="valor" name="valor" radius={[4,4,0,0]}>
-                      {[
-                        'rgba(255,255,255,0.20)',
-                        ...(ticketMedioAno > 0 ? ['rgba(59,130,246,0.65)'] : []),
-                        'rgba(96,165,250,0.70)',
-                        'rgba(201,168,76,0.75)',
-                        'rgba(167,139,250,0.70)',
-                      ].map((fill, i) => <Cell key={i} fill={fill} />)}
-                    </Bar>
-                    <Bar dataKey="margem" name="margem" radius={[4,4,0,0]}>
-                      {[
-                        'rgba(255,255,255,0.10)',
-                        ...(ticketMedioAno > 0 ? ['rgba(59,130,246,0.30)'] : []),
-                        'rgba(96,165,250,0.35)',
-                        'rgba(201,168,76,0.35)',
-                        'rgba(167,139,250,0.35)',
-                      ].map((fill, i) => <Cell key={i} fill={fill} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="flex items-center gap-6 mt-2 justify-center">
-                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/25 inline-block" /> Ticket</span>
-                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/10 inline-block" /> Margem Líquida</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── As 3 Propostas ── */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/[0.06]" />
-                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Packs de Vídeo</p>
-                <div className="h-px flex-1 bg-white/[0.06]" />
-              </div>
-
-              <div className="space-y-3">
-                {/* Proposta 1 */}
-                <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.04] overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-blue-500/[0.10]">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[9px] tracking-[0.4em] text-blue-400/70 uppercase font-semibold">Proposta 1</span>
-                        <span className="text-[9px] text-white/20">·</span>
-                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Reportagem Vídeo</span>
-                      </div>
-                      <p className="text-2xl font-light text-blue-300">{p1Preco.toLocaleString('pt-PT')} <span className="text-sm text-blue-300/40">€</span></p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
-                      <p className="text-xl font-mono font-semibold text-green-400">{p1Margem} €</p>
-                      <p className="text-[9px] text-white/20 mt-0.5">após {p1Equipa}€ de equipa</p>
-                    </div>
-                  </div>
-                  <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {(packsCfg.p1.servicos ?? []).map(item => (
-                      <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
-                        <span className="w-1 h-1 rounded-full bg-blue-400/50 flex-shrink-0" />{item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Proposta 2 */}
-                <div className="rounded-2xl border border-gold/20 bg-gold/[0.04] overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-gold/[0.10]">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[9px] tracking-[0.4em] text-gold/70 uppercase font-semibold">Proposta 2</span>
-                        <span className="text-[9px] text-white/20">·</span>
-                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Reportagem + Pré-Wedding</span>
-                      </div>
-                      <p className="text-2xl font-light text-gold">{p2Preco.toLocaleString('pt-PT')} <span className="text-sm text-gold/40">€</span></p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
-                      <p className="text-xl font-mono font-semibold text-green-400">{p2Margem} €</p>
-                      <p className="text-[9px] text-white/20 mt-0.5">após {p2Equipa}€ de equipa</p>
-                    </div>
-                  </div>
-                  <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {(packsCfg.p2.servicos ?? []).map(item => (
-                      <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
-                        <span className="w-1 h-1 rounded-full bg-gold/50 flex-shrink-0" />{item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Proposta 3 */}
-                <div className="rounded-2xl border border-purple-500/20 bg-purple-500/[0.04] overflow-hidden">
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-purple-500/[0.10]">
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[9px] tracking-[0.4em] text-purple-400/70 uppercase font-semibold">Proposta 3</span>
-                        <span className="text-[9px] text-white/20">·</span>
-                        <span className="text-[9px] tracking-wider text-white/30 uppercase">Premium · Drone + SDE</span>
-                      </div>
-                      <p className="text-2xl font-light text-purple-300">{p3Preco.toLocaleString('pt-PT')} <span className="text-sm text-purple-300/40">€</span></p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[9px] text-white/20 uppercase tracking-widest mb-0.5">Margem líquida</p>
-                      <p className="text-xl font-mono font-semibold text-green-400">{p3Margem} €</p>
-                      <p className="text-[9px] text-white/20 mt-0.5">após {p3Equipa}€ de equipa</p>
-                    </div>
-                  </div>
-                  <div className="px-6 py-3.5 flex flex-wrap gap-x-6 gap-y-2">
-                    {(packsCfg.p3.servicos ?? []).map(item => (
-                      <span key={item} className="flex items-center gap-2 text-[11px] text-white/40">
-                        <span className="w-1 h-1 rounded-full bg-purple-400/50 flex-shrink-0" />{item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Comparação de margens */}
-                <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                  <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-3">Margem por Pack (após videógrafo e editor)</p>
-                  <div className="space-y-3">
-                    {[
-                      { label: `Proposta 1 · ${p1Preco}€`, margem: p1Margem, max: p3Margem, pct: Math.round(p1Margem/p3Margem*100), fill: 'rgba(96,165,250,0.5)' },
-                      { label: `Proposta 2 · ${p2Preco}€`, margem: p2Margem, max: p3Margem, pct: Math.round(p2Margem/p3Margem*100), fill: 'rgba(201,168,76,0.55)' },
-                      { label: `Proposta 3 · ${p3Preco}€`, margem: p3Margem, max: p3Margem, pct: 100, fill: 'rgba(167,139,250,0.5)' },
-                    ].map(r => (
-                      <div key={r.label}>
-                        <div className="flex justify-between text-[10px] mb-1.5">
-                          <span className="text-white/40">{r.label}</span>
-                          <span className="font-mono text-green-400">{r.margem} €</span>
-                        </div>
-                        <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all" style={{ width: `${r.pct}%`, background: r.fill }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Projeção 2027 ── */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-white/[0.06]" />
-                <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">Projeção Vídeo 2027</p>
-                <div className="h-px flex-1 bg-white/[0.06]" />
-              </div>
-
-              {/* Cenários */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-white/[0.08] bg-white/[0.02] p-5 space-y-3">
-                  <p className="text-[10px] tracking-[0.4em] text-white/30 uppercase">Sem Mudança (preços actuais)</p>
-                  <div className="space-y-2">
-                    {[
-                      { l: `${videoEntries2025.length} eventos × ${ticketMedioVideo}€`, v: `${videoSumAtual.toLocaleString('pt-PT')} €`, c: 'text-white/50' },
-                      { l: 'Custo freelancers', v: `−${(videoEntries2025.length * 280).toLocaleString('pt-PT')} €`, c: 'text-red-400/50' },
-                    ].map(r => (
-                      <div key={r.l} className="flex justify-between text-sm">
-                        <span className="text-white/35">{r.l}</span>
-                        <span className={`font-mono ${r.c}`}>{r.v}</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between text-sm pt-2 border-t border-white/[0.06]">
-                      <span className="text-white/50 font-medium">Margem líquida vídeo</span>
-                      <span className="font-mono font-bold text-white/40">{atualMargem.toLocaleString('pt-PT')} €</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-gold/25 bg-gold/[0.05] p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[10px] tracking-[0.4em] text-gold/60 uppercase">Mix 2027 · {numEventosSim} eventos</p>
-                    {pctMelhoria > 0 && (
-                      <span className="text-[9px] text-green-400/70 tracking-wider px-2 py-0.5 rounded-full border border-green-500/20 bg-green-500/10">
-                        +{pctMelhoria}% margem
-                      </span>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { l: `${numEventosSim} eventos × ~${ticketMedio2027}€`, v: `${mixReceitas.toLocaleString('pt-PT')} €`, c: 'text-green-400/70' },
-                      { l: 'Custo equipa (videógrafo + editor)', v: `−${(mixReceitas - mixMargem).toLocaleString('pt-PT')} €`, c: 'text-red-400/50' },
-                    ].map(r => (
-                      <div key={r.l} className="flex justify-between text-sm">
-                        <span className="text-white/35">{r.l}</span>
-                        <span className={`font-mono ${r.c}`}>{r.v}</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between text-sm pt-2 border-t border-gold/[0.15]">
-                      <span className="text-white/50 font-medium">Margem líquida vídeo</span>
-                      <span className="font-mono font-bold text-gold">{mixMargem.toLocaleString('pt-PT')} €</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Gráfico mix */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-1">Composição do Mix 2027 · {numEventosSim} Eventos</p>
-                <p className="text-[10px] text-white/20 mb-4">receita bruta vs margem líquida por proposta</p>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={mixData} barCategoryGap="25%" barGap={3}>
-                    <XAxis dataKey="proposta" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                      contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
-                      formatter={(v: number, name: string) => [`${v.toLocaleString('pt-PT')} €`, name === 'receita' ? 'Receita Bruta' : 'Margem Líquida']}
-                    />
-                    <Bar dataKey="receita" name="receita" radius={[4,4,0,0]}>
-                      {fillCells.map((fill, i) => <Cell key={i} fill={fill} />)}
-                    </Bar>
-                    <Bar dataKey="margem" name="margem" radius={[4,4,0,0]}>
-                      {fillCells.map((fill, i) => <Cell key={i} fill={fill} opacity={0.4} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="flex items-center gap-6 mt-2 justify-center">
-                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/25 inline-block" /> Receita Bruta</span>
-                  <span className="flex items-center gap-1.5 text-[10px] text-white/30"><span className="w-3 h-2 rounded-sm bg-white/10 inline-block" /> Margem Líquida</span>
-                </div>
-              </div>
-
-              {/* Evolução resultado líquido total */}
-              <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Evolução Resultado Líquido (negócio total)</p>
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart
-                    data={[
-                      { ano: '2025 Real', liquido: 19825 },
-                      { ano: `${anoNum} Real`, liquido: saldo > 0 ? saldo : 0 },
-                      { ano: '2027 Obj.', liquido: metaAnualSim },
-                    ]}
-                    barCategoryGap="35%"
-                  >
-                    <XAxis dataKey="ano" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                      contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 12 }}
-                      formatter={(v: number) => [`${v.toLocaleString('pt-PT')} €`, 'Resultado Líquido']}
-                    />
-                    <Bar dataKey="liquido" radius={[6,6,0,0]}>
-                      <Cell fill="rgba(96,165,250,0.55)" />
-                      <Cell fill="rgba(201,168,76,0.65)" />
-                      <Cell fill="rgba(74,222,128,0.75)" />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-                <div className="grid grid-cols-3 gap-3 mt-4">
-                  {[
-                    { ano: '2025 Real', val: 19825, c: 'text-blue-300' },
-                    { ano: `${anoNum} Real`, val: saldo > 0 ? saldo : 0, c: 'text-gold' },
-                    { ano: '2027 Objetivo', val: metaAnualSim, c: 'text-green-400' },
-                  ].map(d => (
-                    <div key={d.ano} className="text-center">
-                      <p className="text-[9px] text-white/25 uppercase tracking-wider mb-1">{d.ano}</p>
-                      <p className={`text-lg font-mono font-semibold ${d.c}`}>{d.val.toLocaleString('pt-PT')} €</p>
-                      {d.ano !== '2025 Real' && (
-                        <p className="text-[9px] text-green-400/50 mt-0.5">+{Math.round(((d.val - 19825) / 19825) * 100)}% vs 2025</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <BlocoTitulo n={3} titulo="Quantos eventos preciso" sub="Para pagar os custos fixos e para chegar à meta." />
 
             {/* ── Ponto de Equilíbrio ── */}
             {(() => {
-              const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480 // +renda 320×12 + internet/luz 40×12
+              const custoFixoAnual = custoFixoBase
               const cfMes = Math.round(custoFixoAnual / 12)
               const beAnual = { p1: Math.ceil(custoFixoAnual / p1Margem), p2: Math.ceil(custoFixoAnual / p2Margem), p3: Math.ceil(custoFixoAnual / p3Margem) }
               const maxBe = beAnual.p1
@@ -2401,66 +2033,6 @@ export default function FinancasAnoPage({ params }: Props) {
               )
             })()}
 
-            {/* ── ROI por Tipo de Evento ── */}
-            {(() => {
-              const HORAS: Record<string, number> = { CASAMENTO: 14, BATIZADO: 5, CORPORATIVO: 6, 'SESSÃO': 3, OUTRO: 4 }
-              const roiData = TIPOS_RECEITA
-                .map(tipo => {
-                  const entries = allReceitas.filter(r => r.tipo === tipo)
-                  if (!entries.length) return null
-                  const avg = Math.round(entries.reduce((s, r) => s + r.valor, 0) / entries.length)
-                  const horas = HORAS[tipo] ?? 5
-                  return { tipo, avg, horas, porHora: Math.round(avg / horas), count: entries.length }
-                })
-                .filter(Boolean)
-                .sort((a, b) => b!.porHora - a!.porHora) as { tipo: string; avg: number; horas: number; porHora: number; count: number }[]
-              const maxPH = roiData[0]?.porHora ?? 1
-              const COLS: Record<string, string> = { CASAMENTO: '#c9a84c', BATIZADO: '#60a5fa', CORPORATIVO: '#a78bfa', 'SESSÃO': '#4ade80', OUTRO: '#6b7280' }
-              return (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-px flex-1 bg-white/[0.06]" />
-                    <p className="text-[10px] tracking-[0.4em] text-white/20 uppercase">ROI por Tipo de Evento</p>
-                    <div className="h-px flex-1 bg-white/[0.06]" />
-                  </div>
-                  <p className="text-[10px] text-white/20 text-center">ticket médio ÷ horas estimadas (shoot + edição)</p>
-                  <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] overflow-hidden">
-                    {roiData.map((d, i) => (
-                      <div key={d.tipo} className="flex items-center gap-4 px-5 py-4 border-b border-white/[0.04] last:border-0">
-                        <span className="text-xl font-extralight text-white/10 w-5 text-right flex-shrink-0">{i+1}</span>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-3">
-                              <span className="text-sm text-white/70 font-medium">{d.tipo}</span>
-                              <span className="text-[9px] text-white/25">{d.count} entradas · {d.horas}h estimadas</span>
-                            </div>
-                            <div className="flex items-center gap-3 flex-shrink-0">
-                              <span className="text-[10px] text-white/30 font-mono">avg {d.avg.toLocaleString('pt-PT')} €</span>
-                              <span className="text-sm font-mono font-bold" style={{ color: COLS[d.tipo] }}>{d.porHora} €/h</span>
-                            </div>
-                          </div>
-                          <div className="h-2 bg-white/[0.05] rounded-full overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${(d.porHora / maxPH) * 100}%`, background: COLS[d.tipo], opacity: 0.65 }} />
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  {roiData.length >= 2 && (
-                    <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-5 py-3 flex items-center gap-3">
-                      <span className="text-lg">💡</span>
-                      <p className="text-[11px] text-white/40 leading-relaxed">
-                        <span style={{ color: COLS[roiData[0].tipo] }} className="font-semibold">{roiData[0].tipo}</span> é o tipo mais rentável por hora ({roiData[0].porHora} €/h).
-                        {roiData.find(d => d.tipo === 'CASAMENTO') && roiData[0].tipo !== 'CASAMENTO' &&
-                          ` Casamento rende ${roiData.find(d => d.tipo === 'CASAMENTO')!.porHora} €/h — ${Math.round(roiData[0].porHora / roiData.find(d => d.tipo === 'CASAMENTO')!.porHora)}× menos eficiente.`
-                        }
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )
-            })()}
-
             {/* ── Simulador de Meta Anual ── */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -2473,7 +2045,7 @@ export default function FinancasAnoPage({ params }: Props) {
               </p>
               {(() => {
                 // Eventos precisos para pagar os custos fixos E chegar à meta, só com cada pack
-                const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
+                const custoFixoAnual = custoFixoBase
                 const nec = (margem: number) => margem > 0 ? Math.ceil((metaAnualSim + custoFixoAnual) / margem) : 0
                 const simData = [
                   { label: 'Proposta 1', preco: p1Preco, margem: p1Margem, evMargem: nec(p1Margem), fill: 'rgba(96,165,250,0.65)', tc: 'text-blue-300' },
@@ -2496,27 +2068,11 @@ export default function FinancasAnoPage({ params }: Props) {
                         </div>
                       ))}
                     </div>
-                    <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                      <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Eventos Necessários por Proposta</p>
-                      <ResponsiveContainer width="100%" height={160}>
-                        <BarChart data={simData.map(s => ({ label: s.label, eventos: s.evMargem }))} barCategoryGap="35%">
-                          <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                          <YAxis hide />
-                          <Tooltip
-                            contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 11 }}
-                            formatter={(v: number) => [`${v} eventos/ano`, 'Necessário']}
-                          />
-                          <Bar dataKey="eventos" radius={[6,6,0,0]}>
-                            {simData.map((s, i) => <Cell key={i} fill={s.fill} />)}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
                   </div>
 
                   {/* ── Resultado por Nº de Eventos ── */}
                   {(() => {
-                    const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
+                    const custoFixoAnual = custoFixoBase
                     const evData = [
                       { label: 'Proposta 1', preco: p1Preco, margem: p1Margem, fill: 'rgba(96,165,250,0.65)',  tc: 'text-blue-300',   border: 'border-blue-500/20',   bg: 'bg-blue-500/[0.04]' },
                       { label: 'Proposta 2', preco: p2Preco, margem: p2Margem, fill: 'rgba(201,168,76,0.70)',  tc: 'text-gold',       border: 'border-gold/20',       bg: 'bg-gold/[0.04]' },
@@ -2561,23 +2117,6 @@ export default function FinancasAnoPage({ params }: Props) {
                             </div>
                           ))}
                         </div>
-                        <div className="rounded-2xl border border-white/[0.06] bg-white/[0.01] p-5">
-                          <p className="text-[10px] tracking-[0.35em] text-white/30 uppercase mb-4">Resultado Líquido por Proposta</p>
-                          <ResponsiveContainer width="100%" height={150}>
-                            <BarChart data={evData.map(s => ({ label: s.label, liquido: Math.max(0, s.liquido), deficit: Math.min(0, s.liquido) }))} barCategoryGap="35%">
-                              <XAxis dataKey="label" tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }} axisLine={false} tickLine={false} />
-                              <YAxis hide />
-                              <ReferenceLine y={0} stroke="rgba(255,255,255,0.15)" strokeDasharray="4 3" />
-                              <Tooltip
-                                contentStyle={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, fontSize: 11 }}
-                                formatter={(v: number, name: string) => [`${Math.abs(v).toLocaleString('pt-PT')} €`, name === 'liquido' ? 'Resultado' : 'Défice']}
-                              />
-                              <Bar dataKey="liquido" radius={[6,6,0,0]}>
-                                {evData.map((s, i) => <Cell key={i} fill={s.fill} />)}
-                              </Bar>
-                            </BarChart>
-                          </ResponsiveContainer>
-                        </div>
                       </div>
                     )
                   })()}
@@ -2585,9 +2124,11 @@ export default function FinancasAnoPage({ params }: Props) {
                 )
               })()}
 
+            <BlocoTitulo n={4} titulo="Vendas" sub="Mix de eventos, época do ano e conversão do CRM." />
+
             {/* ── Estratégia de Vendas ── */}
             {(() => {
-              const custoFixoAnual = totalCustosFixosAnuais + 3840 + 480
+              const custoFixoAnual = custoFixoBase
               const margemNecessaria = metaAnualSim + custoFixoAnual
               const PREC_BAT = packsCfg.bat.preco,  MARG_BAT = margemPack(packsCfg.bat)
               const PREC_CORP = packsCfg.corp.preco, MARG_CORP = margemPack(packsCfg.corp)
@@ -2984,6 +2525,8 @@ export default function FinancasAnoPage({ params }: Props) {
               )}
             </div>
 
+            <BlocoTitulo n={5} titulo="Ações" sub="O que fazer a seguir." />
+
             {/* ── Ações Prioritárias ── */}
             <div className="space-y-4">
               <div className="flex items-center gap-3">
@@ -2996,7 +2539,7 @@ export default function FinancasAnoPage({ params }: Props) {
                   { u: 'IMEDIATO',    c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: `Implementar Proposta 1 (${p1Preco}€) como mínimo — abandonar vídeo a ${ticketMedioVideo}€` },
                   { u: 'IMEDIATO',    c: 'text-red-400',    b: 'border-red-500/20',    bg: 'bg-red-500/[0.04]',    a: 'Criar proposta PDF com os 3 packs para apresentar a novos clientes' },
                   { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Promover activamente a Proposta 2 — pré-wedding diferencia e justifica +200€' },
-                  { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: 'Avaliar se o estúdio (320€/mês = 3.840€/ano) tem retorno real' },
+                  { u: 'CURTO PRAZO', c: 'text-orange-400', b: 'border-orange-500/20', bg: 'bg-orange-500/[0.04]', a: `Avaliar se o estúdio (${fixosCfg.renda}€/mês = ${(fixosCfg.renda * 12).toLocaleString('pt-PT')}€/ano) tem retorno real` },
                   { u: 'MÉDIO PRAZO', c: 'text-yellow-400', b: 'border-yellow-500/20', bg: 'bg-yellow-500/[0.04]', a: 'Objetivo: 40% dos eventos na Proposta 2 ou 3 — maior margem com mesma carga de trabalho' },
                   { u: 'MÉDIO PRAZO', c: 'text-yellow-400', b: 'border-yellow-500/20', bg: 'bg-yellow-500/[0.04]', a: 'Criar proposta corporate autónoma — eventos tipo OLEOBIO (2.400€/dia) são muito mais eficientes' },
                 ].map((row, i) => (
@@ -3014,7 +2557,7 @@ export default function FinancasAnoPage({ params }: Props) {
               const p1Preco = packsCfg.p1.preco
               const p2Preco = packsCfg.p2.preco
               const p3Preco = packsCfg.p3.preco
-              const custoAnual = totalCustosFixosAnuais + 3840 + 480
+              const custoAnual = custoFixoBase
               const receitasBruto  = allReceitas.reduce((s, r) => s + r.valor, 0)
               const casamentosAno  = allReceitas.filter(r => r.tipo === 'CASAMENTO')
               const ticketMedio    = casamentosAno.length > 0 ? Math.round(casamentosAno.reduce((s, r) => s + r.valor, 0) / casamentosAno.length) : 0
@@ -3398,7 +2941,7 @@ export default function FinancasAnoPage({ params }: Props) {
         const casAtual    = allReceitas.filter(r => r.tipo === 'CASAMENTO').length
         const ticketAtual = casAtual > 0 ? Math.round(recAtual / casAtual) : 0
         const margemAtual = recAtual > 0 ? Math.round((lucroAtual / recAtual) * 1000) / 10 : 0
-        const cfixoAtual  = totalCustosFixosAnuais + 3840 + 480  // mesma fórmula que estratégia
+        const cfixoAtual  = custoFixoBase  // mesma fórmula que estratégia
 
         // ── Crescimento
         const crescTicket  = ticket25 > 0 ? Math.round(((ticketAtual - ticket25) / ticket25) * 100) : 0

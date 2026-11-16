@@ -22,6 +22,20 @@ const DEFAULT_CFG: Cfg = {
   incluirOutros: false,
 }
 
+// Parte fixa (renda, internet, luz, outros): a página lê-a para usar em toda a Estratégia.
+export type FixosCfg = Pick<Cfg, 'renda' | 'internet' | 'luz' | 'incluirOutros'>
+export const DEFAULT_FIXOS: FixosCfg = {
+  renda: DEFAULT_CFG.renda, internet: DEFAULT_CFG.internet, luz: DEFAULT_CFG.luz, incluirOutros: DEFAULT_CFG.incluirOutros,
+}
+export function pickFixos(c: Partial<Cfg>): Partial<FixosCfg> {
+  const out: Partial<FixosCfg> = {}
+  if (typeof c.renda === 'number') out.renda = c.renda
+  if (typeof c.internet === 'number') out.internet = c.internet
+  if (typeof c.luz === 'number') out.luz = c.luz
+  if (typeof c.incluirOutros === 'boolean') out.incluirOutros = c.incluirOutros
+  return out
+}
+
 const PRECOS_TABELA = [800, 1000, 1200, 1500, 2000]
 
 const eur = (n: number) => `${Math.round(n).toLocaleString('pt-PT')} €`
@@ -42,7 +56,9 @@ function Campo({ label, value, onChange, step = 5, sufixo = '€', cor = 'text-w
   )
 }
 
-export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos }: { ano: number; outrosFixosAnuais: number; casamentos: number }) {
+export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos, onFixosChange }: {
+  ano: number; outrosFixosAnuais: number; casamentos: number; onFixosChange?: (f: FixosCfg) => void
+}) {
   const KEY = `custo-produtora-${ano}`
   const [cfgBase, setCfg] = useState<Cfg>(DEFAULT_CFG)
   const cfg = { ...cfgBase, casamentos }
@@ -58,6 +74,7 @@ export default function CustoProdutora({ ano, outrosFixosAnuais, casamentos }: {
     const next = { ...cfgBase, ...patch }
     setCfg(next)
     try { localStorage.setItem(KEY, JSON.stringify(next)) } catch {}
+    onFixosChange?.({ ...DEFAULT_FIXOS, ...pickFixos(next) })
   }
 
   // ── Contas
