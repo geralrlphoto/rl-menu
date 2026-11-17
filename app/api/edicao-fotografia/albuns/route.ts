@@ -106,7 +106,42 @@ export async function GET(req: NextRequest) {
     .filter(p => p.temAlbum === true || (p.selecao?.categorias ?? []).some((c: any) => c.campo === 'fotos_album' && /\d/.test(c.texto ?? '')))
     .map(p => ({ referencia: p.referencia, cliente: p.cliente, data: p.data, fichaId: p.fichaId, recebida: p.recebida,
       numFotos: (p.selecaoFotos ?? []).find((c: any) => c.categoria === 'Álbum')?.fotos ?? null,
-      fotosAlbum: (p.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto || null, temAlbum: p.temAlbum ?? null }))
+      fotosAlbum: (p.selecao?.categorias ?? []).find((c: any) => c.campo === 'fotos_album')?.texto || null, temAlbum: p.temAlbum ?? null,
+      tamanho: null as string | null, situacao: null as string | null }))
+
+  // Todos os contratos com álbum (serviços de fotografia da ficha) ainda sem álbum nem editor,
+  // também os casamentos futuros ou à espera da seleção dos noivos
+  const { data: comAlbumFicha } = await sb.from('eventos_2026').select('id, notion_id, referencia, cliente, data_evento, servico_foto')
+    .not('referencia', 'is', null).order('data_evento')
+  const candidatos = (comAlbumFicha ?? []).filter(e => Array.isArray(e.servico_foto) && e.servico_foto.some((s: unknown) => /[áa]lbum/i.test(String(s)))
+    && !/\bteste\b/i.test(String(e.cliente ?? '')) && !comAlbum.has(e.referencia) && !porNomear.some(p => p.referencia === e.referencia))
+  const { data: eqsCand } = candidatos.length
+    ? await sb.from('evento_equipa').select('referencia, editor_album').in('referencia', candidatos.map(e => e.referencia))
+    : { data: [] as any[] }
+  const comEditor = new Set((eqsCand ?? []).filter(q => arr(q.editor_album).length).map(q => q.referencia))
+  const tamanhoDe = (servicos: unknown[]) => {
+    const s = servicos.map(String).find(x => /[áa]lbum/i.test(x)) ?? ''
+    const m = s.match(/(\d{2})\s*[x×]\s*(\d{2})/i)
+    return m ? `${m[1]}x${m[2]}` : null
+  }
+  for (const e of candidatos) {
+    if (comEditor.has(e.referencia)) continue
+    const p = porRef.get(e.referencia)
+    const situacao = e.data_evento > hoje ? 'Casamento ainda por fazer'
+      : p?.fase === 'escolha' ? 'À espera da seleção dos noivos'
+      : p && ['sneakpeek', 'galerias', 'selecao'].includes(p.fase) ? 'Fotos ainda não enviadas aos noivos'
+      : 'Sem seleção para o álbum'
+    porNomear.push({
+      referencia: e.referencia, cliente: e.cliente, data: e.data_evento, fichaId: e.notion_id ?? String(e.id), recebida: p?.recebida ?? null,
+      numFotos: null, fotosAlbum: null, temAlbum: true, tamanho: tamanhoDe(e.servico_foto), situacao,
+    })
+  }
+  // tamanho também nos que já tinham seleção
+  for (const p of porNomear) if (!p.tamanho) {
+    const e = (comAlbumFicha ?? []).find(x => x.referencia === p.referencia)
+    if (e && Array.isArray(e.servico_foto)) p.tamanho = tamanhoDe(e.servico_foto)
+  }
+  porNomear.sort((a, b) => String(a.data ?? '').localeCompare(String(b.data ?? '')))
 
   return NextResponse.json({ ok: true, hoje, albuns, porNomear, equipa: equipa ?? [] })
 }

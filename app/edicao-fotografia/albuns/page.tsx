@@ -36,7 +36,7 @@ type Album = {
   entregueEm: string | null; aprovadoEm: string | null
   ficha: Record<string, string | number>
 }
-type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null; temAlbum: boolean | null }
+type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null; temAlbum: boolean | null; tamanho?: string | null; situacao?: string | null }
 
 const fmt = (iso: string | null) => iso ? new Date(String(iso).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—'
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
@@ -273,7 +273,13 @@ export default function AlbunsPage() {
                         <p className="font-semibold leading-snug">{p.cliente || p.referencia}</p>
                         <p className="text-[11px] text-white/40 mt-0.5">{fmt(p.data)}{p.recebida ? ` · seleção a ${fmt(p.recebida)}` : ''}</p>
                       </div>
-                      <FotosAlbum texto={p.fotosAlbum} temAlbum={p.temAlbum} />
+                      {(p.tamanho || p.situacao) && (
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {p.tamanho && <span className="rounded-md border border-[#C9A84C]/35 bg-[#C9A84C]/[0.08] px-2 py-0.5 text-[11px] font-mono text-[#C9A84C]">Álbum {p.tamanho.replace('x', ' × ')}</span>}
+                          {p.situacao && <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/55">{p.situacao}</span>}
+                        </div>
+                      )}
+                      {!p.situacao && <FotosAlbum texto={p.fotosAlbum} temAlbum={p.temAlbum} />}
                       {select('', v => nomear(p.referencia, p.cliente, v, undefined, p.fotosAlbum), aGravar === p.referencia)}
                       {p.fichaId && <Link href={`/eventos-2026/${p.fichaId}`} className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>}
                     </div>
