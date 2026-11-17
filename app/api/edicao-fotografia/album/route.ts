@@ -44,6 +44,19 @@ export async function POST(req: NextRequest) {
     body: JSON.stringify({ referencia, local: ev?.local ?? null, data_casamento: ev?.data_evento ?? null, editor_album: [fl.nome] }),
   }).catch(() => {})
 
+  // link das fotos (wfolio) e tamanho do álbum, guardados no departamento: no portal do
+  // casamento (settings) ou, sem portal (casamentos antigos), no trabalho do editor anterior.
+  // Lido antes de tirar o trabalho ao editor anterior, para passar ao novo.
+  const [{ data: portal }, { data: trabAnt }] = await Promise.all([
+    sb.from('portais').select('settings').ilike('referencia', referencia).maybeSingle(),
+    sb.from('freelancer_album').select('link_fotos_album, tamanho_album').eq('referencia_album', referencia)
+      .or('link_fotos_album.not.is.null,tamanho_album.not.is.null').limit(1).maybeSingle(),
+  ])
+  const extra = {
+    link_fotos_album: (portal?.settings as any)?.album_fotos_url ?? trabAnt?.link_fotos_album ?? null,
+    tamanho_album: (portal?.settings as any)?.album_tamanho ?? trabAnt?.tamanho_album ?? null,
+  }
+
   // 2) tira o trabalho ao editor anterior
   for (const n of anterior) {
     const ant = acha(n)
@@ -59,12 +72,6 @@ export async function POST(req: NextRequest) {
   }).catch(() => {})
 
   // 4) trabalho no portal do novo editor + email
-  // link das fotos (wfolio) e tamanho do álbum, guardados no departamento (portais.settings)
-  const { data: portal } = await sb.from('portais').select('settings').ilike('referencia', referencia).maybeSingle()
-  const extra = {
-    link_fotos_album: (portal?.settings as any)?.album_fotos_url ?? null,
-    tamanho_album: (portal?.settings as any)?.album_tamanho ?? null,
-  }
   const { data: ja } = await sb.from('freelancer_album').select('id').eq('freelancer_id', fl.id).eq('referencia_album', referencia).limit(1).maybeSingle()
   if (!ja) {
     await sb.from('freelancer_album').insert({
@@ -102,9 +109,11 @@ export async function PATCH(req: NextRequest) {
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
   const { data: portal } = await sb.from('portais').select('referencia, settings').ilike('referencia', referencia).maybeSingle()
-  if (!portal) return NextResponse.json({ error: 'Portal do casamento não encontrado.' }, { status: 404 })
-  const settings = { ...((portal.settings ?? {}) as Record<string, unknown>), album_fotos_url: url, album_tamanho: tam }
-  await sb.from('portais').update({ settings, updated_at: new Date().toISOString() }).eq('referencia', portal.referencia)
+  // casamentos antigos podem não ter portal: aí fica só no trabalho do editor
+  if (portal) {
+    const settings = { ...((portal.settings ?? {}) as Record<string, unknown>), album_fotos_url: url, album_tamanho: tam }
+    await sb.from('portais').update({ settings, updated_at: new Date().toISOString() }).eq('referencia', portal.referencia)
+  }
   await sb.from('freelancer_album').update({ link_fotos_album: url, tamanho_album: tam, updated_at: new Date().toISOString() }).eq('referencia_album', referencia)
   return NextResponse.json({ ok: true })
 }

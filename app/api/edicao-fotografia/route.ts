@@ -122,6 +122,12 @@ export async function GET(req: NextRequest) {
   const { data: trabalhos } = emEdicao.length
     ? await sb.from('freelancer_edicao').select('referencia, freelancer_id, status, updated_at').in('referencia', emEdicao)
     : { data: [] as any[] }
+  // link das fotos e tamanho do álbum de casamentos sem portal: estão no trabalho do editor do álbum
+  const { data: trabAlbum } = refs.length
+    ? await sb.from('freelancer_album').select('referencia_album, link_fotos_album, tamanho_album').in('referencia_album', refs)
+        .or('link_fotos_album.not.is.null,tamanho_album.not.is.null')
+    : { data: [] as any[] }
+  const albumPorRef = new Map((trabAlbum ?? []).map(t => [t.referencia_album, t]))
   const conta = (t: unknown) => String(t ?? '').split(/[\s,;]+/).filter(x => /\d/.test(x)).length
   const selecaoPorRef = new Map<string, { categoria: string; fotos: number }[]>()
   for (const [ref, r] of selecaoDe) {
@@ -153,7 +159,8 @@ export async function GET(req: NextRequest) {
       fotografos: arr(eq?.fotografo),
       temAlbum: temAlbumDe(e),
       editorAlbum: arr(eq?.editor_album)[0] ?? null,
-      albumLink: s.album_fotos_url ?? null, albumTamanho: s.album_tamanho ?? null,
+      albumLink: s.album_fotos_url ?? albumPorRef.get(e.referencia)?.link_fotos_album ?? null,
+      albumTamanho: s.album_tamanho ?? albumPorRef.get(e.referencia)?.tamanho_album ?? null,
       selecaoFotos: selecaoPorRef.get(e.referencia) ?? null,
       selecao: selecaoCompleta(e.referencia),
       trabalhos: (trabalhos ?? []).filter(t => t.referencia === e.referencia).map(t => ({ freelancerId: t.freelancer_id, estado: t.status, em: t.updated_at })),
