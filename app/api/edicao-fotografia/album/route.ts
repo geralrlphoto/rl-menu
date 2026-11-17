@@ -63,8 +63,11 @@ export async function POST(req: NextRequest) {
   if (!ja) {
     await sb.from('freelancer_album').insert({
       freelancer_id: fl.id, nome, status: 'AGUARDAR', data_casamento: ev?.data_evento ?? null,
-      referencia_album: referencia, updated_at: new Date().toISOString(),
+      referencia_album: referencia, fotos_album: fotosAlbum, updated_at: new Date().toISOString(),
     })
+  } else if (fotosAlbum) {
+    // as fotos do álbum aparecem no cartão do trabalho, no portal do editor
+    await sb.from('freelancer_album').update({ fotos_album: fotosAlbum, updated_at: new Date().toISOString() }).eq('id', ja.id)
   }
   await fetch(`${origin}/api/send-edicao-album-email`, {
     method: 'POST', headers: json, body: JSON.stringify({ freelancer_id: fl.id, nome_noivos: nome, referencia, fotos_album: fotosAlbum }),
