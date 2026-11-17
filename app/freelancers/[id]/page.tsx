@@ -83,6 +83,7 @@ type Album = {
   id: string; freelancer_id: string; nome: string; status: string
   local: string | null; data_casamento: string | null; data_entrega: string | null
   fotos_album: string | null; texto_album: string | null; referencia_album: string | null
+  link_fotos_album?: string | null; tamanho_album?: string | null
 }
 type Valor = {
   id: string; freelancer_id: string; servico: string; total_unidade: number
@@ -3396,6 +3397,23 @@ function AlbumTab({ freelancerId, album, onRefresh, viewAsFreelancer }: { freela
                           ? <span className="inline-flex items-center gap-1.5 text-[10px] font-mono text-emerald-300/80 bg-emerald-500/10 border border-emerald-500/25 px-2 py-1 rounded-md w-fit">🔗 {item.referencia_album}</span>
                           : <span className="inline-flex items-center gap-1.5 text-[10px] text-red-300/70 bg-red-500/8 border border-red-500/20 px-2 py-1 rounded-md w-fit">⚠ sem referência</span>
                         }
+
+                        {(item.tamanho_album || item.link_fotos_album) && (
+                          <div className="flex flex-col gap-2 border-t border-white/[0.04] pt-2">
+                            {item.tamanho_album && (
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-[9px] text-white/30 uppercase tracking-[0.3em]">Tamanho</span>
+                                <span className="text-[12px] font-mono text-gold/90 border border-gold/30 bg-gold/[0.06] rounded-md px-2 py-0.5">{item.tamanho_album.replace('x', ' × ')}</span>
+                              </div>
+                            )}
+                            {item.link_fotos_album && (
+                              <a href={item.link_fotos_album} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                                className="w-full flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold text-emerald-200 border border-emerald-400/35 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all">
+                                Descarregar fotos do álbum ↗
+                              </a>
+                            )}
+                          </div>
+                        )}
 
                         {(item.fotos_album || item.texto_album) && (
                           <div className="border-t border-white/[0.04] pt-2 space-y-1.5">

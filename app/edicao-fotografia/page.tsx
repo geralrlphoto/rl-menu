@@ -47,6 +47,7 @@ type Projeto = {
   contacto: { noiva: string | null; noivo: string | null; tel: string | null } | null
   selecaoFotos: { categoria: string; fotos: number }[] | null
   editorAlbum: string | null
+  albumLink: string | null; albumTamanho: string | null
   selecao: { id: string; referencia: string | null; nome: string | null; entrada: string | null; categorias: { campo: string; titulo: string; texto: string }[]; detalhes: string | null } | null
   trabalhos: { freelancerId: string; estado: string | null; em: string | null }[]
   historico: { etapa: string; origem: string | null; em: string }[]
@@ -55,6 +56,48 @@ type Projeto = {
 const fmt = (iso: string) => new Date(iso.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' })
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
 const diasEntre = (a: string, b: string) => Math.round((new Date(b.slice(0, 10) + 'T12:00:00Z').getTime() - new Date(a.slice(0, 10) + 'T12:00:00Z').getTime()) / 86400000)
+
+// Álbum: tamanho e link das fotos (wfolio) para o editor do álbum descarregar.
+// Fica no cartão do álbum, no portal do editor.
+const TAMANHOS_ALBUM = ['25x25', '30x30']
+function AlbumDetalhes({ p, onGuardado }: { p: Projeto; onGuardado: () => void }) {
+  const [tamanho, setTamanho] = useState(p.albumTamanho ?? '')
+  const [link, setLink] = useState(p.albumLink ?? '')
+  const [estado, setEstado] = useState<'' | 'a-guardar' | 'ok'>('')
+  useEffect(() => { setTamanho(p.albumTamanho ?? ''); setLink(p.albumLink ?? '') }, [p.albumTamanho, p.albumLink])
+  const mudou = tamanho !== (p.albumTamanho ?? '') || link.trim() !== (p.albumLink ?? '')
+  const guardar = async () => {
+    if (link.trim() && !/^https?:\/\//i.test(link.trim())) { alert('Cola o link completo (https://…).'); return }
+    setEstado('a-guardar')
+    const r = await fetch('/api/edicao-fotografia/album', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, link: link.trim(), tamanho }),
+    }).catch(() => null)
+    if (!r?.ok) { setEstado(''); alert(((await r?.json().catch(() => ({}))) as any)?.error || 'Não foi possível guardar.'); return }
+    setEstado('ok'); setTimeout(() => setEstado(''), 2000)
+    onGuardado()
+  }
+  return (
+    <div className="flex flex-col gap-2 rounded-lg border border-white/10 bg-black/20 p-2.5">
+      <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Tamanho do álbum</span>
+      <div className="flex gap-1.5">
+        {TAMANHOS_ALBUM.map(t => (
+          <button key={t} type="button" onClick={() => setTamanho(tamanho === t ? '' : t)}
+            className={`flex-1 rounded-full border px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] ${tamanho === t ? 'border-[#C9A84C] bg-[#C9A84C]/20 text-white' : 'border-white/15 text-white/50 hover:text-white/80'}`}>
+            {t.replace('x', ' × ')}
+          </button>
+        ))}
+      </div>
+      <span className="mt-1 text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Link das fotos do álbum (wfolio)</span>
+      <input type="url" placeholder="https://…" value={link} onChange={e => setLink(e.target.value)}
+        className="w-full rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+      <button type="button" disabled={!mudou || estado === 'a-guardar'} onClick={guardar}
+        className="rounded-full border border-[#C9A84C]/50 bg-[#C9A84C]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#C9A84C]/25 disabled:opacity-40">
+        {estado === 'a-guardar' ? 'A guardar…' : estado === 'ok' ? 'Guardado ✓' : p.editorAlbum ? `Guardar para ${primeiro(p.editorAlbum)}` : 'Guardar'}
+      </button>
+    </div>
+  )
+}
 
 // Lembrete da seleção por WhatsApp: nomes e dia do casamento, sem referência nem emojis
 const PORTAL_LOGIN = 'https://portal.rlphotovideo.pt/login-noivos'
@@ -593,6 +636,7 @@ export default function DepartamentoFotografiaPage() {
                                 {cargas.map(({ e }) => <option key={e.id} value={e.nome}>{e.nome}</option>)}
                               </select>
                             </label>
+                            <AlbumDetalhes p={p} onGuardado={carregar} />
                             <span className="mt-1 text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Entrega aos noivos (quando o editor acabar)</span>
                             <input type="url" placeholder="Link das fotos editadas" value={link}
                               onChange={e => setLinks(l => ({ ...l, [chave]: e.target.value }))}

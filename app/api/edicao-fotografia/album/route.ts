@@ -59,15 +59,21 @@ export async function POST(req: NextRequest) {
   }).catch(() => {})
 
   // 4) trabalho no portal do novo editor + email
+  // link das fotos (wfolio) e tamanho do álbum, guardados no departamento (portais.settings)
+  const { data: portal } = await sb.from('portais').select('settings').ilike('referencia', referencia).maybeSingle()
+  const extra = {
+    link_fotos_album: (portal?.settings as any)?.album_fotos_url ?? null,
+    tamanho_album: (portal?.settings as any)?.album_tamanho ?? null,
+  }
   const { data: ja } = await sb.from('freelancer_album').select('id').eq('freelancer_id', fl.id).eq('referencia_album', referencia).limit(1).maybeSingle()
   if (!ja) {
     await sb.from('freelancer_album').insert({
       freelancer_id: fl.id, nome, status: 'AGUARDAR', data_casamento: ev?.data_evento ?? null,
-      referencia_album: referencia, fotos_album: fotosAlbum, updated_at: new Date().toISOString(),
+      referencia_album: referencia, fotos_album: fotosAlbum, ...extra, updated_at: new Date().toISOString(),
     })
-  } else if (fotosAlbum) {
+  } else {
     // as fotos do álbum aparecem no cartão do trabalho, no portal do editor
-    await sb.from('freelancer_album').update({ fotos_album: fotosAlbum, updated_at: new Date().toISOString() }).eq('id', ja.id)
+    await sb.from('freelancer_album').update({ ...(fotosAlbum ? { fotos_album: fotosAlbum } : {}), ...extra, updated_at: new Date().toISOString() }).eq('id', ja.id)
   }
   await fetch(`${origin}/api/send-edicao-album-email`, {
     method: 'POST', headers: json, body: JSON.stringify({ freelancer_id: fl.id, nome_noivos: nome, referencia, fotos_album: fotosAlbum }),
@@ -80,5 +86,25 @@ export async function POST(req: NextRequest) {
   if (!alb?.status || alb.status === 'NOVO ÁLBUM') {
     await aplicarEstadoAlbum(origin, { referencia, estado: 'EM EDIÇÃO', origem: 'RL' })
   }
+  return NextResponse.json({ ok: true })
+}
+
+// Departamento de Fotografia › link das fotos do álbum (wfolio) e tamanho do álbum.
+// PATCH { referencia, link, tamanho }: fica no portal do casamento e no cartão do álbum do editor.
+export async function PATCH(req: NextRequest) {
+  const bloqueio = exigeAdmin(req)
+  if (bloqueio) return bloqueio
+  const { referencia, link, tamanho } = await req.json().catch(() => ({}))
+  if (!referencia) return NextResponse.json({ error: 'Falta a referência.' }, { status: 400 })
+  const url = String(link ?? '').trim() || null
+  if (url && !/^https?:\/\//i.test(url)) return NextResponse.json({ error: 'O link tem de começar por https://' }, { status: 400 })
+  const tam = String(tamanho ?? '').trim() || null
+  const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+
+  const { data: portal } = await sb.from('portais').select('referencia, settings').ilike('referencia', referencia).maybeSingle()
+  if (!portal) return NextResponse.json({ error: 'Portal do casamento não encontrado.' }, { status: 404 })
+  const settings = { ...((portal.settings ?? {}) as Record<string, unknown>), album_fotos_url: url, album_tamanho: tam }
+  await sb.from('portais').update({ settings, updated_at: new Date().toISOString() }).eq('referencia', portal.referencia)
+  await sb.from('freelancer_album').update({ link_fotos_album: url, tamanho_album: tam, updated_at: new Date().toISOString() }).eq('referencia_album', referencia)
   return NextResponse.json({ ok: true })
 }

@@ -153,6 +153,7 @@ export async function GET(req: NextRequest) {
       fotografos: arr(eq?.fotografo),
       temAlbum: temAlbumDe(e),
       editorAlbum: arr(eq?.editor_album)[0] ?? null,
+      albumLink: s.album_fotos_url ?? null, albumTamanho: s.album_tamanho ?? null,
       selecaoFotos: selecaoPorRef.get(e.referencia) ?? null,
       selecao: selecaoCompleta(e.referencia),
       trabalhos: (trabalhos ?? []).filter(t => t.referencia === e.referencia).map(t => ({ freelancerId: t.freelancer_id, estado: t.status, em: t.updated_at })),
