@@ -267,8 +267,18 @@ export default function AlbunsPage() {
                   {!dados && <div className="h-28 rounded-[18px] bg-white/[0.03] animate-pulse" />}
                   {dados && !lista.length && !extra.length && <p className="text-xs text-white/25 px-1">Nada aqui.</p>}
 
-                  {extra.map(p => (
-                    <div key={p.referencia} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/90 p-4 flex flex-col gap-3" style={{ borderLeft: `2px solid ${c.cor}` }}>
+                  {extra.map((p, i) => {
+                    // separador pequeno quando muda o ano do casamento (2026 → 2027 → …)
+                    const ano = String(p.data ?? '').slice(0, 4)
+                    const anoAntes = i > 0 ? String(extra[i - 1].data ?? '').slice(0, 4) : null
+                    return (<div key={p.referencia} className="contents">
+                    {anoAntes !== null && ano && ano !== anoAntes && (
+                      <div className="col-span-full flex items-center gap-2 px-1 pt-1">
+                        <span className="text-[10px] font-semibold tracking-[0.3em] text-[#C9A84C]/80">{ano}</span>
+                        <span className="h-px flex-1 bg-[#C9A84C]/25" />
+                      </div>
+                    )}
+                    <div className="rounded-[18px] border border-white/[0.08] bg-[#111111]/90 p-4 flex flex-col gap-3" style={{ borderLeft: `2px solid ${c.cor}` }}>
                       <div>
                         <p className="font-semibold leading-snug">{p.cliente || p.referencia}</p>
                         <p className="text-[11px] text-white/40 mt-0.5">{fmt(p.data)}{p.recebida ? ` · seleção a ${fmt(p.recebida)}` : ''}</p>
@@ -283,7 +293,8 @@ export default function AlbunsPage() {
                       {select('', v => nomear(p.referencia, p.cliente, v, undefined, p.fotosAlbum), aGravar === p.referencia)}
                       {p.fichaId && <Link href={`/eventos-2026/${p.fichaId}`} className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>}
                     </div>
-                  ))}
+                    </div>)
+                  })}
 
                   {lista.map(a => {
                     const k = colunaDe(a)
