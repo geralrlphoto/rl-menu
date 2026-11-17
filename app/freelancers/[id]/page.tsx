@@ -3399,12 +3399,7 @@ function AlbumTab({ freelancerId, album, onRefresh, viewAsFreelancer }: { freela
 
                         {(item.fotos_album || item.texto_album) && (
                           <div className="border-t border-white/[0.04] pt-2 space-y-1.5">
-                            {item.fotos_album && (
-                              <div>
-                                <p className="text-[9px] text-white/30 uppercase tracking-[0.3em] mb-0.5">Fotos</p>
-                                <p className="text-[11px] text-white/55 whitespace-pre-wrap leading-snug line-clamp-3">{item.fotos_album}</p>
-                              </div>
-                            )}
+                            {item.fotos_album && <VerFotosAlbum nome={item.nome} referencia={item.referencia_album} fotos={item.fotos_album} />}
                             {item.texto_album && (
                               <div>
                                 <p className="text-[9px] text-white/30 uppercase tracking-[0.3em] mb-0.5">Texto</p>
@@ -3451,6 +3446,72 @@ function AlbumTab({ freelancerId, album, onRefresh, viewAsFreelancer }: { freela
         </div>
       </div>
     </div>
+  )
+}
+
+// Cartão do álbum › botão "Ver fotos" que abre uma caixa central com a numeração toda
+function VerFotosAlbum({ nome, referencia, fotos }: { nome: string; referencia: string | null; fotos: string }) {
+  const [aberto, setAberto] = useState(false)
+  const [copiado, setCopiado] = useState(false)
+  const lista = fotos.split(/[\s,;]+/).map(x => x.trim()).filter(Boolean)
+  useEffect(() => {
+    if (!aberto) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setAberto(false) }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [aberto])
+  const copiar = () => {
+    navigator.clipboard?.writeText(lista.join('; ')).then(() => { setCopiado(true); setTimeout(() => setCopiado(false), 1800) }).catch(() => {})
+  }
+  return (
+    <>
+      <button type="button" onClick={e => { e.stopPropagation(); setAberto(true) }}
+        className="w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold text-gold/90 border border-gold/30 bg-gold/[0.06] hover:bg-gold/[0.14] hover:border-gold/60 transition-all">
+        <span className="flex items-center gap-1.5">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+          Ver fotos
+        </span>
+        <span className="font-mono text-white/70">{lista.length}</span>
+      </button>
+      {aberto && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4" onClick={() => setAberto(false)}>
+          <div className="absolute inset-0 bg-black/85 backdrop-blur-md" />
+          <div className="relative z-10 w-full max-w-2xl rounded-3xl border border-white/[0.08] bg-[#111] shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="h-0.5 w-full bg-gold/60" />
+            <div className="px-7 pt-6 pb-4 border-b border-white/[0.05] flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[11px] tracking-[0.45em] text-gold/70 uppercase mb-1.5">Fotos para o álbum · {lista.length}</p>
+                <h2 className="text-xl font-light tracking-[0.12em] text-white uppercase">{nome}</h2>
+                {referencia && <p className="text-[11px] font-mono text-white/35 mt-1">{referencia}</p>}
+              </div>
+              <button onClick={() => setAberto(false)} aria-label="Fechar"
+                className="w-8 h-8 flex items-center justify-center rounded-full border border-white/10 text-white/40 hover:text-white hover:border-white/30 transition-all">✕</button>
+            </div>
+            <div className="px-7 py-5 max-h-[60vh] overflow-y-auto">
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+                {lista.map((f, i) => (
+                  <div key={`${f}-${i}`} className="rounded-lg border border-white/[0.07] bg-white/[0.03] px-2 py-1.5 text-center">
+                    <span className="block text-[9px] text-white/25 font-mono">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="block text-[13px] text-white/85 font-mono">{f}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="px-7 py-4 border-t border-white/[0.05] flex items-center justify-end gap-2">
+              <button type="button" onClick={copiar}
+                className="rounded-full px-4 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold text-gold border border-gold/40 hover:bg-gold/10 transition-all">
+                {copiado ? 'Copiado ✓' : 'Copiar a lista'}
+              </button>
+              <button type="button" onClick={() => setAberto(false)}
+                className="rounded-full px-4 py-2 text-[11px] tracking-[0.2em] uppercase font-semibold text-white/60 border border-white/15 hover:text-white hover:border-white/30 transition-all">
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body,
+      )}
+    </>
   )
 }
 
