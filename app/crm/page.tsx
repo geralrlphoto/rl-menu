@@ -81,6 +81,7 @@ const ICONS: Record<string, string> = {
   relogio: 'M12 7v5l3 2M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
   formulario: 'M9 4h6a1 1 0 011 1v1H8V5a1 1 0 011-1zM8 6H6a1 1 0 00-1 1v13a1 1 0 001 1h12a1 1 0 001-1V7a1 1 0 00-1-1h-2M9 12h6M9 16h4',
   mais: 'M12 5v14M5 12h14',
+  conversa: 'M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12zM8.5 12h.01M12 12h.01M15.5 12h.01',
   analise: 'M12 3a3 3 0 00-3 3v5a3 3 0 006 0V6a3 3 0 00-3-3zM6 11a6 6 0 0012 0M12 17v4M9 21h6',
 }
 
@@ -504,6 +505,7 @@ export default function CRMPage() {
             <ActionTile num={9} label={syncing ? 'A sincronizar' : 'Sync Notion'} icon="sync" onClick={handleSync} disabled={syncing} />
             <ActionTile num={10} label="Análise Reuniões" icon="analise" href="/crm/analises" />
             <ActionTile num={11} label={aBuscarMail ? 'A procurar' : 'Leads Mail'} icon="mail" onClick={handleLeadsMail} disabled={aBuscarMail} />
+            <ActionTile num={12} label="WhatsApp" icon="conversa" href="/whatsapp" />
           </div>
           {syncMsg && <p className="text-[13px] text-[#C9A84C] text-right mt-2">{syncMsg}</p>}
         </div>
