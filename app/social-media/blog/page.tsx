@@ -34,7 +34,7 @@ export default function BlogIdeasPage() {
 
         <div className="relative flex-1 flex flex-col pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-16 lg:pt-8 pb-10 lg:pb-14">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <Link href="/social-media" className="text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Voltar a Social Media</Link>
+            <Link href="/social-media" className="text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Voltar a Comunicação</Link>
             <Link href="/social-media/blog/subscritores"
               className="inline-flex items-center gap-2 rounded-full bg-[#0e0e0e]/90 backdrop-blur-md font-semibold text-[15px] text-white px-5 py-2.5 transition-all border border-[#C9A84C]/45 hover:border-[#C9A84C]/80 shadow-[0_0_28px_-12px_rgba(201,168,76,0.6)]">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#C9A84C" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -45,7 +45,7 @@ export default function BlogIdeasPage() {
             </Link>
           </div>
           <div className="mt-auto pt-14">
-            <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">Social Media</p>
+            <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">Comunicação</p>
             <h1 className="font-bold uppercase text-white leading-[0.88] text-[64px] sm:text-[110px] lg:text-[140px] mt-2">Blog</h1>
             <div className="flex items-center gap-4 mt-5">
               <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />

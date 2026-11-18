@@ -219,13 +219,13 @@ export default async function SecaoPage({ params }: Props) {
     )
   }
 
-  // Menu Geral: acrescentar Social Media (placeholder)
+  // Menu Geral: Departamento de Comunicação (/social-media)
   if (
     section.name?.toUpperCase().includes('GERAL') ||
     id === '490653af-115b-4a9b-9d88-902c1a60f9c1'
   ) {
     extraButtons.push(
-      { href: '/social-media', label: 'Social Media', internal: true },
+      { href: '/social-media', label: 'Comunicação', internal: true },
       { href: '/crescimento', label: 'Funil de Crescimento', internal: true },
       { href: '/formularios', label: 'Formulários', internal: true },
     )

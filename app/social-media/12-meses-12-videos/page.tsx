@@ -25,9 +25,9 @@ export default function DozeMesesDozeVideosPage() {
           Setembro 2026 · Agosto 2027
         </p>
         <div className="relative flex-1 flex flex-col pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-16 lg:pt-8 pb-10 lg:pb-14">
-          <Link href="/social-media" className="self-start text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Voltar a Social Media</Link>
+          <Link href="/social-media" className="self-start text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Voltar a Comunicação</Link>
           <div className="mt-auto pt-14">
-            <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">Social Media</p>
+            <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">Comunicação</p>
             <h1 className="font-bold uppercase text-white leading-[0.88] text-[52px] sm:text-[96px] lg:text-[120px] mt-2">12 Meses<br />12 Vídeos</h1>
             <div className="flex items-center gap-4 mt-5">
               <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />

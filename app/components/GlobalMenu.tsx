@@ -61,13 +61,14 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/fotos-convidados', pill: 'Convidados' },
     { href: '/painel-fotografo', pill: 'Fotógrafo' },
   ] },
-  { titulo: 'Dep. de Social Media', links: [
+  { titulo: 'Dep. de Comunicação', links: [
     { href: '/social-media', pill: 'Início' },
     { href: '/social-media/anuncios', pill: 'Leads' },
     { href: '/newsletter-admin', pill: 'Emails' },
     { href: '/social-media/blog', pill: 'Artigos' },
     { href: '/social-media/12-meses-12-videos', pill: 'Guiões' },
     { href: '/social-media/podcast', pill: 'Episódios' },
+    { href: '/social-media/whatsapp', pill: 'WhatsApp' },
     { href: '/comunicacao', pill: 'Landing' },
   ] },
   ],
@@ -506,9 +507,9 @@ function GlobalMenuInner() {
     href: '/painel-fotografo', label: 'Painel do Fotógrafo', sub: 'Vista do fotógrafo',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="4" width="18" height="13" rx="2"/><path strokeLinecap="round" d="M8 21h8M12 17v4"/></svg>,
   },
-  // Social Media › Comunicação (landing pages para os clientes)
+  // Comunicação › Landing pages ( para os clientes)
   {
-    href: '/comunicacao', label: 'Comunicação', sub: 'Landing pages',
+    href: '/comunicacao', label: 'Landing Pages', sub: 'Para os clientes',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M3 10v4a1 1 0 001 1h3l5 4V5L7 9H4a1 1 0 00-1 1z"/><path strokeLinecap="round" d="M16 9a4 4 0 010 6M19 6a8 8 0 010 12"/></svg>,
   },
   {
@@ -548,7 +549,7 @@ function GlobalMenuInner() {
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3 17l6-6 4 4 8-8M15 7h6v6"/></svg>,
   },
   {
-    href: '/social-media', label: 'Social Media', sub: 'Departamento', exact: true,
+    href: '/social-media', label: 'Comunicação', sub: 'Departamento', exact: true,
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="0.8" fill="currentColor"/></svg>,
   },
   {
@@ -570,6 +571,10 @@ function GlobalMenuInner() {
   {
     href: '/social-media/podcast', label: 'Antes do Sim', sub: 'Podcast',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><rect x="9" y="3" width="6" height="11" rx="3"/><path strokeLinecap="round" d="M5 11a7 7 0 0014 0M12 18v3"/></svg>,
+  },
+  {
+    href: '/social-media/whatsapp', label: 'WhatsApp', sub: 'Respostas aos clientes',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></svg>,
   },
   {
     href: '/recrutamento', label: 'Recrutamento', sub: 'Novos freelancers',

@@ -505,7 +505,7 @@ export default function CRMPage() {
             <ActionTile num={9} label={syncing ? 'A sincronizar' : 'Sync Notion'} icon="sync" onClick={handleSync} disabled={syncing} />
             <ActionTile num={10} label="Análise Reuniões" icon="analise" href="/crm/analises" />
             <ActionTile num={11} label={aBuscarMail ? 'A procurar' : 'Leads Mail'} icon="mail" onClick={handleLeadsMail} disabled={aBuscarMail} />
-            <ActionTile num={12} label="WhatsApp" icon="conversa" href="/whatsapp" />
+            <ActionTile num={12} label="WhatsApp" icon="conversa" href="/social-media/whatsapp" />
           </div>
           {syncMsg && <p className="text-[13px] text-[#C9A84C] text-right mt-2">{syncMsg}</p>}
         </div>

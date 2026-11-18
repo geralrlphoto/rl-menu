@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 /* ============================================================
-   /social-media — no layout da app: topo como o do CRM (linha
+   /social-media (Departamento de Comunicação) — no layout da app: topo como o do CRM (linha
    dourada, título grande, foto a preto e branco à direita) e
    cartões com foto como os do Menu do /photo.
    ============================================================ */
@@ -14,6 +14,7 @@ const CARTOES: Cartao[] = [
   { href: '/social-media/blog', titulo: 'Blog', desc: 'Artigos prontos a copiar para o blog', img: '/eventos-hero-2026.webp' },
   { href: '/social-media/12-meses-12-videos', titulo: '12 Meses 12 Vídeos', desc: 'Guiões prontos, de setembro 2026 a agosto 2027', img: '/eventos-hero-2027.webp' },
   { href: '/social-media/podcast', titulo: 'Antes do Sim', desc: 'Episódios, candidaturas e leads do podcast', img: '/prewedding-hero.webp' },
+  { href: '/social-media/whatsapp', titulo: 'WhatsApp', desc: 'Respostas sugeridas aos clientes, prontas a enviar', img: '/crm-hero.webp' },
   { titulo: 'Instagram', desc: 'Calendário editorial e publicações', img: '/casamentos-2028.webp', embreve: true },
 ]
 
@@ -30,14 +31,14 @@ export default function SocialMediaPage() {
         </div>
         <div className="absolute top-0 bottom-0 left-6 sm:left-10 lg:left-14 w-px bg-[#C9A84C]/45" />
         <p className="hidden md:block absolute right-6 top-1/2 -translate-y-1/2 text-[11px] tracking-[0.4em] uppercase text-white/30 [writing-mode:vertical-rl]">
-          Anúncios · Newsletter · Blog · Vídeos · Podcast
+          Anúncios · Newsletter · Blog · Vídeos · Podcast · WhatsApp
         </p>
 
         <div className="relative flex-1 flex flex-col pl-11 sm:pl-16 lg:pl-24 pr-5 sm:pr-16 pt-16 lg:pt-8 pb-12 lg:pb-16">
           <Link href="/secao/490653af-115b-4a9b-9d88-902c1a60f9c1" className="self-start text-[14px] text-white/45 hover:text-[#C9A84C] transition-colors">‹ Voltar ao Menu</Link>
           <div className="mt-auto pt-16">
             <p className="text-[13px] sm:text-[18px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">RL Photo.Video</p>
-            <h1 className="font-bold uppercase text-white leading-[0.88] text-[60px] sm:text-[110px] lg:text-[140px] mt-2">Social<br />Media</h1>
+            <h1 className="font-bold uppercase text-white leading-[0.88] text-[44px] min-[420px]:text-[52px] sm:text-[96px] lg:text-[124px] mt-2">Comunicação</h1>
             <div className="flex items-center gap-4 mt-5">
               <span className="hidden sm:block w-12 h-px bg-[#C9A84C]" />
               <p className="text-[13px] sm:text-[17px] tracking-[0.22em] uppercase text-white/70">
@@ -45,7 +46,7 @@ export default function SocialMediaPage() {
               </p>
             </div>
             <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
-              O departamento de Social Media: anúncios pagos, newsletter, blog, vídeos e podcast, num só sítio.
+              O departamento de Comunicação: anúncios pagos, newsletter, blog, vídeos, podcast e WhatsApp, num só sítio.
             </p>
           </div>
         </div>
@@ -54,7 +55,7 @@ export default function SocialMediaPage() {
       {/* ── Cartões com foto, como os do Menu do /photo ─────────────────── */}
       <section className="max-w-[1400px] mx-auto px-5 sm:px-10 lg:px-14 pt-6 pb-20">
         <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Áreas</p>
-        <h2 className="font-semibold text-white text-[28px] leading-tight mt-1 mb-6">Departamento de Social Media</h2>
+        <h2 className="font-semibold text-white text-[28px] leading-tight mt-1 mb-6">Departamento de Comunicação</h2>
 
         <div className="grid grid-cols-1 min-[520px]:grid-cols-2 lg:grid-cols-3 gap-4">
           {CARTOES.map((c, i) => {

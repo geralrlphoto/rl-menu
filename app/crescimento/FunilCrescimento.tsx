@@ -29,14 +29,14 @@ const FASES: Fase[] = [
     n: 1, nome: 'Atrair', en: 'Attract', lado: 'esq', estado: 'feito',
     objetivo: 'Os casais descobrem a RL pela primeira vez.',
     naRL: ['Instagram e blog com casamentos reais', 'Site e filmes no Vimeo', 'Parcerias com quintas: Quinta Lagus Resort e Quinta dos Plátanos', 'Convidados que nos viram a trabalhar'],
-    ferramentas: [{ label: 'Social Media', href: '/social-media' }, { label: 'Redes', href: '/redes' }],
+    ferramentas: [{ label: 'Comunicação', href: '/social-media' }, { label: 'Redes', href: '/redes' }],
     medir: ['Leads por mês', 'Origem de cada lead (Instagram, site, recomendação, quinta parceira)', 'Leads vindas de cada quinta parceira'],
   },
   {
     n: 2, nome: 'Nutrir', en: 'Nurture', lado: 'esq', estado: 'feito',
     objetivo: 'Ganham confiança antes de pedirem orçamento.',
     naRL: ['Newsletter com histórias e dicas', 'Portefólio, filmes e testemunhos', 'Resposta rápida e próxima no primeiro contacto'],
-    ferramentas: [{ label: 'Newsletter', href: '/newsletter-admin' }, { label: 'Social Media', href: '/social-media' }],
+    ferramentas: [{ label: 'Newsletter', href: '/newsletter-admin' }, { label: 'Comunicação', href: '/social-media' }],
     medir: ['Subscritores da newsletter', 'Taxa de abertura', 'Tempo até à primeira resposta'],
   },
   {
