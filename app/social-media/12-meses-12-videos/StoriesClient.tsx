@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Prompter } from './GuioesClient'
 import { CATEGORIAS, DICAS_STORIES, STORIES, type Categoria, type Story } from './_data/stories'
 
@@ -21,7 +21,32 @@ export default function StoriesClient() {
   const [sel, setSel]           = useState<string>(STORIES[0].id)
   const [prompter, setPrompter] = useState(false)
   const [copiado, setCopiado]   = useState(false)
+  const [usadas, setUsadas]     = useState<Set<string>>(new Set())
   const palcoRef = useRef<HTMLElement>(null)
+
+  // Uma leitura por abertura da página
+  useEffect(() => {
+    fetch('/api/stories-utilizadas')
+      .then(r => r.json())
+      .then(j => setUsadas(new Set(j.ids ?? [])))
+      .catch(() => {})
+  }, [])
+
+  async function alternarUsada(id: string) {
+    const utilizada = !usadas.has(id)
+    const antes = usadas
+    const nova = new Set(usadas)
+    if (utilizada) nova.add(id); else nova.delete(id)
+    setUsadas(nova)
+    try {
+      const r = await fetch('/api/stories-utilizadas', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, utilizada }),
+      })
+      if (!r.ok) throw new Error()
+    } catch { setUsadas(antes) }
+  }
 
   const lista = useMemo(
     () => (cat === 'todas' ? STORIES : STORIES.filter(s => s.categoria === cat)),
@@ -77,10 +102,13 @@ export default function StoriesClient() {
           <button
             key={s.id}
             type="button"
-            className={`st-card ${s.id === sel ? 'is-sel' : ''}`}
+            className={`st-card ${s.id === sel ? 'is-sel' : ''} ${usadas.has(s.id) ? 'is-usada' : ''}`}
             onClick={() => escolher(s.id)}
           >
-            <span className="st-card-cat">{s.categoria}</span>
+            <span className="st-card-cat">
+              {s.categoria}
+              {usadas.has(s.id) && <em className="st-card-usada">✓ Utilizada</em>}
+            </span>
             <span className="st-card-titulo">{s.titulo}</span>
             <span className="st-card-gancho">“{s.gancho}”</span>
           </button>
@@ -114,6 +142,13 @@ export default function StoriesClient() {
           </button>
           <button type="button" className="mv-prompter-btn st-copiar" onClick={copiar}>
             {copiado ? 'Copiado' : 'Copiar texto'}
+          </button>
+          <button
+            type="button"
+            className={`mv-prompter-btn st-copiar st-usada-btn ${usadas.has(story.id) ? 'is-on' : ''}`}
+            onClick={() => alternarUsada(story.id)}
+          >
+            {usadas.has(story.id) ? '✓ Já utilizada' : 'Marcar como utilizada'}
           </button>
         </div>
       </article>

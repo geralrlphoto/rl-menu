@@ -742,6 +742,11 @@ export default function DozeMesesDozeVideosPage() {
         .st-acoes { display: flex; flex-wrap: wrap; gap: 10px; }
         .st-copiar { padding: 8px 20px; }
         .st-dicas { margin-top: 40px; }
+        .st-card-cat { display: flex; justify-content: space-between; gap: 8px; }
+        .st-card-usada { font-style: normal; color: var(--verde); }
+        .st-card.is-usada { opacity: 0.5; }
+        .st-card.is-usada:hover, .st-card.is-usada.is-sel { opacity: 1; }
+        .st-usada-btn.is-on { border-color: var(--verde); color: var(--verde); background: rgba(111,191,143,0.1); }
       `}</style>
       </div>
     </main>
