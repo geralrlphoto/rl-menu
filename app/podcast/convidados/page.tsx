@@ -75,14 +75,14 @@ export default function ConvidadosPage() {
             </div>
             <div className="cv-texto" data-r>
               <p>{PROGRAMA.descricao}</p>
-              <p>São doze episódios por ano, um por mês, publicados na primeira terça-feira. Cada episódio dura cerca de 45 minutos e sai em áudio e em vídeo.</p>
+              <p>São doze episódios por ano, um por mês. Cada episódio dura cerca de 45 minutos e sai em áudio e em vídeo.</p>
             </div>
           </div>
           <div className="cv-wrap">
             <div className="cv-numeros">
               <div data-r><strong>12</strong><small>Episódios por ano</small></div>
               <div data-r><strong>45</strong><small>Minutos de conversa</small></div>
-              <div data-r><strong>1.ª</strong><small>Terça de cada mês</small></div>
+              <div data-r><strong>1</strong><small>Episódio por mês</small></div>
             </div>
           </div>
         </section>

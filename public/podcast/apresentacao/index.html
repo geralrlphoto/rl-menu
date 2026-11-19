@@ -206,7 +206,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
 .bloco .mono{color:var(--g)}
 .bloco h3{font-family:var(--fs);font-weight:400;font-size:25px;margin:10px 0 8px}
 .bloco p{color:var(--tx-mid);font-size:15px}
-.rubricas{display:grid;grid-template-columns:1fr 1fr;gap:clamp(20px,3vw,40px);margin-top:clamp(56px,7vw,90px)}
+.rubricas{display:grid;grid-template-columns:minmax(0,760px);gap:clamp(20px,3vw,40px);margin-top:clamp(56px,7vw,90px)}
 .rubrica{border:1px solid rgba(216,190,147,.3);padding:clamp(28px,4vw,48px);position:relative}
 .rubrica::before{content:"\201C";position:absolute;top:-6px;left:24px;font-family:var(--fs);font-size:120px;line-height:1;color:var(--g);opacity:.35}
 .rubrica blockquote{font-family:var(--fs);font-style:italic;font-weight:300;font-size:clamp(24px,2.4vw,32px);line-height:1.25;margin:22px 0 18px}
@@ -429,11 +429,11 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
   <div class="heroi-corpo">
     <p class="eyebrow">Podcast · RL Photo.Video</p>
     <h1 class="titulo"><span><i>Antes do</i></span><span><i><em>Sim</em></i></span></h1>
-    <p class="heroi-lede r" style="--d:3">Todos os meses, uma conversa com quem faz casamentos por dentro, para que quem está a planear o seu saiba o que perguntar, quanto custa e o que corre mal.</p>
+    <p class="heroi-lede r" style="--d:3">Todos os meses, uma conversa com quem faz casamentos por dentro, para que quem está a planear o seu saiba o que perguntar, quanto custa e o que vale mesmo a pena.</p>
     <div class="heroi-meta r" style="--d:4">
       <span class="chip">12 episódios por temporada</span>
       <span class="chip">≈ 45 minutos</span>
-      <span class="chip">1.ª terça de cada mês · 7h00</span>
+      <span class="chip">Um episódio por mês</span>
       <span class="chip">Áudio e vídeo</span>
     </div>
     <div class="heroi-acoes r" style="--d:5">
@@ -477,7 +477,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
 <section class="sec quem" id="para-quem">
   <div class="wrap">
     <p class="eyebrow r">Para quem é <b>/ 02</b></p>
-    <h2 class="h2 r" style="--d:1">Dois lados <em>da mesma mesa.</em></h2>
+    <h2 class="h2 r" style="--d:1">Dois lados <em>da mesma conversa.</em></h2>
     <div class="quem-grid">
       <article class="quem-col r" style="--d:1">
         <img src="/podcast/apresentacao/img/port/outros-19.jpg" alt="" loading="lazy">
@@ -502,11 +502,11 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
   <div class="porque-foto" data-parallax="0.12"><img src="/podcast/apresentacao/img/port/carina-03.jpg" alt="" loading="lazy"></div>
   <div class="wrap">
     <p class="eyebrow r">Porque existe <b>/ 03</b></p>
-    <p class="manifesto" id="manifesto" data-texto="O portefólio mostra. |A conversa convence.| Toda a gente publica fotografias bonitas. Poucos explicam aos noivos, com calma, o que perguntar, quanto custa e o que corre mal. |Este programa existe para isso.|"></p>
+    <p class="manifesto" id="manifesto" data-texto="O portefólio mostra. |A conversa convence.| Toda a gente publica fotografias bonitas. Poucos explicam aos noivos, com calma, o que perguntar, quanto custa e o que vale mesmo a pena. |Este programa existe para isso.|"></p>
     <div class="porque-pilares">
       <div class="pilar r" style="--d:0"><span class="mono">Para os noivos</span><h3>Decidir melhor</h3><p>Respostas concretas a perguntas reais, na ordem em que as decisões aparecem.</p></div>
       <div class="pilar r" style="--d:1"><span class="mono">Para os convidados</span><h3>Dar palco</h3><p>Quem ouve chega ao seu contacto já a conhecer a sua forma de trabalhar.</p></div>
-      <div class="pilar r" style="--d:2"><span class="mono">Para o setor</span><h3>Criar rede</h3><p>Profissionais da mesma região, à mesma mesa, a falar a mesma língua aos casais.</p></div>
+      <div class="pilar r" style="--d:2"><span class="mono">Para o setor</span><h3>Criar rede</h3><p>Profissionais da mesma região, na mesma conversa, a falar a mesma língua aos casais.</p></div>
     </div>
   </div>
 </section>
@@ -558,10 +558,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
     <div class="blocos" id="blocos"></div>
 
     <div class="rubricas">
-      <div class="rubrica r"><span class="mono" style="color:var(--g)">Rubrica · a história</span>
-        <blockquote>Conte-me um casamento em que alguma coisa correu mal. O que aconteceu e o que aprendeu com isso?</blockquote>
-        <p>O bloco mais partilhável de cada episódio. Não é para expor ninguém: é para mostrar como se resolve.</p></div>
-      <div class="rubrica r" style="--d:1"><span class="mono" style="color:var(--g)">Rubrica final · sempre igual</span>
+      <div class="rubrica r"><span class="mono" style="color:var(--g)">Rubrica final · sempre igual</span>
         <blockquote>Três conselhos para quem está agora a planear o casamento.</blockquote>
         <p>A única pergunta que pedimos que traga pensada. Ao fim de um ano são 36 conselhos, de 12 profissionais diferentes.</p></div>
     </div>
@@ -611,7 +608,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
         <li class="passo"><span class="passo-n">04</span><span class="mono">2 dias antes</span><h3>Os temas da conversa</h3><p>Enviamos os temas, que não são um guião rígido. Não há respostas para decorar: falamos do que faz todos os dias.</p></li>
         <li class="passo"><span class="passo-n">05</span><span class="mono">O dia</span><h3>A gravação</h3><p>No nosso espaço em Pinhal Novo, Palmela <span class="ph">[confirmar morada]</span>, ou no seu (uma quinta, uma loja, um atelier) quando o tema o pede. Gravamos de uma vez, em vídeo, com duas câmaras. No fim, fazemos o seu retrato.</p></li>
         <li class="passo"><span class="passo-n">06</span><span class="mono">No mesmo dia</span><h3>O seu retrato</h3><p>Enviamos o retrato tirado durante a gravação, editado e pronto a usar onde quiser.</p></li>
-        <li class="passo"><span class="passo-n">07</span><span class="mono">1.ª terça do mês · 7h00</span><h3>Episódio no ar</h3><p>Recebe a ligação, os cortes verticais, duas fotografias e um texto pronto a copiar para partilhar nos seus canais.</p></li>
+        <li class="passo"><span class="passo-n">07</span><span class="mono">Um episódio por mês</span><h3>Episódio no ar</h3><p>Recebe a ligação, os cortes verticais, duas fotografias e um texto pronto a copiar para partilhar nos seus canais.</p></li>
       </ol></div>
     </div>
 
@@ -648,9 +645,9 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
     <div class="mes-trilho" id="mes-trilho">
       <div class="marco r" style="--d:0"><span class="marco-ponto"></span><span class="mono">5 dias antes</span><h3>Anúncio do convidado</h3><p>O seu retrato com o tema do episódio.</p></div>
       <div class="marco r" style="--d:1"><span class="marco-ponto"></span><span class="mono">2 dias antes</span><h3>Teaser vertical</h3><p>A frase mais forte da conversa, em 30 segundos.</p></div>
-      <div class="marco is-dia r" style="--d:2"><span class="marco-ponto"></span><span class="mono">Dia 1 · terça</span><h3>Episódio no ar</h3><p>Feed, stories e o kit de divulgação para si.</p></div>
+      <div class="marco is-dia r" style="--d:2"><span class="marco-ponto"></span><span class="mono">Dia 1</span><h3>Episódio no ar</h3><p>Feed, stories e o kit de divulgação para si.</p></div>
       <div class="marco r" style="--d:3"><span class="marco-ponto"></span><span class="mono">Dia 8</span><h3>Os três conselhos</h3><p>Carrossel com a rubrica final.</p></div>
-      <div class="marco r" style="--d:4"><span class="marco-ponto"></span><span class="mono">Dia 15</span><h3>A história</h3><p>O caso que correu mal, em vertical.</p></div>
+      <div class="marco r" style="--d:4"><span class="marco-ponto"></span><span class="mono">Dia 15</span><h3>Corte vertical</h3><p>Outro momento forte da conversa, em vertical.</p></div>
       <div class="marco r" style="--d:5"><span class="marco-ponto"></span><span class="mono">Dia 22</span><h3>Artigo no site</h3><p>As perguntas do episódio, escritas para a pesquisa no Google.</p></div>
     </div>
   </div>
@@ -673,7 +670,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
       <p class="eyebrow r">Quem apresenta <b>/ 09</b></p>
       <h2 class="h2 r" style="--d:1">Rui <em>Gonçalves</em></h2>
       <p class="r" style="--d:2;margin-top:28px">O Antes do Sim é apresentado pelo Rui Gonçalves, da RL Photo.Video, em Pinhal Novo, Palmela. Passa as épocas de casamentos lado a lado com planners, quintas, cozinhas e bandas.</p>
-      <p class="r" style="--d:3">Conhece os casamentos por dentro, fim de semana após fim de semana. No Antes do Sim, senta-se do outro lado da mesa e faz as perguntas que os noivos ainda não sabem que têm de fazer.</p>
+      <p class="r" style="--d:3">Conhece os casamentos por dentro, fim de semana após fim de semana. No Antes do Sim, passa para o outro lado e faz as perguntas que os noivos ainda não sabem que têm de fazer.</p>
       <div class="abertura r" style="--d:4">
         <span class="mono">Como abre cada episódio</span>
         <blockquote>“Bem-vindos ao Antes do Sim, o podcast para quem está a planear o casamento. Sou o Rui Gonçalves, da RL Photo.Video, e todos os meses trago aqui alguém que faz casamentos por dentro.”</blockquote>
@@ -742,8 +739,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
     {t:'01:00',w:1.5,n:'Abertura',d:'Frase fixa, o tema em duas frases e o convidado em três.'},
     {t:'02:30',w:3.5,n:'Origem',d:'Como chegou a este trabalho. Aquece a conversa e cria ligação.'},
     {t:'06:00',w:14,n:'O essencial',d:'Três perguntas âncora. É aqui que está o valor prático para os noivos.'},
-    {t:'20:00',w:10,n:'O que ninguém conta',d:'Custos reais, erros comuns, aquilo que os noivos assumem mal.'},
-    {t:'30:00',w:8,n:'A história',d:'Um caso que correu mal e o que se aprendeu com ele.'},
+    {t:'20:00',w:18,n:'O que ninguém conta',d:'Custos reais, erros comuns, aquilo que os noivos assumem mal.'},
     {t:'38:00',w:5,n:'Três conselhos',d:'A rubrica fixa de fecho, igual em todos os episódios.'},
     {t:'43:00',w:2,n:'Fecho',d:'Onde encontrar o convidado e o tema do mês seguinte.'}
   ];
@@ -759,7 +755,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
     {n:'08',f:'escolhas',t:'Flores e decoração sem estourar o orçamento',g:'Florista ou decoradora'},
     {n:'09',f:'escolhas',t:'Música: DJ, banda ou os dois',g:'DJ e músico',esc:true},
     {n:'10',f:'dia',t:'A cerimónia: civil, religiosa, celebrante e votos',g:'Celebrante, pároco ou conservador'},
-    {n:'11',f:'dia',t:'O dia hora a hora: a timeline e o que corre mal',g:'Planner ou coordenadora de dia'},
+    {n:'11',f:'dia',t:'O dia hora a hora: a timeline e os imprevistos',g:'Planner ou coordenadora de dia'},
     {n:'12',f:'depois',t:'Já casámos: o que faríamos diferente',g:'Dois ou três casais já casados'}
   ];
 
@@ -779,7 +775,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
   GUIAO.forEach(function(s,i){
     var seg = el('div','seg'+(s.w<3?' curto':''),'<b>'+s.n+'</b>'); seg.style.setProperty('--w',s.w); seg.style.setProperty('--i',i); seg.title = s.t+' · '+s.n;
     barra.appendChild(seg);
-    if (s.w >= 3.5 || i===2){
+    if (s.w >= 3.5 || i===2 || i===GUIAO.length-1){
       var bl = el('div','bloco r','<span class="mono">'+s.t+'</span><h3>'+s.n+'</h3><p>'+s.d+'</p>');
       bl.style.setProperty('--d', blocos.children.length % 3);
       bl.dataset.i = i; blocos.appendChild(bl);

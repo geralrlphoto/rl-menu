@@ -118,9 +118,8 @@ Não precisa de levar nada. Se quiser mostrar algum trabalho ou material seu no 
 1. [tema]
 2. [tema]
 3. [tema]
-4. Uma história de algo que correu mal e o que aprendeu com isso
-5. Três conselhos para quem está a planear o casamento
-O ponto 5 é a rubrica fixa do programa, é a única pergunta que peço que traga pensada.` }
+4. Três conselhos para quem está a planear o casamento
+O ponto 4 é a rubrica fixa do programa, é a única pergunta que peço que traga pensada.` }
 
     case 'agradecimento':
       return { texto:

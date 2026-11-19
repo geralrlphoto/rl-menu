@@ -4,7 +4,7 @@ import { BASE_URL } from '@/lib/podcast/programa'
 import Revelar from '../../convidados/Revelar'
 
 /* ============================================================
-   /podcast/apresentacao/convidados — quem se senta à mesa.
+   /podcast/apresentacao/convidados — os convidados do podcast.
 
    Mostra só os convidados com "publicar_perfil" ligado (interruptor
    na gestão, /social-media/podcast). Lê no servidor só os campos
@@ -20,7 +20,7 @@ export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Os convidados',
-  description: 'Quem se senta à mesa do Antes do Sim, o podcast da RL Photo.Video sobre casamentos.',
+  description: 'Os convidados do Antes do Sim, o podcast da RL Photo.Video sobre casamentos.',
   alternates: { canonical: `${BASE_URL}/podcast/apresentacao/convidados` },
 }
 
@@ -65,7 +65,7 @@ export default async function ConvidadosPublicos() {
         </div>
         <div className="ac-heroi-corpo">
           <p className="ac-eyebrow">Antes do Sim · Convidados</p>
-          <h1 className="ac-titulo">Quem se senta <em style={{ whiteSpace: 'nowrap' }}>à mesa.</em></h1>
+          <h1 className="ac-titulo">As vozes <em style={{ whiteSpace: 'nowrap' }}>do Antes do Sim.</em></h1>
           <p className="ac-lede">
             Cada episódio é uma conversa com quem faz casamentos por dentro. Conheça os profissionais
             que passam pelo Antes do Sim e siga o trabalho deles.
