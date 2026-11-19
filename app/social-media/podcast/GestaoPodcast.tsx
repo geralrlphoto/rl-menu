@@ -16,7 +16,7 @@ import { MODELOS, textoModelo, numeroWhatsapp, type ChaveModelo } from '@/lib/po
    ============================================================ */
 
 type Convidado = { id: string; nome: string; email: string | null; telefone: string | null; instagram: string | null; profissao: string | null; empresa: string | null; bio?: string | null; foto_url?: string | null; website?: string | null; publicar_perfil?: boolean }
-type Convite = { id: string; token: string; episodio_id: string; nome: string; marca: string | null; telefone: string | null; email: string | null; nota: string | null; gravacao_data: string | null; gravacao_hora: string | null; gravacao_local: string | null; convidado_id: string | null; visto_em: string | null; resposta: 'aceitou' | 'recusou' | null; resposta_em: string | null; created_at: string }
+type Convite = { id: string; token: string; episodio_id: string; nome: string; marca: string | null; telefone: string | null; email: string | null; nota: string | null; sobre: string | null; importancia: string | null; gravacao_data: string | null; gravacao_hora: string | null; gravacao_local: string | null; convidado_id: string | null; visto_em: string | null; resposta: 'aceitou' | 'recusou' | null; resposta_em: string | null; created_at: string }
 type Msg = { id: string; episodio_id: string; convidado_id: string | null; modelo: string; canal: string; enviado_em: string }
 type Ep = {
   id: string; numero: number; slug: string; titulo: string; subtitulo: string | null; estado: string
@@ -295,12 +295,18 @@ function Detalhe({ ep, guardar, registar, apagarRegisto }: {
    ainda não estiver decidido fica "por definir"). Aqui criam-se,
    editam-se e enviam-se por WhatsApp com o link, e vê-se se a pessoa
    abriu e o que respondeu. Quem aceitar passa a convidado. */
-type FormConvite = { nome: string; marca: string; telefone: string; email: string; gravacao_data: string; gravacao_hora: string; gravacao_local: string; nota: string }
-const FORM_VAZIO: FormConvite = { nome: '', marca: '', telefone: '', email: '', gravacao_data: '', gravacao_hora: '', gravacao_local: '', nota: '' }
+type FormConvite = { nome: string; marca: string; telefone: string; email: string; gravacao_data: string; gravacao_hora: string; gravacao_local: string; nota: string; sobre: string; importancia: string }
+const FORM_VAZIO: FormConvite = { nome: '', marca: '', telefone: '', email: '', gravacao_data: '', gravacao_hora: '', gravacao_local: '', nota: '', sobre: '', importancia: '' }
 
 function dataLongaConvite(iso: string) {
   const d = new Date(iso + 'T12:00:00')
   return d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+/** "MARIANA SILVA" → "Mariana Silva" (só mexe em nomes todos em maiúsculas). */
+function nomeBonito(n: string) {
+  const t = n.trim()
+  return t === t.toUpperCase() ? t.toLowerCase().replace(/(^|\s)(\p{L})/gu, (_m, a, b) => a + b.toUpperCase()) : t
 }
 
 function Convites({ ep }: { ep: Ep }) {
@@ -318,7 +324,7 @@ function Convites({ ep }: { ep: Ep }) {
     setEditar('novo'); setErro(null)
   }
   function abrirEditar(c: Convite) {
-    setForm({ nome: c.nome, marca: c.marca ?? '', telefone: c.telefone ?? '', email: c.email ?? '', gravacao_data: c.gravacao_data ?? '', gravacao_hora: c.gravacao_hora ?? '', gravacao_local: c.gravacao_local ?? '', nota: c.nota ?? '' })
+    setForm({ nome: c.nome, marca: c.marca ?? '', telefone: c.telefone ?? '', email: c.email ?? '', gravacao_data: c.gravacao_data ?? '', gravacao_hora: c.gravacao_hora ?? '', gravacao_local: c.gravacao_local ?? '', nota: c.nota ?? '', sobre: c.sobre ?? '', importancia: c.importancia ?? '' })
     setEditar(c.id); setErro(null)
   }
 
@@ -343,7 +349,7 @@ function Convites({ ep }: { ep: Ep }) {
   function copiar(c: Convite) { navigator.clipboard?.writeText(link(c)).then(() => avisar('Link copiado.')) }
 
   function textoWhatsapp(c: Convite) {
-    const primeiro = c.nome.trim().split(/\s+/)[0]
+    const primeiro = nomeBonito(c.nome).split(/\s+/)[0]
     const quem = c.marca ? `consigo e com a ${c.marca}` : 'consigo'
     const data = c.gravacao_data ? dataLongaConvite(c.gravacao_data) : 'por definir'
     const hora = c.gravacao_hora || 'por definir'
@@ -391,7 +397,9 @@ function Convites({ ep }: { ep: Ep }) {
         <label>Local<input className="gp-input" {...campo('gravacao_local')} placeholder="Por definir" /></label>
       </div>
       <p className="gp-nota-p">O que ficar vazio aparece como "por definir" no convite e na mensagem.</p>
-      <label>Nota pessoal (aparece no convite, opcional)<textarea className="gp-input" rows={3} {...campo('nota')} placeholder="Porque pensámos em si para este tema" /></label>
+      <label>O que faz (descrição para nós)<textarea className="gp-input" rows={3} {...campo('sobre')} placeholder="Ex.: faz joalharia para noivas, tudo feito à mão" /></label>
+      <label>Porque é importante a presença dela/dele (aparece no convite)<textarea className="gp-input" rows={6} {...campo('importancia')} placeholder="Texto da secção Porque pensámos em si. Pede ao Claude para o escrever a partir da descrição." /></label>
+      <label>Nota pessoal curta (aparece no convite, opcional)<textarea className="gp-input" rows={2} {...campo('nota')} placeholder="Uma frase sua, assinada" /></label>
       <div className="gp-botoes">
         <button type="button" onClick={guardar}>{editar === 'novo' ? 'Criar convite' : 'Guardar alterações'}</button>
         <button type="button" className="gp-cancelar" onClick={() => setEditar(null)}>Cancelar</button>

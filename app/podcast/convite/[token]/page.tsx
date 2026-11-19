@@ -34,7 +34,7 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
   const sb = clienteAdmin()
   const { data: c } = await sb
     .from('podcast_convites')
-    .select('id, nome, marca, nota, visto_em, resposta, gravacao_data, gravacao_hora, gravacao_local, podcast_episodios (numero, titulo, gravacao_data, gravacao_hora, gravacao_local)')
+    .select('id, nome, marca, nota, importancia, visto_em, resposta, gravacao_data, gravacao_hora, gravacao_local, podcast_episodios (numero, titulo, gravacao_data, gravacao_hora, gravacao_local)')
     .eq('token', token)
     .maybeSingle()
   if (!c) notFound()
@@ -44,7 +44,10 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
   }
 
   const ep: any = (c as any).podcast_episodios
-  const primeiro = c.nome.trim().split(/\s+/)[0]
+  const nomeLimpo = c.nome.trim() === c.nome.trim().toUpperCase()
+    ? c.nome.trim().toLowerCase().replace(/(^|\s)(\p{L})/gu, (_m: string, a: string, b: string) => a + b.toUpperCase())
+    : c.nome.trim()
+  const primeiro = nomeLimpo.split(/\s+/)[0]
   const gData: string | null = c.gravacao_data ?? ep?.gravacao_data ?? null
   const gHora: string | null = c.gravacao_hora ?? ep?.gravacao_hora ?? null
   const gLocal: string | null = c.gravacao_local ?? ep?.gravacao_local ?? null
@@ -73,6 +76,14 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
       </header>
 
       <main className="ci-wrap">
+        {c.importancia && (
+          <section className="ci-porque" data-r>
+            <p className="ci-eyebrow">Porque é importante a sua presença</p>
+            <h2 className="ci-h2">Porque pensámos <em style={{ whiteSpace: 'nowrap' }}>em si.</em></h2>
+            <div className="ci-porque-texto">{c.importancia.split(/\n+/).map((p: string, i: number) => <p key={i}>{p}</p>)}</div>
+          </section>
+        )}
+
         {c.nota && (
           <section className="ci-nota" data-r>
             <blockquote>{c.nota.split(/\n+/).map((p, i) => <p key={i}>{p}</p>)}</blockquote>
@@ -169,6 +180,12 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
         .ci-quando dd{margin:0;color:var(--tx);font-size:15px;line-height:1.5}
         .ci-pd{color:var(--g);font-style:italic;font-family:var(--fs);font-size:18px}
         .ci-quando-nota{color:var(--txm);font-size:14px;line-height:1.6;margin:16px 0 0}
+        .ci-porque{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(28px,6vw,90px);align-items:start;margin:0 0 clamp(64px,9vw,120px)}
+        .ci-porque .ci-eyebrow{grid-column:1/-1;margin-bottom:0}
+        .ci-porque .ci-h2{margin:0}
+        .ci-porque-texto p{margin:0 0 18px;color:var(--txm);font-size:clamp(17px,1.4vw,19px);line-height:1.8}
+        .ci-porque-texto p:first-child{color:var(--tx);font-family:var(--fs);font-size:clamp(23px,2.2vw,29px);line-height:1.4;font-weight:300}
+        @media(max-width:860px){.ci-porque{grid-template-columns:1fr}}
         .ci-responder{margin-top:clamp(64px,9vw,120px);padding:clamp(32px,6vw,72px);border:1px solid rgba(216,190,147,.35);background:linear-gradient(90deg,rgba(216,190,147,.07),transparent)}
         .ci-h2{font-family:var(--fs);font-weight:300;font-size:clamp(40px,5.4vw,72px);line-height:1;margin:0 0 30px}
         .ci-botoes{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
