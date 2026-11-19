@@ -34,7 +34,7 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
   const sb = clienteAdmin()
   const { data: c } = await sb
     .from('podcast_convites')
-    .select('id, nome, nota, visto_em, resposta, podcast_episodios (numero, titulo, gravacao_data, gravacao_hora, gravacao_local)')
+    .select('id, nome, marca, nota, visto_em, resposta, gravacao_data, gravacao_hora, gravacao_local, podcast_episodios (numero, titulo, gravacao_data, gravacao_hora, gravacao_local)')
     .eq('token', token)
     .maybeSingle()
   if (!c) notFound()
@@ -45,6 +45,9 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
 
   const ep: any = (c as any).podcast_episodios
   const primeiro = c.nome.trim().split(/\s+/)[0]
+  const gData: string | null = c.gravacao_data ?? ep?.gravacao_data ?? null
+  const gHora: string | null = c.gravacao_hora ?? ep?.gravacao_hora ?? null
+  const gLocal: string | null = c.gravacao_local ?? ep?.gravacao_local ?? null
   const whatsapp = `https://wa.me/351912932768?text=${encodeURIComponent(`Olá Rui, sou ${c.nome} e recebi o convite para o Antes do Sim.`)}`
 
   return (
@@ -53,7 +56,7 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
       <header className="ci-heroi">
         <div className="ci-heroi-foto" aria-hidden="true"><img src="/podcast/convidados/heroi.webp" alt="" /></div>
         <div className="ci-heroi-corpo">
-          <p className="ci-eyebrow">Antes do Sim · Convite pessoal</p>
+          <p className="ci-eyebrow">Antes do Sim · Convite pessoal{c.marca ? ` · ${c.marca}` : ''}</p>
           <h1 className="ci-titulo">Olá, <em>{primeiro}.</em></h1>
           <p className="ci-lede">
             Gostávamos muito de contar consigo no Antes do Sim, o podcast da RL Photo.Video para quem
@@ -98,17 +101,12 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
           <article className="ci-bloco" data-r style={{ ['--d' as string]: 2 }}>
             <span className="ci-n">03</span>
             <h2>Quando e onde</h2>
-            {ep?.gravacao_data ? (
-              <ul>
-                <li>{dataLonga(ep.gravacao_data)}{ep.gravacao_hora ? `, às ${ep.gravacao_hora}` : ''}.</li>
-                {ep.gravacao_local && <li>{ep.gravacao_local}</li>}
-              </ul>
-            ) : (
-              <ul>
-                <li>Combinamos juntos a data, de manhã ou de tarde.</li>
-                <li>No nosso espaço em Palmela, ou no seu, se fizer sentido para o tema.</li>
-              </ul>
-            )}
+            <dl className="ci-quando">
+              <dt>Data</dt><dd>{gData ? dataLonga(gData) : <span className="ci-pd">Por definir</span>}</dd>
+              <dt>Hora</dt><dd>{gHora || <span className="ci-pd">Por definir</span>}</dd>
+              <dt>Local</dt><dd>{gLocal || <span className="ci-pd">Por definir</span>}</dd>
+            </dl>
+            {(!gData || !gLocal) && <p className="ci-quando-nota">O que estiver por definir combinamos juntos. Gravamos no nosso espaço em Palmela, ou no seu, se fizer sentido para o tema.</p>}
           </article>
         </section>
 
@@ -166,6 +164,11 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
         .ci-bloco ul{list-style:none;margin:0;padding:0}
         .ci-bloco li{position:relative;padding-left:18px;color:var(--txm);font-size:15px;line-height:1.65;margin-bottom:8px}
         .ci-bloco li::before{content:"";position:absolute;left:0;top:11px;width:6px;height:1px;background:var(--g)}
+        .ci-quando{display:grid;grid-template-columns:auto 1fr;gap:10px 16px;margin:0}
+        .ci-quando dt{font-family:var(--fm);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--txd);padding-top:3px}
+        .ci-quando dd{margin:0;color:var(--tx);font-size:15px;line-height:1.5}
+        .ci-pd{color:var(--g);font-style:italic;font-family:var(--fs);font-size:18px}
+        .ci-quando-nota{color:var(--txm);font-size:14px;line-height:1.6;margin:16px 0 0}
         .ci-responder{margin-top:clamp(64px,9vw,120px);padding:clamp(32px,6vw,72px);border:1px solid rgba(216,190,147,.35);background:linear-gradient(90deg,rgba(216,190,147,.07),transparent)}
         .ci-h2{font-family:var(--fs);font-weight:300;font-size:clamp(40px,5.4vw,72px);line-height:1;margin:0 0 30px}
         .ci-botoes{display:flex;flex-wrap:wrap;gap:12px;align-items:center}

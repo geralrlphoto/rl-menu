@@ -16,7 +16,7 @@ import { MODELOS, textoModelo, numeroWhatsapp, type ChaveModelo } from '@/lib/po
    ============================================================ */
 
 type Convidado = { id: string; nome: string; email: string | null; telefone: string | null; instagram: string | null; profissao: string | null; empresa: string | null; bio?: string | null; foto_url?: string | null; website?: string | null; publicar_perfil?: boolean }
-type Convite = { id: string; token: string; episodio_id: string; nome: string; telefone: string | null; email: string | null; nota: string | null; convidado_id: string | null; visto_em: string | null; resposta: 'aceitou' | 'recusou' | null; resposta_em: string | null; created_at: string }
+type Convite = { id: string; token: string; episodio_id: string; nome: string; marca: string | null; telefone: string | null; email: string | null; nota: string | null; gravacao_data: string | null; gravacao_hora: string | null; gravacao_local: string | null; convidado_id: string | null; visto_em: string | null; resposta: 'aceitou' | 'recusou' | null; resposta_em: string | null; created_at: string }
 type Msg = { id: string; episodio_id: string; convidado_id: string | null; modelo: string; canal: string; enviado_em: string }
 type Ep = {
   id: string; numero: number; slug: string; titulo: string; subtitulo: string | null; estado: string
@@ -291,28 +291,49 @@ function Detalhe({ ep, guardar, registar, apagarRegisto }: {
 
 /* ── Convites pessoais ────────────────────────────────────────
    Cada convite é uma página em /podcast/convite/<token>, feita para
-   uma pessoa. Aqui criam-se, copiam-se ou enviam-se por WhatsApp, e
-   vê-se se a pessoa abriu e o que respondeu. Quem aceitar passa a
-   convidado do episódio com um clique. */
+   uma pessoa: nome, marca, data, hora e local da gravação (o que
+   ainda não estiver decidido fica "por definir"). Aqui criam-se,
+   editam-se e enviam-se por WhatsApp com o link, e vê-se se a pessoa
+   abriu e o que respondeu. Quem aceitar passa a convidado. */
+type FormConvite = { nome: string; marca: string; telefone: string; email: string; gravacao_data: string; gravacao_hora: string; gravacao_local: string; nota: string }
+const FORM_VAZIO: FormConvite = { nome: '', marca: '', telefone: '', email: '', gravacao_data: '', gravacao_hora: '', gravacao_local: '', nota: '' }
+
+function dataLongaConvite(iso: string) {
+  const d = new Date(iso + 'T12:00:00')
+  return d.toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
 function Convites({ ep }: { ep: Ep }) {
   const [lista, setLista] = useState<Convite[]>(ep.convites)
-  const [aCriar, setACriar] = useState(false)
-  const [novo, setNovo] = useState({ nome: '', telefone: '', email: '', nota: '' })
+  const [editar, setEditar] = useState<string | null>(null) // 'novo' ou id do convite
+  const [form, setForm] = useState<FormConvite>(FORM_VAZIO)
   const [aviso, setAviso] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const origem = typeof window !== 'undefined' ? window.location.origin : 'https://portal.rlphotovideo.pt'
   const link = (c: Convite) => `${origem}/podcast/convite/${c.token}`
 
-  function avisar(t: string) { setAviso(t); setTimeout(() => setAviso(null), 2200) }
+  function avisar(t: string) { setAviso(t); setTimeout(() => setAviso(null), 2400) }
+  function abrirNovo() {
+    setForm({ ...FORM_VAZIO, gravacao_data: ep.gravacao_data ?? '', gravacao_hora: ep.gravacao_hora ?? '', gravacao_local: ep.gravacao_local ?? '' })
+    setEditar('novo'); setErro(null)
+  }
+  function abrirEditar(c: Convite) {
+    setForm({ nome: c.nome, marca: c.marca ?? '', telefone: c.telefone ?? '', email: c.email ?? '', gravacao_data: c.gravacao_data ?? '', gravacao_hora: c.gravacao_hora ?? '', gravacao_local: c.gravacao_local ?? '', nota: c.nota ?? '' })
+    setEditar(c.id); setErro(null)
+  }
 
-  async function criar() {
-    if (!novo.nome.trim()) { setErro('Escreve o nome.'); return }
+  async function guardar() {
+    if (!form.nome.trim()) { setErro('Escreve o nome.'); return }
     setErro(null)
-    const r = await fetch('/api/podcast-convites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ episodio: ep.id, ...novo }) })
+    const novo = editar === 'novo'
+    const r = await fetch('/api/podcast-convites', {
+      method: novo ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(novo ? { episodio: ep.id, ...form } : { id: editar, ...form }),
+    })
     const j = await r.json().catch(() => ({}))
-    if (!r.ok) { setErro(j.error ?? 'Não foi possível criar.'); return }
-    setLista(l => [...l, j.convite]); setNovo({ nome: '', telefone: '', email: '', nota: '' }); setACriar(false)
-    avisar('Convite criado.')
+    if (!r.ok) { setErro(j.error ?? 'Não foi possível guardar.'); return }
+    setLista(l => (novo ? [...l, j.convite] : l.map(x => (x.id === j.convite.id ? j.convite : x))))
+    setEditar(null); avisar(novo ? 'Convite criado. Já o podes enviar por WhatsApp.' : 'Convite atualizado.')
   }
   async function apagar(c: Convite) {
     if (!confirm(`Apagar o convite de ${c.nome}? O link deixa de funcionar.`)) return
@@ -320,14 +341,24 @@ function Convites({ ep }: { ep: Ep }) {
     if (r.ok) setLista(l => l.filter(x => x.id !== c.id))
   }
   function copiar(c: Convite) { navigator.clipboard?.writeText(link(c)).then(() => avisar('Link copiado.')) }
+
+  function textoWhatsapp(c: Convite) {
+    const primeiro = c.nome.trim().split(/\s+/)[0]
+    const quem = c.marca ? `consigo e com a ${c.marca}` : 'consigo'
+    const data = c.gravacao_data ? dataLongaConvite(c.gravacao_data) : 'por definir'
+    const hora = c.gravacao_hora || 'por definir'
+    const onde = c.gravacao_local || 'por definir'
+    return `Olá ${primeiro}, tudo bem?\n`
+      + `Sou o Rui Gonçalves, da RL Photo.Video. Gostávamos muito de contar ${quem} no Antes do Sim, o nosso podcast sobre casamentos, no episódio "${ep.titulo}".\n\n`
+      + `Data: ${data}\nHora: ${hora}\nLocal: ${onde}\n\n`
+      + `Preparei um convite só para si, onde pode ver tudo e responder:\n${link(c)}`
+  }
   function whatsapp(c: Convite) {
     const n = numeroWhatsapp(c.telefone); if (!n) return
-    const primeiro = c.nome.trim().split(/\s+/)[0]
-    const texto = `Olá ${primeiro}, tudo bem?\nSou o Rui Gonçalves, da RL Photo.Video. Preparei um convite para si para o Antes do Sim, o nosso podcast sobre casamentos:\n${link(c)}\nDiga-me o que acha.`
-    window.open(`https://wa.me/${n}?text=${encodeURIComponent(texto)}`, '_blank', 'noopener')
+    window.open(`https://wa.me/${n}?text=${encodeURIComponent(textoWhatsapp(c))}`, '_blank', 'noopener')
   }
   async function passarConvidado(c: Convite) {
-    const r = await fetch('/api/podcast-convidados', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ episodio: ep.id, nome: c.nome, telefone: c.telefone, email: c.email }) })
+    const r = await fetch('/api/podcast-convidados', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ episodio: ep.id, nome: c.nome, empresa: c.marca, telefone: c.telefone, email: c.email }) })
     const j = await r.json().catch(() => ({}))
     if (!r.ok) { setErro(j.error ?? 'Não foi possível criar a ficha.'); return }
     const r2 = await fetch('/api/podcast-convites', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, convidado_id: j.convidado.id }) })
@@ -343,38 +374,66 @@ function Convites({ ep }: { ep: Ep }) {
     return { t: 'Ainda não abriu', cls: '' }
   }
 
+  const campo = (k: keyof FormConvite) => ({ value: form[k], onChange: (e: any) => setForm({ ...form, [k]: e.target.value }) })
+  const formulario = (
+    <div className="gp-conv-form">
+      <div className="gp-grelha">
+        <label>Nome da pessoa *<input className="gp-input" {...campo('nome')} placeholder="Ex.: Ana Silva" /></label>
+        <label>Marca<input className="gp-input" {...campo('marca')} placeholder="Nome da marca ou empresa" /></label>
+      </div>
+      <div className="gp-grelha">
+        <label>Telefone (para o WhatsApp)<input className="gp-input" type="tel" {...campo('telefone')} placeholder="912 345 678" /></label>
+        <label>Email<input className="gp-input" type="email" {...campo('email')} /></label>
+      </div>
+      <div className="gp-grelha gp-grelha-3">
+        <label>Data<span className="gp-linha"><input className="gp-input" type="date" {...campo('gravacao_data')} />{form.gravacao_data && <button type="button" className="gp-limpar" onClick={() => setForm({ ...form, gravacao_data: '' })}>Por definir</button>}</span></label>
+        <label>Hora<span className="gp-linha"><input className="gp-input" type="time" {...campo('gravacao_hora')} />{form.gravacao_hora && <button type="button" className="gp-limpar" onClick={() => setForm({ ...form, gravacao_hora: '' })}>Por definir</button>}</span></label>
+        <label>Local<input className="gp-input" {...campo('gravacao_local')} placeholder="Por definir" /></label>
+      </div>
+      <p className="gp-nota-p">O que ficar vazio aparece como "por definir" no convite e na mensagem.</p>
+      <label>Nota pessoal (aparece no convite, opcional)<textarea className="gp-input" rows={3} {...campo('nota')} placeholder="Porque pensámos em si para este tema" /></label>
+      <div className="gp-botoes">
+        <button type="button" onClick={guardar}>{editar === 'novo' ? 'Criar convite' : 'Guardar alterações'}</button>
+        <button type="button" className="gp-cancelar" onClick={() => setEditar(null)}>Cancelar</button>
+      </div>
+    </div>
+  )
+
   return (
     <div className="gp-bloco gp-convites">
       <div className="gp-conv-cab">
         <h3>Convites pessoais</h3>
-        <button type="button" className="gp-estado" onClick={() => setACriar(v => !v)}>{aCriar ? 'Cancelar' : '+ Novo convite'}</button>
+        {editar !== 'novo' && <button type="button" className="gp-estado" onClick={abrirNovo}>+ Novo convite</button>}
       </div>
-      {lista.length === 0 && !aCriar && <p className="gp-nota">Cria um convite para cada pessoa que queres neste episódio. Cada uma recebe uma página só dela, com o nome e o tema, onde pode aceitar ou recusar.</p>}
-      {aCriar && (
-        <div className="gp-conv-form">
-          <div className="gp-grelha">
-            <label>Nome<input className="gp-input" value={novo.nome} onChange={e => setNovo({ ...novo, nome: e.target.value })} placeholder="Nome da pessoa" /></label>
-            <label>Telefone<input className="gp-input" value={novo.telefone} onChange={e => setNovo({ ...novo, telefone: e.target.value })} placeholder="912 345 678" /></label>
-          </div>
-          <label>Email<input className="gp-input" value={novo.email} onChange={e => setNovo({ ...novo, email: e.target.value })} /></label>
-          <label>Nota pessoal (aparece no convite, opcional)<textarea className="gp-input" rows={3} value={novo.nota} onChange={e => setNovo({ ...novo, nota: e.target.value })} placeholder="Porque pensámos em si para este tema" /></label>
-          <div className="gp-botoes"><button type="button" onClick={criar}>Criar convite</button></div>
-        </div>
-      )}
+      {lista.length === 0 && !editar && <p className="gp-nota">Cria um convite para cada pessoa que queres neste episódio. Cada uma recebe uma página só dela, com o nome, a marca, a data e o local, onde pode aceitar ou recusar. Envia-se por WhatsApp com um clique.</p>}
+      {editar === 'novo' && formulario}
       {lista.length > 0 && (
         <ul className="gp-conv-lista">
           {lista.map(c => {
             const e = estado(c)
+            const tel = numeroWhatsapp(c.telefone)
             return (
               <li key={c.id}>
-                <div className="gp-conv-quem"><b>{c.nome}</b><span className={'gp-tag' + e.cls}>{e.t}</span>{c.convidado_id && <span className="gp-tag is-ok">Convidado</span>}</div>
-                <div className="gp-conv-acoes">
-                  <button type="button" onClick={() => copiar(c)}>Copiar link</button>
-                  <button type="button" onClick={() => whatsapp(c)} disabled={!numeroWhatsapp(c.telefone)} title={numeroWhatsapp(c.telefone) ? '' : 'Sem telefone'}>WhatsApp</button>
-                  <a href={link(c)} target="_blank" rel="noopener">Ver ↗</a>
-                  {c.resposta === 'aceitou' && !c.convidado_id && <button type="button" className="is-ouro" onClick={() => passarConvidado(c)}>Passar a convidado</button>}
-                  <button type="button" className="is-apagar" onClick={() => apagar(c)} title="Apagar convite">✕</button>
+                <div className="gp-conv-linha">
+                  <div className="gp-conv-quem">
+                    <b>{c.nome}</b>{c.marca && <span className="gp-conv-marca">{c.marca}</span>}
+                    <span className={'gp-tag' + e.cls}>{e.t}</span>{c.convidado_id && <span className="gp-tag is-ok">Convidado</span>}
+                    <small className="gp-conv-quando">
+                      {c.gravacao_data ? dataLongaConvite(c.gravacao_data) : 'Data por definir'}
+                      {' · '}{c.gravacao_hora || 'hora por definir'}
+                      {' · '}{c.gravacao_local || 'local por definir'}
+                    </small>
+                  </div>
+                  <div className="gp-conv-acoes">
+                    <button type="button" className="is-wa" onClick={() => whatsapp(c)} disabled={!tel} title={tel ? 'Abrir o WhatsApp com a mensagem e o link' : 'Falta o telefone: carrega em Editar'}>WhatsApp</button>
+                    <button type="button" onClick={() => copiar(c)}>Copiar link</button>
+                    <a href={link(c)} target="_blank" rel="noopener">Ver ↗</a>
+                    <button type="button" onClick={() => (editar === c.id ? setEditar(null) : abrirEditar(c))}>{editar === c.id ? 'Fechar' : 'Editar'}</button>
+                    {c.resposta === 'aceitou' && !c.convidado_id && <button type="button" className="is-ouro" onClick={() => passarConvidado(c)}>Passar a convidado</button>}
+                    <button type="button" className="is-apagar" onClick={() => apagar(c)} title="Apagar convite">✕</button>
+                  </div>
                 </div>
+                {editar === c.id && formulario}
               </li>
             )
           })}
@@ -529,6 +588,17 @@ textarea.gp-input{resize:vertical;line-height:1.6}
 .gp-conv-acoes .is-ouro{background:var(--g);border-color:var(--g);color:var(--bg)}
 .gp-conv-acoes .is-apagar{color:var(--txd)}
 .gp-ok{font-size:13px;color:#a8dcb0;margin-top:8px}
+.gp-conv-linha{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;width:100%}
+.gp-conv-marca{font-size:13px;color:var(--txm)}
+.gp-conv-quando{flex-basis:100%;font-size:12px;color:var(--txd)}
+.gp-conv-acoes .is-wa{background:#1f8f4e;border-color:#1f8f4e;color:#fff}
+.gp-conv-acoes .is-wa:hover{background:#25a35b;color:#fff;border-color:#25a35b}
+.gp-grelha-3{grid-template-columns:1fr 1fr 1.4fr}
+.gp-limpar{font-family:var(--fm);font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;background:none;border:1px solid var(--ln);color:var(--txm);border-radius:20px;padding:6px 9px}
+.gp-nota-p{font-size:12px;color:var(--txd);margin:-4px 0 12px}
+.gp-botoes .gp-cancelar{background:none;color:var(--txm);border-color:var(--ln)}
+.gp-conv-lista li{flex-direction:column;align-items:stretch}
+@media(max-width:720px){.gp-grelha-3{grid-template-columns:1fr}}
 .gp-perfil{margin-top:16px;padding-top:14px;border-top:1px solid var(--lns);display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .gp-perfil a{color:var(--g)}
 .gp-ver{font-family:var(--fm);font-size:10px;letter-spacing:.12em;text-transform:uppercase}

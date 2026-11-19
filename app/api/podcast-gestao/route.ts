@@ -31,7 +31,7 @@ export async function GET(req: Request) {
       .limit(500),
     sb.from('podcast_candidaturas').select('estado'),
     sb.from('podcast_convites')
-      .select('id, token, episodio_id, nome, telefone, email, nota, convidado_id, visto_em, resposta, resposta_em, created_at')
+      .select('id, token, episodio_id, nome, marca, telefone, email, nota, gravacao_data, gravacao_hora, gravacao_local, convidado_id, visto_em, resposta, resposta_em, created_at')
       .order('created_at'),
   ])
 

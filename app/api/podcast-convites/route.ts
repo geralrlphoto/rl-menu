@@ -12,7 +12,7 @@ import { clienteAdmin } from '@/lib/podcast/dados'
 
 export const dynamic = 'force-dynamic'
 
-const CAMPOS = ['nome', 'telefone', 'email', 'nota', 'convidado_id', 'resposta'] as const
+const CAMPOS = ['nome', 'marca', 'telefone', 'email', 'nota', 'gravacao_data', 'gravacao_hora', 'gravacao_local', 'convidado_id', 'resposta'] as const
 
 function limpar(body: Record<string, any>) {
   const out: Record<string, any> = {}
@@ -25,7 +25,7 @@ function limpar(body: Record<string, any>) {
   return out
 }
 
-const SELECT = 'id, token, episodio_id, nome, telefone, email, nota, convidado_id, visto_em, resposta, resposta_em, created_at'
+const SELECT = 'id, token, episodio_id, nome, marca, telefone, email, nota, gravacao_data, gravacao_hora, gravacao_local, convidado_id, visto_em, resposta, resposta_em, created_at'
 
 // POST { episodio, nome, telefone?, email?, nota? } → cria o convite
 export async function POST(req: Request) {
