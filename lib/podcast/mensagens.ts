@@ -3,8 +3,8 @@
 
    Vêm do plano do programa (secção "Como convidar"), com duas
    mudanças pedidas pelo Rui a 2026-11-19:
-   - o Rui apresenta-se como CEO da RL Photo.Video (não "filmo e
-     fotografo casamentos");
+   - o Rui apresenta-se como "Rui Gonçalves, da RL Photo.Video"
+     (sem "CEO" e sem "filmo e fotografo casamentos");
    - o convidado recebe só o ficheiro do episódio (sem retrato nem
      cortes verticais).
 
@@ -67,7 +67,7 @@ export function textoModelo(chave: ChaveModelo, d: DadosMensagem): { assunto?: s
     case 'dm':
       return { texto:
 `Olá ${nome}, tudo bem?
-Sou o Rui Gonçalves, CEO da RL Photo.Video, aqui na zona de Setúbal e Palmela.
+Sou o Rui Gonçalves, da RL Photo.Video, aqui na zona de Setúbal e Palmela.
 Estamos a lançar o Antes do Sim, um podcast mensal para noivos que estão a planear o casamento, onde convidamos quem trabalha no setor para explicar as coisas que os noivos só descobrem tarde demais. O episódio de ${m} é sobre ${tema} e lembrei-me logo de si.
 São 45 minutos de conversa, gravados em vídeo, sem preparação necessária da sua parte. Posso enviar-lhe os detalhes?
 Obrigado pelo tempo.` }
@@ -76,7 +76,7 @@ Obrigado pelo tempo.` }
       return { assunto: `Convite para o podcast Antes do Sim | episódio sobre ${tema}`, texto:
 `Olá ${nome},
 
-Chamo-me Rui Gonçalves e sou CEO da RL Photo.Video, em Palmela.
+Chamo-me Rui Gonçalves e sou da RL Photo.Video, em Palmela.
 
 Estamos a produzir o Antes do Sim, um podcast mensal dirigido a casais em fase de planeamento. Cada episódio é uma conversa de 45 minutos com um profissional do setor sobre um tema concreto, para ajudar os noivos a decidir melhor.
 
@@ -89,7 +89,7 @@ O que recebe: o ficheiro do episódio completo, para publicar nos seus canais.
 Pode ver como funciona aqui: https://portal.rlphotovideo.pt/podcast/apresentacao
 
 Cumprimentos,
-Rui Gonçalves · CEO, RL Photo.Video
+Rui Gonçalves · RL Photo.Video
 912 932 768 · www.rlphotovideo.pt` }
 
     case 'insistencia':
