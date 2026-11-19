@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
@@ -26,6 +26,17 @@ export default function NovaLeadPage() {
   })
 
   const set = (k: string, v: string) => setForm(f => ({ ...f, [k]: v }))
+
+  // Vindo do WhatsApp (botão Criar lead em /social-media/whatsapp): ?nome=…&contato=…&mensagem=…
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search)
+    const vindo: Record<string, string> = {}
+    for (const k of ['nome', 'contato', 'mensagem', 'como_chegou'] as const) {
+      const v = q.get(k)
+      if (v) vindo[k] = v
+    }
+    if (Object.keys(vindo).length) setForm(f => ({ ...f, ...vindo }))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -23,3 +23,12 @@ alter table public.whatsapp_sugestoes
   add column if not exists sugestao_original text,
   add column if not exists link_ficha text,
   add column if not exists enviada_em timestamptz;
+
+-- 2026-11-19: ligação ao CRM (histórico), respostas-base (tema/base), lead nova, tarefa criada a partir de uma promessa.
+alter table public.whatsapp_sugestoes
+  add column if not exists crm_contact_id uuid,
+  add column if not exists tema text,
+  add column if not exists base boolean not null default false,
+  add column if not exists lead_nova boolean not null default false,
+  add column if not exists tarefa_id uuid,
+  add column if not exists tarefa_prazo date;
