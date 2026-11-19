@@ -98,6 +98,7 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/staff', pill: 'Equipa' },
     { href: '/freelancers', pill: 'Equipa' },
     { href: '/recrutamento', pill: 'Candidatos' },
+    { href: '/account-manager', pill: 'Diário' },
   ] },
   ],
 }
@@ -590,6 +591,10 @@ function GlobalMenuInner() {
   {
     href: '/social-media/whatsapp', label: 'WhatsApp', sub: 'Respostas aos clientes',
     icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinejoin="round" d="M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12z"/></svg>,
+  },
+  {
+    href: '/account-manager', label: 'Account Manager', sub: 'Ponto de situação',
+    icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H6a1 1 0 00-1 1v14a1 1 0 001 1h12a1 1 0 001-1V6a1 1 0 00-1-1h-3M9 5a3 3 0 006 0M9 5a3 3 0 016 0M9 13l2 2 4-4"/></svg>,
   },
   {
     href: '/recrutamento', label: 'Recrutamento', sub: 'Novos freelancers',

@@ -577,6 +577,27 @@ export default function FreelancersPage() {
           </div>
         )}
 
+        {/* ── Account Manager: ponto de situação diário de todos os projetos ── */}
+        <div className="mt-16">
+          <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Gestão diária</p>
+          <h2 className="font-semibold text-white text-[30px] sm:text-[34px] leading-tight mt-1 mb-6">Account Manager</h2>
+          <Link href="/account-manager" onClick={sfx.clique}
+            className="fl-card group relative h-64 rounded-[24px] overflow-hidden border border-[#C9A84C]/25 hover:border-[#C9A84C]/60 hover:shadow-[0_0_50px_-20px_rgba(201,168,76,0.6)] transition-all flex items-end">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/quinta-da-ria-aerea.webp" alt="" className="fl-foto absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0" style={{ background: 'linear-gradient(to top, rgba(7,7,7,0.95) 20%, rgba(7,7,7,0.35) 65%, rgba(7,7,7,0.1))' }} />
+            <span className="absolute top-5 left-6 text-[11px] font-medium tracking-[0.2em] uppercase px-3 py-1 rounded-full border border-[#C9A84C]/45 text-[#C9A84C] bg-black/40 backdrop-blur-sm">Diário</span>
+            <div className="relative w-full p-6 flex items-end justify-between gap-4">
+              <div className="min-w-0">
+                <p className="font-bold uppercase text-white text-[34px] leading-none">Ponto de situação</p>
+                <div className="w-14 h-px bg-[#C9A84C] my-3" />
+                <p className="text-[14px] text-white/60 max-w-xl">Prazos de todos os projetos, fotos dos convidados, equipas dos casamentos com custos e margem, e objetivos do ano.</p>
+              </div>
+              <span className="w-11 h-11 shrink-0 rounded-full border border-[#C9A84C]/45 text-[#C9A84C] flex items-center justify-center group-hover:bg-[#C9A84C]/25 transition-all">→</span>
+            </div>
+          </Link>
+        </div>
+
         {/* ── Maquetes (cartões com foto, como as temporadas do /casamentos) ── */}
         <div className="mt-16">
           <p className="text-[11px] font-medium tracking-[0.2em] uppercase text-[#C9A84C]">Maquetes</p>
