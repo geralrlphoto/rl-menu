@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import FichaNoPainel from './FichaNoPainel'
+import GestaoPodcast from './GestaoPodcast'
 
 /* ============================================================
    /social-media/podcast — o plano do podcast "Antes do Sim".
@@ -22,15 +23,8 @@ import FichaNoPainel from './FichaNoPainel'
    ============================================================ */
 
 export const metadata = {
-  title: 'Antes do Sim — Plano do podcast · RL Photo.Video',
+  title: 'Antes do Sim · Gestão do podcast · RL Photo.Video',
 }
-
-const ATALHOS = [
-  { href: '/social-media/podcast/episodios', texto: 'Gerir episódios' },
-  { href: '/social-media/podcast/candidaturas', texto: 'Candidaturas' },
-  { href: '/social-media/podcast/leads', texto: 'Leads' },
-  { href: '/podcast', texto: 'Página pública ↗' },
-]
 
 function lerDesign() {
   const ficheiro = path.join(process.cwd(), 'app', 'social-media', 'podcast', '_design', 'podcast.html')
@@ -73,37 +67,39 @@ export default function PlanoPodcastPage() {
       />
 
       <style dangerouslySetInnerHTML={{ __html: estilo }} />
-      <div dangerouslySetInnerHTML={{ __html: corpo }} />
+
+      {/* Gestão: convidados, mensagens e gravações de cada episódio. */}
+      <GestaoPodcast />
+
+      {/* O plano do programa (design aprovado), recolhido para consulta. */}
+      <details className="pod-plano">
+        <summary>
+          <span>Plano do programa</span>
+          <small>Porquê um podcast, guião, temporada, convites, divulgação e produção</small>
+        </summary>
+        <div dangerouslySetInnerHTML={{ __html: corpo }} />
+      </details>
       <script dangerouslySetInnerHTML={{ __html: script }} />
 
       {/* As fichas do convidado e dos potenciais, dentro do painel lateral
           que o design abre em cada episódio. */}
       <FichaNoPainel />
 
-      {/* Atalhos do back-office, fora do design para não lhe tocar. */}
-      <nav className="pod-atalhos" aria-label="Gestão do podcast">
-        {ATALHOS.map(a => (
-          <a key={a.href} href={a.href}>{a.texto}</a>
-        ))}
-      </nav>
-
       <style dangerouslySetInnerHTML={{ __html: `
-        .pod-atalhos {
-          position: fixed; right: 16px; bottom: 16px; z-index: 8100;
-          display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end;
-          max-width: min(420px, calc(100vw - 32px));
+        .pod-plano { max-width: 1180px; margin: 0 auto 80px; padding: 0 clamp(16px,4vw,48px); }
+        .pod-plano > summary {
+          list-style: none; cursor: pointer; display: flex; flex-direction: column; gap: 6px;
+          padding: 24px 28px; border: 1px solid rgba(216,190,147,.3);
+          background: linear-gradient(90deg, rgba(216,190,147,.06), transparent);
         }
-        .pod-atalhos a {
-          font-family: 'Space Mono', monospace;
-          font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
-          color: rgba(243,237,226,.6); text-decoration: none;
-          padding: 9px 14px; border-radius: 40px;
-          border: 1px solid rgba(243,237,226,.14);
-          background: rgba(11,10,8,.82); backdrop-filter: blur(10px);
-          transition: color .3s, border-color .3s;
-        }
-        .pod-atalhos a:hover { color: #d8be93; border-color: #d8be93; }
-        @media (max-width: 640px) { .pod-atalhos { position: static; margin: 24px 20px 40px; } }
+        .pod-plano > summary::-webkit-details-marker { display: none; }
+        .pod-plano > summary span { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; color: rgba(243,237,226,.92); }
+        .pod-plano > summary span::after { content: ' +'; color: #d8be93; }
+        .pod-plano[open] > summary span::after { content: ' 2'; }
+        .pod-plano > summary small { font-family: 'Space Mono', monospace; font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: rgba(243,237,226,.45); }
+        .pod-plano > summary:hover { border-color: #d8be93; }
+        .pod-plano[open] > div { margin: 0 calc(-1 * clamp(16px,4vw,48px)); }
+        .pod-plano .bar { display: none; }
       ` }} />
     </>
   )

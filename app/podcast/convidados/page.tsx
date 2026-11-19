@@ -46,7 +46,7 @@ export default function ConvidadosPage() {
             <img src="/podcast/convidados/heroi.webp" alt="" />
           </div>
           <div className="cv-topo">
-            <Link className="cv-voltar" href="/podcast"><span aria-hidden="true">‹</span> Podcast</Link>
+            <a className="cv-voltar" href="/podcast/apresentacao"><span aria-hidden="true">‹</span> Voltar à apresentação</a>
             <a className="cv-topo-cta" href="#candidatura">Candidatar-me</a>
           </div>
           <div className="cv-heroi-corpo">

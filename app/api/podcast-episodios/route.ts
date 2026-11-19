@@ -19,9 +19,11 @@ const CAMPOS = [
   'notas_md', 'guiao_md', 'duracao_segundos', 'data_publicacao', 'estado', 'capa_url',
   'youtube_id', 'spotify_url', 'apple_url', 'audio_url', 'transcricao',
   'gravacao_data', 'gravacao_hora', 'gravacao_local',
+  'video_estado', 'video_bruto_url',
 ] as const
 
 const ESTADOS = ['rascunho', 'agendado', 'publicado']
+const ESTADOS_VIDEO = ['por_gravar', 'gravado', 'em_edicao', 'pronto', 'publicado']
 
 function limpar(body: Record<string, any>) {
   const out: Record<string, any> = {}
@@ -95,6 +97,9 @@ export async function PATCH(req: Request) {
   const campos = limpar(body)
   if (campos.estado && !ESTADOS.includes(campos.estado)) {
     return NextResponse.json({ error: 'estado inválido' }, { status: 400 })
+  }
+  if (campos.video_estado && !ESTADOS_VIDEO.includes(campos.video_estado)) {
+    return NextResponse.json({ error: 'estado do vídeo inválido' }, { status: 400 })
   }
   if (Object.keys(campos).length === 0) return NextResponse.json({ ok: true, ignorado: true })
 
