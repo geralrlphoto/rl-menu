@@ -72,7 +72,7 @@ export default function WhatsappClient() {
       {lista === null && <p className="text-white/40">A carregar…</p>}
       {lista && lista.length === 0 && !erro && (
         <p className="text-white/40 font-light max-w-xl leading-relaxed">
-          Nada aqui. No Claude Code diz &quot;responde à [nome]&quot; e a sugestão aparece nesta lista.
+          Nada por responder. No Claude Code diz &quot;ler mensagens&quot; e as sugestões aparecem aqui.
         </p>
       )}
 
@@ -110,10 +110,14 @@ function Cartao({ s, onMudou }: { s: Sugestao; onMudou: () => void }) {
 
   function abrirWhatsapp() {
     if (texto !== s.sugestao) patch({ sugestao: texto })
-    const url = numero
-      ? `https://wa.me/${numero}?text=${encodeURIComponent(texto)}`
-      : `https://wa.me/?text=${encodeURIComponent(texto)}`
-    window.open(url, '_blank', 'noopener')
+    // WhatsApp Web numa janela própria na metade direita do ecrã, já na conversa
+    // e com o texto escrito. O nome fixo faz com que a mesma janela seja reutilizada.
+    const url = `https://web.whatsapp.com/send?${numero ? `phone=${numero}&` : ''}text=${encodeURIComponent(texto)}`
+    const sw = window.screen.availWidth
+    const sh = window.screen.availHeight
+    const left = Math.round(sw / 2)
+    const w = window.open(url, 'rl-whatsapp', `popup=yes,left=${left},top=0,width=${sw - left},height=${sh}`)
+    if (w) { w.opener = null; w.focus() }
   }
 
   async function mudarEstado(novo: Sugestao['estado']) {

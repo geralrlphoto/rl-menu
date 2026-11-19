@@ -19,7 +19,7 @@ export default function WhatsappPage() {
         <p className="mt-12 text-[13px] sm:text-[16px] font-bold tracking-[0.55em] uppercase text-[#C9A84C]">Comunicação</p>
         <h1 className="font-bold uppercase leading-[0.9] text-[48px] sm:text-[84px] mt-2">WhatsApp</h1>
         <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-4 max-w-xl">
-          Respostas sugeridas pelo Claude. Ajusta o texto, copia ou abre a conversa no WhatsApp e envia.
+          Respostas sugeridas pelo Claude. Diz &quot;ler mensagens&quot; no Claude Code para ler as pendentes. Põe esta janela à esquerda: o botão Abrir no WhatsApp abre a conversa na metade direita do ecrã, já com o texto escrito.
         </p>
       </section>
       <WhatsappClient />
