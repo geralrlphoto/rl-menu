@@ -18,7 +18,7 @@ export default function WhatsappPage() {
       {/* ── Topo, como o do CRM e das outras áreas da Comunicação ───────── */}
       <section className="relative min-h-[480px] lg:min-h-[62vh] flex flex-col overflow-hidden">
         <div className="absolute inset-y-0 right-0 w-full lg:w-[62%]">
-          <img src="/portal-noivos-login.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-40 lg:opacity-55" />
+          <img src="/casamentos-2026.jpg" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_45%] grayscale opacity-40 lg:opacity-55" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
         </div>
