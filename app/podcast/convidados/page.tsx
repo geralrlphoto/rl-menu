@@ -211,10 +211,10 @@ export default function ConvidadosPage() {
 
         /* herói */
         .cv-heroi{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate}
-        .cv-heroi-foto{position:absolute;inset:0;z-index:-2}
-        .cv-heroi-foto img{width:100%;height:100%;object-fit:cover;object-position:60% 50%;filter:grayscale(1) contrast(1.08) brightness(.8);animation:cvZoom 14s var(--ease) both}
+        .cv-heroi-foto{position:absolute;inset:0 0 0 46%;z-index:-2;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 32%);mask-image:linear-gradient(90deg,transparent 0,#000 32%)}
+        .cv-heroi-foto img{width:100%;height:100%;object-fit:cover;object-position:42% 45%;filter:saturate(.9) contrast(1.05) brightness(.9);animation:cvZoom 14s var(--ease) both}
         @keyframes cvZoom{from{transform:scale(1.12)}to{transform:scale(1)}}
-        .cv-heroi::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(11,10,8,.97) 0%,rgba(11,10,8,.85) 34%,rgba(11,10,8,.35) 68%,rgba(11,10,8,.2)),linear-gradient(0deg,var(--ink),rgba(11,10,8,0) 40%)}
+        .cv-heroi::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(11,10,8,.97) 0%,rgba(11,10,8,.88) 36%,rgba(11,10,8,.1) 64%,rgba(11,10,8,0) 100%),linear-gradient(0deg,var(--ink),rgba(11,10,8,0) 40%)}
         .cv-topo{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:22px var(--pad)}
         .cv-voltar,.cv-topo-cta{font-family:var(--fm);font-size:10px;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;border-radius:40px;padding:10px 18px;transition:all .3s}
         .cv-voltar{color:var(--txm);border:1px solid var(--ln)}
@@ -306,7 +306,10 @@ export default function ConvidadosPage() {
           .cv-cand-intro{position:static}
           .cv-quem-foto{aspect-ratio:16/11}
           .cv-recebe-foto{min-height:260px;aspect-ratio:16/10}
-          .cv-heroi::before{background:linear-gradient(0deg,var(--ink) 6%,rgba(11,10,8,.85) 50%,rgba(11,10,8,.4))}
+          .cv-heroi-foto{inset:0 0 auto 0;height:62svh;-webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 100%);mask-image:linear-gradient(180deg,#000 55%,transparent 100%)}
+          .cv-heroi-foto img{object-position:45% 40%}
+          .cv-heroi::before{background:linear-gradient(180deg,rgba(11,10,8,.5) 0,rgba(11,10,8,0) 14%)}
+          .cv-heroi-corpo{padding-top:46svh}
         }
         @media(max-width:560px){
           .cv-cartoes{grid-template-columns:1fr}.cv-cartao{min-height:0}

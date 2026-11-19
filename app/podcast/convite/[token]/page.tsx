@@ -148,10 +148,10 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
         .ci-eyebrow{display:flex;align-items:center;gap:14px;font-family:var(--fm);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);margin:0 0 22px}
         .ci-eyebrow::before{content:"";width:36px;height:1px;background:var(--g);opacity:.7}
         .ci-heroi{position:relative;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate}
-        .ci-heroi-foto{position:absolute;inset:0;z-index:-2}
-        .ci-heroi-foto img{width:100%;height:100%;object-fit:cover;object-position:60% 50%;filter:grayscale(1) contrast(1.08) brightness(.78);animation:ciZoom 14s var(--ease) both}
+        .ci-heroi-foto{position:absolute;inset:0 0 0 46%;z-index:-2;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 32%);mask-image:linear-gradient(90deg,transparent 0,#000 32%)}
+        .ci-heroi-foto img{width:100%;height:100%;object-fit:cover;object-position:42% 45%;filter:saturate(.9) contrast(1.05) brightness(.9);animation:ciZoom 14s var(--ease) both}
         @keyframes ciZoom{from{transform:scale(1.1)}to{transform:scale(1)}}
-        .ci-heroi::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(11,10,8,.97),rgba(11,10,8,.84) 38%,rgba(11,10,8,.35)),linear-gradient(0deg,var(--bg),rgba(11,10,8,0) 45%)}
+        .ci-heroi::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(11,10,8,.97) 0%,rgba(11,10,8,.88) 36%,rgba(11,10,8,.1) 64%,rgba(11,10,8,0) 100%),linear-gradient(0deg,var(--bg),rgba(11,10,8,0) 40%)}
         .ci-heroi-corpo{max-width:1180px;width:100%;margin:0 auto;padding:110px var(--pad) clamp(48px,8vh,88px);animation:ciSobe 1.4s var(--ease) both}
         @keyframes ciSobe{from{opacity:0;transform:translateY(40px)}to{opacity:1;transform:none}}
         .ci-titulo{font-family:var(--fs);font-weight:300;font-size:clamp(64px,11vw,168px);line-height:.9;letter-spacing:-.02em;margin:0}
@@ -206,7 +206,10 @@ export default async function ConvitePage({ params }: { params: Promise<{ token:
         .ci-rodape small{display:block;font-family:var(--fm);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--txd)}
         @media(max-width:860px){
           .ci-grelha{grid-template-columns:1fr}
-          .ci-heroi::before{background:linear-gradient(0deg,var(--bg) 6%,rgba(11,10,8,.86) 55%,rgba(11,10,8,.45))}
+          .ci-heroi-foto{inset:0 0 auto 0;height:62svh;-webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 100%);mask-image:linear-gradient(180deg,#000 55%,transparent 100%)}
+          .ci-heroi-foto img{object-position:45% 40%}
+          .ci-heroi::before{background:linear-gradient(180deg,rgba(11,10,8,.5) 0,rgba(11,10,8,0) 14%)}
+          .ci-heroi-corpo{padding-top:46svh}
           .ci-btn{width:100%;justify-content:center}
         }
         @media(prefers-reduced-motion:reduce){.ci *{animation:none!important;transition:none!important}}
