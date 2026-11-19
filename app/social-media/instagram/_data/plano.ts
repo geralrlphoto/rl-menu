@@ -32,7 +32,7 @@ export const POSTS: Post[] = [
       'Slide 2: «1. Não marques a quinta antes de saberes quantos convidados querem.»',
       'Slide 3: «2. Não peças 30 orçamentos. Escolhe 3 pessoas de quem gostas do trabalho e fala com elas.»',
       'Slide 4: «3. Não deixes a foto e o vídeo para o fim. As boas datas de verão fecham primeiro.»',
-      'Slide 5: «4. Não escolhas só pelo Instagram. Pede para ver um casamento inteiro.»',
+      'Slide 5: «4. Não escolhas só pelo Instagram. Marquem uma conversa e percebam se confiam em quem vai estar convosco o dia todo.»',
       'Slide 6: «5. Não decidas sozinha. Data, convidados e orçamento decidem-se a dois.»',
       'Slide 7: «A ordem certa: data, convidados, espaço, foto e vídeo.»',
       'Slide 8: «Guarda e envia ao teu par.»',
