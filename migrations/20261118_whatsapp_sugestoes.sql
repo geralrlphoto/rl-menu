@@ -16,3 +16,10 @@ create index if not exists whatsapp_sugestoes_estado_idx on public.whatsapp_suge
 
 -- Só a chave de serviço (rotas da app) lê e escreve.
 alter table public.whatsapp_sugestoes enable row level security;
+
+-- 2026-11-19: dias à espera, versão original do Claude (aprender o tom), link para a ficha, data de envio.
+alter table public.whatsapp_sugestoes
+  add column if not exists data_mensagem timestamptz,
+  add column if not exists sugestao_original text,
+  add column if not exists link_ficha text,
+  add column if not exists enviada_em timestamptz;

@@ -183,6 +183,19 @@ function GlobalMenuInner() {
   const fecharMega = useRef<ReturnType<typeof setTimeout> | null>(null)
   // Menu do telemóvel: grupo aberto (como os menus da barra de topo do desktop)
   const [grupoAberto, setGrupoAberto] = useState<string | null>(null)
+  // Respostas do WhatsApp por enviar (Dep. de Comunicação): só se conta quando um
+  // menu abre e no máximo uma vez por minuto (sem polling, para poupar o Supabase).
+  const [waPendentes, setWaPendentes] = useState(0)
+  const waLidoEm = useRef(0)
+  useEffect(() => {
+    if (!mega && !open && !grupoAberto) return
+    if (Date.now() - waLidoEm.current < 60_000) return
+    waLidoEm.current = Date.now()
+    fetch('/api/whatsapp-sugestoes?contar=1', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { if (j && typeof j.pendentes === 'number') setWaPendentes(j.pendentes) })
+      .catch(() => {})
+  }, [mega, open, grupoAberto])
 
   useEffect(() => {
     setCompact(localStorage.getItem('rl-menu-compacto') === '1')
@@ -398,7 +411,9 @@ function GlobalMenuInner() {
             const colunas = COLUNAS_MENU[g.nome]
             const item = (href: string, label?: string) => {
               const l = linkDe(href)
-              return l ? <NavItem key={href} href={href} label={label ?? l.label} icon={l.icon} exact={l.exact} /> : null
+              const nome = label ?? l?.label
+              const comConta = href === '/social-media/whatsapp' && waPendentes > 0 ? `${nome} (${waPendentes})` : nome
+              return l ? <NavItem key={href} href={href} label={comConta} icon={l.icon} exact={l.exact} /> : null
             }
             return (
               <div key={g.nome}>
@@ -736,7 +751,7 @@ function GlobalMenuInner() {
                               <span className="block font-cond font-semibold text-[17px] text-white truncate">{label ?? l.label}</span>
                               <span className="block font-cond text-[14px] text-white/50 truncate">{sub ?? l.sub}</span>
                             </span>
-                            {pill(isActive(l.href, l.exact), textoPill)}
+                            {pill(isActive(l.href, l.exact), href === '/social-media/whatsapp' && waPendentes > 0 ? `${waPendentes} por enviar` : textoPill)}
                           </div>
                         </Link>
                       )
