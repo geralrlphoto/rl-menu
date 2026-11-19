@@ -398,7 +398,12 @@ function Convites({ ep }: { ep: Ep }) {
       </div>
       <p className="gp-nota-p">O que ficar vazio aparece como "por definir" no convite e na mensagem.</p>
       <label>O que faz (descrição para nós)<textarea className="gp-input" rows={3} {...campo('sobre')} placeholder="Ex.: faz joalharia para noivas, tudo feito à mão" /></label>
-      <label>Porque é importante a presença dela/dele (aparece no convite)<textarea className="gp-input" rows={6} {...campo('importancia')} placeholder="Texto da secção Porque pensámos em si. Pede ao Claude para o escrever a partir da descrição." /></label>
+      <div className="gp-imp">
+        <span>Porque é importante a presença (aparece no convite)</span>
+        {form.importancia
+          ? <div className="gp-imp-texto">{form.importancia.split(/\n+/).map((p, i) => <p key={i}>{p}</p>)}</div>
+          : <p className="gp-imp-vazio">Escrito pelo Claude a partir de &quot;O que faz&quot;. Guarda o convite e diz &quot;texto convites&quot; na conversa.</p>}
+      </div>
       <label>Nota pessoal curta (aparece no convite, opcional)<textarea className="gp-input" rows={2} {...campo('nota')} placeholder="Uma frase sua, assinada" /></label>
       <div className="gp-botoes">
         <button type="button" onClick={guardar}>{editar === 'novo' ? 'Criar convite' : 'Guardar alterações'}</button>
@@ -572,6 +577,12 @@ const CSS = `
 .gp-input{width:100%;font-family:var(--fb);font-size:14px;letter-spacing:0;text-transform:none;color:var(--tx);background:rgba(0,0,0,.35);border:1px solid var(--ln);padding:10px 12px;border-radius:0}
 .gp-input:focus{outline:none;border-color:var(--g)}
 textarea.gp-input{resize:vertical;line-height:1.6}
+.gp-imp{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.gp-imp>span{font-family:var(--fm);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--txd)}
+.gp-imp-texto{border:1px solid var(--ln);border-left:2px solid var(--g);padding:12px 14px;background:rgba(0,0,0,.25)}
+.gp-imp-texto p{font-size:14px;line-height:1.65;color:var(--txm);margin:0 0 10px}
+.gp-imp-texto p:last-child{margin:0}
+.gp-imp-vazio{font-size:13px;color:var(--txd);font-style:italic;border:1px dashed var(--ln);padding:12px 14px;margin:0}
 .gp-linha{display:flex;gap:8px;align-items:center}
 .gp-linha a{font-family:var(--fm);font-size:10px;color:var(--g);white-space:nowrap}
 .gp-sub{font-family:var(--fm);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--txd);margin:4px 0 8px}
