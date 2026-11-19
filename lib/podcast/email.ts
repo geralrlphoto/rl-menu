@@ -89,3 +89,17 @@ export async function avisarCandidatura(d: {
     ]),
   )
 }
+
+export async function avisarRespostaConvite(d: {
+  nome: string; resposta: 'aceitou' | 'recusou'; episodio: string
+}) {
+  const aceitou = d.resposta === 'aceitou'
+  await enviar(
+    `Convite do podcast: ${d.nome} ${aceitou ? 'aceitou' : 'não pode agora'}`,
+    moldura(aceitou ? 'Convite aceite' : 'Convite recusado', [
+      ['Nome', d.nome],
+      ['Resposta', aceitou ? 'Aceito o convite' : 'Agora não posso'],
+      ['Episódio', d.episodio],
+    ]),
+  )
+}

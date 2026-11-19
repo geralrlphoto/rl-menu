@@ -16,12 +16,13 @@ import { MODELOS, textoModelo, numeroWhatsapp, type ChaveModelo } from '@/lib/po
    ============================================================ */
 
 type Convidado = { id: string; nome: string; email: string | null; telefone: string | null; instagram: string | null; profissao: string | null; empresa: string | null; bio?: string | null; foto_url?: string | null; website?: string | null; publicar_perfil?: boolean }
+type Convite = { id: string; token: string; episodio_id: string; nome: string; telefone: string | null; email: string | null; nota: string | null; convidado_id: string | null; visto_em: string | null; resposta: 'aceitou' | 'recusou' | null; resposta_em: string | null; created_at: string }
 type Msg = { id: string; episodio_id: string; convidado_id: string | null; modelo: string; canal: string; enviado_em: string }
 type Ep = {
   id: string; numero: number; slug: string; titulo: string; subtitulo: string | null; estado: string
   data_publicacao: string | null; gravacao_data: string | null; gravacao_hora: string | null; gravacao_local: string | null
   video_estado: string; video_bruto_url: string | null; youtube_id: string | null
-  convidados: Convidado[]; potenciais: number; mensagens: Msg[]
+  convidados: Convidado[]; potenciais: number; mensagens: Msg[]; convites: Convite[]
 }
 
 const ESTADOS_VIDEO = [
@@ -165,6 +166,7 @@ function Linha({ ep, aberto, alternar, guardar, registar, apagarRegisto }: {
           <span className={'gp-tag' + (conv.length ? ' is-ok' : '')}>{conv.length ? 'Convidado' : 'Por convidar'}</span>
           <span className="gp-tag">{gData ? 'Grava ' + gData : 'Sem data'}</span>
           <span className={'gp-tag gp-v-' + ep.video_estado}>{estado?.t}</span>
+          {ep.convites.length > 0 && <span className={'gp-tag' + (ep.convites.some(c => c.resposta === 'aceitou') ? ' is-ok' : '')}>{ep.convites.length} {ep.convites.length === 1 ? 'convite' : 'convites'}</span>}
           <span className="gp-tag">{ep.mensagens.length} msg</span>
         </span>
         <span className="gp-mais" aria-hidden="true" />
@@ -280,6 +282,106 @@ function Detalhe({ ep, guardar, registar, apagarRegisto }: {
           </>
         )}
       </div>
+
+      {/* Convites pessoais (uma página por pessoa) */}
+      <Convites ep={ep} />
+    </div>
+  )
+}
+
+/* ── Convites pessoais ────────────────────────────────────────
+   Cada convite é uma página em /podcast/convite/<token>, feita para
+   uma pessoa. Aqui criam-se, copiam-se ou enviam-se por WhatsApp, e
+   vê-se se a pessoa abriu e o que respondeu. Quem aceitar passa a
+   convidado do episódio com um clique. */
+function Convites({ ep }: { ep: Ep }) {
+  const [lista, setLista] = useState<Convite[]>(ep.convites)
+  const [aCriar, setACriar] = useState(false)
+  const [novo, setNovo] = useState({ nome: '', telefone: '', email: '', nota: '' })
+  const [aviso, setAviso] = useState<string | null>(null)
+  const [erro, setErro] = useState<string | null>(null)
+  const origem = typeof window !== 'undefined' ? window.location.origin : 'https://portal.rlphotovideo.pt'
+  const link = (c: Convite) => `${origem}/podcast/convite/${c.token}`
+
+  function avisar(t: string) { setAviso(t); setTimeout(() => setAviso(null), 2200) }
+
+  async function criar() {
+    if (!novo.nome.trim()) { setErro('Escreve o nome.'); return }
+    setErro(null)
+    const r = await fetch('/api/podcast-convites', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ episodio: ep.id, ...novo }) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) { setErro(j.error ?? 'Não foi possível criar.'); return }
+    setLista(l => [...l, j.convite]); setNovo({ nome: '', telefone: '', email: '', nota: '' }); setACriar(false)
+    avisar('Convite criado.')
+  }
+  async function apagar(c: Convite) {
+    if (!confirm(`Apagar o convite de ${c.nome}? O link deixa de funcionar.`)) return
+    const r = await fetch('/api/podcast-convites?id=' + c.id, { method: 'DELETE' })
+    if (r.ok) setLista(l => l.filter(x => x.id !== c.id))
+  }
+  function copiar(c: Convite) { navigator.clipboard?.writeText(link(c)).then(() => avisar('Link copiado.')) }
+  function whatsapp(c: Convite) {
+    const n = numeroWhatsapp(c.telefone); if (!n) return
+    const primeiro = c.nome.trim().split(/\s+/)[0]
+    const texto = `Olá ${primeiro}, tudo bem?\nSou o Rui Gonçalves, da RL Photo.Video. Preparei um convite para si para o Antes do Sim, o nosso podcast sobre casamentos:\n${link(c)}\nDiga-me o que acha.`
+    window.open(`https://wa.me/${n}?text=${encodeURIComponent(texto)}`, '_blank', 'noopener')
+  }
+  async function passarConvidado(c: Convite) {
+    const r = await fetch('/api/podcast-convidados', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ episodio: ep.id, nome: c.nome, telefone: c.telefone, email: c.email }) })
+    const j = await r.json().catch(() => ({}))
+    if (!r.ok) { setErro(j.error ?? 'Não foi possível criar a ficha.'); return }
+    const r2 = await fetch('/api/podcast-convites', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, convidado_id: j.convidado.id }) })
+    const j2 = await r2.json().catch(() => ({}))
+    if (r2.ok) setLista(l => l.map(x => (x.id === c.id ? j2.convite : x)))
+    avisar('Passou a convidado. Recarrega a página para ver a ficha.')
+  }
+
+  function estado(c: Convite) {
+    if (c.resposta === 'aceitou') return { t: 'Aceitou · ' + dataHora(c.resposta_em!), cls: ' is-ok' }
+    if (c.resposta === 'recusou') return { t: 'Agora não · ' + dataHora(c.resposta_em!), cls: ' is-nao' }
+    if (c.visto_em) return { t: 'Viu · ' + dataHora(c.visto_em), cls: ' is-visto' }
+    return { t: 'Ainda não abriu', cls: '' }
+  }
+
+  return (
+    <div className="gp-bloco gp-convites">
+      <div className="gp-conv-cab">
+        <h3>Convites pessoais</h3>
+        <button type="button" className="gp-estado" onClick={() => setACriar(v => !v)}>{aCriar ? 'Cancelar' : '+ Novo convite'}</button>
+      </div>
+      {lista.length === 0 && !aCriar && <p className="gp-nota">Cria um convite para cada pessoa que queres neste episódio. Cada uma recebe uma página só dela, com o nome e o tema, onde pode aceitar ou recusar.</p>}
+      {aCriar && (
+        <div className="gp-conv-form">
+          <div className="gp-grelha">
+            <label>Nome<input className="gp-input" value={novo.nome} onChange={e => setNovo({ ...novo, nome: e.target.value })} placeholder="Nome da pessoa" /></label>
+            <label>Telefone<input className="gp-input" value={novo.telefone} onChange={e => setNovo({ ...novo, telefone: e.target.value })} placeholder="912 345 678" /></label>
+          </div>
+          <label>Email<input className="gp-input" value={novo.email} onChange={e => setNovo({ ...novo, email: e.target.value })} /></label>
+          <label>Nota pessoal (aparece no convite, opcional)<textarea className="gp-input" rows={3} value={novo.nota} onChange={e => setNovo({ ...novo, nota: e.target.value })} placeholder="Porque pensámos em si para este tema" /></label>
+          <div className="gp-botoes"><button type="button" onClick={criar}>Criar convite</button></div>
+        </div>
+      )}
+      {lista.length > 0 && (
+        <ul className="gp-conv-lista">
+          {lista.map(c => {
+            const e = estado(c)
+            return (
+              <li key={c.id}>
+                <div className="gp-conv-quem"><b>{c.nome}</b><span className={'gp-tag' + e.cls}>{e.t}</span>{c.convidado_id && <span className="gp-tag is-ok">Convidado</span>}</div>
+                <div className="gp-conv-acoes">
+                  <button type="button" onClick={() => copiar(c)}>Copiar link</button>
+                  <button type="button" onClick={() => whatsapp(c)} disabled={!numeroWhatsapp(c.telefone)} title={numeroWhatsapp(c.telefone) ? '' : 'Sem telefone'}>WhatsApp</button>
+                  <a href={link(c)} target="_blank" rel="noopener">Ver ↗</a>
+                  {c.resposta === 'aceitou' && !c.convidado_id && <button type="button" className="is-ouro" onClick={() => passarConvidado(c)}>Passar a convidado</button>}
+                  <button type="button" className="is-apagar" onClick={() => apagar(c)} title="Apagar convite">✕</button>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+      {aviso && <p className="gp-ok">{aviso}</p>}
+      {erro && <p className="gp-falta">{erro}</p>}
     </div>
   )
 }
@@ -410,6 +512,23 @@ textarea.gp-input{resize:vertical;line-height:1.6}
 .gp-estado{font-family:var(--fm);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--txm);background:none;border:1px solid var(--ln);border-radius:30px;padding:7px 11px}
 .gp-estado:hover{border-color:var(--g);color:var(--g)}
 .gp-estado.is-on{background:var(--g);border-color:var(--g);color:var(--bg)}
+.gp-convites{grid-column:1/-1}
+.gp-conv-cab{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+.gp .gp-conv-cab h3{margin:0}
+.gp-conv-form{border:1px solid rgba(216,190,147,.3);padding:14px;margin-bottom:14px;background:rgba(0,0,0,.25)}
+.gp-conv-lista{list-style:none}
+.gp-conv-lista li{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;padding:12px 0;border-top:1px solid var(--lns)}
+.gp-conv-quem{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.gp-conv-quem b{font-weight:400;font-size:16px;margin-right:4px}
+.gp-tag.is-visto{color:#e3c27a;border-color:rgba(227,194,122,.45)}
+.gp-tag.is-nao{color:#e8a1a1;border-color:rgba(232,161,161,.4)}
+.gp-conv-acoes{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.gp-conv-acoes button,.gp-conv-acoes a{font-family:var(--fm);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx);background:none;border:1px solid var(--ln);border-radius:30px;padding:8px 12px}
+.gp-conv-acoes button:hover,.gp-conv-acoes a:hover{border-color:var(--g);color:var(--g)}
+.gp-conv-acoes button:disabled{opacity:.35;cursor:not-allowed}
+.gp-conv-acoes .is-ouro{background:var(--g);border-color:var(--g);color:var(--bg)}
+.gp-conv-acoes .is-apagar{color:var(--txd)}
+.gp-ok{font-size:13px;color:#a8dcb0;margin-top:8px}
 .gp-perfil{margin-top:16px;padding-top:14px;border-top:1px solid var(--lns);display:flex;flex-direction:column;align-items:flex-start;gap:8px}
 .gp-perfil a{color:var(--g)}
 .gp-ver{font-family:var(--fm);font-size:10px;letter-spacing:.12em;text-transform:uppercase}

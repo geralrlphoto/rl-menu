@@ -17,7 +17,7 @@ export async function GET(req: Request) {
   if (barrado) return barrado
 
   const sb = clienteAdmin()
-  const [eps, liga, pots, msgs, cands] = await Promise.all([
+  const [eps, liga, pots, msgs, cands, convs] = await Promise.all([
     sb.from('podcast_episodios')
       .select('id, numero, temporada, slug, titulo, subtitulo, estado, data_publicacao, gravacao_data, gravacao_hora, gravacao_local, video_estado, video_bruto_url, youtube_id')
       .order('numero'),
@@ -30,9 +30,12 @@ export async function GET(req: Request) {
       .order('enviado_em', { ascending: false })
       .limit(500),
     sb.from('podcast_candidaturas').select('estado'),
+    sb.from('podcast_convites')
+      .select('id, token, episodio_id, nome, telefone, email, nota, convidado_id, visto_em, resposta, resposta_em, created_at')
+      .order('created_at'),
   ])
 
-  const erro = eps.error || liga.error || pots.error || msgs.error || cands.error
+  const erro = eps.error || liga.error || pots.error || msgs.error || cands.error || convs.error
   if (erro) return NextResponse.json({ error: erro.message }, { status: 500 })
 
   const convidados: Record<string, any[]> = {}
@@ -47,6 +50,9 @@ export async function GET(req: Request) {
   const mensagens: Record<string, any[]> = {}
   for (const m of msgs.data ?? []) (mensagens[m.episodio_id] ??= []).push(m)
 
+  const convites: Record<string, any[]> = {}
+  for (const c of convs.data ?? []) (convites[c.episodio_id] ??= []).push(c)
+
   const candidaturas = {
     total: cands.data?.length ?? 0,
     novas: (cands.data ?? []).filter(c => !c.estado || c.estado === 'nova').length,
@@ -58,6 +64,7 @@ export async function GET(req: Request) {
       convidados: convidados[e.id] ?? [],
       potenciais: potenciais[e.id] ?? 0,
       mensagens: mensagens[e.id] ?? [],
+      convites: convites[e.id] ?? [],
     })),
     candidaturas,
   })
