@@ -15,7 +15,7 @@ const CARTOES: Cartao[] = [
   { href: '/social-media/12-meses-12-videos', titulo: '12 Meses 12 Vídeos', desc: 'Guiões prontos, de setembro 2026 a agosto 2027', img: '/eventos-hero-2027.webp' },
   { href: '/social-media/podcast', titulo: 'Antes do Sim', desc: 'Episódios, candidaturas e leads do podcast', img: '/prewedding-hero.webp' },
   { href: '/social-media/whatsapp', titulo: 'WhatsApp', desc: 'Respostas sugeridas aos clientes, prontas a enviar', img: '/crm-hero.webp' },
-  { titulo: 'Instagram', desc: 'Calendário editorial e publicações', img: '/casamentos-2028.webp', embreve: true },
+  { href: '/social-media/instagram', titulo: 'Instagram', desc: 'Calendário editorial e publicações', img: '/casamentos-2028.webp' },
 ]
 
 export default function SocialMediaPage() {
