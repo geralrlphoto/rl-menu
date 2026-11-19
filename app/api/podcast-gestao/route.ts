@@ -22,7 +22,7 @@ export async function GET(req: Request) {
       .select('id, numero, temporada, slug, titulo, subtitulo, estado, data_publicacao, gravacao_data, gravacao_hora, gravacao_local, video_estado, video_bruto_url, youtube_id')
       .order('numero'),
     sb.from('podcast_episodio_convidados')
-      .select('episodio_id, ordem, podcast_convidados (id, nome, email, telefone, instagram, profissao, empresa)')
+      .select('episodio_id, ordem, podcast_convidados (id, nome, email, telefone, instagram, profissao, empresa, bio, foto_url, website, publicar_perfil)')
       .order('ordem'),
     sb.from('podcast_potenciais').select('episodio_id'),
     sb.from('podcast_mensagens')

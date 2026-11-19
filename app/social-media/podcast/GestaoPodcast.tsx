@@ -15,7 +15,7 @@ import { MODELOS, textoModelo, numeroWhatsapp, type ChaveModelo } from '@/lib/po
    para a área de transferência, e só aí ficam registadas.
    ============================================================ */
 
-type Convidado = { id: string; nome: string; email: string | null; telefone: string | null; instagram: string | null; profissao: string | null; empresa: string | null }
+type Convidado = { id: string; nome: string; email: string | null; telefone: string | null; instagram: string | null; profissao: string | null; empresa: string | null; bio?: string | null; foto_url?: string | null; website?: string | null; publicar_perfil?: boolean }
 type Msg = { id: string; episodio_id: string; convidado_id: string | null; modelo: string; canal: string; enviado_em: string }
 type Ep = {
   id: string; numero: number; slug: string; titulo: string; subtitulo: string | null; estado: string
@@ -214,6 +214,7 @@ function Detalhe({ ep, guardar, registar, apagarRegisto }: {
                 <dt>Instagram</dt><dd>{conv.instagram || '—'}</dd>
               </dl>
             )}
+            {conv && <PerfilPublico key={conv.id} conv={conv} />}
           </>
         )}
       </div>
@@ -279,6 +280,26 @@ function Detalhe({ ep, guardar, registar, apagarRegisto }: {
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+/* Interruptor "mostrar na página dos convidados" (/podcast/apresentacao/convidados). */
+function PerfilPublico({ conv }: { conv: Convidado }) {
+  const [on, setOn] = useState(!!conv.publicar_perfil)
+  const [erro, setErro] = useState<string | null>(null)
+  const falta = [!conv.foto_url && 'foto', !conv.bio && 'texto', !conv.instagram && !conv.website && 'redes'].filter(Boolean) as string[]
+  async function mudar() {
+    const novo = !on; setOn(novo); setErro(null)
+    const r = await fetch('/api/podcast-convidados', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: conv.id, publicar_perfil: novo }) })
+    if (!r.ok) { setOn(!novo); setErro('Não foi possível guardar.') }
+  }
+  return (
+    <div className="gp-perfil">
+      <button type="button" className={'gp-estado' + (on ? ' is-on' : '')} onClick={mudar}>{on ? 'Na página dos convidados' : 'Mostrar na página dos convidados'}</button>
+      {falta.length > 0 && <p className="gp-falta">Falta na ficha: {falta.join(', ')}. Edita em <a href="/social-media/podcast/episodios">Editar episódios</a>.</p>}
+      {on && <a className="gp-ver" href="/podcast/apresentacao/convidados" target="_blank" rel="noopener">Ver página ↗</a>}
+      {erro && <p className="gp-falta">{erro}</p>}
     </div>
   )
 }
@@ -389,6 +410,9 @@ textarea.gp-input{resize:vertical;line-height:1.6}
 .gp-estado{font-family:var(--fm);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--txm);background:none;border:1px solid var(--ln);border-radius:30px;padding:7px 11px}
 .gp-estado:hover{border-color:var(--g);color:var(--g)}
 .gp-estado.is-on{background:var(--g);border-color:var(--g);color:var(--bg)}
+.gp-perfil{margin-top:16px;padding-top:14px;border-top:1px solid var(--lns);display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+.gp-perfil a{color:var(--g)}
+.gp-ver{font-family:var(--fm);font-size:10px;letter-spacing:.12em;text-transform:uppercase}
 .gp-modelos{list-style:none;display:flex;flex-direction:column;gap:6px}
 .gp-modelo{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;background:var(--bg3);border:1px solid var(--lns);color:var(--tx);padding:10px 12px}
 .gp-modelo:hover,.gp-modelo.is-on{border-color:rgba(216,190,147,.5)}
