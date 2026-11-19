@@ -71,10 +71,10 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
 
 /* ── Herói ───────────────────────────────── */
 .heroi{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden;isolation:isolate}
-.heroi-foto{position:absolute;inset:-6% 0 0 0;z-index:-2;will-change:transform}
-.heroi-foto img{width:100%;height:100%;object-fit:cover;object-position:62% 40%;filter:grayscale(1) contrast(1.08) brightness(.82)}
+.heroi-foto{position:absolute;inset:-6% 0 0 38%;z-index:-2;will-change:transform;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 30%);mask-image:linear-gradient(90deg,transparent 0,#000 30%)}
+.heroi-foto img{width:100%;height:100%;object-fit:cover;object-position:50% 58%;filter:saturate(.9) contrast(1.05) brightness(.92)}
 .heroi::before{content:"";position:absolute;inset:0;z-index:-1;
-  background:linear-gradient(90deg,rgba(11,10,8,.97) 0%,rgba(11,10,8,.86) 32%,rgba(11,10,8,.35) 64%,rgba(11,10,8,.15) 100%),
+  background:linear-gradient(90deg,rgba(11,10,8,.97) 0%,rgba(11,10,8,.88) 36%,rgba(11,10,8,.12) 62%,rgba(11,10,8,0) 100%),
              linear-gradient(0deg,var(--ink) 0%,rgba(11,10,8,0) 38%)}
 .heroi-corpo{width:100%;max-width:var(--max);margin:0 auto;padding:120px var(--pad) clamp(48px,7vh,80px)}
 .heroi .eyebrow{margin-bottom:22px}
@@ -105,8 +105,9 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
 .scroll-ind{position:absolute;right:var(--pad);bottom:40px;display:flex;flex-direction:column;align-items:center;gap:12px;font-family:var(--fm);font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-dim);writing-mode:vertical-rl}
 .scroll-ind::after{content:"";width:1px;height:60px;background:linear-gradient(var(--g),transparent);animation:desce 2.2s var(--ease) infinite}
 @keyframes desce{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
-@media(max-width:700px){.scroll-ind{display:none}.heroi-foto img{object-position:70% 40%}
-  .heroi::before{background:linear-gradient(0deg,var(--ink) 4%,rgba(11,10,8,.88) 46%,rgba(11,10,8,.35) 100%)}}
+@media(max-width:700px){.scroll-ind{display:none}.heroi-foto{inset:0 0 auto 0;height:68svh;-webkit-mask-image:linear-gradient(180deg,#000 55%,transparent 100%);mask-image:linear-gradient(180deg,#000 55%,transparent 100%)}.heroi-foto img{object-position:50% 62%}
+  .heroi::before{background:linear-gradient(180deg,rgba(11,10,8,.55) 0,rgba(11,10,8,0) 14%)}
+  .heroi-corpo{padding-top:52svh}}
 
 /* ── Faixa de temas ──────────────────────── */
 .faixa{border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);overflow:hidden;padding:22px 0;background:var(--ink-2)}
@@ -425,7 +426,7 @@ body::after{content:"";position:fixed;inset:-50%;z-index:9000;pointer-events:non
 
 <!-- ═══ HERÓI ═══ -->
 <section class="heroi" id="heroi">
-  <div class="heroi-foto" data-parallax="0.18"><img src="/podcast/apresentacao/img/prewedding-hero.webp" alt="" fetchpriority="high"></div>
+  <div class="heroi-foto" data-parallax="0.18"><img src="/podcast/apresentacao/img/port/outros-33.jpg" alt="Noivos em contraluz ao pôr do sol, de mãos dadas na praia" fetchpriority="high"></div>
   <div class="heroi-corpo">
     <p class="eyebrow">Podcast · RL Photo.Video</p>
     <h1 class="titulo"><span><i>Antes do</i></span><span><i><em>Sim</em></i></span></h1>
