@@ -5,7 +5,7 @@ export type Post = {
   data: string; tipo: 'reel' | 'carrossel' | 'foto'; serie: string; ep: string
   apareces: 'a falar' | 'voz off' | 'não' | 'em foto'; duracao: string; pronto?: boolean
   titulo: string; gancho: string; guiao: string[]; visual: string; legenda: string
-  cta: string; stories: string; nota: string; ficheiros?: string[]
+  cta: string; stories: string; nota: string; ficheiros?: string[]; storiesFicheiros?: string[]
 }
 
 
@@ -41,7 +41,8 @@ export const POSTS: Post[] = [
     ficheiros: Array.from({ length: 8 }, (_, i) => `/instagram/2026-11-19/${String(i + 1).padStart(2, '0')}.jpg`),
     legenda: 'Dezembro está aí e é o mês com mais pedidos de casamento. Se vais casar em 2027, guarda isto: são os 5 erros que mais vejo nos primeiros meses de planeamento.',
     cta: '«Guarda e envia ao teu par.»',
-    stories: 'Partilha o carrossel + caixa de pergunta: «Vais casar em 2027? Qual é a tua maior dúvida?»',
+    stories: 'Partilha o carrossel + caixa de pergunta: «Vais casar em 2027? Qual é a tua maior dúvida?» (fundo pronto abaixo; põe o sticker no espaço livre).',
+    storiesFicheiros: ['/instagram/stories/2026-11-19.jpg'],
     nota: 'Publica hoje ao fim da tarde (entre as 19h e as 21h).' },
 
   { data: '2026-11-21', tipo: 'reel', serie: 'Contador 2027', ep: 'ep. 01', apareces: 'a falar', duracao: '35 s',
@@ -56,7 +57,8 @@ export const POSTS: Post[] = [
     visual: 'Tu sentado no escritório, plano médio, luz de janela. Contador grande no canto (Montserrat). No fim, 3 planos rápidos de casamentos de 2026.',
     legenda: 'Episódio 01. Vou contar, aqui, como se enche uma agenda de casamentos para 2027. Datas, decisões, erros. Sem preços. Segue para veres o número a mexer.',
     cta: '«Segue para veres o número a mexer.»',
-    stories: 'Partilha + caixa de pergunta: «O que queres que eu mostre nesta série?»',
+    stories: 'Partilha + caixa de pergunta: «O que queres que eu mostre nesta série?» (fundo pronto abaixo).',
+    storiesFicheiros: ['/instagram/stories/2026-11-21.jpg'],
     nota: 'Usa o número real. Gravar sexta, 20 nov.' },
 
   { data: '2026-11-23', tipo: 'reel', serie: 'Um Dia Como CEO', ep: 'ep. 01', apareces: 'a falar', duracao: '60 s',
@@ -149,7 +151,8 @@ export const POSTS: Post[] = [
     visual: 'Mesmo enquadramento do ep. 01 (a repetição é intencional). 2 planos de reuniões com noivos.',
     legenda: 'Contador 2027, episódio 02. Datas fechadas, uma perdida. E o que aprendi com isso.',
     cta: 'Sem pedido.',
-    stories: 'Sondagem: «Já escolheste um fornecedor só pelo preço?» Sim / Não.',
+    stories: 'Sondagem: «Já escolheste um fornecedor só pelo preço?» Sim / Não (fundo pronto abaixo).',
+    storiesFicheiros: ['/instagram/stories/2026-12-03.jpg'],
     nota: 'Gravado sexta 20; se a realidade mudar, regrava a frase do número.' },
 
   { data: '2026-12-05', tipo: 'reel', serie: 'Telemóvel vs. Cinema', ep: 'ep. 01', apareces: 'voz off', duracao: '30 s',
@@ -238,22 +241,23 @@ export const POSTS: Post[] = [
     stories: 'Sondagem: «Achas que vais ser pedida este Natal?» (tom leve).',
     nota: 'Gravado segunda 30.' },
 
-  { data: '2026-12-17', tipo: 'carrossel', serie: 'Para noivos', ep: '', apareces: 'não', duracao: '7 slides',
+  { data: '2026-12-17', tipo: 'reel', serie: 'Para noivos', ep: '', apareces: 'não', duracao: '21 s', pronto: true,
     titulo: 'Foste pedida? Os primeiros 7 dias',
-    gancho: 'Slide 1: «Foste pedida? Os primeiros 7 dias.»',
+    gancho: 'Cartão 1: «foste pedida? os primeiros 7 dias»',
     guiao: [
-      'Slide 2: «Dia 1: não digas nada a ninguém durante umas horas. É vosso.»',
-      'Slide 3: «Dia 2: contem à família, por esta ordem: pais dele, pais dela (ou ao contrário, mas combinem).»',
-      'Slide 4: «Dia 3: definam o tipo de casamento: grande, pequeno, igreja, civil.»',
-      'Slide 5: «Dias 4 e 5: 2 ou 3 datas possíveis e uma lista rápida de convidados.»',
-      'Slide 6: «Dias 6 e 7: visitem 2 espaços. Só depois falem com fotografia e vídeo.»',
-      'Slide 7: «Guarda para o dia em que te pedirem.»',
+      'Cartão «dia 1»: «Não digas nada a ninguém durante umas horas. É vosso.»',
+      'Cartão «dia 2»: «Contem à família. Combinem antes por que ordem.»',
+      'Cartão «dia 3»: «Definam o tipo de casamento: grande, pequeno, igreja, civil.»',
+      'Cartão «dias 4 e 5»: «2 ou 3 datas possíveis e uma lista rápida de convidados.»',
+      'Cartão «dias 6 e 7»: «Visitem 2 espaços. Só depois falem com fotografia e vídeo.»',
+      'Cartão final: «guarda, para o dia em que te pedirem.»',
     ],
-    visual: 'Mesmo estilo do carrossel de 19 nov (fundo castanho, Montserrat, foto de anel no slide 1).',
+    visual: 'Já feito: reel de cartões (1080×1920, 21 s, sem música). No Instagram, escolhe um áudio calmo em tendência e usa a capa abaixo.',
+    ficheiros: ['/instagram/2026-12-17/reel.mp4', '/instagram/2026-12-17/capa.jpg'],
     legenda: 'Para quem for pedida nas próximas semanas: os primeiros 7 dias, sem pânico. Guarda.',
     cta: '«Guarda e envia a quem desconfias que vai ser pedida.»',
     stories: 'Caixa: «Foste pedida este ano? Conta como foi.»',
-    nota: 'Eu faço as imagens quando quiseres (como o de hoje).' },
+    nota: 'Como já está feito, podes agendá-lo já no Instagram para dia 17.' },
 
   { data: '2026-12-19', tipo: 'reel', serie: 'Ainda Casados', ep: 'ep. 03', apareces: 'voz off', duracao: '40 s',
     titulo: 'O terceiro casal',
@@ -348,6 +352,11 @@ export const POSTS: Post[] = [
     stories: 'Contagem decrescente + mensagem de ano novo.',
     nota: 'Gravado segunda 30 nov; regrava a frase do número no próprio dia.' },
 ]
+
+export const STORIES_FICHEIROS: Record<string, string[]> = {
+  Quarta: ['/instagram/stories/quarta.jpg'],
+  Sexta: ['/instagram/stories/sexta-1.jpg', '/instagram/stories/sexta-2.jpg'],
+}
 
 export const STORIES: [string, string][] = [
   ['Segunda', 'Bastidores do escritório: o que a equipa está a editar esta semana (ecrã com timeline, sem nomes de clientes).'],

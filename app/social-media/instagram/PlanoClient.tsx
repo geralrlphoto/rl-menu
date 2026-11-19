@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { PLANO, POSTS, STORIES, type Post } from './_data/plano'
+import { PLANO, POSTS, STORIES, STORIES_FICHEIROS, type Post } from './_data/plano'
 
 // Séries que se publicam como colaboração com a conta da empresa
 const COLAB = ['Para noivos', 'Contador 2027', 'Mesmos Noivos, 3 Editores', 'Telemóvel vs. Cinema']
@@ -10,6 +10,13 @@ const SEMANA = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
 const D = (s: string) => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)) }
 const iso = (d: Date) => d.toISOString().slice(0, 10)
 const CHAVE = 'rl-instagram-publicados'
+
+// Miniatura que descarrega o ficheiro (imagem ou vídeo)
+function Ficheiro({ f, i }: { f: string; i: number }) {
+  return f.endsWith('.mp4')
+    ? <a href={f} download className="ig-video"><video src={f} muted playsInline loop autoPlay preload="metadata" /><span>descarregar vídeo</span></a>
+    : <a href={f} download><img src={f} alt={`ficheiro ${i + 1}`} /></a>
+}
 
 export default function PlanoClient() {
   const [feitos, setFeitos] = useState<Record<string, boolean>>({})
@@ -109,12 +116,14 @@ export default function PlanoClient() {
               <div className="ig-bloco"><h5>{p.tipo === 'carrossel' ? 'slides' : p.tipo === 'foto' ? 'texto' : 'o que dizes / o que se vê'}</h5><ol>{p.guiao.map((g, i) => <li key={i}>{g}</li>)}</ol></div>
               {p.ficheiros && (
                 <div className="ig-bloco"><h5>imagens prontas</h5>
-                  <div className="ig-fich">{p.ficheiros.map((f, i) => <a key={f} href={f} download><img src={f} alt={`slide ${i + 1}`} /></a>)}</div>
+                  <div className="ig-fich">{p.ficheiros.map((f, i) => <Ficheiro key={f} f={f} i={i} />)}</div>
                 </div>
               )}
               <div className="ig-duas">
                 <div className="ig-bloco"><h5>imagem</h5><p>{p.visual}</p></div>
-                <div className="ig-bloco"><h5>stories do dia</h5><p>{p.stories}</p></div>
+                <div className="ig-bloco"><h5>stories do dia</h5><p>{p.stories}</p>
+                  {p.storiesFicheiros && <div className="ig-st">{p.storiesFicheiros.map((f, i) => <Ficheiro key={f} f={f} i={i} />)}</div>}
+                </div>
               </div>
               <div className="ig-bloco"><h5>legenda</h5>
                 <div className="ig-leg"><button onClick={() => copiar(p)}>{copiado === p.data ? 'copiado' : 'copiar'}</button>{p.legenda}</div>
@@ -130,7 +139,8 @@ export default function PlanoClient() {
       })}
 
       <h2 className="ig-h2"><b>stories</b> fixas da semana</h2>
-      <div className="ig-grav">{STORIES.map(([q, o]) => <div key={q}><b>{q}</b><span>{o}</span></div>)}</div>
+      <div className="ig-grav">{STORIES.map(([q, o]) => <div key={q}><b>{q}</b><span>{o}
+        {STORIES_FICHEIROS[q] && <span className="ig-st">{STORIES_FICHEIROS[q].map((f, i) => <Ficheiro key={f} f={f} i={i} />)}</span>}</span></div>)}</div>
 
       <style>{`
         .ig{--gold:#C9A84C;--ink:#efe7d6;--mut:#9a8f7e;--card:#141210;--card2:#1c1712;--line:rgba(201,168,76,.18);
@@ -174,6 +184,8 @@ export default function PlanoClient() {
         .ig-leg{background:rgba(201,168,76,.07);border-left:2px solid var(--gold);padding:10px 80px 10px 12px;border-radius:6px;font-size:14px;position:relative}
         .ig-leg button{position:absolute;top:6px;right:8px;background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:6px;font:inherit;font-size:11px;padding:2px 8px;cursor:pointer}
         .ig-fich{display:grid;grid-template-columns:repeat(8,1fr);gap:6px} .ig-fich img{width:100%;border-radius:6px;display:block}
+        .ig-st{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap} .ig-st img{width:72px;border-radius:6px;display:block}
+        .ig-video{grid-column:span 2;position:relative;display:block} .ig-video video{width:100%;border-radius:6px;display:block} .ig-video span{position:absolute;left:6px;bottom:6px;font-size:10px;background:rgba(0,0,0,.6);color:#fff;padding:2px 6px;border-radius:4px}
         .ig-duas{display:grid;grid-template-columns:1fr 1fr;gap:14px}
         .ig-feito{display:flex;gap:6px;align-items:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-size:12px;color:var(--mut);cursor:pointer}
         .ig-feito input{accent-color:var(--gold)}
