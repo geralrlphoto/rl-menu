@@ -363,17 +363,21 @@ export function nomeNoivos(cliente?: string | null, nomeNoiva?: string | null, n
 }
 
 /* Agradecimento depois de escolherem a proposta no portal ("A nossa escolha").
-   Vai na tarefa do calendário que o admin envia por WhatsApp. */
+   Vai na tarefa do calendário que o admin envia por WhatsApp. Só agradece: o portal
+   e a password já seguem sozinhos. No casamento leva o Guia de Orçamento (PDF em
+   public/guias, aberto sem login). */
+export const GUIA_ORCAMENTO_PATH = '/guias/guia-orcamento-casamento.pdf'
 export function mensagemObrigadoEscolha(nome: string | null | undefined, batizado = false): string {
   const quem = nomeNoivos(nome)
   return [
     `Olá ${quem || 'a ambos'}!`,
     '',
     `Muito, muito obrigado por nos escolherem para ${batizado ? 'o batizado' : 'o vosso casamento'}. Ficámos mesmo felizes com a vossa decisão e já estamos entusiasmados por fazer parte de um dia tão especial.`,
-    '',
-    'Assim que recebermos os vossos dados para o contrato, vamos preparar o vosso Portal e entregá-lo nos próximos dias. É lá que vão acompanhar tudo o que vamos construir juntos.',
-    '',
-    `Quanto à adjudicação: assim que receberem o Portal, têm 48 horas para a efetuar e reservar efetivamente ${batizado ? 'o dia do batizado' : 'o vosso dia'}. Basta irem a Pagamentos, onde está toda a informação sobre como proceder.`,
+    ...(batizado ? [] : [
+      '',
+      'Para vos ajudar desde já, deixamos-vos o nosso Guia de Orçamento de Casamento. Tem tudo num só sítio: despesas por secção, lista de convidados, plano de mesas, guião do dia e calendário de pagamentos.',
+      linkPublico(GUIA_ORCAMENTO_PATH),
+    ]),
     '',
     'Qualquer dúvida, estamos aqui para vós.',
     '',
