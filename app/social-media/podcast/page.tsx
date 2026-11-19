@@ -45,6 +45,16 @@ function lerDesign() {
     // vai a lado nenhum: passa a voltar para a Social Media. É a única
     // alteração ao design, e é feita aqui para o ficheiro ficar intacto.
     .replace(/href="RL Photo\.Video\.html"/g, 'href="/social-media"')
+    // Por baixo dos botões do topo: a página de apresentação para os
+    // convidados (public/podcast/apresentacao), para abrir ou copiar o link.
+    .replace(
+      /(<a class="btn btn--ghost" href="#convidado">[\s\S]*?<\/a>\s*<\/div>)/,
+      `$1
+    <div class="hero__row r pod-apresentacao" style="margin-top:14px">
+      <a class="btn btn--ghost" href="/podcast/apresentacao" target="_blank" rel="noopener"><span class="fill"></span><span class="dot"></span>Página de apresentação ↗</a>
+      <button type="button" class="btn btn--ghost" onclick="(function(b){var u=location.origin+'/podcast/apresentacao';var ok=function(){var t=b.lastChild.textContent;b.lastChild.textContent='Link copiado';setTimeout(function(){b.lastChild.textContent=t},1800)};if(navigator.clipboard){navigator.clipboard.writeText(u).then(ok,function(){prompt('Copie o link:',u)})}else{prompt('Copie o link:',u)}})(this)"><span class="fill"></span><span class="dot"></span>Copiar link</button>
+    </div>`,
+    )
     .trim()
 
   return { estilo, script, corpo }

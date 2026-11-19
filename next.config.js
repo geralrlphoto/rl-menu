@@ -38,6 +38,7 @@ const nextConfig = {
     return [
       { source: '/newsletter', destination: '/nl/index.html' },
       { source: '/lp/casamentos', destination: '/lp/casamentos/index.html' },
+      { source: '/podcast/apresentacao', destination: '/podcast/apresentacao/index.html' },
       { source: '/apresentacao/:slug', destination: '/apresentacoes/:slug/index.html' },
     ]
   },
