@@ -315,6 +315,7 @@ function Convites({ ep }: { ep: Ep }) {
   const [form, setForm] = useState<FormConvite>(FORM_VAZIO)
   const [aviso, setAviso] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [aGerar, setAGerar] = useState(false)
   const origem = typeof window !== 'undefined' ? window.location.origin : 'https://portal.rlphotovideo.pt'
   const link = (c: Convite) => `${origem}/podcast/convite/${c.token}`
 
@@ -340,6 +341,19 @@ function Convites({ ep }: { ep: Ep }) {
     if (!r.ok) { setErro(j.error ?? 'Não foi possível guardar.'); return }
     setLista(l => (novo ? [...l, j.convite] : l.map(x => (x.id === j.convite.id ? j.convite : x))))
     setEditar(null); avisar(novo ? 'Convite criado. Já o podes enviar por WhatsApp.' : 'Convite atualizado.')
+  }
+  async function gerarTexto() {
+    if (!form.sobre.trim()) { setErro('Escreve primeiro "O que faz".'); return }
+    setErro(null); setAGerar(true)
+    try {
+      const r = await fetch('/api/podcast-convites/gerar-texto', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ episodio: ep.id, nome: form.nome, marca: form.marca, sobre: form.sobre }),
+      })
+      const j = await r.json().catch(() => ({}))
+      if (!r.ok) { setErro(j.error ?? 'Não foi possível gerar o texto.'); return }
+      setForm(f => ({ ...f, importancia: j.texto }))
+    } finally { setAGerar(false) }
   }
   async function apagar(c: Convite) {
     if (!confirm(`Apagar o convite de ${c.nome}? O link deixa de funcionar.`)) return
@@ -399,10 +413,12 @@ function Convites({ ep }: { ep: Ep }) {
       <p className="gp-nota-p">O que ficar vazio aparece como "por definir" no convite e na mensagem.</p>
       <label>O que faz (descrição para nós)<textarea className="gp-input" rows={3} {...campo('sobre')} placeholder="Ex.: faz joalharia para noivas, tudo feito à mão" /></label>
       <div className="gp-imp">
-        <span>Porque é importante a presença (aparece no convite)</span>
+        <span className="gp-imp-topo">Porque é importante a presença (aparece no convite)
+          <button type="button" className="gp-gerar" onClick={gerarTexto} disabled={aGerar}>{aGerar ? 'A escrever…' : form.importancia ? 'Gerar outro texto' : 'Gerar texto'}</button>
+        </span>
         {form.importancia
           ? <div className="gp-imp-texto">{form.importancia.split(/\n+/).map((p, i) => <p key={i}>{p}</p>)}</div>
-          : <p className="gp-imp-vazio">Escrito pelo Claude a partir de &quot;O que faz&quot;. Guarda o convite e diz &quot;texto convites&quot; na conversa.</p>}
+          : <p className="gp-imp-vazio">Preenche &quot;O que faz&quot; e carrega em Gerar texto. O Claude escreve-o a partir da descrição e do tema do episódio.</p>}
       </div>
       <label>Nota pessoal curta (aparece no convite, opcional)<textarea className="gp-input" rows={2} {...campo('nota')} placeholder="Uma frase sua, assinada" /></label>
       <div className="gp-botoes">
@@ -578,6 +594,9 @@ const CSS = `
 .gp-input:focus{outline:none;border-color:var(--g)}
 textarea.gp-input{resize:vertical;line-height:1.6}
 .gp-imp{display:flex;flex-direction:column;gap:6px;margin-bottom:12px}
+.gp-imp-topo{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.gp .gp-gerar{font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--g);background:transparent;border:1px solid var(--g);padding:7px 12px;cursor:pointer}
+.gp .gp-gerar:disabled{opacity:.6;cursor:wait}
 .gp-imp>span{font-family:var(--fm);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--txd)}
 .gp-imp-texto{border:1px solid var(--ln);border-left:2px solid var(--g);padding:12px 14px;background:rgba(0,0,0,.25)}
 .gp-imp-texto p{font-size:14px;line-height:1.65;color:var(--txm);margin:0 0 10px}
