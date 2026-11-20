@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import FicheirosLead from './FicheirosLead'
+import GuiaoReuniao from './GuiaoReuniao'
 import CampoDataPT from '@/app/media/_components/CampoDataPT'
 
 // Fases da lead RL PROD (Validada cria o projeto em Projetos com o portal pronto a enviar)
@@ -715,6 +716,9 @@ export default function LeadsClient({ leads: initial }: Props) {
                     <p className="text-[14px] text-white/50 leading-relaxed whitespace-pre-line bg-white/[0.02] border border-white/[0.06] px-5 py-4">{lead.mensagem}</p>
                   </div>
                 )}
+
+                {/* Guião da reunião */}
+                <GuiaoReuniao labelCls={labelCls} />
 
                 {/* Apresentação online */}
                 {lead.apresentacao_url && (
