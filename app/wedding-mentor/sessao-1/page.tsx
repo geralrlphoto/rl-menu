@@ -303,7 +303,7 @@ export default function AulaSessao1() {
               <h3>O que vamos fazer</h3>
               <ol className="a-lista">
                 <li>Saber quanto custa a tua empresa por mês.</li>
-                <li>Pôr um número na vida que descreveste.</li>
+                <li>Decidir quanto te queres pagar.</li>
                 <li>Ver onde estás hoje.</li>
                 <li>Chegar ao número exato de casamentos e ao preço.</li>
               </ol>
@@ -363,36 +363,6 @@ export default function AulaSessao1() {
       },
     },
     {
-      id: 'vida', titulo: 'A vida que queres', parte: 'A · As contas',
-      render: () => (
-        <>
-          <Cab k="Agora sim, os números" t="Quanto custa a vida que descreveste?" s="Traduz o teu dia perfeito em três números. Os números servem a vida, não o contrário." />
-          <div className="a-grid3">
-            <div className="a-card">
-              <h3>Quanto queres levar para casa?</h3>
-              <p>Por mês, já depois de impostos. Como um salário.</p>
-              <Num label="Por mês" valor={e.lucroMensal} passo={100} onChange={v => upE({ lucroMensal: v })} />
-              <Num label="Meses" valor={e.meses} suf="" passo={1} onChange={v => upE({ meses: v })} />
-              <div className="a-big">{eur(r.lucroLiquido)}<small>por ano, no bolso</small></div>
-            </div>
-            <div className="a-card">
-              <h3>Quantos casamentos, no máximo?</h3>
-              <p>O teto que aceitas fazer por ano, sem te queimares.</p>
-              <Num label="Casamentos por ano" valor={e.capacidade} suf="" passo={1} onChange={v => upE({ capacidade: v })} />
-              <Num label="Sábados livres na época alta" valor={d.sabadosLivres} suf="" passo={1} dica="de ~26 (maio a outubro)" onChange={v => up({ sabadosLivres: v })} />
-              <div className="a-big">{Math.max(0, 26 - d.sabadosLivres)}<small>sábados de época alta a trabalhar</small></div>
-            </div>
-            <div className="a-card">
-              <h3>Quanto tempo dá cada casamento?</h3>
-              <p>Reuniões, dia, edição, gestão. Sê honesto.</p>
-              <Num label="Horas por casamento" valor={e.horas} suf="h" passo={1} onChange={v => upE({ horas: v })} />
-              <div className="a-big">{num(e.capacidade * e.horas)} h<small>por ano, no teu teto de {e.capacidade} casamentos</small></div>
-            </div>
-          </div>
-        </>
-      ),
-    },
-    {
       id: 'hoje', titulo: 'Onde estás hoje', parte: 'A · As contas',
       render: () => (
         <>
@@ -407,9 +377,38 @@ export default function AulaSessao1() {
             <div><small>Faturação</small><b>{eur(d.hoje.casamentos * d.hoje.ticket)}</b></div>
             <div><small>Lucro por mês</small><b>{eur(lucroHoje / 12)}</b></div>
             <div><small>Ficou por casamento</small><b>{eur(porCasamentoHoje)}</b></div>
-            <div><small>Distância ao que queres</small><b>{eur(r.lucroLiquido - lucroHoje)}</b></div>
+            <div><small>Margem de lucro</small><b>{d.hoje.casamentos && d.hoje.ticket ? Math.round(lucroHoje / (d.hoje.casamentos * d.hoje.ticket) * 100) + '%' : '—'}</b></div>
           </div>
           <p className="a-nota">Se o lucro for difícil de saber: faturação menos custos menos impostos. Quase ninguém sabe quanto lhe fica por casamento, e é por isso que começamos aqui.</p>
+        </>
+      ),
+    },
+    {
+      id: 'custos', titulo: 'O teu salário e os custos', parte: 'A · As contas',
+      render: () => (
+        <>
+          <Cab k="Os teus números" t="Quanto te queres pagar?" s="O teu salário, os impostos sobre ele e o que custa cada casamento. Os custos fixos já os fizeste." />
+          <div className="a-grid3">
+            <div className="a-card">
+              <h3>O teu salário</h3>
+              <p>Por mês, já depois de impostos. O que queres levar para casa.</p>
+              <Num label="Por mês" valor={e.lucroMensal} passo={100} onChange={v => upE({ lucroMensal: v })} />
+              <Num label="Meses" valor={e.meses} suf="" passo={1} onChange={v => upE({ meses: v })} />
+              <Num label="Impostos e SS" valor={e.impostos} suf="%" passo={1} dica="taxa efetiva, confirma com o contabilista" onChange={v => upE({ impostos: Math.min(70, v) })} />
+              <div className="a-big">{eur(r.lucroBruto)}<small>a gerar por ano, antes de impostos, para levares {eur(r.lucroLiquido)}</small></div>
+            </div>
+            <div className="a-card">
+              <h3>Custos fixos</h3>
+              <p>Da pergunta anterior: o que a tua empresa custa, mesmo sem casamentos.</p>
+              <div className="a-big">{eur(r.fixos / 12)}<small>por mês · {eur(r.fixos)} por ano</small></div>
+            </div>
+            <div className="a-card">
+              <h3>Custo de cada casamento</h3>
+              <p>Só existe quando fazes o casamento.</p>
+              {e.variaveis.map((l, k) => <Num key={l.nome} label={l.nome} valor={l.valor} passo={50} onChange={v => upLinha('variaveis', k, v)} />)}
+              <div className="a-tot"><span>Por casamento</span><b>{eur(r.porCasamento)}</b></div>
+            </div>
+          </div>
         </>
       ),
     },
@@ -425,7 +424,7 @@ export default function AulaSessao1() {
         ]
         return (
           <>
-            <Cab k="A conta ao contrário" t="A conta começa no fim" s="Clica em avançar para construir a conta passo a passo, com os números de quem está na aula." />
+            <Cab k="A conta ao contrário" t="A conta começa no fim" s="Agora juntamos tudo. Clica em revelar para construir a tua conta, passo a passo." />
             <div className="a-cadeia">
               {st.map(([n, t, v, s], k) => (
                 <div key={n} className={`a-elo ${k < rev ? 'on' : ''} ${k === 4 ? 'fim' : ''}`}>
@@ -436,38 +435,9 @@ export default function AulaSessao1() {
             <div className={`a-formula ${rev >= 5 ? 'on' : ''}`}>
               Casamentos = (lucro antes de impostos + custos fixos) ÷ (preço − custo por casamento)
             </div>
-            <p className="a-nota">Os números de cada passo afinam-se nas secções seguintes. Aqui é só para veres a lógica toda.</p>
           </>
         )
       },
-    },
-    {
-      id: 'custos', titulo: 'Impostos e custos', parte: 'A · As contas',
-      render: () => (
-        <>
-          <Cab k="Passos 2, 3 e 4" t="O que sai antes do teu lucro" s="Troca os valores de exemplo pelos reais. O resultado atualiza logo." />
-          <div className="a-grid3">
-            <div className="a-card">
-              <h3>Impostos e SS</h3>
-              <p>Taxa efetiva sobre o lucro. Confirma com o contabilista.</p>
-              <Num label="Taxa efetiva" valor={e.impostos} suf="%" passo={1} onChange={v => upE({ impostos: Math.min(70, v) })} />
-              <div className="a-big">{eur(r.lucroBruto)}<small>a gerar antes de impostos</small></div>
-            </div>
-            <div className="a-card">
-              <h3>Custos fixos por ano</h3>
-              <p>Pagas mesmo sem casamentos.</p>
-              {e.fixos.map((l, k) => <Num key={l.nome} label={l.nome} valor={l.valor} passo={100} onChange={v => upLinha('fixos', k, v)} />)}
-              <div className="a-tot"><span>Total</span><b>{eur(r.fixos)}</b></div>
-            </div>
-            <div className="a-card">
-              <h3>Custo de cada casamento</h3>
-              <p>Só existe quando fazes o casamento.</p>
-              {e.variaveis.map((l, k) => <Num key={l.nome} label={l.nome} valor={l.valor} passo={50} onChange={v => upLinha('variaveis', k, v)} />)}
-              <div className="a-tot"><span>Por casamento</span><b>{eur(r.porCasamento)}</b></div>
-            </div>
-          </div>
-        </>
-      ),
     },
     {
       id: 'resultado', titulo: 'O resultado', parte: 'A · As contas',
@@ -490,6 +460,11 @@ export default function AulaSessao1() {
                 {Array.from({ length: 26 }, (_, k) => <span key={k} className={k < sabadosOcupados ? (k >= 26 - d.sabadosLivres ? 'cheio quer-livre' : 'cheio') : ''} />)}
               </div>
               <p>{r.casamentos > 26 ? `+${r.casamentos - 26} casamentos fora da época alta` : `${26 - sabadosOcupados} sábados livres (querias ${d.sabadosLivres})`}</p>
+              <div className="a-teto">
+                <Num label="O teu teto" dica="casamentos por ano, no máximo" valor={e.capacidade} suf="" passo={1} onChange={v => upE({ capacidade: v })} />
+                <Num label="Sábados livres" dica="que queres na época alta" valor={d.sabadosLivres} suf="" passo={1} onChange={v => up({ sabadosLivres: v })} />
+                <Num label="Horas" dica="por casamento" valor={e.horas} suf="h" passo={1} onChange={v => upE({ horas: v })} />
+              </div>
             </div>
           </div>
           <table className="a-tab">
@@ -821,6 +796,8 @@ export default function AulaSessao1() {
         .a-sab span.cheio { background: ${GOLD}; border-color: ${GOLD}; }
         .a-sab span.quer-livre { background: ${ALERT}; border-color: ${ALERT}; }
         .a-agenda p { font-size: 13px; color: ${MUTE}; margin: 0; }
+        .a-teto { margin-top: 12px; padding-top: 8px; border-top: 1px solid ${RULE}; }
+        .a-teto .a-num input { width: 80px; font-size: 15px; }
         .a-tab { width: 100%; border-collapse: collapse; margin-top: 18px; background: #fff; border: 1px solid ${RULE}; border-radius: 14px; overflow: hidden; font-size: 15px; }
         .a-tab th { background: ${BG2}; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; color: ${GOLD_DK}; padding: 10px 14px; text-align: right; }
         .a-tab td { padding: 10px 14px; border-top: 1px solid ${RULE}; text-align: right; }
