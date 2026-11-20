@@ -52,6 +52,86 @@ const PERDAS = [
     pergunta: '"Quando um cliente vos compara com outro, o que vê de cada lado?"' },
 ]
 
+type Bloco = { eyebrow: string; titulo: string; itens: string[] }
+
+// Antes da R1: a chamada fria só serve para marcar a reunião.
+const CHAMADA: Bloco[] = [
+  { eyebrow: 'Chamada fria · 3 a 5 minutos', titulo: 'Não se vende o serviço. Vende-se a reunião.', itens: [
+    'Volume: cerca de 100 chamadas dão 5 reuniões. Leads de anúncios: ligar no primeiro minuto.',
+    'Qualificar com 2 a 4 perguntas leves: "Qual é o objetivo de faturação este ano?", "Quantas pessoas têm na equipa?" (nunca "quanto faturam?").',
+    'Ritmo e tom variados; abrandar no fim para dar peso ao que se marca.',
+    'Ao marcar: "Se tiver algum imprevisto, ligue-me um dia antes e mudamos para a mesma hora."',
+    'Marcar para hoje ou amanhã. Mais de 3 dias depois, muitos faltam.',
+    'Depois de um "não": "Compreendo. Quem conhece que eu possa contactar e ver se conseguimos ajudar?"',
+  ] },
+  { eyebrow: 'Se pedem o preço ao telefone', titulo: 'Responder e marcar.', itens: [
+    '"Os nossos valores dependem mesmo do que vamos entregar. Prefere amanhã às 14h ou segunda às 10h?"',
+    '"Fico contente com a pergunta, quer dizer que está mesmo interessado. Daqui a pouco envio-lhe a nossa apresentação e alguns casos."',
+    'Entre a chamada e a R1: enviar apresentação, casos e testemunhos por email ou WhatsApp.',
+  ] },
+  { eyebrow: 'A quem ligar', titulo: 'Primeiro a base que já tens.', itens: [
+    'Orçamentos que ficaram em "vou pensar", antigos clientes, quem já pagou vídeo a alguém.',
+    'Depois: empresas com redes ou vídeo fracos, ou sem vídeo nenhum.',
+    'Um grupo por tarde. Segunda de manhã e sexta à tarde atendem pouco: usar para pesquisar contactos (LinkedIn, Google Maps).',
+  ] },
+]
+
+// R1: o que não fazer.
+const ERROS = [
+  'Mostrar o portfólio nos primeiros 5 minutos.',
+  'Fazer 10 perguntas e não aprofundar nenhuma.',
+  'Dizer o preço antes do tempo.',
+  'Não descobrir quem decide.',
+  'Sair sem a próxima data marcada.',
+]
+
+// Depois da R1.
+const DEPOIS: Bloco[] = [
+  { eyebrow: 'R1 · notas', titulo: 'Como um médico: primeiro examina, só depois receita.', itens: [
+    'Abrir com: "O que te despertou o interesse para estarmos aqui hoje?" e pedir licença para fazer as perguntas.',
+    'Ele fala 70 a 80% do tempo. Quem faz as perguntas comanda a reunião.',
+    'Se há sócio, mulher ou diretor a decidir, tem de estar na R2.',
+    'Pedir o compromisso em voz alta: "No fim da apresentação, posso contar com um sim ou um não?"',
+    'Trabalho pequeno (até uns 3.000 €): R1 e R2 podem ser juntas, acrescentando valor (versão vertical, brutos, testemunhos no evento).',
+    'Se não for para nós: dizer com franqueza, perguntar quando poderá fazer sentido e pedir referências.',
+  ] },
+  { eyebrow: 'R2 · apresentação da proposta, cerca de 35 minutos', titulo: 'Recapitular, apresentar, calar, marcar.', itens: [
+    'Recapitular a R1 e o custo de não fazer nada. "A trabalhar connosco, como veem o negócio daqui a 3 ou 6 meses?"',
+    'Por esta ordem: quem somos e números que dão confiança; a solução, dita com autoridade; a metodologia; casos de clientes.',
+    'Garantia ligada ao maior receio dele (por exemplo, o prazo de entrega).',
+    'O investimento. Depois do preço, 8 segundos de silêncio.',
+    'Sair com os próximos passos marcados: contrato, pagamento e arranque, no máximo em 48 horas.',
+  ] },
+  { eyebrow: 'Objeções', titulo: 'A melhor objeção é a que não aparece.', itens: [
+    '"Vou pensar" quer dizer que falta informação: "O que é que tem mesmo de pensar? É o timing ou o preço?"',
+    'Preço: "Qual é a dificuldade? Pagamento faseado, outro pacote?" e "Caro comparado com quê?"',
+    '"Já trabalhamos com uma empresa": "De 0 a 10, quão satisfeitos estão? O que falta para ser 10?" Trabalhamos em parceria com agências, não somos concorrentes.',
+    'Na escala de 0 a 10, perguntar "porque não é um 4?": é ele que justifica o nosso valor.',
+    'Decisor ausente: "Percebo que esteja ocupado. Se isto é urgente, marcamos para quando ele puder estar."',
+    'Se não decidir na R2: marcar logo uma R3 de esclarecimento, que acaba em sim ou não.',
+  ] },
+  { eyebrow: 'Métricas', titulo: 'Medir cada passo.', itens: [
+    'Atendidas, qualificadas, R1 marcadas, comparência, R2, fecho.',
+    'Um bom fecho fica nos 25 a 30%. Acima disso: pouco volume ou qualificação a mais, e negócio perdido.',
+  ] },
+]
+
+function Blocos({ lista }: { lista: Bloco[] }) {
+  return (
+    <>
+      {lista.map(b => (
+        <div key={b.eyebrow} className="mt-3 rounded-xl border border-white/[0.08] bg-[#00141f]/60 px-4 py-4">
+          <p className="rlp-m text-[10px] text-[#5a8bff]">{b.eyebrow}</p>
+          <p className="rlp-t mt-1 text-[18px] leading-tight text-white">{b.titulo}</p>
+          <ul className="mt-2 space-y-1.5">
+            {b.itens.map(i => <li key={i} className="text-[13px] leading-snug text-white/75">{i}</li>)}
+          </ul>
+        </div>
+      ))}
+    </>
+  )
+}
+
 const REGRAS = [
   'Uma pergunta de cada vez. Depois, silêncio.',
   'Quando a resposta interessa, aprofunda antes de passar à seguinte: "há quanto tempo?", "e o que fizeram quanto a isso?".',
@@ -64,12 +144,14 @@ export default function GuiaoReuniao({ labelCls }: { labelCls: string }) {
   return (
     <div>
       <button type="button" onClick={() => setAberto(a => !a)} className="flex w-full items-center justify-between gap-3 text-left">
-        <span className={labelCls}>Guião da reunião · oito tempos</span>
+        <span className={labelCls}>Guião de vendas · chamada, R1, R2, objeções</span>
         <span className="text-[12px] text-[#5a8bff]">{aberto ? 'Fechar' : 'Abrir'}</span>
       </button>
       {aberto && (
         <div className="mt-4">
-          <p className="text-[13px] text-white/50 mb-4">Sempre esta ordem. Os tempos 1 e 2 levam uns dois minutos; os 3 a 6 ocupam o resto da reunião.</p>
+          <Blocos lista={CHAMADA} />
+          <p className="rlp-m mt-6 text-[10px] text-[#5a8bff]">R1 · diagnóstico, 20 a 25 minutos</p>
+          <p className="text-[13px] text-white/50 mt-1 mb-4">Sempre esta ordem. Os tempos 1 e 2 levam uns dois minutos; os 3 a 6 ocupam o resto da reunião.</p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {TEMPOS.map(t => (
               <div key={t.n} className={'rounded-xl border px-4 py-4 ' + (t.destaque ? 'border-[#2e6cf6]/70 bg-[#2e6cf6]/[0.14]' : 'border-white/[0.08] bg-white/[0.02]')}>
@@ -119,6 +201,13 @@ export default function GuiaoReuniao({ labelCls }: { labelCls: string }) {
               {REGRAS.map(r => <li key={r} className="text-[13px] leading-snug text-white/70">{r}</li>)}
             </ul>
           </div>
+          <div className="mt-3 rounded-xl border border-white/[0.08] bg-[#00141f]/60 px-4 py-4">
+            <p className="rlp-m text-[10px] text-[#5a8bff] mb-2">Os cinco erros mais comuns</p>
+            <ol className="space-y-1.5 list-decimal pl-5">
+              {ERROS.map(e => <li key={e} className="text-[13px] leading-snug text-white/70">{e}</li>)}
+            </ol>
+          </div>
+          <Blocos lista={DEPOIS} />
         </div>
       )}
     </div>
