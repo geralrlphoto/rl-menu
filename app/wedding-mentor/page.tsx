@@ -12,7 +12,7 @@ const INK = '#33302B'
 
 const BASE = '/wedding-mentor-files/'
 
-type Card = { badge: string; title: string; file: string; slides?: number }
+type Card = { badge: string; title: string; file: string; slides?: number; link?: string }
 
 const SECTIONS: { title: string; cards: Card[] }[] = [
   {
@@ -37,7 +37,7 @@ const SECTIONS: { title: string; cards: Card[] }[] = [
     title: 'Guia & Sessões',
     cards: [
       { badge: 'PDF',  title: 'Guia da Mentoria',                              file: 'Guia_Mentoria_RL.pdf' },
-      { badge: 'PPTX', title: 'Sessão 1 — Posicionamento e a Matemática dos 100K', file: 'S1_Posicionamento.pptx', slides: 27 },
+      { badge: 'PPTX', title: 'Sessão 1 — Posicionamento e a Matemática do Lucro', file: 'S1_Posicionamento.pptx', slides: 30 },
       { badge: 'PPTX', title: 'Sessão 2 — Como Chegar ao Cliente',             file: 'S2_Atracao.pptx', slides: 20 },
       { badge: 'PPTX', title: 'Sessão 3 — Captação e Qualificação do Lead',    file: 'S3_Captacao.pptx', slides: 20 },
       { badge: 'PPTX', title: 'Sessão 4 — A Reunião de Venda',                 file: 'S4_Reuniao_Venda.pptx', slides: 20 },
@@ -50,6 +50,7 @@ const SECTIONS: { title: string; cards: Card[] }[] = [
   {
     title: 'Ferramentas de Trabalho',
     cards: [
+      { badge: 'APP', title: 'Calculadora do Lucro', file: '', link: '/wedding-mentor/calculadora' },
       { badge: 'WORD',  title: 'Sistema de Captação',        file: '01_Sistema_de_Captacao.docx' },
       { badge: 'WORD',  title: 'Guião de Reunião de Venda',  file: '02_Guiao_Reuniao_de_Venda.docx' },
       { badge: 'WORD',  title: 'Proposta Premium',           file: '03_Proposta_Premium.docx' },
@@ -68,7 +69,7 @@ const SECTIONS: { title: string; cards: Card[] }[] = [
   },
 ]
 
-const ALL_FILES = SECTIONS.flatMap(s => s.cards).map(c => c.file)
+const ALL_FILES = SECTIONS.flatMap(s => s.cards).map(c => c.file).filter(Boolean)
 
 function SlideViewer({ card, onClose }: { card: Card; onClose: () => void }) {
   const total = card.slides ?? 0
@@ -129,7 +130,7 @@ export default function WeddingMentorPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Poppins:wght@400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; }
-        body { margin: 0; background: ${CREAM}; color: ${INK} !important; font-family: 'Poppins', -apple-system, sans-serif; line-height: 1.55; }
+        body { margin: 0; background: ${CREAM} !important; color: ${INK} !important; font-family: 'Poppins', -apple-system, sans-serif; line-height: 1.55; }
         h1, h2, h3, p, div, span { color: ${INK} !important; }
         .wm-wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px 80px; }
         .wm-header { text-align: center; padding: 54px 22px 14px; }
@@ -196,12 +197,14 @@ export default function WeddingMentorPage() {
             </div>
             <div className="wm-grid">
               {section.cards.map(card => (
-                <div key={card.file} className="wm-card">
+                <div key={card.file || card.link} className="wm-card">
                   <div className="wm-badge">{card.badge}</div>
                   <h3>{card.title}</h3>
                   <div className="wm-actions">
                     {card.slides ? <button className="wm-dl wm-ver" onClick={() => setAVer(card)}>Ver slides</button> : null}
-                    <a className="wm-dl" href={BASE + card.file} download={card.file}>Descarregar</a>
+                    {card.link
+                      ? <a className="wm-dl" href={card.link}>Abrir</a>
+                      : <a className="wm-dl" href={BASE + card.file} download={card.file}>Descarregar</a>}
                   </div>
                 </div>
               ))}
