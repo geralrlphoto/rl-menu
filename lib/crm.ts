@@ -387,9 +387,9 @@ export function nomeNoivos(cliente?: string | null, nomeNoiva?: string | null, n
 /* Agradecimento depois de escolherem a proposta no portal ("A nossa escolha").
    Vai na tarefa do calendário que o admin envia por WhatsApp. Só agradece: o portal
    e a password já seguem sozinhos. No casamento leva o Guia de Orçamento (PDF em
-   public/guias, aberto sem login). */
+   public/guias, aberto sem login) e, com o id da lead, o link do NPS (/nps). */
 export const GUIA_ORCAMENTO_PATH = '/guias/guia-orcamento-casamento.pdf'
-export function mensagemObrigadoEscolha(nome: string | null | undefined, batizado = false): string {
+export function mensagemObrigadoEscolha(nome: string | null | undefined, batizado = false, leadId?: string | null): string {
   const quem = nomeNoivos(nome)
   return [
     `Olá ${quem || 'a ambos'}!`,
@@ -399,6 +399,12 @@ export function mensagemObrigadoEscolha(nome: string | null | undefined, batizad
       '',
       'Para vos ajudar desde já, deixamos-vos o nosso Guia de Orçamento de Casamento. Tem tudo num só sítio: despesas por secção, lista de convidados, plano de mesas, guião do dia e calendário de pagamentos.',
       linkPublico(GUIA_ORCAMENTO_PATH),
+    ]),
+    ...(batizado || !leadId ? [] : [
+      '',
+      'Agora que a decisão está tomada, gostávamos muito de saber como foi para vós o caminho até aqui: o primeiro contacto, a reunião, o portal e a proposta. São 8 perguntas rápidas, cerca de 1 minuto, e ajudam-nos a fazer cada vez melhor.',
+      'No fim, se conhecerem noivos que se vão casar, podem indicá-los. Se fecharem connosco, oferecemos-vos um serviço como agradecimento.',
+      linkPublico(linkNps(leadId, nome)),
     ]),
     '',
     'Qualquer dúvida, estamos aqui para vós.',

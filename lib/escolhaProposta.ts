@@ -40,7 +40,7 @@ export async function guardarPropostaAceite(sb: SupabaseClient, token: string, n
 }
 
 export async function criarTarefaObrigado(sb: SupabaseClient, token: string, batizado: boolean, proposta: string | null) {
-  const { data: c } = await sb.from('crm_contacts').select('nome, contato').eq('page_token', token).maybeSingle()
+  const { data: c } = await sb.from('crm_contacts').select('id, nome, contato').eq('page_token', token).maybeSingle()
   if (!c) return
   const quem = nomeNoivos(c.nome) || 'noivos'
   const titulo = `WhatsApp: agradecer ${quem}`
@@ -52,7 +52,7 @@ export async function criarTarefaObrigado(sb: SupabaseClient, token: string, bat
     proposta ? `Escolheram a proposta ${proposta}.` : 'Escolheram uma proposta no portal.',
     c.contato ? `Contacto: ${c.contato}` : null,
     'Mensagem:',
-    mensagemObrigadoEscolha(c.nome, batizado),
+    mensagemObrigadoEscolha(c.nome, batizado, c.id),
   ].filter(Boolean).join('\n')
   await sb.from('tarefas').insert({ titulo, descricao, data_prazo: hoje, hora: horaLisboa(), status: 'NOVA', evento_id: null })
   revalidateTag('photo-reunioes-tarefa', { expire: 0 }) // aparece já na faixa do /photo

@@ -385,7 +385,7 @@ export const FASES: Fase[] = [
         tarefas: ['Confirmar aceitação no portal da reunião', 'Mudar estado para Fechou', 'Registar valor fechado e data', 'Bloquear a data na agenda'],
         mensagens: [
           { titulo: 'Aceitaram a proposta', quando: 'Quando dizem que sim', texto: mensagemFecho(EX.nome, EX.casamento, linkPublico('/login-noivos')), tipo: 'crm' },
-          { titulo: 'Obrigado pela escolha', quando: 'Depois de aceitarem', texto: mensagemObrigadoEscolha(EX.nome), tipo: 'crm' },
+          { titulo: 'Obrigado pela escolha', quando: 'Depois de aceitarem', texto: mensagemObrigadoEscolha(EX.nome, false, 'exemplo'), tipo: 'crm' },
           { titulo: 'Fechou · boas-vindas à família RL', quando: 'Fecham na reunião', texto: FECHOU_CONTRATO, tipo: 'copiar' },
         ],
         regras: [['Quando dizem que sim', 'Aceitaram a proposta', '/crm · card']],
