@@ -30,6 +30,7 @@ export type WaTarefa = {
   atrasoDias: number   // > 0 quando o dia já passou
   futura: boolean      // ainda não é o dia: só informativa
   mensagem?: string    // 'obrigado': texto já escrito na tarefa do calendário
+  rotulo?: string      // 'obrigado': rótulo próprio (ex.: Enviar NPS)
 }
 
 const CONFIG = {
@@ -78,7 +79,7 @@ export function WaTarefaChip({ t }: { t: WaTarefa }) {
   const [enviado, setEnviado] = useState(false)
   const [janela, setJanela] = useState(false)
   const cfg = CONFIG[t.tipo]
-  const rotulo = t.tipo === 'lembrete_prep' && t.reuniaoHora ? `Preparação ${t.reuniaoHora.slice(0, 5)} · lembrete` : cfg.rotulo
+  const rotulo = t.rotulo ? t.rotulo : t.tipo === 'lembrete_prep' && t.reuniaoHora ? `Preparação ${t.reuniaoHora.slice(0, 5)} · lembrete` : cfg.rotulo
   const href = t.futura ? null : whatsappLink(t.contato, textoDe(t))
   const nome = t.nome.trim() || 'Sem nome'
 
