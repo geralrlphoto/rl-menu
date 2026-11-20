@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
 import { MOTIVOS_NAO_FECHOU, colunaDe, whatsappLink, mensagemOpiniao, EVENTO_OPINIAO, linkOpiniao, EVENTO_NPS, linkNps, mensagemNps } from '@/lib/crm'
 import { PERGUNTAS, respostaTexto, tituloSimples, type Respostas } from '@/lib/opiniao'
+import { PERGUNTAS_NPS, respostaTextoNps, tituloSimplesNps, type RespostasNps } from '@/lib/nps'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL, ofertaDaProposta } from '@/lib/crm'
 import { gerarPropostasAuto } from '@/lib/propostasAuto'
@@ -109,10 +110,10 @@ export default function ClientePage() {
   const [opinioes, setOpinioes] = useState<{ id: string; texto: string | null; respostas: Respostas | null; created_at: string }[]>([])
   const [linkOpiniaoCopiado, setLinkOpiniaoCopiado] = useState(false)
   // NPS (0 a 10) deixado no /nps por quem fechou e por quem não fechou
-  const [nps, setNps] = useState<{ id: string; nota: number; porque: string | null; created_at: string }[]>([])
+  const [nps, setNps] = useState<{ id: string; nota: number; porque: string | null; respostas: RespostasNps | null; indicacao_nome: string | null; indicacao_contacto: string | null; created_at: string }[]>([])
   const [linkNpsCopiado, setLinkNpsCopiado] = useState(false)
   useEffect(() => {
-    supabase.from('crm_nps').select('id,nota,porque,created_at')
+    supabase.from('crm_nps').select('id,nota,porque,respostas,indicacao_nome,indicacao_contacto,created_at')
       .eq('contact_id', id).order('created_at', { ascending: false })
       .then(({ data }) => setNps(data ?? []))
   }, [id])
@@ -661,7 +662,7 @@ export default function ClientePage() {
         {(form.status === 'Fechou' || form.status === 'NÃO FECHOU') && (
         <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
           <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">NPS</h2>
-          <p className="text-xs text-white/40">Uma pergunta de 0 a 10: quanto nos recomendariam a um amigo, e porquê.</p>
+          <p className="text-xs text-white/40">8 perguntas, do primeiro contacto à proposta; a última é a recomendação de 0 a 10. Com nota 7 ou mais podem indicar outros noivos (oferecemos um serviço se esses noivos fecharem).</p>
           <div className="flex flex-wrap gap-2">
             <button type="button"
               onClick={() => { navigator.clipboard.writeText(linkPublico(linkNps(id, form.nome))); setLinkNpsCopiado(true); setTimeout(() => setLinkNpsCopiado(false), 2000) }}
@@ -688,9 +689,26 @@ export default function ClientePage() {
               {nps.map(n => (
                 <li key={n.id} className="rounded-xl border border-white/10 bg-black/30 p-4 flex gap-4 items-start">
                   <span className={`text-2xl font-semibold tabular-nums ${n.nota >= 9 ? 'text-green-400' : n.nota >= 7 ? 'text-[#C9A84C]' : 'text-red-400'}`}>{n.nota}<span className="text-xs text-white/30">/10</span></span>
-                  <div className="flex-1">
-                    <p className="text-sm text-white/85 whitespace-pre-wrap">{n.porque || 'Sem comentário.'}</p>
-                    <p className="text-[11px] text-white/30 mt-1">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
+                  <div className="flex-1 flex flex-col gap-2">
+                    {(n.indicacao_nome || n.indicacao_contacto) && (
+                      <div className="rounded-lg border border-[#C9A84C]/50 bg-[#C9A84C]/10 px-3 py-2">
+                        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C]">Noivos indicados (oferecer serviço se fecharem)</p>
+                        <p className="text-sm text-white/90 mt-1">{n.indicacao_nome || '-'} · {n.indicacao_contacto || '-'}</p>
+                      </div>
+                    )}
+                    {n.respostas ? (
+                      <dl className="flex flex-col gap-1.5">
+                        {PERGUNTAS_NPS.filter(q => q.tipo !== 'nps' && n.respostas![q.id] !== undefined).map(q => (
+                          <div key={q.id}>
+                            <dt className="text-[11px] text-white/40">{tituloSimplesNps(q.titulo)}</dt>
+                            <dd className="text-sm text-white/85 whitespace-pre-wrap">{respostaTextoNps(q, n.respostas![q.id])}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : (
+                      <p className="text-sm text-white/85 whitespace-pre-wrap">{n.porque || 'Sem comentário.'}</p>
+                    )}
+                    <p className="text-[11px] text-white/30">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
                   </div>
                 </li>
               ))}

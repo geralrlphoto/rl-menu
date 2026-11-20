@@ -316,7 +316,7 @@ export function mensagemNps(nome: string | null | undefined, link: string, fecho
     fechou
       ? 'Obrigado pela confiança. Estamos muito felizes por fazer parte do vosso casamento.'
       : 'Obrigado pelo tempo que dedicaram a conhecer-nos.',
-    'Podem dizer-nos, de 0 a 10, quanto recomendariam a RL Photo.Video a um amigo? É só uma pergunta:',
+    'Gostávamos muito de saber como foi a vossa experiência connosco, do primeiro contacto à proposta. Demora cerca de 1 minuto:',
     link,
     '',
     'Com carinho,',
