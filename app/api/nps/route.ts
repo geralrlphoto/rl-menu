@@ -16,8 +16,22 @@ export async function POST(req: NextRequest) {
   const indContacto = nota >= NOTA_INDICAR ? String(body.indicacao?.contacto ?? '').trim().slice(0, 160) : ''
 
   const sb = sbAdmin()
-  const { data: lead } = await sb.from('crm_contacts').select('id, status').eq('id', leadId).maybeSingle()
+  const { data: lead } = await sb.from('crm_contacts').select('id, nome, status').eq('id', leadId).maybeSingle()
   if (!lead) return NextResponse.json({ error: 'Lead não encontrada' }, { status: 404 })
+
+  // Noivos indicados: entram no CRM como lead nova (mesmos valores por defeito do /crm/nova)
+  if (indNome && indContacto) {
+    const quemIndicou = lead.nome || 'noivos sem nome'
+    const { data: nova } = await sb.from('crm_contacts').insert({
+      nome: indNome,
+      ...(indContacto.includes('@') ? { email: indContacto } : { contato: indContacto }),
+      status: 'Por Contactar', lead_prioridade: 'Médio', tipo_evento: 'Casamento',
+      data_entrada: new Date().toISOString().split('T')[0],
+      como_chegou: 'Indicação',
+      notas: `Indicados por ${quemIndicou} no NPS (nota ${nota}/10). Se fecharem, oferecer um serviço a ${quemIndicou}.`,
+    }).select('id').single()
+    if (nova) await sb.from('crm_status_history').insert({ contact_id: nova.id, evento: `Lead criada por indicação de ${quemIndicou} (NPS)` })
+  }
 
   const { error } = await sb.from('crm_nps').insert({
     contact_id: lead.id, nota, respostas,

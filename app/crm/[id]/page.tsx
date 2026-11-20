@@ -692,7 +692,7 @@ export default function ClientePage() {
                   <div className="flex-1 flex flex-col gap-2">
                     {(n.indicacao_nome || n.indicacao_contacto) && (
                       <div className="rounded-lg border border-[#C9A84C]/50 bg-[#C9A84C]/10 px-3 py-2">
-                        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C]">Noivos indicados (oferecer serviço se fecharem)</p>
+                        <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#C9A84C]">Noivos indicados · já estão no CRM como lead nova (oferecer serviço se fecharem)</p>
                         <p className="text-sm text-white/90 mt-1">{n.indicacao_nome || '-'} · {n.indicacao_contacto || '-'}</p>
                       </div>
                     )}
