@@ -143,7 +143,9 @@ export default function AulaSessao1() {
 
   const r = useMemo(() => calc(d.e), [d.e])
   const e = d.e
-  const precoAtual = d.hoje.ticket || 0
+  const faturacaoHoje = d.hoje.custos + d.hoje.lucro
+  const ticketHoje = d.hoje.casamentos ? faturacaoHoje / d.hoje.casamentos : 0
+  const precoAtual = Math.round(ticketHoje)
   const precoDegrau = precoAtual ? Math.round(precoAtual * (1 + d.degrau / 100) / 50) * 50 : 0
   const rDegrau = useMemo(() => (precoDegrau ? calc(d.e, precoDegrau) : null), [d.e, precoDegrau])
   const lucroHoje = d.hoje.lucro
@@ -367,19 +369,18 @@ export default function AulaSessao1() {
       render: () => (
         <>
           <Cab k="O ponto de partida" t="Onde estás hoje?" s="Os números reais dos últimos 12 meses. Aproximados servem." />
-          <div className="a-grid4">
-            <div className="a-card"><Num label="Casamentos" valor={d.hoje.casamentos} suf="" passo={1} onChange={v => up({ hoje: { ...d.hoje, casamentos: v } })} /></div>
-            <div className="a-card"><Num label="Ticket médio (sem IVA)" valor={d.hoje.ticket} passo={100} onChange={v => up({ hoje: { ...d.hoje, ticket: v } })} /></div>
-            <div className="a-card"><Num label="Custos do ano" valor={d.hoje.custos} passo={500} onChange={v => up({ hoje: { ...d.hoje, custos: v } })} /></div>
-            <div className="a-card"><Num label="Lucro no bolso" valor={d.hoje.lucro} passo={500} onChange={v => up({ hoje: { ...d.hoje, lucro: v } })} /></div>
+          <div className="a-grid4 a-tres">
+            <div className="a-card"><Num label="Casamentos que fizeste" valor={d.hoje.casamentos} suf="" passo={1} onChange={v => up({ hoje: { ...d.hoje, casamentos: v } })} /></div>
+            <div className="a-card"><Num label="Despesas do ano" valor={d.hoje.custos} passo={500} onChange={v => up({ hoje: { ...d.hoje, custos: v } })} /></div>
+            <div className="a-card"><Num label="Lucro do ano" valor={d.hoje.lucro} passo={500} onChange={v => up({ hoje: { ...d.hoje, lucro: v } })} /></div>
           </div>
           <div className="a-res">
-            <div><small>Faturação</small><b>{eur(d.hoje.casamentos * d.hoje.ticket)}</b></div>
-            <div><small>Lucro por mês</small><b>{eur(lucroHoje / 12)}</b></div>
-            <div><small>Ficou por casamento</small><b>{eur(porCasamentoHoje)}</b></div>
-            <div><small>Margem de lucro</small><b>{d.hoje.casamentos && d.hoje.ticket ? Math.round(lucroHoje / (d.hoje.casamentos * d.hoje.ticket) * 100) + '%' : '—'}</b></div>
+            <div className="dest"><small>O teu ticket médio</small><b>{d.hoje.casamentos ? eur(ticketHoje) : '—'}</b></div>
+            <div><small>Faturação</small><b>{eur(faturacaoHoje)}</b></div>
+            <div><small>Ficou por casamento</small><b>{d.hoje.casamentos ? eur(porCasamentoHoje) : '—'}</b></div>
+            <div><small>Margem de lucro</small><b>{faturacaoHoje ? Math.round(lucroHoje / faturacaoHoje * 100) + '%' : '—'}</b></div>
           </div>
-          <p className="a-nota">Se o lucro for difícil de saber: faturação menos custos menos impostos. Quase ninguém sabe quanto lhe fica por casamento, e é por isso que começamos aqui.</p>
+          <p className="a-nota">Despesas mais lucro dão a faturação. A dividir pelos casamentos, dá o que cobraste em média a cada casal. Quase ninguém sabe quanto lhe fica por casamento, e é por isso que começamos aqui.</p>
         </>
       ),
     },
@@ -489,7 +490,7 @@ export default function AulaSessao1() {
         <>
           <Cab k="Sem saltos impossíveis" t="O teu primeiro degrau de preço" s="Ninguém dobra o preço de um ano para o outro. Qual é a subida deste ano?" />
           {!precoAtual ? (
-            <p className="a-nota">Preenche o ticket médio em “Onde estás hoje” para calcular o degrau.</p>
+            <p className="a-nota">Preenche os casamentos, as despesas e o lucro em “Onde estás hoje” para calcular o degrau.</p>
           ) : (
             <div className="a-grid3">
               <div className="a-card"><h3>Hoje</h3><div className="a-big">{eur(precoAtual)}<small>ticket médio atual</small></div></div>
@@ -650,7 +651,7 @@ export default function AulaSessao1() {
           <div className="a-doc-grid">
             <section>
               <h3>Onde estás</h3>
-              <p>{d.hoje.casamentos || '—'} casamentos a {eur(d.hoje.ticket)} · lucro de {eur(d.hoje.lucro)} ({eur(porCasamentoHoje)} por casamento)</p>
+              <p>{d.hoje.casamentos || '—'} casamentos a {eur(ticketHoje)} de média · despesas de {eur(d.hoje.custos)} · lucro de {eur(d.hoje.lucro)} ({eur(porCasamentoHoje)} por casamento)</p>
               <h3>A tua empresa custa</h3>
               <p>{eur(r.fixos / 12)} por mês ({eur(r.fixos)} por ano){d.palpiteMensal ? ` · achavas ${eur(d.palpiteMensal)}` : ''}</p>
               <h3>O que queres</h3>
@@ -747,6 +748,8 @@ export default function AulaSessao1() {
         .a-grid2 { grid-template-columns: repeat(2, 1fr); }
         .a-grid3 { grid-template-columns: repeat(3, 1fr); }
         .a-grid4 { grid-template-columns: repeat(4, 1fr); }
+        .a-grid4.a-tres { grid-template-columns: repeat(3, 1fr); }
+        .a-res > div.dest { background: ${GOLD_DK}; }
         .a-card { background: #fff; border: 1px solid ${RULE}; border-radius: 16px; padding: 20px; box-shadow: 0 6px 18px rgba(60,45,30,.04); }
         .a-card.dest { background: ${BG2}; border-color: ${GOLD}; }
         .a-card h3 { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; margin: 0 0 4px; }
