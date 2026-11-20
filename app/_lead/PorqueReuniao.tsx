@@ -7,7 +7,7 @@ import { useState } from 'react'
    temporadas em /casamentos. Explica que a reunião não serve para apresentar valores
    (para isso bastava um PDF) e sim para nos conhecermos e ganharmos empatia. */
 
-type Tipo = 'casamento' | 'batizado'
+type Tipo = 'casamento' | 'batizado' | 'espaco'
 type Painel = { n: string; curto: string; titulo: string; em: string; texto: string; img: string; pos: string }
 
 const PAINEIS: Record<Tipo, Painel[]> = {
@@ -30,6 +30,17 @@ const PAINEIS: Record<Tipo, Painel[]> = {
       texto: 'Quem somos, como trabalhamos e como é estar connosco. Num dia tão especial para a família, vamos estar ao vosso lado do início ao fim.' },
     { n: '04', curto: 'Empatia', titulo: 'Empatia', em: 'antes de tudo', img: '/batizado-hero.webp', pos: '50% 35%',
       texto: 'Um batizado bem contado começa com confiança. Se no fim desta conversa houver empatia entre nós, tudo o resto flui naturalmente.' },
+  ],
+  // Reunião com gestores de espaços (parcerias), ex. /parceria/sirius-park
+  espaco: [
+    { n: '01', curto: 'O espaço', titulo: 'Queremos conhecer', em: 'o vosso espaço', img: '/newsletter/casamento-02.jpg', pos: 'center',
+      texto: 'A luz ao longo do dia, os recantos, os sítios onde os casais gostam de estar. Conhecer bem o espaço é o que nos deixa contar cada casamento com verdade.' },
+    { n: '02', curto: 'Os casais', titulo: 'Os vossos casais', em: 'em boas mãos', img: '/newsletter/casamento-06.jpg', pos: 'center',
+      texto: 'Quando um casal vos pede uma recomendação de fotografia e vídeo, queremos que saibam exatamente quem somos e como trabalhamos.' },
+    { n: '03', curto: 'Imagens', titulo: 'Imagens', em: 'para o espaço', img: '/newsletter/casamento-10.jpg', pos: 'center',
+      texto: 'Cada casamento que fazemos convosco pode dar fotografias e vídeo do espaço para o vosso site e redes sociais.' },
+    { n: '04', curto: 'Parceria', titulo: 'Uma parceria', em: 'que cresce', img: '/newsletter/casamento-13.jpg', pos: '40% center',
+      texto: 'Recomendação de parte a parte, sempre com o mesmo cuidado. Se no fim desta conversa fizer sentido para os dois, começamos já.' },
   ],
 }
 

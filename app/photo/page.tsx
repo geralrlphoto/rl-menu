@@ -479,12 +479,12 @@ export default async function PhotoDashboard() {
     })
   }
   const waAgenda = waTarefas.filter(t => !ocultos.has(chaveWa(t)))
-  // Agradecer a escolha da proposta e pedidos de NPS: tarefas "WhatsApp: agradecer X" / "WhatsApp: NPS X" do calendário, com a mensagem já escrita
+  // Agradecer a escolha da proposta e pedidos de NPS e portais avulsos (ex. parceria Sirius Park): tarefas "WhatsApp: agradecer X" / "WhatsApp: NPS X" do calendário, com a mensagem já escrita
   const getObrigado = unstable_cache(
     async () => {
       const { data } = await supabase.from('tarefas')
         .select('id, titulo, descricao, data_prazo')
-        .or('titulo.ilike."WhatsApp: agradecer*",titulo.ilike."WhatsApp: NPS*"')
+        .or('titulo.ilike."WhatsApp: agradecer*",titulo.ilike."WhatsApp: NPS*",titulo.ilike."WhatsApp: portal*"')
         .neq('status', 'CONCLUIDA')
         .lte('data_prazo', semanaDias[DIAS_AGENDA - 1])
         .limit(30)
@@ -498,8 +498,9 @@ export default async function PhotoDashboard() {
     const devido = String(ta.data_prazo)
     const t = {
       tipo: 'obrigado' as const, contactId: ta.id,
-      nome: String(ta.titulo).replace(/^WhatsApp:\s*(agradecer|NPS)\s*/i, ''),
+      nome: String(ta.titulo).replace(/^WhatsApp:\s*(agradecer|NPS|portal)\s*/i, ''),
       ...(/^WhatsApp:\s*NPS/i.test(String(ta.titulo)) ? { rotulo: 'Enviar NPS' } : {}),
+      ...(/^WhatsApp:\s*portal/i.test(String(ta.titulo)) ? { rotulo: 'Enviar portal' } : {}),
       contato: (d.match(/^Contacto:\s*(.+)$/m) ?? [])[1]?.trim() ?? null,
       mensagem: (d.match(/^Mensagem:\n([\s\S]+)$/m) ?? [])[1]?.trim() ?? '',
       reuniaoHora: null, dataCasamento: null,

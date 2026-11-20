@@ -215,6 +215,7 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/api/partilha-token') ||
     pathname.startsWith('/r/') ||
     pathname.startsWith('/b/') ||
+    pathname.startsWith('/parceria/') ||   // portais de reunião com espaços parceiros (ex. Sirius Park)
     // Marcação da reunião de preparação pelos noivos (link do WhatsApp)
     pathname.startsWith('/preparacao/') ||
     pathname.startsWith('/api/preparacao-publico') ||
