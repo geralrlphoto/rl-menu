@@ -96,6 +96,12 @@ export default function NpsPage() {
               <p className="font-light text-white/50 text-[15px] sm:text-[17px] leading-relaxed mt-5 max-w-xl">
                 {loading ? 'A carregar respostas…' : `${kpis.n} ${kpis.n === 1 ? 'resposta' : 'respostas'} de noivos que fecharam · ${kpis.ind} ${kpis.ind === 1 ? 'indicação' : 'indicações'}`}
               </p>
+              {/* Pré-visualização: o /nps sem id de lead não grava nada */}
+              <a href="/nps?n=Ana%20e%20Rui" target="_blank" rel="noopener noreferrer"
+                className="mt-8 inline-flex items-center gap-2.5 border border-[#C9A84C]/70 bg-[#C9A84C]/15 hover:bg-[#C9A84C]/30 px-7 py-3.5 text-[15px] font-semibold tracking-[0.18em] uppercase text-white transition-all shadow-[0_0_34px_-12px_rgba(201,168,76,0.7)]">
+                Ver formulário
+                <svg viewBox="0 0 24 24" fill="none" stroke="#C9A84C" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4" aria-hidden><path d="M7 17L17 7M9 7h8v8" /></svg>
+              </a>
             </div>
           </div>
 

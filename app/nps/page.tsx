@@ -116,6 +116,8 @@ function Formulario() {
 
   const enviar = async (r: RespostasNps, comIndicacao: boolean) => {
     irPara(PASSO_FIM)
+    // Pré-visualização (botão no /crm/nps, sem id de lead): mostra o fim sem gravar nada
+    if (!leadId) { setEnvio('ok'); return }
     setEnvio('a-enviar')
     try {
       const res = await fetch('/api/nps', {
