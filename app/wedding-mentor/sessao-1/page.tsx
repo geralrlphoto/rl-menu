@@ -338,11 +338,12 @@ export default function AulaSessao1() {
               <div className="a-grid2" style={{ marginTop: 22 }}>
                 <div className="a-card">
                   <h3>Agora, linha a linha</h3>
-                  <p>O que pagas todos os meses, mesmo sem casamentos. O equipamento entra como renovação: uma câmara de 3.000 € que dura 3 anos são 83 € por mês.</p>
+                  <p>Quanto gastas por ano em cada linha, mesmo sem casamentos. A conta divide por 12 para chegar ao mês. O equipamento entra como renovação: uma câmara de 3.000 € que dura 3 anos são 1.000 € por ano.</p>
                   {e.fixos.map((l, k) => (
-                    <Num key={l.nome} label={l.nome} valor={Math.round(l.valor / 12)} passo={10} onChange={v => upLinha('fixos', k, v * 12)} />
+                    <Num key={l.nome} label={l.nome.replace(' (renovação por ano)', ' (renovação)')} dica={`${eur(l.valor / 12)} por mês`} valor={l.valor} suf="€/ano" passo={100} onChange={v => upLinha('fixos', k, v)} />
                   ))}
-                  <div className="a-tot"><span>Por mês</span><b>{eur(real)}</b></div>
+                  <div className="a-tot"><span>Por ano</span><b>{eur(r.fixos)}</b></div>
+                  <div className="a-tot"><span>÷ 12 = por mês</span><b>{eur(real)}</b></div>
                 </div>
                 <div className="a-comp">
                   <div><small>Achavas</small><b>{d.palpiteMensal ? eur(d.palpiteMensal) : '—'}</b></div>
@@ -780,7 +781,7 @@ export default function AulaSessao1() {
         .a-num-in { display: flex; align-items: center; gap: 4px; }
         .a-num input { width: 104px; font-family: inherit; font-size: 16px; text-align: right; padding: 7px 9px; border: 1px solid ${RULE}; border-radius: 9px; background: ${CREAM2}; color: ${INK}; }
         .a-num input:focus, .a-txt textarea:focus, .a-linha input:focus { outline: none; border-color: ${GOLD}; box-shadow: 0 0 0 3px rgba(177,147,126,.18); }
-        .a-num em { font-style: normal; font-size: 13px; color: ${MUTE}; width: 18px; }
+        .a-num em { font-style: normal; font-size: 13px; color: ${MUTE}; min-width: 18px; white-space: nowrap; }
         .a-grid4 .a-num { flex-direction: column; align-items: flex-start; }
         .a-grid4 .a-num input { width: 100%; font-size: 22px; font-family: 'Playfair Display', Georgia, serif; }
         .a-grid4 .a-num-in { width: 100%; }
