@@ -57,6 +57,7 @@ type Bloco = { eyebrow: string; titulo: string; itens: string[] }
 // Antes da R1: a chamada fria só serve para marcar a reunião.
 const CHAMADA: Bloco[] = [
   { eyebrow: 'Chamada fria · 3 a 5 minutos', titulo: 'Não se vende o serviço. Vende-se a reunião.', itens: [
+    'Meta: 30 a 60 chamadas por dia. Cinco ou dez por dia não enchem a agenda.',
     'Volume: cerca de 100 chamadas dão 5 reuniões. Leads de anúncios: ligar no primeiro minuto.',
     'Qualificar com 2 a 4 perguntas leves: "Qual é o objetivo de faturação este ano?", "Quantas pessoas têm na equipa?" (nunca "quanto faturam?").',
     'Ritmo e tom variados; abrandar no fim para dar peso ao que se marca.',
@@ -70,6 +71,7 @@ const CHAMADA: Bloco[] = [
     'Entre a chamada e a R1: enviar apresentação, casos e testemunhos por email ou WhatsApp.',
   ] },
   { eyebrow: 'A quem ligar', titulo: 'Primeiro a base que já tens.', itens: [
+    'Antes de cada sessão de chamadas, uma lista de 20 contactos: 5 da nossa base e 15 do LinkedIn ou do Google Maps.',
     'Orçamentos que ficaram em "vou pensar", antigos clientes, quem já pagou vídeo a alguém.',
     'Depois: empresas com redes ou vídeo fracos, ou sem vídeo nenhum.',
     'Um grupo por tarde. Segunda de manhã e sexta à tarde atendem pouco: usar para pesquisar contactos (LinkedIn, Google Maps).',
@@ -98,7 +100,8 @@ const DEPOIS: Bloco[] = [
   { eyebrow: 'R2 · apresentação da proposta, cerca de 35 minutos', titulo: 'Recapitular, apresentar, calar, marcar.', itens: [
     'Recapitular a R1 e o custo de não fazer nada. "A trabalhar connosco, como veem o negócio daqui a 3 ou 6 meses?"',
     'Por esta ordem: quem somos e números que dão confiança; a solução, dita com autoridade; a metodologia; casos de clientes.',
-    'Garantia ligada ao maior receio dele (por exemplo, o prazo de entrega).',
+    'Garantia ligada ao maior receio dele e a algo que controlamos (por exemplo, o prazo de entrega).',
+    'Alerta: quem pede para alargar a garantia costuma ser cliente de risco.',
     'O investimento. Depois do preço, 8 segundos de silêncio.',
     'Sair com os próximos passos marcados: contrato, pagamento e arranque, no máximo em 48 horas.',
   ] },
