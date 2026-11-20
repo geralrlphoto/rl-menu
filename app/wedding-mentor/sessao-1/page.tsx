@@ -380,7 +380,31 @@ export default function AulaSessao1() {
             <div><small>Ficou por casamento</small><b>{d.hoje.casamentos ? eur(porCasamentoHoje) : '—'}</b></div>
             <div><small>Margem de lucro</small><b>{faturacaoHoje ? Math.round(lucroHoje / faturacaoHoje * 100) + '%' : '—'}</b></div>
           </div>
-          <p className="a-nota">Despesas mais lucro dão a faturação. A dividir pelos casamentos, dá o que cobraste em média a cada casal. Quase ninguém sabe quanto lhe fica por casamento, e é por isso que começamos aqui.</p>
+          <p className="a-nota">Despesas mais lucro dão a faturação. A dividir pelos casamentos, dá o que cobraste em média a cada casal.</p>
+          <div className="a-imp">
+            <h3>Porque é que estes números são tão importantes</h3>
+            <div className="a-grid4">
+              <div className="a-card">
+                <b>Não se gere o que não se mede</b>
+                <p>Sem estes números, cada decisão sobre preço, equipa ou anúncios é um palpite. Com eles, passa a ser uma escolha.</p>
+              </div>
+              <div className="a-card">
+                <b>O ticket médio é o teu preço real</b>
+                <p>Não o da tabela. Descontos, extras oferecidos e pacotes baratos puxam-no para baixo. Este é o que os casais pagaram mesmo.</p>
+              </div>
+              <div className="a-card dest">
+                <b>O lucro por casamento diz se vale a pena</b>
+                <p>{d.hoje.casamentos && e.horas
+                  ? `Ficaram-te ${eur(porCasamentoHoje)} por casamento. Com ~${e.horas} h de trabalho em cada um, são ${eur(porCasamentoHoje / e.horas)} por hora.`
+                  : 'Divide o que te ficou por casamento pelas horas que lhe deste. É o valor real da tua hora.'}</p>
+              </div>
+              <div className="a-card">
+                <b>É o ponto de partida de tudo</b>
+                <p>Sem saberes onde estás, não sabes a distância até onde queres chegar, nem se uma subida de preço resultou.</p>
+              </div>
+            </div>
+            <p className="a-nota">Quase ninguém sabe responder a isto de cabeça. Se não souberes, não faz mal: o primeiro trabalho é passar a saber, todos os meses.</p>
+          </div>
         </>
       ),
     },
@@ -750,6 +774,11 @@ export default function AulaSessao1() {
         .a-grid4 { grid-template-columns: repeat(4, 1fr); }
         .a-grid4.a-tres { grid-template-columns: repeat(3, 1fr); }
         .a-res > div.dest { background: ${GOLD_DK}; }
+        .a-imp { margin-top: 30px; }
+        .a-imp h3 { font-family: 'Playfair Display', Georgia, serif; font-size: 24px; margin: 0 0 14px; }
+        .a-imp .a-card b { display: block; font-family: 'Playfair Display', Georgia, serif; font-size: 17px; line-height: 1.25; margin-bottom: 8px; }
+        .a-imp .a-card p { font-size: 14px; color: ${MUTE}; margin: 0; }
+        .a-imp .a-card.dest p { color: ${INK}; }
         .a-card { background: #fff; border: 1px solid ${RULE}; border-radius: 16px; padding: 20px; box-shadow: 0 6px 18px rgba(60,45,30,.04); }
         .a-card.dest { background: ${BG2}; border-color: ${GOLD}; }
         .a-card h3 { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; margin: 0 0 4px; }
