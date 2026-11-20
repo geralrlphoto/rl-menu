@@ -36,6 +36,7 @@ type Dados = {
   porques: string[]
   naos: string[]; naoExtra: string
   proposito: string
+  palpiteMensal: number
 }
 
 const NOVO = (): Dados => ({
@@ -55,6 +56,7 @@ const NOVO = (): Dados => ({
   porques: ['', '', '', '', ''],
   naos: [], naoExtra: '',
   proposito: '',
+  palpiteMensal: 0,
 })
 
 const AREAS = ['Família', 'Relação', 'Saúde', 'Dinheiro', 'Trabalho', 'Tempo livre', 'Amigos', 'Crescimento']
@@ -285,12 +287,82 @@ export default function AulaSessao1() {
           <div className="a-card dest" style={{ marginTop: 16 }}>
             <Txt label="O teu propósito numa frase" valor={d.proposito} ph="Faço isto para… e quero um negócio que me deixe…" linhas={2} onChange={v => up({ proposito: v })} />
           </div>
-          <p className="a-nota">Agora sim, vamos às contas: quanto custa a vida que acabaste de descrever?</p>
+          <p className="a-nota">Guarda esta bússola. A seguir vêm as contas.</p>
         </>
       ),
     },
     {
-      id: 'vida', titulo: 'A vida que queres', parte: 'A · O lucro',
+      id: 'doer', titulo: 'Agora vai doer mais', parte: 'A · As contas',
+      render: () => (
+        <div className="a-doer">
+          <div className="a-k">PARTE A · AS CONTAS</div>
+          <h1>Agora vai doer mais.</h1>
+          <p className="a-lead">Até aqui falámos do que queres. Agora vamos ver se o teu negócio consegue pagar isso.</p>
+          <div className="a-grid2">
+            <div className="a-card">
+              <h3>O que vamos fazer</h3>
+              <ol className="a-lista">
+                <li>Saber quanto custa a tua empresa por mês.</li>
+                <li>Pôr um número na vida que descreveste.</li>
+                <li>Ver onde estás hoje.</li>
+                <li>Chegar ao número exato de casamentos e ao preço.</li>
+              </ol>
+            </div>
+            <div className="a-card dest">
+              <h3>Porquê</h3>
+              <p className="a-porque-txt">A maioria dos fotógrafos decide o preço a olhar para a concorrência. Tu vais decidi-lo a olhar para a tua vida e para os teus custos.</p>
+              <p className="a-porque-txt">Sem esta conta, o propósito que escreveste fica no papel.</p>
+            </div>
+          </div>
+          <p className="a-nota">Respira fundo. Os números não mentem, mas também não julgam.</p>
+        </div>
+      ),
+    },
+    {
+      id: 'custo-mes', titulo: 'Quanto custa a tua empresa', parte: 'A · As contas', passos: 1,
+      render: () => {
+        const real = r.fixos / 12
+        const dif = real - d.palpiteMensal
+        return (
+          <>
+            <div className="a-pergunta">
+              <div className="a-k">PERGUNTA DIRETA</div>
+              <h2>Quanto custa a tua empresa por mês?</h2>
+              <p>Sem calculadora, sem abrir o banco. O primeiro número que te vier à cabeça. O teu salário não entra aqui.</p>
+              <label className="a-palpite">
+                <input type="number" inputMode="decimal" step={50} value={d.palpiteMensal || ''} placeholder="0" onChange={ev => up({ palpiteMensal: ev.target.value === '' ? 0 : Number(ev.target.value) })} />
+                <span>€ / mês</span>
+              </label>
+            </div>
+            {rev >= 1 ? (
+              <div className="a-grid2" style={{ marginTop: 22 }}>
+                <div className="a-card">
+                  <h3>Agora, linha a linha</h3>
+                  <p>O que pagas todos os meses, mesmo sem casamentos. O equipamento entra como renovação: uma câmara de 3.000 € que dura 3 anos são 83 € por mês.</p>
+                  {e.fixos.map((l, k) => (
+                    <Num key={l.nome} label={l.nome} valor={Math.round(l.valor / 12)} passo={10} onChange={v => upLinha('fixos', k, v * 12)} />
+                  ))}
+                  <div className="a-tot"><span>Por mês</span><b>{eur(real)}</b></div>
+                </div>
+                <div className="a-comp">
+                  <div><small>Achavas</small><b>{d.palpiteMensal ? eur(d.palpiteMensal) : '—'}</b></div>
+                  <div className="dest"><small>Na verdade</small><b>{eur(real)}</b></div>
+                  <p>{!d.palpiteMensal ? 'Escreve primeiro o teu palpite em cima.'
+                    : Math.abs(dif) < real * 0.1 ? 'Sabes bem quanto custa a tua empresa. És exceção.'
+                    : dif > 0 ? `A tua empresa custa mais ${eur(dif)} por mês do que pensavas. São ${eur(dif * 12)} por ano que não estavam na tua conta.`
+                    : `Afinal custa menos ${eur(-dif)} por mês do que pensavas. Confirma se não falta nenhuma linha.`}</p>
+                  <p className="a-sub">{eur(r.fixos)} por ano, antes de pagares um cêntimo a ti próprio.</p>
+                </div>
+              </div>
+            ) : (
+              <p className="a-nota">Quando tiveres o teu número, carrega em “Revelar” e fazemos a conta a sério.</p>
+            )}
+          </>
+        )
+      },
+    },
+    {
+      id: 'vida', titulo: 'A vida que queres', parte: 'A · As contas',
       render: () => (
         <>
           <Cab k="Agora sim, os números" t="Quanto custa a vida que descreveste?" s="Traduz o teu dia perfeito em três números. Os números servem a vida, não o contrário." />
@@ -320,7 +392,7 @@ export default function AulaSessao1() {
       ),
     },
     {
-      id: 'hoje', titulo: 'Onde estás hoje', parte: 'A · O lucro',
+      id: 'hoje', titulo: 'Onde estás hoje', parte: 'A · As contas',
       render: () => (
         <>
           <Cab k="O ponto de partida" t="Onde estás hoje?" s="Os números reais dos últimos 12 meses. Aproximados servem." />
@@ -341,7 +413,7 @@ export default function AulaSessao1() {
       ),
     },
     {
-      id: 'conta', titulo: 'A conta começa no fim', parte: 'A · O lucro', passos: 5,
+      id: 'conta', titulo: 'A conta começa no fim', parte: 'A · As contas', passos: 5,
       render: () => {
         const st = [
           ['01', 'Lucro que queres', eur(r.lucroLiquido), `${eur(e.lucroMensal)} × ${e.meses}`],
@@ -369,7 +441,7 @@ export default function AulaSessao1() {
       },
     },
     {
-      id: 'custos', titulo: 'Impostos e custos', parte: 'A · O lucro',
+      id: 'custos', titulo: 'Impostos e custos', parte: 'A · As contas',
       render: () => (
         <>
           <Cab k="Passos 2, 3 e 4" t="O que sai antes do teu lucro" s="Troca os valores de exemplo pelos reais. O resultado atualiza logo." />
@@ -397,7 +469,7 @@ export default function AulaSessao1() {
       ),
     },
     {
-      id: 'resultado', titulo: 'O resultado', parte: 'A · O lucro',
+      id: 'resultado', titulo: 'O resultado', parte: 'A · As contas',
       render: () => (
         <>
           <Cab k="Passo 5" t="Quantos casamentos e a que preço?" s="Arrasta o preço. Repara no que acontece à agenda." />
@@ -436,7 +508,7 @@ export default function AulaSessao1() {
       ),
     },
     {
-      id: 'degrau', titulo: 'O primeiro degrau', parte: 'A · O lucro',
+      id: 'degrau', titulo: 'O primeiro degrau', parte: 'A · As contas',
       render: () => (
         <>
           <Cab k="Sem saltos impossíveis" t="O teu primeiro degrau de preço" s="Ninguém dobra o preço de um ano para o outro. Qual é a subida deste ano?" />
@@ -464,7 +536,7 @@ export default function AulaSessao1() {
       ),
     },
     {
-      id: 'funil', titulo: 'O funil', parte: 'A · O lucro',
+      id: 'funil', titulo: 'O funil', parte: 'A · As contas',
       render: () => (
         <>
           <Cab k="A conta até ao fim" t="Quantas leads precisas?" s="Com as tuas taxas reais. É este motor que a Sessão 2 vai construir." />
@@ -603,6 +675,8 @@ export default function AulaSessao1() {
             <section>
               <h3>Onde estás</h3>
               <p>{d.hoje.casamentos || '—'} casamentos a {eur(d.hoje.ticket)} · lucro de {eur(d.hoje.lucro)} ({eur(porCasamentoHoje)} por casamento)</p>
+              <h3>A tua empresa custa</h3>
+              <p>{eur(r.fixos / 12)} por mês ({eur(r.fixos)} por ano){d.palpiteMensal ? ` · achavas ${eur(d.palpiteMensal)}` : ''}</p>
               <h3>O que queres</h3>
               <p>{eur(e.lucroMensal)}/mês × {e.meses} = {eur(r.lucroLiquido)} no bolso · no máximo {e.capacidade} casamentos · {d.sabadosLivres} sábados livres</p>
               <h3>A tua conta</h3>
@@ -784,6 +858,25 @@ export default function AulaSessao1() {
         .a-erro b::before { content: '⚠ '; color: ${GOLD}; }
         .a-erro span { font-size: 14px; color: ${MUTE}; }
         .a-erro.on { background: ${BG2}; border-color: ${GOLD}; }
+        .a-doer { min-height: 62vh; display: flex; flex-direction: column; justify-content: center; }
+        .a-doer h1 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(44px, 8vw, 92px); margin: 8px 0 10px; line-height: 1; font-style: italic; }
+        .a-lista { margin: 8px 0 0; padding-left: 20px; font-size: 15px; }
+        .a-lista li { margin: 6px 0; }
+        .a-porque-txt { font-size: 15px !important; color: ${INK} !important; margin: 8px 0 0 !important; }
+        .a-pergunta { background: ${INK}; color: #F3ECE3; border-radius: 20px; padding: 34px 32px; }
+        .a-pergunta h2 { font-family: 'Playfair Display', Georgia, serif; font-size: clamp(30px, 5vw, 56px); margin: 8px 0 8px; line-height: 1.1; }
+        .a-pergunta p { opacity: .8; margin: 0 0 20px; font-size: 15px; max-width: 640px; }
+        .a-palpite { display: inline-flex; align-items: baseline; gap: 10px; border-bottom: 2px solid ${GOLD}; padding-bottom: 4px; }
+        .a-palpite input { width: 220px; font-family: 'Playfair Display', Georgia, serif; font-size: 52px; background: transparent; border: none; color: #fff; text-align: right; }
+        .a-palpite input:focus { outline: none; }
+        .a-palpite span { font-size: 18px; opacity: .75; }
+        .a-comp { display: flex; flex-direction: column; gap: 12px; }
+        .a-comp > div { background: #fff; border: 1px solid ${RULE}; border-radius: 16px; padding: 16px 20px; }
+        .a-comp > div.dest { background: ${BG2}; border-color: ${GOLD}; }
+        .a-comp small { display: block; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: ${GOLD_DK}; font-weight: 600; }
+        .a-comp b { font-family: 'Playfair Display', Georgia, serif; font-size: 40px; }
+        .a-comp p { font-size: 15px; margin: 4px 0 0; }
+        .a-comp p.a-sub { font-size: 13px; color: ${MUTE}; font-style: italic; }
         .a-roda { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
         .a-area { display: grid; grid-template-columns: 110px 1fr 28px; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }
         .a-area input { accent-color: ${GOLD}; width: 100%; }
@@ -839,6 +932,8 @@ export default function AulaSessao1() {
         @media (max-width: 640px) {
           .a-grid2, .a-grid3, .a-grid4, .a-cadeia, .a-hero, .a-testes, .a-doc-grid, .a-roda, .a-top3 { grid-template-columns: 1fr; }
           .a-area { grid-template-columns: 90px 1fr 24px; }
+          .a-pergunta { padding: 24px 20px; }
+          .a-palpite input { width: 160px; font-size: 40px; }
           .a-main { padding: 22px 16px 120px; }
           .a-top { padding: 10px 16px; }
           .a-top .a-parte { display: none; }
