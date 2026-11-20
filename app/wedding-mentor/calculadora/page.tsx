@@ -247,6 +247,12 @@ export default function CalculadoraLucro() {
               <div className="cl-tot"><span>Precisas de gerar antes de impostos</span><b>{eur(r.lucroBruto)}</b></div>
             </div>
             <div className="cl-panel">
+              <h2>O teu preço</h2>
+              <p className="cl-sub">Por casamento, sem IVA. Também o podes mudar na barra do resultado.</p>
+              <Campo label="Preço por casamento" valor={e.preco} sufixo="€" passo={100} onChange={v => set({ preco: v })} />
+              <div className="cl-tot"><span>Com IVA (23%)</span><b>{eur(e.preco * 1.23)}</b></div>
+            </div>
+            <div className="cl-panel">
               <h2>Custos fixos por ano</h2>
               <p className="cl-sub">Pagas mesmo que não faças nenhum casamento.</p>
               {e.fixos.map((l, i) => <Campo key={l.nome} label={l.nome} valor={l.valor} sufixo="€" passo={100} onChange={v => setLinha('fixos', i, v)} />)}
