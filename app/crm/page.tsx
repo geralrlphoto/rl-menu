@@ -83,6 +83,7 @@ const ICONS: Record<string, string> = {
   mais: 'M12 5v14M5 12h14',
   conversa: 'M21 12a8 8 0 01-11.6 7.1L4 20l1-4.6A8 8 0 1121 12zM8.5 12h.01M12 12h.01M15.5 12h.01',
   analise: 'M12 3a3 3 0 00-3 3v5a3 3 0 006 0V6a3 3 0 00-3-3zM6 11a6 6 0 0012 0M12 17v4M9 21h6',
+  nps: 'M12 17.3l-5.5 3.2 1.5-6.2L3 10.1l6.4-.5L12 3.7l2.6 5.9 6.4.5-5 4.2 1.5 6.2z',
 }
 
 function ActionTile({ num, label, icon, href, onClick, external, primary, disabled }: {
@@ -506,6 +507,7 @@ export default function CRMPage() {
             <ActionTile num={10} label="Análise Reuniões" icon="analise" href="/crm/analises" />
             <ActionTile num={11} label={aBuscarMail ? 'A procurar' : 'Leads Mail'} icon="mail" onClick={handleLeadsMail} disabled={aBuscarMail} />
             <ActionTile num={12} label="WhatsApp" icon="conversa" href="/social-media/whatsapp" />
+            <ActionTile num={13} label="NPS" icon="nps" href="/crm/nps" />
           </div>
           {syncMsg && <p className="text-[13px] text-[#C9A84C] text-right mt-2">{syncMsg}</p>}
         </div>

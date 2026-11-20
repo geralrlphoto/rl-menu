@@ -91,6 +91,7 @@ const COLUNAS_MENU: Record<string, ColunaMenu[]> = {
     { href: '/crm', pill: 'Leads', label: 'CRM Casamentos' },
     { href: '/crm/follow-up', pill: 'Contactos' },
     { href: '/crm/analises', pill: 'Reuniões' },
+    { href: '/crm/nps', pill: 'NPS' },
     { href: '/crm/stats', pill: 'Números' },
     { href: '/crescimento', pill: 'Marketing' },
   ] },
