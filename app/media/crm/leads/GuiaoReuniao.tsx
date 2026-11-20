@@ -42,6 +42,16 @@ const MAPA = [
     exemplo: 'Um vídeo de produto de 90 segundos e seis cortes curtos para a equipa comercial usar antes de cada reunião.' },
 ]
 
+// Tempo 6: o custo de não fazer nada. Três perdas que o cliente ainda não contou.
+const PERDAS = [
+  { n: '01', titulo: 'O site que não converte', texto: 'Tem visitas, mas não passa confiança nem mostra a qualidade do trabalho. Quem lá chega não pede contacto.',
+    pergunta: '"Em cada 100 visitas ao site, quantas vos deixam contacto?"' },
+  { n: '02', titulo: 'O evento que morre no próprio dia', texto: 'Gasta milhares num evento e não usa o conteúdo para vender patrocínios nem lugares na edição seguinte.',
+    pergunta: '"Quanto custou o último evento e o que ficou dele a trabalhar para o próximo?"' },
+  { n: '03', titulo: 'O concorrente que aparece sempre', texto: 'Comunica quando tem tempo. O concorrente aparece todas as semanas e é desse que o cliente se lembra.',
+    pergunta: '"Quando um cliente vos compara com outro, o que vê de cada lado?"' },
+]
+
 const REGRAS = [
   'Uma pergunta de cada vez. Depois, silêncio.',
   'Quando a resposta interessa, aprofunda antes de passar à seguinte: "há quanto tempo?", "e o que fizeram quanto a isso?".',
@@ -86,6 +96,22 @@ export default function GuiaoReuniao({ labelCls }: { labelCls: string }) {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="mt-3 rounded-xl border border-white/[0.08] bg-[#00141f]/60 px-4 py-4">
+            <p className="rlp-m text-[10px] text-[#5a8bff]">Tempo 6 · o custo de não fazer nada</p>
+            <p className="rlp-t mt-1 text-[18px] leading-tight text-white">Três perdas que o cliente ainda não contou.</p>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+              {PERDAS.map(p => (
+                <div key={p.n} className="rounded-xl border border-white/[0.08] bg-white/[0.02] px-4 py-4">
+                  <p className="rlp-m text-[10px] text-[#5a8bff]">{p.n}</p>
+                  <p className="mt-1 text-[14px] font-medium text-white">{p.titulo}</p>
+                  <p className="mt-1 text-[12.5px] text-white/50">{p.texto}</p>
+                  <p className="mt-3 text-[11px] uppercase tracking-[0.2em] text-white/35">Pergunta</p>
+                  <p className="mt-1 text-[13px] leading-snug text-white/80">{p.pergunta}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-3 rounded-xl border border-[#2e6cf6]/70 bg-[#2e6cf6]/[0.14] px-4 py-3 text-[13px] text-white/85">Estes números não são teus para prometer. São dele: pergunta, escreve e devolve-lhos no fim. &quot;É isto?&quot;</p>
           </div>
           <div className="mt-3 rounded-xl border border-white/[0.08] bg-[#00141f]/60 px-4 py-4">
             <p className="rlp-m text-[10px] text-[#5a8bff] mb-2">A regra das perguntas</p>
