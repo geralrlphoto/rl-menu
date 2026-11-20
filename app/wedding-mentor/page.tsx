@@ -1,5 +1,7 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
+
 const GOLD = '#B1937E'
 const GOLD_DK = '#9A7B66'
 const CREAM = '#F8F6F3'
@@ -10,11 +12,13 @@ const INK = '#33302B'
 
 const BASE = '/wedding-mentor-files/'
 
-const SECTIONS = [
+type Card = { badge: string; title: string; file: string; slides?: number }
+
+const SECTIONS: { title: string; cards: Card[] }[] = [
   {
     title: 'Apresentar a Mentoria',
     cards: [
-      { badge: 'PPTX', title: 'A Mentoria — Apresentação', file: 'A_Mentoria_Apresentacao.pptx' },
+      { badge: 'PPTX', title: 'A Mentoria — Apresentação', file: 'A_Mentoria_Apresentacao.pptx', slides: 16 },
     ],
   },
   {
@@ -33,14 +37,14 @@ const SECTIONS = [
     title: 'Guia & Sessões',
     cards: [
       { badge: 'PDF',  title: 'Guia da Mentoria',                              file: 'Guia_Mentoria_RL.pdf' },
-      { badge: 'PPTX', title: 'Sessão 1 — Posicionamento e a Matemática dos 100K', file: 'S1_Posicionamento.pptx' },
-      { badge: 'PPTX', title: 'Sessão 2 — Como Chegar ao Cliente',             file: 'S2_Atracao.pptx' },
-      { badge: 'PPTX', title: 'Sessão 3 — Captação e Qualificação do Lead',    file: 'S3_Captacao.pptx' },
-      { badge: 'PPTX', title: 'Sessão 4 — A Reunião de Venda',                 file: 'S4_Reuniao_Venda.pptx' },
-      { badge: 'PPTX', title: 'Sessão 5 — Proposta e Pricing',                 file: 'S5_Proposta_Pricing.pptx' },
-      { badge: 'PPTX', title: 'Sessão 6 — Experiência e Portal de Cliente',    file: 'S6_Experiencia_Portal.pptx' },
-      { badge: 'PPTX', title: 'Sessão 7 — Produção e Entrega',                 file: 'S7_Producao_Entrega.pptx' },
-      { badge: 'PPTX', title: 'Sessão 8 — Pós-venda, Escala e Sistemas',       file: 'S8_Posvenda_Escala.pptx' },
+      { badge: 'PPTX', title: 'Sessão 1 — Posicionamento e a Matemática dos 100K', file: 'S1_Posicionamento.pptx', slides: 27 },
+      { badge: 'PPTX', title: 'Sessão 2 — Como Chegar ao Cliente',             file: 'S2_Atracao.pptx', slides: 20 },
+      { badge: 'PPTX', title: 'Sessão 3 — Captação e Qualificação do Lead',    file: 'S3_Captacao.pptx', slides: 20 },
+      { badge: 'PPTX', title: 'Sessão 4 — A Reunião de Venda',                 file: 'S4_Reuniao_Venda.pptx', slides: 20 },
+      { badge: 'PPTX', title: 'Sessão 5 — Proposta e Pricing',                 file: 'S5_Proposta_Pricing.pptx', slides: 21 },
+      { badge: 'PPTX', title: 'Sessão 6 — Experiência e Portal de Cliente',    file: 'S6_Experiencia_Portal.pptx', slides: 20 },
+      { badge: 'PPTX', title: 'Sessão 7 — Produção e Entrega',                 file: 'S7_Producao_Entrega.pptx', slides: 20 },
+      { badge: 'PPTX', title: 'Sessão 8 — Pós-venda, Escala e Sistemas',       file: 'S8_Posvenda_Escala.pptx', slides: 22 },
     ],
   },
   {
@@ -66,7 +70,60 @@ const SECTIONS = [
 
 const ALL_FILES = SECTIONS.flatMap(s => s.cards).map(c => c.file)
 
+function SlideViewer({ card, onClose }: { card: Card; onClose: () => void }) {
+  const total = card.slides ?? 0
+  const pasta = BASE + 'slides/' + card.file.replace(/\.pptx$/, '') + '/'
+  const src = (i: number) => pasta + String(i + 1).padStart(2, '0') + '.jpg'
+  const [i, setI] = useState(0)
+  const toque = useRef<number | null>(null)
+  const ir = (d: number) => setI(v => Math.min(total - 1, Math.max(0, v + d)))
+
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); ir(1) }
+      else if (e.key === 'ArrowLeft') ir(-1)
+      else if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', k)
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', k); document.body.style.overflow = '' }
+  }, [onClose])
+
+  // pré-carrega o slide seguinte
+  useEffect(() => { if (i + 1 < total) { const im = new Image(); im.src = src(i + 1) } }, [i])
+
+  return (
+    <div className="wm-viewer" role="dialog" aria-label={card.title}
+      onTouchStart={e => { toque.current = e.touches[0].clientX }}
+      onTouchEnd={e => {
+        if (toque.current == null) return
+        const dx = e.changedTouches[0].clientX - toque.current
+        if (Math.abs(dx) > 40) ir(dx < 0 ? 1 : -1)
+        toque.current = null
+      }}>
+      <div className="wm-v-top">
+        <span className="wm-v-title">{card.title}</span>
+        <span className="wm-v-count">{i + 1} / {total}</span>
+        <button className="wm-v-close" onClick={onClose} aria-label="Fechar">×</button>
+      </div>
+      <div className="wm-v-stage">
+        <button className="wm-v-nav" onClick={() => ir(-1)} disabled={i === 0} aria-label="Slide anterior">‹</button>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src(i)} alt={`${card.title}, slide ${i + 1}`} onClick={() => ir(1)} />
+        <button className="wm-v-nav" onClick={() => ir(1)} disabled={i === total - 1} aria-label="Slide seguinte">›</button>
+      </div>
+      <div className="wm-v-thumbs">
+        {Array.from({ length: total }, (_, k) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={k} src={src(k)} alt="" loading="lazy" className={k === i ? 'on' : ''} onClick={() => setI(k)} />
+        ))}
+      </div>
+    </div>
+  )
+}
+
 export default function WeddingMentorPage() {
+  const [aVer, setAVer] = useState<Card | null>(null)
   return (
     <>
       <style>{`
@@ -93,6 +150,28 @@ export default function WeddingMentorPage() {
         .wm-card h3 { font-family: 'Playfair Display', Georgia, serif; font-weight: 700; font-size: 18px; margin: 0 0 6px; line-height: 1.25; flex: 1; }
         .wm-dl { background: ${INK}; color: #fff; border: none; font-family: 'Poppins'; font-weight: 500; font-size: 13px; letter-spacing: .5px; padding: 11px 16px; border-radius: 9px; cursor: pointer; transition: .2s; text-decoration: none; display: inline-block; text-align: center; margin-top: 18px; }
         .wm-dl:hover { background: ${GOLD_DK}; }
+        .wm-actions { display: flex; gap: 8px; margin-top: 18px; }
+        .wm-actions .wm-dl { flex: 1; margin-top: 0; }
+        .wm-ver { background: transparent; color: ${GOLD_DK}; border: 1px solid ${GOLD}; }
+        .wm-ver:hover { background: ${GOLD}; color: #fff; }
+        .wm-viewer { position: fixed; inset: 0; z-index: 1000; background: #14110E; display: flex; flex-direction: column; }
+        .wm-viewer * { color: #F3ECE3 !important; }
+        .wm-v-top { display: flex; align-items: center; gap: 14px; padding: 12px 18px; }
+        .wm-v-title { font-family: 'Playfair Display', Georgia, serif; font-size: 16px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .wm-v-count { font-size: 13px; letter-spacing: 1px; opacity: .75; }
+        .wm-v-close { background: none; border: none; font-size: 30px; line-height: 1; cursor: pointer; padding: 0 4px; }
+        .wm-v-stage { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; gap: 10px; padding: 0 10px; }
+        .wm-v-stage img { max-width: calc(100% - 110px); max-height: 100%; object-fit: contain; border-radius: 6px; box-shadow: 0 20px 60px rgba(0,0,0,.5); cursor: pointer; background: #fff; }
+        .wm-v-nav { background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.18); width: 44px; height: 44px; border-radius: 50%; font-size: 26px; line-height: 1; cursor: pointer; flex: none; }
+        .wm-v-nav:disabled { opacity: .25; cursor: default; }
+        .wm-v-thumbs { display: flex; gap: 8px; overflow-x: auto; padding: 12px 18px 16px; }
+        .wm-v-thumbs img { height: 54px; aspect-ratio: 16/9; object-fit: cover; border-radius: 4px; opacity: .45; cursor: pointer; border: 2px solid transparent; flex: none; }
+        .wm-v-thumbs img.on { opacity: 1; border-color: ${GOLD}; }
+        @media (max-width: 640px) {
+          .wm-v-nav { display: none; }
+          .wm-v-stage img { max-width: 100%; }
+          .wm-v-thumbs img { height: 40px; }
+        }
         .wm-footer { text-align: center; color: ${GOLD}; font-size: 12px; letter-spacing: 3px; margin-top: 64px; padding-top: 22px; border-top: 1px solid ${RULE}; }
       `}</style>
 
@@ -120,7 +199,10 @@ export default function WeddingMentorPage() {
                 <div key={card.file} className="wm-card">
                   <div className="wm-badge">{card.badge}</div>
                   <h3>{card.title}</h3>
-                  <a className="wm-dl" href={BASE + card.file} download={card.file}>Descarregar</a>
+                  <div className="wm-actions">
+                    {card.slides ? <button className="wm-dl wm-ver" onClick={() => setAVer(card)}>Ver slides</button> : null}
+                    <a className="wm-dl" href={BASE + card.file} download={card.file}>Descarregar</a>
+                  </div>
                 </div>
               ))}
             </div>
@@ -129,6 +211,8 @@ export default function WeddingMentorPage() {
 
         <footer className="wm-footer">RL WEDDING MENTOR · EDUCATE · INSPIRE · ELEVATE</footer>
       </div>
+
+      {aVer && <SlideViewer key={aVer.file} card={aVer} onClose={() => setAVer(null)} />}
     </>
   )
 }
