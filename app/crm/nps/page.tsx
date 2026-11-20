@@ -71,8 +71,8 @@ export default function NpsPage() {
       <section className="relative min-h-[520px] lg:min-h-[70vh] flex flex-col overflow-hidden">
         <div className="absolute inset-y-0 right-0 w-full lg:w-[64%]">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {/* Foto do Unsplash (licença livre): unsplash.com/photos/464ps_nOflw */}
-          <img src="/nps-hero.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[60%_60%] grayscale opacity-40 lg:opacity-55" />
+          {/* Foto do Unsplash (licença livre): unsplash.com/photos/Qzq00OKwZ98 (formulário) */}
+          <img src="/nps-hero.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-[center_40%] grayscale opacity-40 lg:opacity-55" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, #070707 0%, rgba(7,7,7,0.75) 30%, rgba(7,7,7,0.15) 70%, rgba(7,7,7,0.5) 100%)' }} />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(0deg, #070707 0%, transparent 35%, transparent 75%, rgba(7,7,7,0.6) 100%)' }} />
         </div>
