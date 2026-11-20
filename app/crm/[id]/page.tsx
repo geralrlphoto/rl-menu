@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
 import { SITE_URL, linkPublico } from '@/lib/site-url'
-import { MOTIVOS_NAO_FECHOU, colunaDe, whatsappLink, mensagemOpiniao, EVENTO_OPINIAO, linkOpiniao } from '@/lib/crm'
+import { MOTIVOS_NAO_FECHOU, colunaDe, whatsappLink, mensagemOpiniao, EVENTO_OPINIAO, linkOpiniao, EVENTO_NPS, linkNps, mensagemNps } from '@/lib/crm'
 import { PERGUNTAS, respostaTexto, tituloSimples, type Respostas } from '@/lib/opiniao'
 import SeloQualificacao from '@/app/components/SeloQualificacao'
 import { NOMES_PROPOSTAS, PROPOSTA_OPCIONAL, ofertaDaProposta } from '@/lib/crm'
@@ -108,6 +108,14 @@ export default function ClientePage() {
   // Opiniões deixadas no formulário público /opiniao (noivos que não fecharam)
   const [opinioes, setOpinioes] = useState<{ id: string; texto: string | null; respostas: Respostas | null; created_at: string }[]>([])
   const [linkOpiniaoCopiado, setLinkOpiniaoCopiado] = useState(false)
+  // NPS (0 a 10) deixado no /nps por quem fechou e por quem não fechou
+  const [nps, setNps] = useState<{ id: string; nota: number; porque: string | null; created_at: string }[]>([])
+  const [linkNpsCopiado, setLinkNpsCopiado] = useState(false)
+  useEffect(() => {
+    supabase.from('crm_nps').select('id,nota,porque,created_at')
+      .eq('contact_id', id).order('created_at', { ascending: false })
+      .then(({ data }) => setNps(data ?? []))
+  }, [id])
   useEffect(() => {
     supabase.from('crm_opinioes').select('id,texto,respostas,created_at')
       .eq('contact_id', id).order('created_at', { ascending: false })
@@ -648,6 +656,48 @@ export default function ClientePage() {
             </div>
           )}
         </div>
+
+        {/* NPS: só para quem fechou e quem não fechou */}
+        {(form.status === 'Fechou' || form.status === 'NÃO FECHOU') && (
+        <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
+          <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">NPS</h2>
+          <p className="text-xs text-white/40">Uma pergunta de 0 a 10: quanto nos recomendariam a um amigo, e porquê.</p>
+          <div className="flex flex-wrap gap-2">
+            <button type="button"
+              onClick={() => { navigator.clipboard.writeText(linkPublico(linkNps(id, form.nome))); setLinkNpsCopiado(true); setTimeout(() => setLinkNpsCopiado(false), 2000) }}
+              className="text-xs px-4 py-2 rounded-lg border border-white/20 text-white/80 hover:border-white/50">
+              {linkNpsCopiado ? 'Link copiado' : 'Copiar link'}
+            </button>
+            {whatsappLink(form.contato) && (
+              <a target="_blank" rel="noopener noreferrer"
+                href={whatsappLink(form.contato, mensagemNps(form.nome, linkPublico(linkNps(id, form.nome)), form.status === 'Fechou')) ?? undefined}
+                onClick={() => { supabase.from('crm_status_history').insert({ contact_id: id, evento: EVENTO_NPS }).then(() => loadHistorico()) }}
+                className="text-xs px-4 py-2 rounded-lg border border-green-500/40 text-green-400 hover:border-green-400">
+                Enviar NPS por WhatsApp
+              </a>
+            )}
+            <a href={linkNps(id, form.nome)} target="_blank" rel="noopener noreferrer"
+              className="text-xs px-4 py-2 rounded-lg border border-white/10 text-white/50 hover:border-white/30">
+              Ver formulário
+            </a>
+          </div>
+          {nps.length === 0 ? (
+            <p className="text-xs text-white/30">Ainda sem resposta.</p>
+          ) : (
+            <ul className="flex flex-col gap-3">
+              {nps.map(n => (
+                <li key={n.id} className="rounded-xl border border-white/10 bg-black/30 p-4 flex gap-4 items-start">
+                  <span className={`text-2xl font-semibold tabular-nums ${n.nota >= 9 ? 'text-green-400' : n.nota >= 7 ? 'text-[#C9A84C]' : 'text-red-400'}`}>{n.nota}<span className="text-xs text-white/30">/10</span></span>
+                  <div className="flex-1">
+                    <p className="text-sm text-white/85 whitespace-pre-wrap">{n.porque || 'Sem comentário.'}</p>
+                    <p className="text-[11px] text-white/30 mt-1">{new Date(n.created_at).toLocaleDateString('pt-PT')}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        )}
 
         {/* Formulário de opinião (noivos que não fecharam) */}
         <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">

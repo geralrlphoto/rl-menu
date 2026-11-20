@@ -222,6 +222,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/marcar' || pathname === '/api/marcar' ||
     pathname === '/opiniao' || pathname.startsWith('/opiniao/') ||   // opinião dos casais que não fecharam
     pathname === '/api/opiniao' ||
+    pathname === '/nps' || pathname === '/api/nps' ||   // NPS de quem fechou e de quem não fechou
     pathname === '/api/portfolio-wfolio' ||   // fotos do portfólio (galeria Wfolio)
     // Marcação da sessão pré-wedding pelos noivos (link do WhatsApp)
     pathname.startsWith('/prewedding/') ||

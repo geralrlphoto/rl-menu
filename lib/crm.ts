@@ -300,6 +300,30 @@ export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?
   ].join('\n')
 }
 
+/* NPS (0 a 10): link público /nps para quem fechou e para quem não fechou */
+export const EVENTO_NPS = 'WhatsApp pedido de NPS enviado'
+export const linkNps = (id: string, nome?: string | null) => {
+  const q = new URLSearchParams()
+  if ((nome ?? '').trim()) q.set('n', nome!.trim())
+  q.set('id', id)
+  return `/nps?${q.toString()}`
+}
+export function mensagemNps(nome: string | null | undefined, link: string, fechou: boolean): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    fechou
+      ? 'Obrigado pela confiança. Estamos muito felizes por fazer parte do vosso casamento.'
+      : 'Obrigado pelo tempo que dedicaram a conhecer-nos.',
+    'Podem dizer-nos, de 0 a 10, quanto recomendariam a RL Photo.Video a um amigo? É só uma pergunta:',
+    link,
+    '',
+    'Com carinho,',
+    'RL Photo.Video',
+  ].join('\n')
+}
+
 /* Pedido de opinião: link para o formulário público /opiniao (Follow Up e Não fechou) */
 export const EVENTO_OPINIAO = 'WhatsApp pedido de opinião enviado'
 export const linkOpiniao = (id: string, nome?: string | null) => {
