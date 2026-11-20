@@ -1,4 +1,4 @@
-// NPS (/nps) de quem fechou e de quem não fechou: 8 perguntas, a última é a recomendação de 0 a 10.
+// NPS (/nps) só de quem fechou: 8 perguntas, a última é a recomendação de 0 a 10.
 // Se a nota for 7 ou mais, abre a caixa para indicarem outros noivos (nome e contacto).
 // As perguntas vivem aqui para a página, a API (/api/nps) e a ficha do CRM usarem a mesma lista.
 

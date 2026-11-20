@@ -109,7 +109,7 @@ export default function ClientePage() {
   // Opiniões deixadas no formulário público /opiniao (noivos que não fecharam)
   const [opinioes, setOpinioes] = useState<{ id: string; texto: string | null; respostas: Respostas | null; created_at: string }[]>([])
   const [linkOpiniaoCopiado, setLinkOpiniaoCopiado] = useState(false)
-  // NPS (0 a 10) deixado no /nps por quem fechou e por quem não fechou
+  // NPS (0 a 10) deixado no /nps por quem fechou
   const [nps, setNps] = useState<{ id: string; nota: number; porque: string | null; respostas: RespostasNps | null; indicacao_nome: string | null; indicacao_contacto: string | null; created_at: string }[]>([])
   const [linkNpsCopiado, setLinkNpsCopiado] = useState(false)
   useEffect(() => {
@@ -658,8 +658,8 @@ export default function ClientePage() {
           )}
         </div>
 
-        {/* NPS: só para quem fechou e quem não fechou */}
-        {(form.status === 'Fechou' || form.status === 'NÃO FECHOU') && (
+        {/* NPS: só para quem fechou */}
+        {form.status === 'Fechou' && (
         <div className="bg-[#111111]/80 border border-white/[0.08] rounded-[22px] backdrop-blur-xl p-6 flex flex-col gap-4">
           <h2 className="text-[12px] font-semibold tracking-[0.2em] text-[#C9A84C] uppercase mb-1">NPS</h2>
           <p className="text-xs text-white/40">8 perguntas, do primeiro contacto à proposta; a última é a recomendação de 0 a 10. Com nota 7 ou mais podem indicar outros noivos (oferecemos um serviço se esses noivos fecharem).</p>
@@ -671,7 +671,7 @@ export default function ClientePage() {
             </button>
             {whatsappLink(form.contato) && (
               <a target="_blank" rel="noopener noreferrer"
-                href={whatsappLink(form.contato, mensagemNps(form.nome, linkPublico(linkNps(id, form.nome)), form.status === 'Fechou')) ?? undefined}
+                href={whatsappLink(form.contato, mensagemNps(form.nome, linkPublico(linkNps(id, form.nome)))) ?? undefined}
                 onClick={() => { supabase.from('crm_status_history').insert({ contact_id: id, evento: EVENTO_NPS }).then(() => loadHistorico()) }}
                 className="text-xs px-4 py-2 rounded-lg border border-green-500/40 text-green-400 hover:border-green-400">
                 Enviar NPS por WhatsApp

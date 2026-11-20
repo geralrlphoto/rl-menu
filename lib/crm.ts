@@ -300,7 +300,7 @@ export function mensagemFollowUp(nome: string | null | undefined, dataCasamento?
   ].join('\n')
 }
 
-/* NPS (0 a 10): link público /nps para quem fechou e para quem não fechou */
+/* NPS (0 a 10): link público /nps só para quem fechou */
 export const EVENTO_NPS = 'WhatsApp pedido de NPS enviado'
 export const linkNps = (id: string, nome?: string | null) => {
   const q = new URLSearchParams()
@@ -308,14 +308,12 @@ export const linkNps = (id: string, nome?: string | null) => {
   q.set('id', id)
   return `/nps?${q.toString()}`
 }
-export function mensagemNps(nome: string | null | undefined, link: string, fechou: boolean): string {
+export function mensagemNps(nome: string | null | undefined, link: string): string {
   const quem = (nome ?? '').trim()
   return [
     `Olá${quem ? ' ' + quem : ''}!`,
     '',
-    fechou
-      ? 'Obrigado pela confiança. Estamos muito felizes por fazer parte do vosso casamento.'
-      : 'Obrigado pelo tempo que dedicaram a conhecer-nos.',
+    'Obrigado pela confiança. Estamos muito felizes por fazer parte do vosso casamento.',
     'Gostávamos muito de saber como foi a vossa experiência connosco, do primeiro contacto à proposta. Demora cerca de 1 minuto:',
     link,
     '',

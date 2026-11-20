@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sbAdmin, UUID_RE } from '@/lib/preparacao'
 import { limparRespostasNps, NOTA_INDICAR } from '@/lib/nps'
 
-// Público: recebe o NPS (/nps) de quem fechou e de quem não fechou e guarda-o na ficha da lead,
+// Público: recebe o NPS (/nps) só de quem fechou e guarda-o na ficha da lead,
 // com os noivos que indicaram (se a nota for alta).
 
 export async function POST(req: NextRequest) {
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   const sb = sbAdmin()
   const { data: lead } = await sb.from('crm_contacts').select('id, nome, status').eq('id', leadId).maybeSingle()
   if (!lead) return NextResponse.json({ error: 'Lead não encontrada' }, { status: 404 })
+  if (lead.status !== 'Fechou') return NextResponse.json({ error: 'O NPS é só para noivos que fecharam' }, { status: 403 })
 
   // Noivos indicados: entram no CRM como lead nova (mesmos valores por defeito do /crm/nova)
   if (indNome && indContacto) {

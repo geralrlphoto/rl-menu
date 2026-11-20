@@ -4,7 +4,7 @@ import { Suspense, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { PERGUNTAS_NPS, NOTA_INDICAR, type PerguntaNps, type RespostasNps } from '@/lib/nps'
 
-/* NPS público para quem fechou e para quem não fechou (link por WhatsApp a partir da ficha do CRM).
+/* NPS público só para quem fechou (link por WhatsApp a partir da ficha do CRM).
    /nps?n=Nome dos noivos&id=<id da lead>. 8 perguntas, uma por ecrã (mesma linguagem do /opiniao);
    a última é a recomendação de 0 a 10. Com nota 7 ou mais aparece a caixa para indicarem outros noivos,
    com a oferta de um serviço se esses noivos fecharem. As respostas ficam em crm_nps (/api/nps). */
