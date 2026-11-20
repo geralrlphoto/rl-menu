@@ -32,6 +32,16 @@ const TEMPOS: Tempo[] = [
     frases: ['"Deixe-me ver se percebi: hoje fazem X, querem Y, o que trava é Z e isso custa-vos W. Está certo?"', '"Então marco já [dia e hora] para lhe apresentar a proposta."'] },
 ]
 
+// Tempos 4 e 5: o mapa. Dor → Problema → Solução, por esta ordem, sempre.
+const MAPA = [
+  { titulo: 'Dor', sub: 'O que ele sente', texto: 'A frase que ele diz, nas palavras dele. Ainda é um incómodo, sem número.',
+    exemplo: '"Temos um produto muito bom e ninguém percebe o que ele faz."' },
+  { titulo: 'Problema', sub: 'O que isso causa no negócio', texto: 'O efeito concreto na faturação, no tempo da equipa e nos clientes perdidos.',
+    exemplo: 'Em cada reunião comercial gastam 20 minutos a explicar o produto e perdem negócios para concorrentes que explicam melhor.' },
+  { titulo: 'Solução', sub: 'O que a RL PROD entrega', texto: 'Só aqui entras tu, e só depois de ele confirmar as duas colunas anteriores.', destaque: true,
+    exemplo: 'Um vídeo de produto de 90 segundos e seis cortes curtos para a equipa comercial usar antes de cada reunião.' },
+]
+
 const REGRAS = [
   'Uma pergunta de cada vez. Depois, silêncio.',
   'Quando a resposta interessa, aprofunda antes de passar à seguinte: "há quanto tempo?", "e o que fizeram quanto a isso?".',
@@ -61,6 +71,21 @@ export default function GuiaoReuniao({ labelCls }: { labelCls: string }) {
                 </ul>
               </div>
             ))}
+          </div>
+          <div className="mt-3 rounded-xl border border-white/[0.08] bg-[#00141f]/60 px-4 py-4">
+            <p className="rlp-m text-[10px] text-[#5a8bff]">Tempos 4 e 5 · o mapa</p>
+            <p className="rlp-t mt-1 text-[18px] leading-tight text-white">Dor → Problema → Solução. Por esta ordem, sempre.</p>
+            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+              {MAPA.map(m => (
+                <div key={m.titulo} className={'rounded-xl border px-4 py-4 ' + (m.destaque ? 'border-[#2e6cf6]/70 bg-[#2e6cf6]/[0.14]' : 'border-white/[0.08] bg-white/[0.02]')}>
+                  <p className="rlp-m text-[10px] text-[#5a8bff]">{m.titulo}</p>
+                  <p className="mt-1 text-[14px] font-medium text-white">{m.sub}</p>
+                  <p className="mt-1 text-[12.5px] text-white/50">{m.texto}</p>
+                  <p className="mt-3 text-[11px] uppercase tracking-[0.2em] text-white/35">Exemplo</p>
+                  <p className="mt-1 text-[13px] leading-snug text-white/80">{m.exemplo}</p>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="mt-3 rounded-xl border border-white/[0.08] bg-[#00141f]/60 px-4 py-4">
             <p className="rlp-m text-[10px] text-[#5a8bff] mb-2">A regra das perguntas</p>
