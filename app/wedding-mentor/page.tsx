@@ -36,6 +36,7 @@ const SECTIONS: { title: string; cards: Card[] }[] = [
   {
     title: 'Guia & Sessões',
     cards: [
+      { badge: 'AULA', title: 'Sessão 1 — Aula interativa', file: '', link: '/wedding-mentor/sessao-1' },
       { badge: 'PDF',  title: 'Guia da Mentoria',                              file: 'Guia_Mentoria_RL.pdf' },
       { badge: 'PPTX', title: 'Sessão 1 — Posicionamento e a Matemática do Lucro', file: 'S1_Posicionamento.pptx', slides: 30 },
       { badge: 'PPTX', title: 'Sessão 2 — Como Chegar ao Cliente',             file: 'S2_Atracao.pptx', slides: 20 },
