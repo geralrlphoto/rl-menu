@@ -30,6 +30,12 @@ type Dados = {
   quem: string; valorizam: string; receiam: string; procuram: string
   fCasal: string; fTransf: string; fDif: string; publica: string
   testes: boolean[]
+  roda: number[]; rodaReflexao: string
+  valores: string[]; valoresConflito: string
+  dia: { manha: string; comQuem: string; trabalho: string; sabado: string }
+  porques: string[]
+  naos: string[]; naoExtra: string
+  proposito: string
 }
 
 const NOVO = (): Dados => ({
@@ -43,7 +49,35 @@ const NOVO = (): Dados => ({
   quem: '', valorizam: '', receiam: '', procuram: '',
   fCasal: '', fTransf: '', fDif: '', publica: '',
   testes: [false, false, false],
+  roda: [5, 5, 5, 5, 5, 5, 5, 5], rodaReflexao: '',
+  valores: [], valoresConflito: '',
+  dia: { manha: '', comQuem: '', trabalho: '', sabado: '' },
+  porques: ['', '', '', '', ''],
+  naos: [], naoExtra: '',
+  proposito: '',
 })
+
+const AREAS = ['Família', 'Relação', 'Saúde', 'Dinheiro', 'Trabalho', 'Tempo livre', 'Amigos', 'Crescimento']
+const VALORES = ['Liberdade', 'Família', 'Segurança', 'Criatividade', 'Reconhecimento', 'Saúde', 'Aventura', 'Impacto', 'Tranquilidade', 'Excelência', 'Dinheiro', 'Tempo', 'Fé', 'Comunidade', 'Autonomia', 'Aprender', 'Amor', 'Legado']
+const NAOS = ['Trabalhar todos os fins de semana', 'Clientes que regateiam o preço', 'Edições sempre atrasadas', 'Responder a mensagens à noite', 'Fazer tudo sozinho', 'Casamentos que não me inspiram', 'Faltar a momentos da família', 'Viver mês a mês sem reserva', 'Trabalhar doente ou exausto', 'Competir pelo mais barato']
+
+function Roda({ valores }: { valores: number[] }) {
+  const n = valores.length, c = 150, R = 105
+  const pt = (k: number, v: number) => {
+    const a = (Math.PI * 2 * k) / n - Math.PI / 2
+    return [c + Math.cos(a) * R * (v / 10), c + Math.sin(a) * R * (v / 10)]
+  }
+  const poli = valores.map((v, k) => pt(k, v).join(',')).join(' ')
+  return (
+    <svg viewBox="0 0 300 300" role="img" aria-label="Roda da vida">
+      {[2, 4, 6, 8, 10].map(r => <polygon key={r} points={valores.map((_, k) => pt(k, r).join(',')).join(' ')} fill="none" stroke={RULE} strokeWidth={1} />)}
+      {valores.map((_, k) => { const [x, y] = pt(k, 10); return <line key={k} x1={c} y1={c} x2={x} y2={y} stroke={RULE} strokeWidth={1} /> })}
+      <polygon points={poli} fill="rgba(177,147,126,.35)" stroke={GOLD_DK} strokeWidth={2} />
+      {valores.map((v, k) => { const [x, y] = pt(k, v); return <circle key={k} cx={x} cy={y} r={4} fill={GOLD_DK} /> })}
+      {AREAS.map((a, k) => { const [x, y] = pt(k, 12.6); return <text key={a} x={x} y={y} textAnchor="middle" dominantBaseline="middle" fontSize={11} fill={MUTE} fontFamily="Poppins, sans-serif">{a}</text> })}
+    </svg>
+  )
+}
 
 /* ---------- pequenos componentes ---------- */
 
@@ -116,6 +150,8 @@ export default function AulaSessao1() {
   const precoMin = Math.ceil(r.precoMinCapacidade / 50) * 50
   const frase = `Ajudo ${d.fCasal || '[casal ideal]'} a ${d.fTransf || '[transformação]'} através de ${d.fDif || '[o teu diferencial]'}.`
   const passaTeste = d.testes.every(Boolean)
+  const minRoda = Math.min(...d.roda)
+  const maisBaixa = d.roda.every(v => v === d.roda[0]) ? '' : AREAS[d.roda.indexOf(minRoda)]
 
   /* ---------- secções ---------- */
   const SECOES: { id: string; titulo: string; passos?: number; parte?: string; render: () => ReactNode }[] = [
@@ -127,7 +163,7 @@ export default function AulaSessao1() {
           <img className="a-logo" src="/logo mentor.webp" alt="RL Wedding Mentor" />
           <div className="a-k">SESSÃO 01 · AULA INTERATIVA</div>
           <h1>Posicionamento e a Matemática do Lucro</h1>
-          <p className="a-lead">Hoje desenhamos juntos a conta do teu negócio: o lucro que queres, quantos casamentos precisas, a que preço, e para quem trabalhas.</p>
+          <p className="a-lead">Hoje começamos por ti: o que é importante, porque fazes isto, que vida queres. Só depois fazemos as contas do negócio que serve essa vida.</p>
           <label className="a-nome">
             <span>Mentorando</span>
             <input value={d.nome} placeholder="Nome de quem está na aula" onChange={ev => up({ nome: ev.target.value })} />
@@ -137,10 +173,127 @@ export default function AulaSessao1() {
       ),
     },
     {
+      id: 'roda', titulo: 'A roda da vida', parte: '0 · Propósito',
+      render: () => (
+        <>
+          <Cab k="Dinâmica 1 · Onde estás na vida" t="A roda da vida" s="De 1 a 10, quão satisfeito estás hoje com cada área? Responde depressa, sem pensar muito." />
+          <div className="a-roda">
+            <div className="a-card">
+              {AREAS.map((a, k) => (
+                <label key={a} className="a-area">
+                  <span>{a}</span>
+                  <input type="range" min={1} max={10} value={d.roda[k]} onChange={ev => up({ roda: d.roda.map((x, n) => (n === k ? Number(ev.target.value) : x)) })} aria-label={a} />
+                  <b>{d.roda[k]}</b>
+                </label>
+              ))}
+            </div>
+            <div className="a-card a-roda-svg">
+              <Roda valores={d.roda} />
+              <p>{maisBaixa ? <>A área mais baixa é <b>{maisBaixa}</b>. </> : null}Se subisse 2 pontos daqui a um ano, o que mudava na tua vida?</p>
+            </div>
+          </div>
+          <div className="a-card" style={{ marginTop: 16 }}>
+            <Txt label="O que mudava se a área mais baixa subisse 2 pontos?" valor={d.rodaReflexao} ph="Escreve o que te vier à cabeça…" onChange={v => up({ rodaReflexao: v })} />
+          </div>
+        </>
+      ),
+    },
+    {
+      id: 'valores', titulo: 'O que é mais importante', parte: '0 · Propósito',
+      render: () => (
+        <>
+          <Cab k="Dinâmica 2 · Os teus valores" t="O que é mais importante para ti?" s="Escolhe só 3. É difícil de propósito: o que fica de fora também diz muito." />
+          <div className="a-valores">
+            {VALORES.map(v => {
+              const pos = d.valores.indexOf(v)
+              return (
+                <button key={v} className={`a-valor ${pos >= 0 ? 'on' : ''}`} disabled={pos < 0 && d.valores.length >= 3}
+                  onClick={() => setD(o => ({ ...o, valores: o.valores.includes(v) ? o.valores.filter(x => x !== v) : o.valores.length >= 3 ? o.valores : [...o.valores, v] }))}>
+                  {pos >= 0 && <i>{pos + 1}</i>}{v}
+                </button>
+              )
+            })}
+          </div>
+          <div className="a-top3">
+            {[0, 1, 2].map(k => <div key={k}><small>{k + 1}º</small><b>{d.valores[k] || '…'}</b></div>)}
+          </div>
+          <div className="a-card" style={{ marginTop: 16 }}>
+            <Txt label="Onde é que o teu negócio hoje vai contra estes 3 valores?" valor={d.valoresConflito} ph="Ex.: digo que a família é o nº 1, mas trabalho 30 sábados por ano…" onChange={v => up({ valoresConflito: v })} />
+          </div>
+        </>
+      ),
+    },
+    {
+      id: 'dia', titulo: 'Um dia perfeito', parte: '0 · Propósito',
+      render: () => (
+        <>
+          <Cab k="Dinâmica 3 · Visualização" t="Um dia perfeito, daqui a 3 anos" s="Fecha os olhos um minuto. Imagina uma terça-feira normal daqui a 3 anos, em que tudo correu bem. Depois descreve-a." />
+          <div className="a-grid2">
+            <div className="a-card"><Txt label="A que horas acordas e como começa o dia?" valor={d.dia.manha} ph="Sem despertador, pequeno-almoço com os miúdos…" linhas={3} onChange={v => up({ dia: { ...d.dia, manha: v } })} /></div>
+            <div className="a-card"><Txt label="Com quem passas o dia?" valor={d.dia.comQuem} ph="Família, equipa, clientes, sozinho…" linhas={3} onChange={v => up({ dia: { ...d.dia, comQuem: v } })} /></div>
+            <div className="a-card"><Txt label="Quanto trabalhas e em quê?" valor={d.dia.trabalho} ph="Horas, tipo de trabalho, o que já não fazes tu…" linhas={3} onChange={v => up({ dia: { ...d.dia, trabalho: v } })} /></div>
+            <div className="a-card"><Txt label="E um sábado de casamento, como é?" valor={d.dia.sabado} ph="Quantos fazes, com que equipa, como chegas a casa…" linhas={3} onChange={v => up({ dia: { ...d.dia, sabado: v } })} /></div>
+          </div>
+          <p className="a-nota">Lê em voz alta o que escreveste. O que é mais diferente da tua terça-feira de hoje?</p>
+        </>
+      ),
+    },
+    {
+      id: 'porques', titulo: 'Os 5 porquês', parte: '0 · Propósito',
+      render: () => (
+        <>
+          <Cab k="Dinâmica 4 · Propósito" t="Porque é que fotografas casamentos?" s="Responde. Depois pergunta “porquê?” à tua resposta. Cinco vezes. A última resposta costuma ser a verdadeira." />
+          <div className="a-porques">
+            {d.porques.map((p, k) => (k === 0 || d.porques[k - 1].trim()) ? (
+              <label key={k} className={`a-porque ${k === 4 ? 'fim' : ''}`}>
+                <span>{k === 0 ? 'Porque é que fazes isto?' : `Porquê? (${k + 1}/5)`}</span>
+                <input value={p} placeholder={k === 0 ? 'Porque gosto de fotografar…' : 'Porque…'} onChange={ev => up({ porques: d.porques.map((x, n) => (n === k ? ev.target.value : x)) })} />
+              </label>
+            ) : null)}
+          </div>
+          {d.porques[4].trim() && <div className="a-frase pequena" style={{ marginTop: 18 }}>“{d.porques[4]}”</div>}
+        </>
+      ),
+    },
+    {
+      id: 'naos', titulo: 'O que já não aceitas', parte: '0 · Propósito',
+      render: () => (
+        <>
+          <Cab k="Dinâmica 5 · Os teus limites" t="O que já não aceitas no teu negócio?" s="Dizer sim ao que importa obriga a dizer não a outras coisas. Marca os teus nãos." />
+          <div className="a-valores">
+            {NAOS.map(v => {
+              const on = d.naos.includes(v)
+              return <button key={v} className={`a-valor nao ${on ? 'on' : ''}`} onClick={() => setD(o => ({ ...o, naos: o.naos.includes(v) ? o.naos.filter(x => x !== v) : [...o.naos, v] }))}>{v}</button>
+            })}
+          </div>
+          <div className="a-card" style={{ marginTop: 16 }}>
+            <Txt label="Outros nãos" valor={d.naoExtra} ph="O que mais já não queres na tua vida profissional?" onChange={v => up({ naoExtra: v })} />
+          </div>
+        </>
+      ),
+    },
+    {
+      id: 'bussola', titulo: 'A tua bússola', parte: '0 · Propósito',
+      render: () => (
+        <>
+          <Cab k="Antes dos números" t="A tua bússola" s="Tudo o que decidires a seguir, preço, número de casamentos, clientes, tem de respeitar isto." />
+          <div className="a-grid3">
+            <div className="a-card"><h3>Os teus valores</h3><p className="a-bus">{d.valores.length ? d.valores.join(' · ') : '—'}</p></div>
+            <div className="a-card"><h3>A área a melhorar</h3><p className="a-bus">{maisBaixa || '—'}</p></div>
+            <div className="a-card"><h3>O teu porquê</h3><p className="a-bus">{d.porques.filter(x => x.trim()).slice(-1)[0] || '—'}</p></div>
+          </div>
+          <div className="a-card dest" style={{ marginTop: 16 }}>
+            <Txt label="O teu propósito numa frase" valor={d.proposito} ph="Faço isto para… e quero um negócio que me deixe…" linhas={2} onChange={v => up({ proposito: v })} />
+          </div>
+          <p className="a-nota">Agora sim, vamos às contas: quanto custa a vida que acabaste de descrever?</p>
+        </>
+      ),
+    },
+    {
       id: 'vida', titulo: 'A vida que queres', parte: 'A · O lucro',
       render: () => (
         <>
-          <Cab k="Antes dos números" t="Que vida queres ter daqui a 3 anos?" s="Os números servem a vida, não o contrário. Responde a estas três perguntas primeiro." />
+          <Cab k="Agora sim, os números" t="Quanto custa a vida que descreveste?" s="Traduz o teu dia perfeito em três números. Os números servem a vida, não o contrário." />
           <div className="a-grid3">
             <div className="a-card">
               <h3>Quanto queres levar para casa?</h3>
@@ -409,7 +562,7 @@ export default function AulaSessao1() {
               ['O teu casal ideal reconhece-se?', 'Ao ler, pensam “isto é para nós”.'],
               ['Consegues prová-la?', 'Portefólio, testemunhos e processo confirmam o que prometes.'],
             ].map(([t, s], k) => (
-              <button key={k} className={`a-teste ${d.testes[k] ? 'on' : ''}`} onClick={() => up({ testes: d.testes.map((x, n) => (n === k ? !x : x)) })}>
+              <button key={k} className={`a-teste ${d.testes[k] ? 'on' : ''}`} onClick={() => setD(o => ({ ...o, testes: o.testes.map((x, n) => (n === k ? !x : x)) }))}>
                 <i>{d.testes[k] ? '✓' : ''}</i><span><b>{t}</b><small>{s}</small></span>
               </button>
             ))}
@@ -461,6 +614,12 @@ export default function AulaSessao1() {
               <p>{num(r.leads)} leads → {num(r.reunioes)} reuniões → {num(r.casamentos)} casamentos ({e.taxaReuniao}% marcam, {e.taxaFecho}% fecham)</p>
             </section>
             <section>
+              <h3>Propósito</h3>
+              {d.proposito && <p className="a-doc-dest">{d.proposito}</p>}
+              <p><i>Valores:</i> {d.valores.join(' · ') || '—'}</p>
+              {maisBaixa && <p><i>Área a melhorar:</i> {maisBaixa} ({minRoda}/10)</p>}
+              {d.porques.some(x => x.trim()) && <p><i>Porquê:</i> {d.porques.filter(x => x.trim()).slice(-1)[0]}</p>}
+              {(d.naos.length > 0 || d.naoExtra) && <p><i>Já não aceito:</i> {[...d.naos, d.naoExtra].filter(Boolean).join(' · ')}</p>}
               <h3>Casal ideal</h3>
               <p>{d.clientes.filter(Boolean).join(', ') || '—'}</p>
               {d.padrao && <p><i>Em comum:</i> {d.padrao}</p>}
@@ -625,6 +784,31 @@ export default function AulaSessao1() {
         .a-erro b::before { content: '⚠ '; color: ${GOLD}; }
         .a-erro span { font-size: 14px; color: ${MUTE}; }
         .a-erro.on { background: ${BG2}; border-color: ${GOLD}; }
+        .a-roda { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .a-area { display: grid; grid-template-columns: 110px 1fr 28px; align-items: center; gap: 10px; padding: 5px 0; font-size: 14px; }
+        .a-area input { accent-color: ${GOLD}; width: 100%; }
+        .a-area b { font-family: 'Playfair Display', Georgia, serif; font-size: 18px; color: ${GOLD_DK}; text-align: right; }
+        .a-roda-svg { display: flex; flex-direction: column; align-items: center; }
+        .a-roda-svg svg { width: 100%; max-width: 340px; overflow: visible; }
+        .a-roda-svg p { font-size: 14px; color: ${MUTE}; text-align: center; margin: 6px 0 0; }
+        .a-roda-svg p b { color: ${INK}; }
+        .a-valores { display: flex; flex-wrap: wrap; gap: 10px; }
+        .a-valor { font-family: inherit; font-size: 15px; padding: 10px 18px; border-radius: 30px; border: 1px solid ${RULE}; background: #fff; color: ${INK}; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: .2s; }
+        .a-valor:disabled { opacity: .35; cursor: default; }
+        .a-valor.on { background: ${INK}; border-color: ${INK}; color: #fff; }
+        .a-valor.on i { font-style: normal; width: 20px; height: 20px; border-radius: 50%; background: ${GOLD}; color: #fff; font-size: 12px; display: inline-flex; align-items: center; justify-content: center; }
+        .a-valor.nao.on { background: #F7E6E0; border-color: ${ALERT}; color: ${ALERT}; text-decoration: line-through; }
+        .a-top3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 18px; }
+        .a-top3 > div { background: ${BG2}; border: 1px solid ${GOLD}; border-radius: 14px; padding: 14px 18px; }
+        .a-top3 small { display: block; color: ${GOLD_DK}; font-size: 12px; font-weight: 600; }
+        .a-top3 b { font-family: 'Playfair Display', Georgia, serif; font-size: 24px; }
+        .a-porques { display: flex; flex-direction: column; gap: 10px; max-width: 820px; }
+        .a-porque { display: flex; flex-direction: column; gap: 4px; padding-left: 16px; border-left: 2px solid ${RULE}; animation: aEntra .4s ease; }
+        .a-porque.fim { border-left-color: ${GOLD}; }
+        .a-porque span { font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; color: ${GOLD_DK}; font-weight: 600; }
+        .a-porque input { font-family: 'Playfair Display', Georgia, serif; font-size: 20px; border: none; border-bottom: 1px solid ${RULE}; background: transparent; padding: 6px 0; color: ${INK}; }
+        .a-porque input:focus { outline: none; border-bottom-color: ${GOLD}; }
+        .a-bus { font-family: 'Playfair Display', Georgia, serif; font-size: 20px !important; color: ${GOLD_DK} !important; margin: 6px 0 0 !important; }
         .a-doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
         .a-doc section { background: #fff; border: 1px solid ${RULE}; border-radius: 16px; padding: 22px 24px; }
         .a-doc h3 { font-size: 11px; letter-spacing: 2.5px; text-transform: uppercase; color: ${GOLD}; margin: 16px 0 4px; }
@@ -653,7 +837,8 @@ export default function AulaSessao1() {
           .a-res { grid-template-columns: 1fr 1fr; }
         }
         @media (max-width: 640px) {
-          .a-grid2, .a-grid3, .a-grid4, .a-cadeia, .a-hero, .a-testes, .a-doc-grid { grid-template-columns: 1fr; }
+          .a-grid2, .a-grid3, .a-grid4, .a-cadeia, .a-hero, .a-testes, .a-doc-grid, .a-roda, .a-top3 { grid-template-columns: 1fr; }
+          .a-area { grid-template-columns: 90px 1fr 24px; }
           .a-main { padding: 22px 16px 120px; }
           .a-top { padding: 10px 16px; }
           .a-top .a-parte { display: none; }
