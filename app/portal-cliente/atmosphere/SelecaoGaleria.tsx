@@ -46,6 +46,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const carregado = useRef(false)
   const selRef = useRef<string[]>([])
+  const guardarRef = useRef<((s: string[]) => void) | null>(null)
   useEffect(() => { selRef.current = sel }, [sel])
 
   // ── carregar a galeria e a escolha guardada ──
@@ -59,6 +60,15 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
           setSel(d.estado.sel ?? [])
           setEnviada(d.estado.enviada ?? null)
         }
+        // Escolha que ficou só neste dispositivo (a internet falhou ao sair): repõe e guarda
+        try {
+          const local = JSON.parse(localStorage.getItem(`rl_selecao_${portalRef}`) || 'null')
+          if (local && Array.isArray(local.sel) && !d?.estado?.enviada) {
+            const servidor = new Date(d?.estado?.atualizado || 0).getTime()
+            if (local.em > servidor) { setSel(local.sel); selRef.current = local.sel; guardarRef.current?.(local.sel) }
+            else localStorage.removeItem(`rl_selecao_${portalRef}`)
+          }
+        } catch {}
         if (!d?.ok) { setErro(d?.error === 'wfolio' ? 'A galeria está a demorar a responder. Tentem de novo daqui a pouco.' : 'A galeria ainda não está disponível.'); return }
         setCdn(d.cdn)
         setPastas(d.pastas)
@@ -89,20 +99,57 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
     return m
   }, [todas, selSet])
 
-  // ── guardar a escolha (1,5 s depois do último toque) ──
+  // ── guardar a escolha ──
+  // Vai para o portal pouco depois de cada toque e, se ainda faltar, logo que
+  // fecham a galeria ou saem do portal. Há também uma cópia neste dispositivo
+  // até o portal confirmar, para nada se perder se a internet falhar.
+  const chaveLocal = `rl_selecao_${portalRef}`
+  const pendente = useRef<string[] | null>(null)
+  const onEstadoRef = useRef(onEstado)
+  useEffect(() => { onEstadoRef.current = onEstado }, [onEstado])
+
+  const enviarGuardar = useCallback((nova: string[], aSair = false) => {
+    fetch('/api/fotos-selecao-galeria', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: portalRef, acao: 'guardar', sel: nova }),
+      keepalive: aSair,
+    }).then(r => {
+      if (!r.ok) { setGuardado('erro'); return }
+      if (pendente.current === nova) {
+        pendente.current = null
+        setGuardado('ok')
+        try { localStorage.removeItem(chaveLocal) } catch {}
+      }
+      onEstadoRef.current?.({ sel: nova, enviada: null })
+    }).catch(() => setGuardado('erro'))
+  }, [portalRef, chaveLocal])
+
   const guardar = useCallback((nova: string[]) => {
+    pendente.current = nova
+    try { localStorage.setItem(chaveLocal, JSON.stringify({ sel: nova, em: Date.now() })) } catch {}
     if (timer.current) clearTimeout(timer.current)
     setGuardado('a-guardar')
-    timer.current = setTimeout(() => {
-      fetch('/api/fotos-selecao-galeria', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: portalRef, acao: 'guardar', sel: nova }),
-      }).then(r => {
-        setGuardado(r.ok ? 'ok' : 'erro')
-        if (r.ok) onEstado?.({ sel: nova, enviada: null })
-      }).catch(() => setGuardado('erro'))
-    }, 1500)
-  }, [portalRef, onEstado])
+    timer.current = setTimeout(() => enviarGuardar(nova), 700)
+  }, [chaveLocal, enviarGuardar])
+
+  useEffect(() => { guardarRef.current = guardar }, [guardar])
+
+  // ao fechar a galeria, mudar de separador ou sair do portal: guarda já o que faltar
+  useEffect(() => {
+    const despachar = () => {
+      if (!pendente.current) return
+      if (timer.current) clearTimeout(timer.current)
+      enviarGuardar(pendente.current, true)
+    }
+    const aoEsconder = () => { if (document.visibilityState === 'hidden') despachar() }
+    window.addEventListener('pagehide', despachar)
+    document.addEventListener('visibilitychange', aoEsconder)
+    return () => {
+      window.removeEventListener('pagehide', despachar)
+      document.removeEventListener('visibilitychange', aoEsconder)
+      despachar()
+    }
+  }, [enviarGuardar])
 
   const toast = (t: string) => { setAviso(t); setTimeout(() => setAviso(a => (a === t ? null : a)), 1800) }
 
@@ -159,6 +206,8 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
       })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) { toast(d?.error || 'Não foi possível enviar. Tentem de novo.'); if (d?.estado?.enviada) setEnviada(d.estado.enviada); return }
+      pendente.current = null
+      try { localStorage.removeItem(chaveLocal) } catch {}
       setEnviada(d.estado.enviada)
       onEstado?.(d.estado)
       setConfirmar(false)
@@ -221,6 +270,10 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
               ? <>São <strong>{todas.length.toLocaleString('pt-PT')} fotografias</strong>, arrumadas em {nomesPastas.length} pastas. Toquem numa para a verem em grande e carreguem em <strong>Selecionar</strong>. A escolha fica guardada: podem voltar quando quiserem, também noutro telemóvel ou computador.</>
               : 'A abrir a vossa galeria…'}
           </p>
+          <div className="sg-qualidade">
+            <span className="eyebrow">Nota sobre a qualidade</span>
+            <p>As fotografias desta galeria estão em <strong>baixa qualidade</strong>, só para escolherem. As que escolherem são editadas e entregues no final em <strong>alta qualidade</strong>.</p>
+          </div>
         </div>
 
         {enviada && (
@@ -251,6 +304,26 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
               <button type="button" className={filtro === 'todas' ? 'on' : ''} onClick={() => setFiltro('todas')}>Todas</button>
               <button type="button" className={filtro === 'sel' ? 'on' : ''} onClick={() => setFiltro('sel')}>A minha seleção · {pasta === 'todas' ? total : (porPasta[pasta] ?? 0)}</button>
             </div>
+
+            {filtro === 'sel' && (
+              <div className="sg-resumo">
+                <div className="sg-resumo-head">
+                  <span className="eyebrow">A vossa seleção por pasta</span>
+                  <span className="sg-resumo-total">{total} {total === 1 ? 'fotografia' : 'fotografias'}</span>
+                </div>
+                <div className="sg-resumo-grid">
+                  {nomesPastas.map(p => {
+                    const k = porPasta[p] ?? 0
+                    return (
+                      <button key={p} type="button" className={`sg-resumo-item${k ? '' : ' zero'}${pasta === p ? ' on' : ''}`} onClick={() => setPasta(pasta === p ? 'todas' : p)}>
+                        <span className="t">{p}</span>
+                        <span className="n">{k}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
 
             <div className="sg-grelha">
               {celulas.length ? celulas : (
@@ -316,7 +389,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
             >
               {enviada ? (selSet.has(foto.n) ? 'Escolhida ✓' : 'Seleção fechada') : selSet.has(foto.n) ? 'Selecionada ✓ · tirar' : 'Selecionar'}
             </button>
-            <span className="sg-lb-dica">{total} {total === 1 ? 'escolhida' : 'escolhidas'} · deslizem para o lado para passar</span>
+            <span className="sg-lb-dica">{total} {total === 1 ? 'escolhida' : 'escolhidas'} · pré-visualização em baixa qualidade, entregamos em alta</span>
           </div>
         </div>
       )}

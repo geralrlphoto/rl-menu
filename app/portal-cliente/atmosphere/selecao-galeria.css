@@ -8,9 +8,7 @@
   position: fixed; inset: 0; z-index: 150;
   min-height: 0;
   overflow-y: auto; overscroll-behavior: contain;
-  background-color: var(--bg);
-  background-image: var(--rl-dots, none);
-  background-size: 22px 22px;
+  background: var(--bg);
   padding-bottom: 120px;
   animation: fpModalFade .25s ease;
 }
@@ -111,6 +109,38 @@
 }
 .sg-root .sg-tabs button:hover { border-color: rgba(216,190,147,.6); }
 .sg-root .sg-tabs button.on { color: var(--gold); border-color: rgba(216,190,147,.6); background: rgba(216,190,147,.15); }
+
+/* ── nota da qualidade ── */
+.sg-root .sg-qualidade {
+  max-width: 600px; margin: 22px auto 0; padding: 14px 18px;
+  border-radius: 18px; text-align: center;
+  border: 1px solid rgba(255,255,255,.08); border-left: 2px solid rgba(216,190,147,.45);
+  background: #141414;
+}
+.sg-root .sg-qualidade .eyebrow { font-size: 9.5px; }
+.sg-root .sg-qualidade p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.55; }
+
+/* ── a minha seleção por pasta ── */
+.sg-root .sg-resumo {
+  margin: 0 0 22px; padding: 16px 18px; border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.08); border-left: 2px solid rgba(216,190,147,.45);
+  background: #141414;
+}
+.sg-root .sg-resumo-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sg-root .sg-resumo-total { font-family: var(--fm); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--gold-soft); }
+.sg-root .sg-resumo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin-top: 12px; }
+.sg-root .sg-resumo-item {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px 14px; border-radius: 999px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,.1); background: rgba(14,14,14,.9); color: var(--ink);
+  font-family: var(--fb); font-size: 13.5px; transition: .2s;
+}
+.sg-root .sg-resumo-item .n { font-family: var(--fm); font-size: 12px; color: var(--gold); }
+.sg-root .sg-resumo-item.zero { color: var(--ink-3); }
+.sg-root .sg-resumo-item.zero .n { color: var(--ink-4); }
+.sg-root .sg-resumo-item:hover { border-color: rgba(216,190,147,.6); }
+.sg-root .sg-resumo-item.on { border-color: rgba(216,190,147,.6); background: rgba(216,190,147,.15); }
+@media (max-width: 560px) { .sg-root .sg-resumo-grid { grid-template-columns: 1fr 1fr; } }
 
 /* ── grelha ── */
 .sg-root .sg-grelha { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
