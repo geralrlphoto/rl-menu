@@ -99,7 +99,7 @@ const TOPICS: Topic[] = [
       {
         title: <>O email de <em>boas-vindas</em></>,
         text: 'Logo a seguir recebem o email "💍 O portal do casamento está pronto". É o vosso bilhete de entrada: traz o email de acesso, a palavra-passe que criámos para vocês e o botão Aceder ao Portal.',
-        tip: 'Guardem este email. A referência do casamento (por exemplo CAS_026_26_RL) está no portal e é pedida no formulário de seleção e no registo de pagamentos.',
+        tip: 'Guardem este email. A referência do casamento (por exemplo CAS_026_26_RL) está no portal e é pedida no registo de pagamentos.',
         mock: (
           <div className="m-mail m-in" style={d(0)}>
             <div className="hd">O vosso <em>portal</em></div>
@@ -315,7 +315,7 @@ const TOPICS: Topic[] = [
         list: [
           ['Galeria Online', 'até 7 dias úteis após o casamento'],
           ['Fotos para Seleção', 'até 30 dias úteis após o casamento'],
-          ['A vossa seleção', 'enviada por vocês no formulário'],
+          ['A vossa seleção', 'enviada por vocês na galeria do portal'],
           ['Fotos editadas', '30 dias úteis após recebermos a seleção'],
           ['Download das fotos editadas', 'disponível durante 30 dias'],
           ['Fotos compradas pelos convidados', 'digitais em 15 dias úteis, em papel em 30 dias úteis'],
@@ -324,7 +324,7 @@ const TOPICS: Topic[] = [
           <>
             <div className="m-label m-in" style={d(0)}>Fotografias</div>
             <div className="m-timeline">
-              {[['0', 'Casamento', 'O grande dia', 'ok'], ['7', 'Galeria Online', 'até 7 dias úteis', 'ok'], ['30', 'Fotos p/ Seleção', 'até 30 dias úteis', 'ok'], ['✎', 'Vocês escolhem', 'formulário', ''], ['30', 'Fotos editadas', '30 dias úteis', '']].map(([n, t, s, st], i) => (
+              {[['0', 'Casamento', 'O grande dia', 'ok'], ['7', 'Galeria Online', 'até 7 dias úteis', 'ok'], ['30', 'Fotos p/ Seleção', 'até 30 dias úteis', 'ok'], ['✎', 'Vocês escolhem', 'na galeria', ''], ['30', 'Fotos editadas', '30 dias úteis', '']].map(([n, t, s, st], i) => (
                 <div key={t} className="st m-in" style={d(i + 1)}>
                   <span className={`bul ${st}`}>{n}</span>
                   <span><div style={{ fontSize: 12 }}>{t}</div><div className="m-small">{s}</div></span>
@@ -477,7 +477,7 @@ const TOPICS: Topic[] = [
       },
       {
         title: <>Fotos para <em>Seleção</em></>,
-        text: 'Até 30 dias úteis depois do casamento recebem o email "As vossas fotos estão prontas para seleção". A galeria está organizada em pastas (Noivo, Noiva, Cerimónia e as seguintes) e cada fotografia tem um nome com as vossas iniciais e um número, por exemplo AP-0001.',
+        text: 'Até 30 dias úteis depois do casamento recebem o email "As vossas fotos estão prontas para seleção". Em Fotografias toquem em VER MAIS no cartão Galeria para Seleção: a galeria abre aqui no portal, organizada em pastas (Noivo, Noiva, Cerimónia e as seguintes).',
         tip: 'No cartão Galeria para Seleção há o botão "Como fazer a escolha", que mostra sempre estas instruções.',
         mock: (
           <>
@@ -487,68 +487,46 @@ const TOPICS: Topic[] = [
                 <div key={c} className={`m-img ${[0, 4, 8].includes(i) ? 'sel' : ''}`}><span className="code">AP-{c}</span></div>
               ))}
             </div>
-            <div className="m-row m-in" style={d(3)}><span className="m-btn m-tap">Como fazer a escolha</span><span className="m-btn">Enviar Seleção</span></div>
+            <div className="m-row m-in" style={d(3)}><span className="m-btn gold">Ver mais</span><span className="m-btn m-tap">Como fazer a escolha</span></div>
           </>
         ),
       },
       {
-        title: <>Passo 1: um <em>Word</em> por pastas</>,
-        text: 'Abram um documento Word e criem uma secção para cada pasta da galeria, pela mesma ordem: Noivo, Noiva, Cerimónia e assim sucessivamente. Percorram a galeria pasta a pasta e, em cada secção, escrevam as fotografias que escolheram.',
+        title: <>Passo 1: <em>selecionar</em></>,
+        text: 'Toquem numa fotografia para a verem em grande e carreguem em Selecionar. Também podem tocar no ✓ no canto de cada fotografia. Para passar à seguinte, deslizem para o lado.',
         mock: (
-          <div className="m-doc m-in" style={d(0)}>
-            <div className="s">NOIVO</div><div className="c">AP-0001, AP-0002, AP-0003</div>
-            <div className="s">NOIVA</div><div className="c">AP-0045, AP-0046, AP-0052</div>
-            <div className="s">CERIMÓNIA</div><div className="c">AP-0120, AP-0124, AP-0131</div>
-            <div className="s">CONVIDADOS</div><div className="c">AP-0210, AP-0233 …</div>
+          <div className="m-card m-in" style={{ ...d(0), flexDirection: 'column', alignItems: 'stretch', padding: 8, gap: 8 }}>
+            <div className="m-img sel" style={{ height: 110 }}><span className="code">AP-0124</span></div>
+            <span className="m-btn gold m-tap">Selecionar</span>
           </div>
         ),
       },
       {
-        title: <>Passo 2: os nomes <em>certos</em></>,
-        text: 'Escrevam o nome de cada fotografia exatamente como aparece na galeria: as vossas iniciais, hífen e o número com quatro dígitos. Separem sempre cada fotografia com uma vírgula. Sem vírgulas o formulário não deixa enviar.',
+        title: <>Passo 2: <em>a vossa seleção</em></>,
+        text: 'Em A minha seleção veem só as fotografias que escolheram, pasta a pasta. A escolha fica guardada sozinha: podem parar e voltar quando quiserem, também noutro telemóvel ou computador.',
         list: [
-          ['Certo', 'AP-0001, AP-0002, AP-0003'],
-          ['Errado', '1, 2, 3 (sem iniciais)'],
-          ['Errado', 'AP-0001 AP-0002 (sem vírgula)'],
-        ],
-        tip: 'Um nome mal escrito pode não ser reconhecido e atrasar a edição. Confirmem a numeração antes de enviar.',
-        mock: (
-          <>
-            <div className="m-in" style={d(0)}><div className="m-label">Certo</div><div className="m-input" style={{ borderColor: 'rgba(157,181,139,.5)', color: 'var(--g-ok)' }}>AP-0001, AP-0002, AP-0003</div></div>
-            <div className="m-in" style={d(1)}><div className="m-label" style={{ color: 'var(--g-red)' }}>Errado</div><div className="m-input" style={{ borderColor: 'rgba(224,122,110,.5)' }}>1, 2, 3</div></div>
-            <div className="m-in" style={d(2)}><div className="m-label" style={{ color: 'var(--g-red)' }}>Errado</div><div className="m-input" style={{ borderColor: 'rgba(224,122,110,.5)' }}>AP-0001 AP-0002</div>
-              <div className="m-small" style={{ color: 'var(--g-red)', marginTop: 4 }}>Falta a vírgula entre fotografias.</div></div>
-          </>
-        ),
-      },
-      {
-        title: <>Passo 3: o <em>formulário</em></>,
-        text: 'Toquem em Enviar Seleção. No formulário escrevam o nome dos noivos, a data do casamento e a referência do evento. Depois abram cada secção e colem a escolha do Word. O contador de cada secção mostra quantas fotografias indicaram.',
-        list: [
-          ['Secções', 'Fotos do Noivo · Fotos da Noiva · Cerimónia · Convidados · Sala e Animação · Bolo e Bouquet · Detalhes · Sessão Noivos · Fotos para Álbum'],
-          ['Fotos para Álbum', 'a última secção: as fotografias que querem ver no álbum'],
+          ['Pastas', 'cada pasta mostra quantas fotografias já escolheram'],
+          ['Guardado', 'não é preciso Word, nem escrever os números das fotografias'],
         ],
         mock: (
           <>
-            <div className="m-in" style={d(0)}><div className="m-label">Referência do Evento</div><div className="m-input">CAS_026_26_RL</div></div>
-            {[['Fotos do Noivo', '3 fotos'], ['Fotos da Noiva', '3 fotos'], ['Cerimónia', '0 fotos']].map(([t, n], i) => (
-              <div key={t} className={`m-card m-in ${i === 2 ? 'gold' : ''}`} style={{ ...d(i + 1), padding: '8px 12px' }}><span className="m-grow">{t}</span><span className="m-small">{n} ›</span></div>
+            {[['Noivo', '12 ✓'], ['Noiva', '18 ✓'], ['Cerimónia', '24 ✓']].map(([t, n], i) => (
+              <div key={t} className="m-card m-in" style={{ ...d(i), padding: '8px 12px' }}><span className="m-grow">{t}</span><span className="m-small">{n}</span></div>
             ))}
-            <div className="m-in" style={d(4)}><div className="m-input"><span className="typed">AP-0120, AP-0124, AP-0131</span></div></div>
-            <div className="m-small m-in" style={d(4)}>Separem cada fotografia com vírgula (,)</div>
+            <div className="m-small m-in" style={d(3)}>54 fotografias escolhidas · Guardado</div>
           </>
         ),
       },
       {
-        title: <>Passo 4: <em>enviar</em></>,
-        text: 'Toquem em Enviar seleção. Aparece "Seleção recebida" com o total de fotografias. A partir daqui editamos as fotografias escolhidas e entregamo-las em alta qualidade em 30 dias úteis.',
+        title: <>Passo 3: <em>enviar</em></>,
+        text: 'Quando terminarem, carreguem em Enviar seleção, no fundo da galeria, e confirmem. A seleção chega-nos logo. A partir daqui editamos as fotografias escolhidas e entregamo-las em alta qualidade em 30 dias úteis.',
         mock: (
           <>
             <span className="m-btn gold m-in m-tap" style={d(0)}>Enviar seleção</span>
             <div className="m-in" style={{ ...d(3), textAlign: 'center', padding: '18px 0 6px' }}>
               <div style={{ width: 40, height: 40, margin: '0 auto 10px', borderRadius: '50%', border: '1px solid var(--g-gold)', display: 'grid', placeItems: 'center', color: 'var(--g-gold)' }}>✓</div>
-              <div className="m-h" style={{ fontSize: 20 }}>Seleção <em>recebida.</em></div>
-              <div className="m-small" style={{ marginTop: 6 }}>Já temos a vossa seleção de 86 fotografias. Entregamos em 30 dias úteis.</div>
+              <div className="m-h" style={{ fontSize: 20 }}>Seleção <em>enviada.</em></div>
+              <div className="m-small" style={{ marginTop: 6 }}>Recebemos a vossa escolha de 86 fotografias. Entregamos em 30 dias úteis.</div>
             </div>
             <div className="m-card m-in" style={d(5)}><span className="m-grow">Seleção Fotos</span><ChipSwap from={['Em Seleção', 'info']} to={['Concluído', 'ok']} /></div>
           </>

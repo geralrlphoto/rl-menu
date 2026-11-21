@@ -17,6 +17,8 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { SectionTitle } from './SectionTitle'
 import { useTemaRL, useBatizado } from './PortalShell'
+import { SelecaoGaleria, type EstadoSelecao } from './SelecaoGaleria'
+import { ehGaleriaWfolio } from '@/lib/wfolioGaleria'
 import './fotografias.css'
 
 export type FotografiasCard = {
@@ -415,8 +417,10 @@ function ShareGalleryButton({ url, storageKey }: { url: string; storageKey: stri
    como preparar a selecção num Word, pasta a pasta, antes de a
    enviarem pelo formulário.
    ─────────────────────────────────────────────────────────────── */
-function ComoEscolherButton({ enviarUrl }: { enviarUrl: string }) {
+function ComoEscolherButton({ enviarUrl, onAbrirGaleria }: { enviarUrl: string; onAbrirGaleria?: () => void }) {
   const [open, setOpen] = useState(false)
+  // Galeria dentro do portal: a escolha e o envio fazem-se lá, sem Word nem formulário
+  const interna = !!onAbrirGaleria
 
   useEffect(() => {
     if (!open) return
@@ -447,6 +451,37 @@ function ComoEscolherButton({ enviarUrl }: { enviarUrl: string }) {
             <div className="eyebrow">Seleção</div>
             <h3 id="fp-modal-title">Como fazer a vossa <em>escolha</em></h3>
 
+            {interna ? (
+              <>
+                <ol className="fp-modal-steps">
+                  <li>
+                    <span className="n">01</span>
+                    <p>Carreguem em <strong>Ver Mais</strong>. A galeria abre aqui no portal, arrumada pelas mesmas pastas: <strong>Noivo</strong>, <strong>Noiva</strong>, <strong>Cerimónia</strong> e assim sucessivamente.</p>
+                  </li>
+                  <li>
+                    <span className="n">02</span>
+                    <p>Toquem numa fotografia para a verem em grande e carreguem em <strong>Selecionar</strong>. Também podem tocar no <strong>✓</strong> no canto de cada fotografia.</p>
+                  </li>
+                  <li>
+                    <span className="n">03</span>
+                    <p>Em <strong>A minha seleção</strong> veem só as que escolheram. A escolha fica guardada sozinha: podem parar e voltar quando quiserem, também noutro telemóvel ou computador.</p>
+                  </li>
+                  <li>
+                    <span className="n">04</span>
+                    <p>Quando terminarem, carreguem em <strong>Enviar seleção</strong>, no fundo da galeria. A seleção chega-nos logo e passamos à edição.</p>
+                  </li>
+                </ol>
+                <div className="fp-modal-actions">
+                  <button type="button" className="fp-btn available" onClick={() => { setOpen(false); onAbrirGaleria!() }}>
+                    Abrir a galeria
+                    <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
+                    </svg>
+                  </button>
+                  <button type="button" className="fp-btn ghost" onClick={() => setOpen(false)}>Percebido</button>
+                </div>
+              </>
+            ) : (<>
             <ol className="fp-modal-steps">
               <li>
                 <span className="n">01</span>
@@ -485,6 +520,7 @@ function ComoEscolherButton({ enviarUrl }: { enviarUrl: string }) {
               </a>
               <button type="button" className="fp-btn ghost" onClick={() => setOpen(false)}>Percebido</button>
             </div>
+            </>)}
           </div>
         </div>
         </div>,
@@ -502,12 +538,37 @@ export function FotografiasView(props: FotografiasViewProps) {
   const temaRL = useTemaRL()
   const evento = useBatizado() ? 'batizado' : 'casamento'
   const casamento = /^\d{4}-\d{2}-\d{2}/.test(props.dataCasamento ?? '') ? props.dataCasamento!.slice(0, 10) : null
+
+  // ── Galeria para Seleção dentro do portal (quando o link é uma galeria do Wfolio) ──
+  const urlSelecao = props.cards.find(c => c.key === 'selecao')?.url ?? null
+  const selecaoInterna = ehGaleriaWfolio(urlSelecao) && !!props.portalRef
+  const [galeriaAberta, setGaleriaAberta] = useState(false)
+  const [estadoSel, setEstadoSel] = useState<EstadoSelecao | null>(null)
+  useEffect(() => {
+    if (!selecaoInterna) return
+    let vivo = true
+    fetch(`/api/fotos-selecao-galeria?ref=${encodeURIComponent(props.portalRef!)}&estado=1`)
+      .then(r => r.json()).then(d => { if (vivo && d?.estado) setEstadoSel(d.estado) }).catch(() => {})
+    return () => { vivo = false }
+  }, [selecaoInterna, props.portalRef])
+  // Abre logo a galeria quando o endereço traz #selecao (ex.: link do email)
+  useEffect(() => {
+    if (selecaoInterna && window.location.hash === '#selecao') setGaleriaAberta(true)
+  }, [selecaoInterna])
+
   // Estado e data prevista de cada galeria (prazos do guia: 7 e 30 dias úteis)
   const estadoGaleria = (c: FotografiasCard): { estado: string; nota?: string; tom: 'ok' | 'info' | 'wait' | 'alerta' } => {
     const ok = Boolean(c.url && c.url.length > 0)
     if (c.key === 'selecao') {
       const editadas = props.cards.find(x => x.key === 'editadas')
       if (editadas?.url) return { estado: 'Concluída', tom: 'ok' }
+      if (ok && selecaoInterna && estadoSel?.enviada) {
+        return { estado: 'Seleção enviada', nota: `${estadoSel.sel.length} fotografias · recebida a ${new Date(estadoSel.enviada).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' })}`, tom: 'info' }
+      }
+      if (ok && selecaoInterna && estadoSel && estadoSel.sel.length > 0) {
+        const n = estadoSel.sel.length
+        return { estado: 'Em seleção', nota: `${n} ${n === 1 ? 'fotografia escolhida' : 'fotografias escolhidas'} · falta enviar`, tom: 'wait' }
+      }
       if (ok && /envia|edi|entreg/i.test(props.estadoEdicao ?? '')) return { estado: 'Seleção recebida · em edição', tom: 'info' }
       if (ok) return { estado: 'Por escolher', nota: 'Escolham as fotografias e enviem a seleção', tom: 'wait' }
       return { estado: 'A aguardar', nota: casamento ? `Prevista até ${dataPt(somaUteis(casamento, 30))}` : `Até 30 dias úteis depois do ${evento}`, tom: 'wait' }
@@ -628,7 +689,14 @@ export function FotografiasView(props: FotografiasViewProps) {
                   </div>
                 </div>
                 <div className="fp-card-foot">
-                  {available ? (
+                  {available && c.key === 'selecao' && selecaoInterna ? (
+                    <button type="button" className="fp-btn available" onClick={() => setGaleriaAberta(true)}>
+                      Ver Mais
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
+                      </svg>
+                    </button>
+                  ) : available ? (
                     <a className="fp-btn available" href={c.url!} target="_blank" rel="noopener noreferrer">
                       {c.key === 'convidados' ? 'Ver página dos convidados' : 'Ver Mais'}
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -660,9 +728,13 @@ export function FotografiasView(props: FotografiasViewProps) {
                   {/* O card da selecção leva também o formulário: é por ali
                       que a escolha nos chega. */}
                   {c.key === 'selecao' && (
-                    <ComoEscolherButton enviarUrl={props.enviarFotosUrl} />
+                    <ComoEscolherButton
+                      enviarUrl={props.enviarFotosUrl}
+                      onAbrirGaleria={available && selecaoInterna ? () => setGaleriaAberta(true) : undefined}
+                    />
                   )}
-                  {c.key === 'selecao' && (
+                  {/* Com a galeria dentro do portal o envio faz-se lá dentro */}
+                  {c.key === 'selecao' && !(available && selecaoInterna) && (
                     <a className="fp-btn ghost" href={props.enviarFotosUrl} target="_blank" rel="noopener noreferrer">
                       Enviar Selecção
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -725,6 +797,19 @@ export function FotografiasView(props: FotografiasViewProps) {
             maqueteUrl={props.maqueteUrl ?? null}
           />
         )}
+
+      {galeriaAberta && selecaoInterna && (
+        <SelecaoGaleria
+          portalRef={props.portalRef!}
+          tipo={evento}
+          temaRL={temaRL}
+          onClose={() => {
+            setGaleriaAberta(false)
+            if (window.location.hash === '#selecao') history.replaceState(null, '', window.location.pathname + window.location.search)
+          }}
+          onEstado={setEstadoSel}
+        />
+      )}
     </div>
   )
 }
