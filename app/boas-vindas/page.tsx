@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
-import { Saira_Extra_Condensed } from 'next/font/google'
 import { CSS_BRIEFING } from '@/app/_briefing/estilo'
 
 // Letras da RL Prod (como no rlprod.pt): condensada grossa/fina + mono técnica
-const saira = Saira_Extra_Condensed({ subsets: ['latin'], weight: ['200', '300', '500', '800'], variable: '--f-saira' })
+// Por <link> e não por next/font/google: o Vercel falha a descarregar letras do Google no build
+const SAIRA_CSS = 'https://fonts.googleapis.com/css2?family=Saira+Extra+Condensed:wght@200;300;500;800&display=swap'
 // JetBrains Mono vem por <link> (o next/font falhava a descarregá-la no build do Vercel)
 const JETBRAINS_CSS = 'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap'
 
@@ -153,7 +153,8 @@ function Titulo() {
 
 export default function BoasVindasPage() {
   return (
-    <main className={`nlead bv ${saira.variable}`}style={{ minHeight: '100vh', background: 'var(--ink)' }}>
+    <main className="nlead bv" style={{ minHeight: '100vh', background: 'var(--ink)', ['--f-saira' as string]: "'Saira Extra Condensed'" }}>
+      <link rel="stylesheet" href={SAIRA_CSS} precedence="default" />
       <link rel="stylesheet" href={JETBRAINS_CSS} precedence="default" />
       <style>{CSS_BRIEFING + CSS}</style>
       <div className="fx-grain" aria-hidden="true" />
