@@ -443,7 +443,17 @@ export default function AdquirirFotografiasPage() {
     }
 
     addFoto.addEventListener('click', function () { addRow(); update() })
-    addRow()  // começa com 1 espaço
+    // Vindo da galeria dos convidados: as fotografias escolhidas já entram na lista
+    var escolhidas: string[] = []
+    try {
+      var guardadas = JSON.parse(sessionStorage.getItem('rl_adqf_fotos') || '[]')
+      if (Array.isArray(guardadas)) escolhidas = guardadas.filter(function (x: unknown) { return typeof x === 'string' && x }).slice(0, 500)
+    } catch (e) { /* sem escolha guardada */ }
+    if (escolhidas.length) {
+      escolhidas.forEach(function (nome) { addRow(); (fotoList.lastElementChild!.querySelector('input') as HTMLInputElement).value = nome })
+    } else {
+      addRow()  // começa com 1 espaço
+    }
 
     seg.querySelectorAll('label').forEach(function (lab) {
       lab.addEventListener('click', function () {
@@ -619,6 +629,12 @@ export default function AdquirirFotografiasPage() {
         await fetch('/api/photo-orders', { method: 'POST', body: fd })
       } catch (err) { /* mostra confirmação na mesma */ }
 
+      // Pedido feito: a escolha da galeria dos convidados fica limpa
+      try {
+        var chaveGaleria = sessionStorage.getItem('rl_adqf_chave')
+        if (chaveGaleria) localStorage.removeItem(chaveGaleria)
+        sessionStorage.removeItem('rl_adqf_fotos'); sessionStorage.removeItem('rl_adqf_chave')
+      } catch (e) { /* nada */ }
       document.getElementById('orderBlock')!.style.display = 'none'
       var s = document.getElementById('sentBlock')!; s.classList.add('show')
       document.getElementById('sentRecap')!.innerHTML =

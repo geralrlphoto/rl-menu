@@ -5,6 +5,8 @@
 import { createClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { ehGaleriaWfolio } from '@/lib/wfolioGaleria'
+import GaleriaConvidados from './GaleriaConvidados'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,7 +43,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 }
 
 export default async function ConvidadosPage({ params }: { params: Promise<{ id: string }> }) {
-  const c = await carregar((await params).id)
+  const { id } = await params
+  const c = await carregar(id)
   if (!c) notFound()
 
   const dataLonga = /^\d{4}-\d{2}-\d{2}$/.test(c.data)
@@ -83,7 +86,10 @@ export default async function ConvidadosPage({ params }: { params: Promise<{ id:
 
       {/* ── os dois caminhos ── */}
       <section className="mx-auto grid max-w-4xl gap-5 px-5 pb-12 sm:grid-cols-2">
-        {c.galeria ? (
+        {c.galeria && ehGaleriaWfolio(c.galeria) ? (
+          // Galeria do Wfolio: abre aqui, escolhem e seguem para o formulário com as fotos
+          <GaleriaConvidados portalId={id} evento={c.evento as 'casamento' | 'batizado'} comprar={comprar} foto={c.foto} cartao={cartao} />
+        ) : c.galeria ? (
           <a href={c.galeria} target="_blank" rel="noopener noreferrer" className={cartao} style={{ borderLeft: '2px solid rgba(216,190,147,0.6)' }}>
             {c.foto && (
               // eslint-disable-next-line @next/next/no-img-element
@@ -110,7 +116,7 @@ export default async function ConvidadosPage({ params }: { params: Promise<{ id:
           <div className="p-6">
             <p className="font-cond text-[11px] font-medium tracking-[0.2em] uppercase" style={{ color: G }}>02 · Adquirir</p>
             <h2 className="mt-2 font-cond font-semibold text-[26px]">Adquirir fotografias</h2>
-            <p className="mt-2 font-cond text-[15px] leading-relaxed text-white/55">Indiquem os números das fotografias, escolham o formato e enviem o pedido. Recebem um ticket por email.</p>
+            <p className="mt-2 font-cond text-[15px] leading-relaxed text-white/55">Escolham as fotografias na galeria ou indiquem os números, escolham o formato e enviem o pedido. Recebem um ticket por email.</p>
             <div className="mt-5 grid grid-cols-2 gap-3">
               <div className="rounded-[16px] border border-white/[0.08] bg-[#111111] p-3">
                 <p className="font-cond text-[11px] text-white/45">Digital</p>

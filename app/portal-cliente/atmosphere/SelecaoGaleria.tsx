@@ -21,13 +21,20 @@ type FotoL = Foto & { pasta: string }
 const PASSO = 120
 const dataPt = (iso: string) => new Date(iso).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
 
-export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
+export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fonteUrl, convidados }: {
+  /** Noivos: referência do portal. Convidados: id do portal. */
   portalRef: string
   tipo: 'casamento' | 'batizado'
   temaRL: boolean
   onClose: () => void
   onEstado?: (e: EstadoSelecao) => void
+  /** De onde vêm as fotografias (por omissão, a galeria de seleção dos noivos) */
+  fonteUrl?: string
+  /** Modo convidados: a escolha fica só neste dispositivo e o fim é "Continuar"
+   *  para o formulário de compra, em vez de enviar a seleção. */
+  convidados?: { onContinuar: (sel: string[]) => void }
 }) {
+  const conv = !!convidados
   const [pastas, setPastas] = useState<Pasta[] | null>(null)
   const [cdn, setCdn] = useState('')
   const [erro, setErro] = useState<string | null>(null)
@@ -52,16 +59,22 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
   // ── carregar a galeria e a escolha guardada ──
   useEffect(() => {
     let vivo = true
-    fetch(`/api/fotos-selecao-galeria?ref=${encodeURIComponent(portalRef)}`)
+    fetch(fonteUrl ?? `/api/fotos-selecao-galeria?ref=${encodeURIComponent(portalRef)}`)
       .then(r => r.json())
       .then(d => {
         if (!vivo) return
-        if (d?.estado) {
+        if (conv) {
+          // Convidados: a escolha vive só neste dispositivo
+          try {
+            const local = JSON.parse(localStorage.getItem(`rl_conv_${portalRef}`) || 'null')
+            if (local && Array.isArray(local.sel)) { setSel(local.sel); selRef.current = local.sel }
+          } catch {}
+        } else if (d?.estado) {
           setSel(d.estado.sel ?? [])
           setEnviada(d.estado.enviada ?? null)
         }
         // Escolha que ficou só neste dispositivo (a internet falhou ao sair): repõe e guarda
-        try {
+        if (!conv) try {
           const local = JSON.parse(localStorage.getItem(`rl_selecao_${portalRef}`) || 'null')
           if (local && Array.isArray(local.sel) && !d?.estado?.enviada) {
             const servidor = new Date(d?.estado?.atualizado || 0).getTime()
@@ -76,7 +89,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
       })
       .catch(() => vivo && setErro('Não foi possível abrir a galeria. Verifiquem a ligação à internet.'))
     return () => { vivo = false }
-  }, [portalRef])
+  }, [portalRef, fonteUrl, conv])
 
   // ── bloquear o scroll da página por baixo ──
   useEffect(() => {
@@ -103,7 +116,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
   // Vai para o portal pouco depois de cada toque e, se ainda faltar, logo que
   // fecham a galeria ou saem do portal. Há também uma cópia neste dispositivo
   // até o portal confirmar, para nada se perder se a internet falhar.
-  const chaveLocal = `rl_selecao_${portalRef}`
+  const chaveLocal = conv ? `rl_conv_${portalRef}` : `rl_selecao_${portalRef}`
   const pendente = useRef<string[] | null>(null)
   const onEstadoRef = useRef(onEstado)
   useEffect(() => { onEstadoRef.current = onEstado }, [onEstado])
@@ -125,12 +138,13 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
   }, [portalRef, chaveLocal])
 
   const guardar = useCallback((nova: string[]) => {
-    pendente.current = nova
     try { localStorage.setItem(chaveLocal, JSON.stringify({ sel: nova, em: Date.now() })) } catch {}
+    if (conv) { setGuardado('ok'); return }   // convidados: só neste dispositivo
+    pendente.current = nova
     if (timer.current) clearTimeout(timer.current)
     setGuardado('a-guardar')
     timer.current = setTimeout(() => enviarGuardar(nova), 700)
-  }, [chaveLocal, enviarGuardar])
+  }, [chaveLocal, enviarGuardar, conv])
 
   useEffect(() => { guardarRef.current = guardar }, [guardar])
 
@@ -218,12 +232,13 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
   const foto = aberta !== null ? lista[aberta] : null
   const seguinte = aberta !== null && lista.length ? lista[(aberta + 1) % lista.length] : null
   const nomesPastas = (pastas ?? []).map(p => p.nome)
+  const variasPastas = nomesPastas.length > 1
 
   // grelha com títulos de pasta
   const celulas: ReactNode[] = []
   let ultima: string | null = null
   lista.slice(0, mostrar).forEach((f, i) => {
-    if (pasta === 'todas' && f.pasta !== ultima) {
+    if (pasta === 'todas' && variasPastas && f.pasta !== ultima) {
       ultima = f.pasta
       const k = porPasta[f.pasta] ?? 0
       celulas.push(
@@ -250,29 +265,32 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
   })
 
   const total = sel.length
+  const titulo = conv ? `Fotografias do ${tipo}` : 'Galeria para Seleção'
 
   return createPortal(
     <div className={`portal-atmosphere fp-modal-root sg-root${temaRL ? ' tema-rl' : ''}`} ref={rootRef}>
       {/* ── barra do topo ── */}
       <header className="sg-top">
         <button type="button" className="sg-voltar" onClick={onClose}>‹ Voltar</button>
-        <span className="sg-top-t">Galeria para Seleção</span>
+        <span className="sg-top-t">{titulo}</span>
         <span className="sg-top-n">{total} {total === 1 ? 'escolhida' : 'escolhidas'}</span>
       </header>
 
       <div className="sg-wrap">
         <div className="sg-hero">
-          <div className="eyebrow">Galeria para Seleção</div>
+          <div className="eyebrow">{titulo}</div>
           <h2>Escolham as vossas <em>fotografias.</em></h2>
           <hr className="lede-rule" />
           <p>
             {todas.length > 0
-              ? <>São <strong>{todas.length.toLocaleString('pt-PT')} fotografias</strong>, arrumadas em {nomesPastas.length} pastas. Toquem numa para a verem em grande e carreguem em <strong>Selecionar</strong>. A escolha fica guardada: podem voltar quando quiserem, também noutro telemóvel ou computador.</>
+              ? conv
+                ? <>São <strong>{todas.length.toLocaleString('pt-PT')} fotografias</strong>. Toquem numa para a verem em grande e carreguem em <strong>Selecionar</strong>. Quando terminarem, carreguem em <strong>Continuar</strong> para indicarem os vossos dados e o formato, digital ou papel.</>
+                : <>São <strong>{todas.length.toLocaleString('pt-PT')} fotografias</strong>, arrumadas em {nomesPastas.length} pastas. Toquem numa para a verem em grande e carreguem em <strong>Selecionar</strong>. A escolha fica guardada: podem voltar quando quiserem, também noutro telemóvel ou computador.</>
               : 'A abrir a vossa galeria…'}
           </p>
           <div className="sg-qualidade">
             <span className="eyebrow">Nota sobre a qualidade</span>
-            <p>As fotografias desta galeria estão em <strong>baixa qualidade</strong>, só para escolherem. As que escolherem são editadas e entregues no final em <strong>alta qualidade</strong>.</p>
+            <p>As fotografias desta galeria estão em <strong>baixa qualidade</strong>, só para escolherem. As que {conv ? 'adquirirem' : 'escolherem'} são {conv ? 'entregues' : 'editadas e entregues no final'} em <strong>alta qualidade</strong>.</p>
           </div>
         </div>
 
@@ -287,7 +305,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
 
         {pastas && (
           <>
-            <nav className="sg-pastas">
+            {variasPastas && <nav className="sg-pastas">
               {['todas', ...nomesPastas].map(p => {
                 const n = p === 'todas' ? todas.length : (pastas.find(x => x.nome === p)?.fotos.length ?? 0)
                 const k = p === 'todas' ? total : (porPasta[p] ?? 0)
@@ -298,14 +316,14 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
                   </button>
                 )
               })}
-            </nav>
+            </nav>}
 
             <div className="sg-tabs">
               <button type="button" className={filtro === 'todas' ? 'on' : ''} onClick={() => setFiltro('todas')}>Todas</button>
               <button type="button" className={filtro === 'sel' ? 'on' : ''} onClick={() => setFiltro('sel')}>A minha seleção · {pasta === 'todas' ? total : (porPasta[pasta] ?? 0)}</button>
             </div>
 
-            {filtro === 'sel' && (
+            {filtro === 'sel' && variasPastas && (
               <div className="sg-resumo">
                 <div className="sg-resumo-head">
                   <span className="eyebrow">A vossa seleção por pasta</span>
@@ -342,12 +360,18 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado }: {
             <div className="sg-rodape-info">
               <span><strong>{total}</strong> {total === 1 ? 'fotografia escolhida' : 'fotografias escolhidas'}</span>
               <span className={`sg-guardado ${guardado}`}>
-                {enviada ? 'Enviada' : guardado === 'a-guardar' ? 'A guardar…' : guardado === 'erro' ? 'Não guardou, verifiquem a internet' : 'Guardado'}
+                {conv ? 'Guardado neste dispositivo' : enviada ? 'Enviada' : guardado === 'a-guardar' ? 'A guardar…' : guardado === 'erro' ? 'Não guardou, verifiquem a internet' : 'Guardado'}
               </span>
             </div>
-            <button type="button" className="fp-btn available sg-enviar" disabled={!!enviada || total === 0} onClick={() => setConfirmar(true)}>
-              {enviada ? 'Seleção enviada' : 'Enviar seleção'}
-            </button>
+            {conv ? (
+              <button type="button" className="fp-btn available sg-enviar" disabled={total === 0} onClick={() => convidados!.onContinuar(todas.filter(f => selSet.has(f.n)).map(f => f.n))}>
+                Continuar →
+              </button>
+            ) : (
+              <button type="button" className="fp-btn available sg-enviar" disabled={!!enviada || total === 0} onClick={() => setConfirmar(true)}>
+                {enviada ? 'Seleção enviada' : 'Enviar seleção'}
+              </button>
+            )}
           </div>
         </footer>
       )}
