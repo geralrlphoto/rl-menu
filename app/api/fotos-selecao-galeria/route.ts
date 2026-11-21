@@ -80,15 +80,24 @@ export async function POST(req: Request) {
   const atual = estadoDe(portal.settings)
   if (atual.enviada) return NextResponse.json({ error: 'Esta seleção já foi enviada.', estado: atual }, { status: 409 })
 
-  const sel: string[] = Array.isArray(body.sel)
-    ? [...new Set<string>(body.sel.filter((x: unknown): x is string => typeof x === 'string' && x.length < 80))].slice(0, 5000)
+  const nomes = (v: unknown): string[] => Array.isArray(v)
+    ? [...new Set<string>(v.filter((x: unknown): x is string => typeof x === 'string' && x.length > 0 && x.length < 80))].slice(0, 5000)
     : []
   const agora = new Date().toISOString()
 
-  if (body.acao === 'guardar') {
-    const err = await gravarEstado(portal.id, portal.settings, { sel, atualizado: agora, enviada: null })
-    if (err) return NextResponse.json({ error: err.message }, { status: 500 })
-    return NextResponse.json({ ok: true })
+  // Cada aparelho manda só o que juntou e o que tirou: assim os dois noivos podem
+  // escolher ao mesmo tempo sem um apagar as escolhas do outro.
+  const novas = nomes(body.add), tira = new Set(nomes(body.rem))
+  const sel = [...atual.sel.filter(n => !tira.has(n))]
+  for (const n of novas) if (!sel.includes(n) && !tira.has(n)) sel.push(n)
+  const mudou = novas.length > 0 || tira.size > 0
+
+  if (body.acao === 'alterar') {
+    if (mudou) {
+      const err = await gravarEstado(portal.id, portal.settings, { sel, atualizado: agora, enviada: null })
+      if (err) return NextResponse.json({ error: err.message }, { status: 500 })
+    }
+    return NextResponse.json({ ok: true, estado: { sel, atualizado: mudou ? agora : atual.atualizado, enviada: null } })
   }
 
   if (body.acao !== 'enviar') return NextResponse.json({ error: 'acao' }, { status: 400 })

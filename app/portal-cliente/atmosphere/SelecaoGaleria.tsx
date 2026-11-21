@@ -19,6 +19,12 @@ export type EstadoSelecao = { sel: string[]; atualizado?: string | null; enviada
 type FotoL = Foto & { pasta: string }
 
 const PASSO = 120
+/** Escolha do portal + alterações deste aparelho ainda por confirmar */
+function juntar(base: string[], d: Record<string, 'add' | 'rem'>): string[] {
+  const out = base.filter(n => d[n] !== 'rem')
+  for (const n of Object.keys(d)) if (d[n] === 'add' && !out.includes(n)) out.push(n)
+  return out
+}
 const dataPt = (iso: string) => new Date(iso).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
 
 export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fonteUrl, convidados }: {
@@ -53,7 +59,9 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const carregado = useRef(false)
   const selRef = useRef<string[]>([])
-  const guardarRef = useRef<((s: string[]) => void) | null>(null)
+  const guardarRef = useRef<(() => void) | null>(null)
+  // alterações ainda por confirmar pelo portal: nome → juntar/tirar
+  const delta = useRef<Record<string, 'add' | 'rem'>>({})
   useEffect(() => { selRef.current = sel }, [sel])
 
   // ── carregar a galeria e a escolha guardada ──
@@ -70,18 +78,18 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
             if (local && Array.isArray(local.sel)) { setSel(local.sel); selRef.current = local.sel }
           } catch {}
         } else if (d?.estado) {
-          setSel(d.estado.sel ?? [])
           setEnviada(d.estado.enviada ?? null)
-        }
-        // Escolha que ficou só neste dispositivo (a internet falhou ao sair): repõe e guarda
-        if (!conv) try {
-          const local = JSON.parse(localStorage.getItem(`rl_selecao_${portalRef}`) || 'null')
-          if (local && Array.isArray(local.sel) && !d?.estado?.enviada) {
-            const servidor = new Date(d?.estado?.atualizado || 0).getTime()
-            if (local.em > servidor) { setSel(local.sel); selRef.current = local.sel; guardarRef.current?.(local.sel) }
-            else localStorage.removeItem(`rl_selecao_${portalRef}`)
+          // Alterações que ficaram só neste aparelho (a internet falhou ao sair): juntam-se e seguem
+          if (!d.estado.enviada) {
+            try {
+              const local = JSON.parse(localStorage.getItem(`rl_selecao_${portalRef}`) || 'null')
+              if (local?.delta && typeof local.delta === 'object') delta.current = { ...local.delta, ...delta.current }
+            } catch {}
           }
-        } catch {}
+          const base = juntar(d.estado.sel ?? [], delta.current)
+          setSel(base); selRef.current = base
+          if (Object.keys(delta.current).length) guardarRef.current?.()
+        }
         if (!d?.ok) { setErro(d?.error === 'wfolio' ? 'A galeria está a demorar a responder. Tentem de novo daqui a pouco.' : 'A galeria ainda não está disponível.'); return }
         setCdn(d.cdn)
         setPastas(d.pastas)
@@ -113,68 +121,105 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   }, [todas, selSet])
 
   // ── guardar a escolha ──
-  // Vai para o portal pouco depois de cada toque e, se ainda faltar, logo que
-  // fecham a galeria ou saem do portal. Há também uma cópia neste dispositivo
-  // até o portal confirmar, para nada se perder se a internet falhar.
+  // Cada toque é uma alteração ("juntar" ou "tirar"). Seguem para o portal pouco
+  // depois e, se ainda faltar, logo que fecham a galeria ou saem do portal. O portal
+  // junta as alterações dos dois aparelhos, por isso os noivos podem escolher ao
+  // mesmo tempo. Até o portal confirmar, as alterações ficam também neste aparelho.
   const chaveLocal = conv ? `rl_conv_${portalRef}` : `rl_selecao_${portalRef}`
-  const pendente = useRef<string[] | null>(null)
   const onEstadoRef = useRef(onEstado)
   useEffect(() => { onEstadoRef.current = onEstado }, [onEstado])
 
-  const enviarGuardar = useCallback((nova: string[], aSair = false) => {
+  const guardarLocal = useCallback(() => {
+    try {
+      if (Object.keys(delta.current).length) localStorage.setItem(chaveLocal, JSON.stringify({ delta: delta.current, em: Date.now() }))
+      else localStorage.removeItem(chaveLocal)
+    } catch {}
+  }, [chaveLocal])
+
+  const mostrarServidor = useCallback((estado: EstadoSelecao) => {
+    if (estado.enviada) { setEnviada(estado.enviada); delta.current = {}; guardarLocal() }
+    const nova = juntar(estado.sel ?? [], delta.current)
+    selRef.current = nova
+    setSel(nova)
+  }, [guardarLocal])
+
+  const enviarAlteracoes = useCallback((aSair = false) => {
+    const envio = { ...delta.current }
+    const nomes = Object.keys(envio)
+    if (!nomes.length) return
     fetch('/api/fotos-selecao-galeria', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ref: portalRef, acao: 'guardar', sel: nova }),
+      body: JSON.stringify({
+        ref: portalRef, acao: 'alterar',
+        add: nomes.filter(n => envio[n] === 'add'),
+        rem: nomes.filter(n => envio[n] === 'rem'),
+      }),
       keepalive: aSair,
-    }).then(r => {
-      if (!r.ok) { setGuardado('erro'); return }
-      if (pendente.current === nova) {
-        pendente.current = null
-        setGuardado('ok')
-        try { localStorage.removeItem(chaveLocal) } catch {}
-      }
-      onEstadoRef.current?.({ sel: nova, enviada: null })
+    }).then(async r => {
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { setGuardado('erro'); if (d?.estado?.enviada) mostrarServidor(d.estado); return }
+      // o que já chegou ao portal sai da lista de alterações por enviar
+      for (const n of nomes) if (delta.current[n] === envio[n]) delete delta.current[n]
+      guardarLocal()
+      if (d?.estado) { mostrarServidor(d.estado); onEstadoRef.current?.(d.estado) }
+      setGuardado(Object.keys(delta.current).length ? 'a-guardar' : 'ok')
     }).catch(() => setGuardado('erro'))
-  }, [portalRef, chaveLocal])
+  }, [portalRef, guardarLocal, mostrarServidor])
 
-  const guardar = useCallback((nova: string[]) => {
-    try { localStorage.setItem(chaveLocal, JSON.stringify({ sel: nova, em: Date.now() })) } catch {}
-    if (conv) { setGuardado('ok'); return }   // convidados: só neste dispositivo
-    pendente.current = nova
+  const guardar = useCallback(() => {
+    guardarLocal()
     if (timer.current) clearTimeout(timer.current)
     setGuardado('a-guardar')
-    timer.current = setTimeout(() => enviarGuardar(nova), 700)
-  }, [chaveLocal, enviarGuardar, conv])
+    timer.current = setTimeout(() => enviarAlteracoes(), 700)
+  }, [guardarLocal, enviarAlteracoes])
 
   useEffect(() => { guardarRef.current = guardar }, [guardar])
 
-  // ao fechar a galeria, mudar de separador ou sair do portal: guarda já o que faltar
+  // Vai buscar ao portal as escolhas feitas noutro aparelho (sem polling: só quando voltam à galeria)
+  const atualizar = useCallback(async () => {
+    if (conv) return
+    try {
+      const r = await fetch(`/api/fotos-selecao-galeria?ref=${encodeURIComponent(portalRef)}&estado=1`)
+      const d = await r.json()
+      if (d?.estado) mostrarServidor(d.estado)
+    } catch {}
+  }, [conv, portalRef, mostrarServidor])
+
+  // ao fechar a galeria, mudar de separador ou sair do portal: guarda já o que faltar;
+  // ao voltar ao separador: atualiza com as escolhas do outro aparelho
   useEffect(() => {
+    if (conv) return
     const despachar = () => {
-      if (!pendente.current) return
+      if (!Object.keys(delta.current).length) return
       if (timer.current) clearTimeout(timer.current)
-      enviarGuardar(pendente.current, true)
+      enviarAlteracoes(true)
     }
-    const aoEsconder = () => { if (document.visibilityState === 'hidden') despachar() }
+    const aoMudar = () => { if (document.visibilityState === 'hidden') despachar(); else atualizar() }
     window.addEventListener('pagehide', despachar)
-    document.addEventListener('visibilitychange', aoEsconder)
+    document.addEventListener('visibilitychange', aoMudar)
     return () => {
       window.removeEventListener('pagehide', despachar)
-      document.removeEventListener('visibilitychange', aoEsconder)
+      document.removeEventListener('visibilitychange', aoMudar)
       despachar()
     }
-  }, [enviarGuardar])
+  }, [conv, enviarAlteracoes, atualizar])
 
   const toast = (t: string) => { setAviso(t); setTimeout(() => setAviso(a => (a === t ? null : a)), 1800) }
 
   const alternar = useCallback((n: string) => {
     if (enviada) { toast('A seleção já foi enviada'); return }
     const prev = selRef.current
-    const nova = prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n]
+    const tirar = prev.includes(n)
+    const nova = tirar ? prev.filter(x => x !== n) : [...prev, n]
     selRef.current = nova
     setSel(nova)
-    guardar(nova)
-  }, [enviada, guardar])
+    if (conv) {   // convidados: só neste dispositivo
+      try { localStorage.setItem(chaveLocal, JSON.stringify({ sel: nova, em: Date.now() })) } catch {}
+      return
+    }
+    delta.current[n] = tirar ? 'rem' : 'add'
+    guardar()
+  }, [enviada, guardar, conv, chaveLocal])
 
   // ── carregar mais fotografias ao descer ──
   useEffect(() => { setMostrar(PASSO) }, [pasta, filtro])
@@ -216,13 +261,17 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
     try {
       const r = await fetch('/api/fotos-selecao-galeria', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ref: portalRef, acao: 'enviar', sel, tipo }),
+        body: JSON.stringify({
+          ref: portalRef, acao: 'enviar', tipo,
+          add: Object.keys(delta.current).filter(n => delta.current[n] === 'add'),
+          rem: Object.keys(delta.current).filter(n => delta.current[n] === 'rem'),
+        }),
       })
       const d = await r.json().catch(() => ({}))
-      if (!r.ok) { toast(d?.error || 'Não foi possível enviar. Tentem de novo.'); if (d?.estado?.enviada) setEnviada(d.estado.enviada); return }
-      pendente.current = null
-      try { localStorage.removeItem(chaveLocal) } catch {}
-      setEnviada(d.estado.enviada)
+      if (!r.ok) { toast(d?.error || 'Não foi possível enviar. Tentem de novo.'); if (d?.estado?.enviada) mostrarServidor(d.estado); return }
+      delta.current = {}
+      guardarLocal()
+      mostrarServidor(d.estado)
       onEstado?.(d.estado)
       setConfirmar(false)
       rootRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
@@ -368,7 +417,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
                 Continuar →
               </button>
             ) : (
-              <button type="button" className="fp-btn available sg-enviar" disabled={!!enviada || total === 0} onClick={() => setConfirmar(true)}>
+              <button type="button" className="fp-btn available sg-enviar" disabled={!!enviada || total === 0} onClick={async () => { await atualizar(); setConfirmar(true) }}>
                 {enviada ? 'Seleção enviada' : 'Enviar seleção'}
               </button>
             )}
