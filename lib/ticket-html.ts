@@ -2,7 +2,7 @@
 // email. Partilhado entre o envio do ticket e a preparação de impressão, para
 // a cópia colocada na pasta ser idêntica ao ticket do cliente.
 
-import { PRECO_FOTO } from '@/lib/precos-fotos'
+import { PRECO_FOTO, PORTES_PAPEL } from '@/lib/precos-fotos'
 import { APOIO_FOTOGRAFIAS_URL } from '@/lib/links'
 const eur = (n: number) => `${Number(n).toFixed(2)} €`
 
@@ -19,6 +19,22 @@ export function blocoApoioCliente(): string {
                      font-size:11px;letter-spacing:0.2em;text-transform:uppercase;text-decoration:none;font-weight:700;">
               Apoio ao Cliente
             </a>
+          </div>`
+}
+
+// Envio em papel por CTT: código de rastreio, carta não levantada e novo envio.
+// Partilhado pelo ticket e pelo comprovativo de aquisição (app/api/photo-orders).
+export function blocoEnvioCtt(): string {
+  return `
+          <div style="margin:12px 0 0;padding:16px 18px;background:#faf5ea;border:1px solid #ece4d4;border-left:3px solid #d8be93;border-radius:4px;">
+            <p style="margin:0 0 8px;font-size:12px;color:#3a352e;line-height:1.7;">
+              <strong style="color:#0b0a08;">Envio por CTT:</strong>
+              assim que enviarmos as fotografias, recebe por email o <strong style="color:#0b0a08;">código de rastreio</strong> dos CTT para acompanhar a entrega.
+            </p>
+            <p style="margin:0;font-size:12px;color:#3a352e;line-height:1.7;">
+              <strong style="color:#0b0a08;">Se a carta não for levantada</strong> ou voltar para trás por algum motivo, as fotografias ficam para levantar no nosso estúdio.
+              Se preferir, pode pedir um novo envio, com o pagamento de mais <strong style="color:#0b0a08;">${eur(PORTES_PAPEL)}</strong> de portes.
+            </p>
           </div>`
 }
 
@@ -66,6 +82,7 @@ export function buildTicketHtml(o: any): string {
               ${isPapel ? 'até 30 dias úteis, por carta registada.' : 'até 15 dias úteis (entrega digital).'}
             </p>
           </div>
+          ${isPapel ? blocoEnvioCtt() : ''}
           <div style="margin:12px 0 0;padding:16px 18px;background:#faf5ea;border:1px solid #ece4d4;border-radius:4px;">
             <p style="margin:0;font-size:12px;color:#3a352e;line-height:1.7;">
               <strong style="color:#0b0a08;">Quer uma tela?</strong>

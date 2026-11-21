@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { PRECO_FOTO, PORTES_PAPEL, calcularPortes } from '@/lib/precos-fotos'
-import { blocoApoioCliente } from '@/lib/ticket-html'
+import { blocoApoioCliente, blocoEnvioCtt } from '@/lib/ticket-html'
 
 // ── Config ───────────────────────────────────────────────────────────────────
 const ALLOW_ORIGIN = 'https://rlphotovideo.pt'
@@ -87,6 +87,7 @@ function buildEmailHtml(o: {
               <strong style="color:#0b0a08;">Pagamento:</strong> MB WAY 916 162 728 (Liliana Gonçalves) — comprovativo recebido.
             </p>
           </div>
+          ${isPapel ? blocoEnvioCtt() : ''}
           ${apoio ? blocoApoioCliente() : ''}
         </td></tr>
         <!-- Rodapé -->
