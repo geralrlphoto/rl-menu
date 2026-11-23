@@ -175,9 +175,14 @@ export default function ClientePage() {
     formToSave.motivo_nao_fechou = form.motivo_nao_fechou || null
     // Lead encerrada deixa de ter próxima ação pendente
     if (colunaDe(form.status) === 'encerrada') { formToSave.proxima_acao = null; formToSave.proxima_acao_data = null }
+    // Reunião com dia e hora numa lead ainda nova: passa a Reunião Agendada (sai o calendário/boas-vindas, entra o portal da reunião)
+    if (colunaDe(form.status) === 'nova' && formToSave.reuniao_data && formToSave.reuniao_hora) {
+      formToSave.status = 'Reunião Agendada'
+      formToSave.reuniao_tipo = formToSave.reuniao_tipo || 'Presencial'
+    }
     // Mudança de status pela ficha reinicia a contagem de dias na coluna do CRM
     const dentroDoFollowUp = colunaDe(form.status) === 'follow' && colunaDe(original.status) === 'follow'
-    if (form.status !== original.status && !dentroDoFollowUp) {
+    if (formToSave.status !== original.status && !dentroDoFollowUp) {
       formToSave.status_updated_at = new Date().toISOString()
     }
     // Regista data_fecho automaticamente quando status = Fechou e ainda não tem
@@ -187,12 +192,12 @@ export default function ClientePage() {
     const { error } = await supabase.from('crm_contacts').update(formToSave).eq('id', id)
     if (!error) {
       // A data da reunião mudou: o painel /photo tem de refletir isso já
-      if (formToSave.reuniao_data !== original.reuniao_data || formToSave.reuniao_hora !== original.reuniao_hora) {
+      if (formToSave.reuniao_data !== original.reuniao_data || formToSave.reuniao_hora !== original.reuniao_hora || formToSave.status !== original.status) {
         fetch('/api/revalidate-photo', { method: 'POST' }).catch(() => {})
       }
       setForm(formToSave)
       setOriginal(formToSave)
-      if (form.status !== original.status) loadHistorico()
+      if (formToSave.status !== original.status) loadHistorico()
       setSaved(true)
       setTimeout(() => setSaved(false), 2000)
     } else {
