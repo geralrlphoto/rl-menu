@@ -586,12 +586,12 @@ export async function GET(req: Request) {
     try {
       const { data: albunsAprov } = await supabase
         .from('albuns_casamento')
-        .select('id, nome, ref_evento, status, data_aprovacao, data_prevista_entrega, num_fotografias, updated_at, created_at')
+        .select('id, nome, ref_evento, status, data_aprovacao, data_prevista_entrega, num_fotografias, created_at')
         .eq('status', 'APROVADO')
         .order('data_aprovacao', { ascending: false, nullsFirst: false })
         .limit(50)
       for (const a of (albunsAprov ?? []) as any[]) {
-        const sent = a.data_aprovacao || a.updated_at || a.created_at
+        const sent = a.data_aprovacao || a.created_at
         if (!sent) continue
         const sentIso = typeof sent === 'string' && sent.length === 10 ? `${sent}T12:00:00.000Z` : sent
         notifications.push({
@@ -622,13 +622,13 @@ export async function GET(req: Request) {
     try {
       const { data: albunsPend } = await supabase
         .from('albuns_casamento')
-        .select('id, nome, ref_evento, status, updated_at, created_at')
+        .select('id, nome, ref_evento, status, created_at')
         .in('status', ['REVISÃO RL', 'ALTERAÇÕES'])
         .limit(50)
       for (const a of (albunsPend ?? []) as any[]) {
         const tipo = a.status === 'REVISÃO RL' ? 'album_revisao' : 'album_alteracoes'
         notifications.push({
-          id: `${tipo}::${a.id}::${String(a.updated_at ?? '').slice(0, 16)}`,
+          id: `${tipo}::${a.id}`,
           tipo,
           tipo_label: TIPO_LABELS[tipo],
           tipo_icon: TIPO_ICONS[tipo],
@@ -639,7 +639,7 @@ export async function GET(req: Request) {
           data_casamento: null,
           referencia: a.ref_evento ?? null,
           url: '/edicao-fotografia/albuns',
-          sent_at: a.updated_at ?? a.created_at,
+          sent_at: a.created_at,
           mensagem: a.status === 'REVISÃO RL'
             ? 'O editor entregou o álbum. Revê-o, cria o teu link e envia aos noivos.'
             : 'Os noivos pediram alterações à maqueta. O editor já foi avisado.',

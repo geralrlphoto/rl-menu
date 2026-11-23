@@ -21,7 +21,7 @@ const lerResumo = unstable_cache(
         .limit(10),
       supabase.from('media_leads')
         .select('id', { count: 'exact', head: true })
-        .eq('status', 'Por Contactar'),
+        .eq('estado', 'Novo'),
     ])
     const prox = (ev.data ?? []).find(e => !ehBatizado(e.tipo_evento)) ?? null
     return {
