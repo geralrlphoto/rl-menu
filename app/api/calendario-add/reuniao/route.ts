@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { EVENTO_CONFIRMAR_REUNIAO } from '@/lib/crm'
 
 function db() {
   return createClient(
@@ -12,7 +13,7 @@ function db() {
 // Body: { crm_id: string, data: 'YYYY-MM-DD', hora: 'HH:MM', tipo?: 'Presencial' | 'Videochamada', link?: string }
 export async function POST(req: Request) {
   const body = await req.json()
-  const { crm_id, data, hora, tipo, link, remarcar } = body
+  const { crm_id, data, hora, tipo, link, remarcar, avisado } = body
 
   if (!crm_id || !data || !hora) {
     return NextResponse.json({ error: 'crm_id, data e hora são obrigatórios' }, { status: 400 })
@@ -32,6 +33,9 @@ export async function POST(req: Request) {
     .eq('id', crm_id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  // Já avisado no WhatsApp ao agendar: o /photo deixa de pedir a confirmação
+  if (avisado) await supabase.from('crm_status_history').insert({ contact_id: crm_id, evento: EVENTO_CONFIRMAR_REUNIAO })
 
   // O bloco antigo nos Time Blocks sai; o novo é gerado no resync do novo dia
   if (remarcar) await supabase.from('time_blocks').delete().eq('evento_id', crm_id)

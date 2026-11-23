@@ -378,11 +378,14 @@ export default function CalendarClient({
           hora: reuniaoHora,
           tipo: reuniaoTipo,
           link: reuniaoLink || null,
+          avisado: !!waHref,
         }),
       })
       const d = await res.json()
       if (res.ok) {
         setReuniaoOpen(false)
+        // A faixa dos 30 dias do /photo passa a mostrar a reunião (e o botão Confirmar, se não foi avisada)
+        fetch('/api/revalidate-photo', { method: 'POST' }).catch(() => {})
         if (waHref) {
           if (waTab) waTab.location.href = waHref
           else window.open(waHref, '_blank', 'noopener')
