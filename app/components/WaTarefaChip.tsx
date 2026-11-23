@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import { linkPublico } from '@/lib/site-url'
 import FollowUpJanela from '@/app/components/FollowUpJanela'
 import type { TipoFollow } from '@/lib/followUpOpcoes'
 import {
@@ -10,7 +11,7 @@ import {
   mensagemLembreteBriefing, mensagemLembretePreparacao, mensagemPreWedding,
   mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
   mensagemFollowUpContacto1, mensagemFollowUpContacto2, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUp3, EVENTO_FOLLOW3,
-  EVENTO_LIGAR_ABRIU, EVENTO_LEMBRETE_VESPERA, mensagemVesperaReuniao, EVENTO_CONFIRMAR_REUNIAO,
+  EVENTO_LIGAR_ABRIU, EVENTO_LEMBRETE_VESPERA, mensagemVesperaReuniao, EVENTO_PORTAL_REUNIAO, mensagemPortalReuniao,
 } from '@/lib/crm'
 
 /* Tarefa de WhatsApp da faixa "Próximos 30 dias" do /photo.
@@ -18,7 +19,7 @@ import {
    envio no histórico da lead (o mesmo registo que os botões do /crm usam). */
 
 export type WaTarefa = {
-  tipo: 'confirmar' | 'lembrete' | 'vespera' | 'ligar' | 'follow1' | 'follow2' | 'follow3' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
+  tipo: 'portal' | 'lembrete' | 'vespera' | 'ligar' | 'follow1' | 'follow2' | 'follow3' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
   contactId: string    // id da lead no CRM; nos tipos de evento (preparação e lembretes) é o id do evento; em 'obrigado' é o id da tarefa
   nome: string
   contato: string | null
@@ -29,12 +30,13 @@ export type WaTarefa = {
   referencia?: string | null  // pré-wedding: link do portal dos noivos (Guia Pré-Wedding)
   atrasoDias: number   // > 0 quando o dia já passou
   futura: boolean      // ainda não é o dia: só informativa
-  mensagem?: string    // 'obrigado' e 'confirmar': texto já escrito
+  mensagem?: string    // 'obrigado' e 'portal': texto já escrito (portal sem link: o portal é criado no clique)
+  reuniaoData?: string | null // 'portal': dia da reunião
   rotulo?: string      // 'obrigado': rótulo próprio (ex.: Enviar NPS)
 }
 
 const CONFIG = {
-  confirmar: { rotulo: 'Confirmar reunião', evento: EVENTO_CONFIRMAR_REUNIAO },
+  portal: { rotulo: 'Portal da reunião', evento: EVENTO_PORTAL_REUNIAO },
   lembrete: { rotulo: 'Lembrete 1h', evento: 'WhatsApp lembrete 1h enviado' },
   follow1: { rotulo: '1.º Follow up', evento: 'WhatsApp follow-up enviado' },
   follow2: { rotulo: '2.º Follow up', evento: 'WhatsApp 2.º follow-up enviado' },
@@ -59,7 +61,7 @@ const FOLLOW = new Set<WaTarefa['tipo']>(['ligar', 'contacto1', 'contacto2', 'fo
 const DO_EVENTO = new Set(['preparacao', 'lembrete_briefing', 'lembrete_prep', 'prewedding', 'lembrete_marcar_pw', 'vespera_pw'])
 
 function textoDe(t: WaTarefa): string {
-  if (t.tipo === 'obrigado' || t.tipo === 'confirmar') return t.mensagem ?? ''
+  if (t.tipo === 'obrigado' || t.tipo === 'portal') return t.mensagem ?? ''
   if (t.tipo === 'lembrete') return mensagemLembreteReuniao(t.nome, t.reuniaoHora)
   if (t.tipo === 'follow1') return mensagemFollowUp(t.nome, t.dataCasamento)
   if (t.tipo === 'follow3') return mensagemFollowUp3(t.nome, t.dataCasamento)
@@ -115,6 +117,25 @@ export function WaTarefaChip({ t }: { t: WaTarefa }) {
 
   // Futura, já enviada ou sem telefone: não envia daqui (sem telefone abre a ficha)
   if (enviado || t.futura) return <div className={cls} style={estilo} title={t.futura ? 'Fica disponível neste dia' : undefined}>{corpo}</div>
+  // Portal da reunião ainda por criar: cria-o no clique (como o botão do /crm) e só depois abre o WhatsApp
+  if (t.tipo === 'portal' && !t.mensagem && whatsappLink(t.contato)) {
+    return (
+      <button type="button" className={`${cls} w-full text-left hover:bg-green-500/10`} style={estilo} title="Criar o portal da reunião e enviá-lo pelo WhatsApp"
+        onClick={async () => {
+          const w = window.open('', '_blank')
+          const res = await fetch('/api/lead-page/toggle-publish', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: t.contactId, publish: true }),
+          }).then(r => r.json()).catch(() => null)
+          if (!res?.token) { w?.close(); alert('Não foi possível criar o portal desta lead.'); return }
+          const link = whatsappLink(t.contato, mensagemPortalReuniao(t.nome, linkPublico(`/${t.batizado ? 'b' : 'r'}/${res.token}`), t.reuniaoData, t.reuniaoHora))!
+          if (w) w.location.href = link; else window.open(link, '_blank')
+          setEnviado(true)
+          supabase.from('crm_status_history').insert({ contact_id: t.contactId, evento: cfg.evento })
+            .then(() => { fetch('/api/revalidate-photo?tag=whatsapp', { method: 'POST' }).catch(() => {}) })
+        }}>{corpo}</button>
+    )
+  }
   const ficha = t.tipo === 'obrigado' ? '/calendario' : DO_EVENTO.has(t.tipo) ? `/eventos-2026/${t.contactId}` : `/crm/${t.contactId}`
   if (!href) return <Link href={ficha} className={cls} style={estilo} title="Sem telefone válido na ficha">{corpo}</Link>
 
