@@ -180,6 +180,11 @@ export default function PortalSiriusPark() {
               </FadeIn>
             ))}
           </div>
+          {/* Apresentação da reunião (protegida por password, ver apresentacao/acesso.ts) */}
+          <FadeIn delay={200} className="flex flex-col items-center text-center gap-4" style={{ marginTop: 48 }}>
+            <p className="rlp-lede" style={{ fontSize: 15 }}>A apresentação que vamos mostrar no dia</p>
+            <a href="/parceria/sirius-park/apresentacao" className="rlp-btn"><span className="fill" /><span className="dot" />Ver apresentação</a>
+          </FadeIn>
         </div>
       </section>
 

@@ -27,7 +27,8 @@ export async function GET() {
       const partes = m[1].split(',').map(p => p.trim()).map(p => {
         const [u, w] = p.split(/\s+/)
         return { u: u.startsWith('//') ? `https:${u}` : u, w: parseInt(w) || 0 }
-      }).filter(p => /^https:\/\/i\.wfolio\.com\//.test(p.u) && p.w > 0)
+      // o Wfolio passou a servir do im-sl-cf.wfolio.photo (antes i.wfolio.com): aceitam-se os dois
+      }).filter(p => /^https:\/\/(i\.wfolio\.com|[a-z0-9-]+\.wfolio\.photo)\//.test(p.u) && p.w > 0)
       if (!partes.length) continue
       partes.sort((a, b) => a.w - b.w)
       const maior = partes[partes.length - 1].u
