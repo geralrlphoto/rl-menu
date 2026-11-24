@@ -17,7 +17,11 @@ const ESPACO = 'Sirius Park'
 const DATA = '2026-11-25'
 const HORA = '16:30'
 const ALVO = `${DATA}T${HORA}:00`
-const MAPS = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ESPACO)}`
+// Exemplos do que os casais recebem: reunião "Liliana e Rui" (CRM) e portal dos noivos "Ana e Mário" (CAS_026_26_RL, só com sessão de admin)
+const PORTAL_REUNIAO = 'https://portal.rlphotovideo.pt/r/2272e1a8-6050-4d7f-88be-74d1f45a2b9e'
+const PORTAL_NOIVOS = 'https://portal.rlphotovideo.pt/portal-cliente/ref/CAS_026_26_RL?admin=1'
+const PODCAST = 'https://portal.rlphotovideo.pt/podcast/apresentacao'
+const MAPS =`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ESPACO)}`
 
 const PONTOS = [
   { n: '01', t: 'Quem somos', d: 'A RL Photo · Video, a equipa e a forma como contamos um casamento do primeiro ao último minuto.' },
@@ -184,6 +188,15 @@ export default function PortalSiriusPark() {
           <FadeIn delay={200} className="flex flex-col items-center text-center gap-4" style={{ marginTop: 48 }}>
             <p className="rlp-lede" style={{ fontSize: 15 }}>A apresentação que vamos mostrar no dia</p>
             <a href="/parceria/sirius-park/apresentacao" className="rlp-btn"><span className="fill" /><span className="dot" />Ver apresentação</a>
+          </FadeIn>
+          {/* Os portais que os casais recebem (os mesmos links do slide "Vejam por vocês") */}
+          <FadeIn delay={260} className="flex flex-col items-center text-center gap-4" style={{ marginTop: 40 }}>
+            <p className="rlp-lede" style={{ fontSize: 15 }}>O que os casais recebem</p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <a href={PORTAL_REUNIAO} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost"><span className="fill" /><span className="dot" />Portal da reunião</a>
+              <a href={PORTAL_NOIVOS} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost"><span className="fill" /><span className="dot" />Portal dos noivos</a>
+              <a href={PODCAST} target="_blank" rel="noopener noreferrer" className="rlp-btn ghost"><span className="fill" /><span className="dot" />Podcast Antes do Sim</a>
+            </div>
           </FadeIn>
         </div>
       </section>
