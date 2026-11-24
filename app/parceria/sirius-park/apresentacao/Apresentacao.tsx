@@ -201,6 +201,9 @@ const SLIDES: Slide[] = [
           <span className="rlp-eyebrow">Testemunho Nº 001 · Catarina &amp; Ruben</span>
           <h2 className="ap-h2 ap-quote">Não nos conheciam.<br />Não tinham referências nossas.<br /><em>Mas confiaram.</em></h2>
           <p className="ap-lede">Uma história sobre confiança e a responsabilidade de contar um dos dias mais importantes da vida de um casal.</p>
+          <a href="https://rlphotovideo.pt/testemunho" target="_blank" rel="noopener noreferrer" className="ap-btn-portal" style={{ alignSelf: 'flex-start' }} onClick={e => e.stopPropagation()}>
+            Ler a história deles <span>↗</span>
+          </a>
         </div>
         <div className="ap-foto" {...slot('testemunho')} style={{ backgroundImage: f('testemunho'), backgroundPosition: '62% 45%' }} />
       </div>
