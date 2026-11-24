@@ -19,6 +19,7 @@ const FASES: { k: EtapaFoto; titulo: string; cor: string }[] = [
   { k: 'galerias', titulo: 'Galeria online', cor: '#fb923c' },
   { k: 'selecao', titulo: 'Fotos p/ seleção', cor: '#fbbf24' },
   { k: 'escolha', titulo: 'Seleção dos noivos', cor: '#93c5fd' },
+  { k: 'selecionadas', titulo: 'Fotos selecionadas', cor: '#5eead4' },
   { k: 'edicao', titulo: 'Edição', cor: '#c4b5fd' },
   { k: 'entregue', titulo: 'Entregue', cor: '#4ade80' },
 ]
@@ -30,7 +31,8 @@ const FASES_INFO: { k: EtapaFoto; quem: string; quando: string; noivos: string }
   { k: 'galerias', quem: 'RL', quando: 'Até 7 dias depois do casamento.', noivos: 'recebem o email da Galeria Online; o cartão fica Disponível no portal.' },
   { k: 'selecao', quem: 'RL', quando: 'Até 30 dias depois do casamento.', noivos: 'recebem a galeria para escolherem as fotos do álbum.' },
   { k: 'escolha', quem: 'Noivos', quando: 'Enviam a seleção pelo formulário (chega sozinha). Lembrar ao fim de 30 dias.', noivos: 'escolhem as preferidas no portal.' },
-  { k: 'edicao', quem: 'Editor', quando: 'A RL nomeia o editor; 30 dias depois de chegar a seleção.', noivos: 'veem a seleção recebida e em edição.' },
+  { k: 'selecionadas', quem: 'RL', quando: 'A seleção chegou: a RL nomeia o editor de fotos e o editor do álbum. Com os dois nomeados passa a Edição.', noivos: 'veem a seleção recebida.' },
+  { k: 'edicao', quem: 'Editor', quando: '30 dias depois de chegar a seleção.', noivos: 'veem a seleção recebida e em edição.' },
   { k: 'entregue', quem: 'RL', quando: 'A RL envia as fotos editadas.', noivos: 'recebem o email das Fotos Finais; 30 dias para descarregar.' },
 ]
 
@@ -46,7 +48,7 @@ type Projeto = {
   portalId: string | null
   contacto: { noiva: string | null; noivo: string | null; tel: string | null } | null
   selecaoFotos: { categoria: string; fotos: number }[] | null
-  editorAlbum: string | null
+  editorAlbum: string | null; temAlbum: boolean | null
   albumLink: string | null; albumTamanho: string | null
   selecao: { id: string; referencia: string | null; nome: string | null; entrada: string | null; categorias: { campo: string; titulo: string; texto: string }[]; detalhes: string | null } | null
   trabalhos: { freelancerId: string; estado: string | null; em: string | null }[]
@@ -314,7 +316,7 @@ export default function DepartamentoFotografiaPage() {
     }).catch(() => {})
     // Com a seleção já recebida, o editor recebe também o email "Nova edição de fotos"
     const fl = dados?.equipa.find(m => m.nome === nome)
-    if (p.fase === 'edicao' && fl) {
+    if ((p.fase === 'edicao' || p.fase === 'selecionadas') && fl) {
       await fetch('/api/send-edicao-fotos-email', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ freelancer_id: fl.id, nome_noivos: p.cliente ?? null, referencia: p.referencia }),
@@ -352,6 +354,8 @@ export default function DepartamentoFotografiaPage() {
     return m
   }, [projetos])
   // Atraso da RL (a espera pela seleção dos noivos não conta)
+  // Com a seleção recebida o editor já tem o trabalho (Fotos selecionadas ou Edição)
+  const aEditar = (p: Projeto) => p.fase === 'edicao' || p.fase === 'selecionadas'
   const atrasado = (p: Projeto) => p.fase !== 'entregue' && p.fase !== 'escolha' && !p.alertaOff && p.diasPrazo !== null && p.diasPrazo < 0
   const kpis = [
     ...FASES.filter(f => f.k !== 'entregue').map(f => ({ label: f.titulo, valor: porFase.get(f.k)!.length, cor: f.cor })),
@@ -359,8 +363,8 @@ export default function DepartamentoFotografiaPage() {
   ]
 
   const cargas = (dados?.equipa ?? []).map(e => {
-    const meus = projetos.filter(p => p.fase === 'edicao' && p.editorIds.includes(e.id))
-    const nomeados = projetos.filter(p => p.fase !== 'edicao' && p.fase !== 'entregue' && p.editorIds.includes(e.id)).length
+    const meus = projetos.filter(p => aEditar(p) && p.editorIds.includes(e.id))
+    const nomeados = projetos.filter(p => !aEditar(p) && p.fase !== 'entregue' && p.editorIds.includes(e.id)).length
     return { e, ativos: meus.length, nomeados, atrasados: meus.filter(atrasado).length }
   }).sort((a, b) => a.ativos - b.ativos || a.e.nome.localeCompare(b.e.nome))
   const comTrabalho = cargas.filter(c => c.ativos > 0 || c.nomeados > 0)
@@ -403,7 +407,7 @@ export default function DepartamentoFotografiaPage() {
           <p className="mt-12 text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Ponto de situação</p>
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Fotografias em curso</h2>
           <p className="mt-2 text-sm text-white/45">Quantos casamentos estão em cada fase e quantos já passaram o prazo da fase em que estão.</p>
-          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
             {kpis.map(k => (
               <div key={k.label} className="rounded-[18px] border border-white/[0.08] bg-[#111111]/85 backdrop-blur-md px-4 py-3.5" style={{ borderLeft: `2px solid ${k.cor}` }}>
                 <p className="text-[10px] tracking-[0.25em] uppercase text-white/45">{k.label}</p>
@@ -623,6 +627,26 @@ export default function DepartamentoFotografiaPage() {
                           </div>
                         )}
 
+                        {p.fase === 'selecionadas' && (
+                          <div className="flex flex-col gap-2 rounded-xl border border-[#5eead4]/30 bg-[#5eead4]/[0.06] p-3">
+                            {p.recebida && <p className="text-[11px] text-white/55">Seleção recebida a {fmt(p.recebida)}. Nomeia {!p.editores.length && p.temAlbum && !p.editorAlbum ? 'o editor de fotos e o do álbum' : !p.editores.length ? 'o editor de fotos (acima)' : 'o editor do álbum'} para passar a Edição.</p>}
+                            {(p.temAlbum || p.editorAlbum) && (
+                              <>
+                                <label className="flex flex-col gap-1">
+                                  <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Editor do álbum</span>
+                                  <select disabled={aGravar === p.id} value={albumAtual(p)} onChange={e => nomearAlbum(p, e.target.value)}
+                                    className={`w-full rounded-xl border bg-black/40 px-3 py-2 text-sm outline-none focus:border-[#C9A84C] ${p.editorAlbum ? 'border-white/10 text-white' : 'border-[#5eead4]/50 text-white/60'}`}>
+                                    <option value="" disabled>{aGravar === p.id ? 'A guardar…' : 'Nomear editor do álbum…'}</option>
+                                    {albumAtual(p) && !cargas.some(c => c.e.nome === albumAtual(p)) && <option value={albumAtual(p)}>{albumAtual(p)}</option>}
+                                    {cargas.map(({ e }) => <option key={e.id} value={e.nome}>{e.nome}</option>)}
+                                  </select>
+                                </label>
+                                <AlbumDetalhes p={p} onGuardado={carregar} />
+                              </>
+                            )}
+                          </div>
+                        )}
+
                         {p.fase === 'edicao' && (
                           <div className="flex flex-col gap-2 rounded-xl border border-[#c4b5fd]/25 bg-[#c4b5fd]/[0.05] p-3">
                             {p.recebida && <p className="text-[11px] text-white/45">Seleção recebida a {fmt(p.recebida)}</p>}
@@ -737,9 +761,9 @@ export default function DepartamentoFotografiaPage() {
       )}
 
       {aVer && (() => {
-        const meus = projetos.filter(p => p.fase === 'edicao' && p.editorIds.includes(aVer.id))
+        const meus = projetos.filter(p => aEditar(p) && p.editorIds.includes(aVer.id))
           .sort((a, b) => (a.diasPrazo ?? 9999) - (b.diasPrazo ?? 9999))
-        const aSeguir = projetos.filter(p => p.fase !== 'edicao' && p.fase !== 'entregue' && p.editorIds.includes(aVer.id))
+        const aSeguir = projetos.filter(p => !aEditar(p) && p.fase !== 'entregue' && p.editorIds.includes(aVer.id))
         return (
           <div role="dialog" aria-modal="true" aria-label={`O que ${aVer.nome} está a editar`} onClick={() => setAVer(null)}
             className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">

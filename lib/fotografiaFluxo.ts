@@ -3,7 +3,10 @@
 // Tudo vive em portais.settings (as mesmas chaves que a ficha do evento e o
 // portal dos noivos já usam), por isso a ficha, o /photo e o portal ficam iguais.
 
-export type EtapaFoto = 'sneakpeek' | 'galerias' | 'selecao' | 'escolha' | 'edicao' | 'entregue'
+// 'selecionadas' só existe no departamento (/api/edicao-fotografia): a seleção chegou
+// mas a RL ainda não nomeou o editor de fotos (e o do álbum, se houver álbum).
+// faseFoto nunca a devolve: para a ficha, o /photo e o portal continua a ser Edição.
+export type EtapaFoto = 'sneakpeek' | 'galerias' | 'selecao' | 'escolha' | 'selecionadas' | 'edicao' | 'entregue'
 
 export const ETAPAS_FOTO: {
   k: EtapaFoto

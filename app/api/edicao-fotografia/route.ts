@@ -147,18 +147,23 @@ export async function GET(req: NextRequest) {
   const todosProj = comFoto.map(e => {
     const p = portalPorRef.get(e.referencia)
     const s: Record<string, any> = p?.settings ?? {}
-    const { fase, prazo, recebida } = faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado)
+    const base = faseFoto(e.data_evento, s, selPorRef.get(e.referencia) ?? null, e.sel_fotos_estado)
+    const { prazo, recebida } = base
     const eq = eqPorRef.get(e.referencia)
     const editores = arr(eq?.editor_fotos)
+    const editorAlbum = arr(eq?.editor_album)[0] ?? null
+    // Fotos selecionadas: a seleção chegou e falta nomear o editor de fotos
+    // (ou o do álbum, quando o casamento tem álbum). Com os dois nomeados passa a Edição.
+    const fase = base.fase === 'edicao' && (!editores.length || (temAlbumDe(e) && !editorAlbum)) ? 'selecionadas' as const : base.fase
     // Alerta desligado na ficha (sino) para esta fase: não conta como atraso
-    const chaveAlerta = fase === 'galerias' ? 'galerias' : fase === 'selecao' ? 'selecao' : fase === 'edicao' ? 'fotos_finais' : fase
+    const chaveAlerta = fase === 'galerias' ? 'galerias' : fase === 'selecao' ? 'selecao' : fase === 'edicao' || fase === 'selecionadas' ? 'fotos_finais' : fase
     return {
       id: e.id, fichaId: e.notion_id ?? String(e.id), referencia: e.referencia, cliente: e.cliente, data: e.data_evento, local: e.local,
       fase, prazo, diasPrazo: prazo ? diasAte(prazo) : null, alertaOff: !!s[`${chaveAlerta}_alerta_off`] || s.alertas_fotografia_ativos === false,
       recebida, editores, editorIds: editores.map(n => porNome.get(norm(n))?.id ?? null),
       fotografos: arr(eq?.fotografo),
       temAlbum: temAlbumDe(e),
-      editorAlbum: arr(eq?.editor_album)[0] ?? null,
+      editorAlbum,
       albumLink: s.album_fotos_url ?? albumPorRef.get(e.referencia)?.link_fotos_album ?? null,
       albumTamanho: s.album_tamanho ?? albumPorRef.get(e.referencia)?.tamanho_album ?? null,
       selecaoFotos: selecaoPorRef.get(e.referencia) ?? null,
