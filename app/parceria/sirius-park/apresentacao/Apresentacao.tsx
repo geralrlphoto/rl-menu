@@ -6,6 +6,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { RLP_CSS } from '@/app/_lead/rlpCss'
+import { gravarFoto } from './acesso'
 import RodaReels from '@/app/_lead/RodaReels'
 
 const ESPACO = 'Sirius Park'
@@ -66,15 +67,22 @@ const LINKS = [
 // Fotos do portfólio (galeria Wfolio, via /api/portfolio-wfolio): o número é a posição na galeria.
 // Cada foto aparece uma só vez na apresentação.
 const P = { capa: 14, quem: 7, portal: 16, mosaico: [3, 24, 17, 9, 19, 23], fim: 6 }
+// Escolhas do modo Editar fotos (espaço → url) têm prioridade sobre estes números
 let PORT: string[] = []
-const f = (n: number) => PORT[n] ? `url(${PORT[n]})` : 'none'
+let ESC: Record<string, string> = {}
+const NOMES: Record<string, string> = { capa: 'Capa', quem: 'Quem somos', portal: 'Portal dos noivos', m0: 'Mosaico 1', m1: 'Mosaico 2', m2: 'Mosaico 3', m3: 'Mosaico 4', m4: 'Mosaico 5', m5: 'Mosaico 6', testemunho: 'Testemunho', fim: 'Obrigado' }
+const ORIGEM: Record<string, number | string> = { capa: P.capa, quem: P.quem, portal: P.portal, fim: P.fim, testemunho: '/testemunho-catarina-ruben-1200.webp', ...Object.fromEntries(P.mosaico.map((n, i) => [`m${i}`, n])) }
+const urlDe = (e: string) => ESC[e] ?? (typeof ORIGEM[e] === 'string' ? ORIGEM[e] as string : PORT[ORIGEM[e] as number] ?? '')
+const f = (e: string) => urlDe(e) ? `url(${urlDe(e)})` : 'none'
+// atributos dos espaços de foto (no modo Editar fotos clica-se neles)
+const slot = (e: string) => ({ 'data-slot': e, 'data-nome': NOMES[e] })
 
 const SLIDES: Slide[] = [
   {
     id: 'capa',
     render: () => (
-      <div className="ap-full">
-        <div className="ap-bg" style={{ backgroundImage: f(P.capa) }} />
+      <div className="ap-full" {...slot('capa')}>
+        <div className="ap-bg" style={{ backgroundImage: f('capa') }} />
         <div className="ap-shade" />
         <div className="ap-in ap-bottom">
           <span className="rlp-eyebrow">Apresentação · 25 de Novembro de 2026</span>
@@ -95,7 +103,7 @@ const SLIDES: Slide[] = [
           <p className="ap-lede"><T>{'[Equipa: Rui Gonçalves (direção e vídeo), fotógrafos e editores que trabalham connosco.]'}</T></p>
           <p className="ap-sig">registamos com foco na verdade</p>
         </div>
-        <div className="ap-foto" style={{ backgroundImage: f(P.quem) }} />
+        <div className="ap-foto" {...slot('quem')} style={{ backgroundImage: f('quem') }} />
       </div>
     ),
   },
@@ -146,7 +154,7 @@ const SLIDES: Slide[] = [
     id: 'portal',
     render: () => (
       <div className="ap-split rev">
-        <div className="ap-foto" style={{ backgroundImage: f(P.portal) }} />
+        <div className="ap-foto" {...slot('portal')} style={{ backgroundImage: f('portal') }} />
         <div className="ap-col">
           <span className="rlp-eyebrow">O portal dos noivos</span>
           <h2 className="ap-h2">Casais organizados, <em>dia tranquilo</em></h2>
@@ -167,7 +175,7 @@ const SLIDES: Slide[] = [
       <div className="ap-in">
         <span className="rlp-eyebrow">03 · O nosso trabalho</span>
         <div className="ap-mosaico">
-          {P.mosaico.map((n, i) => <div key={n} className={`ap-m ap-m${i}`} style={{ backgroundImage: f(n) }} />)}
+          {P.mosaico.map((n, i) => <div key={n} className={`ap-m ap-m${i}`} {...slot(`m${i}`)} style={{ backgroundImage: f(`m${i}`) }} />)}
         </div>
         <div className="ap-row">
           <a className="rlp-link-u" href="https://rlphotovideo.pt" target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}><span>rlphotovideo.pt</span><span className="a">→</span></a>
@@ -194,7 +202,7 @@ const SLIDES: Slide[] = [
           <h2 className="ap-h2 ap-quote">Não nos conheciam.<br />Não tinham referências nossas.<br /><em>Mas confiaram.</em></h2>
           <p className="ap-lede">Uma história sobre confiança e a responsabilidade de contar um dos dias mais importantes da vida de um casal.</p>
         </div>
-        <div className="ap-foto" style={{ backgroundImage: 'url(/testemunho-catarina-ruben-1200.webp)', backgroundPosition: '62% 45%' }} />
+        <div className="ap-foto" {...slot('testemunho')} style={{ backgroundImage: f('testemunho'), backgroundPosition: '62% 45%' }} />
       </div>
     ),
   },
@@ -272,8 +280,8 @@ const SLIDES: Slide[] = [
   {
     id: 'fim',
     render: () => (
-      <div className="ap-full">
-        <div className="ap-bg" style={{ backgroundImage: f(P.fim) }} />
+      <div className="ap-full" {...slot('fim')}>
+        <div className="ap-bg" style={{ backgroundImage: f('fim') }} />
         <div className="ap-shade" />
         <div className="ap-in ap-bottom">
           <span className="rlp-eyebrow">Próximos passos</span>
@@ -288,17 +296,43 @@ const SLIDES: Slide[] = [
   },
 ]
 
-export default function ApresentacaoSiriusPark() {
+type FotoWf = { src: string; srcSet: string }
+
+export default function ApresentacaoSiriusPark({ escolhas, admin }: { escolhas: Record<string, string>; admin: boolean }) {
   const [i, setI] = useState(0)
   const toque = useRef<number | null>(null)
   const total = SLIDES.length
-  const [fotos, setFotos] = useState<string[]>([])
-  PORT = fotos
+  const [fotos, setFotos] = useState<FotoWf[]>([])
+  const [esc, setEsc] = useState(escolhas)
+  PORT = fotos.map(x => x.src)
+  ESC = esc
   useEffect(() => {
     fetch('/api/portfolio-wfolio').then(r => r.json())
-      .then(d => setFotos(Array.isArray(d.fotos) ? d.fotos.map((x: { src: string }) => x.src) : []))
+      .then(d => setFotos(Array.isArray(d.fotos) ? d.fotos : []))
       .catch(() => {})
   }, [])
+
+  // Modo Editar fotos (só admin): clica-se num espaço do slide e depois numa foto do portfólio
+  const [editar, setEditar] = useState(false)
+  const [sel, setSel] = useState<string | null>(null)
+  const [aGravar, setAGravar] = useState(false)
+  const [aviso, setAviso] = useState('')
+  const escolher = async (url: string | null) => {
+    if (!sel) return
+    const antes = esc
+    const novo = { ...esc }
+    if (url) novo[sel] = url; else delete novo[sel]
+    setEsc(novo); setAGravar(true); setAviso('')
+    const ok = await gravarFoto(sel, url)
+    setAGravar(false)
+    if (!ok) { setEsc(antes); setAviso('Não foi possível gravar. Tens a sessão de admin aberta?') }
+    else setAviso('Gravado')
+  }
+  const usada = (src: string) => Object.keys(NOMES).filter(e => urlDe(e) === src).map(e => NOMES[e])
+  // marca o espaço escolhido
+  useEffect(() => {
+    document.querySelectorAll('[data-slot]').forEach(el => el.classList.toggle('sel', editar && (el as HTMLElement).dataset.slot === sel))
+  }, [sel, editar, i])
   const ir = useCallback((d: number) => setI(v => Math.min(total - 1, Math.max(0, v + d))), [total])
 
   useEffect(() => {
@@ -321,8 +355,15 @@ export default function ApresentacaoSiriusPark() {
 
   return (
     <div
-      className="rl-portal ap"
-      onClick={e => ir(e.clientX > innerWidth / 3 ? 1 : -1)}
+      className={`rl-portal ap${editar ? ' editar' : ''}`}
+      onClick={e => {
+        if (editar) {
+          const el = (e.target as HTMLElement).closest('[data-slot]') as HTMLElement | null
+          if (el) setSel(el.dataset.slot!)
+          return
+        }
+        ir(e.clientX > innerWidth / 3 ? 1 : -1)
+      }}
       onTouchStart={e => { toque.current = e.touches[0].clientX }}
       onTouchEnd={e => {
         if (toque.current == null) return
@@ -350,6 +391,34 @@ export default function ApresentacaoSiriusPark() {
         <button aria-label="Slide anterior" onClick={() => ir(-1)} disabled={i === 0}>‹</button>
         <button aria-label="Slide seguinte" onClick={() => ir(1)} disabled={i === total - 1}>›</button>
       </div>
+
+      {admin && (
+        <button className={`ap-editar-btn${editar ? ' on' : ''}`} onClick={e => { e.stopPropagation(); setEditar(v => !v); setSel(null); setAviso('') }}>
+          {editar ? 'Fechar edição' : 'Editar fotos'}
+        </button>
+      )}
+      {admin && editar && (
+        <aside className="ap-painel" onClick={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
+          <p className="ap-painel-t">Portfólio · {fotos.length} fotos</p>
+          <p className="ap-painel-s">
+            {sel ? <>A escolher para <b>{NOMES[sel]}</b>. Clica numa foto.</> : 'Clica num espaço de foto do slide (contorno tracejado) e depois numa foto daqui.'}
+          </p>
+          {sel && esc[sel] && <button className="ap-painel-repor" onClick={() => escolher(null)}>Repor a foto de origem</button>}
+          {(aGravar || aviso) && <p className="ap-painel-aviso">{aGravar ? 'A gravar…' : aviso}</p>}
+          <div className="ap-painel-grid">
+            {fotos.map((x, n) => {
+              const onde = usada(x.src)
+              return (
+                <button key={x.src} className={`ap-th${sel && urlDe(sel) === x.src ? ' on' : ''}`} disabled={!sel || aGravar} onClick={() => escolher(x.src)} title={onde.length ? `Em uso: ${onde.join(', ')}` : `Foto ${n + 1}`}>
+                  <img src={x.srcSet.split(',')[0].trim().split(' ')[0]} alt={`Foto ${n + 1}`} loading="lazy" />
+                  <span className="ap-th-n">{n + 1}</span>
+                  {onde.length > 0 && <span className="ap-th-uso">{onde.join(' · ')}</span>}
+                </button>
+              )
+            })}
+          </div>
+        </aside>
+      )}
     </div>
   )
 }
@@ -371,6 +440,28 @@ const CSS = `
 .ap-nav button:disabled{opacity:.25;cursor:default;}
 .ap-roda{cursor:default;height:100%;}
 .ap-roda .rr-pin{max-height:none;}
+.ap-editar-btn{position:fixed;top:16px;right:calc(var(--pad) + 90px);z-index:70;padding:8px 16px;border-radius:40px;border:1px solid rgba(216,190,147,.55);background:rgba(11,11,11,.7);color:var(--g);font-family:var(--fb);font-size:10px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;}
+.ap-editar-btn.on{background:var(--g);color:var(--ink);right:360px;}
+.ap.editar{cursor:default;}
+.ap.editar .ap-slide{right:340px;}
+.ap.editar [data-slot]{outline:2px dashed rgba(216,190,147,.7);outline-offset:-8px;cursor:crosshair;}
+.ap.editar .ap-m[data-slot]{position:relative;}
+.ap.editar [data-slot]::before{content:attr(data-nome);position:absolute;z-index:30;top:16px;left:16px;padding:5px 10px;border-radius:20px;background:rgba(11,11,11,.8);color:var(--g);font-family:var(--fb);font-size:10px;letter-spacing:.18em;text-transform:uppercase;pointer-events:none;}
+.ap.editar .ap-full[data-slot]::before{top:70px;left:var(--pad);}
+.ap.editar [data-slot].sel{outline:3px solid var(--g);}
+.ap-painel{position:fixed;top:0;right:0;bottom:0;width:340px;z-index:65;background:#0e0e0e;border-left:1px solid var(--line);padding:64px 16px 16px;overflow-y:auto;cursor:default;}
+.ap-painel-t{font-family:var(--fb);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--g);margin:0 0 8px;}
+.ap-painel-s{font-family:var(--fb);font-size:13px;line-height:1.5;color:var(--tx-mid);margin:0 0 12px;}
+.ap-painel-s b{color:var(--tx);font-weight:500;}
+.ap-painel-repor{font-family:var(--fb);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tx-mid);background:none;border:1px solid var(--line);border-radius:20px;padding:6px 12px;cursor:pointer;margin-bottom:10px;}
+.ap-painel-aviso{font-family:var(--fb);font-size:12px;color:var(--g);margin:0 0 10px;}
+.ap-painel-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.ap-th{position:relative;padding:0;border:2px solid transparent;border-radius:8px;overflow:hidden;background:var(--ink-3);cursor:pointer;aspect-ratio:1;}
+.ap-th:disabled{cursor:default;opacity:.75;}
+.ap-th.on{border-color:var(--g);}
+.ap-th img{width:100%;height:100%;object-fit:cover;display:block;}
+.ap-th-n{position:absolute;top:4px;left:6px;font-family:var(--fb);font-size:11px;font-weight:600;color:#fff;text-shadow:0 0 4px #000;}
+.ap-th-uso{position:absolute;left:0;right:0;bottom:0;padding:3px 6px;background:rgba(11,11,11,.8);font-family:var(--fb);font-size:9px;letter-spacing:.08em;color:var(--g);text-align:left;}
 .ap-hint{position:fixed;right:var(--pad);bottom:18px;z-index:50;font-family:var(--fb);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--tx-dim);margin:0;}
 
 .ap-in{position:relative;z-index:2;max-width:1240px;margin:0 auto;padding:110px var(--pad) 80px;}
