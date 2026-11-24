@@ -14,12 +14,32 @@ export async function GET(req: NextRequest) {
   const freelancer = req.nextUrl.searchParams.get('freelancer')
   const bloqueio = await exigeAdminOuProprio(req, freelancer)
   if (bloqueio) return bloqueio
-  const { data, error } = await sb().from('video_partilhas')
-    .select('id, referencia, cliente, data_casamento, local, filme_url, entregue_em')
+  const db = sb()
+  const { data, error } = await db.from('video_partilhas')
+    .select('id, referencia, cliente, data_casamento, local, filme_url, entregue_em, capa_url')
     .eq('freelancer_id', freelancer!).not('entregue_em', 'is', null)
     .order('entregue_em', { ascending: false })
   if (error) return NextResponse.json({ error: 'Não foi possível ler os vídeos.' }, { status: 500 })
-  return NextResponse.json({ ok: true, videos: data ?? [] })
+  // Capa do filme: lida uma vez do Vimeo/YouTube e guardada ('' = link sem capa, ex.: Smash)
+  const videos = await Promise.all((data ?? []).map(async v => {
+    if (v.capa_url !== null || !v.filme_url) return v
+    const capa = await capaDoFilme(v.filme_url)
+    await db.from('video_partilhas').update({ capa_url: capa }).eq('referencia', v.referencia).eq('filme_url', v.filme_url)
+    return { ...v, capa_url: capa }
+  }))
+  return NextResponse.json({ ok: true, videos })
+}
+
+async function capaDoFilme(url: string): Promise<string> {
+  const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{11})/)
+  if (yt) return `https://img.youtube.com/vi/${yt[1]}/hqdefault.jpg`
+  if (/vimeo\.com\//i.test(url)) {
+    const limpo = url.split('?')[0]
+    const r = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(limpo)}&width=1280`).catch(() => null)
+    const d = r?.ok ? await r.json().catch(() => null) : null
+    if (d?.thumbnail_url) return String(d.thumbnail_url)
+  }
+  return ''
 }
 
 export async function PUT(req: NextRequest) {
@@ -39,7 +59,7 @@ export async function PUT(req: NextRequest) {
     const antes = new Map((atuais ?? []).map(a => [a.freelancer_id, a.entregue_em]))
     const { error } = await db.from('video_partilhas').upsert(ids.map(fid => ({
       referencia, freelancer_id: fid, cliente: cliente ?? null, data_casamento: data ? String(data).slice(0, 10) : null, local: local ?? null,
-      filme_url: filmeUrl ?? null, entregue_em: entregue ? (antes.get(fid) ?? agora) : null,
+      filme_url: filmeUrl ?? null, capa_url: null, entregue_em: entregue ? (antes.get(fid) ?? agora) : null,
     })), { onConflict: 'referencia,freelancer_id' })
     if (error) return NextResponse.json({ error: 'Não foi possível guardar.' }, { status: 500 })
   }

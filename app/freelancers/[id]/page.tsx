@@ -3170,14 +3170,30 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
 // ─── Vídeos Tab ───────────────────────────────────────────────────────────────
 /* Filmes que a RL partilhou com o membro no /edicao-video (tabela video_partilhas).
    Só aparecem depois de o filme estar Entregue. */
-type VideoPartilhado = { id: string; referencia: string; cliente: string | null; data_casamento: string | null; local: string | null; filme_url: string | null; entregue_em: string }
+type VideoPartilhado = { id: string; referencia: string; cliente: string | null; data_casamento: string | null; local: string | null; filme_url: string | null; entregue_em: string; capa_url: string | null }
 function VideosTab({ freelancerId }: { freelancerId: string }) {
   const [videos, setVideos] = useState<VideoPartilhado[] | null>(null)
+  const [copiado, setCopiado] = useState<string | null>(null)
   useEffect(() => {
     fetch(`/api/freelancer-videos?freelancer=${encodeURIComponent(freelancerId)}`)
       .then(r => r.json()).then(d => setVideos(d.videos ?? [])).catch(() => setVideos([]))
   }, [freelancerId])
   const data = (iso: string | null) => iso ? new Date(iso.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''
+
+  // Partilhar o link: no telemóvel abre a folha de partilha (WhatsApp, email…); no computador copia o link
+  const partilhar = async (v: VideoPartilhado) => {
+    if (!v.filme_url) return
+    const titulo = `O vosso filme · ${v.cliente || v.referencia}`
+    if (typeof navigator !== 'undefined' && navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+      try { await navigator.share({ title: titulo, url: v.filme_url }); return } catch { /* cancelado: copia */ }
+    }
+    try {
+      await navigator.clipboard.writeText(v.filme_url)
+      setCopiado(v.id)
+      setTimeout(() => setCopiado(c => (c === v.id ? null : c)), 2500)
+    } catch { window.prompt('Copia o link do filme:', v.filme_url) }
+  }
+
   if (!videos) return <div className="h-28 rounded-[18px] bg-white/[0.03] animate-pulse" />
   if (!videos.length) return (
     <div className="py-16 text-center">
@@ -3187,21 +3203,51 @@ function VideosTab({ freelancerId }: { freelancerId: string }) {
     </div>
   )
   return (
-    <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {videos.map(v => (
-        <li key={v.id} className="rounded-[18px] bg-[#111111]/90 p-5 flex flex-col gap-3" style={{ border: '1px solid rgba(216,190,147,0.18)' }}>
-          <div>
-            <p className="text-[17px] font-semibold text-white leading-snug">{v.cliente || v.referencia}</p>
-            <p className="text-[12px] text-white/40 mt-0.5">{data(v.data_casamento)}{v.local ? ` · ${v.local}` : ''}</p>
-          </div>
-          <p className="text-[11px] tracking-[0.15em] uppercase text-[#4ade80]">✓ Entregue a {data(v.entregue_em)}</p>
-          {v.filme_url
-            ? <a href={v.filme_url} target="_blank" rel="noopener noreferrer"
-                className="mt-auto inline-flex items-center justify-center gap-2 rounded-full border border-[#d8be93]/50 bg-[#d8be93]/10 px-4 py-2 text-[12px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#d8be93]/25">▶ Ver filme</a>
-            : <span className="text-[12px] text-white/35">Sem link do filme</span>}
-        </li>
-      ))}
-    </ul>
+    <div className="flex flex-col gap-8">
+      {/* Como partilhar com os noivos */}
+      <section className="rounded-[18px] bg-[#111111]/90 p-5 sm:p-6" style={{ border: '1px solid rgba(255,255,255,0.18)' }}>
+        <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#d8be93]">Como partilhar com os noivos</p>
+        <ol className="mt-3 grid gap-2 sm:grid-cols-3 text-[13.5px] text-white/70 leading-snug">
+          <li><span className="text-[#d8be93] font-semibold">1.</span> Vê o filme primeiro, até ao fim, para saberes do que falas.</li>
+          <li><span className="text-[#d8be93] font-semibold">2.</span> Carrega em <b className="text-white">Partilhar link</b>. No telemóvel escolhes o WhatsApp; no computador o link fica copiado e colas na mensagem.</li>
+          <li><span className="text-[#d8be93] font-semibold">3.</span> Escreve uma mensagem pessoal aos noivos: um momento do dia de que gostaste e os parabéns. Assina com o teu nome e RL Photo.Video.</li>
+        </ol>
+        <p className="mt-3 text-[12px] text-white/40">Envia só aos noivos do filme. Não publiques o vídeo nem o link nas redes sociais sem autorização da RL.</p>
+      </section>
+
+      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {videos.map(v => (
+          <li key={v.id} className="rounded-[18px] overflow-hidden bg-[#111111]/90 flex flex-col" style={{ border: '1px solid rgba(216,190,147,0.18)' }}>
+            {/* Capa do filme */}
+            <a href={v.filme_url ?? undefined} target="_blank" rel="noopener noreferrer" className="group relative block aspect-video bg-black overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={v.capa_url || '/eventos-hero-2026.webp'} alt={v.cliente ?? ''} loading="lazy"
+                className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04] ${v.capa_url ? '' : 'opacity-50'}`} />
+              <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+              {!v.capa_url && <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[13px] font-semibold tracking-[0.3em] uppercase text-[#d8be93]">{v.cliente || v.referencia}</span>}
+              <span className="absolute right-3 bottom-3 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 border border-[#d8be93]/60 text-white text-[14px] group-hover:bg-[#d8be93]/30">▶</span>
+            </a>
+            <div className="p-5 flex flex-col gap-3 flex-1">
+              <div>
+                <p className="text-[17px] font-semibold text-white leading-snug">{v.cliente || v.referencia}</p>
+                <p className="text-[12px] text-white/40 mt-0.5">{data(v.data_casamento)}{v.local ? ` · ${v.local}` : ''}</p>
+              </div>
+              <p className="text-[11px] tracking-[0.15em] uppercase text-[#4ade80]">✓ Entregue a {data(v.entregue_em)}</p>
+              {v.filme_url ? (
+                <div className="mt-auto grid grid-cols-2 gap-2">
+                  <a href={v.filme_url} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d8be93]/50 bg-[#d8be93]/10 px-3 py-2 text-[12px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#d8be93]/25">▶ Ver filme</a>
+                  <button type="button" onClick={() => partilhar(v)}
+                    className={`inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-[12px] font-semibold tracking-[0.15em] uppercase transition-colors ${copiado === v.id ? 'border-[#4ade80]/60 bg-[#4ade80]/10 text-[#4ade80]' : 'border-white/25 text-white hover:bg-white/[0.06]'}`}>
+                    {copiado === v.id ? '✓ Link copiado' : '↗ Partilhar link'}
+                  </button>
+                </div>
+              ) : <span className="mt-auto text-[12px] text-white/35">Sem link do filme</span>}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 

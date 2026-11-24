@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   // sem email nem ticket aos noivos. A página avisa numa janela que não há portal.
   if (!p) {
     await aplicarEstadoVideo(req.nextUrl.origin, { referencia, estado: 'Entregue' })
-    await sb.from('video_partilhas').update({ filme_url: link, entregue_em: new Date().toISOString() })
+    await sb.from('video_partilhas').update({ filme_url: link, capa_url: null, entregue_em: new Date().toISOString() })
       .eq('referencia', referencia).is('entregue_em', null)
     return NextResponse.json({ ok: true, semPortal: true })
   }
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
   await aplicarEstadoVideo(req.nextUrl.origin, { referencia, estado: 'Entregue' })
 
   // 4) os membros da equipa com quem o filme foi partilhado passam a vê-lo na pasta Vídeos
-  await sb.from('video_partilhas').update({ filme_url: link, entregue_em: new Date().toISOString() })
+  await sb.from('video_partilhas').update({ filme_url: link, capa_url: null, entregue_em: new Date().toISOString() })
     .eq('referencia', referencia).is('entregue_em', null)
   return NextResponse.json({ ok: true })
 }
@@ -72,11 +72,11 @@ export async function PATCH(req: NextRequest) {
   const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
   const { data: p } = await sb.from('portais').select('id, settings').eq('referencia', referencia).maybeSingle()
   if (!p) {
-    await sb.from('video_partilhas').update({ filme_url: link }).eq('referencia', referencia)
+    await sb.from('video_partilhas').update({ filme_url: link, capa_url: null }).eq('referencia', referencia)
     return NextResponse.json({ ok: true, semPortal: true })
   }
   const { error } = await sb.from('portais').update({ settings: { ...(p.settings ?? {}), wedding_film_url: link } }).eq('id', p.id)
   if (error) return NextResponse.json({ error: 'Não foi possível guardar o link.' }, { status: 500 })
-  await sb.from('video_partilhas').update({ filme_url: link }).eq('referencia', referencia)
+  await sb.from('video_partilhas').update({ filme_url: link, capa_url: null }).eq('referencia', referencia)
   return NextResponse.json({ ok: true })
 }
