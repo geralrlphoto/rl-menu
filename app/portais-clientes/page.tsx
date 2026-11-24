@@ -14,6 +14,8 @@ const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
 const EDITORIAIS = [
   { slug: 'zankyou-quinta-da-ria', nome: 'Zankyou × Quinta da Ria', sub: 'EDITORIAL · PLANO DE VÍDEO', href: '/editorial/zankyou-quinta-da-ria' },
   { slug: 'zankyou-sud-lisboa', nome: 'Zankyou Wedding Club × SUD Lisboa', sub: 'EVENTO · 16 NOV 2026 · VÍDEO OFICIAL', href: '/editorial/zankyou-sud-lisboa' },
+  // Portal da reunião de parceria (a apresentação tem password própria, em app/parceria/sirius-park/apresentacao/acesso.ts): sem o botão +
+  { slug: 'sirius-park', nome: 'Sirius Park · Reunião de parceria', sub: 'PARCERIA · 25 NOV 2026 · 16:30', href: '/parceria/sirius-park', semAdmin: true },
 ]
 
 function formatDay(d: string) {
@@ -161,7 +163,7 @@ export default async function PortaisClientesPage() {
                   <p className="font-mono text-[10px] mt-0.5 tracking-widest truncate" style={{ color: 'rgba(255,255,255,0.2)' }}>{ed.sub}</p>
                 </Link>
                 {/* + abre a janela da senha e dos links das entregas */}
-                <EditorialAdminButton slug={ed.slug} nome={ed.nome} />
+                {!('semAdmin' in ed && ed.semAdmin) && <EditorialAdminButton slug={ed.slug} nome={ed.nome} />}
                 <Link href={ed.href} target="_blank" className="shrink-0 text-sm" style={{ color: 'rgba(201,168,76,0.5)' }} aria-label="Abrir o editorial">↗</Link>
               </div>
               <CopiarLinkButton url={ed.href} />
