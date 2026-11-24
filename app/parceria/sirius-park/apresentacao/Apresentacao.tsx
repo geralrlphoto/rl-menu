@@ -298,7 +298,7 @@ const SLIDES: Slide[] = [
 
 type FotoWf = { src: string; srcSet: string }
 
-export default function ApresentacaoSiriusPark({ escolhas, admin }: { escolhas: Record<string, string>; admin: boolean }) {
+export default function ApresentacaoSiriusPark({ escolhas, admin, editarInicial = false }: { escolhas: Record<string, string>; admin: boolean; editarInicial?: boolean }) {
   const [i, setI] = useState(0)
   const toque = useRef<number | null>(null)
   const total = SLIDES.length
@@ -313,7 +313,7 @@ export default function ApresentacaoSiriusPark({ escolhas, admin }: { escolhas: 
   }, [])
 
   // Modo Editar fotos (só admin): clica-se num espaço do slide e depois numa foto do portfólio
-  const [editar, setEditar] = useState(false)
+  const [editar, setEditar] = useState(admin && editarInicial)
   const [sel, setSel] = useState<string | null>(null)
   const [aGravar, setAGravar] = useState(false)
   const [aviso, setAviso] = useState('')
