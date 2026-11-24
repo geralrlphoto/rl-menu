@@ -275,7 +275,7 @@ function FreelancerDetailInner() {
       document.removeEventListener('visibilitychange', onVis)
     }
   }, [viewAsFreelancer, id])
-  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
+  const [tab, setTab] = useState<'casamentos'|'edicao'|'album'|'videos'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   // ID de casamento a abrir expandido quando o utilizador entra na tab Casamentos
   // — usado pelas notificações para abrir directamente o casamento associado.
@@ -658,6 +658,12 @@ function FreelancerDetailInner() {
           texto={`${album.length} ${album.length === 1 ? 'álbum' : 'álbuns'}`}
           lateral="Edição de álbuns" />
       )
+      case 'videos': return (
+        <CapaPortal foto="/eventos-hero-2026.webp" eyebrow="RL Photo.Video" titulo="VÍDEOS"
+          linha={<>Pasta · <span className="text-[#d8be93]">Vídeos</span></>}
+          texto="Os vídeos da equipa"
+          lateral="Vídeos" />
+      )
       case 'tarefas': case 'notificacoes': case 'mensagens': return (
         <CapaPortal foto="/crm-hero.webp" eyebrow="RL Photo.Video" titulo="MENSAGENS"
           linha={<>Tarefas · Notificações · <span className="text-[#d8be93]">Mensagens</span></>}
@@ -780,7 +786,7 @@ function FreelancerDetailInner() {
       {capa}
 
       <div className={`mx-auto ${
-        (['casamentos', 'edicao', 'album', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes', 'mensagens', null] as Array<string | null>).includes(tab) ? 'max-w-[1500px]' : 'max-w-3xl'
+        (['casamentos', 'edicao', 'album', 'videos', 'pagamentos', 'tarefas', 'calendario', 'definicoes', 'notificacoes', 'mensagens', null] as Array<string | null>).includes(tab) ? 'max-w-[1500px]' : 'max-w-3xl'
       }`}>
       {/* Início: atalhos, o que há para fazer, os próximos casamentos e as tarefas */}
       {tab === null && (
@@ -1057,6 +1063,12 @@ function FreelancerDetailInner() {
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} etapaDe={etapaDe} filtroInicial={filtroCasamentos} onFiltroUsado={() => setFiltroCasamentos(null)} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} fotosSelecaoMap={fotosSelecaoMap} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
+      {tab === 'videos'       && (
+        <div className="py-16 text-center">
+          <p className="text-[40px] text-[#d8be93]/60 leading-none">▶</p>
+          <p className="mt-4 text-[15px] text-white/60">A pasta de vídeos ainda está vazia.</p>
+        </div>
+      )}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
       {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} disponibilidade={disponibilidade} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
@@ -1212,7 +1224,7 @@ function AtalhoPortal({ num, label, icon, onClick, href, contador, primary }: {
 }
 
 // ─── SidebarNavAdmin ───────────────────────────────────────────────────────
-type AdminTabKey ='casamentos'|'edicao'|'album'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
+type AdminTabKey ='casamentos'|'edicao'|'album'|'videos'|'tarefas'|'calendario'|'info'|'notas'|'pagamentos'|'notificacoes'|'mensagens'|'definicoes'|null
 
 // ─── Início "Mesa de trabalho" ─────────────────────────────────────────────
 /* Uma página para saber o que fazer hoje. Cada linha é um casamento com a etapa do
@@ -1462,6 +1474,7 @@ function itensMenuMembro({ isVideografo, isFotografo, freelancerId }: { isVideog
     { key: 'casamentos',  label: 'Eventos',             icon: '◆' },
     ...(!isVideografo ? [{ key: 'edicao' as AdminTabKey, label: 'Edição de fotos', icon: '✎' }] : []),
     ...(isFotografo ? [{ key: 'album' as AdminTabKey, label: 'Edição Álbum', icon: '◫' }] : []),
+    { key: 'videos',      label: 'Vídeos',              icon: '▶' },
     { key: 'tarefas',     label: 'Mensagens e tarefas', icon: '◷', grupo: ['tarefas', 'notificacoes', 'mensagens'] },
     { key: 'calendario',  label: 'Calendário',          icon: '◉' },
     { key: 'pagamentos',  label: 'Pagamentos',          icon: '$' },
