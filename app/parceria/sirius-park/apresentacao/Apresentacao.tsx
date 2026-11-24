@@ -122,13 +122,22 @@ const SLIDES: Slide[] = [
         <span className="rlp-eyebrow">02 · Como trabalhamos</span>
         <h2 className="ap-h2">Do primeiro contacto <em>à última entrega</em></h2>
         <div className="ap-grid3">
-          {PROCESSO.map(p => (
-            <div key={p.n} className="ap-card">
-              <span className="ap-n">{p.n}</span>
-              <p className="ap-card-t">{p.t}</p>
-              <p className="ap-card-d">{p.d}</p>
-            </div>
-          ))}
+          {PROCESSO.map(p => {
+            // 01 e 02 têm botão para o portal de exemplo (mesmos links do slide "Vejam por vocês")
+            const url = p.n === '01' ? LINKS[0].url : p.n === '02' ? LINKS[1].url : ''
+            return (
+              <div key={p.n} className="ap-card">
+                <span className="ap-n">{p.n}</span>
+                <p className="ap-card-t">{p.t}</p>
+                <p className="ap-card-d">{p.d}</p>
+                {url && (
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="ap-btn-portal" onClick={e => e.stopPropagation()}>
+                    {p.n === '01' ? 'Ver portal da reunião' : 'Ver portal dos noivos'} <span>↗</span>
+                  </a>
+                )}
+              </div>
+            )
+          })}
         </div>
       </div>
     ),
@@ -404,6 +413,9 @@ const CSS = `
 .ap-link{display:block;text-decoration:none;cursor:pointer;transition:border-color .35s,background .35s,transform .35s var(--ease);}
 .ap-link:hover{border-color:rgba(216,190,147,.5);background:rgba(216,190,147,.05);transform:translateY(-3px);}
 .ap-abrir{display:inline-block;margin-top:18px;font-family:var(--fb);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--g);}
+.ap-btn-portal{display:inline-flex;align-items:center;gap:10px;margin-top:18px;padding:10px 18px;border:1px solid rgba(216,190,147,.55);border-radius:40px;
+  font-family:var(--fb);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--g);text-decoration:none;cursor:pointer;transition:background .35s,color .35s;}
+.ap-btn-portal:hover{background:var(--g);color:var(--ink);}
 .ap-list{list-style:none;padding:0;margin:4px 0 22px;display:flex;flex-direction:column;gap:10px;}
 .ap-list li{font-family:var(--fb);font-size:16px;color:var(--tx);padding-left:22px;position:relative;}
 .ap-list li::before{content:'';position:absolute;left:0;top:.65em;width:10px;height:1px;background:var(--g);}
