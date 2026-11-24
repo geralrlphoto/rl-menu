@@ -46,6 +46,10 @@ export async function POST(req: NextRequest) {
 
   // 3) estado Entregue em todo o lado
   await aplicarEstadoVideo(req.nextUrl.origin, { referencia, estado: 'Entregue' })
+
+  // 4) os membros da equipa com quem o filme foi partilhado passam a vê-lo na pasta Vídeos
+  await sb.from('video_partilhas').update({ filme_url: link, entregue_em: new Date().toISOString() })
+    .eq('referencia', referencia).is('entregue_em', null)
   return NextResponse.json({ ok: true })
 }
 
@@ -63,5 +67,6 @@ export async function PATCH(req: NextRequest) {
   if (!p) return NextResponse.json({ error: 'Este casamento não tem portal.' }, { status: 404 })
   const { error } = await sb.from('portais').update({ settings: { ...(p.settings ?? {}), wedding_film_url: link } }).eq('id', p.id)
   if (error) return NextResponse.json({ error: 'Não foi possível guardar o link.' }, { status: 500 })
+  await sb.from('video_partilhas').update({ filme_url: link }).eq('referencia', referencia)
   return NextResponse.json({ ok: true })
 }

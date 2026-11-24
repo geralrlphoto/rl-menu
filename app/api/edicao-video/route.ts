@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
 
   // Pagamentos dos editores (descrição começa pela referência) e histórico dos projetos
   const idsEditores = (eds ?? []).map(e => e.id)
-  const [{ data: pags }, { data: hist }, { data: avals }] = await Promise.all([
+  const [{ data: pags }, { data: hist }, { data: avals }, { data: equipa }, { data: partilhas }] = await Promise.all([
     idsEditores.length
       ? sb.from('freelancer_pagamentos').select('id, freelancer_id, descricao, valor, status, data_pago, data_prevista').in('freelancer_id', idsEditores)
       : Promise.resolve({ data: [] as any[] }),
@@ -92,7 +92,12 @@ export async function GET(req: NextRequest) {
       : Promise.resolve({ data: [] as any[] }),
     // todas as avaliações (ranking dos editores, de sempre)
     sb.from('video_avaliacoes').select('referencia, freelancer_id, ritmo, cor, audio, historia, nota_noivos'),
+    // toda a equipa (botão Partilhar) e com quem cada filme já está partilhado
+    sb.from('freelancers').select('id, nome, status').order('nome'),
+    refs.length ? sb.from('video_partilhas').select('referencia, freelancer_id').in('referencia', refs) : Promise.resolve({ data: [] as any[] }),
   ])
+  const partilhasPorRef = new Map<string, string[]>()
+  for (const s of partilhas ?? []) partilhasPorRef.set(s.referencia, [...(partilhasPorRef.get(s.referencia) ?? []), s.freelancer_id])
   const avalPorRef = new Map((avals ?? []).map(a => [a.referencia, a]))
   const pendente = (p: any) => !['PAGO', 'CANCELADO'].includes(String(p.status ?? '').toUpperCase())
   const porPagar: Record<string, number> = {}
@@ -177,6 +182,7 @@ export async function GET(req: NextRequest) {
             .map(p => ({ id: p.id, freelancerId: p.freelancer_id, valor: Number(p.valor) || 0, pago: String(p.status ?? '').toUpperCase() === 'PAGO', dataPago: p.data_pago }))
         : [],
       historico: histPorRef.get(e.referencia ?? '') ?? [],
+      partilhas: partilhasPorRef.get(e.referencia ?? '') ?? [],
     }
   })
   // Entregues antigos saem do quadro (ficam só os recentes)
@@ -194,5 +200,5 @@ export async function GET(req: NextRequest) {
   }).filter(r => r.filmes || r.nNoivos)
     .sort((a, b) => ((b.rl ?? 0) + (b.noivos ?? b.rl ?? 0)) - ((a.rl ?? 0) + (a.noivos ?? a.rl ?? 0)))
 
-  return NextResponse.json({ ok: true, hoje, editores: eds ?? [], projetos, porPagar, ranking })
+  return NextResponse.json({ ok: true, hoje, editores: eds ?? [], equipa: equipa ?? [], projetos, porPagar, ranking })
 }

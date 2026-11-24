@@ -1063,12 +1063,7 @@ function FreelancerDetailInner() {
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} etapaDe={etapaDe} filtroInicial={filtroCasamentos} onFiltroUsado={() => setFiltroCasamentos(null)} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} fotosSelecaoMap={fotosSelecaoMap} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
-      {tab === 'videos'       && (
-        <div className="py-16 text-center">
-          <p className="text-[40px] text-[#d8be93]/60 leading-none">▶</p>
-          <p className="mt-4 text-[15px] text-white/60">A pasta de vídeos ainda está vazia.</p>
-        </div>
-      )}
+      {tab === 'videos'       && <VideosTab freelancerId={id} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
       {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} disponibilidade={disponibilidade} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
@@ -3169,6 +3164,44 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
         </div>
       </div>
     </div>
+  )
+}
+
+// ─── Vídeos Tab ───────────────────────────────────────────────────────────────
+/* Filmes que a RL partilhou com o membro no /edicao-video (tabela video_partilhas).
+   Só aparecem depois de o filme estar Entregue. */
+type VideoPartilhado = { id: string; referencia: string; cliente: string | null; data_casamento: string | null; local: string | null; filme_url: string | null; entregue_em: string }
+function VideosTab({ freelancerId }: { freelancerId: string }) {
+  const [videos, setVideos] = useState<VideoPartilhado[] | null>(null)
+  useEffect(() => {
+    fetch(`/api/freelancer-videos?freelancer=${encodeURIComponent(freelancerId)}`)
+      .then(r => r.json()).then(d => setVideos(d.videos ?? [])).catch(() => setVideos([]))
+  }, [freelancerId])
+  const data = (iso: string | null) => iso ? new Date(iso.slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : ''
+  if (!videos) return <div className="h-28 rounded-[18px] bg-white/[0.03] animate-pulse" />
+  if (!videos.length) return (
+    <div className="py-16 text-center">
+      <p className="text-[40px] text-[#d8be93]/60 leading-none">▶</p>
+      <p className="mt-4 text-[15px] text-white/60">A pasta de vídeos ainda está vazia.</p>
+      <p className="mt-1 text-[13px] text-white/35">Os filmes que a RL partilhar contigo aparecem aqui quando forem entregues aos noivos.</p>
+    </div>
+  )
+  return (
+    <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {videos.map(v => (
+        <li key={v.id} className="rounded-[18px] bg-[#111111]/90 p-5 flex flex-col gap-3" style={{ border: '1px solid rgba(216,190,147,0.18)' }}>
+          <div>
+            <p className="text-[17px] font-semibold text-white leading-snug">{v.cliente || v.referencia}</p>
+            <p className="text-[12px] text-white/40 mt-0.5">{data(v.data_casamento)}{v.local ? ` · ${v.local}` : ''}</p>
+          </div>
+          <p className="text-[11px] tracking-[0.15em] uppercase text-[#4ade80]">✓ Entregue a {data(v.entregue_em)}</p>
+          {v.filme_url
+            ? <a href={v.filme_url} target="_blank" rel="noopener noreferrer"
+                className="mt-auto inline-flex items-center justify-center gap-2 rounded-full border border-[#d8be93]/50 bg-[#d8be93]/10 px-4 py-2 text-[12px] font-semibold tracking-[0.15em] uppercase text-white hover:bg-[#d8be93]/25">▶ Ver filme</a>
+            : <span className="text-[12px] text-white/35">Sem link do filme</span>}
+        </li>
+      ))}
+    </ul>
   )
 }
 

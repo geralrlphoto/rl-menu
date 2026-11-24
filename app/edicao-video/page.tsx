@@ -39,7 +39,9 @@ type Projeto = {
   material: { notifId: string; freelancerId: string; link: string } | null
   pagamentos: { id: string; freelancerId: string; valor: number; pago: boolean; dataPago: string | null }[]
   historico: { estado: string; origem: string | null; em: string }[]
+  partilhas: string[]
 }
+type Membro = { id: string; nome: string; status: string | null }
 
 type Rank = { id: string; nome: string; foto_url: string | null; filmes: number; rl: number | null; noivos: number | null; nNoivos: number; ritmo: number | null; cor: number | null; audio: number | null; historia: number | null }
 const CRITERIOS = [['ritmo', 'Ritmo'], ['cor', 'Cor'], ['audio', 'Áudio'], ['historia', 'História']] as const
@@ -62,13 +64,13 @@ const fmt = (iso: string) => new Date(iso + 'T12:00:00Z').toLocaleDateString('pt
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
 
 export default function EdicaoVideoPage() {
-  const [dados, setDados] = useState<{ editores: Editor[]; projetos: Projeto[]; porPagar: Record<string, number>; ranking: Rank[] } | null>(null)
+  const [dados, setDados] = useState<{ editores: Editor[]; equipa: Membro[]; projetos: Projeto[]; porPagar: Record<string, number>; ranking: Rank[] } | null>(null)
   const [erro, setErro] = useState(false)
   const [aGravar, setAGravar] = useState<number | null>(null)
 
   const carregar = () => {
     fetch('/api/edicao-video').then(r => r.json())
-      .then(d => { if (d.ok) setDados({ editores: d.editores, projetos: d.projetos, porPagar: d.porPagar ?? {}, ranking: d.ranking ?? [] }); else setErro(true) })
+      .then(d => { if (d.ok) setDados({ editores: d.editores, equipa: d.equipa ?? [], projetos: d.projetos, porPagar: d.porPagar ?? {}, ranking: d.ranking ?? [] }); else setErro(true) })
       .catch(() => setErro(true))
   }
   useEffect(carregar, [])
@@ -229,6 +231,22 @@ export default function EdicaoVideoPage() {
     setAGravar(null)
     if (!r?.ok) { alert('Não foi possível trocar o link. Tenta outra vez.'); return }
     setNovoLink(({ [p.id]: _, ...resto }) => resto)
+    carregar()
+  }
+
+  // Partilhar o filme com membros da equipa: aparece na pasta Vídeos do portal deles
+  // quando o filme estiver Entregue (já entregue: aparece logo ao guardar).
+  const [partilhar, setPartilhar] = useState<{ id: number; ids: string[] } | null>(null)
+  const guardarPartilha = async (p: Projeto) => {
+    if (!partilhar) return
+    setAGravar(p.id)
+    const r = await fetch('/api/freelancer-videos', {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ referencia: p.referencia, cliente: p.cliente, data: p.data, local: p.local, filmeUrl: p.filmeUrl, entregue: p.fase === 'Entregue', freelancerIds: partilhar.ids }),
+    }).catch(() => null)
+    setAGravar(null)
+    if (!r?.ok) { alert('Não foi possível guardar a partilha. Tenta outra vez.'); return }
+    setPartilhar(null)
     carregar()
   }
 
@@ -605,6 +623,48 @@ export default function EdicaoVideoPage() {
                                   className="rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase text-white/50 hover:text-white">Cancelar</button>
                               </div>
                               <p className="text-[10px] text-white/35">Muda só o link no portal. Os noivos não recebem novo email.</p>
+                            </>
+                          )}
+                        </div>
+                      )}
+                      {p.referencia && (
+                        <div className="rounded-xl border border-white/[0.08] bg-black/25 p-3 flex flex-col gap-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-white/40">Partilhar com a equipa</p>
+                            {partilhar?.id !== p.id && (
+                              <button type="button" onClick={() => setPartilhar({ id: p.id, ids: p.partilhas })}
+                                className="shrink-0 rounded-full border border-[#C9A84C]/45 bg-[#C9A84C]/10 px-3 py-1 text-[10px] font-semibold tracking-[0.12em] uppercase text-white hover:bg-[#C9A84C]/25">
+                                ↗ Partilhar{p.partilhas.length ? ` · ${p.partilhas.length}` : ''}
+                              </button>
+                            )}
+                          </div>
+                          {partilhar?.id !== p.id && p.partilhas.length > 0 && (
+                            <p className="text-[11px] text-white/55 leading-snug">
+                              {p.partilhas.map(fid => dados?.equipa.find(m => m.id === fid)?.nome ?? '?').join(', ')}
+                              <span className="text-white/35"> · {f === 'Entregue' ? 'já veem na pasta Vídeos' : 'recebem ao marcar Entregue'}</span>
+                            </p>
+                          )}
+                          {partilhar?.id === p.id && (
+                            <>
+                              <div className="flex flex-wrap gap-1.5 max-h-56 overflow-y-auto">
+                                {(dados?.equipa ?? []).map(m => {
+                                  const on = partilhar.ids.includes(m.id)
+                                  return (
+                                    <button key={m.id} type="button" title={m.status ?? ''}
+                                      onClick={() => setPartilhar(s => s && ({ ...s, ids: on ? s.ids.filter(x => x !== m.id) : [...s.ids, m.id] }))}
+                                      className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors ${on ? 'border-[#C9A84C] bg-[#C9A84C]/25 text-white' : 'border-white/15 text-white/50 hover:text-white hover:border-white/35'}`}>
+                                      {on ? '✓ ' : ''}{m.nome}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                              <div className="flex gap-2">
+                                <button type="button" disabled={aGravar === p.id} onClick={() => guardarPartilha(p)}
+                                  className="flex-1 rounded-full border border-[#C9A84C]/50 bg-[#C9A84C]/15 px-3 py-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase text-white hover:bg-[#C9A84C]/30 disabled:opacity-40">{aGravar === p.id ? 'A guardar…' : `Guardar (${partilhar.ids.length})`}</button>
+                                <button type="button" onClick={() => setPartilhar(null)}
+                                  className="rounded-full border border-white/15 px-3 py-1.5 text-[10px] font-semibold tracking-[0.12em] uppercase text-white/50 hover:text-white">Cancelar</button>
+                              </div>
+                              <p className="text-[10px] text-white/35">{f === 'Entregue' ? 'O filme aparece já na pasta Vídeos de quem escolheres.' : 'Quem escolheres recebe o filme na pasta Vídeos do portal quando o marcares Entregue.'}</p>
                             </>
                           )}
                         </div>
