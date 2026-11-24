@@ -195,7 +195,9 @@ export default function EdicaoVideoPage() {
     const estreia = local ? new Date(local).toISOString() : null
     if (estreia && Date.parse(estreia) <= Date.now()) { alert('A estreia tem de ser numa data e hora futuras.'); return }
     const quando = estreia ? new Date(estreia).toLocaleString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' }) : ''
-    if (!window.confirm(estreia
+    if (!window.confirm(!p.portalId
+      ? `Este casamento não tem portal. ${estreia ? 'Marcar a estreia' : 'Entregar o filme'} de ${p.cliente || p.referencia} na mesma? O vídeo fica Entregue e a equipa com quem foi partilhado recebe-o na pasta Vídeos.`
+      : estreia
       ? `Marcar a estreia do filme de ${p.cliente || p.referencia} para ${quando}? Os noivos recebem o ticket com a data e o filme abre no portal a essa hora.`
       : `Enviar o filme a ${p.cliente || p.referencia}? Os noivos recebem o email e o vídeo fica Entregue.`)) return
     const enviar = async (semEmail: boolean) => {
@@ -215,8 +217,11 @@ export default function EdicaoVideoPage() {
       res = await enviar(true)
     }
     if (!res.ok) { alert(res.d.error || 'Não foi possível enviar.'); return }
+    if (res.d.semPortal) setSemPortal({ nome: p.cliente || p.referencia || 'Este casamento', estreia: !!estreia })
     carregar()
   }
+  // Janela central: o filme foi entregue, mas o casamento não tem portal
+  const [semPortal, setSemPortal] = useState<{ nome: string; estreia: boolean } | null>(null)
 
   // Trocar o link do filme já entregue (só o portal; os noivos não recebem novo email)
   const [novoLink, setNovoLink] = useState<Record<number, string>>({})
@@ -738,6 +743,23 @@ export default function EdicaoVideoPage() {
           </details>
         )}
       </div>
+
+      {semPortal && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-5 bg-black/70 backdrop-blur-sm" onClick={() => setSemPortal(null)}>
+          <div role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}
+            className="w-full max-w-md rounded-[22px] border border-[#C9A84C]/40 bg-[#111111] p-7 text-center shadow-[0_0_60px_-20px_rgba(201,168,76,0.7)]">
+            <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Sem portal</p>
+            <p className="mt-3 text-[22px] font-semibold leading-tight">{semPortal.nome} não tem portal</p>
+            <p className="mt-3 text-[14px] text-white/65 leading-relaxed">
+              {semPortal.estreia ? 'A estreia ficou marcada' : 'O filme ficou entregue'} e o vídeo passou a <span className="text-[#4ade80] font-semibold">Entregue</span>.
+              A equipa com quem foi partilhado já o vê na pasta Vídeos.
+              Os noivos não recebem email nem ticket: envia-lhes o link por outro meio.
+            </p>
+            <button type="button" autoFocus onClick={() => setSemPortal(null)}
+              className="mt-6 rounded-full border border-[#C9A84C]/60 bg-[#C9A84C]/15 px-8 py-2.5 text-[12px] font-semibold tracking-[0.18em] uppercase text-white hover:bg-[#C9A84C]/30">Entendi</button>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
