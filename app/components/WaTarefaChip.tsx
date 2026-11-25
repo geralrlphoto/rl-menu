@@ -9,7 +9,7 @@ import type { TipoFollow } from '@/lib/followUpOpcoes'
 import {
   whatsappLink, mensagemLembreteReuniao, mensagemFollowUp, mensagemFollowUp2, mensagemReuniaoPreparacao,
   mensagemLembreteBriefing, mensagemLembretePreparacao, mensagemPreWedding,
-  mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding,
+  mensagemLembreteMarcarPreWedding, mensagemVesperaPreWedding, mensagemPedirContrato,
   mensagemFollowUpContacto1, mensagemFollowUpContacto2, EVENTO_FOLLOW_CONTACTO1, EVENTO_FOLLOW_CONTACTO2, mensagemFollowUp3, EVENTO_FOLLOW3,
   EVENTO_LIGAR_ABRIU, EVENTO_LEMBRETE_VESPERA, mensagemVesperaReuniao, EVENTO_PORTAL_REUNIAO, mensagemPortalReuniao,
 } from '@/lib/crm'
@@ -19,7 +19,7 @@ import {
    envio no histórico da lead (o mesmo registo que os botões do /crm usam). */
 
 export type WaTarefa = {
-  tipo: 'portal' | 'lembrete' | 'vespera' | 'ligar' | 'follow1' | 'follow2' | 'follow3' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado'
+  tipo: 'portal' | 'lembrete' | 'vespera' | 'ligar' | 'follow1' | 'follow2' | 'follow3' | 'contacto1' | 'contacto2' | 'preparacao' | 'lembrete_briefing' | 'lembrete_prep' | 'prewedding' | 'lembrete_marcar_pw' | 'vespera_pw' | 'obrigado' | 'contrato' | 'lembrete_contrato'
   contactId: string    // id da lead no CRM; nos tipos de evento (preparação e lembretes) é o id do evento; em 'obrigado' é o id da tarefa
   nome: string
   contato: string | null
@@ -52,13 +52,15 @@ const CONFIG = {
   lembrete_marcar_pw: { rotulo: 'Lembrar pré-wedding', evento: 'lembrete_marcar_prewedding' },
   vespera_pw: { rotulo: 'Pré-wedding amanhã · lembrete', evento: 'lembrete_prewedding' },
   obrigado: { rotulo: 'Agradecer escolha', evento: '' },
+  contrato: { rotulo: 'Pedir contrato assinado', evento: 'pedir_contrato' },
+  lembrete_contrato: { rotulo: 'Lembrar contrato', evento: 'lembrete_contrato' },
 }
 
 /* Follow-ups: carregar abre a janela com as opções de mensagem e o script de telefonema */
 const FOLLOW = new Set<WaTarefa['tipo']>(['ligar', 'contacto1', 'contacto2', 'follow1', 'follow2', 'follow3'])
 
 /* Tarefas ligadas ao evento (registo em eventos_whatsapp_envios); as outras são do CRM */
-const DO_EVENTO = new Set(['preparacao', 'lembrete_briefing', 'lembrete_prep', 'prewedding', 'lembrete_marcar_pw', 'vespera_pw'])
+const DO_EVENTO = new Set(['preparacao', 'lembrete_briefing', 'lembrete_prep', 'prewedding', 'lembrete_marcar_pw', 'vespera_pw', 'contrato', 'lembrete_contrato'])
 
 function textoDe(t: WaTarefa): string {
   if (t.tipo === 'obrigado' || t.tipo === 'portal') return t.mensagem ?? ''
@@ -74,6 +76,8 @@ function textoDe(t: WaTarefa): string {
   if (t.tipo === 'lembrete_prep') return mensagemLembretePreparacao(t.nome, t.reuniaoHora)
   if (t.tipo === 'prewedding') return mensagemPreWedding(t.nome, t.contactId)
   if (t.tipo === 'lembrete_marcar_pw') return mensagemLembreteMarcarPreWedding(t.nome, t.contactId)
+  if (t.tipo === 'contrato') return mensagemPedirContrato(t.nome)
+  if (t.tipo === 'lembrete_contrato') return mensagemPedirContrato(t.nome, true)
   if (t.tipo === 'vespera_pw') return mensagemVesperaPreWedding(t.nome, t.reuniaoHora, t.local, t.referencia)
   return mensagemFollowUp2(t.nome, t.dataCasamento)
 }

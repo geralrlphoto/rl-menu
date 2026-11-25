@@ -614,6 +614,25 @@ export function mensagemLembretePreparacao(nome: string | null | undefined, hora
 /* Sessão pré-wedding: alerta no /photo a 30 dias do casamento (se tiver o serviço) */
 export const PREWEDDING_ALERTA_DIAS = 30
 
+/* Pedir aos noivos o contrato assinado (portal com bloqueio até contrato + adjudicação).
+   lembrete = segundo envio, 7 dias depois do primeiro, se o contrato ainda não chegou. */
+export function mensagemPedirContrato(nome: string | null | undefined, lembrete = false): string {
+  const quem = (nome ?? '').trim()
+  return [
+    `Olá${quem ? ' ' + quem : ''}!`,
+    '',
+    lembrete
+      ? 'Ainda não recebemos o vosso contrato assinado. Está disponível no portal dos noivos, na página Contrato.'
+      : 'O vosso contrato de prestação de serviços já está disponível no portal dos noivos, na página Contrato.',
+    '',
+    'Pedimos que o leiam com calma, o assinem e nos enviem pelo botão "Enviar contrato assinado" (em PDF ou numa fotografia). Com o contrato assinado e a adjudicação paga, as restantes páginas do portal ficam disponíveis.',
+    '',
+    linkPublico('/login-noivos'),
+    '',
+    'Qualquer dúvida, estamos por aqui.',
+  ].join('\n')
+}
+
 export function mensagemPreWedding(nome: string | null | undefined, eventoId: string): string {
   const quem = (nome ?? '').trim()
   return [

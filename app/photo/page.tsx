@@ -673,6 +673,59 @@ export default async function PhotoDashboard() {
     }
     if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
   }
+  // Pedir o contrato assinado: portais com bloqueio até contrato + adjudicação, contrato
+  // disponível e ainda por enviar pelo portal. 1.º pedido 2 dias depois de o portal ser
+  // criado; se o contrato não chegar, lembrete 7 dias depois do pedido.
+  const CONTRATO_PEDIR_DIAS = 2
+  const CONTRATO_LEMBRETE_DIAS = 7
+  const getContratosPorAssinar = unstable_cache(
+    async () => {
+      const { data: portais } = await supabase.from('portais')
+        .select('referencia, created_at')
+        .eq('settings->>bloqueioAteAdjudicacao', 'true')
+        .eq('settings->>contratoDisponivel', 'true')
+        .is('settings->>contratoAssinadoEm', null)
+        .limit(200)
+      const refs = (portais ?? []).map((p: any) => p.referencia).filter(Boolean)
+      if (refs.length === 0) return { portais: [], evs: [], tels: [], env: [] }
+      const { data: evs } = await supabase.from('eventos_2026')
+        .select('id, referencia, cliente, data_evento, tipo_evento, nome_crianca')
+        .in('referencia', refs).gte('data_evento', hojeLx)
+      const ids = (evs ?? []).map((e: any) => e.id)
+      const [{ data: tels }, { data: env }] = await Promise.all([
+        supabase.from('dados_contrato_cps').select('referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs),
+        ids.length
+          ? supabase.from('eventos_whatsapp_envios').select('evento_id, evento, created_at').in('evento', ['pedir_contrato', 'lembrete_contrato']).in('evento_id', ids)
+          : Promise.resolve({ data: [] as any[] }),
+      ])
+      return { portais: portais ?? [], evs: evs ?? [], tels: tels ?? [], env: env ?? [] }
+    },
+    [`photo-wa-contrato-${hojeLx}`],
+    { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
+  )
+  const contr = await getContratosPorAssinar()
+  for (const ev of contr.evs as any[]) {
+    const portal = (contr.portais as any[]).find(p => String(p.referencia).toLowerCase() === String(ev.referencia).toLowerCase())
+    const envios: Record<string, string> = {}
+    for (const x of contr.env as any[]) if (x.evento_id === ev.id) envios[x.evento] = x.created_at
+    if (envios.lembrete_contrato) continue
+    const c = (contr.tels as any[]).find(t => t.referencia_evento === ev.referencia)
+    const tipo = envios.pedir_contrato ? 'lembrete_contrato' as const : 'contrato' as const
+    const devido = envios.pedir_contrato
+      ? somaDias(lisboaISO(new Date(envios.pedir_contrato)), CONTRATO_LEMBRETE_DIAS)
+      : somaDias(lisboaISO(new Date(portal?.created_at ?? new Date())), CONTRATO_PEDIR_DIAS)
+    const t = {
+      tipo, contactId: ev.id,
+      nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
+      contato: c?.tel_noiva || c?.tel_noivo || null,
+      batizado: ehBatizado(ev.tipo_evento) ? { crianca: ev.nome_crianca ?? null } : null,
+      reuniaoHora: null, dataCasamento: ev.data_evento,
+      dia: devido < hojeLx ? hojeLx : devido,
+      atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
+    }
+    if (t.dia <= semanaDias[DIAS_AGENDA - 1] && !ocultos.has(chaveWa(t))) waAgenda.push(t)
+  }
+
   const waPorEnviar = waAgenda.filter(t => !t.futura).length
 
   // Enviar o briefing à equipa: 3 dias antes do evento, enquanto ninguém da equipa o tiver recebido
