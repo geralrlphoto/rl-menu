@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { RLP_CSS } from '@/app/_lead/rlpCss'
 import { gravarFoto } from './acesso'
 import RodaReels from '@/app/_lead/RodaReels'
+import type { FilmeRia } from './filmesRia'
 
 const ESPACO = 'Sirius Park'
 const NOME = 'Inês'
@@ -76,14 +77,19 @@ const f = (e: string) => urlDe(e) ? `url(${urlDe(e)})` : 'none'
 // atributos dos espaços de foto (no modo Editar fotos clica-se neles)
 const slot = (e: string) => ({ 'data-slot': e, 'data-nome': NOMES[e] })
 
-// Editorial Zankyou × Quinta da Ria: os dois filmes (Vimeo) com troca entre eles.
-// Os links vêm das entregas do editorial (tabela `editoriais`, slug zankyou-quinta-da-ria), copiados aqui.
-const FILMES_RIA = [
-  { id: 'espaco', nome: 'Filme do espaço', sub: 'Quinta da Ria', src: 'https://player.vimeo.com/video/1245102446' },
-  { id: 'editorial', nome: 'Filme editorial', sub: 'Zankyou', src: 'https://player.vimeo.com/video/1250039838?h=983ad1c812' },
+// Editorial Zankyou × Quinta da Ria: leitor + roda com as capas de todos os vídeos entregues.
+// A lista vem do servidor (filmesRia.ts, entregas do editorial); estes dois ficam de reserva.
+let FILMES: FilmeRia[] = [
+  { id: 'filme-espaco', nome: 'Quinta da Ria', grupo: 'Quinta da Ria', src: 'https://player.vimeo.com/video/1245102446', vertical: false },
+  { id: 'filme-editorial', nome: 'Editorial Quinta da Ria', grupo: 'Zankyou', src: 'https://player.vimeo.com/video/1250039838?h=983ad1c812', vertical: false },
 ]
+const modN = (v: number, n: number) => ((v % n) + n) % n
 function SlideEditorial() {
+  const filmes = FILMES
+  const n = filmes.length
   const [f, setF] = useState(0)
+  const atual = filmes[Math.min(f, n - 1)]
+  const ir = (d: number) => setF(v => modN(v + d, n))
   return (
     <div className="ap-ed" onClick={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
       <div className="ap-ed-bg" aria-hidden />
@@ -93,18 +99,37 @@ function SlideEditorial() {
           <h2 className="ap-h2">Zankyou <em>×</em> Quinta da Ria</h2>
           <p className="ap-lede">Um editorial de casamento para a Zankyou e o filme de apresentação do espaço para a Quinta da Ria, no Algarve. Dois filmes, uma produção.</p>
           <p className="ap-lede" style={{ color: 'var(--g)' }}>O mesmo podemos fazer pelo {ESPACO}.</p>
-          <div className="ap-ed-tabs">
-            {FILMES_RIA.map((x, k) => (
-              <button key={x.id} className={k === f ? 'on' : ''} onClick={() => setF(k)}>
-                {x.nome}<small>{x.sub}</small>
-              </button>
-            ))}
+          <div className="ap-ed-agora">
+            <span>{String(f + 1).padStart(2, '0')} / {String(n).padStart(2, '0')}</span>
+            <b>{atual.nome}</b>
+            <small>{atual.grupo}</small>
           </div>
           <a href="/editorial/zankyou-quinta-da-ria" target="_blank" rel="noopener noreferrer" className="ap-btn-portal">Ver o editorial completo <span>↗</span></a>
         </div>
-        <div className="ap-ed-video">
-          <iframe key={FILMES_RIA[f].id} src={`${FILMES_RIA[f].src}${FILMES_RIA[f].src.includes('?') ? '&' : '?'}title=0&byline=0&portrait=0&dnt=1`}
-            allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={`${FILMES_RIA[f].nome} · ${FILMES_RIA[f].sub}`} />
+        <div className={`ap-ed-video${atual.vertical ? ' v' : ''}`}>
+          <iframe key={atual.id} src={`${atual.src}${atual.src.includes('?') ? '&' : '?'}title=0&byline=0&portrait=0&dnt=1`}
+            allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={atual.nome} />
+        </div>
+        {/* Roda com as capas: a do centro é a que está a tocar */}
+        <div className="ap-roda-ria">
+          <button className="ap-roda-seta" aria-label="Vídeo anterior" onClick={() => ir(-1)}>‹</button>
+          <div className="ap-roda-palco">
+            {filmes.map((x, k) => {
+              let d = modN(k - f, n); if (d > n / 2) d -= n
+              const longe = Math.abs(d)
+              return (
+                <button key={x.id} className={`ap-roda-c${d === 0 ? ' on' : ''}`} aria-label={x.nome} onClick={() => setF(k)}
+                  style={{
+                    transform: `translateX(calc(-50% + ${d * 62}%)) rotateY(${d * -28}deg) scale(${1 - Math.min(longe, 3) * 0.12})`,
+                    zIndex: 10 - longe, opacity: longe > 3 ? 0 : 1 - longe * 0.22, pointerEvents: longe > 3 ? 'none' : undefined,
+                  }}>
+                  {x.capa ? <img src={x.capa} alt="" draggable={false} /> : <span className="ap-roda-sem" />}
+                  <span className="ap-roda-nome">{x.nome}</span>
+                </button>
+              )
+            })}
+          </div>
+          <button className="ap-roda-seta" aria-label="Vídeo seguinte" onClick={() => ir(1)}>›</button>
         </div>
       </div>
     </div>
@@ -337,7 +362,8 @@ const SLIDES: Slide[] = [
 
 type FotoWf = { src: string; srcSet: string }
 
-export default function ApresentacaoSiriusPark({ escolhas, admin, editarInicial = false }: { escolhas: Record<string, string>; admin: boolean; editarInicial?: boolean }) {
+export default function ApresentacaoSiriusPark({ escolhas, admin, editarInicial = false, filmesRia = [] }: { escolhas: Record<string, string>; admin: boolean; editarInicial?: boolean; filmesRia?: FilmeRia[] }) {
+  if (filmesRia.length) FILMES = filmesRia
   const [i, setI] = useState(0)
   const toque = useRef<number | null>(null)
   const total = SLIDES.length
@@ -504,14 +530,26 @@ const CSS = `
 .ap-ed{position:relative;height:100%;display:flex;align-items:center;cursor:default;}
 .ap-ed-bg{position:absolute;inset:0;background:url('/quinta-da-ria-aerea.webp') center 40%/cover no-repeat;opacity:.22;filter:saturate(.7);}
 .ap-ed-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--ink) 0%,rgba(11,11,11,.75) 45%,rgba(11,11,11,.55) 100%);}
-.ap-ed-in{position:relative;z-index:2;width:100%;max-width:1320px;margin:0 auto;padding:100px var(--pad) 70px;display:grid;grid-template-columns:minmax(300px,.8fr) 1.2fr;gap:clamp(28px,4vw,64px);align-items:center;}
-.ap-ed-tabs{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px;}
-.ap-ed-tabs button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 18px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--tx-mid);font-family:var(--fd);font-weight:300;font-size:17px;cursor:pointer;transition:.3s;}
-.ap-ed-tabs button small{font-family:var(--fb);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim);}
-.ap-ed-tabs button.on{border-color:var(--g);color:var(--tx);background:rgba(216,190,147,.06);}
-.ap-ed-tabs button.on small{color:var(--g);}
-.ap-ed-video{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(216,190,147,.35);box-shadow:0 40px 80px -30px rgba(0,0,0,.8);}
+.ap-ed-in{position:relative;z-index:2;width:100%;max-width:1320px;margin:0 auto;padding:84px var(--pad) 56px;display:grid;grid-template-columns:minmax(300px,.8fr) 1.2fr;column-gap:clamp(28px,4vw,64px);row-gap:22px;align-items:center;}
+.ap-ed-in .ap-h2{margin-bottom:18px;}
+.ap-ed-agora{display:flex;flex-direction:column;gap:4px;margin:6px 0 18px;padding-left:14px;border-left:2px solid var(--g);}
+.ap-ed-agora span{font-family:var(--fb);font-size:11px;letter-spacing:.22em;color:var(--tx-dim);}
+.ap-ed-agora b{font-family:var(--fd);font-weight:300;font-size:22px;color:var(--tx);}
+.ap-ed-agora small{font-family:var(--fb);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--g);}
+.ap-ed-video{position:relative;aspect-ratio:16/9;max-height:min(46vh,460px);justify-self:center;width:100%;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(216,190,147,.35);box-shadow:0 40px 80px -30px rgba(0,0,0,.8);}
+.ap-ed-video.v{aspect-ratio:9/16;width:auto;height:min(46vh,460px);}
 .ap-ed-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+.ap-roda-ria{grid-column:1 / -1;display:flex;align-items:center;gap:14px;}
+.ap-roda-palco{position:relative;flex:1;height:clamp(110px,16vh,150px);perspective:1200px;overflow:hidden;}
+.ap-roda-c{position:absolute;left:50%;top:50%;width:clamp(170px,17vw,240px);aspect-ratio:16/9;margin-top:calc(clamp(170px,17vw,240px) * -9 / 32);padding:0;border:1px solid var(--line-soft);border-radius:10px;overflow:hidden;background:var(--ink-3);cursor:pointer;
+  transition:transform .6s var(--ease),opacity .5s,border-color .4s;}
+.ap-roda-c img{width:100%;height:100%;object-fit:cover;display:block;filter:brightness(.6);transition:filter .4s;}
+.ap-roda-c.on{border-color:var(--g);box-shadow:0 0 30px -10px rgba(216,190,147,.6);}
+.ap-roda-c.on img,.ap-roda-c:hover img{filter:none;}
+.ap-roda-sem{display:block;width:100%;height:100%;}
+.ap-roda-nome{position:absolute;left:0;right:0;bottom:0;padding:16px 8px 6px;background:linear-gradient(transparent,rgba(0,0,0,.8));font-family:var(--fb);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#fff;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.ap-roda-seta{flex:none;width:42px;height:42px;border-radius:50%;border:1px solid var(--line);background:none;color:var(--tx-mid);font-size:18px;cursor:pointer;}
+.ap-roda-seta:hover{border-color:var(--g);color:var(--g);}
 @media (max-width:820px){.ap-ed-in{grid-template-columns:1fr;padding-top:80px;overflow-y:auto;max-height:100%;}}
 .ap-hint{position:fixed;right:var(--pad);bottom:18px;z-index:50;font-family:var(--fb);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--tx-dim);margin:0;}
 

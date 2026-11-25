@@ -6,6 +6,7 @@ import { temAcesso } from './acesso'
 import { ehAdmin, lerEscolhas } from './fotos'
 import Apresentacao from './Apresentacao'
 import Cadeado from './Cadeado'
+import { lerFilmesRia } from './filmesRia'
 
 export const dynamic = 'force-dynamic'
 export const metadata = { title: 'Apresentação · RL Photo · Video × Sirius Park', robots: { index: false, follow: false } }
@@ -17,5 +18,6 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ e
   const editar = (await searchParams).editar === '1'
   if (editar && !admin) redirect(`/login?next=${encodeURIComponent(`${AQUI}?editar=1`)}`)
   if (!admin && !(await temAcesso())) return <Cadeado />
-  return <Apresentacao escolhas={await lerEscolhas()} admin={admin} editarInicial={editar} />
+  const [escolhas, filmesRia] = await Promise.all([lerEscolhas(), lerFilmesRia()])
+  return <Apresentacao escolhas={escolhas} admin={admin} editarInicial={editar} filmesRia={filmesRia} />
 }
