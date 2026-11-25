@@ -4,7 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { WhatsAppMembro } from './WhatsAppMembro'
-import { WaTarefaChip, type WaTarefa } from './WaTarefaChip'
+import type { WaTarefa } from './WaTarefaChip'
+import { ContratosPorAssinarLista } from './ContratosPorAssinarLista'
 
 type Tarefa = {
   id: string
@@ -228,29 +229,10 @@ export function TarefasCard({ contratos = [] }: { contratos?: WaTarefa[] }) {
               </form>}
             </div>
 
-            {/* Contratos por assinar: pedir pelo WhatsApp e, 7 dias depois, lembrar */}
+            {/* Contratos por assinar: pedir pelo WhatsApp, lembrar 7 dias depois, ou marcar como assinado */}
             {separador === 'contratos' && (
-              <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-3">
-                {contratos.length === 0 && <p className="text-center font-cond text-[16px] text-white/35 py-16">Nenhum contrato por assinar</p>}
-                {contratos.map(c => (
-                  <div key={c.contactId} className="rounded-[20px] border border-white/[0.08] bg-[#141414] px-4 py-3.5 flex items-center gap-3.5"
-                    style={{ borderLeft: `2px solid ${c.atrasoDias > 0 && !c.lembreteEm ? VERMELHO : '#4ade80'}` }}>
-                    <div className="min-w-0 flex-1">
-                      <Link href={`/eventos-2026/${c.contactId}`} onClick={() => setAberto(false)}
-                        className="font-cond text-[17px] text-white leading-snug hover:text-[#C9A84C] transition-colors">{c.nome || 'Sem nome'}</Link>
-                      <p className="font-cond text-[12px] text-white/40 mt-0.5">
-                        {c.dataCasamento ? `${c.batizado ? 'Batizado' : 'Casamento'} a ${fmt(c.dataCasamento)}` : ''}
-                        {c.pedidoEm ? ` · pedido a ${fmt(c.pedidoEm)}` : ''}
-                        {c.lembreteEm ? ` · lembrete a ${fmt(c.lembreteEm)}` : ''}
-                      </p>
-                    </div>
-                    <div className="w-[170px] shrink-0">
-                      {c.lembreteEm
-                        ? <p className="font-cond text-[12px] text-white/40 text-right">Pedido e lembrete enviados. Ligar aos noivos.</p>
-                        : <WaTarefaChip t={c} />}
-                    </div>
-                  </div>
-                ))}
+              <div className="flex-1 overflow-y-auto px-5 py-5">
+                <ContratosPorAssinarLista contratos={contratos} onAbrir={() => setAberto(false)} />
               </div>
             )}
 

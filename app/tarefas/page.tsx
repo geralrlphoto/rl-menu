@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import type { WaTarefa } from '@/app/components/WaTarefaChip'
+import { ContratosPorAssinarLista } from '@/app/components/ContratosPorAssinarLista'
 
 type Status = 'NOVA' | 'PENDENTE' | 'RESPONDIDA' | 'CONCLUIDA'
 
@@ -96,6 +98,14 @@ export default function TarefasPage() {
   const [tarefas, setTarefas]       = useState<Tarefa[]>([])
   const [loading, setLoading]       = useState(true)
   const [filtro, setFiltro]         = useState<Status | 'TODAS'>('TODAS')
+  // Separador Contratos: contratos disponíveis no portal e ainda por assinar
+  const [aba, setAba] = useState<'tarefas' | 'contratos'>('tarefas')
+  const [contratos, setContratos] = useState<WaTarefa[] | null>(null)
+  useEffect(() => {
+    fetch('/api/contratos-por-assinar').then(r => r.json())
+      .then(d => setContratos(Array.isArray(d?.contratos) ? d.contratos : []))
+      .catch(() => setContratos([]))
+  }, [])
 
   // Form nova tarefa
   const [showForm, setShowForm]     = useState(false)
@@ -505,6 +515,25 @@ export default function TarefasPage() {
         </div>
       )}
 
+      {/* Separadores */}
+      <div className="flex gap-px mb-6">
+        {([['tarefas', 'Tarefas', tarefas.filter(x => x.status !== 'CONCLUIDA').length], ['contratos', 'Contratos por assinar', contratos?.length ?? 0]] as const).map(([k, rot, num]) => (
+          <button key={k} onClick={() => setAba(k)}
+            className={`flex-1 py-2.5 text-[10px] tracking-[0.25em] uppercase transition-colors border ${aba === k
+              ? 'bg-gold/10 border-gold/40 text-gold'
+              : 'bg-transparent border-white/[0.06] text-white/35 hover:text-white/60 hover:border-white/15'}`}>
+            {rot} <span className="ml-1 opacity-60">({contratos === null && k === 'contratos' ? '…' : num})</span>
+          </button>
+        ))}
+      </div>
+
+      {aba === 'contratos' && (
+        contratos === null
+          ? <div className="text-center py-20 text-[10px] tracking-[0.4em] text-white/20 uppercase">A carregar…</div>
+          : <ContratosPorAssinarLista contratos={contratos} />
+      )}
+
+      <div className={aba === 'tarefas' ? '' : 'hidden'}>
       {/* Filtros */}
       <div className="flex gap-px mb-6">
         {(['TODAS', ...STATUS_ORDER] as (Status | 'TODAS')[]).map(f => (
@@ -898,6 +927,7 @@ export default function TarefasPage() {
           })}
         </div>
       )}
+      </div>
     </main>
   )
 }

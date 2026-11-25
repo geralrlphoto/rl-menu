@@ -6,6 +6,7 @@ import { LogoutButton } from '@/app/components/LogoutButton'
 import { EntregasDrawer, type EntregaAtraso } from '@/app/components/EntregasDrawer'
 import { TarefasCard } from '@/app/components/TarefasCard'
 import { WaTarefaChip, type WaTarefa } from '@/app/components/WaTarefaChip'
+import { contratosPorAssinar } from '@/lib/contratosPorAssinar'
 import { linkPublico } from '@/lib/site-url'
 import { AgendaItem, ReporEscondidos } from '@/app/components/AgendaItem'
 import { whatsappLink, MEET_LINK, colunaDe, followContactoPendente, ENCERRADA_STATUSES, EVENTO_FOLLOW3, FOLLOW3_WA_DIAS, ligarDepoisDeAbrir, EVENTO_ABRIU_LINK, EVENTO_LIGAR_ABRIU, EVENTO_LEMBRETE_VESPERA, EVENTO_PORTAL_REUNIAO, mensagemPortalReuniao } from '@/lib/crm'
@@ -673,60 +674,13 @@ export default async function PhotoDashboard() {
     }
     if (!ocultos.has(chaveWa(t))) waAgenda.push(t)
   }
-  // Pedir o contrato assinado: portais com bloqueio até contrato + adjudicação, contrato
-  // disponível e ainda por enviar pelo portal. 1.º pedido 2 dias depois de o portal ser
-  // criado; se o contrato não chegar, lembrete 7 dias depois do pedido.
-  const CONTRATO_PEDIR_DIAS = 2
-  const CONTRATO_LEMBRETE_DIAS = 7
+  // Contratos por assinar (separador do cartão Tarefas): lib/contratosPorAssinar.ts
   const getContratosPorAssinar = unstable_cache(
-    async () => {
-      const { data: portais } = await supabase.from('portais')
-        .select('referencia, created_at')
-        .eq('settings->>bloqueioAteAdjudicacao', 'true')
-        .eq('settings->>contratoDisponivel', 'true')
-        .is('settings->>contratoAssinadoEm', null)
-        .limit(200)
-      const refs = (portais ?? []).map((p: any) => p.referencia).filter(Boolean)
-      if (refs.length === 0) return { portais: [], evs: [], tels: [], env: [] }
-      const { data: evs } = await supabase.from('eventos_2026')
-        .select('id, referencia, cliente, data_evento, tipo_evento, nome_crianca')
-        .in('referencia', refs).gte('data_evento', hojeLx)
-      const ids = (evs ?? []).map((e: any) => e.id)
-      const [{ data: tels }, { data: env }] = await Promise.all([
-        supabase.from('dados_contrato_cps').select('referencia_evento, nome_noiva, nome_noivo, tel_noiva, tel_noivo').in('referencia_evento', refs),
-        ids.length
-          ? supabase.from('eventos_whatsapp_envios').select('evento_id, evento, created_at').in('evento', ['pedir_contrato', 'lembrete_contrato']).in('evento_id', ids)
-          : Promise.resolve({ data: [] as any[] }),
-      ])
-      return { portais: portais ?? [], evs: evs ?? [], tels: tels ?? [], env: env ?? [] }
-    },
-    [`photo-wa-contrato-${hojeLx}`],
+    async () => contratosPorAssinar(supabase),
+    [`photo-contratos-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
   )
-  const contr = await getContratosPorAssinar()
-  // Vão para o separador "Contratos por assinar" do cartão Tarefas (não para a faixa)
-  const contratosPorAssinar: WaTarefa[] = []
-  for (const ev of contr.evs as any[]) {
-    const portal = (contr.portais as any[]).find(p => String(p.referencia).toLowerCase() === String(ev.referencia).toLowerCase())
-    const envios: Record<string, string> = {}
-    for (const x of contr.env as any[]) if (x.evento_id === ev.id) envios[x.evento] = x.created_at
-    const c = (contr.tels as any[]).find(t => t.referencia_evento === ev.referencia)
-    const tipo = envios.pedir_contrato ? 'lembrete_contrato' as const : 'contrato' as const
-    const devido = envios.pedir_contrato
-      ? somaDias(lisboaISO(new Date(envios.pedir_contrato)), CONTRATO_LEMBRETE_DIAS)
-      : somaDias(lisboaISO(new Date(portal?.created_at ?? new Date())), CONTRATO_PEDIR_DIAS)
-    contratosPorAssinar.push({
-      tipo, contactId: ev.id,
-      nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
-      contato: c?.tel_noiva || c?.tel_noivo || null,
-      batizado: ehBatizado(ev.tipo_evento) ? { crianca: ev.nome_crianca ?? null } : null,
-      reuniaoHora: null, dataCasamento: ev.data_evento,
-      atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: false,
-      // Separador "Contratos por assinar": datas do pedido e do lembrete já enviados
-      pedidoEm: envios.pedir_contrato ? lisboaISO(new Date(envios.pedir_contrato)) : null,
-      lembreteEm: envios.lembrete_contrato ? lisboaISO(new Date(envios.lembrete_contrato)) : null,
-    })
-  }
+  const contratosLista = await getContratosPorAssinar()
 
   const waPorEnviar = waAgenda.filter(t => !t.futura).length
 
@@ -1198,7 +1152,7 @@ export default async function PhotoDashboard() {
             <div className="hidden lg:block absolute left-0 right-0 top-1/2 h-px bg-white/[0.08]" />
             <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {prioridades.map(p => {
-                if ('tarefas' in p && p.tarefas) return <TarefasCard key="tarefas" contratos={contratosPorAssinar} />
+                if ('tarefas' in p && p.tarefas) return <TarefasCard key="tarefas" contratos={contratosLista} />
                 const avisoN = 'aviso' in p ? (p.aviso as number) : 0
                 const itensGaveta = 'gaveta' in p ? (p.gaveta as EntregaAtraso[]) : []
                 const comGaveta = itensGaveta.length > 0
