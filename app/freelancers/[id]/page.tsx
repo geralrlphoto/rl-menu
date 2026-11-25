@@ -1063,7 +1063,7 @@ function FreelancerDetailInner() {
       {tab === 'casamentos'   && <CasamentosTab freelancerId={id} casamentos={casamentos} etapaDe={etapaDe} filtroInicial={filtroCasamentos} onFiltroUsado={() => setFiltroCasamentos(null)} onRefresh={load} freelancerStatus={freelancer?.status ?? null} freelancer={freelancer} viewAsFreelancer={viewAsFreelancer} fotosSelecaoMap={fotosSelecaoMap} fotosConvidadosMap={fotosConvidadosMap} setFotosConvidadosMap={setFotosConvidadosMap} initialExpandedId={pendingExpandCasamentoId} onExpandedHandled={() => setPendingExpandCasamentoId(null)} />}
       {tab === 'edicao'       && <EdicaoTab freelancerId={id} edicao={edicao} casamentos={casamentos} fotosSelecaoMap={fotosSelecaoMap} onRefresh={load} />}
       {tab === 'album'        && <AlbumTab freelancerId={id} album={album} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
-      {tab === 'videos'       && <VideosTab freelancerId={id} />}
+      {tab === 'videos'       && <VideosTab freelancerId={id} nomeMembro={freelancer?.nome ?? ""} />}
       {tab === 'tarefas'      && <TarefasTab freelancerId={id} viewAsFreelancer={viewAsFreelancer} freelancer={freelancer} notificacoes={notificacoes} onRefresh={load} />}
       {tab === 'calendario'   && <CalendarioTab freelancerId={id} casamentos={casamentos} edicao={edicao} album={album} notificacoes={notificacoes} freelancer={freelancer} disponibilidade={disponibilidade} onRefresh={load} viewAsFreelancer={viewAsFreelancer} />}
       {tab === 'info'         && <InfoTab freelancerId={id} info={info} onRefresh={load} />}
@@ -3171,7 +3171,7 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
 /* Filmes que a RL partilhou com o membro no /edicao-video (tabela video_partilhas).
    Só aparecem depois de o filme estar Entregue. */
 type VideoPartilhado = { id: string; referencia: string; cliente: string | null; data_casamento: string | null; local: string | null; filme_url: string | null; entregue_em: string; capa_url: string | null }
-function VideosTab({ freelancerId }: { freelancerId: string }) {
+function VideosTab({ freelancerId, nomeMembro }: { freelancerId: string; nomeMembro: string }) {
   const [videos, setVideos] = useState<VideoPartilhado[] | null>(null)
   const [copiado, setCopiado] = useState<string | null>(null)
   useEffect(() => {
@@ -3194,6 +3194,29 @@ function VideosTab({ freelancerId }: { freelancerId: string }) {
     } catch { window.prompt('Copia o link do filme:', v.filme_url) }
   }
 
+  // WhatsApp: o membro só põe o número dos noivos; abre o WhatsApp nesse número com a
+  // mensagem já escrita (wa.me, 0 €). Sem emojis: no WhatsApp viram "?".
+  const [numeros, setNumeros] = useState<Record<string, string>>({})
+  const mensagemNoivos = (v: VideoPartilhado) => {
+    const eu = nomeMembro.trim().split(/\s+/)[0] || nomeMembro
+    return [
+      `Olá ${v.cliente || ''}!`.replace(' !', '!'),
+      `Aqui é ${eu}, da RL Photo.Video. Foi um gosto enorme fazer parte do vosso casamento${v.local ? ` na ${v.local}` : ''}.`,
+      `O vosso filme já está pronto e quis partilhá-lo convosco:`,
+      v.filme_url ?? '',
+      `Vejam com calma, de preferência juntos e com som. Muitos parabéns e que este filme vos faça reviver o dia muitas vezes.`,
+      `Um abraço,`,
+      `${nomeMembro} · RL Photo.Video`,
+    ].join('\n\n').replace('\n\nUm abraço,\n\n', '\n\nUm abraço,\n')
+  }
+  const enviarWhatsApp = (v: VideoPartilhado) => {
+    let n = (numeros[v.id] ?? '').replace(/\D/g, '')
+    if (n.startsWith('00')) n = n.slice(2)
+    if (n.length === 9 && /^9/.test(n)) n = '351' + n   // número português sem indicativo
+    if (n.length < 9) { alert('Escreve o número de telemóvel dos noivos (ex.: 912 345 678).'); return }
+    window.open(`https://wa.me/${n}?text=${encodeURIComponent(mensagemNoivos(v))}`, '_blank', 'noopener,noreferrer')
+  }
+
   if (!videos) return <div className="h-28 rounded-[18px] bg-white/[0.03] animate-pulse" />
   if (!videos.length) return (
     <div className="py-16 text-center">
@@ -3209,8 +3232,8 @@ function VideosTab({ freelancerId }: { freelancerId: string }) {
         <p className="text-[11px] font-semibold tracking-[0.3em] uppercase text-[#d8be93]">Como partilhar com os noivos</p>
         <ol className="mt-3 grid gap-2 sm:grid-cols-3 text-[13.5px] text-white/70 leading-snug">
           <li><span className="text-[#d8be93] font-semibold">1.</span> Vê o filme primeiro, até ao fim, para saberes do que falas.</li>
-          <li><span className="text-[#d8be93] font-semibold">2.</span> Carrega em <b className="text-white">Partilhar link</b>. No telemóvel escolhes o WhatsApp; no computador o link fica copiado e colas na mensagem.</li>
-          <li><span className="text-[#d8be93] font-semibold">3.</span> Escreve uma mensagem pessoal aos noivos: um momento do dia de que gostaste e os parabéns. Assina com o teu nome e RL Photo.Video.</li>
+          <li><span className="text-[#d8be93] font-semibold">2.</span> Escreve o número de telemóvel dos noivos no cartão do filme e carrega em <b className="text-white">Enviar pelo WhatsApp</b>. Abre o WhatsApp nesse número com a mensagem e o link já escritos.</li>
+          <li><span className="text-[#d8be93] font-semibold">3.</span> Lê a mensagem, junta um momento do dia de que gostaste, se quiseres, e carrega em enviar no WhatsApp.</li>
         </ol>
         <p className="mt-3 text-[12px] text-white/40">Envia só aos noivos do filme. Não publiques o vídeo nem o link nas redes sociais sem autorização da RL.</p>
       </section>
@@ -3241,6 +3264,22 @@ function VideosTab({ freelancerId }: { freelancerId: string }) {
                     className={`inline-flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-[12px] font-semibold tracking-[0.15em] uppercase transition-colors ${copiado === v.id ? 'border-[#4ade80]/60 bg-[#4ade80]/10 text-[#4ade80]' : 'border-white/25 text-white hover:bg-white/[0.06]'}`}>
                     {copiado === v.id ? '✓ Link copiado' : '↗ Partilhar link'}
                   </button>
+                  <div className="col-span-2 mt-1 flex flex-col gap-2 rounded-[14px] border border-[#25D366]/25 bg-[#25D366]/[0.05] p-3">
+                    <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#25D366]/90">Enviar aos noivos pelo WhatsApp</p>
+                    <input type="tel" inputMode="tel" placeholder="Telemóvel dos noivos (ex.: 912 345 678)" value={numeros[v.id] ?? ''}
+                      onChange={e => setNumeros(s => ({ ...s, [v.id]: e.target.value }))}
+                      onKeyDown={e => { if (e.key === 'Enter') enviarWhatsApp(v) }}
+                      className="w-full rounded-full border border-white/15 bg-black/40 px-4 py-2 text-[14px] text-white placeholder:text-white/30 outline-none focus:border-[#25D366]/60" />
+                    <button type="button" onClick={() => enviarWhatsApp(v)} disabled={!(numeros[v.id] ?? '').trim()}
+                      className="inline-flex items-center justify-center gap-2 rounded-full bg-[#25D366] px-4 py-2 text-[12px] font-bold tracking-[0.15em] uppercase text-black hover:bg-[#2fe377] disabled:opacity-40">
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.3-.5 0-1 .2-3.3-.7-2.8-1.1-4.5-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.2 1.4 2.5 1.6.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3.1.1.1.7-.1 1.2Z"/></svg>
+                      Enviar pelo WhatsApp
+                    </button>
+                    <details className="group/msg">
+                      <summary className="cursor-pointer list-none text-[11px] text-white/40 hover:text-white/70"><span className="group-open/msg:hidden">+ Ver a mensagem</span><span className="hidden group-open/msg:inline">− Esconder a mensagem</span></summary>
+                      <p className="mt-2 whitespace-pre-line text-[12px] text-white/60 leading-relaxed break-words">{mensagemNoivos(v)}</p>
+                    </details>
+                  </div>
                 </div>
               ) : <span className="mt-auto text-[12px] text-white/35">Sem link do filme</span>}
             </div>
