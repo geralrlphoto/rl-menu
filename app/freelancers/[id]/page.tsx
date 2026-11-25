@@ -3170,7 +3170,7 @@ function CasamentoForm({ form, setForm, saving, onSave, onCancel, onDelete }: an
 // ─── Vídeos Tab ───────────────────────────────────────────────────────────────
 /* Filmes que a RL partilhou com o membro no /edicao-video (tabela video_partilhas).
    Só aparecem depois de o filme estar Entregue. */
-type VideoPartilhado = { id: string; referencia: string; cliente: string | null; data_casamento: string | null; local: string | null; filme_url: string | null; entregue_em: string; capa_url: string | null }
+type VideoPartilhado = { id: string; referencia: string; cliente: string | null; data_casamento: string | null; local: string | null; filme_url: string | null; entregue_em: string; capa_url: string | null; enviado_em: string | null }
 function VideosTab({ freelancerId, nomeMembro }: { freelancerId: string; nomeMembro: string }) {
   const [videos, setVideos] = useState<VideoPartilhado[] | null>(null)
   const [copiado, setCopiado] = useState<string | null>(null)
@@ -3217,6 +3217,13 @@ function VideosTab({ freelancerId, nomeMembro }: { freelancerId: string; nomeMem
     if (n.length === 9 && /^9/.test(n)) n = '351' + n   // número português sem indicativo
     if (n.length < 9) { alert('Escreve o número de telemóvel dos noivos (ex.: 912 345 678).'); return }
     window.open(`https://wa.me/${n}?text=${encodeURIComponent(mensagemNoivos(v))}`, '_blank', 'noopener,noreferrer')
+    // fica "Vídeo enviado" no cartão (e gravado, para não se perder ao voltar à página)
+    const enviado_em = new Date().toISOString()
+    setVideos(vs => vs?.map(x => x.id === v.id ? { ...x, enviado_em } : x) ?? vs)
+    fetch('/api/freelancer-videos', {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ freelancer: freelancerId, id: v.id }),
+    }).catch(() => {})
   }
 
   if (!videos) return <div className="h-28 rounded-[18px] bg-white/[0.03] animate-pulse" />
@@ -3268,6 +3275,11 @@ function VideosTab({ freelancerId, nomeMembro }: { freelancerId: string; nomeMem
                   </button>
                   <div className="col-span-2 mt-1 flex flex-col gap-2 rounded-[14px] border border-[#25D366]/25 bg-[#25D366]/[0.05] p-3">
                     <p className="text-[10px] font-semibold tracking-[0.2em] uppercase text-[#25D366]/90">Enviar aos noivos pelo WhatsApp</p>
+                    {v.enviado_em && (
+                      <p className="rounded-full border border-[#25D366]/50 bg-[#25D366]/15 px-4 py-2 text-center text-[12px] font-bold tracking-[0.15em] uppercase text-[#25D366]">
+                        ✓ Vídeo enviado · {data(v.enviado_em)}
+                      </p>
+                    )}
                     <input type="tel" inputMode="tel" placeholder="Telemóvel dos noivos (ex.: 912 345 678)" value={numeros[v.id] ?? ''}
                       onChange={e => setNumeros(s => ({ ...s, [v.id]: e.target.value }))}
                       onKeyDown={e => { if (e.key === 'Enter') enviarWhatsApp(v) }}

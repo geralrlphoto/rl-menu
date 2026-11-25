@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   if (bloqueio) return bloqueio
   const db = sb()
   const { data, error } = await db.from('video_partilhas')
-    .select('id, referencia, cliente, data_casamento, local, filme_url, entregue_em, capa_url')
+    .select('id, referencia, cliente, data_casamento, local, filme_url, entregue_em, capa_url, enviado_em')
     .eq('freelancer_id', freelancer!).not('entregue_em', 'is', null)
     .order('entregue_em', { ascending: false })
   if (error) return NextResponse.json({ error: 'Não foi possível ler os vídeos.' }, { status: 500 })
@@ -28,6 +28,18 @@ export async function GET(req: NextRequest) {
     return { ...v, capa_url: capa }
   }))
   return NextResponse.json({ ok: true, videos })
+}
+
+// PATCH { freelancer, id }: o membro carregou em Enviar pelo WhatsApp → fica "Vídeo enviado"
+export async function PATCH(req: NextRequest) {
+  const { freelancer, id } = await req.json().catch(() => ({}))
+  const bloqueio = await exigeAdminOuProprio(req, freelancer)
+  if (bloqueio) return bloqueio
+  if (!id) return NextResponse.json({ error: 'Falta o vídeo.' }, { status: 400 })
+  const enviado_em = new Date().toISOString()
+  const { error } = await sb().from('video_partilhas').update({ enviado_em }).eq('id', id).eq('freelancer_id', freelancer)
+  if (error) return NextResponse.json({ error: 'Não foi possível guardar.' }, { status: 500 })
+  return NextResponse.json({ ok: true, enviado_em })
 }
 
 async function capaDoFilme(url: string): Promise<string> {
