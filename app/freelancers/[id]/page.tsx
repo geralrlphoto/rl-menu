@@ -3183,7 +3183,7 @@ function VideosTab({ freelancerId, nomeMembro }: { freelancerId: string; nomeMem
   // Partilhar o link: no telemóvel abre a folha de partilha (WhatsApp, email…); no computador copia o link
   const partilhar = async (v: VideoPartilhado) => {
     if (!v.filme_url) return
-    const titulo = `O vosso filme · ${v.cliente || v.referencia}`
+    const titulo = `O vosso filme · ${nomeNoivos(v)}`
     if (typeof navigator !== 'undefined' && navigator.share && /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
       try { await navigator.share({ title: titulo, url: v.filme_url }); return } catch { /* cancelado: copia */ }
     }
@@ -3197,16 +3197,18 @@ function VideosTab({ freelancerId, nomeMembro }: { freelancerId: string; nomeMem
   // WhatsApp: o membro só põe o número dos noivos; abre o WhatsApp nesse número com a
   // mensagem já escrita (wa.me, 0 €). Sem emojis: no WhatsApp viram "?".
   const [numeros, setNumeros] = useState<Record<string, string>>({})
+  // Nome dos noivos sem o que vem entre parênteses (ex.: "Teresa e João (KAPPA)" → "Teresa e João")
+  const nomeNoivos = (v: VideoPartilhado) => (v.cliente || v.referencia).replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim()
   const mensagemNoivos = (v: VideoPartilhado) => {
     const eu = nomeMembro.trim().split(/\s+/)[0] || nomeMembro
     return [
-      `Olá ${v.cliente || ''}!`.replace(' !', '!'),
-      `Aqui é ${eu}, da RL Photo.Video. Foi um gosto enorme fazer parte do vosso casamento${v.local ? ` na ${v.local}` : ''}.`,
+      `Olá ${nomeNoivos(v)}!`.replace(' !', '!'),
+      `Aqui é ${eu}. Foi um gosto enorme fazer parte do vosso casamento${v.local ? ` na ${v.local}` : ''}.`,
       `O vosso filme já está pronto e quis partilhá-lo convosco:`,
       v.filme_url ?? '',
       `Vejam com calma, de preferência juntos e com som. Muitos parabéns e que este filme vos faça reviver o dia muitas vezes.`,
       `Um abraço,`,
-      `${nomeMembro} · RL Photo.Video`,
+      nomeMembro,
     ].join('\n\n').replace('\n\nUm abraço,\n\n', '\n\nUm abraço,\n')
   }
   const enviarWhatsApp = (v: VideoPartilhado) => {
@@ -3247,12 +3249,12 @@ function VideosTab({ freelancerId, nomeMembro }: { freelancerId: string; nomeMem
               <img src={v.capa_url || '/eventos-hero-2026.webp'} alt={v.cliente ?? ''} loading="lazy"
                 className={`w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04] ${v.capa_url ? '' : 'opacity-50'}`} />
               <span className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-              {!v.capa_url && <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[13px] font-semibold tracking-[0.3em] uppercase text-[#d8be93]">{v.cliente || v.referencia}</span>}
+              {!v.capa_url && <span className="absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[13px] font-semibold tracking-[0.3em] uppercase text-[#d8be93]">{nomeNoivos(v)}</span>}
               <span className="absolute right-3 bottom-3 w-11 h-11 rounded-full flex items-center justify-center bg-black/55 border border-[#d8be93]/60 text-white text-[14px] group-hover:bg-[#d8be93]/30">▶</span>
             </a>
             <div className="p-5 flex flex-col gap-3 flex-1">
               <div>
-                <p className="text-[17px] font-semibold text-white leading-snug">{v.cliente || v.referencia}</p>
+                <p className="text-[17px] font-semibold text-white leading-snug">{nomeNoivos(v)}</p>
                 <p className="text-[12px] text-white/40 mt-0.5">{data(v.data_casamento)}{v.local ? ` · ${v.local}` : ''}</p>
               </div>
               <p className="text-[11px] tracking-[0.15em] uppercase text-[#4ade80]">✓ Entregue a {data(v.entregue_em)}</p>
