@@ -2,7 +2,7 @@
 
 // Apresentação da RL Photo · Video para a reunião com o Sirius Park (25/11/2026).
 // Slides em ecrã inteiro: setas / espaço / clique nas metades do ecrã / deslizar no telemóvel. F = ecrã inteiro.
-// Os textos entre [ ] são provisórios e ficam realçados a dourado até serem preenchidos.
+// Nada entre [ ] aparece na apresentação (ver T).
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { RLP_CSS } from '@/app/_lead/rlpCss'
@@ -12,10 +12,10 @@ import RodaReels from '@/app/_lead/RodaReels'
 const ESPACO = 'Sirius Park'
 const NOME = 'Inês'
 
-// Marca texto provisório: tudo o que estiver entre [ ] fica realçado
+// Texto entre [ ] nunca aparece: o Rui não quer textos provisórios visíveis
 function T({ children }: { children: string }) {
   const partes = children.split(/(\[[^\]]+\])/g)
-  return <>{partes.map((p, i) => p.startsWith('[') ? <span key={i} className="ap-ph">{p}</span> : p)}</>
+  return <>{partes.filter(p => !p.startsWith('[')).map((p, i) => <span key={i}>{p}</span>)}</>
 }
 
 type Slide = { id: string; render: () => React.ReactNode }
@@ -43,7 +43,7 @@ const PERGUNTAS = [
 ]
 
 const OFERTA = [
-  { t: 'Imagens do espaço', d: '[Sessão de fotografia e vídeo do Sirius Park para o site, redes e materiais.]' },
+  { t: 'Imagens do espaço', d: '' },
   { t: 'Conteúdo dos casamentos', d: 'Fotografias e vídeos dos casamentos feitos aí, com autorização dos noivos e crédito ao espaço.' },
   { t: 'Divulgação', d: 'O Sirius Park nas nossas redes, no blog, nas histórias dos casais e no podcast Antes do Sim.' },
   { t: 'No dia', d: 'Respeito pelas regras da casa, horários cumpridos e articulação com a vossa equipa.' },
@@ -99,7 +99,6 @@ const SLIDES: Slide[] = [
           <span className="rlp-eyebrow">01 · Quem somos</span>
           <h2 className="ap-h2">Contamos o dia <em>como ele foi</em></h2>
           <p className="ap-lede">Somos especializados em fotografia e vídeo de casamentos, baseados no Pinhal Novo. Preservamos a autenticidade de cada momento: a emoção, os detalhes, as histórias que só acontecem uma vez.</p>
-          <p className="ap-lede"><T>{'[Equipa: Rui Gonçalves (direção e vídeo), fotógrafos e editores que trabalham connosco.]'}</T></p>
           <p className="ap-sig">registamos com foco na verdade</p>
         </div>
         <div className="ap-foto" {...slot('quem')} style={{ backgroundImage: f('quem'), backgroundPosition: 'center 20%' }} />
@@ -230,7 +229,7 @@ const SLIDES: Slide[] = [
           {OFERTA.map(o => (
             <div key={o.t} className="ap-card">
               <p className="ap-card-t">{o.t}</p>
-              <p className="ap-card-d"><T>{o.d}</T></p>
+              {o.d && <p className="ap-card-d"><T>{o.d}</T></p>}
             </div>
           ))}
         </div>
@@ -288,7 +287,6 @@ const SLIDES: Slide[] = [
         <div className="ap-in ap-bottom">
           <span className="rlp-eyebrow">Próximos passos</span>
           <h2 className="ap-h1" style={{ fontSize: 'clamp(40px,6.5vw,96px)' }}>Obrigado, <em>{NOME}</em></h2>
-          <p className="ap-lede"><T>{'[Combinar a sessão do espaço · enviar a proposta de parceria por escrito · próxima conversa]'}</T></p>
           <div className="ap-contactos">
             <span>Rui Gonçalves</span><span>912 932 768</span><span>geral.rlphoto@gmail.com</span><span>rlphotovideo.pt</span>
           </div>
