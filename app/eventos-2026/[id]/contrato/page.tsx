@@ -4,6 +4,7 @@ import React, { useEffect, useState, Suspense } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { prazoVideoDias } from '@/lib/crm'
+import { CLAUSULAS_V2, TITULOS_V2 } from '@/lib/contratoV2Texto'
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
@@ -87,7 +88,11 @@ function ContratoPageContent() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [clausulas, setClausulas] = useState<Record<string, string>>(DEFAULT_CLAUSULAS)
+  // Só as cláusulas alteradas para este evento (tabela contrato_clausulas); o texto
+  // por defeito vem da versão do contrato (v1 = DEFAULT_CLAUSULAS, v2 = CLAUSULAS_V2).
+  // A chave "_versao" fixa a versão de um evento (ex.: contratos já visíveis ficam em "v1").
+  const [clausulas, setClausulas] = useState<Record<string, string>>({})
+  const [datasAss, setDatasAss] = useState<{ aprovadoEm: string | null; assinadoEm: string | null }>({ aprovadoEm: null, assinadoEm: null })
   const [loadError, setLoadError] = useState<string | null>(null)
 
   // Os dois pedidos vão separados de propósito: em Promise.all, uma falha de
@@ -110,8 +115,11 @@ function ContratoPageContent() {
 
     fetch(`/api/contrato-clausulas?eventoId=${id}`)
       .then(r => r.json())
-      .then(cd => setClausulas({ ...DEFAULT_CLAUSULAS, ...(cd?.clausulas ?? {}) }))
-      .catch(() => setClausulas(DEFAULT_CLAUSULAS))
+      .then(cd => {
+        setClausulas(cd?.clausulas ?? {})
+        setDatasAss({ aprovadoEm: cd?.aprovadoEm ?? null, assinadoEm: cd?.assinadoEm ?? null })
+      })
+      .catch(() => setClausulas({}))
   }
 
   useEffect(() => { carregar() }, [id])
@@ -184,15 +192,36 @@ function ContratoPageContent() {
   )
 
   const e = draft
-  // 7.1: o prazo estimado do vídeo segue o pacote (BASIC 180, ESSENCIAL 120, SIGNATURE 60 dias úteis)
-  const textoClausula = (key: string) => {
-    const t = clausulas[key] ?? DEFAULT_CLAUSULAS[key] ?? ''
-    return key === '7' ? t.replace(/(7\.1[^\n]*?)\d+( dias úteis)/, `$1${prazoVideoDias(e?.proposta)}$2`) : t
-  }
-  const hoje = formatDate(new Date().toISOString().split('T')[0])
+  // Versão do contrato: a fixada no evento ("_versao"), senão a v2 para eventos a partir de 2027
+  const v2 = (clausulas._versao ?? (String(e?.data_evento ?? '') >= '2027-01-01' ? 'v2' : 'v1')) === 'v2'
+  const BASE = v2 ? CLAUSULAS_V2 : DEFAULT_CLAUSULAS
   const servicosFoto: string[] = evento.servico_foto ?? []
   const servicosVideo: string[] = evento.servico_video ?? []
   const servicosExtra: string[] = evento.servico_extra ?? []
+  // Número de fotografias editadas do pack (ex.: "ATÉ 850 FOTOGRAFIAS")
+  const nFotos = (() => {
+    for (const s of servicosFoto) { const m = String(s).match(/(\d[\d.]*)\s*FOTOGRAFIAS/i); if (m) return m[1] }
+    return null
+  })()
+  // Prazo do vídeo segue o pacote (BASIC 180, ESSENCIAL 120, SIGNATURE 60 dias úteis): v1 na 7.1, v2 na 13.1
+  const textoClausula = (key: string) => {
+    const t = clausulas[key] ?? BASE[key] ?? ''
+    if (v2) return t
+      .replace('{prazo_video}', String(prazoVideoDias(e?.proposta)))
+      .replace(' ({n_fotos})', nFotos ? ` (${nFotos})` : '')
+      .replace('identificados em "Evento e serviços contratados"', 'identificados em "Objeto do Contrato" e "Serviços Contratados"')
+    return key === '7' ? t.replace(/(7\.1[^\n]*?)\d+( dias úteis)/, `$1${prazoVideoDias(e?.proposta)}$2`) : t
+  }
+  // v2: deixa claro na lista de serviços quem escolhe as fotografias
+  const rotuloServico = (s: string) =>
+    v2 && /^ATÉ\s+\d[\d.]*\s+FOTOGRAFIAS$/i.test(String(s).trim()) ? `${String(s).trim()} EDITADAS, ESCOLHIDAS PELOS NOIVOS` : s
+  const temFoto = servicosFoto.length > 0
+  const temVideo = servicosVideo.length > 0
+  const temPreWedding = [...servicosFoto, ...servicosVideo].some(s => /PR[ÉE]-?WEDDING/i.test(String(s)))
+  const preWeddingFoto = servicosFoto.some(s => /PR[ÉE]-?WEDDING/i.test(String(s)))
+  const total = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
+  const dataCurta = (iso: string | null) => iso ? new Date(iso).toLocaleDateString('pt-PT') : '____/____/______'
+  const hoje = formatDate(new Date().toISOString().split('T')[0])
 
   return (
     <main className="min-h-screen bg-white text-black">
@@ -248,7 +277,7 @@ function ContratoPageContent() {
       )}
 
       {/* Documento */}
-      <div className="max-w-[800px] mx-auto px-10 py-12 print:px-8 print:py-8">
+      <div className={`max-w-[800px] mx-auto px-10 py-12 print:px-8 print:py-8${v2 ? ' cps-v2' : ''}`}>
 
         {/* Cabeçalho */}
         <div className="flex items-start justify-between mb-10 pb-6 border-b-2 border-black">
@@ -269,6 +298,30 @@ function ContratoPageContent() {
           <h2 className="text-xl font-black tracking-[0.2em] uppercase mb-2">Contrato de Prestação de Serviços</h2>
           <p className="text-xs text-zinc-400 tracking-widest uppercase">Referência: {e.referencia}</p>
         </div>
+
+        {/* v2: resumo só com os pontos dos serviços contratados */}
+        {v2 && (
+          <section className="mb-8 border border-zinc-300 rounded-lg px-5 py-4">
+            <h3 className="font-black tracking-[0.2em] uppercase mb-3">O que deve saber antes de assinar</h3>
+            <p className="mb-2 text-zinc-600">Este resumo não substitui as cláusulas, mas explica as regras que mais costumam gerar dúvidas.</p>
+            <ul className="space-y-2 list-disc pl-5 text-zinc-800">
+              <li><strong>Reserva e pagamentos.</strong> A data fica reservada quando o contrato está assinado e a reserva está paga ({total > 0 && total < 1600 ? '25% do valor total' : '400 €'}). Depois pagam 80% do valor em falta até 48 horas antes do evento e os restantes 20% em duas partes, nas entregas (cláusula 2). Têm 15 dias a contar da assinatura para desistir sem custos (cláusula 3).</li>
+              <li><strong>Cancelamento.</strong> Depois desses 15 dias, se desistirem, pagam uma compensação que depende da antecedência, segundo a escala da cláusula 3.</li>
+              {temFoto && <li><strong>Fotografias.</strong> Fazemos uma triagem técnica e mostramos-vos as fotografias numa galeria para seleção, com marca de água. <strong>São vocês que escolhem</strong> as fotografias do vosso pack{nFotos ? ` (até ${nFotos})` : ''}, e na mesma escolha indicam as do álbum. Têm 90 dias para escolher. Se não escolherem, escolhemos nós e essa escolha não tem alterações. As fotografias não escolhidas não são entregues em alta resolução e os ficheiros originais (RAW) nunca são entregues (cláusula 9).</li>}
+              {temPreWedding && <li><strong>Pré-wedding.</strong> {preWeddingFoto
+                ? 'Aqui é diferente: somos nós que escolhemos e editamos entre 30 e 60 fotografias'
+                : 'O vídeo da sessão tem entre 3 e 5 minutos'} (cláusula 12).</li>}
+              <li><strong>Prazos.</strong> {[
+                temFoto && 'galeria para seleção até 30 dias úteis após o evento; fotografias editadas até 30 dias úteis depois de recebermos a vossa escolha',
+                temVideo && `vídeo até ${prazoVideoDias(e?.proposta)} dias úteis`,
+              ].filter(Boolean).join('; ').replace(/^./, c => c.toUpperCase())}. Os prazos param enquanto esperamos por algo da vossa parte (cláusula 14).</li>
+              <li><strong>Uso das fotografias e vídeos.</strong> Podem usá-los e partilhá-los nas vossas redes pessoais e imprimi-los para uso pessoal. Os direitos de autor são da RL (cláusula 18).</li>
+              <li><strong>Publicação pela RL.</strong> Só publicamos o que autorizarem na declaração de consentimento, preenchida à parte no portal. Não autorizar não muda o preço (cláusula 19).</li>
+              <li><strong>Por escrito.</strong> Tudo o que mude este contrato tem de ficar escrito, por email ou no portal. Depois de cada chamada enviamos-vos um resumo por escrito (cláusula 26).</li>
+              <li><strong>Reclamações.</strong> Podem reclamar para geral.rlphoto@gmail.com, no Livro de Reclamações e num centro de arbitragem de consumo (cláusula 29).</li>
+            </ul>
+          </section>
+        )}
 
         {/* 1. Identificação das partes */}
         <section className="mb-8">
@@ -345,7 +398,7 @@ function ContratoPageContent() {
                 <div className="bg-zinc-100 px-4 py-2 text-[10px] font-bold tracking-widest uppercase">Fotografia</div>
                 <ul className="p-4 space-y-1.5">
                   {servicosFoto.map((s: string, i: number) => (
-                    <li key={i} className="text-sm flex items-start gap-2"><span className="text-zinc-400 mt-1">•</span>{s}</li>
+                    <li key={i} className="text-sm flex items-start gap-2"><span className="text-zinc-400 mt-1">•</span>{rotuloServico(s)}</li>
                   ))}
                 </ul>
               </div>
@@ -387,7 +440,7 @@ function ContratoPageContent() {
 
         {/* Cláusulas */}
         <div className="space-y-6 mb-8 text-sm leading-relaxed text-zinc-700">
-          {([
+          {(v2 ? TITULOS_V2 : [
             { n: "1.ª", title: "Objeto", key: "1" },
             { n: "2.ª", title: "Pagamentos", key: "2" },
             { n: "3.ª", title: "Cancelamentos", key: "3" },
@@ -406,10 +459,10 @@ function ContratoPageContent() {
             { n: "16.ª", title: "Equipas", key: "16" },
             { n: "17.ª", title: "Falta de Pagamento Final", key: "17" },
             { n: "18.ª", title: "Extras", key: "18" },
-          ] as const).map(({ n, title, key }) => (
+          ]).map(({ n, title, key }) => (
             <div key={key}>
               <h4 className="text-[10px] font-black tracking-[0.25em] uppercase border-b border-zinc-200 pb-1.5 mb-3 text-zinc-900">
-                {n} Cláusula — {title}
+                {v2 ? `Cláusula ${n}. ${title}` : `${n} Cláusula — ${title}`}
               </h4>
               {editing && !readonly ? (
                 <textarea
@@ -432,6 +485,24 @@ function ContratoPageContent() {
           <h3 className="text-[10px] font-black tracking-[0.3em] uppercase border-b border-zinc-200 pb-2 mb-6">
             Assinaturas
           </h3>
+          {v2 ? (
+            <div className="space-y-6 text-zinc-800">
+              <div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {/* Imagem no bucket privado "contratos"; a rota só a entrega ao admin e aos noivos deste evento */}
+                <img src={`/api/contrato-assinatura-rl?eventoId=${id}`} alt="Assinatura de Liliana Barreto Gonçalves" className="h-16 w-auto" />
+                <p>A CONTRATADA: Liliana Sofia Fernandes Barreto Gonçalves (RL Photo.Video), em {dataCurta(datasAss.aprovadoEm)} (data em que o contrato fica disponível no portal dos noivos)</p>
+              </div>
+              <div>
+                <div className="border-b border-zinc-400 mb-2 h-12 max-w-[360px]" />
+                <p>O CONTRATANTE: {e.nome_noiva || '____________________________'}{datasAss.assinadoEm ? `, assinado e enviado pelo portal em ${dataCurta(datasAss.assinadoEm)}` : ', em ____/____/______'}</p>
+              </div>
+              <div>
+                <div className="border-b border-zinc-400 mb-2 h-12 max-w-[360px]" />
+                <p>O CONTRATANTE: {e.nome_noivo || '____________________________'}{datasAss.assinadoEm ? `, assinado e enviado pelo portal em ${dataCurta(datasAss.assinadoEm)}` : ', em ____/____/______'}</p>
+              </div>
+            </div>
+          ) : (<>
           <p className="text-sm text-zinc-600 mb-8">
             O presente contrato é celebrado em duplicado, ficando um exemplar na posse de cada uma das partes, e entra em vigor na data da sua assinatura.
           </p>
@@ -449,11 +520,14 @@ function ContratoPageContent() {
               <p className="text-xs font-bold text-center mt-1">{e.nome_noiva && e.nome_noivo ? `${e.nome_noiva} & ${e.nome_noivo}` : e.cliente || '____________________________'}</p>
             </div>
           </div>
+          </>)}
         </section>
 
       </div>
 
       <style>{`
+        /* Contrato v2: letra de pelo menos 11 pontos (15 px) e espaçamento 1,5 (DL 446/85, art. 21.º, al. i)) */
+        .cps-v2 .text-sm, .cps-v2 .text-xs, .cps-v2 .text-\\[10px\\], .cps-v2 p, .cps-v2 li, .cps-v2 h3, .cps-v2 h4, .cps-v2 textarea { font-size: 15px !important; line-height: 1.55; }
         @media print {
           .print\\:hidden { display: none !important; }
           body { background: white; }
