@@ -3,7 +3,8 @@ import { exigeAcessoRef } from '@/lib/api-guard'
 import { db, ADMIN_EMAIL } from '@/lib/portalCriar'
 
 // POST multipart { referencia, ficheiro } — os noivos enviam o contrato assinado.
-// O ficheiro segue por email para o admin (anexo) e não fica guardado na app.
+// O ficheiro segue por email para o admin (anexo) e fica também guardado no bucket
+// privado "contratos" (assinados/<referência>/), com o caminho em settings.contratoAssinadoFicheiro.
 // Marca portais.settings.contratoAssinadoEm (desbloqueia o portal com a adjudicação paga).
 
 const MAX_BYTES = 4 * 1024 * 1024 // limite do pedido na Vercel (~4,5 MB)
@@ -31,6 +32,16 @@ export async function POST(req: NextRequest) {
 
   const nomes = [portal.noiva, portal.noivo].filter(Boolean).join(' & ') || referencia
   const ext = (ficheiro.name.split('.').pop() || 'pdf').toLowerCase()
+  const bytes = Buffer.from(await ficheiro.arrayBuffer())
+
+  // Guarda uma cópia no bucket privado "contratos" (prova em caso de reclamação).
+  // Abre-se só com sessão de admin, por /api/contrato-ficheiro?p=<caminho>.
+  const caminho = `assinados/${referencia.replace(/[^\w.-]+/g, '_')}/${new Date().toISOString().replace(/[:.]/g, '-')}.${ext}`
+  const { error: erroGuardar } = await sb.storage.from('contratos')
+    .upload(caminho, bytes, { contentType: ficheiro.type || 'application/octet-stream', upsert: false })
+  if (erroGuardar) console.error('[portais-contrato-assinado] storage', erroGuardar.message)
+  const SITE = process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.rlphotovideo.pt'
+  const linkFicheiro = erroGuardar ? null : `${SITE}/api/contrato-ficheiro?p=${encodeURIComponent(caminho)}`
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
@@ -39,8 +50,10 @@ export async function POST(req: NextRequest) {
       to: [ADMIN_EMAIL],
       subject: `✍ Contrato assinado: ${nomes} (${referencia})`,
       html: `<p style="font-family:Georgia,serif;font-size:16px">Os noivos <strong>${nomes}</strong> enviaram o contrato assinado pelo portal.</p>
-<p style="font-family:Georgia,serif;font-size:14px;color:#555">Referência: ${referencia}<br>O ficheiro vai em anexo e não ficou guardado na app.</p>`,
-      attachments: [{ filename: `Contrato assinado ${referencia}.${ext}`, content: Buffer.from(await ficheiro.arrayBuffer()).toString('base64') }],
+<p style="font-family:Georgia,serif;font-size:14px;color:#555">Referência: ${referencia}<br>O ficheiro vai em anexo${linkFicheiro
+  ? ` e ficou guardado na app: <a href="${linkFicheiro}">abrir a cópia guardada</a> (só com sessão de admin).`
+  : '. Atenção: não foi possível guardar a cópia na app; guarda este email.'}</p>`,
+      attachments: [{ filename: `Contrato assinado ${referencia}.${ext}`, content: bytes.toString('base64') }],
     }),
   })
   if (!res.ok) {
@@ -50,7 +63,7 @@ export async function POST(req: NextRequest) {
 
   const contratoAssinadoEm = new Date().toISOString()
   await sb.from('portais').update({
-    settings: { ...(portal.settings ?? {}), contratoAssinadoEm },
+    settings: { ...(portal.settings ?? {}), contratoAssinadoEm, ...(linkFicheiro ? { contratoAssinadoFicheiro: caminho } : {}) },
     updated_at: contratoAssinadoEm,
   }).eq('id', portal.id)
 
