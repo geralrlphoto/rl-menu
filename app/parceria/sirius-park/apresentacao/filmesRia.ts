@@ -3,7 +3,6 @@
 // com a capa do Vimeo. Mudar ou acrescentar um vídeo lá muda-o também na apresentação.
 import { lerEditorial } from '@/lib/editorialAcesso'
 import { montarEntregas } from '@/lib/editoriaisEntregas'
-import { capaVimeo } from '@/lib/vimeoCapa'
 
 export type FilmeRia = { id: string; nome: string; grupo: string; src: string; capa?: string; vertical: boolean }
 
@@ -14,6 +13,18 @@ function player(link: string) {
   const m = link.match(/vimeo\.com\/(?:video\/)?(\d+)(?:\/([0-9a-f]+))?/i)
   if (!m) return null
   return `https://player.vimeo.com/video/${m[1]}${m[2] ? `?h=${m[2]}` : ''}`
+}
+
+// Capa e formato real pelo oEmbed público do Vimeo (funciona com links privados com o código)
+async function infoVimeo(link: string): Promise<{ capa?: string; vertical: boolean }> {
+  try {
+    const r = await fetch(`https://vimeo.com/api/oembed.json?width=1280&url=${encodeURIComponent(link.split('?')[0])}`, { next: { revalidate: 86400 } })
+    if (!r.ok) return { vertical: false }
+    const j = (await r.json()) as { thumbnail_url?: string; width?: number; height?: number }
+    return { capa: j.thumbnail_url, vertical: !!j.width && !!j.height && j.height > j.width }
+  } catch {
+    return { vertical: false }
+  }
 }
 
 export async function lerFilmesRia(): Promise<FilmeRia[]> {
@@ -27,8 +38,7 @@ export async function lerFilmesRia(): Promise<FilmeRia[]> {
       nome: i.nome,
       grupo: i.grupo,
       src: player(i.link!)!,
-      capa: await capaVimeo(i.link),
-      vertical: /9\s*:\s*16/.test(i.formato ?? ''),
+      ...(await infoVimeo(i.link!)),
     })))
     return todos.filter(f => f.capa)
   } catch {
