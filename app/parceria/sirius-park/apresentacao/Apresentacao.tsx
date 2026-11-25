@@ -76,6 +76,41 @@ const f = (e: string) => urlDe(e) ? `url(${urlDe(e)})` : 'none'
 // atributos dos espaços de foto (no modo Editar fotos clica-se neles)
 const slot = (e: string) => ({ 'data-slot': e, 'data-nome': NOMES[e] })
 
+// Editorial Zankyou × Quinta da Ria: os dois filmes (Vimeo) com troca entre eles.
+// Os links vêm das entregas do editorial (tabela `editoriais`, slug zankyou-quinta-da-ria), copiados aqui.
+const FILMES_RIA = [
+  { id: 'espaco', nome: 'Filme do espaço', sub: 'Quinta da Ria', src: 'https://player.vimeo.com/video/1245102446' },
+  { id: 'editorial', nome: 'Filme editorial', sub: 'Zankyou', src: 'https://player.vimeo.com/video/1250039838?h=983ad1c812' },
+]
+function SlideEditorial() {
+  const [f, setF] = useState(0)
+  return (
+    <div className="ap-ed" onClick={e => e.stopPropagation()} onTouchStart={e => e.stopPropagation()} onTouchEnd={e => e.stopPropagation()}>
+      <div className="ap-ed-bg" aria-hidden />
+      <div className="ap-ed-in">
+        <div className="ap-ed-txt">
+          <span className="rlp-eyebrow">Trabalho recente · Editorial</span>
+          <h2 className="ap-h2">Zankyou <em>×</em> Quinta da Ria</h2>
+          <p className="ap-lede">Um editorial de casamento para a Zankyou e o filme de apresentação do espaço para a Quinta da Ria, no Algarve. Dois filmes, uma produção.</p>
+          <p className="ap-lede" style={{ color: 'var(--g)' }}>O mesmo podemos fazer pelo {ESPACO}.</p>
+          <div className="ap-ed-tabs">
+            {FILMES_RIA.map((x, k) => (
+              <button key={x.id} className={k === f ? 'on' : ''} onClick={() => setF(k)}>
+                {x.nome}<small>{x.sub}</small>
+              </button>
+            ))}
+          </div>
+          <a href="/editorial/zankyou-quinta-da-ria" target="_blank" rel="noopener noreferrer" className="ap-btn-portal">Ver o editorial completo <span>↗</span></a>
+        </div>
+        <div className="ap-ed-video">
+          <iframe key={FILMES_RIA[f].id} src={`${FILMES_RIA[f].src}${FILMES_RIA[f].src.includes('?') ? '&' : '?'}title=0&byline=0&portrait=0&dnt=1`}
+            allow="autoplay; fullscreen; picture-in-picture" allowFullScreen title={`${FILMES_RIA[f].nome} · ${FILMES_RIA[f].sub}`} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const SLIDES: Slide[] = [
   {
     id: 'capa',
@@ -206,6 +241,10 @@ const SLIDES: Slide[] = [
         <div className="ap-foto" {...slot('testemunho')} style={{ backgroundImage: f('testemunho'), backgroundPosition: '62% 45%' }} />
       </div>
     ),
+  },
+  {
+    id: 'editorial',
+    render: () => <SlideEditorial />,
   },
   {
     id: 'ouvir',
@@ -377,7 +416,7 @@ export default function ApresentacaoSiriusPark({ escolhas, admin, editarInicial 
 
       {SLIDES.map((s, k) => (
         <section key={s.id} className={`ap-slide${k === i ? ' on' : ''}${k < i ? ' past' : ''}`} aria-hidden={k !== i}>
-          {(s.id !== 'videos' || k === i) && s.render()}
+          {(!['videos', 'editorial'].includes(s.id) || k === i) && s.render()}
         </section>
       ))}
 
@@ -462,6 +501,18 @@ const CSS = `
 .ap-th img{width:100%;height:100%;object-fit:cover;display:block;}
 .ap-th-n{position:absolute;top:4px;left:6px;font-family:var(--fb);font-size:11px;font-weight:600;color:#fff;text-shadow:0 0 4px #000;}
 .ap-th-uso{position:absolute;left:0;right:0;bottom:0;padding:3px 6px;background:rgba(11,11,11,.8);font-family:var(--fb);font-size:9px;letter-spacing:.08em;color:var(--g);text-align:left;}
+.ap-ed{position:relative;height:100%;display:flex;align-items:center;cursor:default;}
+.ap-ed-bg{position:absolute;inset:0;background:url('/quinta-da-ria-aerea.webp') center 40%/cover no-repeat;opacity:.22;filter:saturate(.7);}
+.ap-ed-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--ink) 0%,rgba(11,11,11,.75) 45%,rgba(11,11,11,.55) 100%);}
+.ap-ed-in{position:relative;z-index:2;width:100%;max-width:1320px;margin:0 auto;padding:100px var(--pad) 70px;display:grid;grid-template-columns:minmax(300px,.8fr) 1.2fr;gap:clamp(28px,4vw,64px);align-items:center;}
+.ap-ed-tabs{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 4px;}
+.ap-ed-tabs button{display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:12px 18px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.02);color:var(--tx-mid);font-family:var(--fd);font-weight:300;font-size:17px;cursor:pointer;transition:.3s;}
+.ap-ed-tabs button small{font-family:var(--fb);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim);}
+.ap-ed-tabs button.on{border-color:var(--g);color:var(--tx);background:rgba(216,190,147,.06);}
+.ap-ed-tabs button.on small{color:var(--g);}
+.ap-ed-video{position:relative;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(216,190,147,.35);box-shadow:0 40px 80px -30px rgba(0,0,0,.8);}
+.ap-ed-video iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+@media (max-width:820px){.ap-ed-in{grid-template-columns:1fr;padding-top:80px;overflow-y:auto;max-height:100%;}}
 .ap-hint{position:fixed;right:var(--pad);bottom:18px;z-index:50;font-family:var(--fb);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--tx-dim);margin:0;}
 
 .ap-in{position:relative;z-index:2;max-width:1240px;margin:0 auto;padding:110px var(--pad) 80px;}
