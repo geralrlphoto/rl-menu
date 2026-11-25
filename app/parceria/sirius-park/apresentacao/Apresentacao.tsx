@@ -51,8 +51,8 @@ const OFERTA = [
 
 const PARCERIA = [
   { n: '01', t: 'Recomendação mútua', d: 'Vocês recomendam a RL aos casais; nós recomendamos o Sirius Park a quem ainda procura espaço.' },
-  { n: '02', t: 'Condição para os vossos casais', d: '[Benefício para os noivos que chegam através do Sirius Park.]' },
-  { n: '03', t: 'Material partilhado', d: '[Brochura ou cartão da RL no espaço; imagens do espaço no nosso portal.]' },
+  { n: '02', t: 'Condição para os vossos casais', d: '' },
+  { n: '03', t: 'Material partilhado', d: '' },
 ]
 
 // Links para mostrar na reunião (abrem noutro separador): portal da reunião = o de exemplo "Liliana e Rui" (CRM);
@@ -248,7 +248,7 @@ const SLIDES: Slide[] = [
             <div key={p.n} className="ap-card">
               <span className="ap-n">{p.n}</span>
               <p className="ap-card-t">{p.t}</p>
-              <p className="ap-card-d"><T>{p.d}</T></p>
+              {p.d && <p className="ap-card-d"><T>{p.d}</T></p>}
             </div>
           ))}
         </div>
