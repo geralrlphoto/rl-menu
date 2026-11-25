@@ -481,6 +481,21 @@ export default function ClientePage() {
     setOriginal((f: Contact) => ({ ...f, page_content: newPc }))
   }
 
+  // Autorização dos noivos para gravar a reunião (pedida pelo Rui no início da reunião).
+  // Fica em page_content.gravacao_reuniao: { autorizada, em }. Tocar no botão ativo volta a "por perguntar".
+  const pcAtual = typeof form.page_content === 'string' ? JSON.parse(form.page_content || '{}') : (form.page_content || {})
+  const gravacaoReuniao: { autorizada: boolean; em: string } | null = pcAtual.gravacao_reuniao ?? null
+  const handleGravacao = async (autorizada: boolean) => {
+    const pc = typeof form.page_content === 'string' ? JSON.parse(form.page_content || '{}') : (form.page_content || {})
+    const newPc = { ...pc }
+    if (pc.gravacao_reuniao?.autorizada === autorizada) delete newPc.gravacao_reuniao
+    else newPc.gravacao_reuniao = { autorizada, em: new Date().toISOString() }
+    const { error } = await supabase.from('crm_contacts').update({ page_content: newPc }).eq('id', id)
+    if (error) return alert('Não foi possível guardar a autorização de gravação.')
+    setForm((f: Contact) => ({ ...f, page_content: newPc }))
+    setOriginal((f: Contact) => ({ ...f, page_content: newPc }))
+  }
+
   const handleTogglePage = async (publish: boolean) => {
     setTogglingPage(true)
     const res = await fetch('/api/lead-page/toggle-publish', {
@@ -1363,6 +1378,30 @@ export default function ClientePage() {
               })}
             </p>
           )}
+
+          {/* Gravação da reunião: perguntar aos noivos no início, antes de gravar */}
+          <div className="border-t border-white/[0.06] pt-4 flex flex-col gap-2">
+            <label className="text-xs tracking-widest text-white/30 uppercase">Gravação da reunião</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => handleGravacao(true)}
+                className={`py-2.5 rounded-xl text-sm border transition-all ${gravacaoReuniao?.autorizada === true
+                  ? 'bg-green-500/20 text-green-400 border-green-500/40'
+                  : 'bg-white/5 text-white/50 border-white/10 hover:border-white/25'}`}
+              >Autorizada</button>
+              <button
+                onClick={() => handleGravacao(false)}
+                className={`py-2.5 rounded-xl text-sm border transition-all ${gravacaoReuniao?.autorizada === false
+                  ? 'bg-red-500/20 text-red-400 border-red-500/40'
+                  : 'bg-white/5 text-white/50 border-white/10 hover:border-white/25'}`}
+              >Não autorizada</button>
+            </div>
+            <p className={`text-[11px] tracking-wide ${gravacaoReuniao ? (gravacaoReuniao.autorizada ? 'text-green-400/70' : 'text-red-400/80') : 'text-white/30'}`}>
+              {gravacaoReuniao
+                ? `${gravacaoReuniao.autorizada ? 'Autorizada' : 'Não autorizada: não gravar'} · registado a ${new Date(gravacaoReuniao.em).toLocaleString('pt-PT', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`
+                : 'Por perguntar. Pergunta aos noivos no início da reunião, antes de gravar.'}
+            </p>
+          </div>
         </div>
 
       </div>
