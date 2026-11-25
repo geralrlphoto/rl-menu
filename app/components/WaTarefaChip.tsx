@@ -33,6 +33,8 @@ export type WaTarefa = {
   mensagem?: string    // 'obrigado' e 'portal': texto já escrito (portal sem link: o portal é criado no clique)
   reuniaoData?: string | null // 'portal': dia da reunião
   rotulo?: string      // 'obrigado': rótulo próprio (ex.: Enviar NPS)
+  pedidoEm?: string | null   // 'contrato' / 'lembrete_contrato': dia em que o pedido foi enviado
+  lembreteEm?: string | null // 'lembrete_contrato': dia em que o lembrete foi enviado
 }
 
 const CONFIG = {

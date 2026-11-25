@@ -704,26 +704,28 @@ export default async function PhotoDashboard() {
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
   )
   const contr = await getContratosPorAssinar()
+  // Vão para o separador "Contratos por assinar" do cartão Tarefas (não para a faixa)
+  const contratosPorAssinar: WaTarefa[] = []
   for (const ev of contr.evs as any[]) {
     const portal = (contr.portais as any[]).find(p => String(p.referencia).toLowerCase() === String(ev.referencia).toLowerCase())
     const envios: Record<string, string> = {}
     for (const x of contr.env as any[]) if (x.evento_id === ev.id) envios[x.evento] = x.created_at
-    if (envios.lembrete_contrato) continue
     const c = (contr.tels as any[]).find(t => t.referencia_evento === ev.referencia)
     const tipo = envios.pedir_contrato ? 'lembrete_contrato' as const : 'contrato' as const
     const devido = envios.pedir_contrato
       ? somaDias(lisboaISO(new Date(envios.pedir_contrato)), CONTRATO_LEMBRETE_DIAS)
       : somaDias(lisboaISO(new Date(portal?.created_at ?? new Date())), CONTRATO_PEDIR_DIAS)
-    const t = {
+    contratosPorAssinar.push({
       tipo, contactId: ev.id,
       nome: nomeNoivos(ev.cliente, c?.nome_noiva, c?.nome_noivo),
       contato: c?.tel_noiva || c?.tel_noivo || null,
       batizado: ehBatizado(ev.tipo_evento) ? { crianca: ev.nome_crianca ?? null } : null,
       reuniaoHora: null, dataCasamento: ev.data_evento,
-      dia: devido < hojeLx ? hojeLx : devido,
-      atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: devido > hojeLx,
-    }
-    if (t.dia <= semanaDias[DIAS_AGENDA - 1] && !ocultos.has(chaveWa(t))) waAgenda.push(t)
+      atrasoDias: Math.max(0, difDias(hojeLx, devido)), futura: false,
+      // Separador "Contratos por assinar": datas do pedido e do lembrete já enviados
+      pedidoEm: envios.pedir_contrato ? lisboaISO(new Date(envios.pedir_contrato)) : null,
+      lembreteEm: envios.lembrete_contrato ? lisboaISO(new Date(envios.lembrete_contrato)) : null,
+    })
   }
 
   const waPorEnviar = waAgenda.filter(t => !t.futura).length
@@ -1196,7 +1198,7 @@ export default async function PhotoDashboard() {
             <div className="hidden lg:block absolute left-0 right-0 top-1/2 h-px bg-white/[0.08]" />
             <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {prioridades.map(p => {
-                if ('tarefas' in p && p.tarefas) return <TarefasCard key="tarefas" />
+                if ('tarefas' in p && p.tarefas) return <TarefasCard key="tarefas" contratos={contratosPorAssinar} />
                 const avisoN = 'aviso' in p ? (p.aviso as number) : 0
                 const itensGaveta = 'gaveta' in p ? (p.gaveta as EntregaAtraso[]) : []
                 const comGaveta = itensGaveta.length > 0
