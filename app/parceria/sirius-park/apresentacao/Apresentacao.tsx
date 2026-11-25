@@ -71,7 +71,7 @@ const P = { capa: 14, quem: 7, portal: 16, mosaico: [3, 24, 17, 9, 19, 23], fim:
 let PORT: string[] = []
 let ESC: Record<string, string> = {}
 const NOMES: Record<string, string> = { capa: 'Capa', quem: 'Quem somos', portal: 'Portal dos noivos', m0: 'Mosaico 1', m1: 'Mosaico 2', m2: 'Mosaico 3', m3: 'Mosaico 4', m4: 'Mosaico 5', m5: 'Mosaico 6', testemunho: 'Testemunho', fim: 'Obrigado' }
-const ORIGEM: Record<string, number | string> = { capa: P.capa, quem: P.quem, portal: P.portal, fim: P.fim, testemunho: '/testemunho-catarina-ruben-1200.webp', ...Object.fromEntries(P.mosaico.map((n, i) => [`m${i}`, n])) }
+const ORIGEM: Record<string, number | string> = { capa: P.capa, quem: '/parceria/rui-goncalves.webp', portal: P.portal, fim: P.fim, testemunho: '/testemunho-catarina-ruben-1200.webp', ...Object.fromEntries(P.mosaico.map((n, i) => [`m${i}`, n])) }
 const urlDe = (e: string) => ESC[e] ?? (typeof ORIGEM[e] === 'string' ? ORIGEM[e] as string : PORT[ORIGEM[e] as number] ?? '')
 const f = (e: string) => urlDe(e) ? `url(${urlDe(e)})` : 'none'
 // atributos dos espaços de foto (no modo Editar fotos clica-se neles)
@@ -103,7 +103,7 @@ const SLIDES: Slide[] = [
           <p className="ap-lede"><T>{'[Equipa: Rui Gonçalves (direção e vídeo), fotógrafos e editores que trabalham connosco.]'}</T></p>
           <p className="ap-sig">registamos com foco na verdade</p>
         </div>
-        <div className="ap-foto" {...slot('quem')} style={{ backgroundImage: f('quem') }} />
+        <div className="ap-foto" {...slot('quem')} style={{ backgroundImage: f('quem'), backgroundPosition: 'center 20%' }} />
       </div>
     ),
   },
