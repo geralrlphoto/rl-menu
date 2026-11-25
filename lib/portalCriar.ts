@@ -124,6 +124,10 @@ export async function criarPortalCasamento(ref: string, dados: any, password: st
       local: dados.local_cerimonia ?? '',
       tipoPortal: 'casamento',
       portalPassword: password,
+      // Regra (desde 25/11/2026): portal novo só abre Contrato e Pagamentos até o
+      // contrato assinado ser enviado E a adjudicação estar paga (lib/portalBloqueio.ts).
+      // Portais que já existiam (com password) mantêm o que tinham.
+      bloqueioAteAdjudicacao: existente.portalPassword ? !!existente.bloqueioAteAdjudicacao : true,
       // O contrato foi aprovado pelo admin antes deste passo (botão
       // "Criar Portal" só aparece depois do contrato estar aprovado).
       // Marca como disponível para o cliente ver imediatamente.
@@ -177,6 +181,8 @@ export async function criarPortalBatizado(ref: string, dados: any, password: str
       nomeCrianca:  dados.nome_crianca  ?? '',
       idadeCrianca: dados.idade_crianca ?? '',
       portalPassword: password,
+      // Regra (desde 25/11/2026): igual aos casamentos (paridade dos portais)
+      bloqueioAteAdjudicacao: existente.portalPassword ? !!existente.bloqueioAteAdjudicacao : true,
       // O contrato foi aprovado pelo admin antes deste passo. Marca como
       // disponível para os pais verem imediatamente.
       contratoDisponivel: true,
