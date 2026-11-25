@@ -20,8 +20,9 @@ export async function GET(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Datas das assinaturas (contrato versão 2): a RL assina quando o contrato é
-  // aprovado e fica disponível no portal; os noivos quando o enviam assinado.
+  // Datas das assinaturas (contrato versão 2): a RL assina na data em que foi
+  // criado o portal dos noivos (onde o contrato fica disponível); os noivos quando
+  // o enviam assinado. Sem portal, usa a data de aprovação do contrato.
   let aprovadoEm: string | null = null
   let assinadoEm: string | null = null
   const { data: ev } = await supabase.from('eventos_2026').select('referencia').eq('id', eventoId).maybeSingle()
@@ -30,9 +31,9 @@ export async function GET(req: Request) {
       supabase.from('dados_contrato_cps').select('contrato_aprovado_em')
         .ilike('referencia_evento', ev.referencia).not('contrato_aprovado_em', 'is', null)
         .order('contrato_aprovado_em', { ascending: false }).limit(1).maybeSingle(),
-      supabase.from('portais').select('assinado:settings->>contratoAssinadoEm').ilike('referencia', ev.referencia).maybeSingle(),
+      supabase.from('portais').select('created_at, assinado:settings->>contratoAssinadoEm').ilike('referencia', ev.referencia).maybeSingle(),
     ])
-    aprovadoEm = cps?.contrato_aprovado_em ?? null
+    aprovadoEm = (portal as any)?.created_at ?? cps?.contrato_aprovado_em ?? null
     assinadoEm = (portal as any)?.assinado ?? null
   }
   return NextResponse.json({ clausulas: data?.clausulas ?? null, aprovadoEm, assinadoEm })
