@@ -21,10 +21,9 @@ function T({ children }: { children: string }) {
 type Slide = { id: string; render: () => React.ReactNode }
 
 const NUMEROS = [
-  { v: '[00]', l: 'Casamentos por ano' },
-  { v: '[00]', l: 'Anos a contar histórias' },
-  { v: '[5,0]', l: 'Avaliação dos noivos' },
-  { v: '48 h', l: 'Primeiras fotos (sneak peek)' },
+  { v: '60-80', l: 'Casamentos por ano' },
+  { v: '5', l: 'Anos no mercado' },
+  { v: '4,8', l: 'Avaliação dos noivos' },
 ]
 
 const PROCESSO = [
@@ -491,7 +490,7 @@ const CSS = `
 .ap-foto::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,var(--ink) 0%,transparent 30%);}
 .ap-split.rev .ap-foto::after{background:linear-gradient(270deg,var(--ink) 0%,transparent 30%);}
 
-.ap-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(16px,3vw,48px);margin-top:48px;width:100%;}
+.ap-stats{display:grid;grid-template-columns:repeat(3,1fr);max-width:1000px;gap:clamp(16px,3vw,48px);margin-top:48px;width:100%;}
 .ap-stat{display:flex;flex-direction:column;align-items:center;gap:14px;padding:28px 10px;border-top:1px solid var(--line);}
 .ap-stat-v{font-family:var(--fb);font-weight:100;font-size:clamp(52px,7vw,110px);line-height:.9;color:var(--tx);}
 .ap-stat-l{font-family:var(--fb);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--tx-mid);}
@@ -531,7 +530,7 @@ const CSS = `
   .ap-split.rev .ap-col{order:2;}
   .ap-col,.ap-split.rev .ap-col{padding:24px var(--pad) 60px;justify-content:flex-start;}
   .ap-foto::after,.ap-split.rev .ap-foto::after{background:linear-gradient(0deg,var(--ink) 0%,transparent 40%);}
-  .ap-stats{grid-template-columns:repeat(2,1fr);margin-top:24px;}
+  .ap-stats{grid-template-columns:1fr;gap:4px;margin-top:24px;}
   .ap-grid3,.ap-grid2{grid-template-columns:1fr;gap:10px;}
   .ap-in{padding-top:80px;overflow-y:auto;max-height:100%;}
   .ap-mosaico{height:46vh;}
