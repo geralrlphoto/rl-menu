@@ -37,7 +37,8 @@ function configDe(settings: Record<string, any> | null): Config {
 }
 
 const nomesDe = (v: unknown): string[] => Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
-const absoluto = (u: string) => (u.startsWith('//') ? 'https:' + u : u.startsWith('http') ? u : 'https:' + WFOLIO_CDN + u)
+// WFOLIO_CDN já traz o https: (antes ficava https:https://… e as fotos não carregavam)
+const absoluto = (u: string) => (u.startsWith('//') ? 'https:' + u : u.startsWith('http') ? u : WFOLIO_CDN + u)
 
 export async function GET(req: Request) {
   const ref = new URL(req.url).searchParams.get('ref')?.trim()

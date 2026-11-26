@@ -748,7 +748,6 @@ const todosEdges = () => Object.values(EDGES).flat()
 function faltas() {
   const f = []
   if (!st.rev) f.push(['Revestimento', 'Capa'])
-  if (!st.fita) f.push(['Fita de Cetim', 'Capa'])
   if (st.pers.includes('stamping')) {
     const sp = st.stamp, P = 'Personalização da Capa'
     if (!sp.letra) f.push(['Tipo de Letra', P])
@@ -893,7 +892,7 @@ function uvPainel() {
 function livro(alvo) {
   const capa = CAPAS.find(c => c.id === st.capa)
   const cor = achar(REVESTIMENTOS, st.rev)?.[2]
-  const fita = achar(FITAS, st.fita)?.[2]
+  const fita = null   // sem fita de cetim
   const edge = achar(todosEdges(), st.edge)?.[2]
   const cls = ['livro', cor ? 'cheio' : 'vazio', capa.tipo === 'foto' && cor ? 'foto' : '', alvo === 'grande' && st.d3 ? 'd3' : ''].join(' ')
   return `<div class="${cls}" style="${cor ? fundoLinho(st.rev, cor) : ''}">
@@ -953,8 +952,6 @@ function render() {
           <div class="stock${achar(REVESTIMENTOS, st.rev)?.[3] === 'alerta' ? ' sel' : ''}"><span class="alerta">!</span>${achar(REVESTIMENTOS, st.rev)?.[3] === 'alerta'
             ? 'Este revestimento tem <b>stock limitado</b>. Confirmamos a disponibilidade antes de produzir o álbum.'
             : 'Stock limitado'}</div></div>
-        <div class="field${req(st.fita)}"><div class="field-t">Fita de Cetim<b>*</b></div>
-          <div class="fitas">${FITAS.map(f => sw('fita', f, st.fita, false)).join('')}</div></div>
       </div>
     </div>
     <div class="sub-t">personalizações da capa</div>
@@ -1117,7 +1114,7 @@ function resumoProducao() {
       <p class="prod-dica">Colem o pedido no Claude: monta as folhas em alta com as fotos desta pasta e preenche o álbum no DreamBooks, parando em "Guardar Projeto".</p>
     </div>
     <table>
-    ${linha('Capa', 'Åland')}${linha('Revestimento', rev)}${linha('Fita de cetim', fita)}${linha('Personalização', pers)}${linha('Folhas', `${(st.paginas || []).length}${extras() ? ` (${extras()} extra · +${extras() * PRECO_EXTRA} €)` : ''}`)}${folhas}</table></div>`
+    ${linha('Capa', 'Åland')}${linha('Revestimento', rev)}${linha('Personalização', pers)}${linha('Folhas', `${(st.paginas || []).length}${extras() ? ` (${extras()} extra · +${extras() * PRECO_EXTRA} €)` : ''}`)}${folhas}</table></div>`
 }
 async function iniciar() {
   if (!REF) { $('#carregarTxt').textContent = 'Falta a referência do casamento no endereço.'; $('#carregar').classList.add('erro'); return }
