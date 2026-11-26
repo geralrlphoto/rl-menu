@@ -38,6 +38,11 @@ function estadoDe(settings: Record<string, any> | null): Estado {
   return { sel: Array.isArray(e?.sel) ? e.sel.filter((x: unknown) => typeof x === 'string') : [], atualizado: e?.atualizado ?? null, enviada: e?.enviada ?? null }
 }
 
+function albumDe(settings: Record<string, any> | null): Estado {
+  const e = settings?.album_galeria
+  return { sel: Array.isArray(e?.sel) ? e.sel.filter((x: unknown) => typeof x === 'string') : [], atualizado: e?.atualizado ?? null, enviada: e?.enviada ?? null }
+}
+
 async function gravarEstado(id: string, settings: Record<string, any> | null, estado: Estado) {
   const { error } = await db().from('portais')
     .update({ settings: { ...(settings ?? {}), selecao_galeria: estado }, updated_at: new Date().toISOString() })
@@ -56,15 +61,16 @@ export async function GET(req: Request) {
   if (!portal) return NextResponse.json({ error: 'portal' }, { status: 404 })
   const url = portal.settings?.selecao_url as string | undefined
   const estado = estadoDe(portal.settings)
-  if (searchParams.get('estado')) return NextResponse.json({ ok: true, wfolio: ehGaleriaWfolio(url), estado })
+  const album = albumDe(portal.settings)
+  if (searchParams.get('estado')) return NextResponse.json({ ok: true, wfolio: ehGaleriaWfolio(url), estado, album })
 
-  if (!ehGaleriaWfolio(url)) return NextResponse.json({ ok: false, error: 'sem_galeria', estado })
+  if (!ehGaleriaWfolio(url)) return NextResponse.json({ ok: false, error: 'sem_galeria', estado, album })
   try {
     const g = await lerGaleriaWfolio(url!)
-    return NextResponse.json({ ok: true, cdn: WFOLIO_CDN, titulo: g.titulo, pastas: g.pastas, estado })
+    return NextResponse.json({ ok: true, cdn: WFOLIO_CDN, titulo: g.titulo, pastas: g.pastas, estado, album })
   } catch (e) {
     console.error('[fotos-selecao-galeria] wfolio:', e)
-    return NextResponse.json({ ok: false, error: 'wfolio', estado }, { status: 502 })
+    return NextResponse.json({ ok: false, error: 'wfolio', estado, album }, { status: 502 })
   }
 }
 
@@ -78,12 +84,38 @@ export async function POST(req: Request) {
   const portal = await lerPortal(ref)
   if (!portal) return NextResponse.json({ error: 'portal' }, { status: 404 })
   const atual = estadoDe(portal.settings)
-  if (atual.enviada) return NextResponse.json({ error: 'Esta seleção já foi enviada.', estado: atual }, { status: 409 })
-
   const nomes = (v: unknown): string[] => Array.isArray(v)
     ? [...new Set<string>(v.filter((x: unknown): x is string => typeof x === 'string' && x.length > 0 && x.length < 80))].slice(0, 5000)
     : []
   const agora = new Date().toISOString()
+
+  // ── Álbum: escolhido só entre as fotografias da seleção ──
+  //  { acao: 'album', sel }         → guarda a escolha a meio (settings.album_galeria)
+  //  { acao: 'enviar-album', sel }  → fecha a escolha e passa-a para fotos_selecao.fotos_album
+  if (body.acao === 'album' || body.acao === 'enviar-album') {
+    const alb = albumDe(portal.settings)
+    if (alb.enviada) return NextResponse.json({ error: 'As fotografias do álbum já foram enviadas.', album: alb }, { status: 409 })
+    const daSelecao = new Set(atual.sel)
+    const escolha = nomes(body.sel).filter(n => daSelecao.has(n))
+    const enviar = body.acao === 'enviar-album'
+    if (enviar && escolha.length === 0) return NextResponse.json({ error: 'Escolham pelo menos uma fotografia para o álbum.' }, { status: 400 })
+    const novo: Estado = { sel: escolha, atualizado: agora, enviada: enviar ? agora : null }
+    const { error } = await db().from('portais')
+      .update({ settings: { ...(portal.settings ?? {}), album_galeria: novo }, updated_at: agora })
+      .eq('id', portal.id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (enviar) {
+      // Se a seleção já chegou, o álbum junta-se à mesma linha (é daí que o departamento o lê)
+      const ordem = atual.sel.filter(n => escolha.includes(n))
+      const { data: linha } = await db().from('fotos_selecao').select('id')
+        .eq('referencia', portal.referencia).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (linha) await db().from('fotos_selecao').update({ fotos_album: ordem.join(', ') }).eq('id', linha.id)
+      await registarFoto(portal.referencia, `Fotos do álbum recebidas (${escolha.length})`, 'Noivos')
+    }
+    return NextResponse.json({ ok: true, album: novo })
+  }
+
+  if (atual.enviada) return NextResponse.json({ error: 'Esta seleção já foi enviada.', estado: atual }, { status: 409 })
 
   // Cada aparelho manda só o que juntou e o que tirou: assim os dois noivos podem
   // escolher ao mesmo tempo sem um apagar as escolhas do outro.
@@ -136,7 +168,8 @@ export async function POST(req: Request) {
     cerimonia: junta('cerimonia'),
     bolo_bouquet: junta('bolo_bouquet'),
     sala_animacao: junta('sala_animacao'),
-    fotos_album: junta('fotos_album'),
+    // Fotos do álbum já enviadas pelo separador Álbum têm prioridade sobre a pasta
+    fotos_album: (() => { const a = albumDe(portal.settings); const ok = a.enviada ? sel.filter(n => a.sel.includes(n)) : []; return ok.length ? ok.join(', ') : junta('fotos_album') })(),
     detalhes: junta('detalhes'),
   }
 

@@ -109,6 +109,16 @@
 }
 .sg-root .sg-tabs button:hover { border-color: rgba(216,190,147,.6); }
 .sg-root .sg-tabs button.on { color: var(--gold); border-color: rgba(216,190,147,.6); background: rgba(216,190,147,.15); }
+/* separador Álbum: só as fotografias da seleção */
+.sg-root .sg-tabs { flex-wrap: wrap; }
+.sg-root .sg-tabs .sg-tab-album { border-color: rgba(255,255,255,.45); color: #fff; box-shadow: 0 0 18px -8px rgba(255,255,255,.6); }
+.sg-root .sg-album-info {
+  margin: 0 0 22px; padding: 14px 18px; border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.22); background: #141414;
+  box-shadow: 0 0 30px -18px rgba(255,255,255,.5);
+}
+.sg-root .sg-album-info p { margin: 6px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--ink-2); }
+.sg-root .sg-album-info strong { color: var(--ink); }
 
 /* ── nota da qualidade ── */
 .sg-root .sg-qualidade {

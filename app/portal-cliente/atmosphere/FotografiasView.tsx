@@ -542,7 +542,7 @@ export function FotografiasView(props: FotografiasViewProps) {
   // ── Galeria para Seleção dentro do portal (quando o link é uma galeria do Wfolio) ──
   const urlSelecao = props.cards.find(c => c.key === 'selecao')?.url ?? null
   const selecaoInterna = ehGaleriaWfolio(urlSelecao) && !!props.portalRef
-  const [galeriaAberta, setGaleriaAberta] = useState(false)
+  const [galeriaAberta, setGaleriaAberta] = useState<false | true | 'album'>(false)
   const [estadoSel, setEstadoSel] = useState<EstadoSelecao | null>(null)
   useEffect(() => {
     if (!selecaoInterna) return
@@ -554,6 +554,7 @@ export function FotografiasView(props: FotografiasViewProps) {
   // Abre logo a galeria quando o endereço traz #selecao (ex.: link do email)
   useEffect(() => {
     if (selecaoInterna && window.location.hash === '#selecao') setGaleriaAberta(true)
+    if (selecaoInterna && window.location.hash === '#album') setGaleriaAberta('album')
   }, [selecaoInterna])
 
   // Estado e data prevista de cada galeria (prazos do guia: 7 e 30 dias úteis)
@@ -733,6 +734,15 @@ export function FotografiasView(props: FotografiasViewProps) {
                       onAbrirGaleria={available && selecaoInterna ? () => setGaleriaAberta(true) : undefined}
                     />
                   )}
+                  {/* Álbum: escolhido só entre as fotografias da seleção */}
+                  {c.key === 'selecao' && available && selecaoInterna && (
+                    <button type="button" className="fp-btn ghost" onClick={() => setGaleriaAberta('album')}>
+                      Álbum
+                      <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 5a2 2 0 0 1 2-2h12v18H6a2 2 0 0 1-2-2z" /><path d="M12 3v18" />
+                      </svg>
+                    </button>
+                  )}
                   {/* Com a galeria dentro do portal o envio faz-se lá dentro */}
                   {c.key === 'selecao' && !(available && selecaoInterna) && (
                     <a className="fp-btn ghost" href={props.enviarFotosUrl} target="_blank" rel="noopener noreferrer">
@@ -803,9 +813,10 @@ export function FotografiasView(props: FotografiasViewProps) {
           portalRef={props.portalRef!}
           tipo={evento}
           temaRL={temaRL}
+          inicio={galeriaAberta === 'album' ? 'album' : undefined}
           onClose={() => {
             setGaleriaAberta(false)
-            if (window.location.hash === '#selecao') history.replaceState(null, '', window.location.pathname + window.location.search)
+            if (window.location.hash === '#selecao' || window.location.hash === '#album') history.replaceState(null, '', window.location.pathname + window.location.search)
           }}
           onEstado={setEstadoSel}
         />

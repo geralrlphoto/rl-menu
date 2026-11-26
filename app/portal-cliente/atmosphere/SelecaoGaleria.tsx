@@ -27,7 +27,7 @@ function juntar(base: string[], d: Record<string, 'add' | 'rem'>): string[] {
 }
 const dataPt = (iso: string) => new Date(iso).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
 
-export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fonteUrl, convidados }: {
+export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fonteUrl, convidados, inicio }: {
   /** Noivos: referência do portal. Convidados: id do portal. */
   portalRef: string
   tipo: 'casamento' | 'batizado'
@@ -39,6 +39,8 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   /** Modo convidados: a escolha fica só neste dispositivo e o fim é "Continuar"
    *  para o formulário de compra, em vez de enviar a seleção. */
   convidados?: { onContinuar: (sel: string[]) => void }
+  /** Abre logo no separador Álbum */
+  inicio?: 'album'
 }) {
   const conv = !!convidados
   const [pastas, setPastas] = useState<Pasta[] | null>(null)
@@ -48,7 +50,14 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   const [enviada, setEnviada] = useState<string | null>(null)
   const [guardado, setGuardado] = useState<'ok' | 'a-guardar' | 'erro'>('ok')
   const [pasta, setPasta] = useState<string>('todas')
-  const [filtro, setFiltro] = useState<'todas' | 'sel'>('todas')
+  const [filtro, setFiltro] = useState<'todas' | 'sel' | 'album'>(inicio === 'album' && !convidados ? 'album' : 'todas')
+  // Álbum: escolhido só entre as fotografias da seleção
+  const [alb, setAlb] = useState<string[]>([])
+  const [albEnviado, setAlbEnviado] = useState<string | null>(null)
+  const [albGuardado, setAlbGuardado] = useState<'ok' | 'a-guardar' | 'erro'>('ok')
+  const albTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const albRef = useRef<string[]>([])
+  const albPendente = useRef(false)
   const [mostrar, setMostrar] = useState(PASSO)
   const [aberta, setAberta] = useState<number | null>(null)
   const [confirmar, setConfirmar] = useState(false)
@@ -90,6 +99,11 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
           setSel(base); selRef.current = base
           if (Object.keys(delta.current).length) guardarRef.current?.()
         }
+        if (!conv && d?.album) {
+          const a = Array.isArray(d.album.sel) ? d.album.sel : []
+          setAlb(a); albRef.current = a
+          setAlbEnviado(d.album.enviada ?? null)
+        }
         if (!d?.ok) { setErro(d?.error === 'wfolio' ? 'A galeria está a demorar a responder. Tentem de novo daqui a pouco.' : 'A galeria ainda não está disponível.'); return }
         setCdn(d.cdn)
         setPastas(d.pastas)
@@ -108,6 +122,9 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
   const src = useCallback((u: string) => (u.startsWith('//') ? 'https:' + u : u.startsWith('http') ? u : cdn + u), [cdn])
   const selSet = useMemo(() => new Set(sel), [sel])
+  const modoAlbum = filtro === 'album'
+  // só contam para o álbum as que continuam na seleção
+  const albSet = useMemo(() => new Set(alb.filter(n => selSet.has(n))), [alb, selSet])
 
   const todas: FotoL[] = useMemo(() => (pastas ?? []).flatMap(p => p.fotos.map(f => ({ ...f, pasta: p.nome }))), [pastas])
   const lista: FotoL[] = useMemo(
@@ -116,9 +133,10 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   )
   const porPasta = useMemo(() => {
     const m: Record<string, number> = {}
-    for (const f of todas) if (selSet.has(f.n)) m[f.pasta] = (m[f.pasta] ?? 0) + 1
+    const conta = modoAlbum ? albSet : selSet
+    for (const f of todas) if (conta.has(f.n)) m[f.pasta] = (m[f.pasta] ?? 0) + 1
     return m
-  }, [todas, selSet])
+  }, [todas, selSet, albSet, modoAlbum])
 
   // ── guardar a escolha ──
   // Cada toque é uma alteração ("juntar" ou "tirar"). Seguem para o portal pouco
@@ -221,6 +239,57 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
     guardar()
   }, [enviada, guardar, conv, chaveLocal])
 
+  // ── álbum: guarda a escolha inteira pouco depois de cada toque ──
+  const guardarAlbum = useCallback((aSair = false) => {
+    fetch('/api/fotos-selecao-galeria', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ref: portalRef, acao: 'album', sel: albRef.current }),
+      keepalive: aSair,
+    }).then(async r => {
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { setAlbGuardado('erro'); if (d?.album?.enviada) setAlbEnviado(d.album.enviada); return }
+      setAlbGuardado(albPendente.current ? 'a-guardar' : 'ok')
+    }).catch(() => setAlbGuardado('erro'))
+  }, [portalRef])
+  // ao fechar a galeria: guarda já o que faltar
+  useEffect(() => () => {
+    if (albTimer.current) clearTimeout(albTimer.current)
+    if (albPendente.current) { albPendente.current = false; guardarAlbum(true) }
+  }, [guardarAlbum])
+
+  const alternarAlbum = useCallback((n: string) => {
+    if (albEnviado) { toast('As fotografias do álbum já foram enviadas'); return }
+    if (!selRef.current.includes(n)) return
+    const prev = albRef.current
+    const nova = prev.includes(n) ? prev.filter(x => x !== n) : [...prev, n]
+    albRef.current = nova
+    setAlb(nova)
+    setAlbGuardado('a-guardar')
+    albPendente.current = true
+    if (albTimer.current) clearTimeout(albTimer.current)
+    albTimer.current = setTimeout(() => { albTimer.current = null; albPendente.current = false; guardarAlbum() }, 700)
+  }, [albEnviado, guardarAlbum])
+
+  const tocar = useCallback((n: string) => (modoAlbum ? alternarAlbum(n) : alternar(n)), [modoAlbum, alternarAlbum, alternar])
+
+  async function enviarAlbum() {
+    setAEnviar(true)
+    if (albTimer.current) { clearTimeout(albTimer.current); albTimer.current = null }
+    albPendente.current = false
+    try {
+      const r = await fetch('/api/fotos-selecao-galeria', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: portalRef, acao: 'enviar-album', sel: albRef.current }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { toast(d?.error || 'Não foi possível enviar. Tentem de novo.'); if (d?.album?.enviada) setAlbEnviado(d.album.enviada); return }
+      setAlbEnviado(d.album.enviada)
+      setAlbGuardado('ok')
+      setConfirmar(false)
+      rootRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    } finally { setAEnviar(false) }
+  }
+
   // ── carregar mais fotografias ao descer ──
   useEffect(() => { setMostrar(PASSO) }, [pasta, filtro])
   useEffect(() => {
@@ -242,11 +311,11 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
       if (e.key === 'Escape') setAberta(null)
       else if (e.key === 'ArrowRight') setAberta(i => (i === null ? i : (i + 1) % lista.length))
       else if (e.key === 'ArrowLeft') setAberta(i => (i === null ? i : (i - 1 + lista.length) % lista.length))
-      else if (e.key.toLowerCase() === 's' && lista[aberta]) alternar(lista[aberta].n)
+      else if (e.key.toLowerCase() === 's' && lista[aberta]) tocar(lista[aberta].n)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [aberta, lista, alternar, confirmar, onClose])
+  }, [aberta, lista, tocar, confirmar, onClose])
 
   // se a foto aberta deixar de estar na lista (ex.: tirada em "A minha seleção")
   useEffect(() => {
@@ -297,7 +366,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
         </h3>,
       )
     }
-    const on = selSet.has(f.n)
+    const on = modoAlbum ? albSet.has(f.n) : selSet.has(f.n)
     celulas.push(
       <div key={f.n} className={`sg-cel${on ? ' on' : ''}`} onClick={() => setAberta(i)}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -306,14 +375,15 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
         <button
           type="button"
           className="sg-chk"
-          aria-label={on ? 'Tirar da seleção' : 'Selecionar'}
-          onClick={e => { e.stopPropagation(); alternar(f.n) }}
+          aria-label={modoAlbum ? (on ? 'Tirar do álbum' : 'Pôr no álbum') : on ? 'Tirar da seleção' : 'Selecionar'}
+          onClick={e => { e.stopPropagation(); tocar(f.n) }}
         >✓</button>
       </div>,
     )
   })
 
   const total = sel.length
+  const totalAlb = albSet.size
   const titulo = conv ? `Fotografias do ${tipo}` : 'Galeria para Seleção'
 
   return createPortal(
@@ -369,14 +439,28 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
             <div className="sg-tabs">
               <button type="button" className={filtro === 'todas' ? 'on' : ''} onClick={() => setFiltro('todas')}>Todas</button>
-              <button type="button" className={filtro === 'sel' ? 'on' : ''} onClick={() => setFiltro('sel')}>A minha seleção · {pasta === 'todas' ? total : (porPasta[pasta] ?? 0)}</button>
+              <button type="button" className={filtro === 'sel' ? 'on' : ''} onClick={() => setFiltro('sel')}>A minha seleção · {filtro === 'sel' && pasta !== 'todas' ? (porPasta[pasta] ?? 0) : total}</button>
+              {!conv && <button type="button" className={`sg-tab-album${modoAlbum ? ' on' : ''}`} onClick={() => setFiltro('album')}>Álbum · {totalAlb}</button>}
             </div>
 
-            {filtro === 'sel' && variasPastas && (
+            {modoAlbum && (
+              <div className="sg-album-info">
+                <span className="eyebrow">{albEnviado ? 'Fotografias do álbum enviadas' : 'Fotografias para o álbum'}</span>
+                <p>
+                  {albEnviado
+                    ? <>Recebemos as <strong>{totalAlb} fotografias</strong> para o álbum a {dataPt(albEnviado)}. Obrigado!</>
+                    : total === 0
+                      ? <>Primeiro escolham as fotografias da vossa <strong>seleção</strong>. Depois escolhem aqui, entre elas, as que querem no álbum.</>
+                      : <>Aqui aparecem só as <strong>{total} fotografias da vossa seleção</strong>. Toquem no ✓ das que querem no álbum e, no fim, carreguem em <strong>Enviar álbum</strong>.</>}
+                </p>
+              </div>
+            )}
+
+            {filtro !== 'todas' && variasPastas && (
               <div className="sg-resumo">
                 <div className="sg-resumo-head">
-                  <span className="eyebrow">A vossa seleção por pasta</span>
-                  <span className="sg-resumo-total">{total} {total === 1 ? 'fotografia' : 'fotografias'}</span>
+                  <span className="eyebrow">{modoAlbum ? 'O vosso álbum por pasta' : 'A vossa seleção por pasta'}</span>
+                  <span className="sg-resumo-total">{modoAlbum ? totalAlb : total} {(modoAlbum ? totalAlb : total) === 1 ? 'fotografia' : 'fotografias'}</span>
                 </div>
                 <div className="sg-resumo-grid">
                   {nomesPastas.map(p => {
@@ -394,7 +478,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
             <div className="sg-grelha">
               {celulas.length ? celulas : (
-                <div className="sg-vazio">{filtro === 'sel' ? 'Ainda não escolheram nenhuma fotografia' + (pasta !== 'todas' ? ' nesta pasta.' : '.') : 'Esta pasta não tem fotografias.'}</div>
+                <div className="sg-vazio">{filtro !== 'todas' ? 'Ainda não escolheram nenhuma fotografia' + (pasta !== 'todas' ? ' nesta pasta.' : '.') : 'Esta pasta não tem fotografias.'}</div>
               )}
               {lista.length > mostrar && <div ref={maisRef} className="sg-mais">A carregar mais fotografias…</div>}
             </div>
@@ -407,12 +491,20 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
         <footer className="sg-rodape">
           <div className="sg-rodape-in">
             <div className="sg-rodape-info">
-              <span><strong>{total}</strong> {total === 1 ? 'fotografia escolhida' : 'fotografias escolhidas'}</span>
-              <span className={`sg-guardado ${guardado}`}>
-                {conv ? 'Guardado neste dispositivo' : enviada ? 'Enviada' : guardado === 'a-guardar' ? 'A guardar…' : guardado === 'erro' ? 'Não guardou, verifiquem a internet' : 'Guardado'}
+              {modoAlbum
+                ? <span><strong>{totalAlb}</strong> de {total} para o álbum</span>
+                : <span><strong>{total}</strong> {total === 1 ? 'fotografia escolhida' : 'fotografias escolhidas'}</span>}
+              <span className={`sg-guardado ${modoAlbum ? albGuardado : guardado}`}>
+                {modoAlbum
+                  ? albEnviado ? 'Enviado' : albGuardado === 'a-guardar' ? 'A guardar…' : albGuardado === 'erro' ? 'Não guardou, verifiquem a internet' : 'Guardado'
+                  : conv ? 'Guardado neste dispositivo' : enviada ? 'Enviada' : guardado === 'a-guardar' ? 'A guardar…' : guardado === 'erro' ? 'Não guardou, verifiquem a internet' : 'Guardado'}
               </span>
             </div>
-            {conv ? (
+            {modoAlbum ? (
+              <button type="button" className="fp-btn available sg-enviar" disabled={!!albEnviado || totalAlb === 0} onClick={() => setConfirmar(true)}>
+                {albEnviado ? 'Álbum enviado' : 'Enviar álbum'}
+              </button>
+            ) : conv ? (
               <button type="button" className="fp-btn available sg-enviar" disabled={total === 0} onClick={() => convidados!.onContinuar(todas.filter(f => selSet.has(f.n)).map(f => f.n))}>
                 Continuar →
               </button>
@@ -456,13 +548,15 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
           <div className="sg-lb-base">
             <button
               type="button"
-              className={`fp-btn ${selSet.has(foto.n) ? 'available' : 'ghost'} sg-lb-sel`}
-              disabled={!!enviada}
-              onClick={() => alternar(foto.n)}
+              className={`fp-btn ${(modoAlbum ? albSet : selSet).has(foto.n) ? 'available' : 'ghost'} sg-lb-sel`}
+              disabled={modoAlbum ? !!albEnviado : !!enviada}
+              onClick={() => tocar(foto.n)}
             >
-              {enviada ? (selSet.has(foto.n) ? 'Escolhida ✓' : 'Seleção fechada') : selSet.has(foto.n) ? 'Selecionada ✓ · tirar' : 'Selecionar'}
+              {modoAlbum
+                ? albEnviado ? (albSet.has(foto.n) ? 'No álbum ✓' : 'Álbum fechado') : albSet.has(foto.n) ? 'No álbum ✓ · tirar' : 'Pôr no álbum'
+                : enviada ? (selSet.has(foto.n) ? 'Escolhida ✓' : 'Seleção fechada') : selSet.has(foto.n) ? 'Selecionada ✓ · tirar' : 'Selecionar'}
             </button>
-            <span className="sg-lb-dica">{total} {total === 1 ? 'escolhida' : 'escolhidas'} · pré-visualização em baixa qualidade, entregamos em alta</span>
+            <span className="sg-lb-dica">{modoAlbum ? `${totalAlb} no álbum` : `${total} ${total === 1 ? 'escolhida' : 'escolhidas'}`} · pré-visualização em baixa qualidade, entregamos em alta</span>
           </div>
         </div>
       )}
@@ -472,17 +566,17 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
         <div className="fp-modal-backdrop" onClick={() => setConfirmar(false)}>
           <div className="fp-modal" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
             <button type="button" className="fp-modal-close" onClick={() => setConfirmar(false)} aria-label="Fechar">×</button>
-            <div className="eyebrow">Seleção</div>
-            <h3>Enviar a vossa <em>escolha?</em></h3>
+            <div className="eyebrow">{modoAlbum ? 'Álbum' : 'Seleção'}</div>
+            <h3>{modoAlbum ? <>Enviar as fotografias do <em>álbum?</em></> : <>Enviar a vossa <em>escolha?</em></>}</h3>
             <div className="fp-modal-example">
-              <div className="lbl">{total} fotografias</div>
+              <div className="lbl">{modoAlbum ? totalAlb : total} fotografias</div>
               {nomesPastas.filter(p => porPasta[p]).map(p => (
                 <div key={p} className="sg-conf-linha"><span>{p}</span><b>{porPasta[p]}</b></div>
               ))}
             </div>
-            <p className="sg-conf-txt">Depois de enviada, a seleção fica fechada e passamos à edição.</p>
+            <p className="sg-conf-txt">{modoAlbum ? 'Depois de enviadas, a escolha do álbum fica fechada e começamos a maquete.' : 'Depois de enviada, a seleção fica fechada e passamos à edição.'}</p>
             <div className="fp-modal-actions">
-              <button type="button" className="fp-btn available" disabled={aEnviar} onClick={enviar}>{aEnviar ? 'A enviar…' : 'Sim, enviar'}</button>
+              <button type="button" className="fp-btn available" disabled={aEnviar} onClick={modoAlbum ? enviarAlbum : enviar}>{aEnviar ? 'A enviar…' : 'Sim, enviar'}</button>
               <button type="button" className="fp-btn ghost" onClick={() => setConfirmar(false)}>Voltar à galeria</button>
             </div>
           </div>
