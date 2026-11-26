@@ -64,7 +64,7 @@
   .mini-livro.gravura::after { content: ''; position: absolute; left: 12px; right: 9px; top: 26px; height: 12px; border: 1px solid rgba(0,0,0,.25); border-radius: 50%; }
 
   .cover-detail { background: #f3f3f3; border-radius: 6px; padding: 14px 14px 14px; display: grid; grid-template-columns: minmax(0, 1fr) 354px; gap: 22px; }
-  .cover-name { background: #e6e6e6; border-radius: 4px; padding: 11px 10px; font-size: 13px; font-weight: 600; }
+  .cover-name { background: #e6e6e6; border-radius: 4px; padding: 11px 10px; font-size: 13px; font-weight: 600; margin-bottom: 12px; }
   .cover-name span { font-size: 10.5px; color: #777; font-weight: 500; letter-spacing: .6px; margin-right: 8px; }
   .tpl { display: flex; align-items: center; gap: 10px; margin: 12px 0; font-size: 12px; font-weight: 600; letter-spacing: .6px; color: #666; text-transform: uppercase; }
   .ps { width: 16px; height: 16px; border-radius: 3px; background: #31a8ff; color: #001e36; font-size: 9px; font-weight: 700; display: grid; place-items: center; text-transform: none; letter-spacing: 0; }
@@ -927,9 +927,6 @@ function render() {
     <div class="cover-detail">
       <div>
         <div class="cover-name"><span>CAPA</span>${capa.n}</div>
-        <div class="tpl"><span class="ps">Ps</span>Descarregar template de ${capa.n}<span class="sp"></span>
-          <button class="mini-btn${st.escuro ? ' on' : ''}" data-tg="escuro"><span class="ms" style="font-size:14px">dark_mode</span></button>
-          <button class="mini-btn${st.d3 ? ' on' : ''}" data-tg="d3"><span class="ms" style="font-size:14px">3d_rotation</span>3D</button></div>
         <div class="preview${st.escuro ? ' escuro' : ''}">${livro('grande')}<p>Pré-visualização. O produto final pode variar.</p></div>
       </div>
       <div class="fields">
