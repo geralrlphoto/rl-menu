@@ -788,6 +788,23 @@ export function FotografiasView(props: FotografiasViewProps) {
         </p>
       </section>
 
+      {/* ── Personalizar o álbum: capa + páginas com as fotos do separador Álbum ── */}
+      {props.portalRef && (
+        <div className="fp-album-prazo">
+          <span className="eyebrow">Personalizar o álbum</span>
+          <p style={{ margin: '8px 0 14px' }}>
+            Escolham a capa, o linho e a personalização, e montem as páginas com as fotografias que escolheram para o álbum.
+            Podem ver o álbum a folhear antes de nos enviarem.
+          </p>
+          <a className="fp-btn available" href={`/portal-cliente/personalizar-album/index.html?ref=${encodeURIComponent(props.portalRef)}`}>
+            Personalizar o álbum
+            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14" /><path d="M13 6l6 6-6 6" />
+            </svg>
+          </a>
+        </div>
+      )}
+
       {/* ── Maquete + Aprovação ─────────────────────────────── */}
       {temaRL && casamento && (
         <div className="fp-album-prazo">

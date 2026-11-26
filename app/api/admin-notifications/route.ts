@@ -51,6 +51,7 @@ const TIPO_LABELS: Record<string, string> = {
   pedido_reuniao:           'Pedido de Reunião',
   reuniao_marcada:          'Reunião de Preparação Marcada',
   reuniao_publica:          'Reunião Marcada (Link Público)',
+  album_personalizado:      'Álbum Personalizado pelos Noivos',
 }
 
 const TIPO_ICONS: Record<string, string> = {
@@ -93,6 +94,7 @@ const TIPO_ICONS: Record<string, string> = {
   pedido_reuniao:           '📅',
   reuniao_marcada:          '📅',
   reuniao_publica:          '📅',
+  album_personalizado:      '📖',
 }
 
 // Soma dias úteis a uma data (igual ao cálculo da ficha do evento).
@@ -577,6 +579,26 @@ export async function GET(req: Request) {
       }
     } catch (err) {
       console.warn('[admin-notifications] fotos_selecao read failed:', err)
+    }
+
+    // ── ÁLBUM PERSONALIZADO enviado pelos noivos (portais.settings.album_config) ──
+    //    Usa a leitura única de `portais` acima (sem nova leitura).
+    for (const p of portaisAll) {
+      const enviado = p?.settings?.album_config?.enviado
+      if (!enviado || !p.referencia) continue
+      notifications.push({
+        id: `album_personalizado::${p.referencia}::${enviado}`,
+        tipo: 'album_personalizado',
+        tipo_label: TIPO_LABELS.album_personalizado,
+        tipo_icon: TIPO_ICONS.album_personalizado,
+        casamento_id: '',
+        freelancer_id: '',
+        freelancer_nome: p.referencia,
+        local: p.referencia,
+        data_casamento: null,
+        url: `/portal-cliente/personalizar-album/index.html?ref=${encodeURIComponent(p.referencia)}`,
+        sent_at: enviado,
+      })
     }
 
     // ── Notificações de ÁLBUNS APROVADOS pelos noivos ──
