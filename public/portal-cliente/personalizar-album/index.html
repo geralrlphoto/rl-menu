@@ -583,6 +583,9 @@
   .producao { background: var(--rl-2); border-color: var(--rl-linha); color: var(--rl-ink); }
   .producao h4 { color: var(--rl-ouro); } .producao td { border-top-color: var(--rl-linha); } .producao td:first-child { color: var(--rl-ink3); }
   .toast { background: var(--rl-3); border: 1px solid var(--rl-ouro); color: var(--rl-ink); }
+  body.embed .nav { display: none; }
+  body.embed .layout { padding-top: 16px; }
+  body.embed .floating-price-panel { top: 16px; }
   .pg-thumb .pg-extra { color: #14110c; }
   .pg-extras { border-color: var(--rl-linha); color: var(--rl-ink); } .pg-extras b { color: var(--rl-ouro); }
 </style>
@@ -717,6 +720,9 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 const REF = new URLSearchParams(location.search).get('ref') || ''
+// dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
+const EMBED = new URLSearchParams(location.search).get('embed') === '1'
+if (EMBED) document.body.classList.add('embed')
 const CHAVE = 'rl_album_' + REF
 const base = {
   nome: 'Projeto teste', capa: 'aland', rev: null, saco: '', fita: null, dvd: false, persNao: false, pers: ['uv'], stamp: { letra: null, car: '', loc: null, cor: null, txt1: '', linha2: '', car2: '', txt2: '' }, uv: { tab: 'Botanical', design: null, n1: '', n2: '', data: '' },
@@ -1165,6 +1171,8 @@ $('#enviar').onclick = async () => {
   const d = await r.json().catch(() => ({}))
   if (!r.ok) return toast(d.error || 'Não foi possível enviar. Tentem de novo.')
   CFG = d.config; try { localStorage.removeItem(CHAVE) } catch {}
+  // avisa a galeria do portal (fecha também a escolha das fotos do álbum)
+  if (window.parent !== window) window.parent.postMessage({ tipo: 'album-enviado', enviada: CFG.enviado }, location.origin)
   mostrarEstado(); renderPaginas(); toast('Álbum enviado. Obrigado!')
 }
 $('#reabrir').onclick = async () => {

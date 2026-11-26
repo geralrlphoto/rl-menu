@@ -56,6 +56,10 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   // Álbum: escolhido só entre as fotografias da seleção
   const [alb, setAlb] = useState<string[]>([])
   const [albEnviado, setAlbEnviado] = useState<string | null>(null)
+  // Personalizar o álbum: a página abre por baixo da galeria (iframe) e é lá que se envia
+  const [personalizar, setPersonalizar] = useState(false)
+  const [pzVez, setPzVez] = useState(0)
+  const pzRef = useRef<HTMLElement>(null)
   const [albGuardado, setAlbGuardado] = useState<'ok' | 'a-guardar' | 'erro'>('ok')
   const albTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const albRef = useRef<string[]>([])
@@ -251,7 +255,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
   // ── álbum: guarda a escolha inteira pouco depois de cada toque ──
   const guardarAlbum = useCallback((aSair = false) => {
-    fetch('/api/fotos-selecao-galeria', {
+    return fetch('/api/fotos-selecao-galeria', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ref: portalRef, acao: 'album', sel: albRef.current }),
       keepalive: aSair,
@@ -261,6 +265,26 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
       setAlbGuardado(albPendente.current ? 'a-guardar' : 'ok')
     }).catch(() => setAlbGuardado('erro'))
   }, [portalRef])
+  // a página de personalizar avisa quando os noivos enviam o álbum
+  useEffect(() => {
+    const ouvir = (e: MessageEvent) => {
+      if (e.origin !== location.origin || e.data?.tipo !== 'album-enviado') return
+      setAlbEnviado(e.data.enviada ?? new Date().toISOString())
+      setAlbGuardado('ok')
+    }
+    window.addEventListener('message', ouvir)
+    return () => window.removeEventListener('message', ouvir)
+  }, [])
+
+  async function abrirPersonalizar() {
+    // guarda já as fotos escolhidas, para a página de personalizar as ler
+    if (albTimer.current) { clearTimeout(albTimer.current); albTimer.current = null }
+    if (albPendente.current) { albPendente.current = false; await guardarAlbum() }
+    setPzVez(v => v + 1)
+    setPersonalizar(true)
+    setTimeout(() => pzRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120)
+  }
+
   // ao fechar a galeria: guarda já o que faltar
   useEffect(() => () => {
     if (albTimer.current) clearTimeout(albTimer.current)
@@ -461,7 +485,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
                     ? <>Recebemos as <strong>{totalAlb} fotografias</strong> para o álbum a {dataPt(albEnviado)}. Obrigado!</>
                     : total === 0
                       ? <>Primeiro escolham as fotografias da vossa <strong>seleção</strong>. Depois escolhem aqui, entre elas, as que querem no álbum.</>
-                      : <>Aqui aparecem só as <strong>{total} fotografias da vossa seleção</strong>. Toquem no ✓ das que querem no álbum e, no fim, carreguem em <strong>Enviar álbum</strong>.</>}
+                      : <>Aqui aparecem só as <strong>{total} fotografias da vossa seleção</strong>. Toquem no ✓ das que querem no álbum e, no fim, carreguem em <strong>Personalizar álbum</strong> para escolherem a capa e montarem as páginas. É no fim da personalização que enviam o álbum.</>}
                 </p>
               </div>
             )}
@@ -510,6 +534,22 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
             </div>}
           </>
         )}
+
+        {/* ── Personalizar o álbum: abre aqui por baixo; o envio faz-se no fim da personalização ── */}
+        {modoAlbum && personalizar && (
+          <section className="sg-pz" ref={pzRef}>
+            <div className="sg-pz-h">
+              <span className="eyebrow">{albEnviado ? 'O vosso álbum' : 'Personalizar o álbum'}</span>
+              <button type="button" className="sg-pz-x" onClick={() => setPersonalizar(false)} aria-label="Fechar">×</button>
+            </div>
+            <iframe
+              key={pzVez}
+              className="sg-pz-f"
+              title="Personalizar o álbum"
+              src={`/portal-cliente/personalizar-album/index.html?ref=${encodeURIComponent(portalRef)}&embed=1`}
+            />
+          </section>
+        )}
       </div>
 
       {/* ── barra de envio ── */}
@@ -527,8 +567,8 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
               </span>
             </div>
             {modoAlbum ? (
-              <button type="button" className="fp-btn available sg-enviar" disabled={!!albEnviado || totalAlb === 0} onClick={() => setConfirmar(true)}>
-                {albEnviado ? 'Álbum enviado' : 'Enviar álbum'}
+              <button type="button" className="fp-btn available sg-enviar" disabled={!albEnviado && totalAlb === 0} onClick={abrirPersonalizar}>
+                {albEnviado ? 'Ver o álbum' : personalizar ? 'Atualizar fotos' : 'Personalizar álbum'}
               </button>
             ) : conv ? (
               <button type="button" className="fp-btn available sg-enviar" disabled={total === 0} onClick={() => convidados!.onContinuar(todas.filter(f => selSet.has(f.n)).map(f => f.n))}>

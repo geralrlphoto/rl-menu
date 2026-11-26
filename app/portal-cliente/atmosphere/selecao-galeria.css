@@ -278,3 +278,10 @@
 /* "Álbum" no resumo por pasta: contorno branco, destaca-se das pastas */
 .sg-root .sg-resumo-item.sg-resumo-album { border-color: rgba(255,255,255,.45); box-shadow: 0 0 18px -8px rgba(255,255,255,.6); }
 .sg-root .sg-resumo-item.sg-resumo-album .t { color: #fff; }
+
+/* Personalizar o álbum: a página abre por baixo da galeria, com a sua própria rolagem */
+.sg-root .sg-pz { margin: 30px 0 110px; border-radius: 22px; border: 1px solid rgba(216,190,147,.35); background: #0b0a08; overflow: hidden;
+                  box-shadow: 0 0 40px -22px rgba(216,190,147,.6); scroll-margin-top: 70px; }
+.sg-root .sg-pz-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid rgba(216,190,147,.2); }
+.sg-root .sg-pz-x { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: var(--ink-2); cursor: pointer; font-size: 18px; line-height: 1; }
+.sg-root .sg-pz-f { display: block; width: 100%; height: calc(100vh - 170px); min-height: 560px; border: 0; background: #0b0a08; }

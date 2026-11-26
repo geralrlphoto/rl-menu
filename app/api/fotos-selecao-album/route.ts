@@ -115,7 +115,11 @@ export async function POST(req: Request) {
 
   if (body.acao === 'reabrir') {
     if (!admin) return NextResponse.json({ error: 'nao_autorizado' }, { status: 401 })
-    const err = await gravar({ ...atual, enviado: null })
+    // reabre a personalização e a escolha das fotos do álbum
+    const s0 = portal.settings ?? {}
+    const { error: err } = await db().from('portais')
+      .update({ settings: { ...s0, album_config: { ...atual, enviado: null }, ...(s0.album_galeria ? { album_galeria: { ...s0.album_galeria, enviada: null } } : {}) }, updated_at: agora })
+      .eq('id', portal.id)
     if (err) return NextResponse.json({ error: err.message }, { status: 500 })
     await registarFoto(portal.referencia, 'Álbum personalizado: reaberto para alterações', 'RL')
     return NextResponse.json({ ok: true, config: { ...atual, enviado: null } })
@@ -130,8 +134,25 @@ export async function POST(req: Request) {
 
   const enviar = body.acao === 'enviar'
   const novo: Config = { estado, atualizado: agora, enviado: enviar ? agora : atual.enviado, pasta: atual.pasta ?? null }
-  const err = await gravar(novo)
+  const s0 = portal.settings ?? {}
+  // ao enviar, fecha também a escolha das fotos do álbum (separador Álbum da galeria)
+  const selecao = nomesDe(s0.selecao_galeria?.sel), naSelecao = new Set(selecao)
+  const fotosAlbum = nomesDe(s0.album_galeria?.sel).filter(n => naSelecao.has(n))
+  const fecharFotos = enviar && fotosAlbum.length > 0 && !s0.album_galeria?.enviada
+  const { error: err } = await db().from('portais')
+    .update({ settings: { ...s0, album_config: novo, ...(fecharFotos ? { album_galeria: { ...s0.album_galeria, sel: fotosAlbum, atualizado: agora, enviada: agora } } : {}) }, updated_at: agora })
+    .eq('id', portal.id)
   if (err) return NextResponse.json({ error: err.message }, { status: 500 })
-  if (enviar) await registarFoto(portal.referencia, 'Álbum personalizado enviado pelos noivos', 'Noivos')
+  if (enviar) {
+    if (fecharFotos) {
+      // como o antigo "Enviar álbum" da galeria: as fotos passam para fotos_selecao.fotos_album
+      const ordem = selecao.filter(n => fotosAlbum.includes(n))
+      const { data: linha } = await db().from('fotos_selecao').select('id')
+        .eq('referencia', portal.referencia).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (linha) await db().from('fotos_selecao').update({ fotos_album: ordem.join(', ') }).eq('id', linha.id)
+      await registarFoto(portal.referencia, `Fotos do álbum recebidas (${fotosAlbum.length})`, 'Noivos')
+    }
+    await registarFoto(portal.referencia, 'Álbum personalizado enviado pelos noivos', 'Noivos')
+  }
   return NextResponse.json({ ok: true, config: admin ? novo : { ...novo, pasta: null } })
 }
