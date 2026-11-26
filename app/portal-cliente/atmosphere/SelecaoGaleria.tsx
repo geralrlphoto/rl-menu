@@ -131,6 +131,12 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
     () => todas.filter(f => (pasta === 'todas' || f.pasta === pasta) && (filtro === 'todas' || selSet.has(f.n))),
     [todas, pasta, filtro, selSet],
   )
+  // fotografias da seleção em cada pasta (o álbum escolhe-se entre estas)
+  const selPorPasta = useMemo(() => {
+    const m: Record<string, number> = {}
+    for (const f of todas) if (selSet.has(f.n)) m[f.pasta] = (m[f.pasta] ?? 0) + 1
+    return m
+  }, [todas, selSet])
   const porPasta = useMemo(() => {
     const m: Record<string, number> = {}
     const conta = modoAlbum ? albSet : selSet
@@ -460,15 +466,21 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
               <div className="sg-resumo">
                 <div className="sg-resumo-head">
                   <span className="eyebrow">{modoAlbum ? 'O vosso álbum por pasta' : 'A vossa seleção por pasta'}</span>
-                  <span className="sg-resumo-total">{modoAlbum ? totalAlb : total} {(modoAlbum ? totalAlb : total) === 1 ? 'fotografia' : 'fotografias'}</span>
+                  <span className="sg-resumo-total">
+                    {modoAlbum
+                      ? <>{total} {total === 1 ? 'selecionada' : 'selecionadas'} · {totalAlb} no álbum</>
+                      : <>{total} {total === 1 ? 'fotografia' : 'fotografias'}</>}
+                  </span>
                 </div>
                 <div className="sg-resumo-grid">
                   {nomesPastas.map(p => {
-                    const k = porPasta[p] ?? 0
+                    // no álbum: quantas da seleção há na pasta e quantas já estão no álbum
+                    const k = modoAlbum ? (selPorPasta[p] ?? 0) : (porPasta[p] ?? 0)
+                    const a = porPasta[p] ?? 0
                     return (
                       <button key={p} type="button" className={`sg-resumo-item${k ? '' : ' zero'}${pasta === p ? ' on' : ''}`} onClick={() => setPasta(pasta === p ? 'todas' : p)}>
                         <span className="t">{p}</span>
-                        <span className="n">{k}</span>
+                        <span className="n">{modoAlbum && a > 0 ? <>{a} ✓ / {k}</> : k}</span>
                       </button>
                     )
                   })}
@@ -476,12 +488,15 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
               </div>
             )}
 
-            <div className="sg-grelha">
+            {/* Álbum: as fotografias só aparecem depois de escolherem a pasta */}
+            {modoAlbum && variasPastas && pasta === 'todas' ? (
+              total > 0 && <div className="sg-vazio">Escolham uma pasta acima para ver as fotografias da vossa seleção.</div>
+            ) : <div className="sg-grelha">
               {celulas.length ? celulas : (
                 <div className="sg-vazio">{filtro !== 'todas' ? 'Ainda não escolheram nenhuma fotografia' + (pasta !== 'todas' ? ' nesta pasta.' : '.') : 'Esta pasta não tem fotografias.'}</div>
               )}
               {lista.length > mostrar && <div ref={maisRef} className="sg-mais">A carregar mais fotografias…</div>}
-            </div>
+            </div>}
           </>
         )}
       </div>
