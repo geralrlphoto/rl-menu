@@ -10,11 +10,12 @@ import { registarFoto } from '@/lib/fotografiaHistorico'
 //  POST { ref, acao: 'guardar', estado } → guarda a meio (portais.settings.album_config)
 //  POST { ref, acao: 'enviar', estado }  → fecha a escolha e avisa a RL (sino + histórico)
 //  POST { ref, acao: 'reabrir' }         → só admin: volta a deixar os noivos mexer
+//  POST { ref, acao: 'pasta', pasta }     → só admin: onde estão as fotos originais (para o comando "fazer álbum")
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
-type Config = { estado: Record<string, unknown> | null; atualizado: string | null; enviado: string | null }
+type Config = { estado: Record<string, unknown> | null; atualizado: string | null; enviado: string | null; pasta?: string | null }
 
 function db() {
   return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -32,7 +33,7 @@ async function lerPortal(ref: string) {
 
 function configDe(settings: Record<string, any> | null): Config {
   const c = settings?.album_config
-  return { estado: c?.estado && typeof c.estado === 'object' ? c.estado : null, atualizado: c?.atualizado ?? null, enviado: c?.enviado ?? null }
+  return { estado: c?.estado && typeof c.estado === 'object' ? c.estado : null, atualizado: c?.atualizado ?? null, enviado: c?.enviado ?? null, pasta: c?.pasta ?? null }
 }
 
 const nomesDe = (v: unknown): string[] => Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
@@ -79,7 +80,7 @@ export async function GET(req: Request) {
     nomes: [portal.noiva, portal.noivo].filter(Boolean).join(' & '),
     origem,
     fotos,
-    config: configDe(s),
+    config: ehAdmin(req) ? configDe(s) : { ...configDe(s), pasta: null },
     admin: ehAdmin(req),
   })
 }
@@ -104,6 +105,14 @@ export async function POST(req: Request) {
     return error
   }
 
+  if (body.acao === 'pasta') {
+    if (!admin) return NextResponse.json({ error: 'nao_autorizado' }, { status: 401 })
+    const pasta = typeof body.pasta === 'string' ? body.pasta.trim().slice(0, 500) : ''
+    const err = await gravar({ ...atual, pasta: pasta || null })
+    if (err) return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ ok: true, config: { ...atual, pasta: pasta || null } })
+  }
+
   if (body.acao === 'reabrir') {
     if (!admin) return NextResponse.json({ error: 'nao_autorizado' }, { status: 401 })
     const err = await gravar({ ...atual, enviado: null })
@@ -113,16 +122,16 @@ export async function POST(req: Request) {
   }
 
   if (body.acao !== 'guardar' && body.acao !== 'enviar') return NextResponse.json({ error: 'acao' }, { status: 400 })
-  if (atual.enviado && !admin) return NextResponse.json({ error: 'O álbum já foi enviado.', config: atual }, { status: 409 })
+  if (atual.enviado && !admin) return NextResponse.json({ error: 'O álbum já foi enviado.', config: { ...atual, pasta: null } }, { status: 409 })
 
   const estado = body.estado
   if (!estado || typeof estado !== 'object' || Array.isArray(estado)) return NextResponse.json({ error: 'estado' }, { status: 400 })
   if (JSON.stringify(estado).length > 300_000) return NextResponse.json({ error: 'Demasiado grande' }, { status: 413 })
 
   const enviar = body.acao === 'enviar'
-  const novo: Config = { estado, atualizado: agora, enviado: enviar ? agora : atual.enviado }
+  const novo: Config = { estado, atualizado: agora, enviado: enviar ? agora : atual.enviado, pasta: atual.pasta ?? null }
   const err = await gravar(novo)
   if (err) return NextResponse.json({ error: err.message }, { status: 500 })
   if (enviar) await registarFoto(portal.referencia, 'Álbum personalizado enviado pelos noivos', 'Noivos')
-  return NextResponse.json({ ok: true, config: novo })
+  return NextResponse.json({ ok: true, config: admin ? novo : { ...novo, pasta: null } })
 }
