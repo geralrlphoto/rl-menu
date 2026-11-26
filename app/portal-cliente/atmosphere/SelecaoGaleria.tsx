@@ -19,6 +19,8 @@ export type EstadoSelecao = { sel: string[]; atualizado?: string | null; enviada
 type FotoL = Foto & { pasta: string }
 
 const PASSO = 120
+/** Pasta "virtual" do resumo do álbum: mostra só as fotografias já escolhidas para o álbum */
+const SO_ALBUM = '__album'
 /** Escolha do portal + alterações deste aparelho ainda por confirmar */
 function juntar(base: string[], d: Record<string, 'add' | 'rem'>): string[] {
   const out = base.filter(n => d[n] !== 'rem')
@@ -128,8 +130,10 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
   const todas: FotoL[] = useMemo(() => (pastas ?? []).flatMap(p => p.fotos.map(f => ({ ...f, pasta: p.nome }))), [pastas])
   const lista: FotoL[] = useMemo(
-    () => todas.filter(f => (pasta === 'todas' || f.pasta === pasta) && (filtro === 'todas' || selSet.has(f.n))),
-    [todas, pasta, filtro, selSet],
+    () => todas.filter(f => pasta === SO_ALBUM
+      ? albSet.has(f.n)   // "Álbum" no resumo: só as que já escolheram para o álbum
+      : (pasta === 'todas' || f.pasta === pasta) && (filtro === 'todas' || selSet.has(f.n))),
+    [todas, pasta, filtro, selSet, albSet],
   )
   // fotografias da seleção em cada pasta (o álbum escolhe-se entre estas)
   const selPorPasta = useMemo(() => {
@@ -362,7 +366,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   const celulas: ReactNode[] = []
   let ultima: string | null = null
   lista.slice(0, mostrar).forEach((f, i) => {
-    if (pasta === 'todas' && variasPastas && f.pasta !== ultima) {
+    if ((pasta === 'todas' || pasta === SO_ALBUM) && variasPastas && f.pasta !== ultima) {
       ultima = f.pasta
       const k = porPasta[f.pasta] ?? 0
       celulas.push(
@@ -444,8 +448,8 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
             </nav>}
 
             <div className="sg-tabs">
-              <button type="button" className={filtro === 'todas' ? 'on' : ''} onClick={() => setFiltro('todas')}>Todas</button>
-              <button type="button" className={filtro === 'sel' ? 'on' : ''} onClick={() => setFiltro('sel')}>A minha seleção · {filtro === 'sel' && pasta !== 'todas' ? (porPasta[pasta] ?? 0) : total}</button>
+              <button type="button" className={filtro === 'todas' ? 'on' : ''} onClick={() => { setFiltro('todas'); if (pasta === SO_ALBUM) setPasta('todas') }}>Todas</button>
+              <button type="button" className={filtro === 'sel' ? 'on' : ''} onClick={() => { setFiltro('sel'); if (pasta === SO_ALBUM) setPasta('todas') }}>A minha seleção · {filtro === 'sel' && pasta !== 'todas' ? (porPasta[pasta] ?? 0) : total}</button>
               {!conv && <button type="button" className={`sg-tab-album${modoAlbum ? ' on' : ''}`} onClick={() => setFiltro('album')}>Álbum · {totalAlb}</button>}
             </div>
 
@@ -484,16 +488,23 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
                       </button>
                     )
                   })}
+                  {/* Separador Álbum: ver só o que já escolheram para o álbum */}
+                  {modoAlbum && (
+                    <button type="button" className={`sg-resumo-item sg-resumo-album${totalAlb ? '' : ' zero'}${pasta === SO_ALBUM ? ' on' : ''}`} onClick={() => setPasta(pasta === SO_ALBUM ? 'todas' : SO_ALBUM)}>
+                      <span className="t">Álbum</span>
+                      <span className="n">{totalAlb}</span>
+                    </button>
+                  )}
                 </div>
               </div>
             )}
 
             {/* Álbum: as fotografias só aparecem depois de escolherem a pasta */}
             {modoAlbum && variasPastas && pasta === 'todas' ? (
-              total > 0 && <div className="sg-vazio">Escolham uma pasta acima para ver as fotografias da vossa seleção.</div>
+              total > 0 && <div className="sg-vazio">Escolham uma pasta acima para ver as fotografias da vossa seleção, ou Álbum para ver as que já escolheram.</div>
             ) : <div className="sg-grelha">
               {celulas.length ? celulas : (
-                <div className="sg-vazio">{filtro !== 'todas' ? 'Ainda não escolheram nenhuma fotografia' + (pasta !== 'todas' ? ' nesta pasta.' : '.') : 'Esta pasta não tem fotografias.'}</div>
+                <div className="sg-vazio">{filtro !== 'todas' ? (pasta === SO_ALBUM ? 'Ainda não escolheram nenhuma fotografia para o álbum.' : 'Ainda não escolheram nenhuma fotografia' + (pasta !== 'todas' ? ' nesta pasta.' : '.')) : 'Esta pasta não tem fotografias.'}</div>
               )}
               {lista.length > mostrar && <div ref={maisRef} className="sg-mais">A carregar mais fotografias…</div>}
             </div>}

@@ -274,3 +274,7 @@
   font-family: var(--fm); font-size: 10.5px; letter-spacing: .16em; text-transform: uppercase;
   color: #0b0b0b; background: var(--gold);
 }
+
+/* "Álbum" no resumo por pasta: contorno branco, destaca-se das pastas */
+.sg-root .sg-resumo-item.sg-resumo-album { border-color: rgba(255,255,255,.45); box-shadow: 0 0 18px -8px rgba(255,255,255,.6); }
+.sg-root .sg-resumo-item.sg-resumo-album .t { color: #fff; }
