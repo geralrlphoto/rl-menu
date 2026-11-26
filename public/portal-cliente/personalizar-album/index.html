@@ -458,6 +458,10 @@
   .producao table { border-collapse: collapse; width: 100%; }
   .producao td { padding: 5px 8px; border-top: 1px solid #edf2ef; vertical-align: top; }
   .producao td:first-child { width: 190px; color: #777; }
+  .pg-thumb .pg-extra { display: inline-block; margin-left: 4px; padding: 0 5px; border-radius: 3px; background: var(--verde); color: #fff; font-size: 9px; font-weight: 600; vertical-align: 1px; }
+  .pg-add small { display: block; font-size: 10px; font-weight: 500; opacity: .8; }
+  .pg-extras { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 9px 12px; border-radius: 8px; font-size: 12px; background: var(--verde-bg); border: 1px solid var(--rosa-b); }
+  .pg-extras b { white-space: nowrap; }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: #2f5a45; color: #fff; padding: 11px 18px; border-radius: 8px; font-size: 12.5px; opacity: 0; transition: .25s; z-index: 200; pointer-events: none; }
   .toast.on { opacity: 1; transform: translateX(-50%); }
   @media (max-width: 1200px) { .layout { grid-template-columns: 1fr; } .floating-price-panel { position: static; min-height: 0; max-height: none; } .cover-detail { grid-template-columns: 1fr; } .panel-body { padding: 28px 18px; } }
@@ -573,6 +577,8 @@
   .producao { background: var(--rl-2); border-color: var(--rl-linha); color: var(--rl-ink); }
   .producao h4 { color: var(--rl-ouro); } .producao td { border-top-color: var(--rl-linha); } .producao td:first-child { color: var(--rl-ink3); }
   .toast { background: var(--rl-3); border: 1px solid var(--rl-ouro); color: var(--rl-ink); }
+  .pg-thumb .pg-extra { color: #14110c; }
+  .pg-extras { border-color: var(--rl-linha); color: var(--rl-ink); } .pg-extras b { color: var(--rl-ouro); }
 </style>
 </head>
 <body>
@@ -1085,7 +1091,7 @@ function resumoProducao() {
     return linha(`Folha ${i + 1} · páginas ${i * 2 + 1}–${i * 2 + 2}`, `${m ? m.n : 'sem modelo'}${fotos ? ` · ${fotos}` : ''}`)
   }).join('')
   return `<div class="producao"><h4>Resumo para a produção (só a RL vê)</h4><table>
-    ${linha('Capa', 'Åland')}${linha('Revestimento', rev)}${linha('Fita de cetim', fita)}${linha('Personalização', pers)}${folhas}</table></div>`
+    ${linha('Capa', 'Åland')}${linha('Revestimento', rev)}${linha('Fita de cetim', fita)}${linha('Personalização', pers)}${linha('Folhas', `${(st.paginas || []).length}${extras() ? ` (${extras()} extra · +${extras() * PRECO_EXTRA} €)` : ''}`)}${folhas}</table></div>`
 }
 async function iniciar() {
   if (!REF) { $('#carregarTxt').textContent = 'Falta a referência do casamento no endereço.'; $('#carregar').classList.add('erro'); return }
@@ -1120,7 +1126,8 @@ $('#enviar').onclick = async () => {
   const f = faltas(), vz = (st.paginas || []).filter(p => !p.modelo).length
   if (f.length) return toast(`Falta escolher: ${f[0][0]}`)
   if (vz) return toast('Há folhas sem modelo')
-  if (!confirm('Enviar o álbum? Depois de enviado fica fechado e passamos à produção.')) return
+  const ex = extras(), custo = ex ? `\n\nInclui ${ex} ${ex === 1 ? 'folha extra' : 'folhas extra'}: +${ex * PRECO_EXTRA} €.` : ''
+  if (!confirm('Enviar o álbum? Depois de enviado fica fechado e passamos à produção.' + custo)) return
   const r = await fetch('/api/fotos-selecao-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: REF, acao: 'enviar', estado: st }) })
   const d = await r.json().catch(() => ({}))
   if (!r.ok) return toast(d.error || 'Não foi possível enviar. Tentem de novo.')

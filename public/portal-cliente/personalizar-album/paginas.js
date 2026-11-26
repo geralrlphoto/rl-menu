@@ -8,7 +8,9 @@
 // Protótipo: as fotos de exemplo. No portal serão as do separador Álbum (Wfolio).
 // Fotografias que os noivos escolheram para o álbum (vêm do portal, galeria do Wfolio)
 const FOTOS_ALBUM = (window.FOTOS_PORTAL || []).map(f => ({ id: f.id, src: f.src, t: f.t || f.src, w: f.w, h: f.h }))
-const MAX_PAG = 12
+// 12 folhas incluídas; a partir daí cada folha extra custa PRECO_EXTRA € (máximo do DreamBooks: 44)
+const INCLUIDAS = 12, MAX_PAG = 44, PRECO_EXTRA = 15
+const extras = () => Math.max(0, st.paginas.length - INCLUIDAS)
 
 // Modelos de folha dupla (as duas páginas abertas, 60 × 25 cm, dobra ao meio).
 // Tudo é calculado em centímetros para ficar exatamente simétrico: a mesma margem em
@@ -128,10 +130,10 @@ function renderPaginas() {
 
   $('#paginas').innerHTML = `
   <section class="sec pg">
-    <div class="sec-h"><h3>Páginas do Álbum</h3><span class="tag">até ${MAX_PAG} folhas duplas · 60 × 25 cm</span><span class="sp"></span><span class="tag">${total} / ${MAX_PAG} folhas</span></div>
+    <div class="sec-h"><h3>Páginas do Álbum</h3><span class="tag">${INCLUIDAS} folhas duplas incluídas · 60 × 25 cm</span><span class="sp"></span><span class="tag">${total} ${total === 1 ? 'folha' : 'folhas'}${extras() ? ` · ${extras()} extra` : ''}</span></div>
     <div class="sec-b">
       <div class="pg-auto">
-        <div><b>Montagem automática</b><span>Distribuímos as vossas ${FOTOS_ALBUM.length} fotografias pelas ${Math.min(MAX_PAG, FOTOS_ALBUM.length)} folhas, com modelos escolhidos pelo número de fotos. Depois podem mudar tudo.</span></div>
+        <div><b>Montagem automática</b><span>Distribuímos as vossas ${FOTOS_ALBUM.length} fotografias pelas ${Math.min(INCLUIDAS, FOTOS_ALBUM.length)} folhas incluídas, com modelos escolhidos pelo número de fotos. Depois podem mudar tudo.</span></div>
         <button class="btn cheio" data-pgauto="1"><span class="ms" style="font-size:17px">auto_awesome</span>Montar automaticamente</button>
         <button class="btn" data-pgver="1"><span class="ms" style="font-size:17px">menu_book</span>Ver o álbum</button>
       </div>
@@ -183,9 +185,10 @@ function renderPaginas() {
       <div class="pg-barra">
         ${st.paginas.map((q, i) => `
           <button class="pg-thumb${i === st.pagAtual ? ' on' : ''}${!q.modelo || vazios(q) ? ' falta' : ''}" data-pgir="${i}">
-            <span class="pg-thumb-f">${folhaHTML(q, true)}<span class="pg-dobra"></span></span><span class="pg-thumb-n">${i + 1}</span></button>`).join('')}
-        <button class="pg-add" data-pgadd="1" ${total >= MAX_PAG ? 'disabled' : ''}><span class="ms">add</span>${total >= MAX_PAG ? 'Máximo de 12' : 'Adicionar folha'}</button>
+            <span class="pg-thumb-f">${folhaHTML(q, true)}<span class="pg-dobra"></span></span><span class="pg-thumb-n">${i + 1}${i >= INCLUIDAS ? '<span class="pg-extra">extra</span>' : ''}</span></button>`).join('')}
+        <button class="pg-add" data-pgadd="1" ${total >= MAX_PAG ? 'disabled' : ''}><span class="ms">add</span>${total >= MAX_PAG ? `Máximo de ${MAX_PAG}` : total >= INCLUIDAS ? `Folha extra<small>+${PRECO_EXTRA} €</small>` : 'Adicionar folha'}</button>
       </div>
+      ${extras() ? `<div class="pg-extras"><span class="ms" style="font-size:17px">add_circle</span><span>${extras()} ${extras() === 1 ? 'folha extra' : 'folhas extra'} além das ${INCLUIDAS} incluídas · ${PRECO_EXTRA} € cada</span><span class="sp" style="flex:1"></span><b>+${extras() * PRECO_EXTRA} €</b></div>` : ''}
       <div class="pg-estado ${vz || semModelo ? '' : 'ok'}">
         <span class="ms">${vz || semModelo ? 'error' : 'check_circle'}</span>
         ${vz || semModelo
@@ -204,7 +207,7 @@ function renderPaginas() {
    3) dentro de cada folha, as fotos ao alto vão para os espaços mais altos. */
 function contagens(n) {
   const max = Math.max(...MODELOS_PAG.map(m => m.s.length))
-  const folhas = Math.min(MAX_PAG, n)
+  const folhas = Math.min(INCLUIDAS, n)   // a montagem automática usa só as incluídas
   if (folhas <= 2) return folhas === 1 ? [n] : [Math.ceil(n / 2), Math.floor(n / 2)]
   // abertura e fecho com uma foto quando há fotos que cheguem
   const pontas = n >= folhas * 2 ? [1, 1] : []
@@ -227,7 +230,7 @@ function contagens(n) {
   return out
 }
 function montarAuto() {
-  const fotos = FOTOS_ALBUM.slice(0, MAX_PAG * Math.max(...MODELOS_PAG.map(m => m.s.length)))
+  const fotos = FOTOS_ALBUM.slice(0, INCLUIDAS * Math.max(...MODELOS_PAG.map(m => m.s.length)))
   const cont = contagens(fotos.length)
   // abertura e fecho levam uma foto nas duas páginas: escolhe a mais deitada entre as
   // primeiras (e entre as últimas) e põe-na na ponta, sem baralhar o resto
@@ -306,7 +309,8 @@ raiz.addEventListener('click', e => {
   }
   if (d.pgir) { st.pagAtual = Number(d.pgir); pgSel = null; return pgGuardar() }
   if (d.pgadd) {
-    if (st.paginas.length >= MAX_PAG) return toast('O álbum tem no máximo 12 folhas duplas')
+    if (st.paginas.length >= MAX_PAG) return toast(`O álbum tem no máximo ${MAX_PAG} folhas duplas`)
+    if (st.paginas.length >= INCLUIDAS && !confirm(`Já têm as ${INCLUIDAS} folhas incluídas. Cada folha extra custa ${PRECO_EXTRA} €. Acrescentar uma folha extra?`)) return
     st.paginas.push({ modelo: null, slots: [] }); st.pagAtual = st.paginas.length - 1; pgSel = null; return pgGuardar()
   }
   if (d.pgnav) { st.pagAtual = Math.max(0, Math.min(st.paginas.length - 1, st.pagAtual + Number(d.pgnav))); pgSel = null; return pgGuardar() }
