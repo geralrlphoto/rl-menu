@@ -145,6 +145,9 @@
   .st-t { display: flex; align-items: center; justify-content: space-between; font-size: 10.5px; font-weight: 600; letter-spacing: .6px; color: #666; text-transform: uppercase; margin-bottom: 12px; }
   .st-t b { color: var(--rosa-txt); margin-left: 3px; }
   .st-x { border: 0; background: none; cursor: pointer; color: #999; font-size: 16px; padding: 0; line-height: 1; }
+  .st-info { display: flex; gap: 10px; align-items: flex-start; margin: 0 0 14px; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(216,190,147,.45); background: rgba(216,190,147,.08); font-size: 13px; line-height: 1.5; color: var(--rl-ink2, #555); }
+  .st-info .ms { font-size: 19px; color: var(--rl-ouro, #3d6e55); }
+  .st-info b { color: var(--rl-ouro, #3d6e55); font-weight: 600; }
   .st-ops { display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
   .st-op { position: relative; width: 58px; padding: 3px 3px 4px; border-radius: 7px; border: 2px solid transparent; background: none; cursor: pointer; text-align: center; font-size: 10.5px; color: #444; line-height: 1.2; }
   .st-op.on { border-color: var(--verde); background: #eef7f1; }
@@ -776,7 +779,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27v'
+const VERSAO = '2026-11-27w'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
@@ -857,7 +860,10 @@ function stTexto(k, ph, desl) {
 }
 function stampPainel() {
   const sp = st.stamp, sem2 = sp.linha2 !== 'Com 2ª Linha'
+  const temSeco = coresStamp().some(r => r[0] === 'incolor')
   return `<div class="st-painel"><h5>Stamping da Capa</h5>
+    <p class="st-info"><span class="ms">info</span><span>O stamping é uma forma de personalizar a capa do álbum. O texto fica <b>prensado</b> no revestimento, gravado por pressão.
+      ${temSeco ? 'Pode ser <b>Incolor</b>, só com o relevo da prensa, ou ter <b>cor</b> (Prateado, Dourado, Rose Gold ou Rose Metalic), mas fica sempre prensado.' : 'Escolham a <b>cor</b> (Prateado, Dourado, Rose Gold ou Rose Metalic). O texto fica sempre prensado.'}</span></p>
     <div class="st-grid">
       ${stCard('loc', 'Localização', sp.loc, `<div class="st-locs">${LOCAIS.map(([id, n, , m]) => `
         <button class="st-loc${sp.loc === id ? ' on' : ''}" data-st="loc" data-v="${id}"><span class="i" style="position:absolute;top:4px;right:6px;width:12px;height:12px;border-radius:50%;background:#9a9a9a;color:#fff;font-size:8px;display:grid;place-items:center">i</span>
