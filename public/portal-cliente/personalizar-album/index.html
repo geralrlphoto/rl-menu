@@ -584,6 +584,7 @@
   .producao h4 { color: var(--rl-ouro); } .producao td { border-top-color: var(--rl-linha); } .producao td:first-child { color: var(--rl-ink3); }
   .toast { background: var(--rl-3); border: 1px solid var(--rl-ouro); color: var(--rl-ink); }
   body.embed .nav { display: none; }
+  body.embed #enviar { display: none; }   /* dentro da galeria, envia-se pelo botão Enviar do separador Álbum */
   body.embed .layout { padding-top: 16px; }
   body.embed .floating-price-panel { top: 16px; }
   .pg-thumb .pg-extra { color: #14110c; }
@@ -1113,6 +1114,13 @@ async function iniciar() {
   // o resumo para a produção, a pasta das fotos e o pedido ao Claude estão na página de Álbuns
   // do Departamento de Fotografia (/edicao-fotografia/albuns), não no portal dos noivos
   $('#carregar').remove()
+}
+// a galeria chama isto antes de enviar: grava já o que está por gravar
+window.guardarJa = async () => {
+  clearTimeout(tGuardar)
+  if (CFG.enviado && !ADMIN) return
+  await fetch('/api/fotos-selecao-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: REF, acao: 'guardar', estado: st }) })
+  $('#estadoGuardar').textContent = 'Guardado'
 }
 $('#enviar').onclick = async () => {
   const f = faltas(), vz = (st.paginas || []).filter(p => !p.modelo).length

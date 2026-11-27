@@ -285,3 +285,5 @@
 .sg-root .sg-pz-h { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid rgba(216,190,147,.2); }
 .sg-root .sg-pz-x { width: 32px; height: 32px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18); background: none; color: var(--ink-2); cursor: pointer; font-size: 18px; line-height: 1; }
 .sg-root .sg-pz-f { display: block; width: 100%; height: calc(100vh - 170px); min-height: 560px; border: 0; background: #0b0a08; }
+
+.sg-root .sg-botoes { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }

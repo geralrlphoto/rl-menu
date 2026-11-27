@@ -263,8 +263,13 @@ function pgGuardar() { guardar(true); renderPaginas() }
 
 function colocar(fotoId, i) {
   const p = pgAtual()
-  // cada foto só entra uma vez no álbum: se já estava noutro espaço, sai de lá
-  st.paginas.forEach(q => q.slots.forEach(s => { if (s.foto === fotoId) { s.foto = null } }))
+  // a mesma foto não deve repetir: se já está noutro espaço, avisa e só a repete se confirmarem
+  const usada = st.paginas.some((q, qi) => q.slots.some((x, xi) => x.foto === fotoId && !(qi === st.pagAtual && xi === i)))
+  if (usada && !confirm(`Não é possível repetir a mesma fotografia no álbum: esta já está na folha ${usos()[fotoId]}.
+
+Têm a certeza que a querem usar outra vez?`)) {
+    pgEscolhida = null; return renderPaginas()
+  }
   p.slots[i] = { foto: fotoId, x: 50, y: 50, z: 1 }
   pgEscolhida = null; pgSel = i
   pgGuardar()

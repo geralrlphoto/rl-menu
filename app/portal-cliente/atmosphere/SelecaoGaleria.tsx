@@ -60,6 +60,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   const [personalizar, setPersonalizar] = useState(false)
   const [pzVez, setPzVez] = useState(0)
   const pzRef = useRef<HTMLElement>(null)
+  const pzFrame = useRef<HTMLIFrameElement>(null)
   const [albGuardado, setAlbGuardado] = useState<'ok' | 'a-guardar' | 'erro'>('ok')
   const albTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const albRef = useRef<string[]>([])
@@ -358,7 +359,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
   const toque = useRef<number | null>(null)
 
-  async function enviar() {
+  async function enviar(): Promise<boolean> {
     setAEnviar(true)
     if (timer.current) clearTimeout(timer.current)
     try {
@@ -371,13 +372,54 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
         }),
       })
       const d = await r.json().catch(() => ({}))
-      if (!r.ok) { toast(d?.error || 'Não foi possível enviar. Tentem de novo.'); if (d?.estado?.enviada) mostrarServidor(d.estado); return }
+      if (!r.ok) { toast(d?.error || 'Não foi possível enviar. Tentem de novo.'); if (d?.estado?.enviada) mostrarServidor(d.estado); return false }
       delta.current = {}
       guardarLocal()
       mostrarServidor(d.estado)
       onEstado?.(d.estado)
       setConfirmar(false)
       rootRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+      return true
+    } finally { setAEnviar(false) }
+  }
+
+  // ── Enviar (separador Álbum): a seleção, as fotos do álbum e o álbum personalizado, de uma vez ──
+  async function enviarTudo() {
+    // guarda já o que estiver por guardar (fotos do álbum e a personalização aberta)
+    if (albTimer.current) { clearTimeout(albTimer.current); albTimer.current = null }
+    if (albPendente.current) { albPendente.current = false; await guardarAlbum() }
+    const fr = pzFrame.current?.contentWindow as (Window & { guardarJa?: () => Promise<unknown> }) | null | undefined
+    if (fr?.guardarJa) await fr.guardarJa().catch(() => null)
+    const v = await fetch(`/api/fotos-selecao-album?ref=${encodeURIComponent(portalRef)}&validar=1`).then(r => r.json()).catch(() => null)
+    if (!v?.ok) { toast('Não foi possível verificar o álbum. Tentem de novo.'); return }
+    if (!v.fotosAlbum) { toast('Escolham primeiro as fotografias para o álbum'); return }
+    let semPersonalizar = false
+    if (!v.iniciado) {
+      if (!window.confirm('Ainda não personalizaram o álbum (capa e páginas).\n\nQuerem enviar sem personalizar o álbum?')) return
+      semPersonalizar = true
+    } else if (v.faltas.length || v.porColocar.length) {
+      const n = v.porColocar.length
+      const linhas = [
+        ...v.faltas.map((f: string) => `• Falta ${f}`),
+        ...(n ? [`• ${n} ${n === 1 ? 'fotografia escolhida para o álbum ainda não está' : 'fotografias escolhidas para o álbum ainda não estão'} nas folhas: ${v.porColocar.slice(0, 8).join(', ')}${n > 8 ? '…' : ''}`] : []),
+      ]
+      if (!window.confirm(`A personalização do álbum não está completa:\n\n${linhas.join('\n')}\n\nQuerem enviar sem personalizar o álbum?\n(Cancelar para voltarem e completarem.)`)) return
+      semPersonalizar = true
+    } else if (!window.confirm(`Enviar ${enviada ? '' : 'a seleção, '}as fotografias do álbum e o álbum personalizado?\n\nDepois de enviado fica fechado e passamos à produção.`)) return
+    // a seleção, se ainda não foi
+    if (!enviada && !(await enviar())) return
+    setAEnviar(true)
+    try {
+      const r = await fetch('/api/fotos-selecao-album', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ref: portalRef, acao: 'enviar-tudo', semPersonalizar }),
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { toast(d?.error === 'incompleto' ? 'O álbum ainda não está completo.' : d?.error || 'Não foi possível enviar. Tentem de novo.'); return }
+      setAlbEnviado(d.enviada)
+      setAlbGuardado('ok')
+      setPzVez(x => x + 1)   // a personalização passa a mostrar "enviado"
+      toast(semPersonalizar ? 'Enviado. Obrigado!' : 'Seleção e álbum enviados. Obrigado!')
     } finally { setAEnviar(false) }
   }
 
@@ -543,6 +585,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
               <button type="button" className="sg-pz-x" onClick={() => setPersonalizar(false)} aria-label="Fechar">×</button>
             </div>
             <iframe
+              ref={pzFrame}
               key={pzVez}
               className="sg-pz-f"
               title="Personalizar o álbum"
@@ -567,9 +610,16 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
               </span>
             </div>
             {modoAlbum ? (
-              <button type="button" className="fp-btn available sg-enviar" disabled={!albEnviado && totalAlb === 0} onClick={abrirPersonalizar}>
-                {albEnviado ? 'Ver o álbum' : personalizar ? 'Atualizar fotos' : 'Personalizar álbum'}
-              </button>
+              <div className="sg-botoes">
+                <button type="button" className={`fp-btn ${albEnviado ? 'available' : 'ghost'} sg-enviar`} disabled={!albEnviado && totalAlb === 0} onClick={abrirPersonalizar}>
+                  {albEnviado ? 'Ver o álbum' : personalizar ? 'Atualizar fotos' : 'Personalizar álbum'}
+                </button>
+                {!albEnviado && (
+                  <button type="button" className="fp-btn available sg-enviar" disabled={totalAlb === 0 || aEnviar} onClick={enviarTudo}>
+                    {aEnviar ? 'A enviar…' : 'Enviar'}
+                  </button>
+                )}
+              </div>
             ) : conv ? (
               <button type="button" className="fp-btn available sg-enviar" disabled={total === 0} onClick={() => convidados!.onContinuar(todas.filter(f => selSet.has(f.n)).map(f => f.n))}>
                 Continuar →

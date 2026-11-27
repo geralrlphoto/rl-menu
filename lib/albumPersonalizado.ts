@@ -66,3 +66,47 @@ export function resumoAlbum(cfg: any): ResumoAlbum | null {
     extras: Math.max(0, folhas.length - FOLHAS_INCLUIDAS),
   }
 }
+
+// Quantos espaços tem cada modelo de folha (igual a paginas.js)
+const ESPACOS: Record<string, number> = {
+  'esq-preparativos': 5, 'esq-cerimonia': 5, 'esq-saida': 5, 'esq-tres-dobra': 3, 'esq-dois-tres': 5,
+  'pag-inteira-esq': 1, 'pag-inteira-dir': 1, 'pag-inteiras': 2, panoramica: 1, 'pan-margem': 1, 'uma-pagina': 2,
+  'inteira-margem': 2, centro: 2, 'grande-duas': 3, 'quatro-alto': 4, 'tres-grande': 4, 'grelha-grande': 5, seis: 6, oito: 8,
+}
+
+/** O que falta para o álbum personalizado estar completo, e as fotos do álbum que não foram colocadas. */
+export function validarAlbum(estado: any, fotosAlbum: string[]): { iniciado: boolean; faltas: string[]; porColocar: string[] } {
+  const st = estado && typeof estado === 'object' ? estado : null
+  const paginas: any[] = Array.isArray(st?.paginas) ? st.paginas : []
+  const iniciado = !!st && (!!st.rev || paginas.some(p => p?.modelo))
+  if (!iniciado) return { iniciado: false, faltas: [], porColocar: fotosAlbum }
+  const faltas: string[] = []
+  if (!st.rev) faltas.push('o revestimento da capa')
+  const pers: string[] = Array.isArray(st.pers) ? st.pers : []
+  if (pers.includes('uv')) {
+    const u = st.uv ?? {}
+    if (!u.design) faltas.push('o design da impressão UV')
+    if (!txt(u.n1) || !txt(u.n2)) faltas.push('os nomes da impressão UV')
+    if (!txt(u.data)) faltas.push('a data da impressão UV')
+  }
+  if (pers.includes('stamping')) {
+    const s = st.stamp ?? {}
+    if (!s.letra || !s.car || !s.loc || !s.cor || !txt(s.txt1) || !s.linha2) faltas.push('campos do stamping')
+    else if (s.linha2 === 'Com 2ª Linha' && (!s.car2 || !txt(s.txt2))) faltas.push('a 2ª linha do stamping')
+  }
+  const semModelo = paginas.filter(p => !p?.modelo).length
+  if (semModelo) faltas.push(`${semModelo} ${semModelo === 1 ? 'folha sem modelo' : 'folhas sem modelo'}`)
+  let vazios = 0
+  const colocadas = new Set<string>()
+  for (const p of paginas) {
+    const n = ESPACOS[p?.modelo] ?? 0
+    const ocultos: number[] = Array.isArray(p?.ocultos) ? p.ocultos : []
+    for (let i = 0; i < n; i++) {
+      if (ocultos.includes(i)) continue
+      const f = txt(p?.slots?.[i]?.foto)
+      if (f) colocadas.add(f); else vazios++
+    }
+  }
+  if (vazios) faltas.push(`${vazios} ${vazios === 1 ? 'espaço vazio' : 'espaços vazios'} nas folhas`)
+  return { iniciado: true, faltas, porColocar: fotosAlbum.filter(f => !colocadas.has(f)) }
+}

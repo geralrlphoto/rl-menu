@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { exigeAcessoRef, ehAdmin } from '@/lib/api-guard'
 import { ehGaleriaWfolio, lerGaleriaWfolio, WFOLIO_CDN } from '@/lib/wfolioGaleria'
 import { registarFoto } from '@/lib/fotografiaHistorico'
+import { validarAlbum } from '@/lib/albumPersonalizado'
 
 // Personalizar o álbum (página /portal-cliente/personalizar-album/?ref=X).
 //  GET  ?ref=X → fotografias que os noivos escolheram para o álbum (separador Álbum da
@@ -11,6 +12,9 @@ import { registarFoto } from '@/lib/fotografiaHistorico'
 //  POST { ref, acao: 'enviar', estado }  → fecha a escolha e avisa a RL (sino + histórico)
 //  POST { ref, acao: 'reabrir' }         → só admin: volta a deixar os noivos mexer
 //  POST { ref, acao: 'pasta', pasta }     → só admin: onde estão as fotos originais (para o comando "fazer álbum")
+//  GET  ?ref=X&validar=1                  → o que falta no álbum personalizado e as fotos do álbum por colocar
+//  POST { ref, acao: 'enviar-tudo', semPersonalizar? } → o botão Enviar do separador Álbum: fecha as fotos
+//       do álbum e, se não for semPersonalizar, também o álbum personalizado (tem de estar completo)
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 30
@@ -58,6 +62,11 @@ export async function GET(req: Request) {
   const origem = album.length ? 'album' : selecao.length ? 'selecao' : 'nenhuma'
 
   let fotos: { id: string; src: string; t: string; w: number; h: number }[] = []
+  if (new URL(req.url).searchParams.get('validar')) {
+    const v = validarAlbum(configDe(s).estado, album)
+    return NextResponse.json({ ok: true, fotosAlbum: album.length, selecaoEnviada: !!s.selecao_galeria?.enviada, albumEnviado: !!configDe(s).enviado, ...v })
+  }
+
   const url = s.selecao_url as string | undefined
   if (nomes.length && ehGaleriaWfolio(url)) {
     try {
@@ -124,6 +133,35 @@ export async function POST(req: Request) {
     if (err) return NextResponse.json({ error: err.message }, { status: 500 })
     await registarFoto(portal.referencia, 'Álbum personalizado: reaberto para alterações', 'RL')
     return NextResponse.json({ ok: true, config: { ...atual, enviado: null } })
+  }
+
+  if (body.acao === 'enviar-tudo') {
+    const s0 = portal.settings ?? {}
+    if (s0.album_galeria?.enviada && atual.enviado) return NextResponse.json({ error: 'O álbum já foi enviado.' }, { status: 409 })
+    const selecao = nomesDe(s0.selecao_galeria?.sel), naSelecao = new Set(selecao)
+    const fotosAlbum = nomesDe(s0.album_galeria?.sel).filter(n => naSelecao.has(n))
+    if (!fotosAlbum.length) return NextResponse.json({ error: 'Escolham primeiro as fotografias para o álbum.' }, { status: 400 })
+    const semPersonalizar = !!body.semPersonalizar
+    let config = atual
+    if (!semPersonalizar) {
+      const v = validarAlbum(atual.estado, fotosAlbum)
+      if (!v.iniciado || v.faltas.length || v.porColocar.length) return NextResponse.json({ error: 'incompleto', ...v }, { status: 422 })
+      config = { ...atual, enviado: agora, atualizado: agora }
+    }
+    const { error: err } = await db().from('portais')
+      .update({ settings: { ...s0, album_config: config, album_galeria: { ...s0.album_galeria, sel: fotosAlbum, atualizado: agora, enviada: s0.album_galeria?.enviada ?? agora } }, updated_at: agora })
+      .eq('id', portal.id)
+    if (err) return NextResponse.json({ error: err.message }, { status: 500 })
+    if (!s0.album_galeria?.enviada) {
+      // as fotos do álbum passam para fotos_selecao.fotos_album (é daí que o departamento as lê)
+      const ordem = selecao.filter(n => fotosAlbum.includes(n))
+      const { data: linha } = await db().from('fotos_selecao').select('id')
+        .eq('referencia', portal.referencia).order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (linha) await db().from('fotos_selecao').update({ fotos_album: ordem.join(', ') }).eq('id', linha.id)
+      await registarFoto(portal.referencia, `Fotos do álbum recebidas (${fotosAlbum.length})`, 'Noivos')
+    }
+    if (!semPersonalizar) await registarFoto(portal.referencia, 'Álbum personalizado enviado pelos noivos', 'Noivos')
+    return NextResponse.json({ ok: true, enviada: agora, personalizado: !semPersonalizar })
   }
 
   if (body.acao !== 'guardar' && body.acao !== 'enviar') return NextResponse.json({ error: 'acao' }, { status: 400 })
