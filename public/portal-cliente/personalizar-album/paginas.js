@@ -56,9 +56,9 @@ const FADE_FOTOS = {
   '2-v': em(ZONA_DIR, (x, y, l, a) => grelha(x, y, l, a, [1, 1])),
   '2-h': grelha(MEIO + 5, 3.5, 20, FA - 7, [1], [[1, 1]]),
   '3-v': em(ZONA_DIR, (x, y, l, a) => grelha(x, y, l, a, [1, 1, 1])),
-  // três horizontais do mesmo tamanho: duas em cima e uma em baixo, centrada
-  '3-h': (() => { const z = ZONA_DIR, l = (z.l - ES) / 2, a = (z.a - ES) / 2
-    return [[z.x, z.y, l, a], [z.x + l + ES, z.y, l, a], [z.x + (z.l - l) / 2, z.y + a + ES, l, a]] })(),
+  // três horizontais do mesmo tamanho (3:2), numa coluna, alinhadas ao centro da página
+  '3-h': (() => { const y0 = 2, alt = FA - 4, a = (alt - 2 * ES) / 3, l = a * 1.5, x = MEIO + (MEIO - l) / 2
+    return [0, 1, 2].map(k => [x, y0 + k * (a + ES), l, a]) })(),
 }
 const FADE_KS = Object.keys(FADE_FOTOS)
 const MODELOS_FADE = ['dir', 'esq'].flatMap(lado => FADE_KS.map(k => {
