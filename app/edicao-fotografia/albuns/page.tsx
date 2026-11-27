@@ -27,6 +27,11 @@ const COLUNAS: { k: Coluna; titulo: string; cor: string; quem: string; texto: st
 ]
 const COR = Object.fromEntries(COLUNAS.map(c => [c.k, c.cor])) as Record<Coluna, string>
 
+// Preçário dos álbuns: para acrescentar um álbum, junta uma linha aqui (imagem em public/albuns/)
+const PRECARIO: { nome: string; tamanho: string; folhas: number; preco: number; img: string }[] = [
+  { nome: 'Luxe Linen', tamanho: '30 × 30', folhas: 12, preco: 110, img: '/albuns/luxe-linen-30x30.webp' },
+]
+
 type Membro = { id: string; nome: string; foto_url: string | null; status: string; contato: string | null }
 type Album = {
   id: string; referencia: string; refAlbum: string; refErrada: string | null; nome: string; cliente: string | null; data: string | null; fichaId: string | null
@@ -269,6 +274,27 @@ export default function AlbunsPage() {
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12 flex flex-col gap-14">
         {erro && <p className="text-red-400 text-sm">Não foi possível carregar os álbuns. Atualiza a página.</p>}
+
+        <section>
+          <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Preçário</p>
+          <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Álbuns e preços</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {PRECARIO.map(p => (
+              <div key={p.nome + p.tamanho} className="overflow-hidden rounded-[20px] border border-white/[0.08] bg-[#111111]/85" style={{ borderLeft: `2px solid ${OURO}` }}>
+                <div className="aspect-[8/7] bg-[#f3efe9]">
+                  <img src={p.img} alt={`Álbum ${p.nome} ${p.tamanho}`} className="h-full w-full object-contain" loading="lazy" />
+                </div>
+                <div className="p-4 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-[19px] font-semibold">{p.nome}</p>
+                    <p className="mt-1 text-[12.5px] text-white/60">{p.tamanho} cm · {p.folhas} folhas · {p.folhas * 2} páginas</p>
+                  </div>
+                  <p className="text-[32px] font-thin leading-none tabular-nums" style={{ color: OURO }}>{p.preco} €</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
         <section>
           <p className="text-[11px] font-semibold tracking-[0.3em] uppercase" style={{ color: OURO }}>Como funciona</p>
