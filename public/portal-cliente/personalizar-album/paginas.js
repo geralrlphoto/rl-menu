@@ -142,19 +142,29 @@ const estiloImg = (g) => `width:${g.W}%;height:${g.H}%;left:${g.left}%;top:${g.t
 const mascara = (lado) => { const g = `linear-gradient(to ${lado === 'dir' ? 'right' : 'left'}, #000 32%, transparent 74%)`; return `-webkit-mask-image:${g};mask-image:${g}` }
 // Desvanecimento: as fotos por cima (espaços 1…) podem andar para os lados e mudar de tamanho,
 // em grupo. p.fadeAjuste = { dx: deslocação em % da folha, esc: escala (0,7 a 1,3) }.
+const MARG_X = MG / FL * 100, MARG_Y = MG / FA * 100   // margem do álbum em % da folha
+// maior escala com que o grupo (largura l × altura a, em %) ainda cabe dentro das margens
+const escMaxDe = (l, a) => Math.min(1.3, (100 - 2 * MARG_X) / l, (100 - 2 * MARG_Y) / a)
+function escMaxFolha(p) {
+  const m = pgModelo(p); if (!m?.fade || m.s.length < 2) return 1.3
+  const f = m.s.slice(1)
+  return escMaxDe(Math.max(...f.map(r => r[0] + r[2])) - Math.min(...f.map(r => r[0])), Math.max(...f.map(r => r[1] + r[3])) - Math.min(...f.map(r => r[1])))
+}
 function espacosDe(p) {
   const m = pgModelo(p); if (!m) return []
   const aj = p.fadeAjuste
   if (!m.fade || !aj || m.s.length < 2 || (!aj.dx && (aj.esc ?? 1) === 1)) return m.s
-  const fotos = m.s.slice(1), esc = aj.esc ?? 1, dx = aj.dx ?? 0
+  const fotos = m.s.slice(1), dx = aj.dx ?? 0
   const x0 = Math.min(...fotos.map(r => r[0])), x1 = Math.max(...fotos.map(r => r[0] + r[2]))
   const y0 = Math.min(...fotos.map(r => r[1])), y1 = Math.max(...fotos.map(r => r[1] + r[3]))
+  const esc = Math.min(aj.esc ?? 1, escMaxDe(x1 - x0, y1 - y0))
   const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2
   let novos = fotos.map(([x, y, w, h, o]) => [cx + (x - cx) * esc + dx, cy + (y - cy) * esc, w * esc, h * esc, o])
-  // não deixa o grupo sair da folha (1 % de margem)
+  // o grupo fica sempre dentro das margens do álbum (MG = 1,2 cm de cada corte)
   const nx0 = Math.min(...novos.map(r => r[0])), nx1 = Math.max(...novos.map(r => r[0] + r[2]))
   const ny0 = Math.min(...novos.map(r => r[1])), ny1 = Math.max(...novos.map(r => r[1] + r[3]))
-  const mx = nx0 < 1 ? 1 - nx0 : nx1 > 99 ? 99 - nx1 : 0, my = ny0 < 2 ? 2 - ny0 : ny1 > 98 ? 98 - ny1 : 0
+  const mx = nx0 < MARG_X ? MARG_X - nx0 : nx1 > 100 - MARG_X ? 100 - MARG_X - nx1 : 0
+  const my = ny0 < MARG_Y ? MARG_Y - ny0 : ny1 > 100 - MARG_Y ? 100 - MARG_Y - ny1 : 0
   novos = novos.map(([x, y, w, h, o]) => [x + mx, y + my, w, h, o])
   return [m.s[0], ...novos]
 }
@@ -227,7 +237,7 @@ function renderPaginas() {
             ${m.fade.k !== '0' ? `
             <div class="pg-fade-aj">
               <label><span>Fotos para a esquerda / direita</span><span class="ms">arrow_back</span><input type="range" min="-30" max="30" step="0.5" value="${p.fadeAjuste?.dx ?? 0}" data-fadeaj="dx"><span class="ms">arrow_forward</span></label>
-              <label><span>Tamanho das fotos</span><span class="ms">remove</span><input type="range" min="0.7" max="1.3" step="0.01" value="${p.fadeAjuste?.esc ?? 1}" data-fadeaj="esc"><span class="ms">add</span></label>
+              <label><span>Tamanho das fotos</span><span class="ms">remove</span><input type="range" min="0.7" max="${escMaxFolha(p).toFixed(2)}" step="0.01" value="${Math.min(p.fadeAjuste?.esc ?? 1, escMaxFolha(p))}" data-fadeaj="esc"><span class="ms">add</span></label>
               <button class="pg-fade-b" data-fadereset="1"><span class="ms">restart_alt</span>Repor</button>
             </div>` : ''}
           </div>` : ''}
