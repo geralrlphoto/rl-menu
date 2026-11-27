@@ -5,10 +5,10 @@ import { useEffect, useRef, useState } from 'react'
 import { RLP_CSS } from '@/app/_lead/rlpCss'
 import RodaReels from '@/app/_lead/RodaReels'
 import TestemunhoDestaque from '@/app/_lead/TestemunhoDestaque'
+import { pedirDisponibilidade } from './pedido'
 
 const WA = 'https://wa.me/351912932768'
 const MSG = 'Olá! Vamos casar no Sirius Park e fomos recomendados pela Inês. Gostávamos de saber mais sobre a RL Photo · Video.'
-const MSG_DATA = 'Olá! Vamos casar no Sirius Park e fomos recomendados pela Inês. A nossa data é: '
 
 const PORQUE = [
   { n: '01', t: 'Conhecemos o espaço', d: 'Sabemos onde está a melhor luz a cada hora, os recantos dos jardins e o ritmo de um casamento no Sirius Park.' },
@@ -44,7 +44,6 @@ function FadeIn({ children, delay = 0, className = '', style = {} }: { children:
 
 export default function Kit({ fotosEspaco }: { fotosEspaco: string }) {
   const [fotos, setFotos] = useState<Foto[]>([])
-  const [data, setData] = useState('')
   useEffect(() => {
     fetch('/api/portfolio-wfolio').then(r => r.json()).then(d => setFotos(Array.isArray(d.fotos) ? d.fotos.slice(0, 12) : [])).catch(() => {})
     const onScroll = () => document.getElementById('rlp-bar')?.classList.toggle('s', scrollY > 40)
@@ -52,7 +51,6 @@ export default function Kit({ fotosEspaco }: { fotosEspaco: string }) {
     return () => removeEventListener('scroll', onScroll)
   }, [])
   const wa = (m: string) => `${WA}?text=${encodeURIComponent(m)}`
-  const dataPT = data ? new Date(`${data}T12:00:00`).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
 
   return (
     <div className="rl-portal kc min-h-screen">
@@ -148,17 +146,7 @@ export default function Kit({ fotosEspaco }: { fotosEspaco: string }) {
       <section className="rlp-sec">
         <div className="rlp-wrap" style={{ maxWidth: 760 }}>
           <FadeIn>
-            <div className="rlp-card kc-data">
-              <span className="rlp-eyebrow c">A vossa data</span>
-              <h2 className="rlp-h2" style={{ textAlign: 'center' }}>Ainda temos a vossa <em>data livre?</em></h2>
-              <p className="rlp-lede" style={{ textAlign: 'center', fontSize: 16 }}>Digam-nos o dia e respondemos no próprio dia.</p>
-              <div className="kc-data-f">
-                <input type="date" value={data} onChange={e => setData(e.target.value)} aria-label="Data do casamento" />
-                <a href={wa(MSG_DATA + (dataPT || '…'))} target="_blank" rel="noopener noreferrer" className={`rlp-btn${data ? '' : ' off'}`}>
-                  <span className="fill" /><span className="dot" />Ver disponibilidade
-                </a>
-              </div>
-            </div>
+            <PedidoData />
           </FadeIn>
         </div>
       </section>
@@ -184,6 +172,53 @@ export default function Kit({ fotosEspaco }: { fotosEspaco: string }) {
         <div className="end"><span>© RL Photo · Video</span><span>registamos com foco na verdade</span></div>
       </footer>
     </div>
+  )
+}
+
+// Pedido de disponibilidade: nome, email, contacto e data → lead no CRM + email à RL (pedido.ts)
+function PedidoData() {
+  const [f, setF] = useState({ nome: '', email: '', contacto: '', data: '', site: '' })
+  const [estado, setEstado] = useState<'form' | 'a-enviar' | 'feito'>('form')
+  const [erro, setErro] = useState('')
+  const muda = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.value })
+  const hoje = new Date().toISOString().slice(0, 10)
+  const dataPT = f.data ? new Date(`${f.data}T12:00:00`).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' }) : ''
+  const enviar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErro(''); setEstado('a-enviar')
+    const r = await pedirDisponibilidade(f).catch(() => ({ ok: false, erro: 'Não foi possível enviar. Tentem outra vez.' }))
+    if (r.ok) setEstado('feito')
+    else { setErro(('erro' in r && r.erro) || 'Não foi possível enviar.'); setEstado('form') }
+  }
+
+  if (estado === 'feito') return (
+    <div className="rlp-card kc-data kc-feito">
+      <div className="kc-check" aria-hidden><svg viewBox="0 0 52 52"><circle cx="26" cy="26" r="24" /><path d="M15 27l7 7 15-16" /></svg></div>
+      <span className="rlp-eyebrow c">Pedido recebido</span>
+      <h2 className="rlp-h2" style={{ textAlign: 'center' }}>Obrigado, <em>{f.nome.split(/\s+/)[0]}</em></h2>
+      <p className="rlp-lede" style={{ textAlign: 'center', fontSize: 16, maxWidth: '44ch' }}>
+        Vamos verificar a disponibilidade para <b style={{ color: 'var(--g)', fontWeight: 500 }}>{dataPT}</b> e já entramos em contacto convosco.
+      </p>
+    </div>
+  )
+
+  return (
+    <form onSubmit={enviar} className="rlp-card kc-data">
+      <span className="rlp-eyebrow c">A vossa data</span>
+      <h2 className="rlp-h2" style={{ textAlign: 'center' }}>Ainda temos a vossa <em>data livre?</em></h2>
+      <p className="rlp-lede" style={{ textAlign: 'center', fontSize: 16 }}>Deixem-nos os vossos dados e a data. Verificamos e entramos em contacto.</p>
+      <div className="kc-campos">
+        <label className="kc-campo l2"><span>Nomes dos noivos</span><input required value={f.nome} onChange={muda('nome')} placeholder="Ex.: Ana e Mário" autoComplete="name" /></label>
+        <label className="kc-campo"><span>Email</span><input required type="email" value={f.email} onChange={muda('email')} placeholder="nome@email.com" autoComplete="email" /></label>
+        <label className="kc-campo"><span>Contacto</span><input required type="tel" value={f.contacto} onChange={muda('contacto')} placeholder="912 345 678" autoComplete="tel" inputMode="tel" /></label>
+        <label className="kc-campo l2"><span>Data do casamento</span><input required type="date" min={hoje} value={f.data} onChange={muda('data')} /></label>
+        <input className="kc-mel" tabIndex={-1} autoComplete="off" value={f.site} onChange={muda('site')} aria-hidden />
+      </div>
+      {erro && <p className="kc-erro">{erro}</p>}
+      <button className="rlp-btn" disabled={estado === 'a-enviar'} style={{ marginTop: 6 }}>
+        <span className="fill" /><span className="dot" />{estado === 'a-enviar' ? 'A enviar…' : 'Ver disponibilidade'}
+      </button>
+    </form>
   )
 }
 
@@ -229,8 +264,20 @@ const KC_CSS = `
 @media(max-width:760px){.kc-passos{grid-template-columns:1fr 1fr;row-gap:34px}.kc-passos::before{display:none}}
 .kc-data{padding:clamp(28px,5vw,56px)!important;display:flex;flex-direction:column;align-items:center;gap:16px}
 .kc-data>*{position:relative;z-index:1}
-.kc-data-f{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:8px}
-.kc-data-f input{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:999px;padding:13px 20px;color:var(--tx);font-family:var(--fb);font-size:15px;color-scheme:dark;outline:none}
-.kc-data-f input:focus{border-color:var(--g)}
+.kc-campos{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;margin-top:8px}
+.kc-campo{display:flex;flex-direction:column;gap:7px;text-align:left}
+.kc-campo.l2{grid-column:1/-1}
+.kc-campo span{font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--tx-dim)}
+.kc-campo input{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;padding:14px 16px;color:var(--tx);font-family:var(--fb);font-size:16px;color-scheme:dark;outline:none;transition:border-color .3s,background .3s;width:100%}
+.kc-campo input:focus{border-color:var(--g);background:rgba(216,190,147,.05)}
+.kc-mel{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.kc-erro{color:#e59a94;font-size:14px}
+@media(max-width:560px){.kc-campos{grid-template-columns:1fr}}
+.kc-feito{animation:kc-in .7s var(--ease) both}
+@keyframes kc-in{from{opacity:0;transform:scale(.96)}}
+.kc-check svg{width:74px;height:74px;fill:none;stroke:var(--g);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 14px rgba(216,190,147,.5))}
+.kc-check circle{stroke-dasharray:151;stroke-dashoffset:151;animation:kc-traco .9s .1s var(--ease) forwards}
+.kc-check path{stroke-dasharray:36;stroke-dashoffset:36;animation:kc-traco .5s .8s var(--ease) forwards}
+@keyframes kc-traco{to{stroke-dashoffset:0}}
 .rlp-btn.off{opacity:.5;pointer-events:none}
 `
