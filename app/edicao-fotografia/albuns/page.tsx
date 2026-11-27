@@ -101,7 +101,7 @@ function BlocoClaude({ referencia, r, onGuardado }: { referencia: string; r: Res
         </summary>
         <table className="mt-2 w-full text-[11px]">
           <tbody>
-            {[['Capa', 'Åland'], ['Revestimento', r.revestimento ?? '—'], ['Personalização', r.personalizacao],
+            {[['Gama', 'Luxe Linen (capa Åland)'], ['Revestimento', r.revestimento ?? '—'], ['Personalização', r.personalizacao],
               ['Folhas', `${r.folhas.length}${r.extras ? ` (${r.extras} extra · +${r.extras * 15} €)` : ''}`],
               ...r.folhas.map(f => [`Folha ${f.n} · pág. ${f.n * 2 - 1}–${f.n * 2}`, `${f.modelo}${f.fotos.length ? ` · ${f.fotos.join(', ')}` : ''}`])].map(([k, v]) => (
               <tr key={k} className="border-t border-white/[0.06] align-top"><td className="py-1 pr-2 text-white/40 whitespace-nowrap">{k}</td><td className="py-1 text-white/80 break-words">{v}</td></tr>

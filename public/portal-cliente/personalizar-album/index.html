@@ -663,7 +663,7 @@
    Nomes e opções lidos do configurador do fornecedor. Preços: só os que lá
    aparecem (capa 45,50 €, folha de papel vegetal 8,00 €); o resto a 0,00 €. */
 const CAPAS = [
-  { id: 'aland', n: 'Åland', preco: 45.5, tipo: 'gravura' },
+  { id: 'aland', n: 'Luxe Linen', capa: 'Åland', preco: 45.5, tipo: 'gravura' },   // gama Luxe Linen, capa Åland no DreamBooks
 ]
 const REVESTIMENTOS = [
   ['L01', 'L01 - Linen Aqua', '#c5e2d6', null, 'linhos/L01.jpg'], ['L06', 'L06 - Linen Zink', '#aeaeae', null, 'linhos/L06.jpg'], ['L07', 'L07 - Linen Bege', '#c3b09d', null, 'linhos/L07.jpg'],
@@ -759,7 +759,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27j'
+const VERSAO = '2026-11-27k'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
@@ -976,7 +976,7 @@ function render() {
 
   $('#corpo').innerHTML = `
   <div class="cover-box">
-    <h4>selecionar capa</h4>
+    <h4>Selecionar gama</h4>
     <div class="covers">${CAPAS.map(c => `
       <button class="cover-card${st.capa === c.id ? ' on' : ''}" data-k="capa" data-v="${c.id}">
         <span class="ms chk">check_circle</span>
@@ -984,7 +984,7 @@ function render() {
 
     <div class="cover-detail">
       <div>
-        <div class="cover-name"><span>CAPA</span>${capa.n}</div>
+        <div class="cover-name"><span>GAMA</span>${capa.n}</div>
         <div class="preview${st.escuro ? ' escuro' : ''}">${livro('grande')}<p>Pré-visualização. O produto final pode variar.</p></div>
       </div>
       <div class="fields">
