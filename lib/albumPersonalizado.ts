@@ -8,7 +8,7 @@ const REVESTIMENTOS: Record<string, string> = {
   L01: 'L01 - Linen Aqua', L02: 'L02 - Linen Pétal', L03: 'L03 - Linen Sun (stock limitado)', L04: 'L04 - Linen Pumpkin',
   L05: 'L05 - Linen Apple', L06: 'L06 - Linen Zink', L07: 'L07 - Linen Bege', L08: 'L08 - Linen Branco',
   M2: 'M2 - Madeira Castanha', M9: 'M9 - Madeira Cinza Clara', M10: 'M10 - Madeira Cinza Escura',
-  C06: 'C06 - Couleurs Nude', C03: 'C03 - Couleurs Rosa Bebé', C02: 'C02 - Couleurs Azul Bebé', BN02: 'BN02 - Buckram Natural Castanho', BN03: 'BN03 - Buckram Natural Pure',
+  C06: 'C06 - Couleurs Nude', C03: 'C03 - Couleurs Rosa Bebé', C02: 'C02 - Couleurs Azul Bebé', BN01: 'BN01 - Buckram Natural Preto', BN02: 'BN02 - Buckram Natural Castanho', BN03: 'BN03 - Buckram Natural Pure',
 }
 const GAMAS: Record<string, string> = { aland: 'Luxe Linen (capa Åland)', rustic: 'Rustic', junior: 'Junior' }
 const MODELOS: Record<string, string> = {
