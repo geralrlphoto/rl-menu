@@ -21,7 +21,7 @@ const ETAPAS: Etapa[] = [
   { quando: 'A partir do contrato', t: 'Portal dos noivos', d: 'Tudo num só sítio até ao fim: contrato, pagamentos, guias, cronograma e o estado das entregas.',
     itens: ['Pagamentos com recibo', 'Guias para cada momento do dia'] },
   { quando: 'Nos meses antes', t: 'Sessão pré-wedding', d: 'Uma sessão para o casal se habituar à câmara e a nós, antes do grande dia.',
-    itens: ['Local escolhido com o casal', 'Pode ser no próprio Sirius Park'], sirius: 'O espaço como cenário' },
+    itens: ['Local escolhido com o casal', 'Pode ser no próprio Sirius Park'] },
   { quando: '15 dias antes', t: 'Briefing e reunião de preparação', d: 'Uma videochamada com o casal para fechar horários, família, momentos especiais e pedidos.',
     itens: ['Questionário de briefing', 'Lista de fotos de família'] },
   { quando: 'Na última semana', t: 'Cronograma com o espaço', d: 'O plano do dia, minuto a minuto, alinhado com a equipa do Sirius Park.',
