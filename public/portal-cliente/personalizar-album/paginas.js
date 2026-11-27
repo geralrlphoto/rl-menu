@@ -95,6 +95,19 @@ const MODELOS_PAG = [
   // uma só foto a ocupar as duas páginas (passa por cima da dobra)
   { id: 'panoramica', n: 'Uma foto nas duas páginas', s: pct([[0, 0, FL, FA]]) },
   { id: 'pan-margem', n: 'Panorâmica com margem', s: pct([[AREA.x, AREA.y, AREA.l, AREA.a]]) },
+  // mais disposições com 1 e 2 fotos (para "Alterar esta folha" mudar mesmo)
+  { id: 'pag-margem-esq', n: 'Página esquerda com margem', s: pct([[PAG_E.x, PAG_E.y, PAG_E.l, PAG_E.a]]) },
+  { id: 'pag-margem-dir', n: 'Página direita com margem', s: pct([[PAG_D.x, PAG_D.y, PAG_D.l, PAG_D.a]]) },
+  { id: 'pequena-esq', n: 'Pequena à esquerda, muito branco', s: pct([[6, 5, 18, 15]]) },
+  { id: 'pequena-dir', n: 'Pequena à direita, muito branco', s: pct([[MEIO + 6, 5, 18, 15]]) },
+  { id: 'alto-esq', n: 'Ao alto na página esquerda', s: pct([[(MEIO - 13) / 2, 2.5, 13, FA - 5]]) },
+  { id: 'alto-dir', n: 'Ao alto na página direita', s: pct([[MEIO + (MEIO - 13) / 2, 2.5, 13, FA - 5]]) },
+  { id: 'dois-tercos-esq', n: 'Dois terços da folha (esquerda)', s: pct([[0, 0, 40, FA]]) },
+  { id: 'dois-tercos-dir', n: 'Dois terços da folha (direita)', s: pct([[FL - 40, 0, 40, FA]]) },
+  { id: 'duas-pequenas', n: 'Duas pequenas com branco', s: pct([[6, 5, 18, 15], [MEIO + 6, 5, 18, 15]]) },
+  { id: 'duas-na-direita', n: 'Duas na página direita', s: pct(em(PAG_D, (x, y, l, a) => grelha(x, y, l, a, [1, 1]))) },
+  { id: 'duas-na-esquerda', n: 'Duas na página esquerda', s: pct(em(PAG_E, (x, y, l, a) => grelha(x, y, l, a, [1, 1]))) },
+  { id: 'grande-pequena', n: 'Dois terços + pequena', s: pct([[0, 0, 40, FA], [44, 5, 12, FA - 10]]) },
   { id: 'uma-pagina', n: 'Uma por página', s: pct([[PAG_E.x, PAG_E.y, PAG_E.l, PAG_E.a], [PAG_D.x, PAG_D.y, PAG_D.l, PAG_D.a]]) },
   { id: 'inteira-margem', n: 'Página inteira + foto com margem', s: pct([[0, 0, MEIO, FA], [MEIO + 4, 4, MEIO - 8, FA - 8]]) },
   { id: 'centro', n: 'Pequena ao centro', s: pct([[(MEIO - 13) / 2, 4, 13, FA - 8], [MEIO + (MEIO - 13) / 2, 4, 13, FA - 8]]) },
@@ -421,7 +434,13 @@ function alterarFolha() {
   const fotos = p.slots.filter((s, i) => s.foto && !oculto(p, i)).map(s => fotoDe(s.foto)).filter(Boolean)
   if (!fotos.length) return toast('Esta folha ainda não tem fotografias')
   const n = fotos.length, rec = recentesFolha[st.pagAtual] ||= []
-  const todos = [...modelosCom(n, false), ...modelosCom(n, true)]
+  let todos = [...modelosCom(n, false), ...modelosCom(n, true)]
+  if (n === 1) {
+    // com uma foto: só disposições em que a foto não fica muito cortada
+    const f = fotos[0], ar = f.w / f.h
+    const serve = m => { const [, , w, h] = m.s[0]; const e = (w * 60) / (h * 25); return Math.max(ar / e, e / ar) < 2.6 }
+    if (todos.filter(serve).length >= 4) todos = todos.filter(serve)
+  }
   let ops = todos.filter(m => m.id !== p.modelo && !rec.includes(m.id))
   if (!ops.length) { rec.length = 0; ops = todos.filter(m => m.id !== p.modelo) }
   // às vezes vai para o degradê quando há (para se ver bem a diferença)
