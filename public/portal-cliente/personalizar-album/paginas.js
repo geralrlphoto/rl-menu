@@ -140,10 +140,33 @@ function geo(f, sw, sh, s, margem = MARGEM) {
 const estiloImg = (g) => `width:${g.W}%;height:${g.H}%;left:${g.left}%;top:${g.top}%`
 // desvanece para o branco: a foto vai ficando transparente sobre o papel branco
 const mascara = (lado) => { const g = `linear-gradient(to ${lado === 'dir' ? 'right' : 'left'}, #000 32%, transparent 74%)`; return `-webkit-mask-image:${g};mask-image:${g}` }
+// Desvanecimento: as fotos por cima (espaços 1…) podem andar para os lados e mudar de tamanho,
+// em grupo. p.fadeAjuste = { dx: deslocação em % da folha, esc: escala (0,7 a 1,3) }.
+function espacosDe(p) {
+  const m = pgModelo(p); if (!m) return []
+  const aj = p.fadeAjuste
+  if (!m.fade || !aj || m.s.length < 2 || (!aj.dx && (aj.esc ?? 1) === 1)) return m.s
+  const fotos = m.s.slice(1), esc = aj.esc ?? 1, dx = aj.dx ?? 0
+  const x0 = Math.min(...fotos.map(r => r[0])), x1 = Math.max(...fotos.map(r => r[0] + r[2]))
+  const y0 = Math.min(...fotos.map(r => r[1])), y1 = Math.max(...fotos.map(r => r[1] + r[3]))
+  const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2
+  let novos = fotos.map(([x, y, w, h, o]) => [cx + (x - cx) * esc + dx, cy + (y - cy) * esc, w * esc, h * esc, o])
+  // não deixa o grupo sair da folha (1 % de margem)
+  const nx0 = Math.min(...novos.map(r => r[0])), nx1 = Math.max(...novos.map(r => r[0] + r[2]))
+  const ny0 = Math.min(...novos.map(r => r[1])), ny1 = Math.max(...novos.map(r => r[1] + r[3]))
+  const mx = nx0 < 1 ? 1 - nx0 : nx1 > 99 ? 99 - nx1 : 0, my = ny0 < 2 ? 2 - ny0 : ny1 > 98 ? 98 - ny1 : 0
+  novos = novos.map(([x, y, w, h, o]) => [x + mx, y + my, w, h, o])
+  return [m.s[0], ...novos]
+}
+function redesenharFolha() {
+  const p = pgAtual(), el = document.getElementById('pgFolha'); if (!el) return
+  const n = st.pagAtual + 1
+  el.innerHTML = `${folhaHTML(p)}<span class="pg-dobra"></span><span class="pg-num esq">${n * 2 - 1}</span><span class="pg-num">${n * 2}</span>`
+}
 function folhaHTML(p, mini) {
   const m = pgModelo(p)
   if (!m) return mini ? '<span class="pg-vazia">Sem modelo</span>' : `<div class="pg-sem"><span class="ms">dashboard_customize</span>Escolham um modelo de folha em baixo</div>`
-  return m.s.map(([x, y, w, h, o], i) => {
+  return espacosDe(p).map(([x, y, w, h, o], i) => {
     if (oculto(p, i)) return ''   // espaço eliminado pelos noivos
     const s = p.slots[i] || {}, f = s.foto && fotoDe(s.foto)
     const img = f ? `<img src="${f.src}" alt="" draggable="false" style="${estiloImg(geo(f, w, h, s, o?.fade ? MARGEM_FADE : MARGEM))}${o?.fade ? ';' + mascara(o.fade) : ''}">` : ''
@@ -201,6 +224,12 @@ function renderPaginas() {
             <span class="pg-fade-t">Posição</span>
             <div class="pg-fade-g">${[['v', 'Vertical', 'crop_portrait'], ['h', 'Horizontal', 'crop_landscape']].map(([o, t, ic]) =>
               `<button class="pg-fade-b${m.fade.k.endsWith(o) ? ' on' : ''}" data-fadeo="${o}" ${m.fade.k === '0' ? 'disabled' : ''}><span class="ms">${ic}</span>${t}</button>`).join('')}</div>
+            ${m.fade.k !== '0' ? `
+            <div class="pg-fade-aj">
+              <label><span>Fotos para a esquerda / direita</span><span class="ms">arrow_back</span><input type="range" min="-30" max="30" step="0.5" value="${p.fadeAjuste?.dx ?? 0}" data-fadeaj="dx"><span class="ms">arrow_forward</span></label>
+              <label><span>Tamanho das fotos</span><span class="ms">remove</span><input type="range" min="0.7" max="1.3" step="0.01" value="${p.fadeAjuste?.esc ?? 1}" data-fadeaj="esc"><span class="ms">add</span></label>
+              <button class="pg-fade-b" data-fadereset="1"><span class="ms">restart_alt</span>Repor</button>
+            </div>` : ''}
           </div>` : ''}
           <div class="pg-ferr">${sl ? `
             <div class="pg-barras">
@@ -344,6 +373,7 @@ raiz.addEventListener('click', async e => {
     if (pgEscolhida) return colocar(pgEscolhida, i)
     pgSel = pgSel === i ? null : i; return renderPaginas()
   }
+  if (d.fadereset) { delete p.fadeAjuste; return pgGuardar() }
   if (d.faden !== undefined || d.fadeo) {
     const f = pgModelo(p)?.fade; if (!f) return
     const nAtual = Number(f.k[0]), oAtual = f.k.length > 1 ? f.k.slice(-1) : 'v'
@@ -399,15 +429,21 @@ raiz.addEventListener('click', async e => {
 // barras do espaço selecionado: esquerda/direita e cima/baixo (sem redesenhar tudo enquanto desliza)
 function aplicarImg(s) {
   const img = raiz.querySelector(`.pg-slot[data-slot="${pgSel}"] img`); if (!img) return
-  const [, , w, h, o] = pgModelo(pgAtual()).s[pgSel]
+  const [, , w, h, o] = espacosDe(pgAtual())[pgSel]
   img.style.cssText = estiloImg(geo(fotoDe(s.foto), w, h, s, o?.fade ? MARGEM_FADE : MARGEM)) + (o?.fade ? ';' + mascara(o.fade) : '')
 }
 raiz.addEventListener('input', e => {
+  const aj = e.target.dataset?.fadeaj
+  if (aj) {
+    // mexe o grupo de fotos enquanto deslizam (sem redesenhar a barra)
+    const p = pgAtual(); p.fadeAjuste = { dx: 0, esc: 1, ...(p.fadeAjuste || {}), [aj]: Number(e.target.value) }
+    return redesenharFolha()
+  }
   const eixo = e.target.dataset?.eixo; if (!eixo) return
   const s = pgAtual().slots[pgSel]; s[eixo] = Number(e.target.value)
   aplicarImg(s)
 })
-raiz.addEventListener('change', e => { if (e.target.dataset?.eixo) guardar(true) })
+raiz.addEventListener('change', e => { if (e.target.dataset?.eixo || e.target.dataset?.fadeaj) guardar(true) })
 
 // arrastar fotos: da lista para um espaço, ou de um espaço para outro (troca)
 raiz.addEventListener('dragstart', e => {
@@ -436,7 +472,7 @@ let pan = null, pgIgnorarClique = false
 raiz.addEventListener('pointerdown', e => {
   const s = e.target.closest('.pg-slot.sel'); if (!s) return
   const slot = pgAtual().slots[pgSel]; if (!slot?.foto) return
-  const [, , w, h, o] = pgModelo(pgAtual()).s[pgSel], g = geo(fotoDe(slot.foto), w, h, slot, o?.fade ? MARGEM_FADE : MARGEM)
+  const [, , w, h, o] = espacosDe(pgAtual())[pgSel], g = geo(fotoDe(slot.foto), w, h, slot, o?.fade ? MARGEM_FADE : MARGEM)
   // quantos píxeis a foto pode andar em cada sentido
   pan = { x0: e.clientX, y0: e.clientY, px: slot.x ?? 50, py: slot.y ?? 50,
           ox: s.clientWidth * (g.W - 100) / 100, oy: s.clientHeight * (g.H - 100) / 100, mexeu: false }
