@@ -16,6 +16,12 @@ const MODELOS: Record<string, string> = {
   'inteira-margem': 'Página inteira + foto com margem', centro: 'Pequena ao centro', 'grande-duas': 'Uma grande + duas',
   'quatro-alto': 'Quatro ao alto', 'tres-grande': 'Três colunas + grande', 'grelha-grande': 'Quatro em grelha + grande',
   seis: 'Seis em grelha', oito: 'Oito em grelha',
+  'fade-dir-1': 'Desvanecer à direita + 1 foto',
+  'fade-dir-2': 'Desvanecer à direita + 2 fotos',
+  'fade-dir-3': 'Desvanecer à direita + 3 fotos',
+  'fade-esq-1': 'Desvanecer à esquerda + 1 foto',
+  'fade-esq-2': 'Desvanecer à esquerda + 2 fotos',
+  'fade-esq-3': 'Desvanecer à esquerda + 3 fotos',
 }
 const DESIGNS_UV: Record<string, string> = { ramo: 'Ramo', raminho: 'Raminho', monograma: 'Monograma', circulo: 'Círculo', coroa: 'Coroa', cruz: 'Cruz', arco: 'Arco' }
 const LETRAS: Record<string, string> = { georgia: 'Georgia', optima: 'Optima', impact: 'Impact' }
@@ -72,6 +78,8 @@ const ESPACOS: Record<string, number> = {
   'esq-preparativos': 5, 'esq-cerimonia': 5, 'esq-saida': 5, 'esq-tres-dobra': 3, 'esq-dois-tres': 5,
   'pag-inteira-esq': 1, 'pag-inteira-dir': 1, 'pag-inteiras': 2, panoramica: 1, 'pan-margem': 1, 'uma-pagina': 2,
   'inteira-margem': 2, centro: 2, 'grande-duas': 3, 'quatro-alto': 4, 'tres-grande': 4, 'grelha-grande': 5, seis: 6, oito: 8,
+  // foto a desvanecer (fundo) + 1, 2 ou 3 fotos
+  'fade-dir-1': 2, 'fade-dir-2': 3, 'fade-dir-3': 4, 'fade-esq-1': 2, 'fade-esq-2': 3, 'fade-esq-3': 4,
 }
 
 /** O que falta para o álbum personalizado estar completo, e as fotos do álbum que não foram colocadas. */

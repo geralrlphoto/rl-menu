@@ -487,6 +487,9 @@
   .rl-aviso-bt .sim:hover { background: #e4d3b3; }
   @keyframes rlAvFade { from { opacity: 0 } to { opacity: 1 } }
   @keyframes rlAvSobe { from { transform: translateY(10px); opacity: 0 } to { transform: none; opacity: 1 } }
+  .pg-mod-f i.fade-dir { background: linear-gradient(to right, #cfd8d3 30%, rgba(207,216,211,0) 75%) !important; }
+  .pg-mod-f i.fade-esq { background: linear-gradient(to left, #cfd8d3 30%, rgba(207,216,211,0) 75%) !important; }
+  .pg-mod-f i.fade-dir ~ i, .pg-mod-f i.fade-esq ~ i { box-shadow: 0 0 0 1px #fff; }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: #2f5a45; color: #fff; padding: 11px 18px; border-radius: 8px; font-size: 12.5px; opacity: 0; transition: .25s; z-index: 200; pointer-events: none; }
   .toast.on { opacity: 1; transform: translateX(-50%); }
   @media (max-width: 1200px) { .layout { grid-template-columns: 1fr; } .floating-price-panel { position: static; min-height: 0; max-height: none; } .cover-detail { grid-template-columns: 1fr; } .panel-body { padding: 28px 18px; } }
@@ -740,7 +743,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27c'
+const VERSAO = '2026-11-27d'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'

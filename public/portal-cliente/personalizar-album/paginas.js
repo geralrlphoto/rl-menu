@@ -31,7 +31,13 @@ function grelha(x, y, l, a, cols, linhas = cols.map(() => [1])) {
 function linhas(x, y, l, a, pesosL, colsPorLinha) {
   return partes(y, a, pesosL).flatMap(([ly, la], k) => partes(x, l, colsPorLinha[k]).map(([cx, cl]) => [cx, ly, cl, la]))
 }
-const pct = (r) => r.map(([x, y, l, a]) => [x / FL * 100, y / FA * 100, l / FL * 100, a / FA * 100])
+const pct = (r) => r.map(([x, y, l, a, o]) => { const v = [x / FL * 100, y / FA * 100, l / FL * 100, a / FA * 100]; return o ? [...v, o] : v })
+// Foto que desvanece para o branco a ocupar a folha toda, com fotos por cima da parte branca.
+// O 5.º elemento do espaço ({ fade: 'dir' | 'esq' }) diz para que lado vai o branco.
+const ZONA_DIR = { x: MEIO + 3, y: 4, l: MEIO - 5.4, a: FA - 8 }
+const ZONA_ESQ = { x: 2.4, y: 4, l: MEIO - 5.4, a: FA - 8 }
+const fade = (lado, fotos) => [[0, 0, FL, FA, { fade: lado }], ...fotos]
+const MARGEM_FADE = 1.05   // a foto de fundo ocupa a folha toda: menos margem = mais resolução
 // áreas úteis: folha inteira, página esquerda e direita (com o espaço ES na dobra)
 const AREA = { x: MG, y: MG, l: FL - 2 * MG, a: FA - 2 * MG }
 const ESQ = { x: MG, y: MG, l: MEIO - ES / 2 - MG, a: FA - 2 * MG }
@@ -56,6 +62,13 @@ const MODELOS_PAG = [
   })()) },
   { id: 'esq-tres-dobra', n: 'Três com a do meio na dobra', s: pct(em(AREA, (x, y, l, a) => grelha(x, y, l, a, [3, 4, 3]))) },
   { id: 'esq-dois-tres', n: 'Duas em cima + três em baixo', s: pct(em(AREA, (x, y, l, a) => linhas(x, y, l, a, [3, 2], [[1, 1], [1, 1, 1]]))) },
+  // foto a desvanecer para o branco + 1, 2 ou 3 fotos na parte branca (fora da montagem automática)
+  { id: 'fade-dir-1', n: 'Desvanecer à direita + 1 foto', semAuto: true, s: pct(fade('dir', [[MEIO + 7, 3.5, 16, FA - 7]])) },
+  { id: 'fade-dir-2', n: 'Desvanecer à direita + 2 fotos', semAuto: true, s: pct(fade('dir', em(ZONA_DIR, (x, y, l, a) => grelha(x, y, l, a, [1, 1])))) },
+  { id: 'fade-dir-3', n: 'Desvanecer à direita + 3 fotos', semAuto: true, s: pct(fade('dir', em(ZONA_DIR, (x, y, l, a) => linhas(x, y, l, a, [1, 1], [[1], [1, 1]])))) },
+  { id: 'fade-esq-1', n: 'Desvanecer à esquerda + 1 foto', semAuto: true, s: pct(fade('esq', [[7, 3.5, 16, FA - 7]])) },
+  { id: 'fade-esq-2', n: 'Desvanecer à esquerda + 2 fotos', semAuto: true, s: pct(fade('esq', em(ZONA_ESQ, (x, y, l, a) => grelha(x, y, l, a, [1, 1])))) },
+  { id: 'fade-esq-3', n: 'Desvanecer à esquerda + 3 fotos', semAuto: true, s: pct(fade('esq', em(ZONA_ESQ, (x, y, l, a) => linhas(x, y, l, a, [1, 1], [[1], [1, 1]])))) },
   // outros modelos
   // uma foto a ocupar a página inteira (até ao corte)
   { id: 'pag-inteira-esq', n: 'Página inteira à esquerda', s: pct([[0, 0, MEIO, FA]]) },
@@ -97,23 +110,25 @@ const vazios = (p) => pgModelo(p) ? pgModelo(p).s.filter((_, i) => !oculto(p, i)
 // A foto cobre o espaço e fica MARGEM maior, para poder andar para os lados e para cima/baixo.
 // x e y vão de 0 a 100: 0 = foto encostada à esquerda/em cima do movimento, 50 = centrada.
 const MARGEM = 1.12
-function geo(f, sw, sh, s) {
+function geo(f, sw, sh, s, margem = MARGEM) {
   const espaco = (sw * 60) / (sh * 25), foto = f.w / f.h
   let W = 100, H = 100
   if (foto > espaco) W = foto / espaco * 100; else H = espaco / foto * 100
-  W *= MARGEM; H *= MARGEM
+  W *= margem; H *= margem
   const x = s.x ?? 50, y = s.y ?? 50
   // barra para a direita = foto anda para a direita
   return { W, H, left: -(W - 100) * (1 - x / 100), top: -(H - 100) * (1 - y / 100) }
 }
 const estiloImg = (g) => `width:${g.W}%;height:${g.H}%;left:${g.left}%;top:${g.top}%`
+// desvanece para o branco: a foto vai ficando transparente sobre o papel branco
+const mascara = (lado) => { const g = `linear-gradient(to ${lado === 'dir' ? 'right' : 'left'}, #000 32%, transparent 74%)`; return `-webkit-mask-image:${g};mask-image:${g}` }
 function folhaHTML(p, mini) {
   const m = pgModelo(p)
   if (!m) return mini ? '<span class="pg-vazia">Sem modelo</span>' : `<div class="pg-sem"><span class="ms">dashboard_customize</span>Escolham um modelo de folha em baixo</div>`
-  return m.s.map(([x, y, w, h], i) => {
+  return m.s.map(([x, y, w, h, o], i) => {
     if (oculto(p, i)) return ''   // espaço eliminado pelos noivos
     const s = p.slots[i] || {}, f = s.foto && fotoDe(s.foto)
-    const img = f ? `<img src="${f.src}" alt="" draggable="false" style="${estiloImg(geo(f, w, h, s))}">` : ''
+    const img = f ? `<img src="${f.src}" alt="" draggable="false" style="${estiloImg(geo(f, w, h, s, o?.fade ? MARGEM_FADE : MARGEM))}${o?.fade ? ';' + mascara(o.fade) : ''}">` : ''
     if (mini) return `<span class="pg-slot${f ? '' : ' livre'}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%">${img}</span>`
     return `<div class="pg-slot${f ? '' : ' livre'}${pgSel === i ? ' sel' : ''}" data-slot="${i}" ${f && pgSel !== i ? 'draggable="true"' : ''}
       style="left:${x}%;top:${y}%;width:${w}%;height:${h}%">${img || `<span class="pg-mais"><span class="ms">add_photo_alternate</span>Arraste uma foto</span><button class="pg-del" data-pgdel="${i}" title="Eliminar este espaço"><span class="ms">close</span></button>`}</div>`
@@ -177,7 +192,7 @@ function renderPaginas() {
           <div class="pg-col-t">Modelos de folha dupla <b>${MODELOS_PAG.length}</b></div>
           <div class="pg-modelos">${MODELOS_PAG.map(md => `
             <button class="pg-mod${p.modelo === md.id ? ' on' : ''}" data-pgmodelo="${md.id}" title="${md.n}">
-              <span class="pg-mod-f"><span class="pg-dobra"></span>${md.s.map(([x, y, w, h]) => `<i style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i>`).join('')}</span>
+              <span class="pg-mod-f"><span class="pg-dobra"></span>${md.s.map(([x, y, w, h, o]) => `<i class="${o?.fade ? 'fade-' + o.fade : ''}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i>`).join('')}</span>
               <span class="pg-mod-n">${md.n}</span><span class="pg-mod-c">${md.s.length} ${md.s.length === 1 ? 'foto' : 'fotos'}</span></button>`).join('')}</div>
         </aside>
       </div>
@@ -241,7 +256,7 @@ function montarAuto() {
   let k = 0
   st.paginas = cont.map((n, idx, todas) => {
     // modelos com n espaços; abertura e fecho preferem a foto nas duas páginas
-    let opcoes = MODELOS_PAG.filter(m => m.s.length === n)
+    let opcoes = MODELOS_PAG.filter(m => m.s.length === n && !m.semAuto)
     if (n === 1 && (idx === 0 || idx === todas.length - 1)) opcoes = opcoes.filter(m => m.id === 'panoramica').concat(opcoes)
     const vez = usadosPorN[n] = (usadosPorN[n] ?? -1) + 1
     const modelo = n === 1 && (idx === 0 || idx === todas.length - 1) ? opcoes[0] : opcoes[vez % opcoes.length]
@@ -346,8 +361,8 @@ raiz.addEventListener('click', async e => {
 // barras do espaço selecionado: esquerda/direita e cima/baixo (sem redesenhar tudo enquanto desliza)
 function aplicarImg(s) {
   const img = raiz.querySelector(`.pg-slot[data-slot="${pgSel}"] img`); if (!img) return
-  const [, , w, h] = pgModelo(pgAtual()).s[pgSel]
-  img.style.cssText = estiloImg(geo(fotoDe(s.foto), w, h, s))
+  const [, , w, h, o] = pgModelo(pgAtual()).s[pgSel]
+  img.style.cssText = estiloImg(geo(fotoDe(s.foto), w, h, s, o?.fade ? MARGEM_FADE : MARGEM)) + (o?.fade ? ';' + mascara(o.fade) : '')
 }
 raiz.addEventListener('input', e => {
   const eixo = e.target.dataset?.eixo; if (!eixo) return
@@ -383,7 +398,7 @@ let pan = null, pgIgnorarClique = false
 raiz.addEventListener('pointerdown', e => {
   const s = e.target.closest('.pg-slot.sel'); if (!s) return
   const slot = pgAtual().slots[pgSel]; if (!slot?.foto) return
-  const [, , w, h] = pgModelo(pgAtual()).s[pgSel], g = geo(fotoDe(slot.foto), w, h, slot)
+  const [, , w, h, o] = pgModelo(pgAtual()).s[pgSel], g = geo(fotoDe(slot.foto), w, h, slot, o?.fade ? MARGEM_FADE : MARGEM)
   // quantos píxeis a foto pode andar em cada sentido
   pan = { x0: e.clientX, y0: e.clientY, px: slot.x ?? 50, py: slot.y ?? 50,
           ox: s.clientWidth * (g.W - 100) / 100, oy: s.clientHeight * (g.H - 100) / 100, mexeu: false }
