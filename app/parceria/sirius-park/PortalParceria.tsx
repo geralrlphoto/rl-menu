@@ -73,8 +73,8 @@ function Conta({ v }: { v: number }) {
   return <span ref={ref}>{n}</span>
 }
 
-async function enviar(f: File, pasta: 'biblioteca' | 'moodboard') {
-  const s = await prepararEnvio(f.name, pasta)
+async function enviar(f: File) {
+  const s = await prepararEnvio(f.name)
   if (!s) throw new Error('sem acesso')
   const { error } = await supabase.storage.from('parcerias').uploadToSignedUrl(s.path, s.token, f, { contentType: f.type || 'application/octet-stream' })
   if (error) throw error
@@ -292,7 +292,7 @@ function Biblioteca({ itens, admin, atualizar, fotoVazia }: { itens: ItemBib[]; 
       for (let i = 0; i < fs.length; i++) {
         setAEnviar(`A enviar ${i + 1} de ${fs.length}…`)
         const f = fs[i]
-        novos.push({ tipo: f.type.startsWith('video') ? 'video' : 'foto', url: await enviar(f, 'biblioteca'), titulo: f.name.replace(/\.[^.]+$/, '') })
+        novos.push({ tipo: f.type.startsWith('video') ? 'video' : 'foto', url: await enviar(f), titulo: f.name.replace(/\.[^.]+$/, '') })
       }
       atualizar(await juntarBiblioteca(novos))
     } catch { alert('Falhou o envio de um ficheiro.') }
@@ -387,33 +387,23 @@ function Biblioteca({ itens, admin, atualizar, fotoVazia }: { itens: ItemBib[]; 
 
 /* ───────────────────────── MOOD BOARD ───────────────────────── */
 function MoodBoard({ itens, admin, atualizar }: { itens: ItemMood[]; admin: boolean; atualizar: Atualizar }) {
-  const [ficheiros, setFicheiros] = useState<File[]>([])
   const [link, setLink] = useState('')
   const [nota, setNota] = useState('')
-  const [aEnviar, setAEnviar] = useState('')
+  const [aEnviar, setAEnviar] = useState(false)
   const [enviado, setEnviado] = useState(false)
-  const [arrastar, setArrastar] = useState(false)
-  const previews = useMemo(() => ficheiros.map(f => URL.createObjectURL(f)), [ficheiros])
-  useEffect(() => () => previews.forEach(u => URL.revokeObjectURL(u)), [previews])
 
-  const juntarFicheiros = (fs: FileList | null) => {
-    if (!fs) return
-    setFicheiros(v => [...v, ...Array.from(fs).filter(f => f.type.startsWith('image'))].slice(0, 20))
-  }
+  // Só links (sem imagens): o link é obrigatório, a nota é opcional
   const submeter = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (link && !/^https:\/\//.test(link.trim())) return alert('O link tem de começar por https://')
-    try {
-      const imgs: string[] = []
-      for (let i = 0; i < ficheiros.length; i++) { setAEnviar(`A enviar ${i + 1} de ${ficheiros.length}…`); imgs.push(await enviar(ficheiros[i], 'moodboard')) }
-      setAEnviar('A guardar…')
-      const d = await juntarMood({ imgs, link, nota })
-      atualizar(d)
-      if (d) { setFicheiros([]); setLink(''); setNota(''); setEnviado(true); setTimeout(() => setEnviado(false), 4000) }
-    } catch { alert('Falhou o envio. Tente outra vez.') }
-    setAEnviar('')
+    const l = link.trim()
+    if (!/^https:\/\/\S+$/.test(l)) return alert('Cole um link completo, a começar por https://')
+    setAEnviar(true)
+    const d = await juntarMood({ link: l, nota })
+    atualizar(d)
+    if (d) { setLink(''); setNota(''); setEnviado(true); setTimeout(() => setEnviado(false), 4000) }
+    setAEnviar(false)
   }
-  const vazio = !ficheiros.length && !link.trim() && !nota.trim()
+  const vazio = !link.trim()
 
   return (
     <section id="moodboard" className="rlp-sec pp-ancora">
@@ -421,44 +411,22 @@ function MoodBoard({ itens, admin, atualizar }: { itens: ItemMood[]; admin: bool
         <FadeIn className="pp-cab">
           <span className="rlp-eyebrow">03 · Mood board</span>
           <h2 className="rlp-h2">O que querem que <em>façamos</em></h2>
-          <p className="rlp-lede">Viram um vídeo, uma foto ou um estilo de que gostaram? Mandem-nos aqui. Imagens, links do Instagram ou do Pinterest e uma nota com a ideia. Nós produzimos.</p>
+          <p className="rlp-lede">Viram um vídeo, uma foto ou um estilo de que gostaram? Colem aqui o link (Instagram, Pinterest, TikTok, YouTube…) e uma nota com a ideia. Nós produzimos.</p>
         </FadeIn>
 
         <FadeIn>
           <form onSubmit={submeter} className="pp-mood-form rlp-card">
-            <label
-              className={`pp-drop${arrastar ? ' on' : ''}`}
-              onDragOver={e => { e.preventDefault(); setArrastar(true) }}
-              onDragLeave={() => setArrastar(false)}
-              onDrop={e => { e.preventDefault(); setArrastar(false); juntarFicheiros(e.dataTransfer.files) }}
-            >
-              <input type="file" accept="image/*" multiple hidden onChange={e => { juntarFicheiros(e.target.files); e.target.value = '' }} />
-              {previews.length ? (
-                <div className="pp-drop-prev">
-                  {previews.map((u, i) => (
-                    <div key={u} style={{ backgroundImage: `url(${u})` }}>
-                      <button type="button" aria-label="Tirar" onClick={e => { e.preventDefault(); setFicheiros(v => v.filter((_, k) => k !== i)) }}>×</button>
-                    </div>
-                  ))}
-                  <span className="mais">+</span>
-                </div>
-              ) : (
-                <>
-                  <span className="pp-drop-ic">＋</span>
-                  <b>Arrastar imagens para aqui</b>
-                  <small>ou clicar para escolher (capturas de ecrã também servem)</small>
-                </>
-              )}
-            </label>
-            <div className="pp-mood-campos">
-              <input placeholder="Link (Instagram, Pinterest, TikTok, YouTube…)" value={link} onChange={e => setLink(e.target.value)} inputMode="url" />
-              <textarea placeholder="Qual é a ideia? Ex.: um reel da entrada dos noivos ao pôr do sol, para a primavera." rows={4} value={nota} onChange={e => setNota(e.target.value)} />
-              <button className="rlp-btn full" disabled={vazio || !!aEnviar} style={{ opacity: vazio || aEnviar ? .55 : 1 }}>
-                <span className="fill" /><span className="dot" />{aEnviar || (enviado ? 'Recebido, obrigado!' : 'Enviar referência')}
-              </button>
+            <div className="pp-mood-link">
+              <span aria-hidden>↗</span>
+              <input placeholder="Colar o link aqui" value={link} onChange={e => setLink(e.target.value)} inputMode="url" required />
             </div>
+            <textarea placeholder="Qual é a ideia? Ex.: um reel da entrada dos noivos ao pôr do sol, para a primavera." rows={3} value={nota} onChange={e => setNota(e.target.value)} />
+            <button className="rlp-btn full" disabled={vazio || aEnviar} style={{ opacity: vazio || aEnviar ? .55 : 1 }}>
+              <span className="fill" /><span className="dot" />{aEnviar ? 'A enviar…' : enviado ? 'Recebido, obrigado!' : 'Enviar referência'}
+            </button>
           </form>
         </FadeIn>
+
 
         {itens.length > 0 ? (
           <div className="pp-masonry pp-mood">
@@ -606,18 +574,12 @@ select.pp-tag option{background:#111;color:#eee}
 .pp-lb-pe span{margin-right:8px}
 
 /* mood board */
-.pp-mood-form{display:grid;grid-template-columns:1.1fr 1fr;gap:clamp(16px,2.4vw,28px);padding:clamp(18px,2.6vw,30px)!important}
-@media(max-width:820px){.pp-mood-form{grid-template-columns:1fr}}
-.pp-drop{position:relative;z-index:1;min-height:240px;border:1.5px dashed rgba(216,190,147,.35);border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:20px;cursor:pointer;transition:all .3s;background:rgba(216,190,147,.025)}
-.pp-drop:hover,.pp-drop.on{border-color:var(--g);background:rgba(216,190,147,.07)}
-.pp-drop-ic{font-size:30px;color:var(--g);font-weight:200;width:56px;height:56px;border-radius:50%;border:1px solid rgba(216,190,147,.4);display:grid;place-items:center;margin-bottom:6px}
-.pp-drop b{font-family:var(--fd);font-weight:300;font-size:19px}
-.pp-drop small{font-size:12px;color:var(--tx-dim)}
-.pp-drop-prev{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:8px;width:100%}
-.pp-drop-prev div{aspect-ratio:1;border-radius:8px;background-size:cover;background-position:center;position:relative}
-.pp-drop-prev div button{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.7);color:#fff;cursor:pointer;line-height:1}
-.pp-drop-prev .mais{aspect-ratio:1;border-radius:8px;border:1px dashed var(--line);display:grid;place-items:center;color:var(--g);font-size:24px}
-.pp-mood-campos{position:relative;z-index:1;display:flex;flex-direction:column;gap:12px}
+.pp-mood-form{display:flex;flex-direction:column;gap:14px;max-width:820px;padding:clamp(18px,2.6vw,30px)!important}
+.pp-mood-form>*{position:relative;z-index:1}
+.pp-mood-link{display:flex;align-items:center;gap:12px;border:1px solid var(--line);border-radius:10px;padding:4px 6px 4px 16px;background:rgba(255,255,255,.035);transition:border-color .3s}
+.pp-mood-link:focus-within{border-color:var(--g)}
+.pp-mood-link span{color:var(--g);font-size:20px}
+.pp-mood-link input{border:0!important;background:transparent!important;padding:14px 8px!important;font-size:16px!important}
 .pp-mood{margin-top:clamp(30px,4vw,48px)}
 .pp-mcard{background:var(--ink-2);border:1px solid var(--line-soft)}
 .pp-mcard img{display:block;width:100%;height:auto}

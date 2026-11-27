@@ -1,7 +1,7 @@
 'use server'
 
 // Ações do portal de parceria. Casamentos e biblioteca: só a RL (sessão de admin).
-// Mood board: a Inês (password do portal) e a RL.
+// Mood board (só links): a Inês (password do portal) e a RL.
 import { db, ehAdmin } from './apresentacao/fotos'
 import { temAcesso } from './apresentacao/acesso'
 import { BUCKET, PASTA, PUBLICO, mudarPortal, type Casamento, type EstadoMood, type ItemBib } from './dados'
@@ -16,9 +16,9 @@ const nomeSeguro = (n: string) =>
 async function podeVer() { return (await ehAdmin()) || (await temAcesso()) }
 
 // Envio direto do browser para o Storage (sem passar pelo servidor: aguenta vídeos grandes)
-export async function prepararEnvio(nome: string, pasta: 'biblioteca' | 'moodboard') {
-  if (pasta === 'biblioteca' ? !(await ehAdmin()) : !(await podeVer())) return null
-  const path = `${PASTA}/${pasta}/${Date.now()}-${nomeSeguro(nome)}`
+export async function prepararEnvio(nome: string) {
+  if (!(await ehAdmin())) return null
+  const path = `${PASTA}/biblioteca/${Date.now()}-${nomeSeguro(nome)}`
   const { data, error } = await db().storage.from(BUCKET).createSignedUploadUrl(path)
   if (error || !data) return null
   return { path: data.path, token: data.token, url: `${PUBLICO}${data.path}` }
@@ -49,19 +49,15 @@ export async function tirarBiblioteca(bid: string) {
   return mudarPortal(d => ({ ...d, biblioteca: d.biblioteca.filter(b => b.id !== bid) }))
 }
 
-export async function juntarMood(r: { imgs: string[]; link?: string; nota: string }) {
+// Mood board: só links (sem imagens), com uma nota opcional
+export async function juntarMood(r: { link: string; nota: string }) {
   if (!(await podeVer())) return null
   const admin = await ehAdmin()
-  const imgs = r.imgs.filter(u => doBucket(u)).slice(0, 20)
-  const link = r.link?.trim() || undefined
+  const link = r.link.trim().slice(0, 500)
   const nota = r.nota.trim().slice(0, 600)
-  if (!https(link) || (!imgs.length && !link && !nota)) return null
-  const base = { nota, autor: admin ? 'rl' as const : 'sirius' as const, estado: 'novo' as const, criado: agora() }
-  // Cada imagem fica um cartão; a nota e o link vão com a primeira
-  const novos = imgs.length
-    ? imgs.map((img, i) => ({ ...base, id: id(), img, ...(i === 0 ? { link } : { nota: '' }) }))
-    : [{ ...base, id: id(), link }]
-  return mudarPortal(d => ({ ...d, moodboard: [...novos, ...d.moodboard] }))
+  if (!link || !https(link)) return null
+  const item = { id: id(), link, nota, autor: admin ? 'rl' as const : 'sirius' as const, estado: 'novo' as const, criado: agora() }
+  return mudarPortal(d => ({ ...d, moodboard: [item, ...d.moodboard] }))
 }
 
 export async function estadoMood(mid: string, estado: EstadoMood) {
