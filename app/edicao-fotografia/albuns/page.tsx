@@ -27,12 +27,16 @@ const COLUNAS: { k: Coluna; titulo: string; cor: string; quem: string; texto: st
 ]
 const COR = Object.fromEntries(COLUNAS.map(c => [c.k, c.cor])) as Record<Coluna, string>
 
-// Preçário dos álbuns: para acrescentar um álbum, junta uma linha aqui (imagem em public/albuns/)
-const PRECARIO: { nome: string; tamanho: string; folhas: number; preco: number; img: string }[] = [
-  { nome: 'Luxe Linen', tamanho: '25 × 25', folhas: 12, preco: 85, img: '/albuns/luxe-linen-30x30.webp' },
-  { nome: 'Luxe Linen', tamanho: '30 × 30', folhas: 12, preco: 110, img: '/albuns/luxe-linen-30x30.webp' },
-  { nome: 'Rustic', tamanho: '25 × 25', folhas: 12, preco: 85, img: '/albuns/rustic.webp' },
-  { nome: 'Rustic', tamanho: '30 × 30', folhas: 12, preco: 110, img: '/albuns/rustic.webp' },
+// Preçário dos álbuns: um cartão por álbum, com uma linha por tamanho (imagem em public/albuns/)
+const PRECARIO: { nome: string; img: string; tamanhos: { tamanho: string; folhas: number; preco: number }[] }[] = [
+  { nome: 'Luxe Linen', img: '/albuns/luxe-linen-30x30.webp', tamanhos: [
+    { tamanho: '25 × 25', folhas: 12, preco: 85 },
+    { tamanho: '30 × 30', folhas: 12, preco: 110 },
+  ] },
+  { nome: 'Rustic', img: '/albuns/rustic.webp', tamanhos: [
+    { tamanho: '25 × 25', folhas: 12, preco: 85 },
+    { tamanho: '30 × 30', folhas: 12, preco: 110 },
+  ] },
 ]
 
 type Membro = { id: string; nome: string; foto_url: string | null; status: string; contato: string | null }
@@ -283,16 +287,20 @@ export default function AlbunsPage() {
           <h2 className="mt-1 text-3xl sm:text-[34px] font-semibold">Álbuns e preços</h2>
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {PRECARIO.map(p => (
-              <div key={p.nome + p.tamanho} className="overflow-hidden rounded-[20px] border border-white/[0.08] bg-[#111111]/85" style={{ borderLeft: `2px solid ${OURO}` }}>
+              <div key={p.nome} className="overflow-hidden rounded-[20px] border border-white/[0.08] bg-[#111111]/85" style={{ borderLeft: `2px solid ${OURO}` }}>
                 <div className="aspect-[8/7] bg-[#f3efe9]">
-                  <img src={p.img} alt={`Álbum ${p.nome} ${p.tamanho}`} className="h-full w-full object-contain" loading="lazy" />
+                  <img src={p.img} alt={`Álbum ${p.nome}`} className="h-full w-full object-contain" loading="lazy" />
                 </div>
-                <div className="p-4 flex items-end justify-between gap-3">
-                  <div>
-                    <p className="text-[19px] font-semibold">{p.nome}</p>
-                    <p className="mt-1 text-[12.5px] text-white/60">{p.tamanho} cm · {p.folhas} folhas · {p.folhas * 2} páginas</p>
-                  </div>
-                  <p className="text-[32px] font-thin leading-none tabular-nums" style={{ color: OURO }}>{p.preco} €</p>
+                <div className="p-4">
+                  <p className="text-[19px] font-semibold">{p.nome}</p>
+                  <ul className="mt-2 divide-y divide-white/[0.06]">
+                    {p.tamanhos.map(t => (
+                      <li key={t.tamanho} className="flex items-center justify-between gap-3 py-2">
+                        <span className="text-[12.5px] text-white/60">{t.tamanho} cm · {t.folhas} folhas · {t.folhas * 2} páginas</span>
+                        <span className="text-[26px] font-thin leading-none tabular-nums" style={{ color: OURO }}>{t.preco} €</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             ))}
