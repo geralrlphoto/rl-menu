@@ -171,6 +171,9 @@
   .livro .stamp { position: absolute; text-align: center; line-height: 1.25; letter-spacing: .08em; white-space: nowrap; font-size: 20px;
                   text-shadow: 0 1px 0 rgba(255,255,255,.25), 0 -1px 0 rgba(0,0,0,.25); }
   .livro .stamp small { display: block; font-size: .7em; }
+  /* incolor: gravado a seco, só o relevo da pressão */
+  .livro .stamp.seco { color: rgba(0,0,0,.13); text-shadow: 0 1px 0 rgba(255,255,255,.35), 0 -1px 0 rgba(0,0,0,.22); mix-blend-mode: multiply; }
+  .st-op .am.seco { color: #e2e2e2; text-shadow: 0 1px 0 #fff, 0 -1px 0 rgba(0,0,0,.28); }
   .resumo-prev .livro .stamp { font-size: 8px; }
   /* impressão UV: design sempre ao centro da capa */
   .livro .uv { position: absolute; left: 50%; top: 50%; width: 62%; transform: translate(-50%, -50%); color: #141414; pointer-events: none; }
@@ -668,7 +671,7 @@ const CAPAS = [
   // gamas: cada uma com os seus revestimentos (capa = modelo no DreamBooks)
   { id: 'aland', n: 'Luxe Linen', capa: 'Åland', preco: 45.5, tipo: 'gravura', revs: ['L01', 'L06', 'L07', 'L02', 'L05', 'L04', 'L03', 'L08'] },
   { id: 'rustic', n: 'Rustic', capa: 'Rustic', preco: 0, tipo: 'gravura', revs: ['M2', 'M9', 'M10'] },
-  { id: 'junior', n: 'Junior', capa: 'Junior', preco: 0, tipo: 'gravura', revs: ['C06', 'C03', 'C02'] },
+  { id: 'junior', n: 'Junior', capa: 'Junior', preco: 0, tipo: 'gravura', revs: ['C06', 'C03', 'C02'], stamp: ['incolor'] },
 ]
 const REVESTIMENTOS = [
   ['L01', 'L01 - Linen Aqua', '#c5e2d6', null, 'linhos/L01.jpg'], ['L06', 'L06 - Linen Zink', '#aeaeae', null, 'linhos/L06.jpg'], ['L07', 'L07 - Linen Bege', '#c3b09d', null, 'linhos/L07.jpg'],
@@ -716,7 +719,10 @@ const LOCAIS = [
 const CORES_STAMP = [
   ['prateado', 'Prateado', '#aeb3b8'], ['dourado', 'Dourado', '#b8903a'],
   ['rose-gold', 'Rose Gold', '#c48a74'], ['rose-metalic', 'Rose Metalic', '#9c3d5f'],
+  ['incolor', 'Incolor', null],   // gravado a seco: fica marcado sob pressão, sem tinta
 ]
+// cores de stamping de cada gama (por omissão as metálicas)
+const coresStamp = () => { const ids = CAPAS.find(c => c.id === st.capa)?.stamp ?? ['prateado', 'dourado', 'rose-gold', 'rose-metalic']; return CORES_STAMP.filter(r => ids.includes(r[0])) }
 const PERSONALIZACOES_IDS = ['stamping', 'uv']
 const LINHA2 = ['Sem 2ª Linha', 'Com 2ª Linha']
 const MAX_STAMP = 22
@@ -770,7 +776,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27r'
+const VERSAO = '2026-11-27s'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
@@ -829,10 +835,10 @@ function stampHTML() {
   if (!st.pers.includes('stamping') || !sp.txt1.trim()) return ''
   const letra = achar(LETRAS, sp.letra) ?? LETRAS[0]
   const loc = (achar(LOCAIS, sp.loc) ?? LOCAIS[0])[2]
-  const cor = achar(CORES_STAMP, sp.cor)?.[2] ?? '#b8903a'
+  const cor = achar(CORES_STAMP, sp.cor)?.[2] ?? '#b8903a', seco = sp.cor === 'incolor'
   const l2 = sp.linha2 === 'Com 2ª Linha' && sp.txt2.trim()
     ? `<small style="text-transform:${CASO[sp.car2] ?? 'none'}">${esc(sp.txt2)}</small>` : ''
-  return `<div class="stamp" style="left:${loc[0]}%;top:${loc[1]}%;transform:translate(-50%,-50%);font-family:${letra[2]};color:${cor}">
+  return `<div class="stamp${seco ? ' seco' : ''}" style="left:${loc[0]}%;top:${loc[1]}%;transform:translate(-50%,-50%);font-family:${letra[2]};${seco ? '' : `color:${cor}`}">
     <span style="text-transform:${CASO[sp.car] ?? 'none'}">${esc(sp.txt1)}</span>${l2}</div>`
 }
 function stCard(k, titulo, cheio, corpo, extra = '') {
@@ -858,9 +864,9 @@ function stampPainel() {
       ${stCard('loc', 'Localização', sp.loc, `<div class="st-locs">${LOCAIS.map(([id, n, , m]) => `
         <button class="st-loc${sp.loc === id ? ' on' : ''}" data-st="loc" data-v="${id}"><span class="i" style="position:absolute;top:4px;right:6px;width:12px;height:12px;border-radius:50%;background:#9a9a9a;color:#fff;font-size:8px;display:grid;place-items:center">i</span>
           <span class="q"><i style="left:${m[0]}px;top:${m[1]}px"></i></span>${n}</button>`).join('')}</div>`, 'alto')}
-      ${stCard('cor', 'Cor do Stamping', sp.cor, `<div class="st-ops">${CORES_STAMP.map(([id, n, c]) => `
+      ${stCard('cor', 'Cor do Stamping', sp.cor, `<div class="st-ops">${coresStamp().map(([id, n, c]) => `
         <button class="st-op${sp.cor === id ? ' on' : ''}" data-st="cor" data-v="${id}"><span class="i">i</span>
-          <span class="am" style="background:#ececec;color:${c};font-family:Impact,'Arial Black',sans-serif;font-size:11px"><span>RL PHOTO</span></span>${n}</button>`).join('')}</div>`, 'alto')}
+          <span class="am${c ? '' : ' seco'}" style="background:#ececec;${c ? `color:${c};` : ''}font-family:Impact,'Arial Black',sans-serif;font-size:11px"><span>RL PHOTO</span></span>${n}</button>`).join('')}</div>`, 'alto')}
       ${stCard('txt1', 'Texto 1ª Linha Stamping', sp.txt1.trim(), stTexto('txt1', 'Introduza Texto 1ª Linha'))}
       ${stCard('linha2', '2ª Linha Stamping', sp.linha2, selectHTML('stamp.linha2', LINHA2, sp.linha2, 'selecionar 2ª Linha Stamping'))}
       ${stCard('car2', 'Caracter - 2ª Linha', sp.car2 || (sp.linha2 && sem2), selectHTML('stamp.car2', CARACTERES, sp.car2, 'selecionar Caracter - 2ª Linha'), sp.linha2 && sem2 ? 'desl' : '')}
@@ -1081,6 +1087,8 @@ document.addEventListener('click', e => {
   if (d.k) {
     st[d.k] = st[d.k] === d.v && d.k !== 'capa' ? null : d.v
     if (d.k === 'capa' && !CAPAS.find(c => c.id === st.capa)?.revs.includes(st.rev)) st.rev = null
+    // a cor do stamping tem de existir na gama; se só houver uma, fica escolhida
+    if (d.k === 'capa') { const cs = coresStamp(); if (!cs.some(r => r[0] === st.stamp.cor)) st.stamp.cor = cs.length === 1 ? cs[0][0] : null }
     return mudou()
   }
   if (d.tab) { st[d.tab] = d.v; return mudou() }

@@ -32,7 +32,7 @@ const LOCAIS: Record<string, string> = {
   centro: 'Centro', 'centro-esq': 'Centro Esquerdo', 'centro-dir': 'Centro Direito', 'centro-inf': 'Centro Inferior', 'centro-sup': 'Centro Superior',
   'canto-inf-esq': 'Canto Inferior Esquerdo', 'canto-inf-dir': 'Canto Inferior Direito', 'canto-sup-esq': 'Canto Superior Esquerdo', 'canto-sup-dir': 'Canto Superior Direito',
 }
-const CORES: Record<string, string> = { prateado: 'Prateado', dourado: 'Dourado', 'rose-gold': 'Rose Gold', 'rose-metalic': 'Rose Metalic' }
+const CORES: Record<string, string> = { prateado: 'Prateado', dourado: 'Dourado', 'rose-gold': 'Rose Gold', 'rose-metalic': 'Rose Metalic', incolor: 'Incolor (gravado a seco)' }
 export const FOLHAS_INCLUIDAS = 12
 export const PRECO_FOLHA_EXTRA = 15
 
