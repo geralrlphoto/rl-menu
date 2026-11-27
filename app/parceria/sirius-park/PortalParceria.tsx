@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { RLP_CSS } from '@/app/_lead/rlpCss'
 import { supabase } from '@/lib/supabase'
+import Percurso from './Percurso'
 import type { Casamento, DadosPortal, EstadoMood, ItemBib, ItemMood } from './dados'
 import { estadoMood, gravarCasamento, juntarBiblioteca, juntarMood, prepararEnvio, tirarBiblioteca, tirarCasamento, tirarMood } from './acoes'
 
@@ -113,7 +114,7 @@ export default function PortalParceria({ dados: inicial, admin, fotosEspaco }: {
       <header id="rlp-bar" className="rlp-bar" style={{ top: 0 }}>
         <a href="/parceria/sirius-park" className="rlp-mono" aria-label="RL Photo · Video"><span>RL</span><i>× {ESPACO}</i></a>
         <nav className="pp-nav">
-          <a href="#numeros">Números</a><a href="#biblioteca">Biblioteca</a><a href="#moodboard">Mood board</a>
+          <a href="#percurso">Percurso</a><a href="#numeros">Números</a><a href="#biblioteca">Biblioteca</a><a href="#moodboard">Mood board</a>
         </nav>
       </header>
 
@@ -147,6 +148,8 @@ export default function PortalParceria({ dados: inicial, admin, fotosEspaco }: {
         </div>
       </div>
 
+      <Percurso />
+      <div className="rlp-div" />
       <Numeros casamentos={dados.casamentos} admin={admin} atualizar={atualizar} />
       <div className="rlp-div" />
       <Biblioteca itens={dados.biblioteca} admin={admin} atualizar={atualizar} fotoVazia={foto} />
@@ -214,7 +217,7 @@ function Numeros({ casamentos, admin, atualizar }: { casamentos: Casamento[]; ad
     <section id="numeros" className="rlp-sec pp-ancora">
       <div className="rlp-wrap" style={{ maxWidth: 1100 }}>
         <FadeIn className="pp-cab">
-          <span className="rlp-eyebrow">01 · Números</span>
+          <span className="rlp-eyebrow">02 · Números</span>
           <h2 className="rlp-h2">Os casais que fecham <em>connosco</em></h2>
           <p className="rlp-lede">Cada casal do {ESPACO} que escolhe a RL aparece aqui, com a data do casamento. Atualizamos sempre que um contrato fecha.</p>
         </FadeIn>
@@ -308,7 +311,7 @@ function Biblioteca({ itens, admin, atualizar, fotoVazia }: { itens: ItemBib[]; 
     <section id="biblioteca" className="rlp-sec pp-ancora" style={{ background: 'var(--ink-2)' }}>
       <div className="rlp-wrap" style={{ maxWidth: 1200 }}>
         <FadeIn className="pp-cab">
-          <span className="rlp-eyebrow">02 · Biblioteca</span>
+          <span className="rlp-eyebrow">03 · Biblioteca</span>
           <h2 className="rlp-h2">Imagens para as vossas <em>redes</em></h2>
           <p className="rlp-lede">Fotografias e vídeos dos casamentos no {ESPACO}, prontos a descarregar e publicar. Pedimos só que identifiquem <b style={{ color: 'var(--g)', fontWeight: 500 }}>@rlphoto_fotografia.video</b>.</p>
         </FadeIn>
@@ -409,7 +412,7 @@ function MoodBoard({ itens, admin, atualizar }: { itens: ItemMood[]; admin: bool
     <section id="moodboard" className="rlp-sec pp-ancora">
       <div className="rlp-wrap" style={{ maxWidth: 1200 }}>
         <FadeIn className="pp-cab">
-          <span className="rlp-eyebrow">03 · Mood board</span>
+          <span className="rlp-eyebrow">04 · Mood board</span>
           <h2 className="rlp-h2">O que querem que <em>façamos</em></h2>
           <p className="rlp-lede">Viram um vídeo, uma foto ou um estilo de que gostaram? Colem aqui o link (Instagram, Pinterest, TikTok, YouTube…) e uma nota com a ideia. Nós produzimos.</p>
         </FadeIn>
@@ -470,7 +473,7 @@ const PP_CSS = `
 .pp-nav{display:flex;gap:clamp(14px,2.4vw,32px)}
 .pp-nav a{font-family:var(--fb);font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--tx-mid);text-decoration:none;transition:color .3s}
 .pp-nav a:hover{color:var(--g)}
-@media(max-width:560px){.pp-nav{gap:12px}.pp-nav a{font-size:9.5px;letter-spacing:.14em}.rlp-mono i{display:none}}
+@media(max-width:560px){.pp-nav{gap:10px}.pp-nav a{font-size:9px;letter-spacing:.1em}.rlp-mono i{display:none}}
 
 /* capa */
 .pp-hero{position:relative;min-height:100svh;display:flex;align-items:flex-end;overflow:hidden}
