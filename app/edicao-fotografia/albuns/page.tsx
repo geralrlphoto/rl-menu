@@ -31,6 +31,8 @@ const COR = Object.fromEntries(COLUNAS.map(c => [c.k, c.cor])) as Record<Coluna,
 const PRECARIO: { nome: string; tamanho: string; folhas: number; preco: number; img: string }[] = [
   { nome: 'Luxe Linen', tamanho: '25 × 25', folhas: 12, preco: 85, img: '/albuns/luxe-linen-30x30.webp' },
   { nome: 'Luxe Linen', tamanho: '30 × 30', folhas: 12, preco: 110, img: '/albuns/luxe-linen-30x30.webp' },
+  { nome: 'Rustic', tamanho: '25 × 25', folhas: 12, preco: 85, img: '/albuns/rustic.webp' },
+  { nome: 'Rustic', tamanho: '30 × 30', folhas: 12, preco: 110, img: '/albuns/rustic.webp' },
 ]
 
 type Membro = { id: string; nome: string; foto_url: string | null; status: string; contato: string | null }
