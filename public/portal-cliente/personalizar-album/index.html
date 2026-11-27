@@ -776,7 +776,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27t'
+const VERSAO = '2026-11-27u'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
@@ -793,6 +793,8 @@ let CFG = { enviado: null }, ADMIN = false, FOTOS_ENVIADAS = null
 function normalizar() {
   st.pers = (st.pers || []).filter(x => PERSONALIZACOES_IDS.includes(x)).slice(0, 1)
   st.stamp = Object.assign({}, base.stamp, st.stamp); st.uv = Object.assign({}, base.uv, st.uv)
+  // o stamping é sempre em Georgia e todas maiúsculas (os noivos não escolhem)
+  Object.assign(st.stamp, { letra: 'georgia', car: 'Todas Maiúsculas', car2: 'Todas Maiúsculas' })
   if (!CAPAS.some(c => c.id === st.capa)) st.capa = CAPAS[0].id
 }
 const $ = s => document.querySelector(s)
@@ -857,10 +859,6 @@ function stampPainel() {
   const sp = st.stamp, sem2 = sp.linha2 !== 'Com 2ª Linha'
   return `<div class="st-painel"><h5>Stamping da Capa</h5>
     <div class="st-grid">
-      ${stCard('letra', 'Tipo de Letra', sp.letra, `<div class="st-ops">${LETRAS.map(([id, n, fam, bg, c]) => `
-        <button class="st-op${sp.letra === id ? ' on' : ''}" data-st="letra" data-v="${id}"><span class="i">i</span>
-          <span class="am" style="background:${bg};color:${c};font-family:${fam}"><span>RL PHOTO</span></span>${n}</button>`).join('')}</div>`, 'alto')}
-      ${stCard('car', 'Caracter', sp.car, selectHTML('stamp.car', CARACTERES, sp.car, 'selecionar Caracter'), 'alto')}
       ${stCard('loc', 'Localização', sp.loc, `<div class="st-locs">${LOCAIS.map(([id, n, , m]) => `
         <button class="st-loc${sp.loc === id ? ' on' : ''}" data-st="loc" data-v="${id}"><span class="i" style="position:absolute;top:4px;right:6px;width:12px;height:12px;border-radius:50%;background:#9a9a9a;color:#fff;font-size:8px;display:grid;place-items:center">i</span>
           <span class="q"><i style="left:${m[0]}px;top:${m[1]}px"></i></span>${n}</button>`).join('')}</div>`, 'alto')}
@@ -869,7 +867,6 @@ function stampPainel() {
           <span class="am${c ? '' : ' seco'}" style="background:#ececec;${c ? `color:${c};` : ''}font-family:Impact,'Arial Black',sans-serif;font-size:11px"><span>RL PHOTO</span></span>${n}</button>`).join('')}</div>`, 'alto')}
       ${stCard('txt1', 'Texto 1ª Linha Stamping', sp.txt1.trim(), stTexto('txt1', 'Introduza Texto 1ª Linha'))}
       ${stCard('linha2', '2ª Linha Stamping', sp.linha2, selectHTML('stamp.linha2', LINHA2, sp.linha2, 'selecionar 2ª Linha Stamping'))}
-      ${stCard('car2', 'Caracter - 2ª Linha', sp.car2 || (sp.linha2 && sem2), selectHTML('stamp.car2', CARACTERES, sp.car2, 'selecionar Caracter - 2ª Linha'), sp.linha2 && sem2 ? 'desl' : '')}
       ${stCard('txt2', 'Texto 2ª Linha Stamping', sp.txt2.trim() || (sp.linha2 && sem2), stTexto('txt2', 'Introduza Texto 2ª Linha', sp.linha2 && sem2), sp.linha2 && sem2 ? 'desl' : '')}
     </div></div>`
 }
