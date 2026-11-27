@@ -674,7 +674,7 @@ const CAPAS = [
   // gamas: cada uma com os seus revestimentos (capa = modelo no DreamBooks)
   { id: 'aland', n: 'Luxe Linen', capa: 'Åland', preco: 45.5, tipo: 'gravura', revs: ['L01', 'L06', 'L07', 'L02', 'L05', 'L04', 'L03', 'L08'] },
   { id: 'rustic', n: 'Rustic', capa: 'Rustic', preco: 0, tipo: 'gravura', revs: ['M2', 'M9', 'M10'], stamp: ['prateado', 'dourado', 'rose-gold', 'rose-metalic', 'incolor'] },
-  { id: 'junior', n: 'Junior', capa: 'Junior', preco: 0, tipo: 'gravura', revs: ['C06', 'C03', 'C02'], stamp: ['prateado', 'dourado', 'rose-gold', 'rose-metalic', 'incolor'] },
+  { id: 'junior', n: 'Junior', capa: 'Junior', preco: 0, tipo: 'gravura', revs: ['C06', 'C03', 'C02', 'BN02'], stamp: ['prateado', 'dourado', 'rose-gold', 'rose-metalic', 'incolor'] },
 ]
 const REVESTIMENTOS = [
   ['L01', 'L01 - Linen Aqua', '#c5e2d6', null, 'linhos/L01.jpg'], ['L06', 'L06 - Linen Zink', '#aeaeae', null, 'linhos/L06.jpg'], ['L07', 'L07 - Linen Bege', '#c3b09d', null, 'linhos/L07.jpg'],
@@ -686,6 +686,7 @@ const REVESTIMENTOS = [
   ['C06', 'C06 - Couleurs Nude', '#b57f72', null, 'linhos/C06.jpg'],
   ['C03', 'C03 - Couleurs Rosa Bebé', '#d99481', null, 'linhos/C03.jpg'],
   ['C02', 'C02 - Couleurs Azul Bebé', '#b3d0d9', null, 'linhos/C02.jpg'],
+  ['BN02', 'BN02 - Buckram Natural Castanho', '#cbb9a9', null, 'linhos/BN02.jpg'],
 ]
 const SACOS = ['Saco de Veludo Preto', 'Saco de Veludo Cinza', 'Saco de Veludo Bege', 'Saco de Veludo Azul']
 const FITAS = [
@@ -779,7 +780,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27w'
+const VERSAO = '2026-11-27x'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
