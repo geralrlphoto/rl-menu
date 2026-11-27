@@ -47,6 +47,27 @@ const PAG_E = { x: MG, y: MG, l: MEIO - 2 * MG, a: FA - 2 * MG }
 const PAG_D = { x: MEIO + MG, y: MG, l: MEIO - 2 * MG, a: FA - 2 * MG }
 const em = (z, f) => f(z.x, z.y, z.l, z.a)
 
+// Desvanecimento: as fotos por cima da parte branca, por número e posição (página da direita;
+// à esquerda é o espelho). k = '0' | '1-v' | '1-h' | '2-v' | '2-h' | '3-v' | '3-h'
+const FADE_FOTOS = {
+  '0': [],
+  '1-v': [[MEIO + 7, 3.5, 16, FA - 7]],
+  '1-h': [[MEIO + 4, 5.5, 22, 14]],
+  '2-v': em(ZONA_DIR, (x, y, l, a) => grelha(x, y, l, a, [1, 1])),
+  '2-h': grelha(MEIO + 5, 3.5, 20, FA - 7, [1], [[1, 1]]),
+  '3-v': em(ZONA_DIR, (x, y, l, a) => grelha(x, y, l, a, [1, 1, 1])),
+  '3-h': em(ZONA_DIR, (x, y, l, a) => linhas(x, y, l, a, [1, 1], [[1], [1, 1]])),
+}
+const FADE_KS = Object.keys(FADE_FOTOS)
+const MODELOS_FADE = ['dir', 'esq'].flatMap(lado => FADE_KS.map(k => {
+  const n = Number(k[0]), ladoN = lado === 'dir' ? 'direita' : 'esquerda'
+  const fotos = lado === 'dir' ? FADE_FOTOS[k] : FADE_FOTOS[k].map(([x, y, l, a]) => [FL - x - l, y, l, a])
+  return {
+    id: `fade-${lado}-${k}`, semAuto: true, esconder: k !== '2-v', fade: { lado, k },
+    n: k === '2-v' ? `Desvanecer à ${ladoN}` : `Desvanecer à ${ladoN}${n ? ` + ${n} ${n === 1 ? 'foto' : 'fotos'} (${k.endsWith('v') ? 'vertical' : 'horizontal'})` : ''}`,
+    s: pct(fade(lado, fotos)),
+  }
+}))
 const MODELOS_PAG = [
   // os três esquemas do Rui
   { id: 'esq-preparativos', n: 'Quatro + página inteira', s: pct([
@@ -62,13 +83,8 @@ const MODELOS_PAG = [
   })()) },
   { id: 'esq-tres-dobra', n: 'Três com a do meio na dobra', s: pct(em(AREA, (x, y, l, a) => grelha(x, y, l, a, [3, 4, 3]))) },
   { id: 'esq-dois-tres', n: 'Duas em cima + três em baixo', s: pct(em(AREA, (x, y, l, a) => linhas(x, y, l, a, [3, 2], [[1, 1], [1, 1, 1]]))) },
-  // foto a desvanecer para o branco + 1, 2 ou 3 fotos na parte branca (fora da montagem automática)
-  { id: 'fade-dir-1', n: 'Desvanecer à direita + 1 foto', semAuto: true, s: pct(fade('dir', [[MEIO + 7, 3.5, 16, FA - 7]])) },
-  { id: 'fade-dir-2', n: 'Desvanecer à direita + 2 fotos', semAuto: true, s: pct(fade('dir', em(ZONA_DIR, (x, y, l, a) => grelha(x, y, l, a, [1, 1])))) },
-  { id: 'fade-dir-3', n: 'Desvanecer à direita + 3 fotos', semAuto: true, s: pct(fade('dir', em(ZONA_DIR, (x, y, l, a) => linhas(x, y, l, a, [1, 1], [[1], [1, 1]])))) },
-  { id: 'fade-esq-1', n: 'Desvanecer à esquerda + 1 foto', semAuto: true, s: pct(fade('esq', [[7, 3.5, 16, FA - 7]])) },
-  { id: 'fade-esq-2', n: 'Desvanecer à esquerda + 2 fotos', semAuto: true, s: pct(fade('esq', em(ZONA_ESQ, (x, y, l, a) => grelha(x, y, l, a, [1, 1])))) },
-  { id: 'fade-esq-3', n: 'Desvanecer à esquerda + 3 fotos', semAuto: true, s: pct(fade('esq', em(ZONA_ESQ, (x, y, l, a) => linhas(x, y, l, a, [1, 1], [[1], [1, 1]])))) },
+  // foto a desvanecer para o branco (as variantes ficam escondidas; escolhem-se ao tocar na foto)
+  ...MODELOS_FADE,
   // outros modelos
   // uma foto a ocupar a página inteira (até ao corte)
   { id: 'pag-inteira-esq', n: 'Página inteira à esquerda', s: pct([[0, 0, MEIO, FA]]) },
@@ -130,7 +146,7 @@ function folhaHTML(p, mini) {
     const s = p.slots[i] || {}, f = s.foto && fotoDe(s.foto)
     const img = f ? `<img src="${f.src}" alt="" draggable="false" style="${estiloImg(geo(f, w, h, s, o?.fade ? MARGEM_FADE : MARGEM))}${o?.fade ? ';' + mascara(o.fade) : ''}">` : ''
     if (mini) return `<span class="pg-slot${f ? '' : ' livre'}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%">${img}</span>`
-    return `<div class="pg-slot${f ? '' : ' livre'}${pgSel === i ? ' sel' : ''}" data-slot="${i}" ${f && pgSel !== i ? 'draggable="true"' : ''}
+    return `<div class="pg-slot${f ? '' : ' livre'}${o?.fade ? ' fundo' : ''}${pgSel === i ? ' sel' : ''}" data-slot="${i}" ${f && pgSel !== i ? 'draggable="true"' : ''}
       style="left:${x}%;top:${y}%;width:${w}%;height:${h}%">${img || `<span class="pg-mais"><span class="ms">add_photo_alternate</span>Arraste uma foto</span><button class="pg-del" data-pgdel="${i}" title="Eliminar este espaço"><span class="ms">close</span></button>`}</div>`
   }).join('')
 }
@@ -176,6 +192,14 @@ function renderPaginas() {
             <button class="pg-ic perigo" data-pgapagar="1" title="Apagar folha"><span class="ms">delete</span></button>
           </div>
           <div class="pg-folha" id="pgFolha">${folhaHTML(p)}<span class="pg-dobra"></span><span class="pg-num esq">${n * 2 - 1}</span><span class="pg-num">${n * 2}</span></div>
+          ${m?.fade && pgSel === 0 ? `
+          <div class="pg-fade">
+            <span class="pg-fade-t"><span class="ms">gradient</span>Fotos na parte branca</span>
+            <div class="pg-fade-g">${[0, 1, 2, 3].map(q => `<button class="pg-fade-b${Number(m.fade.k[0]) === q ? ' on' : ''}" data-faden="${q}">${q}</button>`).join('')}</div>
+            <span class="pg-fade-t">Posição</span>
+            <div class="pg-fade-g">${[['v', 'Vertical', 'crop_portrait'], ['h', 'Horizontal', 'crop_landscape']].map(([o, t, ic]) =>
+              `<button class="pg-fade-b${m.fade.k.endsWith(o) ? ' on' : ''}" data-fadeo="${o}" ${m.fade.k === '0' ? 'disabled' : ''}><span class="ms">${ic}</span>${t}</button>`).join('')}</div>
+          </div>` : ''}
           <div class="pg-ferr">${sl ? `
             <div class="pg-barras">
               <label><span>Esquerda / Direita</span><span class="ms">arrow_back</span><input type="range" min="0" max="100" step="0.5" value="${sl.x ?? 50}" data-eixo="x"><span class="ms">arrow_forward</span></label>
@@ -189,11 +213,11 @@ function renderPaginas() {
         </div>
 
         <aside class="pg-col">
-          <div class="pg-col-t">Modelos de folha dupla <b>${MODELOS_PAG.length}</b></div>
-          <div class="pg-modelos">${MODELOS_PAG.map(md => `
-            <button class="pg-mod${p.modelo === md.id ? ' on' : ''}" data-pgmodelo="${md.id}" title="${md.n}">
+          <div class="pg-col-t">Modelos de folha dupla <b>${MODELOS_PAG.filter(md => !md.esconder).length}</b></div>
+          <div class="pg-modelos">${MODELOS_PAG.filter(md => !md.esconder).map(md => `
+            <button class="pg-mod${p.modelo === md.id || (md.fade && m?.fade?.lado === md.fade.lado) ? ' on' : ''}" data-pgmodelo="${md.id}" title="${md.n}">
               <span class="pg-mod-f"><span class="pg-dobra"></span>${md.s.map(([x, y, w, h, o]) => `<i class="${o?.fade ? 'fade-' + o.fade : ''}" style="left:${x}%;top:${y}%;width:${w}%;height:${h}%"></i>`).join('')}</span>
-              <span class="pg-mod-n">${md.n}</span><span class="pg-mod-c">${md.s.length} ${md.s.length === 1 ? 'foto' : 'fotos'}</span></button>`).join('')}</div>
+              <span class="pg-mod-n">${md.n}</span><span class="pg-mod-c">${md.fade ? 'escolham 0 a 3 fotos' : `${md.s.length} ${md.s.length === 1 ? 'foto' : 'fotos'}`}</span></button>`).join('')}</div>
         </aside>
       </div>
 
@@ -317,6 +341,18 @@ raiz.addEventListener('click', async e => {
     const i = Number(d.slot)
     if (pgEscolhida) return colocar(pgEscolhida, i)
     pgSel = pgSel === i ? null : i; return renderPaginas()
+  }
+  if (d.faden !== undefined || d.fadeo) {
+    const f = pgModelo(p)?.fade; if (!f) return
+    const nAtual = Number(f.k[0]), oAtual = f.k.length > 1 ? f.k.slice(-1) : 'v'
+    const nNovo = d.faden !== undefined ? Number(d.faden) : nAtual, oNovo = d.fadeo || oAtual
+    const k = nNovo ? `${nNovo}-${oNovo}` : '0'
+    const novo = MODELOS_PAG.find(x => x.id === `fade-${f.lado}-${k}`)
+    const extras = p.slots.slice(1).filter(x => x.foto)
+    p.modelo = novo.id; p.ocultos = []
+    p.slots = novo.s.map((_, i) => i === 0 ? (p.slots[0] || { foto: null }) : (extras[i - 1] ? { ...extras[i - 1] } : { foto: null }))
+    if (extras.length > nNovo) toast(`${extras.length - nNovo} ${extras.length - nNovo === 1 ? 'foto voltou' : 'fotos voltaram'} para a lista`)
+    pgSel = 0; return pgGuardar()
   }
   if (d.pgmodelo) {
     const novo = MODELOS_PAG.find(m => m.id === d.pgmodelo)

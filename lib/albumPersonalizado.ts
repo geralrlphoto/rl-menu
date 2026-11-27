@@ -82,6 +82,13 @@ const ESPACOS: Record<string, number> = {
   'fade-dir-1': 2, 'fade-dir-2': 3, 'fade-dir-3': 4, 'fade-esq-1': 2, 'fade-esq-2': 3, 'fade-esq-3': 4,
 }
 
+// Desvanecimento: fade-<dir|esq>-<0 | 1-v | 1-h | 2-v | 2-h | 3-v | 3-h> (foto de fundo + 0 a 3 fotos)
+for (const lado of ['dir', 'esq'] as const) for (const k of ['0', '1-v', '1-h', '2-v', '2-h', '3-v', '3-h']) {
+  const n = Number(k[0]), id = `fade-${lado}-${k}`
+  MODELOS[id] = `Desvanecer à ${lado === 'dir' ? 'direita' : 'esquerda'}${n ? ` + ${n} ${n === 1 ? 'foto' : 'fotos'} (${k.endsWith('v') ? 'vertical' : 'horizontal'})` : ' (sem fotos por cima)'}`
+  ESPACOS[id] = n + 1
+}
+
 /** O que falta para o álbum personalizado estar completo, e as fotos do álbum que não foram colocadas. */
 export function validarAlbum(estado: any, fotosAlbum: string[]): { iniciado: boolean; faltas: string[]; porColocar: string[] } {
   const st = estado && typeof estado === 'object' ? estado : null

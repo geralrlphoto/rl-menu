@@ -490,6 +490,18 @@
   .pg-mod-f i.fade-dir { background: linear-gradient(to right, #cfd8d3 30%, rgba(207,216,211,0) 75%) !important; }
   .pg-mod-f i.fade-esq { background: linear-gradient(to left, #cfd8d3 30%, rgba(207,216,211,0) 75%) !important; }
   .pg-mod-f i.fade-dir ~ i, .pg-mod-f i.fade-esq ~ i { box-shadow: 0 0 0 1px #fff; }
+  /* a foto de fundo (desvanecer) fica sempre por baixo das fotos pequenas, mesmo selecionada */
+  .pg-slot.fundo { z-index: 0 !important; }
+  .pg-slot.fundo ~ .pg-slot { z-index: 1; }
+  .pg-slot.fundo ~ .pg-slot.sel { z-index: 2; }
+  .pg-fade { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-top: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(216,190,147,.45); background: rgba(216,190,147,.08); }
+  .pg-fade-t { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--rl-ouro, #3d6e55); }
+  .pg-fade-t .ms { font-size: 17px; }
+  .pg-fade-g { display: flex; gap: 6px; }
+  .pg-fade-b { min-width: 38px; height: 34px; padding: 0 12px; border-radius: 999px; border: 1px solid rgba(216,190,147,.35); background: transparent; color: var(--rl-ink2, #555); cursor: pointer; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+  .pg-fade-b .ms { font-size: 17px; }
+  .pg-fade-b.on { background: var(--rl-ouro, #3d6e55); border-color: var(--rl-ouro, #3d6e55); color: #14110c; }
+  .pg-fade-b:disabled { opacity: .35; cursor: default; }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: #2f5a45; color: #fff; padding: 11px 18px; border-radius: 8px; font-size: 12.5px; opacity: 0; transition: .25s; z-index: 200; pointer-events: none; }
   .toast.on { opacity: 1; transform: translateX(-50%); }
   @media (max-width: 1200px) { .layout { grid-template-columns: 1fr; } .floating-price-panel { position: static; min-height: 0; max-height: none; } .cover-detail { grid-template-columns: 1fr; } .panel-body { padding: 28px 18px; } }
@@ -743,7 +755,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27d'
+const VERSAO = '2026-11-27f'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
