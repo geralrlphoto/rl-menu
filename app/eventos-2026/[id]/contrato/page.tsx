@@ -218,7 +218,8 @@ function ContratoPageContent() {
   const temFoto = servicosFoto.length > 0
   const temVideo = servicosVideo.length > 0
   const temPreWedding = [...servicosFoto, ...servicosVideo].some(s => /PR[ÉE]-?WEDDING/i.test(String(s)))
-  const preWeddingFoto = servicosFoto.some(s => /PR[ÉE]-?WEDDING/i.test(String(s)))
+  const temAlbum = [...servicosFoto, ...servicosExtra].some(s => /[ÁA]LBUM/i.test(String(s)))
+  const preWeddingFoto =servicosFoto.some(s => /PR[ÉE]-?WEDDING/i.test(String(s)))
   const total = (e.valor_foto ?? 0) + (e.valor_video ?? 0) + (e.valor_extras ?? 0)
   const dataCurta = (iso: string | null) => iso ? new Date(iso).toLocaleDateString('pt-PT') : '____/____/______'
   const hoje = formatDate(new Date().toISOString().split('T')[0])
@@ -307,7 +308,8 @@ function ContratoPageContent() {
             <ul className="space-y-2 list-disc pl-5 text-zinc-800">
               <li><strong>Reserva e pagamentos.</strong> A data fica reservada quando o contrato está assinado e a reserva está paga ({total > 0 && total < 1600 ? '25% do valor total' : '400 €'}). Depois pagam 80% do valor em falta até 48 horas antes do evento e os restantes 20% em duas partes, nas entregas (cláusula 2). Têm 15 dias a contar da assinatura para desistir sem custos (cláusula 3).</li>
               <li><strong>Cancelamento.</strong> Depois desses 15 dias, se desistirem, pagam uma compensação que depende da antecedência, segundo a escala da cláusula 3.</li>
-              {temFoto && <li><strong>Fotografias.</strong> Fazemos uma triagem técnica e mostramos-vos as fotografias numa galeria para seleção, com marca de água, numeradas e a 50% da qualidade. <strong>São vocês que escolhem</strong> as fotografias do vosso pack{nFotos ? ` (até ${nFotos})` : ''}, e na mesma escolha indicam as do álbum. Têm 90 dias para escolher. Se não escolherem, escolhemos nós e essa escolha não tem alterações. As fotografias não escolhidas não são entregues em alta resolução e os ficheiros originais (RAW) nunca são entregues (cláusula 9).</li>}
+              {temFoto && <li><strong>Fotografias.</strong> Fazemos uma triagem técnica e mostramos-vos as fotografias numa galeria para seleção, com marca de água, numeradas e a 50% da qualidade. <strong>São vocês que escolhem</strong> as fotografias do vosso pack{nFotos ? ` (até ${nFotos})` : ''}. Têm 90 dias para escolher. Se não escolherem, escolhemos nós e essa escolha não tem alterações. As fotografias não escolhidas não são entregues em alta resolução e os ficheiros originais (RAW) nunca são entregues (cláusula 9).</li>}
+              {temAlbum && <li><strong>Álbum.</strong> Podem criá-lo e personalizá-lo vocês no portal dos noivos ou pedir-nos que o façamos. Depois de concluído, têm direito a uma revisão (cláusula 16).</li>}
               {temPreWedding && <li><strong>Pré-wedding.</strong> {preWeddingFoto
                 ? 'Aqui é diferente: somos nós que escolhemos e editamos entre 30 e 60 fotografias'
                 : 'O vídeo da sessão tem entre 3 e 5 minutos'} (cláusula 12).</li>}
