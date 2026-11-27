@@ -1081,40 +1081,8 @@ function mostrarEstado() {
   const b = $('#bloqueio')
   b.hidden = !CFG.enviado
   b.innerHTML = CFG.enviado
-    ? `<span class="ms">check_circle</span><span>${ADMIN ? `Os noivos enviaram o álbum a ${dt}. Em baixo está o resumo para a produção.` : `Recebemos o vosso álbum a ${dt}. Obrigado! Para mudar alguma coisa, falem connosco.`}</span>`
+    ? `<span class="ms">check_circle</span><span>${ADMIN ? `Os noivos enviaram o álbum a ${dt}. O resumo para a produção está nos Álbuns do Departamento de Fotografia.` : `Recebemos o vosso álbum a ${dt}. Obrigado! Para mudar alguma coisa, falem connosco.`}</span>`
     : ''
-}
-function resumoProducao() {
-  if (!ADMIN) return ''
-  const linha = (k, v) => `<tr><td>${k}</td><td>${v || '—'}</td></tr>`
-  const rev = achar(REVESTIMENTOS, st.rev)?.[1], fita = achar(FITAS, st.fita)?.[1]
-  let pers = 'Sem personalização'
-  if (st.pers.includes('uv')) pers = `Impressão UV · design ${UV_DESIGNS.find(d => d.id === st.uv.design)?.n ?? '—'} · ${esc(st.uv.n1)} & ${esc(st.uv.n2)} · ${esc(st.uv.data)}`
-  if (st.pers.includes('stamping')) {
-    const s = st.stamp
-    pers = `Stamping · ${achar(LETRAS, s.letra)?.[1] ?? '—'} · ${esc(s.car)} · ${achar(LOCAIS, s.loc)?.[1] ?? '—'} · ${achar(CORES_STAMP, s.cor)?.[1] ?? '—'} · "${esc(s.txt1)}"${s.linha2 === 'Com 2ª Linha' ? ` / "${esc(s.txt2)}" (${esc(s.car2)})` : ''}`
-  }
-  const folhas = (st.paginas || []).map((p, i) => {
-    const m = MODELOS_PAG.find(x => x.id === p.modelo)
-    const fotos = (p.slots || []).filter(x => x.foto).map(x => esc(x.foto)).join(', ')
-    return linha(`Folha ${i + 1} · páginas ${i * 2 + 1}–${i * 2 + 2}`, `${m ? m.n : 'sem modelo'}${fotos ? ` · ${fotos}` : ''}`)
-  }).join('')
-  const pedido = `fazer álbum ${REF}`
-  return `<div class="producao"><h4>Resumo para a produção (só a RL vê)</h4>
-    <div class="prod-pasta">
-      <label for="pastaFotos">Pasta das fotos originais</label>
-      <div class="prod-linha">
-        <input id="pastaFotos" placeholder="ex.: D:\CASAMENTOS 2026\Ana e Paulo\EDITADAS" value="${esc(CFG.pasta || '')}">
-        <button class="btn" id="guardarPasta"><span class="ms" style="font-size:16px">save</span>Guardar</button>
-      </div>
-      <div class="prod-linha">
-        <code id="pedidoClaude">${esc(pedido)}</code>
-        <button class="btn cheio" id="copiarPedido"><span class="ms" style="font-size:16px">content_copy</span>Copiar pedido para o Claude</button>
-      </div>
-      <p class="prod-dica">Colem o pedido no Claude: monta as folhas em alta com as fotos desta pasta e preenche o álbum no DreamBooks, parando em "Guardar Projeto".</p>
-    </div>
-    <table>
-    ${linha('Capa', 'Åland')}${linha('Revestimento', rev)}${linha('Personalização', pers)}${linha('Folhas', `${(st.paginas || []).length}${extras() ? ` (${extras()} extra · +${extras() * PRECO_EXTRA} €)` : ''}`)}${folhas}</table></div>`
 }
 async function iniciar() {
   if (!REF) { $('#carregarTxt').textContent = 'Falta a referência do casamento no endereço.'; $('#carregar').classList.add('erro'); return }
@@ -1142,20 +1110,8 @@ async function iniciar() {
     await new Promise((ok, falha) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = falha; document.body.appendChild(s) })
   }
   mostrarEstado()
-  if (ADMIN) {
-    document.querySelector('.content-panel').insertAdjacentHTML('beforeend', resumoProducao())
-    $('#guardarPasta').onclick = async () => {
-      const pasta = $('#pastaFotos').value.trim()
-      const r = await fetch('/api/fotos-selecao-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: REF, acao: 'pasta', pasta }) })
-      if (r.ok) { CFG = (await r.json()).config; toast('Pasta guardada') } else toast('Não foi possível guardar a pasta')
-    }
-    $('#copiarPedido').onclick = async () => {
-      if (!$('#pastaFotos').value.trim()) return toast('Primeiro indiquem a pasta das fotos originais')
-      if ($('#pastaFotos').value.trim() !== (CFG.pasta || '')) $('#guardarPasta').click()
-      try { await navigator.clipboard.writeText($('#pedidoClaude').textContent); toast('Pedido copiado. Colem-no no Claude.') }
-      catch { toast('Copiem à mão: ' + $('#pedidoClaude').textContent) }
-    }
-  }
+  // o resumo para a produção, a pasta das fotos e o pedido ao Claude estão na página de Álbuns
+  // do Departamento de Fotografia (/edicao-fotografia/albuns), não no portal dos noivos
   $('#carregar').remove()
 }
 $('#enviar').onclick = async () => {

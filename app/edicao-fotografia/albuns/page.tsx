@@ -11,11 +11,13 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { whatsappLink } from '@/lib/crm'
 import { JanelaWhatsApp, comNotaAutomatica } from '@/app/components/WhatsAppMembro'
+import type { ResumoAlbum } from '@/lib/albumPersonalizado'
 
 const OURO = '#C9A84C'
-type Coluna = 'nomear' | 'edicao' | 'revisao' | 'noivos' | 'alteracoes' | 'aprovado' | 'entregue'
+type Coluna = 'nomear' | 'claude' | 'edicao' | 'revisao' | 'noivos' | 'alteracoes' | 'aprovado' | 'entregue'
 const COLUNAS: { k: Coluna; titulo: string; cor: string; quem: string; texto: string }[] = [
   { k: 'nomear', titulo: 'Por nomear', cor: '#f87171', quem: 'RL', texto: 'Seleção recebida. Escolhe o editor do álbum: recebe o trabalho no portal e o email.' },
+  { k: 'claude', titulo: 'Personalizado pelos noivos', cor: '#d8be93', quem: 'Claude', texto: 'Os noivos montaram o álbum no portal. Indica a pasta das fotos originais e copia o pedido para o Claude. Não é preciso nomear editor.' },
   { k: 'edicao', titulo: 'Em edição', cor: '#fb923c', quem: 'Editor', texto: 'Logo ao nomear. O editor entrega o álbum no portal dele (link). Prazo: 30 dias depois da seleção.' },
   { k: 'revisao', titulo: 'Em revisão', cor: '#fbbf24', quem: 'RL', texto: 'Recebes um email. Vês o álbum do editor, crias o teu link e envias aos noivos, ou pedes alterações ao editor.' },
   { k: 'noivos', titulo: 'Entregue aos noivos', cor: '#93c5fd', quem: 'Noivos', texto: 'Recebem o email com o teu link e veem-no no portal, com Aprovar ou Pedir alterações.' },
@@ -35,14 +37,16 @@ type Album = {
   historico: { etapa: string; origem: string | null; em: string }[]
   entregueEm: string | null; aprovadoEm: string | null
   ficha: Record<string, string | number>
+  personalizado: ResumoAlbum | null
 }
-type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null; temAlbum: boolean | null; tamanho?: string | null; situacao?: string | null }
+type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null; temAlbum: boolean | null; tamanho?: string | null; situacao?: string | null; personalizado?: ResumoAlbum | null }
 
 const fmt = (iso: string | null) => iso ? new Date(String(iso).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—'
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
 const dias = (n: number) => `${n} ${n === 1 ? 'dia' : 'dias'}`
 const colunaDe = (a: Album): Coluna =>
-  !a.editores.length && (a.estado === 'NOVO ÁLBUM' || a.estado === 'EM EDIÇÃO') ? 'nomear'
+  a.personalizado && !a.editores.length && (a.estado === 'NOVO ÁLBUM' || a.estado === 'EM EDIÇÃO') ? 'claude'
+  : !a.editores.length && (a.estado === 'NOVO ÁLBUM' || a.estado === 'EM EDIÇÃO') ? 'nomear'
     : a.estado === 'REVISÃO RL' ? 'revisao' : a.estado === 'PARA APROVAÇÃO' ? 'noivos' : a.estado === 'ALTERAÇÕES' ? 'alteracoes'
       : a.estado === 'APROVADO' ? 'aprovado' : a.estado === 'ENTREGUE' ? 'entregue' : 'edicao'
 
@@ -61,6 +65,55 @@ function FotosAlbum({ texto, temAlbum }: { texto: string | null; temAlbum?: bool
       <button type="button" onClick={async () => { try { await navigator.clipboard.writeText(lista.join('; ')); setCopiado(true); setTimeout(() => setCopiado(false), 2000) } catch {} }}
         className="mt-2 text-[10px] font-semibold tracking-[0.15em] uppercase text-white/50 hover:text-white">{copiado ? 'Copiado ✓' : 'Copiar a lista'}</button>
     </details>
+  )
+}
+
+/* Álbum que os noivos personalizaram no portal: resumo, pasta das fotos e o pedido ao Claude */
+function BlocoClaude({ referencia, r, onGuardado }: { referencia: string; r: ResumoAlbum; onGuardado: () => void }) {
+  const [pasta, setPasta] = useState(r.pasta ?? '')
+  const [aviso, setAviso] = useState<string | null>(null)
+  const pedido = `fazer álbum ${referencia}`
+  const avisar = (t: string) => { setAviso(t); setTimeout(() => setAviso(a => (a === t ? null : a)), 2500) }
+  async function guardarPasta(): Promise<boolean> {
+    const res = await fetch('/api/fotos-selecao-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: referencia, acao: 'pasta', pasta: pasta.trim() }) }).catch(() => null)
+    if (!res?.ok) { avisar('Não foi possível guardar a pasta'); return false }
+    onGuardado(); return true
+  }
+  async function copiar() {
+    if (!pasta.trim()) { avisar('Primeiro indica a pasta das fotos originais'); return }
+    if (pasta.trim() !== (r.pasta ?? '') && !(await guardarPasta())) return
+    try { await navigator.clipboard.writeText(pedido); avisar('Pedido copiado. Cola-o no Claude.') } catch { avisar(`Copia à mão: ${pedido}`) }
+  }
+  return (
+    <div className="flex flex-col gap-2.5 rounded-xl border border-[#d8be93]/30 bg-[#d8be93]/[0.05] p-3">
+      <p className="text-[11px] text-[#d8be93]">Personalizado pelos noivos{r.enviado ? ` a ${fmt(r.enviado)}` : ''} · feito pelo Claude, sem editor</p>
+      <details className="group/r">
+        <summary className="cursor-pointer list-none text-[10px] font-semibold tracking-[0.2em] uppercase text-white/55 hover:text-white">
+          <span className="group-open/r:hidden">+ Resumo para a produção</span><span className="hidden group-open/r:inline">− Resumo para a produção</span>
+        </summary>
+        <table className="mt-2 w-full text-[11px]">
+          <tbody>
+            {[['Capa', 'Åland'], ['Revestimento', r.revestimento ?? '—'], ['Personalização', r.personalizacao],
+              ['Folhas', `${r.folhas.length}${r.extras ? ` (${r.extras} extra · +${r.extras * 15} €)` : ''}`],
+              ...r.folhas.map(f => [`Folha ${f.n} · pág. ${f.n * 2 - 1}–${f.n * 2}`, `${f.modelo}${f.fotos.length ? ` · ${f.fotos.join(', ')}` : ''}`])].map(([k, v]) => (
+              <tr key={k} className="border-t border-white/[0.06] align-top"><td className="py-1 pr-2 text-white/40 whitespace-nowrap">{k}</td><td className="py-1 text-white/80 break-words">{v}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+      <label className="flex flex-col gap-1">
+        <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Pasta das fotos originais</span>
+        <input value={pasta} onChange={e => setPasta(e.target.value)} placeholder={'ex.: D:\\CASAMENTOS 2026\\Ana e Paulo\\EDITADAS'}
+          className="rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-[12px] text-white outline-none focus:border-[#C9A84C]/60" />
+      </label>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={guardarPasta} className="rounded-full border border-white/15 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-white/60 hover:text-white">Guardar pasta</button>
+        <button type="button" onClick={copiar} className="rounded-full border border-[#d8be93]/60 bg-[#d8be93]/15 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#d8be93] hover:bg-[#d8be93]/25">Copiar pedido para o Claude</button>
+      </div>
+      <code className="text-[11px] text-white/45">{pedido}</code>
+      <a href={`/portal-cliente/personalizar-album/index.html?ref=${encodeURIComponent(referencia)}`} target="_blank" rel="noopener noreferrer" className="text-[11px] font-semibold text-[#d8be93] hover:underline">▶ Ver o álbum dos noivos</a>
+      {aviso && <p className="text-[11px] text-amber-200/90">{aviso}</p>}
+    </div>
   )
 }
 
@@ -177,7 +230,8 @@ export default function AlbunsPage() {
     for (const [, l] of m) l.sort((x, y) => (x.diasPrazo ?? 9999) - (y.diasPrazo ?? 9999))
     return m
   }, [albuns])
-  const contar = (k: Coluna) => (porColuna.get(k)?.length ?? 0) + (k === 'nomear' ? (dados?.porNomear.length ?? 0) : 0)
+  const extrasDe = (k: Coluna) => (dados?.porNomear ?? []).filter(p => (k === 'claude' ? !!p.personalizado : k === 'nomear' ? !p.personalizado : false))
+  const contar = (k: Coluna) => (porColuna.get(k)?.length ?? 0) + extrasDe(k).length
   const atrasados = albuns.filter(a => a.diasPrazo !== null && a.diasPrazo < 0 && ['edicao', 'alteracoes', 'aprovado'].includes(colunaDe(a))).length
   const nomesEquipa = (dados?.equipa ?? []).map(e => e.nome)
   const select = (valor: string, onChange: (v: string) => void, disabled: boolean) => (
@@ -255,7 +309,7 @@ export default function AlbunsPage() {
           <div className={filtro === 'todos' ? 'mt-6 flex gap-4 overflow-x-auto pb-4 snap-x' : 'mt-6'}>
             {COLUNAS.filter(c => filtro === 'todos' || c.k === filtro).map(c => {
               const lista = porColuna.get(c.k) ?? []
-              const extra = c.k === 'nomear' ? (dados?.porNomear ?? []) : []
+              const extra = extrasDe(c.k)
               return (
                 <div key={c.k} className={filtro === 'todos' ? 'snap-start flex-none w-[290px] flex flex-col gap-3' : 'grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-start'}>
                   <div className="flex items-center justify-between px-1 col-span-full">
@@ -289,8 +343,12 @@ export default function AlbunsPage() {
                           {p.situacao && <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/55">{p.situacao}</span>}
                         </div>
                       )}
-                      {!p.situacao && <FotosAlbum texto={p.fotosAlbum} temAlbum={p.temAlbum} />}
-                      {select('', v => nomear(p.referencia, p.cliente, v, undefined, p.fotosAlbum), aGravar === p.referencia)}
+                      {p.personalizado
+                        ? <BlocoClaude referencia={p.referencia} r={p.personalizado} onGuardado={carregar} />
+                        : <>
+                          {!p.situacao && <FotosAlbum texto={p.fotosAlbum} temAlbum={p.temAlbum} />}
+                          {select('', v => nomear(p.referencia, p.cliente, v, undefined, p.fotosAlbum), aGravar === p.referencia)}
+                        </>}
                       {p.fichaId && <Link href={`/eventos-2026/${p.fichaId}`} className="text-[11px] font-semibold tracking-[0.15em] uppercase text-[#C9A84C]/80 hover:text-[#C9A84C]">Ficha →</Link>}
                     </div>
                     </div>)
@@ -311,14 +369,15 @@ export default function AlbunsPage() {
                           </p>
                         )}
                         {k === 'noivos' && a.maqueteEnviada && <p className="text-[12px] text-white/55">Entregue aos noivos a {fmt(a.maqueteEnviada)}</p>}
-                        {k !== 'entregue' && <FotosAlbum texto={a.fotosAlbum} temAlbum={a.temAlbum} />}
+                        {k === 'claude' && a.personalizado && <BlocoClaude referencia={a.referencia} r={a.personalizado} onGuardado={carregar} />}
+                        {k !== 'entregue' && k !== 'claude' && <FotosAlbum texto={a.fotosAlbum} temAlbum={a.temAlbum} />}
                         {atraso && (
                           <button type="button" onClick={() => avisar(a)}
                             className="rounded-full border border-[#25D366]/45 bg-[#25D366]/10 px-3 py-1.5 text-[11px] font-semibold tracking-[0.1em] uppercase text-[#25D366] hover:bg-[#25D366]/20">
                             Avisar {responsavel(a) ? primeiro(responsavel(a)!.nome) : 'o editor'} por WhatsApp
                           </button>
                         )}
-                        {k !== 'entregue' && (
+                        {k !== 'entregue' && k !== 'claude' && (
                           <label className="flex flex-col gap-1">
                             <span className="text-[10px] font-semibold tracking-[0.18em] uppercase text-white/40">Editor do álbum</span>
                             {select(nomeEquipa(a), v => nomear(a.refAlbum, a.cliente, v, nomeEquipa(a), a.fotosAlbum), aGravar === a.referencia)}

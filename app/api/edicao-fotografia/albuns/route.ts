@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { exigeAdmin, cabecalhoInterno } from '@/lib/api-guard'
 import { aplicarEstadoAlbum, ESTADOS_ALBUM, type EstadoAlbum } from '@/lib/albumEstado'
 import { PRAZO_ALBUM_EDITOR_DIAS } from '@/lib/etapasFotografo'
+import { resumoAlbum, type ResumoAlbum } from '@/lib/albumPersonalizado'
 
 // Departamento de Fotografia › Álbuns (/edicao-fotografia/albuns).
 // GET: os álbuns (albuns_casamento) com o editor (evento_equipa.editor_album), a
@@ -143,7 +144,31 @@ export async function GET(req: NextRequest) {
   }
   porNomear.sort((a, b) => String(a.data ?? '').localeCompare(String(b.data ?? '')))
 
-  return NextResponse.json({ ok: true, hoje, albuns, porNomear, equipa: equipa ?? [] })
+  // ── Álbuns personalizados pelos noivos no portal (portais.settings.album_config enviado):
+  //    o Claude faz o álbum ("fazer álbum CAS_xxx"), sem nomear editor ──
+  const { data: pcfg } = await sb.from('portais').select('referencia, cfg:settings->album_config').not('settings->album_config', 'is', null)
+  const persPorRef = new Map<string, ResumoAlbum>()
+  for (const p of (pcfg ?? []) as any[]) {
+    const r = resumoAlbum(p.cfg)
+    if (r?.enviado && p.referencia) persPorRef.set(p.referencia, r)
+  }
+  const noQuadro = new Set([...albuns.map(a => a.referencia), ...albuns.map(a => a.refAlbum), ...porNomear.map(p => p.referencia)])
+  const faltam = [...persPorRef.keys()].filter(r => !noQuadro.has(r))
+  if (faltam.length) {
+    const { data: evf } = await sb.from('eventos_2026').select('id, notion_id, referencia, cliente, data_evento').in('referencia', faltam)
+    for (const ref of faltam) {
+      const e = (evf ?? []).find(x => x.referencia === ref)
+      porNomear.push({ referencia: ref, cliente: e?.cliente ?? ref, data: e?.data_evento ?? null, fichaId: e?.notion_id ?? (e?.id ? String(e.id) : null),
+        recebida: null, numFotos: null, fotosAlbum: null, temAlbum: true, tamanho: null, situacao: null })
+    }
+  }
+
+  return NextResponse.json({
+    ok: true, hoje,
+    albuns: albuns.map(a => ({ ...a, personalizado: persPorRef.get(a.referencia) ?? persPorRef.get(a.refAlbum) ?? null })),
+    porNomear: porNomear.map(p => ({ ...p, personalizado: persPorRef.get(p.referencia) ?? null })),
+    equipa: equipa ?? [],
+  })
 }
 
 export async function POST(req: NextRequest) {
