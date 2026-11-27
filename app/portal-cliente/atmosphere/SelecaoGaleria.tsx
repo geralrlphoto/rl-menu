@@ -393,19 +393,15 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
     } finally { setAEnviar(false) }
   }
 
-  // ── Enviar seleção: com álbum no contrato, pergunta se querem personalizá-lo ou deixar à RL ──
-  async function enviarSelecao() {
-    if (!temAlbum || albEnviado) { await enviar(); return }
-    setConfirmar(false)
-    const r = await perguntar({
-      titulo: 'Querem personalizar o vosso álbum?',
-      texto: 'Podem escolher as fotografias do álbum e personalizá-lo aqui no portal: a capa, a personalização e as páginas.\n\nOu podem deixar isso connosco e a RL Photo.Video monta o álbum a partir da vossa seleção.',
-      sim: 'Sim, vamos personalizar', nao: 'Não, deixar à RL Photo.Video',
-    })
-    if (r === null) { setConfirmar(true); return }
-    if (!(await enviar(r ? 'noivos' : 'rl'))) return
-    if (r) { setFiltro('album'); toast('Seleção enviada. Agora escolham as fotografias do álbum e personalizem-no.') }
-    else toast('Seleção enviada. Nós tratamos do álbum. Obrigado!')
+  // ── Enviar seleção (sem álbum no contrato, ou com o álbum já enviado) ──
+  async function enviarSelecao() { await enviar() }
+
+  // ── Seguinte (com álbum): guarda a seleção e passa ao separador Álbum; o envio faz-se lá ──
+  async function irParaAlbum() {
+    await atualizar()
+    setFiltro('album')
+    rootRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    toast('Agora escolham as fotografias do álbum e personalizem-no')
   }
 
   // ── Enviar (separador Álbum): a seleção, as fotos do álbum e o álbum personalizado, de uma vez ──
@@ -417,10 +413,18 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
     if (fr?.guardarJa) await fr.guardarJa().catch(() => null)
     const v = await fetch(`/api/fotos-selecao-album?ref=${encodeURIComponent(portalRef)}&validar=1`).then(r => r.json()).catch(() => null)
     if (!v?.ok) { toast('Não foi possível verificar o álbum. Tentem de novo.'); return }
-    if (!v.fotosAlbum) { toast('Escolham primeiro as fotografias para o álbum'); return }
+    // sem fotos no álbum, sem personalização ou com folhas por completar: perguntar se deixam à RL
+    const deixarRL = (falta: string) => perguntar({
+      titulo: 'Não querem personalizar o vosso álbum?',
+      texto: `${falta}\n\nQuerem deixar que a RL Photo.Video personalize o álbum por vocês? Montamos o álbum a partir da vossa seleção.`,
+      sim: 'Sim, deixar à RL Photo.Video', nao: 'Não, vamos personalizar',
+    })
     let semPersonalizar = false
-    if (!v.iniciado) {
-      if (!(await perguntar({ titulo: 'Álbum por personalizar', texto: 'Ainda não personalizaram o álbum (capa e páginas).\n\nQuerem enviar sem personalizar o álbum?', sim: 'Enviar sem personalizar', nao: 'Personalizar primeiro' }))) return
+    if (!v.fotosAlbum) {
+      if (!(await deixarRL('Ainda não escolheram fotografias para o álbum.'))) return
+      semPersonalizar = true
+    } else if (!v.iniciado) {
+      if (!(await deixarRL('Ainda não personalizaram o álbum (capa e páginas).'))) return
       semPersonalizar = true
     } else if (v.faltas.length || v.porColocar.length) {
       const n = v.porColocar.length
@@ -428,7 +432,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
         ...v.faltas.map((f: string) => `• Falta ${f}`),
         ...(n ? [`• ${n} ${n === 1 ? 'fotografia escolhida para o álbum ainda não está' : 'fotografias escolhidas para o álbum ainda não estão'} nas folhas: ${v.porColocar.slice(0, 8).join(', ')}${n > 8 ? '…' : ''}`] : []),
       ]
-      if (!(await perguntar({ titulo: 'Falta completar o álbum', texto: `A personalização do álbum não está completa:\n\n${linhas.join('\n')}\n\nQuerem enviar sem personalizar o álbum?`, sim: 'Enviar sem personalizar', nao: 'Voltar e completar' }))) return
+      if (!(await deixarRL(`O álbum ainda tem páginas por completar:\n\n${linhas.join('\n')}`))) return
       semPersonalizar = true
     } else if (!(await perguntar({ titulo: 'Enviar tudo?', texto: `Vamos enviar ${enviada ? '' : 'a seleção, '}as fotografias do álbum e o álbum personalizado.\n\nDepois de enviado fica fechado e passamos à produção.`, sim: 'Enviar', nao: 'Ainda não' }))) return
     // a seleção, se ainda não foi
@@ -444,7 +448,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
       setAlbEnviado(d.enviada)
       setAlbGuardado('ok')
       setPzVez(x => x + 1)   // a personalização passa a mostrar "enviado"
-      toast(semPersonalizar ? 'Enviado. Obrigado!' : 'Seleção e álbum enviados. Obrigado!')
+      toast(semPersonalizar ? 'Enviado. Nós tratamos do álbum. Obrigado!' : 'Seleção e álbum enviados. Obrigado!')
     } finally { setAEnviar(false) }
   }
 
@@ -640,7 +644,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
                   {albEnviado ? 'Ver o álbum' : personalizar ? 'Atualizar fotos' : 'Personalizar álbum'}
                 </button>
                 {!albEnviado && (
-                  <button type="button" className="fp-btn available sg-enviar" disabled={totalAlb === 0 || aEnviar} onClick={enviarTudo}>
+                  <button type="button" className="fp-btn available sg-enviar" disabled={aEnviar || (!enviada && total === 0)} onClick={enviarTudo}>
                     {aEnviar ? 'A enviar…' : 'Enviar'}
                   </button>
                 )}
@@ -650,9 +654,16 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
                 Continuar →
               </button>
             ) : (
-              <button type="button" className="fp-btn available sg-enviar" disabled={!!enviada || total === 0} onClick={async () => { await atualizar(); setConfirmar(true) }}>
-                {enviada ? 'Seleção enviada' : 'Enviar seleção'}
-              </button>
+              temAlbum && !enviada && !albEnviado ? (
+                // com álbum no contrato: Seguinte leva ao separador Álbum; o envio faz-se lá
+                <button type="button" className="fp-btn available sg-enviar" disabled={total === 0} onClick={irParaAlbum}>
+                  Seguinte →
+                </button>
+              ) : (
+                <button type="button" className="fp-btn available sg-enviar" disabled={!!enviada || total === 0} onClick={async () => { await atualizar(); setConfirmar(true) }}>
+                  {enviada ? 'Seleção enviada' : 'Enviar seleção'}
+                </button>
+              )
             )}
           </div>
         </footer>

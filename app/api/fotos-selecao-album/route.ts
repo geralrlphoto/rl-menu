@@ -141,8 +141,9 @@ export async function POST(req: Request) {
     if (s0.album_galeria?.enviada && atual.enviado) return NextResponse.json({ error: 'O álbum já foi enviado.' }, { status: 409 })
     const selecao = nomesDe(s0.selecao_galeria?.sel), naSelecao = new Set(selecao)
     const fotosAlbum = nomesDe(s0.album_galeria?.sel).filter(n => naSelecao.has(n))
-    if (!fotosAlbum.length) return NextResponse.json({ error: 'Escolham primeiro as fotografias para o álbum.' }, { status: 400 })
     const semPersonalizar = !!body.semPersonalizar
+    // sem fotos escolhidas só se deixarem o álbum à RL
+    if (!fotosAlbum.length && !semPersonalizar) return NextResponse.json({ error: 'Escolham primeiro as fotografias para o álbum.' }, { status: 400 })
     let config = atual
     if (!semPersonalizar) {
       const v = validarAlbum(atual.estado, fotosAlbum)
@@ -153,7 +154,7 @@ export async function POST(req: Request) {
       .update({ settings: { ...s0, album_config: config, album_galeria: { ...s0.album_galeria, sel: fotosAlbum, atualizado: agora, enviada: s0.album_galeria?.enviada ?? agora } }, updated_at: agora })
       .eq('id', portal.id)
     if (err) return NextResponse.json({ error: err.message }, { status: 500 })
-    if (!s0.album_galeria?.enviada) {
+    if (!s0.album_galeria?.enviada && fotosAlbum.length) {
       // as fotos do álbum passam para fotos_selecao.fotos_album (é daí que o departamento as lê)
       const ordem = selecao.filter(n => fotosAlbum.includes(n))
       const { data: linha } = await db().from('fotos_selecao').select('id')
