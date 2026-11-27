@@ -14,8 +14,8 @@ const EVENTOS_DB = '1ad220116d8a804b839ddc36f1e7ecf1'
 const EDITORIAIS = [
   { slug: 'zankyou-quinta-da-ria', nome: 'Zankyou × Quinta da Ria', sub: 'EDITORIAL · PLANO DE VÍDEO', href: '/editorial/zankyou-quinta-da-ria' },
   { slug: 'zankyou-sud-lisboa', nome: 'Zankyou Wedding Club × SUD Lisboa', sub: 'EVENTO · 16 NOV 2026 · VÍDEO OFICIAL', href: '/editorial/zankyou-sud-lisboa' },
-  // Portal da reunião de parceria (a apresentação tem password própria, em app/parceria/sirius-park/apresentacao/acesso.ts): sem o botão +
-  { slug: 'sirius-park', nome: 'Sirius Park · Reunião de parceria', sub: 'PARCERIA · 25 NOV 2026 · 16:30', href: '/parceria/sirius-park', semAdmin: true },
+  // Portal de parceria do Sirius Park (portal e apresentação com a password de app/parceria/sirius-park/apresentacao/acesso.ts): sem o botão +
+  { slug: 'sirius-park', nome: 'Sirius Park · Portal de parceria', sub: 'PARCERIA · NÚMEROS · BIBLIOTECA · MOOD BOARD', href: '/parceria/sirius-park', semAdmin: true },
 ]
 
 function formatDay(d: string) {
