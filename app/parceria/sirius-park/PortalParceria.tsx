@@ -149,6 +149,7 @@ export default function PortalParceria({ dados: inicial, admin, fotosEspaco }: {
       </div>
 
       <Percurso />
+      <KitCasais />
       <div className="rlp-div" />
       <Numeros casamentos={dados.casamentos} admin={admin} atualizar={atualizar} />
       <div className="rlp-div" />
@@ -189,6 +190,37 @@ export default function PortalParceria({ dados: inicial, admin, fotosEspaco }: {
 }
 
 type Atualizar = (d: DadosPortal | null) => void
+
+/* ───────────────────────── KIT PARA OS CASAIS ───────────────────────── */
+// Página pública /parceria/sirius-park/casais que a Inês envia aos noivos que visitam o espaço
+function KitCasais() {
+  const [copiado, setCopiado] = useState(false)
+  const [url, setUrl] = useState('/parceria/sirius-park/casais')
+  useEffect(() => setUrl(`${location.origin}/parceria/sirius-park/casais`), [])
+  const msg = `Olá! Deixo-vos aqui a RL Photo · Video, a equipa de fotografia e vídeo que recomendamos no ${ESPACO}: ${url}`
+  const copiar = async () => { try { await navigator.clipboard.writeText(url); setCopiado(true); setTimeout(() => setCopiado(false), 2500) } catch { prompt('Copiar o link:', url) } }
+  return (
+    <section className="rlp-sec pp-kit">
+      <div className="rlp-wrap" style={{ maxWidth: 1100 }}>
+        <div className="pp-kit-in rlp-card">
+          <FadeIn className="pp-kit-txt">
+            <span className="rlp-eyebrow">Kit para os vossos casais</span>
+            <h2 className="rlp-h2">Recomendem-nos <em>num clique</em></h2>
+            <p className="rlp-lede">Quando um casal visitar o {ESPACO}, enviem-lhe esta página: o nosso trabalho, os vídeos, como funciona e um botão para nos perguntarem pela data. Quem vier por aqui chega-nos como recomendação vossa.</p>
+            <div className="pp-kit-acoes">
+              <a href={`https://wa.me/?text=${encodeURIComponent(msg)}`} target="_blank" rel="noopener noreferrer" className="rlp-btn"><span className="fill" /><span className="dot" />Enviar por WhatsApp</a>
+              <button onClick={copiar} className="rlp-calbtn">{copiado ? 'Link copiado ✓' : 'Copiar link'}</button>
+              <a href="/parceria/sirius-park/casais" target="_blank" rel="noopener noreferrer" className="rlp-calbtn">Ver como o casal vê ↗</a>
+            </div>
+          </FadeIn>
+          <FadeIn delay={200} className="pp-kit-tel" aria-hidden>
+            <div className="pp-kit-tel-ecra"><iframe src="/parceria/sirius-park/casais" title="Kit para os casais" tabIndex={-1} loading="lazy" /></div>
+          </FadeIn>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 /* ───────────────────────── NÚMEROS ───────────────────────── */
 function Numeros({ casamentos, admin, atualizar }: { casamentos: Casamento[]; admin: boolean; atualizar: Atualizar }) {
@@ -505,6 +537,20 @@ const PP_CSS = `
 /* cabeçalhos */
 .pp-cab{display:flex;flex-direction:column;gap:14px;max-width:62ch;margin-bottom:clamp(32px,5vw,56px)}
 .pp-cab .rlp-lede{font-size:16px}
+
+/* kit para os casais */
+.pp-kit{padding-top:0!important}
+.pp-kit-in{display:grid;grid-template-columns:1.2fr 1fr;gap:clamp(24px,4vw,60px);align-items:center;padding:clamp(26px,4vw,56px)!important;overflow:hidden}
+.pp-kit-in>*{position:relative;z-index:1}
+.pp-kit-txt{display:flex;flex-direction:column;gap:16px}
+.pp-kit-txt .rlp-lede{font-size:16px}
+.pp-kit-acoes{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:8px}
+.pp-kit-acoes .rlp-calbtn{flex:0 0 auto;white-space:nowrap;width:auto;min-width:0;padding:14px 20px}
+.pp-kit-tel{justify-self:center;width:250px;height:510px;border-radius:38px;padding:10px;background:linear-gradient(145deg,#2a2620,#0e0d0b);border:1px solid rgba(216,190,147,.35);box-shadow:0 40px 80px -40px #000,0 0 60px -30px rgba(216,190,147,.6);animation:pp-flutua 6s ease-in-out infinite}
+@keyframes pp-flutua{50%{transform:translateY(-10px) rotate(-1deg)}}
+.pp-kit-tel-ecra{width:100%;height:100%;border-radius:29px;overflow:hidden;background:#0b0b0b;position:relative}
+.pp-kit-tel-ecra iframe{position:absolute;top:0;left:0;width:375px;height:800px;border:0;transform:scale(.613);transform-origin:0 0;pointer-events:none}
+@media(max-width:820px){.pp-kit-in{grid-template-columns:1fr}}
 
 /* números */
 .pp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
