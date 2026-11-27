@@ -64,15 +64,17 @@ export async function GET(req: Request) {
   const url = portal.settings?.selecao_url as string | undefined
   const estado = estadoDe(portal.settings)
   const album = albumDe(portal.settings)
-  if (searchParams.get('estado')) return NextResponse.json({ ok: true, wfolio: ehGaleriaWfolio(url), estado, album })
+  // tem álbum nos serviços contratados (ficha)? Sem álbum, o portal não mostra o Álbum nem a pergunta
+  const temAlbum = await temAlbumPortal(db(), portal.referencia).catch(() => false)
+  if (searchParams.get('estado')) return NextResponse.json({ ok: true, wfolio: ehGaleriaWfolio(url), estado, album, temAlbum })
 
-  if (!ehGaleriaWfolio(url)) return NextResponse.json({ ok: false, error: 'sem_galeria', estado, album })
+  if (!ehGaleriaWfolio(url)) return NextResponse.json({ ok: false, error: 'sem_galeria', estado, album, temAlbum })
   try {
-    const [g, temAlbum] = await Promise.all([lerGaleriaWfolio(url!), temAlbumPortal(db(), portal.referencia, portal.settings).catch(() => null)])
+    const g = await lerGaleriaWfolio(url!)
     return NextResponse.json({ ok: true, cdn: WFOLIO_CDN, titulo: g.titulo, pastas: g.pastas, estado, album, temAlbum, escolhaAlbum: portal.settings?.album_escolha ?? null })
   } catch (e) {
     console.error('[fotos-selecao-galeria] wfolio:', e)
-    return NextResponse.json({ ok: false, error: 'wfolio', estado, album }, { status: 502 })
+    return NextResponse.json({ ok: false, error: 'wfolio', estado, album, temAlbum }, { status: 502 })
   }
 }
 
@@ -178,7 +180,8 @@ export async function POST(req: Request) {
   const { id, error } = await saveSelecao(mapped, 'fotos-selecao-galeria')
   if (error) return NextResponse.json({ error }, { status: 500 })
   // Quem personaliza o álbum (perguntado aos noivos ao enviar): settings + Notas Privadas do portal
-  const escolha: EscolhaAlbum | null = body.album === 'noivos' || body.album === 'rl' ? { quem: body.album, em: agora } : null
+  const escolha: EscolhaAlbum | null = (body.album === 'noivos' || body.album === 'rl') && await temAlbumPortal(db(), portal.referencia).catch(() => false)
+    ? { quem: body.album, em: agora } : null
   const mais: Record<string, any> = {}
   if (escolha) {
     mais.album_escolha = escolha

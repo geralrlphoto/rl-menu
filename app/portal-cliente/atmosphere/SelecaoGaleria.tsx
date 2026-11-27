@@ -67,8 +67,8 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   const [pergunta, setPergunta] = useState<Pergunta | null>(null)
   const perguntar = (o: Omit<Pergunta, 'resolve'>) => new Promise<boolean | null>(resolve => setPergunta({ ...o, resolve }))
   const responder = (v: boolean | null) => { pergunta?.resolve(v); setPergunta(null) }
-  // Contrato com álbum? (ao enviar a seleção pergunta-se quem personaliza o álbum; null = não se sabe, pergunta)
-  const [temAlbum, setTemAlbum] = useState<boolean | null>(null)
+  // Álbum nos serviços contratados (ficha)? Só assim aparece o separador Álbum e a pergunta ao enviar
+  const [temAlbum, setTemAlbum] = useState(false)
   const [albGuardado, setAlbGuardado] = useState<'ok' | 'a-guardar' | 'erro'>('ok')
   const albTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const albRef = useRef<string[]>([])
@@ -118,7 +118,8 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
           const a = Array.isArray(d.album.sel) ? d.album.sel : []
           setAlb(a); albRef.current = a
           setAlbEnviado(d.album.enviada ?? null)
-          setTemAlbum(d.temAlbum ?? null)
+          setTemAlbum(d.temAlbum === true)
+          if (d.temAlbum !== true) setFiltro(f => (f === 'album' ? 'todas' : f))
         }
         if (!d?.ok) { setErro(d?.error === 'wfolio' ? 'A galeria está a demorar a responder. Tentem de novo daqui a pouco.' : 'A galeria ainda não está disponível.'); return }
         setCdn(d.cdn)
@@ -394,7 +395,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
   // ── Enviar seleção: com álbum no contrato, pergunta se querem personalizá-lo ou deixar à RL ──
   async function enviarSelecao() {
-    if (temAlbum === false || albEnviado) { await enviar(); return }
+    if (!temAlbum || albEnviado) { await enviar(); return }
     setConfirmar(false)
     const r = await perguntar({
       titulo: 'Querem personalizar o vosso álbum?',
@@ -540,7 +541,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
             <div className="sg-tabs">
               <button type="button" className={filtro === 'todas' ? 'on' : ''} onClick={() => { setFiltro('todas'); if (pasta === SO_ALBUM) setPasta('todas') }}>Todas</button>
               <button type="button" className={filtro === 'sel' ? 'on' : ''} onClick={() => { setFiltro('sel'); if (pasta === SO_ALBUM) setPasta('todas') }}>A minha seleção · {filtro === 'sel' && pasta !== 'todas' ? (porPasta[pasta] ?? 0) : total}</button>
-              {!conv && <button type="button" className={`sg-tab-album${modoAlbum ? ' on' : ''}`} onClick={() => setFiltro('album')}>Álbum · {totalAlb}</button>}
+              {!conv && temAlbum && <button type="button" className={`sg-tab-album${modoAlbum ? ' on' : ''}`} onClick={() => setFiltro('album')}>Álbum · {totalAlb}</button>}
             </div>
 
             {modoAlbum && (

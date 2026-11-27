@@ -544,11 +544,13 @@ export function FotografiasView(props: FotografiasViewProps) {
   const selecaoInterna = ehGaleriaWfolio(urlSelecao) && !!props.portalRef
   const [galeriaAberta, setGaleriaAberta] = useState<false | true | 'album'>(false)
   const [estadoSel, setEstadoSel] = useState<EstadoSelecao | null>(null)
+  // álbum nos serviços contratados (ficha): sem ele não aparece o botão Álbum
+  const [temAlbum, setTemAlbum] = useState(false)
   useEffect(() => {
     if (!selecaoInterna) return
     let vivo = true
     fetch(`/api/fotos-selecao-galeria?ref=${encodeURIComponent(props.portalRef!)}&estado=1`)
-      .then(r => r.json()).then(d => { if (vivo && d?.estado) setEstadoSel(d.estado) }).catch(() => {})
+      .then(r => r.json()).then(d => { if (vivo && d?.estado) setEstadoSel(d.estado); if (vivo) setTemAlbum(d?.temAlbum === true) }).catch(() => {})
     return () => { vivo = false }
   }, [selecaoInterna, props.portalRef])
   // Abre logo a galeria quando o endereço traz #selecao (ex.: link do email)
@@ -735,7 +737,7 @@ export function FotografiasView(props: FotografiasViewProps) {
                     />
                   )}
                   {/* Álbum: escolhido só entre as fotografias da seleção */}
-                  {c.key === 'selecao' && available && selecaoInterna && (
+                  {c.key === 'selecao' && available && selecaoInterna && temAlbum && (
                     <button type="button" className="fp-btn ghost" onClick={() => setGaleriaAberta('album')}>
                       Álbum
                       <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
