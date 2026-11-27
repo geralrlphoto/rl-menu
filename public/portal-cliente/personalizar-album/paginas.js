@@ -285,7 +285,12 @@ function renderPaginas() {
       alterna folhas mais cheias e mais leves para dar ritmo;
    2) escolhe um modelo com esse número de espaços, variando entre os disponíveis;
    3) dentro de cada folha, as fotos ao alto vão para os espaços mais altos. */
-function contagens(n) {
+// cada clique em "Montar automaticamente" dá uma configuração nova (as fotos mantêm a ordem)
+let autoAssin = null
+const assinPag = () => JSON.stringify(st.paginas.map(q => [q.modelo, q.slots.map(x => x.foto)]))
+const aleat = n => Math.floor(Math.random() * n)
+const baralhar = a => { for (let i = a.length - 1; i > 0; i--) { const j = aleat(i + 1); [a[i], a[j]] = [a[j], a[i]] } return a }
+function contagens(n, variar) {
   const max = Math.max(...MODELOS_PAG.map(m => m.s.length))
   const folhas = Math.min(INCLUIDAS, n)   // a montagem automática usa só as incluídas
   if (folhas <= 2) return folhas === 1 ? [n] : [Math.ceil(n / 2), Math.floor(n / 2)]
@@ -298,10 +303,16 @@ function contagens(n) {
   for (let i = 0; i + 1 < c.length; i += 2) {
     if (c[i] === c[i + 1] && c[i] >= 3 && c[i] + 1 <= max) { c[i]++; c[i + 1]-- }
   }
-  // espalha as folhas mais cheias para não ficarem todas seguidas
-  c.sort((a, b) => b - a)
   const alternado = []
-  while (c.length) { alternado.push(c.shift()); if (c.length) alternado.push(c.pop()) }
+  if (variar) {
+    // outro ritmo: passa fotos entre folhas ao acaso e baralha a ordem das folhas do meio
+    for (let t = 0; t < c.length; t++) { const a = aleat(c.length), b = aleat(c.length); if (a !== b && c[a] > 2 && c[b] < max) { c[a]--; c[b]++ } }
+    alternado.push(...baralhar(c))
+  } else {
+    // espalha as folhas mais cheias para não ficarem todas seguidas
+    c.sort((a, b) => b - a)
+    while (c.length) { alternado.push(c.shift()); if (c.length) alternado.push(c.pop()) }
+  }
   const out = pontas.length ? [1, ...alternado, 1] : alternado
   // se algum número não tem modelo (ex.: 7), parte-o pela folha seguinte
   for (let i = 0; i < out.length; i++) {
@@ -310,21 +321,36 @@ function contagens(n) {
   return out
 }
 function montarAuto() {
+  // a primeira montagem é a base; as seguintes variam e nunca repetem a que está
+  const variar = st.paginas.some(q => q.slots.some(x => x.foto))
+  const antes = assinPag()
+  let tent = 0
+  do construirAuto(variar); while (variar && assinPag() === antes && ++tent < 15)
+  autoAssin = assinPag()
+  st.pagAtual = 0; pgSel = null; pgEscolhida = null
+  toast(`Nova montagem: ${st.paginas.reduce((a, q) => a + q.slots.filter(x => x.foto).length, 0)} fotografias em ${st.paginas.length} folhas`)
+  pgGuardar()
+}
+function construirAuto(variar) {
   const fotos = FOTOS_ALBUM.slice(0, INCLUIDAS * Math.max(...MODELOS_PAG.map(m => m.s.length)))
-  const cont = contagens(fotos.length)
+  const cont = contagens(fotos.length, variar)
   // abertura e fecho levam uma foto nas duas páginas: escolhe a mais deitada entre as
   // primeiras (e entre as últimas) e põe-na na ponta, sem baralhar o resto
   const deitada = (de, ate) => { let b = de; for (let i = de; i < ate; i++) if (fotos[i].w / fotos[i].h > fotos[b].w / fotos[b].h) b = i; return b }
   if (cont[0] === 1 && fotos.length > 6) fotos.unshift(...fotos.splice(deitada(0, 6), 1))
   if (cont[cont.length - 1] === 1 && fotos.length > 6) fotos.push(...fotos.splice(deitada(fotos.length - 6, fotos.length), 1))
-  const usadosPorN = {}
+  const usadosPorN = {}, desvio = {}
   let k = 0
   st.paginas = cont.map((n, idx, todas) => {
     // modelos com n espaços; abertura e fecho preferem a foto nas duas páginas
     let opcoes = MODELOS_PAG.filter(m => m.s.length === n && !m.semAuto)
-    if (n === 1 && (idx === 0 || idx === todas.length - 1)) opcoes = opcoes.filter(m => m.id === 'panoramica').concat(opcoes)
+    const ponta = n === 1 && (idx === 0 || idx === todas.length - 1)
+    if (ponta) opcoes = opcoes.filter(m => m.id === 'panoramica').concat(opcoes.filter(m => m.id !== 'panoramica'))
     const vez = usadosPorN[n] = (usadosPorN[n] ?? -1) + 1
-    const modelo = n === 1 && (idx === 0 || idx === todas.length - 1) ? opcoes[0] : opcoes[vez % opcoes.length]
+    if (variar && desvio[n] === undefined) desvio[n] = aleat(opcoes.length)
+    const modelo = ponta
+      ? (variar && Math.random() < 0.5 ? opcoes[aleat(opcoes.length)] : opcoes[0])
+      : opcoes[(vez + (desvio[n] ?? 0)) % opcoes.length]
     const grupo = fotos.slice(k, k + n); k += n
     // fotos ao alto nos espaços mais altos (relação altura/largura em cm)
     const alturaRel = ([, , w, hh]) => (hh * 25) / (w * 60)
@@ -334,9 +360,6 @@ function montarAuto() {
     espacos.forEach((e, j) => { if (porForma[j]) slots[e.i] = { foto: porForma[j].id, x: 50, y: 50 } })
     return { modelo: modelo.id, slots, ocultos: [] }
   })
-  st.pagAtual = 0; pgSel = null; pgEscolhida = null
-  toast(`${fotos.length} fotografias distribuídas por ${st.paginas.length} folhas`)
-  pgGuardar()
 }
 
 function pgGuardar() { guardar(true); renderPaginas() }
@@ -369,7 +392,8 @@ raiz.addEventListener('click', async e => {
   const d = b.dataset, p = pgAtual()
   if (d.pgauto) {
     const feito = st.paginas.some(q => q.slots.some(x => x.foto))
-    if (feito && !(await perguntar({ titulo: 'Montar automaticamente?', icone: 'auto_awesome', texto: 'A montagem automática substitui as folhas que já fizeram.', sim: 'Montar', nao: 'Cancelar' }))) return
+    // só pergunta se mexeram nas folhas desde a última montagem automática
+    if (feito && assinPag() !== autoAssin && !(await perguntar({ titulo: 'Montar automaticamente?', icone: 'auto_awesome', texto: 'A montagem automática substitui as folhas que já fizeram.', sim: 'Montar', nao: 'Cancelar' }))) return
     return montarAuto()
   }
   if (d.pgfiltro) { pgFiltro = d.pgfiltro; return renderPaginas() }
