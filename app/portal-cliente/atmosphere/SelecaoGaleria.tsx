@@ -61,6 +61,11 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   const [pzVez, setPzVez] = useState(0)
   const pzRef = useRef<HTMLElement>(null)
   const pzFrame = useRef<HTMLIFrameElement>(null)
+  // janela de aviso com o layout do portal (em vez do confirm do browser)
+  type Pergunta = { titulo: string; texto: string; sim: string; nao: string; resolve: (v: boolean) => void }
+  const [pergunta, setPergunta] = useState<Pergunta | null>(null)
+  const perguntar = (o: Omit<Pergunta, 'resolve'>) => new Promise<boolean>(resolve => setPergunta({ ...o, resolve }))
+  const responder = (v: boolean) => { pergunta?.resolve(v); setPergunta(null) }
   const [albGuardado, setAlbGuardado] = useState<'ok' | 'a-guardar' | 'erro'>('ok')
   const albTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const albRef = useRef<string[]>([])
@@ -395,7 +400,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
     if (!v.fotosAlbum) { toast('Escolham primeiro as fotografias para o álbum'); return }
     let semPersonalizar = false
     if (!v.iniciado) {
-      if (!window.confirm('Ainda não personalizaram o álbum (capa e páginas).\n\nQuerem enviar sem personalizar o álbum?')) return
+      if (!(await perguntar({ titulo: 'Álbum por personalizar', texto: 'Ainda não personalizaram o álbum (capa e páginas).\n\nQuerem enviar sem personalizar o álbum?', sim: 'Enviar sem personalizar', nao: 'Personalizar primeiro' }))) return
       semPersonalizar = true
     } else if (v.faltas.length || v.porColocar.length) {
       const n = v.porColocar.length
@@ -403,9 +408,9 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
         ...v.faltas.map((f: string) => `• Falta ${f}`),
         ...(n ? [`• ${n} ${n === 1 ? 'fotografia escolhida para o álbum ainda não está' : 'fotografias escolhidas para o álbum ainda não estão'} nas folhas: ${v.porColocar.slice(0, 8).join(', ')}${n > 8 ? '…' : ''}`] : []),
       ]
-      if (!window.confirm(`A personalização do álbum não está completa:\n\n${linhas.join('\n')}\n\nQuerem enviar sem personalizar o álbum?\n(Cancelar para voltarem e completarem.)`)) return
+      if (!(await perguntar({ titulo: 'Falta completar o álbum', texto: `A personalização do álbum não está completa:\n\n${linhas.join('\n')}\n\nQuerem enviar sem personalizar o álbum?`, sim: 'Enviar sem personalizar', nao: 'Voltar e completar' }))) return
       semPersonalizar = true
-    } else if (!window.confirm(`Enviar ${enviada ? '' : 'a seleção, '}as fotografias do álbum e o álbum personalizado?\n\nDepois de enviado fica fechado e passamos à produção.`)) return
+    } else if (!(await perguntar({ titulo: 'Enviar tudo?', texto: `Vamos enviar ${enviada ? '' : 'a seleção, '}as fotografias do álbum e o álbum personalizado.\n\nDepois de enviado fica fechado e passamos à produção.`, sim: 'Enviar', nao: 'Ainda não' }))) return
     // a seleção, se ainda não foi
     if (!enviada && !(await enviar())) return
     setAEnviar(true)
@@ -694,6 +699,22 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
             <div className="fp-modal-actions">
               <button type="button" className="fp-btn available" disabled={aEnviar} onClick={modoAlbum ? enviarAlbum : enviar}>{aEnviar ? 'A enviar…' : 'Sim, enviar'}</button>
               <button type="button" className="fp-btn ghost" onClick={() => setConfirmar(false)}>Voltar à galeria</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── janela de aviso (envio do álbum) ── */}
+      {pergunta && (
+        <div className="fp-modal-backdrop" onClick={() => responder(false)}>
+          <div className="fp-modal" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+            <button type="button" className="fp-modal-close" onClick={() => responder(false)} aria-label="Fechar">×</button>
+            <div className="eyebrow">Álbum</div>
+            <h3>{pergunta.titulo}</h3>
+            <p className="sg-conf-txt" style={{ whiteSpace: 'pre-line', textAlign: 'left' }}>{pergunta.texto}</p>
+            <div className="fp-modal-actions">
+              <button type="button" className="fp-btn available" onClick={() => responder(true)}>{pergunta.sim}</button>
+              <button type="button" className="fp-btn ghost" onClick={() => responder(false)}>{pergunta.nao}</button>
             </div>
           </div>
         </div>

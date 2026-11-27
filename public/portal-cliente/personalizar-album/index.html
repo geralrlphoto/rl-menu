@@ -468,6 +468,24 @@
   .pg-add small { display: block; font-size: 10px; font-weight: 500; opacity: .8; }
   .pg-extras { display: flex; align-items: center; gap: 8px; margin-top: 10px; padding: 9px 12px; border-radius: 8px; font-size: 12px; background: var(--verde-bg); border: 1px solid var(--rosa-b); }
   .pg-extras b { white-space: nowrap; }
+  /* janela de aviso RL (em vez das caixas do browser) */
+  .rl-aviso { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 20px; background: rgba(5,4,3,.72); backdrop-filter: blur(4px); animation: rlAvFade .18s ease; }
+  .rl-aviso-caixa { width: min(460px, 100%); border-radius: 22px; padding: 26px 26px 22px; background: #15120e; border: 1px solid rgba(216,190,147,.28);
+                    box-shadow: 0 30px 70px -20px rgba(0,0,0,.9), 0 0 40px -24px rgba(216,190,147,.6); color: rgba(243,237,226,.92); text-align: center; animation: rlAvSobe .22s ease; }
+  .rl-aviso-ic { width: 46px; height: 46px; margin: 0 auto 12px; border-radius: 50%; display: grid; place-items: center; background: rgba(216,190,147,.12); border: 1px solid rgba(216,190,147,.35); color: #d8be93; }
+  .rl-aviso-ic .ms { font-size: 24px; }
+  .rl-aviso-t { margin: 0; font-family: 'Cormorant Garamond', serif; font-weight: 500; font-size: 26px; color: #d8be93; letter-spacing: .01em; }
+  .rl-aviso-linha { width: 44px; height: 1px; margin: 12px auto 14px; background: #d8be93; opacity: .6; }
+  .rl-aviso-x { margin: 0; font-size: 14px; line-height: 1.6; color: rgba(243,237,226,.72); white-space: pre-line; }
+  .rl-aviso-x b { color: rgba(243,237,226,.95); font-weight: 600; }
+  .rl-aviso-bt { display: flex; gap: 10px; justify-content: center; margin-top: 22px; flex-wrap: wrap; }
+  .rl-aviso-bt button { min-width: 140px; height: 42px; padding: 0 18px; border-radius: 999px; cursor: pointer; font: 600 12px Inter, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+  .rl-aviso-bt .nao { background: transparent; border: 1px solid rgba(216,190,147,.35); color: rgba(243,237,226,.75); }
+  .rl-aviso-bt .nao:hover { border-color: #d8be93; color: #d8be93; }
+  .rl-aviso-bt .sim { background: #d8be93; border: 1px solid #d8be93; color: #14110c; }
+  .rl-aviso-bt .sim:hover { background: #e4d3b3; }
+  @keyframes rlAvFade { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes rlAvSobe { from { transform: translateY(10px); opacity: 0 } to { transform: none; opacity: 1 } }
   .toast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); background: #2f5a45; color: #fff; padding: 11px 18px; border-radius: 8px; font-size: 12.5px; opacity: 0; transition: .25s; z-index: 200; pointer-events: none; }
   .toast.on { opacity: 1; transform: translateX(-50%); }
   @media (max-width: 1200px) { .layout { grid-template-columns: 1fr; } .floating-price-panel { position: static; min-height: 0; max-height: none; } .cover-detail { grid-template-columns: 1fr; } .panel-body { padding: 28px 18px; } }
@@ -720,6 +738,8 @@ const PRECO_VEGETAL = 8
 const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
+// muda a cada alteração para o browser não usar paginas.js/revista.js antigos
+const VERSAO = '2026-11-27b'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
@@ -980,6 +1000,27 @@ function renderResumo() {
   $('#resumoPrev').innerHTML = livro('mini')
 }
 
+// ── Janela de aviso RL (substitui o confirm do browser). Devolve uma promessa: true = Sim ──
+function perguntar({ titulo = 'Atenção', texto = '', sim = 'Sim', nao = 'Cancelar', icone = 'info' } = {}) {
+  return new Promise(resolve => {
+    const el = document.createElement('div')
+    el.className = 'rl-aviso'
+    el.innerHTML = `<div class="rl-aviso-caixa" role="dialog" aria-modal="true">
+      <div class="rl-aviso-ic"><span class="ms">${icone}</span></div>
+      <h3 class="rl-aviso-t">${titulo}</h3><div class="rl-aviso-linha"></div>
+      <p class="rl-aviso-x">${texto}</p>
+      <div class="rl-aviso-bt">${nao ? `<button type="button" class="nao">${nao}</button>` : ''}<button type="button" class="sim">${sim}</button></div></div>`
+    const fim = (v) => { document.removeEventListener('keydown', tecla); el.remove(); resolve(v) }
+    const tecla = (e) => { if (e.key === 'Escape') fim(false); else if (e.key === 'Enter') fim(true) }
+    el.addEventListener('click', e => { if (e.target === el) fim(false) })
+    el.querySelector('.sim').onclick = () => fim(true)
+    el.querySelector('.nao')?.addEventListener('click', () => fim(false))
+    document.addEventListener('keydown', tecla)
+    document.body.appendChild(el)
+    el.querySelector('.sim').focus()
+  })
+}
+
 /* ═════════════ INTERAÇÃO ═════════════ */
 let t
 // guarda no portal (com uma cópia neste aparelho caso a internet falhe)
@@ -1108,7 +1149,7 @@ async function iniciar() {
   if (!window.FOTOS_PORTAL.length) toast('Ainda não escolheram fotografias para o álbum no portal')
   render()
   for (const src of ['paginas.js', 'revista.js']) {
-    await new Promise((ok, falha) => { const s = document.createElement('script'); s.src = src; s.onload = ok; s.onerror = falha; document.body.appendChild(s) })
+    await new Promise((ok, falha) => { const s = document.createElement('script'); s.src = src + '?v=' + VERSAO; s.onload = ok; s.onerror = falha; document.body.appendChild(s) })
   }
   mostrarEstado()
   // o resumo para a produção, a pasta das fotos e o pedido ao Claude estão na página de Álbuns
@@ -1127,7 +1168,7 @@ $('#enviar').onclick = async () => {
   if (f.length) return toast(`Falta escolher: ${f[0][0]}`)
   if (vz) return toast('Há folhas sem modelo')
   const ex = extras(), custo = ex ? `\n\nInclui ${ex} ${ex === 1 ? 'folha extra' : 'folhas extra'}: +${ex * PRECO_EXTRA} €.` : ''
-  if (!confirm('Enviar o álbum? Depois de enviado fica fechado e passamos à produção.' + custo)) return
+  if (!(await perguntar({ titulo: 'Enviar o álbum?', texto: 'Depois de enviado fica fechado e passamos à produção.' + custo, sim: 'Enviar', icone: 'send' }))) return
   const r = await fetch('/api/fotos-selecao-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: REF, acao: 'enviar', estado: st }) })
   const d = await r.json().catch(() => ({}))
   if (!r.ok) return toast(d.error || 'Não foi possível enviar. Tentem de novo.')
@@ -1137,7 +1178,7 @@ $('#enviar').onclick = async () => {
   mostrarEstado(); renderPaginas(); toast('Álbum enviado. Obrigado!')
 }
 $('#reabrir').onclick = async () => {
-  if (!confirm('Reabrir o álbum para os noivos poderem alterar?')) return
+  if (!(await perguntar({ titulo: 'Reabrir o álbum?', texto: 'Os noivos voltam a poder alterar o álbum e as fotos do álbum.', sim: 'Reabrir', icone: 'lock_open' }))) return
   const r = await fetch('/api/fotos-selecao-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: REF, acao: 'reabrir' }) })
   if (r.ok) { CFG = (await r.json()).config; mostrarEstado(); toast('Reaberto') }
 }

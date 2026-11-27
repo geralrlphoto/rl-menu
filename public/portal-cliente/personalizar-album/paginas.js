@@ -261,13 +261,13 @@ function montarAuto() {
 
 function pgGuardar() { guardar(true); renderPaginas() }
 
-function colocar(fotoId, i) {
+async function colocar(fotoId, i) {
   const p = pgAtual()
   // a mesma foto não deve repetir: se já está noutro espaço, avisa e só a repete se confirmarem
   const usada = st.paginas.some((q, qi) => q.slots.some((x, xi) => x.foto === fotoId && !(qi === st.pagAtual && xi === i)))
-  if (usada && !confirm(`Não é possível repetir a mesma fotografia no álbum: esta já está na folha ${usos()[fotoId]}.
-
-Têm a certeza que a querem usar outra vez?`)) {
+  if (usada && !(await perguntar({ titulo: 'Fotografia repetida', icone: 'photo_library',
+    texto: `Não é possível repetir a mesma fotografia no álbum: esta já está na <b>folha ${usos()[fotoId]}</b>.\n\nTêm a certeza que a querem usar outra vez?`,
+    sim: 'Sim, usar outra vez', nao: 'Cancelar' }))) {
     pgEscolhida = null; return renderPaginas()
   }
   p.slots[i] = { foto: fotoId, x: 50, y: 50, z: 1 }
@@ -282,14 +282,14 @@ function trocar(a, b) {
 }
 
 const raiz = $('#paginas')
-raiz.addEventListener('click', e => {
+raiz.addEventListener('click', async e => {
   if (pgIgnorarClique) { pgIgnorarClique = false; return }  // fim de um arrasto de enquadramento
   // botões primeiro: as miniaturas das folhas também têm espaços (.pg-slot) lá dentro
   const b = e.target.closest('button') || e.target.closest('.pg-slot'); if (!b || b.disabled) return
   const d = b.dataset, p = pgAtual()
   if (d.pgauto) {
     const feito = st.paginas.some(q => q.slots.some(x => x.foto))
-    if (feito && !confirm('A montagem automática substitui as folhas que já fizeram. Continuar?')) return
+    if (feito && !(await perguntar({ titulo: 'Montar automaticamente?', icone: 'auto_awesome', texto: 'A montagem automática substitui as folhas que já fizeram.', sim: 'Montar', nao: 'Cancelar' }))) return
     return montarAuto()
   }
   if (d.pgfiltro) { pgFiltro = d.pgfiltro; return renderPaginas() }
@@ -315,7 +315,7 @@ raiz.addEventListener('click', e => {
   if (d.pgir) { st.pagAtual = Number(d.pgir); pgSel = null; return pgGuardar() }
   if (d.pgadd) {
     if (st.paginas.length >= MAX_PAG) return toast(`O álbum tem no máximo ${MAX_PAG} folhas duplas`)
-    if (st.paginas.length >= INCLUIDAS && !confirm(`Já têm as ${INCLUIDAS} folhas incluídas. Cada folha extra custa ${PRECO_EXTRA} €. Acrescentar uma folha extra?`)) return
+    if (st.paginas.length >= INCLUIDAS && !(await perguntar({ titulo: 'Folha extra', icone: 'add_circle', texto: `Já têm as <b>${INCLUIDAS} folhas incluídas</b>. Cada folha extra custa <b>${PRECO_EXTRA} €</b>.\n\nAcrescentar uma folha extra?`, sim: `Acrescentar · ${PRECO_EXTRA} €`, nao: 'Cancelar' }))) return
     st.paginas.push({ modelo: null, slots: [] }); st.pagAtual = st.paginas.length - 1; pgSel = null; return pgGuardar()
   }
   if (d.pgnav) { st.pagAtual = Math.max(0, Math.min(st.paginas.length - 1, st.pagAtual + Number(d.pgnav))); pgSel = null; return pgGuardar() }
@@ -326,7 +326,7 @@ raiz.addEventListener('click', e => {
   }
   if (d.pglimpar) { p.slots = p.slots.map(() => ({ foto: null })); pgSel = null; return pgGuardar() }
   if (d.pgapagar) {
-    if (p.slots.some(s => s.foto) && !confirm(`Apagar a folha ${st.pagAtual + 1}? As fotos voltam para a lista.`)) return
+    if (p.slots.some(s => s.foto) && !(await perguntar({ titulo: `Apagar a folha ${st.pagAtual + 1}?`, icone: 'delete', texto: 'As fotografias desta folha voltam para a lista.', sim: 'Apagar', nao: 'Cancelar' }))) return
     st.paginas.splice(st.pagAtual, 1)
     if (!st.paginas.length) st.paginas.push({ modelo: null, slots: [] })
     st.pagAtual = Math.min(st.pagAtual, st.paginas.length - 1); pgSel = null; return pgGuardar()
