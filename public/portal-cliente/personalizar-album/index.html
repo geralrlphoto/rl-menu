@@ -451,7 +451,8 @@
   .head-btn.enviar:disabled { opacity: .5; cursor: default; }
   .bloqueio { margin: 18px 42px 0; padding: 12px 16px; border-radius: 8px; background: var(--verde-bg); border: 1px solid #cfe3d6; color: var(--verde); font-size: 13px; display: flex; gap: 10px; align-items: center; }
   .bloqueio .ms { font-size: 20px; }
-  body.fechado #corpo, body.fechado .pg-grid, body.fechado .pg-barra, body.fechado .pg-auto [data-pgauto] { pointer-events: none; }
+  body.fechado #corpo, body.fechado .pg-grid, body.fechado .pg-barra, body.fechado .pg-auto [data-pgauto], body.fechado .pg-topo button { pointer-events: none; }
+  body.fechado #corpo input, body.fechado #corpo select { pointer-events: none; }
   body.fechado #corpo, body.fechado .pg-grid { opacity: .75; }
   .producao { margin: 22px 42px 30px; padding: 16px 18px; border-radius: 10px; border: 1px dashed #c8d8cf; background: #fbfdfc; font-size: 12.5px; color: #333; }
   .producao h4 { margin: 0 0 10px; font-size: 13px; color: var(--verde); }
@@ -739,7 +740,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27b'
+const VERSAO = '2026-11-27c'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
@@ -752,7 +753,7 @@ const base = {
   acesNao: false, aces: [], backupNao: false, modalidade: '', obs: '', escuro: false, d3: false,
 }
 let st = Object.assign({}, base)
-let CFG = { enviado: null }, ADMIN = false
+let CFG = { enviado: null }, ADMIN = false, FOTOS_ENVIADAS = null
 function normalizar() {
   st.pers = (st.pers || []).filter(x => PERSONALIZACOES_IDS.includes(x)).slice(0, 1)
   st.stamp = Object.assign({}, base.stamp, st.stamp); st.uv = Object.assign({}, base.uv, st.uv)
@@ -1026,7 +1027,7 @@ let t
 // guarda no portal (com uma cópia neste aparelho caso a internet falhe)
 let tGuardar = null
 function guardar(silencioso) {
-  if (CFG.enviado && !ADMIN) return
+  if ((CFG.enviado || FOTOS_ENVIADAS) && !ADMIN) return
   try { localStorage.setItem(CHAVE, JSON.stringify(st)) } catch {}
   clearTimeout(tGuardar)
   $('#estadoGuardar').textContent = 'A guardar…'
@@ -1114,17 +1115,20 @@ document.addEventListener('input', e => {
 })
 // ── arranque: lê do portal as fotos do álbum e o que já montaram ──
 function mostrarEstado() {
-  const fechado = !!CFG.enviado && !ADMIN
+  // fechado: álbum personalizado enviado, ou fotos do álbum enviadas (mesmo sem personalizar)
+  const quando = CFG.enviado || FOTOS_ENVIADAS
+  const fechado = !!quando && !ADMIN
   document.body.classList.toggle('fechado', fechado)
-  const dt = CFG.enviado ? new Date(CFG.enviado).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' }) : ''
-  $('#headEstado').textContent = CFG.enviado ? `Enviado a ${dt}` : ''
-  $('#enviar').hidden = !!CFG.enviado
-  $('#reabrir').hidden = !(ADMIN && CFG.enviado)
+  const dt = quando ? new Date(quando).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long' }) : ''
+  $('#headEstado').textContent = quando ? `Enviado a ${dt}` : ''
+  $('#enviar').hidden = !!quando
+  $('#reabrir').hidden = !(ADMIN && quando)
   const b = $('#bloqueio')
-  b.hidden = !CFG.enviado
-  b.innerHTML = CFG.enviado
-    ? `<span class="ms">check_circle</span><span>${ADMIN ? `Os noivos enviaram o álbum a ${dt}. O resumo para a produção está nos Álbuns do Departamento de Fotografia.` : `Recebemos o vosso álbum a ${dt}. Obrigado! Para mudar alguma coisa, falem connosco.`}</span>`
-    : ''
+  b.hidden = !quando
+  b.innerHTML = !quando ? ''
+    : ADMIN ? `<span class="ms">lock</span><span>Os noivos enviaram a ${dt}${CFG.enviado ? '' : ' sem personalizar o álbum'}. O resumo para a produção está nos Álbuns do Departamento de Fotografia.</span>`
+    : CFG.enviado ? `<span class="ms">check_circle</span><span>Recebemos o vosso álbum a ${dt}. Obrigado! Já não é possível alterar. Para mudar alguma coisa, falem connosco.</span>`
+    : `<span class="ms">lock</span><span>Enviaram as fotografias do álbum a ${dt} sem personalizar. A personalização ficou fechada. Para mudar alguma coisa, falem connosco.</span>`
 }
 async function iniciar() {
   if (!REF) { $('#carregarTxt').textContent = 'Falta a referência do casamento no endereço.'; $('#carregar').classList.add('erro'); return }
@@ -1138,6 +1142,7 @@ async function iniciar() {
     $('#carregarTxt').textContent = e.message || 'Não foi possível abrir o álbum.'; $('#carregar').classList.add('erro'); return
   }
   ADMIN = !!d.admin
+  FOTOS_ENVIADAS = d.fotosEnviadas || null
   CFG = d.config || { enviado: null }
   window.FOTOS_PORTAL = d.fotos || []
   // o que está no portal manda; a cópia deste aparelho só serve se o portal ainda não tiver nada
@@ -1159,7 +1164,7 @@ async function iniciar() {
 // a galeria chama isto antes de enviar: grava já o que está por gravar
 window.guardarJa = async () => {
   clearTimeout(tGuardar)
-  if (CFG.enviado && !ADMIN) return
+  if ((CFG.enviado || FOTOS_ENVIADAS) && !ADMIN) return
   await fetch('/api/fotos-selecao-album', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ref: REF, acao: 'guardar', estado: st }) })
   $('#estadoGuardar').textContent = 'Guardado'
 }

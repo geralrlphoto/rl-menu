@@ -91,6 +91,7 @@ export async function GET(req: Request) {
     origem,
     fotos,
     config: ehAdmin(req) ? configDe(s) : { ...configDe(s), pasta: null },
+    fotosEnviadas: s.album_galeria?.enviada ?? null,
     admin: ehAdmin(req),
   })
 }
@@ -165,7 +166,7 @@ export async function POST(req: Request) {
   }
 
   if (body.acao !== 'guardar' && body.acao !== 'enviar') return NextResponse.json({ error: 'acao' }, { status: 400 })
-  if (atual.enviado && !admin) return NextResponse.json({ error: 'O álbum já foi enviado.', config: { ...atual, pasta: null } }, { status: 409 })
+  if ((atual.enviado || portal.settings?.album_galeria?.enviada) && !admin) return NextResponse.json({ error: 'O álbum já foi enviado.', config: { ...atual, pasta: null } }, { status: 409 })
 
   const estado = body.estado
   if (!estado || typeof estado !== 'object' || Array.isArray(estado)) return NextResponse.json({ error: 'estado' }, { status: 400 })
