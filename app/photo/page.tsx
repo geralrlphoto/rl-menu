@@ -134,12 +134,13 @@ export default async function PhotoDashboard() {
 
   const getAlbunsAprovadosSb = unstable_cache(
     async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('albuns_casamento')
         .select('id, nome, ref_evento, data_aprovacao, data_prevista_entrega')
         .eq('status', 'APROVADO')
         .order('data_prevista_entrega', { ascending: true, nullsFirst: false })
         .limit(20)
+      if (error) throw error
       return data ?? []
     },
     ['photo-albuns-aprovados'],
@@ -169,7 +170,7 @@ export default async function PhotoDashboard() {
       page_size: 50,
     }),
     getRefPortais(),
-    getAlbunsAprovadosSb(),
+    getAlbunsAprovadosSb().catch(() => []),
   ])
 
   // ── Refs com alertas de fotografia DESATIVADOS pelo admin ───────────────
@@ -257,48 +258,51 @@ export default async function PhotoDashboard() {
   })
   const getSemana = unstable_cache(
     async () => {
-      const { data } = await supabase.from('eventos_2026')
+      const { data, error } = await supabase.from('eventos_2026')
         .select('id, referencia, cliente, data_evento, local, tipo_evento')
         .gte('data_evento', semanaDias[0])
         .lte('data_evento', semanaDias[DIAS_AGENDA - 1])
         .order('data_evento', { ascending: true })
         .limit(80)
+      if (error) throw error
       return data ?? []
     },
-    [`photo-agenda30-v2-${semanaDias[0]}`],
+    [`photo-agenda30b-v2-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
-  const eventosSemana = await getSemana()
+  const eventosSemana = await getSemana().catch(() => [])
 
   // Reuniões marcadas nas fichas de CRM, na mesma janela de 30 dias
   const getReunioes = unstable_cache(
     async () => {
-      const { data } = await supabase.from('crm_contacts')
+      const { data, error } = await supabase.from('crm_contacts')
         .select('id, nome, reuniao_data, reuniao_hora, reuniao_tipo')
         .gte('reuniao_data', semanaDias[0])
         .lte('reuniao_data', semanaDias[DIAS_AGENDA - 1])
         .order('reuniao_data', { ascending: true })
         .limit(80)
+      if (error) throw error
       return data ?? []
     },
-    [`photo-agenda30-reunioes-v2-${semanaDias[0]}`],
+    [`photo-agenda30b-reunioes-v2-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
-  const reunioesSemana = await getReunioes()
+  const reunioesSemana = await getReunioes().catch(() => [])
 
   // Pedidos de reunião feitos em /reuniao, à espera de serem aceites (cartão "Por confirmar")
   const getPedidosReuniao = unstable_cache(
     async () => {
-      const { data } = await supabase.from('crm_contacts')
+      const { data, error } = await supabase.from('crm_contacts')
         .select('id, nome, contato, data_casamento, reuniao_pedido')
         .not('reuniao_pedido', 'is', null)
         .limit(80)
+      if (error) throw error
       return data ?? []
     },
-    ['photo-agenda30-pedidos-reuniao-v2'],
+    ['photo-agenda30b-pedidos-reuniao-v2'],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
-  const pedidosReuniao = (await getPedidosReuniao()).flatMap((c: any) => {
+  const pedidosReuniao = (await getPedidosReuniao().catch(() => [])).flatMap((c: any) => {
     const ped = c.reuniao_pedido ?? {}
     const p: PedidoReuniao = {
       contactId: c.id, nome: (c.nome ?? '').trim(), contato: c.contato ?? '', dataCasamento: c.data_casamento ?? null,
@@ -311,14 +315,15 @@ export default async function PhotoDashboard() {
   // Reuniões marcadas no link público /marcar (quem não é noivo). Tag própria: o /api/marcar refaz esta leitura
   const getMarcacoesPublicas = unstable_cache(
     async () => {
-      const { data } = await supabase.from('marcacoes_publicas')
+      const { data, error } = await supabase.from('marcacoes_publicas')
         .select('id, data, hora, nome, contacto, assunto')
         .gte('data', semanaDias[0])
         .lte('data', semanaDias[DIAS_AGENDA - 1])
         .limit(80)
+      if (error) throw error
       return data ?? []
     },
-    [`photo-agenda30-marcacoes-${semanaDias[0]}`],
+    [`photo-agenda30b-marcacoes-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-marcacoes'] }
   )
   // Mensagem de confirmação já escrita, com o link da sala do Google Meet
@@ -334,7 +339,7 @@ export default async function PhotoDashboard() {
       'RL PhotoVideo',
     ].join('\n')
   }
-  const marcacoesPublicas = (await getMarcacoesPublicas()).map((m: any) => {
+  const marcacoesPublicas = (await getMarcacoesPublicas().catch(() => [])).map((m: any) => {
     const msg = msgConfirmarMarcacao(m)
     return {
       id: `pub-${m.id}`, nome: m.nome, reuniao_data: m.data, reuniao_hora: m.hora, href: '/calendario',
@@ -349,29 +354,31 @@ export default async function PhotoDashboard() {
   // Reuniões criadas como tarefa no calendário ("Reunião: Nome"). Tag própria: o /api/tarefas só refaz esta leitura
   const getReunioesTarefa = unstable_cache(
     async () => {
-      const { data } = await supabase.from('tarefas')
+      const { data, error } = await supabase.from('tarefas')
         .select('id, titulo, data_prazo, hora')
         .ilike('titulo', 'Reuni%')
         .gte('data_prazo', semanaDias[0])
         .lte('data_prazo', semanaDias[DIAS_AGENDA - 1])
         .limit(80)
+      if (error) throw error
       return data ?? []
     },
-    [`photo-agenda30-reunioes-tarefa-${semanaDias[0]}`],
+    [`photo-agenda30b-reunioes-tarefa-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-reunioes-tarefa'] }
   )
-  const reunioesTarefa = await getReunioesTarefa()
+  const reunioesTarefa = await getReunioesTarefa().catch(() => [])
 
   // Itens escondidos com o ✕ (só desta faixa; o resto da app não é afetado)
   const getOcultos = unstable_cache(
     async () => {
-      const { data } = await supabase.from('photo_agenda_ocultos').select('chave').limit(2000)
+      const { data, error } = await supabase.from('photo_agenda_ocultos').select('chave').limit(2000)
+      if (error) throw error
       return (data ?? []).map((o: any) => o.chave as string)
     },
-    ['photo-agenda-ocultos-v2'],
+    ['photo-agenda-ocultos-v3'],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-agenda-ocultos'] }
   )
-  const ocultos = new Set(await getOcultos())
+  const ocultos = new Set(await getOcultos().catch(() => [] as string[]))
   const chaveEvento = (e: any) => `evento:${e.id}`
   const chaveReuniao = (r: any) => `reuniao:${r.id}:${r.reuniao_data}`
   const chaveWa = (t: { contactId: string; tipo: string }) => `wa:${t.contactId}:${t.tipo}`
@@ -493,18 +500,19 @@ export default async function PhotoDashboard() {
   // Agradecer a escolha da proposta e pedidos de NPS e portais avulsos (ex. parceria Sirius Park): tarefas "WhatsApp: agradecer X" / "WhatsApp: NPS X" do calendário, com a mensagem já escrita
   const getObrigado = unstable_cache(
     async () => {
-      const { data } = await supabase.from('tarefas')
+      const { data, error } = await supabase.from('tarefas')
         .select('id, titulo, descricao, data_prazo')
         .or('titulo.ilike."WhatsApp: agradecer*",titulo.ilike."WhatsApp: NPS*",titulo.ilike."WhatsApp: portal*"')
         .neq('status', 'CONCLUIDA')
         .lte('data_prazo', semanaDias[DIAS_AGENDA - 1])
         .limit(30)
+      if (error) throw error
       return data ?? []
     },
     [`photo-wa-obrigado-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-reunioes-tarefa'] }
   )
-  for (const ta of (await getObrigado()) as any[]) {
+  for (const ta of (await getObrigado().catch(() => [])) as any[]) {
     const d = String(ta.descricao ?? '')
     const devido = String(ta.data_prazo)
     const t = {
@@ -524,14 +532,16 @@ export default async function PhotoDashboard() {
     async () => {
       // Até onde é preciso olhar: o alerta mais antecipado é o do pré-wedding (30 dias)
       const ate = somaDias(hojeLx, DIAS_AGENDA + Math.max(PREPARACAO_DIAS, PREWEDDING_ALERTA_DIAS))
-      const { data: evs } = await supabase.from('eventos_2026')
+      const { data: evs, error: errEvs } = await supabase.from('eventos_2026')
         .select('id, referencia, cliente, data_evento, tipo_evento, nome_crianca')
         .gte('data_evento', somaDias(hojeLx, 1)).lte('data_evento', ate).limit(150)
+      if (errEvs) throw errEvs
       const lista = evs ?? []
       // Reuniões de preparação já marcadas pelos noivos, na janela da faixa
-      const { data: marcadas } = await supabase.from('preparacao_slots')
+      const { data: marcadas, error: errMarcadas } = await supabase.from('preparacao_slots')
         .select('id, tipo, data, hora, local, formato, evento_id').not('evento_id', 'is', null)
         .gte('data', hojeLx).lte('data', semanaDias[DIAS_AGENDA - 1]).order('hora')
+      if (errMarcadas) throw errMarcadas
       const idsM = [...new Set((marcadas ?? []).map((m: any) => m.evento_id))]
       const { data: evsM } = idsM.length
         ? await supabase.from('eventos_2026').select('id, cliente').in('id', idsM)
@@ -568,10 +578,10 @@ export default async function PhotoDashboard() {
         reservadosPw: (todasReservas ?? []).filter((r: any) => r.tipo === 'prewedding').map((r: any) => r.evento_id),
       }
     },
-    [`photo-wa-preparacao-${hojeLx}`],
+    [`photo-wa-preparacao-b-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
   )
-  const prep = await getPreparacao()
+  const prep = await getPreparacao().catch(() => ({ evs: [], tels: [], env: [], briefings: [], equipaComBriefing: [], comPreWedding: [], marcadas: [], reservados: [], reservadosPw: [] }))
   // Envios por evento: { evento_id: { reuniao_preparacao: data, lembrete_briefing: data, … } }
   const envPorEvento: Record<string, Record<string, string>> = {}
   for (const x of prep.env as any[]) (envPorEvento[x.evento_id] ||= {})[x.evento] = x.created_at
@@ -718,7 +728,7 @@ export default async function PhotoDashboard() {
       ])
       return { pagamentos: (pagamentos ?? []) as any[], contactos: (contactos ?? []) as any[] }
     },
-    [`photo-agenda30-adjudicacao-v6-${semanaDias[0]}`],
+    [`photo-agenda30b-adjudicacao-v6-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
   )
   const { pagamentos: pagamentosAgenda, contactos: contactosAgenda } = await getPagamentosAgenda()
@@ -814,17 +824,18 @@ export default async function PhotoDashboard() {
   const GALERIA_DESDE = '2026-01-01'
   const getEventosRealizados = unstable_cache(
     async () => {
-      const { data } = await supabase.from('eventos_2026')
+      const { data, error } = await supabase.from('eventos_2026')
         .select('id, referencia, cliente, data_evento, tipo_servico, valor_foto, valor_real_foto, valor_video, sel_fotos_estado, video_estado')
         .gte('data_evento', GALERIA_DESDE)
         .lte('data_evento', hojeLx)
         .order('data_evento', { ascending: true })
+      if (error) throw error
       return data ?? []
     },
     [`photo-acoes-foto-v2-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
-  const eventosRealizados = await getEventosRealizados()
+  const eventosRealizados = await getEventosRealizados().catch(() => [])
   const settingsPorRef = new Map<string, any>()
   for (const p of (refPortais ?? []) as Array<{ referencia: string | null; settings: any }>) {
     if (p.referencia) settingsPorRef.set(p.referencia.toUpperCase(), p.settings ?? {})
