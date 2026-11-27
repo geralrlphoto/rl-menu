@@ -128,7 +128,7 @@ export default async function PhotoDashboard() {
         return { referencia: r.referencia as string | null, noiva: r.noiva, noivo: r.noivo, settings }
       })
     },
-    ['photo-portais-v3'],
+    ['photo-portais-v4'],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-portais'] }
   )
 
@@ -398,21 +398,23 @@ export default async function PhotoDashboard() {
   // Tag própria: um envio só refaz esta leitura, não o painel todo.
   const getWaTarefas = unstable_cache(
     async () => {
-      const { data: leads } = await supabase.from('crm_contacts')
+      const { data: leads, error: errLeads } = await supabase.from('crm_contacts')
         .select('id, nome, contato, status, reuniao_data, reuniao_hora, reuniao_pedido, data_casamento, status_updated_at, page_token, page_tipo:page_content->>tipo')
         .or(`status.is.null,status.not.in.(${ENCERRADA_STATUSES.map(s => `"${s}"`).join(',')})`)
         .limit(300)
+      if (errLeads) throw errLeads   // falha do Supabase não fica guardada como "sem tarefas"
       const ids = (leads ?? []).map((l: any) => l.id)
       if (ids.length === 0) return { leads: [], hist: [] }
-      const { data: hist } = await supabase.from('crm_status_history')
+      const { data: hist, error: errHist } = await supabase.from('crm_status_history')
         .select('contact_id, evento, created_at')
         .in('contact_id', ids).or(`evento.like.WhatsApp%,evento.eq."${EVENTO_ABRIU_LINK}",evento.eq."${EVENTO_LIGAR_ABRIU}"`)
+      if (errHist) throw errHist
       return { leads: leads ?? [], hist: hist ?? [] }
     },
-    [`photo-wa-tarefas-v3-${semanaDias[0]}`],
+    [`photo-wa-tarefas-v4-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
   )
-  const waDados = await getWaTarefas()
+  const waDados = await getWaTarefas().catch(() => ({ leads: [] as any[], hist: [] as any[] }))
   const somaDias = (iso: string, n: number) => {
     const d = new Date(iso.slice(0, 10) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n)
     return d.toISOString().split('T')[0]
@@ -476,7 +478,7 @@ export default async function PhotoDashboard() {
         : { data: [] as any[] }
       return { contactos: contactos ?? [], enviados: (enviados ?? []).map((e: any) => e.contact_id as string) }
     },
-    [`photo-wa-lembrete-tarefa-${hojeLx}-${reunioesTarefaHoje.map(t => t.id).join(',')}`],
+    [`photo-wa-lembrete-tarefa-b-${hojeLx}-${reunioesTarefaHoje.map(t => t.id).join(',')}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
   )
   const lembTarefa = reunioesTarefaHoje.length ? await getLembretesTarefa() : { contactos: [], enviados: [] }
@@ -687,7 +689,7 @@ export default async function PhotoDashboard() {
   // Contratos por assinar (separador do cartão Tarefas): lib/contratosPorAssinar.ts
   const getContratosPorAssinar = unstable_cache(
     async () => contratosPorAssinar(supabase),
-    [`photo-contratos-${hojeLx}`],
+    [`photo-contratos-b-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-whatsapp'] }
   )
   const contratosLista = await getContratosPorAssinar()
@@ -728,7 +730,7 @@ export default async function PhotoDashboard() {
       ])
       return { pagamentos: (pagamentos ?? []) as any[], contactos: (contactos ?? []) as any[] }
     },
-    [`photo-agenda30b-adjudicacao-v6-${semanaDias[0]}`],
+    [`photo-agenda30b-adjudicacao-v7-${semanaDias[0]}`],
     { revalidate: 1800, tags: ['photo-dashboard', 'photo-adjudicacao'] }
   )
   const { pagamentos: pagamentosAgenda, contactos: contactosAgenda } = await getPagamentosAgenda()
@@ -832,7 +834,7 @@ export default async function PhotoDashboard() {
       if (error) throw error
       return data ?? []
     },
-    [`photo-acoes-foto-v2-${hojeLx}`],
+    [`photo-acoes-foto-v3-${hojeLx}`],
     { revalidate: 1800, tags: ['photo-dashboard'] }
   )
   const eventosRealizados = await getEventosRealizados().catch(() => [])
