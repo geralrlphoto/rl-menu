@@ -199,7 +199,7 @@ function renderPaginas() {
     <div class="sec-h"><h3>Páginas do Álbum</h3><span class="tag">${INCLUIDAS} folhas duplas incluídas · 60 × 25 cm</span><span class="sp"></span><span class="tag">${total} ${total === 1 ? 'folha' : 'folhas'}${extras() ? ` · ${extras()} extra` : ''}</span></div>
     <div class="sec-b">
       <div class="pg-auto">
-        <div><b>Montagem automática</b><span>Distribuímos as vossas ${FOTOS_ALBUM.length} fotografias pelas ${Math.min(INCLUIDAS, FOTOS_ALBUM.length)} folhas incluídas, com modelos escolhidos pelo número de fotos. Depois podem mudar tudo.</span></div>
+        <div><b>Montagem automática</b><span>Distribuímos as vossas ${FOTOS_ALBUM.length} fotografias pelas ${Math.min(INCLUIDAS, FOTOS_ALBUM.length)} folhas incluídas, com modelos escolhidos pelo número de fotos. Cada clique dá um álbum diferente; para mudar só uma folha, usem "Alterar esta folha". Depois podem mudar tudo.</span></div>
         <button class="btn cheio" data-pgauto="1"><span class="ms" style="font-size:17px">auto_awesome</span>Montar automaticamente</button>
         <button class="btn" data-pgver="1"><span class="ms" style="font-size:17px">menu_book</span>Ver o álbum</button>
       </div>
@@ -223,6 +223,7 @@ function renderPaginas() {
             <button class="pg-ic" data-pgnav="-1" ${st.pagAtual === 0 ? 'disabled' : ''} title="Folha anterior"><span class="ms">chevron_left</span></button>
             <button class="pg-ic" data-pgnav="1" ${st.pagAtual === total - 1 ? 'disabled' : ''} title="Folha seguinte"><span class="ms">chevron_right</span></button>
             ${(p.ocultos || []).length ? `<button class="pg-repor" data-pgrepor="1" title="Voltar a pôr os espaços eliminados"><span class="ms">restart_alt</span>Repor espaços (${p.ocultos.length})</button>` : ''}
+            <button class="pg-repor" data-pgvariar="1" ${p.slots.some(s => s.foto) ? '' : 'disabled'} title="As mesmas fotos noutra disposição"><span class="ms">shuffle</span>Alterar esta folha</button>
             <button class="pg-ic" data-pglimpar="1" ${m && p.slots.some(s => s.foto) ? '' : 'disabled'} title="Tirar as fotos desta folha"><span class="ms">layers_clear</span></button>
             <button class="pg-ic perigo" data-pgapagar="1" title="Apagar folha"><span class="ms">delete</span></button>
           </div>
@@ -321,45 +322,117 @@ function contagens(n, variar) {
   return out
 }
 function montarAuto() {
-  // a primeira montagem é a base; as seguintes variam e nunca repetem a que está
+  // a primeira montagem é a base; as seguintes são álbuns bem diferentes e nunca repetem o que está
   const variar = st.paginas.some(q => q.slots.some(x => x.foto))
   const antes = assinPag()
   let tent = 0
   do construirAuto(variar); while (variar && assinPag() === antes && ++tent < 15)
   autoAssin = assinPag()
   st.pagAtual = 0; pgSel = null; pgEscolhida = null
-  toast(`Nova montagem: ${st.paginas.reduce((a, q) => a + q.slots.filter(x => x.foto).length, 0)} fotografias em ${st.paginas.length} folhas`)
+  const nf = st.paginas.filter(q => pgModelo(q)?.fade).length
+  toast(`Novo álbum: ${st.paginas.reduce((a, q) => a + q.slots.filter(x => x.foto).length, 0)} fotografias em ${st.paginas.length} folhas${nf ? ` · ${nf} em degradê` : ''}`)
   pgGuardar()
 }
+
+// modelos que a montagem pode usar com n fotos; comFade = os de desvanecimento (degradê)
+const modelosCom = (n, comFade) => MODELOS_PAG.filter(m => m.s.length === n && (comFade ? !!m.fade : !m.semAuto))
+const CONTAGENS_OK = [...new Set(MODELOS_PAG.map(m => m.s.length))].sort((a, b) => a - b)
+const MAX_FOTOS_FOLHA = CONTAGENS_OK[CONTAGENS_OK.length - 1]
+
+// Quantas fotos em cada folha, ao acaso: umas folhas leves (1 ou 2 fotos), outras bem cheias
+function contagensAleat(n) {
+  const folhas = Math.min(INCLUIDAS, n), max = MAX_FOTOS_FOLHA
+  const c = Array.from({ length: folhas }, () => 1)
+  const peso = Array.from({ length: folhas }, () => Math.random() ** 2 + 0.03)
+  let falta = n - folhas
+  while (falta > 0) {
+    const cand = c.map((_, i) => i).filter(i => c[i] < max); if (!cand.length) break
+    let r = Math.random() * cand.reduce((a, i) => a + peso[i], 0), i = cand[cand.length - 1]
+    for (const j of cand) { r -= peso[j]; if (r <= 0) { i = j; break } }
+    c[i]++; falta--
+  }
+  // números sem modelo (ex.: 7): passa uma foto para outra folha
+  for (let t = 0; t < 60; t++) {
+    const i = c.findIndex(v => !CONTAGENS_OK.includes(v)); if (i < 0) break
+    const j = c.findIndex((v, k) => k !== i && v < max && CONTAGENS_OK.includes(v + 1))
+    if (j >= 0) { c[i]--; c[j]++; continue }
+    const k = c.findIndex((v, q) => q !== i && v > 1 && CONTAGENS_OK.includes(v - 1))
+    if (k >= 0 && c[i] < max) { c[i]++; c[k]-- } else c[i]--
+  }
+  return c
+}
+
+// Põe um grupo de fotos num modelo: as mais deitadas nos espaços mais largos (o fundo do
+// degradê é o mais largo de todos). Com variar, fotos de forma parecida trocam ao acaso.
+function encaixar(modelo, grupo, variar) {
+  const alturaRel = ([, , w, hh]) => (hh * 25) / (w * 60)
+  const espacos = modelo.s.map((r, i) => ({ i, rel: alturaRel(r) + (variar ? Math.random() * 0.25 : 0) })).sort((a, b) => b.rel - a.rel)
+  const porForma = grupo.map(f => ({ f, k: f.h / f.w + (variar ? Math.random() * 0.35 : 0) })).sort((a, b) => b.k - a.k).map(x => x.f)
+  const slots = modelo.s.map(() => ({ foto: null }))
+  espacos.forEach((e, j) => { if (porForma[j]) slots[e.i] = { foto: porForma[j].id, x: 50, y: 50 } })
+  return slots
+}
+
 function construirAuto(variar) {
-  const fotos = FOTOS_ALBUM.slice(0, INCLUIDAS * Math.max(...MODELOS_PAG.map(m => m.s.length)))
-  const cont = contagens(fotos.length, variar)
-  // abertura e fecho levam uma foto nas duas páginas: escolhe a mais deitada entre as
-  // primeiras (e entre as últimas) e põe-na na ponta, sem baralhar o resto
+  const fotos = FOTOS_ALBUM.slice(0, INCLUIDAS * MAX_FOTOS_FOLHA)
+  if (!variar) return construirBase(fotos)
+  const cont = contagensAleat(fotos.length)
+  // cada álbum tem a sua dose de degradê (entre pouco e bastante)
+  const chanceFade = 0.2 + Math.random() * 0.35
+  const usados = {}
+  let k = 0, anterior = null
+  st.paginas = cont.map(n => {
+    const querFade = Math.random() < chanceFade && modelosCom(n, true).length > 0
+    let ops = modelosCom(n, querFade)
+    if (!ops.length) ops = modelosCom(n, false).length ? modelosCom(n, false) : modelosCom(n, true)
+    // não repete o modelo da folha anterior e prefere os que ainda não usou neste álbum
+    const semAnt = ops.filter(m => m.id !== anterior); if (semAnt.length) ops = semAnt
+    const minU = Math.min(...ops.map(m => usados[m.id] ?? 0)), menos = ops.filter(m => (usados[m.id] ?? 0) === minU)
+    const modelo = menos[aleat(menos.length)]
+    usados[modelo.id] = (usados[modelo.id] ?? 0) + 1; anterior = modelo.id
+    const grupo = fotos.slice(k, k + n); k += n
+    return { modelo: modelo.id, slots: encaixar(modelo, grupo, true), ocultos: [] }
+  })
+}
+
+// Montagem base (primeira vez): ritmo calmo, abre e fecha com uma foto nas duas páginas
+function construirBase(fotos) {
+  const cont = contagens(fotos.length, false)
   const deitada = (de, ate) => { let b = de; for (let i = de; i < ate; i++) if (fotos[i].w / fotos[i].h > fotos[b].w / fotos[b].h) b = i; return b }
   if (cont[0] === 1 && fotos.length > 6) fotos.unshift(...fotos.splice(deitada(0, 6), 1))
   if (cont[cont.length - 1] === 1 && fotos.length > 6) fotos.push(...fotos.splice(deitada(fotos.length - 6, fotos.length), 1))
-  const usadosPorN = {}, desvio = {}
+  const usadosPorN = {}
   let k = 0
   st.paginas = cont.map((n, idx, todas) => {
-    // modelos com n espaços; abertura e fecho preferem a foto nas duas páginas
-    let opcoes = MODELOS_PAG.filter(m => m.s.length === n && !m.semAuto)
+    let opcoes = modelosCom(n, false)
     const ponta = n === 1 && (idx === 0 || idx === todas.length - 1)
     if (ponta) opcoes = opcoes.filter(m => m.id === 'panoramica').concat(opcoes.filter(m => m.id !== 'panoramica'))
     const vez = usadosPorN[n] = (usadosPorN[n] ?? -1) + 1
-    if (variar && desvio[n] === undefined) desvio[n] = aleat(opcoes.length)
-    const modelo = ponta
-      ? (variar && Math.random() < 0.5 ? opcoes[aleat(opcoes.length)] : opcoes[0])
-      : opcoes[(vez + (desvio[n] ?? 0)) % opcoes.length]
+    const modelo = ponta ? opcoes[0] : opcoes[vez % opcoes.length]
     const grupo = fotos.slice(k, k + n); k += n
-    // fotos ao alto nos espaços mais altos (relação altura/largura em cm)
-    const alturaRel = ([, , w, hh]) => (hh * 25) / (w * 60)
-    const espacos = modelo.s.map((r, i) => ({ i, rel: alturaRel(r) })).sort((a, b) => b.rel - a.rel)
-    const porForma = [...grupo].sort((a, b) => (b.h / b.w) - (a.h / a.w))
-    const slots = modelo.s.map(() => ({ foto: null }))
-    espacos.forEach((e, j) => { if (porForma[j]) slots[e.i] = { foto: porForma[j].id, x: 50, y: 50 } })
-    return { modelo: modelo.id, slots, ocultos: [] }
+    return { modelo: modelo.id, slots: encaixar(modelo, grupo, false), ocultos: [] }
   })
+}
+
+// Alterar só esta folha: as mesmas fotos noutro modelo (inclui degradê), sem repetir os últimos
+const recentesFolha = {}
+function alterarFolha() {
+  const p = pgAtual()
+  const fotos = p.slots.filter((s, i) => s.foto && !oculto(p, i)).map(s => fotoDe(s.foto)).filter(Boolean)
+  if (!fotos.length) return toast('Esta folha ainda não tem fotografias')
+  const n = fotos.length, rec = recentesFolha[st.pagAtual] ||= []
+  const todos = [...modelosCom(n, false), ...modelosCom(n, true)]
+  let ops = todos.filter(m => m.id !== p.modelo && !rec.includes(m.id))
+  if (!ops.length) { rec.length = 0; ops = todos.filter(m => m.id !== p.modelo) }
+  // às vezes vai para o degradê quando há (para se ver bem a diferença)
+  const comFade = ops.filter(m => m.fade), semFade = ops.filter(m => !m.fade)
+  const pool = comFade.length && (Math.random() < 0.4 || !semFade.length) ? comFade : semFade.length ? semFade : ops
+  const m = pool.length ? pool[aleat(pool.length)] : pgModelo(p)
+  rec.push(m.id); if (rec.length > Math.max(1, todos.length - 2)) rec.shift()
+  st.paginas[st.pagAtual] = { modelo: m.id, slots: encaixar(m, fotos, true), ocultos: [] }
+  pgSel = null; pgEscolhida = null
+  toast(`Folha ${st.pagAtual + 1}: ${m.n}`)
+  pgGuardar()
 }
 
 function pgGuardar() { guardar(true); renderPaginas() }
@@ -441,6 +514,7 @@ raiz.addEventListener('click', async e => {
     ;[st.paginas[st.pagAtual], st.paginas[j]] = [st.paginas[j], st.paginas[st.pagAtual]]
     st.pagAtual = j; return pgGuardar()
   }
+  if (d.pgvariar) return alterarFolha()
   if (d.pglimpar) { p.slots = p.slots.map(() => ({ foto: null })); pgSel = null; return pgGuardar() }
   if (d.pgapagar) {
     if (p.slots.some(s => s.foto) && !(await perguntar({ titulo: `Apagar a folha ${st.pagAtual + 1}?`, icone: 'delete', texto: 'As fotografias desta folha voltam para a lista.', sim: 'Apagar', nao: 'Cancelar' }))) return
