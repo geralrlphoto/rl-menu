@@ -663,12 +663,15 @@
    Nomes e opções lidos do configurador do fornecedor. Preços: só os que lá
    aparecem (capa 45,50 €, folha de papel vegetal 8,00 €); o resto a 0,00 €. */
 const CAPAS = [
-  { id: 'aland', n: 'Luxe Linen', capa: 'Åland', preco: 45.5, tipo: 'gravura' },   // gama Luxe Linen, capa Åland no DreamBooks
+  // gamas: cada uma com os seus revestimentos (capa = modelo no DreamBooks)
+  { id: 'aland', n: 'Luxe Linen', capa: 'Åland', preco: 45.5, tipo: 'gravura', revs: ['L01', 'L06', 'L07', 'L02', 'L05', 'L04', 'L03', 'L08'] },
+  { id: 'rustic', n: 'Rustic', capa: 'Rustic', preco: 0, tipo: 'gravura', revs: ['R01'] },
 ]
 const REVESTIMENTOS = [
   ['L01', 'L01 - Linen Aqua', '#c5e2d6', null, 'linhos/L01.jpg'], ['L06', 'L06 - Linen Zink', '#aeaeae', null, 'linhos/L06.jpg'], ['L07', 'L07 - Linen Bege', '#c3b09d', null, 'linhos/L07.jpg'],
   ['L02', 'L02 - Linen Pétal', '#b78787', null, 'linhos/L02.jpg'], ['L05', 'L05 - Linen Apple', '#bdb560', null, 'linhos/L05.jpg'], ['L04', 'L04 - Linen Pumpkin', '#b38457', null, 'linhos/L04.jpg'],
   ['L03', 'L03 - Linen Sun', '#eeeaa6', 'alerta', 'linhos/L03.jpg'], ['L08', 'L08 - Linen Branco', '#f3f3f3', null, 'linhos/L08.jpg'],
+  ['R01', 'R01 - Rustic', '#917f6f', null, 'linhos/R01.jpg'],
 ]
 const SACOS = ['Saco de Veludo Preto', 'Saco de Veludo Cinza', 'Saco de Veludo Bege', 'Saco de Veludo Azul']
 const FITAS = [
@@ -759,7 +762,7 @@ const MIN_F = 12, MAX_F = 44
 
 /* ═════════════ ESTADO ═════════════ */
 // muda a cada alteração para o browser não usar paginas.js/revista.js antigos
-const VERSAO = '2026-11-27k'
+const VERSAO = '2026-11-27l'
 const REF = new URLSearchParams(location.search).get('ref') || ''
 // dentro da galeria do portal (iframe por baixo do separador Álbum): sem a barra de cima
 const EMBED = new URLSearchParams(location.search).get('embed') === '1'
@@ -980,7 +983,7 @@ function render() {
     <div class="covers">${CAPAS.map(c => `
       <button class="cover-card${st.capa === c.id ? ' on' : ''}" data-k="capa" data-v="${c.id}">
         <span class="ms chk">check_circle</span>
-        <span class="mini-livro ${c.tipo}" style="${fundoLinho(st.rev, achar(REVESTIMENTOS, st.rev)?.[2] ?? '#b9c6c0')}"></span>${c.n}</button>`).join('')}</div>
+        <span class="mini-livro ${c.tipo}" style="${(r => fundoLinho(r, achar(REVESTIMENTOS, r)?.[2] ?? '#b9c6c0'))(c.revs.includes(st.rev) ? st.rev : c.revs[0])}"></span>${c.n}</button>`).join('')}</div>
 
     <div class="cover-detail">
       <div>
@@ -989,10 +992,10 @@ function render() {
       </div>
       <div class="fields">
         <div class="field${req(st.rev)}"><div class="field-t">Revestimento<b>*</b></div>
-          <div class="sw-grid">${REVESTIMENTOS.map(r => sw('rev', r, st.rev)).join('')}</div>
-          <div class="stock${achar(REVESTIMENTOS, st.rev)?.[3] === 'alerta' ? ' sel' : ''}"><span class="alerta">!</span>${achar(REVESTIMENTOS, st.rev)?.[3] === 'alerta'
+          <div class="sw-grid">${REVESTIMENTOS.filter(r => capa.revs.includes(r[0])).map(r => sw('rev', r, st.rev)).join('')}</div>
+          ${REVESTIMENTOS.some(r => capa.revs.includes(r[0]) && r[3] === 'alerta') ? `<div class="stock${achar(REVESTIMENTOS, st.rev)?.[3] === 'alerta' ? ' sel' : ''}"><span class="alerta">!</span>${achar(REVESTIMENTOS, st.rev)?.[3] === 'alerta'
             ? 'Este revestimento tem <b>stock limitado</b>. Confirmamos a disponibilidade antes de produzir o álbum.'
-            : 'Stock limitado'}</div></div>
+            : 'Stock limitado'}</div>` : ''}</div>
       </div>
     </div>
     <div class="sub-t">personalizações da capa</div>
@@ -1064,7 +1067,11 @@ function toast(m) { const e = $('#toast'); e.textContent = m; e.classList.add('o
 document.addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return
   const d = b.dataset
-  if (d.k) { st[d.k] = st[d.k] === d.v && d.k !== 'capa' ? null : d.v; return mudou() }
+  if (d.k) {
+    st[d.k] = st[d.k] === d.v && d.k !== 'capa' ? null : d.v
+    if (d.k === 'capa' && !CAPAS.find(c => c.id === st.capa)?.revs.includes(st.rev)) st.rev = null
+    return mudou()
+  }
   if (d.tab) { st[d.tab] = d.v; return mudou() }
   if (d.tg) { st[d.tg] = !st[d.tg]; return mudou() }
   if (d.nao) { st[d.nao] = !st[d.nao]; if (d.nao === 'persNao' && st.persNao) st.pers = []; return mudou() }

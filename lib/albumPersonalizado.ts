@@ -7,7 +7,9 @@
 const REVESTIMENTOS: Record<string, string> = {
   L01: 'L01 - Linen Aqua', L02: 'L02 - Linen Pétal', L03: 'L03 - Linen Sun (stock limitado)', L04: 'L04 - Linen Pumpkin',
   L05: 'L05 - Linen Apple', L06: 'L06 - Linen Zink', L07: 'L07 - Linen Bege', L08: 'L08 - Linen Branco',
+  R01: 'R01 - Rustic',
 }
+const GAMAS: Record<string, string> = { aland: 'Luxe Linen (capa Åland)', rustic: 'Rustic' }
 const MODELOS: Record<string, string> = {
   'esq-preparativos': 'Quatro + página inteira', 'esq-cerimonia': 'Quatro + panorâmica', 'esq-saida': 'Panorâmica + quatro',
   'esq-tres-dobra': 'Três com a do meio na dobra', 'esq-dois-tres': 'Duas em cima + três em baixo',
@@ -36,6 +38,7 @@ export const PRECO_FOLHA_EXTRA = 15
 export type ResumoAlbum = {
   enviado: string | null
   pasta: string | null
+  gama: string
   revestimento: string | null
   personalizacao: string
   folhas: { n: number; modelo: string; fotos: string[] }[]
@@ -66,6 +69,7 @@ export function resumoAlbum(cfg: any): ResumoAlbum | null {
   return {
     enviado: cfg.enviado ?? null,
     pasta: cfg.pasta ?? null,
+    gama: GAMAS[st.capa] ?? GAMAS.aland,
     revestimento: REVESTIMENTOS[st.rev] ?? null,
     personalizacao,
     folhas,
