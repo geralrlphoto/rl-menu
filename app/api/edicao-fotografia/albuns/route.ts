@@ -152,6 +152,9 @@ export async function GET(req: NextRequest) {
     const r = resumoAlbum(p.cfg)
     if (r?.enviado && p.referencia) persPorRef.set(p.referencia, r)
   }
+  // Quem personaliza o álbum (resposta dos noivos ao enviar a seleção)
+  const { data: pesc } = await sb.from('portais').select('referencia, esc:settings->album_escolha').not('settings->album_escolha', 'is', null)
+  const escPorRef = new Map<string, { quem: 'noivos' | 'rl'; em: string }>((pesc ?? []).filter((p: any) => p.referencia && p.esc?.quem).map((p: any) => [p.referencia, p.esc]))
   const noQuadro = new Set([...albuns.map(a => a.referencia), ...albuns.map(a => a.refAlbum), ...porNomear.map(p => p.referencia)])
   const faltam = [...persPorRef.keys()].filter(r => !noQuadro.has(r))
   if (faltam.length) {
@@ -165,8 +168,8 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     ok: true, hoje,
-    albuns: albuns.map(a => ({ ...a, personalizado: persPorRef.get(a.referencia) ?? persPorRef.get(a.refAlbum) ?? null })),
-    porNomear: porNomear.map(p => ({ ...p, personalizado: persPorRef.get(p.referencia) ?? null })),
+    albuns: albuns.map(a => ({ ...a, personalizado: persPorRef.get(a.referencia) ?? persPorRef.get(a.refAlbum) ?? null, escolhaAlbum: escPorRef.get(a.referencia) ?? escPorRef.get(a.refAlbum) ?? null })),
+    porNomear: porNomear.map(p => ({ ...p, personalizado: persPorRef.get(p.referencia) ?? null, escolhaAlbum: escPorRef.get(p.referencia) ?? null })),
     equipa: equipa ?? [],
   })
 }

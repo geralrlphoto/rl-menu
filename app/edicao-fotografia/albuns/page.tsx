@@ -50,8 +50,16 @@ type Album = {
   entregueEm: string | null; aprovadoEm: string | null
   ficha: Record<string, string | number>
   personalizado: ResumoAlbum | null
+  escolhaAlbum?: Escolha | null
 }
-type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null; temAlbum: boolean | null; tamanho?: string | null; situacao?: string | null; personalizado?: ResumoAlbum | null }
+type Escolha = { quem: 'noivos' | 'rl'; em: string }
+// Resposta dos noivos ao enviar a seleção: quem personaliza o álbum
+function EscolhaAlbum({ e }: { e?: Escolha | null }) {
+  if (!e) return null
+  return <p className={`rounded-lg border px-2.5 py-1.5 text-[11px] ${e.quem === 'noivos' ? 'border-[#d8be93]/35 bg-[#d8be93]/[0.06] text-[#d8be93]' : 'border-white/10 bg-white/[0.04] text-white/65'}`}>
+    {e.quem === 'noivos' ? 'Os noivos vão personalizar o álbum no portal' : 'Os noivos deixaram a personalização à RL'} · {fmt(e.em)}</p>
+}
+type PorNomear = { referencia: string; cliente: string | null; data: string | null; fichaId: string | null; recebida: string | null; numFotos: number | null; fotosAlbum: string | null; temAlbum: boolean | null; tamanho?: string | null; situacao?: string | null; personalizado?: ResumoAlbum | null; escolhaAlbum?: Escolha | null }
 
 const fmt = (iso: string | null) => iso ? new Date(String(iso).slice(0, 10) + 'T12:00:00Z').toLocaleDateString('pt-PT', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'UTC' }) : '—'
 const primeiro = (n: string) => n.trim().split(/\s+/)[0]
@@ -380,6 +388,7 @@ export default function AlbunsPage() {
                           {p.situacao && <span className="rounded-md border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[11px] text-white/55">{p.situacao}</span>}
                         </div>
                       )}
+                      <EscolhaAlbum e={p.escolhaAlbum} />
                       {p.personalizado
                         ? <BlocoClaude referencia={p.referencia} r={p.personalizado} onGuardado={carregar} />
                         : <>
@@ -406,6 +415,7 @@ export default function AlbunsPage() {
                           </p>
                         )}
                         {k === 'noivos' && a.maqueteEnviada && <p className="text-[12px] text-white/55">Entregue aos noivos a {fmt(a.maqueteEnviada)}</p>}
+                        {k !== 'entregue' && <EscolhaAlbum e={a.escolhaAlbum} />}
                         {k === 'claude' && a.personalizado && <BlocoClaude referencia={a.referencia} r={a.personalizado} onGuardado={carregar} />}
                         {k !== 'entregue' && k !== 'claude' && <FotosAlbum texto={a.fotosAlbum} temAlbum={a.temAlbum} />}
                         {atraso && (

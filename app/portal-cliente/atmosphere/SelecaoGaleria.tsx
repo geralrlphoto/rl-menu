@@ -62,10 +62,13 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
   const pzRef = useRef<HTMLElement>(null)
   const pzFrame = useRef<HTMLIFrameElement>(null)
   // janela de aviso com o layout do portal (em vez do confirm do browser)
-  type Pergunta = { titulo: string; texto: string; sim: string; nao: string; resolve: (v: boolean) => void }
+  // resposta: true (sim), false (não) ou null (fechou a janela sem responder)
+  type Pergunta = { titulo: string; texto: string; sim: string; nao: string; resolve: (v: boolean | null) => void }
   const [pergunta, setPergunta] = useState<Pergunta | null>(null)
-  const perguntar = (o: Omit<Pergunta, 'resolve'>) => new Promise<boolean>(resolve => setPergunta({ ...o, resolve }))
-  const responder = (v: boolean) => { pergunta?.resolve(v); setPergunta(null) }
+  const perguntar = (o: Omit<Pergunta, 'resolve'>) => new Promise<boolean | null>(resolve => setPergunta({ ...o, resolve }))
+  const responder = (v: boolean | null) => { pergunta?.resolve(v); setPergunta(null) }
+  // Contrato com álbum? (ao enviar a seleção pergunta-se quem personaliza o álbum; null = não se sabe, pergunta)
+  const [temAlbum, setTemAlbum] = useState<boolean | null>(null)
   const [albGuardado, setAlbGuardado] = useState<'ok' | 'a-guardar' | 'erro'>('ok')
   const albTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const albRef = useRef<string[]>([])
@@ -115,6 +118,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
           const a = Array.isArray(d.album.sel) ? d.album.sel : []
           setAlb(a); albRef.current = a
           setAlbEnviado(d.album.enviada ?? null)
+          setTemAlbum(d.temAlbum ?? null)
         }
         if (!d?.ok) { setErro(d?.error === 'wfolio' ? 'A galeria está a demorar a responder. Tentem de novo daqui a pouco.' : 'A galeria ainda não está disponível.'); return }
         setCdn(d.cdn)
@@ -364,14 +368,14 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
   const toque = useRef<number | null>(null)
 
-  async function enviar(): Promise<boolean> {
+  async function enviar(album?: 'noivos' | 'rl'): Promise<boolean> {
     setAEnviar(true)
     if (timer.current) clearTimeout(timer.current)
     try {
       const r = await fetch('/api/fotos-selecao-galeria', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ref: portalRef, acao: 'enviar', tipo,
+          ref: portalRef, acao: 'enviar', tipo, album,
           add: Object.keys(delta.current).filter(n => delta.current[n] === 'add'),
           rem: Object.keys(delta.current).filter(n => delta.current[n] === 'rem'),
         }),
@@ -386,6 +390,21 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
       rootRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
       return true
     } finally { setAEnviar(false) }
+  }
+
+  // ── Enviar seleção: com álbum no contrato, pergunta se querem personalizá-lo ou deixar à RL ──
+  async function enviarSelecao() {
+    if (temAlbum === false || albEnviado) { await enviar(); return }
+    setConfirmar(false)
+    const r = await perguntar({
+      titulo: 'Querem personalizar o vosso álbum?',
+      texto: 'Podem escolher as fotografias do álbum e personalizá-lo aqui no portal: a capa, a personalização e as páginas.\n\nOu podem deixar isso connosco e a RL Photo.Video monta o álbum a partir da vossa seleção.',
+      sim: 'Sim, vamos personalizar', nao: 'Não, deixar à RL Photo.Video',
+    })
+    if (r === null) { setConfirmar(true); return }
+    if (!(await enviar(r ? 'noivos' : 'rl'))) return
+    if (r) { setFiltro('album'); toast('Seleção enviada. Agora escolham as fotografias do álbum e personalizem-no.') }
+    else toast('Seleção enviada. Nós tratamos do álbum. Obrigado!')
   }
 
   // ── Enviar (separador Álbum): a seleção, as fotos do álbum e o álbum personalizado, de uma vez ──
@@ -412,7 +431,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
       semPersonalizar = true
     } else if (!(await perguntar({ titulo: 'Enviar tudo?', texto: `Vamos enviar ${enviada ? '' : 'a seleção, '}as fotografias do álbum e o álbum personalizado.\n\nDepois de enviado fica fechado e passamos à produção.`, sim: 'Enviar', nao: 'Ainda não' }))) return
     // a seleção, se ainda não foi
-    if (!enviada && !(await enviar())) return
+    if (!enviada && !(await enviar(semPersonalizar ? 'rl' : 'noivos'))) return
     setAEnviar(true)
     try {
       const r = await fetch('/api/fotos-selecao-album', {
@@ -697,7 +716,7 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
             </div>
             <p className="sg-conf-txt">{modoAlbum ? 'Depois de enviadas, a escolha do álbum fica fechada e começamos a maquete.' : 'Depois de enviada, a seleção fica fechada e passamos à edição.'}</p>
             <div className="fp-modal-actions">
-              <button type="button" className="fp-btn available" disabled={aEnviar} onClick={modoAlbum ? enviarAlbum : enviar}>{aEnviar ? 'A enviar…' : 'Sim, enviar'}</button>
+              <button type="button" className="fp-btn available" disabled={aEnviar} onClick={modoAlbum ? enviarAlbum : enviarSelecao}>{aEnviar ? 'A enviar…' : 'Sim, enviar'}</button>
               <button type="button" className="fp-btn ghost" onClick={() => setConfirmar(false)}>Voltar à galeria</button>
             </div>
           </div>
@@ -706,9 +725,9 @@ export function SelecaoGaleria({ portalRef, tipo, temaRL, onClose, onEstado, fon
 
       {/* ── janela de aviso (envio do álbum) ── */}
       {pergunta && (
-        <div className="fp-modal-backdrop" onClick={() => responder(false)}>
+        <div className="fp-modal-backdrop" onClick={() => responder(null)}>
           <div className="fp-modal" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
-            <button type="button" className="fp-modal-close" onClick={() => responder(false)} aria-label="Fechar">×</button>
+            <button type="button" className="fp-modal-close" onClick={() => responder(null)} aria-label="Fechar">×</button>
             <div className="eyebrow">Álbum</div>
             <h3>{pergunta.titulo}</h3>
             <p className="sg-conf-txt" style={{ whiteSpace: 'pre-line', textAlign: 'left' }}>{pergunta.texto}</p>

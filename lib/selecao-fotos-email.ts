@@ -32,7 +32,7 @@ function contar(valor: string | null) {
   return valor.split(/[;,]/).map(v => v.trim()).filter(Boolean).length
 }
 
-export async function enviarEmailAdminSelecao(data: SelecaoFotos, tipo: 'casamento' | 'batizado') {
+export async function enviarEmailAdminSelecao(data: SelecaoFotos, tipo: 'casamento' | 'batizado', album: string | null = null) {
   if (!process.env.RESEND_API_KEY) {
     console.warn('[selecao-fotos] RESEND_API_KEY em falta — email não enviado')
     return
@@ -107,6 +107,13 @@ export async function enviarEmailAdminSelecao(data: SelecaoFotos, tipo: 'casamen
                   <td style="padding:9px 0;border-bottom:0.5px solid #2a1f0e;text-align:right;font-size:14px;color:#d4c9b0;">${l.n}</td>
                 </tr>`).join('')}
               </table>
+
+              ${album ? `<table cellpadding="0" cellspacing="0" style="margin:0 auto 28px;border:0.5px solid #6a5430;width:100%;max-width:380px;background:rgba(201,169,110,0.04);">
+                <tr><td style="padding:16px 24px;text-align:center;">
+                  <p style="margin:0 0 6px;font-size:9px;letter-spacing:0.4em;color:#7a6340;text-transform:uppercase;">Álbum</p>
+                  <p style="margin:0;font-size:15px;color:#d4c9b0;line-height:1.5;">${album}</p>
+                </td></tr>
+              </table>` : ''}
 
               <p style="margin:0;font-size:15px;color:#a09070;line-height:1.8;">
                 Vê a seleção completa em<br>

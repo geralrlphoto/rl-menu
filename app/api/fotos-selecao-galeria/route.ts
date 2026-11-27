@@ -6,12 +6,14 @@ import { saveSelecao, type SelecaoFotos } from '@/lib/selecao-fotos-save'
 import { enviarEmailAdminSelecao } from '@/lib/selecao-fotos-email'
 import { enviarTicketFotos } from '@/lib/ticketFotos'
 import { registarFoto } from '@/lib/fotografiaHistorico'
+import { temAlbumPortal, PAGINA_NOTAS_PRIVADAS, textoEscolhaAlbum, type EscolhaAlbum } from '@/lib/temAlbum'
 
 // Galeria de seleção dentro do portal dos noivos.
 //  GET  ?ref=X          → pastas e fotografias da galeria do Wfolio (selecao_url) + escolha guardada
 //  GET  ?ref=X&estado=1 → só o estado (para o cartão), sem ler o Wfolio
 //  POST { ref, acao: 'guardar', sel }         → guarda a escolha a meio (settings.selecao_galeria)
-//  POST { ref, acao: 'enviar', sel, tipo }    → envia pelo mesmo caminho do formulário da seleção:
+//  POST { ref, acao: 'enviar', sel, tipo, album? } → album: 'noivos' | 'rl' (quem personaliza o álbum;
+//       fica em settings.album_escolha, nas Notas Privadas do portal e no email da seleção). Envia pelo mesmo caminho do formulário da seleção:
 //       linha em fotos_selecao + página no Notion + email ao admin + ticket aos noivos.
 
 export const dynamic = 'force-dynamic'
@@ -43,9 +45,9 @@ function albumDe(settings: Record<string, any> | null): Estado {
   return { sel: Array.isArray(e?.sel) ? e.sel.filter((x: unknown) => typeof x === 'string') : [], atualizado: e?.atualizado ?? null, enviada: e?.enviada ?? null }
 }
 
-async function gravarEstado(id: string, settings: Record<string, any> | null, estado: Estado) {
+async function gravarEstado(id: string, settings: Record<string, any> | null, estado: Estado, mais: Record<string, any> = {}) {
   const { error } = await db().from('portais')
-    .update({ settings: { ...(settings ?? {}), selecao_galeria: estado }, updated_at: new Date().toISOString() })
+    .update({ settings: { ...(settings ?? {}), selecao_galeria: estado, ...mais }, updated_at: new Date().toISOString() })
     .eq('id', id)
   return error
 }
@@ -66,8 +68,8 @@ export async function GET(req: Request) {
 
   if (!ehGaleriaWfolio(url)) return NextResponse.json({ ok: false, error: 'sem_galeria', estado, album })
   try {
-    const g = await lerGaleriaWfolio(url!)
-    return NextResponse.json({ ok: true, cdn: WFOLIO_CDN, titulo: g.titulo, pastas: g.pastas, estado, album })
+    const [g, temAlbum] = await Promise.all([lerGaleriaWfolio(url!), temAlbumPortal(db(), portal.referencia, portal.settings).catch(() => null)])
+    return NextResponse.json({ ok: true, cdn: WFOLIO_CDN, titulo: g.titulo, pastas: g.pastas, estado, album, temAlbum, escolhaAlbum: portal.settings?.album_escolha ?? null })
   } catch (e) {
     console.error('[fotos-selecao-galeria] wfolio:', e)
     return NextResponse.json({ ok: false, error: 'wfolio', estado, album }, { status: 502 })
@@ -175,10 +177,23 @@ export async function POST(req: Request) {
 
   const { id, error } = await saveSelecao(mapped, 'fotos-selecao-galeria')
   if (error) return NextResponse.json({ error }, { status: 500 })
-  await gravarEstado(portal.id, portal.settings, { sel, atualizado: agora, enviada: agora })
+  // Quem personaliza o álbum (perguntado aos noivos ao enviar): settings + Notas Privadas do portal
+  const escolha: EscolhaAlbum | null = body.album === 'noivos' || body.album === 'rl' ? { quem: body.album, em: agora } : null
+  const mais: Record<string, any> = {}
+  if (escolha) {
+    mais.album_escolha = escolha
+    const bi = portal.settings?.briefingInfo ?? {}, pag = bi[PAGINA_NOTAS_PRIVADAS] ?? {}
+    const linha = `ÁLBUM (${new Date(agora).toLocaleDateString('pt-PT', { timeZone: 'Europe/Lisbon' })}): ${textoEscolhaAlbum(escolha)}.`
+    const nota = String(pag.notasPrivadas ?? '').trim()
+    mais.briefingInfo = { ...bi, [PAGINA_NOTAS_PRIVADAS]: { ...pag, notasPrivadas: nota ? `${nota}
+
+${linha}` : linha } }
+  }
+  await gravarEstado(portal.id, portal.settings, { sel, atualizado: agora, enviada: agora }, mais)
 
   const tipo = body.tipo === 'batizado' ? 'batizado' : 'casamento'
-  await enviarEmailAdminSelecao(mapped, tipo).catch(e => console.error('[fotos-selecao-galeria] email falhou:', e))
+  await enviarEmailAdminSelecao(mapped, tipo, escolha ? textoEscolhaAlbum(escolha) : null).catch(e => console.error('[fotos-selecao-galeria] email falhou:', e))
+  if (escolha) await registarFoto(portal.referencia, escolha.quem === 'noivos' ? 'Álbum: os noivos vão personalizar' : 'Álbum: personalização deixada à RL', 'Noivos')
   await enviarTicketFotos('recebida', portal.referencia).catch(() => null)
   await registarFoto(portal.referencia, 'Seleção recebida', 'Noivos')
 
