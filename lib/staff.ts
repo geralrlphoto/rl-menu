@@ -18,6 +18,7 @@ export const EMAILS_NOIVOS: { grupo: string; emails: EmailNoivos[] }[] = [
   ] },
   { grupo: 'Reunião e proposta', emails: [
     { chave: 'nova-lead', nome: 'Recebemos o vosso contacto' },
+    { chave: 'pedido-disponibilidade', nome: 'Pedido de disponibilidade (Sirius Park)' },
     { chave: 'reuniao', nome: 'Reunião marcada' },
     { chave: 'lembrete-reuniao', nome: 'Lembrete da reunião' },
   ] },

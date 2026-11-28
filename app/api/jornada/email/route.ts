@@ -9,7 +9,7 @@ import {
   emailNovidadesFreelancer, emailNovoBriefing, emailTrabalhoEdicao, emailEdicaoFotos, emailCandidatura, emailEdicaoAlbum,
   emailNotificacaoFreelancer, emailMensagemFreelancer, emailNovaTarefa, emailNovoProjeto, emailProjetoAtrasado, emailAvisoAlbum,
 } from '@/lib/emailsFreelancers'
-import { buildRecoveryEmail, buildDadosRecebidosEmail, buildNovaLeadEmail } from '@/lib/emailsClientes'
+import { buildRecoveryEmail, buildDadosRecebidosEmail, buildNovaLeadEmail, buildPedidoSiriusEmail } from '@/lib/emailsClientes'
 import {
   emailNotificacaoNoivos, emailRespostaNoivos, emailTarefaNoivos, emailMarcarPreWedding, emailPreWeddingReservado,
   emailPropostaPreWedding, emailPagamentoRegistado, emailPortalPronto, emailReuniaoMarcada, emailLembreteReuniao,
@@ -81,6 +81,7 @@ function html(k: string): string | null {
   if (k === 'recuperar') return buildRecoveryEmail({ nome: 'Ana & Tiago', password: 'exemplo123', loginUrl: login })
   if (k === 'dados-recebidos') return buildDadosRecebidosEmail({ nome_noivos: 'Ana e Tiago', data_casamento: '2027-06-12' })
   if (k === 'nova-lead') return buildNovaLeadEmail('Ana e Tiago', 'Fotografia, Vídeo')
+  if (k === 'pedido-disponibilidade') return buildPedidoSiriusEmail('Ana e Tiago', '2027-06-12')
   // Restantes emails aos noivos e aos casais em lead (lib/emailsNoivos.ts)
   const portal = `${SITE}/portal-cliente/ref/CAS_000_27_RL`
   const DATA = '2027-06-12'

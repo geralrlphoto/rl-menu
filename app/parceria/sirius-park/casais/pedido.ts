@@ -6,6 +6,7 @@
 import { revalidateTag } from 'next/cache'
 import { db } from '../apresentacao/fotos'
 import { qualificarLead } from '@/lib/crm'
+import { buildPedidoSiriusEmail } from '@/lib/emailsClientes'
 
 const DESTINO = 'geral.rlphoto@gmail.com'
 const REMETENTE = 'RL Photo.Video <geral@rlphotovideo.pt>'
@@ -60,6 +61,14 @@ export async function pedirDisponibilidade(f: { nome: string; email: string; con
         body: JSON.stringify({ from: REMETENTE, to: [DESTINO], reply_to: email, subject: `Nova lead Sirius Park: ${nome} · ${dataPT}`, html }),
       })
     } catch (e) { console.error('[sirius kit] email não enviado', e) }
+    // Bilhete de confirmação ao casal (layout dos emails aos noivos)
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ from: REMETENTE, to: [email], reply_to: DESTINO, subject: 'Recebemos o vosso pedido · RL Photo.Video', html: buildPedidoSiriusEmail(nome, data) }),
+      })
+    } catch (e) { console.error('[sirius kit] bilhete ao casal não enviado', e) }
   }
   return { ok: true }
 }

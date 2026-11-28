@@ -1,7 +1,7 @@
 // Emails a noivos e leads, partilhados entre as rotas de envio e a pré-visualização
 // da página Tickets (/api/jornada/email).
 
-import { buildBilheteNoivos, blocoChave, nomesBilhete } from './bilheteNoivos'
+import { buildBilheteNoivos, blocoChave, blocoPassos, nomesBilhete } from './bilheteNoivos'
 
 const ADMIN_EMAIL = 'geral.rlphoto@gmail.com'
 
@@ -41,6 +41,31 @@ export function buildDadosRecebidosEmail(data: { nome_noivos: string; data_casam
     cta: { label: 'Falar connosco', url: `mailto:${ADMIN_EMAIL}` },
     nota: `Para qualquer questão estamos sempre disponíveis.<br>${ADMIN_EMAIL}`,
     preheader: 'Recebemos os vossos dados.',
+  })
+}
+
+/** "Pedido recebido": resposta ao casal que pediu disponibilidade no kit do Sirius Park
+ *  (/parceria/sirius-park/casais, pedido-disponibilidade). Foto do espaço no topo. */
+export function buildPedidoSiriusEmail(nome: string, data: string): string {
+  const SITE = (process.env.NEXT_PUBLIC_SITE_URL || 'https://portal.rlphotovideo.pt').replace(/\/+$/, '')
+  const dataLonga = /^\d{4}-\d{2}-\d{2}$/.test(data)
+    ? new Date(`${data}T12:00:00`).toLocaleDateString('pt-PT', { day: 'numeric', month: 'long', year: 'numeric' })
+    : data
+  return buildBilheteNoivos({
+    chave: 'pedido-disponibilidade',
+    pill: 'Pedido recebido',
+    nomes: nomesBilhete(nome) || 'Obrigado',
+    data,
+    fundo: `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/parcerias/sirius-park/espaco/sirius-bilhete.jpg`,
+    frase: 'Obrigado pelo vosso pedido. Vamos verificar a disponibilidade para o vosso dia e já entramos em contacto convosco.',
+    campos: [
+      { k: 'O vosso dia', v: dataLonga },
+      { k: 'Local', v: 'Sirius Park' },
+    ],
+    extra: blocoPassos(['Pedido', 'Verificação', 'Conversa', 'Data reservada'], 1),
+    cta: { label: 'Ver o nosso trabalho', url: `${SITE}/parceria/sirius-park/casais#trabalho` },
+    nota: `Alguma dúvida? Respondam a este email ou liguem para o 912 932 768.<br>${ADMIN_EMAIL}`,
+    preheader: 'Vamos verificar a vossa data e já entramos em contacto.',
   })
 }
 

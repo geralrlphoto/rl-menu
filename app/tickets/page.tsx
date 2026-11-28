@@ -103,6 +103,7 @@ const GRUPOS: { titulo: string; tickets: Ticket[] }[] = [
       { k: 'reuniao', nome: 'Reunião Marcada', assunto: 'Tens uma reunião marcada · <data> às <hora>', quando: 'No CRM, ao marcar a reunião com o casal.', para: 'Casal (email da lead)', info: 'Pílula REUNIÃO MARCADA, nomes, data, hora, modo e botão VER A REUNIÃO.' },
       { k: 'lembrete-reuniao', nome: 'Lembrete da Reunião', assunto: '⏰ A vossa reunião começa em 30 minutos', quando: 'Sozinho, 30 minutos antes da reunião marcada no CRM.', para: 'Casal (email da lead)', info: 'Pílula FALTAM 30 MINUTOS, nomes, hora, destaque "30 minutos" e botão JUNTAR À VIDEOCHAMADA.' },
       { k: 'nova-lead', nome: 'Recebemos o Vosso Contacto', assunto: 'Recebemos o vosso contacto — RL Photo.Video', quando: 'Quando uma lead preenche o formulário de contacto (Nova Lead).', para: 'Lead', info: 'Pílula MENSAGEM RECEBIDA, nomes, serviços pedidos e botão VER O BLOG.' },
+      { k: 'pedido-disponibilidade', nome: 'Pedido de Disponibilidade (Sirius Park)', assunto: 'Recebemos o vosso pedido · RL Photo.Video', quando: 'Quando um casal pede disponibilidade no kit do Sirius Park (/parceria/sirius-park/casais).', para: 'Casal (email do pedido)', info: 'Foto do Sirius Park, pílula PEDIDO RECEBIDO, nomes, data, local, passos (Verificação em curso) e botão VER O NOSSO TRABALHO.' },
     ],
   },
 ]
